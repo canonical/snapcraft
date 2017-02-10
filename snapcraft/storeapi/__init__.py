@@ -193,7 +193,8 @@ class StoreClient():
         return self._refresh_if_necessary(
             self.sca.push_snap_build, snap_id, snap_build)
 
-    def upload(self, snap_name, snap_filename):
+    def upload(self, snap_name, snap_filename, delta_format=None,
+               source_hash=None, target_hash=None, delta_hash=None):
         # FIXME This should be raised by the function that uses the
         # discharge. --elopio -2016-06-20
         if self.conf.get('unbound_discharge') is None:
@@ -203,7 +204,9 @@ class StoreClient():
         updown_data = _upload.upload_files(snap_filename, self.updown)
 
         return self._refresh_if_necessary(
-            self.sca.snap_push_metadata, snap_name, updown_data)
+            self.sca.snap_push_metadata, snap_name, updown_data,
+            delta_format=delta_format, source_hash=source_hash,
+            target_hash=target_hash, delta_hash=delta_hash)
 
     def release(self, snap_name, revision, channels):
         return self._refresh_if_necessary(
@@ -249,14 +252,18 @@ class StoreClient():
         return self._refresh_if_necessary(
             self.sca.close_channels, snap_id, channel_names)
 
-    def download(self, snap_name, channel, download_path, arch=None):
+    def download(self, snap_name, channel, download_path,
+                 arch=None, except_hash=''):
         if arch is None:
             arch = snapcraft.ProjectOptions().deb_arch
 
         package = self.cpi.get_package(snap_name, channel, arch)
-        self._download_snap(
-            snap_name, channel, arch, download_path,
-            package['anon_download_url'], package['download_sha512'])
+        if package['download_sha3_384'] != except_hash:
+            self._download_snap(
+                snap_name, channel, arch, download_path,
+                # FIXME LP: #1662665
+                package['anon_download_url'], package['download_sha512'])
+        return package['download_sha3_384']
 
     def _download_snap(self, name, channel, arch, download_path,
                        download_url, expected_sha512):
@@ -389,8 +396,10 @@ class SnapIndexClient(Client):
 
         params = {
             'channel': channel,
+            # FIXME LP: #1662665
             'fields': 'status,anon_download_url,download_url,'
-                      'download_sha512,snap_id,release',
+                      'download_sha3_384,download_sha512,snap_id,'
+                      'revision,release',
         }
         logger.info('Getting details for {}'.format(snap_name))
         url = 'api/v1/snaps/details/{}'.format(snap_name)
@@ -512,7 +521,9 @@ class SCAClient(Client):
         if not response.ok:
             raise errors.StorePushError(data['name'], response)
 
-    def snap_push_metadata(self, snap_name, updown_data):
+    def snap_push_metadata(self, snap_name, updown_data,
+                           delta_format=None, delta_hash=None,
+                           source_hash=None, target_hash=None):
         data = {
             'name': snap_name,
             'series': constants.DEFAULT_SERIES,
@@ -520,6 +531,11 @@ class SCAClient(Client):
             'binary_filesize': updown_data['binary_filesize'],
             'source_uploaded': updown_data['source_uploaded'],
         }
+        if delta_format:
+            data['delta_format'] = delta_format
+            data['delta_hash'] = delta_hash
+            data['source_hash'] = source_hash
+            data['target_hash'] = target_hash
         auth = _macaroon_auth(self.conf)
         response = self.post(
             'snap-push/', data=json.dumps(data),
@@ -531,12 +547,14 @@ class SCAClient(Client):
 
         return StatusTracker(response.json()['status_details_url'])
 
-    def snap_release(self, snap_name, revision, channels):
+    def snap_release(self, snap_name, revision, channels, delta_format=None):
         data = {
             'name': snap_name,
             'revision': str(revision),
             'channels': channels,
         }
+        if delta_format:
+            data['delta_format'] = delta_format
         auth = _macaroon_auth(self.conf)
         response = self.post(
             'snap-release/', data=json.dumps(data),
@@ -692,11 +710,13 @@ class StatusTracker:
         'being_processed': 'Processing...',
         'ready_to_release': 'Ready to release!',
         'need_manual_review': 'Will need manual review...',
+        'processing_upload_delta_error': 'Error while processing delta...',
         'processing_error': 'Error while processing...',
     }
 
     __error_codes = (
         'processing_error',
+        'processing_upload_delta_error',
         'need_manual_review',
     )
 

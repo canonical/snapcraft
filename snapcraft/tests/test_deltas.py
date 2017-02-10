@@ -33,6 +33,7 @@ class BaseDeltaGenerationTestCase(TestCase):
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
+        self.delta_tool_path = '/usr/bin/xdelta3'
         self.workdir = self.useFixture(fixtures.TempDir()).path
         self.source_file = os.path.join(self.workdir, 'source.snap')
         self.target_file = os.path.join(self.workdir, 'target.snap')
@@ -45,7 +46,7 @@ class BaseDeltaGenerationTestCase(TestCase):
     def test_find_unique_file_name(self):
         tmp_delta = deltas.BaseDeltasGenerator(
             source_path=self.source_file, target_path=self.target_file,
-            delta_format='xdelta3', delta_tool_path='/usr/bin/xdelta3')
+            delta_format='xdelta3', delta_tool_path=self.delta_tool_path)
 
         unique_file_name = tmp_delta.find_unique_file_name(
             tmp_delta.source_path)
@@ -64,7 +65,7 @@ class BaseDeltaGenerationTestCase(TestCase):
         self.assertThat(
             lambda: deltas.BaseDeltasGenerator(
                 source_path=self.source_file, target_path=self.target_file,
-                delta_format=None, delta_tool_path='/usr/bin/xdelta3'),
+                delta_format=None, delta_tool_path=self.delta_tool_path),
             m.raises(deltas.errors.DeltaFormatError)
         )
         exception = self.assertRaises(deltas.errors.DeltaFormatError,
@@ -105,7 +106,7 @@ class BaseDeltaGenerationTestCase(TestCase):
                                       source_path=self.source_file,
                                       target_path=self.target_file,
                                       delta_format='invalid-delta-format',
-                                      delta_tool_path='/usr/bin/xdelta3')
+                                      delta_tool_path=self.delta_tool_path)
         expected = """delta_format must be a option in ['xdelta3'].
 for now delta_format='invalid-delta-format'"""
         self.assertEqual(str(exception), expected)
@@ -137,9 +138,32 @@ for now delta_format='invalid-delta-format'"""
             source_path=self.source_file,
             target_path=self.target_file,
             delta_format='xdelta3',
-            delta_tool_path='/usr/bin/xdelta3')
+            delta_tool_path=self.delta_tool_path)
 
         self.assertThat(
             lambda: tmp_delta.make_delta(is_for_test=True),
             m.raises(NotImplementedError)
+        )
+
+    def test_large_delta_raises_error(self):
+        delta_file = os.path.join(self.workdir, 'target.snap.delta')
+        target_file = os.path.join(self.workdir, 'target.snap')
+        source_file = os.path.join(self.workdir, 'source.snap')
+
+        with open(delta_file, 'wb') as delta, \
+                open(source_file, 'wb') as source:
+            delta.seek(999 - 1)
+            delta.write(b'\0')
+            source.seek(1000 - 1)
+            source.write(b'\0')
+
+        generator = deltas.BaseDeltasGenerator(
+            source_path=source_file,
+            target_path=target_file,
+            delta_format='xdelta3',
+            delta_tool_path=self.delta_tool_path)
+
+        self.assertThat(
+            lambda: generator._check_delta_size_constraint(delta_file),
+            m.raises(deltas.errors.DeltaGenerationTooBigError)
         )

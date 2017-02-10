@@ -6,7 +6,10 @@ confinement: classic
 
 apps:
   git:
-    command: env PATH=$PATH:$SNAP/libexec/git-core GIT_TEMPLATE_DIR=$SNAP/share/git-core/templates git
+    command: git
+    environment:
+      PATH: $PATH:$SNAP/libexec/git-core
+      GIT_TEMPLATE_DIR: $SNAP/share/git-core/templates
 
 parts:
   git:

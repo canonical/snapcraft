@@ -16,8 +16,10 @@
 
 import os
 import tempfile
+from glob import glob
 from unittest import mock
-from testtools.matchers import HasLength
+
+from testtools.matchers import FileContains, HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -28,11 +30,25 @@ def setup_directories(plugin, python_version):
     version = '2.7' if python_version == 'python2' else '3.5'
     os.makedirs(plugin.sourcedir)
     os.makedirs(plugin.builddir)
-    os.makedirs(os.path.join(
-        plugin.installdir, 'usr', 'lib', 'python' + version, 'dist-packages'))
-    os.makedirs(os.path.join(
-        plugin.installdir, 'usr', 'include', 'python' + version))
+    python_home = os.path.join(plugin.installdir, 'usr')
+    python_lib_path = os.path.join(python_home, 'lib', 'python' + version)
+    python_include_path = os.path.join(
+        python_home, 'include', 'python' + version)
+
+    os.makedirs(os.path.join(python_lib_path, 'dist-packages'))
+    os.makedirs(python_include_path)
     open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
+
+    site_path = os.path.join(plugin.installdir, 'lib', 'python' + version,
+                             'site-packages')
+    os.makedirs(site_path)
+    with open(os.path.join(python_lib_path, 'site.py'), 'w') as f:
+        f.write('#!/usr/bin/python3\n'
+                '# comment\n'
+                'ENABLE_USER_SITE = None\n'
+                'USER_SITE = None\n'
+                'USER_BASE = None\n'
+                '# comment\n')
 
 
 class PythonPluginTestCase(tests.TestCase):
@@ -96,28 +112,12 @@ class PythonPluginTestCase(tests.TestCase):
     def test_env(self):
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
-        expected_env = [
-            'PYTHONUSERBASE=/testpath',
-            'PYTHONHOME=/testpath/usr',
-        ]
+        expected_env = []
         env = plugin.env('/testpath')
         self.assertListEqual(expected_env, env)
 
         env_missing_path = plugin.env('/testpath')
         self.assertTrue('PYTHONPATH=/testpath' not in env_missing_path)
-
-    def test_system_pip_command(self):
-        plugin = python.PythonPlugin('test-part', self.options,
-                                     self.project_options)
-        pip_command = os.path.join(os.path.sep, 'usr', 'bin', 'pip3')
-        self.assertEqual(plugin.system_pip_command, pip_command)
-
-        # NOTE(SamYaple): python2 pip test
-        self.options.python_version = 'python2'
-        plugin = python.PythonPlugin('test-part', self.options,
-                                     self.project_options)
-        pip_command = os.path.join(os.path.sep, 'usr', 'bin', 'pip')
-        self.assertEqual(plugin.system_pip_command, pip_command)
 
     @mock.patch.object(python.PythonPlugin, 'run')
     @mock.patch.object(os.path, 'exists', return_value=False)
@@ -150,21 +150,26 @@ class PythonPluginTestCase(tests.TestCase):
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
 
-        pip_download = ['pip', 'download',
+        pip_command = [
+            os.path.join(plugin.installdir, 'usr', 'bin', 'python3'),
+            '-m', 'pip']
+
+        pip_download = ['download',
                         '--disable-pip-version-check',
                         '--dest', plugin._python_package_dir,
                         '--constraint', constraints_path]
 
         calls = [
-            mock.call(pip_download + ['--requirement', requirements_path, '.',
-                                      'test', 'packages'],
+            mock.call(pip_command + pip_download +
+                      ['--requirement', requirements_path, '.',
+                       'test', 'packages'],
                       cwd=plugin.sourcedir, env=mock.ANY),
         ]
         plugin.pull()
         mock_run.assert_has_calls(calls)
 
     @mock.patch.object(python.PythonPlugin, 'run')
-    def test_pull_without_requirments(self, mock_run):
+    def test_pull_without_requirements(self, mock_run):
         self.options.requirements = ''
         self.options.constraints = 'constraints.txt'
         self.options.python_packages = ['test', 'packages']
@@ -175,13 +180,17 @@ class PythonPluginTestCase(tests.TestCase):
 
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
 
-        pip_download = ['pip', 'download',
+        pip_command = [
+            os.path.join(plugin.installdir, 'usr', 'bin', 'python3'),
+            '-m', 'pip']
+
+        pip_download = ['download',
                         '--disable-pip-version-check',
                         '--dest', plugin._python_package_dir,
                         '--constraint', constraints_path]
 
         calls = [
-            mock.call(pip_download + ['.', 'test', 'packages'],
+            mock.call(pip_command + pip_download + ['.', 'test', 'packages'],
                       cwd=plugin.sourcedir, env=mock.ANY),
         ]
         plugin.pull()
@@ -233,23 +242,28 @@ class PythonPluginTestCase(tests.TestCase):
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
 
-        pip_wheel = ['pip', 'wheel',
+        pip_command = [
+            os.path.join(plugin.installdir, 'usr', 'bin', 'python3'),
+            '-m', 'pip']
+
+        pip_wheel = ['wheel',
                      '--disable-pip-version-check', '--no-index',
                      '--find-links', plugin._python_package_dir,
                      '--constraint', constraints_path,
                      '--wheel-dir', mock.ANY]
 
-        pip_install = ['pip', 'install', '--user', '--no-compile',
+        pip_install = ['install', '--user', '--no-compile',
                        '--disable-pip-version-check', '--no-index',
                        '--find-links', plugin._python_package_dir,
                        '--constraint', constraints_path]
 
         calls = [
-            mock.call(pip_wheel + ['--requirement', requirements_path, '.',
-                                   'test', 'packages'],
+            mock.call(pip_command + pip_wheel +
+                      ['--requirement', requirements_path, '.',
+                       'test', 'packages'],
                       cwd=plugin.builddir, env=mock.ANY),
-            mock.call(tests.ContainsList(pip_install + ['project.whl']),
-                      env=mock.ANY),
+            mock.call(tests.ContainsList(pip_command + pip_install +
+                      ['project.whl']), env=mock.ANY),
         ]
         plugin.build()
         mock_run.assert_has_calls(calls)
@@ -263,15 +277,19 @@ class PythonPluginTestCase(tests.TestCase):
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
 
-        pip_download = ['pip', 'download',
+        pip_command = [
+            os.path.join(plugin.installdir, 'usr', 'bin', 'python3'),
+            '-m', 'pip']
+
+        pip_download = ['download',
                         '--disable-pip-version-check',
                         '--dest', plugin._python_package_dir,
                         '--constraint', 'http://test.com/constraints.txt']
 
         calls = [
-            mock.call(pip_download + ['--requirement',
-                                      'https://test.com/requirements.txt',
-                                      '.'],
+            mock.call(pip_command + pip_download +
+                      ['--requirement', 'https://test.com/requirements.txt',
+                       '.'],
                       cwd=plugin.sourcedir, env=mock.ANY),
         ]
         plugin.pull()
@@ -294,20 +312,14 @@ class PythonPluginTestCase(tests.TestCase):
     def test_build_fixes_python_shebangs(self, run_mock):
         if self.options.python_version == 'python2':
             py_version_short = 'python2'
-            py_version_long = 'python2'
         elif self.options.python_version == 'python3':
             py_version_short = 'python3'
-            py_version_long = 'python3.5'
 
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
-        os.makedirs(plugin.sourcedir)
-        open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
+        setup_directories(plugin, self.options.python_version)
+
         os.makedirs(os.path.join(plugin.installdir, 'bin'))
-        os.makedirs(os.path.join(
-            plugin.installdir, 'usr', 'lib', py_version_long, 'dist-packages'))
-        os.makedirs(os.path.join(
-            plugin.installdir, 'usr', 'include', py_version_long))
 
         # Place a few files with bad shebangs, and some files that shouldn't be
         # changed.
@@ -360,3 +372,36 @@ class PythonPluginTestCase(tests.TestCase):
                                                mock_os_stat):
         python._replicate_owner_mode('/nonexistant_path')
         self.assertFalse(mock_os_stat.called)
+
+    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(python.PythonPlugin, 'run')
+    @mock.patch.object(python.snapcraft.BasePlugin, 'build')
+    def test_build_creates_correct_sitecustomize(
+            self, mock_base_build, mock_run, mock_run_output):
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+        setup_directories(plugin, self.options.python_version)
+
+        plugin.build()
+
+        expected_sitecustomize = (
+            'import site\n'
+            'import os\n'
+            '\n'
+            'snap_dir = os.getenv("SNAP")\n'
+            'snapcraft_stage_dir = os.getenv("SNAPCRAFT_STAGE")\n'
+            'snapcraft_part_install = os.getenv("SNAPCRAFT_PART_INSTALL")\n'
+            '\n'
+            'for d in (snap_dir, snapcraft_stage_dir, '
+            'snapcraft_part_install):\n'
+            '    if d:\n'
+            '        site_dir = os.path.join(d, '
+            '"lib/python3.5/site-packages")\n'
+            '        site.addsitedir(site_dir)\n'
+            '\n'
+            'if snap_dir:\n'
+            '    site.ENABLE_USER_SITE = False')
+
+        site_path = glob(os.path.join(
+            plugin.installdir, 'usr', 'lib', 'python*', 'sitecustomize.py'))[0]
+        self.assertThat(site_path, FileContains(expected_sitecustomize))

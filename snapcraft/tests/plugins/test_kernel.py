@@ -754,7 +754,7 @@ ACCEPT=n
         self.assertEqual(config_contents, 'ACCEPT=y\n')
         self._assert_common_assets(plugin.installdir)
         self.assertTrue(os.path.exists(os.path.join(
-            plugin.installdir, 'lib', 'firmware', 'fake-fw-dir')))
+            plugin.installdir, 'firmware', 'fake-fw-dir')))
 
     def test_build_with_kconfigfile_and_no_firmware(self):
         self.options.kconfigfile = 'config'
@@ -898,4 +898,4 @@ ACCEPT=n
 
         download_mock.assert_called_once_with(
             'ubuntu-core', 'edge', plugin.os_snap,
-            self.project_options.deb_arch)
+            self.project_options.deb_arch, '')

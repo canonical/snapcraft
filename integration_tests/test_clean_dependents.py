@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -31,21 +31,17 @@ class CleanDependentsTestCase(integration_tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.project_dir = 'dependencies'
-        self.run_snapcraft('prime', self.project_dir)
+        self.copy_project_to_cwd('dependencies')
+        self.run_snapcraft('prime')
 
         # Need to use the state directory here instead of partdir due to
         # bug #1567054.
         self.part_dirs = {
-            'p1': os.path.join(self.project_dir, 'parts', 'p1', 'state'),
-            'p2': os.path.join(self.project_dir, 'parts', 'p2', 'state'),
-            'p3': os.path.join(self.project_dir, 'parts', 'p3', 'state'),
-            'p4': os.path.join(self.project_dir, 'parts', 'p4', 'state'),
+            'p1': os.path.join(self.parts_dir, 'p1', 'state'),
+            'p2': os.path.join(self.parts_dir, 'p2', 'state'),
+            'p3': os.path.join(self.parts_dir, 'p3', 'state'),
+            'p4': os.path.join(self.parts_dir, 'p4', 'state'),
         }
-
-        self.partsdir = os.path.join(self.project_dir, 'parts')
-        self.stagedir = os.path.join(self.project_dir, 'stage')
-        self.snapdir = os.path.join(self.project_dir, 'prime')
 
     def assert_clean(self, parts, common=False):
         for part in parts:
@@ -54,11 +50,11 @@ class CleanDependentsTestCase(integration_tests.TestCase):
                 'Expected part directory for {!r} to be cleaned'.format(part))
 
         if common:
-            self.expectThat(self.partsdir, Not(DirExists()),
+            self.expectThat(self.parts_dir, Not(DirExists()),
                             'Expected parts/ directory to be cleaned')
-            self.expectThat(self.stagedir, Not(DirExists()),
+            self.expectThat(self.stage_dir, Not(DirExists()),
                             'Expected stage/ directory to be cleaned')
-            self.expectThat(self.snapdir, Not(DirExists()),
+            self.expectThat(self.prime_dir, Not(DirExists()),
                             'Expected snap/ directory to be cleaned')
 
     def assert_not_clean(self, parts, common=False):
@@ -69,51 +65,50 @@ class CleanDependentsTestCase(integration_tests.TestCase):
                     part))
 
         if common:
-            self.expectThat(self.partsdir, DirExists(),
+            self.expectThat(self.parts_dir, DirExists(),
                             'Expected parts/ directory to be uncleaned')
-            self.expectThat(self.stagedir, DirExists(),
+            self.expectThat(self.stage_dir, DirExists(),
                             'Expected stage/ directory to be uncleaned')
-            self.expectThat(self.snapdir, DirExists(),
+            self.expectThat(self.prime_dir, DirExists(),
                             'Expected snap/ directory to be uncleaned')
 
     def test_clean_nested_dependent(self):
         # Test that p3 (which has dependencies but no dependents) cleans with
         # no extra parameters.
-        self.run_snapcraft(['clean', 'p3'], self.project_dir)
+        self.run_snapcraft(['clean', 'p3'])
         self.assert_clean(['p3'])
         self.assert_not_clean(['p1', 'p2', 'p4'], True)
 
         # Now run prime again
-        self.run_snapcraft('prime', self.project_dir)
+        self.run_snapcraft('prime')
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
 
     def test_clean_dependent(self):
         # Test that p2 (which has both dependencies and dependents) cleans with
         # its dependents (p3 and p4) also specified.
-        self.run_snapcraft(['clean', 'p2', 'p3', 'p4'], self.project_dir)
+        self.run_snapcraft(['clean', 'p2', 'p3', 'p4'])
         self.assert_clean(['p2', 'p3', 'p4'])
         self.assert_not_clean(['p1'], True)
 
         # Now run prime again
-        self.run_snapcraft('prime', self.project_dir)
+        self.run_snapcraft('prime')
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
 
     def test_clean_main(self):
         # Test that p1 (which has no dependencies but dependents) cleans with
         # its dependents (p2 and, as an extension, p3 and p4) also specified.
-        self.run_snapcraft(['clean', 'p1', 'p2', 'p3', 'p4'], self.project_dir)
+        self.run_snapcraft(['clean', 'p1', 'p2', 'p3', 'p4'])
         self.assert_clean(['p1', 'p2', 'p3', 'p4'], True)
 
         # Now run prime again
-        self.run_snapcraft('prime', self.project_dir)
+        self.run_snapcraft('prime')
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
 
     def test_clean_dependent_without_nested_dependents_raises(self):
         # Test that p2 (which has both dependencies and dependents) fails to
         # clean if its dependents (p3 and p4) are not also specified
         exception = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft, ['clean', 'p2'],
-            self.project_dir)
+            subprocess.CalledProcessError, self.run_snapcraft, ['clean', 'p2'])
         self.assertThat(
             exception.output,
             EndsWith(
@@ -127,7 +122,7 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         # clean if one of its dependents (p4) is not also specified
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft,
-            ['clean', 'p2', 'p3'], self.project_dir)
+            ['clean', 'p2', 'p3'])
         self.assertThat(
             exception.output,
             EndsWith(
@@ -140,8 +135,7 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         # Test that p1 (which has no dependencies but dependents) fails to
         # clean if none of its dependents are also specified.
         exception = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft, ['clean', 'p1'],
-            self.project_dir)
+            subprocess.CalledProcessError, self.run_snapcraft, ['clean', 'p1'])
         self.assertThat(
             exception.output,
             EndsWith(
@@ -154,7 +148,7 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         # clean if its dependent (p2) is not also specified
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft,
-            ['clean', 'p1', 'p3', 'p4'], self.project_dir)
+            ['clean', 'p1', 'p3', 'p4'])
         self.assertThat(
             exception.output,
             EndsWith(
@@ -168,7 +162,7 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         # specified
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft,
-            ['clean', 'p1', 'p2'], self.project_dir)
+            ['clean', 'p1', 'p2'])
         self.assertThat(
             exception.output,
             EndsWith(

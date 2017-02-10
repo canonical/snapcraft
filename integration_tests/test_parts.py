@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,7 +16,7 @@
 
 import os
 
-from testtools.matchers import StartsWith
+from testtools.matchers import Contains
 import yaml
 
 import integration_tests
@@ -47,9 +47,9 @@ class PartsTestCase(integration_tests.TestCase):
             "Description: A tool and a library (usable from many languages) "
             "for client side URL transfers, supporting FTP, FTPS, HTTP, "
             "HTTPS, TELNET, DICT, FILE and LDAP.\n\n")
-        self.assertThat(output, StartsWith(expected_prefix))
-
-        part = yaml.safe_load(output[len(expected_prefix):])
+        self.assertThat(output, Contains(expected_prefix))
+        idx = output.index(expected_prefix) + len(expected_prefix)
+        part = yaml.safe_load(output[idx:])
         expected_part = {
             "curl": {
                 "plugin": "autotools",
@@ -84,9 +84,9 @@ class PartsWithFilesetsTestCase(integration_tests.TestCase):
             "Maintainer: 'Jonathan Cave <jonathan.cave@canonical.com>'\n"
             "Description: The filesets test from the integration test suite."
             "\n\n")
-        self.assertThat(output, StartsWith(expected_prefix))
-
-        part = yaml.safe_load(output[len(expected_prefix):])
+        self.assertThat(output, Contains(expected_prefix))
+        idx = output.index(expected_prefix) + len(expected_prefix)
+        part = yaml.safe_load(output[idx:])
         expected_part = {
             "simple-make-filesets": {
                 "plugin": "make",
@@ -115,5 +115,4 @@ class PartsWithFilesetsTestCase(integration_tests.TestCase):
         }
         self.assertEqual(expected_part, part)
 
-        project_dir = 'wiki-filesets'
-        self.run_snapcraft('snap', project_dir)
+        self.run_snapcraft('snap', 'wiki-filesets')

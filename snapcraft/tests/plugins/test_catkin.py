@@ -720,9 +720,26 @@ class CatkinPluginTestCase(tests.TestCase):
             plugin.installdir, 'opt', 'ros', self.properties.rosdistro))
             in environment)
 
-        self.assertTrue(
-            '. {}'.format(plugin.installdir, 'opt', 'ros', 'setup.sh') in
-            '\n'.join(environment), 'Expected ROS\'s setup.sh to be sourced')
+        # Make sure $@ is zeroed, then setup.sh sourced, then $@ is restored
+        lines_of_interest = [
+            'set --',
+            '. {}'.format(os.path.join(
+                plugin.installdir, 'opt', 'ros', self.properties.rosdistro,
+                'setup.sh')),
+            'eval "set -- $BACKUP_ARGS"',
+        ]
+        actual_lines = []
+
+        # Joining and re-splitting to get hacked script in there as well
+        for line in '\n'.join(environment).split('\n'):
+            line = line.strip()
+            if line in lines_of_interest:
+                actual_lines.append(line)
+
+        self.assertThat(
+            actual_lines, Equals(lines_of_interest),
+            "Expected ROS's setup.sh to be sourced after args were zeroed, "
+            "followed by the args being restored.")
 
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
     def test_run_environment_no_python(self, run_mock):
