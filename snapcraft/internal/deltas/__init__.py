@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-
-from . import errors # noqa
-from ._deltas import BaseDeltasGenerator # noqa
-from ._xdelta3 import XDelta3Generator # noqa
+from . import errors  # noqa
+from ._deltas import BaseDeltasGenerator  # noqa
+from ._xdelta3 import XDelta3Generator  # noqa

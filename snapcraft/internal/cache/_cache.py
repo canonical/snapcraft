@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -31,6 +31,9 @@ class SnapcraftCache:
     def cache(self):
         raise NotImplementedError
 
+    def get(self, *args, **kwargs):
+        raise NotImplementedError
+
     def prune(self, *args, **kwargs):
         raise NotImplementedError
 
@@ -40,4 +43,12 @@ class SnapcraftProjectCache(SnapcraftCache):
     def __init__(self, *, project_name):
         super().__init__()
         self.project_cache_root = os.path.join(
-            self.cache_root, project_name)
+            self.cache_root, 'projects', project_name)
+
+
+class SnapcraftStagePackageCache(SnapcraftCache):
+    """Cache specific to stage-packages."""
+    def __init__(self):
+        super().__init__()
+        self.stage_package_cache_root = os.path.join(
+            self.cache_root, 'stage-packages')

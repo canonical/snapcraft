@@ -695,6 +695,31 @@ class UploadTestCase(tests.TestCase):
             errors.StoreReviewError,
             tracker.raise_for_code)
 
+    def test_upload_duplicate_snap(self):
+        self.client.login('dummy', 'test correct password')
+        tracker = self.client.upload('test-duplicate-snap', self.snap_path)
+        self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
+        result = tracker.track()
+        expected_result = {
+            'code': 'processing_error',
+            'revision': '1',
+            'url': '/dev/click-apps/5349/rev/1',
+            'can_release': False,
+            'processed': True,
+            'errors': [
+                {'message': 'Duplicate snap already uploaded'},
+            ]
+        }
+        self.assertEqual(expected_result, result)
+
+        raised = self.assertRaises(
+            errors.StoreReviewError,
+            tracker.raise_for_code)
+
+        self.assertEqual(
+            'The store was unable to accept this snap.\n'
+            '  - Duplicate snap already uploaded', str(raised))
+
     def test_push_unregistered_snap(self):
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(

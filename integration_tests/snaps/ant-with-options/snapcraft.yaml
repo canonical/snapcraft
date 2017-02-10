@@ -1,0 +1,16 @@
+name: ant-with-options
+version: 0
+summary: test ant builds
+description: |
+ Test ant builds and options.
+confinement: strict
+grade: stable
+
+parts:
+  ant-with-options:
+    plugin: ant
+    source: my-app
+    ant-properties:
+      dist.dir: 'target'
+    ant-build-targets:
+      - artifacts
