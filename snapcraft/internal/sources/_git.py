@@ -24,7 +24,8 @@ from ._base import Base
 class Git(Base):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None, source_checksum=None):
+                 source_branch=None, source_depth=None, silent=False,
+                 source_checksum=None):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth, source_checksum, 'git')
         if source_tag and source_branch:
