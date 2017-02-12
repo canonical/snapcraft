@@ -5,8 +5,6 @@ description: |
     Valid source checksums that snapcraft should accept.
 confinement: strict
 
-build-packages: [gcc, libc6-dev]
-
 parts:
   checksum-md5:
     plugin: dump

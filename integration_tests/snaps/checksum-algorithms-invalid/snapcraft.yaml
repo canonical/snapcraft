@@ -6,8 +6,6 @@ description: |
     check and then raise an exception.
 confinement: strict
 
-build-packages: [gcc, libc6-dev]
-
 parts:
   checksum-md5:
     plugin: dump
