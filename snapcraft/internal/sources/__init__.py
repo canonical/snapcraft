@@ -37,7 +37,8 @@ code for that part, and how to unpack it if necessary.
 
     Snapcraft will use the digest specified to verify the integrity of the
     source. The source-type needs to be a file (tar, zip, deb or rpm) and
-    the algorithm either md5, sha1, sha224, sha256, sha384 or sha512.
+    the algorithm either md5, sha1, sha224, sha256, sha384, sha512, sha3_256,
+    sha3_384 or sha3_512.
 
   - source-depth: <integer>
 
@@ -79,6 +80,7 @@ import os
 import os.path
 import re
 import hashlib
+import sys
 
 from snapcraft.internal import common
 from ._bazaar import Bazaar          # noqa
@@ -92,6 +94,10 @@ from ._subversion import Subversion  # noqa
 from ._tar import Tar                # noqa
 from ._zip import Zip                # noqa
 from . import errors
+
+if sys.version_info < (3, 6):
+    import sha3  # noqa
+
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
@@ -191,8 +197,9 @@ def verify_checksum(source_checksum, checkfile):
                          .format(source_checksum))
 
     with open(checkfile, 'rb') as f:
-        # This will raise a ValueError if algorithm is unsupported
-        calculated_digest = hashlib.new(algorithm, f.read())
+        # This will raise an AttributeError if algorithm is unsupported
+        hashlib_algorithm = getattr(hashlib, algorithm)
+        calculated_digest = hashlib_algorithm(f.read())
 
     calculated_digest = calculated_digest.hexdigest()
     if digest != calculated_digest:

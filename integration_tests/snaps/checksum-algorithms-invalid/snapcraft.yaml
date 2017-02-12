@@ -33,3 +33,15 @@ parts:
     plugin: dump
     source: checksum.tar.gz
     source-checksum: sha512/b40dd8099c3dd299b889d1981fb1e87dd058134cf38146615648753dffb7bead6eac0e9bacb53c553873406eae702632e432e70383b2a345ddc5768f6c7007e5
+  checksum-sha3-256:
+    plugin: dump
+    source: checksum.tar.gz
+    source-checksum: sha3_256/7e0777196597af4d8d7a8a561bca3212953ff63a3de59aba6ec4580abaea871a
+  checksum-sha3-384:
+    plugin: dump
+    source: checksum.tar.gz
+    source-checksum: sha3_384/f61220214092d345a9908c45d76f0031060e28b6cd808b3ea7b289d9b852eaa0842d3433615448dd09c92b09f1da343b
+  checksum-sha3-512:
+    plugin: dump
+    source: checksum.tar.gz
+    source-checksum: sha3_512/7c49d8eb5a9738474debccef5491cd34db6b61383a887387065010677c8ce9bb14479e556c561269398c86bf20f24afdd5d6f7d04009ac05d38b605c0cfc2682

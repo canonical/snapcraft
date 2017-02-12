@@ -186,6 +186,7 @@ class TestGit(SourceTestCase):
             "can't specify a source-checksum for a git source")
         self.assertEqual(raised.message, expected_message)
 
+
 class TestGitConflicts(tests.TestCase):
     """Test that git pull errors don't kill the parser"""
 

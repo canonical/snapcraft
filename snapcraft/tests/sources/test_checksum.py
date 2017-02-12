@@ -14,13 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from snapcraft import tests
+from snapcraft.internal import sources
+
 import os
 import hashlib
 import zipfile
+import sys
 
-from snapcraft.internal import sources
-
-from snapcraft import tests
+if sys.version_info < (3, 6):
+    import sha3  # noqa
 
 
 class TestChecksum(tests.TestCase):
@@ -37,7 +40,7 @@ class TestChecksum(tests.TestCase):
         zip_file.write(file_to_zip)
         zip_file.close()
 
-        self.assertRaises(ValueError, sources.verify_checksum, '456/abcde',
+        self.assertRaises(AttributeError, sources.verify_checksum, '456/abcde',
                           'src/test.zip')
 
     def test_correct_checksum(self):

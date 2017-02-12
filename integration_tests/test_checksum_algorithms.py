@@ -14,10 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import subprocess
-
-from snapcraft.internal import sources
 
 import integration_tests
 
@@ -53,4 +50,16 @@ class ChecksumAlgorithmsTestCase(integration_tests.TestCase):
         self.assertRaises(subprocess.CalledProcessError,
                           self.run_snapcraft,
                           ['pull', 'checksum-sha512'],
+                          project_dir)
+        self.assertRaises(subprocess.CalledProcessError,
+                          self.run_snapcraft,
+                          ['pull', 'checksum-sha3-256'],
+                          project_dir)
+        self.assertRaises(subprocess.CalledProcessError,
+                          self.run_snapcraft,
+                          ['pull', 'checksum-sha3-384'],
+                          project_dir)
+        self.assertRaises(subprocess.CalledProcessError,
+                          self.run_snapcraft,
+                          ['pull', 'checksum-sha3-512'],
                           project_dir)
