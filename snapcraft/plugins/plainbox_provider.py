@@ -43,14 +43,24 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
-        self.run(["python3", "manage.py", "build"])
-        self.run(["python3", "manage.py", "i18n"])
+
+        self.run(['python3', 'manage.py', 'build'])
+        self.run(['python3', 'manage.py', 'i18n'])
         self.run([
-            "python3", "manage.py", "install", "--layout=relocatable",
-            "--prefix=/providers/{}".format(self.name),
-            "--root={}".format(self.installdir)])
+            'python3', 'manage.py', 'install', '--layout=relocatable',
+            '--prefix=/providers/{}'.format(self.name),
+            '--root={}'.format(self.installdir)])
 
         # Fix all shebangs to use the in-snap python.
         file_utils.replace_in_file(self.installdir, re.compile(r''),
                                    re.compile(r'^#!.*python'),
                                    r'#!/usr/bin/env python')
+
+    def snap_fileset(self):
+        fileset = super().snap_fileset()
+        # If a python package is added as a stage-packages it will include
+        # sitecustomize.py which is irrelevant and will cause unnecessary
+        # conflicts so instead we just ignore these entries.
+        fileset.append('-usr/lib/python*/sitecustomize.py')
+        fileset.append('-etc/python*/sitecustomize.py')
+        return fileset
