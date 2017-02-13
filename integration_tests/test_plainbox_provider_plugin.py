@@ -28,7 +28,7 @@ class PlainboxProviderPluginTestCase(testscenarios.WithScenarios,
     scenarios = [
         ('basic', dict(project_directory='plainbox-provider')),
         ('with-stage-packages',
-         dict(project_directory='plainbox-provider-with-stage-oackages')),
+         dict(project_directory='plainbox-provider-with-stage-packages')),
     ]
 
     def test_stage(self):
