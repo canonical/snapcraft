@@ -368,6 +368,10 @@ class PythonPlugin(snapcraft.BasePlugin):
         # conflict.
         fileset.append('-**/__pycache__')
         fileset.append('-**/*.pyc')
+        # The RECORD files include hashes useful when uninstalling packages.
+        # In the snap they will cause conflicts when more than one part uses
+        # the python plugin.
+        fileset.append('-lib/python*/site-packages/*/RECORD')
         return fileset
 
 
