@@ -44,6 +44,7 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
+
         env = os.environ.copy()
         provider_stage_dir = os.path.join(self.project.stage_dir, 'providers')
         if os.path.exists(provider_stage_dir):
@@ -62,3 +63,12 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
         file_utils.replace_in_file(self.installdir, re.compile(r''),
                                    re.compile(r'^#!.*python'),
                                    r'#!/usr/bin/env python')
+
+    def snap_fileset(self):
+        fileset = super().snap_fileset()
+        # If a python package is added as a stage-packages it will include
+        # sitecustomize.py which is irrelevant and will cause unnecessary
+        # conflicts so instead we just ignore these entries.
+        fileset.append('-usr/lib/python*/sitecustomize.py')
+        fileset.append('-etc/python*/sitecustomize.py')
+        return fileset

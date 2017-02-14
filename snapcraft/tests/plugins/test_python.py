@@ -305,6 +305,7 @@ class PythonPluginTestCase(tests.TestCase):
             '-bin/wheel',
             '-**/__pycache__',
             '-**/*.pyc',
+            '-lib/python*/site-packages/*/RECORD'
         ]
         fileset = plugin.snap_fileset()
         self.assertListEqual(expected_fileset, fileset)
