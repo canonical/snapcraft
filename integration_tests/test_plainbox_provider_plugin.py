@@ -16,15 +16,23 @@
 
 import os
 
+import testscenarios
 from testtools.matchers import FileExists
 
 import integration_tests
 
 
-class PlainboxProviderPluginTestCase(integration_tests.TestCase):
+class PlainboxProviderPluginTestCase(testscenarios.WithScenarios,
+                                     integration_tests.TestCase):
 
-    def test_snap_simple_provider(self):
-        self.run_snapcraft('stage', 'plainbox-provider')
+    scenarios = [
+        ('basic', dict(project_directory='plainbox-provider')),
+        ('with-stage-packages',
+         dict(project_directory='plainbox-provider-with-stage-packages')),
+    ]
+
+    def test_stage(self):
+        self.run_snapcraft('stage', self.project_directory)
 
         self.assertThat(
             os.path.join(

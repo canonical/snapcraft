@@ -165,3 +165,8 @@ class PythonPluginTestCase(integration_tests.TestCase):
                 self.parts_dir, 'root', 'install',
                 'lib', 'python3*', 'site-packages', 'etc', 'broken.txt'))[0],
             FileExists())
+
+    def test_stage_with_two_python_parts(self):
+        # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1663739
+        self.run_snapcraft('stage', 'python-with-two-parts')
+        # If there is a conflict, stage will raise an exception.
