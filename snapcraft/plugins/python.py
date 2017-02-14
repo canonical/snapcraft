@@ -331,6 +331,11 @@ class PythonPlugin(snapcraft.BasePlugin):
         site_dir = self._get_user_site_dir()
         sitecustomize_path = self._get_sitecustomize_path()
 
+        # python from the archives has a sitecustomize symlinking to /etc which
+        # is distro specific and not needed for a snap.
+        if os.path.islink(sitecustomize_path):
+            os.unlink(sitecustomize_path)
+
         # Now create our sitecustomize
         os.makedirs(os.path.dirname(sitecustomize_path), exist_ok=True)
         with open(sitecustomize_path, 'w') as f:
