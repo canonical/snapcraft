@@ -1,3 +1,60 @@
+snapcraft (2.27) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * core: switch to using rpath for clasic confinement. (#1094)
+  * python plugin: do the right thing with classic. (#1093)
+  * meta: support for the environment keyword. (#1103)
+  * meta: correct the deprecation for `setup/gui` use. (#1107)
+  * tests: avoid snapping progress to leak into report. (#1114)
+  * core: setup core to support classic confinement. (#1112)
+  * cleanbuild: allow talking to a remote. (#1121)
+  * plainbox-provider plugin: filter out sitecustomize. (#1139)
+  * New upstream release 2.27 (LP: #1663229)
+
+  [ Kyle Fazzari ]
+  * schema,copy plugin: better errors when item has no value. (#1096)
+  * cleanbuild: include snap directory in tarball. (#1102)
+  * repo: remove symlinks to libc. (#1100)
+  * catkin plugin: don't pass args to setup.sh. (#1099)
+  * pluginhandler: support more complex stage-packages. (#1059)
+  * repo: cache stage packages for faster future use. (#1122)
+
+  [ Leo Arias ]
+  * tests: do not rely on project_dir. (#1078)
+  * lifecycle: print the command needed to clean the dirty part (#1097)
+  * tests: check the CLA on all the commits. (#1106)
+  * tests: rename the integration test snaps. (#1105)
+  * misc: consistently use a dash for copyright years. (#1101)
+  * tests: rename the waf test snap. (#1111)
+  * ci: fix the env vars passed to the docker container in travis. (#1125)
+  * python plugin: exclude the RECORD files. (#1138)
+
+  [ Marco Trevisan ]
+  * meta: properly get the icon extension from splitted name. (#1092)
+  * tests: fix or ignore PEP8 static errors. (#1085)
+
+  [ John Lenton ]
+  * ux: print the version on startup when running with --debug (#1086)
+
+  [ Dan Chapman ]
+  * qbs plugin: add plugin support for the Qt Build Suite (qbs). (#1079)
+
+  [ Bayard Randel ]
+  * store: implement delta uploads in push. (#940)
+
+  [ Joe Talbott ]
+  * store: expose store errors to the cli. (#1110)
+  * Make git pulls less error prone due to history changes. (#1052)
+  * store: add support for tracks in channels. (#1108)
+
+  [ MZN Lab ]
+  * meta: allow `post-stop-command` for an app entry in `apps`. (#1109)
+
+  [ Loïc Minier ]
+  * kernel plugin: fix kernel snap layout (#1115)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 09 Feb 2017 12:55:44 +0000
+
 snapcraft (2.26) xenial; urgency=medium
 
   [ Sergio Schvezov ]
