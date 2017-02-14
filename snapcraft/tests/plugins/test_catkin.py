@@ -666,7 +666,59 @@ class CatkinPluginTestCase(tests.TestCase):
         for file_info in files:
             path = os.path.join(plugin.rosdir, file_info['path'])
             with open(path, 'r') as f:
-                self.assertEqual(f.read(), file_info['expected'])
+                self.assertThat(f.read(), Equals(file_info['expected']))
+
+    @mock.patch.object(catkin.CatkinPlugin, '_use_in_snap_python')
+    def test_finish_build_cmake_paths(self, use_in_snap_python_mock):
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.rosdir, 'test'))
+
+        # Place a few .cmake files with incorrect paths, and some files that
+        # shouldn't be changed.
+        files = [
+            {
+                'path': 'fooConfig.cmake',
+                'contents': '"{}/usr/lib/foo"'.format(plugin.installdir),
+                'expected': '"$ENV{SNAPCRAFT_STAGE}/usr/lib/foo"',
+            },
+            {
+                'path': 'bar.cmake',
+                'contents': '"/usr/lib/bar"',
+                'expected': '"/usr/lib/bar"',
+            },
+            {
+                'path': 'test/bazConfig.cmake',
+                'contents': '"{0}/test/baz;{0}/usr/lib/baz"'.format(
+                    plugin.installdir),
+                'expected': '"$ENV{SNAPCRAFT_STAGE}/test/baz;'
+                            '$ENV{SNAPCRAFT_STAGE}/usr/lib/baz"',
+            },
+            {
+                'path': 'test/quxConfig.cmake',
+                'contents': 'qux',
+                'expected': 'qux',
+            },
+            {
+                'path': 'test/installedConfig.cmake',
+                'contents': '"$ENV{SNAPCRAFT_STAGE}/foo"',
+                'expected': '"$ENV{SNAPCRAFT_STAGE}/foo"',
+            }
+        ]
+
+        for file_info in files:
+            path = os.path.join(plugin.rosdir, file_info['path'])
+            with open(path, 'w') as f:
+                f.write(file_info['contents'])
+
+        plugin._finish_build()
+
+        self.assertTrue(use_in_snap_python_mock.called)
+
+        for file_info in files:
+            path = os.path.join(plugin.rosdir, file_info['path'])
+            with open(path, 'r') as f:
+                self.assertThat(f.read(), Equals(file_info['expected']))
 
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
