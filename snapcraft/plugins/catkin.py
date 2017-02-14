@@ -350,6 +350,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         # the install directory.
         def _new_path(path):
             if not path.startswith(self.installdir):
+                # Not using os.path.join here as `path` is absolute.
                 return self.installdir + path
             return path
 
