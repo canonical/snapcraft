@@ -43,11 +43,13 @@ def _schema_properties():
 class PullState(State):
     yaml_tag = u'!PullState'
 
-    def __init__(self, property_names, part_properties=None, project=None):
+    def __init__(self, property_names, part_properties=None, project=None,
+                 pkg_list=None):
         # Save this off before calling super() since we'll need it
         # FIXME: for 3.x the name `schema_properties` is leaking
         #        implementation details from a higher layer.
         self.schema_properties = property_names
+        self.pkg_list = pkg_list
 
         super().__init__(part_properties, project)
 

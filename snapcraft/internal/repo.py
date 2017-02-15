@@ -269,8 +269,11 @@ class Ubuntu:
             return package_name in apt_cache
 
     def get(self, package_names):
+        pkg_list = []
         with self._apt.archive(self._cache.base_dir) as apt_cache:
-            self._get(apt_cache, package_names)
+            pkg_list = self._get(apt_cache, package_names)
+
+        return pkg_list
 
     def _get(self, apt_cache, package_names):
         manifest_dep_names = self._manifest_dep_names(apt_cache)
@@ -326,7 +329,9 @@ class Ubuntu:
         # Downloading each package individually has the drawback of witholding
         # any clue of how long the whole pulling process will take, but that's
         # something we'll have to live with.
+        pkg_list = []
         for package in apt_cache.get_changes():
+            pkg_list.append(str(package.candidate))
             source = package.candidate.fetch_binary(
                 self._cache.packages_dir, progress=self._apt.progress)
             destination = os.path.join(
@@ -334,6 +339,8 @@ class Ubuntu:
             with contextlib.suppress(FileNotFoundError):
                 os.remove(destination)
             file_utils.link_or_copy(source, destination)
+
+        return pkg_list
 
     def unpack(self, rootdir):
         pkgs_abs_path = glob.glob(os.path.join(self._downloaddir, '*.deb'))
