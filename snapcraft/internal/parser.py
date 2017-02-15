@@ -51,9 +51,12 @@ from docopt import docopt
 from collections import OrderedDict
 
 import snapcraft
-from snapcraft.internal import log, repo, sources
+from snapcraft.internal import log, project_loader, repo, sources
 from snapcraft.internal.errors import SnapcraftError, InvalidWikiEntryError
-from snapcraft.internal.project_loader import replace_attr
+from snapcraft.internal.project_loader import (
+    replace_attr,
+    SnapcraftYamlFileError,
+)
 
 
 class BadSnapcraftYAMLError(Exception):
@@ -96,23 +99,8 @@ def main(argv=None):
 
 def _get_origin_data(origin_dir):
     origin_data = {}
-    snapcraft_yaml_file = os.path.join(origin_dir, 'snapcraft.yaml')
-    hidden_snapcraft_yaml_file = os.path.join(origin_dir, '.snapcraft.yaml')
 
-    # read either 'snapcraft.yaml' or '.snapcraft.yaml' but not both
-    if not os.path.exists(snapcraft_yaml_file) and not os.path.exists(
-            hidden_snapcraft_yaml_file):
-        raise MissingSnapcraftYAMLError()
-
-    if os.path.exists(snapcraft_yaml_file):
-        if os.path.exists(hidden_snapcraft_yaml_file):
-            raise BadSnapcraftYAMLError(
-                'Origin has both "snapcraft.yaml" and ".snapcraft.yaml"')
-        else:
-            yaml_file = snapcraft_yaml_file
-    elif os.path.exists(hidden_snapcraft_yaml_file):
-        yaml_file = hidden_snapcraft_yaml_file
-
+    yaml_file = project_loader.get_snapcraft_yaml(base_dir=origin_dir)
     try:
         with open(yaml_file) as fp:
             origin_data = yaml.load(fp)
@@ -282,7 +270,7 @@ def _try_process_entry(
         _process_wiki_entry(
             entry, master_parts_list, missing_parts,
             pending_validation_entries)
-    except SnapcraftError as e:
+    except (SnapcraftError, SnapcraftYamlFileError) as e:
         logger.warning(e)
         wiki_errors += 1
 
