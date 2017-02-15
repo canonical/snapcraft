@@ -45,6 +45,7 @@ class PullPropertiesTestCase(integration_tests.TestCase):
 
         # Verify that the contents of the dependencies made it in as well.
         self.assertTrue('foo' in state.properties)
+        self.assertTrue(len(state.pkg_list) > 0)
         self.assertTrue('stage-packages' in state.properties)
         self.assertEqual('bar', state.properties['foo'])
         self.assertEqual(['curl'], state.properties['stage-packages'])
