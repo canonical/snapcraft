@@ -259,27 +259,29 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         # __init__ as the underlay will probably only be valid once a
         # dependency has been staged.
         catkin = None
-        underlay = None
+        underlay_build_path = None
         if self.options.underlay:
-            underlay = self.options.underlay['build-path']
-        if underlay:
-            if not os.path.isdir(underlay):
+            underlay_build_path = self.options.underlay['build-path']
+        if underlay_build_path:
+            if not os.path.isdir(underlay_build_path):
                 raise errors.SnapcraftEnvironmentError(
                     'Requested underlay ({!r}) does not point to a valid '
-                    'directory'.format(underlay))
+                    'directory'.format(underlay_build_path))
 
-            if not os.path.isfile(os.path.join(underlay, 'setup.sh')):
+            if not os.path.isfile(os.path.join(underlay_build_path,
+                                               'setup.sh')):
                 raise errors.SnapcraftEnvironmentError(
                     'Requested underlay ({!r}) does not contain a '
-                    'setup.sh'.format(underlay))
+                    'setup.sh'.format(underlay_build_path))
 
             # Use catkin_find to discover dependencies already in the underlay
             catkin = _Catkin(
-                self.options.rosdistro, underlay, self._catkin_path,
+                self.options.rosdistro, underlay_build_path, self._catkin_path,
                 self.PLUGIN_STAGE_SOURCES, self.project)
             catkin.setup()
 
-            self._generate_snapcraft_setup_sh(self.installdir, underlay)
+            self._generate_snapcraft_setup_sh(
+                self.installdir, underlay_build_path)
 
         # Pull our own compilers so we use ones that match up with the version
         # of ROS we're using.
@@ -503,8 +505,8 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
                 f.write(replaced)
 
         if self.options.underlay:
-            underlay = self.options.underlay['run-path']
-            self._generate_snapcraft_setup_sh('$SNAP', underlay)
+            underlay_run_path = self.options.underlay['run-path']
+            self._generate_snapcraft_setup_sh('$SNAP', underlay_run_path)
 
     def _use_in_snap_python(self):
         # Fix all shebangs to use the in-snap python.
