@@ -52,7 +52,11 @@ from collections import OrderedDict
 
 import snapcraft
 from snapcraft.internal import log, project_loader, repo, sources
-from snapcraft.internal.errors import SnapcraftError, InvalidWikiEntryError
+from snapcraft.internal.errors import (
+    SnapcraftError,
+    InvalidWikiEntryError,
+    SnapcraftEnvironmentError,
+)
 from snapcraft.internal.project_loader import (
     replace_attr,
     SnapcraftYamlFileError,
@@ -270,7 +274,8 @@ def _try_process_entry(
         _process_wiki_entry(
             entry, master_parts_list, missing_parts,
             pending_validation_entries)
-    except (SnapcraftError, SnapcraftYamlFileError) as e:
+    except (SnapcraftError, SnapcraftYamlFileError,
+            SnapcraftEnvironmentError) as e:
         logger.warning(e)
         wiki_errors += 1
 
