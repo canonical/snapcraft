@@ -581,8 +581,8 @@ def _tabulated_channel_map_tree(track, series, arch, channel_map):
             _get_text_for_channel(channel)
             for (printable_arch, printable_track,
                  printable_series, channel) in zip(
-                [arch] + [''] * len(channel_map),
                 [track] + [''] * len(channel_map),
+                [arch] + [''] * len(channel_map),
                 [series] + [''] * len(channel_map),
                 channel_map
             )
@@ -594,7 +594,7 @@ def _tabulated_channel_map_tree(track, series, arch, channel_map):
     ]
     return tabulate(
         parsed_channels, numalign='left',
-        headers=['Arch', 'Track', 'Series', 'Channel', 'Version', 'Revision'],
+        headers=['Track', 'Arch', 'Series', 'Channel', 'Version', 'Revision'],
         tablefmt='plain'
     )
 
