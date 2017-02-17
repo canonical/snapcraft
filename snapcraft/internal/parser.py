@@ -57,10 +57,6 @@ from snapcraft.internal.errors import (
     InvalidWikiEntryError,
     SnapcraftEnvironmentError,
 )
-from snapcraft.internal.project_loader import (
-    replace_attr,
-    SnapcraftYamlFileError,
-)
 
 
 class BadSnapcraftYAMLError(Exception):
@@ -147,7 +143,7 @@ def _process_entry_parts(entry_parts, parts, origin, maintainer, description,
             ('$SNAPCRAFT_PROJECT_VERSION', origin_version),
         ]
 
-        source_part = replace_attr(source_part, replacements)
+        source_part = project_loader.replace_attr(source_part, replacements)
 
         if source_part:
             source_part = _update_source(source_part, origin)
@@ -274,7 +270,7 @@ def _try_process_entry(
         _process_wiki_entry(
             entry, master_parts_list, missing_parts,
             pending_validation_entries)
-    except (SnapcraftError, SnapcraftYamlFileError,
+    except (SnapcraftError, project_loader.SnapcraftYamlFileError,
             SnapcraftEnvironmentError) as e:
         logger.warning(e)
         wiki_errors += 1
