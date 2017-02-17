@@ -1,3 +1,20 @@
+snapcraft (2.27.1) xenial; urgency=medium
+
+  [ Kyle Fazzari ]
+  * catkin plugin: produce build-ready staging area. (#1130)
+
+  [ Leo Arias ]
+  * ci: trigger beta tests on travis every day. (#1144)
+
+  [ Joe Talbott ]
+  * store: switch Track and Arch in the channel map display. (#1143)
+
+  [ Sergio Schvezov ]
+  * Revert "repo: remove symlinks to libc. (#1100)" (#1146)
+  * New upstream release 2.27.1 (LP: #1665759)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 17 Feb 2017 19:58:48 +0000
+
 snapcraft (2.27) xenial; urgency=medium
 
   [ Sergio Schvezov ]
