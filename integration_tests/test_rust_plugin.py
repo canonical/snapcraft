@@ -24,11 +24,14 @@ import integration_tests
 
 class RustPluginTestCase(integration_tests.TestCase):
 
-    def setUp(self):
-        super().setUp()
+    def run_snapcraft(self, command, project_dir=None, debug=True):
         if snapcraft.ProjectOptions().deb_arch == 'armh64':
             # https://github.com/rust-lang/rustup.sh/issues/82
-            self.skipTest('The rustup does not support arm64')
+            self.expectFailure(
+                'The rustup script does not support arm64.',
+                super().run_snapcraft, command, project_dir, debug)
+
+        super().run_snapcraft(command, project_dir, debug)
 
     def test_stage_rust_plugin(self):
         self.run_snapcraft('stage', 'rust-hello')

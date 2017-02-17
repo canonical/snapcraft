@@ -33,8 +33,10 @@ class ROSTestCase(snaps_tests.SnapsTestCase):
     def test_ros(self):
         if snapcraft.ProjectOptions().deb_arch == 'arm64':
             # https://bugs.launchpad.net/snapcraft/+bug/1662915
-            self.skipTest(
-                'There are no ros-indigo packages in the ros archive')
+            self.expectFailure(
+                'There are no ros-indigo packages in the ros archive',
+                self.build_snap, self.snap_content_dir, timeout=1800)
+
         snap_path = self.build_snap(self.snap_content_dir, timeout=1800)
         self.install_snap(snap_path, 'ros-example', '1.0')
         # check that the hardcoded /usr/bin/python in rosversion
