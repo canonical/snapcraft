@@ -72,8 +72,8 @@ class ReleaseCommandTestCase(tests.TestCase):
         mock_release.assert_called_once_with('nil-snap', '19', ['beta'])
 
         self.assertEqual([
-            'Arch    Track    Series    Channel    Version    Revision',
-            'amd64   latest   16        stable     -          -',
+            'Track    Arch    Series    Channel    Version    Revision',
+            'latest   amd64   16        stable     -          -',
             '                           candidate  -          -',
             '                           beta       0          19',
             '                           edge       ^          ^',
@@ -110,8 +110,8 @@ class ReleaseCommandTestCase(tests.TestCase):
         mock_release.assert_called_once_with('nil-snap', '19', ['2.1/beta'])
 
         self.assertEqual([
-            'Arch    Track    Series    Channel    Version    Revision',
-            'amd64   2.1      16        stable     -          -',
+            'Track    Arch    Series    Channel    Version    Revision',
+            '2.1      amd64   16        stable     -          -',
             '                           candidate  -          -',
             '                           beta       0          19',
             '                           edge       ^          ^',
@@ -148,8 +148,8 @@ class ReleaseCommandTestCase(tests.TestCase):
         mock_release.assert_called_once_with('nil-snap', '19', ['beta'])
 
         self.assertEqual([
-            'Arch    Track    Series    Channel    Version    Revision',
-            'amd64   latest   16        stable     -          -',
+            'Track    Arch    Series    Channel    Version    Revision',
+            'latest   amd64   16        stable     -          -',
             '                           candidate  -          -',
             '                           beta       0          19',
             '                           edge       ^          ^',
