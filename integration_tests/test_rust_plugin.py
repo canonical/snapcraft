@@ -25,7 +25,7 @@ import integration_tests
 class RustPluginTestCase(integration_tests.TestCase):
 
     def run_snapcraft(self, command, project_dir=None, debug=True):
-        if snapcraft.ProjectOptions().deb_arch == 'armh64':
+        if snapcraft.ProjectOptions().deb_arch == 'arm64':
             # https://github.com/rust-lang/rustup.sh/issues/82
             self.expectFailure(
                 'The rustup script does not support arm64.',
