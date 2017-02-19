@@ -1,0 +1,32 @@
+
+unit: category
+id: simple
+_name: Simple
+
+unit: job
+id: always-pass
+category_id: simple
+_summary: A test that always passes
+_description:
+   A test that always passes
+   .
+   This simple test will always succeed, assuming your
+   platform has a 'true' command that returns 0.
+plugin: shell
+estimated_duration: 0.01
+command: true
+flags: preserve-locale
+
+unit: job
+id: always-fail
+category_id: simple
+_summary: A test that always fails
+_description:
+   A test that always fails
+   .
+   This simple test will always fail, assuming your
+   platform has a 'false' command that returns 1.
+plugin: shell
+estimated_duration: 0.01
+command: false
+flags: preserve-locale
