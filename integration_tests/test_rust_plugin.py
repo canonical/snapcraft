@@ -25,6 +25,7 @@ import integration_tests
 class RustPluginTestCase(integration_tests.TestCase):
 
     def run_snapcraft(self, command, project_dir=None, debug=True):
+        print(snapcraft.ProjectOptions().deb_arch)
         if snapcraft.ProjectOptions().deb_arch == 'arm64':
             # https://github.com/rust-lang/rustup.sh/issues/82
             self.expectFailure(
