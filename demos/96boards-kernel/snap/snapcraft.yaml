@@ -14,7 +14,14 @@ parts:
     kconfigs:
       - CONFIG_LOCALVERSION="-96boards"
       - CONFIG_DEBUG_INFO=n
+      - CONFIG_EXT4_FS=y
+      - CONFIG_BLK_DEV_LOOP=y
+      - CONFIG_BLK_DEV_LOOP_MIN_COUNT=256
       - CONFIG_SQUASHFS=m
+      - CONFIG_MMC_SDHCI=y
+      - CONFIG_MMC_SDHCI_PLTFM=y
+      - CONFIG_MMC_SDHCI_MSM=y
+      - CONFIG_PINCTRL_MSM8916=y
     kernel-initrd-modules:
       - squashfs
     kernel-initrd-firmware:
@@ -29,4 +36,4 @@ parts:
   410c-firmware:
     plugin: tar-content
     source: firmware.tar # from developer.qualcomm.com v1.2
-    destination: lib/firmware
+    destination: firmware
