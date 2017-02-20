@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -316,6 +316,9 @@ class PartsConfig:
         for dep_part in part.deps:
             env += dep_part.env(stagedir)
             env += self.build_env_for_part(dep_part, root_part=False)
+
+        env.append('PARALLEL_BUILD_COUNT={}'.format(
+                   self._project_options.parallel_build_count))
 
         return env
 
