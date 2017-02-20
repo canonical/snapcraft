@@ -72,11 +72,11 @@ class ReleaseCommandTestCase(tests.TestCase):
         mock_release.assert_called_once_with('nil-snap', '19', ['beta'])
 
         self.assertEqual([
-            'Track    Arch    Series    Channel    Version    Revision',
-            'latest   amd64   16        stable     -          -',
-            '                           candidate  -          -',
-            '                           beta       0          19',
-            '                           edge       ^          ^',
+            'Track    Arch    Channel    Version    Revision',
+            'latest   amd64   stable     -          -',
+            '                 candidate  -          -',
+            '                 beta       0          19',
+            '                 edge       ^          ^',
             "\x1b[0;32mThe 'beta' channel is now open.\x1b[0m",
         ], fake_terminal.getvalue().splitlines())
 
@@ -110,11 +110,11 @@ class ReleaseCommandTestCase(tests.TestCase):
         mock_release.assert_called_once_with('nil-snap', '19', ['2.1/beta'])
 
         self.assertEqual([
-            'Track    Arch    Series    Channel    Version    Revision',
-            '2.1      amd64   16        stable     -          -',
-            '                           candidate  -          -',
-            '                           beta       0          19',
-            '                           edge       ^          ^',
+            'Track    Arch    Channel    Version    Revision',
+            '2.1      amd64   stable     -          -',
+            '                 candidate  -          -',
+            '                 beta       0          19',
+            '                 edge       ^          ^',
             "\x1b[0;32mThe '2.1/beta' channel is now open.\x1b[0m",
         ], fake_terminal.getvalue().splitlines())
 
@@ -148,11 +148,11 @@ class ReleaseCommandTestCase(tests.TestCase):
         mock_release.assert_called_once_with('nil-snap', '19', ['beta'])
 
         self.assertEqual([
-            'Track    Arch    Series    Channel    Version    Revision',
-            'latest   amd64   16        stable     -          -',
-            '                           candidate  -          -',
-            '                           beta       0          19',
-            '                           edge       ^          ^',
+            'Track    Arch    Channel    Version    Revision',
+            'latest   amd64   stable     -          -',
+            '                 candidate  -          -',
+            '                 beta       0          19',
+            '                 edge       ^          ^',
             "\x1b[0;32mThe 'stable', 'beta' and 'edge' channels "
             "are now open.\x1b[0m",
         ], fake_terminal.getvalue().splitlines())

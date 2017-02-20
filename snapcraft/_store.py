@@ -577,13 +577,11 @@ def _tabulated_channel_map_tree(track, series, arch, channel_map):
     """Tabulate channel map (LTS Channel channel-maps)"""
     def _format_tree(channel_map, track, series):
         return [
-            (printable_arch, printable_track, printable_series) +
+            (printable_arch, printable_track) +
             _get_text_for_channel(channel)
-            for (printable_arch, printable_track,
-                 printable_series, channel) in zip(
+            for (printable_arch, printable_track, channel) in zip(
                 [track] + [''] * len(channel_map),
                 [arch] + [''] * len(channel_map),
-                [series] + [''] * len(channel_map),
                 channel_map
             )
         ]
@@ -594,7 +592,7 @@ def _tabulated_channel_map_tree(track, series, arch, channel_map):
     ]
     return tabulate(
         parsed_channels, numalign='left',
-        headers=['Track', 'Arch', 'Series', 'Channel', 'Version', 'Revision'],
+        headers=['Track', 'Arch', 'Channel', 'Version', 'Revision'],
         tablefmt='plain'
     )
 
