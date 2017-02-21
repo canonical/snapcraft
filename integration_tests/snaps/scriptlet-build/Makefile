@@ -2,7 +2,7 @@
 
 build:
 	touch build-build
-	touch jobs-$(PARALLEL_BUILD_COUNT)
+	touch jobs-$(SNAPCRAFT_PARALLEL_BUILD_COUNT)
 
 move-to-dest:
 	touch $(DESTDIR)/build-install

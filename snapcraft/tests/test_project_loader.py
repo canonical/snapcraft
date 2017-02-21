@@ -1754,7 +1754,7 @@ parts:
         part1 = [part for part in
                  config.parts.all_parts if part.name == 'part1'][0]
         env = config.parts.build_env_for_part(part1)
-        self.assertIn('PARALLEL_BUILD_COUNT=fortytwo', env)
+        self.assertIn('SNAPCRAFT_PARALLEL_BUILD_COUNT=fortytwo', env)
 
 
 class ValidationBaseTestCase(tests.TestCase):
