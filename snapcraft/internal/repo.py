@@ -286,9 +286,9 @@ class Ubuntu:
                 version = None
                 name_arch, version = _get_pkg_name_parts(name)
                 _set_candidate(apt_cache[name_arch], version)
-                apt_cache[name].mark_install()
+                apt_cache[name_arch].mark_install()
             except KeyError:
-                raise PackageNotFoundError(name)
+                raise PackageNotFoundError(name_arch)
 
         skipped_essential = []
         skipped_blacklisted = []
