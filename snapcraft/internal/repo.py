@@ -283,6 +283,9 @@ class Ubuntu:
                 logger.debug(
                     'Marking {!r} (and its dependencies) to be fetched'.format(
                         name))
+                version = None
+                name_arch, version = _get_pkg_name_parts(name)
+                _set_candidate(apt_cache[name_arch], version)
                 apt_cache[name].mark_install()
             except KeyError:
                 raise PackageNotFoundError(name)
@@ -534,3 +537,26 @@ def _try_copy_local(path, target):
 def check_for_command(command):
     if not shutil.which(command):
         raise MissingCommandError([command])
+
+
+def _get_pkg_name_parts(pkg_name):
+    """Break package name into base parts"""
+
+    name = pkg_name
+    version = arch = None
+    if '=' in pkg_name:
+        name, version = pkg_name.split('=')
+        if ':' in name:
+            name, arch = name.split(':')
+
+    if arch:
+        name = '{}:{}'.format(name, arch)
+
+    return name, version
+
+
+def _set_candidate(pkg, version):
+    """Set cadidate version to a specific version if available"""
+    if version and version in pkg.versions:
+        version = pkg.versions.get(version)
+        pkg.candidate = version

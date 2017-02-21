@@ -60,6 +60,21 @@ class UbuntuTestCase(RepoBaseTestCase):
         self.mock_cache.return_value.get_changes.return_value = [
             self.mock_package]
 
+    def test__get_pkg_name_parts_name_only(self):
+        name, version = repo._get_pkg_name_parts('hello')
+        self.assertEqual('hello', name)
+        self.assertEqual(None, version)
+
+    def test__get_pkg_name_parts_all(self):
+        name, version = repo._get_pkg_name_parts('hello:i386=2.10-1')
+        self.assertEqual('hello:i386', name)
+        self.assertEqual('2.10-1', version)
+
+    def test__get_pkg_name_parts_no_arch(self):
+        name, version = repo._get_pkg_name_parts('hello=2.10-1')
+        self.assertEqual('hello', name)
+        self.assertEqual('2.10-1', version)
+
     @patch('snapcraft.repo.apt.apt_pkg')
     def test_get_package(self, mock_apt_pkg):
         project_options = snapcraft.ProjectOptions(
