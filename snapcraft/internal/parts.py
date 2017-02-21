@@ -308,6 +308,8 @@ class PartsConfig:
                 self._project_options.arch_triplet,
                 core_dynamic_linker=core_dynamic_linker)
             env.append('SNAPCRAFT_PART_INSTALL={}'.format(part.installdir))
+            env.append('PARALLEL_BUILD_COUNT={}'.format(
+                       self._project_options.parallel_build_count))
         else:
             env += part.env(stagedir)
             env += project_loader._runtime_env(
@@ -316,9 +318,6 @@ class PartsConfig:
         for dep_part in part.deps:
             env += dep_part.env(stagedir)
             env += self.build_env_for_part(dep_part, root_part=False)
-
-        env.append('PARALLEL_BUILD_COUNT={}'.format(
-                   self._project_options.parallel_build_count))
 
         return env
 
