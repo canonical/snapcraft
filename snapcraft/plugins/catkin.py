@@ -348,32 +348,62 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         # dependencies contain .cmake files pointing to system paths (e.g.
         # /usr/lib, /usr/include, etc.). They need to be rewritten to point to
         # the install directory.
-        def rewrite_paths(match):
+        def _new_path(path):
+            if not path.startswith(self.installdir):
+                # Not using os.path.join here as `path` is absolute.
+                return self.installdir + path
+            return path
+
+        self._rewrite_cmake_paths(_new_path)
+
+    def _rewrite_cmake_paths(self, new_path_callable):
+        def _rewrite_paths(match):
             paths = match.group(1).strip().split(';')
             for i, path in enumerate(paths):
-                # Rewrite this path if it's an absolute path and not already
-                # within the install directory.
-                if (os.path.isabs(path) and
-                        not path.startswith(self.installdir)):
-                    paths[i] = self.installdir + path
+                # Offer the opportunity to rewrite this path if it's absolute.
+                if os.path.isabs(path):
+                    paths[i] = new_path_callable(path)
 
             return '"' + ';'.join(paths) + '"'
 
         # Looking for any path-like string
         file_utils.replace_in_file(self.rosdir, re.compile(r'.*Config.cmake$'),
                                    re.compile(r'"(.*?/.*?)"'),
-                                   rewrite_paths)
+                                   _rewrite_paths)
 
     def _finish_build(self):
         self._use_in_snap_python()
+
+        # We've finished the build, but we need to make sure we turn the cmake
+        # files back into something that doesn't include our installdir. This
+        # way it's usable from the staging area, and won't clash with the same
+        # file coming from other parts.
+        pattern = re.compile(r'^{}'.format(self.installdir))
+
+        def _new_path(path):
+            return pattern.sub('$ENV{SNAPCRAFT_STAGE}', path)
+        self._rewrite_cmake_paths(_new_path)
 
         # Replace the CMAKE_PREFIX_PATH in _setup_util.sh
         setup_util_file = os.path.join(self.rosdir, '_setup_util.py')
         if os.path.isfile(setup_util_file):
             with open(setup_util_file, 'r+') as f:
-                pattern = re.compile(r"CMAKE_PREFIX_PATH = '{}.*".format(
-                    self.rosdir))
+                pattern = re.compile(r"CMAKE_PREFIX_PATH = '.*/opt/ros.*")
                 replaced = pattern.sub('CMAKE_PREFIX_PATH = []', f.read())
+                f.seek(0)
+                f.truncate()
+                f.write(replaced)
+
+        # Set the _CATKIN_SETUP_DIR in setup.sh to a sensible default, removing
+        # our installdir (this way it doesn't clash with a setup.sh coming
+        # from another part).
+        setup_sh_file = os.path.join(self.rosdir, 'setup.sh')
+        if os.path.isfile(setup_sh_file):
+            with open(setup_sh_file, 'r+') as f:
+                pattern = re.compile(r"\${_CATKIN_SETUP_DIR:=.*}")
+                replaced = pattern.sub(
+                    '${{_CATKIN_SETUP_DIR:=$SNAP/opt/ros/{}}}'.format(
+                        self.options.rosdistro), f.read())
                 f.seek(0)
                 f.truncate()
                 f.write(replaced)

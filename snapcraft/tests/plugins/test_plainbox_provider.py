@@ -91,3 +91,14 @@ class PythonPluginTestCase(tests.TestCase):
             with open(os.path.join(plugin.installdir,
                                    file_info['path']), 'r') as f:
                 self.assertEqual(f.read(), file_info['expected'])
+
+    def test_fileset_ignores(self):
+        plugin = plainbox_provider.PlainboxProviderPlugin(
+            'test-part', self.options, self.project_options)
+
+        expected_fileset = [
+            '-usr/lib/python*/sitecustomize.py',
+            '-etc/python*/sitecustomize.py',
+        ]
+        fileset = plugin.snap_fileset()
+        self.assertListEqual(expected_fileset, fileset)

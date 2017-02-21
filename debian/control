@@ -5,6 +5,7 @@ Maintainer: Snapcraft Team <snapcraft@lists.snapcraft.io>
 Build-Depends: bash-completion,
                debhelper (>= 9),
                dh-python,
+               git,
                pkg-config,
                python3 (>= 3.4),
                python3-apt,
