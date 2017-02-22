@@ -1735,6 +1735,27 @@ parts:
                 stage_dir=self.stage_dir,
                 arch_triplet=self.arch_triplet))
 
+    @unittest.mock.patch('snapcraft.ProjectOptions')
+    def test_parts_build_env_contains_parallel_build_count(self, pomock):
+        type(snapcraft.ProjectOptions.return_value).parallel_build_count = \
+            unittest.mock.PropertyMock(return_value='fortytwo')
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+grade: stable
+
+parts:
+  part1:
+    plugin: nil
+""")
+        config = project_loader.Config()
+        part1 = [part for part in
+                 config.parts.all_parts if part.name == 'part1'][0]
+        env = config.parts.build_env_for_part(part1)
+        self.assertIn('SNAPCRAFT_PARALLEL_BUILD_COUNT=fortytwo', env)
+
 
 class ValidationBaseTestCase(tests.TestCase):
 
