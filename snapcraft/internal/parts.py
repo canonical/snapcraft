@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -308,6 +308,8 @@ class PartsConfig:
                 self._project_options.arch_triplet,
                 core_dynamic_linker=core_dynamic_linker)
             env.append('SNAPCRAFT_PART_INSTALL={}'.format(part.installdir))
+            env.append('SNAPCRAFT_PARALLEL_BUILD_COUNT={}'.format(
+                       self._project_options.parallel_build_count))
         else:
             env += part.env(stagedir)
             env += project_loader._runtime_env(
