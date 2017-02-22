@@ -18,3 +18,5 @@ docs/**.html
 Cargo.lock
 target
 *.swp
+.idea/
+venv/
