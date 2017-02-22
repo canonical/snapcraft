@@ -25,53 +25,53 @@ from testtools.matchers import Contains, FileExists, MatchesRegex
 import integration_tests
 
 
-class HistoryTestCase(integration_tests.StoreTestCase):
+class RevisionsTestCase(integration_tests.StoreTestCase):
 
-    def test_history_without_login(self):
+    def test_revisions_without_login(self):
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, ['history', 'test-snap'])
+            self.run_snapcraft, ['revisions', 'test-snap'])
         self.assertIn('No valid credentials found. Have you run "snapcraft '
                       'login"?', str(error.output))
 
-    def test_history_with_login_wrong_snap(self):
+    def test_revisions_with_login_wrong_snap(self):
         self.addCleanup(self.logout)
         self.login()
 
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, ['history', 'mysnap'])
+            self.run_snapcraft, ['revisions', 'mysnap'])
         self.assertIn(
             "Snap 'mysnap' was not found in '16' series.", str(error.output))
 
-    def test_history_with_login_bad_snap_with_series(self):
+    def test_revisions_with_login_bad_snap_with_series(self):
         self.addCleanup(self.logout)
         self.login()
 
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, ['history', 'mysnap', '--series=16'])
+            self.run_snapcraft, ['revisions', 'mysnap', '--series=16'])
         self.assertIn(
             "Snap 'mysnap' was not found in '16' series.", str(error.output))
 
-    def test_history_with_login_bad_snap_with_arch(self):
+    def test_revisions_with_login_bad_snap_with_arch(self):
         self.addCleanup(self.logout)
         self.login()
 
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, ['history', 'mysnap', '--arch=i386'])
+            self.run_snapcraft, ['revisions', 'mysnap', '--arch=i386'])
         self.assertIn(
             "Snap 'mysnap' for 'i386' was not found in '16' series.",
             str(error.output))
 
     @unittest.skipUnless(
         os.getenv('TEST_STORE', 'fake') == 'fake', 'Skip fake store.')
-    def test_history_fake_store(self):
+    def test_revisions_fake_store(self):
         self.addCleanup(self.logout)
         self.login()
 
-        output = self.run_snapcraft(['history', 'basic'])
+        output = self.run_snapcraft(['revisions', 'basic'])
         expected = '\n'.join((
             'Rev.    Uploaded              Arch    Version    Channels',
             '2       2016-09-27T19:23:40Z  i386    2.0.1      -',
@@ -81,7 +81,7 @@ class HistoryTestCase(integration_tests.StoreTestCase):
 
     @unittest.skipUnless(
         os.getenv('TEST_STORE', 'fake') == 'staging', 'Skip staging store.')
-    def test_history_staging_store(self):
+    def test_revisions_staging_store(self):
         self.addCleanup(self.logout)
         self.login()
 
@@ -97,7 +97,7 @@ class HistoryTestCase(integration_tests.StoreTestCase):
         self.register(name)
         self.assertEqual(0, self.push(snap_path, release='candidate,beta'))
 
-        output = self.run_snapcraft(['history', name])
+        output = self.run_snapcraft(['revisions', name])
 
         datetime_re = '\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z'
         expected = '\n'.join((

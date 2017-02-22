@@ -43,7 +43,8 @@ Usage:
   snapcraft [options] push <snap-file> [--release <channels>]
   snapcraft [options] release <snap-name> <revision> <channel>
   snapcraft [options] status <snap-name> [--series=<series>] [--arch=<arch>]
-  snapcraft [options] history <snap-name> [--series=<series>] [--arch=<arch>]
+  snapcraft [options] list-revisions <snap-name> [--series=<series>] [--arch=<arch>]
+  snapcraft [options] revisions <snap-name> [--series=<series>] [--arch=<arch>]
   snapcraft [options] close <snap-name> <channel_names>...
   snapcraft [options] list-plugins
   snapcraft [options] plugins
@@ -118,7 +119,8 @@ The available commands are:
                supersedes this command.
   release      Release a revision of a snap to a specific channel.
   status       Show the current status of a snap per channel and architecture.
-  history      List all revisions of a snap.
+  list-revisions List all revisions of a snap.
+  revisions    Alias for list-revisions.
   close        Close one or more channels of a snap.
   enable-ci    EXPERIMENTAL enable continuous-integration systems to build and
                release snaps to the Ubuntu Store.
@@ -318,7 +320,8 @@ def _is_store_command(args):
     commands = (
         'list-registered', 'registered', 'list-keys', 'keys', 'create-key',
         'register-key', 'register', 'sign-build', 'upload', 'release',
-        'push', 'validate', 'gated', 'history', 'status', 'close')
+        'push', 'validate', 'gated', 'revisions', 'list-revisions',
+        'status', 'close')
     return any(args.get(command) for command in commands)
 
 
@@ -358,8 +361,8 @@ def _run_store_command(args):  # noqa: C901
     elif args['status']:
         snapcraft.status(
             args['<snap-name>'], args['--series'], args['--arch'])
-    elif args['history']:
-        snapcraft.history(
+    elif args['revisions']:
+        snapcraft.revisions(
             args['<snap-name>'], args['--series'], args['--arch'])
     elif args['close']:
         snapcraft.close(args['<snap-name>'], args['<channel_names>'])

@@ -28,7 +28,7 @@ from snapcraft.main import main
 from snapcraft.tests import fixture_setup
 
 
-class HistoryCommandTestCase(tests.TestCase):
+class RevisionsCommandTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -52,95 +52,96 @@ class HistoryCommandTestCase(tests.TestCase):
             'revision': 1,
         }]
 
-    def test_history_without_snap_raises_exception(self):
+    def test_revisions_without_snap_raises_exception(self):
         raised = self.assertRaises(
             docopt.DocoptExit,
-            main, ['history'])
+            main, ['revisions'])
 
         self.assertIn('Usage:', str(raised))
 
-    def test_history_with_no_permissions(self):
+    def test_revisions_with_no_permissions(self):
         self.assertRaises(
             SystemExit,
-            main, ['history', 'snap-test'])
+            main, ['revisions', 'snap-test'])
 
         self.assertIn(
             'No valid credentials found. Have you run "snapcraft login"?',
             self.fake_logger.output)
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
-    def test_history_with_3rd_party_snap(self, mock_account_api):
+    def test_revisions_with_3rd_party_snap(self, mock_account_api):
         mock_account_api.return_value = {}
 
         self.assertRaises(
             SystemExit,
-            main, ['history', 'snap-test'])
+            main, ['revisions', 'snap-test'])
 
         self.assertIn(
             "Snap 'snap-test' was not found in '16' series.",
             self.fake_logger.output)
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
-    def test_history_with_3rd_party_snap_by_arch(self, mock_account_api):
+    def test_revisions_with_3rd_party_snap_by_arch(self, mock_account_api):
         mock_account_api.return_value = {}
 
         self.assertRaises(
             SystemExit,
-            main, ['history', 'snap-test', '--arch=arm64'])
+            main, ['revisions', 'snap-test', '--arch=arm64'])
 
         self.assertIn(
             "Snap 'snap-test' for 'arm64' was not found in '16' series.",
             self.fake_logger.output)
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
-    def test_history_with_3rd_party_snap_by_series(self, mock_account_api):
+    def test_revisions_with_3rd_party_snap_by_series(self, mock_account_api):
         mock_account_api.return_value = {}
 
         self.assertRaises(
             SystemExit,
-            main, ['history', 'snap-test', '--series=15'])
+            main, ['revisions', 'snap-test', '--series=15'])
 
         self.assertIn(
             "Snap 'snap-test' was not found in '15' series.",
             self.fake_logger.output)
 
-    @mock.patch.object(storeapi.SCAClient, 'snap_history')
+    @mock.patch.object(storeapi.SCAClient, 'snap_revisions')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
-    def test_history_by_unknown_arch(self, mock_account_api, mock_history):
-        mock_history.return_value = {}
+    def test_revisions_by_unknown_arch(self, mock_account_api, mock_revisions):
+        mock_revisions.return_value = {}
 
         self.assertRaises(
             SystemExit,
-            main, ['history', 'snap-test', '--arch=some-arch'])
+            main, ['revisions', 'snap-test', '--arch=some-arch'])
 
         self.assertIn(
             "Snap 'snap-test' for 'some-arch' was not found in '16' series.",
             self.fake_logger.output)
 
-    @mock.patch.object(storeapi.SCAClient, 'snap_history')
+    @mock.patch.object(storeapi.SCAClient, 'snap_revisions')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
-    def test_history_by_unknown_series(self, mock_account_api, mock_history):
-        mock_history.return_value = {}
+    def test_revisions_by_unknown_series(self,
+                                         mock_account_api, mock_revisions):
+        mock_revisions.return_value = {}
 
         self.assertRaises(
             SystemExit,
-            main, ['history', 'snap-test', '--series=some-series'])
+            main, ['revisions', 'snap-test', '--series=some-series'])
 
         self.assertIn(
             "Snap 'snap-test' was not found in 'some-series' series.",
             self.fake_logger.output)
 
-    @mock.patch.object(storeapi.StoreClient, 'get_snap_history')
+    @mock.patch.object(storeapi.StoreClient, 'get_snap_revisions')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
-    def test_history(self, mock_account_api, mock_history):
+    def test_revisions(self, mock_account_api, mock_revisions):
         fake_terminal = fixture_setup.FakeTerminal()
         self.useFixture(fake_terminal)
 
-        mock_history.return_value = self.expected
+        mock_revisions.return_value = self.expected
 
-        main(['history', 'snap-test'])
+        main(['revisions', 'snap-test'])
 
-        mock_history.assert_called_once_with('snap-test', '16', None)
+        mock_revisions.assert_called_once_with('snap-test', '16', None)
 
         terminal_output = fake_terminal.getvalue()
         expected_output = [
@@ -150,18 +151,18 @@ class HistoryCommandTestCase(tests.TestCase):
         ]
         self.assertEqual(expected_output, terminal_output.splitlines())
 
-    @mock.patch.object(storeapi.StoreClient, 'get_snap_history')
+    @mock.patch.object(storeapi.StoreClient, 'get_snap_revisions')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
-    def test_history_by_arch(self, mock_account_api, mock_history):
+    def test_revisions_by_arch(self, mock_account_api, mock_revisions):
         fake_terminal = fixture_setup.FakeTerminal()
         self.useFixture(fake_terminal)
 
-        mock_history.return_value = [
+        mock_revisions.return_value = [
             rev for rev in self.expected if rev['arch'] == 'amd64']
 
-        main(['history', 'snap-test', '--arch=amd64'])
+        main(['revisions', 'snap-test', '--arch=amd64'])
 
-        mock_history.assert_called_once_with('snap-test', '16', 'amd64')
+        mock_revisions.assert_called_once_with('snap-test', '16', 'amd64')
 
         terminal_output = fake_terminal.getvalue()
         expected_output = [
@@ -170,17 +171,17 @@ class HistoryCommandTestCase(tests.TestCase):
         ]
         self.assertEqual(expected_output, terminal_output.splitlines())
 
-    @mock.patch.object(storeapi.StoreClient, 'get_snap_history')
+    @mock.patch.object(storeapi.StoreClient, 'get_snap_revisions')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
-    def test_history_by_series(self, mock_account_api, mock_history):
+    def test_revisions_by_series(self, mock_account_api, mock_revisions):
         fake_terminal = fixture_setup.FakeTerminal()
         self.useFixture(fake_terminal)
 
-        mock_history.return_value = self.expected
+        mock_revisions.return_value = self.expected
 
-        main(['history', 'snap-test', '--series=16'])
+        main(['revisions', 'snap-test', '--series=16'])
 
-        mock_history.assert_called_once_with('snap-test', '16', None)
+        mock_revisions.assert_called_once_with('snap-test', '16', None)
 
         terminal_output = fake_terminal.getvalue()
         expected_output = [
