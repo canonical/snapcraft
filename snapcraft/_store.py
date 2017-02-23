@@ -558,14 +558,11 @@ def release(snap_name, revision, release_channels):
     with _requires_login():
         channels = store.release(snap_name, revision, release_channels)
     channel_map_tree = channels.get('channel_map_tree', {})
-    for track, track_data in channel_map_tree.items():
-        for series, series_data in track_data.items():
-            for arch, channel_map in series_data.items():
 
-                # This does not look good in green so we print instead
-                tabulated_channels = _tabulated_channel_map_tree(
-                    track, series, arch, channel_map)
-                print(tabulated_channels)
+    # This does not look good in green so we print instead
+    tabulated_channels = _tabulated_channel_map_tree(
+        channel_map_tree)
+    print(tabulated_channels)
 
     if 'opened_channels' in channels:
         logger.info(
@@ -573,26 +570,45 @@ def release(snap_name, revision, release_channels):
                 channels['opened_channels']))
 
 
-def _tabulated_channel_map_tree(track, series, arch, channel_map):
+def _tabulated_channel_map_tree(channel_map_tree):
+
     """Tabulate channel map (LTS Channel channel-maps)"""
-    def _format_tree(channel_map, track, series):
+    def _format_tree(channel_maps, track, series):
+        arches = []
+
+        for arch, channel_map in sorted(channel_maps.items()):
+            arches += [
+                (printable_arch, ) +
+                _get_text_for_channel(channel)
+                for (printable_arch, channel) in zip(
+                    [arch] + [''] * len(channel_map),
+                    channel_map
+                )
+            ]
+
         return [
-            (printable_arch, printable_track) +
-            _get_text_for_channel(channel)
-            for (printable_arch, printable_track, channel) in zip(
-                [track] + [''] * len(channel_map),
-                [arch] + [''] * len(channel_map),
-                channel_map
+            (printable_arch,) + printable_track
+            for (printable_arch, printable_track) in zip(
+                [track] + [''] * len(arches),
+                arches,
             )
         ]
 
-    parsed_channels = [
-        channel
-        for channel in _format_tree(channel_map, track, series)
-    ]
+    data = []
+    for track, track_data in sorted(channel_map_tree.items()):
+        channel_maps = {}
+        for series, series_data in track_data.items():
+            for arch, channel_map in series_data.items():
+                channel_maps[arch] = channel_map
+        parsed_channels = [
+            channel
+            for channel in _format_tree(channel_maps, track, series)
+        ]
+        data += parsed_channels
+    headers = ['Track', 'Arch', 'Channel', 'Version', 'Revision']
     return tabulate(
-        parsed_channels, numalign='left',
-        headers=['Track', 'Arch', 'Channel', 'Version', 'Revision'],
+        data, numalign='left',
+        headers=headers,
         tablefmt='plain'
     )
 
@@ -675,7 +691,9 @@ def status(snap_name, series, arch):
     with _requires_login():
         status = store.get_snap_status(snap_name, series, arch)
 
-    tabulated_status = _tabulated_status(status)
+    channel_map_tree = status.get('channel_map_tree', {})
+    # This does not look good in green so we print instead
+    tabulated_status = _tabulated_channel_map_tree(channel_map_tree)
     print(tabulated_status)
 
 

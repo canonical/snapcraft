@@ -651,8 +651,8 @@ class SCAClient(Client):
         if series:
             qs['series'] = series
         if arch:
-            qs['arch'] = arch
-        url = 'snaps/' + snap_id + '/status'
+            qs['architecture'] = arch
+        url = 'snaps/' + snap_id + '/state'
         if qs:
             url += '?' + urllib.parse.urlencode(qs)
         auth = _macaroon_auth(self.conf)
