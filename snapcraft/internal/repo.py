@@ -536,14 +536,9 @@ def _get_pkg_name_parts(pkg_name):
     """Break package name into base parts"""
 
     name = pkg_name
-    version = arch = None
+    version = None
     if '=' in pkg_name:
         name, version = pkg_name.split('=')
-        if ':' in name:
-            name, arch = name.split(':')
-
-    if arch:
-        name = '{}:{}'.format(name, arch)
 
     return name, version
 
