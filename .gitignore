@@ -18,3 +18,7 @@ docs/**.html
 Cargo.lock
 target
 *.swp
+*.snap
+parts
+stage
+prime

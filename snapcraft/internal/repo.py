@@ -177,6 +177,25 @@ class _AptCache:
         # Do not install recommends
         apt.apt_pkg.config.set('Apt::Install-Recommends', 'False')
 
+        # Methods and solvers dir for when in the SNAP
+        if os.getenv('SNAP'):
+            snap_dir = os.getenv('SNAP')
+            apt_dir = os.path.join(snap_dir, 'apt')
+            apt.apt_pkg.config.set('Dir', apt_dir)
+            # yes apt is broken like that we need to append os.path.sep
+            apt.apt_pkg.config.set('Dir::Bin::methods',
+                                   apt_dir + os.path.sep)
+            apt.apt_pkg.config.set('Dir::Bin::solvers::',
+                                   apt_dir + os.path.sep)
+            apt_key_path = os.path.join(apt_dir, 'apt-key')
+            apt.apt_pkg.config.set('Dir::Bin::apt-key', apt_key_path)
+            gpgv_path = os.path.join(snap_dir, 'bin', 'gpgv')
+            apt.apt_pkg.config.set('Apt::Key::gpgvcommand', gpgv_path)
+            apt.apt_pkg.config.set('Dir::Etc::Trusted',
+                                   '/etc/apt/trusted.gpg')
+            apt.apt_pkg.config.set('Dir::Etc::TrustedParts',
+                                   '/etc/apt/trusted.gpg.d/')
+
         # Make sure we always use the system GPG configuration, even with
         # apt.Cache(rootdir).
         for key in 'Dir::Etc::Trusted', 'Dir::Etc::TrustedParts':
