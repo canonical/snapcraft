@@ -1554,17 +1554,17 @@ parts:
         config = project_loader.Config()
         environment = config.stage_env()
         self.assertIn(
-            'LDFLAGS="$LDFLAGS -Wl,-z,nodefaultlib '
+            'LDFLAGS="$LDFLAGS '
             '-Wl,--dynamic-linker={core_dynamic_linker} '
             '-Wl,-rpath,'
-            '/snap/core/current/lib:'
-            '/snap/core/current/usr/lib:'
-            '/snap/core/current/lib/{arch_triplet}:'
-            '/snap/core/current/usr/lib/{arch_triplet}:'
             '/snap/test/current/lib:'
             '/snap/test/current/usr/lib:'
             '/snap/test/current/lib/{arch_triplet}:'
-            '/snap/test/current/usr/lib/{arch_triplet}"'.format(
+            '/snap/test/current/usr/lib/{arch_triplet}:'
+            '/snap/core/current/lib:'
+            '/snap/core/current/usr/lib:'
+            '/snap/core/current/lib/{arch_triplet}:'
+            '/snap/core/current/usr/lib/{arch_triplet}"'.format(
                 core_dynamic_linker=dynamic_linker,
                 arch_triplet=self.arch_triplet),
             environment)
