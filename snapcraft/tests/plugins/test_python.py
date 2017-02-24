@@ -19,6 +19,7 @@ import tempfile
 from glob import glob
 from unittest import mock
 
+import fixtures
 from testtools.matchers import FileContains, HasLength
 
 import snapcraft
@@ -407,3 +408,75 @@ class PythonPluginTestCase(tests.TestCase):
         site_path = glob(os.path.join(
             plugin.installdir, 'usr', 'lib', 'python*', 'sitecustomize.py'))[0]
         self.assertThat(site_path, FileContains(expected_sitecustomize))
+
+    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(python.PythonPlugin, 'run')
+    def test_use_staged_python(self, run_mock, run_output_mock):
+        self.useFixture(fixture_setup.CleanEnvironment())
+
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+
+        setup_directories(plugin, self.options.python_version)
+        # Create the necessary hints to detect a staged python
+        staged_python_bin = os.path.join(
+            plugin.project.stage_dir, 'usr', 'bin', 'python3')
+        os.makedirs(os.path.dirname(staged_python_bin))
+        open(staged_python_bin, 'w').close()
+        staged_python_include = os.path.join(
+            plugin.project.stage_dir, 'usr', 'include', 'python3.7')
+        os.makedirs(staged_python_include)
+        plugin.pull()
+
+        pip_command = [
+            os.path.join(plugin.project.stage_dir, 'usr', 'bin', 'python3'),
+            '-m', 'pip', 'download', '--disable-pip-version-check',
+            '--dest', os.path.join(plugin.partdir, 'packages'), '.'
+        ]
+        cwd = plugin.sourcedir
+        env = {
+            'PYTHONUSERBASE': plugin.installdir,
+            'PYTHONHOME': os.path.join(plugin.project.stage_dir, 'usr'),
+            'PATH': '{}/usr/bin:$PATH'.format(plugin.installdir),
+            'CPPFLAGS': '-I{}'.format(os.path.join(
+                plugin.project.stage_dir, 'usr', 'include', 'python3.7'))
+        }
+        run_mock.assert_called_once_with(pip_command, cwd=cwd, env=env)
+
+    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(python.PythonPlugin, 'run')
+    def test_use_staged_python_extra_cppflags(self, run_mock, run_output_mock):
+        self.useFixture(fixture_setup.CleanEnvironment())
+        # Add some extra CPPFLAGS into the environment
+        self.useFixture(fixtures.EnvironmentVariable(
+            'CPPFLAGS', '-I/opt/include'))
+
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+
+        setup_directories(plugin, self.options.python_version)
+        # Create the necessary hints to detect a staged python
+        staged_python_bin = os.path.join(
+            plugin.project.stage_dir, 'usr', 'bin', 'python3')
+        os.makedirs(os.path.dirname(staged_python_bin))
+        open(staged_python_bin, 'w').close()
+        staged_python_include = os.path.join(
+            plugin.project.stage_dir, 'usr', 'include', 'python3.7')
+        os.makedirs(staged_python_include)
+
+        plugin.pull()
+
+        pip_command = [
+            os.path.join(plugin.project.stage_dir, 'usr', 'bin', 'python3'),
+            '-m', 'pip', 'download', '--disable-pip-version-check',
+            '--dest', os.path.join(plugin.partdir, 'packages'), '.'
+        ]
+        cwd = plugin.sourcedir
+        env = {
+            'PYTHONUSERBASE': plugin.installdir,
+            'PYTHONHOME': os.path.join(plugin.project.stage_dir, 'usr'),
+            'PATH': '{}/usr/bin:$PATH'.format(plugin.installdir),
+            'CPPFLAGS': '-I{} -I/opt/include'.format(os.path.join(
+                plugin.project.stage_dir, 'usr', 'include', 'python3.7'))
+        }
+        run_mock.assert_called_once_with(pip_command, cwd=cwd, env=env)

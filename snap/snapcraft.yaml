@@ -1,0 +1,110 @@
+name: snapcraft
+version: '2.28'
+summary: easily create snaps
+description: |
+    Snapcraft aims to make upstream developers' lives easier and as such is not
+    a single toolset, but instead is a collection of tools that enable the
+    natural workflow of an upstream to be extended with a simple release step
+    into Snappy.
+
+grade: devel
+confinement: classic
+
+apps:
+  snapcraft:
+    command: bin/snapcraft
+
+parts:
+  snapcraft:
+    source: .
+    plugin: python
+    requirements: requirements.txt
+    build-packages:
+        - build-essential
+        - libarchive13
+        - libffi-dev
+        - libsodium-dev
+        - liblzma-dev
+    stage-packages:
+        - libarchive13
+        - libffi6
+        - libsodium18
+        - squashfs-tools
+        - xdelta3
+    prime:
+        - '*'
+        - '**/*.pyc'
+    after: [python, apt]
+  python:
+    source: https://www.python.org/ftp/python/3.6.0/Python-3.6.0.tar.xz
+    plugin: autotools
+    configflags: [--prefix=/usr]
+    build-packages: [libssl-dev]
+    prime:
+        - -usr/include
+  apt:
+    source: https://github.com/Debian/apt
+    source-type: git
+    source-tag: 1.2.19
+    source-depth: 1
+    plugin: autotools
+    prepare: |
+        make startup
+    build: |
+        mkdir build
+        cd build
+        ../configure
+        make
+    install: |
+        cd build
+        install -d $SNAPCRAFT_PART_INSTALL/apt
+        cp -r bin/methods/* $SNAPCRAFT_PART_INSTALL/apt/
+        cp -r bin/methods/* $SNAPCRAFT_PART_INSTALL/apt/
+        install bin/apt-key $SNAPCRAFT_PART_INSTALL/apt/
+        install bin/apt-mark $SNAPCRAFT_PART_INSTALL/apt/
+        install bin/apt-internal-solver $SNAPCRAFT_PART_INSTALL/apt/
+        install bin/apt-helper $SNAPCRAFT_PART_INSTALL/apt/
+        install -d $SNAPCRAFT_PART_INSTALL/usr/lib
+        install bin/libapt-inst.so.2.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
+        install bin/libapt-pkg.so $SNAPCRAFT_PART_INSTALL/usr/lib/
+        install bin/libapt-pkg-5.0-0.symver $SNAPCRAFT_PART_INSTALL/usr/lib/
+        install bin/libapt-private.so $SNAPCRAFT_PART_INSTALL/usr/lib/
+        install bin/libapt-private-0.0-0.symver $SNAPCRAFT_PART_INSTALL/usr/lib/
+        install bin/libapt-private.so.0.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
+        install bin/libapt-inst.so.2.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
+        install bin/libapt-inst.so $SNAPCRAFT_PART_INSTALL/usr/lib/
+        install bin/libapt-pkg.so.5.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
+        install bin/libapt-inst-2.0-0.symver $SNAPCRAFT_PART_INSTALL/usr/lib/
+        install bin/libapt-pkg.so.5.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
+        install bin/libapt-private.so.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
+        install -d $SNAPCRAFT_PART_INSTALL/usr/include
+        cp -r include/* $SNAPCRAFT_PART_INSTALL/usr/include/
+    prime:
+        - -usr/include
+    build-packages:
+        - gettext
+        - libbz2-dev
+        - libcurl4-gnutls-dev
+        - libdb-dev
+        - liblz4-dev
+        - liblzma-dev
+        - zlib1g-dev
+    after: [python]
+  gpg:
+      source: git://git.gnupg.org/gnupg.git
+      source-tag: gnupg-1.4.20
+      source-depth: 1
+      plugin: autotools
+      configflags:
+        - --enable-minimal
+        - --disable-makeinfo
+        - --disable-ldap
+        - --disable-finger
+        - --disable-nls
+      prepare: |
+        # This is fragile but we use a fixed tag
+        sed -i.bak -e 's/\(^ *g10 keyserver\) po doc ${checks}$/\1 ${checks}/' Makefile.am
+      build-packages:
+        - texinfo
+      prime:
+        - bin/gpgv

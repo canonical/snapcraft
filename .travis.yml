@@ -14,10 +14,11 @@ env:
   #     travis encrypt -r ubuntu-core/snapcraft TEST_USER_PASSWORD=$password
   - secure: "gqtqTji8cie0Q2O+sRhE4MbTXGI0qTq8yPgRGFd9XlT/lB/EttFQKu72qycr/jyrvt809wjWM13QVqa5/71SoJd+Xzrmr1/leevx9Z/Wnv+IYkRAuGHW7iIDQb7MhQvpq3tw8hbGJzGxw03cUmjKJ89AAlGbwaURMat47lPsRXus8R7pl9S6r5owhBbmrQNaP9io0oPQDOAUf4pmJma1FTHAjXg0EdUwdXFUWToj15c7UJtB/MQNNTfjlwGA+/sPDqgthUEAzXmvUfXAZWnjQFZmq4ebvBIJEOQEPdLCXWGYdN2DAL7zp7WthrwFfgFFZb579rOBh0ETIMebUgBLoVSiPcn/bfzdYHcYKGf7lTJpoug5QENl+kZcuVyK7GUjf8O9tamhkYeMtUOy5Ubrcnv+Lfy9NsDPhKY05n+7tzzUVB1dePTrMHPuRZLl4OKku1AUN/S3A2xMrLO8vsWPVxcfxeb+4Y5ikYiHHpOozJHHDdPmj5raRIf3IH87W2PX0nJhg+gEgNHV1v3HBoyeqOPl4hl6/Fb9sCS/JAbbfcixkC54MHHI+opNSgZRvY0RORGHmuhHRGvfMxnwHmeOD51oV+SRGJS6A7qUq6GlBIy3/YlAY3LqqkWrHwm4EYttd4yM1FZ5s9pVnoSSJkgQ5vYK7A8a9AgZJlCcZnbzXtA="
   matrix:
-  - TEST_SUITE=static DEPENDENCIES="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
-  - TEST_SUITE=unit DEPENDENCIES="apt install -y git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt && python3 -m pip uninstall -y coverage && apt install -y python3-coverage"
-  - TEST_SUITE=integration TEST_STORE=fake DEPENDENCIES="apt install -y bzr curl git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev mercurial python3-pip subversion squashfs-tools sudo snapd xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
-  - TEST_SUITE=beta DEPENDENCIES="apt install -y python3-git python3-github"
+  - DOCKER=1 TEST_SUITE=static DEPENDENCIES="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
+  - DOCKER=1 TEST_SUITE=unit DEPENDENCIES="apt install -y git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt && python3 -m pip uninstall -y coverage && apt install -y python3-coverage"
+  - DOCKER=1 TEST_SUITE=integration TEST_STORE=fake DEPENDENCIES="apt install -y bzr curl git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev mercurial python3-pip subversion squashfs-tools sudo snapd xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
+  - DOCKER=1 GEN_DOCS=1 DEPENDENCIES="apt install libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev git make python3-pip python3-sphinx -y && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
+  - DOCKER=1 TEST_SUITE=beta DEPENDENCIES="apt install -y python3-git python3-github"
 
 matrix:
   include:
@@ -31,21 +32,27 @@ addons:
 
 install:
   - if [ ! -z $CHECK_CLA ] && [ "$TRAVIS_PULL_REQUEST" != "false" ]; then $DEPENDENCIES; fi
-  - if [ ! -z $TEST_SUITE ]; then docker run --name builder -e TEST_USER_EMAIL=$TEST_USER_EMAIL
-    -e TEST_USER_PASSWORD=$TEST_USER_PASSWORD -e TEST_STORE=$TEST_STORE
-    -e TEST_SNAP_WITH_TRACKS=$TEST_SNAP_WITH_TRACKS
+  - if [ ! -z $DOCKER ]; then docker run --name builder
+    -e TEST_USER_EMAIL=$TEST_USER_EMAIL -e TEST_USER_PASSWORD=$TEST_USER_PASSWORD
+    -e TEST_STORE=$TEST_STORE -e TEST_SNAP_WITH_TRACKS=$TEST_SNAP_WITH_TRACKS
     -e GITHUB_TEST_USER_NAME=$GITHUB_TEST_USER_NAME -e GITHUB_TEST_PASSWORD=$GITHUB_TEST_PASSWORD
+    -e GH_TOKEN=$GH_TOKEN
     -e LC_ALL=en_US.UTF-8
     -v $PWD:$PWD -w $PWD -td ubuntu:xenial; fi
-  - if [ ! -z $TEST_SUITE ]; then docker exec -i builder locale-gen en_US.UTF-8; fi
-  - if [ ! -z $TEST_SUITE ]; then docker exec -i builder sed -i s/archive.ubuntu.com/us.archive.ubuntu.com/g /etc/apt/sources.list; fi
-  - if [ ! -z $TEST_SUITE ]; then docker exec -i builder apt update; fi
-  - if [ ! -z $TEST_SUITE ]; then docker exec -i builder sh -c "$DEPENDENCIES"; fi
+  - if [ ! -z $DOCKER ]; then docker exec -i builder locale-gen en_US.UTF-8; fi
+  - if [ ! -z $DOCKER ]; then docker exec -i builder sed -i s/archive.ubuntu.com/us.archive.ubuntu.com/g /etc/apt/sources.list; fi
+  - if [ ! -z $DOCKER ]; then docker exec -i builder apt update; fi
+  - if [ ! -z $DOCKER ]; then docker exec -i builder sh -c "$DEPENDENCIES"; fi
 
 script:
+  # CLA check, only in pull requests.
   - if [ ! -z $CHECK_CLA ] && [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ]; then ./tools/cla_check_in_travis.sh; fi
-  - if [ ! -z $TEST_SUITE ] && [ "$TEST_SUITE" != "beta" ]; then docker exec -i builder ./runtests.sh $TEST_SUITE; fi
-  - if [ $TRAVIS_EVENT_TYPE = "cron" ] && [ "$TEST_SUITE" == "beta" ]; then docker exec -i builder ./tools/make_beta_pr.py; fi
+  # Test suites from runtests.sh, in pull requests and landings to master.
+  - if [ ! -z $TEST_SUITE ] && [ "$TEST_SUITE" != "beta" ] &&  [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then docker exec -i builder ./runtests.sh $TEST_SUITE; fi
+  # Trigger beta tests, only in the daily cron.
+  - if [ "$TRAVIS_EVENT_TYPE" = "cron" ] && [ "$TEST_SUITE" == "beta" ]; then docker exec -i builder ./tools/make_beta_pr.py; fi
+  # Generate docs, only in pushes to master.
+  - if [ ! -z $GEN_DOCS ] && [ "$TRAVIS_EVENT_TYPE" = "push" ] && [ "$TRAVIS_BRANCH" = "master" ]; then docker exec -i builder ./tools/gen_api_docs.sh && ./tools/push_api_gh_pages.sh; fi
 
 after_success:
   - python3 -m coverage xml
