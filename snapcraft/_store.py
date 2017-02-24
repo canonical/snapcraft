@@ -605,6 +605,7 @@ def _tabulated_channel_map_tree(channel_map_tree):
             for channel in _format_tree(channel_maps, track, series)
         ]
         data += parsed_channels
+
     headers = ['Track', 'Arch', 'Channel', 'Version', 'Revision']
     return tabulate(
         data, numalign='left',
@@ -648,9 +649,9 @@ def close(snap_name, channel_names):
             'Make sure the logged in account has upload permissions on '
             '\'{}\' in series \'{}\'.'.format(snap_name, snap_series))
 
-    closed_channels, status = store.close_channels(snap_id, channel_names)
+    closed_channels, c_m_tree = store.close_channels(snap_id, channel_names)
 
-    tabulated_status = _tabulated_status(status)
+    tabulated_status = _tabulated_channel_map_tree(c_m_tree)
     print(tabulated_status)
 
     print()

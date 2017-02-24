@@ -488,14 +488,19 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'application/json')
             response = {
                 'closed_channels': channels,
-                'channel_maps': {
-                    'amd64': [
-                        {'channel': 'stable', 'info': 'none'},
-                        {'channel': 'candidate', 'info': 'none'},
-                        {'channel': 'beta', 'info': 'specific',
-                         'version': '1.1', 'revision': 42},
-                        {'channel': 'edge', 'info': 'tracking'}
-                    ]
+                'channel_map_tree': {
+                    'latest': {
+                        '16': {
+                            'amd64': [
+                                {'channel': 'stable', 'info': 'none'},
+                                {'channel': 'candidate', 'info': 'none'},
+                                {'channel': 'beta', 'info': 'specific',
+                                 'version': '1.1', 'revision': 42},
+                                {'channel': 'edge', 'info': 'tracking'}
+                            ]
+
+                        }
+                    }
                 },
             }
             content = json.dumps(response).encode()

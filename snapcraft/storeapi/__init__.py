@@ -682,7 +682,7 @@ class SCAClient(Client):
 
         try:
             results = response.json()
-            return results['closed_channels'], results['channel_maps']
+            return results['closed_channels'], results['channel_map_tree']
         except (JSONDecodeError, KeyError):
             logger.debug(
                 'Invalid response from the server on channel closing:\n'

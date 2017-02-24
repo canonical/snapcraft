@@ -888,19 +888,23 @@ class CloseChannelsTestCase(tests.TestCase):
 
     def test_close_successfully(self):
         # Successfully closing a channels returns 'closed_channels'
-        # and 'channel_maps' from the Store.
+        # and 'channel_map_tree' from the Store.
         self.client.login('dummy', 'test correct password')
-        closed_channels, channel_maps = self.client.close_channels(
+        closed_channels, channel_map_tree = self.client.close_channels(
             'snap-id', ['beta'])
         self.assertEqual(['beta'], closed_channels)
         self.assertEqual({
-            'amd64': [
-                {'channel': 'stable', 'info': 'none'},
-                {'channel': 'candidate', 'info': 'none'},
-                {'channel': 'beta', 'info': 'specific',
-                 'revision': 42, 'version': '1.1'},
-                {'channel': 'edge', 'info': 'tracking'}]
-        }, channel_maps)
+            'latest': {
+                '16': {
+                    'amd64': [
+                        {'channel': 'stable', 'info': 'none'},
+                        {'channel': 'candidate', 'info': 'none'},
+                        {'channel': 'beta', 'info': 'specific',
+                         'revision': 42, 'version': '1.1'},
+                        {'channel': 'edge', 'info': 'tracking'}]
+                }
+            }
+        }, channel_map_tree)
 
 
 class MacaroonsTestCase(tests.TestCase):
