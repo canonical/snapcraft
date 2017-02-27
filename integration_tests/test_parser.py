@@ -59,27 +59,153 @@ class TestParser(ParserTestCase):
 class TestParserWikis(testscenarios.WithScenarios, ParserTestCase):
     """Test bin/snapcraft-parser"""
 
+    def setUp(self):
+        temp_cwd_fixture = fixture_setup.TempCWD()
+        self.useFixture(temp_cwd_fixture)
+        super().setUp()
+
+        # Since we're running in a temporary directory use
+        # the original source tree version of snapcraft-parser
+        if not os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
+            self.snapcraft_parser_command = os.path.join(
+                os.path.dirname(__file__), '..', 'bin', 'snapcraft-parser')
+
+    def _read_file(self, filename):
+        content = ''
+        with open(filename) as fp:
+            content = fp.read()
+
+        return content
+
+    def _setup_wiki_file(self, filename, origin, commit=None):
+        content = self._read_file(filename)
+        content = content.replace('$ORIGIN', origin)
+        if commit:
+            content = content.replace('$COMMIT', commit)
+        with open('wiki', 'w') as fp:
+            fp.write(content)
+
+    def _setup_origin(self, snapcraft_files, repo_dir, base_dir):
+        os.makedirs(repo_dir)
+        previous_dir = os.getcwd()
+        os.chdir(repo_dir)
+
+        subprocess.check_call(['git', 'init', '.'],
+                              stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL)
+
+        for snapcraft_file in snapcraft_files:
+            snapcraft_content_path = os.path.join(
+                base_dir, snapcraft_file['path'])
+            snapcraft_content = self._read_file(snapcraft_content_path)
+            snapcraft_file = snapcraft_file['snapcraft_file']
+            # make subdirectories if needed.
+            if os.path.dirname(snapcraft_file):
+                os.makedirs(os.path.dirname(snapcraft_file))
+            with open(snapcraft_file, 'w') as fp:
+                fp.write(snapcraft_content)
+            subprocess.check_call(['git', 'add', snapcraft_file],
+                                  stdout=subprocess.DEVNULL,
+                                  stderr=subprocess.DEVNULL)
+        subprocess.check_call(['git', 'commit', '-am', 'commit'],
+                              stdout=subprocess.DEVNULL,
+                              stderr=subprocess.DEVNULL)
+        subprocess.check_call(['git', 'branch', 'feature-branch'])
+        commit = subprocess.check_output(
+            ['git', 'log']).split()[0].decode('utf-8').replace('commit: ', '')
+
+        os.chdir(previous_dir)
+        return commit
+
     scenarios = [
         ('Hidden .snapcraft.yaml file',
-            {'wiki_file': 'hidden_parts_wiki',
-             'expect_valid': True, 'expect_output': True}),
+            {
+                'wiki_file': 'hidden_parts_wiki',
+                'expect_valid': True,
+                'expect_output': True,
+                'snapcraft_files': [
+                    {
+                        'path': 'hidden_snapcraft_yaml',
+                        'snapcraft_file': '.snapcraft.yaml',
+                    }
+                ]
+            }),
         ('Both snapcraft.yaml and .snapcraft.yaml files',
-            {'wiki_file': 'both_parts_wiki',
-             'expect_valid': False, 'expect_output': True}),
+            {
+                'wiki_file': 'both_parts_wiki',
+                'expect_valid': False,
+                'expect_output': True,
+                'snapcraft_files': [
+                    {
+                        'path': 'hidden_snapcraft_yaml',
+                        'snapcraft_file': '.snapcraft.yaml',
+                    },
+                    {
+                        'path': 'hidden_snapcraft_yaml',
+                        'snapcraft_file': 'snapcraft.yaml',
+                    },
+
+                ]
+            }),
         ('snap/snapcraft.yaml',
-            {'wiki_file': 'snap.snapcraft.yaml',
-             'expect_valid': True, 'expect_output': True}),
+            {
+                'wiki_file': 'snap.snapcraft.yaml',
+                'expect_valid': True,
+                'expect_output': True,
+                'snapcraft_files': [
+                    {
+                        'path': 'hidden_snapcraft_yaml',
+                        'snapcraft_file': 'snap/snapcraft.yaml',
+                    },
+
+                ]
+            }),
         ('Missing .snapcraft.yaml file',
-            {'wiki_file': 'missing_parts_wiki',
-             'expect_valid': False, 'expect_output': True}),
+            {
+                'wiki_file': 'missing_parts_wiki',
+                'expect_valid': False,
+                'expect_output': True,
+                'snapcraft_files': [
+                    {
+                        'path': 'hidden_snapcraft_yaml',
+                        'snapcraft_file': 'missing_snapcraft.yaml',
+                    },
+
+                ]
+            }),
         ('Origin type, branch and commit options',
-            {'wiki_file': 'origin_options_wiki',
-             'expect_valid': True, 'expect_output': True}),
+            {
+                'wiki_file': 'origin_options_wiki',
+                'expect_valid': True,
+                'expect_output': True,
+                'snapcraft_files': [
+                    {
+                        'path': 'origin_options_snapcraft_yaml',
+                        'snapcraft_file': 'snapcraft.yaml',
+                    },
+
+                ]
+            }),
         ('Origin type, branch and commit options (wrong values)',
-            {'wiki_file': 'wrong_origin_options_wiki',
-             'expect_valid': False, 'expect_output': False}),
+            {
+                'wiki_file': 'wrong_origin_options_wiki',
+                'expect_valid': False,
+                'expect_output': False,
+                'snapcraft_files': [
+                    {
+                        'path': 'wrong_origin_options_snapcraft_yaml',
+                        'snapcraft_file': 'snapcraft.yaml',
+                    },
+
+                ]
+            }),
     ]
 
-    def test_parse_wiki(self):
-        wiki_file = os.path.join(os.path.dirname(__file__), self.wiki_file)
-        self.call_parser(wiki_file, self.expect_valid, self.expect_output)
+    def test_local_wiki(self):
+        repo_dir = 'repo'
+        base_dir = os.path.dirname(__file__)
+        wiki_file = os.path.join(base_dir, self.wiki_file)
+
+        commit = self._setup_origin(self.snapcraft_files, repo_dir, base_dir)
+        self._setup_wiki_file(wiki_file, repo_dir, commit)
+        self.call_parser('wiki', self.expect_valid, self.expect_output)

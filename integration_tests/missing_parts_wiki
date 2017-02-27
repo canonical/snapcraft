@@ -2,4 +2,5 @@
 description: a test part
 maintainer: John Doe <john.doe@example.com>
 parts: [testpart-missing]
-origin: lp:~joetalbott/+junk/testpart-missing
+origin: $ORIGIN
+origin-type: git
