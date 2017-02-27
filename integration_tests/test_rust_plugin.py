@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 
 from testtools.matchers import FileExists, Not
 
@@ -25,14 +26,18 @@ import integration_tests
 class RustPluginTestCase(integration_tests.TestCase):
 
     def run_snapcraft(self, command, project_dir=None, debug=True):
-        print(snapcraft.ProjectOptions().deb_arch)
-        if snapcraft.ProjectOptions().deb_arch == 'arm64':
-            # https://github.com/rust-lang/rustup.sh/issues/82
-            self.expectFailure(
-                'The rustup script does not support arm64.',
-                super().run_snapcraft, command, project_dir, debug)
-
-        super().run_snapcraft(command, project_dir, debug)
+        try:
+            failed = True
+            super().run_snapcraft(command, project_dir, debug)
+            failed = False
+        except subprocess.CalledProcessError:
+            if snapcraft.ProjectOptions().deb_arch == 'arm64':
+                # https://github.com/rust-lang/rustup.sh/issues/82
+                self.expectFailure(
+                    'The rustup script does not support arm64.',
+                    self.assertTrue, failed)
+            else:
+                raise
 
     def test_stage_rust_plugin(self):
         self.run_snapcraft('stage', 'rust-hello')

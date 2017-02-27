@@ -31,13 +31,19 @@ class ROSTestCase(snaps_tests.SnapsTestCase):
     @skipUnless(linux_distribution()[2] == 'xenial',
                 'This test fails on yakkety LP: #1614476')
     def test_ros(self):
-        if snapcraft.ProjectOptions().deb_arch == 'arm64':
-            # https://bugs.launchpad.net/snapcraft/+bug/1662915
-            self.expectFailure(
-                'There are no ros-indigo packages in the ros archive',
-                self.build_snap, self.snap_content_dir, timeout=1800)
+        try:
+            failed = True
+            snap_path = self.build_snap(self.snap_content_dir, timeout=1800)
+            failed = False
+        except subprocess.CalledProcessError:
+            if snapcraft.ProjectOptions().deb_arch == 'arm64':
+                # https://bugs.launchpad.net/snapcraft/+bug/1662915
+                self.expectFailure(
+                    'There are no arm64 Indigo packages in the ROS archive',
+                    self.assertTrue, failed)
+            else:
+                raise
 
-        snap_path = self.build_snap(self.snap_content_dir, timeout=1800)
         self.install_snap(snap_path, 'ros-example', '1.0')
         # check that the hardcoded /usr/bin/python in rosversion
         # is changed to using /usr/bin/env python
