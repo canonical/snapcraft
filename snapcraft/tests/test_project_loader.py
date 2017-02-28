@@ -1554,17 +1554,17 @@ parts:
         config = project_loader.Config()
         environment = config.stage_env()
         self.assertIn(
-            'LDFLAGS="$LDFLAGS -Wl,-z,nodefaultlib '
+            'LDFLAGS="$LDFLAGS '
             '-Wl,--dynamic-linker={core_dynamic_linker} '
             '-Wl,-rpath,'
-            '/snap/core/current/lib:'
-            '/snap/core/current/usr/lib:'
-            '/snap/core/current/lib/{arch_triplet}:'
-            '/snap/core/current/usr/lib/{arch_triplet}:'
             '/snap/test/current/lib:'
             '/snap/test/current/usr/lib:'
             '/snap/test/current/lib/{arch_triplet}:'
-            '/snap/test/current/usr/lib/{arch_triplet}"'.format(
+            '/snap/test/current/usr/lib/{arch_triplet}:'
+            '/snap/core/current/lib:'
+            '/snap/core/current/usr/lib:'
+            '/snap/core/current/lib/{arch_triplet}:'
+            '/snap/core/current/usr/lib/{arch_triplet}"'.format(
                 core_dynamic_linker=dynamic_linker,
                 arch_triplet=self.arch_triplet),
             environment)
@@ -1734,6 +1734,27 @@ parts:
                 parts_dir=self.parts_dir,
                 stage_dir=self.stage_dir,
                 arch_triplet=self.arch_triplet))
+
+    @unittest.mock.patch('snapcraft.ProjectOptions')
+    def test_parts_build_env_contains_parallel_build_count(self, pomock):
+        type(snapcraft.ProjectOptions.return_value).parallel_build_count = \
+            unittest.mock.PropertyMock(return_value='fortytwo')
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+grade: stable
+
+parts:
+  part1:
+    plugin: nil
+""")
+        config = project_loader.Config()
+        part1 = [part for part in
+                 config.parts.all_parts if part.name == 'part1'][0]
+        env = config.parts.build_env_for_part(part1)
+        self.assertIn('SNAPCRAFT_PARALLEL_BUILD_COUNT=fortytwo', env)
 
 
 class ValidationBaseTestCase(tests.TestCase):
