@@ -90,12 +90,13 @@ class TestParserWikis(testscenarios.WithScenarios, ParserTestCase):
         previous_dir = os.getcwd()
         os.chdir(repo_dir)
 
-        subprocess.check_call(['git', 'config', 'user.name', 'Test User'])
-        subprocess.check_call(
-            ['git', 'config', 'user.email', '<test.user@example.com'])
         subprocess.check_call(['git', 'init', '.'],
                               stdout=subprocess.DEVNULL,
                               stderr=subprocess.DEVNULL)
+        subprocess.check_output(
+            ['git', 'config', 'user.name', 'Test User'])
+        subprocess.check_output(
+            ['git', 'config', 'user.email', '<test.user@example.com'])
 
         for snapcraft_file in snapcraft_files:
             snapcraft_content_path = os.path.join(
