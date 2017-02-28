@@ -32,16 +32,13 @@ class TestChecksum(tests.TestCase):
         super().setUp()
 
     def test_invalid_checksum(self):
-        # Create zip file for testing
+        # Create a file for testing
         os.makedirs(os.path.join('src'))
-        file_to_zip = os.path.join('src', 'test.txt')
-        open(file_to_zip, 'w').close()
-        zip_file = zipfile.ZipFile(os.path.join('src', 'test.zip'), 'w')
-        zip_file.write(file_to_zip)
-        zip_file.close()
+        dummy_file = os.path.join('src', 'test')
+        open(dummy_file, 'w').close()
 
         self.assertRaises(AttributeError, sources.verify_checksum, '456/abcde',
-                          'src/test.zip')
+                          dummy_file)
 
     def test_correct_checksum(self):
         # Create zip file for testing
