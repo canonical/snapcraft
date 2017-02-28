@@ -76,7 +76,7 @@ class PluginHandler:
         self._name = part_name
         self._part_properties = _expand_part_properties(
             part_properties, part_schema)
-        self.pkg_list = []
+        self.stage_packages = []
 
         # Some legacy parts can have a '/' in them to separate the main project
         # part with the subparts. This is rather unfortunate as it affects the
@@ -306,7 +306,7 @@ class PluginHandler:
 
     def _fetch_stage_packages(self):
         try:
-            self.pkg_list = self._stage_package_handler.fetch()
+            self.stage_packages = self._stage_package_handler.fetch()
         except repo.PackageNotFoundError as e:
             raise RuntimeError("Error downloading stage packages for part "
                                "{!r}: {}".format(self.name, e.message))
@@ -334,7 +334,7 @@ class PluginHandler:
 
         self.mark_done('pull', states.PullState(
             pull_properties, part_properties=self._part_properties,
-            project=self._project_options, pkg_list=self.pkg_list))
+            project=self._project_options, stage_packages=self.stage_packages))
 
     def clean_pull(self, hint=''):
         if self.is_clean('pull'):

@@ -81,13 +81,13 @@ class StagePackageHandler:
         the cache.
         """
 
-        self.pkg_list = []
+        pkg_list = []
         if self._stage_packages:
             logger.debug('Fetching stage-packages {!r}'.format(
                 self._stage_packages))
-            self.pkg_list = self._ubuntu.get(self._stage_packages)
+            pkg_list = self._ubuntu.get(self._stage_packages)
 
-        return self.pkg_list
+        return pkg_list
 
     def unpack(self, unpack_dir):
         """Unpack fetched stage packages into directory.

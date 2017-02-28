@@ -35,5 +35,5 @@ class AssetTrackingTestCase(integration_tests.TestCase):
             state = yaml.load(f)
 
         # Verify that the correct version of 'hello' is installed
-        self.assertTrue(len(state.pkg_list) > 0)
-        self.assertIn('hello=2.10-1', state.pkg_list)
+        self.assertTrue(len(state.assets['stage-packages']) > 0)
+        self.assertIn('hello=2.10-1', state.assets['stage-packages'])

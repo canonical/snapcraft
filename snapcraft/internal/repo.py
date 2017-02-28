@@ -288,11 +288,8 @@ class Ubuntu:
             return package_name in apt_cache
 
     def get(self, package_names):
-        pkg_list = []
         with self._apt.archive(self._cache.base_dir) as apt_cache:
-            pkg_list = self._get(apt_cache, package_names)
-
-        return pkg_list
+            return self._get(apt_cache, package_names)
 
     def _get(self, apt_cache, package_names):
         manifest_dep_names = self._manifest_dep_names(apt_cache)
