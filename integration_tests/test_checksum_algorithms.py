@@ -17,49 +17,44 @@
 import subprocess
 
 import integration_tests
+import testscenarios
 
 
-class ChecksumAlgorithmsTestCase(integration_tests.TestCase):
+class ChecksumAlgorithmsTestCase(testscenarios.WithScenarios,
+                                 integration_tests.TestCase):
+
+    scenarios = [
+        (project_dir,
+            {'project_dir': project_dir}) for project_dir in [
+                                           'checksum-algorithms',
+                                           'deb-with-checksum',
+                                           'rpm-with-checksum']
+        ]
 
     def test_checksum_algorithms(self):
-        project_dir = 'checksum-algorithms'
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft('pull', self.project_dir)
+
+
+class InvalidChecksumsTestCase(testscenarios.WithScenarios,
+                               integration_tests.TestCase):
+
+    scenarios = [
+        (part,
+            {'part': part}) for part in [
+                             'checksum-md5',
+                             'checksum-sha1',
+                             'checksum-sha224',
+                             'checksum-sha256',
+                             'checksum-sha384',
+                             'checksum-sha512',
+                             'checksum-sha3-284',
+                             'checksum-sha3-256',
+                             'checksum-sha3-512']
+        ]
 
     def test_checksum_invalid(self):
         project_dir = 'checksum-algorithms-invalid'
         self.assertRaises(subprocess.CalledProcessError,
                           self.run_snapcraft,
-                          ['pull', 'checksum-md5'],
-                          project_dir)
-        self.assertRaises(subprocess.CalledProcessError,
-                          self.run_snapcraft,
-                          ['pull', 'checksum-sha1'],
-                          project_dir)
-        self.assertRaises(subprocess.CalledProcessError,
-                          self.run_snapcraft,
-                          ['pull', 'checksum-sha224'],
-                          project_dir)
-        self.assertRaises(subprocess.CalledProcessError,
-                          self.run_snapcraft,
-                          ['pull', 'checksum-sha256'],
-                          project_dir)
-        self.assertRaises(subprocess.CalledProcessError,
-                          self.run_snapcraft,
-                          ['pull', 'checksum-sha384'],
-                          project_dir)
-        self.assertRaises(subprocess.CalledProcessError,
-                          self.run_snapcraft,
-                          ['pull', 'checksum-sha512'],
-                          project_dir)
-        self.assertRaises(subprocess.CalledProcessError,
-                          self.run_snapcraft,
-                          ['pull', 'checksum-sha3-256'],
-                          project_dir)
-        self.assertRaises(subprocess.CalledProcessError,
-                          self.run_snapcraft,
-                          ['pull', 'checksum-sha3-384'],
-                          project_dir)
-        self.assertRaises(subprocess.CalledProcessError,
-                          self.run_snapcraft,
-                          ['pull', 'checksum-sha3-512'],
+                          ['pull', self.part],
                           project_dir)

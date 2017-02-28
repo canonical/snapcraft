@@ -95,6 +95,7 @@ from ._tar import Tar                # noqa
 from ._zip import Zip                # noqa
 from . import errors
 
+# In python >= 3.6 sha3 support is upstreamed in hashlib
 if sys.version_info < (3, 6):
     import sha3  # noqa
 
