@@ -80,6 +80,38 @@ class RevisionsTestCase(integration_tests.StoreTestCase):
         self.assertThat(output, Contains(expected))
 
     @unittest.skipUnless(
+        os.getenv('TEST_STORE', 'fake') == 'fake', 'Skip fake store.')
+    def test_list_revisions_fake_store(self):
+        self.addCleanup(self.logout)
+        self.login()
+
+        output = self.run_snapcraft(['list-revisions', 'basic'])
+        expected = '\n'.join((
+            'Rev.    Uploaded              Arch    Version    Channels',
+            '2       2016-09-27T19:23:40Z  i386    2.0.1      -',
+            '1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge'
+        ))
+        self.assertThat(output, Contains(expected))
+
+    @unittest.skipUnless(
+        os.getenv('TEST_STORE', 'fake') == 'fake', 'Skip fake store.')
+    def test_history_fake_store(self):
+        self.addCleanup(self.logout)
+        self.login()
+
+        output = self.run_snapcraft(['history', 'basic'])
+        expected = '\n'.join((
+            'Rev.    Uploaded              Arch    Version    Channels',
+            '2       2016-09-27T19:23:40Z  i386    2.0.1      -',
+            '1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge'
+        ))
+        self.assertThat(output, Contains(expected))
+
+        self.assertThat(output, Contains(
+            "DEPRECATED: The 'history' command has "
+            "been replaced by 'revisions'."))
+
+    @unittest.skipUnless(
         os.getenv('TEST_STORE', 'fake') == 'staging', 'Skip staging store.')
     def test_revisions_staging_store(self):
         self.addCleanup(self.logout)
