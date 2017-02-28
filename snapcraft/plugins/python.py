@@ -193,24 +193,35 @@ class PythonPlugin(snapcraft.BasePlugin):
         else:
             return unstaged_python
 
+    def _get_python_headers(self):
+        base_match = os.path.join('usr', 'include', '{}*'.format(
+            self.options.python_version))
+        unstaged_python = glob(os.path.join(os.path.sep, base_match))
+        staged_python = glob(os.path.join(self.project.stage_dir, base_match))
+
+        if staged_python:
+            return staged_python[0]
+        elif unstaged_python:
+            return unstaged_python[0]
+        else:
+            return ''
+
     def _install_pip(self, download):
-        env = os.environ.copy()
-        env['PYTHONUSERBASE'] = self.installdir
+        env = self._get_build_env()
         # since we are using an independent env we need to export this too
         # TODO: figure out if we can move back to common.run
         env['SNAPCRAFT_STAGE'] = self.project.stage_dir
         env['SNAPCRAFT_PART_INSTALL'] = self.installdir
-
-        args = ['pip', 'setuptools', 'wheel']
-
-        pip_command = [self._get_python_command(), '-m', 'pip']
-
-        # If python_command it is not from stage we don't have pip, which means
+        # If python_command is not from stage we don't have pip, which means
         # we are going to need to resort to the pip installed on the system
         # that came from build-packages. This shouldn't be a problem as
         # stage-packages and build-packages should match.
         if not self._get_python_command().startswith(self.project.stage_dir):
             env['PYTHONHOME'] = '/usr'
+
+        args = ['pip', 'setuptools', 'wheel']
+
+        pip_command = [self._get_python_command(), '-m', 'pip']
 
         pip = _Pip(exec_func=subprocess.check_call,
                    runnable=pip_command,
@@ -232,12 +243,14 @@ class PythonPlugin(snapcraft.BasePlugin):
         env['PATH'] = '{}:{}'.format(
             os.path.join(self.installdir, 'usr', 'bin'),
             os.path.expandvars('$PATH'))
-        headers = glob(os.path.join(
-            os.path.sep, 'usr', 'include', '{}*'.format(
-                self.options.python_version)))
+
+        headers = self._get_python_headers()
         if headers:
-            env['CPPFLAGS'] = '-I{} {}'.format(
-                headers[0], env.get('CPPFLAGS', ''))
+            current_cppflags = env.get('CPPFLAGS', '')
+            env['CPPFLAGS'] = '-I{}'.format(headers)
+            if current_cppflags:
+                env['CPPFLAGS'] = '{} {}'.format(
+                    env['CPPFLAGS'], current_cppflags)
 
         return env
 

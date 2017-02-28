@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import multiprocessing
 import os
 
 import integration_tests
@@ -39,6 +40,9 @@ class ScriptletTestCase(integration_tests.TestCase):
         installdir = os.path.join(partdir, 'install')
 
         touch_file_path = os.path.join(builddir, 'build-build')
+        self.assertThat(touch_file_path, FileExists())
+        jobs_file_name = 'jobs-{}'.format(multiprocessing.cpu_count())
+        touch_file_path = os.path.join(builddir, jobs_file_name)
         self.assertThat(touch_file_path, FileExists())
         touch_file_path = os.path.join(installdir, 'build-install')
         self.assertThat(touch_file_path, FileExists())
