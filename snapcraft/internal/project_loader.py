@@ -329,12 +329,13 @@ def _build_env(root, snap_name, confinement, arch_triplet,
         snap_rpaths = common.get_library_paths(snap_path, arch_triplet,
                                                existing_only=False)
 
+        # snap_rpaths before core_rpaths to prefer libraries from the snap.
         rpaths = formatting_utils.combine_paths(
-            core_rpaths + snap_rpaths, prepend='', separator=':')
+            snap_rpaths + core_rpaths, prepend='', separator=':')
         env.append('LDFLAGS="$LDFLAGS '
                    # Building tools to continue the build becomes problematic
                    # with nodefaultlib.
-                   '-Wl,-z,nodefaultlib '
+                   # '-Wl,-z,nodefaultlib '
                    '-Wl,--dynamic-linker={0} '
                    '-Wl,-rpath,{1}"'.format(core_dynamic_linker, rpaths))
 
