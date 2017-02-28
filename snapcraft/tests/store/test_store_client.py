@@ -927,7 +927,7 @@ class MacaroonsTestCase(tests.TestCase):
             storeapi._macaroon_auth, conf)
 
 
-class GetSnapHistoryTestCase(tests.TestCase):
+class GetSnapRevisionsTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -951,62 +951,64 @@ class GetSnapHistoryTestCase(tests.TestCase):
             'revision': 1,
         }]
 
-    def test_get_snap_history_without_login_raises_exception(self):
+    def test_get_snap_revisions_without_login_raises_exception(self):
         self.assertRaises(
             errors.InvalidCredentialsError,
-            self.client.get_snap_history, 'basic')
+            self.client.get_snap_revisions, 'basic')
 
-    def test_get_snap_history_successfully(self):
+    def test_get_snap_revisions_successfully(self):
         self.client.login('dummy', 'test correct password')
-        self.assertEqual(self.expected, self.client.get_snap_history('basic'))
+        self.assertEqual(self.expected,
+                         self.client.get_snap_revisions('basic'))
 
-    def test_get_snap_history_filter_by_series(self):
+    def test_get_snap_revisions_filter_by_series(self):
         self.client.login('dummy', 'test correct password')
         self.assertEqual(
             self.expected,
-            self.client.get_snap_history('basic', series='16'))
+            self.client.get_snap_revisions('basic', series='16'))
 
-    def test_get_snap_history_filter_by_arch(self):
+    def test_get_snap_revisions_filter_by_arch(self):
         self.client.login('dummy', 'test correct password')
         self.assertEqual(
             [rev for rev in self.expected if rev['arch'] == 'amd64'],
-            self.client.get_snap_history('basic', arch='amd64'))
+            self.client.get_snap_revisions('basic', arch='amd64'))
 
-    def test_get_snap_history_filter_by_series_and_filter(self):
+    def test_get_snap_revisions_filter_by_series_and_filter(self):
         self.client.login('dummy', 'test correct password')
         self.assertEqual(
             [rev for rev in self.expected
              if '16' in rev['series'] and rev['arch'] == 'amd64'],
-            self.client.get_snap_history(
+            self.client.get_snap_revisions(
                 'basic', series='16', arch='amd64'))
 
-    def test_get_snap_history_filter_by_unknown_series(self):
+    def test_get_snap_revisions_filter_by_unknown_series(self):
         self.client.login('dummy', 'test correct password')
         e = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
-            self.client.get_snap_history, 'basic', series='12')
+            self.client.get_snap_revisions, 'basic', series='12')
         self.assertEqual(
             "Snap 'basic' was not found in '12' series.",
             str(e))
 
-    def test_get_snap_history_filter_by_unknown_arch(self):
+    def test_get_snap_revisions_filter_by_unknown_arch(self):
         self.client.login('dummy', 'test correct password')
         e = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
-            self.client.get_snap_history, 'basic', arch='somearch')
+            self.client.get_snap_revisions, 'basic', arch='somearch')
         self.assertEqual(
             "Snap 'basic' for 'somearch' was not found in '16' series.",
             str(e))
 
-    def test_get_snap_history_refreshes_macaroon(self):
+    def test_get_snap_revisions_refreshes_macaroon(self):
         self.client.login('dummy', 'test correct password')
         self.fake_store.needs_refresh = True
-        self.assertEqual(self.expected, self.client.get_snap_history('basic'))
+        self.assertEqual(self.expected,
+                         self.client.get_snap_revisions('basic'))
         self.assertFalse(self.fake_store.needs_refresh)
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     @mock.patch.object(storeapi.SCAClient, 'get')
-    def test_get_snap_history_server_error(
+    def test_get_snap_revisions_server_error(
             self, mock_sca_get, mock_account_info):
         mock_account_info.return_value = {
             'snaps': {
@@ -1019,10 +1021,10 @@ class GetSnapHistoryTestCase(tests.TestCase):
 
         self.client.login('dummy', 'test correct password')
         e = self.assertRaises(
-            storeapi.errors.StoreSnapHistoryError,
-            self.client.get_snap_history, 'basic')
+            storeapi.errors.StoreSnapRevisionsError,
+            self.client.get_snap_revisions, 'basic')
         self.assertEqual(
-            "Error fetching history of snap id 'my_snap_id' for 'any arch' "
+            "Error fetching revisions of snap id 'my_snap_id' for 'any arch' "
             "in '16' series: 500 Server error.",
             str(e))
 
