@@ -35,12 +35,12 @@ class ROSTestCase(snaps_tests.SnapsTestCase):
             failed = True
             snap_path = self.build_snap(self.snap_content_dir, timeout=1800)
             failed = False
-        except subprocess.CalledProcessError:
+        except snaps_tests.CommandError::
             if snapcraft.ProjectOptions().deb_arch == 'arm64':
                 # https://bugs.launchpad.net/snapcraft/+bug/1662915
                 self.expectFailure(
                     'There are no arm64 Indigo packages in the ROS archive',
-                    self.assertTrue, failed)
+                    self.assertFalse, failed)
             else:
                 raise
 

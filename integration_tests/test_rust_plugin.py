@@ -35,7 +35,7 @@ class RustPluginTestCase(integration_tests.TestCase):
                 # https://github.com/rust-lang/rustup.sh/issues/82
                 self.expectFailure(
                     'The rustup script does not support arm64.',
-                    self.assertTrue, failed)
+                    self.assertFalse, failed)
             else:
                 raise
 
