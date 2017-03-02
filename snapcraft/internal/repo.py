@@ -177,6 +177,25 @@ class _AptCache:
         # Do not install recommends
         apt.apt_pkg.config.set('Apt::Install-Recommends', 'False')
 
+        # Methods and solvers dir for when in the SNAP
+        if os.getenv('SNAP'):
+            snap_dir = os.getenv('SNAP')
+            apt_dir = os.path.join(snap_dir, 'apt')
+            apt.apt_pkg.config.set('Dir', apt_dir)
+            # yes apt is broken like that we need to append os.path.sep
+            apt.apt_pkg.config.set('Dir::Bin::methods',
+                                   apt_dir + os.path.sep)
+            apt.apt_pkg.config.set('Dir::Bin::solvers::',
+                                   apt_dir + os.path.sep)
+            apt_key_path = os.path.join(apt_dir, 'apt-key')
+            apt.apt_pkg.config.set('Dir::Bin::apt-key', apt_key_path)
+            gpgv_path = os.path.join(snap_dir, 'bin', 'gpgv')
+            apt.apt_pkg.config.set('Apt::Key::gpgvcommand', gpgv_path)
+            apt.apt_pkg.config.set('Dir::Etc::Trusted',
+                                   '/etc/apt/trusted.gpg')
+            apt.apt_pkg.config.set('Dir::Etc::TrustedParts',
+                                   '/etc/apt/trusted.gpg.d/')
+
         # Make sure we always use the system GPG configuration, even with
         # apt.Cache(rootdir).
         for key in 'Dir::Etc::Trusted', 'Dir::Etc::TrustedParts':
@@ -473,9 +492,8 @@ def _fix_xml_tools(root):
 
 def _fix_symlink(path, debdir, root):
     target = os.path.join(debdir, os.readlink(path)[1:])
-    if _link_should_be_removed(os.readlink(path)):
-        logger.debug('Removing {}'.format(target))
-        os.remove(path)
+    if _skip_link(os.readlink(path)):
+        logger.debug('Skipping {}'.format(target))
         return
     if not os.path.exists(target) and not _try_copy_local(path, target):
         return
@@ -499,16 +517,16 @@ def _fix_shebangs(path):
                                    r'#!/usr/bin/env python\n')
 
 
-_remove_list = None
+_skip_list = None
 
 
-def _link_should_be_removed(target):
-    global _remove_list
-    if not _remove_list:
+def _skip_link(target):
+    global _skip_list
+    if not _skip_list:
         output = common.run_output(['dpkg', '-L', 'libc6']).split()
-        _remove_list = [i for i in output if 'lib' in i]
+        _skip_list = [i for i in output if 'lib' in i]
 
-    return target in _remove_list
+    return target in _skip_list
 
 
 def _try_copy_local(path, target):
