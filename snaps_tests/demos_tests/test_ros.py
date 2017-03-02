@@ -35,7 +35,7 @@ class ROSTestCase(snaps_tests.SnapsTestCase):
             failed = True
             snap_path = self.build_snap(self.snap_content_dir, timeout=1800)
             failed = False
-        except snaps_tests.CommandError::
+        except snaps_tests.CommandError:
             if snapcraft.ProjectOptions().deb_arch == 'arm64':
                 # https://bugs.launchpad.net/snapcraft/+bug/1662915
                 self.expectFailure(
