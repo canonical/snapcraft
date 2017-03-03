@@ -1,5 +1,5 @@
 name: ftp-source
-version: 0.2.3
+version: 0.1
 summary: Test downloading files from ftp source
 description: |
   Make sure sources can be fetched from FTP servers.
@@ -9,6 +9,6 @@ grade: devel
 confinement: devmode
 
 parts:
-  libwnck:
+  ftp-part:
     plugin: dump
-    source: ftp://ftp.kernel.org/pub/software/admin/A3Com/A3Com-0.2.3.tar.gz
+    source: ftp://localhost:2121/test.tar.gz
