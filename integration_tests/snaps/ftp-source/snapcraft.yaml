@@ -9,6 +9,6 @@ grade: devel
 confinement: devmode
 
 parts:
-  libwnck:
+  ftp-part:
     plugin: dump
-    source: ftp://ftp.ubuntu.com/ubuntu/pool/main/a/a11y-profile-manager/a11y-profile-manager_0.1.11.orig.tar.xz
+    source: ftp://localhost:2121/test.tar.gz
