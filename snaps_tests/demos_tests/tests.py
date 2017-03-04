@@ -23,11 +23,6 @@ class TestSnapcraftExamples(
         testscenarios.WithScenarios, snaps_tests.SnapsTestCase):
 
     scenarios = [
-        ('godd', {
-            'snap_content_dir': 'godd',
-            'name': 'godd',
-            'version': '1.0',
-            }),
         ('py2-project', {
             'snap_content_dir': 'py2-project',
             'name': 'spongeshaker',
