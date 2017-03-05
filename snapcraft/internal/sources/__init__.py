@@ -91,6 +91,8 @@ from ._script import Script          # noqa
 from ._subversion import Subversion  # noqa
 from ._tar import Tar                # noqa
 from ._zip import Zip                # noqa
+from._7z import _7z                  # noqa
+
 if sys.platform == 'linux':
     from ._deb import Deb            # noqa
     from ._rpm import Rpm            # noqa
@@ -149,6 +151,7 @@ _source_handler = {
     'svn': Subversion,
     'tar': Tar,
     'zip': Zip,
+    '7z': _7z
 }
 if sys.platform == 'linux':
     _source_handler['deb'] = Deb
@@ -187,6 +190,8 @@ def _get_source_type_from_uri(source, ignore_errors=False):  # noqa: C901
         source_type = 'deb'
     elif source.endswith('rpm'):
         source_type = 'rpm'
+    elif source.endswith('7z'):
+        source_type = '7z'
     elif common.isurl(source) and not ignore_errors:
         raise ValueError('no handler to manage source ({})'.format(source))
     elif not os.path.isdir(source) and not ignore_errors:
