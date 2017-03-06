@@ -54,8 +54,7 @@ class _7z(FileBase):
         # Open the 7z file and extract it to destination
         with libarchive.file_reader(_7z_file) as archive:
             for file_entry in archive:
-                entrypath = file_entry.pathname.lstrip('./')
-                file_entry.pathname = os.path.join(dst, entrypath)
+                file_entry.pathname = os.path.join(dst, file_entry.pathname)
                 libarchive.extract.extract_entries([file_entry])
 
         if not keep_7z:
