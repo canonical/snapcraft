@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -38,7 +38,11 @@ class MosquittoTestCase(snaps_tests.SnapsTestCase):
                 ['/snap/bin/mosquitto.publish', 'test-mosquitto-topic',
                  'test-message'], '')
             self.assert_command_in_snappy_testbed(
+                ['/snap/bin/mosquitto.publish', 'test-mosquitto-topic',
+                 'exit'], '')
+            self.assert_command_in_snappy_testbed(
                 ['cat', '/home/ubuntu/snap/mosquitto/*/'
                  'mosquitto.subscriber.log'],
                 'MQTT subscriber connected.\n'
-                "test-mosquitto-topic b'test-message'\n")
+                "test-mosquitto-topic b'test-message'\n"
+                "test-mosquitto-topic b'exit'\n")
