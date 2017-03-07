@@ -863,7 +863,7 @@ ACCEPT=n
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      project_options)
 
-        self.assertEqual(plugin.make_targets, ['Image', 'modules'])
+        self.assertEqual(plugin.make_targets, ['Image', 'modules', 'dtbs'])
 
     def test_kernel_image_target_as_string(self):
         self.options.kernel_image_target = 'Image'
@@ -871,7 +871,7 @@ ACCEPT=n
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      project_options)
 
-        self.assertEqual(plugin.make_targets, ['Image', 'modules'])
+        self.assertEqual(plugin.make_targets, ['Image', 'modules', 'dtbs'])
 
     def test_kernel_image_target_non_existent(self):
         class Options:
@@ -888,7 +888,7 @@ ACCEPT=n
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      project_options)
 
-        self.assertEqual(plugin.make_targets, ['bzImage', 'modules'])
+        self.assertEqual(plugin.make_targets, ['bzImage', 'modules', 'dtbs'])
 
     @mock.patch.object(storeapi.StoreClient, 'download')
     def test_pull(self, download_mock):

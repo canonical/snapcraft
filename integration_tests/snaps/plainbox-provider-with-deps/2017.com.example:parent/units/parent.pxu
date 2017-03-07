@@ -1,0 +1,20 @@
+
+unit: category
+id: parent
+_name: Parent
+
+unit: job
+id: myresource
+category_id: parent
+_summary: An example resource job
+_description:
+   Create two resource objects
+plugin: resource
+estimated_duration: 0.01
+command:
+  echo "name: resource1"
+  echo "type: DISK"
+  echo ""
+  echo "name: resource2"
+  echo "type: AUDIO"
+flags: preserve-locale
