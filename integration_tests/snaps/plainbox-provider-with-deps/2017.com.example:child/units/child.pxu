@@ -1,0 +1,20 @@
+
+unit: category
+id: child
+_name: Child
+
+unit: template
+template-resource: 2017.com.example.parent::myresource
+template-filter: myresource.type == "DISK"
+template-unit: job
+id: echo-name-{type}
+category_id: child
+_summary: A test that prints the name of devices of the type DISK
+_description:
+ This test has a dependency on the resource job from the parent provider. The
+ validate build step if the parent can't be found in the stage directory.
+plugin: shell
+estimated_duration: 0.01
+command:
+  echo "disk: {name}"
+flags: preserve-locale
