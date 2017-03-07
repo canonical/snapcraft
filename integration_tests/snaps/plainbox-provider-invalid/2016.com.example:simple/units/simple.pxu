@@ -1,0 +1,15 @@
+
+unit: category
+id: simple
+_name: Simple
+
+unit: job
+id: missing-command-job
+category_id: simple
+_summary: A job defintion that is missing a command field
+_description:
+   This test is intentionally defined with a missing command field. This will
+   cause the validate step to fail during build.
+estimated_duration: 0.01
+command: true
+flags: preserve-locale
