@@ -1,0 +1,18 @@
+name: staged-libc-links
+version: '0.1'
+summary: Attempt to stage libc6-dev twice
+description: |
+  Once by pulling it in via stage-packages, and the other time via
+  a tarred staging area. They should not conflict.
+
+grade: devel
+confinement: devmode
+
+parts:
+  from-package:
+    plugin: nil
+    stage-packages: [libc6-dev]
+
+  from-tar:
+    plugin: dump
+    source: stage.tar

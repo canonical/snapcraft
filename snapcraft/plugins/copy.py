@@ -39,6 +39,7 @@ import os
 import glob
 
 import snapcraft
+from snapcraft.internal import libraries
 
 
 logger = logging.getLogger(__name__)
@@ -115,7 +116,9 @@ def _link_or_copy(source, destination, boundary):
         destination_dirname = os.path.dirname(destination)
         normalized = os.path.normpath(os.path.join(destination_dirname, link))
         if os.path.isabs(link) or not normalized.startswith(boundary):
-            follow_symlinks = True
+            # Only follow symlinks that are NOT pointing at libc (LP: #1658774)
+            if link not in libraries.libc_library_list():
+                follow_symlinks = True
 
     snapcraft.common.link_or_copy(source, destination,
                                   follow_symlinks=follow_symlinks)

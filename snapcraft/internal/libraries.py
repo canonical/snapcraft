@@ -20,6 +20,7 @@ import logging
 import os
 import platform
 import subprocess
+import sys
 
 from snapcraft.internal import common
 
@@ -86,7 +87,7 @@ def get_dependencies(elf):
 
     This may include libraries contained within the project.
     """
-    logger.debug('Getting dependencies for {!r}'.format(elf))
+    logger.debug('Getting dependencies for {!r}'.format(str(elf)))
     ldd_out = ''
     try:
         ldd_out = common.run_output(['ldd', elf]).split('\n')
@@ -102,3 +103,18 @@ def get_dependencies(elf):
     libs = [l for l in ldd_out if not os.path.basename(l) in system_libs]
 
     return libs
+
+
+_libc_lib_list = None
+
+
+def libc_library_list():
+    global _libc_lib_list
+    if not _libc_lib_list:
+        # No need to use common.run here, as nothing depends upon the snap's
+        # build environment.
+        output = subprocess.check_output(['dpkg', '-L', 'libc6']).decode(
+            sys.getfilesystemencoding()).strip().split()
+        _libc_lib_list = [i for i in output if 'lib' in i]
+
+    return _libc_lib_list

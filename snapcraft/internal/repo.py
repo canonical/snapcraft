@@ -39,6 +39,7 @@ from snapcraft import file_utils
 from snapcraft.internal import (
     cache,
     common,
+    libraries,
 )
 from snapcraft.internal.errors import MissingCommandError
 from snapcraft.internal.indicators import is_dumb_terminal
@@ -491,14 +492,18 @@ def _fix_xml_tools(root):
 
 
 def _fix_symlink(path, debdir, root):
-    target = os.path.join(debdir, os.readlink(path)[1:])
-    if _skip_link(os.readlink(path)):
-        logger.debug('Skipping {}'.format(target))
+    target = os.readlink(path)
+    debdir_target = os.path.join(debdir, os.readlink(path)[1:])
+
+    if target in libraries.libc_library_list():
+        logger.debug("Not fixing symlink {!r}: it's pointing to libc".format(
+            target))
         return
-    if not os.path.exists(target) and not _try_copy_local(path, target):
+    if (not os.path.exists(debdir_target) and not
+            _try_copy_local(path, debdir_target)):
         return
     os.remove(path)
-    os.symlink(os.path.relpath(target, root), path)
+    os.symlink(os.path.relpath(debdir_target, root), path)
 
 
 def _fix_filemode(path):
@@ -515,18 +520,6 @@ def _fix_shebangs(path):
         file_utils.replace_in_file(p, re.compile(r''),
                                    re.compile(r'#!.*python\n'),
                                    r'#!/usr/bin/env python\n')
-
-
-_skip_list = None
-
-
-def _skip_link(target):
-    global _skip_list
-    if not _skip_list:
-        output = common.run_output(['dpkg', '-L', 'libc6']).split()
-        _skip_list = [i for i in output if 'lib' in i]
-
-    return target in _skip_list
 
 
 def _try_copy_local(path, target):
