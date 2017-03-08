@@ -1,0 +1,14 @@
+name: rpm-with-checksum
+version: '0.1'
+summary: test checksum with RPMs sources
+description: |
+  This integration test verifies that RPM files can be with checksums.
+
+grade: devel
+confinement: devmode
+
+parts:
+  rpm-source-checksum:
+    plugin: dump
+    source: small-0.1-1.noarch.rpm
+    source-checksum: sha256/130cd966bc867e0583398f5983bfde3de5be6f06a0e2e7a29f248251eed2620c
