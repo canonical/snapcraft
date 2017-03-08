@@ -173,12 +173,18 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 self.options.kernel_image_target[self.project.deb_arch]
 
         self.make_targets = [self.kernel_image_target, 'modules']
+        self.make_install_targets = [
+            'modules_install', 'INSTALL_MOD_PATH={}'.format(self.installdir)]
         self.dtbs = ['{}.dtb'.format(i)
                      for i in self.options.kernel_device_trees]
         if self.dtbs:
             self.make_targets.extend(self.dtbs)
-        self.make_install_targets = [
-            'modules_install', 'INSTALL_MOD_PATH={}'.format(self.installdir)]
+        elif (self.project.kernel_arch == "arm" or
+                self.project.kernel_arch == "arm64"):
+            self.make_targets.append('dtbs')
+            self.make_install_targets.extend([
+                'dtbs_install',
+                'INSTALL_DTBS_PATH={}/dtbs'.format(self.installdir)])
         self.make_install_targets.extend(self._get_fw_install_targets())
 
     def _get_fw_install_targets(self):
