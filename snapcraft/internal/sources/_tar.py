@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,14 +22,15 @@ import tempfile
 
 from . import errors
 from ._base import FileBase
+from snapcraft.internal import sources
 
 
 class Tar(FileBase):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None):
+                 source_branch=None, source_depth=None, source_checksum=None):
         super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth)
+                         source_branch, source_depth, source_checksum)
         if source_tag:
             raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-tag for a tar source')
@@ -46,6 +47,9 @@ class Tar(FileBase):
     def provision(self, dst, clean_target=True, keep_tarball=False):
         # TODO add unit tests.
         tarball = os.path.join(self.source_dir, os.path.basename(self.source))
+
+        if self.source_checksum:
+            sources.verify_checksum(self.source_checksum, tarball)
 
         if clean_target:
             tmp_tarball = tempfile.NamedTemporaryFile().name
