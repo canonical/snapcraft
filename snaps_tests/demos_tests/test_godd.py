@@ -32,4 +32,4 @@ class GoddTestCase(snaps_tests.SnapsTestCase):
         self.run_command_in_snappy_testbed('mkdir -p ~/snap/godd/common')
         self.run_command_in_snappy_testbed('touch ~/snap/godd/common/test')
         self.run_command_in_snappy_testbed(
-            'godd ~/snap/godd/common/test /dev/null')
+            '/snap/bin/godd ~/snap/godd/common/test /dev/null')
