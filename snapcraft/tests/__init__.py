@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -41,7 +41,8 @@ class MockOptions:
 
     def __init__(self, source=None, source_type=None, source_branch=None,
                  source_tag=None, source_subdir=None, source_depth=None,
-                 source_commit=None, disable_parallel=False):
+                 source_commit=None, source_checksum=None,
+                 disable_parallel=False):
         self.source = source
         self.source_type = source_type
         self.source_depth = source_depth
