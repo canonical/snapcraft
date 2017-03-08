@@ -21,6 +21,7 @@ import platform
 
 from snapcraft.internal import common
 from snapcraft.internal.deprecations import handle_deprecation_notice
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 
 logger = logging.getLogger(__name__)
@@ -193,18 +194,31 @@ class ProjectOptions:
         However if core is not installed None will be returned.
         """
         core_path = common.get_core_path()
-        core_dynamic_linker = self.__machine_info.get('core-dynamic-linker',
-                                                      'lib/ld-linux.so.2')
+        dynamic_linker_path = os.path.join(
+            core_path,
+            self.__machine_info.get('core-dynamic-linker',
+                                    'lib/ld-linux.so.2'))
 
-        try:
-            dynamic_linker_resolved_path = os.readlink(
-                os.path.join(core_path, core_dynamic_linker))
-            dynamic_linker_path = os.path.join(
-                core_path, dynamic_linker_resolved_path.lstrip('/'))
-        except FileNotFoundError:
-            dynamic_linker_path = None
-
-        return dynamic_linker_path
+        # We can't use os.path.realpath because any absolute symlinks
+        # have to be interpreted relative to core_path, not the real
+        # root.
+        seen_paths = set()
+        while True:
+            if dynamic_linker_path in seen_paths:
+                raise SnapcraftEnvironmentError(
+                    "found symlink loop resolving dynamic linker path")
+            seen_paths.add(dynamic_linker_path)
+            if not os.path.exists(dynamic_linker_path):
+                return None
+            if not os.path.islink(dynamic_linker_path):
+                return dynamic_linker_path
+            link_contents = os.readlink(dynamic_linker_path)
+            if os.path.isabs(link_contents):
+                dynamic_linker_path = os.path.join(
+                    core_path, link_contents.lstrip('/'))
+            else:
+                dynamic_linker_path = os.path.join(
+                    os.path.dirname(dynamic_linker_path), link_contents)
 
     def _set_machine(self, target_deb_arch):
         self.__platform_arch = _get_platform_architecture()
