@@ -62,9 +62,8 @@ code for that part, and how to unpack it if necessary.
 
   - source-subdir: path
 
-    Snapcraft will checkout the repository or unpack the archive referred to
-    by the 'source' keyword into parts/<part-name>/src/ but it will only
-    copy the specified subdirectory into parts/<part-name>/build/
+    When building, Snapcraft will set the working directory to be this
+    subdirectory within the source.
 
 Note that plugins might well define their own semantics for the 'source'
 keywords, because they handle specific build systems, and many languages
