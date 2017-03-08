@@ -1,8 +1,8 @@
 name: stage-package-version
 version: '0.1'
-summary: install a specific version of a stage-package
+summary: install a specific, but non-existent version of a stage-package
 description: |
-  Install a specific version of  a stage-package
+  Install a specifi, but non-existent  version of  a stage-package
 
 grade: stable
 confinement: strict
