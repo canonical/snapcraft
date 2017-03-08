@@ -556,7 +556,7 @@ def _get_pkg_name_parts(pkg_name):
 
     name = pkg_name
     version = None
-    if '=' in pkg_name:
+    with contextlib.suppress(ValueError):
         name, version = pkg_name.split('=')
 
     return name, version
