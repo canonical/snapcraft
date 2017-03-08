@@ -1,0 +1,16 @@
+# http://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-1.0.html
+[Desktop Entry]
+Type=Application
+Version=1.0.1
+Encoding=UTF-8
+Name=Bitcoin Unlimited
+Icon=${SNAP}/meta/gui/bitcoin128.png
+MimeType=x-scheme-handler/bitcoin;
+Exec=bitcoin-qt %u
+Terminal=false
+Categories=Office;Finance;
+Comment=Bitcoin P2P Cryptocurrency
+Keywords=internet;bitcoin;
+Comment[fr]=Bitcoin, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=Bitcoin, eşten eşe kriptografik sanal para birimi
+
