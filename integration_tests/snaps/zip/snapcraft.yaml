@@ -6,7 +6,9 @@ confinement: strict
 
 parts:
   file1:
-    plugin: copy
+    plugin: dump
     source: simple.zip
-    files:
-        "*": .
+  zip-source-checksum:
+    plugin: dump
+    source: simple.zip
+    source-checksum: sha256/035ae7da4bd0ff39960466353e0810f51d17193a13e8b75e767391820aed484c

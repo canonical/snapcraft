@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,9 +24,9 @@ from ._base import Base
 class Mercurial(Base):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None):
+                 source_branch=None, source_depth=None, source_checksum=None):
         super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth, 'hg')
+                         source_branch, source_depth, source_checksum, 'hg')
         if source_tag and source_branch:
             raise errors.IncompatibleOptionsError(
                 'can\'t specify both source-tag and source-branch for a '
@@ -42,6 +42,9 @@ class Mercurial(Base):
         if source_depth:
             raise errors.IncompatibleOptionsError(
                 'can\'t specify source-depth for a mercurial source')
+        if source_checksum:
+            raise errors.IncompatibleOptionsError(
+                "can't specify a source-checksum for a mercurial source")
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.hg')):
