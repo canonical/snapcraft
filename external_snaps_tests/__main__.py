@@ -98,9 +98,7 @@ def _bzr_branch(url):
 def _build_snaps(path, cleanbuild=False, keep_dir=False):
     try:
         for dirpath, dirnames, filenames in os.walk(path, topdown=True):
-            if ('snap' in dirnames
-                    or 'snapcraft.yaml' in filenames
-                    or '.snapcraft.yaml' in filenames):
+            if _is_snapcraft_dir(dirpath, dirnames, filenames):
                 _build_snap(dirpath, cleanbuild, keep_dir)
                 # Do not recurse in any directory.
                 dirnames = []
@@ -113,6 +111,13 @@ def _build_snaps(path, cleanbuild=False, keep_dir=False):
                     path))
         else:
             shutil.rmtree(path)
+
+
+def _is_snapcraft_dir(dirpath, dirnames, filenames):
+    return (('snap' in dirnames and
+            'snapcraft.yaml' in os.listdir(os.path.join(dirpath, 'snap'))) or
+            'snapcraft.yaml' in filenames or
+            '.snapcraft.yaml' in filenames)
 
 
 def _build_snap(path, cleanbuild=False, keep_dir=False):
