@@ -97,9 +97,14 @@ def _bzr_branch(url):
 
 def _build_snaps(path, cleanbuild=False, keep_dir=False):
     try:
-        for dirpath, _, filenames in os.walk(path):
-            if 'snapcraft.yaml' in filenames or '.snapcraft.yaml' in filenames:
+        for dirpath, dirnames, filenames in os.walk(path, topdown=True):
+            if ('snap' in dirnames
+                    or 'snapcraft.yaml' in filenames
+                    or '.snapcraft.yaml' in filenames):
                 _build_snap(dirpath, cleanbuild, keep_dir)
+                if 'snap' in dirnames:
+                    # Do not recurse in any directory.
+                    dirnames = []
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
     finally:
