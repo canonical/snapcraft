@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snaps_tests
-
 import os
 import subprocess
 from platform import linux_distribution
 from unittest import skipUnless
+
+import snapcraft
+import snaps_tests
 
 
 class ROSTestCase(snaps_tests.SnapsTestCase):
@@ -29,6 +30,10 @@ class ROSTestCase(snaps_tests.SnapsTestCase):
     @skipUnless(linux_distribution()[2] == 'xenial',
                 'This test fails on yakkety LP: #1614476')
     def test_ros(self):
+        if snapcraft.ProjectOptions().deb_arch == 'arm64':
+            # https://bugs.launchpad.net/snapcraft/+bug/1662915
+            self.skipTest(
+                'There are no ros-indigo packages in the ros archive')
         snap_path = self.build_snap(self.snap_content_dir, timeout=1800)
         self.install_snap(snap_path, 'ros-example', '1.0')
         # check that the hardcoded /usr/bin/python in rosversion

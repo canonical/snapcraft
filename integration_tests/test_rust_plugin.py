@@ -18,10 +18,17 @@ import os
 
 from testtools.matchers import FileExists, Not
 
+import snapcraft
 import integration_tests
 
 
 class RustPluginTestCase(integration_tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        if snapcraft.ProjectOptions().deb_arch == 'armh64':
+            # https://github.com/rust-lang/rustup.sh/issues/82
+            self.skipTest('The rustup does not support arm64')
 
     def test_stage_rust_plugin(self):
         self.run_snapcraft('stage', 'rust-hello')
