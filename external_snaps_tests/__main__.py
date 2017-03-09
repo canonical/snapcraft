@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -115,7 +115,7 @@ def _build_snaps(path, cleanbuild=False, keep_dir=False):
 
 def _is_snapcraft_dir(dirpath, dirnames, filenames):
     return (('snap' in dirnames and
-            'snapcraft.yaml' in os.listdir(os.path.join(dirpath, 'snap'))) or
+             'snapcraft.yaml' in os.listdir(os.path.join(dirpath, 'snap'))) or
             'snapcraft.yaml' in filenames or
             '.snapcraft.yaml' in filenames)
 
