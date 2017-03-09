@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -97,9 +97,11 @@ def _bzr_branch(url):
 
 def _build_snaps(path, cleanbuild=False, keep_dir=False):
     try:
-        for dirpath, _, filenames in os.walk(path):
-            if 'snapcraft.yaml' in filenames or '.snapcraft.yaml' in filenames:
+        for dirpath, dirnames, filenames in os.walk(path, topdown=True):
+            if _is_snapcraft_dir(dirpath, dirnames, filenames):
                 _build_snap(dirpath, cleanbuild, keep_dir)
+                # Do not recurse in any directory.
+                del dirnames[:]
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
     finally:
@@ -109,6 +111,13 @@ def _build_snaps(path, cleanbuild=False, keep_dir=False):
                     path))
         else:
             shutil.rmtree(path)
+
+
+def _is_snapcraft_dir(dirpath, dirnames, filenames):
+    return (('snap' in dirnames and
+             'snapcraft.yaml' in os.listdir(os.path.join(dirpath, 'snap'))) or
+            'snapcraft.yaml' in filenames or
+            '.snapcraft.yaml' in filenames)
 
 
 def _build_snap(path, cleanbuild=False, keep_dir=False):
