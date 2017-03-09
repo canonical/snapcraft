@@ -102,9 +102,8 @@ def _build_snaps(path, cleanbuild=False, keep_dir=False):
                     or 'snapcraft.yaml' in filenames
                     or '.snapcraft.yaml' in filenames):
                 _build_snap(dirpath, cleanbuild, keep_dir)
-                if 'snap' in dirnames:
-                    # Do not recurse in any directory.
-                    dirnames = []
+                # Do not recurse in any directory.
+                dirnames = []
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
     finally:
