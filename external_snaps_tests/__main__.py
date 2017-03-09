@@ -101,7 +101,7 @@ def _build_snaps(path, cleanbuild=False, keep_dir=False):
             if _is_snapcraft_dir(dirpath, dirnames, filenames):
                 _build_snap(dirpath, cleanbuild, keep_dir)
                 # Do not recurse in any directory.
-                dirnames = []
+                del dirnames[:]
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
     finally:
