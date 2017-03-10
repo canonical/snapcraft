@@ -9,6 +9,7 @@ confinement: strict
 apps:
   godd:
     command: bin/godd
+    plugs: [mount-observe]
 
 parts:
   godd:

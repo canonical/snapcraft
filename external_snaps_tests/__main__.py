@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -53,11 +53,17 @@ def main():
     if _is_git(repo):
         if shutil.which('git'):
             path = _git_clone(repo, repo_branch)
-            _build_snaps(path, cleanbuild, keep_dir)
         else:
             sys.exit('Please install git.')
+    elif _is_bzr(repo):
+        if shutil.which('bzr'):
+            path = _bzr_branch(repo)
+        else:
+            sys.exit('Please install bzr.')
     else:
         sys.exit('Unsupported repository.')
+
+    _build_snaps(path, cleanbuild, keep_dir)
 
 
 def _is_git(repo):
@@ -68,7 +74,7 @@ def _is_git(repo):
 
 def _git_clone(url, repo_branch=None):
     temp_dir = tempfile.mkdtemp(prefix='snapcraft-')
-    command = ['git', 'clone', url, temp_dir]
+    command = ['git', 'clone', '--progress', url, temp_dir]
     print(' '.join(command))
     subprocess.check_call(command)
     if repo_branch:
@@ -76,11 +82,26 @@ def _git_clone(url, repo_branch=None):
     return temp_dir
 
 
+def _is_bzr(repo):
+    return repo.startswith('lp:')
+
+
+def _bzr_branch(url):
+    temp_dir = tempfile.mkdtemp(prefix='snapcraft-')
+    repo_dir = os.path.join(temp_dir, 'repo')
+    command = ['bzr', 'branch', '-v', url, repo_dir]
+    print(' '.join(command))
+    subprocess.check_call(command)
+    return repo_dir
+
+
 def _build_snaps(path, cleanbuild=False, keep_dir=False):
     try:
-        for dirpath, _, filenames in os.walk(path):
-            if 'snapcraft.yaml' in filenames or '.snapcraft.yaml' in filenames:
+        for dirpath, dirnames, filenames in os.walk(path, topdown=True):
+            if _is_snapcraft_dir(dirpath, dirnames, filenames):
                 _build_snap(dirpath, cleanbuild, keep_dir)
+                # Do not recurse in any directory.
+                del dirnames[:]
     except subprocess.CalledProcessError as e:
         sys.exit(e.returncode)
     finally:
@@ -90,6 +111,13 @@ def _build_snaps(path, cleanbuild=False, keep_dir=False):
                     path))
         else:
             shutil.rmtree(path)
+
+
+def _is_snapcraft_dir(dirpath, dirnames, filenames):
+    return (('snap' in dirnames and
+             'snapcraft.yaml' in os.listdir(os.path.join(dirpath, 'snap'))) or
+            'snapcraft.yaml' in filenames or
+            '.snapcraft.yaml' in filenames)
 
 
 def _build_snap(path, cleanbuild=False, keep_dir=False):

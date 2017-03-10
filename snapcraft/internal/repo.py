@@ -177,6 +177,25 @@ class _AptCache:
         # Do not install recommends
         apt.apt_pkg.config.set('Apt::Install-Recommends', 'False')
 
+        # Methods and solvers dir for when in the SNAP
+        if os.getenv('SNAP'):
+            snap_dir = os.getenv('SNAP')
+            apt_dir = os.path.join(snap_dir, 'apt')
+            apt.apt_pkg.config.set('Dir', apt_dir)
+            # yes apt is broken like that we need to append os.path.sep
+            apt.apt_pkg.config.set('Dir::Bin::methods',
+                                   apt_dir + os.path.sep)
+            apt.apt_pkg.config.set('Dir::Bin::solvers::',
+                                   apt_dir + os.path.sep)
+            apt_key_path = os.path.join(apt_dir, 'apt-key')
+            apt.apt_pkg.config.set('Dir::Bin::apt-key', apt_key_path)
+            gpgv_path = os.path.join(snap_dir, 'bin', 'gpgv')
+            apt.apt_pkg.config.set('Apt::Key::gpgvcommand', gpgv_path)
+            apt.apt_pkg.config.set('Dir::Etc::Trusted',
+                                   '/etc/apt/trusted.gpg')
+            apt.apt_pkg.config.set('Dir::Etc::TrustedParts',
+                                   '/etc/apt/trusted.gpg.d/')
+
         # Make sure we always use the system GPG configuration, even with
         # apt.Cache(rootdir).
         for key in 'Dir::Etc::Trusted', 'Dir::Etc::TrustedParts':
@@ -270,19 +289,24 @@ class Ubuntu:
 
     def get(self, package_names):
         with self._apt.archive(self._cache.base_dir) as apt_cache:
-            self._get(apt_cache, package_names)
+            self._mark_install(apt_cache, package_names)
+            self._filter_base_packages(apt_cache, package_names)
+            self._get(apt_cache)
 
-    def _get(self, apt_cache, package_names):
-        manifest_dep_names = self._manifest_dep_names(apt_cache)
-
+    def _mark_install(self, apt_cache, package_names):
         for name in package_names:
+            logger.debug('Marking {!r} (and its dependencies) to be '
+                         'fetched'.format(name))
+            name_arch, version = _get_pkg_name_parts(name)
             try:
-                logger.debug(
-                    'Marking {!r} (and its dependencies) to be fetched'.format(
-                        name))
-                apt_cache[name].mark_install()
+                if version:
+                    _set_pkg_version(apt_cache[name_arch], version)
+                apt_cache[name_arch].mark_install()
             except KeyError:
                 raise PackageNotFoundError(name)
+
+    def _filter_base_packages(self, apt_cache, package_names):
+        manifest_dep_names = self._manifest_dep_names(apt_cache)
 
         skipped_essential = []
         skipped_blacklisted = []
@@ -313,6 +337,7 @@ class Ubuntu:
             logger.debug('Skipping blacklisted from manifest packages: '
                          '{!r}'.format(skipped_blacklisted))
 
+    def _get(self, apt_cache):
         # Ideally we'd use apt.Cache().fetch_archives() here, but it seems to
         # mangle some package names on disk such that we can't match it up to
         # the archive later. We could get around this a few different ways:
@@ -459,16 +484,16 @@ def _fix_artifacts(debdir):
 
 def _fix_xml_tools(root):
     xml2_config_path = os.path.join(root, 'usr', 'bin', 'xml2-config')
-    if os.path.isfile(xml2_config_path):
-        common.run(
-            ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
-                format(root), xml2_config_path])
+    with contextlib.suppress(FileNotFoundError):
+        file_utils.search_and_replace_contents(
+            xml2_config_path, re.compile(r'prefix=/usr'),
+            'prefix={}/usr'.format(root))
 
     xslt_config_path = os.path.join(root, 'usr', 'bin', 'xslt-config')
-    if os.path.isfile(xslt_config_path):
-        common.run(
-            ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
-                format(root), xslt_config_path])
+    with contextlib.suppress(FileNotFoundError):
+        file_utils.search_and_replace_contents(
+            xslt_config_path, re.compile(r'prefix=/usr'),
+            'prefix={}/usr'.format(root))
 
 
 def _fix_symlink(path, debdir, root):
@@ -527,3 +552,23 @@ def _try_copy_local(path, target):
 def check_for_command(command):
     if not shutil.which(command):
         raise MissingCommandError([command])
+
+
+def _get_pkg_name_parts(pkg_name):
+    """Break package name into base parts"""
+
+    name = pkg_name
+    version = None
+    with contextlib.suppress(ValueError):
+        name, version = pkg_name.split('=')
+
+    return name, version
+
+
+def _set_pkg_version(pkg, version):
+    """Set cadidate version to a specific version if available"""
+    if version in pkg.versions:
+        version = pkg.versions.get(version)
+        pkg.candidate = version
+    else:
+        raise PackageNotFoundError('{}={}'.format(pkg.name, version))

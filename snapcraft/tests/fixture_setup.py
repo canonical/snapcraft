@@ -203,6 +203,8 @@ class FakeStore(fixtures.Fixture):
 
     def setUp(self):
         super().setUp()
+        # In case the variable was not set or it was empty.
+        self.useFixture(fixtures.EnvironmentVariable('TEST_STORE', 'fake'))
 
         self.needs_refresh = False
 
@@ -325,7 +327,7 @@ class TestStore(fixtures.Fixture):
 
     def setUp(self):
         super().setUp()
-        test_store = os.getenv('TEST_STORE', 'fake')
+        test_store = os.getenv('TEST_STORE') or 'fake'
         if test_store == 'fake':
             self.useFixture(FakeStore())
             self.register_delay = 0

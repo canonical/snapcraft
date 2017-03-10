@@ -38,6 +38,7 @@ logger = logging.getLogger(__name__)
 
 def replace_in_file(directory, file_pattern, search_pattern, replacement):
     """Searches and replaces patterns that match a file pattern.
+
     :param str directory: The directory to look for files.
     :param str file_pattern: The file pattern to match inside directory.
     :param search_pattern: A re.compile'd pattern to search for within
@@ -49,8 +50,37 @@ def replace_in_file(directory, file_pattern, search_pattern, replacement):
     for root, directories, files in os.walk(directory):
         for file_name in files:
             if file_pattern.match(file_name):
-                _search_and_replace_contents(os.path.join(root, file_name),
-                                             search_pattern, replacement)
+                file_path = os.path.join(root, file_name)
+                # Don't bother trying to rewrite a symlink. It's either invalid
+                # or the linked file will be rewritten on its own.
+                if not os.path.islink(file_path):
+                    search_and_replace_contents(
+                        file_path, search_pattern, replacement)
+
+
+def search_and_replace_contents(file_path, search_pattern, replacement):
+    """Search file and replace any occurrence of pattern with replacement.
+
+    :param str file_path: Path of file to be searched.
+    :param re.RegexObject search_pattern: Pattern for which to search.
+    :param str replacement: The string to replace pattern.
+    """
+    try:
+        with open(file_path, 'r+') as f:
+            try:
+                original = f.read()
+            except UnicodeDecodeError:
+                # This was probably a binary file. Skip it.
+                return
+
+            replaced = search_pattern.sub(replacement, original)
+            if replaced != original:
+                f.seek(0)
+                f.truncate()
+                f.write(replaced)
+    except PermissionError as e:
+        logger.warning('Unable to open {path} for writing: {error}'.format(
+            path=file_path, error=e))
 
 
 def link_or_copy(source, destination, follow_symlinks=False):
@@ -155,30 +185,6 @@ def create_similar_directory(source, destination, follow_symlinks=False):
         logger.debug('Unable to chown {}: {}'.format(destination, exception))
 
     shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
-
-
-def _search_and_replace_contents(file_path, search_pattern, replacement):
-    # Don't bother trying to rewrite a symlink. It's either invalid or the
-    # linked file will be rewritten on its own.
-    if os.path.islink(file_path):
-        return
-
-    try:
-        with open(file_path, 'r+') as f:
-            try:
-                original = f.read()
-            except UnicodeDecodeError:
-                # This was probably a binary file. Skip it.
-                return
-
-            replaced = search_pattern.sub(replacement, original)
-            if replaced != original:
-                f.seek(0)
-                f.truncate()
-                f.write(replaced)
-    except PermissionError as e:
-        logger.warning('Unable to open {path} for writing: {error}'.format(
-            path=file_path, error=e))
 
 
 def executable_exists(path):

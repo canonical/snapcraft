@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,20 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
-
 import snaps_tests
 
 
-class TomcatMavenWebappTestCase(snaps_tests.SnapsTestCase):
+class GoddTestCase(snaps_tests.SnapsTestCase):
 
-    snap_content_dir = 'tomcat-maven-webapp'
+    snap_content_dir = 'godd'
 
-    def test_tomcat_maven_webapp(self):
-        if snapcraft.ProjectOptions().deb_arch == 'armhf':
-            # https://bugs.launchpad.net/snapcraft/+bug/1647405
-            self.skipTest('The maven plugin does not support armhf')
+    def test_godd(self):
+        # Build snap will raise an exception in case of error.
         snap_path = self.build_snap(self.snap_content_dir)
-        snap_name = 'tomcat-webapp-demo'
-        self.install_snap(snap_path, snap_name, '1.0')
-        self.assert_service_running(snap_name, 'tomcat')
+        # Install snap will raise an exception in case of error.
+        self.install_snap(snap_path, 'godd', '1.0')
+
+        self.run_command_in_snappy_testbed(
+            'sudo snap connect godd:mount-observe')
+        self.run_command_in_snappy_testbed('mkdir -p ~/snap/godd/common')
+        self.run_command_in_snappy_testbed('touch ~/snap/godd/common/test')
+        self.run_command_in_snappy_testbed(
+            '/snap/bin/godd ~/snap/godd/common/test /dev/null')
