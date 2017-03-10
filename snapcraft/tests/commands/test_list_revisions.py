@@ -19,6 +19,7 @@ from unittest import mock
 
 import docopt
 import fixtures
+from testtools.matchers import Contains
 
 from snapcraft import (
     storeapi,
@@ -190,3 +191,19 @@ class RevisionsCommandTestCase(tests.TestCase):
             '1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge'
         ]
         self.assertEqual(expected_output, terminal_output.splitlines())
+
+    @mock.patch.object(storeapi.StoreClient, 'get_snap_revisions')
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    def test_history_with_deprecation_message(self, mock_account_api,
+                                              mock_revisions):
+        fake_terminal = fixture_setup.FakeTerminal()
+        self.useFixture(fake_terminal)
+
+        mock_revisions.return_value = self.expected
+
+        main(['history', 'snap-test', '--series=16'])
+
+        self.assertThat(
+            fake_terminal.getvalue(), Contains(
+                "DEPRECATED: The 'history' command has been replaced by "
+                "'list-revisions'."))
