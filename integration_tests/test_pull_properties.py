@@ -49,3 +49,20 @@ class PullPropertiesTestCase(integration_tests.TestCase):
         self.assertTrue('stage-packages' in state.properties)
         self.assertEqual('bar', state.properties['foo'])
         self.assertEqual(['curl'], state.properties['stage-packages'])
+
+
+class AssetTrackingTestCase(integration_tests.TestCase):
+
+    def test_pull(self):
+        project_dir = 'asset-tracking'
+        self.run_snapcraft('pull', project_dir)
+
+        state_file = os.path.join(
+            self.parts_dir, 'asset-tracking', 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+
+        # Verify that the correct version of 'hello' is installed
+        self.assertTrue(len(state.assets['stage-packages']) > 0)
+        self.assertIn('hello=2.10-1', state.assets['stage-packages'])
