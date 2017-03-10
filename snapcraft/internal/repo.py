@@ -39,7 +39,6 @@ from snapcraft import file_utils
 from snapcraft.internal import (
     cache,
     common,
-    libraries,
 )
 from snapcraft.internal.errors import MissingCommandError
 from snapcraft.internal.indicators import is_dumb_terminal
@@ -501,7 +500,7 @@ def _fix_symlink(path, debdir, root):
     target = os.readlink(path)
     debdir_target = os.path.join(debdir, os.readlink(path)[1:])
 
-    if target in libraries.libc_library_list():
+    if target in libc_library_list():
         logger.debug("Not fixing symlink {!r}: it's pointing to libc".format(
             target))
         return
@@ -565,3 +564,18 @@ def _set_pkg_version(pkg, version):
         pkg.candidate = version
     else:
         raise PackageNotFoundError('{}={}'.format(pkg.name, version))
+
+
+_libc_lib_list = None
+
+
+def libc_library_list():
+    global _libc_lib_list
+    if not _libc_lib_list:
+        # No need to use common.run here, as nothing depends upon the snap's
+        # build environment.
+        output = subprocess.check_output(['dpkg', '-L', 'libc6']).decode(
+            sys.getfilesystemencoding()).strip().split()
+        _libc_lib_list = [i for i in output if 'lib' in i]
+
+    return _libc_lib_list

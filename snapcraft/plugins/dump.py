@@ -28,7 +28,6 @@ such as: `filesets`, `stage`, `snap` and `organize`.
 import os
 
 import snapcraft
-from snapcraft.internal import libraries
 
 
 class DumpPlugin(snapcraft.BasePlugin):
@@ -58,7 +57,7 @@ def _link_or_copy(source, destination, boundary):
         normalized = os.path.normpath(os.path.join(destination_dirname, link))
         if os.path.isabs(link) or not normalized.startswith(boundary):
             # Only follow symlinks that are NOT pointing at libc (LP: #1658774)
-            if link not in libraries.libc_library_list():
+            if link not in snapcraft.repo.libc_library_list():
                 follow_symlinks = True
 
     try:

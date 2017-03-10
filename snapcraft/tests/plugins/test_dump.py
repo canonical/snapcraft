@@ -17,7 +17,6 @@
 import os
 
 import snapcraft
-from snapcraft.internal import libraries
 from snapcraft.plugins.dump import DumpPlugin
 from snapcraft import tests
 
@@ -171,7 +170,7 @@ class DumpPluginTestCase(tests.TestCase):
 
         # Even though this symlink is absolute, since it's to libc the copy
         # plugin shouldn't try to follow it or modify it.
-        libc_libs = libraries.libc_library_list()
+        libc_libs = snapcraft.repo.libc_library_list()
 
         # We don't care which lib we're testing with, as long as it's a .so.
         libc_library_path = [lib for lib in libc_libs if '.so' in lib][0]
