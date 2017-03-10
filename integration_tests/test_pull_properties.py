@@ -46,6 +46,7 @@ class PullPropertiesTestCase(integration_tests.TestCase):
         # Verify that the contents of the dependencies made it in as well.
         self.assertTrue('foo' in state.properties)
         self.assertTrue(len(state.assets['stage-packages']) > 0)
+        self.assertIn('build-packages', state.assets)
         self.assertTrue('stage-packages' in state.properties)
         self.assertEqual('bar', state.properties['foo'])
         self.assertEqual(['curl'], state.properties['stage-packages'])
@@ -66,3 +67,4 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         # Verify that the correct version of 'hello' is installed
         self.assertTrue(len(state.assets['stage-packages']) > 0)
         self.assertIn('hello=2.10-1', state.assets['stage-packages'])
+        self.assertIn('make=4.1-6', state.assets['build-packages'])

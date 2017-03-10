@@ -108,13 +108,13 @@ def execute(step, project_options, part_names=None):
     :returns: A dict with the snap name, version, type and architectures.
     """
     config = snapcraft.internal.load_config(project_options)
-    repo.install_build_packages(config.build_tools)
+    build_packages = repo.install_build_packages(config.build_tools)
 
     if (os.environ.get('SNAPCRAFT_SETUP_CORE') and
             config.data['confinement'] == 'classic'):
         _setup_core(project_options.deb_arch)
 
-    _Executor(config, project_options).run(step, part_names)
+    _Executor(config, project_options, build_packages).run(step, part_names)
 
     return {'name': config.data['name'],
             'version': config.data['version'],
@@ -168,11 +168,12 @@ def _replace_in_part(part):
 
 class _Executor:
 
-    def __init__(self, config, project_options):
+    def __init__(self, config, project_options, build_packages=None):
         self.config = config
         self.project_options = project_options
         self.parts_config = config.parts
         self._steps_run = self._init_run_states()
+        self.build_packages = build_packages
 
     def _init_run_states(self):
         steps_run = {}
@@ -243,6 +244,9 @@ class _Executor:
         common.env.extend(self.config.project_env())
 
         part = _replace_in_part(part)
+
+        # Add the annotated list of build packages
+        part.build_packages = self.build_packages
         getattr(part, step)()
 
     def _create_meta(self, step, part_names):

@@ -114,6 +114,12 @@ def install_build_packages(packages):
             logger.warning(
                 'Impossible to mark packages as auto-installed: {}'
                 .format(e))
+    pkg_list = []
+    with apt.Cache() as apt_cache:
+        for pkg in unique_packages:
+            pkg_list.append(str(apt_cache[pkg].candidate))
+
+    return pkg_list
 
 
 def get_packages_for_source_type(source_type):

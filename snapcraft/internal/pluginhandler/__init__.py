@@ -77,6 +77,7 @@ class PluginHandler:
         self._part_properties = _expand_part_properties(
             part_properties, part_schema)
         self.stage_packages = []
+        self.build_packages = []
 
         # Some legacy parts can have a '/' in them to separate the main project
         # part with the subparts. This is rather unfortunate as it affects the
@@ -335,7 +336,9 @@ class PluginHandler:
 
         self.mark_done('pull', states.PullState(
             pull_properties, part_properties=self._part_properties,
-            project=self._project_options, stage_packages=self.stage_packages))
+            project=self._project_options, stage_packages=self.stage_packages,
+            build_packages=self.code.build_packages,
+        ))
 
     def clean_pull(self, hint=''):
         if self.is_clean('pull'):
