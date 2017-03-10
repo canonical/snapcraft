@@ -59,3 +59,14 @@ This is a regression test for bug #1660852.
 2. Run `ros-example.launch-project --help`.
 3. Verify that you actually get the help info for `roslaunch`, not a barf of
    errors.
+
+# Test command wrapper quoting
+
+This is a regression test for LP: #1671674
+
+1. Build the lxd snap.
+2. Install the lxd snap.
+3. Setup the lxd snap by running `sudo /snap/bin/lxd init`
+4. Create a container by running `/snap/bin/lxc launch ubuntu:xenial my-container`
+5. Verify that the following command runs succesfully
+   `/snap/bin/lxc exec my-container -- python3 -c 'import urllib.request; urllib.request.urlopen("http://start.ubuntu.com/connectivity-check.html", timeout=5)'`
