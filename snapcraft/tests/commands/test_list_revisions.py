@@ -53,6 +53,7 @@ class RevisionsCommandBaseTestCase(tests.TestCase):
             'revision': 1,
         }]
 
+
 class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
 
     scenarios = [
