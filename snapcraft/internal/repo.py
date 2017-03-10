@@ -291,7 +291,7 @@ class Ubuntu:
         with self._apt.archive(self._cache.base_dir) as apt_cache:
             self._mark_install(apt_cache, package_names)
             self._filter_base_packages(apt_cache, package_names)
-            self._get(apt_cache)
+            return self._get(apt_cache)
 
     def _mark_install(self, apt_cache, package_names):
         for name in package_names:
@@ -351,7 +351,9 @@ class Ubuntu:
         # Downloading each package individually has the drawback of witholding
         # any clue of how long the whole pulling process will take, but that's
         # something we'll have to live with.
+        pkg_list = []
         for package in apt_cache.get_changes():
+            pkg_list.append(str(package.candidate))
             source = package.candidate.fetch_binary(
                 self._cache.packages_dir, progress=self._apt.progress)
             destination = os.path.join(
@@ -359,6 +361,8 @@ class Ubuntu:
             with contextlib.suppress(FileNotFoundError):
                 os.remove(destination)
             file_utils.link_or_copy(source, destination)
+
+        return pkg_list
 
     def unpack(self, rootdir):
         pkgs_abs_path = glob.glob(os.path.join(self._downloaddir, '*.deb'))
@@ -484,16 +488,16 @@ def _fix_artifacts(debdir):
 
 def _fix_xml_tools(root):
     xml2_config_path = os.path.join(root, 'usr', 'bin', 'xml2-config')
-    if os.path.isfile(xml2_config_path):
-        common.run(
-            ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
-                format(root), xml2_config_path])
+    with contextlib.suppress(FileNotFoundError):
+        file_utils.search_and_replace_contents(
+            xml2_config_path, re.compile(r'prefix=/usr'),
+            'prefix={}/usr'.format(root))
 
     xslt_config_path = os.path.join(root, 'usr', 'bin', 'xslt-config')
-    if os.path.isfile(xslt_config_path):
-        common.run(
-            ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
-                format(root), xslt_config_path])
+    with contextlib.suppress(FileNotFoundError):
+        file_utils.search_and_replace_contents(
+            xslt_config_path, re.compile(r'prefix=/usr'),
+            'prefix={}/usr'.format(root))
 
 
 def _fix_symlink(path, debdir, root):
