@@ -291,7 +291,7 @@ class Ubuntu:
         with self._apt.archive(self._cache.base_dir) as apt_cache:
             self._mark_install(apt_cache, package_names)
             self._filter_base_packages(apt_cache, package_names)
-            self._get(apt_cache)
+            return self._get(apt_cache)
 
     def _mark_install(self, apt_cache, package_names):
         for name in package_names:
