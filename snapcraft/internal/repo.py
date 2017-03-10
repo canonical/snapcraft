@@ -484,16 +484,16 @@ def _fix_artifacts(debdir):
 
 def _fix_xml_tools(root):
     xml2_config_path = os.path.join(root, 'usr', 'bin', 'xml2-config')
-    if os.path.isfile(xml2_config_path):
-        common.run(
-            ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
-                format(root), xml2_config_path])
+    with contextlib.suppress(FileNotFoundError):
+        file_utils.search_and_replace_contents(
+            xml2_config_path, re.compile(r'prefix=/usr'),
+            'prefix={}/usr'.format(root))
 
     xslt_config_path = os.path.join(root, 'usr', 'bin', 'xslt-config')
-    if os.path.isfile(xslt_config_path):
-        common.run(
-            ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
-                format(root), xslt_config_path])
+    with contextlib.suppress(FileNotFoundError):
+        file_utils.search_and_replace_contents(
+            xslt_config_path, re.compile(r'prefix=/usr'),
+            'prefix={}/usr'.format(root))
 
 
 def _fix_symlink(path, debdir, root):
