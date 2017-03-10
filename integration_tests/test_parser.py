@@ -207,7 +207,7 @@ class TestParserWikis(testscenarios.WithScenarios, ParserTestCase):
 
     def test_local_wiki(self):
         repo_dir = 'repo'
-        base_dir = os.path.dirname(__file__)
+        base_dir = os.path.join(os.path.dirname(__file__), 'wiki')
         wiki_file = os.path.join(base_dir, self.wiki_file)
 
         commit = self._setup_origin(self.snapcraft_files, repo_dir, base_dir)
