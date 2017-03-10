@@ -107,13 +107,14 @@ parts:
 
     @mock.patch('snapcraft.repo.Ubuntu.get')
     @mock.patch('snapcraft.repo.Ubuntu.unpack')
-    def test_pull_stage_packages_without_geoip(self, mock_get, mock_unpack):
+    def test_pull_stage_packages_without_geoip(self, mock_unpack, mock_get):
         yaml_part = """  pull{:d}:
         plugin: nil
         stage-packages: ['mir']"""
 
         self.make_snapcraft_yaml(n=3, yaml_part=yaml_part)
 
+        mock_get.return_value = '[mir=0.0]'
         project_options = mock.Mock(spec=snapcraft.ProjectOptions)
 
         project_options = main(['pull', 'pull1'])
@@ -122,12 +123,13 @@ parts:
 
     @mock.patch('snapcraft.repo.Ubuntu.get')
     @mock.patch('snapcraft.repo.Ubuntu.unpack')
-    def test_pull_stage_packages_with_geoip(self, mock_get, mock_unpack):
+    def test_pull_stage_packages_with_geoip(self, mock_unpack, mock_get):
         yaml_part = """  pull{:d}:
         plugin: nil
         stage-packages: ['mir']"""
 
         self.make_snapcraft_yaml(n=3, yaml_part=yaml_part)
+        mock_get.return_value = '[mir=0.0]'
 
         project_options = main(['pull', 'pull1', '--enable-geoip'])
 
@@ -142,6 +144,8 @@ parts:
 
         self.make_snapcraft_yaml(n=3, yaml_part=yaml_part)
 
-        main(['pull', 'pull1'])
+        mock_get.return_value = '[mir=0.0]'
+
+        main(['--debug', 'pull', 'pull1'])
 
         mock_get.assert_called_once_with({'mir:arch'})
