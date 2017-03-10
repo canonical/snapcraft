@@ -191,6 +191,10 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
     def env(self, root):
         """Runtime environment for ROS binaries and services."""
 
+        paths = common.get_library_paths(root, self.project.arch_triplet)
+        ld_library_path = formatting_utils.combine_paths(
+            paths, prepend='', separator=':')
+
         env = [
             # This environment variable tells ROS nodes where to find ROS
             # master. It does not affect ROS master, however-- this is just the
@@ -199,12 +203,18 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
             # Various ROS tools (e.g. rospack, roscore) keep a cache or a log,
             # and use $ROS_HOME to determine where to put them.
-            'ROS_HOME=$SNAP_USER_DATA/ros',
+            'ROS_HOME=${SNAP_USER_DATA:-/tmp}/ros',
 
             # FIXME: LP: #1576411 breaks ROS snaps on the desktop, so we'll
             # temporarily work around that bug by forcing the locale to
             # C.UTF-8.
             'LC_ALL=C.UTF-8',
+
+            # The Snapcraft Core will ensure that we get a good LD_LIBRARY_PATH
+            # overall, but it defines it after this function runs. Some ROS
+            # tools will cause binaries to be run when we source the setup.sh,
+            # below, so we need to have a sensible LD_LIBRARY_PATH before then.
+            'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{}'.format(ld_library_path),
         ]
 
         # There's a chicken and egg problem here, everything run get's an
