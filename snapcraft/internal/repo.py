@@ -289,22 +289,24 @@ class Ubuntu:
 
     def get(self, package_names):
         with self._apt.archive(self._cache.base_dir) as apt_cache:
-            return self._get(apt_cache, package_names)
+            self._mark_install(apt_cache, package_names)
+            self._filter_base_packages(apt_cache, package_names)
+            self._get(apt_cache)
 
-    def _get(self, apt_cache, package_names):
-        manifest_dep_names = self._manifest_dep_names(apt_cache)
-
+    def _mark_install(self, apt_cache, package_names):
         for name in package_names:
+            logger.debug('Marking {!r} (and its dependencies) to be '
+                         'fetched'.format(name))
+            name_arch, version = _get_pkg_name_parts(name)
             try:
-                logger.debug(
-                    'Marking {!r} (and its dependencies) to be fetched'.format(
-                        name))
-                version = None
-                name_arch, version = _get_pkg_name_parts(name)
-                _set_candidate(apt_cache[name_arch], version)
+                if version:
+                    _set_pkg_version(apt_cache[name_arch], version)
                 apt_cache[name_arch].mark_install()
             except KeyError:
-                raise PackageNotFoundError(name_arch)
+                raise PackageNotFoundError(name)
+
+    def _filter_base_packages(self, apt_cache, package_names):
+        manifest_dep_names = self._manifest_dep_names(apt_cache)
 
         skipped_essential = []
         skipped_blacklisted = []
@@ -335,6 +337,7 @@ class Ubuntu:
             logger.debug('Skipping blacklisted from manifest packages: '
                          '{!r}'.format(skipped_blacklisted))
 
+    def _get(self, apt_cache):
         # Ideally we'd use apt.Cache().fetch_archives() here, but it seems to
         # mangle some package names on disk such that we can't match it up to
         # the archive later. We could get around this a few different ways:
@@ -560,14 +563,16 @@ def _get_pkg_name_parts(pkg_name):
 
     name = pkg_name
     version = None
-    if '=' in pkg_name:
+    with contextlib.suppress(ValueError):
         name, version = pkg_name.split('=')
 
     return name, version
 
 
-def _set_candidate(pkg, version):
+def _set_pkg_version(pkg, version):
     """Set cadidate version to a specific version if available"""
-    if version and version in pkg.versions:
+    if version in pkg.versions:
         version = pkg.versions.get(version)
         pkg.candidate = version
+    else:
+        raise PackageNotFoundError('{}={}'.format(pkg.name, version))

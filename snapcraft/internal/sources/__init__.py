@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -33,6 +33,13 @@ code for that part, and how to unpack it if necessary.
     control system or compression algorithm. The source-type key can tell
     snapcraft exactly how to treat that content.
 
+  - source-checksum: <algorithm>/<digest>
+
+    Snapcraft will use the digest specified to verify the integrity of the
+    source. The source-type needs to be a file (tar, zip, deb or rpm) and
+    the algorithm either md5, sha1, sha224, sha256, sha384, sha512, sha3_256,
+    sha3_384 or sha3_512.
+
   - source-depth: <integer>
 
     By default clones or branches with full history, specifying a depth
@@ -55,9 +62,8 @@ code for that part, and how to unpack it if necessary.
 
   - source-subdir: path
 
-    Snapcraft will checkout the repository or unpack the archive referred to
-    by the 'source' keyword into parts/<part-name>/src/ but it will only
-    copy the specified subdirectory into parts/<part-name>/build/
+    When building, Snapcraft will set the working directory to be this
+    subdirectory within the source.
 
 Note that plugins might well define their own semantics for the 'source'
 keywords, because they handle specific build systems, and many languages
@@ -72,6 +78,8 @@ import logging
 import os
 import os.path
 import re
+import hashlib
+import sys
 
 from snapcraft.internal import common
 from ._bazaar import Bazaar          # noqa
@@ -84,6 +92,12 @@ from ._script import Script          # noqa
 from ._subversion import Subversion  # noqa
 from ._tar import Tar                # noqa
 from ._zip import Zip                # noqa
+from . import errors
+
+# In python >= 3.6 sha3 support is upstreamed in hashlib
+if sys.version_info < (3, 6):
+    import sha3  # noqa
+
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 
@@ -91,6 +105,7 @@ logging.getLogger('urllib3').setLevel(logging.CRITICAL)
 __SOURCE_DEFAULTS = {
     'source': '.',
     'source-commit': None,
+    'source-checksum': None,
     'source-depth': None,
     'source-tag': None,
     'source-type': None,
@@ -113,6 +128,7 @@ def get(sourcedir, builddir, options):
     source_type = getattr(options, 'source_type', None)
     source_attributes = dict(
         source_depth=getattr(options, 'source_depth', None),
+        source_checksum=getattr(options, 'source_checksum', None),
         source_tag=getattr(options, 'source_tag', None),
         source_commit=getattr(options, 'source_commit', None),
         source_branch=getattr(options, 'source_branch', None),
@@ -170,3 +186,21 @@ def _get_source_type_from_uri(source, ignore_errors=False):  # noqa: C901
         raise ValueError('local source ({}) is not a directory'.format(source))
 
     return source_type
+
+
+def verify_checksum(source_checksum, checkfile):
+    try:
+        algorithm, digest = source_checksum.split('/', 1)
+
+    except ValueError:
+        raise ValueError('invalid checksum format: {!r}'
+                         .format(source_checksum))
+
+    with open(checkfile, 'rb') as f:
+        # This will raise an AttributeError if algorithm is unsupported
+        hashlib_algorithm = getattr(hashlib, algorithm)
+        calculated_digest = hashlib_algorithm(f.read())
+
+    calculated_digest = calculated_digest.hexdigest()
+    if digest != calculated_digest:
+        raise errors.DigestDoesNotMatchError(digest, calculated_digest)
