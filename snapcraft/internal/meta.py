@@ -251,7 +251,7 @@ class _SnapPackaging:
 
     def _write_wrap_exe(self, wrapexec, wrappath,
                         shebang=None, args=None, cwd=None):
-        args = ' '.join(args) + ' "$@"' if args else '"$@"'
+        args = ' '.join(args) + ' $@' if args else '$@'
         cwd = 'cd {}'.format(cwd) if cwd else ''
 
         # If we are dealing with classic confinement it means all our

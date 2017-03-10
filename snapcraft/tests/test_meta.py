@@ -577,7 +577,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
                     'PATH=$SNAP/usr/bin:$SNAP/bin\n\n'
                     'export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
                     '$LD_LIBRARY_PATH\n'
-                    'exec "$SNAP/test_relexepath" "$@"\n')
+                    'exec "$SNAP/test_relexepath" $@\n')
 
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
@@ -603,7 +603,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
                     'PATH=$SNAP/usr/bin:$SNAP/bin\n\n'
                     'export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
                     '$LD_LIBRARY_PATH\n'
-                    'exec "$SNAP/test_relexepath" "$@"\n')
+                    'exec "$SNAP/test_relexepath" $@\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
@@ -633,7 +633,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         expected = (
             '#!/bin/sh\n'
-            'exec "$SNAP/snap_exe" "$SNAP/test_relexepath" "$@"\n')
+            'exec "$SNAP/snap_exe" "$SNAP/test_relexepath" $@\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
         self.assertEqual(expected, wrapper_contents)
@@ -658,7 +658,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
-                    'exec "$SNAP/test_relexepath" "$@"\n')
+                    'exec "$SNAP/test_relexepath" $@\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
@@ -684,7 +684,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
-                    'exec "$SNAP/test_relexepath" "$@"\n')
+                    'exec "$SNAP/test_relexepath" $@\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
@@ -702,7 +702,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
         expected = ('#!/bin/sh\n'
-                    'exec "app1" "$@"\n')
+                    'exec "app1" $@\n')
         with open(wrapper_path) as wrapper_file:
             wrapper_contents = wrapper_file.read()
 
