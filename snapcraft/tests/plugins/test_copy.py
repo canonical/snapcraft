@@ -335,7 +335,7 @@ class TestCopyPlugin(tests.TestCase):
 
         # Even though this symlink is absolute, since it's to libc the copy
         # plugin shouldn't try to follow it or modify it.
-        libc_libs = snapcraft.repo.libc_library_list()
+        libc_libs = snapcraft.repo.get_pkg_libs('libc6')
 
         # We don't care which lib we're testing with, as long as it's a .so.
         libc_library_path = [lib for lib in libc_libs if '.so' in lib][0]

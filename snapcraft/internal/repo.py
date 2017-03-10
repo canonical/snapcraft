@@ -38,7 +38,6 @@ import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import (
     cache,
-    common,
 )
 from snapcraft.internal.errors import MissingCommandError
 from snapcraft.internal.indicators import is_dumb_terminal
@@ -504,7 +503,7 @@ def _fix_symlink(path, debdir, root):
     target = os.readlink(path)
     debdir_target = os.path.join(debdir, os.readlink(path)[1:])
 
-    if target in libc_library_list():
+    if target in get_pkg_libs('libc6'):
         logger.debug("Not fixing symlink {!r}: it's pointing to libc".format(
             target))
         return
@@ -570,16 +569,29 @@ def _set_pkg_version(pkg, version):
         raise PackageNotFoundError('{}={}'.format(pkg.name, version))
 
 
-_libc_lib_list = None
+_lib_list = dict()
 
 
-def libc_library_list():
-    global _libc_lib_list
-    if not _libc_lib_list:
+def get_pkg_libs(pkg_name):
+    """Obtain list of libraries contained within a Debian package.
+
+    :param str pkg_name: Name of the package.
+
+    :return: Set of files in the package with 'lib' in the name. This will
+             include directories.
+    :rtype: set
+
+    Note that this will be slow the first time it's called for a given package
+    name, but the list is cached, so subsequent calls for the same package will
+    be fast.
+    """
+
+    global _lib_list
+    if pkg_name not in _lib_list:
         # No need to use common.run here, as nothing depends upon the snap's
         # build environment.
-        output = subprocess.check_output(['dpkg', '-L', 'libc6']).decode(
+        output = subprocess.check_output(['dpkg', '-L', pkg_name]).decode(
             sys.getfilesystemencoding()).strip().split()
-        _libc_lib_list = [i for i in output if 'lib' in i]
+        _lib_list[pkg_name] = {i for i in output if 'lib' in i}
 
-    return _libc_lib_list
+    return _lib_list[pkg_name].copy()
