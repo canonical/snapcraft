@@ -6,7 +6,7 @@ GH_REPO="@github.com/snapcore/snapcraft.git"
 
 FULL_REPO="https://$GH_TOKEN$GH_REPO"
 
-cd docs/api/_build/html
+cd tools/api/_build/html
 
 git init
 git config user.name "snappy-m-o"
