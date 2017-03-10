@@ -22,6 +22,7 @@ import tempfile
 from unittest.mock import ANY, call, patch, MagicMock
 from testtools.matchers import (
     Contains,
+    FileContains,
     FileExists,
 )
 
@@ -350,6 +351,89 @@ class FixShebangTestCase(RepoBaseTestCase):
 
         with open(self.file_path, 'r') as fd:
             self.assertEqual(fd.read(), self.expected)
+
+
+class FixXmlToolsTestCase(RepoBaseTestCase):
+
+    scenarios = [
+        ('xml2-config only should fix', {
+            'files': [
+                {
+                    'path': os.path.join('root', 'usr', 'bin', 'xml2-config'),
+                    'content': 'prefix=/usr/foo',
+                    'expected': 'prefix=root/usr/foo',
+                },
+            ]
+        }),
+        ('xml2-config only should not fix', {
+            'files': [
+                {
+                    'path': os.path.join('root', 'usr', 'bin', 'xml2-config'),
+                    'content': 'prefix=/foo',
+                    'expected': 'prefix=/foo',
+                },
+            ]
+        }),
+        ('xslt-config only should fix', {
+            'files': [
+                {
+                    'path': os.path.join('root', 'usr', 'bin', 'xslt-config'),
+                    'content': 'prefix=/usr/foo',
+                    'expected': 'prefix=root/usr/foo',
+                },
+            ]
+        }),
+        ('xslt-config only should not fix', {
+            'files': [
+                {
+                    'path': os.path.join('root', 'usr', 'bin', 'xslt-config'),
+                    'content': 'prefix=/foo',
+                    'expected': 'prefix=/foo',
+                },
+            ]
+        }),
+        ('xml2-config and xslt-config', {
+            'files': [
+                {
+                    'path': os.path.join('root', 'usr', 'bin', 'xml2-config'),
+                    'content': 'prefix=/usr/foo',
+                    'expected': 'prefix=root/usr/foo',
+                },
+                {
+                    'path': os.path.join('root', 'usr', 'bin', 'xslt-config'),
+                    'content': 'prefix=/usr/foo',
+                    'expected': 'prefix=root/usr/foo',
+                },
+            ]
+        }),
+        ('xml2-config and xslt-config should not fix', {
+            'files': [
+                {
+                    'path': os.path.join('root', 'usr', 'bin', 'xml2-config'),
+                    'content': 'prefix=/foo',
+                    'expected': 'prefix=/foo',
+                },
+                {
+                    'path': os.path.join('root', 'usr', 'bin', 'xslt-config'),
+                    'content': 'prefix=/foo',
+                    'expected': 'prefix=/foo',
+                },
+            ]
+        }),
+    ]
+
+    def test_fix_xml_tools(self):
+        for test_file in self.files:
+            path = test_file['path']
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, 'w') as f:
+                f.write(test_file['content'])
+
+        repo._fix_xml_tools('root')
+
+        for test_file in self.files:
+            self.assertThat(
+                test_file['path'], FileContains(test_file['expected']))
 
 
 class BuildPackagesTestCase(tests.TestCase):
