@@ -1,0 +1,7 @@
+---
+description: Wiki with origin modifiers
+maintainer: Marco Trevisan <marco@ubuntu.com>
+parts: [testpart]
+origin: $ORIGIN
+origin-branch: feature-branch
+origin-type: git

@@ -25,12 +25,14 @@ import yaml
 from collections import OrderedDict
 
 import snapcraft                           # noqa, initialize yaml
-from snapcraft.internal.errors import MissingCommandError
+from snapcraft.internal.errors import (
+    MissingCommandError,
+    SnapcraftEnvironmentError
+)
 from snapcraft.internal import parser
 from snapcraft.internal.parser import (
     _get_origin_data,
     _encode_origin,
-    BadSnapcraftYAMLError,
     PARTS_FILE,
     main,
 )
@@ -829,7 +831,7 @@ parts: [somepart]
         self.assertEqual(0, _get_part_list_count())
 
         self.assertTrue(
-            'Invalid wiki entry'
+            '1 wiki errors found'
             in fake_logger.output, 'Missing invalid wiki entry info in output')
 
     def test_missing_snapcraft_yaml_without_debug(self):
@@ -1143,7 +1145,8 @@ parts: [child]
                   'snapcraft.yaml'), 'w') as fp:
             fp.write("")
 
-        self.assertRaises(BadSnapcraftYAMLError, _get_origin_data,
+        self.assertRaises(SnapcraftEnvironmentError,
+                          _get_origin_data,
                           self.tempdir_path)
 
     def test__get_origin_data_hidden_only(self):
