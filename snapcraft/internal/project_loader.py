@@ -361,12 +361,15 @@ def _build_env_for_stage(stagedir, snap_name, confinement,
     return env
 
 
-def get_snapcraft_yaml():
+def get_snapcraft_yaml(base_dir=None):
     possible_yamls = [
         os.path.join('snap', 'snapcraft.yaml'),
         'snapcraft.yaml',
         '.snapcraft.yaml',
     ]
+
+    if base_dir:
+        possible_yamls = [os.path.join(base_dir, x) for x in possible_yamls]
 
     snapcraft_yamls = [y for y in possible_yamls if os.path.exists(y)]
 

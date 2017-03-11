@@ -1,8 +1,0 @@
----
-description: Wiki with origin modifiers
-maintainer: Marco Trevisan <marco@ubuntu.com>
-parts: [desktop-glib-only]
-origin: https://github.com/3v1n0/snapcraft-desktop-helpers.git
-origin-type: git
-origin-branch: snap-launcher-arch
-origin-commit: 91cc92f0a0c
