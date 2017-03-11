@@ -16,6 +16,7 @@
 
 import fileinput
 import os
+import re
 import subprocess
 import time
 import uuid
@@ -27,7 +28,7 @@ import pexpect
 from unittest import mock
 import testtools
 from testtools import content
-from testtools.matchers import Contains
+from testtools.matchers import MatchesRegex
 
 from snapcraft.tests import fixture_setup
 
@@ -194,9 +195,9 @@ class StoreTestCase(TestCase):
 
     def logout(self):
         output = self.run_snapcraft('logout')
-        expected = ('Clearing credentials for Ubuntu One SSO.\n'
-                    'Credentials cleared.\n')
-        self.assertThat(output, Contains(expected))
+        expected = (r'.*Clearing credentials for Ubuntu One SSO.\n.*\n'
+                    r'Credentials cleared.\n.*')
+        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
     def register(self, snap_name, private=False, wait=True):
         command = ['register', snap_name]

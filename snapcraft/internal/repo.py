@@ -38,7 +38,6 @@ import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import (
     cache,
-    common,
 )
 from snapcraft.internal.errors import MissingCommandError
 from snapcraft.internal.indicators import is_dumb_terminal
@@ -291,7 +290,7 @@ class Ubuntu:
         with self._apt.archive(self._cache.base_dir) as apt_cache:
             self._mark_install(apt_cache, package_names)
             self._filter_base_packages(apt_cache, package_names)
-            self._get(apt_cache)
+            return self._get(apt_cache)
 
     def _mark_install(self, apt_cache, package_names):
         for name in package_names:
@@ -351,7 +350,9 @@ class Ubuntu:
         # Downloading each package individually has the drawback of witholding
         # any clue of how long the whole pulling process will take, but that's
         # something we'll have to live with.
+        pkg_list = []
         for package in apt_cache.get_changes():
+            pkg_list.append(str(package.candidate))
             source = package.candidate.fetch_binary(
                 self._cache.packages_dir, progress=self._apt.progress)
             destination = os.path.join(
@@ -359,6 +360,8 @@ class Ubuntu:
             with contextlib.suppress(FileNotFoundError):
                 os.remove(destination)
             file_utils.link_or_copy(source, destination)
+
+        return pkg_list
 
     def unpack(self, rootdir):
         pkgs_abs_path = glob.glob(os.path.join(self._downloaddir, '*.deb'))
@@ -497,14 +500,18 @@ def _fix_xml_tools(root):
 
 
 def _fix_symlink(path, debdir, root):
-    target = os.path.join(debdir, os.readlink(path)[1:])
-    if _skip_link(os.readlink(path)):
-        logger.debug('Skipping {}'.format(target))
+    target = os.readlink(path)
+    debdir_target = os.path.join(debdir, os.readlink(path)[1:])
+
+    if target in get_pkg_libs('libc6'):
+        logger.debug("Not fixing symlink {!r}: it's pointing to libc".format(
+            target))
         return
-    if not os.path.exists(target) and not _try_copy_local(path, target):
+    if (not os.path.exists(debdir_target) and not
+            _try_copy_local(path, debdir_target)):
         return
     os.remove(path)
-    os.symlink(os.path.relpath(target, root), path)
+    os.symlink(os.path.relpath(debdir_target, root), path)
 
 
 def _fix_filemode(path):
@@ -521,18 +528,6 @@ def _fix_shebangs(path):
         file_utils.replace_in_file(p, re.compile(r''),
                                    re.compile(r'#!.*python\n'),
                                    r'#!/usr/bin/env python\n')
-
-
-_skip_list = None
-
-
-def _skip_link(target):
-    global _skip_list
-    if not _skip_list:
-        output = common.run_output(['dpkg', '-L', 'libc6']).split()
-        _skip_list = [i for i in output if 'lib' in i]
-
-    return target in _skip_list
 
 
 def _try_copy_local(path, target):
@@ -572,3 +567,31 @@ def _set_pkg_version(pkg, version):
         pkg.candidate = version
     else:
         raise PackageNotFoundError('{}={}'.format(pkg.name, version))
+
+
+_lib_list = dict()
+
+
+def get_pkg_libs(pkg_name):
+    """Obtain list of libraries contained within a Debian package.
+
+    :param str pkg_name: Name of the package.
+
+    :return: Set of files in the package with 'lib' in the name. This will
+             include directories.
+    :rtype: set
+
+    Note that this will be slow the first time it's called for a given package
+    name, but the list is cached, so subsequent calls for the same package will
+    be fast.
+    """
+
+    global _lib_list
+    if pkg_name not in _lib_list:
+        # No need to use common.run here, as nothing depends upon the snap's
+        # build environment.
+        output = subprocess.check_output(['dpkg', '-L', pkg_name]).decode(
+            sys.getfilesystemencoding()).strip().split()
+        _lib_list[pkg_name] = {i for i in output if 'lib' in i}
+
+    return _lib_list[pkg_name].copy()

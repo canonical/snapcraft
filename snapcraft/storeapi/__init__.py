@@ -1,7 +1,7 @@
 
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -33,6 +33,7 @@ from progressbar import (
 )
 import pymacaroons
 import requests
+from requests.adapters import HTTPAdapter
 from simplejson.scanner import JSONDecodeError
 
 import snapcraft
@@ -91,6 +92,10 @@ class Client():
         self.conf = conf
         self.root_url = root_url
         self.session = requests.Session()
+        # Setup max retries for all store URLs and the CDN
+        self.session.mount('http://', HTTPAdapter(max_retries=5))
+        self.session.mount('https://', HTTPAdapter(max_retries=5))
+
         self._snapcraft_headers = {
             'X-SNAPCRAFT-VERSION': snapcraft.__version__
         }
