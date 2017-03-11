@@ -1,5 +1,0 @@
----
-description: a test part
-maintainer: John Doe <john.doe@example.com>
-parts: [hidden-testpart]
-origin: lp:~joetalbott/+junk/testpart

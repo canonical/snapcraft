@@ -1,0 +1,14 @@
+name: deb-with-checksum
+version: '0.1'
+summary: test checksum with deb's sources
+description: |
+  This integration tests verifies that deb files can be used with checksums.
+
+grade: devel
+confinement: devmode
+
+parts:
+  deb-source-checksum:
+    plugin: dump
+    source: small_0.1-1.deb
+    source-checksum: sha256/b439909266aac7384e15d041b90e98d1e7fc774e5e1ac32801859882e7012182

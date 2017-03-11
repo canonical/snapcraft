@@ -38,7 +38,6 @@ import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import (
     cache,
-    common,
 )
 from snapcraft.internal.errors import MissingCommandError
 from snapcraft.internal.indicators import is_dumb_terminal
@@ -177,6 +176,25 @@ class _AptCache:
         # Do not install recommends
         apt.apt_pkg.config.set('Apt::Install-Recommends', 'False')
 
+        # Methods and solvers dir for when in the SNAP
+        if os.getenv('SNAP'):
+            snap_dir = os.getenv('SNAP')
+            apt_dir = os.path.join(snap_dir, 'apt')
+            apt.apt_pkg.config.set('Dir', apt_dir)
+            # yes apt is broken like that we need to append os.path.sep
+            apt.apt_pkg.config.set('Dir::Bin::methods',
+                                   apt_dir + os.path.sep)
+            apt.apt_pkg.config.set('Dir::Bin::solvers::',
+                                   apt_dir + os.path.sep)
+            apt_key_path = os.path.join(apt_dir, 'apt-key')
+            apt.apt_pkg.config.set('Dir::Bin::apt-key', apt_key_path)
+            gpgv_path = os.path.join(snap_dir, 'bin', 'gpgv')
+            apt.apt_pkg.config.set('Apt::Key::gpgvcommand', gpgv_path)
+            apt.apt_pkg.config.set('Dir::Etc::Trusted',
+                                   '/etc/apt/trusted.gpg')
+            apt.apt_pkg.config.set('Dir::Etc::TrustedParts',
+                                   '/etc/apt/trusted.gpg.d/')
+
         # Make sure we always use the system GPG configuration, even with
         # apt.Cache(rootdir).
         for key in 'Dir::Etc::Trusted', 'Dir::Etc::TrustedParts':
@@ -270,19 +288,24 @@ class Ubuntu:
 
     def get(self, package_names):
         with self._apt.archive(self._cache.base_dir) as apt_cache:
-            self._get(apt_cache, package_names)
+            self._mark_install(apt_cache, package_names)
+            self._filter_base_packages(apt_cache, package_names)
+            return self._get(apt_cache)
 
-    def _get(self, apt_cache, package_names):
-        manifest_dep_names = self._manifest_dep_names(apt_cache)
-
+    def _mark_install(self, apt_cache, package_names):
         for name in package_names:
+            logger.debug('Marking {!r} (and its dependencies) to be '
+                         'fetched'.format(name))
+            name_arch, version = _get_pkg_name_parts(name)
             try:
-                logger.debug(
-                    'Marking {!r} (and its dependencies) to be fetched'.format(
-                        name))
-                apt_cache[name].mark_install()
+                if version:
+                    _set_pkg_version(apt_cache[name_arch], version)
+                apt_cache[name_arch].mark_install()
             except KeyError:
                 raise PackageNotFoundError(name)
+
+    def _filter_base_packages(self, apt_cache, package_names):
+        manifest_dep_names = self._manifest_dep_names(apt_cache)
 
         skipped_essential = []
         skipped_blacklisted = []
@@ -313,6 +336,7 @@ class Ubuntu:
             logger.debug('Skipping blacklisted from manifest packages: '
                          '{!r}'.format(skipped_blacklisted))
 
+    def _get(self, apt_cache):
         # Ideally we'd use apt.Cache().fetch_archives() here, but it seems to
         # mangle some package names on disk such that we can't match it up to
         # the archive later. We could get around this a few different ways:
@@ -326,7 +350,9 @@ class Ubuntu:
         # Downloading each package individually has the drawback of witholding
         # any clue of how long the whole pulling process will take, but that's
         # something we'll have to live with.
+        pkg_list = []
         for package in apt_cache.get_changes():
+            pkg_list.append(str(package.candidate))
             source = package.candidate.fetch_binary(
                 self._cache.packages_dir, progress=self._apt.progress)
             destination = os.path.join(
@@ -334,6 +360,8 @@ class Ubuntu:
             with contextlib.suppress(FileNotFoundError):
                 os.remove(destination)
             file_utils.link_or_copy(source, destination)
+
+        return pkg_list
 
     def unpack(self, rootdir):
         pkgs_abs_path = glob.glob(os.path.join(self._downloaddir, '*.deb'))
@@ -459,28 +487,31 @@ def _fix_artifacts(debdir):
 
 def _fix_xml_tools(root):
     xml2_config_path = os.path.join(root, 'usr', 'bin', 'xml2-config')
-    if os.path.isfile(xml2_config_path):
-        common.run(
-            ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
-                format(root), xml2_config_path])
+    with contextlib.suppress(FileNotFoundError):
+        file_utils.search_and_replace_contents(
+            xml2_config_path, re.compile(r'prefix=/usr'),
+            'prefix={}/usr'.format(root))
 
     xslt_config_path = os.path.join(root, 'usr', 'bin', 'xslt-config')
-    if os.path.isfile(xslt_config_path):
-        common.run(
-            ['sed', '-i', '-e', 's|prefix=/usr|prefix={}/usr|'.
-                format(root), xslt_config_path])
+    with contextlib.suppress(FileNotFoundError):
+        file_utils.search_and_replace_contents(
+            xslt_config_path, re.compile(r'prefix=/usr'),
+            'prefix={}/usr'.format(root))
 
 
 def _fix_symlink(path, debdir, root):
-    target = os.path.join(debdir, os.readlink(path)[1:])
-    if _link_should_be_removed(os.readlink(path)):
-        logger.debug('Removing {}'.format(target))
-        os.remove(path)
+    target = os.readlink(path)
+    debdir_target = os.path.join(debdir, os.readlink(path)[1:])
+
+    if target in get_pkg_libs('libc6'):
+        logger.debug("Not fixing symlink {!r}: it's pointing to libc".format(
+            target))
         return
-    if not os.path.exists(target) and not _try_copy_local(path, target):
+    if (not os.path.exists(debdir_target) and not
+            _try_copy_local(path, debdir_target)):
         return
     os.remove(path)
-    os.symlink(os.path.relpath(target, root), path)
+    os.symlink(os.path.relpath(debdir_target, root), path)
 
 
 def _fix_filemode(path):
@@ -497,18 +528,6 @@ def _fix_shebangs(path):
         file_utils.replace_in_file(p, re.compile(r''),
                                    re.compile(r'#!.*python\n'),
                                    r'#!/usr/bin/env python\n')
-
-
-_remove_list = None
-
-
-def _link_should_be_removed(target):
-    global _remove_list
-    if not _remove_list:
-        output = common.run_output(['dpkg', '-L', 'libc6']).split()
-        _remove_list = [i for i in output if 'lib' in i]
-
-    return target in _remove_list
 
 
 def _try_copy_local(path, target):
@@ -528,3 +547,51 @@ def _try_copy_local(path, target):
 def check_for_command(command):
     if not shutil.which(command):
         raise MissingCommandError([command])
+
+
+def _get_pkg_name_parts(pkg_name):
+    """Break package name into base parts"""
+
+    name = pkg_name
+    version = None
+    with contextlib.suppress(ValueError):
+        name, version = pkg_name.split('=')
+
+    return name, version
+
+
+def _set_pkg_version(pkg, version):
+    """Set cadidate version to a specific version if available"""
+    if version in pkg.versions:
+        version = pkg.versions.get(version)
+        pkg.candidate = version
+    else:
+        raise PackageNotFoundError('{}={}'.format(pkg.name, version))
+
+
+_lib_list = dict()
+
+
+def get_pkg_libs(pkg_name):
+    """Obtain list of libraries contained within a Debian package.
+
+    :param str pkg_name: Name of the package.
+
+    :return: Set of files in the package with 'lib' in the name. This will
+             include directories.
+    :rtype: set
+
+    Note that this will be slow the first time it's called for a given package
+    name, but the list is cached, so subsequent calls for the same package will
+    be fast.
+    """
+
+    global _lib_list
+    if pkg_name not in _lib_list:
+        # No need to use common.run here, as nothing depends upon the snap's
+        # build environment.
+        output = subprocess.check_output(['dpkg', '-L', pkg_name]).decode(
+            sys.getfilesystemencoding()).strip().split()
+        _lib_list[pkg_name] = {i for i in output if 'lib' in i}
+
+    return _lib_list[pkg_name].copy()

@@ -345,6 +345,9 @@ class KernelPluginTestCase(tests.TestCase):
         self.run_output_mock.assert_has_calls([
             mock.call(modprobe_cmd + ['vfat'])])
 
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile(self):
         self.options.kconfigfile = 'config'
         with open(self.options.kconfigfile, 'w') as f:
@@ -382,6 +385,9 @@ class KernelPluginTestCase(tests.TestCase):
         self.assertEqual(config_contents, 'ACCEPT=y\n')
         self._assert_common_assets(plugin.installdir)
 
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
     def test_build_verbose_with_kconfigfile(self):
         fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
         self.useFixture(fake_logger)
@@ -438,6 +444,9 @@ class KernelPluginTestCase(tests.TestCase):
         self.assertEqual(config_contents, 'ACCEPT=y\n')
         self._assert_common_assets(plugin.installdir)
 
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_kconfigs(self):
         self.options.kconfigfile = 'config'
         self.options.kconfigs = [
@@ -488,6 +497,9 @@ ACCEPT=n
         self.assertEqual(config_contents, expected_config)
         self._assert_common_assets(plugin.installdir)
 
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
     def test_build_with_defconfig_and_kconfigs(self):
         self.options.kdefconfig = ['defconfig']
         self.options.kconfigs = [
@@ -545,6 +557,9 @@ ACCEPT=n
         self.assertEqual(config_contents, expected_config)
         self._assert_common_assets(plugin.installdir)
 
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
     def test_build_with_two_defconfigs(self):
         self.options.kdefconfig = ['defconfig', 'defconfig2']
 
@@ -585,6 +600,9 @@ ACCEPT=n
         self.assertTrue(os.path.exists(config_file))
         self._assert_common_assets(plugin.installdir)
 
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_dtbs(self):
         self.options.kconfigfile = 'config'
         with open(self.options.kconfigfile, 'w') as f:
@@ -643,6 +661,9 @@ ACCEPT=n
         self.assertEqual(
             "No match for dtb 'fake-dtb.dtb' was found", str(raised))
 
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_modules(self):
         self.options.kconfigfile = 'config'
         with open(self.options.kconfigfile, 'w') as f:
@@ -705,6 +726,9 @@ ACCEPT=n
         self.assertEqual(config_contents, 'ACCEPT=y\n')
         self._assert_common_assets(plugin.installdir)
 
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_firmware(self):
         self.options.kconfigfile = 'config'
         with open(self.options.kconfigfile, 'w') as f:
@@ -756,6 +780,9 @@ ACCEPT=n
         self.assertTrue(os.path.exists(os.path.join(
             plugin.installdir, 'firmware', 'fake-fw-dir')))
 
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_no_firmware(self):
         self.options.kconfigfile = 'config'
         with open(self.options.kconfigfile, 'w') as f:
@@ -830,7 +857,6 @@ ACCEPT=n
 
     def test_build_with_missing_system_map_fails(self):
         self.options.kconfigfile = 'config'
-
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 
@@ -863,7 +889,7 @@ ACCEPT=n
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      project_options)
 
-        self.assertEqual(plugin.make_targets, ['Image', 'modules'])
+        self.assertEqual(plugin.make_targets, ['Image', 'modules', 'dtbs'])
 
     def test_kernel_image_target_as_string(self):
         self.options.kernel_image_target = 'Image'
@@ -871,7 +897,7 @@ ACCEPT=n
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      project_options)
 
-        self.assertEqual(plugin.make_targets, ['Image', 'modules'])
+        self.assertEqual(plugin.make_targets, ['Image', 'modules', 'dtbs'])
 
     def test_kernel_image_target_non_existent(self):
         class Options:
@@ -888,7 +914,7 @@ ACCEPT=n
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      project_options)
 
-        self.assertEqual(plugin.make_targets, ['bzImage', 'modules'])
+        self.assertEqual(plugin.make_targets, ['bzImage', 'modules', 'dtbs'])
 
     @mock.patch.object(storeapi.StoreClient, 'download')
     def test_pull(self, download_mock):

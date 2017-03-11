@@ -16,13 +16,48 @@
 
 import os
 import fixtures
+import tarfile
+import threading
+
+from pyftpdlib import (
+    authorizers,
+    handlers,
+    servers
+)
 
 from testtools.matchers import (
     DirExists,
+    FileContains,
     FileExists
 )
 
 import integration_tests
+
+
+class FtpServerRunning(fixtures.Fixture):
+
+    def __init__(self, directory):
+        super().__init__()
+        self.directory = directory
+
+    def setUp(self):
+        super().setUp()
+        self._start_ftp_server()
+
+    def _start_ftp_server(self):
+        authorizer = authorizers.DummyAuthorizer()
+        authorizer.add_anonymous(self.directory)
+        handler = handlers.FTPHandler
+        handler.authorizer = authorizer
+        self.server = servers.FTPServer(('', 2121), handler)
+
+        server_thread = threading.Thread(target=self.server.serve_forever)
+        server_thread.start()
+        self.addCleanup(self._stop_ftp_server, server_thread)
+
+    def _stop_ftp_server(self, thread):
+        self.server.close_all()
+        thread.join()
 
 
 class DumpPluginTestCase(integration_tests.TestCase):
@@ -65,10 +100,18 @@ class DumpPluginTestCase(integration_tests.TestCase):
 
     def test_download_file_from_ftp_source(self):
         """Download a file from a FTP source, LP: #1602323"""
+        ftp_dir = os.path.join(self.path, 'ftp')
+        os.mkdir(ftp_dir)
+        ftp_server = FtpServerRunning(ftp_dir)
+        self.useFixture(ftp_server)
 
-        # This is needed since autopkgtest doesn't properly set it
-        if not os.getenv('ftp_proxy', None):
-            self.useFixture(fixtures.EnvironmentVariable(
-                'ftp_proxy', os.getenv('http_proxy', '')))
+        test_file_path = os.path.join(self.path, 'test')
+        with open(test_file_path, 'w') as test_file:
+            test_file.write('Hello ftp')
+        with tarfile.open(os.path.join(ftp_dir, 'test.tar.gz'), 'w:gz') as tar:
+            tar.add(test_file_path)
 
         self.run_snapcraft('pull', 'ftp-source')
+        self.assertThat(
+            os.path.join(self.parts_dir, 'ftp-part', 'src', 'test'),
+            FileContains('Hello ftp'))

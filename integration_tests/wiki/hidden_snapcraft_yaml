@@ -1,0 +1,5 @@
+parts:
+  testpart:
+    source: .
+    plugin: nil
+

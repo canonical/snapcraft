@@ -71,7 +71,7 @@ def _get_system_libs():
     lib_path = os.path.join(common.get_librariesdir(), release)
 
     if not os.path.exists(lib_path):
-        logger.warning('No libraries to exclude from this release')
+        logger.debug('No libraries to exclude from this release')
         # Always exclude libc.so.6
         return frozenset(['libc.so.6'])
 
@@ -86,7 +86,7 @@ def get_dependencies(elf):
 
     This may include libraries contained within the project.
     """
-    logger.debug('Getting dependencies for {!r}'.format(elf))
+    logger.debug('Getting dependencies for {!r}'.format(str(elf)))
     ldd_out = ''
     try:
         ldd_out = common.run_output(['ldd', elf]).split('\n')
