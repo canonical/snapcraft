@@ -86,7 +86,7 @@ def get_dependencies(elf):
 
     This may include libraries contained within the project.
     """
-    logger.debug('Getting dependencies for {!r}'.format(elf))
+    logger.debug('Getting dependencies for {!r}'.format(str(elf)))
     ldd_out = ''
     try:
         ldd_out = common.run_output(['ldd', elf]).split('\n')

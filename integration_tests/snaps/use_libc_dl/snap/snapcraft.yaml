@@ -1,0 +1,21 @@
+name: libc-dl
+version: '1.0'
+summary: Use libdl from libc
+description: |
+  This snap links to libdl from libc. It requires the shared library, and will
+  fail to build with the static library. As such, this makes a good regression
+  test for LP: #1665089.
+
+grade: devel
+confinement: strict
+
+apps:
+  hello:
+    command: hello
+
+parts:
+  my-part:
+    plugin: autotools
+    source: src/
+    stage-packages: [libc6-dev]
+    stage: [-usr/]

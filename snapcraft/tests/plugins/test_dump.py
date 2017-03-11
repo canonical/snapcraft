@@ -18,10 +18,10 @@ import os
 
 import snapcraft
 from snapcraft.plugins.dump import DumpPlugin
-from snapcraft.tests import TestCase
+from snapcraft import tests
 
 
-class DumpPluginTestCase(TestCase):
+class DumpPluginTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -59,7 +59,6 @@ class DumpPluginTestCase(TestCase):
     def test_dump_symlinks(self):
         plugin = DumpPlugin('dump', self.options, self.project_options)
 
-        os.makedirs(plugin.builddir)
         os.makedirs(os.path.join(plugin.builddir, 'subdir'))
         with open(os.path.join(plugin.builddir, 'file'), 'w') as f:
             f.write('foo')
@@ -164,6 +163,25 @@ class DumpPluginTestCase(TestCase):
 
             with open(destination, 'r') as f:
                 self.assertEqual(f.read(), symlink['expected_contents'])
+
+    def test_dump_symlinks_to_libc(self):
+        plugin = DumpPlugin('dump', self.options, self.project_options)
+        os.makedirs(plugin.builddir)
+
+        # Even though this symlink is absolute, since it's to libc the copy
+        # plugin shouldn't try to follow it or modify it.
+        libc_libs = snapcraft.repo.get_pkg_libs('libc6')
+
+        # We don't care which lib we're testing with, as long as it's a .so.
+        libc_library_path = [lib for lib in libc_libs if '.so' in lib][0]
+        os.symlink(
+            libc_library_path, os.path.join(plugin.builddir, 'libc-link'))
+
+        plugin.build()
+
+        self.assertThat(
+            os.path.join(plugin.installdir, 'libc-link'),
+            tests.LinkExists(libc_library_path))
 
     def test_dump_broken_symlink(self):
         self.options.source = 'src'
