@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -96,4 +96,15 @@ class TestSubversion(SourceTestCase):
 
         expected_message = (
             'can\'t specify source-depth for a Subversion source')
+        self.assertEqual(raised.message, expected_message)
+
+    def test_source_checksum_raises_exception(self):
+        raised = self.assertRaises(
+            sources.errors.IncompatibleOptionsError,
+            sources.Subversion,
+            'svn://mysource', 'source_dir',
+            source_checksum="md5/d9210476aac5f367b14e513bdefdee08")
+
+        expected_message = (
+            "can't specify a source-checksum for a Subversion source")
         self.assertEqual(raised.message, expected_message)

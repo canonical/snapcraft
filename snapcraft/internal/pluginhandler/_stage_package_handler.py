@@ -32,7 +32,7 @@ class StagePackageHandler:
     ...    cache_dir = os.path.join(tmp, 'cache')
     ...    unpack_dir = os.path.join(tmp, 'unpack')
     ...    handler = StagePackageHandler(['foo'], cache_dir)
-    ...    handler.fetch()
+    ...    pkg_list = handler.fetch()
     ...    handler.unpack(unpack_dir)
     """
 
@@ -81,10 +81,13 @@ class StagePackageHandler:
         the cache.
         """
 
+        pkg_list = []
         if self._stage_packages:
             logger.debug('Fetching stage-packages {!r}'.format(
                 self._stage_packages))
-            self._ubuntu.get(self._stage_packages)
+            pkg_list = self._ubuntu.get(self._stage_packages)
+
+        return pkg_list
 
     def unpack(self, unpack_dir):
         """Unpack fetched stage packages into directory.
