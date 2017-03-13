@@ -364,7 +364,7 @@ from snapcraft._store import (                      # noqa
     create_key,
     close,
     download,
-    history,
+    revisions,
     gated,
     list_keys,
     list_registered,

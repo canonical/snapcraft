@@ -336,7 +336,7 @@ class PushCommandDeltasTestCase(tests.TestCase):
             'url': '/fake/url',
             'revision': self.new_snap_revision,
         }
-        patcher = mock.patch.object(storeapi.StoreClient, 'get_snap_history')
+        patcher = mock.patch.object(storeapi.StoreClient, 'get_snap_revisions')
         mock_release = patcher.start()
         mock_release.return_value = [self.latest_snap_revision]
         self.addCleanup(patcher.stop)
@@ -474,7 +474,7 @@ class PushCommandDeltasWithPruneTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch.object(storeapi.StoreClient, 'get_snap_history')
+        patcher = mock.patch.object(storeapi.StoreClient, 'get_snap_revisions')
         mock_release = patcher.start()
         self.addCleanup(patcher.stop)
         mock_release.return_value = [snap_revision]

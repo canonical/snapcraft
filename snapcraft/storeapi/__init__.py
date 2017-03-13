@@ -217,7 +217,7 @@ class StoreClient():
         return self._refresh_if_necessary(
             self.sca.snap_release, snap_name, revision, channels)
 
-    def get_snap_history(self, snap_name, series=None, arch=None):
+    def get_snap_revisions(self, snap_name, series=None, arch=None):
         if series is None:
             series = constants.DEFAULT_SERIES
 
@@ -228,7 +228,7 @@ class StoreClient():
             raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
 
         response = self._refresh_if_necessary(
-            self.sca.snap_history, snap_id, series, arch)
+            self.sca.snap_revisions, snap_id, series, arch)
 
         if not response:
             raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
@@ -629,7 +629,7 @@ class SCAClient(Client):
         if not response.ok:
             raise errors.StoreSnapBuildError(response)
 
-    def snap_history(self, snap_id, series, arch):
+    def snap_revisions(self, snap_id, series, arch):
         qs = {}
         if series:
             qs['series'] = series
@@ -645,7 +645,8 @@ class SCAClient(Client):
                      'Content-Type': 'application/json',
                      'Accept': 'application/json'})
         if not response.ok:
-            raise errors.StoreSnapHistoryError(response, snap_id, series, arch)
+            raise errors.StoreSnapRevisionsError(
+                response, snap_id, series, arch)
 
         response_json = response.json()
 
