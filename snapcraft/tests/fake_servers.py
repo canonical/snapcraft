@@ -821,7 +821,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_validation_request('no')
         elif parsed_path.path.startswith(snap_path):
             if parsed_path.path.endswith('/history'):
-                self._handle_snap_history()
+                self._handle_snap_revisions()
             elif parsed_path.path.endswith('/status'):
                 self._handle_snap_status()
         else:
@@ -942,7 +942,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             'snaps': {'16': snaps},
         }).encode())
 
-    def _handle_snap_history(self):
+    def _handle_snap_revisions(self):
         logger.debug('Handling account request')
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
