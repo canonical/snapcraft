@@ -685,17 +685,17 @@ def _get_text_for_current_channels(channels, current_channels):
         for channel in channels) or '-'
 
 
-def history(snap_name, series, arch):
+def revisions(snap_name, series, arch):
     store = storeapi.StoreClient()
 
     with _requires_login():
-        history = store.get_snap_history(snap_name, series, arch)
+        revisions = store.get_snap_revisions(snap_name, series, arch)
 
     parsed_revisions = [
         (rev['revision'], rev['timestamp'], rev['arch'], rev['version'],
          _get_text_for_current_channels(
             rev['channels'], rev['current_channels']))
-        for rev in history]
+        for rev in revisions]
     tabulated_revisions = tabulate(
         parsed_revisions, numalign='left',
         headers=['Rev.', 'Uploaded', 'Arch', 'Version', 'Channels'],
