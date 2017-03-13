@@ -1105,6 +1105,10 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
         logger.debug(
             'Handling details request for package {}, with headers {}'.format(
                 package, self.headers))
+        if 'User-Agent' not in self.headers:
+            self.send_response(500)
+            self.end_headers()
+            return
         response = self._get_details_response(package)
         if response is None:
             self.send_response(404)
@@ -1151,6 +1155,10 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_download_request(self, snap):
         logger.debug('Handling download request for snap {}'.format(snap))
+        if 'User-Agent' not in self.headers:
+            self.send_repsonse(500)
+            self.end_headers()
+            return
         self.send_response(200)
         self.send_header('Content-Type', 'application/octet-stream')
         self.end_headers()

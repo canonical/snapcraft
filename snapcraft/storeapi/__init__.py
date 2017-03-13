@@ -97,7 +97,8 @@ class Client():
         self.session.mount('https://', HTTPAdapter(max_retries=5))
 
         self._snapcraft_headers = {
-            'X-SNAPCRAFT-VERSION': snapcraft.__version__
+            'X-SNAPCRAFT-VERSION': snapcraft.__version__,
+            'User-Agent': 'snapcraft/{}'.format(snapcraft.__version__),
         }
 
     def request(self, method, url, params=None, headers=None, **kwargs):
