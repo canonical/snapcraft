@@ -19,6 +19,7 @@ from unittest import mock
 
 import docopt
 import fixtures
+from testtools.matchers import Contains
 
 from snapcraft import (
     storeapi,
@@ -28,7 +29,7 @@ from snapcraft.main import main
 from snapcraft.tests import fixture_setup
 
 
-class RevisionsCommandTestCase(tests.TestCase):
+class RevisionsCommandBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -52,17 +53,25 @@ class RevisionsCommandTestCase(tests.TestCase):
             'revision': 1,
         }]
 
+
+class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
+
+    scenarios = [
+        ('list-revisions', dict(command='list-revisions')),
+        ('revisions', dict(command='revisions')),
+    ]
+
     def test_revisions_without_snap_raises_exception(self):
         raised = self.assertRaises(
             docopt.DocoptExit,
-            main, ['revisions'])
+            main, [self.command])
 
         self.assertIn('Usage:', str(raised))
 
     def test_revisions_with_no_permissions(self):
         self.assertRaises(
             SystemExit,
-            main, ['revisions', 'snap-test'])
+            main, [self.command, 'snap-test'])
 
         self.assertIn(
             'No valid credentials found. Have you run "snapcraft login"?',
@@ -74,7 +83,7 @@ class RevisionsCommandTestCase(tests.TestCase):
 
         self.assertRaises(
             SystemExit,
-            main, ['revisions', 'snap-test'])
+            main, [self.command, 'snap-test'])
 
         self.assertIn(
             "Snap 'snap-test' was not found in '16' series.",
@@ -86,7 +95,7 @@ class RevisionsCommandTestCase(tests.TestCase):
 
         self.assertRaises(
             SystemExit,
-            main, ['revisions', 'snap-test', '--arch=arm64'])
+            main, [self.command, 'snap-test', '--arch=arm64'])
 
         self.assertIn(
             "Snap 'snap-test' for 'arm64' was not found in '16' series.",
@@ -98,7 +107,7 @@ class RevisionsCommandTestCase(tests.TestCase):
 
         self.assertRaises(
             SystemExit,
-            main, ['revisions', 'snap-test', '--series=15'])
+            main, [self.command, 'snap-test', '--series=15'])
 
         self.assertIn(
             "Snap 'snap-test' was not found in '15' series.",
@@ -111,7 +120,7 @@ class RevisionsCommandTestCase(tests.TestCase):
 
         self.assertRaises(
             SystemExit,
-            main, ['revisions', 'snap-test', '--arch=some-arch'])
+            main, [self.command, 'snap-test', '--arch=some-arch'])
 
         self.assertIn(
             "Snap 'snap-test' for 'some-arch' was not found in '16' series.",
@@ -125,7 +134,7 @@ class RevisionsCommandTestCase(tests.TestCase):
 
         self.assertRaises(
             SystemExit,
-            main, ['revisions', 'snap-test', '--series=some-series'])
+            main, [self.command, 'snap-test', '--series=some-series'])
 
         self.assertIn(
             "Snap 'snap-test' was not found in 'some-series' series.",
@@ -139,7 +148,7 @@ class RevisionsCommandTestCase(tests.TestCase):
 
         mock_revisions.return_value = self.expected
 
-        main(['revisions', 'snap-test'])
+        main([self.command, 'snap-test'])
 
         mock_revisions.assert_called_once_with('snap-test', '16', None)
 
@@ -160,7 +169,7 @@ class RevisionsCommandTestCase(tests.TestCase):
         mock_revisions.return_value = [
             rev for rev in self.expected if rev['arch'] == 'amd64']
 
-        main(['revisions', 'snap-test', '--arch=amd64'])
+        main([self.command, 'snap-test', '--arch=amd64'])
 
         mock_revisions.assert_called_once_with('snap-test', '16', 'amd64')
 
@@ -179,7 +188,7 @@ class RevisionsCommandTestCase(tests.TestCase):
 
         mock_revisions.return_value = self.expected
 
-        main(['revisions', 'snap-test', '--series=16'])
+        main([self.command, 'snap-test', '--series=16'])
 
         mock_revisions.assert_called_once_with('snap-test', '16', None)
 
@@ -190,3 +199,22 @@ class RevisionsCommandTestCase(tests.TestCase):
             '1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge'
         ]
         self.assertEqual(expected_output, terminal_output.splitlines())
+
+
+class DeprecatedHistoryCommandTestCase(RevisionsCommandBaseTestCase):
+
+    @mock.patch.object(storeapi.StoreClient, 'get_snap_revisions')
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    def test_history_with_deprecation_message(self, mock_account_api,
+                                              mock_revisions):
+        fake_terminal = fixture_setup.FakeTerminal()
+        self.useFixture(fake_terminal)
+
+        mock_revisions.return_value = self.expected
+
+        main(['history', 'snap-test', '--series=16'])
+
+        self.assertThat(
+            fake_terminal.getvalue(), Contains(
+                "DEPRECATED: The 'history' command has been replaced by "
+                "'list-revisions'."))

@@ -109,7 +109,7 @@ class RevisionsTestCase(integration_tests.StoreTestCase):
 
         self.assertThat(output, Contains(
             "DEPRECATED: The 'history' command has "
-            "been replaced by 'revisions'."))
+            "been replaced by 'list-revisions'."))
 
     @unittest.skipUnless(
         os.getenv('TEST_STORE', 'fake') == 'staging', 'Skip staging store.')
