@@ -443,7 +443,10 @@ class BuildPackagesTestCase(tests.TestCase):
                      'another-uninstalled': MagicMock(installed=False),
                      'another-installed': MagicMock(installed=True),
                      'repeated-package': MagicMock(installed=False),
-                     'repeated-package': MagicMock(installed=False)}
+                     'repeated-package': MagicMock(installed=False),
+                     'versioned-package=0.2': MagicMock(installed=False),
+                     'versioned-package': MagicMock(installed=True,
+                                                    version='0.1')}
 
     def get_installable_packages(self, pkgs):
         return [p for p in pkgs if not pkgs[p].installed]
@@ -460,12 +463,30 @@ class BuildPackagesTestCase(tests.TestCase):
 
     @patch('snapcraft.repo.is_dumb_terminal')
     @patch('subprocess.check_call')
-    def test_install_buid_package(
+    def test_install_build_package(
             self, mock_check_call, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = False
         self.install_test_packages(self.test_packages)
 
         installable = self.get_installable_packages(self.test_packages)
+        mock_check_call.assert_has_calls([
+            call('sudo apt-get --no-install-recommends -y '
+                 '-o Dpkg::Progress-Fancy=1 install'.split() +
+                 sorted(set(installable)),
+                 env={'DEBIAN_FRONTEND': 'noninteractive',
+                      'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
+        ])
+
+    @patch('snapcraft.repo.is_dumb_terminal')
+    @patch('subprocess.check_call')
+    def test_install_versioned_build_package(
+            self, mock_check_call, mock_is_dumb_terminal):
+        logging.getLogger().setLevel(logging.DEBUG)
+        mock_is_dumb_terminal.return_value = False
+        self.install_test_packages(self.test_packages)
+
+        installable = self.get_installable_packages(self.test_packages)
+        installable.append('versioned-package=0.2')
         mock_check_call.assert_has_calls([
             call('sudo apt-get --no-install-recommends -y '
                  '-o Dpkg::Progress-Fancy=1 install'.split() +

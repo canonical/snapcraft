@@ -83,8 +83,11 @@ def install_build_packages(packages):
     with apt.Cache() as apt_cache:
         for pkg in unique_packages:
             try:
-                pkg_name, _ = _get_pkg_name_parts(pkg)
-                if not apt_cache[pkg_name].installed:
+                pkg_name, version = _get_pkg_name_parts(pkg)
+                installed_version = apt_cache[pkg_name].installed
+                if not installed_version:
+                    new_packages.append(pkg)
+                elif version and installed_version != version:
                     new_packages.append(pkg)
             except KeyError as e:
                 raise EnvironmentError(
