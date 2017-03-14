@@ -10,16 +10,12 @@ virtualenv:
 
 env:
   matrix:
+  - DOCKER=1 CHECK_CLA=1 DEPENDENCIES="apt install -y python-launchpadlib"
   - DOCKER=1 TEST_SUITE=static DEPENDENCIES="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
   - DOCKER=1 TEST_SUITE=unit DEPENDENCIES="apt install -y git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt && python3 -m pip uninstall -y coverage && apt install -y python3-coverage"
   - DOCKER=1 TEST_SUITE=integration DEPENDENCIES="apt install -y bzr curl git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev mercurial python3-pip subversion squashfs-tools sudo snapd xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
   - DOCKER=1 GEN_DOCS=1 DEPENDENCIES="apt install libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev git make python3-pip python3-sphinx -y && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
   - DOCKER=1 TEST_SUITE=beta DEPENDENCIES="apt install -y python3-git python3-github wget"
-
-matrix:
-  include:
-    - env: CHECK_CLA=1 DEPENDENCIES="sudo apt install -y python-launchpadlib"
-      python: "2.7"
 
 addons:
   apt:
@@ -27,7 +23,6 @@ addons:
       - python3-coverage
 
 install:
-  - if [ ! -z $CHECK_CLA ] && [ "$TRAVIS_PULL_REQUEST" != "false" ]; then $DEPENDENCIES; fi
   - if [ ! -z $DOCKER ]; then docker run --name builder
     -e TEST_USER_EMAIL=$TEST_USER_EMAIL -e TEST_USER_PASSWORD=$TEST_USER_PASSWORD
     -e TEST_STORE=$TEST_STORE -e TEST_SNAP_WITH_TRACKS=$TEST_SNAP_WITH_TRACKS
@@ -42,7 +37,7 @@ install:
 
 script:
   # CLA check, only in pull requests.
-  - if [ ! -z $CHECK_CLA ] && [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ]; then ./tools/cla_check_in_travis.sh; fi
+  - if [ ! -z $CHECK_CLA ] && [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ]; then docker exec -i builder ./tools/cla_check_in_travis.sh; fi
   # Test suites from runtests.sh, in pull requests and landings to master.
   - if [ ! -z $TEST_SUITE ] && [ "$TEST_SUITE" != "beta" ] &&  [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then docker exec -i builder ./runtests.sh $TEST_SUITE; fi
   # Trigger beta tests, only in the daily cron.
