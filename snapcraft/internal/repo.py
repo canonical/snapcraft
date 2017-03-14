@@ -80,10 +80,12 @@ def is_package_installed(package):
 def install_build_packages(packages):
     unique_packages = set(packages)
     new_packages = []
+    pkg_list = []
     with apt.Cache() as apt_cache:
         for pkg in unique_packages:
             try:
                 pkg_name, version = _get_pkg_name_parts(pkg)
+                pkg_list.append(str(apt_cache[pkg_name].candidate))
                 installed_version = apt_cache[pkg_name].installed
                 if not installed_version:
                     new_packages.append(pkg)
@@ -118,10 +120,6 @@ def install_build_packages(packages):
             logger.warning(
                 'Impossible to mark packages as auto-installed: {}'
                 .format(e))
-    pkg_list = []
-    with apt.Cache() as apt_cache:
-        for pkg in unique_packages:
-            pkg_list.append(str(apt_cache[pkg].candidate))
 
     return pkg_list
 

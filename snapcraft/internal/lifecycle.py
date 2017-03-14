@@ -246,7 +246,16 @@ class _Executor:
         part = _replace_in_part(part)
 
         # Add the annotated list of build packages
-        part.build_packages = self.build_packages
+        part_build_packages = part._part_properties['build-packages']
+        part.build_packages = []
+        for pkg in self.build_packages:
+            if pkg in part_build_packages:
+                part.build_packages.append(pkg)
+            else:
+                pkg_name, version = repo._get_pkg_name_parts(pkg)
+                if pkg_name in part_build_packages:
+                    part.build_packages.append(pkg)
+
         getattr(part, step)()
 
     def _create_meta(self, step, part_names):

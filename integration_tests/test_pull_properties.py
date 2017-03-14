@@ -59,12 +59,26 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.run_snapcraft('pull', project_dir)
 
         state_file = os.path.join(
-            self.parts_dir, 'asset-tracking', 'state', 'pull')
+            self.parts_dir, project_dir, 'state', 'pull')
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
             state = yaml.load(f)
 
         # Verify that the correct version of 'hello' is installed
         self.assertTrue(len(state.assets['stage-packages']) > 0)
+        self.assertTrue(len(state.assets['build-packages']) > 0)
         self.assertIn('hello=2.10-1', state.assets['stage-packages'])
         self.assertIn('make=4.1-6', state.assets['build-packages'])
+
+    def test_pull_global_build_packages(self):
+        project_dir = 'asset-tracking-global'
+        self.run_snapcraft('pull', project_dir)
+
+        state_file = os.path.join(
+            self.parts_dir, project_dir, 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+
+        self.assertTrue(len(state.assets['build-packages']) == 0)
+        self.assertNotIn('make=4.1-6', state.assets['build-packages'])

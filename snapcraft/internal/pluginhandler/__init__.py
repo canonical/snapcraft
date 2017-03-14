@@ -337,7 +337,7 @@ class PluginHandler:
         self.mark_done('pull', states.PullState(
             pull_properties, part_properties=self._part_properties,
             project=self._project_options, stage_packages=self.stage_packages,
-            build_packages=self.code.build_packages,
+            build_packages=self.build_packages,
         ))
 
     def clean_pull(self, hint=''):
