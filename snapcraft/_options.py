@@ -209,8 +209,7 @@ class ProjectOptions:
                     "found symlink loop resolving dynamic linker path")
 
             seen_paths.add(dynamic_linker_path)
-            if not (os.path.exists(dynamic_linker_path) or
-                    os.path.islink(dynamic_linker_path)):
+            if not os.path.lexists(dynamic_linker_path):
                 return None
             if not os.path.islink(dynamic_linker_path):
                 return dynamic_linker_path
