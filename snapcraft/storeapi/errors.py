@@ -317,10 +317,10 @@ class StoreSnapBuildError(StoreError):
         super().__init__(error=error)
 
 
-class StoreSnapHistoryError(StoreError):
+class StoreSnapRevisionsError(StoreError):
 
     fmt = (
-        'Error fetching history of snap id {snap_id!r} for {arch!r} '
+        'Error fetching revisions of snap id {snap_id!r} for {arch!r} '
         'in {series!r} series: {error}.')
 
     def __init__(self, response, snap_id, series, arch):
@@ -342,7 +342,7 @@ class StoreDeltaApplicationError(Exception):
     pass
 
 
-class StoreSnapStatusError(StoreSnapHistoryError):
+class StoreSnapStatusError(StoreSnapRevisionsError):
 
     fmt = (
         'Error fetching status of snap id {snap_id!r} for {arch!r} '
