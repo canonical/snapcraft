@@ -136,7 +136,7 @@ of the choice of plugin.
     parts is available to every snap author - just say 'after' and list the
     parts you want that others have already defined.
 
-  - build-packages: [deb, deb, deb...]
+  - build-packages: [pkg, pkg, pkg...]
 
     A list of packages to install on the build host before building
     the part. The files from these packages typically will not go into the
