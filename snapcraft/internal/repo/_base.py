@@ -63,6 +63,10 @@ class BaseRepo:
         later unpack.
 
         :param str package_names: list of packages to obtain.
+        :returns: list of packages obtained, versioned if possible.
+        :rtype: list of strings.
+        :raises snapcraft.repo.errors.PackageNotFoundError:
+            when a package in package_names is not found.
         """
         raise NotImplemented()
 
