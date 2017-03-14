@@ -14,25 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from unittest import mock
+import logging
+import tempfile
+
+import fixtures
 
 from snapcraft import tests
 
 
-class GrammarTestCase(tests.TestCase):
+class RepoBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-
-        patcher = mock.patch('snapcraft.repo.Repo')
-        self.repo_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        self.get_mock = self.repo_mock.return_value.get
-        self.unpack_mock = self.repo_mock.return_value.unpack
-        self.is_valid_mock = self.repo_mock.return_value.is_valid
-
-        def _is_valid(package_name):
-            return 'invalid' not in package_name
-
-        self.is_valid_mock.side_effect = _is_valid
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+        tempdirObj = tempfile.TemporaryDirectory()
+        self.addCleanup(tempdirObj.cleanup)
+        self.tempdir = tempdirObj.name

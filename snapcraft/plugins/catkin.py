@@ -326,7 +326,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
             logger.info('Fetching package dependencies...')
             try:
                 ubuntu.get(system_dependencies)
-            except repo.PackageNotFoundError as e:
+            except repo.errors.PackageNotFoundError as e:
                 raise RuntimeError(
                     'Failed to fetch system dependencies: {}'.format(
                         e.message))

@@ -47,7 +47,7 @@ class GrammarOnDuplicatesTestCase(GrammarTestCase):
                 "amd64,i386' statements. These should be merged."):
             grammar.process_grammar(
                 self.grammar, snapcraft.ProjectOptions(),
-                snapcraft.repo.Ubuntu())
+                snapcraft.repo.Repo())
 
 
 class BasicGrammarTestCase(GrammarTestCase):
@@ -198,7 +198,7 @@ class BasicGrammarTestCase(GrammarTestCase):
         options = snapcraft.ProjectOptions(target_deb_arch=self.target_arch)
         self.assertThat(
             grammar.process_grammar(
-                self.grammar, options, snapcraft.repo.Ubuntu()),
+                self.grammar, options, snapcraft.repo.Repo()),
             Equals(self.expected_packages))
 
 
@@ -234,4 +234,4 @@ class InvalidGrammarTestCase(GrammarTestCase):
                 self.expected_exception):
             grammar.process_grammar(
                 self.grammar, snapcraft.ProjectOptions(),
-                snapcraft.repo.Ubuntu())
+                snapcraft.repo.Repo())

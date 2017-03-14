@@ -105,8 +105,8 @@ parts:
             self.assertFalse(os.path.exists(parts[i]['state_dir']),
                              'Expected for only to be a state file for pull1')
 
-    @mock.patch('snapcraft.repo.Ubuntu.get')
-    @mock.patch('snapcraft.repo.Ubuntu.unpack')
+    @mock.patch('snapcraft.repo.Repo.get')
+    @mock.patch('snapcraft.repo.Repo.unpack')
     def test_pull_stage_packages_without_geoip(self, mock_unpack, mock_get):
         yaml_part = """  pull{:d}:
         plugin: nil
@@ -121,8 +121,8 @@ parts:
 
         self.assertFalse(project_options.use_geoip)
 
-    @mock.patch('snapcraft.repo.Ubuntu.get')
-    @mock.patch('snapcraft.repo.Ubuntu.unpack')
+    @mock.patch('snapcraft.repo.Repo.get')
+    @mock.patch('snapcraft.repo.Repo.unpack')
     def test_pull_stage_packages_with_geoip(self, mock_unpack, mock_get):
         yaml_part = """  pull{:d}:
         plugin: nil
@@ -135,8 +135,8 @@ parts:
 
         self.assertTrue(project_options.use_geoip)
 
-    @mock.patch('snapcraft.repo.Ubuntu.get')
-    @mock.patch('snapcraft.repo.Ubuntu.unpack')
+    @mock.patch('snapcraft.repo.Repo.get')
+    @mock.patch('snapcraft.repo.Repo.unpack')
     def test_pull_multiarch_stage_package(self, mock_unpack, mock_get):
         yaml_part = """  pull{:d}:
         plugin: nil

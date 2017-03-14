@@ -33,7 +33,7 @@ class OnStatement:
     >>> import tempfile
     >>> from snapcraft import repo, ProjectOptions
     >>> with tempfile.TemporaryDirectory() as cache_dir:
-    ...     repo_instance = repo.Ubuntu(cache_dir)
+    ...     repo_instance = repo.Repo(cache_dir)
     ...     options = ProjectOptions(target_deb_arch='i386')
     ...     clause = OnStatement(on='on amd64', body=['foo'],
     ...                          project_options=options,
@@ -51,9 +51,9 @@ class OnStatement:
         :param project_options: Instance of ProjectOptions to use to process
                                 clause.
         :type project_options: snapcraft.ProjectOptions
-        :param repo_instance: repo.Ubuntu instance used for checking package
+        :param repo_instance: repo.Repo instance used for checking package
                               validity.
-        :type repo_instance: repo.Ubuntu
+        :type repo_instance: repo.Repo
         """
 
         self.selectors = _extract_on_clause_selectors(on)
