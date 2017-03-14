@@ -21,6 +21,7 @@ import itertools
 import json
 import logging
 import os
+import platform
 import urllib.parse
 from time import sleep
 from threading import Thread
@@ -98,7 +99,11 @@ class Client():
 
         self._snapcraft_headers = {
             'X-SNAPCRAFT-VERSION': snapcraft.__version__,
-            'User-Agent': 'snapcraft/{}'.format(snapcraft.__version__),
+            'User-Agent': 'snapcraft/{} {} ({})'.format(
+                snapcraft.__version__,
+                '/'.join(platform.dist()[0:2]),  # i.e. Ubuntu/16.04
+                platform.machine(),  # i.e. x86_64
+            ),
         }
 
     def request(self, method, url, params=None, headers=None, **kwargs):
