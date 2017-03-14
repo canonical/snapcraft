@@ -81,6 +81,14 @@ def _deserialize_macaroon(value):
         raise errors.InvalidCredentialsError('Failed to deserialize macaroon')
 
 
+def _get_user_agent():
+    return 'snapcraft/{} {} ({})'.format(
+                snapcraft.__version__,
+                '/'.join(platform.dist()[0:2]),  # i.e. Ubuntu/16.04
+                platform.machine(),  # i.e. x86_64
+            )
+
+
 class Client():
     """A base class to define clients for the ols servers.
 
@@ -99,11 +107,7 @@ class Client():
 
         self._snapcraft_headers = {
             'X-SNAPCRAFT-VERSION': snapcraft.__version__,
-            'User-Agent': 'snapcraft/{} {} ({})'.format(
-                snapcraft.__version__,
-                '/'.join(platform.dist()[0:2]),  # i.e. Ubuntu/16.04
-                platform.machine(),  # i.e. x86_64
-            ),
+            'User-Agent': _get_user_agent(),
         }
 
     def request(self, method, url, params=None, headers=None, **kwargs):
