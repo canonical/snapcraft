@@ -207,11 +207,13 @@ class ProjectOptions:
             if dynamic_linker_path in seen_paths:
                 raise SnapcraftEnvironmentError(
                     "found symlink loop resolving dynamic linker path")
+
             seen_paths.add(dynamic_linker_path)
-            if not os.path.exists(dynamic_linker_path):
+            if not os.path.lexists(dynamic_linker_path):
                 return None
             if not os.path.islink(dynamic_linker_path):
                 return dynamic_linker_path
+
             link_contents = os.readlink(dynamic_linker_path)
             if os.path.isabs(link_contents):
                 dynamic_linker_path = os.path.join(

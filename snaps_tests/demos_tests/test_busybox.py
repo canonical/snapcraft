@@ -34,7 +34,7 @@ class BusyBoxTestCase(snaps_tests.SnapsTestCase):
             '')
         self.addCleanup(
             self.run_command_in_snappy_testbed,
-            ['rm', '~/snap/busybox/*/busybox.test'])
+            ['rm', '~/snap/busybox/x*/busybox.test'])
         self.assert_command_in_snappy_testbed(
             ['/snap/bin/busybox.ls', '~/snap/busybox/x*/'],
             'busybox.test\n')
