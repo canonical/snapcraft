@@ -37,8 +37,8 @@ class Test7z(tests.TestCase):
         dest_dir = 'src'
         os.makedirs(dest_dir)
 
-        _7z_source = sources._7z(test_7z_file_path, dest_dir)
-        _7z_source.pull()
+        seven_zip_source = sources.SevenZip(test_7z_file_path, dest_dir)
+        seven_zip_source.pull()
 
         self.assertEqual(os.listdir(dest_dir), ['test.txt'])
 
@@ -52,11 +52,11 @@ class Test7z(tests.TestCase):
         dest_dir = 'src'
         os.makedirs(dest_dir)
 
-        _7z_source = sources._7z(test_7z_file_path, dest_dir)
+        seven_zip_source = sources.SevenZip(test_7z_file_path, dest_dir)
         # This is the first step done by pull. We don't call pull to call the
         # second step with a different keep_7z value.
-        shutil.copy2(_7z_source.source, _7z_source.source_dir)
-        _7z_source.provision(dst=dest_dir, keep_7z=True)
+        shutil.copy2(seven_zip_source.source, seven_zip_source.source_dir)
+        seven_zip_source.provision(dst=dest_dir, keep_7z=True)
 
         test_output_files = ['test.txt', test_7z_file_name]
         self.assertCountEqual(os.listdir(dest_dir), test_output_files)

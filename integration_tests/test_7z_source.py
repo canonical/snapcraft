@@ -21,7 +21,7 @@ from testtools.matchers import FileExists
 import integration_tests
 
 
-class _7zTestCase(integration_tests.TestCase):
+class SevenZipTestCase(integration_tests.TestCase):
 
     def test_stage_7z(self):
         self.run_snapcraft('stage', '7z-hello')

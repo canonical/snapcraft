@@ -91,7 +91,7 @@ from ._script import Script          # noqa
 from ._subversion import Subversion  # noqa
 from ._tar import Tar                # noqa
 from ._zip import Zip                # noqa
-from._7z import _7z                  # noqa
+from ._7z import SevenZip            # noqa
 
 if sys.platform == 'linux':
     from ._deb import Deb            # noqa
@@ -151,7 +151,7 @@ _source_handler = {
     'svn': Subversion,
     'tar': Tar,
     'zip': Zip,
-    '7z': _7z
+    '7z': SevenZip
 }
 if sys.platform == 'linux':
     _source_handler['deb'] = Deb

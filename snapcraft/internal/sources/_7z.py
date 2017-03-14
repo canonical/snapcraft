@@ -23,7 +23,7 @@ from . import errors
 from ._base import FileBase
 
 
-class _7z(FileBase):
+class SevenZip(FileBase):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
                  source_branch=None, source_depth=None):
@@ -40,22 +40,22 @@ class _7z(FileBase):
                 'can\'t specify a source-branch for a 7z source')
 
     def provision(self, dst, clean_target=True, keep_7z=False):
-        _7z_file = os.path.join(self.source_dir, os.path.basename(self.source))
+        seven_zip_file = os.path.join(self.source_dir, os.path.basename(self.source))
 
         if clean_target:
             tmp_7z = tempfile.NamedTemporaryFile().name
-            shutil.move(_7z_file, tmp_7z)
+            shutil.move(seven_zip_file, tmp_7z)
             shutil.rmtree(dst)
             os.makedirs(dst)
-            shutil.move(tmp_7z, _7z_file)
+            shutil.move(tmp_7z, seven_zip_file)
 
         # Ensure dst does not have trailing slash
         dst = dst.rstrip('/')
         # Open the 7z file and extract it to destination
-        with libarchive.file_reader(_7z_file) as archive:
+        with libarchive.file_reader(seven_zip_file) as archive:
             for file_entry in archive:
                 file_entry.pathname = os.path.join(dst, file_entry.pathname)
                 libarchive.extract.extract_entries([file_entry])
 
         if not keep_7z:
-            os.remove(_7z_file)
+            os.remove(seven_zip_file)
