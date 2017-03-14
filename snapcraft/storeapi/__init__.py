@@ -82,10 +82,11 @@ def _deserialize_macaroon(value):
 
 
 def _get_user_agent():
+    arch = snapcraft.ProjectOptions().deb_arch
     return 'snapcraft/{} {} ({})'.format(
                 snapcraft.__version__,
                 '/'.join(platform.dist()[0:2]),  # i.e. Ubuntu/16.04
-                platform.machine(),  # i.e. x86_64
+                arch,
             )
 
 

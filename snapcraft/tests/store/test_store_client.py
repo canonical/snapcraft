@@ -1190,10 +1190,11 @@ class SignDeveloperAgreementTestCase(tests.TestCase):
 class UserAgentTestCase(tests.TestCase):
 
     def test_user_agent(self):
+        arch = ProjectOptions().deb_arch
         expected = 'snapcraft/{} {} ({})'.format(
             snapcraft_version,
             '/'.join(platform.dist()[0:2]),  # i.e. Ubuntu/16.04
-            platform.machine(),  # i.e. x86_64
+            arch,
         )
         actual = storeapi._get_user_agent()
         self.assertEqual(expected, actual)
