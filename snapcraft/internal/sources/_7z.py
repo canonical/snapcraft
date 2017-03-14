@@ -49,8 +49,6 @@ class SevenZip(FileBase):
             os.makedirs(dst)
             shutil.move(tmp_7z, seven_zip_file)
 
-        # Ensure dst does not have trailing slash
-        dst = dst.rstrip('/')
         # Open the 7z file and extract it to destination
         with libarchive.file_reader(seven_zip_file) as archive:
             for file_entry in archive:
