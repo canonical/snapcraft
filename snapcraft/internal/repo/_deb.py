@@ -105,27 +105,6 @@ def install_build_packages(packages):
                 .format(e))
 
 
-def get_packages_for_source_type(source_type):
-    """Return a list with required packages to handle the source_type.
-
-    :param source: the snapcraft source type
-    """
-    if source_type == 'bzr':
-        packages = 'bzr'
-    elif source_type == 'git':
-        packages = 'git'
-    elif source_type == 'tar':
-        packages = 'tar'
-    elif source_type == 'hg' or source_type == 'mercurial':
-        packages = 'mercurial'
-    elif source_type == 'subversion' or source_type == 'svn':
-        packages = 'subversion'
-    else:
-        packages = []
-
-    return packages
-
-
 class _AptCache:
 
     def __init__(self, deb_arch, *, sources_list=None, use_geoip=False):
@@ -237,6 +216,23 @@ class Ubuntu(BaseRepo):
             _library_list[package_name] = {i for i in output if 'lib' in i}
 
         return _library_list[package_name].copy()
+
+    @classmethod
+    def get_packages_for_source_type(cls, source_type):
+        if source_type == 'bzr':
+            packages = 'bzr'
+        elif source_type == 'git':
+            packages = 'git'
+        elif source_type == 'tar':
+            packages = 'tar'
+        elif source_type == 'hg' or source_type == 'mercurial':
+            packages = 'mercurial'
+        elif source_type == 'subversion' or source_type == 'svn':
+            packages = 'subversion'
+        else:
+            packages = []
+
+        return packages
 
     def __init__(self, rootdir, sources=None, project_options=None):
         super().__init__(rootdir)

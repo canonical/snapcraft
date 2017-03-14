@@ -39,11 +39,6 @@ class Repo:
         raise NotImplementedError()
 
 
-def get_packages_for_source_type():
-    """Stub method for the platform specific implementation."""
-    raise NotImplementedError()
-
-
 def install_build_packages():
     """Stub method for the platform specific implementation."""
     raise NotImplementedError()
@@ -57,7 +52,6 @@ def is_package_installed():
 if _is_deb_based():
     from . import _deb
     Repo = _deb.Ubuntu                                                # noqa
-    get_packages_for_source_type = _deb.get_packages_for_source_type  # noqa
     install_build_packages = _deb.install_build_packages              # noqa
     is_package_installed = _deb.is_package_installed                  # noqa
 else:

@@ -40,9 +40,15 @@ class BaseRepo:
     """Base implementation for a platform specific repo handler.
 
     Generally any new repo handling system would inherit from this and
-    implement `get` and `unpack`. At the end of the `unpack` method
-    `normalize` needs to be called to adapt the artifacts downloaded
-    to be generic enough for building a snap."""
+    implement:
+
+    - get
+    - unpack
+    - get_package_libraries
+    - get_packages_for_source_type
+
+    At the end of the `unpack` method `normalize` needs to be called to
+    adapt the artifacts downloaded to be generic enough for building a snap."""
 
     @classmethod
     def get_package_libraries(cls, package_name):
@@ -57,6 +63,29 @@ class BaseRepo:
         :rtype: set.
         """
         raise NotImplemented()
+
+    @classmethod
+    def get_packages_for_source_type(cls, source_type):
+        """Return a list of packages required to to work with source_type.
+
+        source_type can be any of the following:
+
+        - bzr
+        - deb
+        - rpm
+        - git
+        - hg
+        - mercurial
+        - subversion
+        - svn
+        - tar
+        - zip
+
+        :param str source_type: a VCS source type to handle.
+        :returns: a list of packages that need to be installed on the host.
+        :rtype: list of strings.
+        """
+        raise NotImplementedError()
 
     def __init__(self, rootdir, *args, **kwargs):
         """Initialize a repository handler.
