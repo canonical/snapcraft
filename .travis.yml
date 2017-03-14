@@ -18,7 +18,7 @@ env:
 
 matrix:
   include:
-    - env: CHECK_CLA=1 DEPENDENCIES="sudo apt install -y python-launchpadlib"
+    - env: CHECK_CLA=1 DEPENDENCIES="apt install -y python-launchpadlib"
       python: "2.7"
 
 addons:
