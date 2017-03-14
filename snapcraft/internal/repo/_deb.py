@@ -53,6 +53,7 @@ deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
 deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
 '''
 _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
+_library_list = dict()
 
 
 def is_package_installed(package):
@@ -225,6 +226,17 @@ class _AptCache:
 
 
 class Ubuntu(BaseRepo):
+
+    @classmethod
+    def get_package_libraries(cls, package_name):
+        global _library_list
+        if package_name not in _library_list:
+            output = subprocess.check_output(
+                ['dpkg', '-L', package_name]).decode(
+                    sys.getfilesystemencoding()).strip().split()
+            _library_list[package_name] = {i for i in output if 'lib' in i}
+
+        return _library_list[package_name].copy()
 
     def __init__(self, rootdir, sources=None, project_options=None):
         super().__init__(rootdir)
@@ -441,31 +453,3 @@ def _set_pkg_version(pkg, version):
         pkg.candidate = version
     else:
         raise errors.PackageNotFoundError('{}={}'.format(pkg.name, version))
-
-
-_lib_list = dict()
-
-
-def get_pkg_libs(pkg_name):
-    """Obtain list of libraries contained within a Debian package.
-
-    :param str pkg_name: Name of the package.
-
-    :return: Set of files in the package with 'lib' in the name. This will
-             include directories.
-    :rtype: set
-
-    Note that this will be slow the first time it's called for a given package
-    name, but the list is cached, so subsequent calls for the same package will
-    be fast.
-    """
-
-    global _lib_list
-    if pkg_name not in _lib_list:
-        # No need to use common.run here, as nothing depends upon the snap's
-        # build environment.
-        output = subprocess.check_output(['dpkg', '-L', pkg_name]).decode(
-            sys.getfilesystemencoding()).strip().split()
-        _lib_list[pkg_name] = {i for i in output if 'lib' in i}
-
-    return _lib_list[pkg_name].copy()

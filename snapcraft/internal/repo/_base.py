@@ -24,8 +24,6 @@ import shutil
 import stat
 
 from snapcraft import file_utils
-from . import get_pkg_libs
-
 
 _BIN_PATHS = (
     'bin',
@@ -45,12 +43,27 @@ class BaseRepo:
     implement `get` and `unpack`. At the end of the `unpack` method
     `normalize` needs to be called to adapt the artifacts downloaded
     to be generic enough for building a snap."""
+
+    @classmethod
+    def get_package_libraries(cls, package_name):
+        """Return a list of libraries in package_name.
+
+        Given the contents of package_name, return the subset of what are
+        considered libraries from those contents, be it static or shared.
+
+        :param str package: package name to get library contents from.
+        :returns: a list of libraries that package_name provides. This includes
+                  directories.
+        :rtype: set.
+        """
+        raise NotImplemented()
+
     def __init__(self, rootdir, *args, **kwargs):
         """Initialize a repository handler.
 
-        :param rootdir string: the root directory to work on. This may well be
-                               to create repo handling specific caches or
-                               download artifacts.
+        :param str rootdir: the root directory to work on. This may well be to
+                            create repo handling specific caches or download
+                            artifacts.
         """
         self.rootdir = rootdir
 
@@ -135,7 +148,7 @@ class BaseRepo:
 
     def _fix_symlink(self, path, root):
         host_target = os.readlink(path)
-        if host_target in get_pkg_libs('libc6'):
+        if host_target in self.get_package_libraries('libc6'):
             logger.debug(
                 "Not fixing symlink {!r}: it's pointing to libc".format(
                     host_target))
