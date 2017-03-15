@@ -49,13 +49,3 @@
 2. Select a project to build.
 3. Run `snapcraft cleanbuild --remote <remote>` where `<remote>` is
    the name you gave the remote on step 1.
-
-
-# Test that the Catkin plugin doesn't pass args to setup.sh
-
-This is a regression test for bug #1660852.
-
-1. Build and install the `demos/ros` demo.
-2. Run `ros-example.launch-project --help`.
-3. Verify that you actually get the help info for `roslaunch`, not a barf of
-   errors.
