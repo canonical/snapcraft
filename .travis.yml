@@ -17,6 +17,11 @@ env:
   - DOCKER=1 GEN_DOCS=1 DEPENDENCIES="apt install libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev git make python3-pip python3-sphinx -y && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
   - DOCKER=1 TEST_SUITE=beta DEPENDENCIES="apt install -y python3-git python3-github wget"
 
+matrix:
+  include:
+    - os: osx
+      env: TEST_SUITE=osx DEPENDENCIES="python3 -m pip install -r requirements-devel.txt -r requirements.txt && python3 -m pip uninstall -y coverage"
+
 addons:
   apt:
     packages:
@@ -40,7 +45,8 @@ script:
   # CLA check, only in pull requests.
   - if [ ! -z $CHECK_CLA ] && [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ]; then docker exec -i builder ./tools/cla_check_in_travis.sh; fi
   # Test suites from runtests.sh, in pull requests and landings to master.
-  - if [ ! -z $TEST_SUITE ] && [ "$TEST_SUITE" != "beta" ] &&  [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then docker exec -i builder ./runtests.sh $TEST_SUITE; fi
+  - if [ ! -z $TEST_SUITE ] && [ "$TEST_SUITE" != "beta" ] && [ "$TEST_SUITE" != "osx" ] &&  [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then docker exec -i builder ./runtests.sh $TEST_SUITE; fi
+  - if [ ! -z $TEST_SUITE ] && [ "$TEST_SUITE" = "osx" ]; then $DEPENDENCIES && ./runtests.sh $TEST_SUITE; fi
   # Trigger beta tests, only in the daily cron.
   - if [ "$TRAVIS_EVENT_TYPE" = "cron" ] && [ "$TEST_SUITE" == "beta" ]; then docker exec -i builder ./tools/make_beta_pr.py; fi
   # Generate docs, only in pushes to master.
