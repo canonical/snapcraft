@@ -115,7 +115,7 @@ class FixXmlToolsTestCase(RepoBaseTestCase):
             with open(path, 'w') as f:
                 f.write(test_file['content'])
 
-        BaseRepo('root').normalize()
+        BaseRepo('root').normalize('root')
 
         for test_file in self.files:
             self.assertThat(
@@ -162,7 +162,7 @@ class FixShebangTestCase(RepoBaseTestCase):
         with open(self.file_path, 'w') as fd:
             fd.write(self.content)
 
-        BaseRepo('root').normalize()
+        BaseRepo('root').normalize('root')
 
         with open(self.file_path, 'r') as fd:
             self.assertEqual(fd.read(), self.expected)
@@ -188,7 +188,7 @@ class FixPkgConfigTestCase(RepoBaseTestCase):
                 Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
             """))
 
-        BaseRepo(self.tempdir).normalize()
+        BaseRepo(self.tempdir).normalize(self.tempdir)
 
         expected_pc_file_content = dedent("""\
             prefix={}/usr
@@ -240,7 +240,7 @@ class FixSymlinksTestCase(RepoBaseTestCase):
     def test_fix_symlinks(self):
         os.symlink(self.src, self.dst)
 
-        BaseRepo(self.tempdir).normalize()
+        BaseRepo(self.tempdir).normalize(self.tempdir)
 
         self.assertEqual(os.readlink(self.dst), self.src)
 
@@ -264,7 +264,7 @@ class FixSUIDTestCase(RepoBaseTestCase):
         open(file, mode='w').close()
         os.chmod(file, self.test_mod)
 
-        BaseRepo(self.tempdir).normalize()
+        BaseRepo(self.tempdir).normalize(self.tempdir)
 
         self.assertEqual(
             stat.S_IMODE(os.stat(file).st_mode), self.expected_mod)
