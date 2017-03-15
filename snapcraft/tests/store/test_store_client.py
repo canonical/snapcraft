@@ -17,21 +17,21 @@
 import json
 import logging
 import os
-import platform
 from textwrap import dedent
 from unittest import mock
 
 import fixtures
 import pymacaroons
 
-from snapcraft import __version__ as snapcraft_version
 from snapcraft import (
     config,
     storeapi,
     tests,
     ProjectOptions,
 )
-from snapcraft.storeapi import errors
+from snapcraft.storeapi import (
+    errors,
+)
 from snapcraft.tests import fixture_setup
 
 
@@ -1185,17 +1185,3 @@ class SignDeveloperAgreementTestCase(tests.TestCase):
             'There was an error while signing developer agreement.\n'
             'Reason: \'Internal Server Error\'\n'
             'Text: \'Broken\'')
-
-
-class UserAgentTestCase(tests.TestCase):
-
-    def test_user_agent(self):
-        arch = ProjectOptions().deb_arch
-        expected_pre = 'snapcraft/{} '.format(snapcraft_version)
-        expected_post = ' {} ({})'.format(
-            '/'.join(platform.dist()[0:2]),  # i.e. Ubuntu/16.04
-            arch,
-        )
-        actual = storeapi._get_user_agent()
-        self.assertTrue(actual.startswith(expected_pre))
-        self.assertTrue(actual.endswith(expected_post))

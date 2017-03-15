@@ -21,7 +21,6 @@ import itertools
 import json
 import logging
 import os
-import platform
 import urllib.parse
 from time import sleep
 from threading import Thread
@@ -41,6 +40,7 @@ import snapcraft
 from snapcraft import config
 from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.storeapi import (
+    _agent,
     _upload,
     constants,
     errors,
@@ -81,28 +81,6 @@ def _deserialize_macaroon(value):
         raise errors.InvalidCredentialsError('Failed to deserialize macaroon')
 
 
-def _is_ci_env():
-    env_prefixes = ['TRAVIS']
-    matches = []
-
-    for prefix in env_prefixes:
-        matches += [
-            var for var in os.environ.keys() if var.startswith(prefix)]
-
-    return len(matches) > 0
-
-
-def _get_user_agent():
-    arch = snapcraft.ProjectOptions().deb_arch
-    testing = '(testing) ' if _is_ci_env() else ''
-    return 'snapcraft/{} {}{} ({})'.format(
-                snapcraft.__version__,
-                testing,
-                '/'.join(platform.dist()[0:2]),  # i.e. Ubuntu/16.04
-                arch,
-            )
-
-
 class Client():
     """A base class to define clients for the ols servers.
 
@@ -120,7 +98,7 @@ class Client():
         self.session.mount('https://', HTTPAdapter(max_retries=5))
 
         self._snapcraft_headers = {
-            'User-Agent': _get_user_agent(),
+            'User-Agent': _agent._get_user_agent(),
         }
 
     def request(self, method, url, params=None, headers=None, **kwargs):
