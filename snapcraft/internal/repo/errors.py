@@ -17,6 +17,16 @@
 from ._platform import _is_deb_based
 
 
+class BuildPackageNotFoundError(Exception):
+
+    def __init__(self, package_name):
+        self.package_name = package_name
+
+    def __str__(self):
+        return ('Could not find a required package in '
+                '\'build-packages\': {}'.format(str(self.package_name)))
+
+
 class PackageNotFoundError(Exception):
 
     @property

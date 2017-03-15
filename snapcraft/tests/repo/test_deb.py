@@ -25,6 +25,7 @@ from testtools.matchers import (
 
 import snapcraft
 from snapcraft.internal.repo import _deb
+from snapcraft.internal.repo import errors
 from snapcraft import tests
 from . import RepoBaseTestCase
 
@@ -236,7 +237,7 @@ class BuildPackagesTestCase(tests.TestCase):
         mock_apt_cache_with = mock_apt_cache.__enter__.return_value
         mock_apt_cache_with.__getitem__.side_effect = lambda p: test_pkgs[p]
 
-        _deb.install_build_packages(test_pkgs.keys())
+        _deb.Ubuntu.install_build_packages(test_pkgs.keys())
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
     @patch('subprocess.check_call')
@@ -290,8 +291,8 @@ class BuildPackagesTestCase(tests.TestCase):
 
     def test_invalid_package_requested(self):
         raised = self.assertRaises(
-            EnvironmentError,
-            _deb.install_build_packages,
+            errors.BuildPackageNotFoundError,
+            _deb.Ubuntu.install_build_packages,
             ['package-does-not-exist'])
 
         self.assertEqual(

@@ -66,45 +66,6 @@ def is_package_installed(package):
         return apt_cache[package].installed
 
 
-def install_build_packages(packages):
-    unique_packages = set(packages)
-    new_packages = []
-    with apt.Cache() as apt_cache:
-        for pkg in unique_packages:
-            try:
-                if not apt_cache[pkg].installed:
-                    new_packages.append(pkg)
-            except KeyError as e:
-                raise EnvironmentError(
-                    'Could not find a required package in '
-                    '\'build-packages\': {}'.format(str(e)))
-    if new_packages:
-        new_packages.sort()
-        logger.info(
-            'Installing build dependencies: %s', ' '.join(new_packages))
-        env = os.environ.copy()
-        env.update({
-            'DEBIAN_FRONTEND': 'noninteractive',
-            'DEBCONF_NONINTERACTIVE_SEEN': 'true',
-        })
-
-        apt_command = ['sudo', 'apt-get',
-                       '--no-install-recommends', '-y']
-        if not is_dumb_terminal():
-            apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
-        apt_command.append('install')
-
-        subprocess.check_call(apt_command + new_packages, env=env)
-
-        try:
-            subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
-                                  new_packages, env=env)
-        except subprocess.CalledProcessError as e:
-            logger.warning(
-                'Impossible to mark packages as auto-installed: {}'
-                .format(e))
-
-
 class _AptCache:
 
     def __init__(self, deb_arch, *, sources_list=None, use_geoip=False):
@@ -233,6 +194,43 @@ class Ubuntu(BaseRepo):
             packages = []
 
         return packages
+
+    @classmethod
+    def install_build_packages(cls, package_names):
+        unique_packages = set(package_names)
+        new_packages = []
+        with apt.Cache() as apt_cache:
+            for pkg in unique_packages:
+                try:
+                    if not apt_cache[pkg].installed:
+                        new_packages.append(pkg)
+                except KeyError as e:
+                    raise errors.BuildPackageNotFoundError(e) from e
+        if new_packages:
+            new_packages.sort()
+            logger.info(
+                'Installing build dependencies: %s', ' '.join(new_packages))
+            env = os.environ.copy()
+            env.update({
+                'DEBIAN_FRONTEND': 'noninteractive',
+                'DEBCONF_NONINTERACTIVE_SEEN': 'true',
+            })
+
+            apt_command = ['sudo', 'apt-get',
+                           '--no-install-recommends', '-y']
+            if not is_dumb_terminal():
+                apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
+            apt_command.append('install')
+
+            subprocess.check_call(apt_command + new_packages, env=env)
+
+            try:
+                subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
+                                      new_packages, env=env)
+            except subprocess.CalledProcessError as e:
+                logger.warning(
+                    'Impossible to mark packages as auto-installed: {}'
+                    .format(e))
 
     def __init__(self, rootdir, sources=None, project_options=None):
         super().__init__(rootdir)

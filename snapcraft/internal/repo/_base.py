@@ -46,6 +46,7 @@ class BaseRepo:
     - unpack
     - get_package_libraries
     - get_packages_for_source_type
+    - install_build_packages
 
     At the end of the `unpack` method `normalize` needs to be called to
     adapt the artifacts downloaded to be generic enough for building a snap."""
@@ -84,6 +85,17 @@ class BaseRepo:
         :param str source_type: a VCS source type to handle.
         :returns: a list of packages that need to be installed on the host.
         :rtype: list of strings.
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def install_build_packages(cls, package_names):
+        """Install packages on the host required to build.
+
+        :param package_names: a list of package names to install.
+        :type package_names: a list of strings.
+        :raises snapcraft.repo.errors.BuildPackageNotFoundError:
+            if one of the package_names cannot be installed.
         """
         raise NotImplementedError()
 

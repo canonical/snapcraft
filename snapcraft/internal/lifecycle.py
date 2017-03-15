@@ -108,7 +108,7 @@ def execute(step, project_options, part_names=None):
     :returns: A dict with the snap name, version, type and architectures.
     """
     config = snapcraft.internal.load_config(project_options)
-    repo.install_build_packages(config.build_tools)
+    repo.Repo.install_build_packages(config.build_tools)
 
     if (os.environ.get('SNAPCRAFT_SETUP_CORE') and
             config.data['confinement'] == 'classic'):

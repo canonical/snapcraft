@@ -583,7 +583,7 @@ grade: stable
             str(raised))
 
     @mock.patch.object(snapcraft.BasePlugin, 'enable_cross_compilation')
-    @mock.patch('snapcraft.repo.install_build_packages')
+    @mock.patch('snapcraft.repo.Repo.install_build_packages')
     def test_pull_is_dirty_if_target_arch_changes(
             self, mock_install_build_packages, mock_enable_cross_compilation):
         self.make_snapcraft_yaml("""parts:

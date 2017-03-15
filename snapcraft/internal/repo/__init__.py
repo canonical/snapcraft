@@ -23,11 +23,6 @@ from ._deb import Ubuntu
 from ._platform import _is_deb_based
 
 
-def install_build_packages():
-    """Stub method for the platform specific implementation."""
-    raise NotImplementedError()
-
-
 def is_package_installed():
     """Stub method for the platform specific implementation."""
     raise NotImplementedError()
@@ -35,7 +30,6 @@ def is_package_installed():
 
 if _is_deb_based():
     Repo = Ubuntu
-    install_build_packages = _deb.install_build_packages              # noqa
     is_package_installed = _deb.is_package_installed                  # noqa
 else:
     raise RuntimeError(
