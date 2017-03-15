@@ -135,32 +135,34 @@ class BaseRepo:
         """
         raise NotImplemented()
 
-    def unpack(self, rootdir):
-        """Unpack obtained packages into rootdir.
+    def unpack(self, unpackdir):
+        """Unpack obtained packages into unpackdir.
 
         This method needs to be implemented by the inheriting class. It
         is called all along the core of snapcraft to unpack the previously
-        obtained package_names in get into rootdir.
+        obtained package_names in get into unpackdir.
 
         After the unpack logic is executed, normalize should be called.
 
-        :param str rootdir: target directory to unpack packages to.
+        :param str unpackdir: target directory to unpack packages to.
         """
         raise NotImplemented()
 
-    def normalize(self):
-        """Normalize artifacts.
+    def normalize(self, unpackdir):
+        """Normalize artifacts in unpackdir.
 
         Repo specific packages are generally created to live in a specific
         distro. What normalize does is scan through the unpacked artifacts
         and slightly modifies them to work better with snapcraft projects
         when building and to also work within a snap's environment.
-        """
-        self._fix_artifacts()
-        self._fix_xml_tools()
-        self._fix_shebangs()
 
-    def _fix_artifacts(self):
+        :param str unpackdir: directory where files where unpacked.
+        """
+        self._fix_artifacts(unpackdir)
+        self._fix_xml_tools(unpackdir)
+        self._fix_shebangs(unpackdir)
+
+    def _fix_artifacts(self, unpackdir):
         """Perform various modifications to unpacked artifacts.
 
         Sometimes distro packages will contain absolute symlinks (e.g. if the
@@ -170,35 +172,35 @@ class BaseRepo:
         Some unpacked items will also contain suid binaries which we do not
         want in the resulting snap.
         """
-        for root, dirs, files in os.walk(self.rootdir):
+        for root, dirs, files in os.walk(unpackdir):
             # Symlinks to directories will be in dirs, while symlinks to
             # non-directories will be in files.
             for entry in itertools.chain(files, dirs):
                 path = os.path.join(root, entry)
                 if os.path.islink(path) and os.path.isabs(os.readlink(path)):
-                    self._fix_symlink(path, root)
+                    self._fix_symlink(path, unpackdir, root)
                 elif os.path.exists(path):
                     _fix_filemode(path)
 
                 if path.endswith('.pc') and not os.path.islink(path):
-                    fix_pkg_config(self.rootdir, path)
+                    fix_pkg_config(unpackdir, path)
 
-    def _fix_xml_tools(self):
+    def _fix_xml_tools(self, unpackdir):
         xml2_config_path = os.path.join(
-            self.rootdir, 'usr', 'bin', 'xml2-config')
+            unpackdir, 'usr', 'bin', 'xml2-config')
         with contextlib.suppress(FileNotFoundError):
             file_utils.search_and_replace_contents(
                 xml2_config_path, re.compile(r'prefix=/usr'),
-                'prefix={}/usr'.format(self.rootdir))
+                'prefix={}/usr'.format(unpackdir))
 
         xslt_config_path = os.path.join(
-            self.rootdir, 'usr', 'bin', 'xslt-config')
+            unpackdir, 'usr', 'bin', 'xslt-config')
         with contextlib.suppress(FileNotFoundError):
             file_utils.search_and_replace_contents(
                 xslt_config_path, re.compile(r'prefix=/usr'),
-                'prefix={}/usr'.format(self.rootdir))
+                'prefix={}/usr'.format(unpackdir))
 
-    def _fix_symlink(self, path, root):
+    def _fix_symlink(self, path, unpackdir, root):
         host_target = os.readlink(path)
         if host_target in self.get_package_libraries('libc6'):
             logger.debug(
@@ -206,18 +208,18 @@ class BaseRepo:
                     host_target))
             return
 
-        target = os.path.join(path, os.readlink(path)[1:])
-        if (not os.path.exists(host_target) and not
+        target = os.path.join(unpackdir, os.readlink(path)[1:])
+        if (not os.path.exists(target) and not
                 _try_copy_local(path, target)):
             return
         os.remove(path)
         os.symlink(os.path.relpath(target, root), path)
 
-    def _fix_shebangs(self):
+    def _fix_shebangs(self, unpackdir):
         """Changes hard coded shebangs for files in _BIN_PATHS to use env."""
         paths = [p for p in _BIN_PATHS
-                 if os.path.exists(os.path.join(self.rootdir, p))]
-        for p in [os.path.join(self.rootdir, p) for p in paths]:
+                 if os.path.exists(os.path.join(unpackdir, p))]
+        for p in [os.path.join(unpackdir, p) for p in paths]:
             file_utils.replace_in_file(p, re.compile(r''),
                                        re.compile(r'#!.*python\n'),
                                        r'#!/usr/bin/env python\n')

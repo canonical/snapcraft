@@ -323,15 +323,16 @@ class Ubuntu(BaseRepo):
 
         return pkg_list
 
-    def unpack(self, rootdir):
+    def unpack(self, unpackdir):
         pkgs_abs_path = glob.glob(os.path.join(self._downloaddir, '*.deb'))
         for pkg in pkgs_abs_path:
             # TODO needs elegance and error control
             try:
-                subprocess.check_call(['dpkg-deb', '--extract', pkg, rootdir])
+                subprocess.check_call(
+                    ['dpkg-deb', '--extract', pkg, unpackdir])
             except subprocess.CalledProcessError:
                 raise errors.UnpackError(pkg)
-        self.normalize()
+        self.normalize(unpackdir)
 
     def _manifest_dep_names(self, apt_cache):
         manifest_dep_names = set()
