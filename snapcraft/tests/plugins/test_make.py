@@ -39,10 +39,6 @@ class MakePluginTestCase(tests.TestCase):
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
 
-        patcher = mock.patch('snapcraft.repo.Ubuntu')
-        self.ubuntu_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
     def test_schema(self):
         schema = make.MakePlugin.schema()
 

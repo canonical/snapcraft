@@ -37,10 +37,6 @@ class BaseGradlePluginTestCase(tests.TestCase):
 
         self.project_options = snapcraft.ProjectOptions()
 
-        patcher = mock.patch('snapcraft.repo.Ubuntu')
-        self.ubuntu_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
         # unset http and https proxies.
         self.useFixture(fixtures.EnvironmentVariable('http_proxy', None))
         self.useFixture(fixtures.EnvironmentVariable('https_proxy', None))
