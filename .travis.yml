@@ -19,7 +19,7 @@ env:
 
 matrix:
   include:
-    - os: osx
+    - language: objective-c
       env: TEST_SUITE=osx DEPENDENCIES="python3 -m pip install -r requirements-devel.txt -r requirements.txt && python3 -m pip uninstall -y coverage"
 
 addons:
