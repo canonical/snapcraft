@@ -237,7 +237,7 @@ def _export_key(name, account_id):
 
 
 def list_keys():
-    if not repo.is_package_installed('snapd'):
+    if not repo.Repo.is_package_installed('snapd'):
         raise EnvironmentError(
             'The snapd package is not installed. In order to use `list-keys`, '
             'you must run `apt install snapd`.')
@@ -259,7 +259,7 @@ def list_keys():
 
 
 def create_key(name):
-    if not repo.is_package_installed('snapd'):
+    if not repo.Repo.is_package_installed('snapd'):
         raise EnvironmentError(
             'The snapd package is not installed. In order to use '
             '`create-key`, you must run `apt install snapd`.')
@@ -303,7 +303,7 @@ def _maybe_prompt_for_key(name):
 
 
 def register_key(name):
-    if not repo.is_package_installed('snapd'):
+    if not repo.Repo.is_package_installed('snapd'):
         raise EnvironmentError(
             'The snapd package is not installed. In order to use '
             '`register-key`, you must run `apt install snapd`.')
@@ -349,7 +349,7 @@ def _generate_snap_build(authority_id, snap_id, grade, key_name,
 
 
 def sign_build(snap_filename, key_name=None, local=False):
-    if not repo.is_package_installed('snapd'):
+    if not repo.Repo.is_package_installed('snapd'):
         raise EnvironmentError(
             'The snapd package is not installed. In order to use '
             '`sign-build`, you must run `apt install snapd`.')

@@ -47,6 +47,7 @@ class BaseRepo:
     - get_package_libraries
     - get_packages_for_source_type
     - install_build_packages
+    - is_package_installed
 
     At the end of the `unpack` method `normalize` needs to be called to
     adapt the artifacts downloaded to be generic enough for building a snap."""
@@ -96,6 +97,16 @@ class BaseRepo:
         :type package_names: a list of strings.
         :raises snapcraft.repo.errors.BuildPackageNotFoundError:
             if one of the package_names cannot be installed.
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def is_package_installed(cls, package_name):
+        """Return a bool indicating if package_name is installed.
+
+        :param str package_name: the package name to query.
+        :returns: True if package_name is installed if not False.
+        :rtype: boolean
         """
         raise NotImplementedError()
 

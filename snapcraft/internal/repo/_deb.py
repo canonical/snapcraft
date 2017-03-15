@@ -56,16 +56,6 @@ _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 _library_list = dict()
 
 
-def is_package_installed(package):
-    """Return True if a package is installed on the system.
-
-    :param str package: the deb package to query for.
-    :returns: True if the package is installed, False if not.
-    """
-    with apt.Cache() as apt_cache:
-        return apt_cache[package].installed
-
-
 class _AptCache:
 
     def __init__(self, deb_arch, *, sources_list=None, use_geoip=False):
@@ -231,6 +221,11 @@ class Ubuntu(BaseRepo):
                 logger.warning(
                     'Impossible to mark packages as auto-installed: {}'
                     .format(e))
+
+    @classmethod
+    def is_package_installed(cls, package_name):
+        with apt.Cache() as apt_cache:
+            return apt_cache[package_name].installed
 
     def __init__(self, rootdir, sources=None, project_options=None):
         super().__init__(rootdir)

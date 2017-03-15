@@ -43,7 +43,7 @@ class RegisterKeyTestCase(tests.TestCase):
         self.useFixture(self.fake_terminal)
 
     @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_register_key_snapd_not_installed(self, mock_installed,
                                               mock_check_output):
         mock_installed.return_value = False
@@ -64,7 +64,7 @@ class RegisterKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
     @mock.patch('builtins.input')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_register_key_successfully(self, mock_installed, mock_input,
                                        mock_getpass, mock_check_output,
                                        mock_login,
@@ -102,7 +102,7 @@ class RegisterKeyTestCase(tests.TestCase):
 
     @mock.patch('subprocess.check_output')
     @mock.patch('builtins.input')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_register_key_no_keys(self, mock_installed, mock_input,
                                   mock_check_output):
         mock_installed.return_value = True
@@ -118,7 +118,7 @@ class RegisterKeyTestCase(tests.TestCase):
 
     @mock.patch('subprocess.check_output')
     @mock.patch('builtins.input')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_register_key_no_keys_null(self, mock_installed, mock_input,
                                        mock_check_output):
         # Some versions of snapd serialise an empty list as "null" rather
@@ -136,7 +136,7 @@ class RegisterKeyTestCase(tests.TestCase):
 
     @mock.patch('subprocess.check_output')
     @mock.patch('builtins.input')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_register_key_no_keys_with_name(self, mock_installed, mock_input,
                                             mock_check_output):
         mock_installed.return_value = True
@@ -158,7 +158,7 @@ class RegisterKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
     @mock.patch('builtins.input')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_register_key_login_failed(self, mock_installed, mock_input,
                                        mock_getpass, mock_check_output,
                                        mock_login,
@@ -187,7 +187,7 @@ class RegisterKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
     @mock.patch('builtins.input')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_register_key_account_info_failed(self, mock_installed, mock_input,
                                               mock_getpass, mock_check_output,
                                               mock_login,
@@ -220,7 +220,7 @@ class RegisterKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
     @mock.patch('builtins.input')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_register_key_failed(self, mock_installed, mock_input,
                                  mock_getpass, mock_check_output, mock_login,
                                  mock_get_account_information,
@@ -250,7 +250,7 @@ class RegisterKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
     @mock.patch('builtins.input')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_register_key_select_key(self, mock_installed, mock_input,
                                      mock_getpass, mock_check_output,
                                      mock_login, mock_get_account_information,

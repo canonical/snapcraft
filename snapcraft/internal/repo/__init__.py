@@ -22,15 +22,8 @@ from ._base import fix_pkg_config  # noqa
 from ._deb import Ubuntu
 from ._platform import _is_deb_based
 
-
-def is_package_installed():
-    """Stub method for the platform specific implementation."""
-    raise NotImplementedError()
-
-
 if _is_deb_based():
     Repo = Ubuntu
-    is_package_installed = _deb.is_package_installed                  # noqa
 else:
     raise RuntimeError(
         'snapcraft is not supported on this operating system')

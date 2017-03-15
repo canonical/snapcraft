@@ -39,7 +39,7 @@ class CreateKeyTestCase(tests.TestCase):
 
     @mock.patch('subprocess.check_call')
     @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_create_key_snapd_not_installed(self, mock_installed,
                                             mock_check_output,
                                             mock_check_call):
@@ -58,7 +58,7 @@ class CreateKeyTestCase(tests.TestCase):
 
     @mock.patch('subprocess.check_call')
     @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_create_key_already_exists(self, mock_installed, mock_check_output,
                                        mock_check_call):
         mock_installed.return_value = True
@@ -76,7 +76,7 @@ class CreateKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_call')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_create_key_already_registered(self, mock_installed,
                                            mock_check_output,
                                            mock_get_account_information,
@@ -107,7 +107,7 @@ class CreateKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_call')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_create_key_successfully(self, mock_installed, mock_check_output,
                                      mock_get_account_information,
                                      mock_check_call):
@@ -133,7 +133,7 @@ class CreateKeyTestCase(tests.TestCase):
     @mock.patch('subprocess.check_call')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_create_key_without_login(self, mock_installed, mock_check_output,
                                       mock_get_account_information,
                                       mock_check_call):

@@ -325,7 +325,7 @@ def _create_tar_filter(tar_filename):
 
 
 def cleanbuild(project_options, remote=''):
-    if not repo.is_package_installed('lxd'):
+    if not repo.Repo.is_package_installed('lxd'):
         raise EnvironmentError(
             'The lxd package is not installed, in order to use `cleanbuild` '
             'you must install lxd onto your system. Refer to the '
