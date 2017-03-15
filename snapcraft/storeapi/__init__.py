@@ -81,10 +81,23 @@ def _deserialize_macaroon(value):
         raise errors.InvalidCredentialsError('Failed to deserialize macaroon')
 
 
+def _is_ci_env():
+    env_prefixes = ['TRAVIS']
+    matches = []
+
+    for prefix in env_prefixes:
+        matches += [
+            var for var in os.environ.keys() if var.startswith(prefix)]
+
+    return len(matches) > 0
+
+
 def _get_user_agent():
     arch = snapcraft.ProjectOptions().deb_arch
-    return 'snapcraft/{} {} ({})'.format(
+    testing = '(testing) ' if _is_ci_env() else ''
+    return 'snapcraft/{} {}{} ({})'.format(
                 snapcraft.__version__,
+                testing,
                 '/'.join(platform.dist()[0:2]),  # i.e. Ubuntu/16.04
                 arch,
             )
@@ -107,7 +120,6 @@ class Client():
         self.session.mount('https://', HTTPAdapter(max_retries=5))
 
         self._snapcraft_headers = {
-            'X-SNAPCRAFT-VERSION': snapcraft.__version__,
             'User-Agent': _get_user_agent(),
         }
 

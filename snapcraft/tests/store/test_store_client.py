@@ -1191,10 +1191,11 @@ class UserAgentTestCase(tests.TestCase):
 
     def test_user_agent(self):
         arch = ProjectOptions().deb_arch
-        expected = 'snapcraft/{} {} ({})'.format(
-            snapcraft_version,
+        expected_pre = 'snapcraft/{} '.format(snapcraft_version)
+        expected_post = ' {} ({})'.format(
             '/'.join(platform.dist()[0:2]),  # i.e. Ubuntu/16.04
             arch,
         )
         actual = storeapi._get_user_agent()
-        self.assertEqual(expected, actual)
+        self.assertTrue(actual.startswith(expected_pre))
+        self.assertTrue(actual.endswith(expected_post))
