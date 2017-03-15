@@ -43,6 +43,8 @@ Usage:
   snapcraft [options] push <snap-file> [--release <channels>]
   snapcraft [options] release <snap-name> <revision> <channel>
   snapcraft [options] status <snap-name> [--series=<series>] [--arch=<arch>]
+  snapcraft [options] list-revisions <snap-name> [--series=<series>] [--arch=<arch>]
+  snapcraft [options] revisions <snap-name> [--series=<series>] [--arch=<arch>]
   snapcraft [options] history <snap-name> [--series=<series>] [--arch=<arch>]
   snapcraft [options] close <snap-name> <channel_names>...
   snapcraft [options] list-plugins
@@ -97,31 +99,33 @@ Options specific to store interaction:
   --series <series>     Snap series [default: {DEFAULT_SERIES}].
 
 The available commands are:
-  help         Obtain help for a certain plugin or topic
-  init         Initialize a snapcraft project.
-  list-plugins List the available plugins that handle different types of part.
-  plugins      Alias for list-plugins.
-  login        Authenticate session against Ubuntu One SSO.
-  logout       Clear session credentials.
+  help            Obtain help for a certain plugin or topic
+  init            Initialize a snapcraft project.
+  list-plugins    List the available plugins that handle different types of part.
+  plugins         Alias for list-plugins.
+  login           Authenticate session against Ubuntu One SSO.
+  logout          Clear session credentials.
   list-registered List snap names registered or shared with you.
-  registered   Alias for list-registered.
-  list-keys    List keys available for signing snaps.
-  keys         Alias for list-keys.
-  create-key   Create a key pair for signing snaps.
-  register-key Register a key for signing snaps.
-  register     Register the package name in the store.
-  tour         Setup the snapcraft examples tour in the specified directory,
-               or ./snapcraft-tour/.
-  sign-build   Sign a built snap file and assert it using the developer's key.
-  push         Pushes and optionally releases a snap to the Ubuntu Store.
-  upload       DEPRECATED Upload a snap to the Ubuntu Store. The push command
-               supersedes this command.
-  release      Release a revision of a snap to a specific channel.
-  status       Show the current status of a snap per channel and architecture.
-  history      List all revisions of a snap.
-  close        Close one or more channels of a snap.
-  enable-ci    EXPERIMENTAL enable continuous-integration systems to build and
-               release snaps to the Ubuntu Store.
+  registered      Alias for list-registered.
+  list-keys       List keys available for signing snaps.
+  keys            Alias for list-keys.
+  create-key      Create a key pair for signing snaps.
+  register-key    Register a key for signing snaps.
+  register        Register the package name in the store.
+  tour            Setup the snapcraft examples tour in the specified directory,
+                  or ./snapcraft-tour/.
+  sign-build      Sign a built snap file and assert it using the developer's key.
+  push            Pushes and optionally releases a snap to the Ubuntu Store.
+  upload          DEPRECATED Upload a snap to the Ubuntu Store. The push command
+                  supersedes this command.
+  release         Release a revision of a snap to a specific channel.
+  status          Show the current status of a snap per channel and architecture.
+  list-revisions  List all revisions of a snap.
+  revisions       Alias for list-revisions.
+  history         Deprecated alias for list-revisions.
+  close           Close one or more channels of a snap.
+  enable-ci       EXPERIMENTAL enable continuous-integration systems to build and
+                  release snaps to the Ubuntu Store.
 
 The available lifecycle commands are:
   clean        Remove content - cleans downloads, builds or install artifacts.
@@ -161,7 +165,12 @@ from docopt import docopt
 
 import snapcraft
 from snapcraft.integrations import enable_ci
-from snapcraft.internal import lifecycle, log, parts
+from snapcraft.internal import (
+    deprecations,
+    lifecycle,
+    log,
+    parts,
+)
 from snapcraft.internal.common import (
     format_output_in_columns,
     get_terminal_width,
@@ -318,7 +327,8 @@ def _is_store_command(args):
     commands = (
         'list-registered', 'registered', 'list-keys', 'keys', 'create-key',
         'register-key', 'register', 'sign-build', 'upload', 'release',
-        'push', 'validate', 'gated', 'history', 'status', 'close')
+        'push', 'validate', 'gated', 'history', 'revisions',
+        'list-revisions', 'status', 'close')
     return any(args.get(command) for command in commands)
 
 
@@ -358,8 +368,10 @@ def _run_store_command(args):  # noqa: C901
     elif args['status']:
         snapcraft.status(
             args['<snap-name>'], args['--series'], args['--arch'])
-    elif args['history']:
-        snapcraft.history(
+    elif args['revisions'] or args['list-revisions'] or args['history']:
+        if args['history']:
+            deprecations.handle_deprecation_notice('dn4')
+        snapcraft.revisions(
             args['<snap-name>'], args['--series'], args['--arch'])
     elif args['close']:
         snapcraft.close(args['<snap-name>'], args['<channel_names>'])

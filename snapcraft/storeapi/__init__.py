@@ -1,7 +1,7 @@
 
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -33,6 +33,7 @@ from progressbar import (
 )
 import pymacaroons
 import requests
+from requests.adapters import HTTPAdapter
 from simplejson.scanner import JSONDecodeError
 
 import snapcraft
@@ -91,6 +92,10 @@ class Client():
         self.conf = conf
         self.root_url = root_url
         self.session = requests.Session()
+        # Setup max retries for all store URLs and the CDN
+        self.session.mount('http://', HTTPAdapter(max_retries=5))
+        self.session.mount('https://', HTTPAdapter(max_retries=5))
+
         self._snapcraft_headers = {
             'X-SNAPCRAFT-VERSION': snapcraft.__version__
         }
@@ -212,7 +217,7 @@ class StoreClient():
         return self._refresh_if_necessary(
             self.sca.snap_release, snap_name, revision, channels)
 
-    def get_snap_history(self, snap_name, series=None, arch=None):
+    def get_snap_revisions(self, snap_name, series=None, arch=None):
         if series is None:
             series = constants.DEFAULT_SERIES
 
@@ -223,7 +228,7 @@ class StoreClient():
             raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
 
         response = self._refresh_if_necessary(
-            self.sca.snap_history, snap_id, series, arch)
+            self.sca.snap_revisions, snap_id, series, arch)
 
         if not response:
             raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
@@ -624,7 +629,7 @@ class SCAClient(Client):
         if not response.ok:
             raise errors.StoreSnapBuildError(response)
 
-    def snap_history(self, snap_id, series, arch):
+    def snap_revisions(self, snap_id, series, arch):
         qs = {}
         if series:
             qs['series'] = series
@@ -640,7 +645,8 @@ class SCAClient(Client):
                      'Content-Type': 'application/json',
                      'Accept': 'application/json'})
         if not response.ok:
-            raise errors.StoreSnapHistoryError(response, snap_id, series, arch)
+            raise errors.StoreSnapRevisionsError(
+                response, snap_id, series, arch)
 
         response_json = response.json()
 
