@@ -1,0 +1,51 @@
+name: ros-app
+version: '1.0'
+grade: stable
+confinement: strict
+summary: ROS App Snap
+description: Contains talker/listener ROS packages and a .launch file.
+
+plugs:
+  # Mount the content shared from ros-base into $SNAP/ros-base
+  ros-base:
+    content: ros-base-v1
+    interface: content
+    target: /ros-base
+
+apps:
+  launch-project:
+    command: run-system
+    plugs: [network, network-bind, ros-base]
+
+parts:
+  # The `source` here is the tarred staging area of the ros-base snap.
+  ros-base:
+    plugin: dump
+    source: ros-base.tar.bz2
+
+    # This is only used for building-- filter it out of the final snap.
+    prime: [-*]
+
+  ros-app:
+    plugin: catkin
+    rosdistro: kinetic
+    include-roscore: false
+    underlay:
+      # Build-time location of the underlay
+      build-path: $SNAPCRAFT_STAGE/opt/ros/kinetic
+
+      # Run-time location of the underlay
+      run-path: $SNAP/ros-base/opt/ros/kinetic
+    catkin-packages:
+      - talker
+      - listener
+    after: [ros-base]
+
+  run-system:
+    plugin: dump
+    stage: [bin/run-system]
+    prime: [bin/run-system]
+
+  mountpoint:
+    plugin: nil
+    install: mkdir $SNAPCRAFT_PART_INSTALL/ros-base
