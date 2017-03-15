@@ -16,6 +16,8 @@
 
 import platform
 
+from ._deb import Ubuntu
+
 _DEB_BASED_PLATFORM = [
     'Ubuntu',
     'Debian',
@@ -24,3 +26,11 @@ _DEB_BASED_PLATFORM = [
 
 def _is_deb_based():
     return platform.linux_distribution()[0] in _DEB_BASED_PLATFORM
+
+
+def _get_repo_for_platform():
+    if _is_deb_based():
+        return Ubuntu
+    else:
+        raise RuntimeError(
+            'snapcraft is not supported on this operating system')

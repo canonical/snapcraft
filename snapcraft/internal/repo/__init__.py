@@ -19,14 +19,11 @@ from snapcraft.internal.errors import MissingCommandError
 from . import errors               # noqa
 from ._base import BaseRepo        # noqa
 from ._base import fix_pkg_config  # noqa
-from ._deb import Ubuntu
-from ._platform import _is_deb_based
+from ._platform import _get_repo_for_platform
+# Imported for backwards compatibility with plugins
+from ._deb import Ubuntu           # noqa
 
-if _is_deb_based():
-    Repo = Ubuntu
-else:
-    raise RuntimeError(
-        'snapcraft is not supported on this operating system')
+Repo = _get_repo_for_platform()
 
 
 def check_for_command(command):
