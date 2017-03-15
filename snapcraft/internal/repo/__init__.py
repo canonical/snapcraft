@@ -13,30 +13,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import platform
 import shutil
 
 from snapcraft.internal.errors import MissingCommandError
-
-_DEB_BASED_PLATFORM = [
-    'Ubuntu',
-    'Debian',
-]
-
-
-def _is_deb_based():
-    return platform.linux_distribution()[0] in _DEB_BASED_PLATFORM
-
-
-# stubs for imports
-class Repo:
-    """Stub for a BaseRepo implementation.
-
-    The class need to be overridden during the platform check.
-    """
-    def __init__(self):
-        raise NotImplementedError()
+from . import errors               # noqa
+from ._base import BaseRepo        # noqa
+from ._base import fix_pkg_config  # noqa
+from ._deb import Ubuntu
+from ._platform import _is_deb_based
 
 
 def install_build_packages():
@@ -50,19 +34,12 @@ def is_package_installed():
 
 
 if _is_deb_based():
-    from . import _deb
-    Repo = _deb.Ubuntu                                                # noqa
+    Repo = Ubuntu
     install_build_packages = _deb.install_build_packages              # noqa
     is_package_installed = _deb.is_package_installed                  # noqa
 else:
     raise RuntimeError(
         'snapcraft is not supported on this operating system')
-
-from . import errors               # noqa
-from ._base import BaseRepo        # noqa
-from ._base import fix_pkg_config  # noqa
-# This is for legacy reasons
-from ._deb import Ubuntu           # noqa
 
 
 def check_for_command(command):

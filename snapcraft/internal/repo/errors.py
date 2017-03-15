@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from . import _is_deb_based
+from ._platform import _is_deb_based
 
 
 class PackageNotFoundError(Exception):
