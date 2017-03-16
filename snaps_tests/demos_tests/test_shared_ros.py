@@ -58,7 +58,7 @@ class SharedROSTestCase(snaps_tests.SnapsTestCase):
         # leave it off and just catch the subprocess error.
         try:
             self.snappy_testbed.run_command(
-                ['timeout', '5s', '/snap/bin/ros-app.launch-project'])
+                ['timeout', '15s', '/snap/bin/ros-app.launch-project'])
         except subprocess.CalledProcessError as e:
             self.assertThat(e.output.decode('utf8'), MatchesRegex(
                 r'.*I heard Hello world.*', re.DOTALL))
