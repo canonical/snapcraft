@@ -411,8 +411,7 @@ def sign_build(snap_filename, key_name=None, local=False):
 def push(snap_filename, release_channels=None):
     """Push a snap_filename to the store.
 
-    If the DELTA_UPLOADS_EXPERIMENTAL environment variable is set
-    and a cached snap is available, a delta will be generated from
+    If a cached snap is available, a delta will be generated from
     the cached snap to the new target snap and uploaded instead. In the
     case of a delta processing or upload failure, push will fall back to
     uploading the full snap.
@@ -438,8 +437,7 @@ def push(snap_filename, release_channels=None):
 
     sha3_384_available = hasattr(hashlib, 'sha3_384')
 
-    if (os.environ.get('DELTA_UPLOADS_EXPERIMENTAL') and
-            sha3_384_available and source_snap):
+    if sha3_384_available and source_snap:
         try:
             result = _push_delta(snap_name, snap_filename, source_snap)
         except StoreDeltaApplicationError as e:
@@ -461,10 +459,9 @@ def push(snap_filename, release_channels=None):
         logger.info('Revision {!r} of {!r} created.'.format(
             result['revision'], snap_name))
 
-        if os.environ.get('DELTA_UPLOADS_EXPERIMENTAL'):
-            snap_cache.cache(snap_filename=snap_filename)
-            snap_cache.prune(deb_arch=arch,
-                             keep_hash=calculate_sha3_384(snap_filename))
+        snap_cache.cache(snap_filename=snap_filename)
+        snap_cache.prune(deb_arch=arch,
+                         keep_hash=calculate_sha3_384(snap_filename))
     else:
         logger.info('Pushing {!r}'.format(snap_name))
 
