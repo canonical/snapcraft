@@ -825,7 +825,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         elif parsed_path.path.startswith(no_validations_path):
             self._handle_validation_request('no')
         elif parsed_path.path.startswith(snap_path):
-            if parsed_path.path.endswith('/revisions'):
+            if parsed_path.path.endswith('/history'):
                 self._handle_snap_revisions()
             elif parsed_path.path.endswith('/state'):
                 self._handle_snap_status()
