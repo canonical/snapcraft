@@ -1,0 +1,24 @@
+#!/bin/bash
+
+case $SNAP_ARCH in
+amd64)
+	export TRIPLET=x86_64-linux-gnu
+	;;
+*)
+	echo "Unsupported arch: $SNAP_ARCH"
+	exit 1
+	;;
+esac
+
+export ROS_BASE=$SNAP/ros-base
+
+# Add ros-base to the PYTHONPATH
+export PYTHONPATH=$PYTHONPATH:$ROS_BASE/usr/lib/python2.7/dist-packages
+
+# Add ros-base to LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ROS_BASE/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ROS_BASE/lib/$TRIPLET
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ROS_BASE/usr/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ROS_BASE/usr/lib/$TRIPLET
+
+roslaunch listener talk_and_listen.launch
