@@ -25,15 +25,15 @@ from . import GrammarTestCase
 
 
 def load_tests(loader, tests, ignore):
-    patcher = mock.patch('snapcraft.repo.Ubuntu')
+    patcher = mock.patch('snapcraft.repo.Repo')
 
     def _setup(test):
-        ubuntu_mock = patcher.start()
+        repo_mock = patcher.start()
 
         def _is_valid(package_name):
             return 'invalid' not in package_name
 
-        ubuntu_mock.return_value.is_valid.side_effect = _is_valid
+        repo_mock.return_value.is_valid.side_effect = _is_valid
 
     def _teardown(test):
         patcher.stop()
@@ -132,7 +132,7 @@ class TryStatementGrammarTestCase(GrammarTestCase):
     def test_try_statement_grammar(self):
         statement = _try.TryStatement(
             body=self.body, project_options=snapcraft.ProjectOptions(),
-            repo_instance=snapcraft.repo.Ubuntu())
+            repo_instance=snapcraft.repo.Repo())
 
         for else_body in self.else_bodies:
             statement.add_else(else_body)

@@ -1,0 +1,22 @@
+name: ros-base
+version: '1.0'
+grade: stable
+confinement: strict
+summary: ROS Base Snap
+description: Contains roscore and basic ROS utilities.
+
+slots:
+  # Consumers will need to access the PYTHONPATH as well as various libs
+  # contained in this snap, so share the entire $SNAP, not just the ROS
+  # workspace.
+  ros-base:
+    content: ros-base-v1
+    interface: content
+    read: [/]
+
+parts:
+  ros-base:
+    plugin: catkin
+    rosdistro: kinetic
+    include-roscore: true
+    catkin-packages: []

@@ -26,10 +26,10 @@ from snapcraft.plugins.copy import (
     CopyPlugin,
     _recursively_link
 )
-from snapcraft.tests import TestCase
+from snapcraft import tests
 
 
-class TestCopyPlugin(TestCase):
+class TestCopyPlugin(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -253,7 +253,6 @@ class TestCopyPlugin(TestCase):
         for symlink in symlinks:
             os.symlink(symlink['source'], symlink['link_name'])
 
-        c.pull()
         c.build()
 
         self.assertTrue(os.path.isdir(destination),
@@ -326,6 +325,28 @@ class TestCopyPlugin(TestCase):
             with open(destination, 'r') as f:
                 self.assertEqual(f.read(), symlink['expected_contents'])
 
+    def test_copy_symlinks_to_libc(self):
+        self.mock_options.files = {'*': '.'}
+
+        c = CopyPlugin('copy', self.mock_options, self.project_options)
+
+        # These directories are created by the pluginhandler
+        os.makedirs(c.builddir)
+
+        # Even though this symlink is absolute, since it's to libc the copy
+        # plugin shouldn't try to follow it or modify it.
+        libc_libs = snapcraft.repo.Repo.get_package_libraries('libc6')
+
+        # We don't care which lib we're testing with, as long as it's a .so.
+        libc_library_path = [lib for lib in libc_libs if '.so' in lib][0]
+        os.symlink(libc_library_path, os.path.join(c.builddir, 'libc-link'))
+
+        c.build()
+
+        self.assertThat(
+            os.path.join(c.installdir, 'libc-link'),
+            tests.LinkExists(libc_library_path))
+
     def test_copy_enable_cross_compilation(self):
         c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.enable_cross_compilation()
@@ -342,7 +363,7 @@ class TestCopyPlugin(TestCase):
             jsonschema.validate({'files': {'foo': ''}}, CopyPlugin.schema())
 
 
-class TestRecursivelyLink(TestCase):
+class TestRecursivelyLink(tests.TestCase):
 
     def setUp(self):
         super().setUp()

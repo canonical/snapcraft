@@ -276,7 +276,8 @@ class PartsConfig:
         self.build_tools += part.code.build_packages
         if part.source_handler and part.source_handler.command:
             self.build_tools.append(
-                repo.get_packages_for_source_type(part.source_handler.command))
+                repo.Repo.get_packages_for_source_type(
+                    part.source_handler.command))
         self.all_parts.append(part)
 
         return part

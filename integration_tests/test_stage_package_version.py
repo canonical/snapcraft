@@ -27,6 +27,6 @@ class StagePackageVersionTestCase(integration_tests.TestCase):
             self.run_snapcraft, 'pull', 'stage-package-version')
         self.assertIn(
             "Error downloading stage packages for part 'hello': "
-            "The Ubuntu package 'hello=x.y-z' was not found.",
+            "The package 'hello=x.y-z' was not found.",
             str(error.output)
         )
