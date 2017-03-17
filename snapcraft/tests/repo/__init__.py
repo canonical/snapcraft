@@ -14,19 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
+import logging
+import tempfile
 
-import integration_tests
+import fixtures
+
+from snapcraft import tests
 
 
-class StagePackageVersionTestCase(integration_tests.TestCase):
+class RepoBaseTestCase(tests.TestCase):
 
-    def test_stage_package_gets_version(self):
-        error = self.assertRaises(
-            subprocess.CalledProcessError,
-            self.run_snapcraft, 'pull', 'stage-package-version')
-        self.assertIn(
-            "Error downloading stage packages for part 'hello': "
-            "The package 'hello=x.y-z' was not found.",
-            str(error.output)
-        )
+    def setUp(self):
+        super().setUp()
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+        tempdirObj = tempfile.TemporaryDirectory()
+        self.addCleanup(tempdirObj.cleanup)
+        self.tempdir = tempdirObj.name

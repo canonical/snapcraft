@@ -46,7 +46,7 @@ class ListKeysTestCase(tests.TestCase):
         self.useFixture(self.fake_terminal)
 
     @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_list_keys_snapd_not_installed(self, mock_installed,
                                            mock_check_output):
         mock_installed.return_value = False
@@ -62,7 +62,7 @@ class ListKeysTestCase(tests.TestCase):
             'The snapd package is not installed.', self.fake_logger.output)
 
     @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_list_keys_without_login(self, mock_installed, mock_check_output):
         mock_installed.return_value = True
         mock_check_output.side_effect = mock_snap_output
@@ -79,7 +79,7 @@ class ListKeysTestCase(tests.TestCase):
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_list_keys_successfully(self, mock_installed, mock_check_output,
                                     mock_get_account_information):
         mock_installed.return_value = True
