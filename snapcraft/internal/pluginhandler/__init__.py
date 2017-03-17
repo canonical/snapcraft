@@ -309,7 +309,7 @@ class PluginHandler:
     def _fetch_stage_packages(self):
         try:
             self.stage_packages = self._stage_package_handler.fetch()
-        except repo.PackageNotFoundError as e:
+        except repo.errors.PackageNotFoundError as e:
             raise RuntimeError("Error downloading stage packages for part "
                                "{!r}: {}".format(self.name, e.message))
 

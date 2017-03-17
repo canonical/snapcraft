@@ -108,7 +108,7 @@ def execute(step, project_options, part_names=None):
     :returns: A dict with the snap name, version, type and architectures.
     """
     config = snapcraft.internal.load_config(project_options)
-    build_packages = repo.install_build_packages(config.build_tools)
+    build_packages = repo.Repo.install_build_packages(config.build_tools)
 
     if (os.environ.get('SNAPCRAFT_SETUP_CORE') and
             config.data['confinement'] == 'classic'):
@@ -338,7 +338,7 @@ def _create_tar_filter(tar_filename):
 
 
 def cleanbuild(project_options, remote=''):
-    if not repo.is_package_installed('lxd'):
+    if not repo.Repo.is_package_installed('lxd'):
         raise EnvironmentError(
             'The lxd package is not installed, in order to use `cleanbuild` '
             'you must install lxd onto your system. Refer to the '

@@ -14,19 +14,23 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import subprocess
+import platform
 
-import integration_tests
+from ._deb import Ubuntu
+
+_DEB_BASED_PLATFORM = [
+    'Ubuntu',
+    'Debian',
+]
 
 
-class StagePackageVersionTestCase(integration_tests.TestCase):
+def _is_deb_based():
+    return platform.linux_distribution()[0] in _DEB_BASED_PLATFORM
 
-    def test_stage_package_gets_version(self):
-        error = self.assertRaises(
-            subprocess.CalledProcessError,
-            self.run_snapcraft, 'pull', 'stage-package-version')
-        self.assertIn(
-            "Error downloading stage packages for part 'hello': "
-            "The package 'hello=x.y-z' was not found.",
-            str(error.output)
-        )
+
+def _get_repo_for_platform():
+    if _is_deb_based():
+        return Ubuntu
+    else:
+        raise RuntimeError(
+            'snapcraft is not supported on this operating system')

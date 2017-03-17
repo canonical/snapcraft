@@ -24,13 +24,13 @@ class GrammarTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft.repo.Ubuntu')
-        self.ubuntu_mock = patcher.start()
+        patcher = mock.patch('snapcraft.repo.Repo')
+        self.repo_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        self.get_mock = self.ubuntu_mock.return_value.get
-        self.unpack_mock = self.ubuntu_mock.return_value.unpack
-        self.is_valid_mock = self.ubuntu_mock.return_value.is_valid
+        self.get_mock = self.repo_mock.return_value.get
+        self.unpack_mock = self.repo_mock.return_value.unpack
+        self.is_valid_mock = self.repo_mock.return_value.is_valid
 
         def _is_valid(package_name):
             return 'invalid' not in package_name
