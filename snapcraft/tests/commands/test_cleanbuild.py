@@ -47,7 +47,7 @@ parts:
 
     @mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
     @mock.patch('snapcraft.internal.lxd.check_call')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_cleanbuild(self, mock_installed, mock_call):
         mock_installed.return_value = True
 
@@ -106,7 +106,7 @@ parts:
             Contains(os.path.join('.', 'snap', 'snapcraft.yaml')),
             'snap/snapcraft unexpectedly excluded from tarball')
 
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_no_lxd(self, mock_installed):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)

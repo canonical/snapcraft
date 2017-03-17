@@ -136,9 +136,9 @@ of the choice of plugin.
     parts is available to every snap author - just say 'after' and list the
     parts you want that others have already defined.
 
-  - build-packages: [deb, deb, deb...]
+  - build-packages: [pkg, pkg, pkg...]
 
-    A list of Ubuntu packages to install on the build host before building
+    A list of packages to install on the build host before building
     the part. The files from these packages typically will not go into the
     final snap unless they contain libraries that are direct dependencies of
     binaries within the snap (in which case they'll be discovered via `ldd`),
@@ -146,7 +146,7 @@ of the choice of plugin.
 
   - stage-packages: YAML list
 
-    A set of Ubuntu packages to be downloaded and unpacked to join the part
+    A set of packages to be downloaded and unpacked to join the part
     before it's built. Note that these packages are not installed on the host.
     Like the rest of the part, all files from these packages will make it into
     the final snap unless filtered out via the `snap` keyword.

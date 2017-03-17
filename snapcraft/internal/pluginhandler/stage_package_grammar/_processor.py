@@ -31,9 +31,9 @@ def process_grammar(grammar, project_options, repo_instance):
     :param project_options: Instance of ProjectOptions to use to determine
                             stage packages.
     :type project_options: snapcraft.ProjectOptions
-    :param repo_instance: repo.Ubuntu instance used for checking package
+    :param repo_instance: repo.Repo instance used for checking package
                           validity.
-    :type repo_instance: repo.Ubuntu
+    :type repo_instance: repo.Repo
 
     :return: Packages to stage
     :rtype: set
