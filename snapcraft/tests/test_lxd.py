@@ -33,11 +33,40 @@ from snapcraft.internal import (
 )
 
 
+def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
+    def call_effect(*args, **kwargs):
+        if args[0] == ['lxc', 'remote', 'get-default']:
+            if fail_on_default:
+                raise CalledProcessError(returncode=255, cmd=args[0])
+            else:
+                return 'local'.encode('utf-8')
+        elif args[0] == ['lxc', 'list', 'my-remote:'] and fail_on_remote:
+            raise CalledProcessError(returncode=255, cmd=args[0])
+        else:
+            return ''.encode('utf-8')
+    return call_effect
+
+
 class LXDTestCase(tests.TestCase):
 
-    @patch('snapcraft.internal.lxd.check_call')
+    def setUp(self):
+            super().setUp()
+
+            patcher = patch('snapcraft.internal.lxd.check_call')
+            self.check_call_mock = patcher.start()
+            self.addCleanup(patcher.stop)
+
+            patcher = patch('snapcraft.internal.lxd.check_output')
+            self.check_output_mock = patcher.start()
+            self.check_output_mock.side_effect = check_output_side_effect()
+            self.addCleanup(patcher.stop)
+
+            patcher = patch('snapcraft.internal.lxd.sleep', lambda _: None)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
     @patch('petname.Generate')
-    def test_cleanbuild(self, mock_pet, mock_call):
+    def test_cleanbuild(self, mock_pet):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
@@ -55,37 +84,36 @@ class LXDTestCase(tests.TestCase):
             'Retrieved snap.snap\n',
             fake_logger.output)
 
-        mock_call.assert_has_calls([
+        self.check_call_mock.assert_has_calls([
             call(['lxc', 'launch', '-e',
                   'ubuntu:xenial/{}'.format(expected_arch),
-                  'snapcraft-my-pet']),
-            call(['lxc', 'config', 'set', 'snapcraft-my-pet',
+                  'local:snapcraft-my-pet']),
+            call(['lxc', 'config', 'set', 'local:snapcraft-my-pet',
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'file', 'push', 'project.tar',
-                  'snapcraft-my-pet//root/project.tar']),
-            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+                  'local:snapcraft-my-pet//root/project.tar']),
+            call(['lxc', 'exec', 'local:snapcraft-my-pet', '--',
                   'tar', 'xvf', '/root/project.tar']),
-            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+            call(['lxc', 'exec', 'local:snapcraft-my-pet', '--',
                   'python3', '-c',
                   'import urllib.request; '
                   'urllib.request.urlopen('
                   '"http://start.ubuntu.com/connectivity-check.html", '
                   'timeout=5)']),
-            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+            call(['lxc', 'exec', 'local:snapcraft-my-pet', '--',
                   'apt-get', 'update']),
-            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+            call(['lxc', 'exec', 'local:snapcraft-my-pet', '--',
                   'apt-get', 'install', 'snapcraft', '-y']),
-            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+            call(['lxc', 'exec', 'local:snapcraft-my-pet', '--',
                   'snapcraft', 'snap', '--output', 'snap.snap']),
             call(['lxc', 'file', 'pull',
-                  'snapcraft-my-pet//root/snap.snap',
+                  'local:snapcraft-my-pet//root/snap.snap',
                   'snap.snap']),
-            call(['lxc', 'stop', '-f', 'snapcraft-my-pet']),
+            call(['lxc', 'stop', '-f', 'local:snapcraft-my-pet']),
         ])
 
-    @patch('snapcraft.internal.lxd.check_call')
     @patch('petname.Generate')
-    def test_cleanbuild_copies_cache(self, mock_pet, mock_call):
+    def test_cleanbuild_copies_cache(self, mock_pet):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
@@ -107,42 +135,41 @@ class LXDTestCase(tests.TestCase):
             'Retrieved snap.snap\n',
             fake_logger.output)
 
-        mock_call.assert_has_calls([
+        self.check_call_mock.assert_has_calls([
             call(['lxc', 'launch', '-e',
                   'ubuntu:xenial/{}'.format(expected_arch),
-                  'snapcraft-my-pet']),
-            call(['lxc', 'config', 'set', 'snapcraft-my-pet',
+                  'local:snapcraft-my-pet']),
+            call(['lxc', 'config', 'set', 'local:snapcraft-my-pet',
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'file', 'push', 'project.tar',
-                  'snapcraft-my-pet//root/project.tar']),
-            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+                  'local:snapcraft-my-pet//root/project.tar']),
+            call(['lxc', 'exec', 'local:snapcraft-my-pet', '--',
                   'tar', 'xvf', '/root/project.tar']),
-            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+            call(['lxc', 'exec', 'local:snapcraft-my-pet', '--',
                   'mkdir', '-p', '/root/.cache/snapcraft/.']),
             call(['lxc', 'file', 'push', os.path.join(cache_dir, 'foo'),
-                  'snapcraft-my-pet//root/.cache/snapcraft/./foo']),
-            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+                  'local:snapcraft-my-pet//root/.cache/snapcraft/./foo']),
+            call(['lxc', 'exec', 'local:snapcraft-my-pet', '--',
                   'python3', '-c',
                   'import urllib.request; '
                   'urllib.request.urlopen('
                   '"http://start.ubuntu.com/connectivity-check.html", '
                   'timeout=5)']),
-            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+            call(['lxc', 'exec', 'local:snapcraft-my-pet', '--',
                   'apt-get', 'update']),
-            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+            call(['lxc', 'exec', 'local:snapcraft-my-pet', '--',
                   'apt-get', 'install', 'snapcraft', '-y']),
-            call(['lxc', 'exec', 'snapcraft-my-pet', '--',
+            call(['lxc', 'exec', 'local:snapcraft-my-pet', '--',
                   'snapcraft', 'snap', '--output', 'snap.snap']),
             call(['lxc', 'file', 'pull',
-                  'snapcraft-my-pet//root/snap.snap',
+                  'local:snapcraft-my-pet//root/snap.snap',
                   'snap.snap']),
-            call(['lxc', 'stop', '-f', 'snapcraft-my-pet']),
+            call(['lxc', 'stop', '-f', 'local:snapcraft-my-pet']),
         ])
 
-    @patch('snapcraft.internal.lxd.check_call')
     @patch('snapcraft.internal.lxd.sleep')
-    def test_wait_for_network_loops(self, mock_sleep, mock_call):
-        mock_call.side_effect = CalledProcessError(-1, ['my-cmd'])
+    def test_wait_for_network_loops(self, mock_sleep):
+        self.check_call_mock.side_effect = CalledProcessError(-1, ['my-cmd'])
 
         cb = lxd.Cleanbuilder('snap.snap', 'project.tar', 'amd64')
 
@@ -154,10 +181,9 @@ class LXDTestCase(tests.TestCase):
             str(raised),
             "Command '['my-cmd']' returned non-zero exit status -1")
 
-    @patch('snapcraft.internal.lxd.check_call')
     @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
     @patch('snapcraft.internal.lxd.sleep')
-    def test_failed_build_with_debug(self, mock_sleep, mock_run, mock_call):
+    def test_failed_build_with_debug(self, mock_sleep, mock_run):
         call_list = []
 
         def run_effect(*args, **kwargs):
@@ -172,10 +198,9 @@ class LXDTestCase(tests.TestCase):
 
         self.assertIn(['bash', '-i'], call_list)
 
-    @patch('snapcraft.internal.lxd.check_call')
     @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
     @patch('snapcraft.internal.lxd.sleep')
-    def test_failed_build_without_debug(self, mock_sleep, mock_run, mock_call):
+    def test_failed_build_without_debug(self, mock_sleep, mock_run):
         call_list = []
 
         def run_effect(*args, **kwargs):
@@ -194,9 +219,8 @@ class LXDTestCase(tests.TestCase):
 
         self.assertNotIn(['bash', '-i'], call_list)
 
-    @patch('snapcraft.internal.lxd.check_call')
     @patch('petname.Generate')
-    def test_cleanbuild_with_remote(self, mock_pet, mock_call):
+    def test_cleanbuild_with_remote(self, mock_pet):
         mock_pet.return_value = 'my-pet'
 
         project_options = ProjectOptions()
@@ -204,7 +228,7 @@ class LXDTestCase(tests.TestCase):
                          remote='my-remote').execute()
         expected_arch = project_options.deb_arch
 
-        mock_call.assert_has_calls([
+        self.check_call_mock.assert_has_calls([
             call(['lxc', 'launch', '-e',
                   'ubuntu:xenial/{}'.format(expected_arch),
                   'my-remote:snapcraft-my-pet']),
@@ -232,18 +256,30 @@ class LXDTestCase(tests.TestCase):
             call(['lxc', 'stop', '-f', 'my-remote:snapcraft-my-pet']),
         ])
 
-    @patch('snapcraft.internal.lxd.check_call')
     @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
     @patch('snapcraft.internal.lxd.sleep')
-    def test_remote_does_not_exist(self, mock_sleep, mock_run, mock_call):
-        call_list = []
+    def test_lxc_check_fails(self, mock_sleep, mock_run):
+        self.check_output_mock.side_effect = check_output_side_effect(
+              fail_on_default=True)
 
-        def call_effect(*args, **kwargs):
-            call_list.append(args[0])
-            if args[0] == ['lxc', 'list', 'my-remote:']:
-                raise CalledProcessError(returncode=255, cmd=args[0])
+        project_options = ProjectOptions(debug=False)
+        with ExpectedException(lxd.SnapcraftEnvironmentError,
+                               'The lxd package is not installed, in order '
+                               'to use `cleanbuild` you must install lxd '
+                               'onto your system. Refer to the '
+                               '"Ubuntu Desktop and Ubuntu Server" '
+                               'section on '
+                               'https://linuxcontainers.org/lxd/getting-'
+                               'started-cli/#ubuntu-desktop-and-ubuntu-'
+                               'server to enable a proper setup.'):
+            lxd.Cleanbuilder('snap.snap', 'project.tar',
+                             project_options)
 
-        mock_call.side_effect = call_effect
+    @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
+    @patch('snapcraft.internal.lxd.sleep')
+    def test_remote_does_not_exist(self, mock_sleep, mock_run):
+        self.check_output_mock.side_effect = check_output_side_effect(
+              fail_on_remote=True)
 
         project_options = ProjectOptions(debug=False)
         with ExpectedException(lxd.SnapcraftEnvironmentError,

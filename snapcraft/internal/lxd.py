@@ -17,8 +17,9 @@
 
 import logging
 import os
+import sys
 from contextlib import contextmanager
-from subprocess import check_call, CalledProcessError
+from subprocess import check_call, check_output, CalledProcessError
 from time import sleep
 
 import petname
@@ -43,25 +44,11 @@ class Cleanbuilder:
         self._tar_filename = tar_filename
         self._project_options = project_options
         container_name = 'snapcraft-{}'.format(petname.Generate(3, '-'))
-        if remote:
-            self._verify_remote(remote)
-            self._container_name = '{}:{}'.format(remote, container_name)
-        else:
-            self._container_name = container_name
 
-    def _verify_remote(self, remote):
-        # There is no easy way to grep the results from `lxc remote list`
-        # so we try and execute a simple operation against the remote.
-        try:
-            check_call(['lxc', 'list', '{}:'.format(remote)])
-        except CalledProcessError as e:
-            raise SnapcraftEnvironmentError(
-                'There are either no permissions or the remote {!r} '
-                'does not exist.\n'
-                'Verify the existing remotes by running `lxc remote list`\n'
-                'To setup a new remote, follow the instructions on\n'
-                'https://linuxcontainers.org/lxd/getting-started-cli/'
-                '#multiple-hosts'.format(remote)) from e
+        if not remote:
+            remote = _get_default_remote()
+        _verify_remote(remote)
+        self._container_name = '{}:{}'.format(remote, container_name)
 
     def _push_file(self, src, dst):
         check_call(['lxc', 'file', 'push',
@@ -147,3 +134,47 @@ class Cleanbuilder:
                 if retry_count == 0:
                     raise e
         logger.info('Network connection established')
+
+
+def _get_default_remote():
+    """Query and return the default lxd remote.
+
+    Use the lxc command to query for the default lxd remote. In most
+    cases this will return the local remote.
+
+    :returns: default lxd remote.
+    :rtype: string.
+    :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
+        raised if the lxc call fails.
+    """
+    try:
+        default_remote = check_output(['lxc', 'remote', 'get-default'])
+    except CalledProcessError:
+        raise SnapcraftEnvironmentError(
+             'The lxd package is not installed, in order to use '
+             '`cleanbuild` you must install lxd onto your system. '
+             'Refer to the "Ubuntu Desktop and Ubuntu Server" section on '
+             'https://linuxcontainers.org/lxd/getting-started-cli/'
+             '#ubuntu-desktop-and-ubuntu-server to enable a proper setup.')
+    return default_remote.decode(sys.getfilesystemencoding()).strip()
+
+
+def _verify_remote(remote):
+    """Verify that the lxd remote exists.
+
+    :param str remote: the lxd remote to verify.
+    :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
+        raised if the lxc call listing the remote fails.
+    """
+    # There is no easy way to grep the results from `lxc remote list`
+    # so we try and execute a simple operation against the remote.
+    try:
+        check_output(['lxc', 'list', '{}:'.format(remote)])
+    except CalledProcessError as e:
+        raise SnapcraftEnvironmentError(
+            'There are either no permissions or the remote {!r} '
+            'does not exist.\n'
+            'Verify the existing remotes by running `lxc remote list`\n'
+            'To setup a new remote, follow the instructions on\n'
+            'https://linuxcontainers.org/lxd/getting-started-cli/'
+            '#multiple-hosts'.format(remote)) from e
