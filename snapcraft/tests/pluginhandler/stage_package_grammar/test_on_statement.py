@@ -27,7 +27,7 @@ from . import GrammarTestCase
 
 
 def load_tests(loader, tests, ignore):
-    patcher = mock.patch('snapcraft.repo.Ubuntu')
+    patcher = mock.patch('snapcraft.repo.Repo')
 
     def _setup(test):
         patcher.start()
@@ -165,7 +165,7 @@ class OnStatementGrammarTestCase(GrammarTestCase):
         options = snapcraft.ProjectOptions(target_deb_arch=self.target_arch)
         statement = on.OnStatement(
             on=self.on, body=self.body, project_options=options,
-            repo_instance=snapcraft.repo.Ubuntu())
+            repo_instance=snapcraft.repo.Repo())
 
         for else_body in self.else_bodies:
             statement.add_else(else_body)
@@ -231,7 +231,7 @@ class OnStatementInvalidGrammarTestCase(GrammarTestCase):
                 target_deb_arch=self.target_arch)
             statement = on.OnStatement(
                 on=self.on, body=self.body, project_options=options,
-                repo_instance=snapcraft.repo.Ubuntu())
+                repo_instance=snapcraft.repo.Repo())
 
             for else_body in self.else_bodies:
                 statement.add_else(else_body)
@@ -246,7 +246,7 @@ class OnStatementElseFail(GrammarTestCase):
             target_deb_arch='amd64')
         statement = on.OnStatement(
             on='on i386', body=['foo'], project_options=options,
-            repo_instance=snapcraft.repo.Ubuntu())
+            repo_instance=snapcraft.repo.Repo())
 
         statement.add_else(None)
 
