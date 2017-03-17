@@ -140,13 +140,13 @@
 
 11. Create the image:
 
-    $ sudo ubuntu-image --image-size 3G -O ubuntu-core-16/dragonboard.img dragonboard.model --extra-snaps $kernel_snap_path
+    $ sudo ubuntu-image --image-size 3G -O ubuntu-core-16 dragonboard.model --extra-snaps $kernel_snap_path
 
 12. Insert an sdcard into the host PC.
 13. Umount the sdcard partitions.
 14. Flash the image, replacing sdX with the path to the sdcard:
 
-    $ sudo dd if=ubuntu-core-16-dragonboard.img of=/dev/sdX bs=32M
+    $ sudo dd if=ubuntu-core-16/dragonboard.img of=/dev/sdX bs=32M
     $ sync
 
 15. Insert the sdcard into the dragonboard, and turn it on.
