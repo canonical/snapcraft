@@ -98,11 +98,11 @@
     $ kvm -smp 2 -m 1500 -netdev user,id=mynet0,hostfwd=tcp::8022-:22,hostfwd=tcp::8090-:80 -device virtio-net-pci,netdev=mynet0 -drive file=ubuntu-core-16/pc.img,format=raw
 
   * Check that the user can be created.
-  * Check that it's possible to ssh into the board.
+  * Check that it's possible to ssh into the vm.
   * Check that it's possible to install a snap.
 
 
-# Test the dragonboar 410c kernel.
+# Test the dragonboard 410c kernel.
 
 1. Download https://developer.qualcomm.com/download/db410c/linux-board-support-package-v1.2.zip
 2. Extract it and copy the file `firmware.tar` to the directory `demos/96boards-kernel`.
