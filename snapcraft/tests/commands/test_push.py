@@ -350,8 +350,6 @@ class PushCommandDeltasTestCase(tests.TestCase):
 
     def test_push_revision_cached_with_experimental_deltas(self):
         self.useFixture(fixture_setup.FakeTerminal())
-        if self.enable_deltas:
-            self.useFixture(fixture_setup.DeltaUploads())
 
         # Create a snap
         main(['init'])
@@ -373,15 +371,10 @@ class PushCommandDeltasTestCase(tests.TestCase):
         cached_snap = os.path.join(
             snap_cache, file_utils.calculate_sha3_384(snap_file))
 
-        if self.enable_deltas:
-            self.assertThat(cached_snap, FileExists())
-        else:
-            self.assertThat(cached_snap, Not(FileExists()))
+        self.assertThat(cached_snap, FileExists())
 
     def test_push_revision_uses_available_delta(self):
         self.useFixture(fixture_setup.FakeTerminal())
-        if self.enable_deltas:
-            self.useFixture(fixture_setup.DeltaUploads())
 
         # Create a source snap
         main(['init'])
@@ -401,14 +394,10 @@ class PushCommandDeltasTestCase(tests.TestCase):
             main(['push', new_snap_file])
 
         _, kwargs = self.mock_upload.call_args
-        if self.enable_deltas:
-            self.assertEqual(kwargs.get('delta_format'), 'xdelta3')
-        else:
-            self.assertIsNone(kwargs.get('delta_format'))
+        self.assertEqual(kwargs.get('delta_format'), 'xdelta3')
 
     def test_push_with_upload_failure_falls_back(self):
         self.useFixture(fixture_setup.FakeTerminal())
-        self.useFixture(fixture_setup.DeltaUploads())
 
         # Create a source snap to delta from
         main(['init'])
@@ -466,7 +455,6 @@ class PushCommandDeltasWithPruneTestCase(tests.TestCase):
 
     def test_push_revision_prune_snap_cache(self):
         self.useFixture(fixture_setup.FakeTerminal())
-        self.useFixture(fixture_setup.DeltaUploads())
 
         snap_revision = 9
 

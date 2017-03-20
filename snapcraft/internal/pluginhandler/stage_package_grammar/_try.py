@@ -24,7 +24,7 @@ class TryStatement:
     >>> import tempfile
     >>> from snapcraft import repo, ProjectOptions
     >>> with tempfile.TemporaryDirectory() as cache_dir:
-    ...     repo_instance = repo.Ubuntu(cache_dir)
+    ...     repo_instance = repo.Repo(cache_dir)
     ...     options = ProjectOptions(target_deb_arch='i386')
     ...     clause = TryStatement(body=['invalid'], project_options=options,
     ...                           repo_instance=repo_instance)
@@ -40,9 +40,9 @@ class TryStatement:
         :param project_options: Instance of ProjectOptions to use to process
                                 clause.
         :type project_options: snapcraft.ProjectOptions
-        :param repo_instance: repo.Ubuntu instance used for checking package
+        :param repo_instance: repo.Repo instance used for checking package
                               validity.
-        :type repo_instance: repo.Ubuntu
+        :type repo_instance: repo.Repo
         """
 
         self._body = body
@@ -100,14 +100,14 @@ def _all_packages_valid(packages, repo_instance):
     """Ensure that all packages are valid.
 
     :param packages: Iterable container of package names.
-    :param repo_instance: repo.Ubuntu instance to use for validity check.
-    :type repo_instance: repo.Ubuntu
+    :param repo_instance: repo.Repo instance to use for validity check.
+    :type repo_instance: repo.Repo
 
     For example:
     >>> import tempfile
     >>> from snapcraft import repo, ProjectOptions
     >>> with tempfile.TemporaryDirectory() as cache_dir:
-    ...     ubuntu = repo.Ubuntu(cache_dir)
+    ...     ubuntu = repo.Repo(cache_dir)
     ...     _all_packages_valid(['valid'], ubuntu)
     ...     _all_packages_valid(['valid', 'invalid'], ubuntu)
     True

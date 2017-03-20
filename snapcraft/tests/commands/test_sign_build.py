@@ -60,7 +60,7 @@ class SignBuildTestCase(tests.TestCase):
         self.useFixture(self.snap_test)
 
     @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_sign_build_snapd_not_installed(self, mock_installed,
                                             mock_check_output):
         mock_installed.return_value = False
@@ -76,7 +76,7 @@ class SignBuildTestCase(tests.TestCase):
             'The snapd package is not installed.', self.fake_logger.output)
 
     @mock.patch('subprocess.check_output')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_sign_build_nonexisting_snap(self, mock_installed,
                                          mock_check_output):
         mock_installed.return_value = True
@@ -94,7 +94,7 @@ class SignBuildTestCase(tests.TestCase):
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_sign_build_missing_account_info(
             self, mock_installed, mock_get_snap_data, mock_check_output,
             mock_get_account_info):
@@ -124,7 +124,7 @@ class SignBuildTestCase(tests.TestCase):
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_sign_build_no_usable_keys(
             self, mock_installed, mock_get_snap_data, mock_check_output,
             mock_get_account_info):
@@ -162,7 +162,7 @@ class SignBuildTestCase(tests.TestCase):
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_sign_build_no_usable_named_key(
             self, mock_installed, mock_get_snap_data, mock_check_output,
             mock_get_account_info):
@@ -200,7 +200,7 @@ class SignBuildTestCase(tests.TestCase):
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_sign_build_unregistered_key(
             self, mock_installed, mock_get_snap_data, mock_check_output,
             mock_get_account_info):
@@ -238,7 +238,7 @@ class SignBuildTestCase(tests.TestCase):
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_sign_build_snapd_failure(
             self, mock_installed, mock_get_snap_data, mock_check_output,
             mock_get_account_info):
@@ -277,7 +277,7 @@ class SignBuildTestCase(tests.TestCase):
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_sign_build_locally_successfully(
             self, mock_installed, mock_get_snap_data, mock_check_output,
             mock_get_account_info):
@@ -314,7 +314,7 @@ class SignBuildTestCase(tests.TestCase):
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_sign_build_missing_grade(
             self, mock_installed, mock_get_snap_data, mock_check_output,
             mock_get_account_info):
@@ -350,7 +350,7 @@ class SignBuildTestCase(tests.TestCase):
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_sign_build_push_successfully(
             self, mock_installed, mock_get_snap_data, mock_check_output,
             mock_get_account_info, mock_push_snap_build):
@@ -390,7 +390,7 @@ class SignBuildTestCase(tests.TestCase):
     @mock.patch.object(storeapi.SCAClient, 'push_snap_build')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
-    @mock.patch('snapcraft.internal.repo.is_package_installed')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_sign_build_push_existing(
             self, mock_installed, mock_get_snap_data, mock_get_account_info,
             mock_push_snap_build):

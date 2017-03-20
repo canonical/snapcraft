@@ -25,7 +25,8 @@ import testtools
 from testtools.matchers import (
     Contains,
     Equals,
-    HasLength
+    HasLength,
+    MatchesRegex,
 )
 
 import snapcraft
@@ -34,6 +35,7 @@ from snapcraft import (
     repo,
     tests,
 )
+from snapcraft.internal import errors
 
 
 class _CompareContainers():
@@ -55,7 +57,7 @@ class _CompareContainers():
         return True
 
 
-class CatkinPluginTestCase(tests.TestCase):
+class CatkinPluginBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -66,6 +68,7 @@ class CatkinPluginTestCase(tests.TestCase):
             source_space = 'src'
             source_subdir = None
             include_roscore = False
+            underlay = None
 
         self.properties = props()
         self.project_options = snapcraft.ProjectOptions()
@@ -83,12 +86,19 @@ class CatkinPluginTestCase(tests.TestCase):
         self.rosdep_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('snapcraft.plugins.catkin._Catkin')
+        self.catkin_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
     def verify_rosdep_setup(self, rosdistro, package_path, rosdep_path,
                             sources):
         self.rosdep_mock.assert_has_calls([
             mock.call(rosdistro, package_path, rosdep_path, sources,
                       self.project_options),
             mock.call().setup()])
+
+
+class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
     def test_schema(self):
         schema = catkin.CatkinPlugin.schema()
@@ -204,6 +214,40 @@ class CatkinPluginTestCase(tests.TestCase):
                          'Expected "include-roscore" "default" to be "true", '
                          'but it was "{}"'.format(include_roscore_default))
 
+        # Check underlay property
+        self.assertThat(properties, Contains('underlay'),
+                        'Expected "underlay" to be included in properties')
+
+        underlay = properties['underlay']
+        self.assertThat(underlay, Contains('type'),
+                        'Expected "type" to be included in "underlay"')
+        self.assertThat(underlay, Contains('properties'),
+                        'Expected "properties" to be included in "underlay"')
+        self.assertThat(underlay, Contains('required'),
+                        'Expected "required" to be included in "underlay"')
+
+        underlay_type = underlay['type']
+        self.assertThat(underlay_type, Equals('object'),
+                        'Expected "underlay" "type" to be "object", but it '
+                        'was "{}"'.format(underlay_type))
+
+        underlay_required = underlay['required']
+        self.assertThat(underlay_required, HasLength(2))
+        self.assertThat(underlay_required, Contains('build-path'))
+        self.assertThat(underlay_required, Contains('run-path'))
+
+        underlay_properties = underlay['properties']
+        self.assertThat(underlay_properties, Contains('build-path'))
+        self.assertThat(underlay_properties, Contains('run-path'))
+
+        underlay_build_path = underlay_properties['build-path']
+        self.assertThat(underlay_build_path, Contains('type'))
+        self.assertThat(underlay_build_path['type'], Equals('string'))
+
+        underlay_run_path = underlay_properties['run-path']
+        self.assertThat(underlay_run_path, Contains('type'))
+        self.assertThat(underlay_run_path['type'], Equals('string'))
+
         # Check required
         self.assertTrue('catkin-packages' in schema['required'],
                         'Expected "catkin-packages" to be included in '
@@ -211,7 +255,8 @@ class CatkinPluginTestCase(tests.TestCase):
 
     def test_get_pull_properties(self):
         expected_pull_properties = ['rosdistro', 'catkin-packages',
-                                    'source-space', 'include-roscore']
+                                    'source-space', 'include-roscore',
+                                    'underlay']
         resulting_pull_properties = catkin.CatkinPlugin.get_pull_properties()
 
         self.assertThat(resulting_pull_properties,
@@ -250,63 +295,6 @@ class CatkinPluginTestCase(tests.TestCase):
                                      self.project_options)
         self.assertTrue('xenial' in plugin.PLUGIN_STAGE_SOURCES)
 
-    def test_pull_debian_dependencies(self):
-        plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                     self.project_options)
-        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
-
-        self.dependencies_mock.return_value = {'foo', 'bar', 'baz'}
-
-        plugin.pull()
-
-        self.verify_rosdep_setup(
-            self.properties.rosdistro,
-            os.path.join(plugin.sourcedir, 'src'),
-            os.path.join(plugin.partdir, 'rosdep'),
-            plugin.PLUGIN_STAGE_SOURCES)
-
-        # Verify that dependencies were found as expected. TODO: Would really
-        # like to use ANY here instead of verifying explicit arguments, but
-        # Python issue #25195 won't let me.
-        self.assertEqual(1, self.dependencies_mock.call_count)
-        self.assertEqual({'my_package'},
-                         self.dependencies_mock.call_args[0][0])
-
-        # Verify that the dependencies were installed
-        self.ubuntu_mock.return_value.get.assert_called_with(
-            _CompareContainers(self, ['foo', 'bar', 'baz']))
-        self.ubuntu_mock.return_value.unpack.assert_called_with(
-            plugin.installdir)
-
-    def test_pull_local_dependencies(self):
-        self.properties.catkin_packages.append('package_2')
-
-        plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                     self.project_options)
-        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
-
-        # No system dependencies (only local)
-        self.dependencies_mock.return_value = set()
-
-        plugin.pull()
-
-        self.verify_rosdep_setup(
-            self.properties.rosdistro,
-            os.path.join(plugin.sourcedir, 'src'),
-            os.path.join(plugin.partdir, 'rosdep'),
-            plugin.PLUGIN_STAGE_SOURCES)
-
-        # Verify that dependencies were found as expected. TODO: Would really
-        # like to use ANY here instead of verifying explicit arguments, but
-        # Python issue #25195 won't let me.
-        self.assertEqual(1, self.dependencies_mock.call_count)
-        self.assertEqual({'my_package', 'package_2'},
-                         self.dependencies_mock.call_args[0][0])
-
-        # Verify that no .deb packages were installed
-        self.assertTrue(mock.call().unpack(plugin.installdir) not in
-                        self.ubuntu_mock.mock_calls)
-
     @mock.patch('snapcraft.plugins.catkin._Compilers')
     def test_pull_invalid_dependency(self, compilers_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
@@ -316,44 +304,15 @@ class CatkinPluginTestCase(tests.TestCase):
         self.dependencies_mock.return_value = ['foo']
 
         mock_instance = self.ubuntu_mock.return_value
-        mock_instance.get.side_effect = repo.PackageNotFoundError('foo')
+        mock_instance.get.side_effect = repo.errors.PackageNotFoundError('foo')
 
         raised = self.assertRaises(
             RuntimeError,
             plugin.pull)
 
         self.assertEqual(str(raised),
-                         'Failed to fetch system dependencies: The Ubuntu '
+                         'Failed to fetch system dependencies: The '
                          "package 'foo' was not found.")
-
-    def test_pull_with_roscore(self):
-        self.properties.include_roscore = True
-        plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                     self.project_options)
-        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
-
-        # No system dependencies
-        self.dependencies_mock.return_value = set()
-
-        def resolve(package_name):
-            if package_name == 'ros_core':
-                return ['ros-core-dependency']
-
-        self.rosdep_mock.return_value.resolve_dependency = resolve
-
-        plugin.pull()
-
-        self.verify_rosdep_setup(
-            self.properties.rosdistro,
-            os.path.join(plugin.sourcedir, 'src'),
-            os.path.join(plugin.partdir, 'rosdep'),
-            plugin.PLUGIN_STAGE_SOURCES)
-
-        # Verify that roscore was installed
-        self.ubuntu_mock.return_value.get.assert_called_with(
-            {'ros-core-dependency'})
-        self.ubuntu_mock.return_value.unpack.assert_called_with(
-            plugin.installdir)
 
     def test_pull_unable_to_resolve_roscore(self):
         self.properties.include_roscore = True
@@ -370,6 +329,27 @@ class CatkinPluginTestCase(tests.TestCase):
 
         self.assertEqual(str(raised),
                          'Unable to determine system dependency for roscore')
+
+    @mock.patch.object(catkin.CatkinPlugin, '_generate_snapcraft_setup_sh')
+    def test_pull_invalid_underlay(self, generate_setup_mock):
+        self.properties.underlay = {
+            'build-path': 'test-build-path',
+            'run-path': 'test-run-path'
+        }
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        # No system dependencies
+        self.dependencies_mock.return_value = set()
+
+        raised = self.assertRaises(
+            errors.SnapcraftEnvironmentError, plugin.pull)
+
+        self.assertThat(
+            str(raised),
+            MatchesRegex(
+                '.*Requested underlay.*does not point to a valid directory'))
 
     def test_clean_pull(self):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
@@ -555,7 +535,7 @@ class CatkinPluginTestCase(tests.TestCase):
                 'expected': '#!/usr/bin/env python',
             },
             {
-                'path': os.path.join(plugin.rosdir, 'bin/catkin_find'),
+                'path': os.path.join(plugin.rosdir, 'bin/catkin'),
                 'contents': '#!/foo/baz/python',
                 'expected': '#!/usr/bin/env python',
             },
@@ -575,7 +555,7 @@ class CatkinPluginTestCase(tests.TestCase):
         for file_info in files:
             with open(os.path.join(plugin.rosdir,
                                    file_info['path']), 'r') as f:
-                self.assertEqual(f.read(), file_info['expected'])
+                self.assertThat(f.read(), Equals(file_info['expected']))
 
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
@@ -617,8 +597,155 @@ class CatkinPluginTestCase(tests.TestCase):
                              'The absolute path to python was not replaced as '
                              'expected')
 
+    @mock.patch.object(catkin.CatkinPlugin, '_source_setup_sh',
+                       return_value='test-source-setup')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
+    def test_run_environment(self, run_mock, source_setup_sh_mock):
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+
+        python_path = os.path.join(
+            plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')
+        os.makedirs(python_path)
+
+        # Joining and re-splitting to get hacked script in there as well
+        environment = '\n'.join(plugin.env(plugin.installdir)).split('\n')
+
+        self.assertThat(environment, Contains(
+            'PYTHONPATH={}:$PYTHONPATH'.format(python_path)))
+
+        self.assertThat(environment, Contains(
+            'ROS_MASTER_URI=http://localhost:11311'))
+
+        self.assertThat(environment, Contains('ROS_HOME=$SNAP_USER_DATA/ros'))
+
+        self.assertThat(environment, Contains('LC_ALL=C.UTF-8'))
+
+        source_setup_sh_mock.assert_called_with(plugin.installdir, None)
+        self.assertThat(environment, Contains('test-source-setup'))
+
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
+    def test_run_environment_with_underlay(self, run_mock):
+        self.properties.underlay = {
+            'build-path': 'test-build-path',
+            'run-path': 'test-run-path',
+        }
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+
+        python_path = os.path.join(
+            plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')
+        os.makedirs(python_path)
+
+        # Joining and re-splitting to get hacked script in there as well
+        environment = '\n'.join(plugin.env(plugin.installdir)).split('\n')
+
+        self.assertThat(environment, Contains(
+            'PYTHONPATH={}:$PYTHONPATH'.format(python_path)))
+
+        self.assertThat(environment, Contains(
+            'ROS_MASTER_URI=http://localhost:11311'))
+
+        self.assertThat(environment, Contains('ROS_HOME=$SNAP_USER_DATA/ros'))
+
+        self.assertThat(environment, Contains('LC_ALL=C.UTF-8'))
+
+        self.assertThat(environment, Contains('. {}'.format(
+            os.path.join(plugin.rosdir, 'snapcraft-setup.sh'))))
+
+    @mock.patch.object(catkin.CatkinPlugin, '_source_setup_sh',
+                       return_value='test-source-setup')
+    def test_generate_snapcraft_sh(self, source_setup_sh_mock):
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+
+        plugin._generate_snapcraft_setup_sh('test-root', None)
+        source_setup_sh_mock.assert_called_with('test-root', None)
+        with open(os.path.join(plugin.rosdir, 'snapcraft-setup.sh'), 'r') as f:
+            self.assertThat(f.read(), Equals('test-source-setup'))
+
+    def test_source_setup_sh(self):
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+
+        # Make sure $@ is zeroed, then setup.sh sourced, then $@ is restored
+        rosdir = os.path.join(
+            'test-root', 'opt', 'ros', self.properties.rosdistro)
+        setup_path = os.path.join(rosdir, 'setup.sh')
+        lines_of_interest = [
+            'set --',
+            'if [ -f {} ]; then'.format(setup_path),
+            '_CATKIN_SETUP_DIR={} . {}'.format(rosdir, setup_path),
+            'fi',
+            'eval "set -- $BACKUP_ARGS"',
+        ]
+        actual_lines = []
+
+        for line in plugin._source_setup_sh('test-root', None).split('\n'):
+            line = line.strip()
+            if line in lines_of_interest:
+                actual_lines.append(line)
+
+        self.assertThat(
+            actual_lines, Equals(lines_of_interest),
+            "Expected ROS's setup.sh to be sourced after args were zeroed, "
+            "followed by the args being restored.")
+
+    def test_generate_snapcraft_sh_with_underlay(self):
+        self.properties.underlay = {
+            'build-path': 'test-build-underlay',
+            'run-path': 'test-run-underlay'
+        }
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+
+        # Make sure $@ is zeroed, then setup.sh sourced, then $@ is restored
+        underlay_setup_path = os.path.join(
+            'test-underlay', 'setup.sh')
+        rosdir = os.path.join(
+            'test-root', 'opt', 'ros', self.properties.rosdistro)
+        setup_path = os.path.join(rosdir, 'setup.sh')
+        lines_of_interest = [
+            'set --',
+            'if [ -f {} ]; then'.format(underlay_setup_path),
+            '_CATKIN_SETUP_DIR={} . {}'.format(
+                'test-underlay', underlay_setup_path),
+            'if [ -f {} ]; then'.format(setup_path),
+            'set -- --extend',
+            '_CATKIN_SETUP_DIR={} . {}'.format(rosdir, setup_path),
+            'fi',
+            'fi',
+            'eval "set -- $BACKUP_ARGS"',
+        ]
+        actual_lines = []
+
+        plugin._generate_snapcraft_setup_sh('test-root', 'test-underlay')
+        with open(os.path.join(plugin.rosdir, 'snapcraft-setup.sh'), 'r') as f:
+            for line in f:
+                line = line.strip()
+                if line in lines_of_interest:
+                    actual_lines.append(line)
+
+        self.assertThat(
+            actual_lines, Equals(lines_of_interest),
+            "Expected ROS's setup.sh to be sourced after args were zeroed, "
+            "followed by the args being restored.")
+
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
+    def test_run_environment_no_python(self, run_mock):
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+
+        python_path = os.path.join(
+            plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')
+
+        environment = plugin.env(plugin.installdir)
+
+        self.assertFalse(
+            'PYTHONPATH={}'.format(python_path) in environment, environment)
+
     @mock.patch.object(catkin.CatkinPlugin, '_use_in_snap_python')
-    def test_prepare_build(self, use_in_snap_python_mock):
+    def test_prepare_build(self, use_python_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
         os.makedirs(os.path.join(plugin.rosdir, 'test'))
@@ -661,25 +788,186 @@ class CatkinPluginTestCase(tests.TestCase):
 
         plugin._prepare_build()
 
-        self.assertTrue(use_in_snap_python_mock.called)
+        self.assertTrue(use_python_mock.called)
 
         for file_info in files:
             path = os.path.join(plugin.rosdir, file_info['path'])
             with open(path, 'r') as f:
                 self.assertThat(f.read(), Equals(file_info['expected']))
 
-    @mock.patch.object(catkin.CatkinPlugin, '_use_in_snap_python')
-    def test_finish_build_cmake_paths(self, use_in_snap_python_mock):
+
+class PullTestCase(CatkinPluginBaseTestCase):
+
+    scenarios = [
+        ('no underlay', {
+            'underlay': None,
+            'expected_underlay_path': None,
+        }),
+        ('underlay', {
+            'underlay': {
+                'build-path': 'test-build-path',
+                'run-path': 'test-run-path',
+            },
+            'expected_underlay_path': 'test-build-path'
+        })
+    ]
+
+    def setUp(self):
+        super().setUp()
+
+        # Make the underlay a valid workspace
+        if self.underlay:
+            os.makedirs(self.underlay['build-path'])
+            open(os.path.join(
+                self.underlay['build-path'], 'setup.sh'), 'w').close()
+            self.properties.underlay = self.underlay
+
+    @mock.patch.object(catkin.CatkinPlugin, '_generate_snapcraft_setup_sh')
+    def test_pull_debian_dependencies(self, generate_setup_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
-        os.makedirs(os.path.join(plugin.rosdir, 'test'))
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        self.dependencies_mock.return_value = {'foo', 'bar', 'baz'}
+
+        plugin.pull()
+
+        self.verify_rosdep_setup(
+            self.properties.rosdistro,
+            os.path.join(plugin.sourcedir, 'src'),
+            os.path.join(plugin.partdir, 'rosdep'),
+            plugin.PLUGIN_STAGE_SOURCES)
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                plugin.installdir, self.expected_underlay_path)
+        else:
+            generate_setup_mock.assert_not_called()
+
+        # Verify that dependencies were found as expected. TODO: Would really
+        # like to use ANY here instead of verifying explicit arguments, but
+        # Python issue #25195 won't let me.
+        self.assertEqual(1, self.dependencies_mock.call_count)
+        self.assertEqual({'my_package'},
+                         self.dependencies_mock.call_args[0][0])
+
+        # Verify that the dependencies were installed
+        self.ubuntu_mock.return_value.get.assert_called_with(
+            _CompareContainers(self, ['foo', 'bar', 'baz']))
+        self.ubuntu_mock.return_value.unpack.assert_called_with(
+            plugin.installdir)
+
+    @mock.patch.object(catkin.CatkinPlugin, '_generate_snapcraft_setup_sh')
+    def test_pull_local_dependencies(self, generate_setup_mock):
+        self.properties.catkin_packages.append('package_2')
+
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        # No system dependencies (only local)
+        self.dependencies_mock.return_value = set()
+
+        plugin.pull()
+
+        self.verify_rosdep_setup(
+            self.properties.rosdistro,
+            os.path.join(plugin.sourcedir, 'src'),
+            os.path.join(plugin.partdir, 'rosdep'),
+            plugin.PLUGIN_STAGE_SOURCES)
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                plugin.installdir, self.expected_underlay_path)
+        else:
+            generate_setup_mock.assert_not_called()
+
+        # Verify that dependencies were found as expected. TODO: Would really
+        # like to use ANY here instead of verifying explicit arguments, but
+        # Python issue #25195 won't let me.
+        self.assertEqual(1, self.dependencies_mock.call_count)
+        self.assertEqual({'my_package', 'package_2'},
+                         self.dependencies_mock.call_args[0][0])
+
+        # Verify that no .deb packages were installed
+        self.assertTrue(mock.call().unpack(plugin.installdir) not in
+                        self.ubuntu_mock.mock_calls)
+
+    @mock.patch.object(catkin.CatkinPlugin, '_generate_snapcraft_setup_sh')
+    def test_pull_with_roscore(self, generate_setup_mock):
+        self.properties.include_roscore = True
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        # No system dependencies
+        self.dependencies_mock.return_value = set()
+
+        def resolve(package_name):
+            if package_name == 'ros_core':
+                return ['ros-core-dependency']
+
+        self.rosdep_mock.return_value.resolve_dependency = resolve
+
+        plugin.pull()
+
+        self.verify_rosdep_setup(
+            self.properties.rosdistro,
+            os.path.join(plugin.sourcedir, 'src'),
+            os.path.join(plugin.partdir, 'rosdep'),
+            plugin.PLUGIN_STAGE_SOURCES)
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                plugin.installdir, self.expected_underlay_path)
+        else:
+            generate_setup_mock.assert_not_called()
+
+        # Verify that roscore was installed
+        self.ubuntu_mock.return_value.get.assert_called_with(
+            {'ros-core-dependency'})
+        self.ubuntu_mock.return_value.unpack.assert_called_with(
+            plugin.installdir)
+
+
+class FinishBuildTestCase(CatkinPluginBaseTestCase):
+
+    scenarios = [
+        ('no underlay', {
+            'underlay': None,
+            'expected_underlay_path': None,
+        }),
+        ('underlay', {
+            'underlay': {
+                'build-path': 'test-build-path',
+                'run-path': 'test-run-path',
+            },
+            'expected_underlay_path': 'test-run-path'
+        })
+    ]
+
+    def setUp(self):
+        super().setUp()
+
+        self.properties.underlay = self.underlay
+        self.plugin = catkin.CatkinPlugin(
+            'test-part', self.properties, self.project_options)
+
+    @mock.patch.object(catkin.CatkinPlugin, '_generate_snapcraft_setup_sh')
+    @mock.patch.object(catkin.CatkinPlugin, '_use_in_snap_python')
+    def test_finish_build_cmake_paths(self, use_python_mock,
+                                      generate_setup_mock):
+        os.makedirs(os.path.join(self.plugin.rosdir, 'test'))
 
         # Place a few .cmake files with incorrect paths, and some files that
         # shouldn't be changed.
         files = [
             {
                 'path': 'fooConfig.cmake',
-                'contents': '"{}/usr/lib/foo"'.format(plugin.installdir),
+                'contents': '"{}/usr/lib/foo"'.format(self.plugin.installdir),
                 'expected': '"$ENV{SNAPCRAFT_STAGE}/usr/lib/foo"',
             },
             {
@@ -690,7 +978,7 @@ class CatkinPluginTestCase(tests.TestCase):
             {
                 'path': 'test/bazConfig.cmake',
                 'contents': '"{0}/test/baz;{0}/usr/lib/baz"'.format(
-                    plugin.installdir),
+                    self.plugin.installdir),
                 'expected': '"$ENV{SNAPCRAFT_STAGE}/test/baz;'
                             '$ENV{SNAPCRAFT_STAGE}/usr/lib/baz"',
             },
@@ -707,37 +995,50 @@ class CatkinPluginTestCase(tests.TestCase):
         ]
 
         for file_info in files:
-            path = os.path.join(plugin.rosdir, file_info['path'])
+            path = os.path.join(self.plugin.rosdir, file_info['path'])
             with open(path, 'w') as f:
                 f.write(file_info['contents'])
 
-        plugin._finish_build()
+        self.plugin._finish_build()
 
-        self.assertTrue(use_in_snap_python_mock.called)
+        self.assertTrue(use_python_mock.called)
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                '$SNAP', self.expected_underlay_path)
+        else:
+            generate_setup_mock.assert_not_called()
 
         for file_info in files:
-            path = os.path.join(plugin.rosdir, file_info['path'])
+            path = os.path.join(self.plugin.rosdir, file_info['path'])
             with open(path, 'r') as f:
                 self.assertThat(f.read(), Equals(file_info['expected']))
 
+    @mock.patch.object(catkin.CatkinPlugin, '_generate_snapcraft_setup_sh')
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
     @mock.patch.object(catkin.CatkinPlugin, '_use_in_snap_python')
-    def test_finish_build_cmake_prefix_path(self, use_in_snap_python_mock,
-                                            run_output_mock, run_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                     self.project_options)
-
-        setup_file = os.path.join(plugin.rosdir, '_setup_util.py')
+    def test_finish_build_cmake_prefix_path(self, use_python_mock,
+                                            run_output_mock, run_mock,
+                                            generate_setup_mock):
+        setup_file = os.path.join(self.plugin.rosdir, '_setup_util.py')
         os.makedirs(os.path.dirname(setup_file))
 
         with open(setup_file, 'w') as f:
             f.write("CMAKE_PREFIX_PATH = '{0}/{1};{0}\n".format(
-                plugin.rosdir, plugin.options.rosdistro))
+                self.plugin.rosdir, self.plugin.options.rosdistro))
 
-        plugin._finish_build()
+        self.plugin._finish_build()
 
-        self.assertTrue(use_in_snap_python_mock.called)
+        self.assertTrue(use_python_mock.called)
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                '$SNAP', self.expected_underlay_path)
+        else:
+            generate_setup_mock.assert_not_called()
 
         expected = 'CMAKE_PREFIX_PATH = []\n'
 
@@ -747,119 +1048,79 @@ class CatkinPluginTestCase(tests.TestCase):
                 'The absolute path to python or the CMAKE_PREFIX_PATH '
                 'was not replaced as expected')
 
-    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
-    def test_run_environment(self, run_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                     self.project_options)
-
-        python_path = os.path.join(
-            plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')
-        os.makedirs(python_path)
-
-        environment = plugin.env(plugin.installdir)
-
-        self.assertTrue(
-            'PYTHONPATH={}:$PYTHONPATH'.format(python_path) in
-            environment, environment)
-
-        self.assertTrue('ROS_MASTER_URI=http://localhost:11311' in environment)
-
-        self.assertTrue('ROS_HOME=$SNAP_USER_DATA/ros' in environment)
-
-        self.assertTrue('LC_ALL=C.UTF-8' in environment)
-
-        self.assertTrue('_CATKIN_SETUP_DIR={}'.format(os.path.join(
-            plugin.installdir, 'opt', 'ros', self.properties.rosdistro))
-            in environment)
-
-        # Make sure $@ is zeroed, then setup.sh sourced, then $@ is restored
-        lines_of_interest = [
-            'set --',
-            '. {}'.format(os.path.join(
-                plugin.installdir, 'opt', 'ros', self.properties.rosdistro,
-                'setup.sh')),
-            'eval "set -- $BACKUP_ARGS"',
-        ]
-        actual_lines = []
-
-        # Joining and re-splitting to get hacked script in there as well
-        for line in '\n'.join(environment).split('\n'):
-            line = line.strip()
-            if line in lines_of_interest:
-                actual_lines.append(line)
-
-        self.assertThat(
-            actual_lines, Equals(lines_of_interest),
-            "Expected ROS's setup.sh to be sourced after args were zeroed, "
-            "followed by the args being restored.")
-
-    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
-    def test_run_environment_no_python(self, run_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                     self.project_options)
-
-        python_path = os.path.join(
-            plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')
-
-        environment = plugin.env(plugin.installdir)
-
-        self.assertFalse(
-            'PYTHONPATH={}'.format(python_path) in environment, environment)
-
 
 class FindSystemDependenciesTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
+        self.rosdep_mock = mock.MagicMock()
+        self.rosdep_mock.get_dependencies.return_value = ['bar']
+
+        self.catkin_mock = mock.MagicMock()
+        exception = catkin.CatkinPackageNotFoundError('foo')
+        self.catkin_mock.find.side_effect = exception
+
     def test_find_system_dependencies_system_only(self):
-        rosdep_mock = mock.MagicMock()
-        rosdep_mock.get_dependencies.return_value = ['bar']
-        rosdep_mock.resolve_dependency.return_value = ['baz']
+        self.rosdep_mock.resolve_dependency.return_value = ['baz']
 
-        self.assertEqual({'baz'}, catkin._find_system_dependencies(
-            {'foo'}, rosdep_mock))
+        self.assertThat(catkin._find_system_dependencies(
+            {'foo'}, self.rosdep_mock, self.catkin_mock), Equals({'baz'}))
 
-        rosdep_mock.get_dependencies.assert_called_once_with('foo')
-        rosdep_mock.resolve_dependency.assert_called_once_with('bar')
+        self.rosdep_mock.get_dependencies.assert_called_once_with('foo')
+        self.rosdep_mock.resolve_dependency.assert_called_once_with('bar')
+        self.catkin_mock.find.assert_called_once_with('bar')
 
     def test_find_system_dependencies_local_only(self):
-        rosdep_mock = mock.MagicMock()
-        rosdep_mock.get_dependencies.return_value = ['bar']
+        self.assertThat(catkin._find_system_dependencies(
+            {'foo', 'bar'}, self.rosdep_mock, self.catkin_mock),
+            HasLength(0))
 
-        self.assertEqual(set(), catkin._find_system_dependencies(
-            {'foo', 'bar'}, rosdep_mock))
+        self.rosdep_mock.get_dependencies.assert_has_calls(
+            [mock.call('foo'), mock.call('bar')], any_order=True)
+        self.rosdep_mock.resolve_dependency.assert_not_called()
+        self.catkin_mock.find.assert_not_called()
 
-        rosdep_mock.get_dependencies.assert_has_calls([mock.call('foo'),
-                                                       mock.call('bar')],
-                                                      any_order=True)
-        rosdep_mock.resolve_dependency.assert_not_called()
+    def test_find_system_dependencies_satisfied_in_stage(self):
+        self.catkin_mock.find.side_effect = None
+        self.catkin_mock.find.return_value = 'baz'
+
+        self.assertThat(catkin._find_system_dependencies(
+            {'foo'}, self.rosdep_mock, self.catkin_mock), HasLength(0))
+
+        self.rosdep_mock.get_dependencies.assert_called_once_with('foo')
+        self.catkin_mock.find.assert_called_once_with('bar')
+        self.rosdep_mock.resolve_dependency.assert_not_called()
 
     def test_find_system_dependencies_mixed(self):
-        rosdep_mock = mock.MagicMock()
-        rosdep_mock.get_dependencies.return_value = ['bar', 'baz']
-        rosdep_mock.resolve_dependency.return_value = ['qux']
+        self.rosdep_mock.get_dependencies.return_value = ['bar', 'baz', 'qux']
+        self.rosdep_mock.resolve_dependency.return_value = ['quux']
 
-        self.assertEqual({'qux'}, catkin._find_system_dependencies(
-            {'foo', 'bar'}, rosdep_mock))
+        def _fake_find(package_name):
+            if package_name == 'qux':
+                return package_name
+            raise catkin.CatkinPackageNotFoundError(package_name)
 
-        rosdep_mock.get_dependencies.assert_has_calls([mock.call('foo'),
-                                                       mock.call('bar')],
-                                                      any_order=True)
-        rosdep_mock.resolve_dependency.assert_called_once_with('baz')
+        self.catkin_mock.find.side_effect = _fake_find
+        self.assertThat(catkin._find_system_dependencies(
+            {'foo', 'bar'}, self.rosdep_mock, self.catkin_mock),
+            Equals({'quux'}))
+
+        self.rosdep_mock.get_dependencies.assert_has_calls(
+            [mock.call('foo'), mock.call('bar')], any_order=True)
+        self.rosdep_mock.resolve_dependency.assert_called_once_with('baz')
+        self.catkin_mock.find.assert_has_calls(
+            [mock.call('baz'), mock.call('qux')], any_order=True)
 
     def test_find_system_dependencies_missing_local_dependency(self):
-        rosdep_mock = mock.MagicMock()
-
         # Setup a dependency on a non-existing package, and it doesn't resolve
         # to a system dependency.'
-        rosdep_mock.get_dependencies.return_value = ['bar']
-        exception = catkin.SystemDependencyNotFound('foo')
-        rosdep_mock.resolve_dependency.side_effect = exception
+        exception = catkin.SystemDependencyNotFoundError('foo')
+        self.rosdep_mock.resolve_dependency.side_effect = exception
 
         raised = self.assertRaises(
             RuntimeError,
             catkin._find_system_dependencies,
-            {'foo'}, rosdep_mock)
+            {'foo'}, self.rosdep_mock, self.catkin_mock)
 
         self.assertEqual(raised.args[0],
                          "Package 'bar' isn't a valid system dependency. Did "
@@ -983,7 +1244,7 @@ class RosdepTestCase(tests.TestCase):
             1, 'foo')
 
         raised = self.assertRaises(
-            catkin.SystemDependencyNotFound,
+            catkin.SystemDependencyNotFoundError,
             self.rosdep.resolve_dependency, 'bar')
 
         self.assertEqual(str(raised),
@@ -1126,3 +1387,73 @@ class CompilersTestCase(tests.TestCase):
 
     def test_ldflags(self):
         self.assertThat(self.compilers.ldflags, Equals(''))
+
+
+class CatkinFindTestCase(tests.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.project = snapcraft.ProjectOptions()
+        self.catkin = catkin._Catkin(
+            'kinetic', 'workspace_path', 'catkin_path', 'sources',
+            self.project)
+
+        patcher = mock.patch('snapcraft.repo.Ubuntu')
+        self.ubuntu_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('subprocess.check_output')
+        self.check_output_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_setup(self):
+        # Return something other than a Mock to ease later assertions
+        self.check_output_mock.return_value = b''
+
+        self.catkin.setup()
+
+        # Verify that only rospack was installed (no other .debs)
+        self.assertThat(self.ubuntu_mock.call_count, Equals(1))
+        self.assertThat(
+            self.ubuntu_mock.return_value.get.call_count, Equals(1))
+        self.assertThat(
+            self.ubuntu_mock.return_value.unpack.call_count, Equals(1))
+        self.ubuntu_mock.assert_has_calls([
+            mock.call(self.catkin._catkin_path, sources='sources',
+                      project_options=self.project),
+            mock.call().get(['ros-kinetic-catkin']),
+            mock.call().unpack(self.catkin._catkin_install_path)])
+
+    def test_setup_can_run_multiple_times(self):
+        self.catkin.setup()
+
+        # Make sure running setup() again doesn't have problems with the old
+        # environment. An exception will be raised if setup() can't be called
+        # twice.
+        self.catkin.setup()
+
+    def test_find(self):
+        self.check_output_mock.return_value = b'bar'
+
+        self.assertThat(self.catkin.find('foo'), Equals('bar'))
+
+        self.assertTrue(self.check_output_mock.called)
+        positional_args = self.check_output_mock.call_args[0][0]
+        self.assertThat(
+            ' '.join(positional_args),
+            Contains('catkin_find --first-only foo'))
+
+    def test_find_non_existing_package(self):
+        self.check_output_mock.side_effect = subprocess.CalledProcessError(
+            1, 'foo')
+
+        with testtools.ExpectedException(
+                catkin.CatkinPackageNotFoundError,
+                "Unable to find Catkin package 'foo'"):
+            self.catkin.find('foo')
+
+        self.assertTrue(self.check_output_mock.called)
+        positional_args = self.check_output_mock.call_args[0][0]
+        self.assertThat(
+            ' '.join(positional_args),
+            Contains('catkin_find --first-only foo'))

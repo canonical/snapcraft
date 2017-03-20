@@ -355,14 +355,6 @@ class TestStore(fixtures.Fixture):
             self.user_password = os.getenv('TEST_USER_PASSWORD')
 
 
-class DeltaUploads(fixtures.Fixture):
-    """Enable the Delta Uploads Experimental flag."""
-    def setUp(self):
-        super().setUp()
-        self.useFixture(fixtures.EnvironmentVariable(
-            'DELTA_UPLOADS_EXPERIMENTAL', 'True'))
-
-
 class FakePlugin(fixtures.Fixture):
     '''Dynamically generate a new module containing the provided plugin'''
 

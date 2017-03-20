@@ -953,8 +953,8 @@ class StateTestCase(StateBaseTestCase):
                     os.path.exists(handler._step_state_file(later_step)),
                     'Expected later step states to be cleared')
 
-    @patch('snapcraft.internal.repo.Ubuntu')
-    def test_pull_state(self, ubuntu_mock):
+    @patch('snapcraft.internal.repo.Repo')
+    def test_pull_state(self, repo_mock):
         self.assertEqual(None, self.handler.last_step())
 
         self.handler.pull()
@@ -2251,9 +2251,10 @@ class StagePackagesTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = patch.object(snapcraft.internal.repo.Ubuntu, 'get')
+        patcher = patch.object(snapcraft.internal.repo.Repo, 'get')
         setup_apt_mock = patcher.start()
-        setup_apt_mock.side_effect = repo.PackageNotFoundError('non-existing')
+        setup_apt_mock.side_effect = repo.errors.PackageNotFoundError(
+            'non-existing')
         self.addCleanup(patcher.stop)
 
     def test_missing_stage_package_displays_nice_error(self):
@@ -2267,7 +2268,7 @@ class StagePackagesTestCase(tests.TestCase):
         self.assertEqual(
             str(raised),
             "Error downloading stage packages for part 'stage-test': "
-            "The Ubuntu package 'non-existing' was not found.")
+            "The package 'non-existing' was not found.")
 
 
 class FindDependenciesTestCase(tests.TestCase):

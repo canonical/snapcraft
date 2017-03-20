@@ -32,7 +32,7 @@ from snapcraft import tests
 
 
 def load_tests(loader, tests, ignore):
-    patcher = mock.patch('snapcraft.repo.Ubuntu')
+    patcher = mock.patch('snapcraft.repo.Repo')
 
     def _setup(test):
         patcher.start()
@@ -58,13 +58,13 @@ class StagePackageHandlerTestCase(tests.TestCase):
         self.process_grammar_mock.side_effect = process_grammar
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.repo.Ubuntu')
-        self.ubuntu_mock = patcher.start()
+        patcher = mock.patch('snapcraft.repo.Repo')
+        self.repo_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        self.get_mock = self.ubuntu_mock.return_value.get
-        self.unpack_mock = self.ubuntu_mock.return_value.unpack
-        self.is_valid_mock = self.ubuntu_mock.return_value.is_valid
+        self.get_mock = self.repo_mock.return_value.get
+        self.unpack_mock = self.repo_mock.return_value.unpack
+        self.is_valid_mock = self.repo_mock.return_value.is_valid
 
         self.cache_dir = os.path.join(os.getcwd(), 'cache')
         self.unpack_dir = os.path.join(os.getcwd(), 'unpack')
