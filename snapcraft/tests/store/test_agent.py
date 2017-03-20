@@ -48,10 +48,13 @@ class UserAgentTestCase(tests.TestCase):
     def test_not_in_ci_env(self):
         # unset any known testing environment vars
         testing_vars = ['TRAVIS', 'AUTHPKGTEST_TMP']
+        vars_to_unset = []
         for env_var in os.environ:
             for test_var in testing_vars:
                 if env_var.startswith(test_var):
-                    self.useFixture(fixtures.EnvironmentVariable(
-                        env_var, None))
+                    vars_to_unset.append(env_var)
+
+        for var in vars_to_unset:
+            self.useFixture(fixtures.EnvironmentVariable(var, None))
 
         self.assertFalse(storeapi._agent._is_ci_env())
