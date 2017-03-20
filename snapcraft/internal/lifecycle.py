@@ -252,7 +252,7 @@ class _Executor:
             if pkg in part_build_packages:
                 part.build_packages.append(pkg)
             else:
-                pkg_name, version = repo._get_pkg_name_parts(pkg)
+                pkg_name, version = repo._deb._get_pkg_name_parts(pkg)
                 if pkg_name in part_build_packages:
                     part.build_packages.append(pkg)
 
