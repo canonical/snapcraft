@@ -54,23 +54,23 @@ class StagePackageHandler:
         self._sources = sources
         self._project_options = project_options
         self.__stage_packages = None
-        self.__ubuntu = None
+        self.__repo = None
 
     @property
-    def _ubuntu(self):
-        if not self.__ubuntu:
-            self.__ubuntu = repo.Ubuntu(
+    def _repo(self):
+        if not self.__repo:
+            self.__repo = repo.Repo(
                 self._cache_dir, sources=self._sources,
                 project_options=self._project_options)
 
-        return self.__ubuntu
+        return self.__repo
 
     @property
     def _stage_packages(self):
         # Comparing to None here since after calculation it may be an empty set
         if self.__stage_packages is None:
             self.__stage_packages = stage_package_grammar.process_grammar(
-                self._grammar, self._project_options, self._ubuntu)
+                self._grammar, self._project_options, self._repo)
 
         return self.__stage_packages
 
@@ -85,7 +85,7 @@ class StagePackageHandler:
         if self._stage_packages:
             logger.debug('Fetching stage-packages {!r}'.format(
                 self._stage_packages))
-            pkg_list = self._ubuntu.get(self._stage_packages)
+            pkg_list = self._repo.get(self._stage_packages)
 
         return pkg_list
 
@@ -99,4 +99,4 @@ class StagePackageHandler:
         if self._stage_packages:
             logger.debug('Unpacking stage-packages to {!r}'.format(
                 unpack_dir))
-            self._ubuntu.unpack(unpack_dir)
+            self._repo.unpack(unpack_dir)

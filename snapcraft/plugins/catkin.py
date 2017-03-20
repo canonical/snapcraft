@@ -318,15 +318,14 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
             os.makedirs(ubuntudir, exist_ok=True)
 
             logger.info('Preparing to fetch package dependencies...')
-            ubuntu = repo.Ubuntu(
-                ubuntudir, self.project,
-                sources=self.PLUGIN_STAGE_SOURCES,
-                project_options=self.project)
+            ubuntu = repo.Ubuntu(ubuntudir,
+                                 sources=self.PLUGIN_STAGE_SOURCES,
+                                 project_options=self.project)
 
             logger.info('Fetching package dependencies...')
             try:
                 ubuntu.get(system_dependencies)
-            except repo.PackageNotFoundError as e:
+            except repo.errors.PackageNotFoundError as e:
                 raise RuntimeError(
                     'Failed to fetch system dependencies: {}'.format(
                         e.message))
