@@ -39,33 +39,84 @@ from snapcraft.internal import (
 from snapcraft.internal.cache import SnapCache
 from snapcraft.internal.indicators import is_dumb_terminal
 from snapcraft.internal.project_loader import replace_attr
+from snapcraft.internal.sources import _get_source_type_from_uri
 
 
 logger = logging.getLogger(__name__)
 
 
-_TEMPLATE_YAML = """name: my-snap-name # you probably want to 'snapcraft register <name>'
-version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
-summary: Single-line elevator pitch for your amazing snap # 79 char long summary
+_TEMPLATE_YAML = """name: {name} # you probably want to 'snapcraft register <name>'
+version: '{version}' # just for humans, typically '1.2+git' or '1.3.2'
+summary: {summary} # 79 char long summary
 description: |
-  This is my-snap's description. You have a paragraph or two to tell the
-  most important story about your snap. Keep it under 100 words though,
-  we live in tweetspace and your description wants to look good in the snap
-  store.
+  {description}
 
 grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: devmode # use 'strict' once you have the right plugs and slots
 
+apps:
+  {name}:
+    command: {command} # Command to run this app
+    daemon: {daemon}
+    plugs: {plugs}
+    
 parts:
-  my-part:
+  {name}:
     # See 'snapcraft plugins'
-    plugin: nil
+    plugin: {plugin}
+    source: {source}
+    source-type: {source-type}
 """  # noqa, lines too long.
 
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 
+_PLUGIN_HINT_FILES = {
+    'package.json': ['nodejs'],
+    'CMakeLists.txt': ['cmake'],
+    'Makefile': ['make', 'autotools'],
+    'configure': ['autotools'],
+    'setup.py': ['python'],
+    'requirements.txt': ['python'],
+}
 
-def init():
+def _list_root_files(source, source_type):
+    """List top-level files for plugin detection purposes"""
+    if source_type == 'local':
+        return os.listdir(source)
+    
+    # This is ugly screen-scraping, and only work with github, would be better 
+    # if there was an API that could be used instead.
+    if source_type == 'git' and 'github' in source:
+        if source.endswith('.git'):
+            source = source[:-4]
+        import subprocess
+        output = []
+        #curl -s <source> |grep js-navigation-open
+        for line in subprocess.check_output(['curl',  '-s',  source]).split(b"\n"):
+            if b'js-navigation-open' in line:
+                output.append(line.decode("utf-8"))
+        return output
+                
+    return []
+
+def _guess_plugin(source, source_type):
+    """Step through pre-defined hint files to see if they exist in the project
+    root directory. Assign each plugin type a score based on the presence of
+    files it would use, and return the plugin type with the highest score.
+    
+    Defaults to 'dump' if no hint file is found"""
+    detect_score = {'dump': 0}
+    for line in _list_root_files(source, source_type):
+        for filename in _PLUGIN_HINT_FILES:
+            if filename in line:
+                for plugin_match in _PLUGIN_HINT_FILES[filename]:
+                    if plugin_match not in detect_score:
+                        detect_score[plugin_match] = 1
+                    else:
+                        detect_score[plugin_match] += 1
+    return sorted(detect_score, key=detect_score.get, reverse=True)[0]
+
+def init(source=None):
     """Initialize a snapcraft project."""
     snapcraft_yaml_path = os.path.join('snap', 'snapcraft.yaml')
 
@@ -76,7 +127,45 @@ def init():
         raise EnvironmentError('snapcraft.yaml already exists!')
     elif os.path.exists('.snapcraft.yaml'):
         raise EnvironmentError('.snapcraft.yaml already exists!')
-    yaml = _TEMPLATE_YAML.strip()
+        
+    # Attempt to pre-populate some package information
+    if source is None:
+        source = '.'
+
+    snap_meta = {
+        'name': 'my-snap-name',
+        'version': '0.1',
+        'summary': 'Single-line elevator pitch for your amazing snap',
+        'description': """This is my-snap's description. You have a paragraph or two to tell the
+  most important story about your snap. Keep it under 100 words though,
+  we live in tweetspace and your description wants to look good in the snap
+  store.""",
+        'plugin': 'dump',
+        'source': source,
+        'source-type': 'local',
+        'command': 'echo "Hello World"',
+        'daemon': 'none',
+        'plugs': []
+    }# noqa, lines too long.
+    
+    # Use the argument passed to the commandline to determine the source type
+    try:
+        detect_type = _get_source_type_from_uri(source)
+        if detect_type:
+            snap_meta['source-type'] = detect_type
+    except ValueError:
+        pass
+
+    # Use the directory or URL basename to populate the snap name
+    if snap_meta['source-type'] == 'local':
+        snap_meta['name'] = os.path.basename(os.path.abspath(source))
+    else:
+        snap_meta['name'] = source.split('/')[-1].split('_')[0].split('.')[0]
+
+    # Guess the plugin type based on files in the root directory of the project
+    snap_meta['plugin'] = _guess_plugin(snap_meta['source'], snap_meta['source-type'])
+
+    yaml = _TEMPLATE_YAML.format(**snap_meta)
     with contextlib.suppress(FileExistsError):
         os.mkdir(os.path.dirname(snapcraft_yaml_path))
     with open(snapcraft_yaml_path, mode='w') as f:

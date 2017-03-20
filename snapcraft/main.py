@@ -20,7 +20,7 @@ snapcraft
 
 Usage:
   snapcraft [options] [--enable-geoip --no-parallel-build]
-  snapcraft [options] init
+  snapcraft [options] init [<source>]
   snapcraft [options] pull [<part> ...]  [--enable-geoip]
   snapcraft [options] build [<part> ...] [--no-parallel-build]
   snapcraft [options] stage [<part> ...]
@@ -260,7 +260,6 @@ def _get_lifecycle_command(args):
 
 def _get_command_from_arg(args):
     functions = {
-        'init': lifecycle.init,
         'login': snapcraft.login,
         'logout': snapcraft.logout,
         'list-plugins': _list_plugins,
@@ -278,6 +277,8 @@ def run(args, project_options):  # noqa
     if lifecycle_command:
         lifecycle.execute(
             lifecycle_command, project_options, args['<part>'])
+    elif args['init']:
+        lifecycle.init(args['<source>'])
     elif argless_command:
         argless_command()
     elif args['clean']:
