@@ -21,7 +21,7 @@ import snapcraft
 
 
 def _is_ci_env():
-    env_prefixes = ['TRAVIS']
+    env_prefixes = ['TRAVIS', 'AUTOPKGTEST_TMP']
     matches = []
 
     for prefix in env_prefixes:

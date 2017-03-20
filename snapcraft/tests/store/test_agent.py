@@ -39,9 +39,15 @@ class UserAgentTestCase(tests.TestCase):
         self.assertTrue(actual.startswith(expected_pre))
         self.assertTrue(actual.endswith(expected_post))
 
-    def test_in_ci_env(self):
+    def test_in_travis_ci_env(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'TRAVIS_TESTING', '1'))
+
+        self.assertTrue(storeapi._agent._is_ci_env())
+
+    def test_in_autopkgtest_ci_env(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'AUTOPKGTEST_TMP', '1'))
 
         self.assertTrue(storeapi._agent._is_ci_env())
 
