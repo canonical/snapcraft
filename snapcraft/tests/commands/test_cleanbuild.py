@@ -134,8 +134,7 @@ parts:
         self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
-            'The lxd package is not installed, in order to use `cleanbuild` '
-            'you must install lxd onto your system. Refer to the '
-            '"Ubuntu Desktop and Ubuntu Server" section on '
-            'https://linuxcontainers.org/lxd/getting-started-cli/'
-            '#ubuntu-desktop-and-ubuntu-server to enable a proper setup.\n')
+            'LXD is either not installed or configured properly, in order '
+            'to use `cleanbuild` you must have a proper LXD setup '
+            'on your system.\nRefer to the documentation at '
+            'https://linuxcontainers.org/lxd/getting-started-cli.\n')

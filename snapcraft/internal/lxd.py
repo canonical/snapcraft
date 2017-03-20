@@ -151,11 +151,10 @@ def _get_default_remote():
         default_remote = check_output(['lxc', 'remote', 'get-default'])
     except CalledProcessError:
         raise SnapcraftEnvironmentError(
-             'The lxd package is not installed, in order to use '
-             '`cleanbuild` you must install lxd onto your system. '
-             'Refer to the "Ubuntu Desktop and Ubuntu Server" section on '
-             'https://linuxcontainers.org/lxd/getting-started-cli/'
-             '#ubuntu-desktop-and-ubuntu-server to enable a proper setup.')
+            'LXD is either not installed or configured properly, in order '
+            'to use `cleanbuild` you must have a proper LXD setup '
+            'on your system.\nRefer to the documentation at '
+            'https://linuxcontainers.org/lxd/getting-started-cli.')
     return default_remote.decode(sys.getfilesystemencoding()).strip()
 
 
@@ -175,6 +174,6 @@ def _verify_remote(remote):
             'There are either no permissions or the remote {!r} '
             'does not exist.\n'
             'Verify the existing remotes by running `lxc remote list`\n'
-            'To setup a new remote, follow the instructions on\n'
+            'To setup a new remote, follow the instructions at\n'
             'https://linuxcontainers.org/lxd/getting-started-cli/'
             '#multiple-hosts'.format(remote)) from e

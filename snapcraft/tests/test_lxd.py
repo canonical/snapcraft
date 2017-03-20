@@ -263,15 +263,12 @@ class LXDTestCase(tests.TestCase):
               fail_on_default=True)
 
         project_options = ProjectOptions(debug=False)
-        with ExpectedException(lxd.SnapcraftEnvironmentError,
-                               'The lxd package is not installed, in order '
-                               'to use `cleanbuild` you must install lxd '
-                               'onto your system. Refer to the '
-                               '"Ubuntu Desktop and Ubuntu Server" '
-                               'section on '
-                               'https://linuxcontainers.org/lxd/getting-'
-                               'started-cli/#ubuntu-desktop-and-ubuntu-'
-                               'server to enable a proper setup.'):
+        with ExpectedException(
+                lxd.SnapcraftEnvironmentError,
+                'LXD is either not installed or configured properly, in order '
+                'to use `cleanbuild` you must have a proper LXD setup '
+                'on your system.\nRefer to the documentation at '
+                'https://linuxcontainers.org/lxd/getting-started-cli.'):
             lxd.Cleanbuilder('snap.snap', 'project.tar',
                              project_options)
 
