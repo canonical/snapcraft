@@ -140,7 +140,7 @@
 
 11. Create the image:
 
-    $ sudo ubuntu-image --image-size 3G -O ubuntu-core-16 dragonboard.model --extra-snaps $kernel_snap_path
+    $ sudo ubuntu-image -O ubuntu-core-16 dragonboard.model --extra-snaps $kernel_snap_path
 
 12. Insert an sdcard into the host PC.
 13. Umount the sdcard partitions.
