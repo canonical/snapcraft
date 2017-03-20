@@ -17,6 +17,7 @@
 import os
 import platform
 
+import fixtures
 from snapcraft import (
     ProjectOptions,
     storeapi,
@@ -39,11 +40,18 @@ class UserAgentTestCase(tests.TestCase):
         self.assertTrue(actual.endswith(expected_post))
 
     def test_in_ci_env(self):
-        os.environ['TRAVIS_STUFF'] = 'stuff'
+        self.useFixture(fixtures.EnvironmentVariable(
+            'TRAVIS_TESTING', '1'))
 
         self.assertTrue(storeapi._agent._is_ci_env())
 
     def test_not_in_ci_env(self):
-        os.environ = {}
+        # unset any known testing environment vars
+        testing_vars = ['TRAVIS', 'AUTHPKGTEST_TMP']
+        for env_var in os.environ:
+            for test_var in testing_vars:
+                if env_var.startswith(test_var):
+                    self.useFixture(fixtures.EnvironmentVariable(
+                        env_var, None))
 
         self.assertFalse(storeapi._agent._is_ci_env())
