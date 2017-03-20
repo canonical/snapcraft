@@ -98,7 +98,7 @@ class Client():
         self.session.mount('https://', HTTPAdapter(max_retries=5))
 
         self._snapcraft_headers = {
-            'User-Agent': _agent._get_user_agent(),
+            'User-Agent': _agent.get_user_agent(),
         }
 
     def request(self, method, url, params=None, headers=None, **kwargs):

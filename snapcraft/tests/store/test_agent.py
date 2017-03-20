@@ -35,7 +35,7 @@ class UserAgentTestCase(tests.TestCase):
             '/'.join(platform.dist()[0:2]),  # i.e. Ubuntu/16.04
             arch,
         )
-        actual = storeapi._agent._get_user_agent()
+        actual = storeapi._agent.get_user_agent()
         self.assertTrue(actual.startswith(expected_pre))
         self.assertTrue(actual.endswith(expected_post))
 

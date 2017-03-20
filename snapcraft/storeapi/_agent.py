@@ -31,7 +31,7 @@ def _is_ci_env():
     return len(matches) > 0
 
 
-def _get_user_agent():
+def get_user_agent():
     arch = snapcraft.ProjectOptions().deb_arch
     testing = '(testing) ' if _is_ci_env() else ''
     return 'snapcraft/{} {}{} ({})'.format(
