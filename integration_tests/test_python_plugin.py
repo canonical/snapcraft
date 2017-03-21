@@ -106,7 +106,7 @@ class PythonPluginTestCase(integration_tests.TestCase):
 
         console_script_template = dedent("""\
             #!/usr/bin/env python{version}
-            # PBR Generated from u'console_scripts'
+            # PBR Generated from {console_scripts}
 
             import sys
 
@@ -116,16 +116,19 @@ class PythonPluginTestCase(integration_tests.TestCase):
             if __name__ == "__main__":
                 sys.exit(main())
         """)
+
         python2_entry_point = os.path.join(
             self.stage_dir, 'bin', 'python2_test')
         self.assertThat(python2_entry_point, FileExists())
-        console_script = console_script_template.format(version='2')
+        console_script = console_script_template.format(
+            version='2', console_scripts="u'console_scripts'")
         self.assertThat(python2_entry_point, FileContains(console_script))
 
         python3_entry_point = os.path.join(
             self.stage_dir, 'bin', 'python3_test')
         self.assertThat(python3_entry_point, FileExists())
-        console_script = console_script_template.format(version='3')
+        console_script = console_script_template.format(
+            version='3', console_scripts='console_scripts')
         self.assertThat(python3_entry_point, FileContains(console_script))
 
     def test_build_does_not_keep_pyc_or_pth_files_in_install(self):
