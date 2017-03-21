@@ -29,7 +29,9 @@ from snapcraft import (
     tests,
     ProjectOptions,
 )
-from snapcraft.storeapi import errors
+from snapcraft.storeapi import (
+    errors,
+)
 from snapcraft.tests import fixture_setup
 
 
