@@ -276,6 +276,12 @@ class PythonPlugin(snapcraft.BasePlugin):
         else:
             return []
 
+    def _run_setup_py(self, setup_file):
+        command = [
+            self._get_python_command(),
+            os.path.basename(setup_file), 'install', '--user']
+        self.run(command, env=self._get_build_env())
+
     def _run_pip(self, setup, download=False):
         self._install_pip(download)
 
@@ -326,6 +332,8 @@ class PythonPlugin(snapcraft.BasePlugin):
         setup_file = os.path.join(self.builddir, 'setup.py')
         with simple_env_bzr(os.path.join(self.installdir, 'bin')):
             self._run_pip(setup_file)
+            if os.path.exists(setup_file):
+                self._run_setup_py(setup_file)
 
         self._fix_permissions()
 

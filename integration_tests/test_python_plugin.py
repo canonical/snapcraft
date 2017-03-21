@@ -16,9 +16,12 @@
 
 import os
 from glob import glob
+from subprocess import check_output
+from textwrap import dedent
 
 from testtools.matchers import (
     DirExists,
+    FileContains,
     FileExists
 )
 
@@ -83,6 +86,43 @@ class PythonPluginTestCase(integration_tests.TestCase):
         self.assertEqual('#!/usr/bin/env python2', python2_shebang)
         self.assertEqual('#!/usr/bin/env python3', python3_shebang)
         self.assertEqual('#!/usr/bin/env python3', python_shebang)
+
+    def test_pbr_console_scripts(self):
+        """Verify that LP: #1670852 doesn't come back."""
+        # pbr needs git repos to work
+        def pre_func():
+            for python_dir in ['python2', 'python3']:
+                d = os.path.join(self.path, python_dir)
+                check_output(['git', 'init'], cwd=d)
+                check_output(
+                    ['git', 'config', 'user.name', 'Test User'], cwd=d)
+                check_output(
+                    ['git', 'config', 'user.email', '<test.user@example.com'],
+                    cwd=d)
+                check_output(['git', 'add', '.'], cwd=d)
+                check_output(['git', 'commit', '-m', 'initial'], cwd=d)
+
+        self.run_snapcraft('stage', 'python-pbr', pre_func=pre_func)
+
+        console_script_template = dedent("""\
+            #!/usr/bin/env python{version}
+            # PBR Generated from u'console_scripts'
+
+            import sys
+
+            from python{version}_test_package.main import main
+        """)
+        python2_entry_point = os.path.join(
+            self.stage_dir, 'bin', 'python2_test')
+        self.assertThat(python2_entry_point, FileExists())
+        console_script = console_script_template.format(version='2')
+        self.assertThat(python2_entry_point, FileContains(console_script))
+
+        python3_entry_point = os.path.join(
+            self.stage_dir, 'bin', 'python3_test')
+        self.assertThat(python3_entry_point, FileExists())
+        console_script = console_script_template.format(version='3')
+        self.assertThat(python3_entry_point, FileContains(console_script))
 
     def test_build_does_not_keep_pyc_or_pth_files_in_install(self):
         # .pyc and .pyc files collide between parts.
