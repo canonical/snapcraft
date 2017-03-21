@@ -128,7 +128,7 @@ class PythonPluginTestCase(integration_tests.TestCase):
             self.stage_dir, 'bin', 'python3_test')
         self.assertThat(python3_entry_point, FileExists())
         console_script = console_script_template.format(
-            version='3', console_scripts='console_scripts')
+            version='3', console_scripts="'console_scripts'")
         self.assertThat(python3_entry_point, FileContains(console_script))
 
     def test_build_does_not_keep_pyc_or_pth_files_in_install(self):
