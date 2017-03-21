@@ -888,19 +888,23 @@ class CloseChannelsTestCase(tests.TestCase):
 
     def test_close_successfully(self):
         # Successfully closing a channels returns 'closed_channels'
-        # and 'channel_maps' from the Store.
+        # and 'channel_map_tree' from the Store.
         self.client.login('dummy', 'test correct password')
-        closed_channels, channel_maps = self.client.close_channels(
+        closed_channels, channel_map_tree = self.client.close_channels(
             'snap-id', ['beta'])
         self.assertEqual(['beta'], closed_channels)
         self.assertEqual({
-            'amd64': [
-                {'channel': 'stable', 'info': 'none'},
-                {'channel': 'candidate', 'info': 'none'},
-                {'channel': 'beta', 'info': 'specific',
-                 'revision': 42, 'version': '1.1'},
-                {'channel': 'edge', 'info': 'tracking'}]
-        }, channel_maps)
+            'latest': {
+                '16': {
+                    'amd64': [
+                        {'channel': 'stable', 'info': 'none'},
+                        {'channel': 'candidate', 'info': 'none'},
+                        {'channel': 'beta', 'info': 'specific',
+                         'revision': 42, 'version': '1.1'},
+                        {'channel': 'edge', 'info': 'tracking'}]
+                }
+            }
+        }, channel_map_tree)
 
 
 class MacaroonsTestCase(tests.TestCase):
@@ -1032,40 +1036,46 @@ class GetSnapStatusTestCase(tests.TestCase):
         self.fake_store = self.useFixture(fixture_setup.FakeStore())
         self.client = storeapi.StoreClient()
         self.expected = {
-            'i386': [
-                {
-                    'info': 'none',
-                    'channel': 'stable'
-                },
-                {
-                    'info': 'none',
-                    'channel': 'beta'
-                },
-                {
-                    'info': 'specific',
-                    'version': '1.0-i386',
-                    'channel': 'edge',
-                    'revision': 3
-                },
-            ],
-            'amd64': [
-                {
-                    'info': 'specific',
-                    'version': '1.0-amd64',
-                    'channel': 'stable',
-                    'revision': 2
-                },
-                {
-                    'info': 'specific',
-                    'version': '1.1-amd64',
-                    'channel': 'beta',
-                    'revision': 4
-                },
-                {
-                    'info': 'tracking',
-                    'channel': 'edge'
-                },
-            ],
+            'channel_map_tree': {
+                'latest': {
+                    '16': {
+                        'i386': [
+                            {
+                                'info': 'none',
+                                'channel': 'stable'
+                            },
+                            {
+                                'info': 'none',
+                                'channel': 'beta'
+                            },
+                            {
+                                'info': 'specific',
+                                'version': '1.0-i386',
+                                'channel': 'edge',
+                                'revision': 3
+                            },
+                        ],
+                        'amd64': [
+                            {
+                                'info': 'specific',
+                                'version': '1.0-amd64',
+                                'channel': 'stable',
+                                'revision': 2
+                            },
+                            {
+                                'info': 'specific',
+                                'version': '1.1-amd64',
+                                'channel': 'beta',
+                                'revision': 4
+                            },
+                            {
+                                'info': 'tracking',
+                                'channel': 'edge'
+                            },
+                        ],
+                    }
+                }
+            }
         }
 
     def test_get_snap_status_without_login_raises_exception(self):
@@ -1085,14 +1095,28 @@ class GetSnapStatusTestCase(tests.TestCase):
 
     def test_get_snap_status_filter_by_arch(self):
         self.client.login('dummy', 'test correct password')
+        exp_arch = self.expected['channel_map_tree']['latest']['16']['amd64']
         self.assertEqual(
-            {'amd64': self.expected['amd64']},
+            {'channel_map_tree': {
+                'latest': {
+                    '16': {
+                        'amd64': exp_arch
+                    }
+                }
+            }},
             self.client.get_snap_status('basic', arch='amd64'))
 
     def test_get_snap_status_filter_by_series_and_filter(self):
         self.client.login('dummy', 'test correct password')
+        exp_arch = self.expected['channel_map_tree']['latest']['16']['amd64']
         self.assertEqual(
-            {'amd64': self.expected['amd64']},
+            {'channel_map_tree': {
+                'latest': {
+                    '16': {
+                        'amd64': exp_arch
+                    }
+                }
+            }},
             self.client.get_snap_status(
                 'basic', series='16', arch='amd64'))
 
