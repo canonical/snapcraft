@@ -111,6 +111,9 @@ class PythonPluginTestCase(integration_tests.TestCase):
             import sys
 
             from python{version}_test_package.main import main
+
+            if __name__ == "__main__":
+                sys.exit(main())
         """)
         python2_entry_point = os.path.join(
             self.stage_dir, 'bin', 'python2_test')
