@@ -112,6 +112,7 @@ class PythonPluginTestCase(integration_tests.TestCase):
 
             from python{version}_test_package.main import main
 
+
             if __name__ == "__main__":
                 sys.exit(main())
         """)
