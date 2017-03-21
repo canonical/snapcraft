@@ -14,40 +14,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import fixtures
-import logging
 import os
-import stat
-import tempfile
+from subprocess import CalledProcessError
 from unittest.mock import ANY, call, patch, MagicMock
+
 from testtools.matchers import (
     Contains,
-    FileContains,
     FileExists,
 )
 
 import snapcraft
-from snapcraft import repo
+from snapcraft.internal.repo import _deb
+from snapcraft.internal.repo import errors
 from snapcraft import tests
-from snapcraft.internal import errors
-
-
-class RepoBaseTestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-        tempdirObj = tempfile.TemporaryDirectory()
-        self.addCleanup(tempdirObj.cleanup)
-        self.tempdir = tempdirObj.name
+from . import RepoBaseTestCase
 
 
 class UbuntuTestCase(RepoBaseTestCase):
 
     def setUp(self):
         super().setUp()
-        patcher = patch('snapcraft.repo.apt.Cache')
+        patcher = patch('snapcraft.repo._deb.apt.Cache')
         self.mock_cache = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -62,25 +49,25 @@ class UbuntuTestCase(RepoBaseTestCase):
             self.mock_package]
 
     def test_get_pkg_name_parts_name_only(self):
-        name, version = repo._get_pkg_name_parts('hello')
+        name, version = _deb._get_pkg_name_parts('hello')
         self.assertEqual('hello', name)
         self.assertEqual(None, version)
 
     def test_get_pkg_name_parts_all(self):
-        name, version = repo._get_pkg_name_parts('hello:i386=2.10-1')
+        name, version = _deb._get_pkg_name_parts('hello:i386=2.10-1')
         self.assertEqual('hello:i386', name)
         self.assertEqual('2.10-1', version)
 
     def test_get_pkg_name_parts_no_arch(self):
-        name, version = repo._get_pkg_name_parts('hello=2.10-1')
+        name, version = _deb._get_pkg_name_parts('hello=2.10-1')
         self.assertEqual('hello', name)
         self.assertEqual('2.10-1', version)
 
-    @patch('snapcraft.repo.apt.apt_pkg')
+    @patch('snapcraft.internal.repo._deb.apt.apt_pkg')
     def test_get_package(self, mock_apt_pkg):
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = _deb.Ubuntu(self.tempdir, project_options=project_options)
         ubuntu.get(['fake-package'])
 
         mock_apt_pkg.assert_has_calls([
@@ -113,11 +100,11 @@ class UbuntuTestCase(RepoBaseTestCase):
             os.path.join(self.tempdir, 'download', 'fake-package.deb'),
             FileExists())
 
-    @patch('snapcraft.repo.apt.apt_pkg')
+    @patch('snapcraft.repo._deb.apt.apt_pkg')
     def test_get_multiarch_package(self, mock_apt_pkg):
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
-        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = _deb.Ubuntu(self.tempdir, project_options=project_options)
         ubuntu.get(['fake-package:arch'])
 
         mock_apt_pkg.assert_has_calls([
@@ -149,12 +136,12 @@ class UbuntuTestCase(RepoBaseTestCase):
             os.path.join(self.tempdir, 'download', 'fake-package.deb'),
             FileExists())
 
-    @patch('snapcraft.repo._get_geoip_country_code_prefix')
+    @patch('snapcraft.repo._deb._get_geoip_country_code_prefix')
     def test_sources_is_none_uses_default(self, mock_cc):
         mock_cc.return_value = 'ar'
 
         self.maxDiff = None
-        sources_list = repo._format_sources_list(
+        sources_list = _deb._format_sources_list(
             '', use_geoip=True, deb_arch='amd64')
 
         expected_sources_list = \
@@ -171,8 +158,8 @@ deb http://security.ubuntu.com/ubuntu xenial-security multiverse
         self.assertEqual(sources_list, expected_sources_list)
 
     def test_no_geoip_uses_default_archive(self):
-        sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, deb_arch='amd64', use_geoip=False)
+        sources_list = _deb._format_sources_list(
+            _deb._DEFAULT_SOURCES, deb_arch='amd64', use_geoip=False)
 
         expected_sources_list = \
             '''deb http://archive.ubuntu.com/ubuntu/ xenial main restricted
@@ -188,13 +175,13 @@ deb http://security.ubuntu.com/ubuntu xenial-security multiverse
 
         self.assertEqual(sources_list, expected_sources_list)
 
-    @patch('snapcraft.repo._get_geoip_country_code_prefix')
+    @patch('snapcraft.internal.repo._deb._get_geoip_country_code_prefix')
     def test_sources_amd64_vivid(self, mock_cc):
         self.maxDiff = None
         mock_cc.return_value = 'ar'
 
-        sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, deb_arch='amd64',
+        sources_list = _deb._format_sources_list(
+            _deb._DEFAULT_SOURCES, deb_arch='amd64',
             use_geoip=True, release='vivid')
 
         expected_sources_list = \
@@ -210,10 +197,10 @@ deb http://security.ubuntu.com/ubuntu vivid-security multiverse
 '''
         self.assertEqual(sources_list, expected_sources_list)
 
-    @patch('snapcraft.repo._get_geoip_country_code_prefix')
+    @patch('snapcraft.repo._deb._get_geoip_country_code_prefix')
     def test_sources_armhf_trusty(self, mock_cc):
-        sources_list = repo._format_sources_list(
-            repo._DEFAULT_SOURCES, deb_arch='armhf', release='trusty')
+        sources_list = _deb._format_sources_list(
+            _deb._DEFAULT_SOURCES, deb_arch='armhf', release='trusty')
 
         expected_sources_list = \
             '''deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted
@@ -229,212 +216,6 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
         self.assertEqual(sources_list, expected_sources_list)
         self.assertFalse(mock_cc.called)
 
-    def test_fix_symlinks(self):
-        os.makedirs(self.tempdir + '/a')
-        open(self.tempdir + '/1', mode='w').close()
-
-        os.symlink('a', self.tempdir + '/rel-to-a')
-        os.symlink('/a', self.tempdir + '/abs-to-a')
-        os.symlink('/b', self.tempdir + '/abs-to-b')
-        os.symlink('1', self.tempdir + '/rel-to-1')
-        os.symlink('/1', self.tempdir + '/abs-to-1')
-
-        repo._fix_artifacts(debdir=self.tempdir)
-
-        self.assertEqual(os.readlink(self.tempdir + '/rel-to-a'), 'a')
-        self.assertEqual(os.readlink(self.tempdir + '/abs-to-a'), 'a')
-        self.assertEqual(os.readlink(self.tempdir + '/abs-to-b'), '/b')
-        self.assertEqual(os.readlink(self.tempdir + '/rel-to-1'), '1')
-        self.assertEqual(os.readlink(self.tempdir + '/abs-to-1'), '1')
-
-    def test_fix_pkg_config(self):
-        pc_file = os.path.join(self.tempdir, 'granite.pc')
-
-        with open(pc_file, 'w') as f:
-            f.write('prefix=/usr\n')
-            f.write('exec_prefix=${prefix}\n')
-            f.write('libdir=${prefix}/lib\n')
-            f.write('includedir=${prefix}/include\n')
-            f.write('\n')
-            f.write('Name: granite\n')
-            f.write('Description: elementary\'s Application Framework\n')
-            f.write('Version: 0.4\n')
-            f.write('Libs: -L${libdir} -lgranite\n')
-            f.write('Cflags: -I${includedir}/granite\n')
-            f.write('Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 '
-                    'gobject-2.0\n')
-        repo._fix_artifacts(debdir=self.tempdir)
-
-        with open(pc_file) as f:
-            pc_file_content = f.read()
-        expected_pc_file_content = """prefix={}/usr
-exec_prefix=${{prefix}}
-libdir=${{prefix}}/lib
-includedir=${{prefix}}/include
-
-Name: granite
-Description: elementary's Application Framework
-Version: 0.4
-Libs: -L${{libdir}} -lgranite
-Cflags: -I${{includedir}}/granite
-Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
-""".format(self.tempdir)
-
-        self.assertEqual(pc_file_content, expected_pc_file_content)
-
-
-class FixSUIDTestCase(RepoBaseTestCase):
-
-    scenarios = [
-        ('suid_file', dict(
-            key='suid_file', test_mod=0o4765, expected_mod=0o0765)),
-        ('guid_file', dict(
-            key='guid_file', test_mod=0o2777, expected_mod=0o0777)),
-        ('suid_guid_file', dict(
-            key='suid_guid_file', test_mod=0o6744, expected_mod=0o0744)),
-        ('suid_guid_sticky_file', dict(
-            key='suid_guid_sticky_file',
-            test_mod=0o7744, expected_mod=0o1744)),
-    ]
-
-    def test_fix_suid(self):
-        file = os.path.join(self.tempdir, self.key)
-        open(file, mode='w').close()
-        os.chmod(file, self.test_mod)
-
-        repo._fix_artifacts(debdir=self.tempdir)
-        self.assertEqual(
-            stat.S_IMODE(os.stat(file).st_mode), self.expected_mod)
-
-
-class FixShebangTestCase(RepoBaseTestCase):
-
-    scenarios = [
-        ('python bin dir', {
-            'file_path': os.path.join('root', 'bin', 'a'),
-            'content': '#!/usr/bin/python\nimport this',
-            'expected': '#!/usr/bin/env python\nimport this',
-        }),
-        ('python3 bin dir', {
-            'file_path': os.path.join('root', 'bin', 'd'),
-            'content': '#!/usr/bin/python3\nraise Exception()',
-            'expected': '#!/usr/bin/python3\nraise Exception()',
-        }),
-        ('sbin dir', {
-            'file_path': os.path.join('root', 'sbin', 'b'),
-            'content': '#!/usr/bin/python\nimport this',
-            'expected': '#!/usr/bin/env python\nimport this',
-        }),
-        ('usr/bin dir', {
-            'file_path': os.path.join('root', 'usr', 'bin', 'c'),
-            'content': '#!/usr/bin/python\nimport this',
-            'expected': '#!/usr/bin/env python\nimport this',
-        }),
-        ('usr/sbin dir', {
-            'file_path': os.path.join('root', 'usr', 'sbin', 'd'),
-            'content': '#!/usr/bin/python\nimport this',
-            'expected': '#!/usr/bin/env python\nimport this',
-        }),
-        ('opt/bin dir',  {
-            'file_path': os.path.join('root', 'opt', 'bin', 'e'),
-            'content': '#!/usr/bin/python\nraise Exception()',
-            'expected': '#!/usr/bin/python\nraise Exception()',
-        }),
-    ]
-
-    def test_fix_shebang(self):
-        os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
-        with open(self.file_path, 'w') as fd:
-            fd.write(self.content)
-
-        repo._fix_shebangs('root')
-
-        with open(self.file_path, 'r') as fd:
-            self.assertEqual(fd.read(), self.expected)
-
-
-class FixXmlToolsTestCase(RepoBaseTestCase):
-
-    scenarios = [
-        ('xml2-config only should fix', {
-            'files': [
-                {
-                    'path': os.path.join('root', 'usr', 'bin', 'xml2-config'),
-                    'content': 'prefix=/usr/foo',
-                    'expected': 'prefix=root/usr/foo',
-                },
-            ]
-        }),
-        ('xml2-config only should not fix', {
-            'files': [
-                {
-                    'path': os.path.join('root', 'usr', 'bin', 'xml2-config'),
-                    'content': 'prefix=/foo',
-                    'expected': 'prefix=/foo',
-                },
-            ]
-        }),
-        ('xslt-config only should fix', {
-            'files': [
-                {
-                    'path': os.path.join('root', 'usr', 'bin', 'xslt-config'),
-                    'content': 'prefix=/usr/foo',
-                    'expected': 'prefix=root/usr/foo',
-                },
-            ]
-        }),
-        ('xslt-config only should not fix', {
-            'files': [
-                {
-                    'path': os.path.join('root', 'usr', 'bin', 'xslt-config'),
-                    'content': 'prefix=/foo',
-                    'expected': 'prefix=/foo',
-                },
-            ]
-        }),
-        ('xml2-config and xslt-config', {
-            'files': [
-                {
-                    'path': os.path.join('root', 'usr', 'bin', 'xml2-config'),
-                    'content': 'prefix=/usr/foo',
-                    'expected': 'prefix=root/usr/foo',
-                },
-                {
-                    'path': os.path.join('root', 'usr', 'bin', 'xslt-config'),
-                    'content': 'prefix=/usr/foo',
-                    'expected': 'prefix=root/usr/foo',
-                },
-            ]
-        }),
-        ('xml2-config and xslt-config should not fix', {
-            'files': [
-                {
-                    'path': os.path.join('root', 'usr', 'bin', 'xml2-config'),
-                    'content': 'prefix=/foo',
-                    'expected': 'prefix=/foo',
-                },
-                {
-                    'path': os.path.join('root', 'usr', 'bin', 'xslt-config'),
-                    'content': 'prefix=/foo',
-                    'expected': 'prefix=/foo',
-                },
-            ]
-        }),
-    ]
-
-    def test_fix_xml_tools(self):
-        for test_file in self.files:
-            path = test_file['path']
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-            with open(path, 'w') as f:
-                f.write(test_file['content'])
-
-        repo._fix_xml_tools('root')
-
-        for test_file in self.files:
-            self.assertThat(
-                test_file['path'], FileContains(test_file['expected']))
-
 
 class BuildPackagesTestCase(tests.TestCase):
 
@@ -449,16 +230,16 @@ class BuildPackagesTestCase(tests.TestCase):
         return [p for p in pkgs if not pkgs[p].installed]
 
     @patch('os.environ')
-    @patch('snapcraft.repo.apt')
+    @patch('snapcraft.repo._deb.apt')
     def install_test_packages(self, test_pkgs, mock_apt, mock_env):
         mock_env.copy.return_value = {}
         mock_apt_cache = mock_apt.Cache.return_value
         mock_apt_cache_with = mock_apt_cache.__enter__.return_value
         mock_apt_cache_with.__getitem__.side_effect = lambda p: test_pkgs[p]
 
-        repo.install_build_packages(test_pkgs.keys())
+        _deb.Ubuntu.install_build_packages(test_pkgs.keys())
 
-    @patch('snapcraft.repo.is_dumb_terminal')
+    @patch('snapcraft.repo._deb.is_dumb_terminal')
     @patch('subprocess.check_call')
     def test_install_buid_package(
             self, mock_check_call, mock_is_dumb_terminal):
@@ -474,7 +255,7 @@ class BuildPackagesTestCase(tests.TestCase):
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
         ])
 
-    @patch('snapcraft.repo.is_dumb_terminal')
+    @patch('snapcraft.repo._deb.is_dumb_terminal')
     @patch('subprocess.check_call')
     def test_install_buid_package_in_dumb_terminal(
             self, mock_check_call, mock_is_dumb_terminal):
@@ -503,30 +284,18 @@ class BuildPackagesTestCase(tests.TestCase):
 
     @patch('subprocess.check_call')
     def test_mark_installed_auto_error_is_not_fatal(self, mock_check_call):
-        error = snapcraft.repo.subprocess.CalledProcessError(101, 'bad-cmd')
+        error = CalledProcessError(101, 'bad-cmd')
         mock_check_call.side_effect = \
             lambda c, env: error if 'apt-mark' in c else None
         self.install_test_packages(self.test_packages)
 
     def test_invalid_package_requested(self):
         raised = self.assertRaises(
-            EnvironmentError,
-            repo.install_build_packages,
+            errors.BuildPackageNotFoundError,
+            _deb.Ubuntu.install_build_packages,
             ['package-does-not-exist'])
 
         self.assertEqual(
             "Could not find a required package in 'build-packages': "
             '"The cache has no package named \'package-does-not-exist\'"',
             str(raised))
-
-
-class CommandCheckTestCase(tests.TestCase):
-
-    def test_check_for_command_not_installed(self):
-        self.assertRaises(
-            errors.MissingCommandError,
-            repo.check_for_command,
-            'missing-command')
-
-    def test_check_for_command_installed(self):
-        repo.check_for_command('sh')

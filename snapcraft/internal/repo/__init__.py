@@ -13,20 +13,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import shutil
 
-import subprocess
+from snapcraft.internal.errors import MissingCommandError
+from . import errors               # noqa
+from ._base import BaseRepo        # noqa
+from ._base import fix_pkg_config  # noqa
+from ._platform import _get_repo_for_platform
+# Imported for backwards compatibility with plugins
+from ._deb import Ubuntu           # noqa
 
-import integration_tests
+Repo = _get_repo_for_platform()
 
 
-class StagePackageVersionTestCase(integration_tests.TestCase):
-
-    def test_stage_package_gets_version(self):
-        error = self.assertRaises(
-            subprocess.CalledProcessError,
-            self.run_snapcraft, 'pull', 'stage-package-version')
-        self.assertIn(
-            "Error downloading stage packages for part 'hello': "
-            "The package 'hello=x.y-z' was not found.",
-            str(error.output)
-        )
+def check_for_command(command):
+    if not shutil.which(command):
+        raise MissingCommandError([command])

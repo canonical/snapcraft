@@ -237,7 +237,7 @@ def _export_key(name, account_id):
 
 
 def list_keys():
-    if not repo.is_package_installed('snapd'):
+    if not repo.Repo.is_package_installed('snapd'):
         raise EnvironmentError(
             'The snapd package is not installed. In order to use `list-keys`, '
             'you must run `apt install snapd`.')
@@ -259,7 +259,7 @@ def list_keys():
 
 
 def create_key(name):
-    if not repo.is_package_installed('snapd'):
+    if not repo.Repo.is_package_installed('snapd'):
         raise EnvironmentError(
             'The snapd package is not installed. In order to use '
             '`create-key`, you must run `apt install snapd`.')
@@ -303,7 +303,7 @@ def _maybe_prompt_for_key(name):
 
 
 def register_key(name):
-    if not repo.is_package_installed('snapd'):
+    if not repo.Repo.is_package_installed('snapd'):
         raise EnvironmentError(
             'The snapd package is not installed. In order to use '
             '`register-key`, you must run `apt install snapd`.')
@@ -349,7 +349,7 @@ def _generate_snap_build(authority_id, snap_id, grade, key_name,
 
 
 def sign_build(snap_filename, key_name=None, local=False):
-    if not repo.is_package_installed('snapd'):
+    if not repo.Repo.is_package_installed('snapd'):
         raise EnvironmentError(
             'The snapd package is not installed. In order to use '
             '`sign-build`, you must run `apt install snapd`.')
@@ -411,8 +411,7 @@ def sign_build(snap_filename, key_name=None, local=False):
 def push(snap_filename, release_channels=None):
     """Push a snap_filename to the store.
 
-    If the DELTA_UPLOADS_EXPERIMENTAL environment variable is set
-    and a cached snap is available, a delta will be generated from
+    If a cached snap is available, a delta will be generated from
     the cached snap to the new target snap and uploaded instead. In the
     case of a delta processing or upload failure, push will fall back to
     uploading the full snap.
@@ -438,8 +437,7 @@ def push(snap_filename, release_channels=None):
 
     sha3_384_available = hasattr(hashlib, 'sha3_384')
 
-    if (os.environ.get('DELTA_UPLOADS_EXPERIMENTAL') and
-            sha3_384_available and source_snap):
+    if sha3_384_available and source_snap:
         try:
             result = _push_delta(snap_name, snap_filename, source_snap)
         except StoreDeltaApplicationError as e:
@@ -461,10 +459,9 @@ def push(snap_filename, release_channels=None):
         logger.info('Revision {!r} of {!r} created.'.format(
             result['revision'], snap_name))
 
-        if os.environ.get('DELTA_UPLOADS_EXPERIMENTAL'):
-            snap_cache.cache(snap_filename=snap_filename)
-            snap_cache.prune(deb_arch=arch,
-                             keep_hash=calculate_sha3_384(snap_filename))
+        snap_cache.cache(snap_filename=snap_filename)
+        snap_cache.prune(deb_arch=arch,
+                         keep_hash=calculate_sha3_384(snap_filename))
     else:
         logger.info('Pushing {!r}'.format(snap_name))
 
@@ -558,14 +555,11 @@ def release(snap_name, revision, release_channels):
     with _requires_login():
         channels = store.release(snap_name, revision, release_channels)
     channel_map_tree = channels.get('channel_map_tree', {})
-    for track, track_data in channel_map_tree.items():
-        for series, series_data in track_data.items():
-            for arch, channel_map in series_data.items():
 
-                # This does not look good in green so we print instead
-                tabulated_channels = _tabulated_channel_map_tree(
-                    track, series, arch, channel_map)
-                print(tabulated_channels)
+    # This does not look good in green so we print instead
+    tabulated_channels = _tabulated_channel_map_tree(
+        channel_map_tree)
+    print(tabulated_channels)
 
     if 'opened_channels' in channels:
         logger.info(
@@ -573,26 +567,46 @@ def release(snap_name, revision, release_channels):
                 channels['opened_channels']))
 
 
-def _tabulated_channel_map_tree(track, series, arch, channel_map):
+def _tabulated_channel_map_tree(channel_map_tree):
+
     """Tabulate channel map (LTS Channel channel-maps)"""
-    def _format_tree(channel_map, track, series):
+    def _format_tree(channel_maps, track, series):
+        arches = []
+
+        for arch, channel_map in sorted(channel_maps.items()):
+            arches += [
+                (printable_arch, ) +
+                _get_text_for_channel(channel)
+                for (printable_arch, channel) in zip(
+                    [arch] + [''] * len(channel_map),
+                    channel_map
+                )
+            ]
+
         return [
-            (printable_arch, printable_track) +
-            _get_text_for_channel(channel)
-            for (printable_arch, printable_track, channel) in zip(
-                [track] + [''] * len(channel_map),
-                [arch] + [''] * len(channel_map),
-                channel_map
+            (printable_arch,) + printable_track
+            for (printable_arch, printable_track) in zip(
+                [track] + [''] * len(arches),
+                arches,
             )
         ]
 
-    parsed_channels = [
-        channel
-        for channel in _format_tree(channel_map, track, series)
-    ]
+    data = []
+    for track, track_data in sorted(channel_map_tree.items()):
+        channel_maps = {}
+        for series, series_data in track_data.items():
+            for arch, channel_map in series_data.items():
+                channel_maps[arch] = channel_map
+        parsed_channels = [
+            channel
+            for channel in _format_tree(channel_maps, track, series)
+        ]
+        data += parsed_channels
+
+    headers = ['Track', 'Arch', 'Channel', 'Version', 'Revision']
     return tabulate(
-        parsed_channels, numalign='left',
-        headers=['Track', 'Arch', 'Channel', 'Version', 'Revision'],
+        data, numalign='left',
+        headers=headers,
         tablefmt='plain'
     )
 
@@ -632,9 +646,9 @@ def close(snap_name, channel_names):
             'Make sure the logged in account has upload permissions on '
             '\'{}\' in series \'{}\'.'.format(snap_name, snap_series))
 
-    closed_channels, status = store.close_channels(snap_id, channel_names)
+    closed_channels, c_m_tree = store.close_channels(snap_id, channel_names)
 
-    tabulated_status = _tabulated_status(status)
+    tabulated_status = _tabulated_channel_map_tree(c_m_tree)
     print(tabulated_status)
 
     print()
@@ -675,7 +689,9 @@ def status(snap_name, series, arch):
     with _requires_login():
         status = store.get_snap_status(snap_name, series, arch)
 
-    tabulated_status = _tabulated_status(status)
+    channel_map_tree = status.get('channel_map_tree', {})
+    # This does not look good in green so we print instead
+    tabulated_status = _tabulated_channel_map_tree(channel_map_tree)
     print(tabulated_status)
 
 

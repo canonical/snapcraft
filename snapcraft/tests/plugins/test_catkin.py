@@ -304,14 +304,14 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.dependencies_mock.return_value = ['foo']
 
         mock_instance = self.ubuntu_mock.return_value
-        mock_instance.get.side_effect = repo.PackageNotFoundError('foo')
+        mock_instance.get.side_effect = repo.errors.PackageNotFoundError('foo')
 
         raised = self.assertRaises(
             RuntimeError,
             plugin.pull)
 
         self.assertEqual(str(raised),
-                         'Failed to fetch system dependencies: The Ubuntu '
+                         'Failed to fetch system dependencies: The '
                          "package 'foo' was not found.")
 
     def test_pull_unable_to_resolve_roscore(self):
