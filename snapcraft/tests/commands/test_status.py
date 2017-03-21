@@ -155,7 +155,13 @@ class StatusCommandTestCase(tests.TestCase):
         fake_terminal = fixture_setup.FakeTerminal()
         self.useFixture(fake_terminal)
 
-        mock_status.return_value = self.expected
+        mock_status.return_value = {
+            'channel_map_tree': {
+                'latest': {
+                    '16': self.expected
+                }
+            }
+        }
 
         main(['status', 'snap-test'])
 
@@ -163,13 +169,13 @@ class StatusCommandTestCase(tests.TestCase):
 
         terminal_output = fake_terminal.getvalue()
         expected_output = [
-            'Arch    Channel    Version    Revision',
-            'amd64   stable     1.0-amd64  2',
-            '        beta       1.1-amd64  4',
-            '        edge       ^          ^',
-            'i386    stable     -          -',
-            '        beta       -          -',
-            '        edge       1.0-i386   3']
+            'Track    Arch    Channel    Version    Revision',
+            'latest   amd64   stable     1.0-amd64  2',
+            '                 beta       1.1-amd64  4',
+            '                 edge       ^          ^',
+            '         i386    stable     -          -',
+            '                 beta       -          -',
+            '                 edge       1.0-i386   3']
         self.assertEqual(expected_output, terminal_output.splitlines())
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
@@ -177,7 +183,15 @@ class StatusCommandTestCase(tests.TestCase):
     def test_status_by_arch(self, mock_account_api, mock_status):
         fake_terminal = fixture_setup.FakeTerminal()
         self.useFixture(fake_terminal)
-        mock_status.return_value = {'i386': self.expected['i386']}
+        mock_status.return_value = {
+            'channel_map_tree': {
+                'latest': {
+                    '16': {
+                        'i386': self.expected['i386']
+                    }
+                }
+            }
+        }
 
         main(['status', 'snap-test', '--arch=i386'])
 
@@ -185,10 +199,10 @@ class StatusCommandTestCase(tests.TestCase):
 
         terminal_output = fake_terminal.getvalue()
         expected_output = [
-            'Arch    Channel    Version    Revision',
-            'i386    stable     -          -',
-            '        beta       -          -',
-            '        edge       1.0-i386   3']
+            'Track    Arch    Channel    Version    Revision',
+            'latest   i386    stable     -          -',
+            '                 beta       -          -',
+            '                 edge       1.0-i386   3']
         self.assertEqual(expected_output, terminal_output.splitlines())
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
@@ -196,7 +210,13 @@ class StatusCommandTestCase(tests.TestCase):
     def test_status_by_series(self, mock_account_api, mock_status):
         fake_terminal = fixture_setup.FakeTerminal()
         self.useFixture(fake_terminal)
-        mock_status.return_value = self.expected
+        mock_status.return_value = {
+            'channel_map_tree': {
+                'latest': {
+                    '16': self.expected
+                }
+            }
+        }
 
         main(['status', 'snap-test', '--series=16'])
 
@@ -204,11 +224,11 @@ class StatusCommandTestCase(tests.TestCase):
 
         terminal_output = fake_terminal.getvalue()
         expected_output = [
-            'Arch    Channel    Version    Revision',
-            'amd64   stable     1.0-amd64  2',
-            '        beta       1.1-amd64  4',
-            '        edge       ^          ^',
-            'i386    stable     -          -',
-            '        beta       -          -',
-            '        edge       1.0-i386   3']
+            'Track    Arch    Channel    Version    Revision',
+            'latest   amd64   stable     1.0-amd64  2',
+            '                 beta       1.1-amd64  4',
+            '                 edge       ^          ^',
+            '         i386    stable     -          -',
+            '                 beta       -          -',
+            '                 edge       1.0-i386   3']
         self.assertEqual(expected_output, terminal_output.splitlines())
