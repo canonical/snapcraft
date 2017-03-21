@@ -54,8 +54,8 @@
 
 1. Get the PC kernel source:
 
-    $ bzr branch lp:pc-kernel-snap
-    $ cd pc-kernel-snap
+    $ git clone -b pc https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux-snap/+git/xenial
+    $ cd kernel
 
 2. Run `sudo snapcraft`.
 3. Create a file called `pc-model.json` with the following contents:
