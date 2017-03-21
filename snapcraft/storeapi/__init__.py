@@ -657,8 +657,8 @@ class SCAClient(Client):
         if series:
             qs['series'] = series
         if arch:
-            qs['arch'] = arch
-        url = 'snaps/' + snap_id + '/status'
+            qs['architecture'] = arch
+        url = 'snaps/' + snap_id + '/state'
         if qs:
             url += '?' + urllib.parse.urlencode(qs)
         auth = _macaroon_auth(self.conf)
@@ -688,7 +688,7 @@ class SCAClient(Client):
 
         try:
             results = response.json()
-            return results['closed_channels'], results['channel_maps']
+            return results['closed_channels'], results['channel_map_tree']
         except (JSONDecodeError, KeyError):
             logger.debug(
                 'Invalid response from the server on channel closing:\n'
