@@ -276,11 +276,16 @@ class PythonPlugin(snapcraft.BasePlugin):
         else:
             return []
 
-    def _run_setup_py(self, setup_file):
+    def _create_sdist(self, setup_file):
         command = [
             self._get_python_command(),
-            os.path.basename(setup_file), 'install', '--user']
-        self.run(command, env=self._get_build_env())
+            os.path.basename(setup_file), '--no-user-cfg', 'sdist']
+        cwd = os.path.dirname(setup_file)
+        self.run(
+            command, env=self._get_build_env(),
+            cwd=cwd)
+        sdist = os.listdir(os.path.join(cwd, 'dist'))[0]
+        return os.path.join(cwd, 'dist', sdist)
 
     def _run_pip(self, setup, download=False):
         self._install_pip(download)
@@ -318,6 +323,11 @@ class PythonPlugin(snapcraft.BasePlugin):
                 # stage-packages
                 need_install = [k for k in wheel_names if k not in installed]
                 pip.install(need_install + ['--no-deps', '--upgrade'])
+            if os.path.exists(setup):
+                # pbr and others don't work using `pip install .`
+                # LP: #1670852
+                sdist_path = self._create_sdist(setup)
+                pip.install([sdist_path])
 
     def _fix_permissions(self):
         for root, dirs, files in os.walk(self.installdir):
@@ -332,8 +342,6 @@ class PythonPlugin(snapcraft.BasePlugin):
         setup_file = os.path.join(self.builddir, 'setup.py')
         with simple_env_bzr(os.path.join(self.installdir, 'bin')):
             self._run_pip(setup_file)
-            if os.path.exists(setup_file):
-                self._run_setup_py(setup_file)
 
         self._fix_permissions()
 

@@ -106,12 +106,17 @@ class PythonPluginTestCase(integration_tests.TestCase):
 
         console_script_template = dedent("""\
             #!/usr/bin/env python{version}
-            # PBR Generated from u'console_scripts'
 
+            # -*- coding: utf-8 -*-
+            import re
             import sys
 
             from python{version}_test_package.main import main
-        """)
+
+            if __name__ == '__main__':
+                sys.argv[0] = re.sub(r'(-script\\.pyw?|\\.exe)?$', '', sys.argv[0])
+                sys.exit(main())
+        """)  # noqa
         python2_entry_point = os.path.join(
             self.stage_dir, 'bin', 'python2_test')
         self.assertThat(python2_entry_point, FileExists())
