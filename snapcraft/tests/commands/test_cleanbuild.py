@@ -17,13 +17,14 @@
 import logging
 import os
 import tarfile
-from unittest import mock
 from testtools.matchers import Contains
+from unittest import mock
 
 import fixtures
 
 from snapcraft.main import main
 from snapcraft import tests
+from snapcraft.tests.test_lxd import check_output_side_effect
 
 
 class CleanBuildCommandTestCase(tests.TestCase):
@@ -41,16 +42,26 @@ parts:
       plugin: nil
 """
 
+    def setUp(self):
+        super().setUp()
+        patcher = mock.patch('snapcraft.internal.lxd.check_call')
+        self.check_call_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.lxd.check_output')
+        self.check_output_mock = patcher.start()
+        self.check_output_mock.side_effect = check_output_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def make_snapcraft_yaml(self, n=1):
         super().make_snapcraft_yaml(self.yaml_template)
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
-    @mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
-    @mock.patch('snapcraft.internal.lxd.check_call')
-    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
-    def test_cleanbuild(self, mock_installed, mock_call):
-        mock_installed.return_value = True
-
+    def test_cleanbuild(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
@@ -106,12 +117,15 @@ parts:
             Contains(os.path.join('.', 'snap', 'snapcraft.yaml')),
             'snap/snapcraft unexpectedly excluded from tarball')
 
-    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
-    def test_no_lxd(self, mock_installed):
+    def test_no_lxd(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        mock_installed.return_value = False
+        self.make_snapcraft_yaml()
+
+        self.check_output_mock.side_effect = check_output_side_effect(
+            fail_on_default=True)
+
         raised = self.assertRaises(
             SystemExit,
             main, ['cleanbuild'])
@@ -120,8 +134,8 @@ parts:
         self.assertEqual(1, raised.code)
         self.assertEqual(
             fake_logger.output,
-            'The lxd package is not installed, in order to use `cleanbuild` '
-            'you must install lxd onto your system. Refer to the '
-            '"Ubuntu Desktop and Ubuntu Server" section on '
-            'https://linuxcontainers.org/lxd/getting-started-cli/'
-            '#ubuntu-desktop-and-ubuntu-server to enable a proper setup.\n')
+            'You must have LXD installed in order to use cleanbuild. '
+            'However, it is either not installed or not configured '
+            'properly.\n'
+            'Refer to the documentation at '
+            'https://linuxcontainers.org/lxd/getting-started-cli.\n')
