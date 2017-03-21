@@ -40,6 +40,7 @@ import snapcraft
 from snapcraft import config
 from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.storeapi import (
+    _agent,
     _upload,
     constants,
     errors,
@@ -97,7 +98,7 @@ class Client():
         self.session.mount('https://', HTTPAdapter(max_retries=5))
 
         self._snapcraft_headers = {
-            'X-SNAPCRAFT-VERSION': snapcraft.__version__
+            'User-Agent': _agent.get_user_agent(),
         }
 
     def request(self, method, url, params=None, headers=None, **kwargs):
