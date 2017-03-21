@@ -266,7 +266,6 @@ class BuildPackagesTestCase(tests.TestCase):
         self.install_test_packages(self.test_packages)
 
         installable = self.get_installable_packages(self.test_packages)
-        installable.append('versioned-package=0.2')
         mock_check_call.assert_has_calls([
             call('sudo apt-get --no-install-recommends -y '
                  '-o Dpkg::Progress-Fancy=1 install'.split() +
