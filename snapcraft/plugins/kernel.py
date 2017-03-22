@@ -288,7 +288,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
             '{} > {}'.format(self.compression_cmd, initrd_path), shell=True,
             cwd=initrd_unpacked_path)
         unversioned_initrd_path = os.path.join(self.installdir, 'initrd.img')
-        os.link(initrd_path, unversioned_initrd_path)
+        os.symlink(initrd, unversioned_initrd_path)
 
     def _parse_kernel_release(self):
         kernel_release_path = os.path.join(
@@ -317,7 +317,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 'kernel build did not output a vmlinux binary in top level '
                 'dir, expected {!r}'.format(src))
         os.link(src, dst)
-        os.link(src, os.path.join(self.installdir, 'kernel.img'))
+        os.symlink(kernel, os.path.join(self.installdir, 'kernel.img'))
 
     def _copy_system_map(self):
         src = os.path.join(self.builddir, 'System.map')
