@@ -49,3 +49,108 @@
 2. Select a project to build.
 3. Run `snapcraft cleanbuild --remote <remote>` where `<remote>` is
    the name you gave the remote on step 1.
+
+# Test the PC kernel.
+
+1. Get the PC kernel source:
+
+    $ git clone -b pc https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux-snap/+git/xenial
+    $ cd kernel
+
+2. Run `sudo snapcraft`.
+3. Create a file called `pc-model.json` with the following contents:
+
+    {
+        "type": "model",
+        "authority-id": "$account_id",
+        "brand-id": "$account_id",
+        "series": "16",
+        "model": "pc",
+        "architecture": "amd64",
+        "gadget": "pc",
+        "kernel": "$kernel_snap_path",
+        "timestamp": "$date"
+    }
+
+4. Replace `$account_id` with the value from https://myapps.developer.ubuntu.com/dev/account/
+5. Replace `$kernel_snap_path` with the path to the snap you just created.
+6. Replace `$date` with the output of the command `date -Iseconds --utc`.
+7. If you haven't created a key, run the following command, replacing
+   `$key_name` with a name for your key:
+
+    $ snap create-key $key_name
+    $ snapcraft register-key
+
+8. Sign the model:
+
+    $ cat pc-model.json | snap sign -k $key_name > pc.model
+
+10. Install ubuntu-image:
+
+    $ sudo apt install ubuntu-image
+
+11. Create the image:
+
+    $ sudo ubuntu-image --image-size 3G -O ubuntu-core-16 pc.model --extra-snaps $kernel_snap_path
+
+12. Start the image in kvm:
+
+    $ kvm -smp 2 -m 1500 -netdev user,id=mynet0,hostfwd=tcp::8022-:22,hostfwd=tcp::8090-:80 -device virtio-net-pci,netdev=mynet0 -drive file=ubuntu-core-16/pc.img,format=raw
+
+  * Check that the user can be created.
+  * Check that it's possible to ssh into the vm.
+  * Check that it's possible to install a snap.
+
+
+# Test the dragonboard 410c kernel.
+
+1. Download https://developer.qualcomm.com/download/db410c/linux-board-support-package-v1.2.zip
+2. Extract it and copy the file `firmware.tar` to the directory `demos/96boards-kernel`.
+3. Run `snapcraft --target-arch arm64` in the `demos/96boards-kernel` directory.
+4. Create a file called `dragonboard-model.json` with the following contents:
+
+    {
+        "type": "model",
+        "authority-id": "$account_id",
+        "brand-id": "$account_id",
+        "series": "16",
+        "model": "dragonboard",
+        "architecture": "arm64",
+        "gadget": "dragonboard",
+        "kernel": "$kernel_snap_path",
+        "timestamp": "$date"
+    }
+
+5. Replace `$account_id` with the value from https://myapps.developer.ubuntu.com/dev/account/
+6. Replace `$kernel_snap_path` with the path to the snap you just created.
+7. Replace `$date` with the output of the command `date -Iseconds --utc`.
+8. If you haven't created a key, run the following command, replacing
+   `$key_name` with a name for your key:
+
+    $ snap create-key $key_name
+    $ snapcraft register-key
+
+9. Sign the model:
+
+    $ cat dragonboard-model.json | snap sign -k $key_name > dragonboard.model
+
+10. Install ubuntu-image:
+
+    $ sudo apt install ubuntu-image
+
+11. Create the image:
+
+    $ sudo ubuntu-image -O ubuntu-core-16 dragonboard.model --extra-snaps $kernel_snap_path
+
+12. Insert an sdcard into the host PC.
+13. Umount the sdcard partitions.
+14. Flash the image, replacing sdX with the path to the sdcard:
+
+    $ sudo dd if=ubuntu-core-16/dragonboard.img of=/dev/sdX bs=32M
+    $ sync
+
+15. Insert the sdcard into the dragonboard, and turn it on.
+
+  * Check that the user can be created.
+  * Check that it's possible to ssh into the board.
+  * Check that it's possible to install a snap.
