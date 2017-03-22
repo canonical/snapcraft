@@ -23,7 +23,7 @@ WARNING: this plugin's API is unstable. The cross compiling support is
 The following kernel specific options are provided by this plugin:
 
     - kernel-image-target:
-      (yaml object or string; default: bzImage)
+      (yaml object, string or null for default target)
       the default target is bzImage and can be set to any specific
       target.
       For more complex cases where one would want to use
@@ -74,6 +74,13 @@ _compression_command = {
     'gz': 'gzip',
 }
 
+default_kernel_image_target = {
+    'amd64': 'bzImage',
+    'i386': 'bzImage',
+    'armhf': 'zImage',
+    'arm64': 'Image.gz',
+}
+
 
 class KernelPlugin(kbuild.KBuildPlugin):
 
@@ -86,7 +93,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 {'type': 'string'},
                 {'type': 'object'},
             ],
-            'default': 'bzImage',
+            'default': '',
         }
 
         schema['properties']['kernel-with-firmware'] = {
@@ -166,7 +173,10 @@ class KernelPlugin(kbuild.KBuildPlugin):
         self._set_kernel_targets()
 
     def _set_kernel_targets(self):
-        if isinstance(self.options.kernel_image_target, str):
+        if not self.options.kernel_image_target:
+            self.kernel_image_target = \
+                default_kernel_image_target[self.project.deb_arch]
+        elif isinstance(self.options.kernel_image_target, str):
             self.kernel_image_target = self.options.kernel_image_target
         elif self.project.deb_arch in self.options.kernel_image_target:
             self.kernel_image_target = \
