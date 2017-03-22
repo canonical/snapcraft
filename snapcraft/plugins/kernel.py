@@ -76,7 +76,7 @@ _compression_command = {
 
 default_kernel_image_target = {
     'amd64': 'bzImage',
-    'i386': 'bzImge',
+    'i386': 'bzImage',
     'armhf': 'zImage',
     'arm64': 'Image.gz',
 }
@@ -93,6 +93,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 {'type': 'string'},
                 {'type': 'object'},
             ],
+            'default': '',
         }
 
         schema['properties']['kernel-with-firmware'] = {

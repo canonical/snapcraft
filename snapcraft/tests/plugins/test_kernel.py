@@ -20,7 +20,7 @@ import os
 from unittest import mock
 
 import fixtures
-from testtools.matchers import HasLength
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft import (
@@ -103,6 +103,8 @@ class KernelPluginTestCase(tests.TestCase):
         self.assertEqual(
             properties['kernel-image-target']['oneOf'],
             [{'type': 'string'}, {'type': 'object'}])
+        self.assertEqual(
+            properties['kernel-image-target']['default'], '')
 
         self.assertEqual(
             properties['kernel-with-firmware']['type'], 'boolean')
@@ -923,3 +925,36 @@ ACCEPT=n
         download_mock.assert_called_once_with(
             'ubuntu-core', 'edge', plugin.os_snap,
             self.project_options.deb_arch, '')
+
+
+class KernelPluginDefaulTargetsTestCase(tests.TestCase):
+
+    scenarios = [
+        ('amd64', {'deb_arch': 'amd64', 'expected': 'bzImage'}),
+        ('i386', {'deb_arch': 'i386', 'expected': 'bzImage'}),
+        ('arm64', {'deb_arch': 'arm64', 'expected': 'Image.gz'}),
+        ('armhf', {'deb_arch': 'armhf', 'expected': 'zImage'}),
+    ]
+
+    def setUp(self):
+        super().setUp()
+
+        class Options:
+            build_parameters = []
+            kconfigfile = None
+            kdefconfig = []
+            kconfigs = []
+            kernel_image_target = ''
+            kernel_with_firmware = True
+            kernel_initrd_modules = []
+            kernel_initrd_firmware = []
+            kernel_device_trees = []
+            kernel_initrd_compression = 'gz'
+
+        self.options = Options()
+
+    def test_default(self):
+        project = snapcraft.ProjectOptions(target_deb_arch=self.deb_arch)
+        plugin = kernel.KernelPlugin('test-part', self.options, project)
+
+        self.assertThat(plugin.kernel_image_target, Equals(self.expected))
