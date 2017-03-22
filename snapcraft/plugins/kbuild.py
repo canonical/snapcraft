@@ -59,6 +59,7 @@ import logging
 import os
 import shutil
 import subprocess
+import re
 
 from snapcraft import BasePlugin
 
@@ -149,6 +150,13 @@ class KBuildPlugin(BasePlugin):
         subprocess.check_call(cmd, shell=True, cwd=self.builddir)
 
     def do_build(self):
+        # Linux's kernel Makefile gets confused if it is invoked with the
+        # environment setup by another Linux's Makefile:
+        # linux/package/Makefile -> snapcraft -> linux/Makefile
+        # fix the problem removing the offending make option (-I...)
+        if 'MAKEFLAGS' in os.environ:
+            makeflags = re.sub('-I[\S]*', '', os.environ['MAKEFLAGS'])
+            os.environ['MAKEFLAGS'] = makeflags
         # build the software
         self.run(self.make_cmd + self.make_targets)
 
