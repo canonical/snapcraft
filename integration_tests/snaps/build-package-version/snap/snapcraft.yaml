@@ -7,6 +7,7 @@ description: |
 
 grade: stable
 confinement: strict
+build-packages: ['make=4.1-6']
 
 parts:
   hello:
