@@ -70,7 +70,11 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.assertIn('hello=2.10-1', state.assets['stage-packages'])
         self.assertIn('make=4.1-6', state.assets['build-packages'])
 
-    def test_pull_global_build_packages(self):
+    def test_pull_global_build_packages_are_excluded(self):
+        """
+        Ensure global build-packages are not included in each part's
+        build-packages data.
+        """
         project_dir = 'asset-tracking-global'
         self.run_snapcraft('pull', project_dir)
 
