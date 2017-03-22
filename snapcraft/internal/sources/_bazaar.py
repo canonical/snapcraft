@@ -62,7 +62,7 @@ class Bazaar(Base):
                   [self.source, self.source_dir]
 
         subprocess.check_call(cmd, **self.kwargs)
-        self._get_source_details()
+        self.assets = self._get_source_details()
 
     def _get_source_details(self):
         tag = self.source_tag
