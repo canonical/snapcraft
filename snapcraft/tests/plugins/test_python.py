@@ -238,6 +238,9 @@ class PythonPluginTestCase(tests.TestCase):
 
         def build_side_effect():
             open(os.path.join(plugin.builddir, 'setup.py'), 'w').close()
+            os.mkdir(os.path.join(plugin.builddir, 'dist'))
+            open(os.path.join(
+                plugin.builddir, 'dist', 'package.tar'), 'w').close()
 
         mock_base_build.side_effect = build_side_effect
 
