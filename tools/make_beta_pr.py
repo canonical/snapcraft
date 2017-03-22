@@ -65,8 +65,8 @@ def main():
 
     # Trigger the autopkgtests.
     for test in ('xenial:amd64', 'xenial:armhf', 'xenial:arm64',
-                 'yakkety:amd64', 'yakkety:armhf', 'yakkety:amd64',
-                 'zesty:amd64', 'zesty:armhf', 'zesty:amd64'):
+                 'yakkety:amd64', 'yakkety:armhf', 'yakkety:arm64',
+                 'zesty:amd64', 'zesty:armhf', 'zesty:arm64'):
         subprocess.check_call(
             ['tools/retry_autopkgtest.sh', str(pr.number), test])
 
