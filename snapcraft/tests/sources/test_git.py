@@ -335,6 +335,10 @@ class GitDetailsTestCase(GitBaseTestCase):
         self.clean_dir(self.working_tree)
         os.chdir(self.working_tree)
         self.call(['git', 'init'])
+        self.call(['git', 'config', '--local', 'user.name',
+                   '"Example Dev"'])
+        self.call(['git', 'config', '--local', 'user.email',
+                   'dev@example.com'])
         with open('testing', 'w') as fp:
             fp.write('testing')
         self.call(['git', 'add', 'testing'])
