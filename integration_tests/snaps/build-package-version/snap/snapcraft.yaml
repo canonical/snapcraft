@@ -1,0 +1,15 @@
+name: build-package-version
+version: '0.1'
+summary: install a specific version of a build-package
+description: |
+  Install a specific version of  a build-package.  One part with
+  a good version and one with a bad version
+
+grade: stable
+confinement: strict
+build-packages: ['make=4.1-6']
+
+parts:
+  hello:
+    plugin: nil
+    build-packages: ['hello=2.10-1']

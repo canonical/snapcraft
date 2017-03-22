@@ -192,7 +192,11 @@ class Ubuntu(BaseRepo):
         with apt.Cache() as apt_cache:
             for pkg in unique_packages:
                 try:
-                    if not apt_cache[pkg].installed:
+                    pkg_name, version = _get_pkg_name_parts(pkg)
+                    installed_version = apt_cache[pkg_name].installed
+                    if not installed_version:
+                        new_packages.append(pkg)
+                    elif version and installed_version != version:
                         new_packages.append(pkg)
                 except KeyError as e:
                     raise errors.BuildPackageNotFoundError(e) from e
