@@ -685,13 +685,17 @@ ACCEPT=n
 
         self.check_call_mock.side_effect = fake_unpack
 
-        def fake_modules(*args, **kwargs):
-            module_path = os.path.join(
-                plugin.installdir, 'lib', 'modules', '4.4.2', 'some-module.ko')
-            open(module_path, 'w').close()
-            return module_path
+        def fake_output(*args, **kwargs):
+            if args[0][:3] == ['modprobe', '-n', '--show-depends']:
+                module_path = os.path.join(
+                    plugin.installdir, 'lib', 'modules', '4.4.2',
+                    'some-module.ko')
+                open(module_path, 'w').close()
+                return ('insmod {} enable_fbdev=1\n'.format(module_path))
+            else:
+                raise Exception(args[0])
 
-        self.run_output_mock.side_effect = fake_modules
+        self.run_output_mock.side_effect = fake_output
 
         plugin.build()
 
