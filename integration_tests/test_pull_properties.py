@@ -15,13 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
 import yaml
 
 import testscenarios
 from testtools.matchers import FileExists
 
 import integration_tests
+from integration_tests import _source_helpers
 
 
 class PullPropertiesTestCase(integration_tests.TestCase):
@@ -93,43 +93,6 @@ class AssetTrackingTestCase(integration_tests.TestCase):
 class GitAssetTrackingTestCase(testscenarios.WithScenarios,
                                integration_tests.TestCase):
 
-    def _create_git_repo(self, name):
-        def _call(cmd):
-            subprocess.check_call(cmd, stdout=subprocess.DEVNULL,
-                                  stderr=subprocess.DEVNULL)
-
-        def _call_with_output(cmd):
-            return subprocess.check_output(cmd).decode('utf-8').strip()
-
-        def _add_and_commit_file(path, filename, contents=None, message=None):
-            if not contents:
-                contents = filename
-            if not message:
-                message = filename
-
-            with open(os.path.join(path, filename), 'w') as fp:
-                fp.write(contents)
-
-            _call(['git', '-C', name, 'add', filename])
-            _call(['git', '-C', name, 'commit', '-am', message])
-
-        os.makedirs(name)
-        _call(['git', '-C', name, 'init'])
-        _call(['git', '-C', name, 'config',
-               'user.name', 'Test User'])
-        _call(['git', '-C', name, 'config',
-               'user.email', 'testuser@example.com'])
-
-        _add_and_commit_file(name, 'testing')
-        _call(['git', '-C', name, 'branch', 'feature'])
-
-        _add_and_commit_file(name, 'testing-2')
-        _call(['git', '-C', name, 'tag', 'feature-tag'])
-
-        _add_and_commit_file(name, 'testing-3')
-
-        return _call_with_output(['git', '-C', name, 'rev-parse', 'HEAD'])
-
     scenarios = [
         ('plain', {
             'part_name': 'git-part',
@@ -151,7 +114,8 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
 
     def test_pull_git(self):
         project_dir = 'asset-tracking'
-        expected_commit = self._create_git_repo('git-source')
+
+        expected_commit = _source_helpers.create_git_repo('git-source')
         self.run_snapcraft(['pull', self.part_name], project_dir)
 
         state_file = os.path.join(
@@ -166,6 +130,43 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
             self.assertEqual(self.expected['branch'],
                              state.assets['source-details']['branch'])
         elif 'tag' in self.expected:
+            self.assertEqual(self.expected['tag'],
+                             state.assets['source-details']['tag'])
+        else:
+            self.assertEqual(expected_commit,
+                             state.assets['source-details']['commit'])
+
+
+class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
+                                  integration_tests.TestCase):
+    scenarios = [
+        ('plain', {
+            'part_name': 'bzr-part',
+            'expected': {}
+        }),
+        ('tag', {
+            'part_name': 'bzr-part-tag',
+            'expected': {
+                'tag': 'feature-tag',
+            }
+        }),
+    ]
+
+    def test_pull_bzr(self):
+        project_dir = 'asset-tracking'
+        part = self.part_name
+        expected_commit = _source_helpers.create_bzr_repo('bzr-source')
+        self.run_snapcraft(['pull', part], project_dir)
+
+        state_file = os.path.join(
+            self.parts_dir, part, 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+
+        self.assertIn('source-details', state.assets)
+
+        if 'tag' in self.expected:
             self.assertEqual(self.expected['tag'],
                              state.assets['source-details']['tag'])
         else:

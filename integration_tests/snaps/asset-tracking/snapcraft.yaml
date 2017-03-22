@@ -24,3 +24,12 @@ parts:
     source: git-source
     source-type: git
     source-tag: feature-tag
+  bzr-part:
+    plugin: nil
+    source: bzr-source
+    source-type: bzr
+  bzr-part-tag:
+    plugin: nil
+    source: bzr-source
+    source-type: bzr
+    source-tag: feature-tag

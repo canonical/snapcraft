@@ -24,7 +24,8 @@ from ._base import Base
 class Bazaar(Base):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None, source_checksum=None):
+                 source_branch=None, source_depth=None, source_checksum=None,
+                 silent=False):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth, source_checksum,  'bzr')
         if source_branch:
@@ -41,6 +42,11 @@ class Bazaar(Base):
             raise errors.IncompatibleOptionsError(
                 "can't specify a source-checksum for a bzr source")
 
+        self.kwargs = {}
+        if silent:
+            self.kwargs['stdout'] = subprocess.DEVNULL
+            self.kwargs['stderr'] = subprocess.DEVNULL
+
     def pull(self):
         tag_opts = []
         if self.source_tag:
@@ -55,4 +61,25 @@ class Bazaar(Base):
             cmd = [self.command, 'branch'] + tag_opts + \
                   [self.source, self.source_dir]
 
-        subprocess.check_call(cmd)
+        subprocess.check_call(cmd, **self.kwargs)
+        self.source_details = self._get_source_details()
+
+    def _get_source_details(self):
+        tag = self.source_tag
+        commit = self.source_commit
+
+        if not tag:
+            if os.path.exists(self.source_dir):
+                commit = subprocess.check_output(
+                    ['bzr', 'revno', self.source_dir]
+                ).decode('utf-8').strip()
+
+        branch = None
+        source = self.source
+
+        return {
+            'commit': commit,
+            'branch': branch,
+            'source': source,
+            'tag': tag,
+        }
