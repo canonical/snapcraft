@@ -244,6 +244,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
         return initrd_unpacked_path
 
     def _make_initrd(self):
+
         logger.info('Generating driver initrd for kernel release: {}'.format(
             self.kernel_release))
 
@@ -256,9 +257,9 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 '-S', self.kernel_release, module])
             modprobe_outs.extend(modprobe_out.split(os.linesep))
 
+        modprobe_outs = [_ for _ in modprobe_outs if _]
         modules_path = os.path.join('lib', 'modules', self.kernel_release)
-        for src in set(modprobe_outs):
-            src = src.split()[-1:][0]
+        for src in set(_.split()[1] for _ in modprobe_outs):
             dst = os.path.join(initrd_unpacked_path,
                                os.path.relpath(src, self.installdir))
             os.makedirs(os.path.dirname(dst), exist_ok=True)
