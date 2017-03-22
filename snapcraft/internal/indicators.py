@@ -16,7 +16,9 @@
 
 import os
 import sys
+from time import sleep
 
+import requests
 from urllib.request import urlretrieve
 from progressbar import (
     AnimatedMarker,
@@ -60,15 +62,27 @@ def download_requests_stream(request_stream, destination, message=None):
     if not request_stream.headers.get('Content-Encoding', ''):
         total_length = int(request_stream.headers.get('Content-Length', '0'))
 
-    total_read = 0
-    progress_bar = _init_progress_bar(total_length, destination, message)
-    progress_bar.start()
-    with open(destination, 'wb') as destination_file:
-        for buf in request_stream.iter_content(1024):
-            destination_file.write(buf)
-            total_read += len(buf)
-            progress_bar.update(total_read)
-    progress_bar.finish()
+    # HttpAdapter cannot help here.
+    not_downloaded = True
+    retry_count = 5
+    while not_downloaded and retry_count:
+        total_read = 0
+        progress_bar = _init_progress_bar(total_length, destination, message)
+        progress_bar.start()
+        try:
+            with open(destination, 'wb') as destination_file:
+                for buf in request_stream.iter_content(1024):
+                    destination_file.write(buf)
+                    total_read += len(buf)
+                    progress_bar.update(total_read)
+            not_downloaded = False
+        except requests.exceptions.ChunkedEncodingError as e:
+            if not retry_count:
+                raise e
+            retry_count -= 1
+            sleep(1)
+        finally:
+            progress_bar.finish()
 
 
 class UrllibDownloader(object):
