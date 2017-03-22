@@ -488,14 +488,19 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self.send_header('Content-Type', 'application/json')
             response = {
                 'closed_channels': channels,
-                'channel_maps': {
-                    'amd64': [
-                        {'channel': 'stable', 'info': 'none'},
-                        {'channel': 'candidate', 'info': 'none'},
-                        {'channel': 'beta', 'info': 'specific',
-                         'version': '1.1', 'revision': 42},
-                        {'channel': 'edge', 'info': 'tracking'}
-                    ]
+                'channel_map_tree': {
+                    'latest': {
+                        '16': {
+                            'amd64': [
+                                {'channel': 'stable', 'info': 'none'},
+                                {'channel': 'candidate', 'info': 'none'},
+                                {'channel': 'beta', 'info': 'specific',
+                                 'version': '1.1', 'revision': 42},
+                                {'channel': 'edge', 'info': 'tracking'}
+                            ]
+
+                        }
+                    }
                 },
             }
             content = json.dumps(response).encode()
@@ -822,7 +827,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         elif parsed_path.path.startswith(snap_path):
             if parsed_path.path.endswith('/history'):
                 self._handle_snap_revisions()
-            elif parsed_path.path.endswith('/status'):
+            elif parsed_path.path.endswith('/state'):
                 self._handle_snap_status()
         else:
             logger.error(
@@ -980,48 +985,64 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         channel_map = {
-            'i386': [
-                {
-                    'info': 'none',
-                    'channel': 'stable'
-                },
-                {
-                    'info': 'none',
-                    'channel': 'beta'
-                },
-                {
-                    'info': 'specific',
-                    'version': '1.0-i386',
-                    'channel': 'edge',
-                    'revision': 3
-                },
-            ],
-            'amd64': [
-                {
-                    'info': 'specific',
-                    'version': '1.0-amd64',
-                    'channel': 'stable',
-                    'revision': 2
-                },
-                {
-                    'info': 'specific',
-                    'version': '1.1-amd64',
-                    'channel': 'beta',
-                    'revision': 4
-                },
-                {
-                    'info': 'tracking',
-                    'channel': 'edge'
-                },
-            ],
+            'channel_map_tree': {
+                'latest': {
+                    '16': {
+                        'i386': [
+                            {
+                                'info': 'none',
+                                'channel': 'stable'
+                            },
+                            {
+                                'info': 'none',
+                                'channel': 'beta'
+                            },
+                            {
+                                'info': 'specific',
+                                'version': '1.0-i386',
+                                'channel': 'edge',
+                                'revision': 3
+                            },
+                        ],
+                        'amd64': [
+                            {
+                                'info': 'specific',
+                                'version': '1.0-amd64',
+                                'channel': 'stable',
+                                'revision': 2
+                            },
+                            {
+                                'info': 'specific',
+                                'version': '1.1-amd64',
+                                'channel': 'beta',
+                                'revision': 4
+                            },
+                            {
+                                'info': 'tracking',
+                                'channel': 'edge'
+                            },
+                        ],
+
+                    }
+                }
+            }
         }
 
         parsed_qs = urllib.parse.parse_qs(
             urllib.parse.urlparse(self.path).query)
-        if 'arch' in parsed_qs:
-            arch = parsed_qs['arch'][0]
-            if arch in channel_map:
-                output = {arch: channel_map[arch]}
+        if 'architecture' in parsed_qs:
+            arch = parsed_qs['architecture'][0]
+            series = channel_map['channel_map_tree']['latest']['16']
+            if arch in series:
+                output = {
+                    'channel_map_tree': {
+                        'latest': {
+                            '16': {
+                                arch: series[arch]
+                            }
+                        }
+                    }
+                }
             else:
                 output = {}
         else:
@@ -1105,6 +1126,10 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
         logger.debug(
             'Handling details request for package {}, with headers {}'.format(
                 package, self.headers))
+        if 'User-Agent' not in self.headers:
+            self.send_response(500)
+            self.end_headers()
+            return
         response = self._get_details_response(package)
         if response is None:
             self.send_response(404)
@@ -1151,6 +1176,10 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_download_request(self, snap):
         logger.debug('Handling download request for snap {}'.format(snap))
+        if 'User-Agent' not in self.headers:
+            self.send_repsonse(500)
+            self.end_headers()
+            return
         self.send_response(200)
         self.send_header('Content-Type', 'application/octet-stream')
         self.end_headers()

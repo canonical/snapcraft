@@ -2,11 +2,16 @@
 
 case $SNAP_ARCH in
 amd64)
-	export TRIPLET=x86_64-linux-gnu
+	TRIPLET="x86_64-linux-gnu"
+	;;
+armhf)
+	TRIPLET="arm-linux-gnueabihf"
+	;;
+arm64)
+	TRIPLET="aarch64-linux-gnu"
 	;;
 *)
-	echo "Unsupported arch: $SNAP_ARCH"
-	exit 1
+	TRIPLET="$SNAP_ARCH-linux-gnu"
 	;;
 esac
 
@@ -21,4 +26,4 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ROS_BASE/lib/$TRIPLET
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ROS_BASE/usr/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ROS_BASE/usr/lib/$TRIPLET
 
-roslaunch listener talk_and_listen.launch
+roslaunch listener talk_and_listen.launch "$@"

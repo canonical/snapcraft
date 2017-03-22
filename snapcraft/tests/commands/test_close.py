@@ -62,27 +62,31 @@ class ChannelClosingTestCase(tests.TestCase):
             }
         }
         closed_channels = ['beta']
-        channel_maps = {
-            'amd64': [
-                {'channel': 'stable', 'info': 'none'},
-                {'channel': 'candidate', 'info': 'none'},
-                {'channel': 'beta', 'info': 'specific',
-                 'version': '1.1', 'revision': 42},
-                {'channel': 'edge', 'info': 'tracking'}
-            ],
+        channel_map_tree = {
+            'latest': {
+                '16': {
+                    'amd64': [
+                        {'channel': 'stable', 'info': 'none'},
+                        {'channel': 'candidate', 'info': 'none'},
+                        {'channel': 'beta', 'info': 'specific',
+                         'version': '1.1', 'revision': 42},
+                        {'channel': 'edge', 'info': 'tracking'}
+                    ],
+                }
+            }
         }
         mock_close_channels.side_effect = [
-            (closed_channels, channel_maps),
+            (closed_channels, channel_map_tree),
         ]
 
         main(['close', 'basic', 'beta'])
 
         self.assertEqual([
-            'Arch    Channel    Version    Revision',
-            'amd64   stable     -          -',
-            '        candidate  -          -',
-            '        beta       1.1        42',
-            '        edge       ^          ^',
+            'Track    Arch    Channel    Version    Revision',
+            'latest   amd64   stable     -          -',
+            '                 candidate  -          -',
+            '                 beta       1.1        42',
+            '                 edge       ^          ^',
             '',
             '\x1b[0;32mThe beta channel is now closed.\x1b[0m'
         ], self.fake_terminal.getvalue().splitlines())
@@ -97,27 +101,31 @@ class ChannelClosingTestCase(tests.TestCase):
             }
         }
         closed_channels = ['beta', 'edge']
-        channel_maps = {
-            'amd64': [
-                {'channel': 'stable', 'info': 'none'},
-                {'channel': 'candidate', 'info': 'specific',
-                 'version': '1.1', 'revision': 42},
-                {'channel': 'beta', 'info': 'tracking'},
-                {'channel': 'edge', 'info': 'tracking'}
-            ],
+        channel_map_tree = {
+            'latest': {
+                '16': {
+                    'amd64': [
+                        {'channel': 'stable', 'info': 'none'},
+                        {'channel': 'candidate', 'info': 'specific',
+                         'version': '1.1', 'revision': 42},
+                        {'channel': 'beta', 'info': 'tracking'},
+                        {'channel': 'edge', 'info': 'tracking'}
+                    ],
+                }
+            }
         }
         mock_close_channels.side_effect = [
-            (closed_channels, channel_maps),
+            (closed_channels, channel_map_tree),
         ]
 
         main(['close', 'basic', 'beta', 'edge'])
 
         self.assertEqual([
-            'Arch    Channel    Version    Revision',
-            'amd64   stable     -          -',
-            '        candidate  1.1        42',
-            '        beta       ^          ^',
-            '        edge       ^          ^',
+            'Track    Arch    Channel    Version    Revision',
+            'latest   amd64   stable     -          -',
+            '                 candidate  1.1        42',
+            '                 beta       ^          ^',
+            '                 edge       ^          ^',
             '',
             '\x1b[0;32mThe beta and edge channels are now closed.\x1b[0m'
         ], self.fake_terminal.getvalue().splitlines())
@@ -132,38 +140,43 @@ class ChannelClosingTestCase(tests.TestCase):
             }
         }
         closed_channels = ['beta']
-        channel_maps = {
-            'amd64': [
-                {'channel': 'stable', 'info': 'none'},
-                {'channel': 'candidate', 'info': 'none'},
-                {'channel': 'beta', 'info': 'specific',
-                 'version': '1.1', 'revision': 42},
-                {'channel': 'edge', 'info': 'tracking'}
-            ],
-            'armhf': [
-                {'channel': 'stable', 'info': 'none'},
-                {'channel': 'beta', 'info': 'specific',
-                 'version': '1.2', 'revision': 24},
-                {'channel': 'beta', 'info': 'tracking'},
-                {'channel': 'edge', 'info': 'tracking'}
-            ],
+        channel_map_tree = {
+            'latest': {
+                '16': {
+                    'amd64': [
+                        {'channel': 'stable', 'info': 'none'},
+                        {'channel': 'candidate', 'info': 'none'},
+                        {'channel': 'beta', 'info': 'specific',
+                         'version': '1.1', 'revision': 42},
+                        {'channel': 'edge', 'info': 'tracking'}
+                    ],
+                    'armhf': [
+                        {'channel': 'stable', 'info': 'none'},
+                        {'channel': 'beta', 'info': 'specific',
+                         'version': '1.2', 'revision': 24},
+                        {'channel': 'beta', 'info': 'tracking'},
+                        {'channel': 'edge', 'info': 'tracking'}
+                    ],
+
+                }
+            }
         }
         mock_close_channels.side_effect = [
-            (closed_channels, channel_maps),
+            (closed_channels, channel_map_tree),
         ]
 
         main(['close', 'basic', 'beta'])
 
         self.assertEqual([
-            'Arch    Channel    Version    Revision',
-            'amd64   stable     -          -',
-            '        candidate  -          -',
-            '        beta       1.1        42',
-            '        edge       ^          ^',
-            'armhf   stable     -          -',
-            '        beta       1.2        24',
-            '        beta       ^          ^',
-            '        edge       ^          ^',
+            'Track    Arch    Channel    Version    Revision',
+            'latest   amd64   stable     -          -',
+            '                 candidate  -          -',
+            '                 beta       1.1        42',
+            '                 edge       ^          ^',
+            '         armhf   stable     -          -',
+            '                 beta       1.2        24',
+            '                 beta       ^          ^',
+            '                 edge       ^          ^',
             '',
             '\x1b[0;32mThe beta channel is now closed.\x1b[0m'
         ], self.fake_terminal.getvalue().splitlines())

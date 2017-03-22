@@ -21,7 +21,6 @@ import re
 import subprocess
 from platform import linux_distribution
 from unittest import skipUnless
-from testtools.matchers import MatchesRegex
 
 
 class ROSTestCase(snaps_tests.SnapsTestCase):
@@ -45,15 +44,12 @@ class ROSTestCase(snaps_tests.SnapsTestCase):
         # passed to rosaunch instead of being eaten by setup.sh.
         self.assert_command_in_snappy_testbed_with_regex([
             '/snap/bin/ros-example.launch-project', '--help'],
-            '.*Usage: roslaunch.*')
+            r'.*Usage: roslaunch.*')
 
-        # Make sure the talker/listener system actually comes up by verifying
-        # that the listener receives something after 5 seconds. `timeout` has
-        # a `--preserve-status` option, but it doesn't always work, so we'll
-        # leave it off and just catch the subprocess error.
-        try:
-            self.snappy_testbed.run_command(
-                ['timeout', '5s', '/snap/bin/ros-example.launch-project'])
-        except subprocess.CalledProcessError as e:
-            self.assertThat(e.output.decode('utf8'), MatchesRegex(
-                r'.*I heard Hello world.*', re.DOTALL))
+        # Run the ROS system. By default this will never exit, but the demo
+        # supports an `exit-after-receive` parameter that, if true, will cause
+        # the system to shutdown after the listener has successfully received
+        # a message.
+        self.assert_command_in_snappy_testbed_with_regex([
+            '/snap/bin/ros-example.launch-project',
+            'exit-after-receive:=true'], r'.*I heard Hello world.*', re.DOTALL)

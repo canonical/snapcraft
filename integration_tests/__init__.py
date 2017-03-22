@@ -94,7 +94,9 @@ class TestCase(testtools.TestCase):
         self.stage_dir = 'stage'
         self.prime_dir = 'prime'
 
-    def run_snapcraft(self, command, project_dir=None, debug=True):
+    def run_snapcraft(
+            self, command, project_dir=None, debug=True,
+            pre_func=lambda: None):
         if project_dir:
             self.copy_project_to_cwd(project_dir)
 
@@ -104,6 +106,7 @@ class TestCase(testtools.TestCase):
         if debug:
             snapcraft_command.append('-d')
         try:
+            pre_func()
             snapcraft_output = subprocess.check_output(
                 snapcraft_command + command,
                 stderr=subprocess.STDOUT, universal_newlines=True)
@@ -154,7 +157,7 @@ class TestCase(testtools.TestCase):
         # Because cwd already exists, shutil.copytree would raise
         # FileExistsError. Use the lesser known distutils.dir_util.copy_tree
         dir_util.copy_tree(
-            os.path.join(self.snaps_dir, project_dir), os.getcwd(),
+            os.path.join(self.snaps_dir, project_dir), self.path,
             preserve_symlinks=True)
 
     def get_output_ignoring_non_zero_exit(self, binary, cwd=None):
