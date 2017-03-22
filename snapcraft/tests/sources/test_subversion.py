@@ -15,13 +15,25 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import shutil
+import subprocess
+from unittest import mock
 
 from snapcraft.internal import sources
 
-from snapcraft.tests.sources import SourceTestCase
+from snapcraft import tests
 
 
-class TestSubversion(SourceTestCase):
+class TestSubversion(tests.sources.SourceTestCase):
+
+    def setUp(self):
+
+        super().setUp()
+        patcher = mock.patch(
+            'snapcraft.sources.Subversion._get_source_details')
+        self.mock_get_source_details = patcher.start()
+        self.mock_get_source_details.return_value = ""
+        self.addCleanup(patcher.stop)
 
     def test_pull_remote(self):
         svn = sources.Subversion('svn://my-source', 'source_dir')
@@ -108,3 +120,66 @@ class TestSubversion(SourceTestCase):
         expected_message = (
             "can't specify a source-checksum for a Subversion source")
         self.assertEqual(raised.message, expected_message)
+
+
+class SubversionBaseTestCase(tests.TestCase):
+
+    def call(self, cmd):
+        """Call a command ignoring output."""
+        subprocess.check_call(
+            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    def call_with_output(self, cmd):
+        """Return command output converted to a string."""
+        return subprocess.check_output(cmd).decode('utf-8').strip()
+
+    def rm_dir(self, dir):
+        if os.path.exists(dir):
+            shutil.rmtree(dir)
+
+    def clean_dir(self, dir):
+        self.rm_dir(dir)
+        os.mkdir(dir)
+        self.addCleanup(self.rm_dir, dir)
+
+    def clone_repo(self, repo, tree):
+        self.clean_dir(tree)
+        self.call(['svn', 'checkout', 'file://{}/{}'.format(
+            os.getcwd(), repo), tree])
+
+    def add_file(self, filename, body, message):
+        with open(filename, 'w') as fp:
+            fp.write(body)
+
+        self.call(['svn', 'add', filename])
+        self.call(['svn', 'commit', '-m', message])
+
+
+class SubversionDetailsTestCase(SubversionBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.repo_tree = 'svn-repo'
+        self.working_tree = 'svn-test'
+        self.source_dir = 'svn-checkout'
+        self.clean_dir(self.repo_tree)
+        self.clean_dir(self.working_tree)
+        self.call(['svnadmin', 'create', self.repo_tree])
+        self.clone_repo(self.repo_tree, self.working_tree)
+        import logging
+        logging.error("JOE: ls: {}".format(self.call_with_output([
+            'ls', '-al'])))
+        os.chdir(self.working_tree)
+        self.add_file('testing', 'test body', 'test message')
+        self.expected_commit = '1'
+
+        os.chdir('..')
+
+        self.svn = sources.Subversion(
+            self.repo_tree, self.source_dir, silent=True)
+        self.svn.pull()
+
+        self.source_details = self.svn._get_source_details()
+
+    def test_svn_details_commit(self):
+        self.assertEqual(self.expected_commit, self.source_details['commit'])

@@ -24,7 +24,8 @@ from ._base import Base
 class Subversion(Base):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None, source_checksum=None):
+                 source_branch=None, source_depth=None, source_checksum=None,
+                 silent=False):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth, source_checksum, 'svn')
         if source_tag:
@@ -45,6 +46,11 @@ class Subversion(Base):
             raise errors.IncompatibleOptionsError(
                 "can't specify a source-checksum for a Subversion source")
 
+        self.kwargs = {}
+        if silent:
+            self.kwargs['stdout'] = subprocess.DEVNULL
+            self.kwargs['stderr'] = subprocess.DEVNULL
+
     def pull(self):
         opts = []
 
@@ -53,14 +59,37 @@ class Subversion(Base):
 
         if os.path.exists(os.path.join(self.source_dir, '.svn')):
             subprocess.check_call(
-                [self.command, 'update'] + opts, cwd=self.source_dir)
+                [self.command, 'update'] + opts, cwd=self.source_dir,
+                **self.kwargs)
         else:
             if os.path.isdir(self.source):
                 subprocess.check_call(
                     [self.command, 'checkout',
                      'file://{}'.format(os.path.abspath(self.source)),
-                     self.source_dir] + opts)
+                     self.source_dir] + opts, **self.kwargs)
             else:
                 subprocess.check_call(
                     [self.command, 'checkout', self.source, self.source_dir] +
-                    opts)
+                    opts, **self.kwargs)
+
+        self._get_source_details()
+
+    def _get_source_details(self):
+        branch = None
+        tag = None
+        source = self.source
+        commit = self.source_commit
+
+        lines = subprocess.check_output(['svn', 'info', self.source_dir]
+                                        ).decode('utf-8').split('\n')
+        prefix = 'Last Changed Rev: '
+        for line in lines:
+            if line.startswith(prefix):
+                commit = line.replace(prefix, '')
+
+        return {
+            'commit': commit,
+            'branch': branch,
+            'source': source,
+            'tag': tag,
+        }
