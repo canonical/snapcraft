@@ -9,3 +9,18 @@ parts:
   asset-tracking:
     plugin: nil
     stage-packages: ['hello=2.10-1']
+  git-part:
+    plugin: nil
+    source: git-source
+    source-type: git
+  git-part-branch:
+    plugin: nil
+    source: git-source
+    source-type: git
+    source-branch: feature
+  git-part-tag:
+    plugin: nil
+    source: git-source
+    source-type: git
+    source-tag: feature-tag
+

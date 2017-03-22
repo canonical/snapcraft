@@ -90,7 +90,7 @@ class Git(Base):
             self._pull_existing()
         else:
             self._clone_new()
-        self._get_source_details()
+        self.assets = self._get_source_details()
 
     def _get_source_details(self):
         tag = self.source_tag
@@ -98,8 +98,8 @@ class Git(Base):
 
         if not tag:
             commit = subprocess.check_output(['git', '-C', self.source_dir,
-                                             'log', '-n1']).split()[1].decode(
-                                                 'utf-8').strip()
+                                              'rev-parse', 'HEAD']).decode(
+                                                  'utf-8').strip()
 
         branch = subprocess.check_output(['git', '-C', self.source_dir,
                                           'rev-parse', '--abbrev-ref', 'HEAD']
