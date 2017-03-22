@@ -1,0 +1,26 @@
+name: python-setup-cfg
+version: '1.0'
+summary: Verify that setup.cfg is taken into account.
+description: |
+        "Verify that entry-point/console-scripts in setup.cfg are taken
+        into account when using pbr.
+        This is a regression test for LP: #1670852"
+confinement: strict
+grade: devel
+
+parts:
+  python2-test:
+    source: python2/
+    plugin: python
+    python-version: python2
+    python-packages: 
+        - pbr==2.0.0
+    stage:
+        - -bin/pbr
+
+  python3-test:
+    source: python3/
+    plugin: python
+    python-version: python3
+    python-packages: 
+        - pbr==2.0.0
