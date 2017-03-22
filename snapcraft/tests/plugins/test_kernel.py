@@ -103,8 +103,6 @@ class KernelPluginTestCase(tests.TestCase):
         self.assertEqual(
             properties['kernel-image-target']['oneOf'],
             [{'type': 'string'}, {'type': 'object'}])
-        self.assertEqual(
-            properties['kernel-image-target']['default'], 'bzImage')
 
         self.assertEqual(
             properties['kernel-with-firmware']['type'], 'boolean')
