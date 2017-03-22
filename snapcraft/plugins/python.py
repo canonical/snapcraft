@@ -57,7 +57,7 @@ import shutil
 import stat
 import subprocess
 import tempfile
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 from glob import glob
 from shutil import which
 from textwrap import dedent
@@ -276,6 +276,17 @@ class PythonPlugin(snapcraft.BasePlugin):
         else:
             return []
 
+    def _setup_tools_install(self, setup_file):
+        command = [
+            self._get_python_command(),
+            os.path.basename(setup_file), '--no-user-cfg', 'install',
+            '--single-version-externally-managed',
+            '--user', '--record', 'install.txt']
+        cwd = os.path.dirname(setup_file)
+        self.run(
+            command, env=self._get_build_env(),
+            cwd=cwd)
+
     def _run_pip(self, setup, download=False):
         self._install_pip(download)
 
@@ -312,6 +323,14 @@ class PythonPlugin(snapcraft.BasePlugin):
                 # stage-packages
                 need_install = [k for k in wheel_names if k not in installed]
                 pip.install(need_install + ['--no-deps', '--upgrade'])
+            if os.path.exists(setup):
+                # pbr and others don't work using `pip install .`
+                # LP: #1670852
+                # There is also a chance that this setup.py is distutils based
+                # in which case we will rely on the `pip install .` ran before
+                #  this.
+                with suppress(subprocess.CalledProcessError):
+                    self._setup_tools_install(setup)
 
     def _fix_permissions(self):
         for root, dirs, files in os.walk(self.installdir):
