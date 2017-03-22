@@ -224,7 +224,10 @@ class BuildPackagesTestCase(tests.TestCase):
                      'another-uninstalled': MagicMock(installed=False),
                      'another-installed': MagicMock(installed=True),
                      'repeated-package': MagicMock(installed=False),
-                     'repeated-package': MagicMock(installed=False)}
+                     'repeated-package': MagicMock(installed=False),
+                     'versioned-package=0.2': MagicMock(installed=False),
+                     'versioned-package': MagicMock(installed=True,
+                                                    version='0.1')}
 
     def get_installable_packages(self, pkgs):
         return [p for p in pkgs if not pkgs[p].installed]
@@ -241,7 +244,7 @@ class BuildPackagesTestCase(tests.TestCase):
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
     @patch('subprocess.check_call')
-    def test_install_buid_package(
+    def test_install_build_package(
             self, mock_check_call, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = False
         self.install_test_packages(self.test_packages)
