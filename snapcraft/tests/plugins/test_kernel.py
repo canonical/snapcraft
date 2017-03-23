@@ -38,6 +38,7 @@ class KernelPluginTestCase(tests.TestCase):
         class Options:
             build_parameters = []
             kconfigfile = None
+            kconfigflavour = None
             kdefconfig = []
             kconfigs = []
             kernel_image_target = 'bzImage'
@@ -91,6 +92,9 @@ class KernelPluginTestCase(tests.TestCase):
 
         self.assertEqual(properties['kconfigfile']['type'], 'string')
         self.assertEqual(properties['kconfigfile']['default'], None)
+
+        self.assertEqual(properties['kconfigflavour']['type'], 'string')
+        self.assertEqual(properties['kconfigflavour']['default'], None)
 
         for prop in ['kconfigs', 'kernel-initrd-modules',
                      'kernel-initrd-firmware', 'kernel-device-trees']:

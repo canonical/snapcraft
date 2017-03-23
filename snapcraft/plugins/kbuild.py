@@ -28,7 +28,12 @@ explained above:
     - kconfigfile:
       (filepath)
       path to file to use as base configuration. If provided this option wins
-      over kdefconfig. default: None
+      over everything else. default: None
+
+    - kconfigflavour
+      (string)
+      Ubuntu config flavour to use as base configuration. If provided this
+      option winds over kdefconfig. default: None
 
     - kconfigs
       (list of strings)
@@ -93,13 +98,18 @@ class KBuildPlugin(BasePlugin):
             'default': [],
         }
 
+        schema['properties']['kconfigflavour'] = {
+            'type': 'string',
+            'default': None,
+        }
+
         return schema
 
     @classmethod
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['kdefconfig', 'kconfigfile', 'kconfigs']
+        return ['kdefconfig', 'kconfigfile', 'kconfigs', 'kconfigflavour']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -114,14 +124,44 @@ class KBuildPlugin(BasePlugin):
 
     def do_base_config(self, config_path):
         # if kconfigfile is provided use that
+        # elif kconfigflavour is provided, assemble the ubuntu.flavour config
         # otherwise use defconfig to seed the base config
-        if self.options.kconfigfile is None:
+        if self.options.kconfigfile:
+            shutil.copy(self.options.kconfigfile, config_path)
+        elif self.options.kconfigflavour:
+            env = open('debian/debian.env', 'r').read()
+            arch = self.project.deb_arch
+            branch = env.split('.')[1].strip()
+            flavour = self.options.kconfigflavour
+
+            configfiles = []
+            configfds = []
+            baseconfigdir = "debian.{}/config".format(branch)
+            archconfigdir = "debian.{}/config/{}".format(branch, arch)
+            commonconfig = os.path.join(baseconfigdir,
+                                        'config.common.ports')
+            ubuntuconfig = os.path.join(baseconfigdir,
+                                        'config.common.ubuntu')
+            archconfig = os.path.join(archconfigdir,
+                                      'config.common.{}'.format(arch))
+            flavourconfig = os.path.join(archconfigdir,
+                                         'config.flavour.{}'.format(flavour))
+            configfiles.append(commonconfig)
+            configfiles.append(ubuntuconfig)
+            configfiles.append(archconfig)
+            configfiles.append(flavourconfig)
+            for f in configfiles:
+                configfds.append(open(f, "r"))
+
+            # assemble .config
+            config = open(config_path, "w")
+            for f in configfds:
+                config.write(f.read())
+        else:
             # we need to run this with -j1, unit tests are a good defense here.
             make_cmd = self.make_cmd.copy()
             make_cmd[1] = '-j1'
             self.run(make_cmd + self.options.kdefconfig)
-        else:
-            shutil.copy(self.options.kconfigfile, config_path)
 
     def do_patch_config(self, config_path):
         # prepend the generated file with provided kconfigs
