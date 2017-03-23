@@ -21,6 +21,7 @@ from ._deb import Ubuntu
 _DEB_BASED_PLATFORM = [
     'Ubuntu',
     'Debian',
+    'debian',
 ]
 
 
