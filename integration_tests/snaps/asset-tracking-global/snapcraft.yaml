@@ -4,7 +4,7 @@ summary: A snap with a global build-package
 description: A snap with a global build-package
 architectures: [all]
 confinement: strict
-build-packages: ['make=4.1-6']
+build-packages: ['hello=2.10-1']
 
 parts:
   asset-tracking-global:
