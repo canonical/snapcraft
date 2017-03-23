@@ -32,6 +32,8 @@ class BuildPackageVersionTestCase(integration_tests.TestCase):
             self.assertEqual(expected_version,
                              installed_version)
 
+            self.assertEqual('4.1-6', apt_cache['make'].candidate.version)
+
     def test_build_package_bad_version(self):
         error = self.assertRaises(
             subprocess.CalledProcessError,

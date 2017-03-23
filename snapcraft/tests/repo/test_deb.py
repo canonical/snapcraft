@@ -250,22 +250,6 @@ class BuildPackagesTestCase(tests.TestCase):
         self.install_test_packages(self.test_packages)
 
         installable = self.get_installable_packages(self.test_packages)
-        mock_check_call.assert_has_calls([
-            call('sudo apt-get --no-install-recommends -y '
-                 '-o Dpkg::Progress-Fancy=1 install'.split() +
-                 sorted(set(installable)),
-                 env={'DEBIAN_FRONTEND': 'noninteractive',
-                      'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
-        ])
-
-    @patch('snapcraft.repo._deb.is_dumb_terminal')
-    @patch('subprocess.check_call')
-    def test_install_versioned_build_package(
-            self, mock_check_call, mock_is_dumb_terminal):
-        mock_is_dumb_terminal.return_value = False
-        self.install_test_packages(self.test_packages)
-
-        installable = self.get_installable_packages(self.test_packages)
         installable.append('versioned-package=0.2')
         mock_check_call.assert_has_calls([
             call('sudo apt-get --no-install-recommends -y '

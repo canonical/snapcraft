@@ -40,6 +40,7 @@ import snapcraft
 from snapcraft import config
 from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.storeapi import (
+    _agent,
     _upload,
     constants,
     errors,
@@ -97,7 +98,7 @@ class Client():
         self.session.mount('https://', HTTPAdapter(max_retries=5))
 
         self._snapcraft_headers = {
-            'X-SNAPCRAFT-VERSION': snapcraft.__version__
+            'User-Agent': _agent.get_user_agent(),
         }
 
     def request(self, method, url, params=None, headers=None, **kwargs):
@@ -657,8 +658,8 @@ class SCAClient(Client):
         if series:
             qs['series'] = series
         if arch:
-            qs['arch'] = arch
-        url = 'snaps/' + snap_id + '/status'
+            qs['architecture'] = arch
+        url = 'snaps/' + snap_id + '/state'
         if qs:
             url += '?' + urllib.parse.urlencode(qs)
         auth = _macaroon_auth(self.conf)
@@ -688,7 +689,7 @@ class SCAClient(Client):
 
         try:
             results = response.json()
-            return results['closed_channels'], results['channel_maps']
+            return results['closed_channels'], results['channel_map_tree']
         except (JSONDecodeError, KeyError):
             logger.debug(
                 'Invalid response from the server on channel closing:\n'
