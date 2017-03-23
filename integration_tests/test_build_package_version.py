@@ -32,7 +32,14 @@ class BuildPackageVersionTestCase(integration_tests.TestCase):
             self.assertEqual(expected_version,
                              installed_version)
 
-            self.assertEqual('4.1-6', apt_cache['make'].candidate.version)
+    def test_global_build_package_gets_version(self):
+        self.run_snapcraft('pull', 'build-package-version-global')
+        pkg = 'hello'
+        expected_version = '2.10-1'
+        with apt.Cache() as apt_cache:
+            installed_version = apt_cache[pkg].candidate.version
+            self.assertEqual(expected_version,
+                             installed_version)
 
     def test_build_package_bad_version(self):
         error = self.assertRaises(
