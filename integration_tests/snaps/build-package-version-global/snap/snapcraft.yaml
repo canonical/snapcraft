@@ -2,8 +2,7 @@ name: build-package-version
 version: '0.1'
 summary: install a specific version of a build-package
 description: |
-  Install a specific version of  a build-package.  One part with
-  a good version and one with a bad version
+  Install a specific version of a global build-package.
 
 grade: stable
 confinement: strict
