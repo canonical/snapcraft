@@ -286,9 +286,21 @@ class StoreClient():
                 name, download_path))
             return
         logger.info('Downloading {}'.format(name, download_path))
-        request = self.cpi.get(download_url, stream=True)
-        request.raise_for_status()
-        download_requests_stream(request, download_path)
+
+        # HttpAdapter cannot help here as this is a stream.
+        not_downloaded = True
+        retry_count = 5
+        while not_downloaded and retry_count:
+            try:
+                request = self.cpi.get(download_url, stream=True)
+                request.raise_for_status()
+                download_requests_stream(request, download_path)
+                not_downloaded = False
+            except requests.exceptions.ChunkedEncodingError as e:
+                if not retry_count:
+                    raise e
+                retry_count -= 1
+                sleep(1)
 
         if self._is_downloaded(download_path, expected_sha512):
             logger.info('Successfully downloaded {} at {}'.format(
