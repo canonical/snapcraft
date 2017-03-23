@@ -27,8 +27,7 @@ snapcraft (2.28) xenial; urgency=medium
   * cli: rename `history` to 'list-revisions' with `revisions` alias. (#1160)
   * repo: add version support for build-packages (#1185)
   * project: use a more likely to be found global build-package (#1218)
-   
-  
+
   [ Paolo Pisati ]
   * demos:  add the minimal config changes to boot a dragonboard410c (#1147)
   * kernel plugin: if no dtb target is set when the arch is arm.* build them all. (#1148)
@@ -53,7 +52,7 @@ snapcraft (2.28) xenial; urgency=medium
   * ci: install wget in the container that triggers the beta tests. (#1167)
   * demos: add a message to exit the mosquitto subscriber. (#1173)
   * demos: add the mount-observe plug to be able to run godd. (#1172)
-  *  tests: support bzr branches for external tests. (#1128)
+  * tests: support bzr branches for external tests. (#1128)
   * docs: update the directory where the API pages are generated (#1163)
   * demos: remove the tomcat demo snap. (#1176)
   * tests: make the kernel unit tests architecture independent. (#1178)
@@ -64,7 +63,6 @@ snapcraft (2.28) xenial; urgency=medium
   * tests: add manual tests for the kernel snaps (#1198)
   * ci: allow to run individual autopkgtest suites (#1200)
   * tests: expect failures for the tests that can't be run in arm64. (#1145)
-   
 
   [ Jonathan Cave ]
   * plainbox-provider plugin: run validate (#1095)
@@ -78,7 +76,7 @@ snapcraft (2.28) xenial; urgency=medium
   [ Colin Watson ]
   * godeps plugin: add git to build-packages. (#1179)
 
- -- Sergio Schvezov <sergiusens@mirkwood>  Thu, 23 Mar 2017 15:31:28 -0300
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Thu, 23 Mar 2017 16:11:14 -0300
 
 snapcraft (2.27.1) xenial; urgency=medium
 
