@@ -72,7 +72,7 @@ class Subversion(Base):
                     [self.command, 'checkout', self.source, self.source_dir] +
                     opts, **self.kwargs)
 
-        self._get_source_details()
+        self.assets = self._get_source_details()
 
     def _get_source_details(self):
         branch = None

@@ -166,9 +166,6 @@ class SubversionDetailsTestCase(SubversionBaseTestCase):
         self.clean_dir(self.working_tree)
         self.call(['svnadmin', 'create', self.repo_tree])
         self.clone_repo(self.repo_tree, self.working_tree)
-        import logging
-        logging.error("JOE: ls: {}".format(self.call_with_output([
-            'ls', '-al'])))
         os.chdir(self.working_tree)
         self.add_file('testing', 'test body', 'test message')
         self.expected_commit = '1'

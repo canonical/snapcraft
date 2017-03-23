@@ -20,6 +20,7 @@ import yaml
 from testtools.matchers import FileExists
 
 import integration_tests
+from integration_tests import _source_helpers
 
 
 class PullPropertiesTestCase(integration_tests.TestCase):
@@ -55,7 +56,7 @@ class AssetTrackingTestCase(integration_tests.TestCase):
 
     def test_pull(self):
         project_dir = 'asset-tracking'
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft(['pull', 'asset-tracking'], project_dir)
 
         state_file = os.path.join(
             self.parts_dir, 'asset-tracking', 'state', 'pull')
@@ -66,3 +67,22 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         # Verify that the correct version of 'hello' is installed
         self.assertTrue(len(state.assets['stage-packages']) > 0)
         self.assertIn('hello=2.10-1', state.assets['stage-packages'])
+
+
+class SubversionAssetTrackingTestCase(integration_tests.TestCase):
+
+    def test_pull_svn(self):
+        project_dir = 'asset-tracking'
+        part = 'svn-part'
+        expected_commit = _source_helpers.create_svn_repo('svn-source')
+        self.run_snapcraft(['pull', part], project_dir)
+
+        state_file = os.path.join(
+            self.parts_dir, part, 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+
+        self.assertIn('source-details', state.assets)
+        self.assertEqual(expected_commit,
+                         state.assets['source-details']['commit'])
