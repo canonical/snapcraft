@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -93,7 +93,6 @@ parts:
 
         self.assertIn(
             'Setting up container with project assets\n'
-            'Copying snapcraft cache into container\n'
             'Waiting for a network connection...\n'
             'Network connection established\n'
             'Retrieved snap-test_1.0_amd64.snap\n',
