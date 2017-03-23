@@ -42,6 +42,7 @@ def create_bzr_repo(name):
         os.makedirs(name)
         os.chdir(name)
         call(['bzr', 'init'])
+        call(['bzr', 'whoami', 'Test User <test.user@example.com>'])
         with open('testing', 'w') as fp:
             fp.write('testing')
 

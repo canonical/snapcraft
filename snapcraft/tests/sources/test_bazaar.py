@@ -157,6 +157,7 @@ class BazaarDetailsTestCase(BazaarBaseTestCase):
         self.clean_dir(self.source_dir)
         os.chdir(self.working_tree)
         self.call(['bzr', 'init'])
+        self.call(['bzr', 'whoami', 'Test User <test.user@example.com>'])
         with open('testing', 'w') as fp:
             fp.write('testing')
         self.call(['bzr', 'add', 'testing'])
