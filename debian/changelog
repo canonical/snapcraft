@@ -1,3 +1,85 @@
+snapcraft (2.28) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * python plugin: use stage headers if applicable. (#1156)
+  * docs: use correct target to generate docs. (#1159)
+  * packaging: snapcraft as a snap (#1158)
+  * tour: make it work when its a snap. (#1217)
+  * cleanbuild: don't copy cache into container. (#1216)
+  * kernel plugin: fix modprobe output parsing. (#1208)
+  * kernel plugin: use default per arch targets. (#1209)
+  * python plugin: support pbr/setup.cfg projects. (#1202)
+  * cleanbuild: packaging independent detection. (#1199)
+  * tests: remove repo.Ubuntu patch for plugins. (#1194)
+  * store: enable delta uploads by default. (#1196)
+  * repo: refactor into a package. (#1192)
+  * core: resolve ld link first. (#1189)
+  * store: enable retries for store calls. (#1184)
+  * New upstream release 2.28 (LP: #1675391)
+
+  [ Joe Talbott ]
+  * store: set User-Agent header in store requests. (#1188)
+  * store: Add track support to commands. (#1161)
+  * state: asset tracking - store versions of stage-packages. (#1142)
+  * store: remove 'Series' from channel map output (#1151)
+  * repo: support versioned stage-packages. (#1157)
+  * parser: use the project loader code to find the origin's snapcraft.yaml (#1141)
+  * cli: rename `history` to 'list-revisions' with `revisions` alias. (#1160)
+  * repo: add version support for build-packages (#1185)
+  * project: use a more likely to be found global build-package (#1218)
+   
+  
+  [ Paolo Pisati ]
+  * demos:  add the minimal config changes to boot a dragonboard410c (#1147)
+  * kernel plugin: if no dtb target is set when the arch is arm.* build them all. (#1148)
+  * kernel plugin: rework MAKEFLAGS from the environment (#1150)
+
+  [ Kyle Fazzari ]
+  * contribution guide: add commit message template (#1153)
+  * demos: make ROS demos support exiting after success. (#1201)
+  * catkin plugin: support building with an underlay. (#1140)
+  * demos: add ROS content sharing demo. (#1186)
+  * repo: fixup with python, not sed (#1181)
+  * repo: ignore symlinks to libc. (#1174)
+  * sources: update documentation for source-subdir (#1177)
+
+  [ Olivier Tilloy ]
+  * project: expose parallel_build_count to scriptlets. (#1154)
+
+  [ Leo Arias ]
+  * docs: build and push the API docs to github pages. (#1126)
+  * tests: pass the autopkgtest secret to the container (#1162)
+  * tests: update the ftp source for integration test (#1169)
+  * ci: install wget in the container that triggers the beta tests. (#1167)
+  * demos: add a message to exit the mosquitto subscriber. (#1173)
+  * demos: add the mount-observe plug to be able to run godd. (#1172)
+  *  tests: support bzr branches for external tests. (#1128)
+  * docs: update the directory where the API pages are generated (#1163)
+  * demos: remove the tomcat demo snap. (#1176)
+  * tests: make the kernel unit tests architecture independent. (#1178)
+  * tests: support snap directory in external tests (#1180)
+  * tests: run the master tests against the staging server (#1164)
+  * tests: take into account the new current link. (#1187)
+  * ci: run the CLA check in a docker container. (#1191)
+  * tests: add manual tests for the kernel snaps (#1198)
+  * ci: allow to run individual autopkgtest suites (#1200)
+  * tests: expect failures for the tests that can't be run in arm64. (#1145)
+   
+
+  [ Jonathan Cave ]
+  * plainbox-provider plugin: run validate (#1095)
+
+  [ Michael Hudson-Doyle ]
+  * core: fix symlink resolution in get_core_dynamic_linker. (#1170)
+
+  [ pachulo ]
+  * sources: add optional "source-checksum" property (#980)
+
+  [ Colin Watson ]
+  * godeps plugin: add git to build-packages. (#1179)
+
+ -- Sergio Schvezov <sergiusens@mirkwood>  Thu, 23 Mar 2017 15:31:28 -0300
+
 snapcraft (2.27.1) xenial; urgency=medium
 
   [ Kyle Fazzari ]
