@@ -189,12 +189,10 @@ class Ubuntu(BaseRepo):
     def install_build_packages(cls, package_names):
         unique_packages = set(package_names)
         new_packages = []
-        pkg_list = []
         with apt.Cache() as apt_cache:
             for pkg in unique_packages:
                 try:
                     pkg_name, version = _get_pkg_name_parts(pkg)
-                    pkg_list.append(str(apt_cache[pkg_name].candidate))
                     installed_version = apt_cache[pkg_name].installed
                     if not installed_version:
                         new_packages.append(pkg)
@@ -228,6 +226,18 @@ class Ubuntu(BaseRepo):
                 logger.warning(
                     'Impossible to mark packages as auto-installed: {}'
                     .format(e))
+
+    @classmethod
+    def get_installed_package_list(cls, package_names):
+        unique_packages = set(package_names)
+        pkg_list = []
+        with apt.Cache() as apt_cache:
+            for pkg in unique_packages:
+                try:
+                    pkg_name, version = _get_pkg_name_parts(pkg)
+                    pkg_list.append(str(apt_cache[pkg_name].candidate))
+                except KeyError as e:
+                    raise errors.BuildPackageNotFoundError(e) from e
 
         return pkg_list
 
