@@ -109,13 +109,12 @@ def execute(step, project_options, part_names=None):
     """
     config = snapcraft.internal.load_config(project_options)
     repo.Repo.install_build_packages(config.build_tools)
-    build_packages = repo.Repo.get_installed_package_list(config.build_tools)
 
     if (os.environ.get('SNAPCRAFT_SETUP_CORE') and
             config.data['confinement'] == 'classic'):
         _setup_core(project_options.deb_arch)
 
-    _Executor(config, project_options, build_packages).run(step, part_names)
+    _Executor(config, project_options).run(step, part_names)
 
     return {'name': config.data['name'],
             'version': config.data['version'],
@@ -169,12 +168,11 @@ def _replace_in_part(part):
 
 class _Executor:
 
-    def __init__(self, config, project_options, build_packages=None):
+    def __init__(self, config, project_options):
         self.config = config
         self.project_options = project_options
         self.parts_config = config.parts
         self._steps_run = self._init_run_states()
-        self.build_packages = build_packages
 
     def _init_run_states(self):
         steps_run = {}
@@ -247,9 +245,11 @@ class _Executor:
         part = _replace_in_part(part)
 
         # Add the annotated list of build packages
+        build_packages = repo.Repo.get_installed_package_list(
+            self.config.build_tools)
         part_build_packages = part._part_properties['build-packages']
         part.build_packages = []
-        for pkg in self.build_packages:
+        for pkg in build_packages:
             if pkg in part_build_packages:
                 part.build_packages.append(pkg)
             else:
