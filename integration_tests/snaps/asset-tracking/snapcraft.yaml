@@ -9,3 +9,7 @@ parts:
   asset-tracking:
     plugin: nil
     stage-packages: ['hello=2.10-1']
+  svn-part:
+    plugin: nil
+    source: svn-source
+    source-type: subversion
