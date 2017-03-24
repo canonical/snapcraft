@@ -63,8 +63,6 @@ contain.
       Requires `daemon` to be specified. It is the length of time in seconds
       that the system will wait for the service to stop before terminating it
       via `SIGTERM` (and `SIGKILL` if that doesn't work).
-* `icon` (string)
-  Path to the icon that will be used for the snap.
 * `parts` (yaml subsection)
   A map of part names to their own part configuration. Order in the file is
   not relevant (to aid copy-and-pasting). Check out the

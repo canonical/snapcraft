@@ -8,7 +8,7 @@ lifecycle by running:
 	$ snapcraft pull
 	$ snapcraft build
 	$ snapcraft stage
-	$ snapcraft strip
+	$ snapcraft prime
 	$ snapcraft snap
 
 That sequence of commands basically went through the lifecycle of all the
@@ -21,20 +21,18 @@ inside the parts entry.
 
 Consider the `downloader-with-wiki-parts` example. To install the built snap:
 
-	$ sudo snap install downloader_1.0_amd64.snap
+	$ sudo snap install downloader_1.0_amd64.snap --dangerous
 
 After installing, a summary of installed snaps will be presented, on a vanilla
 x86-64 bit system it would look a lot like this:
 
-	Name          Date       Version      Developer
-	ubuntu-core   2015-09-17 5            ubuntu
-	downloader    2015-10-01 ICIEPfXHQOaC sideload
-	generic-amd64 2015-10-01 1.4          canonical
+       Name                 Version  Rev  Developer  Notes
+       core                 16.04.1  888  canonical  -
+       downloader           1.0      x1              -
+       hello                1.0      x1              -
 
-Take notice of the sideload word in the downloader snap, this indicates that
-the snap did not come signed from the store, if an app is sideloaded, it
-also fakes the version to allow easy iteration without the need to change the
-metadata.
+Take notice of the Rev word in the downloader snap, "x1" indicates that
+the snap did not come signed from the store.
 
 ## Next
 

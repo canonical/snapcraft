@@ -68,7 +68,7 @@ build a local project against the libraries in `snap/stage` by running `snapcraf
 shell make`. Though in general, you are encouraged to add even local
 projects to snapcraft.yaml with a local `source:` path.
 
-For rapid iteration one can run `snappy try` against this directory to have it
+For rapid iteration one can run `sudo snap try` against this directory to have it
 mounted in a `snappy` capable system.
 
 ### Prime
@@ -85,7 +85,7 @@ reference](http://snapcraft.io/docs/build-snaps/metadata).
 This `snap/prime` directory is useful for inspecting what is going into your snap
 and to make any final post-processing on snapcraft's output.
 
-For rapid iteration one can run `snap try` against this directory to have it
+For rapid iteration one can run `sudo snap try` against this directory to have it
 mounted in a `snappy` capable system.
 
 ### Snap
