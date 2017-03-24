@@ -35,6 +35,11 @@ parts:
         - '*'
         - '**/*.pyc'
     after: [python, apt]
+  tour:
+    source: tour
+    plugin: dump
+    organize:
+      "*": tour/
   python:
     source: https://www.python.org/ftp/python/3.6.0/Python-3.6.0.tar.xz
     plugin: autotools
