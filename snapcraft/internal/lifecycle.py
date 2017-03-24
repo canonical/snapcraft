@@ -245,7 +245,7 @@ class _Executor:
         part = _replace_in_part(part)
 
         # Add the annotated list of build packages
-        build_packages = repo.Repo.get_installed_package_list(
+        build_packages = repo.Repo.get_installed_build_packages(
             self.config.build_tools)
         part_build_packages = part._part_properties['build-packages']
         part.build_packages = []
@@ -253,7 +253,7 @@ class _Executor:
             if pkg in part_build_packages:
                 part.build_packages.append(pkg)
             else:
-                pkg_name, version = repo._deb._get_pkg_name_parts(pkg)
+                pkg_name, version = repo.get_pkg_name_parts(pkg)
                 if pkg_name in part_build_packages:
                     part.build_packages.append(pkg)
 

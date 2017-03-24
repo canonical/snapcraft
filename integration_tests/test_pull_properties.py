@@ -68,14 +68,14 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.assertTrue(len(state.assets['stage-packages']) > 0)
         self.assertTrue(len(state.assets['build-packages']) > 0)
         self.assertIn('hello=2.10-1', state.assets['stage-packages'])
-        self.assertIn('make=4.1-6', state.assets['build-packages'])
+        self.assertIn('hello=2.10-1', state.assets['build-packages'])
 
     def test_pull_global_build_packages_are_excluded(self):
         """
         Ensure global build-packages are not included in each part's
         build-packages data.
         """
-        project_dir = 'asset-tracking-global'
+        project_dir = 'build-package-version-global'
         self.run_snapcraft('pull', project_dir)
 
         state_file = os.path.join(
@@ -85,4 +85,4 @@ class AssetTrackingTestCase(integration_tests.TestCase):
             state = yaml.load(f)
 
         self.assertTrue(len(state.assets['build-packages']) == 0)
-        self.assertNotIn('make=4.1-6', state.assets['build-packages'])
+        self.assertNotIn('hello=2.10-1', state.assets['build-packages'])
