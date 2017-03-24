@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import yaml
 
 
@@ -78,3 +79,17 @@ def _get_differing_keys(dict1, dict2):
             differing_keys.add(key)
 
     return differing_keys
+
+
+def get_state(state_dir, step):
+    state = None
+    state_file = step_state_file(state_dir, step)
+    if os.path.isfile(state_file):
+        with open(state_file, 'r') as f:
+            state = yaml.load(f.read())
+
+    return state
+
+
+def step_state_file(state_dir, step):
+    return os.path.join(state_dir, step)

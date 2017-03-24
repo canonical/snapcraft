@@ -215,7 +215,7 @@ class PluginHandler:
 
     def last_step(self):
         for step in reversed(common.COMMAND_ORDER):
-            if os.path.exists(self._step_state_file(step)):
+            if os.path.exists(states.step_state_file(self.statedir, step)):
                 return step
 
         return None
@@ -242,7 +242,7 @@ class PluginHandler:
         """
 
         # Retrieve the stored state for this step (assuming it has already run)
-        state = self.get_state(step)
+        state = states.get_state(self.statedir, step)
         differing_properties = set()
         differing_options = set()
 
@@ -276,7 +276,7 @@ class PluginHandler:
 
         index = common.COMMAND_ORDER.index(step)
 
-        with open(self._step_state_file(step), 'w') as f:
+        with open(states.step_state_file(self.statedir, step), 'w') as f:
             f.write(yaml.dump(state))
 
         # We know we've only just completed this step, so make sure any later
@@ -286,24 +286,12 @@ class PluginHandler:
                 self.mark_cleaned(command)
 
     def mark_cleaned(self, step):
-        state_file = self._step_state_file(step)
+        state_file = states.step_state_file(self.statedir, step)
         if os.path.exists(state_file):
             os.remove(state_file)
 
         if os.path.isdir(self.statedir) and not os.listdir(self.statedir):
             os.rmdir(self.statedir)
-
-    def get_state(self, step):
-        state = None
-        state_file = self._step_state_file(step)
-        if os.path.isfile(state_file):
-            with open(state_file, 'r') as f:
-                state = yaml.load(f.read())
-
-        return state
-
-    def _step_state_file(self, step):
-        return os.path.join(self.statedir, step)
 
     def _fetch_stage_packages(self):
         try:
@@ -487,7 +475,7 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning staging area for', hint)
 
-        state = self.get_state('stage')
+        state = states.get_state(self.statedir, 'stage')
 
         try:
             self._clean_shared_area(self.stagedir, state,
@@ -547,7 +535,7 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning priming area for', hint)
 
-        state = self.get_state('prime')
+        state = states.get_state(self.statedir, 'prime')
 
         try:
             self._clean_shared_area(self.snapdir, state,
@@ -579,7 +567,7 @@ class PluginHandler:
 
     def get_primed_dependency_paths(self):
         dependency_paths = set()
-        state = self.get_state('prime')
+        state = states.get_state(self.statedir, 'prime')
         if state:
             for path in state.dependency_paths:
                 dependency_paths.add(

@@ -18,3 +18,5 @@ from snapcraft.internal.states._prime_state import PrimeState  # noqa
 from snapcraft.internal.states._stage_state import StageState  # noqa
 from snapcraft.internal.states._build_state import BuildState  # noqa
 from snapcraft.internal.states._pull_state import PullState    # noqa
+from snapcraft.internal.states._state import get_state         # noqa
+from snapcraft.internal.states._state import step_state_file   # noqa
