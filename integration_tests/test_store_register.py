@@ -92,14 +92,17 @@ class RegisterTestCase(integration_tests.StoreTestCase):
         # This test has a potential to fail if working off a slow
         # network.
         self.login()
-        snap_name_1 = 'good-snap{}'.format(uuid.uuid4().int)
-        snap_name_2 = 'test-too-fast{}'.format(uuid.uuid4().int)
 
-        self.register(snap_name_1, wait=False)
+        error = None
+        for idx in range(self.test_store.register_count_limit + 1):
+            snap_name = 'test-too-fast{}-{}'.format(uuid.uuid4().int, idx)
+            try:
+                self.register(snap_name, wait=False)
+            except subprocess.CalledProcessError as exc:
+                error = exc
+                break
 
-        error = self.assertRaises(
-            subprocess.CalledProcessError,
-            self.register, snap_name_2, wait=False)
+        self.assertIsNotNone(error, 'An error must be raised.')
         expected = (
             '.*You must wait \d+ seconds before trying to register your '
             'next snap.*')
