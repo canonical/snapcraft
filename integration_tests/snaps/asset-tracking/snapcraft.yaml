@@ -9,3 +9,12 @@ parts:
   asset-tracking:
     plugin: nil
     stage-packages: ['hello=2.10-1']
+  hg-part:
+    plugin: nil
+    source: hg-source
+    source-type: mercurial
+  hg-part-tag:
+    plugin: nil
+    source: hg-source
+    source-type: mercurial
+    source-tag: feature-tag
