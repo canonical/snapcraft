@@ -215,7 +215,7 @@ class PluginHandler:
 
     def last_step(self):
         for step in reversed(common.COMMAND_ORDER):
-            if os.path.exists(states.step_state_file(self.statedir, step)):
+            if os.path.exists(states.get_step_state_file(self.statedir, step)):
                 return step
 
         return None
@@ -276,7 +276,7 @@ class PluginHandler:
 
         index = common.COMMAND_ORDER.index(step)
 
-        with open(states.step_state_file(self.statedir, step), 'w') as f:
+        with open(states.get_step_state_file(self.statedir, step), 'w') as f:
             f.write(yaml.dump(state))
 
         # We know we've only just completed this step, so make sure any later
@@ -286,7 +286,7 @@ class PluginHandler:
                 self.mark_cleaned(command)
 
     def mark_cleaned(self, step):
-        state_file = states.step_state_file(self.statedir, step)
+        state_file = states.get_step_state_file(self.statedir, step)
         if os.path.exists(state_file):
             os.remove(state_file)
 
