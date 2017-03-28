@@ -17,7 +17,6 @@
 import os
 import re
 import subprocess
-import time
 import uuid
 
 from testtools.matchers import Contains, MatchesRegex
