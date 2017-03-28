@@ -336,18 +336,15 @@ class TestStore(fixtures.Fixture):
         if test_store == 'fake':
             self.useFixture(FakeStore())
             self.register_count_limit = 10
-            self.register_delay = 0
             self.reserved_snap_name = 'test-reserved-snap-name'
             self.already_owned_snap_name = 'test-already-owned-snap-name'
         elif test_store == 'staging':
             self.useFixture(StagingStore())
             self.register_count_limit = 10
-            self.register_delay = 60 * 10
             self.reserved_snap_name = 'bash'
         elif test_store == 'production':
             # Use the default server URLs
             self.register_count_limit = 10
-            self.register_delay = 60 * 10
             self.reserved_snap_name = 'bash'
         else:
             raise ValueError(

@@ -206,11 +206,17 @@ class StoreTestCase(TestCase):
         command = ['register', snap_name]
         if private:
             command.append('--private')
-        self.run_snapcraft(command)
-        # sleep a few seconds to avoid hitting the store restriction on
-        # following registrations.
-        if wait:
-            time.sleep(self.test_store.register_delay)
+        try:
+            self.run_snapcraft(command)
+        except subprocess.CalledProcessError as e:
+            wait_error_regex = (
+                '.*You must wait (\d+) seconds before trying to register your '
+                'next snap.*')
+            match = re.search(wait_error_regex, e.output)
+            if wait and match:
+                time.sleep(int(match.group(1)))
+            else:
+                raise
 
     def register_key(self, key_name, email=None, password=None,
                      expect_success=True):

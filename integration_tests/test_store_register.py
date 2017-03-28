@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -86,9 +86,6 @@ class RegisterTestCase(integration_tests.StoreTestCase):
         self.assertThat(str(error.output), Contains('register-name'))
 
     def test_registrations_in_a_row_fail_if_too_fast(self):
-        # Wait after the registration attempts, so the following registrations
-        # don't get the error.
-        self.addCleanup(time.sleep, self.test_store.register_delay)
         # This test has a potential to fail if working off a slow
         # network.
         self.login()
