@@ -215,6 +215,9 @@ class StoreTestCase(TestCase):
             match = re.search(wait_error_regex, e.output)
             if wait and match:
                 time.sleep(int(match.group(1)))
+                # This could get stuck for ever if the user is registering
+                # other snaps in parallel.
+                self.register(snap_name, private, wait)
             else:
                 raise
 
