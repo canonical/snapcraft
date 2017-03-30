@@ -95,16 +95,13 @@ class Git(Base):
     def _get_source_details(self):
         tag = self.source_tag
         commit = self.source_commit
+        branch = self.source_branch
+        source = self.source
 
-        if not tag:
+        if not tag and not branch and not commit:
             commit = subprocess.check_output(['git', '-C', self.source_dir,
                                               'rev-parse', 'HEAD']).decode(
                                                   'utf-8').strip()
-
-        branch = subprocess.check_output(['git', '-C', self.source_dir,
-                                          'rev-parse', '--abbrev-ref', 'HEAD']
-                                         ).decode('utf-8').strip()
-        source = self.source
 
         return {
             'commit': commit,

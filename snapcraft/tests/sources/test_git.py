@@ -329,29 +329,43 @@ class TestGitConflicts(GitBaseTestCase):
 class GitDetailsTestCase(GitBaseTestCase):
 
     def setUp(self):
+        def _add_and_commit_file(filename, content=None, message=None):
+            if not content:
+                content = filename
+            if not message:
+                message = filename
+
+            with open(filename, 'w') as fp:
+                fp.write(content)
+            self.call(['git', 'add', filename])
+            self.call(['git', 'commit', '-am', message])
+
         super().setUp()
         self.working_tree = 'git-test'
         self.source_dir = 'git-checkout'
         self.clean_dir(self.working_tree)
         os.chdir(self.working_tree)
         self.call(['git', 'init'])
-        self.call(['git', 'config', '--local', 'user.name',
+        self.call(['git', 'config', 'user.name',
                    '"Example Dev"'])
-        self.call(['git', 'config', '--local', 'user.email',
+        self.call(['git', 'config', 'user.email',
                    'dev@example.com'])
-        with open('testing', 'w') as fp:
-            fp.write('testing')
-        self.call(['git', 'add', 'testing'])
-        self.call(['git', 'commit', '-am', 'testing'])
+        _add_and_commit_file('testing')
+        self.expected_commit = self.call_with_output(
+            ['git', 'rev-parse', 'HEAD'])
+
+        _add_and_commit_file('testing-2')
         self.call(['git', 'tag', 'test-tag'])
-        self.expected_commit = self.call_with_output(['git', 'log']).split()[1]
-        self.expected_branch = self.call_with_output(['git', 'rev-parse',
-                                                     '--abbrev-ref', 'HEAD'])
         self.expected_tag = 'test-tag'
+
+        _add_and_commit_file('testing-3')
+        self.expected_branch = 'test-branch'
+        self.call(['git', 'branch', self.expected_branch])
 
         os.chdir('..')
 
-        self.git = sources.Git(self.working_tree, self.source_dir, silent=True)
+        self.git = sources.Git(self.working_tree, self.source_dir, silent=True,
+                               source_commit=self.expected_commit)
         self.git.pull()
 
         self.source_details = self.git._get_source_details()
@@ -360,6 +374,12 @@ class GitDetailsTestCase(GitBaseTestCase):
         self.assertEqual(self.expected_commit, self.source_details['commit'])
 
     def test_git_details_branch(self):
+        shutil.rmtree(self.source_dir)
+        self.git = sources.Git(self.working_tree, self.source_dir, silent=True,
+                               source_branch=self.expected_branch)
+        self.git.pull()
+
+        self.source_details = self.git._get_source_details()
         self.assertEqual(self.expected_branch, self.source_details['branch'])
 
     def test_git_details_tag(self):
