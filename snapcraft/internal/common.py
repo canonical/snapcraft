@@ -148,6 +148,9 @@ def set_tourdir(tourdir):
 
 
 def get_tourdir():
+    snap = os.environ.get('SNAP')
+    if snap:
+        return os.path.join(snap, 'tour')
     return _tourdir
 
 
