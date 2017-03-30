@@ -83,15 +83,14 @@ class AssetTrackingTestCase(integration_tests.TestCase):
                'user.email', 'testuser@example.com'])
 
         _add_and_commit_file(name, 'testing')
-
-        commit = _call_with_output(['git', '-C', name, 'rev-parse', 'HEAD'])
-
-        _add_and_commit_file(name, 'testing-2')
         _call(['git', '-C', name, 'branch', 'feature'])
 
-        _add_and_commit_file(name, 'testing-3')
+        _add_and_commit_file(name, 'testing-2')
         _call(['git', '-C', name, 'tag', 'feature-tag'])
-        return commit
+
+        _add_and_commit_file(name, 'testing-3')
+
+        return _call_with_output(['git', '-C', name, 'rev-parse', 'HEAD'])
 
     def test_pull(self):
         project_dir = 'asset-tracking'
@@ -146,7 +145,7 @@ class AssetTrackingTestCase(integration_tests.TestCase):
     def test_pull_git_branch(self):
         project_dir = 'asset-tracking'
         part = 'git-part-branch'
-        expected_commit = self._create_git_repo('git-source')
+        self._create_git_repo('git-source')
         self.run_snapcraft(['pull', part], project_dir)
 
         state_file = os.path.join(
@@ -156,8 +155,6 @@ class AssetTrackingTestCase(integration_tests.TestCase):
             state = yaml.load(f)
 
         self.assertIn('source-details', state.assets)
-        self.assertEqual(expected_commit,
-                         state.assets['source-details']['commit'])
         self.assertEqual('feature', state.assets['source-details']['branch'])
 
     def test_pull_git_tag(self):
