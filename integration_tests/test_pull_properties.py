@@ -63,20 +63,35 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         def _call_with_output(cmd):
             return subprocess.check_output(cmd).decode('utf-8').strip()
 
+        def _add_and_commit_file(path, filename, contents=None, message=None):
+            if not contents:
+                contents = filename
+            if not message:
+                message = filename
+
+            with open(os.path.join(path, filename), 'w') as fp:
+                fp.write(contents)
+
+            _call(['git', '-C', name, 'add', filename])
+            _call(['git', '-C', name, 'commit', '-am', message])
+
         os.makedirs(name)
         _call(['git', '-C', name, 'init'])
         _call(['git', '-C', name, 'config',
-               '--local', 'user.name', 'Test User'])
+               'user.name', 'Test User'])
         _call(['git', '-C', name, 'config',
-               '--local', 'user.email', 'testuser@example.com'])
-        with open(os.path.join(name, 'testing'), 'w') as fp:
-            fp.write('testing')
+               'user.email', 'testuser@example.com'])
 
-        _call(['git', '-C', name, 'add', 'testing'])
-        _call(['git', '-C', name, 'commit', '-am', 'testing'])
+        _add_and_commit_file(name, 'testing')
+
+        commit = _call_with_output(['git', '-C', name, 'rev-parse', 'HEAD'])
+
+        _add_and_commit_file(name, 'testing-2')
         _call(['git', '-C', name, 'branch', 'feature'])
+
+        _add_and_commit_file(name, 'testing-3')
         _call(['git', '-C', name, 'tag', 'feature-tag'])
-        return _call_with_output(['git', '-C', name, 'rev-parse', 'HEAD'])
+        return commit
 
     def test_pull(self):
         project_dir = 'asset-tracking'
