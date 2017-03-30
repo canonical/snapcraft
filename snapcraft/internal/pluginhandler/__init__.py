@@ -338,19 +338,19 @@ class PluginHandler:
         part_build_packages = self._part_properties.get('build-packages', [])
         build_packages = repo.Repo.get_installed_build_packages(
             part_build_packages)
-        ann_build_packages = []
+        versioned_build_packages = []
         for pkg in build_packages:
             if pkg in part_build_packages:
-                ann_build_packages.append(pkg)
+                versioned_build_packages.append(pkg)
             else:
                 pkg_name, version = repo.get_pkg_name_parts(pkg)
                 if pkg_name in part_build_packages:
-                    ann_build_packages.append(pkg)
+                    versioned_build_packages.append(pkg)
 
         self.mark_done('pull', states.PullState(
             pull_properties, part_properties=self._part_properties,
             project=self._project_options, stage_packages=self.stage_packages,
-            build_packages=ann_build_packages,
+            build_packages=versioned_build_packages,
         ))
 
     def clean_pull(self, hint=''):
