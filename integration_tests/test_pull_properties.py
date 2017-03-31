@@ -222,3 +222,37 @@ class BazaarAssetTrackingTestCase(integration_tests.TestCase):
 
         self.assertIn('source-details', state.assets)
         self.assertEqual('feature-tag', state.assets['source-details']['tag'])
+
+
+class MercurialAssetTrackingTestCase(integration_tests.TestCase):
+
+    def test_pull_hg(self):
+        project_dir = 'asset-tracking'
+        part = 'hg-part'
+        expected_commit = _source_helpers.create_hg_repo('hg-source')
+        self.run_snapcraft(['pull', part], project_dir)
+
+        state_file = os.path.join(
+            self.parts_dir, part, 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+
+        self.assertIn('source-details', state.assets)
+        self.assertEqual(expected_commit,
+                         state.assets['source-details']['commit'])
+
+    def test_pull_hg_tag(self):
+        project_dir = 'asset-tracking'
+        part = 'hg-part-tag'
+        _source_helpers.create_hg_repo('hg-source')
+        self.run_snapcraft(['pull', part], project_dir)
+
+        state_file = os.path.join(
+            self.parts_dir, part, 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+
+        self.assertIn('source-details', state.assets)
+        self.assertEqual('feature-tag', state.assets['source-details']['tag'])
