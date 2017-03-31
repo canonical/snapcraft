@@ -171,6 +171,25 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.assertEqual('feature-tag', state.assets['source-details']['tag'])
 
 
+class SubversionAssetTrackingTestCase(integration_tests.TestCase):
+
+    def test_pull_svn(self):
+        project_dir = 'asset-tracking'
+        part = 'svn-part'
+        expected_commit = _source_helpers.create_svn_repo('svn-source')
+        self.run_snapcraft(['pull', part], project_dir)
+
+        state_file = os.path.join(
+            self.parts_dir, part, 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+
+        self.assertIn('source-details', state.assets)
+        self.assertEqual(expected_commit,
+                         state.assets['source-details']['commit'])
+
+
 class BazaarAssetTrackingTestCase(integration_tests.TestCase):
 
     def test_pull_bzr(self):
