@@ -246,6 +246,7 @@ class _Executor:
         common.env.extend(self.config.project_env())
 
         part = _replace_in_part(part)
+
         getattr(part, step)()
 
     def _annotate_build_packages(self, part_name, state, data):
