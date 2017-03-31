@@ -211,7 +211,8 @@ class _Executor:
                     self._run_step(step, part, part_names)
                     self._steps_run[part.name].add(step)
 
-        self._annotate_snapcraft_yaml(step, part_names)
+        self.annotated_snapcraft_yaml = self._annotate_snapcraft_yaml(
+            step, part_names)
         self._create_meta(step, part_names)
 
     def _run_step(self, step, part, part_names):
@@ -282,6 +283,7 @@ class _Executor:
         pass
 
     def _annotate_snapcraft_yaml(self, step, part_names):
+        annotated_snapcraft_yaml = {}
         if step == 'prime' and part_names == self.config.part_names:
             data = self.config.data
             for part_name in part_names:
@@ -290,12 +292,16 @@ class _Executor:
                 self._annotate_build_packages(part_name, state, data)
                 self._annotate_stage_packages(part_name, state, data)
                 self._annotate_sources(part_name, state, data)
+                annotated_snapcraft_yaml = data
+
+        return annotated_snapcraft_yaml
 
     def _create_meta(self, step, part_names):
         if step == 'prime' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
             meta.create_snap_packaging(self.config.data,
-                                       self.project_options)
+                                       self.project_options,
+                                       self.annotated_snapcraft_yaml)
 
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:

@@ -76,7 +76,7 @@ class CreateBaseTestCase(tests.TestCase):
         self.project_options = ProjectOptions()
 
     def generate_meta_yaml(self):
-        create_snap_packaging(self.config_data, self.project_options)
+        create_snap_packaging(self.config_data, self.project_options, {})
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
@@ -124,7 +124,7 @@ class CreateTestCase(CreateBaseTestCase):
             f.write(gadget_yaml)
 
         self.config_data['type'] = 'gadget'
-        create_snap_packaging(self.config_data, self.project_options)
+        create_snap_packaging(self.config_data, self.project_options, {})
 
         expected_gadget = os.path.join(self.meta_dir, 'gadget.yaml')
         self.assertTrue(os.path.exists(expected_gadget))
@@ -139,7 +139,8 @@ class CreateTestCase(CreateBaseTestCase):
             MissingGadgetError,
             create_snap_packaging,
             self.config_data,
-            self.project_options)
+            self.project_options,
+            {})
 
     def test_create_meta_with_declared_icon(self):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
@@ -227,10 +228,10 @@ class CreateTestCase(CreateBaseTestCase):
         open(os.path.join(os.curdir, 'my-icon.png'), 'w').close()
         self.config_data['icon'] = 'my-icon.png'
 
-        create_snap_packaging(self.config_data, self.project_options)
+        create_snap_packaging(self.config_data, self.project_options, {})
 
         # Running again should be good
-        create_snap_packaging(self.config_data, self.project_options)
+        create_snap_packaging(self.config_data, self.project_options, {})
 
     def test_create_meta_with_icon_in_setup(self):
         gui_path = os.path.join('setup', 'gui')

@@ -166,6 +166,7 @@ parts:
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
+        mock_annotate.return_value = {}
 
         # Pretend this part has already been primed
         os.makedirs(self.state_dir)

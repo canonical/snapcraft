@@ -62,7 +62,7 @@ class CommandError(Exception):
     pass
 
 
-def create_snap_packaging(config_data, project_options):
+def create_snap_packaging(config_data, project_options, snapcraft_yaml):
     """Create snap.yaml and related assets in meta.
 
     Create the meta directory and provision it with snap.yaml in the snap dir
@@ -77,6 +77,7 @@ def create_snap_packaging(config_data, project_options):
     packaging.setup_assets()
     packaging.generate_hook_wrappers()
     packaging.write_snap_directory()
+    packaging.write_snapcraft_yaml(snapcraft_yaml)
 
     return packaging.meta_dir
 
@@ -148,6 +149,19 @@ class _SnapPackaging:
             artifact_path = os.path.join(snap_dir, artifact)
             if os.path.isfile(artifact_path):
                 os.unlink(artifact_path)
+
+    def write_snapcraft_yaml(self, snapcraft_yaml_data):
+        if os.environ.get('SNAPCRAFT_BUILD_INFO'):
+            destination = os.path.join(
+                self._snap_dir, 'snap', 'snapcraft.yaml')
+
+            with contextlib.suppress(FileNotFoundError):
+                os.remove(destination)
+
+            os.makedirs(os.path.dirname(destination), exist_ok=True)
+
+            with open(destination, 'w') as fp:
+                yaml.dump(snapcraft_yaml_data, fp)
 
     def write_snap_directory(self):
         # First migrate the snap directory. It will overwrite any conflicting
