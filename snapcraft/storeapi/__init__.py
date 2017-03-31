@@ -34,6 +34,8 @@ from progressbar import (
 import pymacaroons
 import requests
 from requests.adapters import HTTPAdapter
+from requests.exceptions import RetryError
+from requests.packages.urllib3.util.retry import Retry
 from simplejson.scanner import JSONDecodeError
 
 import snapcraft
@@ -94,8 +96,11 @@ class Client():
         self.root_url = root_url
         self.session = requests.Session()
         # Setup max retries for all store URLs and the CDN
-        self.session.mount('http://', HTTPAdapter(max_retries=5))
-        self.session.mount('https://', HTTPAdapter(max_retries=5))
+        retries = Retry(total=int(os.environ.get('STORE_RETRIES', 5)),
+                        backoff_factor=int(os.environ.get('STORE_BACKOFF', 2)),
+                        status_forcelist=[104, 500, 502, 503, 504])
+        self.session.mount('http://', HTTPAdapter(max_retries=retries))
+        self.session.mount('https://', HTTPAdapter(max_retries=retries))
 
         self._snapcraft_headers = {
             'User-Agent': _agent.get_user_agent(),
@@ -112,9 +117,12 @@ class Client():
             headers = self._snapcraft_headers
 
         final_url = urllib.parse.urljoin(self.root_url, url)
-        response = self.session.request(
-            method, final_url, headers=headers,
-            params=params, **kwargs)
+        try:
+            response = self.session.request(
+                method, final_url, headers=headers,
+                params=params, **kwargs)
+        except RetryError as e:
+            raise errors.StoreRetryError(e) from e
         return response
 
     def get(self, url, **kwargs):
@@ -278,9 +286,22 @@ class StoreClient():
                 name, download_path))
             return
         logger.info('Downloading {}'.format(name, download_path))
-        request = self.cpi.get(download_url, stream=True)
-        request.raise_for_status()
-        download_requests_stream(request, download_path)
+
+        # HttpAdapter cannot help here as this is a stream.
+        # LP: #1617765
+        not_downloaded = True
+        retry_count = 5
+        while not_downloaded and retry_count:
+            request = self.cpi.get(download_url, stream=True)
+            request.raise_for_status()
+            try:
+                download_requests_stream(request, download_path)
+                not_downloaded = False
+            except requests.exceptions.ChunkedEncodingError as e:
+                retry_count -= 1
+                if not retry_count:
+                    raise e
+                sleep(1)
 
         if self._is_downloaded(download_path, expected_sha512):
             logger.info('Successfully downloaded {} at {}'.format(

@@ -9,6 +9,7 @@ parts:
   asset-tracking:
     plugin: nil
     stage-packages: ['hello=2.10-1']
+    build-packages: ['hello=2.10-1']
   git-part:
     plugin: nil
     source: git-source
@@ -23,4 +24,3 @@ parts:
     source: git-source
     source-type: git
     source-tag: feature-tag
-
