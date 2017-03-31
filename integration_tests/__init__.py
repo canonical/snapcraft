@@ -198,7 +198,7 @@ class StoreTestCase(TestCase):
 
     def logout(self):
         output = self.run_snapcraft('logout')
-        expected = (r'.*Clearing credentials for Ubuntu One SSO.\n.*\n'
+        expected = (r'.*Clearing credentials for Ubuntu One SSO.\n'
                     r'Credentials cleared.\n.*')
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
