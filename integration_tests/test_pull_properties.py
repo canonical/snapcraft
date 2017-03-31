@@ -137,7 +137,8 @@ class AssetTrackingTestCase(integration_tests.TestCase):
             state = yaml.load(f)
 
         self.assertIn('source-details', state.assets)
-        self.assertEqual(expected_commit, state.assets['source-details']['commit'])
+        self.assertEqual(expected_commit,
+                         state.assets['source-details']['commit'])
 
     def test_pull_git_branch(self):
         project_dir = 'asset-tracking'
@@ -187,6 +188,7 @@ class BazaarAssetTrackingTestCase(integration_tests.TestCase):
         self.assertIn('source-details', state.assets)
         self.assertEqual(expected_commit,
                          state.assets['source-details']['commit'])
+
     def test_pull_bzr_tag(self):
         project_dir = 'asset-tracking'
         part = 'bzr-part-tag'
