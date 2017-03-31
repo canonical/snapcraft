@@ -733,7 +733,7 @@ def gated(snap_name):
     except KeyError:
         raise storeapi.errors.SnapNotFoundError(snap_name)
 
-    validations = store.get_validations(snap_id)
+    validations = store.get_assertion(snap_id, assertion_type='validations')
 
     if validations:
         table_data = []
@@ -793,14 +793,14 @@ def validate(snap_name, validations, revoke=False, key=None):
         if revoke:
             assertion['revoked'] = "true"
 
-        assertion = _sign_validation(validation, assertion, key)
+        assertion = _sign_assertion(validation, assertion, key)
 
         # Save assertion to a properly named file
         fname = '{}-{}-r{}.assertion'.format(snap_name, gated_name, rev)
         with open(fname, 'wb') as f:
             f.write(assertion)
 
-        store.push_validation(snap_id, assertion)
+        store.push_assertion(snap_id, assertion, assertion_type='validations')
 
 
 validation_re = re.compile('^[^=]+=[0-9]+$')
@@ -815,7 +815,7 @@ def _check_validations(validations):
         raise RuntimeError()
 
 
-def _sign_validation(validation, assertion, key):
+def _sign_assertion(whatsthis, assertion, key):
     cmdline = ['snap', 'sign']
     if key:
         cmdline += ['-k', key]
@@ -823,9 +823,10 @@ def _sign_validation(validation, assertion, key):
         cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     data = json.dumps(assertion).encode('utf8')
-    logger.info('Signing validation {}'.format(validation))
+    logger.info('Signing assertion {}'.format(whatsthis))
     assertion, err = snap_sign.communicate(input=data)
     if snap_sign.returncode != 0:
         err = err.decode('ascii', errors='replace')
         raise RuntimeError('Error signing assertion: {!s}'.format(err))
+
     return assertion
