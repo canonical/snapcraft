@@ -1,6 +1,6 @@
 name: build-package-version
 version: '0.1'
-summary: install a specific version of a build-package
+summary: install a specific version of a global build-package
 description: |
   Install a specific version of a global build-package.
 
@@ -9,5 +9,5 @@ confinement: strict
 build-packages: ['hello=2.10-1']
 
 parts:
-  hello:
+  build-package-version-global:
     plugin: nil
