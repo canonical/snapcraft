@@ -21,6 +21,7 @@ import yaml
 from testtools.matchers import FileExists
 
 import integration_tests
+from integration_tests import _source_helpers
 
 
 class PullPropertiesTestCase(integration_tests.TestCase):
@@ -136,8 +137,7 @@ class AssetTrackingTestCase(integration_tests.TestCase):
             state = yaml.load(f)
 
         self.assertIn('source-details', state.assets)
-        self.assertEqual(expected_commit,
-                         state.assets['source-details']['commit'])
+        self.assertEqual(expected_commit, state.assets['source-details']['commit'])
 
     def test_pull_git_branch(self):
         project_dir = 'asset-tracking'
@@ -158,6 +158,39 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         project_dir = 'asset-tracking'
         part = 'git-part-tag'
         self._create_git_repo('git-source')
+        self.run_snapcraft(['pull', part], project_dir)
+
+        state_file = os.path.join(
+            self.parts_dir, part, 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+
+        self.assertIn('source-details', state.assets)
+        self.assertEqual('feature-tag', state.assets['source-details']['tag'])
+
+
+class BazaarAssetTrackingTestCase(integration_tests.TestCase):
+
+    def test_pull_bzr(self):
+        project_dir = 'asset-tracking'
+        part = 'bzr-part'
+        expected_commit = _source_helpers.create_bzr_repo('bzr-source')
+        self.run_snapcraft(['pull', part], project_dir)
+
+        state_file = os.path.join(
+            self.parts_dir, part, 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+
+        self.assertIn('source-details', state.assets)
+        self.assertEqual(expected_commit,
+                         state.assets['source-details']['commit'])
+    def test_pull_bzr_tag(self):
+        project_dir = 'asset-tracking'
+        part = 'bzr-part-tag'
+        _source_helpers.create_bzr_repo('bzr-source')
         self.run_snapcraft(['pull', part], project_dir)
 
         state_file = os.path.join(
