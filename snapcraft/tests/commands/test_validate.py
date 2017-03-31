@@ -55,9 +55,9 @@ class ValidateTestCase(tests.TestCase):
         main([self.command_name, 'ubuntu-core', "ubuntu-core=3",
               "test-snap=4"])
 
-        self.assertIn('Signing validation ubuntu-core=3',
+        self.assertIn('Signing assertion ubuntu-core=3',
                       self.fake_terminal.getvalue())
-        self.assertIn('Signing validation test-snap=4',
+        self.assertIn('Signing assertion test-snap=4',
                       self.fake_terminal.getvalue())
 
     def test_validate_with_key(self):
@@ -68,9 +68,9 @@ class ValidateTestCase(tests.TestCase):
         self.popen_mock.assert_called_with(['snap', 'sign', '-k', 'keyname'],
                                            stderr=-1, stdin=-1, stdout=-1)
 
-        self.assertIn('Signing validation ubuntu-core=3',
+        self.assertIn('Signing assertion ubuntu-core=3',
                       self.fake_terminal.getvalue())
-        self.assertIn('Signing validation test-snap=4',
+        self.assertIn('Signing assertion test-snap=4',
                       self.fake_terminal.getvalue())
 
     def test_validate_from_branded_store(self):
@@ -83,7 +83,7 @@ class ValidateTestCase(tests.TestCase):
 
         main([self.command_name, 'ubuntu-core', 'test-snap-branded-store=1'])
 
-        self.assertIn('Signing validation test-snap-branded-store=1',
+        self.assertIn('Signing assertion test-snap-branded-store=1',
                       self.fake_terminal.getvalue())
 
     def test_validate_unknown_snap(self):

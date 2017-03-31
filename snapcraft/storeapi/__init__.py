@@ -299,11 +299,11 @@ class StoreClient():
                 file_sum.update(file_chunk)
         return expected_sha512 == file_sum.hexdigest()
 
-    def push_validation(self, snap_id, assertion):
-        return self.sca.push_validation(snap_id, assertion)
+    def push_assertion(self, snap_id, assertion, assertion_type):
+        return self.sca.push_assertion(snap_id, assertion, assertion_type)
 
-    def get_validations(self, snap_id):
-        return self.sca.get_validations(snap_id)
+    def get_assertion(self, snap_id, assertion_type):
+        return self.sca.get_assertion(snap_id, assertion_type)
 
     def sign_developer_agreement(self, latest_tos_accepted=False):
         return self.sca.sign_developer_agreement(latest_tos_accepted)
@@ -574,13 +574,14 @@ class SCAClient(Client):
 
         return response_json
 
-    def push_validation(self, snap_id, assertion):
+    def push_assertion(self, snap_id, assertion, assertion_type):
         data = {
             'assertion': assertion.decode('utf-8'),
         }
         auth = _macaroon_auth(self.conf)
         response = self.put(
-            'snaps/{}/validations'.format(snap_id), data=json.dumps(data),
+            'snaps/{}/{}'.format(snap_id, assertion_type),
+            data=json.dumps(data),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json',
                      'Accept': 'application/json'})
@@ -598,10 +599,10 @@ class SCAClient(Client):
 
         return response_json
 
-    def get_validations(self, snap_id):
+    def get_assertion(self, snap_id, assertion_type):
         auth = _macaroon_auth(self.conf)
         response = self.get(
-            'snaps/{}/validations'.format(snap_id),
+            'snaps/{}/{}'.format(snap_id, assertion_type),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json',
                      'Accept': 'application/json'})
@@ -611,8 +612,8 @@ class SCAClient(Client):
             response_json = response.json()
         except JSONDecodeError:
             message = ('Invalid response from the server when getting '
-                       'validations: {} {}').format(
-                           response.status_code, response)
+                       '{}: {} {}').format(
+                           assertion_type, response.status_code, response)
             logger.debug(message)
             raise errors.StoreValidationError(
                 snap_id, response, message='Invalid response from the server')
