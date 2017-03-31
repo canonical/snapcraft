@@ -215,6 +215,11 @@ class FakeStore(fixtures.Fixture):
             urllib.parse.urljoin(
                 self.fake_sso_server_fixture.url, 'api/v2/')))
 
+        self.useFixture(fixtures.EnvironmentVariable(
+            'STORE_RETRIES', '1'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'STORE_BACKOFF', '0'))
+
         self.fake_store_upload_server_fixture = FakeStoreUploadServerRunning()
         self.useFixture(self.fake_store_upload_server_fixture)
         self.useFixture(fixtures.EnvironmentVariable(
