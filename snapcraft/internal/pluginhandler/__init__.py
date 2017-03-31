@@ -339,6 +339,7 @@ class PluginHandler:
             pull_properties, part_properties=self._part_properties,
             project=self._project_options, stage_packages=self.stage_packages,
             build_packages=versioned_build_packages,
+            source_details=self.source_handler.assets
         ))
 
     def clean_pull(self, hint=''):

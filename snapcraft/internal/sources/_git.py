@@ -90,3 +90,22 @@ class Git(Base):
             self._pull_existing()
         else:
             self._clone_new()
+        self.assets = self._get_source_details()
+
+    def _get_source_details(self):
+        tag = self.source_tag
+        commit = self.source_commit
+        branch = self.source_branch
+        source = self.source
+
+        if not tag and not branch and not commit:
+            commit = subprocess.check_output(['git', '-C', self.source_dir,
+                                              'rev-parse', 'HEAD']).decode(
+                                                  'utf-8').strip()
+
+        return {
+            'commit': commit,
+            'branch': branch,
+            'source': source,
+            'tag': tag,
+        }
