@@ -742,11 +742,11 @@ class StatusTracker:
         'processing_error': 'Error while processing...',
     }
 
-    __error_codes = (
+    __error_codes = {
         'processing_error',
         'processing_upload_delta_error',
         'need_manual_review',
-    )
+    }
 
     def __init__(self, status_details_url):
         self.__status_details_url = status_details_url
@@ -778,7 +778,7 @@ class StatusTracker:
         return content
 
     def raise_for_code(self):
-        if any(self.__content['code'] == k for k in self.__error_codes):
+        if self.__content['code'] in self.__error_codes:
             raise errors.StoreReviewError(self.__content)
 
     def _get_message(self, content):
