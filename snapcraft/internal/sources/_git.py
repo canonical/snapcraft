@@ -90,7 +90,7 @@ class Git(Base):
             self._pull_existing()
         else:
             self._clone_new()
-        self.assets = self._get_source_details()
+        self.source_details = self._get_source_details()
 
     def _get_source_details(self):
         tag = self.source_tag

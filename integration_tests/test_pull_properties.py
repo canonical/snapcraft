@@ -55,6 +55,42 @@ class PullPropertiesTestCase(integration_tests.TestCase):
 
 class AssetTrackingTestCase(integration_tests.TestCase):
 
+    def test_pull(self):
+        project_dir = 'asset-tracking'
+        self.run_snapcraft(['pull', 'asset-tracking'], project_dir)
+
+        state_file = os.path.join(
+            self.parts_dir, project_dir, 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+
+        # Verify that the correct version of 'hello' is installed
+        self.assertTrue(len(state.assets['stage-packages']) > 0)
+        self.assertTrue(len(state.assets['build-packages']) > 0)
+        self.assertIn('hello=2.10-1', state.assets['stage-packages'])
+        self.assertIn('source-details', state.assets)
+
+    def test_pull_global_build_packages_are_excluded(self):
+        """
+        Ensure global build-packages are not included in each part's
+        build-packages data.
+        """
+        project_dir = 'build-package-version-global'
+        self.run_snapcraft('pull', project_dir)
+
+        state_file = os.path.join(
+            self.parts_dir, project_dir, 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+
+        self.assertTrue(len(state.assets['build-packages']) == 0)
+        self.assertNotIn('hello=2.10-1', state.assets['build-packages'])
+
+
+class GitAssetTrackingTestCase(integration_tests.TestCase):
+
     def _create_git_repo(self, name):
         def _call(cmd):
             subprocess.check_call(cmd, stdout=subprocess.DEVNULL,
@@ -92,80 +128,47 @@ class AssetTrackingTestCase(integration_tests.TestCase):
 
         return _call_with_output(['git', '-C', name, 'rev-parse', 'HEAD'])
 
-    def test_pull(self):
+    scenarios = [
+        ('plain', {
+            'part_name': 'git-part',
+            'expected': {}
+        }),
+        ('branch', {
+            'part_name': 'git-part-branch',
+            'expected': {
+                'branch': 'feature',
+            }
+        }),
+        ('tag', {
+            'part_name': 'git-part-tag',
+            'expected': {
+                'tag': 'feature-tag',
+            }
+        }),
+    ]
+
+    def test_git_pull(self):
         project_dir = 'asset-tracking'
-        self.run_snapcraft(['pull', 'asset-tracking'], project_dir)
 
-        state_file = os.path.join(
-            self.parts_dir, project_dir, 'state', 'pull')
-        self.assertThat(state_file, FileExists())
-        with open(state_file) as f:
-            state = yaml.load(f)
-
-        # Verify that the correct version of 'hello' is installed
-        self.assertTrue(len(state.assets['stage-packages']) > 0)
-        self.assertTrue(len(state.assets['build-packages']) > 0)
-        self.assertIn('hello=2.10-1', state.assets['stage-packages'])
-        self.assertIn('source-details', state.assets)
-
-    def test_pull_git(self):
-        project_dir = 'asset-tracking'
-        part = 'git-part'
         expected_commit = self._create_git_repo('git-source')
-        self.run_snapcraft(['pull', part], project_dir)
+        self.run_snapcraft(['pull', self.part_name], project_dir)
 
         state_file = os.path.join(
-            self.parts_dir, part, 'state', 'pull')
+            self.parts_dir, self.part_name, 'state', 'pull')
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
             state = yaml.load(f)
 
         self.assertIn('source-details', state.assets)
-        self.assertEqual(expected_commit,
-                         state.assets['source-details']['commit'])
 
-    def test_pull_git_branch(self):
-        project_dir = 'asset-tracking'
-        part = 'git-part-branch'
-        self._create_git_repo('git-source')
-        self.run_snapcraft(['pull', part], project_dir)
+        print("JOE: {}".format(state.assets['source-details']))
 
-        state_file = os.path.join(
-            self.parts_dir, part, 'state', 'pull')
-        self.assertThat(state_file, FileExists())
-        with open(state_file) as f:
-            state = yaml.load(f)
-
-        self.assertIn('source-details', state.assets)
-        self.assertEqual('feature', state.assets['source-details']['branch'])
-
-    def test_pull_git_tag(self):
-        project_dir = 'asset-tracking'
-        part = 'git-part-tag'
-        self._create_git_repo('git-source')
-        self.run_snapcraft(['pull', part], project_dir)
-
-        state_file = os.path.join(
-            self.parts_dir, part, 'state', 'pull')
-        with open(state_file) as f:
-            state = yaml.load(f)
-
-        self.assertIn('source-details', state.assets)
-        self.assertEqual('feature-tag', state.assets['source-details']['tag'])
-
-    def test_pull_global_build_packages_are_excluded(self):
-        """
-        Ensure global build-packages are not included in each part's
-        build-packages data.
-        """
-        project_dir = 'build-package-version-global'
-        self.run_snapcraft('pull', project_dir)
-
-        state_file = os.path.join(
-            self.parts_dir, project_dir, 'state', 'pull')
-        self.assertThat(state_file, FileExists())
-        with open(state_file) as f:
-            state = yaml.load(f)
-
-        self.assertTrue(len(state.assets['build-packages']) == 0)
-        self.assertNotIn('hello=2.10-1', state.assets['build-packages'])
+        if 'branch' in self.expected:
+            self.assertEqual(self.expected['branch'],
+                             state.assets['source-details']['branch'])
+        elif 'tag' in self.expected:
+            self.assertEqual(self.expected['tag'],
+                             state.assets['source-details']['tag'])
+        else:
+            self.assertEqual(expected_commit,
+                             state.assets['source-details']['commit'])
