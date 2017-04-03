@@ -338,6 +338,7 @@ class PluginHandler:
         self.mark_done('pull', states.PullState(
             pull_properties, part_properties=self._part_properties,
             project=self._project_options, stage_packages=self.stage_packages,
+            source_details=self.source_handler.assets,
             build_packages=versioned_build_packages,
         ))
 

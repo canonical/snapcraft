@@ -20,6 +20,7 @@ import yaml
 from testtools.matchers import FileExists
 
 import integration_tests
+from integration_tests import _source_helpers
 
 
 class PullPropertiesTestCase(integration_tests.TestCase):
@@ -56,7 +57,7 @@ class AssetTrackingTestCase(integration_tests.TestCase):
 
     def test_pull(self):
         project_dir = 'asset-tracking'
-        self.run_snapcraft('pull', project_dir)
+        self.run_snapcraft(['pull', 'asset-tracking'], project_dir)
 
         state_file = os.path.join(
             self.parts_dir, project_dir, 'state', 'pull')
@@ -69,6 +70,40 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.assertTrue(len(state.assets['build-packages']) > 0)
         self.assertIn('hello=2.10-1', state.assets['stage-packages'])
         self.assertIn('hello=2.10-1', state.assets['build-packages'])
+
+
+class BazaarAssetTrackingTestCase(integration_tests.TestCase):
+
+    def test_pull_bzr(self):
+        project_dir = 'asset-tracking'
+        part = 'bzr-part'
+        expected_commit = _source_helpers.create_bzr_repo('bzr-source')
+        self.run_snapcraft(['pull', part], project_dir)
+
+        state_file = os.path.join(
+            self.parts_dir, part, 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+
+        self.assertIn('source-details', state.assets)
+        self.assertEqual(expected_commit,
+                         state.assets['source-details']['commit'])
+
+    def test_pull_bzr_tag(self):
+        project_dir = 'asset-tracking'
+        part = 'bzr-part-tag'
+        _source_helpers.create_bzr_repo('bzr-source')
+        self.run_snapcraft(['pull', part], project_dir)
+
+        state_file = os.path.join(
+            self.parts_dir, part, 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+
+        self.assertIn('source-details', state.assets)
+        self.assertEqual('feature-tag', state.assets['source-details']['tag'])
 
     def test_pull_global_build_packages_are_excluded(self):
         """
