@@ -366,6 +366,7 @@ from snapcraft._store import (                      # noqa
     download,
     revisions,
     gated,
+    get_developers,
     list_keys,
     list_registered,
     login,
@@ -375,6 +376,7 @@ from snapcraft._store import (                      # noqa
     register_key,
     release,
     sign_build,
+    sign_developers,
     status,
     validate,
 )

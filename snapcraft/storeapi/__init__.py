@@ -299,11 +299,11 @@ class StoreClient():
                 file_sum.update(file_chunk)
         return expected_sha512 == file_sum.hexdigest()
 
-    def push_assertion(self, snap_id, assertion, assertion_type):
-        return self.sca.push_assertion(snap_id, assertion, assertion_type)
+    def push_assertion(self, snap_id, assertion, endpoint):
+        return self.sca.push_assertion(snap_id, assertion, endpoint)
 
-    def get_assertion(self, snap_id, assertion_type):
-        return self.sca.get_assertion(snap_id, assertion_type)
+    def get_assertion(self, snap_id, endpoint):
+        return self.sca.get_assertion(snap_id, endpoint)
 
     def sign_developer_agreement(self, latest_tos_accepted=False):
         return self.sca.sign_developer_agreement(latest_tos_accepted)
@@ -574,13 +574,13 @@ class SCAClient(Client):
 
         return response_json
 
-    def push_assertion(self, snap_id, assertion, assertion_type):
+    def push_assertion(self, snap_id, assertion, endpoint):
         data = {
             'assertion': assertion.decode('utf-8'),
         }
         auth = _macaroon_auth(self.conf)
         response = self.put(
-            'snaps/{}/{}'.format(snap_id, assertion_type),
+            'snaps/{}/{}'.format(snap_id, endpoint),
             data=json.dumps(data),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json',
@@ -599,10 +599,10 @@ class SCAClient(Client):
 
         return response_json
 
-    def get_assertion(self, snap_id, assertion_type):
+    def get_assertion(self, snap_id, endpoint):
         auth = _macaroon_auth(self.conf)
         response = self.get(
-            'snaps/{}/{}'.format(snap_id, assertion_type),
+            'snaps/{}/{}'.format(snap_id, endpoint),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json',
                      'Accept': 'application/json'})
@@ -613,7 +613,7 @@ class SCAClient(Client):
         except JSONDecodeError:
             message = ('Invalid response from the server when getting '
                        '{}: {} {}').format(
-                           assertion_type, response.status_code, response)
+                           endpoint, response.status_code, response)
             logger.debug(message)
             raise errors.StoreValidationError(
                 snap_id, response, message='Invalid response from the server')
