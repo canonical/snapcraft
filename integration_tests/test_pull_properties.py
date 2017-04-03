@@ -18,6 +18,7 @@ import os
 import subprocess
 import yaml
 
+import testscenarios
 from testtools.matchers import FileExists
 
 import integration_tests
@@ -89,7 +90,8 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.assertNotIn('hello=2.10-1', state.assets['build-packages'])
 
 
-class GitAssetTrackingTestCase(integration_tests.TestCase):
+class GitAssetTrackingTestCase(testscenarios.WithScenarios,
+                               integration_tests.TestCase):
 
     def _create_git_repo(self, name):
         def _call(cmd):
