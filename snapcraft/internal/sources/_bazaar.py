@@ -75,11 +75,9 @@ class Bazaar(Base):
                 ).decode('utf-8').strip()
 
         branch = None
-        source = self.source
 
         return {
-            'commit': commit,
-            'branch': branch,
-            'source': source,
-            'tag': tag,
+            'source-commit': commit,
+            'source-branch': branch,
+            'source-tag': tag,
         }

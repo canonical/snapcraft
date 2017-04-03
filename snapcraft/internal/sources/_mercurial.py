@@ -77,7 +77,6 @@ class Mercurial(Base):
         tag = self.source_tag
         commit = self.source_commit
         branch = self.source_branch
-        source = self.source
 
         if not (tag or commit or branch):
             commit = subprocess.check_output(
@@ -85,8 +84,7 @@ class Mercurial(Base):
                     'utf-8').strip()
 
         return {
-            'commit': commit,
-            'branch': branch,
-            'source': source,
-            'tag': tag,
+            'source-commit': commit,
+            'source-branch': branch,
+            'source-tag': tag,
         }

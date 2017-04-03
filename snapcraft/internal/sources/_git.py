@@ -96,7 +96,6 @@ class Git(Base):
         tag = self.source_tag
         commit = self.source_commit
         branch = self.source_branch
-        source = self.source
 
         if not tag and not branch and not commit:
             commit = subprocess.check_output(['git', '-C', self.source_dir,
@@ -104,8 +103,7 @@ class Git(Base):
                                                   'utf-8').strip()
 
         return {
-            'commit': commit,
-            'branch': branch,
-            'source': source,
-            'tag': tag,
+            'source-commit': commit,
+            'source-branch': branch,
+            'source-tag': tag,
         }

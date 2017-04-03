@@ -281,7 +281,10 @@ class _Executor:
         part_data['stage-packages'] = stage_packages
 
     def _annotate_sources(self, part_name, state, data):
-        pass
+        source_details = state.assets.get('source-details', {})
+        part_data = data['parts'][part_name]
+        if source_details:
+            part_data.update(source_details)
 
     def _annotate_snapcraft_yaml(self, step, part_names):
         annotated_snapcraft_yaml = {}

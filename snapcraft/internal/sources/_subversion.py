@@ -77,7 +77,6 @@ class Subversion(Base):
     def _get_source_details(self):
         branch = None
         tag = None
-        source = self.source
         commit = self.source_commit
 
         lines = subprocess.check_output(['svn', 'info', self.source_dir]
@@ -88,8 +87,7 @@ class Subversion(Base):
                 commit = line.replace(prefix, '')
 
         return {
-            'commit': commit,
-            'branch': branch,
-            'source': source,
-            'tag': tag,
+            'source-commit': commit,
+            'source-branch': branch,
+            'source-tag': tag,
         }

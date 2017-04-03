@@ -179,4 +179,5 @@ class SubversionDetailsTestCase(SubversionBaseTestCase):
         self.source_details = self.svn._get_source_details()
 
     def test_svn_details_commit(self):
-        self.assertEqual(self.expected_commit, self.source_details['commit'])
+        self.assertEqual(self.expected_commit,
+                         self.source_details['source-commit'])

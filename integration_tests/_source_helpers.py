@@ -37,6 +37,25 @@ def call_with_output(cmd):
     return subprocess.check_output(cmd).decode('utf-8').strip()
 
 
+def create_git_repo(name):
+    with return_to_cwd():
+        os.makedirs(name)
+        os.chdir(name)
+        call(['git', 'init'])
+        call(['git', 'config', 'user.name', 'Test User'])
+        call(['git', 'config', 'user.email', 'test.user@test.com'])
+
+        with open('testing', 'w') as fp:
+            fp.write('testing')
+
+        call(['git', 'add', 'testing'])
+        call(['git', 'commit', '-m', 'testing'])
+        call(['git', 'tag', 'feature-tag'])
+        revno = call_with_output(['git', 'rev-parse', 'HEAD'])
+
+        return revno
+
+
 def create_bzr_repo(name):
     with return_to_cwd():
         os.makedirs(name)
