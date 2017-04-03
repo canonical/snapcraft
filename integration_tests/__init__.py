@@ -26,6 +26,7 @@ from distutils import dir_util
 import fixtures
 import pexpect
 from unittest import mock
+import testscenarios
 import testtools
 from testtools import content
 from testtools.matchers import MatchesRegex
@@ -33,7 +34,7 @@ from testtools.matchers import MatchesRegex
 from snapcraft.tests import fixture_setup
 
 
-class TestCase(testtools.TestCase):
+class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
     def setUp(self):
         super().setUp()
