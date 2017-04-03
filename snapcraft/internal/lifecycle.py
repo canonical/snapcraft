@@ -243,6 +243,7 @@ class _Executor:
         common.env.extend(self.config.project_env())
 
         part = _replace_in_part(part)
+
         getattr(part, step)()
 
     def _create_meta(self, step, part_names):
