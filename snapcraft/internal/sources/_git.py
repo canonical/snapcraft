@@ -97,6 +97,7 @@ class Git(Base):
         commit = self.source_commit
         branch = self.source_branch
         source = self.source
+        checksum = self.source_checksum
 
         if not tag and not branch and not commit:
             commit = subprocess.check_output(['git', '-C', self.source_dir,
@@ -108,4 +109,5 @@ class Git(Base):
             'branch': branch,
             'source': source,
             'tag': tag,
+            'checksum': checksum,
         }
