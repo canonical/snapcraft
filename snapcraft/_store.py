@@ -733,7 +733,7 @@ def gated(snap_name):
     except KeyError:
         raise storeapi.errors.SnapNotFoundError(snap_name)
 
-    validations = store.get_assertion(snap_id, assertion_type='validations')
+    validations = store.get_assertion(snap_id, endpoint='validations')
 
     if validations:
         table_data = []
@@ -793,17 +793,35 @@ def validate(snap_name, validations, revoke=False, key=None):
         if revoke:
             assertion['revoked'] = "true"
 
-        assertion = _sign_assertion(validation, assertion, key)
+        assertion = _sign_assertion(validation, assertion, key, 'validations')
 
         # Save assertion to a properly named file
         fname = '{}-{}-r{}.assertion'.format(snap_name, gated_name, rev)
         with open(fname, 'wb') as f:
             f.write(assertion)
 
-        store.push_assertion(snap_id, assertion, assertion_type='validations')
+        store.push_assertion(snap_id, assertion, endpoint='validations')
 
 
 validation_re = re.compile('^[^=]+=[0-9]+$')
+
+
+def get_developers(snap_id):
+    store = storeapi.StoreClient()
+    developer = {'snap_developer': []}
+    try:
+        developer = store.get_assertion(snap_id, 'developers')
+    except errors.StoreValidationError as e:
+        if e.status_code != 'snap-developer-not-found':
+            raise
+    return developer
+
+
+def sign_developers(snap_id, assertion, key):
+    store = storeapi.StoreClient()
+
+    assertion = _sign_assertion(snap_id, assertion, key, 'developers')
+    store.push_assertion(snap_id, assertion, 'developers')
 
 
 def _check_validations(validations):
@@ -815,7 +833,7 @@ def _check_validations(validations):
         raise RuntimeError()
 
 
-def _sign_assertion(whatsthis, assertion, key):
+def _sign_assertion(target, assertion, key, endpoint):
     cmdline = ['snap', 'sign']
     if key:
         cmdline += ['-k', key]
@@ -823,10 +841,12 @@ def _sign_assertion(whatsthis, assertion, key):
         cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     data = json.dumps(assertion).encode('utf8')
-    logger.info('Signing assertion {}'.format(whatsthis))
+    logger.info('Signing {} assertion for {}'.format(endpoint, target))
     assertion, err = snap_sign.communicate(input=data)
     if snap_sign.returncode != 0:
         err = err.decode('ascii', errors='replace')
-        raise RuntimeError('Error signing assertion: {!s}'.format(err))
+        raise RuntimeError(
+            'Error signing {} assertion for {}: {!s}'.format(
+                endpoint, target, err))
 
     return assertion
