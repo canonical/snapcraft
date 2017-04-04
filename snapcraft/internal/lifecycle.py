@@ -327,23 +327,11 @@ def _snap_data_from_dir(directory):
             'type': snap.get('type', '')}
 
 
-def prompt_yes_no(question, default_answer):
-    choices = '[Y/n]' if default_answer else '[y/N]'
-    values = {
-        'y': True,
-        'n': False,
-    }
-    while True:
-        choice = input('{} {} '.format(question, choices)).lower()
-        if choice in values:
-            return values[choice]
-
-
 def snap(project_options, directory=None, output=None):
     if directory:
         snap_dir = os.path.abspath(directory)
         snap = _snap_data_from_dir(snap_dir)
-    elif prompt_yes_no('Use containerized build (lxd)?', False):
+    elif os.environ.get('SNAPCRAFT_CONTAINER_BUILDS'):
         config = snapcraft.internal.load_config(project_options)
         container = lxd.Project(output, os.path.curdir, project_options,
                                 config)
