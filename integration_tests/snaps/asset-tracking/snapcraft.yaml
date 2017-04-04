@@ -33,3 +33,7 @@ parts:
     source: bzr-source
     source-type: bzr
     source-tag: feature-tag
+  svn-part:
+    plugin: nil
+    source: svn-source
+    source-type: subversion
