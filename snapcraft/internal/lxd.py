@@ -18,6 +18,7 @@
 import logging
 import os
 import sys
+import tarfile
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError
 from time import sleep
@@ -25,6 +26,7 @@ from time import sleep
 import petname
 
 from snapcraft.internal.errors import SnapcraftEnvironmentError
+from snapcraft.internal import common
 
 logger = logging.getLogger(__name__)
 
@@ -34,19 +36,36 @@ _NETWORK_PROBE_COMMAND = \
 _PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
 
 
-class Cleanbuilder:
+def _get_tar_filter(tar_filename):
+    def _tar_filter(tarinfo):
+        fn = tarinfo.name
+        if fn.startswith('./parts/') and not fn.startswith('./parts/plugins'):
+            return None
+        elif fn in ('./stage', './prime', tar_filename):
+            return None
+        elif fn.endswith('.snap'):
+            return None
+        return tarinfo
+    return _tar_filter
 
-    def __init__(self, snap_output, tar_filename, project_options,
-                 remote=None):
+
+class Containerbuild:
+
+    def __init__(self, snap_output, source_folder, project_options,
+                 config, container_name, remote=None):
+        if not snap_output:
+            snap_output = common.format_snap_name(config.data)
         self._snap_output = snap_output
-        self._tar_filename = tar_filename
+        self._tar_filename = '{}_{}_source.tar.bz2'.format(
+            config.data['name'], config.data['version'])
+        with tarfile.open(self._tar_filename, 'w:bz2') as t:
+            t.add(os.path.curdir, filter=_get_tar_filter(self._tar_filename))
         self._project_options = project_options
-        container_name = 'snapcraft-{}'.format(petname.Generate(3, '-'))
 
         if not remote:
             remote = _get_default_remote()
         _verify_remote(remote)
-        self._container_name = '{}:{}'.format(remote, container_name)
+        self._container_name = '{}:snapcraft-{}'.format(remote, container_name)
 
     def _push_file(self, src, dst):
         check_call(['lxc', 'file', 'push',
@@ -59,16 +78,19 @@ class Cleanbuilder:
     def _container_run(self, cmd):
         check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
 
-    @contextmanager
     def _create_container(self):
+        check_call([
+            'lxc', 'launch', '-e',
+            'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
+            self._container_name])
+        check_call([
+            'lxc', 'config', 'set', self._container_name,
+            'environment.SNAPCRAFT_SETUP_CORE', '1'])
+
+    @contextmanager
+    def _run_container(self):
         try:
-            check_call([
-                'lxc', 'launch', '-e',
-                'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
-                self._container_name])
-            check_call([
-                'lxc', 'config', 'set', self._container_name,
-                'environment.SNAPCRAFT_SETUP_CORE', '1'])
+            self._create_container()
             yield
         finally:
             # Stopping takes a while and lxc doesn't print anything.
@@ -76,7 +98,7 @@ class Cleanbuilder:
             check_call(['lxc', 'stop', '-f', self._container_name])
 
     def execute(self):
-        with self._create_container():
+        with self._run_container():
             self._setup_project()
             self._wait_for_network()
             self._container_run(['apt-get', 'update'])
@@ -118,6 +140,36 @@ class Cleanbuilder:
                 if retry_count == 0:
                     raise e
         logger.info('Network connection established')
+
+
+class Cleanbuilder(Containerbuild):
+
+    def __init__(self, snap_output, source_folder, project_options,
+                 config, remote=None):
+        container_name = petname.Generate(3, '-')
+        super().__init__(snap_output, source_folder, project_options,
+                         config, container_name, remote)
+
+
+class Project(Containerbuild):
+
+    def __init__(self, snap_output, source_folder, project_options,
+                 config, remote=None):
+        super().__init__(snap_output, source_folder, project_options,
+                         config, config.data['name'], remote)
+
+    def _create_container(self):
+        try:
+            check_call([
+                'lxc', 'start', self._container_name])
+        except:
+            check_call([
+                'lxc', 'launch',
+                'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
+                self._container_name])
+            check_call([
+                'lxc', 'config', 'set', self._container_name,
+                'environment.SNAPCRAFT_SETUP_CORE', '1'])
 
 
 def _get_default_remote():

@@ -18,7 +18,6 @@ import contextlib
 import logging
 import os
 import shutil
-import tarfile
 import time
 from subprocess import check_call, Popen, PIPE, STDOUT
 from tempfile import TemporaryDirectory
@@ -312,30 +311,10 @@ class _Executor:
         part.clean(staged_state, primed_state, step, '(out of date)')
 
 
-def _create_tar_filter(tar_filename):
-    def _tar_filter(tarinfo):
-        fn = tarinfo.name
-        if fn.startswith('./parts/') and not fn.startswith('./parts/plugins'):
-            return None
-        elif fn in ('./stage', './prime', tar_filename):
-            return None
-        elif fn.endswith('.snap'):
-            return None
-        return tarinfo
-    return _tar_filter
-
-
 def cleanbuild(project_options, remote=''):
     config = snapcraft.internal.load_config(project_options)
-    tar_filename = '{}_{}_source.tar.bz2'.format(
-        config.data['name'], config.data['version'])
-
-    with tarfile.open(tar_filename, 'w:bz2') as t:
-        t.add(os.path.curdir, filter=_create_tar_filter(tar_filename))
-
-    snap_filename = common.format_snap_name(config.data)
-    lxd.Cleanbuilder(snap_filename, tar_filename, project_options,
-                     remote=remote).execute()
+    lxd.Cleanbuilder(None, os.path.curdir, project_options,
+                     config, remote=remote).execute()
 
 
 def _snap_data_from_dir(directory):
@@ -348,10 +327,28 @@ def _snap_data_from_dir(directory):
             'type': snap.get('type', '')}
 
 
+def prompt_yes_no(question, default_answer):
+    choices = '[Y/n]' if default_answer else '[y/N]'
+    values = {
+        'y': True,
+        'n': False,
+    }
+    while True:
+        choice = input('{} {} '.format(question, choices)).lower()
+        if choice in values:
+            return values[choice]
+
+
 def snap(project_options, directory=None, output=None):
     if directory:
         snap_dir = os.path.abspath(directory)
         snap = _snap_data_from_dir(snap_dir)
+    elif prompt_yes_no('Use containerized build (lxd)?', False):
+        config = snapcraft.internal.load_config(project_options)
+        container = lxd.Project(output, os.path.curdir, project_options,
+                                config)
+        container.execute()
+        return container._snap_output
     else:
         # make sure the full lifecycle is executed
         snap_dir = project_options.snap_dir
