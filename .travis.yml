@@ -9,11 +9,14 @@ virtualenv:
   system_site_packages: true
 
 env:
+  global:
+  - INTEGRATION_DEPENDENCIES="apt install -y bzr curl git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev mercurial python3-pip subversion squashfs-tools sudo snapd xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
   matrix:
   - DOCKER=1 CHECK_CLA=1 DEPENDENCIES="apt install -y git python-launchpadlib"
   - DOCKER=1 TEST_SUITE=static DEPENDENCIES="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
   - DOCKER=1 TEST_SUITE=unit DEPENDENCIES="apt install -y git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt && python3 -m pip uninstall -y coverage && apt install -y python3-coverage"
-  - DOCKER=1 TEST_SUITE=integration DEPENDENCIES="apt install -y bzr curl git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev mercurial python3-pip subversion squashfs-tools sudo snapd xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
+  - DOCKER=1 TEST_SUITE=integration DEPENDENCIES=$INTEGRATION_DEPENDENCIES
+  - DOCKER=1 TEST_SUITE=store DEPENDENCIES=$INTEGRATION_DEPENDENCIES
   - DOCKER=1 GEN_DOCS=1 DEPENDENCIES="apt install libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev git make python3-pip python3-sphinx -y && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
   - DOCKER=1 TEST_SUITE=beta DEPENDENCIES="apt install -y python3-git python3-github wget"
 
