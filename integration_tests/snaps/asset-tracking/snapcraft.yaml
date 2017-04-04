@@ -37,3 +37,12 @@ parts:
     plugin: nil
     source: svn-source
     source-type: subversion
+  hg-part:
+    plugin: nil
+    source: hg-source
+    source-type: mercurial
+  hg-part-tag:
+    plugin: nil
+    source: hg-source
+    source-type: mercurial
+    source-tag: feature-tag
