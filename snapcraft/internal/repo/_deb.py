@@ -33,7 +33,7 @@ from xml.etree import ElementTree
 
 import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal import cache
+from snapcraft.internal import cache, repo
 from snapcraft.internal.indicators import is_dumb_terminal
 from ._base import BaseRepo
 from . import errors
@@ -192,7 +192,7 @@ class Ubuntu(BaseRepo):
         with apt.Cache() as apt_cache:
             for pkg in unique_packages:
                 try:
-                    pkg_name, version = _get_pkg_name_parts(pkg)
+                    pkg_name, version = repo.get_pkg_name_parts(pkg)
                     installed_version = apt_cache[pkg_name].installed
                     if not installed_version:
                         new_packages.append(pkg)
@@ -200,6 +200,7 @@ class Ubuntu(BaseRepo):
                         new_packages.append(pkg)
                 except KeyError as e:
                     raise errors.BuildPackageNotFoundError(e) from e
+
         if new_packages:
             new_packages.sort()
             logger.info(
@@ -225,6 +226,20 @@ class Ubuntu(BaseRepo):
                 logger.warning(
                     'Impossible to mark packages as auto-installed: {}'
                     .format(e))
+
+    @classmethod
+    def get_installed_build_packages(cls, package_names):
+        unique_packages = set(package_names)
+        pkg_list = []
+        with apt.Cache() as apt_cache:
+            for pkg in unique_packages:
+                try:
+                    pkg_name, version = repo.get_pkg_name_parts(pkg)
+                    pkg_list.append(str(apt_cache[pkg_name].candidate))
+                except KeyError as e:
+                    raise errors.BuildPackageNotFoundError(e) from e
+
+        return pkg_list
 
     @classmethod
     def is_package_installed(cls, package_name):
@@ -260,7 +275,7 @@ class Ubuntu(BaseRepo):
         for name in package_names:
             logger.debug('Marking {!r} (and its dependencies) to be '
                          'fetched'.format(name))
-            name_arch, version = _get_pkg_name_parts(name)
+            name_arch, version = repo.get_pkg_name_parts(name)
             try:
                 if version:
                     _set_pkg_version(apt_cache[name_arch], version)
@@ -427,17 +442,6 @@ def _try_copy_local(path, target):
 def check_for_command(command):
     if not shutil.which(command):
         raise errors.MissingCommandError([command])
-
-
-def _get_pkg_name_parts(pkg_name):
-    """Break package name into base parts"""
-
-    name = pkg_name
-    version = None
-    with contextlib.suppress(ValueError):
-        name, version = pkg_name.split('=')
-
-    return name, version
 
 
 def _set_pkg_version(pkg, version):
