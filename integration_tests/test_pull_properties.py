@@ -156,9 +156,11 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
     ]
 
     def test_pull_bzr(self):
+        repo_fixture = fixture_setup.BzrRepo('bzr-source')
+        self.useFixture(repo_fixture)
         project_dir = 'asset-tracking'
         part = self.part_name
-        expected_commit = _source_helpers.create_bzr_repo('bzr-source')
+        expected_commit = repo_fixture.commit
         self.run_snapcraft(['pull', part], project_dir)
 
         state_file = os.path.join(

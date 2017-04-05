@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 from functools import partial
 import io
 import os
@@ -419,3 +420,36 @@ class GitRepo(fixtures.Fixture):
 
         self.commit = call_with_output(
             ['git', '-C', name, 'rev-parse', 'HEAD'])
+
+
+@contextlib.contextmanager
+def return_to_cwd():
+    cwd = os.getcwd()
+    try:
+        yield
+    finally:
+        os.chdir(cwd)
+
+
+class BzrRepo(fixtures.Fixture):
+
+    def __init__(self, name):
+        self.name = name
+
+    def setUp(self):
+        super().setUp()
+
+        with return_to_cwd():
+            os.makedirs(self.name)
+            os.chdir(self.name)
+            call(['bzr', 'init'])
+            call(['bzr', 'whoami', 'Test User <test.user@example.com>'])
+            with open('testing', 'w') as fp:
+                fp.write('testing')
+
+            call(['bzr', 'add', 'testing'])
+            call(['bzr', 'commit', '-m', 'testing'])
+            call(['bzr', 'tag', 'feature-tag'])
+            revno = call_with_output(['bzr', 'revno'])
+
+            self.commit = revno

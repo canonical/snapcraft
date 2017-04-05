@@ -37,23 +37,6 @@ def call_with_output(cmd):
     return subprocess.check_output(cmd).decode('utf-8').strip()
 
 
-def create_bzr_repo(name):
-    with return_to_cwd():
-        os.makedirs(name)
-        os.chdir(name)
-        call(['bzr', 'init'])
-        call(['bzr', 'whoami', 'Test User <test.user@example.com>'])
-        with open('testing', 'w') as fp:
-            fp.write('testing')
-
-        call(['bzr', 'add', 'testing'])
-        call(['bzr', 'commit', '-m', 'testing'])
-        call(['bzr', 'tag', 'feature-tag'])
-        revno = call_with_output(['bzr', 'revno'])
-
-        return revno
-
-
 def create_svn_repo(name):
     working_tree = 'svn-repo'
     call(['svnadmin', 'create', name])
