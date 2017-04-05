@@ -50,7 +50,7 @@ class CollaborateTestCase(tests.TestCase):
 
     def test_collaborate_success(self):
         self.client.login('dummy', 'test correct password')
-        main(['--debug', self.command_name, 'ubuntu-core'])
+        main([self.command_name, 'ubuntu-core'])
         self.assertIn('Signing developers assertion for good',
                       self.fake_terminal.getvalue())
         self.assertNotIn('Error signing developers assertion',
@@ -60,7 +60,7 @@ class CollaborateTestCase(tests.TestCase):
 
     def test_collaborate_success_with_key(self):
         self.client.login('dummy', 'test correct password')
-        main(['--debug', self.command_name, 'ubuntu-core',
+        main([self.command_name, 'ubuntu-core',
               '--key-name=keyname'])
         self.popen_mock.assert_called_with(['snap', 'sign', '-k', 'keyname'],
                                            stderr=-1, stdin=-1, stdout=-1)
@@ -84,7 +84,7 @@ class CollaborateTestCase(tests.TestCase):
     def test_collaborate_snap_developer_not_found(self):
         self.client.login('dummy', 'test correct password')
 
-        main(['--debug', self.command_name, 'core-no-dev'])
+        main([self.command_name, 'core-no-dev'])
 
         self.assertIn('Signing developers assertion for no-dev',
                       self.fake_terminal.getvalue())
