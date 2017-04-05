@@ -27,6 +27,10 @@ import fixtures
 import xdg
 
 from snapcraft.tests import fake_servers
+from snapcraft.tests.subprocess_utils import (
+    call,
+    call_with_output,
+)
 
 
 class TempCWD(fixtures.TempDir):
@@ -377,3 +381,41 @@ class FakePlugin(fixtures.Fixture):
 
     def _remove_module(self):
         del sys.modules[self._import_name]
+
+
+class GitRepo(fixtures.Fixture):
+    '''Create a git repo in the current directory'''
+
+    def setUp(self):
+        super().setUp()
+        name = 'git-source'  # must match what the tests expect
+
+        def _add_and_commit_file(path, filename, contents=None, message=None):
+            if not contents:
+                contents = filename
+            if not message:
+                message = filename
+
+            with open(os.path.join(path, filename), 'w') as fp:
+                fp.write(contents)
+
+            call(['git', '-C', name, 'add', filename])
+            call(['git', '-C', name, 'commit', '-am', message])
+
+        os.makedirs(name)
+        call(['git', '-C', name, 'init'])
+        call(['git', '-C', name, 'config',
+              'user.name', 'Test User'])
+        call(['git', '-C', name, 'config',
+              'user.email', 'testuser@example.com'])
+
+        _add_and_commit_file(name, 'testing')
+        call(['git', '-C', name, 'branch', 'feature'])
+
+        _add_and_commit_file(name, 'testing-2')
+        call(['git', '-C', name, 'tag', 'feature-tag'])
+
+        _add_and_commit_file(name, 'testing-3')
+
+        self.commit = call_with_output(
+            ['git', '-C', name, 'rev-parse', 'HEAD'])

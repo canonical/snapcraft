@@ -54,38 +54,6 @@ def create_bzr_repo(name):
         return revno
 
 
-def create_git_repo(name):
-
-    def _add_and_commit_file(path, filename, contents=None, message=None):
-        if not contents:
-            contents = filename
-        if not message:
-            message = filename
-
-        with open(os.path.join(path, filename), 'w') as fp:
-            fp.write(contents)
-
-        call(['git', '-C', name, 'add', filename])
-        call(['git', '-C', name, 'commit', '-am', message])
-
-    os.makedirs(name)
-    call(['git', '-C', name, 'init'])
-    call(['git', '-C', name, 'config',
-          'user.name', 'Test User'])
-    call(['git', '-C', name, 'config',
-          'user.email', 'testuser@example.com'])
-
-    _add_and_commit_file(name, 'testing')
-    call(['git', '-C', name, 'branch', 'feature'])
-
-    _add_and_commit_file(name, 'testing-2')
-    call(['git', '-C', name, 'tag', 'feature-tag'])
-
-    _add_and_commit_file(name, 'testing-3')
-
-    return call_with_output(['git', '-C', name, 'rev-parse', 'HEAD'])
-
-
 def create_svn_repo(name):
     working_tree = 'svn-repo'
     call(['svnadmin', 'create', name])

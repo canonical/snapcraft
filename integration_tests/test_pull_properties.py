@@ -22,6 +22,7 @@ from testtools.matchers import FileExists
 
 import integration_tests
 from integration_tests import _source_helpers
+from snapcraft.tests import fixture_setup
 
 
 class PullPropertiesTestCase(integration_tests.TestCase):
@@ -113,9 +114,11 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
     ]
 
     def test_pull_git(self):
+        repo_fixture = fixture_setup.GitRepo()
+        self.useFixture(repo_fixture)
         project_dir = 'asset-tracking'
 
-        expected_commit = _source_helpers.create_git_repo('git-source')
+        expected_commit = repo_fixture.commit
         self.run_snapcraft(['pull', self.part_name], project_dir)
 
         state_file = os.path.join(
