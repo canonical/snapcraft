@@ -119,7 +119,7 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
     def test_pull_git(self):
         repo_fixture = fixture_setup.GitRepo()
         self.useFixture(repo_fixture)
-        project_dir = 'asset-tracking'
+        project_dir = 'asset-tracking-git'
 
         self.run_snapcraft(['pull', self.part_name], project_dir)
 
@@ -159,7 +159,7 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
     def test_pull_bzr(self):
         repo_fixture = fixture_setup.BzrRepo('bzr-source')
         self.useFixture(repo_fixture)
-        project_dir = 'asset-tracking'
+        project_dir = 'asset-tracking-bzr'
         part = self.part_name
         self.run_snapcraft(['pull', part], project_dir)
 
@@ -197,7 +197,7 @@ class MercurialAssetTrackingTestCase(testscenarios.WithScenarios,
     def test_pull_hg(self):
         repo_fixture = fixture_setup.HgRepo('hg-source')
         self.useFixture(repo_fixture)
-        project_dir = 'asset-tracking'
+        project_dir = 'asset-tracking-hg'
         part = self.part_name
         self.run_snapcraft(['pull', part], project_dir)
 
@@ -224,7 +224,7 @@ class SubversionAssetTrackingTestCase(integration_tests.TestCase):
     def test_pull_svn(self):
         repo_fixture = fixture_setup.SvnRepo('svn-source')
         self.useFixture(repo_fixture)
-        project_dir = 'asset-tracking'
+        project_dir = 'asset-tracking-svn'
         part = 'svn-part'
         expected_commit = repo_fixture.commit
         self.run_snapcraft(['pull', part], project_dir)
