@@ -216,9 +216,11 @@ class MercurialAssetTrackingTestCase(integration_tests.TestCase):
 class SubversionAssetTrackingTestCase(integration_tests.TestCase):
 
     def test_pull_svn(self):
+        repo_fixture = fixture_setup.SvnRepo('svn-source')
+        self.useFixture(repo_fixture)
         project_dir = 'asset-tracking'
         part = 'svn-part'
-        expected_commit = _source_helpers.create_svn_repo('svn-source')
+        expected_commit = repo_fixture.commit
         self.run_snapcraft(['pull', part], project_dir)
 
         state_file = os.path.join(

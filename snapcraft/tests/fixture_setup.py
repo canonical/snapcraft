@@ -453,3 +453,29 @@ class BzrRepo(fixtures.Fixture):
             revno = call_with_output(['bzr', 'revno'])
 
             self.commit = revno
+
+
+class SvnRepo(fixtures.Fixture):
+
+    def __init__(self, name):
+        self.name = name
+
+    def setUp(self):
+        super().setUp()
+
+        working_tree = 'svn-repo'
+        call(['svnadmin', 'create', self.name])
+        call(['svn', 'checkout',
+              'file://{}'.format(os.path.join(os.getcwd(), self.name)),
+              working_tree])
+
+        with return_to_cwd():
+            os.chdir(working_tree)
+            with open('testing', 'w') as fp:
+                fp.write('testing')
+
+            call(['svn', 'add', 'testing'])
+            call(['svn', 'commit', '-m', 'svn testing'])
+            revno = '1'
+
+            self.commit = revno

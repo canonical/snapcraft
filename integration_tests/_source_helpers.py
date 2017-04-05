@@ -37,25 +37,6 @@ def call_with_output(cmd):
     return subprocess.check_output(cmd).decode('utf-8').strip()
 
 
-def create_svn_repo(name):
-    working_tree = 'svn-repo'
-    call(['svnadmin', 'create', name])
-    call(['svn', 'checkout',
-          'file://{}'.format(os.path.join(os.getcwd(), name)),
-          working_tree])
-
-    with return_to_cwd():
-        os.chdir(working_tree)
-        with open('testing', 'w') as fp:
-            fp.write('testing')
-
-        call(['svn', 'add', 'testing'])
-        call(['svn', 'commit', '-m', 'svn testing'])
-        revno = '1'
-
-        return revno
-
-
 def create_hg_repo(name):
     with return_to_cwd():
         os.makedirs(name)
