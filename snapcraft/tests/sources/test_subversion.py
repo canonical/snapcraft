@@ -16,12 +16,12 @@
 
 import os
 import shutil
-import subprocess
 from unittest import mock
 
 from snapcraft.internal import sources
 
 from snapcraft import tests
+from snapcraft.tests.subprocess_utils import call
 
 
 class TestSubversion(tests.sources.SourceTestCase):
@@ -124,15 +124,6 @@ class TestSubversion(tests.sources.SourceTestCase):
 
 class SubversionBaseTestCase(tests.TestCase):
 
-    def call(self, cmd):
-        """Call a command ignoring output."""
-        subprocess.check_call(
-            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    def call_with_output(self, cmd):
-        """Return command output converted to a string."""
-        return subprocess.check_output(cmd).decode('utf-8').strip()
-
     def rm_dir(self, dir):
         if os.path.exists(dir):
             shutil.rmtree(dir)
@@ -144,15 +135,15 @@ class SubversionBaseTestCase(tests.TestCase):
 
     def clone_repo(self, repo, tree):
         self.clean_dir(tree)
-        self.call(['svn', 'checkout', 'file://{}/{}'.format(
+        call(['svn', 'checkout', 'file://{}/{}'.format(
             os.getcwd(), repo), tree])
 
     def add_file(self, filename, body, message):
         with open(filename, 'w') as fp:
             fp.write(body)
 
-        self.call(['svn', 'add', filename])
-        self.call(['svn', 'commit', '-m', message])
+        call(['svn', 'add', filename])
+        call(['svn', 'commit', '-m', message])
 
 
 class SubversionDetailsTestCase(SubversionBaseTestCase):
@@ -164,7 +155,7 @@ class SubversionDetailsTestCase(SubversionBaseTestCase):
         self.source_dir = 'svn-checkout'
         self.clean_dir(self.repo_tree)
         self.clean_dir(self.working_tree)
-        self.call(['svnadmin', 'create', self.repo_tree])
+        call(['svnadmin', 'create', self.repo_tree])
         self.clone_repo(self.repo_tree, self.working_tree)
         os.chdir(self.working_tree)
         self.add_file('testing', 'test body', 'test message')

@@ -16,12 +16,15 @@
 
 import os
 import shutil
-import subprocess
 from unittest import mock
 
 from snapcraft.internal import sources
 
 from snapcraft.tests.sources import SourceTestCase
+from snapcraft.tests.subprocess_utils import (
+    call,
+    call_with_output,
+)
 from snapcraft import tests
 
 
@@ -197,15 +200,6 @@ class TestGit(SourceTestCase):
 
 class GitBaseTestCase(tests.TestCase):
 
-    def call(self, cmd):
-        """Call a command ignoring output."""
-        subprocess.check_call(
-            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    def call_with_output(self, cmd):
-        """Return command output converted to a string."""
-        return subprocess.check_output(cmd).decode('utf-8').strip()
-
     def rm_dir(self, dir):
         if os.path.exists(dir):
             shutil.rmtree(dir)
@@ -217,19 +211,19 @@ class GitBaseTestCase(tests.TestCase):
 
     def clone_repo(self, repo, tree):
         self.clean_dir(tree)
-        self.call(['git', 'clone', repo, tree])
+        call(['git', 'clone', repo, tree])
         os.chdir(tree)
-        self.call(['git', 'config', '--local', 'user.name',
-                   '"Example Dev"'])
-        self.call(['git', 'config', '--local', 'user.email',
-                   'dev@example.com'])
+        call(['git', 'config', '--local', 'user.name',
+              '"Example Dev"'])
+        call(['git', 'config', '--local', 'user.email',
+              'dev@example.com'])
 
     def add_file(self, filename, body, message):
         with open(filename, 'w') as fp:
             fp.write(body)
 
-        self.call(['git', 'add', filename])
-        self.call(['git', 'commit', '-am', message])
+        call(['git', 'add', filename])
+        call(['git', 'commit', '-am', message])
 
     def check_file_contents(self, path, expected):
         body = None
@@ -253,7 +247,7 @@ class TestGitConflicts(GitBaseTestCase):
         self.clean_dir(conflicting_tree)
 
         os.chdir(repo)
-        self.call(['git', 'init', '--bare'])
+        call(['git', 'init', '--bare'])
 
         self.clone_repo(repo, working_tree)
 
@@ -263,13 +257,13 @@ class TestGitConflicts(GitBaseTestCase):
         # add a file to the repo
         os.chdir(working_tree)
         self.add_file('fake', 'fake 1', 'fake 1')
-        self.call(['git', 'push', repo])
+        call(['git', 'push', repo])
 
         git.pull()
 
         os.chdir(conflicting_tree)
         self.add_file('fake', 'fake 2', 'fake 2')
-        self.call(['git', 'push', '-f', repo])
+        call(['git', 'push', '-f', repo])
 
         os.chdir(working_tree)
         git.pull()
@@ -294,19 +288,19 @@ class TestGitConflicts(GitBaseTestCase):
         self.clean_dir(sub_working_tree)
 
         os.chdir(sub_repo)
-        self.call(['git', 'init', '--bare'])
+        call(['git', 'init', '--bare'])
 
         self.clone_repo(sub_repo, sub_working_tree)
         self.add_file('sub-file', 'sub-file', 'sub-file')
-        self.call(['git', 'push', sub_repo])
+        call(['git', 'push', sub_repo])
 
         os.chdir(repo)
-        self.call(['git', 'init', '--bare'])
+        call(['git', 'init', '--bare'])
 
         self.clone_repo(repo, working_tree)
-        self.call(['git', 'submodule', 'add', sub_repo])
-        self.call(['git', 'commit', '-am', 'added submodule'])
-        self.call(['git', 'push', repo])
+        call(['git', 'submodule', 'add', sub_repo])
+        call(['git', 'commit', '-am', 'added submodule'])
+        call(['git', 'push', repo])
 
         git.pull()
 
@@ -317,7 +311,7 @@ class TestGitConflicts(GitBaseTestCase):
         # add a file to the repo
         os.chdir(sub_working_tree)
         self.add_file('fake', 'fake 1', 'fake 1')
-        self.call(['git', 'push', sub_repo])
+        call(['git', 'push', sub_repo])
 
         os.chdir(working_tree)
         git.pull()
@@ -337,30 +331,30 @@ class GitDetailsTestCase(GitBaseTestCase):
 
             with open(filename, 'w') as fp:
                 fp.write(content)
-            self.call(['git', 'add', filename])
-            self.call(['git', 'commit', '-am', message])
+            call(['git', 'add', filename])
+            call(['git', 'commit', '-am', message])
 
         super().setUp()
         self.working_tree = 'git-test'
         self.source_dir = 'git-checkout'
         self.clean_dir(self.working_tree)
         os.chdir(self.working_tree)
-        self.call(['git', 'init'])
-        self.call(['git', 'config', 'user.name',
-                   '"Example Dev"'])
-        self.call(['git', 'config', 'user.email',
-                   'dev@example.com'])
+        call(['git', 'init'])
+        call(['git', 'config', 'user.name',
+              '"Example Dev"'])
+        call(['git', 'config', 'user.email',
+              'dev@example.com'])
         _add_and_commit_file('testing')
-        self.expected_commit = self.call_with_output(
+        self.expected_commit = call_with_output(
             ['git', 'rev-parse', 'HEAD'])
 
         _add_and_commit_file('testing-2')
-        self.call(['git', 'tag', 'test-tag'])
+        call(['git', 'tag', 'test-tag'])
         self.expected_tag = 'test-tag'
 
         _add_and_commit_file('testing-3')
         self.expected_branch = 'test-branch'
-        self.call(['git', 'branch', self.expected_branch])
+        call(['git', 'branch', self.expected_branch])
 
         os.chdir('..')
 

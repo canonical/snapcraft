@@ -16,23 +16,17 @@
 
 import os
 import shutil
-import subprocess
 from unittest import mock
 
 from snapcraft.internal import sources
 from snapcraft import tests
+from snapcraft.tests.subprocess_utils import (
+    call,
+    call_with_output,
+)
 
 
 class BazaarBaseTestCase(tests.sources.SourceTestCase):
-
-    def call(self, cmd):
-        """Call a command ignoring output."""
-        subprocess.check_call(
-            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    def call_with_output(self, cmd):
-        """Return command output converted to a string."""
-        return subprocess.check_output(cmd).decode('utf-8').strip()
 
     def rm_dir(self, dir):
         if os.path.exists(dir):
@@ -156,14 +150,14 @@ class BazaarDetailsTestCase(BazaarBaseTestCase):
         self.clean_dir(self.working_tree)
         self.clean_dir(self.source_dir)
         os.chdir(self.working_tree)
-        self.call(['bzr', 'init'])
-        self.call(['bzr', 'whoami', 'Test User <test.user@example.com>'])
+        call(['bzr', 'init'])
+        call(['bzr', 'whoami', 'Test User <test.user@example.com>'])
         with open('testing', 'w') as fp:
             fp.write('testing')
-        self.call(['bzr', 'add', 'testing'])
-        self.call(['bzr', 'commit', '-m', 'testing'])
-        self.call(['bzr', 'tag', 'test-tag'])
-        self.expected_commit = self.call_with_output(['bzr', 'revno', '.'])
+        call(['bzr', 'add', 'testing'])
+        call(['bzr', 'commit', '-m', 'testing'])
+        call(['bzr', 'tag', 'test-tag'])
+        self.expected_commit = call_with_output(['bzr', 'revno', '.'])
         self.expected_tag = 'test-tag'
 
         os.chdir('..')

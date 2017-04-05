@@ -16,12 +16,15 @@
 
 import os
 import shutil
-import subprocess
 from unittest import mock
 
 from snapcraft.internal import sources
 
 from snapcraft import tests
+from snapcraft.tests.subprocess_utils import (
+    call,
+    call_with_output,
+)
 
 
 class TestMercurial(tests.sources.SourceTestCase):
@@ -166,15 +169,6 @@ class TestMercurial(tests.sources.SourceTestCase):
 
 class MercurialBaseTestCase(tests.TestCase):
 
-    def call(self, cmd):
-        """Call a command ignoring output."""
-        subprocess.check_call(
-            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
-    def call_with_output(self, cmd):
-        """Return command output converted to a string."""
-        return subprocess.check_output(cmd).decode('utf-8').strip()
-
     def rm_dir(self, dir):
         if os.path.exists(dir):
             shutil.rmtree(dir)
@@ -186,15 +180,15 @@ class MercurialBaseTestCase(tests.TestCase):
 
     def clone_repo(self, repo, tree):
         self.clean_dir(tree)
-        self.call(['hg', 'clone', repo, tree])
+        call(['hg', 'clone', repo, tree])
         os.chdir(tree)
 
     def add_file(self, filename, body, message):
         with open(filename, 'w') as fp:
             fp.write(body)
 
-        self.call(['hg', 'add', filename])
-        self.call(['hg', 'commit', '-am', message])
+        call(['hg', 'add', filename])
+        call(['hg', 'commit', '-am', message])
 
     def check_file_contents(self, path, expected):
         body = None
@@ -212,15 +206,15 @@ class MercurialDetailsTestCase(MercurialBaseTestCase):
         self.clean_dir(self.working_tree)
         self.clean_dir(self.source_dir)
         os.chdir(self.working_tree)
-        self.call(['hg', 'init'])
+        call(['hg', 'init'])
         with open('testing', 'w') as fp:
             fp.write('testing')
-        self.call(['hg', 'add', 'testing'])
-        self.call(['hg', 'commit', '-m', 'testing', '-u',
-                   'Test User <t@example.com>'])
-        self.call(['hg', 'tag', 'test-tag'])
-        self.expected_commit = self.call_with_output(['hg', 'id']).split()[0]
-        self.expected_branch = self.call_with_output(['hg', 'branch'])
+        call(['hg', 'add', 'testing'])
+        call(['hg', 'commit', '-m', 'testing', '-u',
+              'Test User <t@example.com>'])
+        call(['hg', 'tag', 'test-tag'])
+        self.expected_commit = call_with_output(['hg', 'id']).split()[0]
+        self.expected_branch = call_with_output(['hg', 'branch'])
         self.expected_tag = 'test-tag'
 
         os.chdir('..')
