@@ -181,14 +181,24 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
                 Equals(repo_fixture.commit))
 
 
-class MercurialAssetTrackingTestCase(integration_tests.TestCase):
+class MercurialAssetTrackingTestCase(testscenarios.WithScenarios,
+                                     integration_tests.TestCase):
+    scenarios = [
+        ('plain', {
+            'part_name': 'hg-part',
+            'expected_details': None,
+        }),
+        ('tag', {
+            'part_name': 'hg-part-tag',
+            'expected_details': TestDetail('tag', 'feature-tag'),
+        }),
+    ]
 
     def test_pull_hg(self):
         repo_fixture = fixture_setup.HgRepo('hg-source')
         self.useFixture(repo_fixture)
         project_dir = 'asset-tracking'
-        part = 'hg-part'
-        expected_commit = repo_fixture.commit
+        part = self.part_name
         self.run_snapcraft(['pull', part], project_dir)
 
         state_file = os.path.join(
@@ -198,24 +208,15 @@ class MercurialAssetTrackingTestCase(integration_tests.TestCase):
             state = yaml.load(f)
 
         self.assertIn('source-details', state.assets)
-        self.assertEqual(expected_commit,
-                         state.assets['source-details']['commit'])
 
-    def test_pull_hg_tag(self):
-        repo_fixture = fixture_setup.HgRepo('hg-source')
-        self.useFixture(repo_fixture)
-        project_dir = 'asset-tracking'
-        part = 'hg-part-tag'
-        self.run_snapcraft(['pull', part], project_dir)
-
-        state_file = os.path.join(
-            self.parts_dir, part, 'state', 'pull')
-        self.assertThat(state_file, FileExists())
-        with open(state_file) as f:
-            state = yaml.load(f)
-
-        self.assertIn('source-details', state.assets)
-        self.assertEqual('feature-tag', state.assets['source-details']['tag'])
+        if self.expected_details:
+            self.assertThat(
+                state.assets['source-details'][self.expected_details.field],
+                Equals(self.expected_details.value))
+        else:
+            self.assertThat(
+                state.assets['source-details']['commit'],
+                Equals(repo_fixture.commit))
 
 
 class SubversionAssetTrackingTestCase(integration_tests.TestCase):
