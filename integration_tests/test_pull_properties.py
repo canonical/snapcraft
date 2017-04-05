@@ -70,6 +70,7 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.assertTrue(len(state.assets['stage-packages']) > 0)
         self.assertTrue(len(state.assets['build-packages']) > 0)
         self.assertIn('hello=2.10-1', state.assets['stage-packages'])
+        self.assertIn('hello=2.10-1', state.assets['build-packages'])
         self.assertIn('source-details', state.assets)
 
     def test_pull_global_build_packages_are_excluded(self):
