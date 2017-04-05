@@ -142,7 +142,7 @@ class StoreClient():
               packages=None, channels=None, save=True):
         """Log in via the Ubuntu One SSO API."""
         if acls is None:
-            acls = ['package_upload', 'package_access']
+            acls = ['package_upload', 'package_access', 'package_manage']
         # Ask the store for the needed capabilities to be associated with the
         # macaroon.
         macaroon = self.sca.get_macaroon(acls, packages, channels)
@@ -575,9 +575,14 @@ class SCAClient(Client):
         return response_json
 
     def push_assertion(self, snap_id, assertion, endpoint):
-        data = {
-            'assertion': assertion.decode('utf-8'),
-        }
+        if endpoint == 'validations':
+            data = {
+                'assertion': assertion.decode('utf-8'),
+            }
+        elif endpoint == 'developers':
+            data = {
+                'snap_developer': assertion.decode('utf-8'),
+            }
         auth = _macaroon_auth(self.conf)
         response = self.put(
             'snaps/{}/{}'.format(snap_id, endpoint),
