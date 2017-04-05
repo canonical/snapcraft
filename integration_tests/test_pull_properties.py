@@ -127,6 +127,8 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
 
         self.assertIn('source-details', state.assets)
 
+        # fall back to the commit if no other source option is provided
+        # snapcraft.source.Git doesn't allow both a tag and a commit
         if self.expected_details:
             self.assertThat(
                 state.assets['source-details'][self.expected_details[0]],
