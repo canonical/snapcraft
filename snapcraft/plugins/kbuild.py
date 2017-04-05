@@ -163,6 +163,8 @@ class KBuildPlugin(BasePlugin):
         except OSError as e:
             raise RuntimeError('Unable to access {!r}: '
                                '{}'.format(e.filename, e.strerror))
+    def get_config_path(self):
+        return os.path.join(self.builddir, '.config')
 
     def do_base_config(self, config_path):
         # if kconfigfile is provided use that
@@ -222,13 +224,19 @@ class KBuildPlugin(BasePlugin):
                  ['CONFIG_PREFIX={}'.format(self.installdir)] +
                  self.make_install_targets)
 
-    def build(self):
+    def prep_build(self):
         super().build()
 
-        config_path = os.path.join(self.builddir, '.config')
+        config_path = self.get_config_path()
 
         self.do_base_config(config_path)
         self.do_patch_config(config_path)
         self.do_remake_config()
+
+    def finish_build(self):
         self.do_build()
         self.do_install()
+
+    def build(self):
+        self.prep_build()
+        self.finish_build()

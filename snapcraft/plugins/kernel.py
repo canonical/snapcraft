@@ -81,6 +81,30 @@ default_kernel_image_target = {
     'arm64': 'Image.gz',
 }
 
+builtin = []
+modules = []
+
+required_generic = ['DEVTMPFS', 'DEVTMPFS_MOUNT', 'TMPFS_POSIX_ACL', 'IPV6',
+                    'SYSVIPC', 'SYSVIPC_SYSCTL', 'VFAT_FS', 'NLS_CODEPAGE_437',
+                    'NLS_ISO8859_1']
+
+required_security = ['SECURITY', 'SECURITY_APPARMOR', 'SYN_COOKIES',
+                     'STRICT_DEVMEM', 'DEFAULT_SECURITY_APPARMOR', 'SECCOMP',
+                     'SECCOMP_FILTER', 'CC_STACKPROTECTOR',
+                     'CC_STACKPROTECTOR_REGULAR', 'DEBUG_RODATA',
+                     'DEBUG_SET_MODULE_RONX']
+
+required_snappy = ['RD_LZMA', 'KEYS', 'ENCRYPTED_KEYS', 'SQUASHFS',
+                   'SQUASHFS_XATTR', 'SQUASHFS_XZ']
+
+required_systemd = ['DEVTMPFS', 'CGROUPS', 'INOTIFY_USER', 'SIGNALFD',
+                    'TIMERFD', 'EPOLL', 'NET', 'SYSFS', 'PROC_FS', 'FHANDLE',
+                    'DMIID', 'BLK_DEV_BSG', 'NET_NS',
+                    'IPV6', 'AUTOFS4_FS',
+                    'TMPFS_POSIX_ACL', 'TMPFS_XATTR', 'SECCOMP']
+
+required_boot = ['squashfs']
+
 
 class KernelPlugin(kbuild.KBuildPlugin):
 
@@ -358,10 +382,77 @@ class KernelPlugin(kbuild.KBuildPlugin):
             for f in found_dtbs:
                 os.link(f, os.path.join(dtb_dir, os.path.basename(f)))
 
+    def _do_parse_config(self, config_path):
+        # tokenize .config and store options in builtin[] or modules[]
+        with open(config_path) as f:
+            for line in f:
+                tok = line.strip().split('=')
+                items = len(tok)
+                if items == 2:
+                    opt = tok[0].upper()
+                    val = tok[1].upper()
+                    if val == 'Y':
+                        builtin.append(opt)
+                    elif val == 'M':
+                        modules.append(opt)
+
+    def _do_check_config(self):
+        # check the resulting .config has all the necessary options
+        msg = 'Your kernel config is missing some feature that ubuntu core \
+recommend / requires,\nand while we won\'t prevent you from building this\
+kernel snap,\n we suggest you take a look at these:'
+        required_opts = required_generic + required_security + \
+            required_snappy + required_systemd
+        missing = []
+
+        for code in required_opts:
+            opt = 'CONFIG_{}'.format(code)
+            if opt in builtin:
+                continue
+            elif opt in modules:
+                continue
+            else:
+                missing.append(opt)
+
+        if missing:
+            logger.warn('\n{}\n'.format(msg))
+            for opt in missing:
+                logger.warn('  - {}'.format(opt))
+            logger.warn('')
+
+    def _do_check_initrd(self):
+        # check all required_boot[] items are either builtin or part of initrd
+        msg = 'The following feature is boot essential, consider making\n\
+it static or adding the relevant module to initrd:'
+        missing = []
+
+        for code in required_boot:
+            opt = 'CONFIG_{}'.format(code.upper())
+            if opt in builtin:
+                continue
+            elif opt in modules:
+                if code in self.options.kernel_initrd_modules:
+                    continue
+                else:
+                    missing.append(opt)
+
+        if missing:
+            logger.warn('\n{}\n'.format(msg))
+            for opt in missing:
+                logger.warn('  - {}'.format(opt))
+            logger.warn('')
+
     def pull(self):
         super().pull()
         snapcraft.download(
             'ubuntu-core', 'edge', self.os_snap, self.project.deb_arch)
+
+    def build(self):
+        super().prep_build()
+        self._do_parse_config(self.get_config_path())
+        self._do_check_config()
+        self._do_check_initrd()
+        super().finish_build()
 
     def do_install(self):
         super().do_install()
