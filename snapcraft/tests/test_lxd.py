@@ -27,39 +27,10 @@ from testtools import ExpectedException
 from snapcraft import tests
 from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
+from snapcraft.tests import check_output_side_effect
 
 
-def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
-    def call_effect(*args, **kwargs):
-        if args[0] == ['lxc', 'remote', 'get-default']:
-            if fail_on_default:
-                raise CalledProcessError(returncode=255, cmd=args[0])
-            else:
-                return 'local'.encode('utf-8')
-        elif args[0] == ['lxc', 'list', 'my-remote:'] and fail_on_remote:
-            raise CalledProcessError(returncode=255, cmd=args[0])
-        else:
-            return ''.encode('utf-8')
-    return call_effect
-
-
-class LXDTestCase(tests.TestCase):
-
-    def setUp(self):
-            super().setUp()
-
-            patcher = patch('snapcraft.internal.lxd.check_call')
-            self.check_call_mock = patcher.start()
-            self.addCleanup(patcher.stop)
-
-            patcher = patch('snapcraft.internal.lxd.check_output')
-            self.check_output_mock = patcher.start()
-            self.check_output_mock.side_effect = check_output_side_effect()
-            self.addCleanup(patcher.stop)
-
-            patcher = patch('snapcraft.internal.lxd.sleep', lambda _: None)
-            patcher.start()
-            self.addCleanup(patcher.stop)
+class LXDTestCase(tests.ContainerTestCase):
 
     @patch('petname.Generate')
     def test_cleanbuild(self, mock_pet):
