@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import namedtuple
 import os
 import yaml
 
@@ -94,6 +95,9 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.assertNotIn('hello=2.10-1', state.assets['build-packages'])
 
 
+TestDetail = namedtuple('TestDetail', ['field', 'value'])
+
+
 class GitAssetTrackingTestCase(testscenarios.WithScenarios,
                                integration_tests.TestCase):
 
@@ -104,11 +108,11 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
         }),
         ('branch', {
             'part_name': 'git-part-branch',
-            'expected_details': ('branch', 'test-branch'),
+            'expected_details': TestDetail('branch', 'test-branch'),
         }),
         ('tag', {
             'part_name': 'git-part-tag',
-            'expected_details': ('tag', 'feature-tag'),
+            'expected_details': TestDetail('tag', 'feature-tag'),
         }),
     ]
 
@@ -131,8 +135,8 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
         # snapcraft.source.Git doesn't allow both a tag and a commit
         if self.expected_details:
             self.assertThat(
-                state.assets['source-details'][self.expected_details[0]],
-                Equals(self.expected_details[1]))
+                state.assets['source-details'][self.expected_details.field],
+                Equals(self.expected_details.value))
         else:
             self.assertThat(
                 state.assets['source-details']['commit'],
@@ -144,13 +148,11 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
     scenarios = [
         ('plain', {
             'part_name': 'bzr-part',
-            'expected': {}
+            'expected_details': None,
         }),
         ('tag', {
             'part_name': 'bzr-part-tag',
-            'expected': {
-                'tag': 'feature-tag',
-            }
+            'expected_details': TestDetail('tag', 'feature-tag'),
         }),
     ]
 
@@ -159,7 +161,6 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
         self.useFixture(repo_fixture)
         project_dir = 'asset-tracking'
         part = self.part_name
-        expected_commit = repo_fixture.commit
         self.run_snapcraft(['pull', part], project_dir)
 
         state_file = os.path.join(
@@ -170,12 +171,14 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
 
         self.assertIn('source-details', state.assets)
 
-        if 'tag' in self.expected:
-            self.assertEqual(self.expected['tag'],
-                             state.assets['source-details']['tag'])
+        if self.expected_details:
+            self.assertThat(
+                state.assets['source-details'][self.expected_details.field],
+                Equals(self.expected_details.value))
         else:
-            self.assertEqual(expected_commit,
-                             state.assets['source-details']['commit'])
+            self.assertThat(
+                state.assets['source-details']['commit'],
+                Equals(repo_fixture.commit))
 
 
 class MercurialAssetTrackingTestCase(integration_tests.TestCase):
