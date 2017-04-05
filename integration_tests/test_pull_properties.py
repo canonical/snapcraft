@@ -119,10 +119,13 @@ class AssetTrackingTestCase(integration_tests.TestCase):
 
         state_file = os.path.join(
             self.parts_dir, project_dir, 'state', 'pull')
+        self.assertThat(state_file, FileExists())
         with open(state_file) as f:
             state = yaml.load(f)
 
         self.assertIn('source-details', state.assets)
+        self.assertTrue(len(state.assets['build-packages']) == 0)
+        self.assertNotIn('hello=2.10-1', state.assets['build-packages'])
 
     def test_pull_git(self):
         project_dir = 'asset-tracking'

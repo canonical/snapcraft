@@ -944,14 +944,14 @@ class StateTestCase(StateBaseTestCase):
             handler.makedirs()
 
             for later_step in common.COMMAND_ORDER[index+1:]:
-                open(states.step_state_file(
+                open(states.get_step_state_file(
                     handler.statedir, later_step), 'w').close()
 
             handler.mark_done(step)
 
             for later_step in common.COMMAND_ORDER[index+1:]:
                 self.assertFalse(
-                    os.path.exists(states.step_state_file(
+                    os.path.exists(states.get_step_state_file(
                         handler.statedir, later_step)),
                     'Expected later step states to be cleared')
 

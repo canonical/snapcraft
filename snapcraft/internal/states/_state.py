@@ -83,7 +83,7 @@ def _get_differing_keys(dict1, dict2):
 
 def get_state(state_dir, step):
     state = None
-    state_file = step_state_file(state_dir, step)
+    state_file = get_step_state_file(state_dir, step)
     if os.path.isfile(state_file):
         with open(state_file, 'r') as f:
             state = yaml.load(f.read())
@@ -91,5 +91,5 @@ def get_state(state_dir, step):
     return state
 
 
-def step_state_file(state_dir, step):
+def get_step_state_file(state_dir, step):
     return os.path.join(state_dir, step)

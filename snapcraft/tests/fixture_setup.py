@@ -215,6 +215,11 @@ class FakeStore(fixtures.Fixture):
             urllib.parse.urljoin(
                 self.fake_sso_server_fixture.url, 'api/v2/')))
 
+        self.useFixture(fixtures.EnvironmentVariable(
+            'STORE_RETRIES', '1'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'STORE_BACKOFF', '0'))
+
         self.fake_store_upload_server_fixture = FakeStoreUploadServerRunning()
         self.useFixture(self.fake_store_upload_server_fixture)
         self.useFixture(fixtures.EnvironmentVariable(
@@ -330,16 +335,16 @@ class TestStore(fixtures.Fixture):
         test_store = os.getenv('TEST_STORE') or 'fake'
         if test_store == 'fake':
             self.useFixture(FakeStore())
-            self.register_delay = 0
+            self.register_count_limit = 10
             self.reserved_snap_name = 'test-reserved-snap-name'
             self.already_owned_snap_name = 'test-already-owned-snap-name'
         elif test_store == 'staging':
             self.useFixture(StagingStore())
-            self.register_delay = 10
+            self.register_count_limit = 10
             self.reserved_snap_name = 'bash'
         elif test_store == 'production':
             # Use the default server URLs
-            self.register_delay = 180
+            self.register_count_limit = 10
             self.reserved_snap_name = 'bash'
         else:
             raise ValueError(
