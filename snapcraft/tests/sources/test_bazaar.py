@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import shutil
 from unittest import mock
 
 from snapcraft.internal import sources
@@ -26,19 +25,7 @@ from snapcraft.tests.subprocess_utils import (
 )
 
 
-class BazaarBaseTestCase(tests.sources.SourceTestCase):
-
-    def rm_dir(self, dir):
-        if os.path.exists(dir):
-            shutil.rmtree(dir)
-
-    def clean_dir(self, dir):
-        self.rm_dir(dir)
-        os.mkdir(dir)
-        self.addCleanup(self.rm_dir, dir)
-
-
-class TestBazaar(BazaarBaseTestCase):
+class TestBazaar(tests.sources.SourceTestCase):
 
     def setUp(self):
         super().setUp()
@@ -142,13 +129,14 @@ class TestBazaar(BazaarBaseTestCase):
         self.assertEqual(raised.message, expected_message)
 
 
-class BazaarDetailsTestCase(BazaarBaseTestCase):
+class BazaarDetailsTestCase(tests.TestCase):
 
     def setUp(self):
+        super().setUp()
         self.working_tree = 'bzr-test'
         self.source_dir = 'bzr-checkout'
-        self.clean_dir(self.working_tree)
-        self.clean_dir(self.source_dir)
+        os.mkdir(self.working_tree)
+        os.mkdir(self.source_dir)
         os.chdir(self.working_tree)
         call(['bzr', 'init'])
         call(['bzr', 'whoami', 'Test User <test.user@example.com>'])
@@ -167,8 +155,6 @@ class BazaarDetailsTestCase(BazaarBaseTestCase):
         self.bzr.pull()
 
         self.source_details = self.bzr._get_source_details()
-
-        super().setUp()
 
     def test_bzr_details_commit(self):
         self.assertEqual(self.expected_commit, self.source_details['commit'])
