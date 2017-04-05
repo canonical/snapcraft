@@ -807,6 +807,12 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._DEV_API_PATH, 'snaps/bad/validations')
         err_validations_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snaps/err/validations')
+        good_developers_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/good/developers')
+        no_developers_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/no-dev/developers')
+        bad_developers_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/badrequest/developers')
 
         if parsed_path.path.startswith(details_good):
             self._handle_scan_complete_request('ready_to_release', True)
@@ -824,6 +830,12 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_validation_request('err')
         elif parsed_path.path.startswith(no_validations_path):
             self._handle_validation_request('no')
+        elif parsed_path.path.startswith(good_developers_path):
+            self._handle_developers_request('good')
+        elif parsed_path.path.startswith(no_developers_path):
+            self._handle_developers_request('no-dev')
+        elif parsed_path.path.startswith(bad_developers_path):
+            self._handle_developers_request('badrequest')
         elif parsed_path.path.startswith(snap_path):
             if parsed_path.path.endswith('/history'):
                 self._handle_snap_revisions()
@@ -892,6 +904,27 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(response)
 
+    def _handle_developers_request(self, code):
+        logger.debug('Handling snap developers request')
+        if code == 'good':
+            response = {'snap_developer': []}
+            response = json.dumps(response).encode()
+            status = 200
+        elif code == 'no-dev':
+            status = 403
+            response = {'error_list': [
+                {'message': 'error',
+                 'code': 'snap-developer-not-found'}]}
+            response = json.dumps(response).encode()
+        elif code == 'badrequest':
+            status = 200
+            response = {'snap_developer': []}
+            response = json.dumps(response).encode()
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(response)
+
     def _handle_duplicate_snap_request(self, code, can_release):
         logger.debug('Handling duplicate snap request')
         self.send_response(200)
@@ -935,6 +968,12 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             'ubuntu-core': {'snap-id': 'good', 'status': 'Approved',
                             'private': False, 'price': None,
                             'since': '2016-12-12T01:01:01Z'},
+            'core-no-dev': {'snap-id': 'no-dev', 'status': 'Approved',
+                            'private': False, 'price': None,
+                            'since': '2016-12-12T01:01:01Z'},
+            'badrequest': {'snap-id': 'badrequest', 'status': 'Approved',
+                           'private': False, 'price': None,
+                           'since': '2016-12-12T01:01:01Z'},
             }
         snaps.update({
             name: {'snap-id': 'fake-snap-id', 'status': 'Approved',
@@ -1060,6 +1099,12 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._DEV_API_PATH, 'snaps/bad/validations')
         err_validations_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snaps/err/validations')
+        good_developers_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/good/developers')
+        no_developers_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/no-dev/developers')
+        bad_developers_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/badrequest/developers')
 
         if parsed_path.path.startswith(good_validations_path):
             self._handle_push_validation_request('good')
@@ -1067,6 +1112,12 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_push_validation_request('bad')
         elif parsed_path.path.startswith(err_validations_path):
             self._handle_push_validation_request('err')
+        elif parsed_path.path.startswith(good_developers_path):
+            self._handle_push_developers_request('good')
+        elif parsed_path.path.startswith(no_developers_path):
+            self._handle_push_developers_request('no-dev')
+        elif parsed_path.path.startswith(bad_developers_path):
+            self._handle_push_developers_request('badrequest')
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
@@ -1086,6 +1137,27 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         elif code == 'bad':
             response = 'foo'.encode()
             status = 200
+        self.send_response(status)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+        self.wfile.write(response)
+
+    def _handle_push_developers_request(self, code):
+        string_data = self.rfile.read(
+            int(self.headers['Content-Length']))
+        if code == 'good':
+            response = string_data
+            status = 200
+        elif code == 'no-dev':
+            response = string_data
+            status = 200
+        elif code == 'badrequest':
+            status = 400
+            response = {'error_list': [
+                {'message': "The given `snap-id` does not match the "
+                            "assertion's.",
+                 'code': 'invalid-request'}]}
+            response = json.dumps(response).encode()
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
