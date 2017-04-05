@@ -18,7 +18,10 @@ import os
 import yaml
 
 import testscenarios
-from testtools.matchers import FileExists
+from testtools.matchers import (
+    Equals,
+    FileExists
+)
 
 import integration_tests
 from snapcraft.tests import fixture_setup
@@ -97,19 +100,15 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
     scenarios = [
         ('plain', {
             'part_name': 'git-part',
-            'expected': {}
+            'expected_details': None,
         }),
         ('branch', {
             'part_name': 'git-part-branch',
-            'expected': {
-                'branch': 'test-branch',
-            }
+            'expected_details': ('branch', 'test-branch'),
         }),
         ('tag', {
             'part_name': 'git-part-tag',
-            'expected': {
-                'tag': 'feature-tag',
-            }
+            'expected_details': ('tag', 'feature-tag'),
         }),
     ]
 
@@ -118,7 +117,6 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
         self.useFixture(repo_fixture)
         project_dir = 'asset-tracking'
 
-        expected_commit = repo_fixture.commit
         self.run_snapcraft(['pull', self.part_name], project_dir)
 
         state_file = os.path.join(
@@ -129,15 +127,14 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
 
         self.assertIn('source-details', state.assets)
 
-        if 'branch' in self.expected:
-            self.assertEqual(self.expected['branch'],
-                             state.assets['source-details']['branch'])
-        elif 'tag' in self.expected:
-            self.assertEqual(self.expected['tag'],
-                             state.assets['source-details']['tag'])
+        if self.expected_details:
+            self.assertThat(
+                state.assets['source-details'][self.expected_details[0]],
+                Equals(self.expected_details[1]))
         else:
-            self.assertEqual(expected_commit,
-                             state.assets['source-details']['commit'])
+            self.assertThat(
+                state.assets['source-details']['commit'],
+                Equals(repo_fixture.commit))
 
 
 class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
