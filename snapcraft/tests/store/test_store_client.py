@@ -22,6 +22,7 @@ from unittest import mock
 
 import fixtures
 import pymacaroons
+from testtools.matchers import Contains
 
 from snapcraft import (
     config,
@@ -35,12 +36,16 @@ from snapcraft.storeapi import (
 from snapcraft.tests import fixture_setup
 
 
-class LoginTestCase(tests.TestCase):
+class StoreTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.useFixture(fixture_setup.FakeStore())
+
+        self.fake_store = self.useFixture(fixture_setup.FakeStore())
         self.client = storeapi.StoreClient()
+
+
+class LoginTestCase(StoreTestCase):
 
     def test_login_successful(self):
         self.client.login(
@@ -124,18 +129,13 @@ class LoginTestCase(tests.TestCase):
         self.assertTrue(config.Config().is_empty())
 
 
-class DownloadTestCase(tests.TestCase):
+class DownloadTestCase(StoreTestCase):
 
     # sha512 of snapcraft/tests/data/test-snap.snap
     EXPECTED_SHA512 = (
         '69D57DCACF4F126592D4E6FF689AD8BB8A083C7B9FE44F6E738EF'
         'd22a956457f14146f7f067b47bd976cf0292f2993ad864ccb498b'
         'fda4128234e4c201f28fe9')
-
-    def setUp(self):
-        super().setUp()
-        self.useFixture(fixture_setup.FakeStore())
-        self.client = storeapi.StoreClient()
 
     def test_download_unexisting_snap_raises_exception(self):
         self.client.login('dummy', 'test correct password')
@@ -241,12 +241,7 @@ class DownloadTestCase(tests.TestCase):
             'test-snap-with-wrong-sha', 'test-channel', download_path)
 
 
-class PushSnapBuildTestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.fake_store = self.useFixture(fixture_setup.FakeStore())
-        self.client = storeapi.StoreClient()
+class PushSnapBuildTestCase(StoreTestCase):
 
     def test_push_snap_build_without_login_raises_exception(self):
         self.assertRaises(
@@ -297,12 +292,7 @@ class PushSnapBuildTestCase(tests.TestCase):
         self.client.push_snap_build('snap-id', 'dummy')
 
 
-class GetAccountInformationTestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.fake_store = self.useFixture(fixture_setup.FakeStore())
-        self.client = storeapi.StoreClient()
+class GetAccountInformationTestCase(StoreTestCase):
 
     def test_get_account_information_without_login_raises_exception(self):
         self.assertRaises(
@@ -390,12 +380,7 @@ class GetAccountInformationTestCase(tests.TestCase):
         self.assertFalse(self.fake_store.needs_refresh)
 
 
-class RegisterKeyTestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.fake_store = self.useFixture(fixture_setup.FakeStore())
-        self.client = storeapi.StoreClient()
+class RegisterKeyTestCase(StoreTestCase):
 
     def test_register_key_without_login_raises_exception(self):
         self.assertRaises(
@@ -441,12 +426,7 @@ class RegisterKeyTestCase(tests.TestCase):
             'The account-key-request assertion is not valid.')
 
 
-class RegisterTestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.fake_store = self.useFixture(fixture_setup.FakeStore())
-        self.client = storeapi.StoreClient()
+class RegisterTestCase(StoreTestCase):
 
     def test_register_without_login_raises_exception(self):
         self.assertRaises(
@@ -523,14 +503,12 @@ class RegisterTestCase(tests.TestCase):
         self.assertEqual(str(raised), 'Registration failed.')
 
 
-class ValidationsTestCase(tests.TestCase):
+class ValidationsTestCase(StoreTestCase):
 
     def setUp(self):
         super().setUp()
         self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
         self.useFixture(self.fake_logger)
-        self.fake_store = self.useFixture(fixture_setup.FakeStore())
-        self.client = storeapi.StoreClient()
 
     def test_get_success(self):
         self.client.login('dummy', 'test correct password')
@@ -588,14 +566,13 @@ class ValidationsTestCase(tests.TestCase):
 
     def test_get_error_response(self):
         self.client.login('dummy', 'test correct password')
-        expected = []
 
         err = self.assertRaises(
-            errors.StoreValidationError,
+            errors.StoreRetryError,
             self.client.get_assertion, 'err', 'validations')
 
-        expected = ("Received error 503: 'error'")
-        self.assertEqual(str(err), expected)
+        expected = ('too many 503 error responses')
+        self.assertThat(str(err), Contains(expected))
 
     def test_push_success(self):
         self.client.login('dummy', 'test correct password')
@@ -631,12 +608,10 @@ class ValidationsTestCase(tests.TestCase):
         self.assertEqual(str(err), expected)
 
 
-class UploadTestCase(tests.TestCase):
+class UploadTestCase(StoreTestCase):
 
     def setUp(self):
         super().setUp()
-        self.fake_store = self.useFixture(fixture_setup.FakeStore())
-        self.client = storeapi.StoreClient()
         self.snap_path = os.path.join(
             os.path.dirname(tests.__file__), 'data',
             'test-snap.snap')
@@ -770,12 +745,7 @@ class UploadTestCase(tests.TestCase):
             self.client.upload, 'test-snap', self.snap_path)
 
 
-class ReleaseTestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.fake_store = self.useFixture(fixture_setup.FakeStore())
-        self.client = storeapi.StoreClient()
+class ReleaseTestCase(StoreTestCase):
 
     def test_release_without_login_raises_exception(self):
         self.assertRaises(
@@ -845,14 +815,12 @@ class ReleaseTestCase(tests.TestCase):
             self.client.release, 'test-snap', '10', ['beta'])
 
 
-class CloseChannelsTestCase(tests.TestCase):
+class CloseChannelsTestCase(StoreTestCase):
 
     def setUp(self):
         super().setUp()
         self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
         self.useFixture(self.fake_logger)
-        self.fake_store = self.useFixture(fixture_setup.FakeStore())
-        self.client = storeapi.StoreClient()
 
     def test_close_requires_login(self):
         self.assertRaises(
@@ -957,12 +925,10 @@ class MacaroonsTestCase(tests.TestCase):
             storeapi._macaroon_auth, conf)
 
 
-class GetSnapRevisionsTestCase(tests.TestCase):
+class GetSnapRevisionsTestCase(StoreTestCase):
 
     def setUp(self):
         super().setUp()
-        self.fake_store = self.useFixture(fixture_setup.FakeStore())
-        self.client = storeapi.StoreClient()
         self.expected = [{
             'series': ['16'],
             'channels': [],
@@ -1059,12 +1025,10 @@ class GetSnapRevisionsTestCase(tests.TestCase):
             str(e))
 
 
-class GetSnapStatusTestCase(tests.TestCase):
+class GetSnapStatusTestCase(StoreTestCase):
 
     def setUp(self):
         super().setUp()
-        self.fake_store = self.useFixture(fixture_setup.FakeStore())
-        self.client = storeapi.StoreClient()
         self.expected = {
             'channel_map_tree': {
                 'latest': {
@@ -1194,12 +1158,7 @@ class GetSnapStatusTestCase(tests.TestCase):
             str(e))
 
 
-class SignDeveloperAgreementTestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.fake_store = self.useFixture(fixture_setup.FakeStore())
-        self.client = storeapi.StoreClient()
+class SignDeveloperAgreementTestCase(StoreTestCase):
 
     def test_sign_dev_agreement_success(self):
         self.client.login('dummy', 'test correct password')

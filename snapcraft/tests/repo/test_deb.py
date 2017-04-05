@@ -24,7 +24,7 @@ from testtools.matchers import (
 )
 
 import snapcraft
-from snapcraft.internal.repo import _deb
+from snapcraft.internal import repo
 from snapcraft.internal.repo import errors
 from snapcraft import tests
 from . import RepoBaseTestCase
@@ -49,17 +49,17 @@ class UbuntuTestCase(RepoBaseTestCase):
             self.mock_package]
 
     def test_get_pkg_name_parts_name_only(self):
-        name, version = _deb._get_pkg_name_parts('hello')
+        name, version = repo.get_pkg_name_parts('hello')
         self.assertEqual('hello', name)
         self.assertEqual(None, version)
 
     def test_get_pkg_name_parts_all(self):
-        name, version = _deb._get_pkg_name_parts('hello:i386=2.10-1')
+        name, version = repo.get_pkg_name_parts('hello:i386=2.10-1')
         self.assertEqual('hello:i386', name)
         self.assertEqual('2.10-1', version)
 
     def test_get_pkg_name_parts_no_arch(self):
-        name, version = _deb._get_pkg_name_parts('hello=2.10-1')
+        name, version = repo.get_pkg_name_parts('hello=2.10-1')
         self.assertEqual('hello', name)
         self.assertEqual('2.10-1', version)
 
@@ -67,7 +67,7 @@ class UbuntuTestCase(RepoBaseTestCase):
     def test_get_package(self, mock_apt_pkg):
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
-        ubuntu = _deb.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
         ubuntu.get(['fake-package'])
 
         mock_apt_pkg.assert_has_calls([
@@ -104,7 +104,7 @@ class UbuntuTestCase(RepoBaseTestCase):
     def test_get_multiarch_package(self, mock_apt_pkg):
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
-        ubuntu = _deb.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
         ubuntu.get(['fake-package:arch'])
 
         mock_apt_pkg.assert_has_calls([
@@ -141,7 +141,7 @@ class UbuntuTestCase(RepoBaseTestCase):
         mock_cc.return_value = 'ar'
 
         self.maxDiff = None
-        sources_list = _deb._format_sources_list(
+        sources_list = repo._deb._format_sources_list(
             '', use_geoip=True, deb_arch='amd64')
 
         expected_sources_list = \
@@ -158,8 +158,8 @@ deb http://security.ubuntu.com/ubuntu xenial-security multiverse
         self.assertEqual(sources_list, expected_sources_list)
 
     def test_no_geoip_uses_default_archive(self):
-        sources_list = _deb._format_sources_list(
-            _deb._DEFAULT_SOURCES, deb_arch='amd64', use_geoip=False)
+        sources_list = repo._deb._format_sources_list(
+            repo._deb._DEFAULT_SOURCES, deb_arch='amd64', use_geoip=False)
 
         expected_sources_list = \
             '''deb http://archive.ubuntu.com/ubuntu/ xenial main restricted
@@ -180,8 +180,8 @@ deb http://security.ubuntu.com/ubuntu xenial-security multiverse
         self.maxDiff = None
         mock_cc.return_value = 'ar'
 
-        sources_list = _deb._format_sources_list(
-            _deb._DEFAULT_SOURCES, deb_arch='amd64',
+        sources_list = repo._deb._format_sources_list(
+            repo._deb._DEFAULT_SOURCES, deb_arch='amd64',
             use_geoip=True, release='vivid')
 
         expected_sources_list = \
@@ -199,8 +199,8 @@ deb http://security.ubuntu.com/ubuntu vivid-security multiverse
 
     @patch('snapcraft.repo._deb._get_geoip_country_code_prefix')
     def test_sources_armhf_trusty(self, mock_cc):
-        sources_list = _deb._format_sources_list(
-            _deb._DEFAULT_SOURCES, deb_arch='armhf', release='trusty')
+        sources_list = repo._deb._format_sources_list(
+            repo._deb._DEFAULT_SOURCES, deb_arch='armhf', release='trusty')
 
         expected_sources_list = \
             '''deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted
@@ -240,7 +240,7 @@ class BuildPackagesTestCase(tests.TestCase):
         mock_apt_cache_with = mock_apt_cache.__enter__.return_value
         mock_apt_cache_with.__getitem__.side_effect = lambda p: test_pkgs[p]
 
-        _deb.Ubuntu.install_build_packages(test_pkgs.keys())
+        repo.Ubuntu.install_build_packages(test_pkgs.keys())
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
     @patch('subprocess.check_call')
@@ -295,7 +295,7 @@ class BuildPackagesTestCase(tests.TestCase):
     def test_invalid_package_requested(self):
         raised = self.assertRaises(
             errors.BuildPackageNotFoundError,
-            _deb.Ubuntu.install_build_packages,
+            repo.Ubuntu.install_build_packages,
             ['package-does-not-exist'])
 
         self.assertEqual(

@@ -101,10 +101,10 @@ class StatusTestCase(integration_tests.StoreTestCase):
 
         output = self.run_snapcraft(['status', name])
         expected = '\n'.join((
-            'Arch    Channel    Version                           Revision',
-            'all     stable     -                                 -',
-            '        candidate  {version}  1',
-            '        beta       {version}  1',
-            '        edge       ^                                 ^'
+            'Track    Arch    Channel    Version                           Revision',  # noqa
+            'latest   all     stable     -                                 -',
+            '                 candidate  {version}  1',
+            '                 beta       {version}  1',
+            '                 edge       ^                                 ^'
         )).format(version=version)
         self.assertThat(output, Contains(expected))
