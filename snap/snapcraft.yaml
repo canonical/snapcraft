@@ -12,9 +12,14 @@ confinement: classic
 
 apps:
   snapcraft:
-    command: bin/snapcraft
+    command: bin/snapcraft-classic
 
 parts:
+  snapcraft-bin:
+    source: bin
+    plugin: dump
+    organize:
+        snapcraft-classic: bin/snapcraft-classic
   snapcraft:
     source: .
     plugin: python
@@ -28,12 +33,17 @@ parts:
     stage-packages:
         - libarchive13
         - libffi6
+        - libmagic1
         - libsodium18
         - squashfs-tools
         - xdelta3
     prime:
         - '*'
         - '**/*.pyc'
+    install: |
+        TRIPLET_PATH=$(ls -d $SNAPCRAFT_PART_INSTALL/usr/lib/$(uname -p)-*)
+        ln -s libarchive.so.13.2.1 $TRIPLET_PATH/libarchive.so
+        ln -s libsodium.so.18.1.1 $TRIPLET_PATH/libsodium.so
     after: [python, apt]
   tour:
     source: tour

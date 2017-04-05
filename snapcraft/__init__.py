@@ -356,6 +356,28 @@ from collections import OrderedDict                 # noqa
 import pkg_resources                                # noqa
 import yaml                                         # noqa
 
+import os as _os
+if _os.environ.get('SNAP_NAME') == 'snapcraft':
+    # The current implementation as of 3.6 in for find_library in
+    # ctypes.util makes use of `ldconfig -p` which depends on the
+    # current ld cache which in effect has no knowledge of any library
+    # in $SNAP. What makes matters worse is that it will provide
+    # results for on host libraries we do NOT want.
+    import re as _re
+
+    def find_library(name):
+        regex = r'lib{name}\.[^\s]+'.format(name=_re.escape(name))
+        snap_root = _os.environ.get('SNAP')
+        for root, directories, files in _os.walk(snap_root):
+            for filename in files:
+                res = _re.search(regex, filename)
+                if res:
+                    return res.group(0)
+
+    from unittest.mock import patch as _patch
+    _p = _patch('ctypes.util.find_library').start()
+    _p.side_effect = find_library
+
 from snapcraft._baseplugin import BasePlugin        # noqa
 from snapcraft._options import ProjectOptions       # noqa
 from snapcraft._help import topic_help              # noqa
