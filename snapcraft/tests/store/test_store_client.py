@@ -329,6 +329,20 @@ class GetAccountInformationTestCase(tests.TestCase):
                         'private': False,
                         'price': None,
                         'since': '2016-12-12T01:01:01Z',
+                    },
+                    'core-no-dev': {
+                        'snap-id': 'no-dev',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
+                    },
+                    'badrequest': {
+                        'snap-id': 'badrequest',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
                     }
                 }
             }
@@ -351,6 +365,20 @@ class GetAccountInformationTestCase(tests.TestCase):
                     },
                     'ubuntu-core': {
                         'snap-id': 'good',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
+                    },
+                    'core-no-dev': {
+                        'snap-id': 'no-dev',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
+                    },
+                    'badrequest': {
+                        'snap-id': 'badrequest',
                         'status': 'Approved',
                         'private': False,
                         'price': None,
@@ -543,7 +571,7 @@ class ValidationsTestCase(tests.TestCase):
             "revoked": "false",
             "required": True,
         }]
-        result = self.client.get_assertion('good', 'validations' )
+        result = self.client.get_assertion('good', 'validations')
         self.assertEqual(result, expected)
 
     def test_get_bad_response(self):
