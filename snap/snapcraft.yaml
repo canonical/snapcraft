@@ -42,8 +42,10 @@ parts:
         - '**/*.pyc'
     install: |
         TRIPLET_PATH=$(ls -d $SNAPCRAFT_PART_INSTALL/usr/lib/$(uname -p)-*)
-        ln -s libarchive.so.13.2.1 $TRIPLET_PATH/libarchive.so
-        ln -s libsodium.so.18.1.1 $TRIPLET_PATH/libsodium.so
+        LIBARCHIVE=$(readlink -n $TRIPLET_PATH/libarchive.so.13)
+        ln -s $LIBARCHIVE $TRIPLET_PATH/libarchive.so
+        LIBSODIUM=$(readlink -n $TRIPLET_PATH/libsodium.so.18)
+        ln -s $LIBSODIUM $TRIPLET_PATH/libsodium.so
     after: [python, apt]
   tour:
     source: tour
