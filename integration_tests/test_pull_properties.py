@@ -101,7 +101,7 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
         ('branch', {
             'part_name': 'git-part-branch',
             'expected': {
-                'branch': 'feature',
+                'branch': 'test-branch',
             }
         }),
         ('tag', {

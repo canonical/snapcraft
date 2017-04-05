@@ -18,7 +18,7 @@ parts:
     plugin: nil
     source: git-source
     source-type: git
-    source-branch: feature
+    source-branch: test-branch
   git-part-tag:
     plugin: nil
     source: git-source

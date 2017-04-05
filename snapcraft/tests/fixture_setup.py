@@ -411,7 +411,7 @@ class GitRepo(fixtures.Fixture):
               'user.email', 'testuser@example.com'])
 
         _add_and_commit_file(name, 'testing')
-        call(['git', '-C', name, 'branch', 'feature'])
+        call(['git', '-C', name, 'branch', 'test-branch'])
 
         _add_and_commit_file(name, 'testing-2')
         call(['git', '-C', name, 'tag', 'feature-tag'])
