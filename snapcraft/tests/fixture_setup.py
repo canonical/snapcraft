@@ -479,3 +479,27 @@ class SvnRepo(fixtures.Fixture):
             revno = '1'
 
             self.commit = revno
+
+
+class HgRepo(fixtures.Fixture):
+
+    def __init__(self, name):
+        self.name = name
+
+    def setUp(self):
+        super().setUp()
+
+        with return_to_cwd():
+            os.makedirs(self.name)
+            os.chdir(self.name)
+            call(['hg', 'init'])
+            with open('testing', 'w') as fp:
+                fp.write('testing')
+
+            call(['hg', 'add', 'testing'])
+            call(['hg', 'commit', '-m', 'testing',
+                  '-u', 'Test User <test.user@example.com>'])
+            call(['hg', 'tag', 'feature-tag'])
+            revno = call_with_output(['hg', 'id']).split()[0]
+
+            self.commit = revno

@@ -35,20 +35,3 @@ def call(cmd):
 
 def call_with_output(cmd):
     return subprocess.check_output(cmd).decode('utf-8').strip()
-
-
-def create_hg_repo(name):
-    with return_to_cwd():
-        os.makedirs(name)
-        os.chdir(name)
-        call(['hg', 'init'])
-        with open('testing', 'w') as fp:
-            fp.write('testing')
-
-        call(['hg', 'add', 'testing'])
-        call(['hg', 'commit', '-m', 'testing',
-              '-u', 'Test User <test.user@example.com>'])
-        call(['hg', 'tag', 'feature-tag'])
-        revno = call_with_output(['hg', 'id']).split()[0]
-
-        return revno

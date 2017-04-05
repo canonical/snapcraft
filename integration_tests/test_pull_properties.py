@@ -21,7 +21,6 @@ import testscenarios
 from testtools.matchers import FileExists
 
 import integration_tests
-from integration_tests import _source_helpers
 from snapcraft.tests import fixture_setup
 
 
@@ -182,9 +181,11 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
 class MercurialAssetTrackingTestCase(integration_tests.TestCase):
 
     def test_pull_hg(self):
+        repo_fixture = fixture_setup.HgRepo('hg-source')
+        self.useFixture(repo_fixture)
         project_dir = 'asset-tracking'
         part = 'hg-part'
-        expected_commit = _source_helpers.create_hg_repo('hg-source')
+        expected_commit = repo_fixture.commit
         self.run_snapcraft(['pull', part], project_dir)
 
         state_file = os.path.join(
@@ -198,9 +199,10 @@ class MercurialAssetTrackingTestCase(integration_tests.TestCase):
                          state.assets['source-details']['commit'])
 
     def test_pull_hg_tag(self):
+        repo_fixture = fixture_setup.HgRepo('hg-source')
+        self.useFixture(repo_fixture)
         project_dir = 'asset-tracking'
         part = 'hg-part-tag'
-        _source_helpers.create_hg_repo('hg-source')
         self.run_snapcraft(['pull', part], project_dir)
 
         state_file = os.path.join(
