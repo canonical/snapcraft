@@ -809,10 +809,8 @@ validation_re = re.compile('^[^=]+=[0-9]+$')
 def collaborate(snap_name, key):
     store = storeapi.StoreClient()
 
-    # Need the ID of the logged in user.
     with _requires_login():
         account_info = store.get_account_information()
-    authority_id = account_info['account_id']
 
     # Get data for the gating snap
     release = storeapi.constants.DEFAULT_SERIES
@@ -820,12 +818,13 @@ def collaborate(snap_name, key):
         snap_id = account_info['snaps'][release][snap_name]['snap-id']
     except KeyError:
         raise storeapi.errors.SnapNotFoundError(snap_name)
-    developers = get_developers(snap_id)
+    developers = _get_developers(snap_id)
+
     # XXX: Do the amendments via UI here.
-    sign_developers(snap_id, developers['snap_developer'], key)
+    _sign_developers(snap_id, developers['snap_developer'], key)
 
 
-def get_developers(snap_id):
+def _get_developers(snap_id):
     store = storeapi.StoreClient()
     developers = {'snap_developer': []}
     try:
@@ -836,7 +835,7 @@ def get_developers(snap_id):
     return developers
 
 
-def sign_developers(snap_id, assertion, key):
+def _sign_developers(snap_id, assertion, key):
     store = storeapi.StoreClient()
     assertion = _sign_assertion(snap_id, assertion, key, 'developers')
     store.push_assertion(snap_id, assertion, 'developers')
