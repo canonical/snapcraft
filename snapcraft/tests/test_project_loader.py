@@ -434,6 +434,26 @@ parts:
         self.assertEqual(raised.message,
                          "'name' is a required property")
 
+    def test_get_metadata(self):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+architectures: ['amd64']
+confinement: strict
+grade: stable
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        config = project_loader.load_config()
+        metadata = config.get_metadata()
+        self.assertEqual(metadata['name'], 'test')
+        self.assertEqual(metadata['version'], '1')
+        self.assertEqual(metadata['arch'], ['amd64'])
+
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_name_as_number(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)

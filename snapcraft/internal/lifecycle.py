@@ -313,8 +313,9 @@ class _Executor:
 
 def cleanbuild(project_options, remote=''):
     config = snapcraft.internal.load_config(project_options)
-    lxd.Cleanbuilder(None, os.path.curdir, project_options,
-                     config, remote=remote).execute()
+    lxd.Cleanbuilder(source=os.path.curdir,
+                     project_options=project_options,
+                     metadata=config.get_metadata(), remote=remote).execute()
 
 
 def _snap_data_from_dir(directory):
@@ -333,8 +334,9 @@ def snap(project_options, directory=None, output=None):
         snap = _snap_data_from_dir(snap_dir)
     elif os.environ.get('SNAPCRAFT_CONTAINER_BUILDS'):
         config = snapcraft.internal.load_config(project_options)
-        container = lxd.Project(output, os.path.curdir, project_options,
-                                config)
+        container = lxd.Project(output=output, source=os.path.curdir,
+                                project_options=project_options,
+                                metadata=config.get_metadata())
         container.execute()
         return container._snap_output
     else:

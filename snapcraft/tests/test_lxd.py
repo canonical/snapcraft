@@ -40,7 +40,8 @@ class LXDTestCase(tests.ContainerTestCase):
         mock_pet.return_value = 'my-pet'
 
         project_options = ProjectOptions()
-        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options).execute()
+        lxd.Cleanbuilder(output='snap.snap', source='project.tar',
+                         project_options=project_options).execute()
         expected_arch = project_options.deb_arch
 
         self.assertEqual(
@@ -82,7 +83,8 @@ class LXDTestCase(tests.ContainerTestCase):
     def test_wait_for_network_loops(self, mock_sleep):
         self.check_call_mock.side_effect = CalledProcessError(-1, ['my-cmd'])
 
-        cb = lxd.Cleanbuilder('snap.snap', 'project.tar', 'amd64')
+        cb = lxd.Cleanbuilder(output='snap.snap', source='project.tar',
+                              project_options='amd64')
 
         raised = self.assertRaises(
             CalledProcessError,
@@ -105,7 +107,8 @@ class LXDTestCase(tests.ContainerTestCase):
         mock_run.side_effect = run_effect
 
         project_options = ProjectOptions(debug=True)
-        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options).execute()
+        lxd.Cleanbuilder(output='snap.snap', source='project.tar',
+                         project_options=project_options).execute()
 
         self.assertIn(['bash', '-i'], call_list)
 
@@ -125,8 +128,8 @@ class LXDTestCase(tests.ContainerTestCase):
         self.assertRaises(
             CalledProcessError,
             lxd.Cleanbuilder(
-                'snap.snap', 'project.tar',
-                project_options).execute)
+                output='snap.snap', source='project.tar',
+                project_options=project_options).execute)
 
         self.assertNotIn(['bash', '-i'], call_list)
 
@@ -135,7 +138,8 @@ class LXDTestCase(tests.ContainerTestCase):
         mock_pet.return_value = 'my-pet'
 
         project_options = ProjectOptions()
-        lxd.Cleanbuilder('snap.snap', 'project.tar', project_options,
+        lxd.Cleanbuilder(output='snap.snap', source='project.tar',
+                         project_options=project_options,
                          remote='my-remote').execute()
         expected_arch = project_options.deb_arch
 
@@ -181,8 +185,8 @@ class LXDTestCase(tests.ContainerTestCase):
                 'properly.\n'
                 'Refer to the documentation at '
                 'https://linuxcontainers.org/lxd/getting-started-cli.'):
-            lxd.Cleanbuilder('snap.snap', 'project.tar',
-                             project_options)
+            lxd.Cleanbuilder(output='snap.snap', source='project.tar',
+                             project_options=project_options)
 
     @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
     @patch('snapcraft.internal.lxd.sleep')
@@ -193,5 +197,6 @@ class LXDTestCase(tests.ContainerTestCase):
         project_options = ProjectOptions(debug=False)
         with ExpectedException(lxd.SnapcraftEnvironmentError,
                                'There are either.*my-remote.*'):
-            lxd.Cleanbuilder('snap.snap', 'project.tar',
-                             project_options, remote='my-remote')
+            lxd.Cleanbuilder(output='snap.snap', source='project.tar',
+                             project_options=project_options,
+                             remote='my-remote')

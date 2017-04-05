@@ -51,15 +51,19 @@ def _get_tar_filter(tar_filename):
 
 class Containerbuild:
 
-    def __init__(self, snap_output, source_folder, project_options,
-                 config, container_name, remote=None):
-        if not snap_output:
-            snap_output = common.format_snap_name(config.data)
-        self._snap_output = snap_output
-        self._tar_filename = '{}_{}_source.tar.bz2'.format(
-            config.data['name'], config.data['version'])
-        with tarfile.open(self._tar_filename, 'w:bz2') as t:
-            t.add(os.path.curdir, filter=_get_tar_filter(self._tar_filename))
+    def __init__(self, *, output, source, project_options,
+                 metadata, container_name, remote=None):
+        if not output:
+            output = common.format_snap_name(metadata)
+        self._snap_output = output
+        if '.tar' in source:
+            self._tar_filename = source
+        else:
+            self._tar_filename = '{}_{}_source.tar.bz2'.format(
+                metadata['name'], metadata['version'])
+            with tarfile.open(self._tar_filename, 'w:bz2') as t:
+                t.add(os.path.curdir,
+                      filter=_get_tar_filter(self._tar_filename))
         self._project_options = project_options
 
         if not remote:
@@ -78,7 +82,7 @@ class Containerbuild:
     def _container_run(self, cmd):
         check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
 
-    def _create_container(self):
+    def _ensure_container(self):
         check_call([
             'lxc', 'launch', '-e',
             'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
@@ -88,9 +92,9 @@ class Containerbuild:
             'environment.SNAPCRAFT_SETUP_CORE', '1'])
 
     @contextmanager
-    def _run_container(self):
+    def _ensure_started(self):
         try:
-            self._create_container()
+            self._ensure_container()
             yield
         finally:
             # Stopping takes a while and lxc doesn't print anything.
@@ -98,7 +102,7 @@ class Containerbuild:
             check_call(['lxc', 'stop', '-f', self._container_name])
 
     def execute(self):
-        with self._run_container():
+        with self._ensure_started():
             self._setup_project()
             self._wait_for_network()
             self._container_run(['apt-get', 'update'])
@@ -144,21 +148,24 @@ class Containerbuild:
 
 class Cleanbuilder(Containerbuild):
 
-    def __init__(self, snap_output, source_folder, project_options,
-                 config, remote=None):
+    def __init__(self, *, output, source, project_options,
+                 metadata=None, remote=None):
         container_name = petname.Generate(3, '-')
-        super().__init__(snap_output, source_folder, project_options,
-                         config, container_name, remote)
+        super().__init__(output=output, source=source,
+                         project_options=project_options, metadata=metadata,
+                         container_name=container_name, remote=remote)
 
 
 class Project(Containerbuild):
 
-    def __init__(self, snap_output, source_folder, project_options,
-                 config, remote=None):
-        super().__init__(snap_output, source_folder, project_options,
-                         config, config.data['name'], remote)
+    def __init__(self, *, output, source, project_options,
+                 metadata, remote=None):
+        super().__init__(output=output, source=source,
+                         project_options=project_options,
+                         metadata=metadata, container_name=metadata['name'],
+                         remote=remote)
 
-    def _create_container(self):
+    def _ensure_container(self):
         try:
             check_call([
                 'lxc', 'start', self._container_name])
