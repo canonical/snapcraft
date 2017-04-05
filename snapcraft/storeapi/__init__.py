@@ -585,8 +585,7 @@ class SCAClient(Client):
             }
         auth = _macaroon_auth(self.conf)
         response = self.put(
-            'snaps/{}/{}'.format(snap_id, endpoint),
-            data=json.dumps(data),
+            'snaps/{}/{}'.format(snap_id, endpoint), data=json.dumps(data),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json',
                      'Accept': 'application/json'})
