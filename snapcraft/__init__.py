@@ -374,9 +374,8 @@ if _os.environ.get('SNAP_NAME') == 'snapcraft':
                 if res:
                     return res.group(0)
 
-    from unittest.mock import patch as _patch
-    _p = _patch('ctypes.util.find_library').start()
-    _p.side_effect = find_library
+    import ctypes.util
+    ctypes.util.find_library = find_library
 
 from snapcraft._baseplugin import BasePlugin        # noqa
 from snapcraft._options import ProjectOptions       # noqa
