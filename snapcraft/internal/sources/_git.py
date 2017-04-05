@@ -43,10 +43,10 @@ class Git(Base):
         if source_checksum:
             raise errors.IncompatibleOptionsError(
                 "can't specify a source-checksum for a git source")
-        self.kwargs = {}
+        self._call_kwargs = {}
         if silent:
-            self.kwargs['stdout'] = subprocess.DEVNULL
-            self.kwargs['stderr'] = subprocess.DEVNULL
+            self._call_kwargs['stdout'] = subprocess.DEVNULL
+            self._call_kwargs['stderr'] = subprocess.DEVNULL
 
     def _pull_existing(self):
         refspec = 'HEAD'
@@ -61,14 +61,16 @@ class Git(Base):
 
         subprocess.check_call([self.command, '-C', self.source_dir,
                                'fetch', '--prune',
-                               '--recurse-submodules=yes'], **self.kwargs)
+                               '--recurse-submodules=yes'],
+                              **self._call_kwargs)
         subprocess.check_call([self.command, '-C', self.source_dir,
-                               'reset', '--hard', reset_spec], **self.kwargs)
+                               'reset', '--hard', reset_spec],
+                              **self._call_kwargs)
 
         # Merge any updates for the submodules (if any).
         subprocess.check_call([self.command, '-C', self.source_dir,
                               'submodule', 'update', '--recursive',
-                               '--remote'], **self.kwargs)
+                               '--remote'], **self._call_kwargs)
 
     def _clone_new(self):
         command = [self.command, 'clone', '--recursive']
@@ -78,12 +80,12 @@ class Git(Base):
         if self.source_depth:
             command.extend(['--depth', str(self.source_depth)])
         subprocess.check_call(command + [self.source, self.source_dir],
-                              **self.kwargs)
+                              **self._call_kwargs)
 
         if self.source_commit:
             subprocess.check_call([self.command, '-C', self.source_dir,
                                   'checkout', self.source_commit],
-                                  **self.kwargs)
+                                  **self._call_kwargs)
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.git')):

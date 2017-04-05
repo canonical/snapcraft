@@ -46,10 +46,10 @@ class Subversion(Base):
             raise errors.IncompatibleOptionsError(
                 "can't specify a source-checksum for a Subversion source")
 
-        self.kwargs = {}
+        self._call_kwargs = {}
         if silent:
-            self.kwargs['stdout'] = subprocess.DEVNULL
-            self.kwargs['stderr'] = subprocess.DEVNULL
+            self._call_kwargs['stdout'] = subprocess.DEVNULL
+            self._call_kwargs['stderr'] = subprocess.DEVNULL
 
     def pull(self):
         opts = []
@@ -60,17 +60,17 @@ class Subversion(Base):
         if os.path.exists(os.path.join(self.source_dir, '.svn')):
             subprocess.check_call(
                 [self.command, 'update'] + opts, cwd=self.source_dir,
-                **self.kwargs)
+                **self._call_kwargs)
         else:
             if os.path.isdir(self.source):
                 subprocess.check_call(
                     [self.command, 'checkout',
                      'file://{}'.format(os.path.abspath(self.source)),
-                     self.source_dir] + opts, **self.kwargs)
+                     self.source_dir] + opts, **self._call_kwargs)
             else:
                 subprocess.check_call(
                     [self.command, 'checkout', self.source, self.source_dir] +
-                    opts, **self.kwargs)
+                    opts, **self._call_kwargs)
 
         self.source_details = self._get_source_details()
 
