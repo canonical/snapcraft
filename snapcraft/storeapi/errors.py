@@ -35,6 +35,14 @@ class StoreError(SnapcraftError):
     """
 
 
+class StoreRetryError(StoreError):
+
+    fmt = 'There seems to be a network error: {error}'
+
+    def __init__(self, exception):
+        super().__init__(error=str(exception))
+
+
 class SnapNotFoundError(StoreError):
 
     __FMT_ARCH_CHANNEL = (
