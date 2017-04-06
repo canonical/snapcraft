@@ -108,9 +108,7 @@ parts:
         - zlib1g-dev
     after: [python]
   gpg:
-      source: git://git.gnupg.org/gnupg.git
-      source-tag: gnupg-1.4.20
-      source-depth: 1
+      source: https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.21.tar.bz2
       plugin: autotools
       configflags:
         - --enable-minimal
