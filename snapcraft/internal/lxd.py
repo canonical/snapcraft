@@ -56,15 +56,10 @@ class Containerbuild:
         if not output:
             output = common.format_snap_name(metadata)
         self._snap_output = output
-        if '.tar' in source:
-            self._tar_filename = source
-        else:
-            self._tar_filename = '{}_{}_source.tar.bz2'.format(
-                metadata['name'], metadata['version'])
-            with tarfile.open(self._tar_filename, 'w:bz2') as t:
-                t.add(os.path.curdir,
-                      filter=_get_tar_filter(self._tar_filename))
+        self._source = os.path.realpath(source)
         self._project_options = project_options
+        self._metadata = metadata
+        self._project_folder = 'build_{}'.format(metadata['name'])
 
         if not remote:
             remote = _get_default_remote()
@@ -80,7 +75,8 @@ class Containerbuild:
                     '{}/{}'.format(self._container_name, src), dst])
 
     def _container_run(self, cmd):
-        check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
+        check_call(['lxc', 'exec', self._container_name, '--env',
+                   'HOME=/{}'.format(self._project_folder), '--'] + cmd)
 
     def _ensure_container(self):
         check_call([
@@ -117,16 +113,26 @@ class Containerbuild:
                 else:
                     raise e
             else:
-                self._pull_snap()
+                self._finish()
 
     def _setup_project(self):
         logger.info('Setting up container with project assets')
-        dst = os.path.join('/root', os.path.basename(self._tar_filename))
-        self._push_file(self._tar_filename, dst)
-        self._container_run(['tar', 'xvf', dst])
+        if '.tar' not in self._source:
+            tar_filename = '{}_{}_source.tar.bz2'.format(
+                self._metadata['name'], self._metadata['version'])
+            with tarfile.open(tar_filename, 'w:bz2') as t:
+                t.add(os.path.curdir,
+                      filter=_get_tar_filter(tar_filename))
+        else:
+            tar_filename = self._source
+        dst = os.path.join(self._project_folder,
+                           os.path.basename(tar_filename))
+        self._container_run(['mkdir', self._project_folder])
+        self._push_file(tar_filename, dst)
+        self._container_run(['tar', 'xvf', os.path.basename(tar_filename)])
 
-    def _pull_snap(self):
-        src = os.path.join('/root', self._snap_output)
+    def _finish(self):
+        src = os.path.join(self._project_folder, self._snap_output)
         self._pull_file(src, self._snap_output)
         logger.info('Retrieved {}'.format(self._snap_output))
 
@@ -148,7 +154,7 @@ class Containerbuild:
 
 class Cleanbuilder(Containerbuild):
 
-    def __init__(self, *, output, source, project_options,
+    def __init__(self, *, output=None, source, project_options,
                  metadata=None, remote=None):
         container_name = petname.Generate(3, '-')
         super().__init__(output=output, source=source,
@@ -171,12 +177,33 @@ class Project(Containerbuild):
                 'lxc', 'start', self._container_name])
         except:
             check_call([
-                'lxc', 'launch',
+                'lxc', 'init',
                 'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
                 self._container_name])
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'environment.SNAPCRAFT_SETUP_CORE', '1'])
+            # Map host user to root inside container
+            check_call([
+                'lxc', 'config', 'set', self._container_name,
+                'raw.idmap', 'both 1000 0'])
+            check_call([
+                'lxc', 'start', self._container_name])
+
+    def _setup_project(self):
+        logger.info('Mounting {} into container'.format(self._source))
+        try:
+            check_call([
+                'lxc', 'config', 'device', 'add', self._container_name,
+                self._project_folder, 'disk', 'source={}'.format(self._source),
+                'path=/{}'.format(self._project_folder)])
+        except CalledProcessError:
+            # Device already exists
+            return
+
+    def _finish(self):
+        # Nothing to do
+        pass
 
 
 def _get_default_remote():
