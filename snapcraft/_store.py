@@ -812,7 +812,6 @@ def collaborate(snap_name, key):
     with _requires_login():
         account_info = store.get_account_information()
 
-    # Get data for the gating snap
     release = storeapi.constants.DEFAULT_SERIES
     try:
         snap_id = account_info['snaps'][release][snap_name]['snap-id']
@@ -821,6 +820,24 @@ def collaborate(snap_name, key):
     developers = _get_developers(snap_id)
 
     # XXX: Do the amendments via UI here.
+    #
+    # The data will look like:
+    # {'snap_developer': {
+    #      'type: 'snap-developer',
+    #      'authority-id': <account_id of the publisher Or `canonical`>,
+    #      'publisher-id': <account_id of the publisher>,
+    #      'snap-id': 'snap_id',
+    #      'developers': [{
+    #          'developer-id': 'account_id of dev-1',
+    #          'since': '2017-02-10T08:35:00.390258Z'
+    #         },{
+    #          'developer-id': 'account_id of dev-2',
+    #          'since': '2017-02-10T08:35:00.390258Z',
+    #          'until': '2018-02-10T08:35:00.390258Z'
+    #         }],
+    #      }
+    # }
+
     _sign_developers(snap_id, developers['snap_developer'], key)
 
 
