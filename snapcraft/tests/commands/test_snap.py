@@ -40,7 +40,6 @@ version: 1.0
 summary: test containerized snap
 description: if snap is succesful a snap package will be available
 architectures: ['amd64']
-type: {}
 confinement: strict
 grade: stable
 
