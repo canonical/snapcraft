@@ -9,10 +9,10 @@ here.
 give us permission to use your contributions.
 
 1. If there is a [Snapcraft bug][2] you are trying to fix, please refer to
-   it here. If it is a feature that has not been discussed before, please
-   raise awareness on https://forum.snapcraft.io under the *snapcraft* topic
-   so we are on the same track and you don't work in vain or step over what
-   someone else is already working on, doing so actually saves time!
+   it here. If it is a feature that has not been discussed, please raise
+   awareness on https://forum.snapcraft.io under the *snapcraft* topic. This
+   will ensure that we're all on the same page, and your work is not in vain
+   or duplicating what someone else is already doing. This actually saves time!
 
 2. We use a forking, feature-based workflow.
 
