@@ -32,6 +32,7 @@ from snapcraft.internal import (
     libraries,
     parts,
     pluginhandler,
+    states,
 )
 from snapcraft._schema import Validator
 from snapcraft.internal.parts import SnapcraftLogicError, get_remote_parts
@@ -161,7 +162,7 @@ class Config:
 
         state = {}
         for part in self.parts.all_parts:
-            state[part.name] = part.get_state(step)
+            state[part.name] = states.get_state(part.statedir, step)
 
         return state
 

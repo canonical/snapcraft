@@ -83,6 +83,18 @@ class TestGetLibraries(tests.TestCase):
         libs = libraries.get_dependencies('foo')
         self.assertEqual(libs, ['/lib/foo.so.1', '/usr/lib/bar.so.2'])
 
+    def test_get_libraries_excludes_slash_snap(self):
+        lines = [
+            'foo.so.1 => /lib/foo.so.1 (0xdead)',
+            'bar.so.2 => /usr/lib/bar.so.2 (0xbeef)',
+            'barsnap.so.2 => /snap/snapcraft/current/bar.so.2 (0xbeef)',
+            '/lib/baz.so.2 (0x1234)',
+        ]
+        self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
+
+        libs = libraries.get_dependencies('foo')
+        self.assertEqual(libs, ['/lib/foo.so.1', '/usr/lib/bar.so.2'])
+
     def test_get_libraries_filtered_by_system_libraries(self):
         self.get_system_libs_mock.return_value = frozenset(['foo.so.1'])
 

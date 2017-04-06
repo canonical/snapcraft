@@ -20,16 +20,15 @@ from unittest import mock
 
 import fixtures
 
-from snapcraft.main import main
 from snapcraft import (
     storeapi,
     tests
 )
 
+from snapcraft._store import collaborate
+
 
 class CollaborateTestCase(tests.TestCase):
-
-    command_name = 'collaborate'
 
     def setUp(self):
         super().setUp()
@@ -38,8 +37,6 @@ class CollaborateTestCase(tests.TestCase):
         self.fake_store = tests.fixture_setup.FakeStore()
         self.useFixture(self.fake_store)
         self.client = storeapi.StoreClient()
-        self.fake_terminal = tests.fixture_setup.FakeTerminal()
-        self.useFixture(self.fake_terminal)
         patcher = mock.patch('snapcraft._store.Popen')
         self.popen_mock = patcher.start()
         rv_mock = mock.Mock()
@@ -50,55 +47,45 @@ class CollaborateTestCase(tests.TestCase):
 
     def test_collaborate_success(self):
         self.client.login('dummy', 'test correct password')
-        main([self.command_name, 'ubuntu-core'])
-        self.assertIn('Signing developers assertion for good',
-                      self.fake_terminal.getvalue())
-        self.assertNotIn('Error signing developers assertion',
-                         self.fake_terminal.getvalue())
-        self.assertNotIn('Invalid response from the server',
-                         self.fake_terminal.getvalue())
+        collaborate('ubuntu-core', 'keyname')
 
-    def test_collaborate_success_with_key(self):
-        self.client.login('dummy', 'test correct password')
-        main([self.command_name, 'ubuntu-core',
-              '--key-name=keyname'])
         self.popen_mock.assert_called_with(['snap', 'sign', '-k', 'keyname'],
                                            stderr=-1, stdin=-1, stdout=-1)
         self.assertIn('Signing developers assertion for good',
-                      self.fake_terminal.getvalue())
+                      self.fake_logger.output)
         self.assertNotIn('Error signing developers assertion',
-                         self.fake_terminal.getvalue())
+                         self.fake_logger.output)
         self.assertNotIn('Invalid response from the server',
-                         self.fake_terminal.getvalue())
+                         self.fake_logger.output)
 
     def test_collaborate_snap_not_found(self):
         self.client.login('dummy', 'test correct password')
 
-        self.assertRaises(
-            SystemExit,
-            main,
-            [self.command_name, 'notfound'])
+        err = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            collaborate,
+            'notfound', 'key')
 
-        self.assertIn("Snap 'notfound' was not found", self.fake_logger.output)
+        self.assertIn("Snap 'notfound' was not found", str(err))
 
     def test_collaborate_snap_developer_not_found(self):
         self.client.login('dummy', 'test correct password')
 
-        main([self.command_name, 'core-no-dev'])
+        collaborate('core-no-dev', 'keyname')
 
         self.assertIn('Signing developers assertion for no-dev',
-                      self.fake_terminal.getvalue())
+                      self.fake_logger.output)
         self.assertNotIn('Error signing developers assertion',
-                         self.fake_terminal.getvalue())
+                         self.fake_logger.output)
         self.assertNotIn('Invalid response from the server',
-                         self.fake_terminal.getvalue())
+                         self.fake_logger.output)
 
     def test_collaborate_bad_request(self):
         self.client.login('dummy', 'test correct password')
         err = self.assertRaises(
             storeapi.errors.StoreValidationError,
-            main,
-            ['--debug', self.command_name, 'badrequest'])
+            collaborate,
+            'badrequest', 'keyname')
 
         self.assertEqual(
                 'Received error 400: "The given `snap-id` does not match '

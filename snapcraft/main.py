@@ -53,7 +53,6 @@ Usage:
   snapcraft [options] update
   snapcraft [options] gated <snap-name>
   snapcraft [options] validate <snap-name> <validation>... [--key-name=<key-name>]
-  snapcraft [options] collaborate <snap-name> [--key-name=<key-name>]
   snapcraft [options] define <part-name>
   snapcraft [options] search [<query> ...]
   snapcraft [options] enable-ci [<ci-system>] [--refresh]
