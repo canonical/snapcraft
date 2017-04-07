@@ -327,7 +327,8 @@ class StoreTestCase(TestCase):
             process.expect(expected_error)
         else:
             for v in validations:
-                process.expect('Signing validation {}'.format(v))
+                process.expect(
+                    'Signing validations assertion for {}'.format(v))
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus

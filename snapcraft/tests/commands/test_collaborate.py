@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -39,10 +39,10 @@ class CollaborateTestCase(tests.TestCase):
         self.client = storeapi.StoreClient()
         patcher = mock.patch('snapcraft._store.Popen')
         self.popen_mock = patcher.start()
-        rv_mock = mock.Mock()
-        rv_mock.returncode = 0
-        rv_mock.communicate.return_value = [b'foo', b'']
-        self.popen_mock.return_value = rv_mock
+        process_mock = mock.Mock()
+        process_mock.returncode = 0
+        process_mock.communicate.return_value = [b'foo', b'']
+        self.popen_mock.return_value = process_mock
         self.addCleanup(patcher.stop)
 
     def test_collaborate_success(self):

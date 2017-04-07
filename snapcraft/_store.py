@@ -843,13 +843,12 @@ def collaborate(snap_name, key):
 
 def _get_developers(snap_id):
     store = storeapi.StoreClient()
-    developers = {'snap_developer': []}
     try:
-        developers = store.get_assertion(snap_id, 'developers')
+        return store.get_assertion(snap_id, 'developers')
     except storeapi.errors.StoreValidationError as e:
-        if e.error_list[0]['code'] != 'snap-developer-not-found':
-            raise
-    return developers
+        if e.error_list[0]['code'] == 'snap-developer-not-found':
+            return {'snap_developer': []}
+        raise
 
 
 def _sign_developers(snap_id, assertion, key):
