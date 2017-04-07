@@ -75,6 +75,7 @@ class Containerbuild:
                     '{}/{}'.format(self._container_name, src), dst])
 
     def _container_run(self, cmd):
+        # Set HOME here as 'lxc config set ... environment.HOME' doesn't work
         check_call(['lxc', 'exec', self._container_name, '--env',
                    'HOME=/{}'.format(self._project_folder), '--'] + cmd)
 
@@ -175,7 +176,7 @@ class Project(Containerbuild):
         try:
             check_call([
                 'lxc', 'start', self._container_name])
-        except:
+        except CalledProcessError:
             check_call([
                 'lxc', 'init',
                 'ubuntu:xenial/{}'.format(self._project_options.deb_arch),

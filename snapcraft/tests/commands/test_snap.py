@@ -18,9 +18,8 @@ import logging
 import os
 import os.path
 import subprocess
-import tarfile
-from testtools.matchers import Contains
 from unittest import mock
+from unittest.mock import call
 
 import fixtures
 from testtools.matchers import (
@@ -50,64 +49,49 @@ parts:
 
     def make_snapcraft_yaml(self, n=1):
         super().make_snapcraft_yaml(self.yaml_template)
-        self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
     def test_snap_defaults(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.useFixture(fixtures.EnvironmentVariable(
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
-
         self.make_snapcraft_yaml()
-        # simulate build artifacts
-
-        dirs = [
-            os.path.join(self.parts_dir, 'part1', 'src'),
-            self.stage_dir,
-            self.prime_dir,
-            os.path.join(self.parts_dir, 'plugins'),
-        ]
-        files_tar = [
-            os.path.join(self.parts_dir, 'plugins', 'x-plugin.py'),
-            'main.c',
-        ]
-        files_no_tar = [
-            os.path.join(self.stage_dir, 'binary'),
-            os.path.join(self.prime_dir, 'binary'),
-            'snap-test.snap',
-            'snap-test_1.0_source.tar.bz2',
-        ]
-        for d in dirs:
-            os.makedirs(d)
-        for f in files_tar + files_no_tar:
-            open(f, 'w').close()
 
         main(['snap', '--debug'])
 
+        source = os.path.realpath(os.path.curdir)
         self.assertIn(
-            'Setting up container with project assets\n'
+            'Mounting {} into container\n'
             'Waiting for a network connection...\n'
-            'Network connection established\n'
-            'Retrieved snap-test_1.0_amd64.snap\n',
+            'Network connection established\n'.format(source),
             fake_logger.output)
 
-        with tarfile.open('snap-test_1.0_source.tar.bz2') as tar:
-            tar_members = tar.getnames()
-
-        for f in files_no_tar:
-            f = os.path.relpath(f)
-            self.assertFalse('./{}'.format(f) in tar_members,
-                             '{} should not be in {}'.format(f, tar_members))
-        for f in files_tar:
-            f = os.path.relpath(f)
-            self.assertTrue('./{}'.format(f) in tar_members,
-                            '{} should be in {}'.format(f, tar_members))
-
-        # Also assert that the snapcraft.yaml made it into the cleanbuild tar
-        self.assertThat(
-            tar_members,
-            Contains(os.path.join('.', 'snap', 'snapcraft.yaml')),
-            'snap/snapcraft unexpectedly excluded from tarball')
+        container_name = 'local:snapcraft-snap-test'
+        project_folder = 'build_snap-test'
+        self.check_call_mock.assert_has_calls([
+            call(['lxc', 'start', container_name]),
+            call(['lxc', 'config', 'device', 'add', container_name,
+                  project_folder, 'disk', 'source={}'.format(source),
+                  'path=/{}'.format(project_folder)]),
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/{}'.format(project_folder), '--',
+                  'python3', '-c',
+                  'import urllib.request; '
+                  'urllib.request.urlopen('
+                  '"http://start.ubuntu.com/connectivity-check.html", '
+                  'timeout=5)']),
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/{}'.format(project_folder), '--',
+                  'apt-get', 'update']),
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/{}'.format(project_folder), '--',
+                  'apt-get', 'install', 'snapcraft', '-y']),
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/{}'.format(project_folder), '--',
+                  'snapcraft', 'snap', '--output',
+                  'snap-test_1.0_amd64.snap']),
+            call(['lxc', 'stop', '-f', container_name]),
+        ])
 
 
 class SnapCommandTestCase(tests.TestCase):
