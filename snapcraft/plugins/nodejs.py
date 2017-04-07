@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -35,6 +35,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (list)
       A list of targets to `npm run`.
       These targets will be run in order, after `npm install`
+    - node-package-manager
+      (string; default: npm)
+      The language package manager to use to drive installation
+      of node packages. Can be either `npm` (default) or `yarn`.
 """
 
 import logging
@@ -55,6 +59,7 @@ _NODEJS_ARCHES = {
     'armhf': 'armv7l',
     'arm64': 'arm64',
 }
+_YARN_URL = 'https://yarnpkg.com/latest.tar.gz'
 
 
 class NodePlugin(snapcraft.BasePlugin):
@@ -75,6 +80,10 @@ class NodePlugin(snapcraft.BasePlugin):
         schema['properties']['node-engine'] = {
             'type': 'string',
             'default': _NODEJS_VERSION
+        }
+        schema['properties']['node-package-manager'] = {
+            'type': 'string',
+            'default': 'npm'
         }
         schema['properties']['npm-run'] = {
             'type': 'array',
@@ -101,20 +110,29 @@ class NodePlugin(snapcraft.BasePlugin):
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['node-engine']
+        return ['node-engine', 'node-package-manager']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self._npm_dir = os.path.join(self.partdir, 'npm')
         self._nodejs_tar = sources.Tar(get_nodejs_release(
             self.options.node_engine, self.project.deb_arch), self._npm_dir)
+        if self.options.node_package_manager == 'yarn':
+            logger.warning(
+                'EXPERIMENTAL: use of yarn to manage packages is experimental')
+            self._yarn_tar = sources.Tar(_YARN_URL, self._npm_dir)
 
     def pull(self):
         super().pull()
         os.makedirs(self._npm_dir, exist_ok=True)
         self._nodejs_tar.download()
+        if hasattr(self, '_yarn_tar'):
+            self._yarn_tar.download()
         # do the install in the pull phase to download all dependencies.
-        self._npm_install(rootdir=self.sourcedir)
+        if self.options.node_package_manager == 'npm':
+            self._npm_install(rootdir=self.sourcedir)
+        else:
+            self._yarn_install(rootdir=self.sourcedir)
 
     def clean_pull(self):
         super().clean_pull()
@@ -125,7 +143,10 @@ class NodePlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
-        self._npm_install(rootdir=self.builddir)
+        if self.options.node_package_manager == 'npm':
+            self._npm_install(rootdir=self.builddir)
+        else:
+            self._yarn_install(rootdir=self.builddir)
 
     def _npm_install(self, rootdir):
         self._nodejs_tar.provision(
@@ -138,6 +159,34 @@ class NodePlugin(snapcraft.BasePlugin):
             self.run(npm_install + ['--global'], cwd=rootdir)
         for target in self.options.npm_run:
             self.run(['npm', 'run', target], cwd=rootdir)
+
+    def _yarn_install(self, rootdir):
+        self._nodejs_tar.provision(
+            self.installdir, clean_target=False, keep_tarball=True)
+        self._yarn_tar.provision(
+            self._npm_dir, clean_target=False, keep_tarball=True)
+        yarn_install = [os.path.join(self._npm_dir, 'bin', 'yarn')]
+        for pkg in self.options.node_packages:
+            self.run(yarn_install + ['add', pkg], cwd=rootdir)
+        package_json_file = os.path.join(rootdir, 'package.json')
+        if os.path.exists(package_json_file):
+            self.run(yarn_install + ['add', 'file:{}'.format(rootdir)])
+        for target in self.options.npm_run:
+            self.run(['yarn', 'run', target], cwd=rootdir)
+        # We need to add the binary links for compatibility with npm
+        # without resorting to the use of global.
+        hidden_bin_dir = os.path.join(self.builddir, 'node_modules', '.bin')
+        if os.path.exists(hidden_bin_dir):
+            node_modules_src_dir = os.path.join(
+                self.builddir, 'node_modules')
+            node_modules_dst_dir = os.path.join(
+                self.installdir, 'node_modules')
+            snapcraft.file_utils.link_or_copy_tree(
+                node_modules_src_dir, node_modules_dst_dir)
+            os.makedirs(os.path.join(self.installdir, 'bin'), exist_ok=True)
+            for binary in os.listdir(hidden_bin_dir):
+                os.symlink(os.path.join('..', 'node_modules', '.bin', binary),
+                           os.path.join(self.installdir, 'bin', binary))
 
 
 def _get_nodejs_base(node_engine, machine):
