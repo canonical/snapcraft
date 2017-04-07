@@ -18,7 +18,6 @@
 import logging
 import os
 import sys
-import tarfile
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError
 from time import sleep
@@ -34,19 +33,6 @@ _NETWORK_PROBE_COMMAND = \
     'import urllib.request; urllib.request.urlopen("{}", timeout=5)'.format(
         'http://start.ubuntu.com/connectivity-check.html')
 _PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
-
-
-def _get_tar_filter(tar_filename):
-    def _tar_filter(tarinfo):
-        fn = tarinfo.name
-        if fn.startswith('./parts/') and not fn.startswith('./parts/plugins'):
-            return None
-        elif fn in ('./stage', './prime', tar_filename):
-            return None
-        elif fn.endswith('.snap'):
-            return None
-        return tarinfo
-    return _tar_filter
 
 
 class Containerbuild:
@@ -118,14 +104,7 @@ class Containerbuild:
 
     def _setup_project(self):
         logger.info('Setting up container with project assets')
-        if '.tar' not in self._source:
-            tar_filename = '{}_{}_source.tar.bz2'.format(
-                self._metadata['name'], self._metadata['version'])
-            with tarfile.open(tar_filename, 'w:bz2') as t:
-                t.add(os.path.curdir,
-                      filter=_get_tar_filter(tar_filename))
-        else:
-            tar_filename = self._source
+        tar_filename = self._source
         dst = os.path.join(self._project_folder,
                            os.path.basename(tar_filename))
         self._container_run(['mkdir', self._project_folder])

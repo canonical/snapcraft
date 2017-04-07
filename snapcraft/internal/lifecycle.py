@@ -18,6 +18,7 @@ import contextlib
 import logging
 import os
 import shutil
+import tarfile
 import time
 from subprocess import check_call, Popen, PIPE, STDOUT
 from tempfile import TemporaryDirectory
@@ -311,9 +312,27 @@ class _Executor:
         part.clean(staged_state, primed_state, step, '(out of date)')
 
 
+def _create_tar_filter(tar_filename):
+    def _tar_filter(tarinfo):
+        fn = tarinfo.name
+        if fn.startswith('./parts/') and not fn.startswith('./parts/plugins'):
+            return None
+        elif fn in ('./stage', './prime', tar_filename):
+            return None
+        elif fn.endswith('.snap'):
+            return None
+        return tarinfo
+    return _tar_filter
+
+
 def cleanbuild(project_options, remote=''):
     config = snapcraft.internal.load_config(project_options)
-    lxd.Cleanbuilder(source=os.path.curdir,
+    tar_filename = '{}_{}_source.tar.bz2'.format(
+        config.data['name'], config.data['version'])
+
+    with tarfile.open(tar_filename, 'w:bz2') as t:
+        t.add(os.path.curdir, filter=_create_tar_filter(tar_filename))
+    lxd.Cleanbuilder(source=tar_filename,
                      project_options=project_options,
                      metadata=config.get_metadata(), remote=remote).execute()
 
