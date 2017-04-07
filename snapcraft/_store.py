@@ -427,7 +427,7 @@ def push(snap_filename, release_channels=None):
     snap_name = snap_yaml['name']
     store = storeapi.StoreClient()
 
-    logger.info('Pushing {!r} to the store.'.format(snap_filename))
+    logger.info('Preparing to push {!r} to the store.'.format(snap_filename))
     with _requires_login():
         store.push_precheck(snap_name)
 

@@ -762,16 +762,19 @@ class StatusTracker:
 
         content = {}
         for indicator_count in itertools.count():
+            progress_indicator.update(indicator_count)
             if not queue.empty():
                 content = queue.get()
                 if isinstance(content, Exception):
                     raise content
-                widgets[0] = self._get_message(content)
-            progress_indicator.update(indicator_count)
             if content.get('processed'):
                 break
+            else:
+                widgets[0] = self._get_message(content)
             sleep(0.1)
         progress_indicator.finish()
+        # Print at the end to avoid a left over spinner artifact
+        print(self._get_message(content))
 
         self.__content = content
 
@@ -782,7 +785,10 @@ class StatusTracker:
             raise errors.StoreReviewError(self.__content)
 
     def _get_message(self, content):
-        return self.__messages.get(content['code'], content['code'])
+        try:
+            return self.__messages.get(content['code'], content['code'])
+        except KeyError:
+            return self.__messages.get('being_processed')
 
     def _update_status(self, queue):
         for content in self._get_status():
