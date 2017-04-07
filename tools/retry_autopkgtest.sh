@@ -42,7 +42,7 @@ temp_dir="$(mktemp -d)"
 trap "rm -rf ${temp_dir}" EXIT
 
 # Download the retry script.
-wget https://git.launchpad.net/~ubuntu-release/+git/autopkgtest-cloud/plain/tools/retry-github-test -O "${temp_dir}/retry-github-test"
+wget https://git.launchpad.net/autopkgtest-cloud/plain/tools/retry-github-test -O "${temp_dir}/retry-github-test"
 chmod +x "${temp_dir}/retry-github-test"
 
 # Save the secret to a file.
