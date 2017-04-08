@@ -16,7 +16,6 @@
 
 import os
 
-from os import path
 from unittest import mock
 from testtools.matchers import HasLength
 
@@ -111,12 +110,10 @@ class NodePluginTestCase(tests.TestCase):
         plugin.build()
 
         if self.package_manager == 'npm':
-            cmd = 'npm'
+            cmd = ['npm', '--cache-min=Infinity', 'install']
             expected_run_calls = [
-                mock.call([cmd, '--cache-min=Infinity', 'install'],
-                          cwd=plugin.builddir),
-                mock.call([cmd, '--cache-min=Infinity', 'install', '--global'],
-                          cwd=plugin.builddir),
+                mock.call(cmd, cwd=plugin.builddir),
+                mock.call(cmd + ['--global'], cwd=plugin.builddir),
             ]
             expected_tar_calls = [
                 mock.call(self.nodejs_url, plugin._npm_dir),
@@ -161,12 +158,11 @@ class NodePluginTestCase(tests.TestCase):
         plugin.build()
 
         if self.package_manager == 'npm':
-            cmd = 'npm'
+            cmd = ['npm', '--cache-min=Infinity', 'install',
+                   '--global', 'my-pkg']
             expected_run_calls = [
-                mock.call([cmd, '--cache-min=Infinity', 'install', '--global',
-                           'my-pkg'], cwd=plugin.sourcedir),
-                mock.call([cmd, '--cache-min=Infinity', 'install', '--global',
-                           'my-pkg'], cwd=plugin.builddir),
+                mock.call(cmd, cwd=plugin.sourcedir),
+                mock.call(cmd, cwd=plugin.builddir),
             ]
             expected_tar_calls = [
                 mock.call(self.nodejs_url, plugin._npm_dir),
