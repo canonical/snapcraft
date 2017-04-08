@@ -83,7 +83,8 @@ class NodePlugin(snapcraft.BasePlugin):
         }
         schema['properties']['node-package-manager'] = {
             'type': 'string',
-            'default': 'npm'
+            'default': 'npm',
+            'enum': ['npm', 'yarn'],
         }
         schema['properties']['npm-run'] = {
             'type': 'array',
