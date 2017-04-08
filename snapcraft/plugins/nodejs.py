@@ -180,12 +180,20 @@ class NodePlugin(snapcraft.BasePlugin):
             yarn_add = yarn_cmd + ['add']
         for pkg in self.options.node_packages:
             self.run(yarn_add + [pkg] + flags, cwd=rootdir)
+
+        # local packages need to be added as if they were remote, we
+        # remove the local package.json so `yarn add` doesn't pollute it.
         if os.path.exists(self._source_package_json):
             with contextlib.suppress(FileNotFoundError):
                 os.unlink(os.path.join(rootdir, 'package.json'))
             package_dir = os.path.dirname(self._source_package_json)
             self.run(yarn_add + ['file:{}'.format(package_dir)] + flags,
                      cwd=rootdir)
+
+        # npm run would require to bring back package.json
+        if self.options.npm_run and os.path.exists(self._source_package_json):
+            os.link(self._source_package_json,
+                    os.path.join(rootdir, 'package.json'))
         for target in self.options.npm_run:
             self.run(yarn_cmd + ['run', target], cwd=rootdir)
 
