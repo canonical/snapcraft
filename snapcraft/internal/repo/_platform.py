@@ -25,6 +25,7 @@ _DEB_BASED_PLATFORM = [
     # Not sure what was going on when this was added.
     '"elementary"',
     'debian',
+    'neon',
 ]
 
 
