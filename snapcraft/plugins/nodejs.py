@@ -40,7 +40,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       The language package manager to use to drive installation
       of node packages. Can be either `npm` (default) or `yarn`.
 """
-
+import contextlib
 import logging
 import os
 import shutil
@@ -114,6 +114,8 @@ class NodePlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+        self._source_package_json = os.path.join(
+            os.path.abspath(self.options.source), 'package.json')
         self._npm_dir = os.path.join(self.partdir, 'npm')
         self._nodejs_tar = sources.Tar(get_nodejs_release(
             self.options.node_engine, self.project.deb_arch), self._npm_dir)
@@ -165,28 +167,26 @@ class NodePlugin(snapcraft.BasePlugin):
             self.installdir, clean_target=False, keep_tarball=True)
         self._yarn_tar.provision(
             self._npm_dir, clean_target=False, keep_tarball=True)
-        yarn_install = [os.path.join(self._npm_dir, 'bin', 'yarn')]
+        yarn_cmd = [os.path.join(self._npm_dir, 'bin', 'yarn')]
+        flags = []
+        if rootdir == self.builddir:
+            yarn_add = yarn_cmd + ['global', 'add']
+            flags.extend([
+                '--offline', '--prod',
+                '--global-folder', self.installdir,
+            ])
+        else:
+            yarn_add = yarn_cmd + ['add']
         for pkg in self.options.node_packages:
-            self.run(yarn_install + ['add', pkg], cwd=rootdir)
-        package_json_file = os.path.join(rootdir, 'package.json')
-        if os.path.exists(package_json_file):
-            self.run(yarn_install + ['add', 'file:{}'.format(rootdir)])
+            self.run(yarn_add + [pkg] + flags, cwd=rootdir)
+        if os.path.exists(self._source_package_json):
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(os.path.join(rootdir, 'package.json'))
+            package_dir = os.path.dirname(self._source_package_json)
+            self.run(yarn_add + ['file:{}'.format(package_dir)] + flags,
+                     cwd=rootdir)
         for target in self.options.npm_run:
-            self.run(['yarn', 'run', target], cwd=rootdir)
-        # We need to add the binary links for compatibility with npm
-        # without resorting to the use of global.
-        hidden_bin_dir = os.path.join(self.builddir, 'node_modules', '.bin')
-        if os.path.exists(hidden_bin_dir):
-            node_modules_src_dir = os.path.join(
-                self.builddir, 'node_modules')
-            node_modules_dst_dir = os.path.join(
-                self.installdir, 'node_modules')
-            snapcraft.file_utils.link_or_copy_tree(
-                node_modules_src_dir, node_modules_dst_dir)
-            os.makedirs(os.path.join(self.installdir, 'bin'), exist_ok=True)
-            for binary in os.listdir(hidden_bin_dir):
-                os.symlink(os.path.join('..', 'node_modules', '.bin', binary),
-                           os.path.join(self.installdir, 'bin', binary))
+            self.run(yarn_cmd + ['run', target], cwd=rootdir)
 
 
 def _get_nodejs_base(node_engine, machine):
