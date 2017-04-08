@@ -64,10 +64,11 @@ def main():
             raise
 
     # Trigger the autopkgtests.
-    for test in ('xenial:armhf', 'yakkety:amd64', 'yakkety:armhf',
-                 'zesty:amd64', 'zesty:armhf'):
-        subprocess.check_call(
-            ['tools/retry_autopkgtest.sh', str(pr.number), test])
+    for series in ('xenial', 'yakkety', 'zesty'):
+        for deb_arch in ('amd64', 'armhf', 'arm64'):
+            subprocess.check_call(
+                ['tools/retry_autopkgtest.sh', str(pr.number),
+                 '{}:{}'.format(series, deb_arch)])
 
 
 if __name__ == '__main__':
