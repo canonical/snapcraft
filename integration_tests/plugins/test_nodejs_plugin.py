@@ -55,11 +55,8 @@ class NodeJSPluginTestCase(testscenarios.WithScenarios,
         self._set_node_package_manager('snapcraft.yaml')
 
         self.run_snapcraft('build')
-        self.assertThat(
-            os.path.join(self.parts_dir, 'nodejs-part', 'build',
-                         'command-one-run'),
-            FileExists())
-        self.assertThat(
-            os.path.join(self.parts_dir, 'nodejs-with-run', 'build',
-                         'command-two-run'),
-            FileExists())
+        part_builddir = os.path.join(self.parts_dir, 'nodejs-part', 'build')
+        self.assertThat(os.path.jon(part_builddir, 'command-one-run'),
+                        FileExists())
+        self.assertThat(os.path.join(part_builddir, 'command-two-run'),
+                        FileExists())
