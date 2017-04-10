@@ -319,6 +319,20 @@ class GetAccountInformationTestCase(StoreTestCase):
                         'private': False,
                         'price': None,
                         'since': '2016-12-12T01:01:01Z',
+                    },
+                    'core-no-dev': {
+                        'snap-id': 'no-dev',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
+                    },
+                    'badrequest': {
+                        'snap-id': 'badrequest',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
                     }
                 }
             }
@@ -341,6 +355,20 @@ class GetAccountInformationTestCase(StoreTestCase):
                     },
                     'ubuntu-core': {
                         'snap-id': 'good',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
+                    },
+                    'core-no-dev': {
+                        'snap-id': 'no-dev',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
+                    },
+                    'badrequest': {
+                        'snap-id': 'badrequest',
                         'status': 'Approved',
                         'private': False,
                         'price': None,
@@ -521,7 +549,7 @@ class ValidationsTestCase(StoreTestCase):
             "revoked": "false",
             "required": True,
         }]
-        result = self.client.get_validations('good')
+        result = self.client.get_assertion('good', 'validations')
         self.assertEqual(result, expected)
 
     def test_get_bad_response(self):
@@ -529,7 +557,7 @@ class ValidationsTestCase(StoreTestCase):
 
         err = self.assertRaises(
             errors.StoreValidationError,
-            self.client.get_validations, 'bad')
+            self.client.get_assertion, 'bad', 'validations')
 
         expected = ("Received error 200: 'Invalid response from the server'")
         self.assertEqual(str(err), expected)
@@ -541,7 +569,7 @@ class ValidationsTestCase(StoreTestCase):
 
         err = self.assertRaises(
             errors.StoreRetryError,
-            self.client.get_validations, 'err')
+            self.client.get_assertion, 'err', 'validations')
 
         expected = ('too many 503 error responses')
         self.assertThat(str(err), Contains(expected))
@@ -550,7 +578,7 @@ class ValidationsTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
         assertion = json.dumps({'foo': 'bar'}).encode('utf-8')
 
-        result = self.client.push_validation('good', assertion)
+        result = self.client.push_assertion('good', assertion, 'validations')
 
         expected = {'assertion': '{"foo": "bar"}'}
         self.assertEqual(result, expected)
@@ -561,7 +589,7 @@ class ValidationsTestCase(StoreTestCase):
 
         err = self.assertRaises(
             errors.StoreValidationError,
-            self.client.push_validation, 'bad', assertion)
+            self.client.push_assertion, 'bad', assertion, 'validations')
 
         expected = ("Received error 200: 'Invalid response from the server'")
         self.assertEqual(str(err), expected)
@@ -574,7 +602,7 @@ class ValidationsTestCase(StoreTestCase):
 
         err = self.assertRaises(
             errors.StoreValidationError,
-            self.client.push_validation, 'err', assertion)
+            self.client.push_assertion, 'err', assertion, 'validations')
 
         expected = ("Received error 501: 'error'")
         self.assertEqual(str(err), expected)

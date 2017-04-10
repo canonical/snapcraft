@@ -733,7 +733,7 @@ def gated(snap_name):
     except KeyError:
         raise storeapi.errors.SnapNotFoundError(snap_name)
 
-    validations = store.get_validations(snap_id)
+    validations = store.get_assertion(snap_id, endpoint='validations')
 
     if validations:
         table_data = []
@@ -793,17 +793,68 @@ def validate(snap_name, validations, revoke=False, key=None):
         if revoke:
             assertion['revoked'] = "true"
 
-        assertion = _sign_validation(validation, assertion, key)
+        assertion = _sign_assertion(validation, assertion, key, 'validations')
 
         # Save assertion to a properly named file
         fname = '{}-{}-r{}.assertion'.format(snap_name, gated_name, rev)
         with open(fname, 'wb') as f:
             f.write(assertion)
 
-        store.push_validation(snap_id, assertion)
+        store.push_assertion(snap_id, assertion, endpoint='validations')
 
 
 validation_re = re.compile('^[^=]+=[0-9]+$')
+
+
+def collaborate(snap_name, key):
+    store = storeapi.StoreClient()
+
+    with _requires_login():
+        account_info = store.get_account_information()
+
+    release = storeapi.constants.DEFAULT_SERIES
+    try:
+        snap_id = account_info['snaps'][release][snap_name]['snap-id']
+    except KeyError:
+        raise storeapi.errors.SnapNotFoundError(snap_name)
+    developers = _get_developers(snap_id)
+
+    # XXX: Do the amendments via UI here.
+    #
+    # The data will look like:
+    # {'snap_developer': {
+    #      'type: 'snap-developer',
+    #      'authority-id': <account_id of the publisher Or `canonical`>,
+    #      'publisher-id': <account_id of the publisher>,
+    #      'snap-id': 'snap_id',
+    #      'developers': [{
+    #          'developer-id': 'account_id of dev-1',
+    #          'since': '2017-02-10T08:35:00.390258Z'
+    #         },{
+    #          'developer-id': 'account_id of dev-2',
+    #          'since': '2017-02-10T08:35:00.390258Z',
+    #          'until': '2018-02-10T08:35:00.390258Z'
+    #         }],
+    #      }
+    # }
+
+    _sign_developers(snap_id, developers['snap_developer'], key)
+
+
+def _get_developers(snap_id):
+    store = storeapi.StoreClient()
+    try:
+        return store.get_assertion(snap_id, 'developers')
+    except storeapi.errors.StoreValidationError as e:
+        if e.error_list[0]['code'] == 'snap-developer-not-found':
+            return {'snap_developer': []}
+        raise
+
+
+def _sign_developers(snap_id, assertion, key):
+    store = storeapi.StoreClient()
+    assertion = _sign_assertion(snap_id, assertion, key, 'developers')
+    store.push_assertion(snap_id, assertion, 'developers')
 
 
 def _check_validations(validations):
@@ -815,7 +866,7 @@ def _check_validations(validations):
         raise RuntimeError()
 
 
-def _sign_validation(validation, assertion, key):
+def _sign_assertion(target, assertion, key, endpoint):
     cmdline = ['snap', 'sign']
     if key:
         cmdline += ['-k', key]
@@ -823,9 +874,12 @@ def _sign_validation(validation, assertion, key):
         cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     data = json.dumps(assertion).encode('utf8')
-    logger.info('Signing validation {}'.format(validation))
+    logger.info('Signing {} assertion for {}'.format(endpoint, target))
     assertion, err = snap_sign.communicate(input=data)
     if snap_sign.returncode != 0:
         err = err.decode('ascii', errors='replace')
-        raise RuntimeError('Error signing assertion: {!s}'.format(err))
+        raise RuntimeError(
+            'Error signing {} assertion for {}: {!s}'.format(
+                endpoint, target, err))
+
     return assertion
