@@ -192,9 +192,11 @@ class NodePlugin(snapcraft.BasePlugin):
 
         # npm run would require to bring back package.json
         if self.options.npm_run and os.path.exists(self._source_package_json):
-            with contextlib.suppress(FileExistsError):
-                os.link(self._source_package_json,
-                        os.path.join(rootdir, 'package.json'))
+            # The current package.json is the yarn prefilled one.
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(os.path.join(rootdir, 'package.json'))
+            os.link(self._source_package_json,
+                    os.path.join(rootdir, 'package.json'))
         for target in self.options.npm_run:
             self.run(yarn_cmd + ['run', target], cwd=rootdir)
 
