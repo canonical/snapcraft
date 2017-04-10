@@ -27,6 +27,14 @@ from snapcraft import tests
 
 class TestGit(SourceTestCase):
 
+    def setUp(self):
+
+        super().setUp()
+        patcher = mock.patch('snapcraft.sources.Git._get_source_details')
+        self.mock_get_source_details = patcher.start()
+        self.mock_get_source_details.return_value = ""
+        self.addCleanup(patcher.stop)
+
     def test_pull(self):
         git = sources.Git('git://my-source', 'source_dir')
 
@@ -187,12 +195,16 @@ class TestGit(SourceTestCase):
         self.assertEqual(raised.message, expected_message)
 
 
-class TestGitConflicts(tests.TestCase):
-    """Test that git pull errors don't kill the parser"""
+class GitBaseTestCase(tests.TestCase):
 
     def call(self, cmd):
+        """Call a command ignoring output."""
         subprocess.check_call(
             cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    def call_with_output(self, cmd):
+        """Return command output converted to a string."""
+        return subprocess.check_output(cmd).decode('utf-8').strip()
 
     def rm_dir(self, dir):
         if os.path.exists(dir):
@@ -224,6 +236,10 @@ class TestGitConflicts(tests.TestCase):
         with open(path) as fp:
             body = fp.read()
         self.assertEqual(body, expected)
+
+
+class TestGitConflicts(GitBaseTestCase):
+    """Test that git pull errors don't kill the parser"""
 
     def test_git_conflicts(self):
 
@@ -308,3 +324,68 @@ class TestGitConflicts(tests.TestCase):
 
         self.check_file_contents(os.path.join(working_tree, 'subrepo', 'fake'),
                                  'fake 1')
+
+
+class GitDetailsTestCase(GitBaseTestCase):
+
+    def setUp(self):
+        def _add_and_commit_file(filename, content=None, message=None):
+            if not content:
+                content = filename
+            if not message:
+                message = filename
+
+            with open(filename, 'w') as fp:
+                fp.write(content)
+            self.call(['git', 'add', filename])
+            self.call(['git', 'commit', '-am', message])
+
+        super().setUp()
+        self.working_tree = 'git-test'
+        self.source_dir = 'git-checkout'
+        self.clean_dir(self.working_tree)
+        os.chdir(self.working_tree)
+        self.call(['git', 'init'])
+        self.call(['git', 'config', 'user.name',
+                   '"Example Dev"'])
+        self.call(['git', 'config', 'user.email',
+                   'dev@example.com'])
+        _add_and_commit_file('testing')
+        self.expected_commit = self.call_with_output(
+            ['git', 'rev-parse', 'HEAD'])
+
+        _add_and_commit_file('testing-2')
+        self.call(['git', 'tag', 'test-tag'])
+        self.expected_tag = 'test-tag'
+
+        _add_and_commit_file('testing-3')
+        self.expected_branch = 'test-branch'
+        self.call(['git', 'branch', self.expected_branch])
+
+        os.chdir('..')
+
+        self.git = sources.Git(self.working_tree, self.source_dir, silent=True,
+                               source_commit=self.expected_commit)
+        self.git.pull()
+
+        self.source_details = self.git._get_source_details()
+
+    def test_git_details_commit(self):
+        self.assertEqual(self.expected_commit, self.source_details['commit'])
+
+    def test_git_details_branch(self):
+        shutil.rmtree(self.source_dir)
+        self.git = sources.Git(self.working_tree, self.source_dir, silent=True,
+                               source_branch=self.expected_branch)
+        self.git.pull()
+
+        self.source_details = self.git._get_source_details()
+        self.assertEqual(self.expected_branch, self.source_details['branch'])
+
+    def test_git_details_tag(self):
+        self.git = sources.Git(self.working_tree, self.source_dir, silent=True,
+                               source_tag='test-tag')
+        self.git.pull()
+
+        self.source_details = self.git._get_source_details()
+        self.assertEqual(self.expected_tag, self.source_details['tag'])
