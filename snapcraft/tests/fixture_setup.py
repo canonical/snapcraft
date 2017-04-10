@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 from functools import partial
 import io
 import os
@@ -27,6 +28,10 @@ import fixtures
 import xdg
 
 from snapcraft.tests import fake_servers
+from snapcraft.tests.subprocess_utils import (
+    call,
+    call_with_output,
+)
 
 
 class TempCWD(fixtures.TempDir):
@@ -377,3 +382,125 @@ class FakePlugin(fixtures.Fixture):
 
     def _remove_module(self):
         del sys.modules[self._import_name]
+
+
+class GitRepo(fixtures.Fixture):
+    '''Create a git repo in the current directory'''
+
+    def setUp(self):
+        super().setUp()
+        name = 'git-source'  # must match what the tests expect
+
+        def _add_and_commit_file(path, filename, contents=None, message=None):
+            if not contents:
+                contents = filename
+            if not message:
+                message = filename
+
+            with open(os.path.join(path, filename), 'w') as fp:
+                fp.write(contents)
+
+            call(['git', '-C', name, 'add', filename])
+            call(['git', '-C', name, 'commit', '-am', message])
+
+        os.makedirs(name)
+        call(['git', '-C', name, 'init'])
+        call(['git', '-C', name, 'config',
+              'user.name', 'Test User'])
+        call(['git', '-C', name, 'config',
+              'user.email', 'testuser@example.com'])
+
+        _add_and_commit_file(name, 'testing')
+        call(['git', '-C', name, 'branch', 'test-branch'])
+
+        _add_and_commit_file(name, 'testing-2')
+        call(['git', '-C', name, 'tag', 'feature-tag'])
+
+        _add_and_commit_file(name, 'testing-3')
+
+        self.commit = call_with_output(
+            ['git', '-C', name, 'rev-parse', 'HEAD'])
+
+
+@contextlib.contextmanager
+def return_to_cwd():
+    cwd = os.getcwd()
+    try:
+        yield
+    finally:
+        os.chdir(cwd)
+
+
+class BzrRepo(fixtures.Fixture):
+
+    def __init__(self, name):
+        self.name = name
+
+    def setUp(self):
+        super().setUp()
+
+        with return_to_cwd():
+            os.makedirs(self.name)
+            os.chdir(self.name)
+            call(['bzr', 'init'])
+            call(['bzr', 'whoami', 'Test User <test.user@example.com>'])
+            with open('testing', 'w') as fp:
+                fp.write('testing')
+
+            call(['bzr', 'add', 'testing'])
+            call(['bzr', 'commit', '-m', 'testing'])
+            call(['bzr', 'tag', 'feature-tag'])
+            revno = call_with_output(['bzr', 'revno'])
+
+            self.commit = revno
+
+
+class SvnRepo(fixtures.Fixture):
+
+    def __init__(self, name):
+        self.name = name
+
+    def setUp(self):
+        super().setUp()
+
+        working_tree = 'svn-repo'
+        call(['svnadmin', 'create', self.name])
+        call(['svn', 'checkout',
+              'file://{}'.format(os.path.join(os.getcwd(), self.name)),
+              working_tree])
+
+        with return_to_cwd():
+            os.chdir(working_tree)
+            with open('testing', 'w') as fp:
+                fp.write('testing')
+
+            call(['svn', 'add', 'testing'])
+            call(['svn', 'commit', '-m', 'svn testing'])
+            revno = '1'
+
+            self.commit = revno
+
+
+class HgRepo(fixtures.Fixture):
+
+    def __init__(self, name):
+        self.name = name
+
+    def setUp(self):
+        super().setUp()
+
+        with return_to_cwd():
+            os.makedirs(self.name)
+            os.chdir(self.name)
+            call(['hg', 'init'])
+            with open('testing', 'w') as fp:
+                fp.write('testing')
+
+            call(['hg', 'add', 'testing'])
+            call(['hg', 'commit', '-m', 'testing',
+                  '-u', 'Test User <test.user@example.com>'])
+            call(['hg', 'tag', 'feature-tag',
+                  '-u', 'Test User <test.user@example.com>'])
+            revno = call_with_output(['hg', 'id']).split()[0]
+
+            self.commit = revno
