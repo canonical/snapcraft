@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import uuid
-
 from testtools.matchers import FileExists
 
 import integration_tests
@@ -42,9 +40,8 @@ class ChannelClosingTestCase(integration_tests.StoreTestCase):
         self.login()
 
         # Build a random snap, register, push and release it.
-        unique_id = uuid.uuid4().int
-        name = 'u1test-{}'.format(unique_id)
-        version = str(unique_id)[:32]
+        name = self.get_unique_name()
+        version = self.get_unique_version()
         self.copy_project_to_cwd('basic')
         self.update_name_and_version(name, version)
         self.run_snapcraft('snap')

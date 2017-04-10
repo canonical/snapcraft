@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import uuid
-
 import integration_tests
 
 
@@ -26,9 +24,9 @@ class RegisteredTestCase(integration_tests.StoreTestCase):
 
         # Make sure 'snap_public' is listed before 'snap_private',
         # thus the 'a/b' suffixes (alphabetical order).
-        snap_public = 'u1test-a-{}'.format(uuid.uuid4().int)
+        snap_public = self.get_unique_name('a')
         self.register(snap_public)
-        snap_private = 'u1test-b-{}'.format(uuid.uuid4().int)
+        snap_private = self.get_unique_name('b')
         self.register(snap_private, private=True)
 
         expected_snaps = [
