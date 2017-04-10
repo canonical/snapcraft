@@ -24,7 +24,6 @@ import fixtures
 
 from snapcraft.main import main
 from snapcraft import tests
-from snapcraft.tests.test_lxd import check_output_side_effect
 
 
 class CleanBuildCommandTestCase(tests.TestCase):
@@ -42,21 +41,6 @@ parts:
       plugin: nil
 """
 
-    def setUp(self):
-        super().setUp()
-        patcher = mock.patch('snapcraft.internal.lxd.check_call')
-        self.check_call_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('snapcraft.internal.lxd.check_output')
-        self.check_output_mock = patcher.start()
-        self.check_output_mock.side_effect = check_output_side_effect()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
     def make_snapcraft_yaml(self, n=1):
         super().make_snapcraft_yaml(self.yaml_template)
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
@@ -64,6 +48,7 @@ parts:
     def test_cleanbuild(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
+        self.useFixture(tests.fixture_setup.FakeLXD())
 
         self.make_snapcraft_yaml()
         # simulate build artifacts
@@ -122,8 +107,7 @@ parts:
 
         self.make_snapcraft_yaml()
 
-        self.check_output_mock.side_effect = check_output_side_effect(
-            fail_on_default=True)
+        self.useFixture(tests.fixture_setup.FakeLXD(fail_on_default=True))
 
         raised = self.assertRaises(
             SystemExit,
