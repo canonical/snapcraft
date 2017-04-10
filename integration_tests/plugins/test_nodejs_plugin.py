@@ -56,7 +56,7 @@ class NodeJSPluginTestCase(testscenarios.WithScenarios,
 
         self.run_snapcraft('build')
         part_builddir = os.path.join(self.parts_dir, 'nodejs-part', 'build')
-        self.assertThat(os.path.jon(part_builddir, 'command-one-run'),
+        self.assertThat(os.path.join(part_builddir, 'command-one-run'),
                         FileExists())
         self.assertThat(os.path.join(part_builddir, 'command-two-run'),
                         FileExists())
