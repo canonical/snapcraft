@@ -32,7 +32,7 @@ from snapcraft.main import main
 from snapcraft import tests
 
 
-class SnapCommandContainerized(tests.ContainerTestCase):
+class SnapCommandContainerized(tests.TestCase):
 
     yaml_template = """name: snap-test
 version: 1.0
@@ -51,6 +51,8 @@ parts:
         super().make_snapcraft_yaml(self.yaml_template)
 
     def test_snap_defaults(self):
+        fake_lxd = tests.fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.useFixture(fixtures.EnvironmentVariable(
@@ -68,7 +70,7 @@ parts:
 
         container_name = 'local:snapcraft-snap-test'
         project_folder = 'build_snap-test'
-        self.check_call_mock.assert_has_calls([
+        fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'start', container_name]),
             call(['lxc', 'config', 'device', 'add', container_name,
                   project_folder, 'disk', 'source={}'.format(source),

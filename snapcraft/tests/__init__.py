@@ -26,7 +26,6 @@ import threading
 import testscenarios
 import testtools
 
-from subprocess import CalledProcessError
 from snapcraft.internal import common
 from snapcraft.tests import fake_servers, fixture_setup
 from unittest import mock
@@ -157,39 +156,6 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             self.assertTrue(os.path.exists(os.path.join(state_dir, step)),
                             'Expected {!r} to be run for {}'.format(
                                 step, part_name))
-
-
-def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
-    def call_effect(*args, **kwargs):
-        if args[0] == ['lxc', 'remote', 'get-default']:
-            if fail_on_default:
-                raise CalledProcessError(returncode=255, cmd=args[0])
-            else:
-                return 'local'.encode('utf-8')
-        elif args[0] == ['lxc', 'list', 'my-remote:'] and fail_on_remote:
-            raise CalledProcessError(returncode=255, cmd=args[0])
-        else:
-            return ''.encode('utf-8')
-    return call_effect
-
-
-class ContainerTestCase(TestCase):
-
-    def setUp(self):
-        super().setUp()
-
-        patcher = mock.patch('snapcraft.internal.lxd.check_call')
-        self.check_call_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('snapcraft.internal.lxd.check_output')
-        self.check_output_mock = patcher.start()
-        self.check_output_mock.side_effect = check_output_side_effect()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
 
 class TestWithFakeRemoteParts(TestCase):

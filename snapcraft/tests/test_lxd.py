@@ -28,13 +28,14 @@ from testtools import ExpectedException
 from snapcraft import tests
 from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
-from snapcraft.tests import check_output_side_effect
 
 
-class LXDTestCase(tests.ContainerTestCase):
+class LXDTestCase(tests.TestCase):
 
     @patch('petname.Generate')
     def test_cleanbuild(self, mock_pet):
+        fake_lxd = tests.fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
@@ -55,7 +56,7 @@ class LXDTestCase(tests.ContainerTestCase):
             'Retrieved snap.snap\n',
             fake_logger.output)
 
-        self.check_call_mock.assert_has_calls([
+        fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'launch', '-e',
                   'ubuntu:xenial/{}'.format(expected_arch),
                   'local:snapcraft-my-pet']),
@@ -91,9 +92,11 @@ class LXDTestCase(tests.ContainerTestCase):
             call(['lxc', 'stop', '-f', 'local:snapcraft-my-pet']),
         ])
 
-    @patch('snapcraft.internal.lxd.sleep')
-    def test_wait_for_network_loops(self, mock_sleep):
-        self.check_call_mock.side_effect = CalledProcessError(-1, ['my-cmd'])
+    def test_wait_for_network_loops(self):
+        fake_lxd = tests.fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        fake_lxd.check_call_mock.side_effect = CalledProcessError(
+            -1, ['my-cmd'])
 
         metadata = {'name': 'project'}
         cb = lxd.Cleanbuilder(output='snap.snap', source='project.tar',
@@ -109,8 +112,8 @@ class LXDTestCase(tests.ContainerTestCase):
             "Command '['my-cmd']' returned non-zero exit status -1")
 
     @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
-    @patch('snapcraft.internal.lxd.sleep')
-    def test_failed_build_with_debug(self, mock_sleep, mock_run):
+    def test_failed_build_with_debug(self, mock_run):
+        self.useFixture(tests.fixture_setup.FakeLXD())
         call_list = []
 
         def run_effect(*args, **kwargs):
@@ -129,8 +132,8 @@ class LXDTestCase(tests.ContainerTestCase):
         self.assertIn(['bash', '-i'], call_list)
 
     @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
-    @patch('snapcraft.internal.lxd.sleep')
-    def test_failed_build_without_debug(self, mock_sleep, mock_run):
+    def test_failed_build_without_debug(self, mock_run):
+        self.useFixture(tests.fixture_setup.FakeLXD())
         call_list = []
 
         def run_effect(*args, **kwargs):
@@ -153,6 +156,8 @@ class LXDTestCase(tests.ContainerTestCase):
 
     @patch('petname.Generate')
     def test_cleanbuild_with_remote(self, mock_pet):
+        fake_lxd = tests.fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
         mock_pet.return_value = 'my-pet'
 
         project_options = ProjectOptions()
@@ -164,7 +169,7 @@ class LXDTestCase(tests.ContainerTestCase):
                          remote='my-remote').execute()
         expected_arch = project_options.deb_arch
 
-        self.check_call_mock.assert_has_calls([
+        fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'launch', '-e',
                   'ubuntu:xenial/{}'.format(expected_arch),
                   'my-remote:snapcraft-my-pet']),
@@ -202,10 +207,8 @@ class LXDTestCase(tests.ContainerTestCase):
         ])
 
     @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
-    @patch('snapcraft.internal.lxd.sleep')
-    def test_lxc_check_fails(self, mock_sleep, mock_run):
-        self.check_output_mock.side_effect = check_output_side_effect(
-              fail_on_default=True)
+    def test_lxc_check_fails(self, mock_run):
+        self.useFixture(tests.fixture_setup.FakeLXD(fail_on_default=True))
 
         project_options = ProjectOptions(debug=False)
         metadata = {'name': 'project'}
@@ -221,10 +224,8 @@ class LXDTestCase(tests.ContainerTestCase):
                              project_options=project_options)
 
     @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
-    @patch('snapcraft.internal.lxd.sleep')
-    def test_remote_does_not_exist(self, mock_sleep, mock_run):
-        self.check_output_mock.side_effect = check_output_side_effect(
-              fail_on_remote=True)
+    def test_remote_does_not_exist(self, mock_run):
+        self.useFixture(tests.fixture_setup.FakeLXD(fail_on_remote=True))
 
         project_options = ProjectOptions(debug=False)
         metadata = {'name': 'project'}

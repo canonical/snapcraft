@@ -2087,7 +2087,8 @@ parts:
         self.data += '        slots: [slot1]'
         self.make_snapcraft_yaml(self.data)
 
-        self.assertRaises(pluginhandler.PluginError, project_loader.load_config)
+        self.assertRaises(pluginhandler.PluginError,
+                          project_loader.load_config)
 
         expected_message = self.expected_message_template.format('slots')
         self.assertIn(expected_message, self.fake_logger.output)
@@ -2096,7 +2097,8 @@ parts:
         self.data += '        plugs: [plug1]'
         self.make_snapcraft_yaml(self.data)
 
-        self.assertRaises(pluginhandler.PluginError, project_loader.load_config)
+        self.assertRaises(pluginhandler.PluginError,
+                          project_loader.load_config)
 
         expected_message = self.expected_message_template.format('plugs')
         self.assertIn(expected_message, self.fake_logger.output)
