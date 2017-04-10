@@ -8,12 +8,11 @@ here.
 **Prerequisite:** Sign the [contributor license agreement][1]. This is how you
 give us permission to use your contributions.
 
-1. Make sure a [Snapcraft bug][2] is filed for the bug you're about to fix, or
-   feature you're about to add. This is not just paperwork required in order to
-   land something: this is where you state what's happening, and why it's a
-   shortcoming. Doing this before you start working on a fix also gives the
-   Snapcraft team a chance to give you feedback and advice, which saves time
-   for everyone!
+1. If there is a [Snapcraft bug][2] you are trying to fix, please refer to
+   it here. If it is a feature that has not been discussed, please raise
+   awareness on https://forum.snapcraft.io under the *snapcraft* topic. This
+   will ensure that we're all on the same page, and your work is not in vain
+   or duplicating what someone else is already doing. This actually saves time!
 
 2. We use a forking, feature-based workflow.
 
@@ -38,10 +37,7 @@ give us permission to use your contributions.
 
        More detailed explanatory text, if necessary. Wrap it to 72 characters.
        Think of this like an email, where you have a subject line and a body.
-       Make sure you mention the bug being fixed on a line all by itself at the
-       end, like so:
 
-       LP: #<bug number>
        ```
 
    Try to keep the summary to around 50 characters, and use the imperative mood.

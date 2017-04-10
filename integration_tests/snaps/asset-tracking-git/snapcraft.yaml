@@ -1,0 +1,22 @@
+name: asset-tracking-git
+version: 0.1
+summary: Git asset tracking
+description: Git asset tracking
+architectures: [all]
+confinement: strict
+
+parts:
+  git-part:
+    plugin: nil
+    source: git-source
+    source-type: git
+  git-part-branch:
+    plugin: nil
+    source: git-source
+    source-type: git
+    source-branch: test-branch
+  git-part-tag:
+    plugin: nil
+    source: git-source
+    source-type: git
+    source-tag: feature-tag

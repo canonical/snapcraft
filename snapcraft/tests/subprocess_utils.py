@@ -14,30 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from platform import linux_distribution as _linux_distribution
-
-from ._deb import Ubuntu
-
-_DEB_BASED_PLATFORM = [
-    'Ubuntu',
-    'Debian',
-    'elementary',
-    # Not sure what was going on when this was added.
-    '"elementary"',
-    'debian',
-    'neon',
-]
+import subprocess
 
 
-def _is_deb_based(distro):
-    return distro in _DEB_BASED_PLATFORM
+def call(cmd):
+    subprocess.check_call(cmd, stdout=subprocess.DEVNULL,
+                          stderr=subprocess.DEVNULL)
 
 
-def _get_repo_for_platform():
-    distro = _linux_distribution()[0]
-    if _is_deb_based(distro):
-        return Ubuntu
-    else:
-        raise RuntimeError(
-            'snapcraft is not supported on this operating system '
-            '({!r})'.format(distro))
+def call_with_output(cmd):
+    return subprocess.check_output(cmd).decode('utf-8').strip()

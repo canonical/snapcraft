@@ -47,10 +47,10 @@ class Mercurial(Base):
             raise errors.IncompatibleOptionsError(
                 "can't specify a source-checksum for a mercurial source")
 
-        self.kwargs = {}
+        self._call_kwargs = {}
         if silent:
-            self.kwargs['stdout'] = subprocess.DEVNULL
-            self.kwargs['stderr'] = subprocess.DEVNULL
+            self._call_kwargs['stdout'] = subprocess.DEVNULL
+            self._call_kwargs['stderr'] = subprocess.DEVNULL
 
     def pull(self):
         if os.path.exists(os.path.join(self.source_dir, '.hg')):
@@ -70,13 +70,14 @@ class Mercurial(Base):
             cmd = [self.command, 'clone'] + ref + [self.source,
                                                    self.source_dir]
 
-        subprocess.check_call(cmd, **self.kwargs)
-        self.assets = self._get_source_details()
+        subprocess.check_call(cmd, **self._call_kwargs)
+        self.source_details = self._get_source_details()
 
     def _get_source_details(self):
         tag = self.source_tag
         commit = self.source_commit
         branch = self.source_branch
+        source = self.source
 
         if not (tag or commit or branch):
             commit = subprocess.check_output(
@@ -84,7 +85,8 @@ class Mercurial(Base):
                     'utf-8').strip()
 
         return {
-            'source-commit': commit,
-            'source-branch': branch,
-            'source-tag': tag,
+            'commit': commit,
+            'branch': branch,
+            'source': source,
+            'tag': tag,
         }

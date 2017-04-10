@@ -42,10 +42,10 @@ class Bazaar(Base):
             raise errors.IncompatibleOptionsError(
                 "can't specify a source-checksum for a bzr source")
 
-        self.kwargs = {}
+        self._call_kwargs = {}
         if silent:
-            self.kwargs['stdout'] = subprocess.DEVNULL
-            self.kwargs['stderr'] = subprocess.DEVNULL
+            self._call_kwargs['stdout'] = subprocess.DEVNULL
+            self._call_kwargs['stderr'] = subprocess.DEVNULL
 
     def pull(self):
         tag_opts = []
@@ -61,8 +61,8 @@ class Bazaar(Base):
             cmd = [self.command, 'branch'] + tag_opts + \
                   [self.source, self.source_dir]
 
-        subprocess.check_call(cmd, **self.kwargs)
-        self.assets = self._get_source_details()
+        subprocess.check_call(cmd, **self._call_kwargs)
+        self.source_details = self._get_source_details()
 
     def _get_source_details(self):
         tag = self.source_tag
@@ -75,9 +75,11 @@ class Bazaar(Base):
                 ).decode('utf-8').strip()
 
         branch = None
+        source = self.source
 
         return {
-            'source-commit': commit,
-            'source-branch': branch,
-            'source-tag': tag,
+            'commit': commit,
+            'branch': branch,
+            'source': source,
+            'tag': tag,
         }

@@ -46,10 +46,10 @@ class Subversion(Base):
             raise errors.IncompatibleOptionsError(
                 "can't specify a source-checksum for a Subversion source")
 
-        self.kwargs = {}
+        self._call_kwargs = {}
         if silent:
-            self.kwargs['stdout'] = subprocess.DEVNULL
-            self.kwargs['stderr'] = subprocess.DEVNULL
+            self._call_kwargs['stdout'] = subprocess.DEVNULL
+            self._call_kwargs['stderr'] = subprocess.DEVNULL
 
     def pull(self):
         opts = []
@@ -60,34 +60,38 @@ class Subversion(Base):
         if os.path.exists(os.path.join(self.source_dir, '.svn')):
             subprocess.check_call(
                 [self.command, 'update'] + opts, cwd=self.source_dir,
-                **self.kwargs)
+                **self._call_kwargs)
         else:
             if os.path.isdir(self.source):
                 subprocess.check_call(
                     [self.command, 'checkout',
                      'file://{}'.format(os.path.abspath(self.source)),
-                     self.source_dir] + opts, **self.kwargs)
+                     self.source_dir] + opts, **self._call_kwargs)
             else:
                 subprocess.check_call(
                     [self.command, 'checkout', self.source, self.source_dir] +
-                    opts, **self.kwargs)
+                    opts, **self._call_kwargs)
 
-        self.assets = self._get_source_details()
+        self.source_details = self._get_source_details()
 
     def _get_source_details(self):
         branch = None
         tag = None
+        source = self.source
         commit = self.source_commit
 
-        lines = subprocess.check_output(['svn', 'info', self.source_dir]
-                                        ).decode('utf-8').split('\n')
-        prefix = 'Last Changed Rev: '
-        for line in lines:
-            if line.startswith(prefix):
-                commit = line.replace(prefix, '')
+        if not commit:  # retrieve the commit id
+            lines = subprocess.check_output(['svn', 'info', self.source_dir]
+                                            ).decode('utf-8').split('\n')
+            prefix = 'Last Changed Rev: '
+            for line in lines:
+                if line.startswith(prefix):
+                    commit = line.replace(prefix, '')
+                    break
 
         return {
-            'source-commit': commit,
-            'source-branch': branch,
-            'source-tag': tag,
+            'commit': commit,
+            'branch': branch,
+            'source': source,
+            'tag': tag,
         }
