@@ -212,7 +212,7 @@ class MercurialDetailsTestCase(MercurialBaseTestCase):
         call(['hg', 'add', 'testing'])
         call(['hg', 'commit', '-m', 'testing', '-u',
               'Test User <t@example.com>'])
-        call(['hg', 'tag', 'test-tag'])
+        call(['hg', 'tag', '-u', 'test', 'test-tag'])
         self.expected_commit = call_with_output(['hg', 'id']).split()[0]
         self.expected_branch = call_with_output(['hg', 'branch'])
         self.expected_tag = 'test-tag'

@@ -499,7 +499,8 @@ class HgRepo(fixtures.Fixture):
             call(['hg', 'add', 'testing'])
             call(['hg', 'commit', '-m', 'testing',
                   '-u', 'Test User <test.user@example.com>'])
-            call(['hg', 'tag', 'feature-tag'])
+            call(['hg', 'tag', 'feature-tag',
+                  '-u', 'Test User <test.user@example.com>'])
             revno = call_with_output(['hg', 'id']).split()[0]
 
             self.commit = revno
