@@ -26,7 +26,7 @@ _DEB_BASED_PLATFORM = [
     '"elementary"',
     'debian',
     'neon',
-    'LinuxMint',
+    'linuxmint',
 ]
 
 
@@ -35,7 +35,7 @@ def _is_deb_based(distro):
 
 
 def _get_repo_for_platform():
-    distro = _linux_distribution()[0]
+    distro = _linux_distribution()[0].lower()
     if _is_deb_based(distro):
         return Ubuntu
     else:
