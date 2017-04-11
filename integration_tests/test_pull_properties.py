@@ -147,11 +147,11 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
         }),
         ('branch', {
             'part_name': 'git-part-branch',
-            'expected_details': TestDetail('branch', 'test-branch'),
+            'expected_details': TestDetail('source-branch', 'test-branch'),
         }),
         ('tag', {
             'part_name': 'git-part-tag',
-            'expected_details': TestDetail('tag', 'feature-tag'),
+            'expected_details': TestDetail('source-tag', 'feature-tag'),
         }),
     ]
 
@@ -178,7 +178,7 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
                 Equals(self.expected_details.value))
         else:
             self.assertThat(
-                state.assets['source-details']['commit'],
+                state.assets['source-details']['source-commit'],
                 Equals(repo_fixture.commit))
 
 
@@ -191,7 +191,7 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
         }),
         ('tag', {
             'part_name': 'bzr-part-tag',
-            'expected_details': TestDetail('tag', 'feature-tag'),
+            'expected_details': TestDetail('source-tag', 'feature-tag'),
         }),
     ]
 
@@ -216,7 +216,7 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
                 Equals(self.expected_details.value))
         else:
             self.assertThat(
-                state.assets['source-details']['commit'],
+                state.assets['source-details']['source-commit'],
                 Equals(repo_fixture.commit))
 
 
@@ -229,7 +229,7 @@ class MercurialAssetTrackingTestCase(testscenarios.WithScenarios,
         }),
         ('tag', {
             'part_name': 'hg-part-tag',
-            'expected_details': TestDetail('tag', 'feature-tag'),
+            'expected_details': TestDetail('source-tag', 'feature-tag'),
         }),
     ]
 
@@ -254,7 +254,7 @@ class MercurialAssetTrackingTestCase(testscenarios.WithScenarios,
                 Equals(self.expected_details.value))
         else:
             self.assertThat(
-                state.assets['source-details']['commit'],
+                state.assets['source-details']['source-commit'],
                 Equals(repo_fixture.commit))
 
 
@@ -276,4 +276,4 @@ class SubversionAssetTrackingTestCase(integration_tests.TestCase):
 
         self.assertIn('source-details', state.assets)
         self.assertEqual(expected_commit,
-                         state.assets['source-details']['commit'])
+                         state.assets['source-details']['source-commit'])

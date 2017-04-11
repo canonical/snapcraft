@@ -158,7 +158,8 @@ class BazaarDetailsTestCase(tests.TestCase):
         self.source_details = self.bzr._get_source_details()
 
     def test_bzr_details_commit(self):
-        self.assertEqual(self.expected_commit, self.source_details['commit'])
+        self.assertEqual(self.expected_commit,
+                         self.source_details['source-commit'])
 
     def test_bzr_details_tag(self):
         self.bzr = sources.Bazaar(self.working_tree, self.source_dir,
@@ -166,4 +167,4 @@ class BazaarDetailsTestCase(tests.TestCase):
         self.bzr.pull()
 
         self.source_details = self.bzr._get_source_details()
-        self.assertEqual(self.expected_tag, self.source_details['tag'])
+        self.assertEqual(self.expected_tag, self.source_details['source-tag'])
