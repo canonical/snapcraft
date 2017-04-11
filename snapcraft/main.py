@@ -308,6 +308,8 @@ def run(args, project_options):  # noqa
         parts.define(args['<part-name>'])
     elif args['search']:
         parts.search(' '.join(args['<query>']))
+    elif os.environ.get('SNAPCRAFT_CONTAINER_BUILDS'):
+        lifecycle.containerbuild(project_options, args['--output'])
     else:  # snap by default:
         lifecycle.snap(project_options, args['<directory>'], args['--output'])
 

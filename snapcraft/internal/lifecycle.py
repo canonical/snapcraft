@@ -325,6 +325,13 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
+def containerbuild(project_options, output=None):
+    config = snapcraft.internal.load_config(project_options)
+    lxd.Project(output=output, source=os.path.curdir,
+                project_options=project_options,
+                metadata=config.get_metadata()).execute()
+
+
 def cleanbuild(project_options, remote=''):
     config = snapcraft.internal.load_config(project_options)
     tar_filename = '{}_{}_source.tar.bz2'.format(
@@ -351,13 +358,6 @@ def snap(project_options, directory=None, output=None):
     if directory:
         snap_dir = os.path.abspath(directory)
         snap = _snap_data_from_dir(snap_dir)
-    elif os.environ.get('SNAPCRAFT_CONTAINER_BUILDS'):
-        config = snapcraft.internal.load_config(project_options)
-        container = lxd.Project(output=output, source=os.path.curdir,
-                                project_options=project_options,
-                                metadata=config.get_metadata())
-        container.execute()
-        return container._snap_output
     else:
         # make sure the full lifecycle is executed
         snap_dir = project_options.snap_dir
