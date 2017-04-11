@@ -26,6 +26,7 @@ _DEB_BASED_PLATFORM = [
     '"elementary"',
     'debian',
     'neon',
+    'LinuxMint',
 ]
 
 
