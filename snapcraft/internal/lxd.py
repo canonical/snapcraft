@@ -171,15 +171,17 @@ class Project(Containerbuild):
                 'lxc', 'start', self._container_name])
 
     def _setup_project(self):
-        logger.info('Mounting {} into container'.format(self._source))
-        try:
+        self._ensure_mount(self._project_folder, self._source)
+
+    def _ensure_mount(self, destination, source):
+        logger.info('Mounting {} into container'.format(source))
+        mounts = check_output([
+            'lxc', 'config', 'device', 'show', self._container_name])
+        if destination not in mounts.decode():
             check_call([
                 'lxc', 'config', 'device', 'add', self._container_name,
-                self._project_folder, 'disk', 'source={}'.format(self._source),
-                'path=/{}'.format(self._project_folder)])
-        except CalledProcessError:
-            # Device already exists
-            return
+                destination, 'disk', 'source={}'.format(source),
+                'path=/{}'.format(destination)])
 
     def _finish(self):
         # Nothing to do
