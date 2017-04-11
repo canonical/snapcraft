@@ -50,7 +50,7 @@ parts:
     plugin: does-not-exist
 ''')
 
-        raised = self.assertRaises(
+        self.assertRaises(
             snapcraft.internal.errors.PluginError,
             snapcraft.internal.load_config)
 

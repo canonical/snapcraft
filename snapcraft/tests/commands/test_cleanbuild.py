@@ -18,7 +18,6 @@ import logging
 import os
 import tarfile
 from testtools.matchers import Contains
-from unittest import mock
 
 import fixtures
 
