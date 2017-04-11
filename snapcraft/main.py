@@ -19,7 +19,7 @@
 snapcraft
 
 Usage:
-  snapcraft [options] [--enable-geoip --no-parallel-build]
+  snapcraft [options] [--enable-geoip --no-parallel-build --remote=<remote>]
   snapcraft [options] init
   snapcraft [options] pull [<part> ...]  [--enable-geoip]
   snapcraft [options] build [<part> ...] [--no-parallel-build]
@@ -27,7 +27,7 @@ Usage:
   snapcraft [options] prime [<part> ...]
   snapcraft [options] strip [<part> ...]
   snapcraft [options] clean [<part> ...] [--step <step>]
-  snapcraft [options] snap [<directory> --output <snap-file>]
+  snapcraft [options] snap [<directory> --output <snap-file>] [--remote=<remote>]
   snapcraft [options] cleanbuild [--remote=<remote>]
   snapcraft [options] login
   snapcraft [options] logout
@@ -71,8 +71,8 @@ Options:
                                         architecture. Very few plugins support
                                         this.
 
-Options specific to cleanbuild:
-  --remote <remote> Use a specific lxd remote to run the cleanbuild on.
+Options specific to containerized builds:
+  --remote <remote> Use a specific lxd remote instead of a local container.
                     This requires prior setup which is described on:
                     https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
 
@@ -309,8 +309,12 @@ def run(args, project_options):  # noqa
     elif args['search']:
         parts.search(' '.join(args['<query>']))
     elif os.environ.get('SNAPCRAFT_CONTAINER_BUILDS'):
-        lifecycle.containerbuild(project_options, args['--output'])
+        lifecycle.containerbuild(project_options,
+                                 args['--output'], args['--remote'])
     else:  # snap by default:
+        if args['--remote']:
+            raise RuntimeError(
+                '--remote can only be used with SNAPCRAFT_CONTAINER_BUILDS')
         lifecycle.snap(project_options, args['<directory>'], args['--output'])
 
     return project_options

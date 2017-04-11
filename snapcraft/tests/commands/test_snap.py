@@ -47,6 +47,11 @@ parts:
       plugin: nil
 """
 
+    scenarios = [
+        ('local', dict(args=[], remote='local')),
+        ('remote', dict(args=['--remote=my-remote'], remote='my-remote')),
+    ]
+
     def make_snapcraft_yaml(self, n=1):
         super().make_snapcraft_yaml(self.yaml_template)
 
@@ -59,7 +64,7 @@ parts:
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()
 
-        main(['snap', '--debug'])
+        main(['snap', '--debug', *self.args])
 
         source = os.path.realpath(os.path.curdir)
         self.assertIn(
@@ -68,7 +73,7 @@ parts:
             'Network connection established\n'.format(source),
             fake_logger.output)
 
-        container_name = 'local:snapcraft-snap-test'
+        container_name = '{}:snapcraft-snap-test'.format(self.remote)
         project_folder = 'build_snap-test'
         fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'start', container_name]),
@@ -359,6 +364,12 @@ type: os
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('mysnap.snap', FileExists())
+
+    def test_snap_containerless_no_remote(self):
+        raised = self.assertRaises(RuntimeError,
+                                   main, ['--debug', '--remote=my-remote'])
+        expected = '--remote can only be used with SNAPCRAFT_CONTAINER_BUILDS'
+        self.assertIn(expected, str(raised))
 
     @mock.patch('time.time')
     def test_snap_renames_stale_snap_build(self, mocked_time):
