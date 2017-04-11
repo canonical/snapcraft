@@ -26,6 +26,7 @@ from testtools.matchers import (
     Contains,
     Equals,
     HasLength,
+    LessThan,
     MatchesRegex,
 )
 
@@ -597,13 +598,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
                              'The absolute path to python was not replaced as '
                              'expected')
 
-    @mock.patch.object(catkin.CatkinPlugin, '_source_setup_sh',
-                       return_value='test-source-setup')
-    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
-    def test_run_environment(self, run_mock, source_setup_sh_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                     self.project_options)
-
+    def _verify_run_environment(self, plugin):
         python_path = os.path.join(
             plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')
         os.makedirs(python_path)
@@ -617,12 +612,31 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(environment, Contains(
             'ROS_MASTER_URI=http://localhost:11311'))
 
-        self.assertThat(environment, Contains('ROS_HOME=$SNAP_USER_DATA/ros'))
+        self.assertThat(
+            environment, Contains('ROS_HOME=${SNAP_USER_DATA:-/tmp}/ros'))
 
         self.assertThat(environment, Contains('LC_ALL=C.UTF-8'))
 
+        # Verify that LD_LIBRARY_PATH was set before setup.sh is sourced
+        ld_library_path_index = [i for i, line in enumerate(environment)
+                                 if 'LD_LIBRARY_PATH' in line][0]
+        source_setup_index = [i for i, line in enumerate(environment)
+                              if 'setup.sh' in line][0]
+        self.assertThat(ld_library_path_index, LessThan(source_setup_index))
+
+        return environment
+
+    @mock.patch.object(catkin.CatkinPlugin, '_source_setup_sh',
+                       return_value='test-source-setup.sh')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
+    def test_run_environment(self, run_mock, source_setup_sh_mock):
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+
+        environment = self._verify_run_environment(plugin)
+
         source_setup_sh_mock.assert_called_with(plugin.installdir, None)
-        self.assertThat(environment, Contains('test-source-setup'))
+        self.assertThat(environment, Contains('test-source-setup.sh'))
 
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='bar')
     def test_run_environment_with_underlay(self, run_mock):
@@ -633,22 +647,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
 
-        python_path = os.path.join(
-            plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')
-        os.makedirs(python_path)
-
-        # Joining and re-splitting to get hacked script in there as well
-        environment = '\n'.join(plugin.env(plugin.installdir)).split('\n')
-
-        self.assertThat(environment, Contains(
-            'PYTHONPATH={}:$PYTHONPATH'.format(python_path)))
-
-        self.assertThat(environment, Contains(
-            'ROS_MASTER_URI=http://localhost:11311'))
-
-        self.assertThat(environment, Contains('ROS_HOME=$SNAP_USER_DATA/ros'))
-
-        self.assertThat(environment, Contains('LC_ALL=C.UTF-8'))
+        environment = self._verify_run_environment(plugin)
 
         self.assertThat(environment, Contains('. {}'.format(
             os.path.join(plugin.rosdir, 'snapcraft-setup.sh'))))

@@ -37,6 +37,7 @@ class Base:
         self.source_branch = source_branch
         self.source_depth = source_depth
         self.source_checksum = source_checksum
+        self.source_details = None
 
         self.command = command
 

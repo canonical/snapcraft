@@ -3,9 +3,11 @@ Section: utils
 Priority: extra
 Maintainer: Snapcraft Team <snapcraft@lists.snapcraft.io>
 Build-Depends: bash-completion,
+               bzr,
                debhelper (>= 9),
                dh-python,
                git,
+               mercurial,
                pkg-config,
                python3 (>= 3.4),
                python3-apt,
@@ -31,6 +33,7 @@ Build-Depends: bash-completion,
                python3-testtools,
                python3-xdg,
                python3-yaml,
+               subversion,
                squashfs-tools,
                xdelta3,
 Homepage: https://github.com/snapcore/snapcraft
