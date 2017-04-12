@@ -841,6 +841,9 @@ def collaborate(snap_name, key):
 
     # The revision should be incremented, to avoid `invalid-revision` errors.
     assertion['revision'] = str(int(assertion.get('revision', '0'))+1)
+    # There is a possibility that the `authority-id` to be `canonical`,
+    # which should be changed to the `publisher_id` to match the signing key.
+    assertion['authority-id'] = publisher_id
 
     assertion = _sign_assertion(snap_id, assertion, key, 'developers')
 
