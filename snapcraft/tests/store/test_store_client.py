@@ -495,6 +495,28 @@ class RegisterTestCase(StoreTestCase):
             'You must wait 177 seconds before trying to register your '
             'next snap.')
 
+    def test_registering_name_too_long(self):
+        self.client.login('dummy', 'test correct password')
+        name = 'name-too-l{}ng'.format('0' * 40)
+        raised = self.assertRaises(
+            errors.StoreRegistrationError,
+            self.client.register, name)
+        expected = (
+            'The name {} should not be longer than 40 characters.'
+            .format(name))
+        self.assertEqual(str(raised), expected)
+
+    def test_registering_name_invalid(self):
+        self.client.login('dummy', 'test correct password')
+        name = 'test_invalid'
+        raised = self.assertRaises(
+            errors.StoreRegistrationError,
+            self.client.register, name)
+        expected = (
+            'The name {!r} is not valid. It can only contain dashes, numbers '
+            'and lowercase ascii letters.'.format(name))
+        self.assertEqual(str(raised), expected)
+
     def test_unhandled_registration_error_path(self):
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
