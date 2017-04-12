@@ -13,27 +13,50 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import integration_tests
 import os
+
+import testscenarios
+import yaml
 from testtools.matchers import FileExists
 
+import integration_tests
 
-class NodeJSPluginTestCase(integration_tests.TestCase):
+
+class NodeJSPluginTestCase(testscenarios.WithScenarios,
+                           integration_tests.TestCase):
+
+    scenarios = [
+        ('default', dict(package_manager='')),
+        ('npm', dict(package_manager='npm')),
+        ('yarn', dict(package_manager='yarn')),
+    ]
+
+    def _set_node_package_manager(self, snapcraft_yaml_file):
+        if not self.package_manager:
+            return
+
+        with open(snapcraft_yaml_file) as f:
+            snapcraft_yaml = yaml.load(f)
+        snapcraft_yaml['parts']['nodejs-part']['node-package-manager'] = \
+            self.package_manager
+        with open(snapcraft_yaml_file, 'w') as f:
+            yaml.dump(snapcraft_yaml, f)
 
     def test_rebuilding_possible(self):
         self.copy_project_to_cwd('nodejs-hello')
+        self._set_node_package_manager('snapcraft.yaml')
+
         self.run_snapcraft('build')
         self.run_snapcraft(['clean', '-s', 'build'])
         self.run_snapcraft('build')
 
     def test_build_with_run_commands(self):
-        self.run_snapcraft('build', 'nodejs-with-run-commands')
-        self.assertThat(
-            os.path.join(self.parts_dir, 'nodejs-with-run', 'build',
-                         'command-one-run'),
-            FileExists())
-        self.assertThat(
-            os.path.join(self.parts_dir, 'nodejs-with-run', 'build',
-                         'command-two-run'),
-            FileExists())
+        self.copy_project_to_cwd('nodejs-with-run-commands')
+        self._set_node_package_manager('snapcraft.yaml')
+
+        self.run_snapcraft('build')
+        part_builddir = os.path.join(self.parts_dir, 'nodejs-part', 'build')
+        self.assertThat(os.path.join(part_builddir, 'command-one-run'),
+                        FileExists())
+        self.assertThat(os.path.join(part_builddir, 'command-two-run'),
+                        FileExists())
