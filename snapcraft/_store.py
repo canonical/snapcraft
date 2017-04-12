@@ -811,13 +811,14 @@ def collaborate(snap_name, key):
 
     with _requires_login():
         account_info = store.get_account_information()
+    publisher_id = account_info['account_id']
 
     release = storeapi.constants.DEFAULT_SERIES
     try:
         snap_id = account_info['snaps'][release][snap_name]['snap-id']
     except KeyError:
         raise storeapi.errors.SnapNotFoundError(snap_name)
-    developers = _get_developers(snap_id)
+    developers = _get_developers(snap_id, publisher_id)
 
     # XXX: Do the amendments via UI here.
     #
@@ -841,13 +842,18 @@ def collaborate(snap_name, key):
     _sign_developers(snap_id, developers['snap_developer'], key)
 
 
-def _get_developers(snap_id):
+def _get_developers(snap_id, publisher_id):
     store = storeapi.StoreClient()
     try:
         return store.get_assertion(snap_id, 'developers')
     except storeapi.errors.StoreValidationError as e:
         if e.error_list[0]['code'] == 'snap-developer-not-found':
-            return {'snap_developer': []}
+            return {'snap_developer': {
+                'type': 'snap-developer',
+                'authority-id': publisher_id,
+                'publisher-id': publisher_id,
+                'snap-id': snap_id,
+                'developers': []}}
         raise
 
 
