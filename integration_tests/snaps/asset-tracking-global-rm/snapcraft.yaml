@@ -1,0 +1,11 @@
+name: asset-tracking-global
+version: 0.1
+summary: A snap with a global build-package
+description: A snap with a global build-package
+architectures: [all]
+confinement: strict
+build-packages: ['hello=2.10-1']
+
+parts:
+  asset-tracking-global:
+    plugin: nil
