@@ -907,7 +907,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
     def _handle_developers_request(self, code):
         logger.debug('Handling snap developers request')
         if code == 'good':
-            response = {'snap_developer': []}
+            response = {'snap_developer': {}}
             response = json.dumps(response).encode()
             status = 200
         elif code == 'no-dev':
@@ -918,7 +918,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             response = json.dumps(response).encode()
         elif code == 'badrequest':
             status = 200
-            response = {'snap_developer': []}
+            response = {'snap_developer': {}}
             response = json.dumps(response).encode()
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')

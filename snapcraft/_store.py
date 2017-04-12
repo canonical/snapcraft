@@ -852,13 +852,15 @@ def _get_developers(snap_id, publisher_id):
                 'type': 'snap-developer',
                 'authority-id': publisher_id,
                 'publisher-id': publisher_id,
-                'snap-id': snap_id,
-                'developers': []}}
+                'snap-id': snap_id}}
         raise
 
 
 def _sign_developers(snap_id, assertion, key):
     store = storeapi.StoreClient()
+    # This is needed to increment the revisions, to avoid
+    # `invalid-revision` errors.
+    assertion['revision'] = str(int(assertion.get('revision', '0'))+1)
     assertion = _sign_assertion(snap_id, assertion, key, 'developers')
     store.push_assertion(snap_id, assertion, 'developers')
 
