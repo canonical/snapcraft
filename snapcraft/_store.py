@@ -818,14 +818,14 @@ def collaborate(snap_name, key):
         snap_id = account_info['snaps'][release][snap_name]['snap-id']
     except KeyError:
         raise storeapi.errors.SnapNotFoundError(snap_name)
-    developers = _get_developers(snap_id, publisher_id)
+    assertion = _get_developers(snap_id, publisher_id)
 
     # XXX: Do the amendments via UI here.
     #
     # The data will look like:
     # {'snap_developer': {
     #      'type: 'snap-developer',
-    #      'authority-id': <account_id of the publisher Or `canonical`>,
+    #      'authority-id': <account_id of the publisher>,
     #      'publisher-id': <account_id of the publisher>,
     #      'snap-id': 'snap_id',
     #      'developers': [{
@@ -839,30 +839,26 @@ def collaborate(snap_name, key):
     #      }
     # }
 
-    _sign_developers(snap_id, developers['snap_developer'], key)
+    # The revision should be incremented, to avoid `invalid-revision` errors.
+    assertion['revision'] = str(int(assertion.get('revision', '0'))+1)
+
+    assertion = _sign_assertion(snap_id, assertion, key, 'developers')
+
+    store.push_assertion(snap_id, assertion, 'developers')
 
 
 def _get_developers(snap_id, publisher_id):
     store = storeapi.StoreClient()
     try:
-        return store.get_assertion(snap_id, 'developers')
+        return store.get_assertion(snap_id, 'developers')['snap_developer']
     except storeapi.errors.StoreValidationError as e:
         if e.error_list[0]['code'] == 'snap-developer-not-found':
-            return {'snap_developer': {
+            return {
                 'type': 'snap-developer',
                 'authority-id': publisher_id,
                 'publisher-id': publisher_id,
-                'snap-id': snap_id}}
+                'snap-id': snap_id}
         raise
-
-
-def _sign_developers(snap_id, assertion, key):
-    store = storeapi.StoreClient()
-    # This is needed to increment the revisions, to avoid
-    # `invalid-revision` errors.
-    assertion['revision'] = str(int(assertion.get('revision', '0'))+1)
-    assertion = _sign_assertion(snap_id, assertion, key, 'developers')
-    store.push_assertion(snap_id, assertion, 'developers')
 
 
 def _check_validations(validations):
