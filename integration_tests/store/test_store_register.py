@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,8 +17,6 @@
 import os
 import re
 import subprocess
-import time
-import uuid
 
 from testtools.matchers import Contains, MatchesRegex
 
@@ -29,12 +27,12 @@ class RegisterTestCase(integration_tests.StoreTestCase):
 
     def test_successful_registration(self):
         self.login()
-        snap_name = 'u1test{}'.format(uuid.uuid4().int)
+        snap_name = self.get_unique_name()
         self.register(snap_name)
 
     def test_successful_private_registration(self):
         self.login()
-        snap_name = 'u1test{}'.format(uuid.uuid4().int)
+        snap_name = self.get_unique_name()
         self.register(snap_name, private=True)
 
     def test_failed_registration_already_registered(self):
@@ -58,8 +56,7 @@ class RegisterTestCase(integration_tests.StoreTestCase):
         self.login()
         self.addCleanup(self.logout)
         if os.getenv('TEST_STORE', 'fake') != 'fake':
-            unique_id = uuid.uuid4().int
-            snap_name = 'u1test-{}'.format(unique_id)
+            snap_name = self.get_unique_name()
             self.register(snap_name)
         else:
             snap_name = self.test_store.already_owned_snap_name
@@ -85,21 +82,45 @@ class RegisterTestCase(integration_tests.StoreTestCase):
         self.assertThat(str(error.output), Contains(expected))
         self.assertThat(str(error.output), Contains('register-name'))
 
+    def test_registration_of_invalid_name(self):
+        self.login()
+        name = 'test_invalid'
+        error = self.assertRaises(
+            subprocess.CalledProcessError, self.register, name)
+
+        expected = (
+            'The name {!r} is not valid. It can only contain dashes, numbers '
+            'and lowercase ascii letters.'.format(name))
+        self.assertThat(str(error.output), Contains(expected))
+        self.assertThat(str(error.output), Contains('register-name'))
+
+    def test_registration_of_too_long_name(self):
+        self.login()
+        name = 'name-too-l{}ng'.format('o' * 40)
+        error = self.assertRaises(
+            subprocess.CalledProcessError, self.register, name)
+
+        expected = (
+            'The name {} should not be longer than 40 characters.'
+            .format(name))
+        self.assertThat(str(error.output), Contains(expected))
+        self.assertThat(str(error.output), Contains('register-name'))
+
     def test_registrations_in_a_row_fail_if_too_fast(self):
-        # Wait after the registration attempts, so the following registrations
-        # don't get the error.
-        self.addCleanup(time.sleep, self.test_store.register_delay)
         # This test has a potential to fail if working off a slow
         # network.
         self.login()
-        snap_name_1 = 'good-snap{}'.format(uuid.uuid4().int)
-        snap_name_2 = 'test-too-fast{}'.format(uuid.uuid4().int)
 
-        self.register(snap_name_1, wait=False)
+        error = None
+        for idx in range(self.test_store.register_count_limit + 1):
+            snap_name = self.get_unique_name('test-too-fast-{}'.format(idx))
+            try:
+                self.register(snap_name, wait=False)
+            except subprocess.CalledProcessError as exc:
+                error = exc
+                break
 
-        error = self.assertRaises(
-            subprocess.CalledProcessError,
-            self.register, snap_name_2, wait=False)
+        self.assertIsNotNone(error, 'An error must be raised.')
         expected = (
             '.*You must wait \d+ seconds before trying to register your '
             'next snap.*')

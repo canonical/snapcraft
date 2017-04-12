@@ -14,12 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+from unittest import mock
+
 from snapcraft.internal import sources
+from snapcraft import tests
+from snapcraft.tests.subprocess_utils import (
+    call,
+    call_with_output,
+)
 
-from snapcraft.tests.sources import SourceTestCase
 
+class TestBazaar(tests.sources.SourceTestCase):
 
-class TestBazaar(SourceTestCase):
+    def setUp(self):
+        super().setUp()
+
+        # Mock _get_source_details() since not all tests have a
+        # full repo checkout
+        patcher = mock.patch('snapcraft.sources.Bazaar._get_source_details')
+        self.mock_get_source_details = patcher.start()
+        self.mock_get_source_details.return_value = ""
+        self.addCleanup(patcher.stop)
 
     def test_pull(self):
         bzr = sources.Bazaar('lp:my-source', 'source_dir')
@@ -111,3 +127,42 @@ class TestBazaar(SourceTestCase):
         expected_message = (
             "can't specify a source-checksum for a bzr source")
         self.assertEqual(raised.message, expected_message)
+
+
+class BazaarDetailsTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.working_tree = 'bzr-test'
+        self.source_dir = 'bzr-checkout'
+        os.mkdir(self.working_tree)
+        os.mkdir(self.source_dir)
+        os.chdir(self.working_tree)
+        call(['bzr', 'init'])
+        call(['bzr', 'whoami', 'Test User <test.user@example.com>'])
+        with open('testing', 'w') as fp:
+            fp.write('testing')
+        call(['bzr', 'add', 'testing'])
+        call(['bzr', 'commit', '-m', 'testing'])
+        call(['bzr', 'tag', 'test-tag'])
+        self.expected_commit = call_with_output(['bzr', 'revno', '.'])
+        self.expected_tag = 'test-tag'
+
+        os.chdir('..')
+
+        self.bzr = sources.Bazaar(self.working_tree, self.source_dir,
+                                  silent=True)
+        self.bzr.pull()
+
+        self.source_details = self.bzr._get_source_details()
+
+    def test_bzr_details_commit(self):
+        self.assertEqual(self.expected_commit, self.source_details['commit'])
+
+    def test_bzr_details_tag(self):
+        self.bzr = sources.Bazaar(self.working_tree, self.source_dir,
+                                  source_tag='test-tag', silent=True)
+        self.bzr.pull()
+
+        self.source_details = self.bzr._get_source_details()
+        self.assertEqual(self.expected_tag, self.source_details['tag'])

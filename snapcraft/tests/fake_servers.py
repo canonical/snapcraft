@@ -578,6 +578,10 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_register_409('already_owned')
         elif data['snap_name'].startswith('test-too-fast'):
             self._handle_register_429('register_window')
+        elif (
+                data['snap_name'].startswith('test_invalid') or
+                len(data['snap_name']) > 40):
+            self._handle_register_name_invalid(data['snap_name'])
         elif data['snap_name'] == 'snap-name-no-clear-error':
             self._handle_unclear_registration_error()
         else:
@@ -603,7 +607,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         self.wfile.write(json.dumps(response).encode())
 
     def _handle_register_429(self, error_code):
-        self.send_response(409)
+        self.send_response(429)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
         response = {
@@ -612,6 +616,28 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         }
         if error_code == 'register_window':
             response['retry_after'] = 177
+        self.wfile.write(json.dumps(response).encode())
+
+    def _handle_register_name_invalid(self, snap_name):
+        self.send_response(400)
+        self.send_header('Content-Type', 'application/json')
+        self.end_headers()
+
+        # Emulates the current Store behaviour and never combines errors.
+        # It's either using invalid chars or too long, never both.
+        if len(snap_name) > 40:
+            msg = ('The name {} should not be longer than 40 characters.'
+                   .format(snap_name))
+        else:
+            msg = (
+                'The name {!r} is not valid. It can only contain dashes, '
+                'numbers and lowercase ascii letters.'.format(snap_name))
+
+        response = {
+            'error_list': [
+                {'code': 'invalid', 'message': msg},
+            ]
+        }
         self.wfile.write(json.dumps(response).encode())
 
     def _handle_unclear_registration_error(self):
@@ -676,7 +702,9 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 'errors': 'Not a valid channel: alpha',
             }
             data = json.dumps(response).encode()
-        elif data['name'] == 'test-snap' or data['name'].startswith('u1test'):
+        elif (
+                data['name'] == 'test-snap' or
+                data['name'].startswith('snapcrafttest')):
             response = {
                 'opened_channels': data['channels'],
                 'channel_map': [
