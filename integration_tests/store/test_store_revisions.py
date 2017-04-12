@@ -18,7 +18,6 @@ import os
 import re
 import subprocess
 import unittest
-import uuid
 
 from testtools.matchers import Contains, FileExists, MatchesRegex
 
@@ -118,10 +117,9 @@ class RevisionsTestCase(integration_tests.StoreTestCase):
         self.login()
 
         # Build a random snap, register, push and release it.
-        self.copy_project_to_cwd('basic')
-        unique_id = uuid.uuid4().int
-        name = 'u1test-{}'.format(unique_id)
+        name = self.get_unique_name()
         version = '1.0'
+        self.copy_project_to_cwd('basic')
         self.update_name_and_version(name, version)
         self.run_snapcraft('snap')
         snap_path = '{}_{}_{}.snap'.format(name, version, 'all')
