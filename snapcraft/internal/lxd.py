@@ -152,10 +152,9 @@ class Project(Containerbuild):
                          remote=remote)
 
     def _ensure_container(self):
-        try:
-            check_call([
-                'lxc', 'start', self._container_name])
-        except CalledProcessError:
+        containers = check_output([
+            'lxc', 'list', self._container_name])
+        if self._container_name.split(':')[-1] not in containers.decode():
             check_call([
                 'lxc', 'init',
                 'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
@@ -167,6 +166,7 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'raw.idmap', 'both 1000 0'])
+        if 'RUNNING' not in containers.decode():
             check_call([
                 'lxc', 'start', self._container_name])
 
