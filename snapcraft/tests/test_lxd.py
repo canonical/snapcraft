@@ -32,6 +32,11 @@ from snapcraft.internal import lxd
 
 class LXDTestCase(tests.TestCase):
 
+    scenarios = [
+        ('local', dict(remote='local')),
+        ('remote', dict(remote='my-remote')),
+    ]
+
     @patch('petname.Generate')
     def test_cleanbuild(self, mock_pet):
         fake_lxd = tests.fixture_setup.FakeLXD()
@@ -45,7 +50,7 @@ class LXDTestCase(tests.TestCase):
         metadata = {'name': 'project'}
         project_folder = 'build_project'
         lxd.Cleanbuilder(output='snap.snap', source='project.tar',
-                         metadata=metadata,
+                         metadata=metadata, remote=self.remote,
                          project_options=project_options).execute()
         expected_arch = project_options.deb_arch
 
@@ -56,40 +61,40 @@ class LXDTestCase(tests.TestCase):
             'Retrieved snap.snap\n',
             fake_logger.output)
 
+        container_name = '{}:snapcraft-my-pet'.format(self.remote)
         fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'launch', '-e',
-                  'ubuntu:xenial/{}'.format(expected_arch),
-                  'local:snapcraft-my-pet']),
-            call(['lxc', 'config', 'set', 'local:snapcraft-my-pet',
+                  'ubuntu:xenial/{}'.format(expected_arch), container_name]),
+            call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
-            call(['lxc', 'exec', 'local:snapcraft-my-pet',
+            call(['lxc', 'exec', container_name,
                   '--env', 'HOME=/{}'.format(project_folder), '--',
                   'mkdir', project_folder]),
             call(['lxc', 'file', 'push', os.path.realpath('project.tar'),
-                  'local:snapcraft-my-pet/build_project/project.tar']),
-            call(['lxc', 'exec', 'local:snapcraft-my-pet',
+                  '{}/build_project/project.tar'.format(container_name)]),
+            call(['lxc', 'exec', container_name,
                   '--env', 'HOME=/{}'.format(project_folder), '--',
                   'tar', 'xvf', 'project.tar']),
-            call(['lxc', 'exec', 'local:snapcraft-my-pet',
+            call(['lxc', 'exec', container_name,
                   '--env', 'HOME=/{}'.format(project_folder), '--',
                   'python3', '-c',
                   'import urllib.request; '
                   'urllib.request.urlopen('
                   '"http://start.ubuntu.com/connectivity-check.html", '
                   'timeout=5)']),
-            call(['lxc', 'exec', 'local:snapcraft-my-pet',
+            call(['lxc', 'exec', container_name,
                   '--env', 'HOME=/{}'.format(project_folder), '--',
                   'apt-get', 'update']),
-            call(['lxc', 'exec', 'local:snapcraft-my-pet',
+            call(['lxc', 'exec', container_name,
                   '--env', 'HOME=/{}'.format(project_folder), '--',
                   'apt-get', 'install', 'snapcraft', '-y']),
-            call(['lxc', 'exec', 'local:snapcraft-my-pet',
+            call(['lxc', 'exec', container_name,
                   '--env', 'HOME=/{}'.format(project_folder), '--',
                   'snapcraft', 'snap', '--output', 'snap.snap']),
             call(['lxc', 'file', 'pull',
-                  'local:snapcraft-my-pet/{}/snap.snap'.format(project_folder),
+                  '{}/{}/snap.snap'.format(container_name, project_folder),
                   'snap.snap']),
-            call(['lxc', 'stop', '-f', 'local:snapcraft-my-pet']),
+            call(['lxc', 'stop', '-f', container_name]),
         ])
 
     def test_wait_for_network_loops(self):
@@ -153,58 +158,6 @@ class LXDTestCase(tests.TestCase):
                 project_options=project_options).execute)
 
         self.assertNotIn(['bash', '-i'], call_list)
-
-    @patch('petname.Generate')
-    def test_cleanbuild_with_remote(self, mock_pet):
-        fake_lxd = tests.fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-        mock_pet.return_value = 'my-pet'
-
-        project_options = ProjectOptions()
-        metadata = {'name': 'project'}
-        project_folder = 'build_project'
-        lxd.Cleanbuilder(output='snap.snap', source='project.tar',
-                         metadata=metadata,
-                         project_options=project_options,
-                         remote='my-remote').execute()
-        expected_arch = project_options.deb_arch
-
-        fake_lxd.check_call_mock.assert_has_calls([
-            call(['lxc', 'launch', '-e',
-                  'ubuntu:xenial/{}'.format(expected_arch),
-                  'my-remote:snapcraft-my-pet']),
-            call(['lxc', 'config', 'set', 'my-remote:snapcraft-my-pet',
-                  'environment.SNAPCRAFT_SETUP_CORE', '1']),
-            call(['lxc', 'exec', 'my-remote:snapcraft-my-pet',
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
-                  'mkdir', project_folder]),
-            call(['lxc', 'file', 'push', os.path.realpath('project.tar'),
-                  'my-remote:snapcraft-my-pet/build_project/project.tar']),
-            call(['lxc', 'exec', 'my-remote:snapcraft-my-pet',
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
-                  'tar', 'xvf', 'project.tar']),
-            call(['lxc', 'exec', 'my-remote:snapcraft-my-pet',
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
-                  'python3', '-c',
-                  'import urllib.request; '
-                  'urllib.request.urlopen('
-                  '"http://start.ubuntu.com/connectivity-check.html", '
-                  'timeout=5)']),
-            call(['lxc', 'exec', 'my-remote:snapcraft-my-pet',
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
-                  'apt-get', 'update']),
-            call(['lxc', 'exec', 'my-remote:snapcraft-my-pet',
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
-                  'apt-get', 'install', 'snapcraft', '-y']),
-            call(['lxc', 'exec', 'my-remote:snapcraft-my-pet',
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
-                  'snapcraft', 'snap', '--output', 'snap.snap']),
-            call(['lxc', 'file', 'pull',
-                  'my-remote:snapcraft-my-pet/{}/snap.snap'.format(
-                      project_folder),
-                  'snap.snap']),
-            call(['lxc', 'stop', '-f', 'my-remote:snapcraft-my-pet']),
-        ])
 
     @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
     def test_lxc_check_fails(self, mock_run):
