@@ -611,6 +611,7 @@ class SCAClient(Client):
                      'Content-Type': 'application/json',
                      'Accept': 'application/json'})
         if not response.ok:
+            # First check if an upload-revokation error for snap developer.
             raise errors.StoreValidationError(snap_id, response)
         try:
             response_json = response.json()
