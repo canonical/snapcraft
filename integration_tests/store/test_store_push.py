@@ -17,7 +17,6 @@
 import os
 import re
 import subprocess
-import uuid
 
 from testtools.matchers import (
     FileExists,
@@ -46,25 +45,22 @@ class PushTestCase(integration_tests.StoreTestCase):
         self.login()
 
         # Change to a random name and version.
-        unique_id = uuid.uuid4().int
-        new_name = 'u1test-{}'.format(unique_id)
-        # The maximum size is 32 chars.
-        new_version = str(unique_id)[:32]
-
+        name = self.get_unique_name()
+        version = self.get_unique_version()
         self.copy_project_to_cwd('basic')
-        self.update_name_and_version(new_name, new_version)
+        self.update_name_and_version(name, version)
 
         self.run_snapcraft('snap')
 
         # Register the snap
-        self.register(new_name)
+        self.register(name)
         # Upload the snap
-        snap_file_path = '{}_{}_{}.snap'.format(new_name, new_version, 'all')
+        snap_file_path = '{}_{}_{}.snap'.format(name, version, 'all')
         self.assertThat(
             os.path.join(snap_file_path), FileExists())
 
         output = self.run_snapcraft(['push', snap_file_path])
-        expected = r'.*Ready to release!.*'.format(new_name)
+        expected = r'.*Ready to release!.*'.format(name)
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
     def test_push_and_release(self):
@@ -73,26 +69,23 @@ class PushTestCase(integration_tests.StoreTestCase):
         self.login()
 
         # Change to a random name and version.
-        unique_id = uuid.uuid4().int
-        new_name = 'u1test-{}'.format(unique_id)
-        # The maximum size is 32 chars.
-        new_version = str(unique_id)[:32]
-
+        name = self.get_unique_name()
+        version = self.get_unique_version()
         self.copy_project_to_cwd('basic')
-        self.update_name_and_version(new_name, new_version)
+        self.update_name_and_version(name, version)
 
         self.run_snapcraft('snap')
 
         # Register the snap
-        self.register(new_name)
+        self.register(name)
         # Upload the snap
-        snap_file_path = '{}_{}_{}.snap'.format(new_name, new_version, 'all')
+        snap_file_path = '{}_{}_{}.snap'.format(name, version, 'all')
         self.assertThat(
             os.path.join(snap_file_path), FileExists())
 
         output = self.run_snapcraft(
             ['push', snap_file_path, '--release', 'edge'])
-        expected = r'.*Ready to release!.*'.format(new_name)
+        expected = r'.*Ready to release!.*'.format(name)
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
         expected = r'.*The \'edge\' channel is now open.*'
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
@@ -103,23 +96,20 @@ class PushTestCase(integration_tests.StoreTestCase):
         self.login()
 
         # Change to a random name and version.
-        unique_id = uuid.uuid4().int
-        new_name = 'u1test-{}'.format(unique_id)
-        # The maximum size is 32 chars.
-        new_version = str(unique_id)[:32]
-
+        name = self.get_unique_name()
+        version = self.get_unique_version()
         self.copy_project_to_cwd('basic')
-        self.update_name_and_version(new_name, new_version)
+        self.update_name_and_version(name, version)
 
         self.run_snapcraft('snap')
 
         # Register the snap
-        self.register(new_name)
+        self.register(name)
         # Upload the snap
-        snap_file_path = '{}_{}_{}.snap'.format(new_name, new_version, 'all')
+        snap_file_path = '{}_{}_{}.snap'.format(name, version, 'all')
         self.assertThat(
             os.path.join(snap_file_path), FileExists())
 
         output = self.run_snapcraft(['upload', snap_file_path])
-        expected = r'.*Ready to release!.*'.format(new_name)
+        expected = r'.*Ready to release!.*'.format(name)
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
