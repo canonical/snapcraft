@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 import logging
 import os
 import sys
@@ -151,10 +152,15 @@ class Project(Containerbuild):
                          metadata=metadata, container_name=metadata['name'],
                          remote=remote)
 
+    def _get_container_status(self):
+        containers = json.loads(check_output([
+            'lxc', 'list', '--format=json', self._container_name]).decode())
+        for container in containers:
+            if container['name'] == self._container_name.split(':')[-1]:
+                return container
+
     def _ensure_container(self):
-        containers = check_output([
-            'lxc', 'list', self._container_name])
-        if self._container_name.split(':')[-1] not in containers.decode():
+        if not self._get_container_status():
             check_call([
                 'lxc', 'init',
                 'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
@@ -166,7 +172,7 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'raw.idmap', 'both 1000 0'])
-        if 'RUNNING' not in containers.decode():
+        if self._get_container_status()['status'] == 'Stopped':
             check_call([
                 'lxc', 'start', self._container_name])
 
@@ -175,9 +181,8 @@ class Project(Containerbuild):
 
     def _ensure_mount(self, destination, source):
         logger.info('Mounting {} into container'.format(source))
-        mounts = check_output([
-            'lxc', 'config', 'device', 'show', self._container_name])
-        if destination not in mounts.decode():
+        devices = self._get_container_status()['devices']
+        if destination not in devices:
             check_call([
                 'lxc', 'config', 'device', 'add', self._container_name,
                 destination, 'disk', 'source={}'.format(source),
