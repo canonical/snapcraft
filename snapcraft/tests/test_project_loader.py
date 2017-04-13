@@ -29,6 +29,7 @@ import snapcraft
 from snapcraft.internal import dirs, parts
 from snapcraft.internal import project_loader
 from snapcraft.internal import errors
+from snapcraft.internal import pluginhandler
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
 
@@ -433,6 +434,26 @@ parts:
 
         self.assertEqual(raised.message,
                          "'name' is a required property")
+
+    def test_get_metadata(self):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+architectures: ['amd64']
+confinement: strict
+grade: stable
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        config = project_loader.load_config()
+        metadata = config.get_metadata()
+        self.assertEqual(metadata['name'], 'test')
+        self.assertEqual(metadata['version'], '1')
+        self.assertEqual(metadata['arch'], ['amd64'])
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_name_as_number(self, mock_loadPlugin):
@@ -2066,7 +2087,8 @@ parts:
         self.data += '        slots: [slot1]'
         self.make_snapcraft_yaml(self.data)
 
-        self.assertRaises(SystemExit, project_loader.load_config)
+        self.assertRaises(pluginhandler.PluginError,
+                          project_loader.load_config)
 
         expected_message = self.expected_message_template.format('slots')
         self.assertIn(expected_message, self.fake_logger.output)
@@ -2075,7 +2097,8 @@ parts:
         self.data += '        plugs: [plug1]'
         self.make_snapcraft_yaml(self.data)
 
-        self.assertRaises(SystemExit, project_loader.load_config)
+        self.assertRaises(pluginhandler.PluginError,
+                          project_loader.load_config)
 
         expected_message = self.expected_message_template.format('plugs')
         self.assertIn(expected_message, self.fake_logger.output)

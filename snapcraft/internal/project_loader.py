@@ -19,7 +19,6 @@ import logging
 import os
 import os.path
 import re
-import sys
 
 import jsonschema
 import yaml
@@ -141,6 +140,11 @@ class Config:
 
         if 'architectures' not in self.data:
             self.data['architectures'] = [self._project_options.deb_arch]
+
+    def get_metadata(self):
+        return {'name': self.data['name'],
+                'version': self.data['version'],
+                'arch': self.data['architectures']}
 
     def _ensure_no_duplicate_app_aliases(self):
         # Prevent multiple apps within a snap from having duplicate alias names
@@ -409,23 +413,23 @@ def load_config(project_options=None):
         logger.error(
             "Could not find {}. Are you sure you're in the right directory?\n"
             "To start a new project, use 'snapcraft init'".format(e.file))
-        sys.exit(1)
+        raise e
     except errors.SnapcraftSchemaError as e:
         msg = 'Issues while validating snapcraft.yaml: {}'.format(e.message)
         logger.error(msg)
-        sys.exit(1)
+        raise e
     except PluginNotDefinedError as e:
         logger.error(
             'Issues while validating snapcraft.yaml: the "plugin" keyword is '
             'missing for the "{}" part.'.format(e.part))
-        sys.exit(1)
+        raise e
     except parts.SnapcraftLogicError as e:
         logger.error('Issue detected while analyzing '
                      'snapcraft.yaml: {}'.format(e.message))
-        sys.exit(1)
+        raise e
     except pluginhandler.PluginError as e:
         logger.error('Issue while loading plugin: {}'.format(e))
-        sys.exit(1)
+        raise e
 
 
 def _ensure_confinement_default(yaml_data, schema):
