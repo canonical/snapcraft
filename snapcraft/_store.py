@@ -845,7 +845,7 @@ def collaborate(snap_name, key):
     # which should be changed to the `publisher_id` to match the signing key.
     assertion['authority-id'] = publisher_id
 
-    assertion = _sign_assertion(snap_id, assertion, key, 'developers')
+    assertion = _sign_assertion(snap_name, assertion, key, 'developers')
 
     store.push_assertion(snap_id, assertion, 'developers')
 
@@ -873,7 +873,7 @@ def _check_validations(validations):
         raise RuntimeError()
 
 
-def _sign_assertion(target, assertion, key, endpoint):
+def _sign_assertion(snap_name, assertion, key, endpoint):
     cmdline = ['snap', 'sign']
     if key:
         cmdline += ['-k', key]
@@ -881,12 +881,12 @@ def _sign_assertion(target, assertion, key, endpoint):
         cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     data = json.dumps(assertion).encode('utf8')
-    logger.info('Signing {} assertion for {}'.format(endpoint, target))
+    logger.info('Signing {} assertion for {}'.format(endpoint, snap_name))
     assertion, err = snap_sign.communicate(input=data)
     if snap_sign.returncode != 0:
         err = err.decode('ascii', errors='replace')
         raise RuntimeError(
             'Error signing {} assertion for {}: {!s}'.format(
-                endpoint, target, err))
+                endpoint, snap_name, err))
 
     return assertion

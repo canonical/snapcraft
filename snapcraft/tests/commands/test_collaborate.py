@@ -51,7 +51,7 @@ class CollaborateTestCase(tests.TestCase):
 
         self.popen_mock.assert_called_with(['snap', 'sign', '-k', 'keyname'],
                                            stderr=-1, stdin=-1, stdout=-1)
-        self.assertIn('Signing developers assertion for good',
+        self.assertIn('Signing developers assertion for ubuntu-core',
                       self.fake_logger.output)
         self.assertNotIn('Error signing developers assertion',
                          self.fake_logger.output)
@@ -73,7 +73,7 @@ class CollaborateTestCase(tests.TestCase):
 
         collaborate('core-no-dev', 'keyname')
 
-        self.assertIn('Signing developers assertion for no-dev',
+        self.assertIn('Signing developers assertion for core-no-dev',
                       self.fake_logger.output)
         self.assertNotIn('Error signing developers assertion',
                          self.fake_logger.output)
