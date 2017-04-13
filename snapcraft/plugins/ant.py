@@ -111,7 +111,7 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
         jars = glob.glob(os.path.join(self.installdir, 'jar', '*.jar'))
         if jars:
             jars = [os.path.join(root, 'jar',
-                    os.path.basename(x)) for x in jars]
+                    os.path.basename(x)) for x in sorted(jars)]
             env.extend(
                 ['CLASSPATH={}:$CLASSPATH'.format(':'.join(jars))])
         # Getting ant to use a proxy requires a little work; the JRE doesn't
