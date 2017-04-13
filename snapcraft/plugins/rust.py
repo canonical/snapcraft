@@ -38,6 +38,7 @@ import shutil
 
 import snapcraft
 from snapcraft import sources
+from snapcraft.internal import common
 
 _RUSTUP = 'https://static.rust-lang.org/rustup.sh'
 
@@ -105,8 +106,25 @@ class RustPlugin(snapcraft.BasePlugin):
         env = os.environ.copy()
         env.update({"RUSTC": self._rustc,
                     "RUSTDOC": self._rustdoc,
-                    "RUST_PATH": self._rustlib})
+                    "RUST_PATH": self._rustlib,
+                    'RUSTFLAGS': self._rustflags()})
         return env
+
+    def _rustflags(self):
+        try:
+            ldflags = [
+                x for x in common.env
+                if "LDFLAGS" in x][0].split("=", 1)[-1].rstrip('"') or ""
+        except IndexError:
+            ldflags = ""
+        ldflags = ldflags.replace('$LDFLAGS', '')\
+                         .replace("'", "")\
+                         .replace('"', "")
+        rustflags = ""
+        for flag in ldflags.split(' '):
+            if flag:
+                rustflags += "-C link-arg={} ".format(flag)
+        return rustflags
 
     def pull(self):
         super().pull()
