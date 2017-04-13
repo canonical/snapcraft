@@ -26,6 +26,7 @@ parseargs(){
         export RUN_UNIT="true"
         export RUN_INTEGRATION="true"
         export RUN_STORE="true"
+        export RUN_PLUGINS="true"
         export RUN_SNAPS="true"
     else
         if [ "$1" == "static" ] ; then
@@ -36,6 +37,8 @@ parseargs(){
             export RUN_INTEGRATION="true"
         elif [ "$1" == "store" ] ; then
             export RUN_STORE="true"
+        elif [ "$1" == "plugins" ] ; then
+            export RUN_PLUGINS="true"
         elif [ "$1" == "snaps" ] ; then
             export RUN_SNAPS="true"
         # Temporary: backward compatibility until CI run the "snaps" target
@@ -88,6 +91,15 @@ run_store(){
     python3 -m unittest discover -b -v -s integration_tests/store -p $pattern
 }
 
+run_plugins(){
+    if [[ "$#" -lt 2 ]]; then
+        pattern="test_*.py"
+    else
+        pattern=$2
+    fi
+    python3 -m unittest discover -b -v -s integration_tests/plugins -p $pattern
+}
+
 run_snaps(){
     python3 -m snaps_tests "$@"
 }
@@ -108,6 +120,10 @@ fi
 
 if [ ! -z "$RUN_STORE" ]; then
     run_store "$@"
+fi
+
+if [ ! -z "$RUN_PLUGINS" ]; then
+    run_plugins "$@"
 fi
 
 if [ ! -z "$RUN_SNAPS" ]; then
