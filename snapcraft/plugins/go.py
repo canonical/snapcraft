@@ -144,6 +144,10 @@ class GoPlugin(snapcraft.BasePlugin):
             go_package = os.path.basename(os.path.abspath(self.options.source))
         return go_package
 
+    def _binary_name(self, package):
+        package = package.replace('/...', '')
+        return package.split('/')[-1]
+
     def build(self):
         super().build()
 
@@ -151,15 +155,15 @@ class GoPlugin(snapcraft.BasePlugin):
         if self.options.go_buildtags:
             tags = ['-tags={}'.format(','.join(self.options.go_buildtags))]
 
-        for go_package in self.options.go_packages:
-            self._run(['go', 'install'] + tags + [go_package])
-        if not self.options.go_packages:
-            self._run(['go', 'install'] + tags +
-                      ['./{}/...'.format(self._get_local_go_package())])
+        packages = self.options.go_packages
+        if not packages:
+            packages = ['./{}/...'.format(self._get_local_go_package())]
+        for package in packages:
+            binary = self._gopath_bin + '/' + self._binary_name(package)
+            self._run(['go', 'build', '-o', binary] + tags + [package])
 
         install_bin_path = os.path.join(self.installdir, 'bin')
         os.makedirs(install_bin_path, exist_ok=True)
-        os.makedirs(self._gopath_bin, exist_ok=True)
         for binary in os.listdir(self._gopath_bin):
             binary_path = os.path.join(self._gopath_bin, binary)
             shutil.copy2(binary_path, install_bin_path)
@@ -191,4 +195,16 @@ class GoPlugin(snapcraft.BasePlugin):
         env['CGO_LDFLAGS'] = '{} {} {}'.format(
             env.get('CGO_LDFLAGS', ''), flags, env.get('LDFLAGS', ''))
 
+        if self.project.is_cross_compiling:
+            # See https://golang.org/doc/install/source#environment
+            go_archs = {
+                'armhf': 'arm',
+                'i386': '386',
+                'ppc64el': 'ppc64le',
+            }
+            env['GOARCH'] = go_archs.get(self.project.deb_arch,
+                                         self.project.deb_arch)
         return env
+
+    def enable_cross_compilation(self):
+        pass
