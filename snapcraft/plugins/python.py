@@ -443,12 +443,18 @@ class _Pip:
         output = exec_func(cmd, env=self._env)
         package_listing = {}
         version_regex = re.compile('\((.+)\)')
+        version_regex_alt = re.compile('((\d+)\.)?((\d+)\.)?(\*|\d+)')
         for line in output.splitlines():
             line = line.split()
             m = version_regex.search(line[1])
+            if not m:
+                m = version_regex_alt.search(line[1])
+                if not m:
+                    continue
             package_listing[line[0]] = m.group(1)
 
         return package_listing
+
 
     def wheel(self, args, **kwargs):
         cmd = [
