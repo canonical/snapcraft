@@ -334,7 +334,7 @@ def _is_store_command(args):
         'list-registered', 'registered', 'list-keys', 'keys', 'create-key',
         'register-key', 'register', 'sign-build', 'upload', 'release',
         'push', 'validate', 'gated', 'history', 'revisions',
-        'list-revisions', 'status', 'close')
+        'list-revisions', 'status', 'close', 'collaborate')
     return any(args.get(command) for command in commands)
 
 
@@ -381,6 +381,8 @@ def _run_store_command(args):  # noqa: C901
             args['<snap-name>'], args['--series'], args['--arch'])
     elif args['close']:
         snapcraft.close(args['<snap-name>'], args['<channel_names>'])
+    elif args['collaborate']:
+        snapcraft.collaborate(args['<snap-name>'], key=args['--key-name'])
 
 
 if __name__ == '__main__':  # pragma: no cover

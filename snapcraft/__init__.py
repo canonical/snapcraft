@@ -398,6 +398,7 @@ from snapcraft._store import (                      # noqa
     sign_build,
     status,
     validate,
+    collaborate,
 )
 from snapcraft import common                        # noqa
 from snapcraft import plugins                       # noqa
