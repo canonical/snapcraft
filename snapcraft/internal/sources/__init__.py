@@ -151,8 +151,8 @@ _source_handler = {
     'zip': Zip,
 }
 if sys.platform == 'linux':
-    _source_handler['deb'] = Deb,
-    _source_handler['rpm'] = Rpm,
+    _source_handler['deb'] = Deb
+    _source_handler['rpm'] = Rpm
 
 
 def get_source_handler(source, *, source_type=''):
