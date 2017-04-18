@@ -50,8 +50,11 @@ class Git(Base):
                 '--always']).decode(sys.getfilesystemencoding()).strip()
             return '0+git.{}'.format(output)
 
-        m = re.search(r'(?P<tag>.*)-(?P<revs_ahead>.*)-g(?P<commit>.*)',
-                      output)
+        m = re.search(
+            r'^(?P<tag>[a-zA-Z0-9.+~-]+)-'
+            r'(?P<revs_ahead>\d+)-'
+            r'g(?P<commit>[0-9a-fA-F]+)$',
+            output)
 
         if not m:
             # This means we have a pure tag
