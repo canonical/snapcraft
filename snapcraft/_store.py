@@ -847,7 +847,19 @@ def collaborate(snap_name, key):
 
     assertion = _sign_assertion(snap_name, assertion, key, 'developers')
 
-    store.push_assertion(snap_id, assertion, 'developers')
+    try:
+        store.push_assertion(snap_id, assertion, 'developers')
+    except storeapi.errors.StoreValidationError as e:
+        if e.error_list[0]['code'] == 'revoked-uploads':
+            print("This will revoke the following uploads: {}".format(
+                e.error_list[0]['extra']))
+            if input('Are you sure you want to continue (y/N): ') == 'y':
+                store.push_assertion(
+                    snap_id, assertion, 'developers', force=True)
+            else:
+                raise
+        else:
+            raise
 
 
 def _get_developers(snap_id, publisher_id):
