@@ -15,15 +15,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 import subprocess
 
-from testtools.matchers import FileExists, Not
+import testscenarios
+import yaml
+from testtools.matchers import FileExists, MatchesRegex, Not
 
 import snapcraft
 import integration_tests
 
 
-class RustPluginTestCase(integration_tests.TestCase):
+class RustPluginBaseTestCase(integration_tests.TestCase):
 
     def run_snapcraft(self, command, project_dir=None, debug=True):
         try:
@@ -38,6 +41,9 @@ class RustPluginTestCase(integration_tests.TestCase):
                     self.assertFalse, failed)
             else:
                 raise
+
+
+class RustPluginTestCase(RustPluginBaseTestCase):
 
     def test_stage_rust_plugin(self):
         self.run_snapcraft('stage', 'rust-hello')
@@ -68,3 +74,36 @@ class RustPluginTestCase(integration_tests.TestCase):
         self.assertEqual('Rust in a subdirectory works\n', binary_output)
         # Test for bug https://bugs.launchpad.net/snapcraft/+bug/1654764
         self.assertThat('Cargo.lock', Not(FileExists()))
+
+
+class RustPluginConfinementTestCase(testscenarios.WithScenarios,
+                                    RustPluginBaseTestCase):
+
+    scenarios = (
+        ('classic', dict(confinement='classic',
+                         startswith='/snap/core/current/lib')),
+        ('strict', dict(confinement='strict',
+                        startswith='/lib')),
+    )
+
+    def _set_confinement(self, snapcraft_yaml_file):
+        with open(snapcraft_yaml_file) as f:
+            snapcraft_yaml = yaml.load(f)
+        snapcraft_yaml['confinement'] = self.confinement
+        with open(snapcraft_yaml_file, 'w') as f:
+            yaml.dump(snapcraft_yaml, f)
+
+    def test_build(self):
+        self.copy_project_to_cwd('rust-hello')
+        self._set_confinement('snapcraft.yaml')
+
+        self.run_snapcraft('build')
+
+        binary = os.path.join(self.parts_dir, 'rust-hello', 'install',
+                              'bin', 'rust-hello')
+        output = subprocess.check_output(['readelf', '--program', binary])
+        output = output.decode('utf-8')
+
+        expected = '.*Requesting program interpreter: {}.*'.format(
+            self.startswith)
+        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
