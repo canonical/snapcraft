@@ -81,18 +81,19 @@ import re
 import hashlib
 import sys
 
+from . import errors
 from snapcraft.internal import common
 from ._bazaar import Bazaar          # noqa
-from ._deb import Deb                # noqa
 from ._git import Git                # noqa
 from ._local import Local            # noqa
 from ._mercurial import Mercurial    # noqa
-from ._rpm import Rpm                # noqa
 from ._script import Script          # noqa
 from ._subversion import Subversion  # noqa
 from ._tar import Tar                # noqa
 from ._zip import Zip                # noqa
-from . import errors
+if sys.platform == 'linux':
+    from ._deb import Deb            # noqa
+    from ._rpm import Rpm            # noqa
 
 # In python >= 3.6 sha3 support is upstreamed in hashlib
 if sys.version_info < (3, 6):
@@ -141,8 +142,6 @@ def get(sourcedir, builddir, options):
 
 _source_handler = {
     'bzr': Bazaar,
-    'deb': Deb,
-    'rpm': Rpm,
     'git': Git,
     'hg': Mercurial,
     'mercurial': Mercurial,
@@ -151,6 +150,9 @@ _source_handler = {
     'tar': Tar,
     'zip': Zip,
 }
+if sys.platform == 'linux':
+    _source_handler['deb'] = Deb
+    _source_handler['rpm'] = Rpm
 
 
 def get_source_handler(source, *, source_type=''):
