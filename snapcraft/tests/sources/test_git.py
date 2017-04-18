@@ -411,7 +411,7 @@ class GitGenerateVersionTestCase(tests.TestCase):
         self.output_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_only_tag(self):
+    def test_version(self):
         if self.tag:
             self.output_mock.return_value = self.return_value.encode('utf-8')
         else:
