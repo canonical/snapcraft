@@ -18,6 +18,7 @@ import os
 import re
 import subprocess
 
+import fixtures
 import testscenarios
 import yaml
 from testtools.matchers import FileExists, MatchesRegex, Not
@@ -94,6 +95,8 @@ class RustPluginConfinementTestCase(testscenarios.WithScenarios,
             yaml.dump(snapcraft_yaml, f)
 
     def test_build(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_SETUP_CORE', '1'))
         self.copy_project_to_cwd('rust-hello')
         self._set_confinement('snapcraft.yaml')
 
