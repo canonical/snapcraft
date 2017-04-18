@@ -53,7 +53,7 @@ class Git(Base):
         m = re.search(
             r'^(?P<tag>[a-zA-Z0-9.+~-]+)-'
             r'(?P<revs_ahead>\d+)-'
-            r'g(?P<commit>[0-9a-fA-F]+)$',
+            r'g(?P<commit>[0-9a-fA-F]+(?:-dirty)?)$',
             output)
 
         if not m:
