@@ -227,10 +227,14 @@ class StorePushError(StoreError):
 class StoreReviewError(StoreError):
 
     __FMT_NEED_MANUAL_REVIEW = (
-        'Publishing checks failed.\n'
-        'To release this to stable channel please request a review on '
-        'the snapcraft list.\n'
-        'Use devmode in the edge or beta channels to disable confinement.')
+        "The Store automatic review failed.\n"
+        "A human will soon review your snap, but if you can't wait please "
+        "write to the snapcraft mailing list asking for the manual review "
+        "explicitly.\n"
+        "If you need to disable confinement, please consider using devmode, "
+        "but note that devmode revision will only be allowed to be released "
+        "in edge and beta channels.\n"
+        "Please check the errors and some hints below:")
 
     __FMT_PROCESSING_ERROR = (
         'The store was unable to accept this snap.')
