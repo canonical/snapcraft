@@ -455,7 +455,6 @@ class _Pip:
 
         return package_listing
 
-
     def wheel(self, args, **kwargs):
         cmd = [
             *self._runnable, 'wheel',
