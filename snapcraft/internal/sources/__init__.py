@@ -155,6 +155,11 @@ if sys.platform == 'linux':
     _source_handler['rpm'] = Rpm
 
 
+def get_source_handler_from_type(source_type):
+    """Return the source handler for source_type."""
+    return _source_handler.get(source_type)
+
+
 def get_source_handler(source, *, source_type=''):
     if not source_type:
         source_type = _get_source_type_from_uri(source)

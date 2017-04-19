@@ -32,6 +32,7 @@ from snapcraft import shell_utils
 from snapcraft.internal import common, project_loader
 from snapcraft.internal.errors import MissingGadgetError
 from snapcraft.internal.deprecations import handle_deprecation_notice
+from snapcraft.internal.sources import get_source_handler_from_type
 
 
 logger = logging.getLogger(__name__)
@@ -39,7 +40,6 @@ logger = logging.getLogger(__name__)
 
 _MANDATORY_PACKAGE_KEYS = [
     'name',
-    'version',
     'description',
     'summary',
 ]
@@ -240,6 +240,8 @@ class _SnapPackaging:
         for key_name in _MANDATORY_PACKAGE_KEYS:
             snap_yaml[key_name] = self._config_data[key_name]
 
+        snap_yaml['version'] = self._get_version(self._config_data['version'])
+
         for key_name in _OPTIONAL_PACKAGE_KEYS:
             if key_name in self._config_data:
                 snap_yaml[key_name] = self._config_data[key_name]
@@ -248,6 +250,16 @@ class _SnapPackaging:
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
 
         return snap_yaml
+
+    def _get_version(self, version):
+        # we want to whitelist what we support here.
+        if version == 'git':
+            logger.info('Determining the version from the project '
+                        'repo (version: git).')
+            vcs_handler = get_source_handler_from_type('git')
+            version = vcs_handler.generate_version()
+            logger.info('The version has been set to {!r}'.format(version))
+        return version
 
     def _write_wrap_exe(self, wrapexec, wrappath,
                         shebang=None, args=None, cwd=None):
