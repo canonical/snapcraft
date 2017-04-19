@@ -255,7 +255,7 @@ class _Executor:
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
             message_components = [
-                'The {!r} step of {!r} is out of date:\n\n'.format(
+                'The {!r} step of {!r} is out of date:\n'.format(
                     step, part.name)]
 
             if dirty_report.dirty_properties:
@@ -279,7 +279,7 @@ class _Executor:
                         humanized_options, pluralized_connection))
 
             message_components.append(
-                "\nIn order to continue, please clean that part's {0!r} step "
+                "In order to continue, please clean that part's {0!r} step "
                 "by running: snapcraft clean {1} -s {0}\n".format(
                     step, part.name))
             raise RuntimeError(''.join(message_components))
