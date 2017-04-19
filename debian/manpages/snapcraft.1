@@ -1,0 +1,87 @@
+.TH snapcraft 1 "19 July 2016" "version 2.13"
+.SH NAME
+Snapcraft - Snapcraft is a delightful packaging tool
+.SH SYNOPSIS
+snapcraft [options] <command>
+
+snapcraft (-h | --help)
+
+snapcraft --version
+.SH DESCRIPTION
+Snapcraft helps you assemble a whole project in a single tree out of many pieces. It can drive a very wide range of build and packaging systems, so that you can simply list all the upstream projects you want and have them built and installed together as a single tree.
+.SH OPTIONS
+--help
+    Prints the available Snapcraft commands.
+
+--version
+    Prints the version of Snapcraft currently installed on your system.
+
+.SH GENERAL COMMANDS
+init
+    Initialize a snapcraft project.
+
+list-plugins
+    List the available plugins that handle different types of part.
+
+login
+    Authenticate session against Ubuntu One SSO.
+
+logout
+    Clear session credentials.
+
+register
+    Register the package name in the store.
+
+tour
+    Setup the snapcraft examples tour in the specified directory, or ./snapcraft-tour/.
+
+push
+    Pushes and optionally releases a snap to the Ubuntu Store.
+
+release
+    Release a revision of a snap to a specific channel.
+
+.SH LIFECYCLE COMMANDS
+snapcraft without a command will default to snap.
+
+clean
+    Remove content - cleans downloads, builds or install artifacts.
+
+cleanbuild
+    Create a snap using a clean environment managed by lxd.
+    This command requires a properly setup lxd environment that can connect to external networks.
+    Refer to the "Ubuntu Desktop and Ubuntu Server" section on https://linuxcontainers.org/lxd/getting-started-cli to get started.
+
+pull
+    Download or retrieve artifacts defined for a part.
+
+build
+    Build artifacts defined for a part. Build systems capable of running parallel build jobs will do so unless "--no-parallel-build" is specified.
+
+stage
+    Stage the part's built artifacts into the common staging area.
+
+prime
+    Final copy and preparation for the snap.
+
+snap
+    Create a snap.
+
+.SH PARTS ECOSYSTEM COMMANDS
+update
+    Updates the parts listing from the cloud.
+
+define
+    Shows the definition for the cloud part.
+
+search
+    Searches the remotes part cache for matching parts.
+
+.SH REPORTING BUGS
+To report a bug in Snapcraft, navigate to Launchpad: https://bugs.launchpad.net/snapcraft/+filebug
+
+.SH CONTRIBUTE
+Refer to our contributing guide to start contributing: https://github.com/snapcore/snapcraft/blob/master/CONTRIBUTING.md
+
+.SH MAILING LIST
+Send an email to snapcraft@lists.snapcraft.io
