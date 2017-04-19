@@ -455,6 +455,26 @@ parts:
         self.assertEqual(metadata['version'], '1')
         self.assertEqual(metadata['arch'], ['amd64'])
 
+    def test_version_script(self):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+version-script: echo $SNAPCRAFT_PROJECT_VERSION-devel
+summary: test
+description: nothing
+architectures: ['amd64']
+confinement: strict
+grade: stable
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        config = project_loader.load_config()
+        metadata = config.get_metadata()
+        self.assertEqual(metadata['version-script'],
+                         '$SNAPCRAFT_PROJECT_VERSION')
+
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_name_as_number(self, mock_loadPlugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)

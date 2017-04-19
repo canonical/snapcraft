@@ -250,6 +250,13 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
 
+    def test_version_script(self):
+        self.config_data['version-script'] = 'echo 10.1-devel'
+
+        y = self.generate_meta_yaml()
+
+        self.assertThat(y['version'], Equals('10.1-devel'))
+
     def test_create_meta_with_app(self):
         os.mkdir(self.prime_dir)
         open(os.path.join(self.prime_dir, 'app.sh'), 'w').close()

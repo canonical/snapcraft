@@ -214,6 +214,7 @@ class Config:
             'SNAPCRAFT_STAGE={}'.format(self._project_options.stage_dir),
             'SNAPCRAFT_PROJECT_NAME={}'.format(self.data['name']),
             'SNAPCRAFT_PROJECT_VERSION={}'.format(self.data['version']),
+            'SNAPCRAFT_PROJECT_GRADE={}'.format(self.data['grade']),
         ]
 
     def _expand_env(self, snapcraft_yaml):
