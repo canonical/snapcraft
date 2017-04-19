@@ -29,7 +29,7 @@ class Git(Base):
     def generate_version(cls, *, source_dir=None):
         """Return the latest git tag from PWD or defined source_dir.
 
-        The output depends on the use of annotated tags, an will return
+        The output depends on the use of annotated tags and will return
         something like: '2.28+git.10.abcdef' where '2.28 is the
         tag, '+git' indicates there are commits ahead of the tag, in
         this case it is '10' and the latest commit hash begins with
