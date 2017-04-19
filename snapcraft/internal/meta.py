@@ -254,10 +254,12 @@ class _SnapPackaging:
     def _get_version(self, version):
         # we want to whitelist what we support here.
         if version == 'git':
+            logger.info('Determining the version from the project '
+                        'repo (version: git).')
             vcs_handler = get_source_handler_from_type('git')
-            return vcs_handler.generate_version()
-        else:
-            return version
+            version = vcs_handler.generate_version()
+            logger.info('The version has been set to {!r}'.format(version))
+        return version
 
     def _write_wrap_exe(self, wrapexec, wrappath,
                         shebang=None, args=None, cwd=None):
