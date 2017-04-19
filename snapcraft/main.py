@@ -281,7 +281,7 @@ def _get_command_from_arg(args):
     return functions[function[0]]
 
 
-def _containerbuild(args):
+def _is_containerbuild(args):
     if os.environ.get('SNAPCRAFT_CONTAINER_BUILDS'):
         return True
     if args['--remote']:
@@ -293,7 +293,7 @@ def run(args, project_options):  # noqa
     lifecycle_command = _get_lifecycle_command(args)
     argless_command = _get_command_from_arg(args)
     if lifecycle_command:
-        if _containerbuild(args):
+        if _is_containerbuild(args):
             lifecycle.containerbuild(lifecycle_command, project_options,
                                      args['--remote'], args['<part>'])
         else:
@@ -302,7 +302,7 @@ def run(args, project_options):  # noqa
     elif argless_command:
         argless_command()
     elif args['clean']:
-        if _containerbuild(args):
+        if _is_containerbuild(args):
             step = args['--step'] or 'pull'
             lifecycle.containerbuild('clean', project_options, None,
                                      args['--remote'],
@@ -321,26 +321,26 @@ def run(args, project_options):  # noqa
     elif args['enable-ci']:
         enable_ci(args['<ci-system>'], args['--refresh'])
     elif args['update']:
-        if _containerbuild(args):
+        if _is_containerbuild(args):
             lifecycle.containerbuild('update', project_options, None,
                                      args['--remote'])
         else:
             parts.update()
     elif args['define']:
-        if _containerbuild(args):
+        if _is_containerbuild(args):
             lifecycle.containerbuild('update', project_options, None,
                                      args['--remote'], args['<part-name>'])
         else:
             parts.define(args['<part-name>'])
     elif args['search']:
-        if _containerbuild(args):
+        if _is_containerbuild(args):
             lifecycle.containerbuild('search', project_options, None,
                                      args['--remote'],
                                      ' '.join(args['<query>']))
         else:
             parts.search(' '.join(args['<query>']))
     else:  # snap by default:
-        if _containerbuild(args):
+        if _is_containerbuild(args):
             lifecycle.containerbuild('snap', project_options, args['--output'],
                                      args['--remote'], args['<directory>'])
         else:
