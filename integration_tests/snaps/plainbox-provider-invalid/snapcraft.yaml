@@ -19,5 +19,5 @@ parts:
             - build-essential
     simple-plainbox-provider:
         plugin: plainbox-provider
-        source: ./2016.com.example:simple
+        source: ./2016.com.example_simple
         after: [plainbox-local]
