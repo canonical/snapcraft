@@ -41,9 +41,10 @@ class Git(Base):
             source_dir = os.getcwd()
 
         try:
-            output = subprocess.check_output([
-                'git', '-C', source_dir, 'describe',
-                '--dirty']).decode(sys.getfilesystemencoding()).strip()
+            output = subprocess.check_output(
+                ['git', '-C', source_dir, 'describe', '--dirty'],
+                stderr=subprocess.DEVNULL).decode(
+                    sys.getfilesystemencoding()).strip()
         except subprocess.CalledProcessError:
             # If we fall into this exception it is because the repo is not
             # tagged at all.
