@@ -219,4 +219,3 @@ class GitGenerateVersionTestCase(GitSourceBaseTestCase):
             exception.output,
             Contains('fatal: Not a git repository (or any of the parent '
                      'directories): .git'))
-
