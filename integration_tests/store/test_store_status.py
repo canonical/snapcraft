@@ -17,7 +17,6 @@
 import os
 import subprocess
 import unittest
-import uuid
 
 from testtools.matchers import Contains, FileExists
 
@@ -88,9 +87,8 @@ class StatusTestCase(integration_tests.StoreTestCase):
         self.login()
 
         # Build a random snap, register, push and release it.
-        unique_id = uuid.uuid4().int
-        name = 'u1test-{}'.format(unique_id)
-        version = str(unique_id)[:32]
+        name = self.get_unique_name()
+        version = self.get_unique_version()
         self.copy_project_to_cwd('basic')
         self.update_name_and_version(name, version)
         self.run_snapcraft('snap')
@@ -101,10 +99,10 @@ class StatusTestCase(integration_tests.StoreTestCase):
 
         output = self.run_snapcraft(['status', name])
         expected = '\n'.join((
-            'Arch    Channel    Version                           Revision',
-            'all     stable     -                                 -',
-            '        candidate  {version}  1',
-            '        beta       {version}  1',
-            '        edge       ^                                 ^'
+            'Track    Arch    Channel    Version                           Revision',  # noqa
+            'latest   all     stable     -                                 -',
+            '                 candidate  {version}  1',
+            '                 beta       {version}  1',
+            '                 edge       ^                                 ^'
         )).format(version=version)
         self.assertThat(output, Contains(expected))

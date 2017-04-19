@@ -198,7 +198,7 @@ class StoreTestCase(TestCase):
 
     def logout(self):
         output = self.run_snapcraft('logout')
-        expected = (r'.*Clearing credentials for Ubuntu One SSO.\n.*\n'
+        expected = (r'.*Clearing credentials for Ubuntu One SSO.\n'
                     r'Credentials cleared.\n.*')
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
@@ -206,11 +206,20 @@ class StoreTestCase(TestCase):
         command = ['register', snap_name]
         if private:
             command.append('--private')
-        self.run_snapcraft(command)
-        # sleep a few seconds to avoid hitting the store restriction on
-        # following registrations.
-        if wait:
-            time.sleep(self.test_store.register_delay)
+        try:
+            self.run_snapcraft(command)
+        except subprocess.CalledProcessError as e:
+            wait_error_regex = (
+                '.*You must wait (\d+) seconds before trying to register your '
+                'next snap.*')
+            match = re.search(wait_error_regex, e.output)
+            if wait and match:
+                time.sleep(int(match.group(1)))
+                # This could get stuck for ever if the user is registering
+                # other snaps in parallel.
+                self.register(snap_name, private, wait)
+            else:
+                raise
 
     def register_key(self, key_name, email=None, password=None,
                      expect_success=True):
@@ -264,14 +273,30 @@ class StoreTestCase(TestCase):
         process.close()
         return process.exitstatus
 
+    def get_unique_name(self, prefix='snapcrafttest'):
+        """Return a unique snap name.
+
+        It uses a UUIDv4 to create unique names and limits its full size
+        to 40 chars (as defined in the snap specification).
+        """
+        unique_id = uuid.uuid4().int
+        return '{}-{}'.format(prefix, unique_id)[:40]
+
+    def get_unique_version(self):
+        """Return a unique snap version.
+
+        It uses a UUIDv4 to create unique version and limits its full size
+        to 32 chars (as defined in the snap specification).
+        """
+        unique_id = uuid.uuid4().int
+        return '{}'.format(unique_id)[:32]
+
     def update_name_arch_and_version(self, name=None, arch=None,
                                      version=None):
-        unique_id = uuid.uuid4().int
         if name is None:
-            name = 'u1test-{}'.format(unique_id)
+            name = self.get_unique_name()
         if version is None:
-            # The maximum size is 32 chars.
-            version = str(unique_id)[:32]
+            version = self.get_unique_version()
         if arch is None:
             arch = 'amd64'
         for line in fileinput.input('snapcraft.yaml', inplace=True):
@@ -285,12 +310,10 @@ class StoreTestCase(TestCase):
                 print(line)
 
     def update_name_and_version(self, name=None, version=None):
-        unique_id = uuid.uuid4().int
         if name is None:
-            name = 'u1test-{}'.format(unique_id)
+            name = self.get_unique_name()
         if version is None:
-            # The maximum size is 32 chars.
-            version = str(unique_id)[:32]
+            version = self.get_unique_version()
         for line in fileinput.input('snapcraft.yaml', inplace=True):
             if 'name: ' in line:
                 print('name: {}'.format(name))
@@ -318,7 +341,8 @@ class StoreTestCase(TestCase):
             process.expect(expected_error)
         else:
             for v in validations:
-                process.expect('Signing validation {}'.format(v))
+                process.expect(
+                    'Signing validations assertion for {}'.format(v))
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus

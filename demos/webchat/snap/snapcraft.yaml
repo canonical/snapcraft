@@ -12,5 +12,6 @@ apps:
 
 parts:
   webchat:
-    plugin: nodejs
     source: .
+    plugin: nodejs
+    node-package-manager: yarn

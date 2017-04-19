@@ -34,6 +34,8 @@ from progressbar import (
 import pymacaroons
 import requests
 from requests.adapters import HTTPAdapter
+from requests.exceptions import RetryError
+from requests.packages.urllib3.util.retry import Retry
 from simplejson.scanner import JSONDecodeError
 
 import snapcraft
@@ -94,8 +96,11 @@ class Client():
         self.root_url = root_url
         self.session = requests.Session()
         # Setup max retries for all store URLs and the CDN
-        self.session.mount('http://', HTTPAdapter(max_retries=5))
-        self.session.mount('https://', HTTPAdapter(max_retries=5))
+        retries = Retry(total=int(os.environ.get('STORE_RETRIES', 5)),
+                        backoff_factor=int(os.environ.get('STORE_BACKOFF', 2)),
+                        status_forcelist=[104, 500, 502, 503, 504])
+        self.session.mount('http://', HTTPAdapter(max_retries=retries))
+        self.session.mount('https://', HTTPAdapter(max_retries=retries))
 
         self._snapcraft_headers = {
             'User-Agent': _agent.get_user_agent(),
@@ -112,9 +117,12 @@ class Client():
             headers = self._snapcraft_headers
 
         final_url = urllib.parse.urljoin(self.root_url, url)
-        response = self.session.request(
-            method, final_url, headers=headers,
-            params=params, **kwargs)
+        try:
+            response = self.session.request(
+                method, final_url, headers=headers,
+                params=params, **kwargs)
+        except RetryError as e:
+            raise errors.StoreRetryError(e) from e
         return response
 
     def get(self, url, **kwargs):
@@ -142,7 +150,7 @@ class StoreClient():
               packages=None, channels=None, save=True):
         """Log in via the Ubuntu One SSO API."""
         if acls is None:
-            acls = ['package_upload', 'package_access']
+            acls = ['package_upload', 'package_access', 'package_manage']
         # Ask the store for the needed capabilities to be associated with the
         # macaroon.
         macaroon = self.sca.get_macaroon(acls, packages, channels)
@@ -278,9 +286,22 @@ class StoreClient():
                 name, download_path))
             return
         logger.info('Downloading {}'.format(name, download_path))
-        request = self.cpi.get(download_url, stream=True)
-        request.raise_for_status()
-        download_requests_stream(request, download_path)
+
+        # HttpAdapter cannot help here as this is a stream.
+        # LP: #1617765
+        not_downloaded = True
+        retry_count = 5
+        while not_downloaded and retry_count:
+            request = self.cpi.get(download_url, stream=True)
+            request.raise_for_status()
+            try:
+                download_requests_stream(request, download_path)
+                not_downloaded = False
+            except requests.exceptions.ChunkedEncodingError as e:
+                retry_count -= 1
+                if not retry_count:
+                    raise e
+                sleep(1)
 
         if self._is_downloaded(download_path, expected_sha512):
             logger.info('Successfully downloaded {} at {}'.format(
@@ -299,11 +320,11 @@ class StoreClient():
                 file_sum.update(file_chunk)
         return expected_sha512 == file_sum.hexdigest()
 
-    def push_validation(self, snap_id, assertion):
-        return self.sca.push_validation(snap_id, assertion)
+    def push_assertion(self, snap_id, assertion, endpoint):
+        return self.sca.push_assertion(snap_id, assertion, endpoint)
 
-    def get_validations(self, snap_id):
-        return self.sca.get_validations(snap_id)
+    def get_assertion(self, snap_id, endpoint):
+        return self.sca.get_assertion(snap_id, endpoint)
 
     def sign_developer_agreement(self, latest_tos_accepted=False):
         return self.sca.sign_developer_agreement(latest_tos_accepted)
@@ -574,13 +595,18 @@ class SCAClient(Client):
 
         return response_json
 
-    def push_validation(self, snap_id, assertion):
-        data = {
-            'assertion': assertion.decode('utf-8'),
-        }
+    def push_assertion(self, snap_id, assertion, endpoint):
+        if endpoint == 'validations':
+            data = {
+                'assertion': assertion.decode('utf-8'),
+            }
+        elif endpoint == 'developers':
+            data = {
+                'snap_developer': assertion.decode('utf-8'),
+            }
         auth = _macaroon_auth(self.conf)
         response = self.put(
-            'snaps/{}/validations'.format(snap_id), data=json.dumps(data),
+            'snaps/{}/{}'.format(snap_id, endpoint), data=json.dumps(data),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json',
                      'Accept': 'application/json'})
@@ -598,10 +624,10 @@ class SCAClient(Client):
 
         return response_json
 
-    def get_validations(self, snap_id):
+    def get_assertion(self, snap_id, endpoint):
         auth = _macaroon_auth(self.conf)
         response = self.get(
-            'snaps/{}/validations'.format(snap_id),
+            'snaps/{}/{}'.format(snap_id, endpoint),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json',
                      'Accept': 'application/json'})
@@ -611,8 +637,8 @@ class SCAClient(Client):
             response_json = response.json()
         except JSONDecodeError:
             message = ('Invalid response from the server when getting '
-                       'validations: {} {}').format(
-                           response.status_code, response)
+                       '{}: {} {}').format(
+                           endpoint, response.status_code, response)
             logger.debug(message)
             raise errors.StoreValidationError(
                 snap_id, response, message='Invalid response from the server')
@@ -721,11 +747,11 @@ class StatusTracker:
         'processing_error': 'Error while processing...',
     }
 
-    __error_codes = (
+    __error_codes = {
         'processing_error',
         'processing_upload_delta_error',
         'need_manual_review',
-    )
+    }
 
     def __init__(self, status_details_url):
         self.__status_details_url = status_details_url
@@ -741,27 +767,33 @@ class StatusTracker:
 
         content = {}
         for indicator_count in itertools.count():
+            progress_indicator.update(indicator_count)
             if not queue.empty():
                 content = queue.get()
                 if isinstance(content, Exception):
                     raise content
-                widgets[0] = self._get_message(content)
-            progress_indicator.update(indicator_count)
             if content.get('processed'):
                 break
+            else:
+                widgets[0] = self._get_message(content)
             sleep(0.1)
         progress_indicator.finish()
+        # Print at the end to avoid a left over spinner artifact
+        print(self._get_message(content))
 
         self.__content = content
 
         return content
 
     def raise_for_code(self):
-        if any(self.__content['code'] == k for k in self.__error_codes):
+        if self.__content['code'] in self.__error_codes:
             raise errors.StoreReviewError(self.__content)
 
     def _get_message(self, content):
-        return self.__messages.get(content['code'], content['code'])
+        try:
+            return self.__messages.get(content['code'], content['code'])
+        except KeyError:
+            return self.__messages.get('being_processed')
 
     def _update_status(self, queue):
         for content in self._get_status():

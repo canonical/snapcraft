@@ -18,7 +18,6 @@ import os
 import re
 import subprocess
 import unittest
-import uuid
 
 from testtools.matchers import (
     FileExists,
@@ -53,29 +52,26 @@ class ReleaseTestCase(integration_tests.StoreTestCase):
         self.login()
 
         # Change to a random name and version.
-        unique_id = uuid.uuid4().int
-        new_name = 'u1test-{}'.format(unique_id)
-        # The maximum size is 32 chars.
-        new_version = str(unique_id)[:32]
-
+        name = self.get_unique_name()
+        version = self.get_unique_version()
         self.copy_project_to_cwd('basic')
-        self.update_name_and_version(new_name, new_version)
+        self.update_name_and_version(name, version)
 
         self.run_snapcraft('snap')
 
         # Register the snap
-        self.register(new_name)
+        self.register(name)
         # Upload the snap
-        snap_file_path = '{}_{}_{}.snap'.format(new_name, new_version, 'all')
+        snap_file_path = '{}_{}_{}.snap'.format(name, version, 'all')
         self.assertThat(
             os.path.join(snap_file_path), FileExists())
 
         output = self.run_snapcraft(['upload', snap_file_path])
-        expected = r'.*Ready to release!.*'.format(new_name)
+        expected = r'.*Ready to release!.*'.format(name)
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
         # Release it
-        output = self.run_snapcraft(['release', new_name, '1', 'edge'])
+        output = self.run_snapcraft(['release', name, '1', 'edge'])
         expected = r'.*The \'edge\' channel is now open.*'
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
@@ -85,29 +81,26 @@ class ReleaseTestCase(integration_tests.StoreTestCase):
         self.login()
 
         # Change to a pre-set name and version.
-        unique_id = uuid.uuid4().int
-        new_name = os.getenv('TEST_SNAP_WITH_TRACKS', 'test-snapcraft-tracks')
-        # The maximum size is 32 chars.
-        new_version = str(unique_id)[:32]
-
+        name = os.getenv('TEST_SNAP_WITH_TRACKS', 'test-snapcraft-tracks')
+        version = self.get_unique_version()
         self.copy_project_to_cwd('multiarch')
-        self.update_name_and_version(new_name, new_version)
+        self.update_name_and_version(name, version)
 
         self.run_snapcraft('snap')
 
         # The snap name is pre-registered
 
         # Upload the snap
-        snap_file_path = '{}_{}_{}.snap'.format(new_name, new_version, 'multi')
+        snap_file_path = '{}_{}_{}.snap'.format(name, version, 'multi')
         self.assertThat(
             os.path.join(snap_file_path), FileExists())
 
         output = self.run_snapcraft(['upload', snap_file_path])
-        expected = r'.*Ready to release!.*'.format(new_name)
+        expected = r'.*Ready to release!.*'.format(name)
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
         # Release it
-        output = self.run_snapcraft(['release', new_name, '1', '0.1/edge'])
+        output = self.run_snapcraft(['release', name, '1', '0.1/edge'])
 
         expected = r'.*all     0.1      16        stable     -          -.*'
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
@@ -118,37 +111,34 @@ class ReleaseTestCase(integration_tests.StoreTestCase):
         self.login()
 
         # Change to a pre-set name and version.
-        unique_id = uuid.uuid4().int
-        new_name = os.getenv('TEST_SNAP_WITH_TRACKS', 'test-snapcraft-tracks')
-        # The maximum size is 32 chars.
-        new_version = str(unique_id)[:32]
-
+        name = os.getenv('TEST_SNAP_WITH_TRACKS', 'test-snapcraft-tracks')
+        version = self.get_unique_version()
         self.copy_project_to_cwd('arm')
-        self.update_name_arch_and_version(new_name, 'armhf', new_version)
+        self.update_name_arch_and_version(name, 'armhf', version)
 
         self.run_snapcraft('snap')
 
         # The snap name is pre-registered
 
         # Upload the snap
-        snap_file_path = '{}_{}_{}.snap'.format(new_name, new_version, 'armhf')
+        snap_file_path = '{}_{}_{}.snap'.format(name, version, 'armhf')
         self.assertThat(
             os.path.join(snap_file_path), FileExists())
 
         output = self.run_snapcraft(['upload', snap_file_path])
-        expected = r'.*Ready to release!.*'.format(new_name)
+        expected = r'.*Ready to release!.*'.format(name)
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
-        output = self.run_snapcraft(['release', new_name, '1', '0.1/edge'])
+        output = self.run_snapcraft(['release', name, '1', '0.1/edge'])
         expected = r'.*all     0.1      16        stable     -          -.*'
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
         self.run_snapcraft('clean')
-        self.update_name_arch_and_version(new_name, 'amd64', new_version)
+        self.update_name_arch_and_version(name, 'amd64', version)
         self.run_snapcraft('snap')
 
         # Release it
-        output = self.run_snapcraft(['release', new_name, '2', '0.1/edge'])
+        output = self.run_snapcraft(['release', name, '2', '0.1/edge'])
         expected = r'.*armhf   0.1      16        stable     '
         r'-                                 -.*'
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))

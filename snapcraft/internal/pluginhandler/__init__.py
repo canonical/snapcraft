@@ -77,6 +77,7 @@ class PluginHandler:
         self._part_properties = _expand_part_properties(
             part_properties, part_schema)
         self.stage_packages = []
+        self.build_packages = []
 
         # Some legacy parts can have a '/' in them to separate the main project
         # part with the subparts. This is rather unfortunate as it affects the
@@ -215,7 +216,7 @@ class PluginHandler:
 
     def last_step(self):
         for step in reversed(common.COMMAND_ORDER):
-            if os.path.exists(self._step_state_file(step)):
+            if os.path.exists(states.get_step_state_file(self.statedir, step)):
                 return step
 
         return None
@@ -242,7 +243,7 @@ class PluginHandler:
         """
 
         # Retrieve the stored state for this step (assuming it has already run)
-        state = self.get_state(step)
+        state = states.get_state(self.statedir, step)
         differing_properties = set()
         differing_options = set()
 
@@ -276,7 +277,7 @@ class PluginHandler:
 
         index = common.COMMAND_ORDER.index(step)
 
-        with open(self._step_state_file(step), 'w') as f:
+        with open(states.get_step_state_file(self.statedir, step), 'w') as f:
             f.write(yaml.dump(state))
 
         # We know we've only just completed this step, so make sure any later
@@ -286,24 +287,12 @@ class PluginHandler:
                 self.mark_cleaned(command)
 
     def mark_cleaned(self, step):
-        state_file = self._step_state_file(step)
+        state_file = states.get_step_state_file(self.statedir, step)
         if os.path.exists(state_file):
             os.remove(state_file)
 
         if os.path.isdir(self.statedir) and not os.listdir(self.statedir):
             os.rmdir(self.statedir)
-
-    def get_state(self, step):
-        state = None
-        state_file = self._step_state_file(step)
-        if os.path.isfile(state_file):
-            with open(state_file, 'r') as f:
-                state = yaml.load(f.read())
-
-        return state
-
-    def _step_state_file(self, step):
-        return os.path.join(self.statedir, step)
 
     def _fetch_stage_packages(self):
         try:
@@ -333,9 +322,25 @@ class PluginHandler:
     def mark_pull_done(self):
         pull_properties = self.code.get_pull_properties()
 
+        # Add the annotated list of build packages
+        part_build_packages = self._part_properties.get('build-packages', [])
+        build_packages = repo.Repo.get_installed_build_packages(
+            part_build_packages)
+        versioned_build_packages = []
+        for pkg in build_packages:
+            if pkg in part_build_packages:
+                versioned_build_packages.append(pkg)
+            else:
+                pkg_name, version = repo.get_pkg_name_parts(pkg)
+                if pkg_name in part_build_packages:
+                    versioned_build_packages.append(pkg)
+
         self.mark_done('pull', states.PullState(
             pull_properties, part_properties=self._part_properties,
-            project=self._project_options, stage_packages=self.stage_packages))
+            project=self._project_options, stage_packages=self.stage_packages,
+            build_packages=versioned_build_packages,
+            source_details=self.source_handler.source_details
+        ))
 
     def clean_pull(self, hint=''):
         if self.is_clean('pull'):
@@ -487,7 +492,7 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning staging area for', hint)
 
-        state = self.get_state('stage')
+        state = states.get_state(self.statedir, 'stage')
 
         try:
             self._clean_shared_area(self.stagedir, state,
@@ -547,7 +552,7 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning priming area for', hint)
 
-        state = self.get_state('prime')
+        state = states.get_state(self.statedir, 'prime')
 
         try:
             self._clean_shared_area(self.snapdir, state,
@@ -579,7 +584,7 @@ class PluginHandler:
 
     def get_primed_dependency_paths(self):
         dependency_paths = set()
-        state = self.get_state('prime')
+        state = states.get_state(self.statedir, 'prime')
         if state:
             for path in state.dependency_paths:
                 dependency_paths.add(

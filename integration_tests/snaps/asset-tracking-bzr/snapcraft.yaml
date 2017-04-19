@@ -1,0 +1,17 @@
+name: asset-tracking-bzr
+version: 0.1
+summary: Bzr asset tracking
+description: Bzr asset tracking
+architectures: [all]
+confinement: strict
+
+parts:
+  bzr-part:
+    plugin: nil
+    source: bzr-source
+    source-type: bzr
+  bzr-part-tag:
+    plugin: nil
+    source: bzr-source
+    source-type: bzr
+    source-tag: feature-tag

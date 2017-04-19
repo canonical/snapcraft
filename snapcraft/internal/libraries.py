@@ -100,5 +100,8 @@ def get_dependencies(elf):
     # Now lets filter out what would be on the system
     system_libs = _get_system_libs()
     libs = [l for l in ldd_out if not os.path.basename(l) in system_libs]
+    # Classic confinement won't do what you want with library crawling
+    # and has a nasty side effect described in LP: #1670100
+    libs = [l for l in libs if not l.startswith('/snap/')]
 
     return libs

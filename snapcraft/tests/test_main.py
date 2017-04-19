@@ -22,6 +22,7 @@ import fixtures
 import snapcraft.main
 
 from snapcraft.tests import TestCase
+from snapcraft.internal import project_loader
 
 
 class TestMain(TestCase):
@@ -61,7 +62,8 @@ class TestMain(TestCase):
     def test_command_debug_logs_version(self, mock_run):
         fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
         self.useFixture(fake_logger)
-        self.assertRaises(SystemExit, snapcraft.main.main, ['--debug'])
+        self.assertRaises(project_loader.SnapcraftYamlFileError,
+                          snapcraft.main.main, ['--debug'])
         self.assertRegex(fake_logger.output,
                          r'Starting snapcraft \S+ from \S+\.')
 

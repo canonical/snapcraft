@@ -1,0 +1,17 @@
+name: asset-tracking-hg
+version: 0.1
+summary: Hg asset tracking
+description: Hg asset tracking
+architectures: [all]
+confinement: strict
+
+parts:
+  hg-part:
+    plugin: nil
+    source: hg-source
+    source-type: mercurial
+  hg-part-tag:
+    plugin: nil
+    source: hg-source
+    source-type: mercurial
+    source-tag: feature-tag

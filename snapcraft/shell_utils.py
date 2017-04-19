@@ -29,3 +29,12 @@ def which(command, **kwargs):
         tempf.write('which {}'.format(command))
         tempf.flush()
         return common.run_output(['/bin/sh', tempf.name], **kwargs)
+
+
+def getenv(envvar, **kwargs):
+    """Return the specified envrionment variable."""
+    with tempfile.NamedTemporaryFile('w+') as tempf:
+        tempf.write('#!/bin/sh\n')
+        tempf.write('echo ${}'.format(envvar))
+        tempf.flush()
+        return common.run_output(['/bin/sh', tempf.name], **kwargs)

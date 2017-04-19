@@ -1,7 +1,7 @@
 #!/bin/bash
 # -*- Mode:sh; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -25,6 +25,8 @@ parseargs(){
         export RUN_STATIC="true"
         export RUN_UNIT="true"
         export RUN_INTEGRATION="true"
+        export RUN_STORE="true"
+        export RUN_PLUGINS="true"
         export RUN_SNAPS="true"
     else
         if [ "$1" == "static" ] ; then
@@ -33,13 +35,17 @@ parseargs(){
             export RUN_UNIT="true"
         elif [ "$1" == "integration" ] ; then
             export RUN_INTEGRATION="true"
+        elif [ "$1" == "store" ] ; then
+            export RUN_STORE="true"
+        elif [ "$1" == "plugins" ] ; then
+            export RUN_PLUGINS="true"
         elif [ "$1" == "snaps" ] ; then
             export RUN_SNAPS="true"
         # Temporary: backward compatibility until CI run the "snaps" target
         elif [ "$1" == "examples" ] ; then
             export RUN_SNAPS="true"
         else
-            echo "Not recognized option, should be one of all, static, unit, integration or snaps"
+            echo "Not recognized option, should be one of all, static, unit, integration, store or snaps"
             exit 1
         fi
     fi
@@ -76,6 +82,24 @@ run_integration(){
     python3 -m unittest discover -b -v -s integration_tests -p $pattern
 }
 
+run_store(){
+    if [[ "$#" -lt 2 ]]; then
+        pattern="test_*.py"
+    else
+        pattern=$2
+    fi
+    python3 -m unittest discover -b -v -s integration_tests/store -p $pattern
+}
+
+run_plugins(){
+    if [[ "$#" -lt 2 ]]; then
+        pattern="test_*.py"
+    else
+        pattern=$2
+    fi
+    python3 -m unittest discover -b -v -s integration_tests/plugins -p $pattern
+}
+
 run_snaps(){
     python3 -m snaps_tests "$@"
 }
@@ -92,6 +116,14 @@ fi
 
 if [ ! -z "$RUN_INTEGRATION" ]; then
     run_integration "$@"
+fi
+
+if [ ! -z "$RUN_STORE" ]; then
+    run_store "$@"
+fi
+
+if [ ! -z "$RUN_PLUGINS" ]; then
+    run_plugins "$@"
 fi
 
 if [ ! -z "$RUN_SNAPS" ]; then
