@@ -160,7 +160,9 @@ class GoPlugin(snapcraft.BasePlugin):
             packages = ['./{}/...'.format(self._get_local_go_package())]
         for package in packages:
             binary = self._gopath_bin + '/' + self._binary_name(package)
-            self._run(['go', 'build', '-o', binary] + tags + [package])
+            self._run(['go', 'build', '-o', binary,
+                       '-ldflags="-extld={}-gcc"'.format(
+                           self.project.arch_triplet)] + tags + [package])
 
         install_bin_path = os.path.join(self.installdir, 'bin')
         os.makedirs(install_bin_path, exist_ok=True)
@@ -196,6 +198,9 @@ class GoPlugin(snapcraft.BasePlugin):
             env.get('CGO_LDFLAGS', ''), flags, env.get('LDFLAGS', ''))
 
         if self.project.is_cross_compiling:
+            env['CC'] = '{}-gcc'.format(self.project.arch_triplet)
+            env['CXX'] = '{}-g++'.format(self.project.arch_triplet)
+            env['CGO_ENABLED'] = '1'
             # See https://golang.org/doc/install/source#environment
             go_archs = {
                 'armhf': 'arm',
@@ -204,6 +209,7 @@ class GoPlugin(snapcraft.BasePlugin):
             }
             env['GOARCH'] = go_archs.get(self.project.deb_arch,
                                          self.project.deb_arch)
+            env['GOARM'] = '7'
         return env
 
     def enable_cross_compilation(self):
