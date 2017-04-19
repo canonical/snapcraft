@@ -52,6 +52,4 @@ script:
   - if [ ! -z $GEN_DOCS ] && [ "$TRAVIS_EVENT_TYPE" = "push" ] && [ "$TRAVIS_BRANCH" = "master" ]; then docker exec -i builder ./tools/gen_api_docs.sh && ./tools/push_api_gh_pages.sh; fi
 
 after_success:
-  - python3 -m coverage xml
-  - pip install codecov
-  - codecov
+  - if [ "$TEST_SUITE" == "unit" ]; then python3 -m coverage xml && pip install codecov && codecov; fi
