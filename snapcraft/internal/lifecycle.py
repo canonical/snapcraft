@@ -249,7 +249,6 @@ class _Executor:
     def _create_meta(self, step, part_names):
         if step == 'prime' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
-            common.env.extend(self.config.project_env())
             meta.create_snap_packaging(self.config.data,
                                        self.project_options)
 
