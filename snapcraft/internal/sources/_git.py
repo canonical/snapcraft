@@ -40,18 +40,23 @@ class Git(Base):
         if not source_dir:
             source_dir = os.getcwd()
 
+        encoding = sys.getfilesystemencoding()
         try:
             output = subprocess.check_output(
                 ['git', '-C', source_dir, 'describe', '--dirty'],
-                stderr=subprocess.DEVNULL).decode(
-                    sys.getfilesystemencoding()).strip()
+                stderr=subprocess.DEVNULL).decode(encoding).strip()
         except subprocess.CalledProcessError:
             # If we fall into this exception it is because the repo is not
             # tagged at all.
-            output = subprocess.check_output([
-                'git', '-C', source_dir, 'describe', '--dirty',
-                '--always']).decode(sys.getfilesystemencoding()).strip()
-            return '0+git.{}'.format(output)
+            proc = subprocess.Popen(
+                ['git', '-C', source_dir, 'describe', '--dirty', '--always'],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = proc.communicate()
+            if proc.returncode != 0:
+                # This most likely means the project we are in is not driven
+                # by git.
+                raise errors.VCSError(message=stderr.decode(encoding).strip())
+            return '0+git.{}'.format(stdout.decode(encoding).strip())
 
         m = re.search(
             r'^(?P<tag>[a-zA-Z0-9.+~-]+)-'

@@ -18,7 +18,7 @@ import subprocess
 import shutil
 from textwrap import dedent
 
-from testtools.matchers import FileExists
+from testtools.matchers import Contains, FileExists
 import integration_tests
 
 
@@ -209,3 +209,14 @@ class GitGenerateVersionTestCase(GitSourceBaseTestCase):
         revno = self.get_revno()[:7]
         expected_file = 'git-test_0+git.{}_amd64.snap'.format(revno)
         self.assertThat(expected_file, FileExists())
+
+    def test_no_git(self):
+        shutil.rmtree('.git')
+
+        exception = self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft, ['snap'])
+        self.assertThat(
+            exception.output,
+            Contains('fatal: Not a git repository (or any of the parent '
+                     'directories): .git'))
+
