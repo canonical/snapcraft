@@ -1,4 +1,4 @@
-# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:5 -*-
 #
 # Copyright (C) 2017 Canonical Ltd
 #
@@ -39,6 +39,7 @@ class CollaborateTestCase(tests.TestCase):
         self.client = storeapi.StoreClient()
         patcher = mock.patch('snapcraft._store.Popen')
         self.popen_mock = patcher.start()
+
         process_mock = mock.Mock()
         process_mock.returncode = 0
         process_mock.communicate.return_value = [b'foo', b'']
@@ -90,3 +91,17 @@ class CollaborateTestCase(tests.TestCase):
         self.assertEqual(
                 'Received error 400: "The given `snap-id` does not match '
                 'the assertion\'s."', str(err))
+
+    def test_collaborate_yes_revoke_uploads_request(self):
+        patcher = mock.patch('builtins.input')
+        mock_input = patcher.start()
+        mock_input.return_value = 'y'
+        self.client.login('dummy', 'test correct password')
+        err = self.assertRaises(
+            storeapi.errors.StoreValidationError,
+            collaborate,
+            'revoked', 'keyname')
+
+        self.assertEqual(
+            'Received error 409: "The assertion\'s `developers` would revoke '
+            'existing uploads."', str(err))

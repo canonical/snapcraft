@@ -841,6 +841,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._DEV_API_PATH, 'snaps/no-dev/developers')
         bad_developers_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snaps/badrequest/developers')
+        revoked_developers_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/revoked/developers')
 
         if parsed_path.path.startswith(details_good):
             self._handle_scan_complete_request('ready_to_release', True)
@@ -864,6 +866,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_developers_request('no-dev')
         elif parsed_path.path.startswith(bad_developers_path):
             self._handle_developers_request('badrequest')
+        elif parsed_path.path.startswith(revoked_developers_path):
+            self._handle_developers_request('revoked')
         elif parsed_path.path.startswith(snap_path):
             if parsed_path.path.endswith('/history'):
                 self._handle_snap_revisions()
@@ -948,6 +952,10 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             status = 200
             response = {'snap_developer': {}}
             response = json.dumps(response).encode()
+        elif code == 'revoked':
+            status = 200
+            response = {'snap_developer': {}}
+            response = json.dumps(response).encode()
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
@@ -1002,6 +1010,9 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             'badrequest': {'snap-id': 'badrequest', 'status': 'Approved',
                            'private': False, 'price': None,
                            'since': '2016-12-12T01:01:01Z'},
+            'revoked': {'snap-id': 'revoked', 'status': 'Approved',
+                        'private': False, 'price': None,
+                        'since': '2016-12-12T01:01:01Z'},
             }
         snaps.update({
             name: {'snap-id': 'fake-snap-id', 'status': 'Approved',
@@ -1133,6 +1144,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._DEV_API_PATH, 'snaps/no-dev/developers')
         bad_developers_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snaps/badrequest/developers')
+        revoked_developers_path = urllib.parse.urljoin(
+            self._DEV_API_PATH, 'snaps/revoked/developers')
 
         if parsed_path.path.startswith(good_validations_path):
             self._handle_push_validation_request('good')
@@ -1146,6 +1159,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_push_developers_request('no-dev')
         elif parsed_path.path.startswith(bad_developers_path):
             self._handle_push_developers_request('badrequest')
+        elif parsed_path.path.startswith(revoked_developers_path):
+            self._handle_push_developers_request('revoked')
         else:
             logger.error(
                 'Not implemented path in fake Store API server: {}'.format(
@@ -1185,6 +1200,14 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 {'message': "The given `snap-id` does not match the "
                             "assertion's.",
                  'code': 'invalid-request'}]}
+            response = json.dumps(response).encode()
+        elif code == 'revoked':
+            status = 409
+            response = {'error_list': [
+                {'message': "The assertion's `developers` would revoke "
+                            "existing uploads.",
+                 'code': 'revoked-uploads',
+                 'extra': ['this']}]}
             response = json.dumps(response).encode()
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')
