@@ -15,13 +15,64 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import re
 import subprocess
+import sys
 
 from . import errors
 from ._base import Base
 
 
 class Git(Base):
+
+    @classmethod
+    def generate_version(cls, *, source_dir=None):
+        """Return the latest git tag from PWD or defined source_dir.
+
+        The output depends on the use of annotated tags and will return
+        something like: '2.28+git.10.abcdef' where '2.28 is the
+        tag, '+git' indicates there are commits ahead of the tag, in
+        this case it is '10' and the latest commit hash begins with
+        'abcdef'. If there are no tags or the revision cannot be
+        determined, this will return 0 as the tag and only the commit
+        hash of the latest commit.
+        """
+        if not source_dir:
+            source_dir = os.getcwd()
+
+        encoding = sys.getfilesystemencoding()
+        try:
+            output = subprocess.check_output(
+                ['git', '-C', source_dir, 'describe', '--dirty'],
+                stderr=subprocess.DEVNULL).decode(encoding).strip()
+        except subprocess.CalledProcessError:
+            # If we fall into this exception it is because the repo is not
+            # tagged at all.
+            proc = subprocess.Popen(
+                ['git', '-C', source_dir, 'describe', '--dirty', '--always'],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = proc.communicate()
+            if proc.returncode != 0:
+                # This most likely means the project we are in is not driven
+                # by git.
+                raise errors.VCSError(message=stderr.decode(encoding).strip())
+            return '0+git.{}'.format(stdout.decode(encoding).strip())
+
+        m = re.search(
+            r'^(?P<tag>[a-zA-Z0-9.+~-]+)-'
+            r'(?P<revs_ahead>\d+)-'
+            r'g(?P<commit>[0-9a-fA-F]+(?:-dirty)?)$',
+            output)
+
+        if not m:
+            # This means we have a pure tag
+            return output
+
+        tag = m.group('tag')
+        revs_ahead = m.group('revs_ahead')
+        commit = m.group('commit')
+
+        return '{}+git{}.{}'.format(tag, revs_ahead, commit)
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
                  source_branch=None, source_depth=None, silent=False,

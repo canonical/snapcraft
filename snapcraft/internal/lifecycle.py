@@ -361,7 +361,8 @@ def snap(project_options, directory=None, output=None):
     else:
         # make sure the full lifecycle is executed
         snap_dir = project_options.snap_dir
-        snap = execute('prime', project_options)
+        execute('prime', project_options)
+        snap = _snap_data_from_dir(snap_dir)
 
     snap_name = output or common.format_snap_name(snap)
 
