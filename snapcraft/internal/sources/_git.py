@@ -45,8 +45,10 @@ class Git(Base):
                 'git', '-C', source_dir, 'describe',
                 '--dirty']).decode(sys.getfilesystemencoding()).strip()
         except subprocess.CalledProcessError:
+            # If we fall into this exception it is because the repo is not
+            # tagged at all.
             output = subprocess.check_output([
-                'git', '-C', source_dir, 'describe', '--tags', '--dirty',
+                'git', '-C', source_dir, 'describe', '--dirty',
                 '--always']).decode(sys.getfilesystemencoding()).strip()
             return '0+git.{}'.format(output)
 
