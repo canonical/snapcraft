@@ -325,11 +325,11 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
-def containerbuild(project_options, output=None, remote=''):
+def containerbuild(step, project_options, output=None, remote='', args=[]):
     config = snapcraft.internal.load_config(project_options)
     lxd.Project(output=output, source=os.path.curdir,
                 project_options=project_options, remote=remote,
-                metadata=config.get_metadata()).execute()
+                metadata=config.get_metadata()).execute(step, args)
 
 
 def cleanbuild(project_options, remote=''):

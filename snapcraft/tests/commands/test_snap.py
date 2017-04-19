@@ -365,12 +365,6 @@ type: os
 
         self.assertThat('mysnap.snap', FileExists())
 
-    def test_snap_containerless_no_remote(self):
-        raised = self.assertRaises(RuntimeError,
-                                   main, ['--debug', '--remote=my-remote'])
-        expected = '--remote can only be used with SNAPCRAFT_CONTAINER_BUILDS'
-        self.assertIn(expected, str(raised))
-
     @mock.patch('time.time')
     def test_snap_renames_stale_snap_build(self, mocked_time):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
