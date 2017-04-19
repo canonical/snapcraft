@@ -34,4 +34,5 @@ class JdkPlugin(snapcraft.BasePlugin):
                  '-usr/lib/jvm/default-java/include',
                  '-usr/lib/jvm/default-java/lib',
                  '-usr/share/doc',
+                 '-usr/lib/jvm/*/jre/lib/security/cacerts',
                  ])
