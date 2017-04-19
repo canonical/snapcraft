@@ -23,7 +23,6 @@ import shlex
 import shutil
 import stat
 import subprocess
-import tempfile
 
 import yaml
 
@@ -422,17 +421,10 @@ class _DesktopFile:
 def _find_bin(binary, basedir):
     # If it doesn't exist it might be in the path
     logger.debug('Checking that {!r} is in the $PATH'.format(binary))
-    script = ('#!/bin/sh\n' +
-              '{}\n'.format(common.assemble_env()) +
-              'which "{}"\n'.format(binary))
-    with tempfile.NamedTemporaryFile('w+') as tempf:
-        tempf.write(script)
-        tempf.flush()
-        try:
-            common.run(['/bin/sh', tempf.name], cwd=basedir,
-                       stdout=subprocess.DEVNULL)
-        except subprocess.CalledProcessError:
-            raise CommandError(binary)
+    try:
+        shell_utils.which(binary, cwd=basedir)
+    except subprocess.CalledProcessError:
+        raise CommandError(binary)
 
 
 def _validate_hook(hook_path):
