@@ -268,7 +268,7 @@ class StoreReviewError(StoreError):
     __FMT_NEED_MANUAL_REVIEW = (
         "The Store automatic review failed.\n"
         "A human will soon review your snap, but if you can't wait please "
-        "write to the snapcraft mailing list asking for the manual review "
+        "write in the snapcraft forum asking for the manual review "
         "explicitly.\n"
         "If you need to disable confinement, please consider using devmode, "
         "but note that devmode revision will only be allowed to be released "
