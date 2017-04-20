@@ -346,7 +346,7 @@ class TestStore(fixtures.Fixture):
             self.already_owned_snap_name = 'test-already-owned-snap-name'
         elif test_store == 'staging':
             self.useFixture(StagingStore())
-            self.register_count_limit = 10
+            self.register_count_limit = 100
             self.reserved_snap_name = 'bash'
         elif test_store == 'production':
             # Use the default server URLs
