@@ -1,3 +1,72 @@
+snapcraft (2.29) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * store: better retry strategy for GETs. (#1212)
+  * docs: remove docs and link to snappy-docs (#1227)
+  * nodejs plugin: switch to the newer LTS. (#1228)
+  * pluginhandler: exclude `/snap/` from libraries. (#1231)
+  * nodejs plugin: switch to the newer LTS. (#1228) (#1232)
+  * core: find the correct libraries as a snap. (#1234)
+  * snap: use the gpg tarball instead of git://. (#1236)
+  * docs: update contribution guide. (#1233)
+  * repo: enable elementary. (#1237)
+  * cli: improve push output. (#1240)
+  * ci: split plugin integration tests out. (#1252)
+  * nodejs plugin: add support for yarn. (#1245)
+  * ci: fix travis ordering for locales generation. (#1254)
+  * core: support running from other operating systems. (#1257)
+  * meta: version from git support. (#1260)
+  * shell_utils: code cleanup (#1265)
+  * meta: override the version with version-script. (#1267)
+  * tests: fix package version pinning tests. (#1269)
+  * New upstream release 2.29 (LP: #1684965)
+
+  [ Joe Talbott ]
+  * tests: Fix staging store test for Tracks. (#1225)
+  * pluginhandler: factor out state bits into the state package. (#1221)
+  * repo: track per-part build-packages. (#1193)
+  * sources: add VCS asset tracking (#1229)
+
+  [ Facundo Batista ]
+  * store: better check of the error code in StatusTracker. (#1226)
+
+  [ Leo Arias ]
+  * tests: add arm64 to the nightly tests (#1210)
+  * tests: update name registration window limit test. (#1224)
+  * ci: update the location of the upstream retry autopkgtests script. (#1243)
+  * tests: use launchpad as the source of the compressed test snap (#1259)
+
+  [ Jumpei Ogawa ]
+  * repo: enable KDE Neon. (#1244)
+
+  [ Kyle Fazzari ]
+  * catkin plugin: create completely valid environment (#1239)
+
+  [ edvega ]
+  * help: replace dashes with underscores when printing plugins help (#1241)
+  * cli: remove empty lines in the unclean parts message (#1251)
+
+  [ Celso Providelo ]
+  * store: new registration errors and test update. (#1247)
+
+  [ Christian Dywan ]
+  * lxd: refactor Cleanbuilder into Containerbuild and add Project. (#1230)
+
+  [ Parameswaran Sivatharman ]
+  * store: plumbing for collaboration support. (#1246)
+
+  [ Colin Watson ]
+  * ant plugin: honour proxy configuration (#1256)
+
+  [ Chris MacNaughton ]
+  * rust plugin: update plugin to set RUSTFLAGS (#1255)
+
+  [ Andy Li ]
+  * docs: fixed links to doc (#1250)
+  * tests: report coverage only in unit tests. (#1266)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 20 Apr 2017 13:57:08 -0300
+
 snapcraft (2.28) xenial; urgency=medium
 
   [ Sergio Schvezov ]
