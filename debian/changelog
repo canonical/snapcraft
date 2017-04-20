@@ -2,7 +2,7 @@ snapcraft (2.29) xenial; urgency=medium
 
   [ Sergio Schvezov ]
   * store: better retry strategy for GETs. (#1212)
-  * docs: remove docs and link to snappy-docs (#1227)
+  * docs: remove docs and link to snappy-docs. (#1227)
   * nodejs plugin: switch to the newer LTS. (#1228)
   * pluginhandler: exclude `/snap/` from libraries. (#1231)
   * nodejs plugin: switch to the newer LTS. (#1228) (#1232)
@@ -62,7 +62,7 @@ snapcraft (2.29) xenial; urgency=medium
   * rust plugin: update plugin to set RUSTFLAGS (#1255)
 
   [ Andy Li ]
-  * docs: fixed links to doc (#1250)
+  * docs: fixed links to doc. (#1250)
   * tests: report coverage only in unit tests. (#1266)
 
  -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 20 Apr 2017 13:57:08 -0300
