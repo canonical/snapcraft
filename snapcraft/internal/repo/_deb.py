@@ -42,15 +42,15 @@ from . import errors
 logger = logging.getLogger(__name__)
 
 _DEFAULT_SOURCES = \
-    '''deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
-deb http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
-deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
-deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
+    '''deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
+deb${arch} http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
+deb${arch} http://${security}.ubuntu.com/${suffix} ${release}-security universe
+deb${arch} http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
 '''
 _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 _library_list = dict()
@@ -186,7 +186,9 @@ class Ubuntu(BaseRepo):
         return packages
 
     @classmethod
-    def install_build_packages(cls, package_names):
+    def install_build_packages(cls, package_names, deb_arch=None):
+        if deb_arch and _is_multi_arch(package_names):
+            _verify_multi_arch_sources(deb_arch)
         unique_packages = set(package_names)
         new_packages = []
         with apt.Cache() as apt_cache:
@@ -199,7 +201,7 @@ class Ubuntu(BaseRepo):
                     elif version and installed_version != version:
                         new_packages.append(pkg)
                 except KeyError as e:
-                    raise errors.BuildPackageNotFoundError(e) from e
+                    raise errors.BuildPackageNotFoundError(pkg) from e
 
         if new_packages:
             new_packages.sort()
@@ -256,7 +258,8 @@ class Ubuntu(BaseRepo):
 
         self._apt = _AptCache(
             project_options.deb_arch, sources_list=sources,
-            use_geoip=project_options.use_geoip)
+            use_geoip=project_options.use_geoip,
+            target_arch=project_options.target_arch)
 
         self._cache = cache.AptStagePackageCache(
             sources_digest=self._apt.sources_digest())
@@ -378,6 +381,27 @@ def _get_local_sources_list():
     return sources
 
 
+def _is_multi_arch(package_names):
+    for package in package_names:
+        if ':' in package:
+            return True
+    return False
+
+
+def _verify_multi_arch_sources(deb_arch):
+    foreign_archs = subprocess.check_output(
+        ['dpkg', '--print-foreign-architectures']).decode()
+    if deb_arch not in foreign_archs:
+        raise Exception('Target architecture needs to be added:\n'
+                        'sudo dpkg --add-architecture {}'.format(deb_arch))
+    sources = _get_local_sources_list()
+    if '[arch={}]'.format(deb_arch) not in sources:
+        release = platform.linux_distribution()[2]
+        logger.warning('Multi-arch sources needed for cross-compilation:\n{}'.
+                       format(_format_sources_list(None, deb_arch=deb_arch,
+                              release=release, foreign=True)))
+
+
 def _get_geoip_country_code_prefix():
     try:
         with urllib.request.urlopen(_GEOIP_SERVER) as f:
@@ -393,7 +417,8 @@ def _get_geoip_country_code_prefix():
 
 
 def _format_sources_list(sources_list, *,
-                         deb_arch, use_geoip=False, release='xenial'):
+                         deb_arch, use_geoip=False, release='xenial',
+                         foreign=False):
     if not sources_list:
         sources_list = _DEFAULT_SOURCES
 
@@ -411,6 +436,7 @@ def _format_sources_list(sources_list, *,
         security = 'ports'
 
     return string.Template(sources_list).substitute({
+        'arch': ' [arch={}]'.format(deb_arch) if foreign else '',
         'prefix': prefix,
         'release': release,
         'suffix': suffix,

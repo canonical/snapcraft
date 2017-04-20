@@ -273,7 +273,13 @@ class PartsConfig:
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema)
 
-        self.build_tools += part.code.build_packages
+        # Add multi-arch suffix for cross-compilation to dev packages
+        for package in part.code.build_packages:
+            if self._project_options.is_cross_compiling:
+                if package.endswith('-dev'):
+                    package += ':{}'.format(self._project_options.deb_arch)
+            self.build_tools.append(package)
+
         if part.source_handler and part.source_handler.command:
             self.build_tools.append(
                 repo.Repo.get_packages_for_source_type(
