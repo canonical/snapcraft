@@ -41,7 +41,10 @@ class SevenZip(FileBase):
                 'can\'t specify a source-branch for a 7z source')
 
     def provision(self, dst, clean_target=True, keep_7z=False):
-        seven_zip_file = os.path.join(self.source_dir, os.path.basename(self.source))
+        seven_zip_file = os.path.join(
+            self.source_dir,
+            os.path.basename(self.source)
+        )
 
         if self.source_checksum:
             sources.verify_checksum(self.source_checksum, seven_zip_file)

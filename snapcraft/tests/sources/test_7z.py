@@ -60,5 +60,5 @@ class Test7z(tests.TestCase):
         shutil.copy2(seven_zip_source.source, seven_zip_source.source_dir)
         seven_zip_source.provision(dst=dest_dir, keep_7z=True)
 
-        test_output_files = self._7z_test_files.union({test_7z_file_name,})
+        test_output_files = self._7z_test_files.union({test_7z_file_name, })
         self.assertCountEqual(set(os.listdir(dest_dir)), test_output_files)
