@@ -60,12 +60,32 @@ class PullPropertiesTestCase(integration_tests.TestCase):
 
 class AssetTrackingTestCase(integration_tests.TestCase):
 
+    def setUp(self):
+        super().setUp()
+        hello_version = integration_tests.get_package_version(
+            'hello', self.distro_series, self.deb_arch)
+        self.hello_package = 'hello={}'.format(hello_version)
+
+    def _set_hello_package_version(self, snapcraft_yaml_file):
+        with open(snapcraft_yaml_file) as f:
+            snapcraft_yaml = yaml.load(f)
+        if 'build-packages' in snapcraft_yaml:
+            snapcraft_yaml['build-packages'] = [self.hello_package]
+        else:
+            snapcraft_yaml['parts']['asset-tracking']['stage-packages'] = \
+                [self.hello_package]
+            snapcraft_yaml['parts']['asset-tracking']['build-packages'] = \
+                [self.hello_package]
+        with open(snapcraft_yaml_file, 'w') as f:
+            yaml.dump(snapcraft_yaml, f)
+
     def test_pull(self):
-        project_dir = 'asset-tracking'
-        self.run_snapcraft(['pull', 'asset-tracking'], project_dir)
+        self.copy_project_to_cwd('asset-tracking')
+        self._set_hello_package_version('snapcraft.yaml')
+        self.run_snapcraft('pull')
 
         state_file = os.path.join(
-            self.parts_dir, project_dir, 'state', 'pull')
+            self.parts_dir, 'asset-tracking', 'state', 'pull')
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
             state = yaml.load(f)
@@ -73,8 +93,8 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         # Verify that the correct version of 'hello' is installed
         self.assertTrue(len(state.assets['stage-packages']) > 0)
         self.assertTrue(len(state.assets['build-packages']) > 0)
-        self.assertIn('hello=2.10-1', state.assets['stage-packages'])
-        self.assertIn('hello=2.10-1', state.assets['build-packages'])
+        self.assertIn(self.hello_package, state.assets['stage-packages'])
+        self.assertIn(self.hello_package, state.assets['build-packages'])
         self.assertIn('source-details', state.assets)
 
     def test_pull_global_build_packages_are_excluded(self):
@@ -82,17 +102,18 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         Ensure global build-packages are not included in each part's
         build-packages data.
         """
-        project_dir = 'build-package-version-global'
-        self.run_snapcraft('pull', project_dir)
+        self.copy_project_to_cwd('build-package-version-global')
+        self._set_hello_package_version(os.path.join('snap', 'snapcraft.yaml'))
+        self.run_snapcraft('pull')
 
         state_file = os.path.join(
-            self.parts_dir, project_dir, 'state', 'pull')
+            self.parts_dir, 'build-package-version-global', 'state', 'pull')
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
             state = yaml.load(f)
 
         self.assertTrue(len(state.assets['build-packages']) == 0)
-        self.assertNotIn('hello=2.10-1', state.assets['build-packages'])
+        self.assertNotIn(self.hello_package, state.assets['build-packages'])
 
 
 TestDetail = namedtuple('TestDetail', ['field', 'value'])
