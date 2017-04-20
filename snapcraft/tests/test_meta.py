@@ -257,6 +257,18 @@ class CreateTestCase(CreateBaseTestCase):
 
         self.assertThat(y['version'], Equals('10.1-devel'))
 
+    def test_version_script_exits_bad(self):
+        self.config_data['version-script'] = 'exit 1'
+
+        with testtools.ExpectedException(CommandError):
+            self.generate_meta_yaml()
+
+    def test_version_script_with_no_output(self):
+        self.config_data['version-script'] = 'echo'
+
+        with testtools.ExpectedException(CommandError):
+            self.generate_meta_yaml()
+
     def test_create_meta_with_app(self):
         os.mkdir(self.prime_dir)
         open(os.path.join(self.prime_dir, 'app.sh'), 'w').close()

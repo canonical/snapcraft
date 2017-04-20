@@ -257,7 +257,14 @@ class _SnapPackaging:
         if version_script:
             logger.info('Determining the version from the project '
                         'repo (version-script).')
-            new_version = shell_utils.run_script(version_script)
+            try:
+                new_version = shell_utils.run_script(version_script).strip()
+                if not new_version:
+                    raise CommandError('The version-script produced no output')
+            except subprocess.CalledProcessError as e:
+                raise CommandError(
+                    'The version-script failed to run (exit code {})'.format(
+                        e.returncode))
         # we want to whitelist what we support here.
         elif version == 'git':
             logger.info('Determining the version from the project '

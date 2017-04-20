@@ -14,17 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+import subprocess
 from textwrap import dedent
 
 import testscenarios
 import yaml
-from testtools.matchers import FileExists
+from testtools.matchers import Contains, FileExists
 
 import integration_tests
 
 
-class VersionScriptPluginTestCase(testscenarios.WithScenarios,
-                                  integration_tests.TestCase):
+class VersionScriptBaseTestCase(integration_tests.TestCase):
+
+    def _set_version_script(self, snapcraft_yaml_file):
+        with open(snapcraft_yaml_file) as f:
+            snapcraft_yaml = yaml.load(f)
+        snapcraft_yaml['version-script'] = self.scripts[self.script]
+        with open(snapcraft_yaml_file, 'w') as f:
+            yaml.dump(snapcraft_yaml, f)
+
+
+class VersionScriptTestCase(testscenarios.WithScenarios,
+                            VersionScriptBaseTestCase):
 
     scripts = {
         'empty': '',  # this is 0.1
@@ -63,13 +74,6 @@ class VersionScriptPluginTestCase(testscenarios.WithScenarios,
               expected_version='test-build')),
     ]
 
-    def _set_version_script(self, snapcraft_yaml_file):
-        with open(snapcraft_yaml_file) as f:
-            snapcraft_yaml = yaml.load(f)
-        snapcraft_yaml['version-script'] = self.scripts[self.script]
-        with open(snapcraft_yaml_file, 'w') as f:
-            yaml.dump(snapcraft_yaml, f)
-
     def test_version(self):
         self.copy_project_to_cwd('version-script')
         self._set_version_script(os.path.join('snap', 'snapcraft.yaml'))
@@ -79,3 +83,29 @@ class VersionScriptPluginTestCase(testscenarios.WithScenarios,
         self.assertThat(
             'version-script-test_{}_amd64.snap'.format(self.expected_version),
             FileExists())
+
+
+class VersionScriptErrorsTestCase(testscenarios.WithScenarios,
+                                  VersionScriptBaseTestCase):
+
+    scripts = {
+        'empty-version': 'echo',
+        'exit-2': 'exit 2',
+    }
+
+    scenarios = (
+        ('no output',
+         dict(script='empty-version',
+              error='The version-script produced no output')),
+        ('exit 2',
+         dict(script='exit-2',
+              error='The version-script failed to run (exit code 2)')),
+    )
+
+    def test_no_output(self):
+        self.copy_project_to_cwd('version-script')
+        self._set_version_script(os.path.join('snap', 'snapcraft.yaml'))
+
+        exception = self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft, ['snap'])
+        self.assertThat(exception.output, Contains(self.error))
