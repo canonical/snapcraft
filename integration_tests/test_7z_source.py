@@ -23,10 +23,13 @@ import integration_tests
 
 class SevenZipTestCase(integration_tests.TestCase):
 
+    _7z_test_files = {'test1.txt', 'test2.txt', 'test3.txt'}
+
     def test_stage_7z(self):
         self.run_snapcraft('stage', '7z-hello')
 
-        self.assertThat(
-            os.path.join(self.stage_dir, 'test.txt'),
-            FileExists()
-        )
+        for filename in self._7z_test_files:
+            self.assertThat(
+                os.path.join(self.stage_dir, filename),
+                FileExists()
+            )

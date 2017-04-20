@@ -24,6 +24,8 @@ from snapcraft import tests
 
 class Test7z(tests.TestCase):
 
+    _7z_test_files = {'test1.txt', 'test2.txt', 'test3.txt'}
+
     @staticmethod
     def relative_path():
         return os.path.dirname(os.path.realpath(__file__))
@@ -40,7 +42,7 @@ class Test7z(tests.TestCase):
         seven_zip_source = sources.SevenZip(test_7z_file_path, dest_dir)
         seven_zip_source.pull()
 
-        self.assertEqual(os.listdir(dest_dir), ['test.txt'])
+        self.assertEqual(set(os.listdir(dest_dir)), self._7z_test_files)
 
     def test_extract_and_keep_7zfile(self):
         test_7z_file_name = 'test.7z'
@@ -58,5 +60,5 @@ class Test7z(tests.TestCase):
         shutil.copy2(seven_zip_source.source, seven_zip_source.source_dir)
         seven_zip_source.provision(dst=dest_dir, keep_7z=True)
 
-        test_output_files = ['test.txt', test_7z_file_name]
-        self.assertCountEqual(os.listdir(dest_dir), test_output_files)
+        test_output_files = self._7z_test_files.union({test_7z_file_name,})
+        self.assertCountEqual(set(os.listdir(dest_dir)), test_output_files)
