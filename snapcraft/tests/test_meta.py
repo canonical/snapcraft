@@ -692,7 +692,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         with open(path, 'rb') as exe:
             self.assertEqual(exe_contents, exe.read())
 
-    @patch('snapcraft.internal.common.run')
+    @patch('snapcraft.internal.common.run_output')
     def test_exe_is_in_path(self, run_mock):
         app_path = os.path.join(self.prime_dir, 'bin', 'app1')
         os.mkdir(os.path.dirname(app_path))
