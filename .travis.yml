@@ -19,11 +19,6 @@ env:
   - DOCKER=1 GEN_DOCS=1 DEPENDENCIES="apt install libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev git make python3-pip python3-sphinx -y && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
   - DOCKER=1 TEST_SUITE=beta DEPENDENCIES="apt install -y python3-git python3-github wget"
 
-#addons:
-#  apt:
-#    packages:
-#      - python3-coverage
-
 install:
   - if [ ! -z $DOCKER ]; then docker run --name builder
     -e TRAVIS_COMMIT_RANGE=$TRAVIS_COMMIT_RANGE
