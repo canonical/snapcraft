@@ -443,13 +443,22 @@ class _Pip:
         output = exec_func(cmd, env=self._env)
         package_listing = {}
         version_regex = re.compile('\((.+)\)')
-        version_regex_alt = re.compile('((\d+)\.)?((\d+)\.)?(\*|\d+)')
         for line in output.splitlines():
             line = line.split()
             m = version_regex.search(line[1])
             if not m:
-                m = version_regex_alt.search(line[1])
+                # with format=columns in pip.conf the output change,
+                # the next regex work with the new output.
+                # example the output format:
+                # Package                      Version     
+                # ---------------------------- ------------
+                # docopt                        0.6.2
+                # requests                      2.13.0
+                version_regex_with_columns = re.compile('((\d+)\.)?((\d+)\.)?(\*|\d+)')
+                m = version_regex_with_columns.search(line[1])
                 if not m:
+                    # with format=columns the 2 first lines are headers.
+                    # (Package, Version, and _) see before comment example
                     continue
             package_listing[line[0]] = m.group(1)
 
