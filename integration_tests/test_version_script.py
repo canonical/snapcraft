@@ -28,8 +28,9 @@ class VersionScriptPluginTestCase(testscenarios.WithScenarios,
 
     scripts = {
         'empty': '',  # this is 0.1
-        'simple': 'echo 0.1',
-        'exported-version': 'echo $SNAPCRAFT_PROJECT_VERSION',  # this is 0.1
+        'simple': 'echo from-version-script',
+        'exported-version': (
+            'echo from-variable-$SNAPCRAFT_PROJECT_VERSION'),  # this is 0.1
         'exported-version-and-grade': (
             'echo $SNAPCRAFT_PROJECT_VERSION-$SNAPCRAFT_PROJECT_GRADE'),
         'multi-line': dedent("""\
@@ -43,14 +44,23 @@ class VersionScriptPluginTestCase(testscenarios.WithScenarios,
     }
 
     scenarios = [
-        ('empty', dict(script='empty', expected_version='0.1')),
-        ('simple', dict(script='simple', expected_version='0.1')),
-        ('version', dict(script='exported-version', expected_version='0.1')),
-        ('version-and-grade', dict(script='exported-version-and-grade',
-                                   expected_version='0.1-devel')),
-        ('multi-line', dict(script='multi-line',
-                            expected_version='development-build')),
-        ('cat-file', dict(script='cat-file', expected_version='test-build')),
+        ('empty',
+         dict(script='empty', expected_version='0.1')),
+        ('simple',
+         dict(script='simple',
+              expected_version='from-version-script')),
+        ('version',
+         dict(script='exported-version',
+              expected_version='from-variable-0.1')),
+        ('version-and-grade',
+         dict(script='exported-version-and-grade',
+              expected_version='0.1-devel')),
+        ('multi-line',
+         dict(script='multi-line',
+              expected_version='development-build')),
+        ('cat-file',
+         dict(script='cat-file',
+              expected_version='test-build')),
     ]
 
     def _set_version_script(self, snapcraft_yaml_file):
