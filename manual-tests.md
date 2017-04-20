@@ -50,6 +50,18 @@
 3. Run `snapcraft cleanbuild --remote <remote>` where `<remote>` is
    the name you gave the remote on step 1.
 
+
+# Test containerized building
+
+1. Setup a remote as described on
+   https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
+2. Select a project <project> to build.
+3. Run `snapcraft --remote <remote>` where `<remote>` is
+   the name you gave the remote on step 1.
+4. Run `snapcraft clean --remote <remote>` and observe that build folders
+   as well as the container `snapcraft-<project>` are being removed.
+
+
 # Test the PC kernel.
 
 1. Get the PC kernel source:
