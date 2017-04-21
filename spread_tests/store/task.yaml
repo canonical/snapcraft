@@ -1,0 +1,4 @@
+summary: integration tests
+execute: |
+  cd /snapcraft
+  SNAPCRAFT_FROM_INSTALLED=1 ./runtests.sh store

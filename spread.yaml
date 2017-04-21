@@ -1,0 +1,17 @@
+project: snapcraft
+
+backends:
+  lxd:
+    systems: [ubuntu-16.04]
+
+suites:
+ spread_tests/:
+   summary: tests of the snapcraft snap
+   prepare: |
+     apt update
+     apt build-dep -y snapcraft
+     apt install -y bzr git curl mercurial subversion lxd python3-pep8 pyflakes python-flake8 python3-fixtures python3-pexpect python3-pyftpdlib python3-testscenarios
+     apt install -y squashfuse
+     snap install snapcraft --classic --edge
+
+path: /snapcraft/
