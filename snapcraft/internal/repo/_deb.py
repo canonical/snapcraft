@@ -42,15 +42,15 @@ from . import errors
 logger = logging.getLogger(__name__)
 
 _DEFAULT_SOURCES = \
-    '''deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
-deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
-deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
-deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
-deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
-deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
-deb${arch} http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
-deb${arch} http://${security}.ubuntu.com/${suffix} ${release}-security universe
-deb${arch} http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
+    '''deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
+deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
+deb http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
+deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
+deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
 '''
 _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 _library_list = dict()
@@ -436,12 +436,11 @@ def _format_sources_list(sources_list, *,
         security = 'ports'
 
     return string.Template(sources_list).substitute({
-        'arch': ' [arch={}]'.format(deb_arch) if foreign else '',
         'prefix': prefix,
         'release': release,
         'suffix': suffix,
         'security': security,
-    })
+    }).replace('deb', 'deb[arch={}]'.format(deb_arch) if foreign else 'deb')
 
 
 def _fix_filemode(path):
