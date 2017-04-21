@@ -31,6 +31,7 @@ _ARCH_TRANSLATIONS = {
     'armv7l': {
         'kernel': 'arm',
         'deb': 'armhf',
+        'uts_machine': 'arm',
         'cross-compiler-prefix': 'arm-linux-gnueabihf-',
         'cross-build-packages': ['gcc-arm-linux-gnueabihf'],
         'triplet': 'arm-linux-gnueabihf',
@@ -39,6 +40,7 @@ _ARCH_TRANSLATIONS = {
     'aarch64': {
         'kernel': 'arm64',
         'deb': 'arm64',
+        'uts_machine': 'aarch64',
         'cross-compiler-prefix': 'aarch64-linux-gnu-',
         'cross-build-packages': ['gcc-aarch64-linux-gnu'],
         'triplet': 'aarch64-linux-gnu',
@@ -47,11 +49,13 @@ _ARCH_TRANSLATIONS = {
     'i686': {
         'kernel': 'x86',
         'deb': 'i386',
+        'uts_machine': 'i686',
         'triplet': 'i386-linux-gnu',
     },
     'ppc64le': {
         'kernel': 'powerpc',
         'deb': 'ppc64el',
+        'uts_machine': 'ppc64el',
         'cross-compiler-prefix': 'powerpc64le-linux-gnu-',
         'cross-build-packages': ['gcc-powerpc64le-linux-gnu'],
         'triplet': 'powerpc64le-linux-gnu',
@@ -60,6 +64,7 @@ _ARCH_TRANSLATIONS = {
     'ppc': {
         'kernel': 'powerpc',
         'deb': 'powerpc',
+        'uts_machine': 'powerpc',
         'cross-compiler-prefix': 'powerpc-linux-gnu-',
         'cross-build-packages': ['gcc-powerpc-linux-gnu'],
         'triplet': 'powerpc-linux-gnu',
@@ -67,12 +72,14 @@ _ARCH_TRANSLATIONS = {
     'x86_64': {
         'kernel': 'x86',
         'deb': 'amd64',
+        'uts_machine': 'x86_64',
         'triplet': 'x86_64-linux-gnu',
         'core-dynamic-linker': 'lib64/ld-linux-x86-64.so.2',
     },
     's390x': {
         'kernel': 's390x',
         'deb': 's390x',
+        'uts_machine': 's390x',
         'cross-compiler-prefix': 's390x-linux-gnu-',
         'cross-build-packages': ['gcc-s390x-linux-gnu'],
         'triplet': 's390x-linux-gnu',
@@ -236,6 +243,8 @@ class ProjectOptions:
 def _find_machine(deb_arch):
     for machine in _ARCH_TRANSLATIONS:
         if _ARCH_TRANSLATIONS[machine].get('deb', '') == deb_arch:
+            return machine
+        elif _ARCH_TRANSLATIONS[machine].get('uts_machine', '') == deb_arch:
             return machine
 
     raise EnvironmentError(
