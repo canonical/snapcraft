@@ -256,8 +256,7 @@ class Ubuntu(BaseRepo):
 
         self._apt = _AptCache(
             project_options.deb_arch, sources_list=sources,
-            use_geoip=project_options.use_geoip,
-            target_arch=project_options.target_arch)
+            use_geoip=project_options.use_geoip)
 
         self._cache = cache.AptStagePackageCache(
             sources_digest=self._apt.sources_digest())
@@ -388,8 +387,8 @@ def _multi_arch_diagnostics(package_name):
     foreign_archs = subprocess.check_output(
         ['dpkg', '--print-foreign-architectures']).decode()
     if arch not in foreign_archs:
-        message += '\nTarget architecture needs to be added:\n' \
-                   'sudo dpkg --add-architecture {}'.format(arch)
+        message += "\nTarget architecture needs to be added:\n" \
+                   "'sudo dpkg --add-architecture {}'".format(arch)
 
     sources = _get_local_sources_list()
     if '[arch={}]'.format(arch) not in sources:

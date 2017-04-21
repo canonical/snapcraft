@@ -32,5 +32,5 @@ class MultiarchTestCase(integration_tests.TestCase):
             exception.output, Contains(
                 "Error downloading stage packages for part 'my-part': The "
                 "package 'hello:fake-arch' was not found.\n"
-                'You may need to add support for this architecture with '
-                "'dpkg --add-architecture fake-arch'"))
+                'Target architecture needs to be added:\n'
+                "'sudo dpkg --add-architecture fake-arch'"))

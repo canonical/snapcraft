@@ -300,5 +300,5 @@ class BuildPackagesTestCase(tests.TestCase):
 
         self.assertEqual(
             "Could not find a required package in 'build-packages': "
-            '"The cache has no package named \'package-does-not-exist\'"',
+            "package-does-not-exist",
             str(raised))
