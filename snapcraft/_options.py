@@ -29,7 +29,6 @@ logger = logging.getLogger(__name__)
 
 _ARCH_TRANSLATIONS = {
     'armv7l': {
-        'aliases': ['armhf', 'arm'],
         'kernel': 'arm',
         'deb': 'armhf',
         'cross-compiler-prefix': 'arm-linux-gnueabihf-',
@@ -38,7 +37,6 @@ _ARCH_TRANSLATIONS = {
         'core-dynamic-linker': 'lib/ld-linux-armhf.so.3',
     },
     'aarch64': {
-        'aliases': ['arm64', 'aarch64'],
         'kernel': 'arm64',
         'deb': 'arm64',
         'cross-compiler-prefix': 'aarch64-linux-gnu-',
@@ -47,13 +45,11 @@ _ARCH_TRANSLATIONS = {
         'core-dynamic-linker': 'lib/ld-linux-aarch64.so.1',
     },
     'i686': {
-        'aliases': ['i386', 'i686'],
         'kernel': 'x86',
         'deb': 'i386',
         'triplet': 'i386-linux-gnu',
     },
     'ppc64le': {
-        'aliases': ['ppc64el'],
         'kernel': 'powerpc',
         'deb': 'ppc64el',
         'cross-compiler-prefix': 'powerpc64le-linux-gnu-',
@@ -62,7 +58,6 @@ _ARCH_TRANSLATIONS = {
         'core-dynamic-linker': '/lib64/ld64.so.2',
     },
     'ppc': {
-        'aliases': ['powerpc'],
         'kernel': 'powerpc',
         'deb': 'powerpc',
         'cross-compiler-prefix': 'powerpc-linux-gnu-',
@@ -70,14 +65,12 @@ _ARCH_TRANSLATIONS = {
         'triplet': 'powerpc-linux-gnu',
     },
     'x86_64': {
-        'aliases': ['amd64', 'x86_64'],
         'kernel': 'x86',
         'deb': 'amd64',
         'triplet': 'x86_64-linux-gnu',
         'core-dynamic-linker': 'lib64/ld-linux-x86-64.so.2',
     },
     's390x': {
-        'aliases': ['s390x'],
         'kernel': 's390x',
         'deb': 's390x',
         'cross-compiler-prefix': 's390x-linux-gnu-',
@@ -242,9 +235,8 @@ class ProjectOptions:
 
 def _find_machine(deb_arch):
     for machine in _ARCH_TRANSLATIONS:
-        for arch in _ARCH_TRANSLATIONS[machine]['aliases']:
-            if arch == deb_arch:
-                return machine
+        if _ARCH_TRANSLATIONS[machine].get('deb', '') == deb_arch:
+            return machine
 
     raise EnvironmentError(
         'Cannot set machine from deb_arch {!r}'.format(deb_arch))
