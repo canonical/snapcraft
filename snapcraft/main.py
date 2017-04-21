@@ -176,6 +176,7 @@ from snapcraft.internal.common import (
     get_terminal_width,
     get_tourdir)
 from snapcraft.storeapi.constants import DEFAULT_SERIES
+from snapcraft.internal.sources.errors import IncompatibleOptionsError
 
 
 logger = logging.getLogger(__name__)
@@ -284,7 +285,10 @@ def _get_command_from_arg(args):
 def _is_containerbuild(args):
     if os.environ.get('SNAPCRAFT_CONTAINER_BUILDS'):
         return True
-    if args['--remote']:
+    remote = args['--remote']
+    if remote:
+        if remote != 'local':
+            raise IncompatibleOptionsError('Remote must be "local"')
         return True
     return False
 
