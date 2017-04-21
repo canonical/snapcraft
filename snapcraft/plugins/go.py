@@ -160,9 +160,7 @@ class GoPlugin(snapcraft.BasePlugin):
             packages = ['./{}/...'.format(self._get_local_go_package())]
         for package in packages:
             binary = self._gopath_bin + '/' + self._binary_name(package)
-            self._run(['go', 'build', '-o', binary,
-                       '-ldflags="-extld={}-gcc"'.format(
-                           self.project.arch_triplet)] + tags + [package])
+            self._run(['go', 'build', '-o', binary] + tags + [package])
 
         install_bin_path = os.path.join(self.installdir, 'bin')
         os.makedirs(install_bin_path, exist_ok=True)
