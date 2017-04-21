@@ -112,8 +112,8 @@ def set_schemadir(schemadir):
 
 
 def get_schemadir():
-    snap = os.environ.get('SNAP')
-    if snap:
+    if os.environ.get('SNAP_NAME', '') == 'snapcraft':
+        snap = os.environ.get('SNAP')
         return os.path.join(snap, 'share', 'snapcraft', 'schema')
     return _schemadir
 
