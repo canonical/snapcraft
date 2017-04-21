@@ -186,9 +186,7 @@ class Ubuntu(BaseRepo):
         return packages
 
     @classmethod
-    def install_build_packages(cls, package_names, deb_arch=None):
-        if deb_arch and _is_multi_arch(package_names):
-            _verify_multi_arch_sources(deb_arch)
+    def install_build_packages(cls, package_names):
         unique_packages = set(package_names)
         new_packages = []
         with apt.Cache() as apt_cache:
@@ -201,7 +199,7 @@ class Ubuntu(BaseRepo):
                     elif version and installed_version != version:
                         new_packages.append(pkg)
                 except KeyError as e:
-                    raise errors.BuildPackageNotFoundError(pkg) from e
+                    raise AptBuildPackageNotFoundError(pkg) from e
 
         if new_packages:
             new_packages.sort()
@@ -239,7 +237,7 @@ class Ubuntu(BaseRepo):
                     pkg_name, version = repo.get_pkg_name_parts(pkg)
                     pkg_list.append(str(apt_cache[pkg_name].candidate))
                 except KeyError as e:
-                    raise errors.BuildPackageNotFoundError(e) from e
+                    raise AptBuildPackageNotFoundError(e) from e
 
         return pkg_list
 
@@ -283,8 +281,8 @@ class Ubuntu(BaseRepo):
                 if version:
                     _set_pkg_version(apt_cache[name_arch], version)
                 apt_cache[name_arch].mark_install()
-            except KeyError:
-                raise errors.PackageNotFoundError(name)
+            except KeyError as e:
+                raise AptPackageNotFoundError(name) from e
 
     def _filter_base_packages(self, apt_cache, package_names):
         manifest_dep_names = self._manifest_dep_names(apt_cache)
@@ -381,25 +379,38 @@ def _get_local_sources_list():
     return sources
 
 
-def _is_multi_arch(package_names):
-    for package in package_names:
-        if ':' in package:
-            return True
-    return False
+def _multi_arch_diagnostics(package_name):
+    message = ''
+    if ':' not in package_name:
+        return message
 
-
-def _verify_multi_arch_sources(deb_arch):
+    (name, arch) = package_name.split(':', 2)
     foreign_archs = subprocess.check_output(
         ['dpkg', '--print-foreign-architectures']).decode()
-    if deb_arch not in foreign_archs:
-        raise Exception('Target architecture needs to be added:\n'
-                        'sudo dpkg --add-architecture {}'.format(deb_arch))
+    if arch not in foreign_archs:
+        message += '\nTarget architecture needs to be added:\n' \
+                   'sudo dpkg --add-architecture {}'.format(arch)
+
     sources = _get_local_sources_list()
-    if '[arch={}]'.format(deb_arch) not in sources:
+    if '[arch={}]'.format(arch) not in sources:
         release = platform.linux_distribution()[2]
-        logger.warning('Multi-arch sources needed for cross-compilation:\n{}'.
-                       format(_format_sources_list(None, deb_arch=deb_arch,
-                              release=release, foreign=True)))
+        message += '\nMulti-arch sources need to be added:\n{}'.format(
+           _format_sources_list(None, deb_arch=arch,
+                                release=release, foreign=True))
+    return message
+
+
+class AptPackageNotFoundError(errors.PackageNotFoundError):
+
+    @property
+    def message(self):
+        return super().message + _multi_arch_diagnostics(self.package_name)
+
+
+class AptBuildPackageNotFoundError(errors.BuildPackageNotFoundError):
+
+    def __str__(self):
+        return super().__str__() + _multi_arch_diagnostics(self.package_name)
 
 
 def _get_geoip_country_code_prefix():
@@ -475,4 +486,4 @@ def _set_pkg_version(pkg, version):
         version = pkg.versions.get(version)
         pkg.candidate = version
     else:
-        raise errors.PackageNotFoundError('{}={}'.format(pkg.name, version))
+        raise AptPackageNotFoundError('{}={}'.format(pkg.name, version))
