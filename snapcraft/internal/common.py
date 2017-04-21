@@ -148,8 +148,8 @@ def set_tourdir(tourdir):
 
 
 def get_tourdir():
-    snap = os.environ.get('SNAP')
-    if snap:
+    if os.environ.get('SNAP_NAME', '') == 'snapcraft':
+        snap = os.environ.get('SNAP')
         return os.path.join(snap, 'tour')
     return _tourdir
 
