@@ -25,7 +25,8 @@ if os.path.exists(os.path.join(topdir, 'setup.py')):
 
 
 if __name__ == '__main__':
-    import snapcraft.main
+    import snapcraft.cli
     import snapcraft.internal.dirs
     snapcraft.internal.dirs.setup_dirs()
-    snapcraft.main.main()
+    snapcraft.cli.run(prog_name='snapcraft',
+                      obj=dict(project=snapcraft.ProjectOptions()))

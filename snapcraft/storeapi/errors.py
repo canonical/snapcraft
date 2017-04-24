@@ -19,20 +19,20 @@ from simplejson.scanner import JSONDecodeError
 from snapcraft.internal.errors import SnapcraftError
 
 
-class InvalidCredentialsError(SnapcraftError):
-
-    fmt = 'Invalid credentials: {message}.'
-
-    def __init__(self, message):
-        super().__init__(message=message)
-
-
 class StoreError(SnapcraftError):
     """Base class for all storeapi exceptions.
 
     :cvar fmt: A format string that daughter classes override
 
     """
+
+
+class InvalidCredentialsError(StoreError):
+
+    fmt = 'Invalid credentials: {message}.'
+
+    def __init__(self, message):
+        super().__init__(message=message)
 
 
 class StoreRetryError(StoreError):
@@ -405,3 +405,8 @@ class StoreChannelClosingError(StoreError):
                 response.status_code, response.reason)
 
         super().__init__(error=error)
+
+
+class StoreAssertionError(StoreError):
+
+    fmt = 'Error signing {endpoint} assertion for {snap_name}: {error!s}'

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,17 +13,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import glob
-import logging
 import os
-import os.path
 from unittest import mock
 
-import docopt
-import fixtures
 from xdg import BaseDirectory
-from testtools.matchers import FileExists, Not
+from testtools.matchers import Contains, Equals, FileExists, Not
 
 import snapcraft
 from snapcraft import (
@@ -31,21 +25,18 @@ from snapcraft import (
     storeapi,
     tests
 )
-from snapcraft.main import main
 from snapcraft.storeapi.errors import (
     StoreDeltaApplicationError,
     StorePushError,
     StoreUploadError
 )
-from snapcraft.tests import fixture_setup
+from . import CommandBaseTestCase
 
 
-class PushCommandTestCase(tests.TestCase):
+class PushCommandBaseTestCase(CommandBaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
 
         patcher = mock.patch('snapcraft.internal.lifecycle.ProgressBar')
         patcher.start()
@@ -55,16 +46,20 @@ class PushCommandTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_push_without_snap_must_raise_exception(self):
-        raised = self.assertRaises(
-            docopt.DocoptExit,
-            main, ['push'])
+        self.snap_file = os.path.join(
+            os.path.dirname(tests.__file__), 'data',
+            'test-snap.snap')
 
-        self.assertTrue('Usage:' in str(raised))
+
+class PushCommandTestCase(PushCommandBaseTestCase):
+
+    def test_push_without_snap_must_raise_exception(self):
+        result = self.run_command(['push'])
+
+        self.assertThat(result.exit_code, Equals(2))
+        self.assertThat(result.output, Contains('Usage:'))
 
     def test_push_a_snap(self):
-        self.useFixture(fixture_setup.FakeTerminal())
-
         mock_tracker = mock.Mock(storeapi.StatusTracker)
         mock_tracker.track.return_value = {
             'code': 'ready_to_release',
@@ -78,73 +73,52 @@ class PushCommandTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
         mock_upload.return_value = mock_tracker
 
-        # Create a snap
-        main(['init'])
-        main(['snap'])
-        snap_file = glob.glob('*.snap')[0]
-
         # Upload
         with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
-            main(['push', snap_file])
+            result = self.run_command(['push', self.snap_file])
+        self.assertThat(result.exit_code, Equals(0))
 
         self.assertRegexpMatches(
             self.fake_logger.output,
-            ".*push 'my-snap-name_0\.1_\w*.snap' to the store\.\n"
-            "Revision 9 of 'my-snap-name' created\.",
+            ".*push '.*test-snap.snap' to the store\.\n"
+            "Revision 9 of 'basic' created\.",
         )
-
-        mock_upload.assert_called_once_with('my-snap-name', snap_file)
+        mock_upload.assert_called_once_with('basic', self.snap_file)
 
     def test_push_without_login_must_raise_exception(self):
-        snap_path = os.path.join(
-            os.path.dirname(tests.__file__), 'data',
-            'test-snap.snap')
-        self.assertRaises(
-            SystemExit,
-            main, ['push', snap_path])
+        result = self.run_command(['push', self.snap_file])
+        self.assertThat(result.exit_code, Equals(1))
         self.assertIn(
             'No valid credentials found. Have you run "snapcraft login"?\n',
             self.fake_logger.output)
 
     def test_push_nonexisting_snap_must_raise_exception(self):
-        self.assertRaises(
-            SystemExit,
-            main, ['push', 'test-unexisting-snap'])
+        result = self.run_command(['push', 'test-unexisting-snap'])
+        self.assertThat(result.exit_code, Equals(2))
 
     def test_push_unregistered_snap_must_raise_exception(self):
-        self.useFixture(fixture_setup.FakeTerminal())
-
         class MockResponse:
             status_code = 404
             error_list = [{'code': 'resource-not-found',
-                           'message': 'Snap not found for name=my-snap-name'}]
+                           'message': 'Snap not found for name=basic'}]
 
         patcher = mock.patch.object(storeapi.StoreClient, 'push_precheck')
         mock_precheck = patcher.start()
         self.addCleanup(patcher.stop)
         mock_precheck.side_effect = StorePushError(
-            'my-snap-name', MockResponse())
+            'basic', MockResponse())
 
-        # Create a snap
-        main(['init'])
-        main(['snap'])
-        snap_file = glob.glob('*.snap')[0]
+        result = self.run_command(['push', self.snap_file])
 
-        self.assertRaises(
-            SystemExit,
-            main, ['push', snap_file])
-
-        self.assertIn(
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
             'You are not the publisher or allowed to push revisions for this '
             'snap. To become the publisher, run `snapcraft register '
-            'my-snap-name` and try to push again.',
-            self.fake_logger.output)
+            'basic` and try to push again.'))
 
     def test_push_with_updown_error(self):
         # We really don't know of a reason why this would fail
         # aside from a 5xx style error on the server.
-        self.useFixture(fixture_setup.FakeTerminal())
-
         class MockResponse:
             text = 'stub error'
             reason = 'stub reason'
@@ -154,18 +128,10 @@ class PushCommandTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
         mock_upload.side_effect = StoreUploadError(MockResponse())
 
-        # Create a snap
-        main(['init'])
-        main(['snap'])
-        snap_file = glob.glob('*.snap')[0]
-
-        self.assertRaises(
-            SystemExit,
-            main, ['push', snap_file])
+        result = self.run_command(['push', self.snap_file])
+        self.assertThat(result.exit_code, Equals(1))
 
     def test_upload_raises_deprecation_warning(self):
-        self.useFixture(fixture_setup.FakeTerminal())
-
         mock_tracker = mock.Mock(storeapi.StatusTracker)
         mock_tracker.track.return_value = {
             'code': 'ready_to_release',
@@ -179,26 +145,16 @@ class PushCommandTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
         mock_upload.return_value = mock_tracker
 
-        # Create a snap
-        main(['init'])
-        main(['snap'])
-        snap_file = glob.glob('*.snap')[0]
-
         # Upload
         with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
-            main(['upload', snap_file])
+            result = self.run_command(['upload', self.snap_file])
 
-        self.assertRegexpMatches(
-            self.fake_logger.output,
-            ".*push 'my-snap-name_0\.1_\w*.snap\' to the store\.\n"
-            "Revision 9 of 'my-snap-name' created.",
-        )
-
-        mock_upload.assert_called_once_with('my-snap-name', snap_file)
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            "Revision 9 of 'basic' created."))
+        mock_upload.assert_called_once_with('basic', self.snap_file)
 
     def test_push_and_release_a_snap(self):
-        self.useFixture(fixture_setup.FakeTerminal())
-
         mock_tracker = mock.Mock(storeapi.StatusTracker)
         mock_tracker.track.return_value = {
             'code': 'ready_to_release',
@@ -233,27 +189,20 @@ class PushCommandTestCase(tests.TestCase):
             }
         }
 
-        # Create a snap
-        main(['init'])
-        main(['snap'])
-        snap_file = glob.glob('*.snap')[0]
-
         # Upload
         with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
-            main(['push', snap_file, '--release', 'beta'])
+            result = self.run_command(['push', self.snap_file,
+                                       '--release', 'beta'])
 
-        self.assertRegexpMatches(
-            self.fake_logger.output,
-            ".*push 'my-snap-name_0\.1_\w*\.snap\' to the store\.\n"
-            "Revision 9 of 'my-snap-name' created\.\n"
-            "The 'beta' channel is now open\.\n")
-
-        mock_upload.assert_called_once_with('my-snap-name', snap_file)
-        mock_release.assert_called_once_with('my-snap-name', 9, ['beta'])
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            "Revision 9 of 'basic' created"))
+        self.assertThat(result.output, Contains(
+            "The 'beta' channel is now open"))
+        mock_upload.assert_called_once_with('basic', self.snap_file)
+        mock_release.assert_called_once_with('basic', 9, ['beta'])
 
     def test_push_and_release_a_snap_to_N_channels(self):
-        self.useFixture(fixture_setup.FakeTerminal())
-
         mock_tracker = mock.Mock(storeapi.StatusTracker)
         mock_tracker.track.return_value = {
             'code': 'ready_to_release',
@@ -290,28 +239,23 @@ class PushCommandTestCase(tests.TestCase):
             }
         }
 
-        # Create a snap
-        main(['init'])
-        main(['snap'])
-        snap_file = glob.glob('*.snap')[0]
-
         # Upload
         with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
-            main(['push', snap_file, '--release', 'edge,beta,candidate'])
+            result = self.run_command(['push', self.snap_file, '--release',
+                                       'edge,beta,candidate'])
 
-        self.assertRegexpMatches(
-            self.fake_logger.output,
-            ".*push 'my-snap-name_0\.1_\w*.snap\' to the store\.\n"
-            "Revision 9 of 'my-snap-name' created\.\n"
-            "The 'beta,edge,candidate' channel is now open\.\n"
-        )
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+             "Revision 9 of 'basic' created"))
+        self.assertThat(result.output, Contains(
+            "The 'beta,edge,candidate' channel is now open"))
 
-        mock_upload.assert_called_once_with('my-snap-name', snap_file)
-        mock_release.assert_called_once_with('my-snap-name', 9,
+        mock_upload.assert_called_once_with('basic', self.snap_file)
+        mock_release.assert_called_once_with('basic', 9,
                                              ['edge', 'beta', 'candidate'])
 
 
-class PushCommandDeltasTestCase(tests.TestCase):
+class PushCommandDeltasTestCase(PushCommandBaseTestCase):
 
     scenarios = [
         ('with deltas', dict(enable_deltas=True)),
@@ -349,67 +293,43 @@ class PushCommandDeltasTestCase(tests.TestCase):
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
     def test_push_revision_cached_with_experimental_deltas(self):
-        self.useFixture(fixture_setup.FakeTerminal())
-
-        # Create a snap
-        main(['init'])
-        main(['snap'])
-        snap_file = glob.glob('*.snap')[0]
-
         # Upload
         with mock.patch('snapcraft.storeapi.StatusTracker'):
-            main(['push', snap_file])
+            result = self.run_command(['push', self.snap_file])
+        self.assertThat(result.exit_code, Equals(0))
 
         snap_cache = os.path.join(
             BaseDirectory.xdg_cache_home,
             'snapcraft',
             'projects',
-            'my-snap-name',
+            'basic',
             'snap_hashes',
             self.deb_arch,
         )
         cached_snap = os.path.join(
-            snap_cache, file_utils.calculate_sha3_384(snap_file))
+            snap_cache, file_utils.calculate_sha3_384(self.snap_file))
 
         self.assertThat(cached_snap, FileExists())
 
     def test_push_revision_uses_available_delta(self):
-        self.useFixture(fixture_setup.FakeTerminal())
-
-        # Create a source snap
-        main(['init'])
-        main(['snap'])
-        snap_file = glob.glob('*.snap')[0]
-
-        # Upload
+        # Push
         with mock.patch('snapcraft.storeapi.StatusTracker'):
-            main(['push', snap_file])
+            result = self.run_command(['push', self.snap_file])
+        self.assertThat(result.exit_code, Equals(0))
 
-        # create an additional snap, potentially a delta target
-        main(['snap'])
-        new_snap_file = glob.glob('*.snap')[0]
-
-        # Upload
+        # Push again
         with mock.patch('snapcraft.storeapi.StatusTracker'):
-            main(['push', new_snap_file])
+            result = self.run_command(['push', self.snap_file])
 
+        self.assertThat(result.exit_code, Equals(0))
         _, kwargs = self.mock_upload.call_args
         self.assertEqual(kwargs.get('delta_format'), 'xdelta3')
 
     def test_push_with_upload_failure_falls_back(self):
-        self.useFixture(fixture_setup.FakeTerminal())
-
-        # Create a source snap to delta from
-        main(['init'])
-        main(['snap'])
-        snap_file = glob.glob('*.snap')[0]
-
         # Upload
         with mock.patch('snapcraft.storeapi.StatusTracker'):
-            main(['push', snap_file])
-
-        # create a target snap
-        main(['snap'])
+            result = self.run_command(['push', self.snap_file])
+        self.assertThat(result.exit_code, Equals(0))
 
         # Raise exception in delta upload
         patcher = mock.patch('snapcraft._store._push_delta')
@@ -433,11 +353,12 @@ class PushCommandDeltasTestCase(tests.TestCase):
 
         # Upload and ensure fallback is called
         with mock.patch('snapcraft.storeapi.StatusTracker'):
-            main(['push', snap_file])
-            mock_upload.assert_called_once_with('my-snap-name', snap_file)
+            result = self.run_command(['push', self.snap_file])
+        self.assertThat(result.exit_code, Equals(0))
+        mock_upload.assert_called_once_with('basic', self.snap_file)
 
 
-class PushCommandDeltasWithPruneTestCase(tests.TestCase):
+class PushCommandDeltasWithPruneTestCase(PushCommandBaseTestCase):
 
     scenarios = [
         ('delete other cache files with valid name', {
@@ -454,8 +375,6 @@ class PushCommandDeltasWithPruneTestCase(tests.TestCase):
     ]
 
     def test_push_revision_prune_snap_cache(self):
-        self.useFixture(fixture_setup.FakeTerminal())
-
         snap_revision = 9
 
         patcher = mock.patch('snapcraft.storeapi.StoreClient.push_precheck')
@@ -487,7 +406,7 @@ class PushCommandDeltasWithPruneTestCase(tests.TestCase):
             BaseDirectory.xdg_cache_home,
             'snapcraft',
             'projects',
-            'my-snap-name',
+            'basic',
             'snap_hashes',
             deb_arch
         )
@@ -497,18 +416,14 @@ class PushCommandDeltasWithPruneTestCase(tests.TestCase):
             cached_snap = cached_snap.format(deb_arch)
             open(os.path.join(snap_cache, cached_snap), 'a').close()
 
-        # Create a snap
-        main(['init'])
-        main(['snap'])
-        snap_file = glob.glob('*.snap')[0]
-
         # Upload
         with mock.patch('snapcraft.storeapi.StatusTracker'):
-            main(['push', snap_file])
+            result = self.run_command(['push', self.snap_file])
+        self.assertThat(result.exit_code, Equals(0))
 
         real_cached_snap = os.path.join(
             snap_cache,
-            file_utils.calculate_sha3_384(snap_file)
+            file_utils.calculate_sha3_384(self.snap_file)
         )
 
         self.assertThat(os.path.join(snap_cache, real_cached_snap),

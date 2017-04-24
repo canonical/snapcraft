@@ -379,7 +379,6 @@ if _os.environ.get('SNAP_NAME') == 'snapcraft':
 
 from snapcraft._baseplugin import BasePlugin        # noqa
 from snapcraft._options import ProjectOptions       # noqa
-from snapcraft._help import topic_help              # noqa
 # FIXME LP: #1662658
 from snapcraft._store import (                      # noqa
     create_key,
@@ -390,7 +389,6 @@ from snapcraft._store import (                      # noqa
     list_keys,
     list_registered,
     login,
-    logout,
     push,
     register,
     register_key,

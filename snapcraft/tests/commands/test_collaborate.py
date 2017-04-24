@@ -62,8 +62,6 @@ class CollaborateTestCase(CollaborateBaseTestCase):
 
         self.popen_mock.assert_called_with(['snap', 'sign', '-k', 'keyname'],
                                            stderr=-1, stdin=-1, stdout=-1)
-        self.assertIn('Signing developers assertion for ubuntu-core',
-                      self.fake_logger.output)
         self.assertNotIn('Error signing developers assertion',
                          self.fake_logger.output)
         self.assertNotIn('Invalid response from the server',
@@ -95,8 +93,6 @@ class CollaborateErrorsTestCase(CollaborateBaseTestCase):
 
         _store.collaborate('core-no-dev', 'keyname')
 
-        self.assertIn('Signing developers assertion for core-no-dev',
-                      self.fake_logger.output)
         self.assertNotIn('Error signing developers assertion',
                          self.fake_logger.output)
         self.assertNotIn('Invalid response from the server',
@@ -124,5 +120,3 @@ class CollaborateErrorsTestCase(CollaborateBaseTestCase):
 
         self.assertIn('Aborting due to unchanged collaborators list.',
                       self.fake_logger.output)
-        self.assertNotIn('Signing developers assertion for ubuntu-core',
-                         self.fake_logger.output)

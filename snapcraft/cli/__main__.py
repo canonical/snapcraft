@@ -1,6 +1,7 @@
+#!/usr/bin/env python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,9 +14,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import snapcraft
 
-"""Snapcraft integrations layer.
+from . import run
 
-Defines 'enable-ci' command infrastructure to support multiple integrations
-systems in an isolated form.
-"""
+run(prog_name='snapcraft', obj=dict(project=snapcraft.ProjectOptions()))

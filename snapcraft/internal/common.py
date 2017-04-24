@@ -183,7 +183,7 @@ def reset_env():
 
 
 def get_terminal_width(max_width=MAX_CHARACTERS_WRAP):
-    if os.isatty(sys.stdout.fileno()):
+    if os.isatty(1):
         width = shutil.get_terminal_size().columns
     else:
         width = MAX_CHARACTERS_WRAP

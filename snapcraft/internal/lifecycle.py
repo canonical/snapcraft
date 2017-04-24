@@ -36,6 +36,7 @@ from snapcraft.internal import (
     pluginhandler,
     repo,
 )
+from snapcraft.internal import errors
 from snapcraft.internal.cache import SnapCache
 from snapcraft.internal.indicators import is_dumb_terminal
 from snapcraft.internal.project_loader import replace_attr
@@ -70,20 +71,19 @@ def init():
     snapcraft_yaml_path = os.path.join('snap', 'snapcraft.yaml')
 
     if os.path.exists(snapcraft_yaml_path):
-        raise EnvironmentError(
+        raise errors.SnapcraftEnvironmentError(
             '{} already exists!'.format(snapcraft_yaml_path))
     elif os.path.exists('snapcraft.yaml'):
-        raise EnvironmentError('snapcraft.yaml already exists!')
+        raise errors.SnapcraftEnvironmentError(
+            'snapcraft.yaml already exists!')
     elif os.path.exists('.snapcraft.yaml'):
-        raise EnvironmentError('.snapcraft.yaml already exists!')
+        raise errors.SnapcraftEnvironmentError(
+            '.snapcraft.yaml already exists!')
     yaml = _TEMPLATE_YAML
     with contextlib.suppress(FileExistsError):
         os.mkdir(os.path.dirname(snapcraft_yaml_path))
     with open(snapcraft_yaml_path, mode='w') as f:
         f.write(yaml)
-    logger.info('Created {}.'.format(snapcraft_yaml_path))
-    logger.info(
-        'Edit the file to your liking or run `snapcraft` to get started')
 
     return snapcraft_yaml_path
 
@@ -411,7 +411,6 @@ def snap(project_options, directory=None, output=None):
 
         logger.debug(proc.stdout.read().decode('utf-8'))
 
-    logger.info('Snapped {}'.format(snap_name))
     return snap_name
 
 
@@ -451,7 +450,7 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
                 humanized_parts = formatting_utils.humanize_list(
                     dependents, 'and')
 
-                raise RuntimeError(
+                raise errors.SnapcraftEnvironmentError(
                     'Requested clean of {!r} but {} depend{} upon it. Please '
                     "add each to the clean command if that's what you "
                     'intended.'.format(part_name, humanized_parts,
