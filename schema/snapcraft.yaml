@@ -54,6 +54,9 @@ properties:
     # type: string
     description: package version
     pattern: "^[a-zA-Z0-9.+~-]*$"
+  version-script:
+    type: string
+    description: a script that echoes the version to set.
   icon:
     type: string
     description: path to a 512x512 icon representing the package.
