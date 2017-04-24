@@ -844,6 +844,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         revoked_developers_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snaps/revoked/developers')
 
+
         if parsed_path.path.startswith(details_good):
             self._handle_scan_complete_request('ready_to_release', True)
         elif parsed_path.path.startswith(details_review):
@@ -868,6 +869,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             self._handle_developers_request('badrequest')
         elif parsed_path.path.startswith(revoked_developers_path):
             self._handle_developers_request('revoked')
+
         elif parsed_path.path.startswith(snap_path):
             if parsed_path.path.endswith('/history'):
                 self._handle_snap_revisions()
@@ -956,6 +958,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             status = 200
             response = {'snap_developer': {}}
             response = json.dumps(response).encode()
+
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()

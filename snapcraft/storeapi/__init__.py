@@ -320,8 +320,10 @@ class StoreClient():
                 file_sum.update(file_chunk)
         return expected_sha512 == file_sum.hexdigest()
 
+
     def push_assertion(self, snap_id, assertion, endpoint, force=False):
         return self.sca.push_assertion(snap_id, assertion, endpoint, force)
+
 
     def get_assertion(self, snap_id, endpoint):
         return self.sca.get_assertion(snap_id, endpoint)
@@ -595,6 +597,7 @@ class SCAClient(Client):
 
         return response_json
 
+
     def push_assertion(self, snap_id, assertion, endpoint, force):
         if endpoint == 'validations':
             data = {
@@ -615,6 +618,7 @@ class SCAClient(Client):
 
         response = self.put(
             url, data=json.dumps(data),
+            'snaps/{}/{}'.format(snap_id, endpoint), data=json.dumps(data),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json',
                      'Accept': 'application/json'})
