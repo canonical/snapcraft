@@ -153,3 +153,42 @@ class GetSourceTestClass(tests.TestCase):
         sources.get('src', 'useless-arg', Options())
 
         self.assertTrue(os.path.isdir('src'))
+
+
+class GetSourceHandlerTestClass(tests.TestCase):
+
+    def test_get_handler_with_unknown_source_type_must_raise_error(self):
+        source = '.'
+        unknown_source_type = 'nothing'
+
+        raised = self.assertRaises(
+            ValueError,
+            sources.get_source_handler,
+            source,
+            source_type=unknown_source_type)
+
+        self.assertEqual(
+            str(raised),
+            'invalid snapcraft.yaml: '
+            'unknown source type: {}'.format(unknown_source_type))
+
+    def test_get_handler_with_none_source_type_returns_Local_handler(self):
+        source = '.'
+        none_source_type = None
+
+        handler = sources.get_source_handler(
+            source,
+            source_type=none_source_type)
+
+        self.assertEqual(
+            handler,
+            sources.Local)
+
+    def test_get_handler_with_default_source_type_returns_Local_handler(self):
+        source = '.'
+
+        handler = sources.get_source_handler(source)
+
+        self.assertEqual(
+            handler,
+            sources.Local)

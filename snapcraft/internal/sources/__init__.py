@@ -149,6 +149,7 @@ _source_handler = {
     'svn': Subversion,
     'tar': Tar,
     'zip': Zip,
+    '': Local,
 }
 if sys.platform == 'linux':
     _source_handler['deb'] = Deb
@@ -164,7 +165,14 @@ def get_source_handler(source, *, source_type=''):
     if not source_type:
         source_type = _get_source_type_from_uri(source)
 
-    return _source_handler.get(source_type, Local)
+    handler = _source_handler.get(source_type, None)
+
+    if not handler:
+        raise ValueError((
+            'invalid snapcraft.yaml: '
+            'unknown source type: {}').format(source_type))
+
+    return handler
 
 
 _tar_type_regex = re.compile(r'.*\.((tar(\.(xz|gz|bz2))?)|tgz)$')
