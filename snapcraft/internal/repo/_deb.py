@@ -450,7 +450,7 @@ def _format_sources_list(sources_list, *,
         'release': release,
         'suffix': suffix,
         'security': security,
-    }).replace('deb', 'deb[arch={}]'.format(deb_arch) if foreign else 'deb')
+    }).replace('deb', 'deb [arch={}]'.format(deb_arch) if foreign else 'deb')
 
 
 def _fix_filemode(path):
