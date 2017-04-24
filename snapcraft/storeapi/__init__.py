@@ -320,8 +320,8 @@ class StoreClient():
                 file_sum.update(file_chunk)
         return expected_sha512 == file_sum.hexdigest()
 
-    def push_assertion(self, snap_id, assertion, endpoint):
-        return self.sca.push_assertion(snap_id, assertion, endpoint)
+    def push_assertion(self, snap_id, assertion, endpoint, force=False):
+        return self.sca.push_assertion(snap_id, assertion, endpoint, force)
 
     def get_assertion(self, snap_id, endpoint):
         return self.sca.get_assertion(snap_id, endpoint)
@@ -595,7 +595,7 @@ class SCAClient(Client):
 
         return response_json
 
-    def push_assertion(self, snap_id, assertion, endpoint):
+    def push_assertion(self, snap_id, assertion, endpoint, force):
         if endpoint == 'validations':
             data = {
                 'assertion': assertion.decode('utf-8'),
@@ -605,11 +605,20 @@ class SCAClient(Client):
                 'snap_developer': assertion.decode('utf-8'),
             }
         auth = _macaroon_auth(self.conf)
+
+        url = 'snaps/{}/{}'.format(snap_id, endpoint)
+
+        # For `snap-developer`, revoking developers will require their uploads
+        # to be invalidated.
+        if force:
+            url = url + '?ignore_revoked_uploads'
+
         response = self.put(
-            'snaps/{}/{}'.format(snap_id, endpoint), data=json.dumps(data),
+            url, data=json.dumps(data),
             headers={'Authorization': auth,
                      'Content-Type': 'application/json',
                      'Accept': 'application/json'})
+
         if not response.ok:
             raise errors.StoreValidationError(snap_id, response)
         try:
