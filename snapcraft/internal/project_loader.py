@@ -121,13 +121,13 @@ class Config:
 
         snapcraft_yaml = self._process_remote_parts(snapcraft_yaml)
         snapcraft_yaml = self._expand_filesets(snapcraft_yaml)
-        self.data = self._expand_env(snapcraft_yaml)
-
-        self._ensure_no_duplicate_app_aliases()
 
         # both confinement type and build quality are optionals
-        _ensure_confinement_default(self.data, self._validator.schema)
-        _ensure_grade_default(self.data, self._validator.schema)
+        _ensure_confinement_default(snapcraft_yaml, self._validator.schema)
+        _ensure_grade_default(snapcraft_yaml, self._validator.schema)
+
+        self.data = self._expand_env(snapcraft_yaml)
+        self._ensure_no_duplicate_app_aliases()
 
         self.build_tools = self.data.get('build-packages', [])
         self.build_tools.extend(project_options.additional_build_packages)
@@ -214,6 +214,7 @@ class Config:
             'SNAPCRAFT_STAGE={}'.format(self._project_options.stage_dir),
             'SNAPCRAFT_PROJECT_NAME={}'.format(self.data['name']),
             'SNAPCRAFT_PROJECT_VERSION={}'.format(self.data['version']),
+            'SNAPCRAFT_PROJECT_GRADE={}'.format(self.data['grade']),
         ]
 
     def _expand_env(self, snapcraft_yaml):
@@ -226,6 +227,7 @@ class Config:
                 [
                     ('$SNAPCRAFT_PROJECT_NAME', snapcraft_yaml['name']),
                     ('$SNAPCRAFT_PROJECT_VERSION', snapcraft_yaml['version']),
+                    ('$SNAPCRAFT_PROJECT_GRADE', snapcraft_yaml['grade']),
                     ('$SNAPCRAFT_STAGE', self._project_options.stage_dir),
                 ])
         return snapcraft_yaml
