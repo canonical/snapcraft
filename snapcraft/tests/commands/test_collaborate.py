@@ -105,4 +105,3 @@ class CollaborateTestCase(tests.TestCase):
         self.assertEqual(
             'Received error 409: "The assertion\'s `developers` would revoke '
             'existing uploads."', str(err))
-

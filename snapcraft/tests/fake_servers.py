@@ -844,7 +844,6 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         revoked_developers_path = urllib.parse.urljoin(
             self._DEV_API_PATH, 'snaps/revoked/developers')
 
-
         if parsed_path.path.startswith(details_good):
             self._handle_scan_complete_request('ready_to_release', True)
         elif parsed_path.path.startswith(details_review):

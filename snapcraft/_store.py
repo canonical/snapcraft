@@ -848,7 +848,6 @@ def collaborate(snap_name, key):
 
     assertion = _sign_assertion(snap_name, assertion, key, 'developers')
 
-
     try:
         store.push_assertion(snap_id, assertion, 'developers')
     except storeapi.errors.StoreValidationError as e:
@@ -863,7 +862,6 @@ def collaborate(snap_name, key):
                 sys.exit(1)
         else:
             raise
-
 
 
 def _get_developers(snap_id, publisher_id):
