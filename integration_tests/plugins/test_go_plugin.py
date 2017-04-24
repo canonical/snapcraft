@@ -33,3 +33,8 @@ class GoPluginTestCase(integration_tests.TestCase):
 
     def test_building_multiple_main_packages(self):
         self.run_snapcraft('stage', 'go-with-multiple-main-packages')
+
+    def test_cross_compiling(self):
+        arch = 'armhf'
+        with self.setup_multi_arch_sources(arch):
+            self.run_snapcraft('stage', 'go-cgo', '--target={}'.format(arch))
