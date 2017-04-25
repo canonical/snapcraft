@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -534,18 +534,27 @@ def _get_text_for_opened_channels(opened_channels):
 
 def _get_text_for_channel(channel):
     if channel['info'] == 'none':
-        channel_text = (channel['channel'], '-', '-')
+        channel_text = (channel['channel'], '-', '-', '')
     elif channel['info'] == 'tracking':
-        channel_text = (channel['channel'], '^', '^')
+        channel_text = (channel['channel'], '^', '^', '')
     elif channel['info'] == 'specific':
         channel_text = (
             channel['channel'],
             channel['version'],
             channel['revision'],
+            '',
+        )
+    elif channel['info'] == 'branch':
+        channel_text = (
+            channel['channel'],
+            channel['version'],
+            channel['revision'],
+            channel['expires_at'],
         )
     else:
-        raise RuntimeError('Unexpected channel info {!r}.'.format(
-            channel['info']))
+        logger.error('Unexpected channel info: %r in channel %s',
+                     channel['info'], channel['channel'])
+        channel_text = (channel['channel'], '', '', '')
 
     return channel_text
 
@@ -603,30 +612,11 @@ def _tabulated_channel_map_tree(channel_map_tree):
         ]
         data += parsed_channels
 
-    headers = ['Track', 'Arch', 'Channel', 'Version', 'Revision']
-    return tabulate(
-        data, numalign='left',
-        headers=headers,
-        tablefmt='plain'
-    )
-
-
-def _tabulated_status(status):
-    """Tabulate status (architecture-specific channel-maps)."""
-    def _format_channel_map(channel_map, arch):
-        return [
-            (printable_arch,) + _get_text_for_channel(channel)
-            for printable_arch, channel in zip(
-                    [arch] + [''] * len(channel_map), channel_map)]
-
-    parsed_channels = [
-        channel
-        for arch, channel_map in sorted(status.items())
-        for channel in _format_channel_map(channel_map, arch)]
-    return tabulate(
-        parsed_channels, numalign='left',
-        headers=['Arch', 'Channel', 'Version', 'Revision'],
-        tablefmt='plain')
+    have_expiration = any(x[5] for x in data)
+    expires_at_header = "Expires at" if have_expiration else ""
+    headers = ['Track', 'Arch', 'Channel',
+               'Version', 'Revision', expires_at_header]
+    return tabulate(data, numalign='left', headers=headers, tablefmt='plain')
 
 
 def close(snap_name, channel_names):
