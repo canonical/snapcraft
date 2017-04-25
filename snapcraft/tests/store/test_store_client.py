@@ -327,6 +327,13 @@ class GetAccountInformationTestCase(StoreTestCase):
                         'price': None,
                         'since': '2016-12-12T01:01:01Z',
                     },
+                    'revoked': {
+                        'snap-id': 'revoked',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
+                    },
                     'badrequest': {
                         'snap-id': 'badrequest',
                         'status': 'Approved',
@@ -362,6 +369,13 @@ class GetAccountInformationTestCase(StoreTestCase):
                     },
                     'core-no-dev': {
                         'snap-id': 'no-dev',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
+                    },
+                    'revoked': {
+                        'snap-id': 'revoked',
                         'status': 'Approved',
                         'private': False,
                         'price': None,
