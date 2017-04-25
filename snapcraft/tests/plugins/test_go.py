@@ -26,6 +26,14 @@ from snapcraft import tests
 
 class GoPluginCrossCompileTestCase(tests.TestCase):
 
+    scenarios = [
+        ('armv7l', dict(deb_arch='armhf', go_arch='arm')),
+        ('aarch64', dict(deb_arch='arm64', go_arch='arm64')),
+        ('i386', dict(deb_arch='i386', go_arch='386')),
+        ('x86_64', dict(deb_arch='amd64', go_arch='amd64')),
+        ('ppc64le', dict(deb_arch='ppc64el', go_arch='ppc64le')),
+    ]
+
     def setUp(self):
         super().setUp()
 
@@ -63,14 +71,6 @@ class GoPluginCrossCompileTestCase(tests.TestCase):
             self.assertTrue(
                 'GOARCH' in env, 'Expected environment to include GOARCH')
             self.assertEqual(env['GOARCH'], self.go_arch)
-
-    scenarios = [
-        ('armv7l', dict(deb_arch='armhf', go_arch='arm')),
-        ('aarch64', dict(deb_arch='arm64', go_arch='arm64')),
-        ('i386', dict(deb_arch='i386', go_arch='386')),
-        ('x86_64', dict(deb_arch='amd64', go_arch='amd64')),
-        ('ppc64le', dict(deb_arch='ppc64el', go_arch='ppc64le')),
-    ]
 
 
 class GoPluginTestCase(tests.TestCase):
