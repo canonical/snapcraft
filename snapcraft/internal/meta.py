@@ -80,6 +80,19 @@ def create_snap_packaging(config_data, project_options):
     return packaging.meta_dir
 
 
+def record_snapcraft(config_data, project_options):
+    record_dir = os.path.join(project_options.snap_dir, 'snap')
+    record_file_path = os.path.join(record_dir, 'snapcraft.yaml')
+    if os.path.isfile(record_file_path):
+        os.unlink(record_file_path)
+
+    # FIXME hide this functionality behind a feature flag for now
+    if os.environ.get('SNAPCRAFT_BUILD_INFO'):
+        os.makedirs(record_dir, exist_ok=True)
+        with open(record_file_path, 'w') as record_file:
+            yaml.dump(config_data, record_file)
+
+
 class _SnapPackaging:
 
     @property

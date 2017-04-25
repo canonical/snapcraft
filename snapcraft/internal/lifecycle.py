@@ -211,7 +211,6 @@ class _Executor:
                     self._steps_run[part.name].add(step)
 
         self._create_meta(step, part_names)
-        self._record_snapcraft(step, part_names)
 
     def _run_step(self, step, part, part_names):
         common.reset_env()
@@ -250,21 +249,8 @@ class _Executor:
     def _create_meta(self, step, part_names):
         if step == 'prime' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
-            meta.create_snap_packaging(self.config.data,
-                                       self.project_options)
-
-    def _record_snapcraft(self, step, part_names):
-        if step == 'prime' and part_names == self.config.part_names:
-            record_dir = os.path.join(self.project_options.snap_dir, 'snap')
-            record_file_path = os.path.join(record_dir, 'snapcraft.yaml')
-            if os.path.isfile(record_file_path):
-                os.unlink(record_file_path)
-
-            # FIXME hide this functionality behind a feature flag for now
-            if os.environ.get('SNAPCRAFT_BUILD_INFO'):
-                os.makedirs(record_dir, exist_ok=True)
-                with open(record_file_path, 'w') as record_file:
-                    yaml.dump(self.config.data, record_file)
+            meta.create_snap_packaging(self.config.data, self.project_options)
+            meta.record_snapcraft(self.config.data, self.project_options)
 
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
