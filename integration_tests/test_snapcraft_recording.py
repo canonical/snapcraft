@@ -25,6 +25,9 @@ import integration_tests
 class SnapcraftRecordingTestCase(integration_tests.TestCase):
 
     def test_prime_records_snapcraft_yaml(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+
         self.run_snapcraft('prime', project_dir='basic')
         recorded_yaml_path = os.path.join(
             self.prime_dir, 'snap', 'snapcraft.yaml')

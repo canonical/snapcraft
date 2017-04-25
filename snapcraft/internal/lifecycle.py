@@ -257,9 +257,14 @@ class _Executor:
         if step == 'prime' and part_names == self.config.part_names:
             record_dir = os.path.join(self.project_options.snap_dir, 'snap')
             record_file_path = os.path.join(record_dir, 'snapcraft.yaml')
-            os.makedirs(record_dir, exist_ok=True)
-            with open(record_file_path, 'w') as record_file:
-                yaml.dump(self.config.data, record_file)
+            if os.path.isfile(record_file_path):
+                os.unlink(record_file_path)
+
+            # FIXME hide this functionality behind a feature flag for now
+            if os.environ.get('SNAPCRAFT_BUILD_INFO'):
+                os.makedirs(record_dir, exist_ok=True)
+                with open(record_file_path, 'w') as record_file:
+                    yaml.dump(self.config.data, record_file)
 
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
