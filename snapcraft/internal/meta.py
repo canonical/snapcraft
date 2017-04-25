@@ -80,19 +80,6 @@ def create_snap_packaging(config_data, project_options):
     return packaging.meta_dir
 
 
-def record_snapcraft(config_data, project_options):
-    record_dir = os.path.join(project_options.snap_dir, 'snap')
-    record_file_path = os.path.join(record_dir, 'snapcraft.yaml')
-    if os.path.isfile(record_file_path):
-        os.unlink(record_file_path)
-
-    # FIXME hide this functionality behind a feature flag for now
-    if os.environ.get('SNAPCRAFT_BUILD_INFO'):
-        os.makedirs(record_dir, exist_ok=True)
-        with open(record_file_path, 'w') as record_file:
-            yaml.dump(config_data, record_file)
-
-
 class _SnapPackaging:
 
     @property
@@ -140,6 +127,18 @@ class _SnapPackaging:
             file_utils.link_or_copy(
                 'gadget.yaml', os.path.join(self.meta_dir, 'gadget.yaml'))
 
+    def _record_snapcraft(self):
+        record_dir = os.path.join(self._snap_dir, 'snap')
+        record_file_path = os.path.join(record_dir, 'snapcraft.yaml')
+        if os.path.isfile(record_file_path):
+            os.unlink(record_file_path)
+
+        # FIXME hide this functionality behind a feature flag for now
+        if os.environ.get('SNAPCRAFT_BUILD_INFO'):
+            os.makedirs(record_dir, exist_ok=True)
+            with open(record_file_path, 'w') as record_file:
+                yaml.dump(self._config_data, record_file)
+
     def write_snap_directory(self):
         # First migrate the snap directory. It will overwrite any conflicting
         # files.
@@ -175,6 +174,8 @@ class _SnapPackaging:
                         os.remove(destination)
 
                     file_utils.link_or_copy(source, destination)
+
+        self._record_snapcraft()
 
     def generate_hook_wrappers(self):
         snap_hooks_dir = os.path.join(self._snap_dir, 'snap', 'hooks')
