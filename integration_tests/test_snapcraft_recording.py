@@ -17,6 +17,7 @@
 import os
 import yaml
 
+import fixtures
 from testtools.matchers import FileExists
 
 import integration_tests
