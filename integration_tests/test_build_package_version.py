@@ -19,29 +19,50 @@ import subprocess
 
 import apt
 import fixtures
+import testscenarios
+import yaml
+from testtools.matchers import Equals
 
 import integration_tests
 
 
-class BuildPackageVersionTestCase(integration_tests.TestCase):
+class BuildPackageVersionTestCase(testscenarios.WithScenarios,
+                                  integration_tests.TestCase):
+
+    scenarios = (
+        ('global', dict(project='build-package-version')),
+        ('local', dict(project='build-package-version-global')),
+    )
+
+    def setUp(self):
+        super().setUp()
+        self.pkg_name = 'hello'
+        self.pkg_version = integration_tests.get_package_version(
+            self.pkg_name, self.distro_series, self.deb_arch)
+        self.hello_package = '{}={}'.format(self.pkg_name, self.pkg_version)
+
+    def _set_hello_package_version(self, snapcraft_yaml_file):
+        with open(snapcraft_yaml_file) as f:
+            snapcraft_yaml = yaml.load(f)
+        if 'build-packages' in snapcraft_yaml:
+            snapcraft_yaml['build-packages'] = [self.hello_package]
+        else:
+            snapcraft_yaml['parts']['hello']['build-packages'] = \
+                [self.hello_package]
+        with open(snapcraft_yaml_file, 'w') as f:
+            yaml.dump(snapcraft_yaml, f)
 
     def test_build_package_gets_version(self):
-        self.run_snapcraft('pull', 'build-package-version')
-        pkg = 'hello'
-        expected_version = '2.10-1'
-        with apt.Cache() as apt_cache:
-            installed_version = apt_cache[pkg].candidate.version
-            self.assertEqual(expected_version,
-                             installed_version)
+        self.copy_project_to_cwd(self.project)
+        self._set_hello_package_version(os.path.join('snap', 'snapcraft.yaml'))
+        self.run_snapcraft('pull')
 
-    def test_global_build_package_gets_version(self):
-        self.run_snapcraft('pull', 'build-package-version-global')
-        pkg = 'hello'
-        expected_version = '2.10-1'
         with apt.Cache() as apt_cache:
-            installed_version = apt_cache[pkg].candidate.version
-            self.assertEqual(expected_version,
-                             installed_version)
+            installed_version = apt_cache[self.pkg_name].candidate.version
+        self.assertThat(installed_version, Equals(self.pkg_version))
+
+
+class BuildPackageVersionErrorsTestCase(integration_tests.TestCase):
 
     def test_build_package_bad_version(self):
         error = self.assertRaises(

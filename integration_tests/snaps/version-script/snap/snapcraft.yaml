@@ -1,0 +1,17 @@
+name: version-script-test
+architectures: [amd64]
+version: "0.1"
+version-script: echo 0.1
+summary: test variations of the version script
+description: |
+  Add different scripts for version-script and verify they do the right
+  thing.
+
+grade: devel
+confinement: devmode
+
+parts:
+  dummy:
+    plugin: nil
+    install: |
+      echo "test-build" > $SNAPCRAFT_PART_INSTALL/version

@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 import logging
 import os
 import sys
@@ -25,6 +26,7 @@ from time import sleep
 import petname
 
 from snapcraft.internal.errors import SnapcraftEnvironmentError
+from snapcraft.internal import common
 
 logger = logging.getLogger(__name__)
 
@@ -34,19 +36,22 @@ _NETWORK_PROBE_COMMAND = \
 _PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
 
 
-class Cleanbuilder:
+class Containerbuild:
 
-    def __init__(self, snap_output, tar_filename, project_options,
-                 remote=None):
-        self._snap_output = snap_output
-        self._tar_filename = tar_filename
+    def __init__(self, *, output, source, project_options,
+                 metadata, container_name, remote=None):
+        if not output:
+            output = common.format_snap_name(metadata)
+        self._snap_output = output
+        self._source = os.path.realpath(source)
         self._project_options = project_options
-        container_name = 'snapcraft-{}'.format(petname.Generate(3, '-'))
+        self._metadata = metadata
+        self._project_folder = 'build_{}'.format(metadata['name'])
 
         if not remote:
             remote = _get_default_remote()
         _verify_remote(remote)
-        self._container_name = '{}:{}'.format(remote, container_name)
+        self._container_name = '{}:snapcraft-{}'.format(remote, container_name)
 
     def _push_file(self, src, dst):
         check_call(['lxc', 'file', 'push',
@@ -57,18 +62,23 @@ class Cleanbuilder:
                     '{}/{}'.format(self._container_name, src), dst])
 
     def _container_run(self, cmd):
-        check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
+        # Set HOME here as 'lxc config set ... environment.HOME' doesn't work
+        check_call(['lxc', 'exec', self._container_name, '--env',
+                   'HOME=/{}'.format(self._project_folder), '--'] + cmd)
+
+    def _ensure_container(self):
+        check_call([
+            'lxc', 'launch', '-e',
+            'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
+            self._container_name])
+        check_call([
+            'lxc', 'config', 'set', self._container_name,
+            'environment.SNAPCRAFT_SETUP_CORE', '1'])
 
     @contextmanager
-    def _create_container(self):
+    def _ensure_started(self):
         try:
-            check_call([
-                'lxc', 'launch', '-e',
-                'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
-                self._container_name])
-            check_call([
-                'lxc', 'config', 'set', self._container_name,
-                'environment.SNAPCRAFT_SETUP_CORE', '1'])
+            self._ensure_container()
             yield
         finally:
             # Stopping takes a while and lxc doesn't print anything.
@@ -76,7 +86,7 @@ class Cleanbuilder:
             check_call(['lxc', 'stop', '-f', self._container_name])
 
     def execute(self):
-        with self._create_container():
+        with self._ensure_started():
             self._setup_project()
             self._wait_for_network()
             self._container_run(['apt-get', 'update'])
@@ -91,16 +101,19 @@ class Cleanbuilder:
                 else:
                     raise e
             else:
-                self._pull_snap()
+                self._finish()
 
     def _setup_project(self):
         logger.info('Setting up container with project assets')
-        dst = os.path.join('/root', os.path.basename(self._tar_filename))
-        self._push_file(self._tar_filename, dst)
-        self._container_run(['tar', 'xvf', dst])
+        tar_filename = self._source
+        dst = os.path.join(self._project_folder,
+                           os.path.basename(tar_filename))
+        self._container_run(['mkdir', self._project_folder])
+        self._push_file(tar_filename, dst)
+        self._container_run(['tar', 'xvf', os.path.basename(tar_filename)])
 
-    def _pull_snap(self):
-        src = os.path.join('/root', self._snap_output)
+    def _finish(self):
+        src = os.path.join(self._project_folder, self._snap_output)
         self._pull_file(src, self._snap_output)
         logger.info('Retrieved {}'.format(self._snap_output))
 
@@ -118,6 +131,66 @@ class Cleanbuilder:
                 if retry_count == 0:
                     raise e
         logger.info('Network connection established')
+
+
+class Cleanbuilder(Containerbuild):
+
+    def __init__(self, *, output=None, source, project_options,
+                 metadata=None, remote=None):
+        container_name = petname.Generate(3, '-')
+        super().__init__(output=output, source=source,
+                         project_options=project_options, metadata=metadata,
+                         container_name=container_name, remote=remote)
+
+
+class Project(Containerbuild):
+
+    def __init__(self, *, output, source, project_options,
+                 metadata, remote=None):
+        super().__init__(output=output, source=source,
+                         project_options=project_options,
+                         metadata=metadata, container_name=metadata['name'],
+                         remote=remote)
+
+    def _get_container_status(self):
+        containers = json.loads(check_output([
+            'lxc', 'list', '--format=json', self._container_name]).decode())
+        for container in containers:
+            if container['name'] == self._container_name.split(':')[-1]:
+                return container
+
+    def _ensure_container(self):
+        if not self._get_container_status():
+            check_call([
+                'lxc', 'init',
+                'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
+                self._container_name])
+            check_call([
+                'lxc', 'config', 'set', self._container_name,
+                'environment.SNAPCRAFT_SETUP_CORE', '1'])
+            # Map host user to root inside container
+            check_call([
+                'lxc', 'config', 'set', self._container_name,
+                'raw.idmap', 'both 1000 0'])
+        if self._get_container_status()['status'] == 'Stopped':
+            check_call([
+                'lxc', 'start', self._container_name])
+
+    def _setup_project(self):
+        self._ensure_mount(self._project_folder, self._source)
+
+    def _ensure_mount(self, destination, source):
+        logger.info('Mounting {} into container'.format(source))
+        devices = self._get_container_status()['devices']
+        if destination not in devices:
+            check_call([
+                'lxc', 'config', 'device', 'add', self._container_name,
+                destination, 'disk', 'source={}'.format(source),
+                'path=/{}'.format(destination)])
+
+    def _finish(self):
+        # Nothing to do
+        pass
 
 
 def _get_default_remote():

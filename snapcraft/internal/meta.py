@@ -23,7 +23,6 @@ import shlex
 import shutil
 import stat
 import subprocess
-import tempfile
 
 import yaml
 
@@ -32,6 +31,7 @@ from snapcraft import shell_utils
 from snapcraft.internal import common, project_loader
 from snapcraft.internal.errors import MissingGadgetError
 from snapcraft.internal.deprecations import handle_deprecation_notice
+from snapcraft.internal.sources import get_source_handler_from_type
 
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,6 @@ logger = logging.getLogger(__name__)
 
 _MANDATORY_PACKAGE_KEYS = [
     'name',
-    'version',
     'description',
     'summary',
 ]
@@ -254,6 +253,10 @@ class _SnapPackaging:
         for key_name in _MANDATORY_PACKAGE_KEYS:
             snap_yaml[key_name] = self._config_data[key_name]
 
+        snap_yaml['version'] = self._get_version(
+            self._config_data['version'],
+            self._config_data.get('version-script'))
+
         for key_name in _OPTIONAL_PACKAGE_KEYS:
             if key_name in self._config_data:
                 snap_yaml[key_name] = self._config_data[key_name]
@@ -262,6 +265,30 @@ class _SnapPackaging:
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
 
         return snap_yaml
+
+    def _get_version(self, version, version_script=None):
+        new_version = version
+        if version_script:
+            logger.info('Determining the version from the project '
+                        'repo (version-script).')
+            try:
+                new_version = shell_utils.run_script(version_script).strip()
+                if not new_version:
+                    raise CommandError('The version-script produced no output')
+            except subprocess.CalledProcessError as e:
+                raise CommandError(
+                    'The version-script failed to run (exit code {})'.format(
+                        e.returncode))
+        # we want to whitelist what we support here.
+        elif version == 'git':
+            logger.info('Determining the version from the project '
+                        'repo (version: git).')
+            vcs_handler = get_source_handler_from_type('git')
+            new_version = vcs_handler.generate_version()
+
+        if new_version != version:
+            logger.info('The version has been set to {!r}'.format(new_version))
+        return new_version
 
     def _write_wrap_exe(self, wrapexec, wrappath,
                         shebang=None, args=None, cwd=None):
@@ -424,17 +451,10 @@ class _DesktopFile:
 def _find_bin(binary, basedir):
     # If it doesn't exist it might be in the path
     logger.debug('Checking that {!r} is in the $PATH'.format(binary))
-    script = ('#!/bin/sh\n' +
-              '{}\n'.format(common.assemble_env()) +
-              'which "{}"\n'.format(binary))
-    with tempfile.NamedTemporaryFile('w+') as tempf:
-        tempf.write(script)
-        tempf.flush()
-        try:
-            common.run(['/bin/sh', tempf.name], cwd=basedir,
-                       stdout=subprocess.DEVNULL)
-        except subprocess.CalledProcessError:
-            raise CommandError(binary)
+    try:
+        shell_utils.which(binary, cwd=basedir)
+    except subprocess.CalledProcessError:
+        raise CommandError(binary)
 
 
 def _validate_hook(hook_path):

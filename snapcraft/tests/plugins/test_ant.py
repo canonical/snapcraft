@@ -17,6 +17,8 @@
 import os
 import copy
 from unittest import mock
+
+import fixtures
 from testtools.matchers import HasLength
 
 import snapcraft
@@ -113,4 +115,25 @@ class AntPluginTestCase(tests.TestCase):
              'jar', 'lib1.jar'), 'w').close()
         open(os.path.join(plugin.installdir,
              'jar', 'lib2.jar'), 'w').close()
-        plugin.env(plugin.partdir)
+        env = plugin.env(plugin.partdir)
+        self.assertIn(
+            'CLASSPATH={}/jar/lib1.jar:{}/jar/lib2.jar:$CLASSPATH'.format(
+                plugin.partdir, plugin.partdir),
+            env)
+
+    def test_env_proxies(self):
+        env_vars = (
+            ('http_proxy', 'http://localhost:3132'),
+            ('https_proxy', 'http://localhost2:3133'),
+        )
+        for v in env_vars:
+            self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
+        plugin = ant.AntPlugin('test-part', self.options,
+                               self.project_options)
+
+        env = plugin.env(plugin.partdir)
+        self.assertIn(
+            "ANT_OPTS='"
+            "-Dhttp.proxyHost=localhost -Dhttp.proxyPort=3132 "
+            "-Dhttps.proxyHost=localhost2 -Dhttps.proxyPort=3133'",
+            env)

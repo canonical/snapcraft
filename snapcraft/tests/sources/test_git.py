@@ -16,10 +16,12 @@
 
 import os
 import shutil
+from subprocess import CalledProcessError
 from unittest import mock
 
-from snapcraft.internal import sources
+from testtools.matchers import Equals
 
+from snapcraft.internal import sources
 from snapcraft.tests.sources import SourceTestCase
 from snapcraft.tests.subprocess_utils import (
     call,
@@ -385,3 +387,59 @@ class GitDetailsTestCase(GitBaseTestCase):
 
         self.source_details = self.git._get_source_details()
         self.assertEqual(self.expected_tag, self.source_details['source-tag'])
+
+
+class GitGenerateVersionBaseTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('subprocess.check_output')
+        self.output_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('subprocess.Popen')
+        self.popen_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+
+class GitGenerateVersionTestCase(GitGenerateVersionBaseTestCase):
+
+    scenarios = (
+        ('only_tag', dict(return_value='2.28',
+                          expected='2.28')),
+        ('tag+commits', dict(return_value='2.28-28-gabcdef1',
+                             expected='2.28+git28.abcdef1')),
+        ('tag+dirty', dict(return_value='2.28-29-gabcdef1-dirty',
+                           expected='2.28+git29.abcdef1-dirty')),
+    )
+
+    def test_version(self):
+        self.output_mock.return_value = self.return_value.encode('utf-8')
+        self.assertThat(sources.Git.generate_version(), Equals(self.expected))
+
+
+class GitGenerateVersionNoTagTestCase(GitGenerateVersionBaseTestCase):
+
+    def test_version(self):
+        self.output_mock.side_effect = CalledProcessError(1, [])
+        proc_mock = mock.Mock()
+        proc_mock.returncode = 0
+        proc_mock.communicate.return_value = (b'abcdef1', b'')
+        self.popen_mock.return_value = proc_mock
+
+        expected = '0+git.abcdef1'
+        self.assertThat(sources.Git.generate_version(), Equals(expected))
+
+
+class GitGenerateVersionNoGitTestCase(GitGenerateVersionBaseTestCase):
+
+    def test_version(self):
+        self.output_mock.side_effect = CalledProcessError(1, [])
+        proc_mock = mock.Mock()
+        proc_mock.returncode = 2
+        proc_mock.communicate.return_value = (b'', b'No .git')
+        self.popen_mock.return_value = proc_mock
+
+        self.assertRaises(sources.errors.VCSError,
+                          sources.Git.generate_version)

@@ -19,6 +19,7 @@ import os
 import os.path
 import subprocess
 from unittest import mock
+from unittest.mock import call
 
 import fixtures
 from testtools.matchers import (
@@ -29,6 +30,75 @@ from testtools.matchers import (
 
 from snapcraft.main import main
 from snapcraft import tests
+
+
+class SnapCommandContainerized(tests.TestCase):
+
+    yaml_template = """name: snap-test
+version: 1.0
+summary: test containerized snap
+description: if snap is succesful a snap package will be available
+architectures: ['amd64']
+confinement: strict
+grade: stable
+
+parts:
+    part1:
+      plugin: nil
+"""
+
+    scenarios = [
+        ('local', dict(args=[], remote='local')),
+        ('remote', dict(args=['--remote=my-remote'], remote='my-remote')),
+    ]
+
+    def make_snapcraft_yaml(self, n=1):
+        super().make_snapcraft_yaml(self.yaml_template)
+
+    def test_snap_defaults(self):
+        fake_lxd = tests.fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml()
+
+        main(['snap', '--debug', *self.args])
+
+        source = os.path.realpath(os.path.curdir)
+        self.assertIn(
+            'Mounting {} into container\n'
+            'Waiting for a network connection...\n'
+            'Network connection established\n'.format(source),
+            fake_logger.output)
+
+        container_name = '{}:snapcraft-snap-test'.format(self.remote)
+        project_folder = 'build_snap-test'
+        fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'start', container_name]),
+            call(['lxc', 'config', 'device', 'add', container_name,
+                  project_folder, 'disk', 'source={}'.format(source),
+                  'path=/{}'.format(project_folder)]),
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/{}'.format(project_folder), '--',
+                  'python3', '-c',
+                  'import urllib.request; '
+                  'urllib.request.urlopen('
+                  '"http://start.ubuntu.com/connectivity-check.html", '
+                  'timeout=5)']),
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/{}'.format(project_folder), '--',
+                  'apt-get', 'update']),
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/{}'.format(project_folder), '--',
+                  'apt-get', 'install', 'snapcraft', '-y']),
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/{}'.format(project_folder), '--',
+                  'snapcraft', 'snap', '--output',
+                  'snap-test_1.0_amd64.snap']),
+            call(['lxc', 'stop', '-f', container_name]),
+        ])
 
 
 class SnapCommandTestCase(tests.TestCase):
@@ -297,6 +367,12 @@ type: os
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('mysnap.snap', FileExists())
+
+    def test_snap_containerless_no_remote(self):
+        raised = self.assertRaises(RuntimeError,
+                                   main, ['--debug', '--remote=my-remote'])
+        expected = '--remote can only be used with SNAPCRAFT_CONTAINER_BUILDS'
+        self.assertIn(expected, str(raised))
 
     @mock.patch('time.time')
     def test_snap_renames_stale_snap_build(self, mocked_time):

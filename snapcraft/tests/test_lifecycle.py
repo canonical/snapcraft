@@ -541,8 +541,8 @@ grade: stable
             self.fake_logger.output)
 
         self.assertEqual(
-            "The 'build' step of 'part1' is out of date:\n\n"
-            "The 'bar' and 'foo' part properties appear to have changed.\n\n"
+            "The 'build' step of 'part1' is out of date:\n"
+            "The 'bar' and 'foo' part properties appear to have changed.\n"
             "In order to continue, please clean that part's 'build' step "
             "by running: snapcraft clean part1 -s build\n",
             str(raised))
@@ -576,8 +576,8 @@ grade: stable
         self.assertEqual('', self.fake_logger.output)
 
         self.assertEqual(
-            "The 'pull' step of 'part1' is out of date:\n\n"
-            "The 'bar' and 'foo' project options appear to have changed.\n\n"
+            "The 'pull' step of 'part1' is out of date:\n"
+            "The 'bar' and 'foo' project options appear to have changed.\n"
             "In order to continue, please clean that part's 'pull' step "
             "by running: snapcraft clean part1 -s pull\n",
             str(raised))
@@ -612,8 +612,8 @@ grade: stable
                          self.fake_logger.output)
 
         self.assertEqual(
-            "The 'pull' step of 'part1' is out of date:\n\n"
-            "The 'deb_arch' project option appears to have changed.\n\n"
+            "The 'pull' step of 'part1' is out of date:\n"
+            "The 'deb_arch' project option appears to have changed.\n"
             "In order to continue, please clean that part's 'pull' step "
             "by running: snapcraft clean part1 -s pull\n",
             str(raised))

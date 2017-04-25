@@ -23,6 +23,7 @@ import threading
 from types import ModuleType
 import urllib.parse
 from unittest import mock
+from subprocess import CalledProcessError
 
 import fixtures
 import xdg
@@ -382,6 +383,49 @@ class FakePlugin(fixtures.Fixture):
 
     def _remove_module(self):
         del sys.modules[self._import_name]
+
+
+def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
+    def call_effect(*args, **kwargs):
+        if args[0] == ['lxc', 'remote', 'get-default']:
+            if fail_on_default:
+                raise CalledProcessError(returncode=255, cmd=args[0])
+            else:
+                return 'local'.encode('utf-8')
+        elif args[0] == ['lxc', 'list', 'my-remote:'] and fail_on_remote:
+            raise CalledProcessError(returncode=255, cmd=args[0])
+        elif args[0][:3] == ['lxc', 'list', '--format=json']:
+            return '''
+                [{"name": "snapcraft-snap-test",
+                  "status": "Stopped",
+                  "devices": {"build-snap-test":[]}}]
+                '''.encode('utf-8')
+        else:
+            return ''.encode('utf-8')
+    return call_effect
+
+
+class FakeLXD(fixtures.Fixture):
+    '''...'''
+
+    def __init__(self, fail_on_remote=False, fail_on_default=False):
+        self.fail_on_remote = fail_on_remote
+        self.fail_on_default = fail_on_default
+
+    def _setUp(self):
+        patcher = mock.patch('snapcraft.internal.lxd.check_call')
+        self.check_call_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.lxd.check_output')
+        self.check_output_mock = patcher.start()
+        self.check_output_mock.side_effect = check_output_side_effect(
+            self.fail_on_remote, self.fail_on_default)
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
 
 class GitRepo(fixtures.Fixture):

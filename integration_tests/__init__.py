@@ -16,6 +16,7 @@
 
 import fileinput
 import os
+import platform
 import re
 import subprocess
 import time
@@ -25,11 +26,12 @@ from distutils import dir_util
 
 import fixtures
 import pexpect
-from unittest import mock
+import requests
 import testtools
+from unittest import mock
 from testtools import content
 from testtools.matchers import MatchesRegex
-
+from snapcraft import ProjectOptions as _ProjectOptions
 from snapcraft.tests import fixture_setup
 
 
@@ -93,6 +95,9 @@ class TestCase(testtools.TestCase):
         self.parts_dir = 'parts'
         self.stage_dir = 'stage'
         self.prime_dir = 'prime'
+
+        self.deb_arch = _ProjectOptions().deb_arch
+        self.distro_series = platform.linux_distribution()[2]
 
     def run_snapcraft(
             self, command, project_dir=None, debug=True,
@@ -273,14 +278,30 @@ class StoreTestCase(TestCase):
         process.close()
         return process.exitstatus
 
+    def get_unique_name(self, prefix='snapcrafttest'):
+        """Return a unique snap name.
+
+        It uses a UUIDv4 to create unique names and limits its full size
+        to 40 chars (as defined in the snap specification).
+        """
+        unique_id = uuid.uuid4().int
+        return '{}-{}'.format(prefix, unique_id)[:40]
+
+    def get_unique_version(self):
+        """Return a unique snap version.
+
+        It uses a UUIDv4 to create unique version and limits its full size
+        to 32 chars (as defined in the snap specification).
+        """
+        unique_id = uuid.uuid4().int
+        return '{}'.format(unique_id)[:32]
+
     def update_name_arch_and_version(self, name=None, arch=None,
                                      version=None):
-        unique_id = uuid.uuid4().int
         if name is None:
-            name = 'u1test-{}'.format(unique_id)
+            name = self.get_unique_name()
         if version is None:
-            # The maximum size is 32 chars.
-            version = str(unique_id)[:32]
+            version = self.get_unique_version()
         if arch is None:
             arch = 'amd64'
         for line in fileinput.input('snapcraft.yaml', inplace=True):
@@ -294,12 +315,10 @@ class StoreTestCase(TestCase):
                 print(line)
 
     def update_name_and_version(self, name=None, version=None):
-        unique_id = uuid.uuid4().int
         if name is None:
-            name = 'u1test-{}'.format(unique_id)
+            name = self.get_unique_name()
         if version is None:
-            # The maximum size is 32 chars.
-            version = str(unique_id)[:32]
+            version = self.get_unique_version()
         for line in fileinput.input('snapcraft.yaml', inplace=True):
             if 'name: ' in line:
                 print('name: {}'.format(name))
@@ -327,7 +346,8 @@ class StoreTestCase(TestCase):
             process.expect(expected_error)
         else:
             for v in validations:
-                process.expect('Signing validation {}'.format(v))
+                process.expect(
+                    'Signing validations assertion for {}'.format(v))
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus
@@ -373,3 +393,18 @@ class StoreTestCase(TestCase):
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus
+
+
+def get_package_version(package_name, series, deb_arch):
+    # http://people.canonical.com/~ubuntu-archive/madison.cgi?package=hello&a=amd64&c=&s=zesty&text=on
+    params = {
+        'package': package_name,
+        's': series,
+        'a': deb_arch,
+        'text': 'on',
+    }
+    query = requests.get('http://people.canonical.com/~ubuntu-archive/'
+                         'madison.cgi', params)
+    query.raise_for_status()
+    package_status = [i.strip() for i in query.text.strip().split('|')]
+    return package_status[1]

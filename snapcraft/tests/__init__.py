@@ -19,7 +19,6 @@ import logging
 import os
 import stat
 
-from unittest import mock
 import fixtures
 import http.server
 import progressbar
@@ -29,6 +28,7 @@ import testtools
 
 from snapcraft.internal import common
 from snapcraft.tests import fake_servers, fixture_setup
+from unittest import mock
 
 
 class ContainsList(list):

@@ -310,7 +310,7 @@ class _Executor:
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
             message_components = [
-                'The {!r} step of {!r} is out of date:\n\n'.format(
+                'The {!r} step of {!r} is out of date:\n'.format(
                     step, part.name)]
 
             if dirty_report.dirty_properties:
@@ -334,7 +334,7 @@ class _Executor:
                         humanized_options, pluralized_connection))
 
             message_components.append(
-                "\nIn order to continue, please clean that part's {0!r} step "
+                "In order to continue, please clean that part's {0!r} step "
                 "by running: snapcraft clean {1} -s {0}\n".format(
                     step, part.name))
             raise RuntimeError(''.join(message_components))
@@ -380,6 +380,13 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
+def containerbuild(project_options, output=None, remote=''):
+    config = snapcraft.internal.load_config(project_options)
+    lxd.Project(output=output, source=os.path.curdir,
+                project_options=project_options, remote=remote,
+                metadata=config.get_metadata()).execute()
+
+
 def cleanbuild(project_options, remote=''):
     config = snapcraft.internal.load_config(project_options)
     tar_filename = '{}_{}_source.tar.bz2'.format(
@@ -387,10 +394,9 @@ def cleanbuild(project_options, remote=''):
 
     with tarfile.open(tar_filename, 'w:bz2') as t:
         t.add(os.path.curdir, filter=_create_tar_filter(tar_filename))
-
-    snap_filename = common.format_snap_name(config.data)
-    lxd.Cleanbuilder(snap_filename, tar_filename, project_options,
-                     remote=remote).execute()
+    lxd.Cleanbuilder(source=tar_filename,
+                     project_options=project_options,
+                     metadata=config.get_metadata(), remote=remote).execute()
 
 
 def _snap_data_from_dir(directory):
@@ -410,7 +416,8 @@ def snap(project_options, directory=None, output=None):
     else:
         # make sure the full lifecycle is executed
         snap_dir = project_options.snap_dir
-        snap = execute('prime', project_options)
+        execute('prime', project_options)
+        snap = _snap_data_from_dir(snap_dir)
 
     snap_name = output or common.format_snap_name(snap)
 
