@@ -618,6 +618,31 @@ grade: stable
             "by running: snapcraft clean part1 -s pull\n",
             str(raised))
 
+    def test_prime_records_snapcraft_yaml(self):
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    plugin: nil
+    prime: []
+    snap: []
+    stage: []
+architectures: [amd64]
+""")
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
 
 class CoreSetupTestCase(tests.TestCase):
 
