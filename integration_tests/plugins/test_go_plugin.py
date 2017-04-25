@@ -40,5 +40,4 @@ class GoPluginTestCase(integration_tests.TestCase):
             self.skipTest('The test only handles amd64 to armhf')
 
         arch = 'armhf'
-        with self.setup_multi_arch_sources(arch):
-            self.run_snapcraft('stage', 'go-cgo', '--target={}'.format(arch))
+        self.run_snapcraft('stage', 'go-cgo', '--target={}'.format(arch))

@@ -14,12 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager
 import fileinput
 import os
 import platform
 import re
-import platform
 import subprocess
 import time
 import uuid
@@ -35,7 +33,6 @@ from testtools import content
 from testtools.matchers import MatchesRegex
 from snapcraft import ProjectOptions as _ProjectOptions
 from snapcraft.tests import fixture_setup
-from snapcraft.internal.repo import _deb
 
 
 class TestCase(testtools.TestCase):
@@ -136,32 +133,6 @@ class TestCase(testtools.TestCase):
             self.addDetail('output', content.text_content(e.output))
             raise
         return snapcraft_output
-
-    @contextmanager
-    def setup_multi_arch_sources(self, arch):
-        sources_lists = '/etc/apt/sources.list.d/'
-        sources_arch = 'ubuntu-{}.list'.format(arch)
-        try:
-            subprocess.check_call(['sudo', 'dpkg', '--add-architecture', arch])
-            release = platform.linux_distribution()[2]
-            sources = _deb._format_sources_list(None, deb_arch=arch,
-                                                release=release, foreign=True)
-            with open(sources_arch, 'w') as f:
-                f.write(sources)
-            subprocess.check_call(['sudo', 'mv', sources_arch, sources_lists])
-            update_output = subprocess.check_output(
-                ['sudo', 'apt-get', 'update'],
-                stderr=subprocess.STDOUT, universal_newlines=True)
-            self.addDetail('apt-get update output',
-                           content.text_content(update_output))
-            yield
-        except subprocess.CalledProcessError as e:
-            self.addDetail('error', content.text_content(str(e)))
-            self.addDetail('output', content.text_content(e.output))
-            raise
-        finally:
-            subprocess.check_call(['sudo', 'rm',
-                                   os.path.join(sources_lists, sources_arch)])
 
     def run_apt_autoremove(self):
         deb_env = os.environ.copy()

@@ -25,6 +25,7 @@ import stat
 import string
 import subprocess
 import sys
+import tempfile
 import urllib
 import urllib.request
 
@@ -186,6 +187,45 @@ class Ubuntu(BaseRepo):
         return packages
 
     @classmethod
+    def _setup_multi_arch(cls, package_name):
+        if ':' not in package_name:
+            return False
+
+        (name, arch) = package_name.split(':', 2)
+        foreign_archs = subprocess.check_output(
+            ['dpkg', '--print-foreign-architectures']).decode()
+        if arch not in foreign_archs:
+            logger.info('Adding foreign architecture {}'.format(arch))
+            subprocess.check_call(
+                ['sudo', 'dpkg', '--add-architecture', arch])
+
+        sources = _get_local_sources_list()
+        if '[arch={}]'.format(arch) not in sources:
+            logger.info('Adding sources for {}'.format(arch))
+            release = platform.linux_distribution()[2]
+            sources = _format_sources_list(None, deb_arch=arch,
+                                           release=release, foreign=True)
+            sources_arch = tempfile.NamedTemporaryFile().name
+            with open(sources_arch, 'w') as f:
+                f.write(sources)
+            sources_lists = '/etc/apt/sources.list.d/'
+            subprocess.check_call(['sudo', 'mv', sources_arch, os.path.join(
+                sources_lists, 'ubuntu-{}.list'.format(arch))])
+
+        try:
+            update_output = subprocess.check_output(
+                ['sudo', 'apt-get', 'update'],
+                stderr=subprocess.STDOUT, universal_newlines=True)
+            # Failure to download doesn't return an error code
+            if 'Err:' in update_output:
+                raise subprocess.CalledProcessError(
+                    100, ['sudo', 'apt-get', 'update'], update_output)
+        except subprocess.CalledProcessError as e:
+            logger.error(e.output)
+            raise e
+        return True
+
+    @classmethod
     def install_build_packages(cls, package_names):
         unique_packages = set(package_names)
         new_packages = []
@@ -199,7 +239,10 @@ class Ubuntu(BaseRepo):
                     elif version and installed_version != version:
                         new_packages.append(pkg)
                 except KeyError as e:
-                    raise AptBuildPackageNotFoundError(pkg) from e
+                    if cls._setup_multi_arch(pkg_name):
+                        new_packages.append(pkg)
+                    else:
+                        raise errors.BuildPackageNotFoundError(pkg) from e
 
         if new_packages:
             new_packages.sort()
@@ -237,7 +280,7 @@ class Ubuntu(BaseRepo):
                     pkg_name, version = repo.get_pkg_name_parts(pkg)
                     pkg_list.append(str(apt_cache[pkg_name].candidate))
                 except KeyError as e:
-                    raise AptBuildPackageNotFoundError(e) from e
+                    raise errors.BuildPackageNotFoundError(e) from e
 
         return pkg_list
 
@@ -281,7 +324,7 @@ class Ubuntu(BaseRepo):
                     _set_pkg_version(apt_cache[name_arch], version)
                 apt_cache[name_arch].mark_install()
             except KeyError as e:
-                raise AptPackageNotFoundError(name) from e
+                raise errors.PackageNotFoundError(name) from e
 
     def _filter_base_packages(self, apt_cache, package_names):
         manifest_dep_names = self._manifest_dep_names(apt_cache)
@@ -378,40 +421,6 @@ def _get_local_sources_list():
     return sources
 
 
-def _multi_arch_diagnostics(package_name):
-    message = ''
-    if ':' not in package_name:
-        return message
-
-    (name, arch) = package_name.split(':', 2)
-    foreign_archs = subprocess.check_output(
-        ['dpkg', '--print-foreign-architectures']).decode()
-    if arch not in foreign_archs:
-        message += "\nTarget architecture needs to be added:\n" \
-                   "'sudo dpkg --add-architecture {}'".format(arch)
-
-    sources = _get_local_sources_list()
-    if '[arch={}]'.format(arch) not in sources:
-        release = platform.linux_distribution()[2]
-        message += '\nMulti-arch sources need to be added:\n{}'.format(
-           _format_sources_list(None, deb_arch=arch,
-                                release=release, foreign=True))
-    return message
-
-
-class AptPackageNotFoundError(errors.PackageNotFoundError):
-
-    @property
-    def message(self):
-        return super().message + _multi_arch_diagnostics(self.package_name)
-
-
-class AptBuildPackageNotFoundError(errors.BuildPackageNotFoundError):
-
-    def __str__(self):
-        return super().__str__() + _multi_arch_diagnostics(self.package_name)
-
-
 def _get_geoip_country_code_prefix():
     try:
         with urllib.request.urlopen(_GEOIP_SERVER) as f:
@@ -485,4 +494,4 @@ def _set_pkg_version(pkg, version):
         version = pkg.versions.get(version)
         pkg.candidate = version
     else:
-        raise AptPackageNotFoundError('{}={}'.format(pkg.name, version))
+        raise errors.PackageNotFoundError('{}={}'.format(pkg.name, version))
