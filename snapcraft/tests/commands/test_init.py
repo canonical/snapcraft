@@ -74,7 +74,7 @@ confinement: devmode # use 'strict' once you have the right plugs and slots
 parts:
   my-part:
     # See 'snapcraft plugins'
-    plugin: nil"""  # noqa, lines too long
+    plugin: nil\n"""  # noqa, lines too long
 
         main(['init'])
 
