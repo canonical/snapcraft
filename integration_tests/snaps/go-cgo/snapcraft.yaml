@@ -5,10 +5,6 @@ description: |
   This is a basic go snap that uses cgo to access C APIs.
   The name of the binary will be that of the directory containing it,
   just like it is seen when using `go build` or `go install`.
-  If you want to add other functionalities to this snap, please don't.
-  Make a new one.
-
-icon: icon.png
 confinement: strict
 
 parts:
