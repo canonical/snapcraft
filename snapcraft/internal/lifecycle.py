@@ -60,7 +60,7 @@ parts:
   my-part:
     # See 'snapcraft plugins'
     plugin: nil
-"""  # noqa, lines too long.
+""" # noqa, lines too long.
 
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 
@@ -76,7 +76,7 @@ def init():
         raise EnvironmentError('snapcraft.yaml already exists!')
     elif os.path.exists('.snapcraft.yaml'):
         raise EnvironmentError('.snapcraft.yaml already exists!')
-    yaml = _TEMPLATE_YAML.strip()
+    yaml = _TEMPLATE_YAML
     with contextlib.suppress(FileExistsError):
         os.mkdir(os.path.dirname(snapcraft_yaml_path))
     with open(snapcraft_yaml_path, mode='w') as f:
@@ -255,7 +255,7 @@ class _Executor:
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
             message_components = [
-                'The {!r} step of {!r} is out of date:\n\n'.format(
+                'The {!r} step of {!r} is out of date:\n'.format(
                     step, part.name)]
 
             if dirty_report.dirty_properties:
@@ -279,7 +279,7 @@ class _Executor:
                         humanized_options, pluralized_connection))
 
             message_components.append(
-                "\nIn order to continue, please clean that part's {0!r} step "
+                "In order to continue, please clean that part's {0!r} step "
                 "by running: snapcraft clean {1} -s {0}\n".format(
                     step, part.name))
             raise RuntimeError(''.join(message_components))
@@ -361,7 +361,8 @@ def snap(project_options, directory=None, output=None):
     else:
         # make sure the full lifecycle is executed
         snap_dir = project_options.snap_dir
-        snap = execute('prime', project_options)
+        execute('prime', project_options)
+        snap = _snap_data_from_dir(snap_dir)
 
     snap_name = output or common.format_snap_name(snap)
 

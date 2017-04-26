@@ -11,4 +11,4 @@ confinement: devmode
 parts:
   shutter:
     plugin: dump
-    source: http://shutter-project.org/wp-content/uploads/releases/tars/shutter-$SNAPCRAFT_PROJECT_VERSION.tar.gz
+    source: https://launchpad.net/shutter/0.9x/0.93.1/+download/shutter-$SNAPCRAFT_PROJECT_VERSION.tar.gz

@@ -16,6 +16,7 @@
 
 import fileinput
 import os
+import platform
 import re
 import subprocess
 import time
@@ -25,11 +26,12 @@ from distutils import dir_util
 
 import fixtures
 import pexpect
-from unittest import mock
+import requests
 import testtools
+from unittest import mock
 from testtools import content
 from testtools.matchers import MatchesRegex
-
+from snapcraft import ProjectOptions as _ProjectOptions
 from snapcraft.tests import fixture_setup
 
 
@@ -93,6 +95,9 @@ class TestCase(testtools.TestCase):
         self.parts_dir = 'parts'
         self.stage_dir = 'stage'
         self.prime_dir = 'prime'
+
+        self.deb_arch = _ProjectOptions().deb_arch
+        self.distro_series = platform.linux_distribution()[2]
 
     def run_snapcraft(
             self, command, project_dir=None, debug=True,
@@ -388,3 +393,18 @@ class StoreTestCase(TestCase):
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus
+
+
+def get_package_version(package_name, series, deb_arch):
+    # http://people.canonical.com/~ubuntu-archive/madison.cgi?package=hello&a=amd64&c=&s=zesty&text=on
+    params = {
+        'package': package_name,
+        's': series,
+        'a': deb_arch,
+        'text': 'on',
+    }
+    query = requests.get('http://people.canonical.com/~ubuntu-archive/'
+                         'madison.cgi', params)
+    query.raise_for_status()
+    package_status = [i.strip() for i in query.text.strip().split('|')]
+    return package_status[1]

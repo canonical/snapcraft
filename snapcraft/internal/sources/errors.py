@@ -17,6 +17,10 @@
 from snapcraft.internal import errors
 
 
+class VCSError(errors.SnapcraftError):
+    fmt = '{message}'
+
+
 class IncompatibleOptionsError(errors.SnapcraftError):
 
     fmt = '{message}'

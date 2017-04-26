@@ -22,5 +22,5 @@ parts:
         plugin: plainbox-provider
         stage-packages:
             - python3-yaml
-        source: ./2016.com.example:simple
+        source: ./2016.com.example_simple
         after: [plainbox-local]
