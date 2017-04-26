@@ -797,6 +797,9 @@ class StatusTracker:
 
     def _update_status(self, queue):
         for content in self._get_status():
+            print(30 * '*')
+            print(content)
+            print(30 * '*')
             queue.put(content)
             if content['processed']:
                 break
