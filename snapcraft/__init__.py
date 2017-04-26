@@ -409,6 +409,10 @@ from snapcraft.internal import repo                 # noqa
 
 
 def _get_version():
+    if _os.environ.get('SNAP_NAME') == 'snapcraft':
+        with open(_os.path.join(_os.getenv('SNAP'), 'meta', 'snap.yaml')) as f:
+            snap_yaml = yaml.load(f)
+        return snap_yaml['version']
     try:
         return pkg_resources.require('snapcraft')[0].version
     except pkg_resources.DistributionNotFound:
