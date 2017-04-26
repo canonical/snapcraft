@@ -64,6 +64,7 @@ import logging
 import os
 import shutil
 import subprocess
+import sys
 import re
 
 from snapcraft import BasePlugin
@@ -122,6 +123,50 @@ class KBuildPlugin(BasePlugin):
         if logger.isEnabledFor(logging.DEBUG):
             self.make_cmd.append('V=1')
 
+    def unroll_ubuntu_config(self, config_path):
+        try:
+            env = open('debian/debian.env', 'r').read()
+        except OSError as e:
+            logger.error('Unable to access {}: {}'.format(e.filename,
+                                                          e.strerror))
+            sys.exit(1)
+        arch = self.project.deb_arch
+        try:
+            branch = env.split('.')[1].strip()
+        except:
+            logger.error('Malformed debian.env, cannot extract branch name')
+            sys.exit(1)
+        flavour = self.options.kconfigflavour
+
+        configfiles = []
+        configfds = []
+        baseconfigdir = "debian.{}/config".format(branch)
+        archconfigdir = "debian.{}/config/{}".format(branch, arch)
+        commonconfig = os.path.join(baseconfigdir,
+                                    'config.common.ports')
+        ubuntuconfig = os.path.join(baseconfigdir,
+                                    'config.common.ubuntu')
+        archconfig = os.path.join(archconfigdir,
+                                  'config.common.{}'.format(arch))
+        flavourconfig = os.path.join(archconfigdir,
+                                     'config.flavour.{}'.format(flavour))
+        configfiles.append(commonconfig)
+        configfiles.append(ubuntuconfig)
+        configfiles.append(archconfig)
+        configfiles.append(flavourconfig)
+        try:
+            for f in configfiles:
+                configfds.append(open(f, "r"))
+        except OSError as e:
+            logger.error('Unable to access {}: {}'.format(e.filename,
+                                                          e.strerror))
+            sys.exit(1)
+
+        # assemble .config
+        config = open(config_path, "w")
+        for f in configfds:
+            config.write(f.read())
+
     def do_base_config(self, config_path):
         # if kconfigfile is provided use that
         # elif kconfigflavour is provided, assemble the ubuntu.flavour config
@@ -129,34 +174,7 @@ class KBuildPlugin(BasePlugin):
         if self.options.kconfigfile:
             shutil.copy(self.options.kconfigfile, config_path)
         elif self.options.kconfigflavour:
-            env = open('debian/debian.env', 'r').read()
-            arch = self.project.deb_arch
-            branch = env.split('.')[1].strip()
-            flavour = self.options.kconfigflavour
-
-            configfiles = []
-            configfds = []
-            baseconfigdir = "debian.{}/config".format(branch)
-            archconfigdir = "debian.{}/config/{}".format(branch, arch)
-            commonconfig = os.path.join(baseconfigdir,
-                                        'config.common.ports')
-            ubuntuconfig = os.path.join(baseconfigdir,
-                                        'config.common.ubuntu')
-            archconfig = os.path.join(archconfigdir,
-                                      'config.common.{}'.format(arch))
-            flavourconfig = os.path.join(archconfigdir,
-                                         'config.flavour.{}'.format(flavour))
-            configfiles.append(commonconfig)
-            configfiles.append(ubuntuconfig)
-            configfiles.append(archconfig)
-            configfiles.append(flavourconfig)
-            for f in configfiles:
-                configfds.append(open(f, "r"))
-
-            # assemble .config
-            config = open(config_path, "w")
-            for f in configfds:
-                config.write(f.read())
+            self.unroll_ubuntu_config(config_path)
         else:
             # we need to run this with -j1, unit tests are a good defense here.
             make_cmd = self.make_cmd.copy()
