@@ -33,7 +33,7 @@ from xml.etree import ElementTree
 
 import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal import cache, repo
+from snapcraft.internal import cache, repo, common
 from snapcraft.internal.indicators import is_dumb_terminal
 from ._base import BaseRepo
 from . import errors
@@ -68,7 +68,7 @@ class _AptCache:
         apt.apt_pkg.config.set('Apt::Install-Recommends', 'False')
 
         # Methods and solvers dir for when in the SNAP
-        if os.getenv('SNAP'):
+        if common.is_snap():
             snap_dir = os.getenv('SNAP')
             apt_dir = os.path.join(snap_dir, 'apt')
             apt.apt_pkg.config.set('Dir', apt_dir)
