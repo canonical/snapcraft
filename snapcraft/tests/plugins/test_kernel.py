@@ -821,6 +821,68 @@ ACCEPT=n
         config_file = os.path.join(plugin.builddir, '.config')
         self.assertTrue(os.path.exists(config_file))
 
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
+    def test_build_with_kconfigflavour(self):
+        arch = self.project_options.deb_arch
+        branch = 'master'
+        flavour = 'vanilla'
+        self.options.kconfigflavour = flavour
+        os.mkdir('debian')
+        with open('debian/debian.env', 'w') as f:
+            f.write('DEBIAN=debian.{}'.format(branch))
+        os.mkdir('debian.{}'.format(branch))
+        basedir = 'debian.{}/config'.format(branch)
+        archdir = 'debian.{}/config/{}'.format(branch, arch)
+        os.mkdir(basedir)
+        os.mkdir(archdir)
+        commoncfg = os.path.join(basedir, 'config.common.ubuntu')
+        ubuntucfg = os.path.join(basedir, 'config.common.ubuntu')
+        archcfg = os.path.join(archdir, 'config.common.{}'.format(arch))
+        flavourcfg = os.path.join(archdir, 'config.flavour.{}'.format(flavour))
+
+        with open(commoncfg, 'w') as f:
+            f.write('ACCEPT=y\n')
+        with open(ubuntucfg, 'w') as f:
+            f.write('ACCEPT=y\n')
+        with open(archcfg, 'w') as f:
+            f.write('ACCEPT=y\n')
+        with open(flavourcfg, 'w') as f:
+            f.write('ACCEPT=y\n')
+
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        self._simulate_build(
+            plugin.sourcedir, plugin.builddir, plugin.installdir)
+
+        plugin.build()
+
+        self._assert_generic_check_call(plugin.builddir, plugin.installdir,
+                                        plugin.os_snap)
+
+        self.assertEqual(2, self.run_mock.call_count)
+        self.run_mock.assert_has_calls([
+            mock.call(['make', '-j2', 'bzImage', 'modules']),
+            mock.call(['make', '-j2',
+                       'CONFIG_PREFIX={}'.format(plugin.installdir),
+                       'modules_install',
+                       'INSTALL_MOD_PATH={}'.format(plugin.installdir),
+                       'firmware_install',
+                       'INSTALL_FW_PATH={}'.format(os.path.join(
+                           plugin.installdir, 'lib', 'firmware'))])
+        ])
+
+        config_file = os.path.join(plugin.builddir, '.config')
+        self.assertTrue(os.path.exists(config_file))
+
+        with open(config_file) as f:
+            config_contents = f.read()
+
+        self.assertEqual(config_contents, 'ACCEPT=y\n')
+        self._assert_common_assets(plugin.installdir)
+
     def test_build_with_missing_kernel_fails(self):
         self.options.kconfigfile = 'config'
 
