@@ -40,5 +40,5 @@ parts:
             - lib/*/*/checkbox_ng*/*/*
     simple-plainbox-provider:
         plugin: plainbox-provider
-        source: ./2016.com.example:simple
+        source: ./2016.com.example_simple
         after: [plainbox-dev, checkbox-support-dev, checkbox-ng-dev]

@@ -97,6 +97,10 @@ def format_snap_name(snap):
     return '{name}_{version}_{arch}.snap'.format(**snap)
 
 
+def is_snap():
+    return os.environ.get('SNAP_NAME') == 'snapcraft'
+
+
 def set_plugindir(plugindir):
     global _plugindir
     _plugindir = plugindir
@@ -112,8 +116,8 @@ def set_schemadir(schemadir):
 
 
 def get_schemadir():
-    snap = os.environ.get('SNAP')
-    if snap:
+    if is_snap():
+        snap = os.environ.get('SNAP')
         return os.path.join(snap, 'share', 'snapcraft', 'schema')
     return _schemadir
 
@@ -148,8 +152,8 @@ def set_tourdir(tourdir):
 
 
 def get_tourdir():
-    snap = os.environ.get('SNAP')
-    if snap:
+    if is_snap():
+        snap = os.environ.get('SNAP')
         return os.path.join(snap, 'tour')
     return _tourdir
 
