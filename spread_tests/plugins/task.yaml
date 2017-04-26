@@ -1,4 +1,6 @@
 summary: integration tests
+
+kill-timeout: 2h
 execute: |
   cd /snapcraft
   SNAPCRAFT_FROM_INSTALLED=1 ./runtests.sh plugins

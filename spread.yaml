@@ -1,5 +1,9 @@
 project: snapcraft
 
+environment:
+  LANG: "$(echo ${LANG:-C.UTF-8})"
+  LANGUAGE: "$(echo ${LANGUAGE:-en})"
+
 backends:
   lxd:
     systems: [ubuntu-16.04]
