@@ -87,11 +87,11 @@ class _SnapPackaging:
         return self._meta_dir
 
     def __init__(self, config_data, project_options):
-        self._snap_dir = project_options.snap_dir
+        self._prime_dir = project_options.prime_dir
         self._parts_dir = project_options.parts_dir
         self._arch_triplet = project_options.arch_triplet
 
-        self._meta_dir = os.path.join(self._snap_dir, 'meta')
+        self._meta_dir = os.path.join(self._prime_dir, 'meta')
         self._config_data = config_data.copy()
 
         os.makedirs(self._meta_dir, exist_ok=True)
@@ -129,7 +129,7 @@ class _SnapPackaging:
 
     def _ensure_snapcraft_yaml(self):
         source = project_loader.get_snapcraft_yaml()
-        destination = os.path.join(self._snap_dir, 'snap', 'snapcraft.yaml')
+        destination = os.path.join(self._prime_dir, 'snap', 'snapcraft.yaml')
 
         with contextlib.suppress(FileNotFoundError):
             os.remove(destination)
@@ -138,8 +138,7 @@ class _SnapPackaging:
         file_utils.link_or_copy(source, destination)
 
     def _ensure_no_build_artifacts(self):
-        # TODO: rename _snap_dir to _prime_dir
-        snap_dir = os.path.join(self._snap_dir, 'snap')
+        snap_dir = os.path.join(self._prime_dir, 'snap')
 
         artifacts = ['snapcraft.yaml']
 
@@ -154,12 +153,12 @@ class _SnapPackaging:
         for root, directories, files in os.walk('snap'):
             for directory in directories:
                 source = os.path.join(root, directory)
-                destination = os.path.join(self._snap_dir, source)
+                destination = os.path.join(self._prime_dir, source)
                 file_utils.create_similar_directory(source, destination)
 
             for file_path in files:
                 source = os.path.join(root, file_path)
-                destination = os.path.join(self._snap_dir, source)
+                destination = os.path.join(self._prime_dir, source)
                 with contextlib.suppress(FileNotFoundError):
                     os.remove(destination)
                 file_utils.link_or_copy(source, destination)
@@ -191,8 +190,8 @@ class _SnapPackaging:
             self._ensure_no_build_artifacts()
 
     def generate_hook_wrappers(self):
-        snap_hooks_dir = os.path.join(self._snap_dir, 'snap', 'hooks')
-        hooks_dir = os.path.join(self._snap_dir, 'meta', 'hooks')
+        snap_hooks_dir = os.path.join(self._prime_dir, 'snap', 'hooks')
+        hooks_dir = os.path.join(self._prime_dir, 'meta', 'hooks')
         if os.path.isdir(snap_hooks_dir):
             os.makedirs(hooks_dir, exist_ok=True)
             for hook_name in os.listdir(snap_hooks_dir):
@@ -292,7 +291,7 @@ class _SnapPackaging:
             assembled_env = None
         else:
             assembled_env = common.assemble_env()
-            assembled_env = assembled_env.replace(self._snap_dir, '$SNAP')
+            assembled_env = assembled_env.replace(self._prime_dir, '$SNAP')
             assembled_env = replace_path.sub('$SNAP', assembled_env)
 
         executable = '"{}"'.format(wrapexec)
@@ -301,7 +300,7 @@ class _SnapPackaging:
             if shebang.startswith('/usr/bin/env '):
                 shebang = shell_utils.which(shebang.split()[1])
             new_shebang = replace_path.sub('$SNAP', shebang)
-            new_shebang = re.sub(self._snap_dir, '$SNAP', new_shebang)
+            new_shebang = re.sub(self._prime_dir, '$SNAP', new_shebang)
             if new_shebang != shebang:
                 # If the shebang was pointing to and executable within the
                 # local 'parts' dir, have the wrapper script execute it
@@ -322,9 +321,9 @@ class _SnapPackaging:
 
     def _wrap_exe(self, command, basename=None):
         execparts = shlex.split(command)
-        exepath = os.path.join(self._snap_dir, execparts[0])
+        exepath = os.path.join(self._prime_dir, execparts[0])
         if basename:
-            wrappath = os.path.join(self._snap_dir, basename) + '.wrapper'
+            wrappath = os.path.join(self._prime_dir, basename) + '.wrapper'
         else:
             wrappath = exepath + '.wrapper'
         shebang = None
@@ -334,7 +333,7 @@ class _SnapPackaging:
 
         wrapexec = '$SNAP/{}'.format(execparts[0])
         if not os.path.exists(exepath) and '/' not in execparts[0]:
-            _find_bin(execparts[0], self._snap_dir)
+            _find_bin(execparts[0], self._prime_dir)
             wrapexec = execparts[0]
         else:
             with open(exepath, 'rb') as exefile:
@@ -347,7 +346,7 @@ class _SnapPackaging:
         self._write_wrap_exe(wrapexec, wrappath,
                              shebang=shebang, args=execparts[1:])
 
-        return os.path.relpath(wrappath, self._snap_dir)
+        return os.path.relpath(wrappath, self._prime_dir)
 
     def _wrap_apps(self, apps):
         gui_dir = os.path.join(self.meta_dir, 'gui')
@@ -373,7 +372,7 @@ class _SnapPackaging:
         if desktop_file_name:
             desktop_file = _DesktopFile(
                 name=name, filename=desktop_file_name,
-                snap_name=self._config_data['name'], prime_dir=self._snap_dir)
+                snap_name=self._config_data['name'], prime_dir=self._prime_dir)
             desktop_file.parse_and_reformat()
             desktop_file.write(gui_dir=os.path.join(self.meta_dir, 'gui'))
 
