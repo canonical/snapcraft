@@ -367,7 +367,8 @@ class GitDetailsTestCase(GitBaseTestCase):
         self.source_details = self.git._get_source_details()
 
     def test_git_details_commit(self):
-        self.assertEqual(self.expected_commit, self.source_details['commit'])
+        self.assertEqual(self.expected_commit,
+                         self.source_details['source-commit'])
 
     def test_git_details_branch(self):
         shutil.rmtree(self.source_dir)
@@ -376,7 +377,8 @@ class GitDetailsTestCase(GitBaseTestCase):
         self.git.pull()
 
         self.source_details = self.git._get_source_details()
-        self.assertEqual(self.expected_branch, self.source_details['branch'])
+        self.assertEqual(self.expected_branch,
+                         self.source_details['source-branch'])
 
     def test_git_details_tag(self):
         self.git = sources.Git(self.working_tree, self.source_dir, silent=True,
@@ -384,7 +386,7 @@ class GitDetailsTestCase(GitBaseTestCase):
         self.git.pull()
 
         self.source_details = self.git._get_source_details()
-        self.assertEqual(self.expected_tag, self.source_details['tag'])
+        self.assertEqual(self.expected_tag, self.source_details['source-tag'])
 
 
 class GitGenerateVersionBaseTestCase(tests.TestCase):

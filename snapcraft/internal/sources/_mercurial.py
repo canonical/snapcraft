@@ -85,8 +85,8 @@ class Mercurial(Base):
                     'utf-8').strip()
 
         return {
-            'commit': commit,
-            'branch': branch,
-            'source': source,
-            'tag': tag,
+            'source-commit': commit,
+            'source-branch': branch,
+            'source-source': source,
+            'source-tag': tag,
         }

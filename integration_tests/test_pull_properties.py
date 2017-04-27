@@ -16,6 +16,7 @@
 
 from collections import namedtuple
 import os
+import subprocess
 import yaml
 
 import testscenarios
@@ -59,6 +60,43 @@ class PullPropertiesTestCase(integration_tests.TestCase):
 
 
 class AssetTrackingTestCase(integration_tests.TestCase):
+
+    def _create_git_repo(self, name):
+        def _call(cmd):
+            subprocess.check_call(cmd, stdout=subprocess.DEVNULL,
+                                  stderr=subprocess.DEVNULL)
+
+        def _call_with_output(cmd):
+            return subprocess.check_output(cmd).decode('utf-8').strip()
+
+        def _add_and_commit_file(path, filename, contents=None, message=None):
+            if not contents:
+                contents = filename
+            if not message:
+                message = filename
+
+            with open(os.path.join(path, filename), 'w') as fp:
+                fp.write(contents)
+
+            _call(['git', '-C', name, 'add', filename])
+            _call(['git', '-C', name, 'commit', '-am', message])
+
+        os.makedirs(name)
+        _call(['git', '-C', name, 'init'])
+        _call(['git', '-C', name, 'config',
+               'user.name', 'Test User'])
+        _call(['git', '-C', name, 'config',
+               'user.email', 'testuser@example.com'])
+
+        _add_and_commit_file(name, 'testing')
+        _call(['git', '-C', name, 'branch', 'feature'])
+
+        _add_and_commit_file(name, 'testing-2')
+        _call(['git', '-C', name, 'tag', 'feature-tag'])
+
+        _add_and_commit_file(name, 'testing-3')
+
+        return _call_with_output(['git', '-C', name, 'rev-parse', 'HEAD'])
 
     def setUp(self):
         super().setUp()
@@ -112,6 +150,7 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         with open(state_file) as f:
             state = yaml.load(f)
 
+        self.assertIn('source-details', state.assets)
         self.assertTrue(len(state.assets['build-packages']) == 0)
         self.assertNotIn(self.hello_package, state.assets['build-packages'])
 
@@ -129,11 +168,11 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
         }),
         ('branch', {
             'part_name': 'git-part-branch',
-            'expected_details': TestDetail('branch', 'test-branch'),
+            'expected_details': TestDetail('source-branch', 'test-branch'),
         }),
         ('tag', {
             'part_name': 'git-part-tag',
-            'expected_details': TestDetail('tag', 'feature-tag'),
+            'expected_details': TestDetail('source-tag', 'feature-tag'),
         }),
     ]
 
@@ -160,7 +199,7 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
                 Equals(self.expected_details.value))
         else:
             self.assertThat(
-                state.assets['source-details']['commit'],
+                state.assets['source-details']['source-commit'],
                 Equals(repo_fixture.commit))
 
 
@@ -173,7 +212,7 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
         }),
         ('tag', {
             'part_name': 'bzr-part-tag',
-            'expected_details': TestDetail('tag', 'feature-tag'),
+            'expected_details': TestDetail('source-tag', 'feature-tag'),
         }),
     ]
 
@@ -198,7 +237,7 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
                 Equals(self.expected_details.value))
         else:
             self.assertThat(
-                state.assets['source-details']['commit'],
+                state.assets['source-details']['source-commit'],
                 Equals(repo_fixture.commit))
 
 
@@ -211,7 +250,7 @@ class MercurialAssetTrackingTestCase(testscenarios.WithScenarios,
         }),
         ('tag', {
             'part_name': 'hg-part-tag',
-            'expected_details': TestDetail('tag', 'feature-tag'),
+            'expected_details': TestDetail('source-tag', 'feature-tag'),
         }),
     ]
 
@@ -236,7 +275,7 @@ class MercurialAssetTrackingTestCase(testscenarios.WithScenarios,
                 Equals(self.expected_details.value))
         else:
             self.assertThat(
-                state.assets['source-details']['commit'],
+                state.assets['source-details']['source-commit'],
                 Equals(repo_fixture.commit))
 
 
@@ -258,4 +297,4 @@ class SubversionAssetTrackingTestCase(integration_tests.TestCase):
 
         self.assertIn('source-details', state.assets)
         self.assertEqual(expected_commit,
-                         state.assets['source-details']['commit'])
+                         state.assets['source-details']['source-commit'])

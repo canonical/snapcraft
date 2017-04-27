@@ -90,8 +90,8 @@ class Subversion(Base):
                     break
 
         return {
-            'commit': commit,
-            'branch': branch,
-            'source': source,
-            'tag': tag,
+            'source-commit': commit,
+            'source-branch': branch,
+            'source-source': source,
+            'source-tag': tag,
         }

@@ -206,10 +206,13 @@ parts:
 
         self.assertThat('snap-test_1.0_amd64.snap', FileExists())
 
-    def test_snap_defaults_with_parts_in_prime(self):
+    @mock.patch(
+        'snapcraft.internal.lifecycle._Executor._annotate_snapcraft_yaml')
+    def test_snap_defaults_with_parts_in_prime(self, mock_annotate):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
+        mock_annotate.return_value = {}
 
         # Pretend this part has already been primed
         os.makedirs(self.state_dir)

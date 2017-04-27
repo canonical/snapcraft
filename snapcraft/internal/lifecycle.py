@@ -39,6 +39,7 @@ from snapcraft.internal import (
 from snapcraft.internal.cache import SnapCache
 from snapcraft.internal.indicators import is_dumb_terminal
 from snapcraft.internal.project_loader import replace_attr
+from snapcraft.internal.states import get_state
 
 
 logger = logging.getLogger(__name__)
@@ -210,6 +211,8 @@ class _Executor:
                     self._run_step(step, part, part_names)
                     self._steps_run[part.name].add(step)
 
+        self.annotated_snapcraft_yaml = self._annotate_snapcraft_yaml(
+            step, part_names)
         self._create_meta(step, part_names)
 
     def _run_step(self, step, part, part_names):
@@ -246,11 +249,63 @@ class _Executor:
 
         getattr(part, step)()
 
+    def _annotate_build_packages(self, part_name, state, data):
+        state_build_packages = state.assets.get('build-packages', [])
+        build_packages = []
+        part_data = data['parts'][part_name]
+        part_map = {
+            x[1]: x[0] for x in enumerate(
+                a.split('=')[0] for a in state_build_packages)}
+
+        for pkg in part_data.get('build-packages', []):
+            if '=' not in pkg and pkg in part_map:
+                build_packages.append(state_build_packages[part_map[pkg]])
+            else:
+                build_packages.append(pkg)
+
+        part_data['build-packages'] = build_packages
+
+    def _annotate_stage_packages(self, part_name, state, data):
+        state_stage_packages = state.assets.get('stage-packages', [])
+        stage_packages = []
+        part_data = data['parts'][part_name]
+        part_map = {
+            x[1]: x[0] for x in enumerate(
+                a.split('=')[0] for a in state_stage_packages)}
+        for pkg in part_data.get('stage-packages', []):
+            if '=' not in pkg and pkg in part_map:
+                stage_packages.append(state_stage_packages[part_map[pkg]])
+            else:
+                stage_packages.append(pkg)
+
+        part_data['stage-packages'] = stage_packages
+
+    def _annotate_sources(self, part_name, state, data):
+        source_details = state.assets.get('source-details', {})
+        part_data = data['parts'][part_name]
+        if source_details:
+            part_data.update(source_details)
+
+    def _annotate_snapcraft_yaml(self, step, part_names):
+        annotated_snapcraft_yaml = {}
+        if step == 'prime' and part_names == self.config.part_names:
+            data = self.config.data
+            for part_name in part_names:
+                state = get_state(
+                    os.path.join('parts', part_name, 'state'), 'pull')
+                self._annotate_build_packages(part_name, state, data)
+                self._annotate_stage_packages(part_name, state, data)
+                self._annotate_sources(part_name, state, data)
+                annotated_snapcraft_yaml = data
+
+        return annotated_snapcraft_yaml
+
     def _create_meta(self, step, part_names):
         if step == 'prime' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
             meta.create_snap_packaging(self.config.data,
-                                       self.project_options)
+                                       self.project_options,
+                                       self.annotated_snapcraft_yaml)
 
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
