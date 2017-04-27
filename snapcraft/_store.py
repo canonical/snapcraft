@@ -24,7 +24,6 @@ import operator
 import os
 import re
 import subprocess
-import sys
 import tempfile
 
 from subprocess import Popen
@@ -858,8 +857,9 @@ def collaborate(snap_name, key):
                 store.push_assertion(
                     snap_id, assertion, 'developers', force=True)
             else:
-                print("The collaborators for this snap haven't been altered")
-                sys.exit(1)
+                print("The collaborators for this snap haven't been altered. "
+                      "Exiting...")
+                raise
         else:
             raise
 

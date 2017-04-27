@@ -340,7 +340,14 @@ class GetAccountInformationTestCase(StoreTestCase):
                         'private': False,
                         'price': None,
                         'since': '2016-12-12T01:01:01Z',
-                    }
+                    },
+                    'no-revoked': {
+                        'snap-id': 'no-revoked',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
+                    },
                 }
             }
         }, self.client.get_account_information())
@@ -387,7 +394,14 @@ class GetAccountInformationTestCase(StoreTestCase):
                         'private': False,
                         'price': None,
                         'since': '2016-12-12T01:01:01Z',
-                    }
+                    },
+                    'no-revoked': {
+                        'snap-id': 'no-revoked',
+                        'status': 'Approved',
+                        'private': False,
+                        'price': None,
+                        'since': '2016-12-12T01:01:01Z',
+                    },
                 }
             }
         }, self.client.get_account_information())
