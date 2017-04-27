@@ -53,8 +53,8 @@
 
 # Test containerized building
 
-1. Setup a remote as described on
-   https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
+1. Setup LXD as described on
+   https://linuxcontainers.org/lxd/getting-started-cli/
 2. Select a project <project> to build.
 3. Run `SNAPCRAFT_CONTAINER_BUILDS=1 snapcraft`.
 4. Run `SNAPCRAFT_CONTAINER_BUILDS=1 snapcraft clean` and observe that
