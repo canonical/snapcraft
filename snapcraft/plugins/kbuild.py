@@ -127,15 +127,13 @@ class KBuildPlugin(BasePlugin):
         try:
             env = open('debian/debian.env', 'r').read()
         except OSError as e:
-            logger.error('Unable to access {}: {}'.format(e.filename,
-                                                          e.strerror))
-            sys.exit(1)
+            raise RuntimeError('Unable to access {}: {}'.format(e.filename,
+                                                                e.strerror))
         arch = self.project.deb_arch
         try:
             branch = env.split('.')[1].strip()
         except:
-            logger.error('Malformed debian.env, cannot extract branch name')
-            sys.exit(1)
+            raise RuntimeError('Malformed debian.env, cannot extract branch name')
         flavour = self.options.kconfigflavour
 
         configfiles = []
@@ -158,10 +156,8 @@ class KBuildPlugin(BasePlugin):
             for f in configfiles:
                 configfds.append(open(f, "r"))
         except OSError as e:
-            logger.error('Unable to access {}: {}'.format(e.filename,
+            raise RuntimeError('Unable to access {}: {}'.format(e.filename,
                                                           e.strerror))
-            sys.exit(1)
-
         # assemble .config
         config = open(config_path, "w")
         for f in configfds:
