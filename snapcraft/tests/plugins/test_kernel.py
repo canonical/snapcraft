@@ -881,7 +881,8 @@ ACCEPT=n
             config_contents = f.read()
 
         self.assertEqual(config_contents,
-            'ACCEPT=y\nACCEPT=m\nACCEPT=y\n# ACCEPT is not set\n')
+                         'ACCEPT=y\nACCEPT=m\nACCEPT=y\n'
+                         '# ACCEPT is not set\n')
         self._assert_common_assets(plugin.installdir)
 
     def test_build_with_missing_kernel_fails(self):
