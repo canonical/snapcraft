@@ -243,6 +243,17 @@ properties:
           source-type:
             type: string
             default: ''
+            enum:
+              - bzr
+              - git
+              - hg
+              - mercurial
+              - subversion
+              - svn
+              - tar
+              - zip
+              - deb
+              - rpm
           disable-parallel:
             type: boolean
             default: false
