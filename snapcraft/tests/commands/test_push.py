@@ -89,7 +89,7 @@ class PushCommandTestCase(tests.TestCase):
 
         self.assertRegexpMatches(
             self.fake_logger.output,
-            ".*Pushing 'my-snap-name_0\.1_\w*.snap' to the store\.\n"
+            ".*push 'my-snap-name_0\.1_\w*.snap' to the store\.\n"
             "Revision 9 of 'my-snap-name' created\.",
         )
 
@@ -190,7 +190,7 @@ class PushCommandTestCase(tests.TestCase):
 
         self.assertRegexpMatches(
             self.fake_logger.output,
-            ".*Pushing 'my-snap-name_0\.1_\w*.snap\' to the store\.\n"
+            ".*push 'my-snap-name_0\.1_\w*.snap\' to the store\.\n"
             "Revision 9 of 'my-snap-name' created.",
         )
 
@@ -244,7 +244,7 @@ class PushCommandTestCase(tests.TestCase):
 
         self.assertRegexpMatches(
             self.fake_logger.output,
-            ".*Pushing 'my-snap-name_0\.1_\w*\.snap\' to the store\.\n"
+            ".*push 'my-snap-name_0\.1_\w*\.snap\' to the store\.\n"
             "Revision 9 of 'my-snap-name' created\.\n"
             "The 'beta' channel is now open\.\n")
 
@@ -301,7 +301,7 @@ class PushCommandTestCase(tests.TestCase):
 
         self.assertRegexpMatches(
             self.fake_logger.output,
-            ".*Pushing 'my-snap-name_0\.1_\w*.snap\' to the store\.\n"
+            ".*push 'my-snap-name_0\.1_\w*.snap\' to the store\.\n"
             "Revision 9 of 'my-snap-name' created\.\n"
             "The 'beta,edge,candidate' channel is now open\.\n"
         )

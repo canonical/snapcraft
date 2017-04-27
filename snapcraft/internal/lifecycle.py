@@ -60,7 +60,7 @@ parts:
   my-part:
     # See 'snapcraft plugins'
     plugin: nil
-"""  # noqa, lines too long.
+""" # noqa, lines too long.
 
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 
@@ -76,7 +76,7 @@ def init():
         raise EnvironmentError('snapcraft.yaml already exists!')
     elif os.path.exists('.snapcraft.yaml'):
         raise EnvironmentError('.snapcraft.yaml already exists!')
-    yaml = _TEMPLATE_YAML.strip()
+    yaml = _TEMPLATE_YAML
     with contextlib.suppress(FileExistsError):
         os.mkdir(os.path.dirname(snapcraft_yaml_path))
     with open(snapcraft_yaml_path, mode='w') as f:
@@ -243,6 +243,7 @@ class _Executor:
         common.env.extend(self.config.project_env())
 
         part = _replace_in_part(part)
+
         getattr(part, step)()
 
     def _create_meta(self, step, part_names):
@@ -254,7 +255,7 @@ class _Executor:
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
             message_components = [
-                'The {!r} step of {!r} is out of date:\n\n'.format(
+                'The {!r} step of {!r} is out of date:\n'.format(
                     step, part.name)]
 
             if dirty_report.dirty_properties:
@@ -278,7 +279,7 @@ class _Executor:
                         humanized_options, pluralized_connection))
 
             message_components.append(
-                "\nIn order to continue, please clean that part's {0!r} step "
+                "In order to continue, please clean that part's {0!r} step "
                 "by running: snapcraft clean {1} -s {0}\n".format(
                     step, part.name))
             raise RuntimeError(''.join(message_components))
@@ -324,6 +325,13 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
+def containerbuild(project_options, output=None, remote=''):
+    config = snapcraft.internal.load_config(project_options)
+    lxd.Project(output=output, source=os.path.curdir,
+                project_options=project_options, remote=remote,
+                metadata=config.get_metadata()).execute()
+
+
 def cleanbuild(project_options, remote=''):
     config = snapcraft.internal.load_config(project_options)
     tar_filename = '{}_{}_source.tar.bz2'.format(
@@ -331,10 +339,9 @@ def cleanbuild(project_options, remote=''):
 
     with tarfile.open(tar_filename, 'w:bz2') as t:
         t.add(os.path.curdir, filter=_create_tar_filter(tar_filename))
-
-    snap_filename = common.format_snap_name(config.data)
-    lxd.Cleanbuilder(snap_filename, tar_filename, project_options,
-                     remote=remote).execute()
+    lxd.Cleanbuilder(source=tar_filename,
+                     project_options=project_options,
+                     metadata=config.get_metadata(), remote=remote).execute()
 
 
 def _snap_data_from_dir(directory):
@@ -349,12 +356,13 @@ def _snap_data_from_dir(directory):
 
 def snap(project_options, directory=None, output=None):
     if directory:
-        snap_dir = os.path.abspath(directory)
-        snap = _snap_data_from_dir(snap_dir)
+        prime_dir = os.path.abspath(directory)
+        snap = _snap_data_from_dir(prime_dir)
     else:
         # make sure the full lifecycle is executed
-        snap_dir = project_options.snap_dir
-        snap = execute('prime', project_options)
+        prime_dir = project_options.prime_dir
+        execute('prime', project_options)
+        snap = _snap_data_from_dir(prime_dir)
 
     snap_name = output or common.format_snap_name(snap)
 
@@ -373,7 +381,7 @@ def snap(project_options, directory=None, output=None):
     if snap['type'] != 'os':
         mksquashfs_args.append('-all-root')
 
-    with Popen(['mksquashfs', snap_dir, snap_name] + mksquashfs_args,
+    with Popen(['mksquashfs', prime_dir, snap_name] + mksquashfs_args,
                stdout=PIPE, stderr=STDOUT) as proc:
         ret = None
         if is_dumb_terminal():
@@ -494,7 +502,7 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
     if index <= common.COMMAND_ORDER.index('prime'):
         # Remove the priming area.
         _cleanup_common(
-            project_options.snap_dir, 'prime', 'Cleaning up priming area',
+            project_options.prime_dir, 'prime', 'Cleaning up priming area',
             parts)
 
     if index <= common.COMMAND_ORDER.index('stage'):
@@ -509,7 +517,7 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
             project_options.parts_dir, project_options.local_plugins_dir,
             parts)
 
-    _remove_directory_if_empty(project_options.snap_dir)
+    _remove_directory_if_empty(project_options.prime_dir)
     _remove_directory_if_empty(project_options.stage_dir)
     _remove_directory_if_empty(project_options.parts_dir)
 

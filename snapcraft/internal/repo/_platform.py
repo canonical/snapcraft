@@ -14,24 +14,39 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import platform
+import logging
+import sys as _sys
+from platform import linux_distribution as _linux_distribution
 
-from ._deb import Ubuntu
-
+logger = logging.getLogger(__name__)
 _DEB_BASED_PLATFORM = [
     'Ubuntu',
     'Debian',
+    'elementary',
+    # Not sure what was going on when this was added.
+    '"elementary"',
     'debian',
+    'neon',
 ]
 
 
-def _is_deb_based():
-    return platform.linux_distribution()[0] in _DEB_BASED_PLATFORM
+def _is_deb_based(distro=None):
+    if not distro:
+        distro = _linux_distribution()[0]
+    return distro in _DEB_BASED_PLATFORM
 
 
 def _get_repo_for_platform():
-    if _is_deb_based():
+    distro = _linux_distribution()[0]
+    if _is_deb_based(distro):
+        from ._deb import Ubuntu
         return Ubuntu
     else:
-        raise RuntimeError(
-            'snapcraft is not supported on this operating system')
+        if _sys.platform == 'linux':
+            system = distro
+        else:
+            system = _sys.platform
+        from ._base import DummyRepo
+        logger.warning('Currently only `cleanbuild` will work on this system '
+                       '({!r})'.format(system))
+        return DummyRepo

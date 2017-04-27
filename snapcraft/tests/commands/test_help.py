@@ -69,6 +69,13 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
                          'The help message does not start with {!r} but with '
                          '{!r} instead'.format(expected, output))
 
+    def test_print_module_named_with_dashes_help_for_valid_plugin(self):
+        main(['help', 'plainbox-provider'])
+
+        expected = ' Create parts'
+        output = self.fake_terminal.getvalue()
+        self.assertThat(output, tests.testtools.matchers.StartsWith(expected))
+
     def test_show_module_help_with_devel_for_valid_plugin(self):
         main(['help', 'nil', '--devel'])
 
