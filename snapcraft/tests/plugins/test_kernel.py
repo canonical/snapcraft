@@ -837,7 +837,7 @@ ACCEPT=n
         archdir = 'debian.{}/config/{}'.format(branch, arch)
         os.mkdir(basedir)
         os.mkdir(archdir)
-        commoncfg = os.path.join(basedir, 'config.common.ubuntu')
+        commoncfg = os.path.join(basedir, 'config.common.ports')
         ubuntucfg = os.path.join(basedir, 'config.common.ubuntu')
         archcfg = os.path.join(archdir, 'config.common.{}'.format(arch))
         flavourcfg = os.path.join(archdir, 'config.flavour.{}'.format(flavour))
@@ -845,11 +845,11 @@ ACCEPT=n
         with open(commoncfg, 'w') as f:
             f.write('ACCEPT=y\n')
         with open(ubuntucfg, 'w') as f:
-            f.write('ACCEPT=y\n')
+            f.write('ACCEPT=m\n')
         with open(archcfg, 'w') as f:
             f.write('ACCEPT=y\n')
         with open(flavourcfg, 'w') as f:
-            f.write('ACCEPT=y\n')
+            f.write('# ACCEPT is not set\n')
 
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      self.project_options)
@@ -880,7 +880,8 @@ ACCEPT=n
         with open(config_file) as f:
             config_contents = f.read()
 
-        self.assertEqual(config_contents, 'ACCEPT=y\n')
+        self.assertEqual(config_contents,
+            'ACCEPT=y\nACCEPT=m\nACCEPT=y\n# ACCEPT is not set\n')
         self._assert_common_assets(plugin.installdir)
 
     def test_build_with_missing_kernel_fails(self):
