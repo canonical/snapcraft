@@ -188,13 +188,13 @@ class Config:
         return env
 
     def snap_env(self):
-        snap_dir = self._project_options.snap_dir
+        prime_dir = self._project_options.prime_dir
         env = []
 
-        env += _runtime_env(snap_dir, self._project_options.arch_triplet)
+        env += _runtime_env(prime_dir, self._project_options.arch_triplet)
         dependency_paths = set()
         for part in self.parts.all_parts:
-            env += part.env(snap_dir)
+            env += part.env(prime_dir)
             dependency_paths |= part.get_primed_dependency_paths()
 
         # Dependency paths are only valid if they actually exist. Sorting them
