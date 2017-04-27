@@ -28,7 +28,7 @@ import yaml
 
 from snapcraft import file_utils
 from snapcraft import shell_utils
-from snapcraft.internal import common, project_loader
+from snapcraft.internal import common
 from snapcraft.internal.errors import MissingGadgetError
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.sources import get_source_handler_from_type
@@ -127,25 +127,17 @@ class _SnapPackaging:
             file_utils.link_or_copy(
                 'gadget.yaml', os.path.join(self.meta_dir, 'gadget.yaml'))
 
-    def _ensure_snapcraft_yaml(self):
-        source = project_loader.get_snapcraft_yaml()
-        destination = os.path.join(self._prime_dir, 'snap', 'snapcraft.yaml')
+    def _record_snapcraft(self):
+        record_dir = os.path.join(self._prime_dir, 'snap')
+        record_file_path = os.path.join(record_dir, 'snapcraft.yaml')
+        if os.path.isfile(record_file_path):
+            os.unlink(record_file_path)
 
-        with contextlib.suppress(FileNotFoundError):
-            os.remove(destination)
-
-        os.makedirs(os.path.dirname(destination), exist_ok=True)
-        file_utils.link_or_copy(source, destination)
-
-    def _ensure_no_build_artifacts(self):
-        snap_dir = os.path.join(self._prime_dir, 'snap')
-
-        artifacts = ['snapcraft.yaml']
-
-        for artifact in artifacts:
-            artifact_path = os.path.join(snap_dir, artifact)
-            if os.path.isfile(artifact_path):
-                os.unlink(artifact_path)
+        # FIXME hide this functionality behind a feature flag for now
+        if os.environ.get('SNAPCRAFT_BUILD_INFO'):
+            os.makedirs(record_dir, exist_ok=True)
+            with open(record_file_path, 'w') as record_file:
+                yaml.dump(self._config_data, record_file)
 
     def write_snap_directory(self):
         # First migrate the snap directory. It will overwrite any conflicting
@@ -183,11 +175,7 @@ class _SnapPackaging:
 
                     file_utils.link_or_copy(source, destination)
 
-        # FIXME hide this functionality behind a feature flag for now
-        if os.environ.get('SNAPCRAFT_BUILD_INFO'):
-            self._ensure_snapcraft_yaml()
-        else:
-            self._ensure_no_build_artifacts()
+        self._record_snapcraft()
 
     def generate_hook_wrappers(self):
         snap_hooks_dir = os.path.join(self._prime_dir, 'snap', 'hooks')

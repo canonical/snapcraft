@@ -37,7 +37,7 @@ from snapcraft.internal import pluginhandler, lifecycle
 from snapcraft import tests
 
 
-class ExecutionTestCases(tests.TestCase):
+class BaseExecutionTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -59,6 +59,9 @@ grade: stable
 """
 
         super().make_snapcraft_yaml(yaml.format(parts=parts, type=snap_type))
+
+
+class ExecutionTestCase(BaseExecutionTestCase):
 
     def test__replace_in_parts(self):
         class Options:
@@ -617,6 +620,48 @@ grade: stable
             "In order to continue, please clean that part's 'pull' step "
             "by running: snapcraft clean part1 -s pull\n",
             str(raised))
+
+
+class RecordSnapcraftTestCase(BaseExecutionTestCase):
+
+    def test_prime_with_build_info_records_snapcraft_yaml(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    plugin: nil
+    prime: []
+    snap: []
+    stage: []
+architectures: [amd64]
+""")
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+    def test_prime_without_build_info_does_not_record_snapcraft_yaml(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', None))
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            Not(FileExists()))
 
 
 class CoreSetupTestCase(tests.TestCase):
