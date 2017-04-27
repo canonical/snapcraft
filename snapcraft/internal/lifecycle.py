@@ -324,11 +324,11 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
-def containerbuild(project_options, output=None, remote=''):
+def containerbuild(step, project_options, output=None, args=[]):
     config = snapcraft.internal.load_config(project_options)
     lxd.Project(output=output, source=os.path.curdir,
-                project_options=project_options, remote=remote,
-                metadata=config.get_metadata()).execute()
+                project_options=project_options,
+                metadata=config.get_metadata()).execute(step, args)
 
 
 def cleanbuild(project_options, remote=''):
@@ -355,13 +355,13 @@ def _snap_data_from_dir(directory):
 
 def snap(project_options, directory=None, output=None):
     if directory:
-        snap_dir = os.path.abspath(directory)
-        snap = _snap_data_from_dir(snap_dir)
+        prime_dir = os.path.abspath(directory)
+        snap = _snap_data_from_dir(prime_dir)
     else:
         # make sure the full lifecycle is executed
-        snap_dir = project_options.snap_dir
+        prime_dir = project_options.prime_dir
         execute('prime', project_options)
-        snap = _snap_data_from_dir(snap_dir)
+        snap = _snap_data_from_dir(prime_dir)
 
     snap_name = output or common.format_snap_name(snap)
 
@@ -380,7 +380,7 @@ def snap(project_options, directory=None, output=None):
     if snap['type'] != 'os':
         mksquashfs_args.append('-all-root')
 
-    with Popen(['mksquashfs', snap_dir, snap_name] + mksquashfs_args,
+    with Popen(['mksquashfs', prime_dir, snap_name] + mksquashfs_args,
                stdout=PIPE, stderr=STDOUT) as proc:
         ret = None
         if is_dumb_terminal():
@@ -501,7 +501,7 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
     if index <= common.COMMAND_ORDER.index('prime'):
         # Remove the priming area.
         _cleanup_common(
-            project_options.snap_dir, 'prime', 'Cleaning up priming area',
+            project_options.prime_dir, 'prime', 'Cleaning up priming area',
             parts)
 
     if index <= common.COMMAND_ORDER.index('stage'):
@@ -516,7 +516,7 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
             project_options.parts_dir, project_options.local_plugins_dir,
             parts)
 
-    _remove_directory_if_empty(project_options.snap_dir)
+    _remove_directory_if_empty(project_options.prime_dir)
     _remove_directory_if_empty(project_options.stage_dir)
     _remove_directory_if_empty(project_options.parts_dir)
 
