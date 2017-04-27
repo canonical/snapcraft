@@ -64,7 +64,6 @@ import logging
 import os
 import shutil
 import subprocess
-import sys
 import re
 
 from snapcraft import BasePlugin
@@ -133,7 +132,8 @@ class KBuildPlugin(BasePlugin):
         try:
             branch = env.split('.')[1].strip()
         except:
-            raise RuntimeError('Malformed debian.env, cannot extract branch name')
+            raise RuntimeError('Malformed debian.env, cannot extract'
+                               ' branch name')
         flavour = self.options.kconfigflavour
 
         configfiles = []
@@ -156,8 +156,8 @@ class KBuildPlugin(BasePlugin):
             for f in configfiles:
                 configfds.append(open(f, "r"))
         except OSError as e:
-            raise RuntimeError('Unable to access {}: {}'.format(e.filename,
-                                                          e.strerror))
+            raise RuntimeError('Unable to access {}: '
+                               '{}'.format(e.filename, e.strerror))
         # assemble .config
         config = open(config_path, "w")
         for f in configfds:
