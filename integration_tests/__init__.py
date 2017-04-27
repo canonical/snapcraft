@@ -304,7 +304,8 @@ class StoreTestCase(TestCase):
             version = self.get_unique_version()
         if arch is None:
             arch = 'amd64'
-        for line in fileinput.input('snapcraft.yaml', inplace=True):
+        for line in fileinput.input(
+                os.path.join('snap', 'snapcraft.yaml'), inplace=True):
             if 'name: ' in line:
                 print('name: {}'.format(name))
             elif 'version: ' in line:
@@ -319,7 +320,8 @@ class StoreTestCase(TestCase):
             name = self.get_unique_name()
         if version is None:
             version = self.get_unique_version()
-        for line in fileinput.input('snapcraft.yaml', inplace=True):
+        for line in fileinput.input(
+                os.path.join('snap', 'snapcraft.yaml'), inplace=True):
             if 'name: ' in line:
                 print('name: {}'.format(name))
             elif 'version: ' in line:
