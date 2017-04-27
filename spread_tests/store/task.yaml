@@ -3,4 +3,4 @@ summary: integration tests
 kill-timeout: 30m
 execute: |
   cd /snapcraft
-  SNAPCRAFT_FROM_INSTALLED=1 ./runtests.sh store
+  ./runtests.sh store
