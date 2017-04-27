@@ -20,7 +20,9 @@ import os
 from unittest import mock
 
 import fixtures
-from testtools.matchers import Equals, HasLength
+from testtools.matchers import Equals, FileContains, HasLength
+
+from textwrap import dedent
 
 import snapcraft
 from snapcraft import (
@@ -877,12 +879,12 @@ ACCEPT=n
         config_file = os.path.join(plugin.builddir, '.config')
         self.assertTrue(os.path.exists(config_file))
 
-        with open(config_file) as f:
-            config_contents = f.read()
-
-        self.assertEqual(config_contents,
-                         'ACCEPT=y\nACCEPT=m\nACCEPT=y\n'
-                         '# ACCEPT is not set\n')
+        self.assertThat(config_file, FileContains(dedent("""\
+        ACCEPT=y
+        ACCEPT=m
+        ACCEPT=y
+        # ACCEPT is not set
+        """)))
         self._assert_common_assets(plugin.installdir)
 
     def test_build_with_missing_kernel_fails(self):

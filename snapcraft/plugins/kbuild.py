@@ -62,12 +62,12 @@ be used.
 
 import logging
 import os
-import shutil
 import subprocess
 import re
 
 from snapcraft import BasePlugin
 
+import snapcraft
 
 logger = logging.getLogger(__name__)
 
@@ -124,22 +124,23 @@ class KBuildPlugin(BasePlugin):
 
     def unroll_ubuntu_config(self, config_path):
         try:
-            env = open('debian/debian.env', 'r').read()
+            with open(os.path.join('debian', 'debian.env'), 'r') as f:
+                env = f.read()
         except OSError as e:
             raise RuntimeError('Unable to access {}: {}'.format(e.filename,
                                                                 e.strerror))
         arch = self.project.deb_arch
         try:
             branch = env.split('.')[1].strip()
-        except:
+        except IndexError:
             raise RuntimeError('Malformed debian.env, cannot extract'
                                ' branch name')
         flavour = self.options.kconfigflavour
 
         configfiles = []
-        configfds = []
-        baseconfigdir = "debian.{}/config".format(branch)
-        archconfigdir = "debian.{}/config/{}".format(branch, arch)
+        baseconfigdir = os.path.join('debian.{}'.format(branch), 'config')
+        archconfigdir = os.path.join('debian.{}'.format(branch),
+                                     'config', arch)
         commonconfig = os.path.join(baseconfigdir,
                                     'config.common.ports')
         ubuntuconfig = os.path.join(baseconfigdir,
@@ -152,23 +153,23 @@ class KBuildPlugin(BasePlugin):
         configfiles.append(ubuntuconfig)
         configfiles.append(archconfig)
         configfiles.append(flavourconfig)
-        try:
-            for f in configfiles:
-                configfds.append(open(f, "r"))
-        except OSError as e:
-            raise RuntimeError('Unable to access {}: '
-                               '{}'.format(e.filename, e.strerror))
         # assemble .config
-        config = open(config_path, "w")
-        for f in configfds:
-            config.write(f.read())
+        try:
+            with open(config_path, 'w') as fw:
+                for f in configfiles:
+                    with open(f) as fr:
+                        fw.write(fr.read())
+        except OSError as e:
+            raise RuntimeError('Unable to access {!r}: '
+                               '{}'.format(e.filename, e.strerror))
 
     def do_base_config(self, config_path):
         # if kconfigfile is provided use that
         # elif kconfigflavour is provided, assemble the ubuntu.flavour config
         # otherwise use defconfig to seed the base config
         if self.options.kconfigfile:
-            shutil.copy(self.options.kconfigfile, config_path)
+            snapcraft.file_utils.link_or_copy(self.options.kconfigfile,
+                                              config_path)
         elif self.options.kconfigflavour:
             self.unroll_ubuntu_config(config_path)
         else:
