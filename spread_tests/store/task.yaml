@@ -1,4 +1,4 @@
-summary: integration tests
+summary: store integration tests
 
 kill-timeout: 30m
 execute: |
