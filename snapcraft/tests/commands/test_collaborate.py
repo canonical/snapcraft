@@ -26,7 +26,7 @@ from snapcraft import (
     tests
 )
 
-from snapcraft._store import collaborate
+from snapcraft import _store
 
 
 class CollaborateBaseTestCase(tests.TestCase):
@@ -69,7 +69,7 @@ class CollaborateTestCase(CollaborateBaseTestCase):
                 'developer-id': 'dummy-id',
                 'since': '2015-07-19 19:30:00'}]})
         self.client.login('dummy', 'test correct password')
-        collaborate('ubuntu-core', 'keyname')
+        _store.collaborate('ubuntu-core', 'keyname')
 
         self.popen_mock.assert_called_with(['snap', 'sign', '-k', 'keyname'],
                                            stderr=-1, stdin=-1, stdout=-1)
@@ -79,6 +79,25 @@ class CollaborateTestCase(CollaborateBaseTestCase):
                          self.fake_logger.output)
         self.assertNotIn('Invalid response from the server',
                          self.fake_logger.output)
+
+
+class EditDevelopersTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        patcher = mock.patch('subprocess.check_call')
+        self.check_call_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_edit_collaborators_opens_vi_by_default(self):
+        self.useFixture(fixtures.EnvironmentVariable('EDITOR', None))
+        _store._edit_collaborators({})
+        self.check_call_mock.assert_called_with(['vi', mock.ANY])
+
+    def test_edit_collaborators_opens_editor(self):
+        self.useFixture(fixtures.EnvironmentVariable('EDITOR', 'test-editor'))
+        _store._edit_collaborators({})
+        self.check_call_mock.assert_called_with(['test-editor', mock.ANY])
 
 
 class CollaborateErrorsTestCase(CollaborateBaseTestCase):
@@ -95,7 +114,7 @@ class CollaborateErrorsTestCase(CollaborateBaseTestCase):
 
         err = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
-            collaborate,
+            _store.collaborate,
             'notfound', 'key')
 
         self.assertIn("Snap 'notfound' was not found", str(err))
@@ -103,7 +122,7 @@ class CollaborateErrorsTestCase(CollaborateBaseTestCase):
     def test_collaborate_snap_developer_not_found(self):
         self.client.login('dummy', 'test correct password')
 
-        collaborate('core-no-dev', 'keyname')
+        _store.collaborate('core-no-dev', 'keyname')
 
         self.assertIn('Signing developers assertion for core-no-dev',
                       self.fake_logger.output)
@@ -116,7 +135,7 @@ class CollaborateErrorsTestCase(CollaborateBaseTestCase):
         self.client.login('dummy', 'test correct password')
         err = self.assertRaises(
             storeapi.errors.StoreValidationError,
-            collaborate,
+            _store.collaborate,
             'badrequest', 'keyname')
 
         self.assertEqual(
