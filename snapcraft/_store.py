@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import contextmanager
-import datetime
 import getpass
 import hashlib
 import json
@@ -25,7 +24,8 @@ import os
 import re
 import subprocess
 import tempfile
-
+from datetime import datetime
+from textwrap import dedent
 from subprocess import Popen
 
 from tabulate import tabulate
@@ -777,7 +777,7 @@ def validate(snap_name, validations, revoke=False, key=None):
             'snap-id': snap_id,
             'approved-snap-id': approved_data['snap_id'],
             'approved-snap-revision': rev,
-            'timestamp': datetime.datetime.utcnow().isoformat() + 'Z',
+            'timestamp': datetime.utcnow().isoformat() + 'Z',
             'revoked': "false"
         }
         if revoke:
@@ -809,9 +809,6 @@ def collaborate(snap_name, key):
     except KeyError:
         raise storeapi.errors.SnapNotFoundError(snap_name)
     assertion = _get_developers(snap_id, publisher_id)
-
-    # XXX: Do the amendments via UI here.
-    #
     # The data will look like:
     # {'snap_developer': {
     #      'type: 'snap-developer',
@@ -828,16 +825,87 @@ def collaborate(snap_name, key):
     #         }],
     #      }
     # }
+    developers = _edit_collaborators(assertion.get('developers', []))
+    if assertion.get('developers', []) == developers:
+        logger.warning('Aborting due to unchanged collaborators list.')
+        return
+    assertion['developers'] = developers
 
     # The revision should be incremented, to avoid `invalid-revision` errors.
     assertion['revision'] = str(int(assertion.get('revision', '0'))+1)
+
     # There is a possibility that the `authority-id` to be `canonical`,
     # which should be changed to the `publisher_id` to match the signing key.
     assertion['authority-id'] = publisher_id
 
-    assertion = _sign_assertion(snap_name, assertion, key, 'developers')
+    signed_assertion = _sign_assertion(snap_name, assertion, key, 'developers')
+    store.push_assertion(snap_id, signed_assertion, 'developers')
 
-    store.push_assertion(snap_id, assertion, 'developers')
+
+_COLLABORATION_HEADER = dedent("""\
+    # Change which developers may build or upload snaps on the publisher's behalf.
+    #
+    # Sample entry:
+    #
+    # developers:
+    #   - developer-id: "dev-one"      # Which developer
+    #     since: "2017-02-10 08:35:00" # When contributions started
+    #     until: "2018-02-10 08:35:00" # When contributions ceased (optional)
+    #
+    # All timestamps are UTC, and the "now" special string will be replaced by
+    # the current time. Do not remove entries or use an until time in the past
+    # unless you want existing snaps provided by the developer to stop working.""") # noqa
+
+
+def _edit_collaborators(developers):
+    """Spawn an editor to modify the snap-developer assertion for a snap."""
+    editor_cmd = os.getenv('EDITOR', 'vi')
+
+    developer_wrapper = {'developers': _reformat_time_from_assertion(
+        developers)}
+
+    with tempfile.NamedTemporaryFile() as ft:
+        ft.close()
+        with open(ft.name, 'w') as fw:
+            print(_COLLABORATION_HEADER, file=fw)
+            yaml.dump(developer_wrapper, stream=fw, default_flow_style=False)
+        subprocess.check_call([editor_cmd, ft.name])
+        with open(ft.name, 'r') as fr:
+            developers = yaml.load(fr).get('developers')
+    return _reformat_time_for_assertion(developers)
+
+
+def _reformat_time_from_assertion(developers):
+    reformatted_developers = []
+    for developer in developers:
+        developer_it = {'developer-id': developer['developer-id']}
+        for range in ['since', 'until']:
+            if range in developer:
+                date = datetime.strptime(developer[range],
+                                         '%Y-%m-%dT%H:%M:%S.%fZ')
+                developer_it[range] = datetime.strftime(date,
+                                                        '%Y-%m-%d %H:%M:%S')
+        reformatted_developers.append(developer_it)
+    return reformatted_developers
+
+
+def _reformat_time_for_assertion(developers):
+    reformatted_developers = []
+    for developer in developers:
+        developer_it = {'developer-id': developer['developer-id']}
+        for range in ['since', 'until']:
+            if range in developer:
+                if developer[range] == 'now':
+                    date = datetime.now()
+                else:
+                    date = datetime.strptime(developer[range],
+                                             '%Y-%m-%d %H:%M:%S')
+                # We don't care about microseconds because we cannot edit
+                # later so we set that to 0.
+                developer_it[range] = date.strftime(
+                    '%Y-%m-%dT%H:%M:%S.000000Z')
+        reformatted_developers.append(developer_it)
+    return reformatted_developers
 
 
 def _get_developers(snap_id, publisher_id):

@@ -336,6 +336,11 @@ def run(args, project_options):  # noqa
         if _is_containerbuild():
             lifecycle.containerbuild('snap', project_options, args['--output'],
                                      args['<directory>'])
+        elif os.getenv('SNAPCRAFT_COLLABORATE'):
+            # this is only for testing
+            snapcraft.collaborate(
+                os.getenv('SNAPRAFT_COLLABORATORS_SNAP_NAME'),
+                os.getenv('SNAPCRAFT_COLLABORATORS_SIGN_KEY'))
         else:
             lifecycle.snap(project_options, args['<directory>'],
                            args['--output'])

@@ -19,6 +19,7 @@ import logging
 from unittest import mock
 
 import fixtures
+import yaml
 
 from snapcraft import (
     storeapi,
@@ -28,7 +29,7 @@ from snapcraft import (
 from snapcraft._store import collaborate
 
 
-class CollaborateTestCase(tests.TestCase):
+class CollaborateBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -36,6 +37,7 @@ class CollaborateTestCase(tests.TestCase):
         self.useFixture(self.fake_logger)
         self.fake_store = tests.fixture_setup.FakeStore()
         self.useFixture(self.fake_store)
+        self.useFixture(fixtures.EnvironmentVariable('EDITOR', 'vi'))
         self.client = storeapi.StoreClient()
         patcher = mock.patch('snapcraft._store.Popen')
         self.popen_mock = patcher.start()
@@ -44,8 +46,28 @@ class CollaborateTestCase(tests.TestCase):
         process_mock.communicate.return_value = [b'foo', b'']
         self.popen_mock.return_value = process_mock
         self.addCleanup(patcher.stop)
+        patcher = mock.patch('subprocess.check_call')
+        self.check_call_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def _generate_mock(self, *, existing_value=None, return_value=None):
+        if not return_value:
+            return_value = {'developers': []}
+
+        def mocked_call(*args):
+            edited_file = args[0][1]
+            with open(edited_file, 'w') as f:
+                yaml.dump(return_value, stream=f)
+        return mocked_call
+
+
+class CollaborateTestCase(CollaborateBaseTestCase):
 
     def test_collaborate_success(self):
+        self.check_call_mock.side_effect = self._generate_mock(
+            return_value={'developers': [{
+                'developer-id': 'dummy-id',
+                'since': '2015-07-19 19:30:00'}]})
         self.client.login('dummy', 'test correct password')
         collaborate('ubuntu-core', 'keyname')
 
@@ -57,6 +79,16 @@ class CollaborateTestCase(tests.TestCase):
                          self.fake_logger.output)
         self.assertNotIn('Invalid response from the server',
                          self.fake_logger.output)
+
+
+class CollaborateErrorsTestCase(CollaborateBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.check_call_mock.side_effect = self._generate_mock(
+            return_value={'developers': [{
+                'developer-id': 'dummy-id',
+                'since': '2015-07-19 19:30:00'}]})
 
     def test_collaborate_snap_not_found(self):
         self.client.login('dummy', 'test correct password')
