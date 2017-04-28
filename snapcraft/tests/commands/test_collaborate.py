@@ -81,7 +81,12 @@ class CollaborateTestCase(CollaborateBaseTestCase):
                          self.fake_logger.output)
 
 
-class EditDevelopersTestCase(tests.TestCase):
+class EditDevelopersOpenEditorTestCase(tests.TestCase):
+
+    scenarios = (
+        ('default', {'editor': None, 'expected': 'vi'}),
+        ('non-default', {'editor': 'test-editor', 'expected': 'test-editor'})
+    )
 
     def setUp(self):
         super().setUp()
@@ -89,15 +94,10 @@ class EditDevelopersTestCase(tests.TestCase):
         self.check_call_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_edit_collaborators_opens_vi_by_default(self):
-        self.useFixture(fixtures.EnvironmentVariable('EDITOR', None))
-        _store._edit_collaborators({})
-        self.check_call_mock.assert_called_with(['vi', mock.ANY])
-
     def test_edit_collaborators_opens_editor(self):
-        self.useFixture(fixtures.EnvironmentVariable('EDITOR', 'test-editor'))
+        self.useFixture(fixtures.EnvironmentVariable('EDITOR', self.editor))
         _store._edit_collaborators({})
-        self.check_call_mock.assert_called_with(['test-editor', mock.ANY])
+        self.check_call_mock.assert_called_with([self.expected, mock.ANY])
 
 
 class CollaborateErrorsTestCase(CollaborateBaseTestCase):
