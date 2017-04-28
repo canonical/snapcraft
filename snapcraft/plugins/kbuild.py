@@ -224,7 +224,7 @@ class KBuildPlugin(BasePlugin):
                  ['CONFIG_PREFIX={}'.format(self.installdir)] +
                  self.make_install_targets)
 
-    def prep_build(self):
+    def do_configure(self):
         super().build()
 
         config_path = self.get_config_path()
@@ -238,5 +238,5 @@ class KBuildPlugin(BasePlugin):
         self.do_install()
 
     def build(self):
-        self.prep_build()
+        self.do_configure()
         self.finish_build()

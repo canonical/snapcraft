@@ -451,7 +451,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
             'ubuntu-core', 'edge', self.os_snap, self.project.deb_arch)
 
     def build(self):
-        super().prep_build()
+        super().do_configure()
         self._do_parse_config(self.get_config_path())
         self._do_check_config()
         self._do_check_initrd()
