@@ -234,9 +234,8 @@ class Ubuntu(BaseRepo):
                 try:
                     pkg_name, version = repo.get_pkg_name_parts(pkg)
                     installed_version = apt_cache[pkg_name].installed
-                    if not installed_version:
-                        new_packages.append(pkg)
-                    elif version and installed_version != version:
+                    if not installed_version or (
+                            version and installed_version != version):
                         new_packages.append(pkg)
                 except KeyError as e:
                     if cls._setup_multi_arch(pkg_name):
