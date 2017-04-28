@@ -398,11 +398,12 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def _do_check_config(self):
         # check the resulting .config has all the necessary options
-        msg = 'Your kernel config is missing some feature that ubuntu core \
-recommend / requires,\nand while we won\'t prevent you from building this\
-kernel snap,\n we suggest you take a look at these:'
-        required_opts = required_generic + required_security + \
-            required_snappy + required_systemd
+        msg = ("Your kernel config is missing some features that ubuntu core "
+               "recommends / requires,\n"
+               "and while we won\'t prevent you from building this "
+               "kernel snap, we suggest\nyou take a look at these:\n")
+        required_opts = (required_generic + required_security +
+            required_snappy + required_systemd)
         missing = []
 
         for code in required_opts:
@@ -415,15 +416,15 @@ kernel snap,\n we suggest you take a look at these:'
                 missing.append(opt)
 
         if missing:
-            logger.warn('\n{}\n'.format(msg))
+            warn = '\n{}\n'.format(msg)
             for opt in missing:
-                logger.warn('  - {}'.format(opt))
-            logger.warn('')
+                warn += '{}'.format(opt)
+            logger.warn(warn)
 
     def _do_check_initrd(self):
         # check all required_boot[] items are either builtin or part of initrd
-        msg = 'The following feature is boot essential, consider making\n\
-it static or adding the relevant module to initrd:'
+        msg = ("The following feature is boot essential, consider making\n"
+               "it static or adding the relevant module to initrd:")
         missing = []
 
         for code in required_boot:
