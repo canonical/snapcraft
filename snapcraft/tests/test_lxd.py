@@ -33,8 +33,9 @@ from snapcraft.internal import lxd
 class LXDTestCase(tests.TestCase):
 
     scenarios = [
-        ('local', dict(remote='local')),
-        ('remote', dict(remote='my-remote')),
+        ('local', dict(remote='local', target_arch=None)),
+        ('remote', dict(remote='my-remote', target_arch=None)),
+        ('cross', dict(remote='local', target_arch='armhf')),
     ]
 
     @patch('petname.Generate')
@@ -46,20 +47,25 @@ class LXDTestCase(tests.TestCase):
 
         mock_pet.return_value = 'my-pet'
 
-        project_options = ProjectOptions()
+        with patch('platform.machine') as machine_mock, \
+                patch('platform.architecture') as arch_mock:
+            arch_mock.return_value = ('64bit', 'ELF')
+            machine_mock.return_value = 'x86_64'
+            project_options = ProjectOptions(target_deb_arch=self.target_arch)
         metadata = {'name': 'project'}
         project_folder = 'build_project'
         lxd.Cleanbuilder(output='snap.snap', source='project.tar',
                          metadata=metadata, remote=self.remote,
                          project_options=project_options).execute()
-        expected_arch = project_options.deb_arch
+        expected_arch = project_options.host_arch
 
-        self.assertEqual(
-            'Setting up container with project assets\n'
-            'Waiting for a network connection...\n'
-            'Network connection established\n'
-            'Retrieved snap.snap\n',
-            fake_logger.output)
+        self.assertIn('Setting up container with project assets\n'
+                      'Waiting for a network connection...\n'
+                      'Network connection established\n'
+                      'Retrieved snap.snap\n', fake_logger.output)
+        if self.target_arch:
+            self.assertIn('Setting target machine to \'{}\'\n'.format(
+                          self.target_arch), fake_logger.output)
 
         container_name = '{}:snapcraft-my-pet'.format(self.remote)
         fake_lxd.check_call_mock.assert_has_calls([

@@ -18,9 +18,10 @@
 import json
 import logging
 import os
+import pipes
 import sys
 from contextlib import contextmanager
-from subprocess import check_call, check_output, CalledProcessError
+from subprocess import check_call, check_output, CalledProcessError, Popen
 from time import sleep
 
 import petname
@@ -61,10 +62,14 @@ class Containerbuild:
         check_call(['lxc', 'file', 'pull',
                     '{}/{}'.format(self._container_name, src), dst])
 
-    def _container_run(self, cmd):
+    def _container_run(self, cmd, stdin=None, stdout=None):
         # Set HOME here as 'lxc config set ... environment.HOME' doesn't work
-        check_call(['lxc', 'exec', self._container_name, '--env',
-                   'HOME=/{}'.format(self._project_folder), '--'] + cmd)
+        # Use 'cd' because --env has no effect with sshfs mounts
+        check_call(['lxc', 'exec', self._container_name, '--',
+                   'bash', '-c', 'cd /{}; {}'.format(
+                       self._project_folder,
+                       ' '.join(pipes.quote(arg) for arg in cmd))],
+                   stdin=stdin, stdout=stdout)
 
     def _ensure_container(self):
         check_call([
@@ -85,12 +90,19 @@ class Containerbuild:
             print('Stopping {}'.format(self._container_name))
             check_call(['lxc', 'stop', '-f', self._container_name])
 
+    def _install_packages(self, packages):
+        try:
+            self._wait_for_network()
+            self._container_run(['apt-get', 'update'])
+            self._container_run(['apt-get', 'install', '-y', *packages])
+        finally:
+            # Always remove apt lock in case we stop during install
+            self._container_run(['rm', '-f', '/var/lib/apt/lists/lock'])
+
     def execute(self, step='snap', args=None):
         with self._ensure_started():
             self._setup_project()
-            self._wait_for_network()
-            self._container_run(['apt-get', 'update'])
-            self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
+            self._install_packages(['snapcraft'])
             command = ['snapcraft', step]
             if step == 'snap':
                 command += ['--output', self._snap_output]
@@ -155,12 +167,14 @@ class Project(Containerbuild):
                          project_options=project_options,
                          metadata=metadata, container_name=metadata['name'],
                          remote=remote)
+        self._processes = []
 
     def _get_container_status(self):
         containers = json.loads(check_output([
             'lxc', 'list', '--format=json', self._container_name]).decode())
         for container in containers:
-            if container['name'] == self._container_name.split(':')[-1]:
+            remote, container_name = self._container_name.split(':')
+            if container['name'] == container_name:
                 return container
 
     def _ensure_container(self):
@@ -183,18 +197,69 @@ class Project(Containerbuild):
     def _setup_project(self):
         self._ensure_mount(self._project_folder, self._source)
 
+    def _container_login(self):
+        network = self._get_container_status()['state']['network']['eth0']
+        for address in network['addresses']:
+            if address['family'] == 'inet':
+                return address['address'], '22'
+        raise RuntimeError('No IP found for {}'.format(self._container_name))
+
+    def _background(self, cmd, stdin=None, stdout=None):
+        self._processes += [Popen(cmd, stdin=stdin, stdout=stdout)]
+
     def _ensure_mount(self, destination, source):
         logger.info('Mounting {} into container'.format(source))
-        devices = self._get_container_status()['devices']
-        if destination not in devices:
-            check_call([
-                'lxc', 'config', 'device', 'add', self._container_name,
-                destination, 'disk', 'source={}'.format(source),
-                'path=/{}'.format(destination)])
+        remote, container_name = self._container_name.split(':')
+        if remote != 'local':
+            # Remove project folder in case it was used "locally" before
+            devices = self._get_container_status()['devices']
+            if destination in devices:
+                check_call([
+                    'lxc', 'config', 'device', 'remove', self._container_name,
+                    destination, 'disk', 'source={}'.format(source),
+                    'path=/{}'.format(destination)])
+
+            self._install_packages(['sshfs'])
+            keyfile = 'id_{}'.format(self._container_name)
+            if not os.path.exists(keyfile):
+                check_output(['ssh-keygen', '-o', '-N', '', '-f', keyfile])
+            self._container_run(['mkdir', '-p', '/root/.ssh'])
+            self._container_run(['chmod', '700', '/root/.ssh'])
+            self._container_run(['tee', '-a',
+                                 '/root/.ssh/authorized_keys'],
+                                stdin=open('{}.pub'.format(keyfile), 'r'))
+            self._container_run(['chmod', '600',
+                                 '/root/.ssh/authorized_keys'])
+            self._container_run(['mkdir', '-p', '/{}'.format(destination)])
+            self._container_run(['mkdir', '-p', source])
+            r1, w1 = os.pipe()
+            r2, w2 = os.pipe()
+            ssh_hostname, ssh_port = self._container_login()
+            logger.info('Connecting via SSH to {}:{}'.format(
+                ssh_hostname, ssh_port))
+            self._background(['/usr/lib/sftp-server'], stdin=r1, stdout=w2)
+            self._background(['ssh', '-C', '-F', '/dev/null',
+                              '-o', 'IdentityFile={}'.format(keyfile),
+                              '-o', 'StrictHostKeyChecking=no',
+                              '-o', 'UserKnownHostsFile=/dev/null',
+                              '-o', 'User=root',
+                              '-p', ssh_port, ssh_hostname,
+                              'sshfs -o slave -o nonempty :{} /{}'.format(
+                                  source, destination)],
+                             stdin=r2, stdout=w1)
+            # -o allow_other, -o, idmap=user,uid=1000,gid=1000
+        else:
+            devices = self._get_container_status()['devices']
+            if destination not in devices:
+                check_call([
+                    'lxc', 'config', 'device', 'add', self._container_name,
+                    destination, 'disk', 'source={}'.format(source),
+                    'path=/{}'.format(destination)])
 
     def _finish(self):
-        # Nothing to do
-        pass
+        for process in self._processes:
+            logger.info('Terminating {}'.format(process.args))
+            process.terminate()
 
     def execute(self, step='snap', args=None):
         super().execute(step, args)
