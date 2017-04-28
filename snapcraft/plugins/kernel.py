@@ -398,10 +398,11 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def _do_check_config(self):
         # check the resulting .config has all the necessary options
-        msg = ("Your kernel config is missing some features that ubuntu core "
-               "recommends / requires,\n"
-               "and while we won\'t prevent you from building this "
-               "kernel snap, we suggest\nyou take a look at these:\n")
+        msg = ("**** WARNING **** WARNING **** WARNING **** WARNING ****\n"
+               "Your kernel config is missing some features that ubuntu\n"
+               "core recommends / requires, and while we won\'t prevent\n"
+               "you from building this kernel snap, we suggest you take\n"
+               "a look at these:\n")
         required_opts = (required_generic + required_security +
             required_snappy + required_systemd)
         missing = []
@@ -419,6 +420,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
             warn = '\n{}\n'.format(msg)
             for opt in missing:
                 warn += '{}'.format(opt)
+            warn += '\n'
             logger.warn(warn)
 
     def _do_check_initrd(self):
