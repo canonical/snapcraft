@@ -835,8 +835,8 @@ ACCEPT=n
         with open('debian/debian.env', 'w') as f:
             f.write('DEBIAN=debian.{}'.format(branch))
         os.mkdir('debian.{}'.format(branch))
-        basedir = 'debian.{}/config'.format(branch)
-        archdir = 'debian.{}/config/{}'.format(branch, arch)
+        basedir = os.path.join('debian.{}'.format(branch), 'config')
+        archdir = os.path.join('debian.{}'.format(branch), 'config', arch)
         os.mkdir(basedir)
         os.mkdir(archdir)
         commoncfg = os.path.join(basedir, 'config.common.ports')

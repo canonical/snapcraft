@@ -33,7 +33,7 @@ explained above:
     - kconfigflavour
       (string)
       Ubuntu config flavour to use as base configuration. If provided this
-      option winds over kdefconfig. default: None
+      option wins over kdefconfig. default: None
 
     - kconfigs
       (list of strings)
@@ -122,7 +122,7 @@ class KBuildPlugin(BasePlugin):
         if logger.isEnabledFor(logging.DEBUG):
             self.make_cmd.append('V=1')
 
-    def unroll_ubuntu_config(self, config_path):
+    def assemble_ubuntu_config(self, config_path):
         try:
             with open(os.path.join('debian', 'debian.env'), 'r') as f:
                 env = f.read()
@@ -155,10 +155,11 @@ class KBuildPlugin(BasePlugin):
         configfiles.append(flavourconfig)
         # assemble .config
         try:
-            with open(config_path, 'w') as fw:
-                for f in configfiles:
-                    with open(f) as fr:
-                        fw.write(fr.read())
+            with open(config_path, 'w') as config_file:
+                for config_part_path in (commonconfig, ubuntuconfig,
+                                         archconfig, flavourconfig):
+                    with open(config_part_path) as config_part:
+                        config_file.write(config_part.read())
         except OSError as e:
             raise RuntimeError('Unable to access {!r}: '
                                '{}'.format(e.filename, e.strerror))
@@ -171,7 +172,7 @@ class KBuildPlugin(BasePlugin):
             snapcraft.file_utils.link_or_copy(self.options.kconfigfile,
                                               config_path)
         elif self.options.kconfigflavour:
-            self.unroll_ubuntu_config(config_path)
+            self.assemble_ubuntu_config(config_path)
         else:
             # we need to run this with -j1, unit tests are a good defense here.
             make_cmd = self.make_cmd.copy()
