@@ -81,7 +81,24 @@ class CollaborateTestCase(CollaborateBaseTestCase):
                          self.fake_logger.output)
 
 
-class EditDevelopersOpenEditorTestCase(tests.TestCase):
+class EditCollaboratorsTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        patcher = mock.patch('subprocess.check_call')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_edit_collaborators_must_write_collaboration_header(self):
+        with mock.patch(
+                'builtins.open',
+                mock.mock_open(read_data='{developers: []}')) as mock_open:
+            _store._edit_collaborators({})
+
+        mock_open().write.assert_called_with([_store._COLLABORATION_HEADER], mock.ANY)
+
+
+class EditCollaboratorsOpenEditorTestCase(tests.TestCase):
 
     scenarios = (
         ('default', {'editor': None, 'expected': 'vi'}),
@@ -94,7 +111,7 @@ class EditDevelopersOpenEditorTestCase(tests.TestCase):
         self.check_call_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_edit_collaborators_opens_editor(self):
+    def test_edit_collaborators_must_open_editor(self):
         self.useFixture(fixtures.EnvironmentVariable('EDITOR', self.editor))
         _store._edit_collaborators({})
         self.check_call_mock.assert_called_with([self.expected, mock.ANY])
