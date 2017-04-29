@@ -624,6 +624,18 @@ class ExecutionTestCase(BaseExecutionTestCase):
 
 class RecordSnapcraftTestCase(BaseExecutionTestCase):
 
+    def test_prime_without_build_info_does_not_record_snapcraft_yaml(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', None))
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            Not(FileExists()))
+
     def test_prime_with_build_info_records_snapcraft_yaml(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
@@ -643,7 +655,6 @@ parts:
   test-part:
     plugin: nil
     prime: []
-    snap: []
     stage: []
 architectures: [amd64]
 """)
@@ -651,17 +662,41 @@ architectures: [amd64]
             os.path.join('prime', 'snap', 'snapcraft.yaml'),
             FileContains(expected))
 
-    def test_prime_without_build_info_does_not_record_snapcraft_yaml(self):
+
+class RecordSnapcraftWithDeprecatedSnapKeywordTestCase(BaseExecutionTestCase):
+
+    scenarios = (
+        ('using snap keyword', {'keyword': 'snap'}),
+        ('using prime keyword', {'keyword': 'prime'})
+    )
+
+    def test_prime_step_records_prime_keyword(self):
         self.useFixture(fixtures.EnvironmentVariable(
-            'SNAPCRAFT_BUILD_INFO', None))
-        self.make_snapcraft_yaml("""parts:
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        parts = ("""parts:
   test-part:
     plugin: nil
+    {}: [-*]
 """)
+        self.make_snapcraft_yaml(parts.format(self.keyword))
         lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    plugin: nil
+    prime: [-*]
+    stage: []
+architectures: [amd64]
+""")
         self.assertThat(
             os.path.join('prime', 'snap', 'snapcraft.yaml'),
-            Not(FileExists()))
+            FileContains(expected))
 
 
 class CoreSetupTestCase(tests.TestCase):

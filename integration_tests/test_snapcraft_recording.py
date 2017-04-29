@@ -37,7 +37,7 @@ class SnapcraftRecordingTestCase(integration_tests.TestCase):
         with open(os.path.join('snap', 'snapcraft.yaml')) as source_yaml_file:
             source_yaml = yaml.load(source_yaml_file)
         # Append the default values.
-        for key in ('prime', 'snap', 'stage'):
+        for key in ('prime', 'stage'):
             source_yaml['parts']['dummy-part'].update({key: []})
         source_yaml.update(grade='stable')
 
