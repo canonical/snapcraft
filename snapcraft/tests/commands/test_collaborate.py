@@ -116,8 +116,8 @@ class CollaborateErrorsTestCase(CollaborateBaseTestCase):
     def test_collaborate_unchanged_collaborators(self):
         self.edit_collaborators_mock.return_value = [{
             'developer-id': 'test-dev-id',
-            'since': '2017-02-10T08:35:00.390258Z',
-            'until': '2018-02-10T08:35:00.390258Z'
+            'since': '2017-02-10T08:35:00.000000Z',
+            'until': '2018-02-10T08:35:00.000000Z'
         }]
         self.client.login('dummy', 'test correct password')
         _store.collaborate('test-snap-with-dev', 'keyname')

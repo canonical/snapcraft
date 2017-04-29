@@ -826,7 +826,7 @@ def collaborate(snap_name, key):
     #      }
     # }
     developers = _edit_collaborators(assertion.get('developers', []))
-    if assertion.get('developers', []) == developers:
+    if _are_developers_unchanged(developers, assertion.get('developers', [])):
         logger.warning('Aborting due to unchanged collaborators list.')
         return
     assertion['developers'] = developers
@@ -893,19 +893,30 @@ def _reformat_time_for_assertion(developers):
     reformatted_developers = []
     for developer in developers:
         developer_it = {'developer-id': developer['developer-id']}
-        for range in ['since', 'until']:
-            if range in developer:
-                if developer[range] == 'now':
+        for range_ in ['since', 'until']:
+            if range_ in developer:
+                if developer[range_] == 'now':
                     date = datetime.now()
                 else:
-                    date = datetime.strptime(developer[range],
+                    date = datetime.strptime(developer[range_],
                                              '%Y-%m-%d %H:%M:%S')
                 # We don't care about microseconds because we cannot edit
                 # later so we set that to 0.
-                developer_it[range] = date.strftime(
+                developer_it[range_] = date.strftime(
                     '%Y-%m-%dT%H:%M:%S.000000Z')
         reformatted_developers.append(developer_it)
     return reformatted_developers
+
+
+def _are_developers_unchanged(edited_developers, developers_from_assertion):
+    # We need to compare without milliseconds, so drop them from the assertion.
+    for developer in developers_from_assertion:
+        for range_ in ['since', 'until']:
+            if range_ in developer:
+                date = datetime.strptime(
+                    developer[range_], '%Y-%m-%dT%H:%M:%S.%fZ')
+                developer[range_] = date.strftime('%Y-%m-%dT%H:%M:%S.000000Z')
+    return developers_from_assertion == edited_developers
 
 
 def _get_developers(snap_id, publisher_id):
