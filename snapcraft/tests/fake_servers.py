@@ -37,6 +37,12 @@ class BaseHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def log_message(*args):
         logger.debug(args)
 
+    def raise_not_implemented(self, path):
+        logger.error(
+            'Not implemented {} in {} server: {}'.format(
+                path, self.__class__.__name__))
+        raise NotImplementedError(parsed)
+
 
 class FakeFileHTTPRequestHandler(BaseHTTPRequestHandler):
 
@@ -217,9 +223,7 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
         elif parsed_path.path.startswith(tokens_refresh_path):
             self._handle_tokens_refresh_request()
         else:
-            logger.error('Not implemented path in fake SSO server: {}'.format(
-                self.path))
-            raise NotImplementedError(self.path)
+            self.raise_not_implemented(self.path)
 
     def _handle_tokens_discharge_request(self):
         string_data = self.rfile.read(
@@ -298,10 +302,7 @@ class FakeStoreUploadRequestHandler(BaseHTTPRequestHandler):
         if parsed_path.path.startswith('/unscanned-upload/'):
             self._handle_upload_request()
         else:
-            logger.error(
-                'Not implemented path in fake Store Upload server: {}'.format(
-                    self.path))
-            raise NotImplementedError(self.path)
+            self.raise_not_implemented(self.path)
 
     def _handle_upload_request(self):
         logger.info('Handling upload request')
@@ -360,6 +361,8 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 self._handle_sign_build_request()
             elif parsed_path.path.endswith('/close'):
                 self._handle_close_request()
+            else:
+                self.raise_not_implemented(self.path)
         elif parsed_path.path.startswith(register_path):
             self._handle_registration_request()
         elif parsed_path.path.startswith(upload_path):
@@ -369,10 +372,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         elif parsed_path.path.startswith(agreement_path):
             self._handle_sign_request()
         else:
-            logger.error(
-                'Not implemented path in fake Store API server: {}'.format(
-                    self.path))
-            raise NotImplementedError(self.path)
+            self.raise_not_implemented(self.path)
 
     def _handle_refresh(self):
         if self.server.fake_store.needs_refresh:
@@ -847,11 +847,10 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 self._handle_snap_validations(snap_id)
             elif request == 'developers':
                 self._handle_snap_developers(snap_id)
+            else:
+                self._raise_not_implemented(parsed_path.path)
         else:
-            logger.error(
-                'Not implemented path in fake Store API server: {}'.format(
-                    self.path))
-            raise NotImplementedError(parsed_path)
+            self._raise_not_implemented(parsed_path.path)
 
     def _handle_snap_validations(self, snap_id):
         logger.debug('Handling validation request')
@@ -898,7 +897,7 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
         elif snap_id == 'bad':
             response = 'foo'.encode()
             status = 200
-        elif snap_id == 'no':
+        elif snap_id == 'test-snap-id-with-no-validations':
             response = json.dumps([]).encode()
             status = 200
         elif snap_id == 'err':
@@ -985,6 +984,11 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             'basic': {'snap-id': 'snap-id', 'status': 'Approved',
                       'private': False, 'price': None,
                       'since': '2016-12-12T01:01:01Z'},
+            'test-snap-with-no-validations': {
+                'snap-id': 'test-snap-id-with-no-validations',
+                'status': 'Approved',
+                'private': False, 'price': None,
+                'since': '2016-12-12T01:01:01Z'},
             'test-snap-with-dev': {'snap-id': 'test-snap-id-with-dev',
                                    'status': 'Approved',
                                    'private': False, 'price': None,
@@ -1125,11 +1129,10 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 self._handle_push_validation_request(snap_id)
             elif request == 'developers':
                 self._handle_push_developers_request(snap_id)
+            else:
+                self.raise_not_implemented(self.path)
         else:
-            logger.error(
-                'Not implemented path in fake Store API server: {}'.format(
-                    self.path))
-            raise NotImplementedError(parsed_path)
+            self.raise_not_implemented(self.path)
 
     def _handle_push_validation_request(self, code):
         string_data = self.rfile.read(
@@ -1196,10 +1199,7 @@ class FakeStoreSearchRequestHandler(BaseHTTPRequestHandler):
             self._handle_download_request(
                 parsed_path.path[len(download_path):])
         else:
-            logger.error(
-                'Not implemented path in fake Store Search server: {}'.format(
-                    self.path))
-            raise NotImplementedError(self.path)
+            self.raise_not_implemented(self.path)
 
     def _handle_details_request(self, package):
         logger.debug(

@@ -748,7 +748,6 @@ def gated(snap_name):
 
 def validate(snap_name, validations, revoke=False, key=None):
     """Generate, sign and upload validation assertions."""
-
     # Check validations format
     _check_validations(validations)
 

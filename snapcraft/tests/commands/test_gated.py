@@ -73,9 +73,11 @@ class GatedTestCase(tests.TestCase):
     def test_gated_no_validations(self):
         self.client.login('dummy', 'test correct password')
 
-        main([self.command_name, 'basic'])
+        main([self.command_name, 'test-snap-with-no-validations'])
 
-        expected_output = "There are no validations for snap 'basic'\n"
+        expected_output = (
+            "There are no validations for snap "
+            "'test-snap-with-no-validations'\n")
         self.assertEqual(expected_output, self.fake_terminal.getvalue())
 
     def test_no_login(self):
