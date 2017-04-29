@@ -41,7 +41,7 @@ class BaseHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
         logger.error(
             'Not implemented {} in {} server: {}'.format(
                 path, self.__class__.__name__))
-        raise NotImplementedError(parsed)
+        raise NotImplementedError(path)
 
 
 class FakeFileHTTPRequestHandler(BaseHTTPRequestHandler):
