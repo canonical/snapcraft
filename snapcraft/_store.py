@@ -811,7 +811,7 @@ def collaborate(snap_name, key):
     assertion = _get_developers(snap_id, publisher_id)
     # The data will look like:
     # {'snap_developer': {
-    #      'type: 'snap-developer',
+    #      'type': 'snap-developer',
     #      'authority-id': <account_id of the publisher>,
     #      'publisher-id': <account_id of the publisher>,
     #      'snap-id': 'snap_id',

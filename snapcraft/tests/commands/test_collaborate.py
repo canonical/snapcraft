@@ -112,3 +112,17 @@ class CollaborateErrorsTestCase(CollaborateBaseTestCase):
         self.assertEqual(
                 'Received error 400: "The given `snap-id` does not match '
                 'the assertion\'s."', str(err))
+
+    def test_collaborate_unchanged_collaborators(self):
+        self.edit_collaborators_mock.return_value = [{
+            'developer-id': 'test-dev-id',
+            'since': '2017-02-10T08:35:00.390258Z',
+            'until': '2018-02-10T08:35:00.390258Z'
+        }]
+        self.client.login('dummy', 'test correct password')
+        _store.collaborate('test-snap-with-dev', 'keyname')
+
+        self.assertIn('Aborting due to unchanged collaborators list.',
+                      self.fake_logger.output)
+        self.assertNotIn('Signing developers assertion for ubuntu-core',
+                      self.fake_logger.output)
