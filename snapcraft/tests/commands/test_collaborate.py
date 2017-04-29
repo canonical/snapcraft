@@ -125,4 +125,4 @@ class CollaborateErrorsTestCase(CollaborateBaseTestCase):
         self.assertIn('Aborting due to unchanged collaborators list.',
                       self.fake_logger.output)
         self.assertNotIn('Signing developers assertion for ubuntu-core',
-                      self.fake_logger.output)
+                         self.fake_logger.output)
