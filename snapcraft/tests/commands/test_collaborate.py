@@ -19,7 +19,6 @@ import logging
 from unittest import mock
 
 import fixtures
-import yaml
 
 from snapcraft import (
     storeapi,
@@ -85,10 +84,8 @@ class EditCollaboratorsTestCase(tests.TestCase):
                           "  since: '2016-02-10 08:35:00'\n"
                           "  until: '2019-02-10 08:35:00'\n")
 
-        with mock.patch(
-                'builtins.open',
-                new_callable=mock.mock_open,
-                read_data=new_developers) as mock_open:
+        with mock.patch('builtins.open', new_callable=mock.mock_open,
+                        read_data=new_developers):
             developers_for_assertion = _store._edit_collaborators(
                 developers_from_assertion)
 
