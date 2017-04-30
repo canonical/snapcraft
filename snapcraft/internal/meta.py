@@ -14,10 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import contextlib
-import os
 import configparser
 import logging
+import os
 import re
 import shlex
 import shutil
@@ -32,6 +33,7 @@ from snapcraft.internal import common
 from snapcraft.internal.errors import MissingGadgetError
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.sources import get_source_handler_from_type
+from snapcraft.internal.states import get_state
 
 
 logger = logging.getLogger(__name__)
@@ -137,7 +139,18 @@ class _SnapPackaging:
         if os.environ.get('SNAPCRAFT_BUILD_INFO'):
             os.makedirs(record_dir, exist_ok=True)
             with open(record_file_path, 'w') as record_file:
-                yaml.dump(self._config_data, record_file)
+                annotated_snapcraft = self._annotate_snapcraft(
+                    copy.deepcopy(self._config_data))
+                yaml.dump(annotated_snapcraft, record_file)
+
+    def _annotate_snapcraft(self, data):
+#        import pdb, sys; pdb.Pdb(stdout=sys.stdout).set_trace()
+        for part in data['parts']:
+            pull_state = get_state(
+                os.path.join(self._parts_dir, part, 'state'), 'pull')
+            data['parts'][part]['stage-packages'] = (
+                pull_state.assets.get('stage-packages', []))
+        return data
 
     def write_snap_directory(self):
         # First migrate the snap directory. It will overwrite any conflicting
