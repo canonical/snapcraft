@@ -45,6 +45,8 @@ class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
         This snap doesn't have stage or build packages and is declared that it
         works on all architectures.
         """
+
+    def test_prime_records_snapcraft_yaml(self):
         self.run_snapcraft('prime', project_dir='basic')
 
         recorded_yaml_path = os.path.join(
