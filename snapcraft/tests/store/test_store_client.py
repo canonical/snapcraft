@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -333,7 +333,21 @@ class GetAccountInformationTestCase(StoreTestCase):
                         'private': False,
                         'price': None,
                         'since': '2016-12-12T01:01:01Z',
-                    }
+                    },
+                    'test-snap-with-dev': {
+                        'price': None,
+                        'private': False,
+                        'since': '2016-12-12T01:01:01Z',
+                        'snap-id': 'test-snap-id-with-dev',
+                        'status': 'Approved'
+                    },
+                    'test-snap-with-no-validations': {
+                        'price': None,
+                        'private': False,
+                        'since': '2016-12-12T01:01:01Z',
+                        'snap-id': 'test-snap-id-with-no-validations',
+                        'status': 'Approved'
+                    },
                 }
             }
         }, self.client.get_account_information())
@@ -373,7 +387,21 @@ class GetAccountInformationTestCase(StoreTestCase):
                         'private': False,
                         'price': None,
                         'since': '2016-12-12T01:01:01Z',
-                    }
+                    },
+                    'test-snap-with-dev': {
+                        'price': None,
+                        'private': False,
+                        'since': '2016-12-12T01:01:01Z',
+                        'snap-id': 'test-snap-id-with-dev',
+                        'status': 'Approved'
+                    },
+                    'test-snap-with-no-validations': {
+                        'price': None,
+                        'private': False,
+                        'since': '2016-12-12T01:01:01Z',
+                        'snap-id': 'test-snap-id-with-no-validations',
+                        'status': 'Approved'
+                    },
                 }
             }
         }, self.client.get_account_information())
