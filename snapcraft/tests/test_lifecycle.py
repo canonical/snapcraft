@@ -20,7 +20,6 @@ import logging
 import os
 import re
 import shutil
-import types
 from unittest import mock
 
 import fixtures
@@ -36,6 +35,7 @@ from snapcraft import storeapi
 from snapcraft.file_utils import calculate_sha3_384
 from snapcraft.internal import pluginhandler, lifecycle
 from snapcraft import tests
+from snapcraft.tests import fixture_setup
 
 
 class BaseExecutionTestCase(tests.TestCase):
@@ -657,6 +657,7 @@ parts:
     plugin: nil
     prime: []
     stage: []
+    stage-packages: []
 architectures: [{}]
 """.format(self.project_options.deb_arch))
         self.assertThat(
@@ -666,20 +667,17 @@ architectures: [{}]
     def test_prime_with_stage_packages(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
+        self.useFixture(fixture_setup.FakeAptCache([
+            ('test-package1', 'test-version1'),
+            ('test-package2', 'test-version2')]))
 
         self.make_snapcraft_yaml("""parts:
   test-part:
     plugin: nil
-    stage-packages: [test-package1=test-version, test-package2]
+    stage-packages: [test-package1=test-version1, test-package2]
 """)
-        with mock.patch('snapcraft.repo._deb.apt.Cache') as mock_apt_cache:
-            fake_cache = {
-                'test-package1': types.SimpleNamespace(
-                    name='test-package1', versions=['test-version1']),
-            }
-            mock_apt_cache().__getitem__.side_effect = (
-                lambda item: fake_cache[item])
-            lifecycle.execute('prime', self.project_options)
+
+        lifecycle.execute('prime', self.project_options)
 
         expected = ("""name: test
 version: 0
@@ -729,6 +727,7 @@ parts:
     plugin: nil
     prime: [-*]
     stage: []
+    stage-packages: []
 architectures: [{}]
 """.format(self.project_options.deb_arch))
         self.assertThat(
