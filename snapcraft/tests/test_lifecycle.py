@@ -20,6 +20,7 @@ import logging
 import os
 import re
 import shutil
+import types
 from unittest import mock
 
 import fixtures
@@ -768,6 +769,42 @@ parts:
     stage-packages: []
 architectures: [{}]
 build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+    def test_prime_with_stage_packages(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+    stage-packages: [test-package1=test-version, test-package2]
+""")
+        with mock.patch('snapcraft.repo._deb.apt.Cache') as mock_apt_cache:
+            fake_cache = {
+                'test-package1': types.SimpleNamespace(
+                    name='test-package1', versions=['test-version']),
+            }
+            mock_apt_cache().__getitem__.side_effect = (
+                lambda item: fake_cache[item])
+            lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: [test-package1=test-version, test-package2]
+architectures: [{}]
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'snapcraft.yaml'),
