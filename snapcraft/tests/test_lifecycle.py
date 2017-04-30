@@ -675,7 +675,7 @@ architectures: [{}]
         with mock.patch('snapcraft.repo._deb.apt.Cache') as mock_apt_cache:
             fake_cache = {
                 'test-package1': types.SimpleNamespace(
-                    name='test-package1', versions=['test-version']),
+                    name='test-package1', versions=['test-version1']),
             }
             mock_apt_cache().__getitem__.side_effect = (
                 lambda item: fake_cache[item])
@@ -692,7 +692,7 @@ parts:
     plugin: nil
     prime: []
     stage: []
-    stage-packages: [test-package1=test-version, test-package2]
+    stage-packages: [test-package1=test-version1, test-package2=test-version2]
 architectures: [{}]
 """.format(self.project_options.deb_arch))
         self.assertThat(
