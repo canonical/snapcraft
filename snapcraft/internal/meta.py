@@ -144,7 +144,6 @@ class _SnapPackaging:
                 yaml.dump(annotated_snapcraft, record_file)
 
     def _annotate_snapcraft(self, data):
-#        import pdb, sys; pdb.Pdb(stdout=sys.stdout).set_trace()
         for part in data['parts']:
             pull_state = get_state(
                 os.path.join(self._parts_dir, part, 'state'), 'pull')
