@@ -419,7 +419,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
         if missing:
             warn = '\n{}\n'.format(msg)
             for opt in missing:
-                warn += '{}'.format(opt)
+                warn += '{}\n'.format(opt)
             warn += '\n'
             logger.warn(warn)
 
