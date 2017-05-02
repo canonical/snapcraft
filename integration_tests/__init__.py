@@ -231,9 +231,6 @@ class StoreTestCase(TestCase):
         process.sendline(email)
         process.expect_exact('Password: ')
         process.sendline(password)
-        if expect_success:
-            process.expect_exact(
-                'We strongly recommend enabling multi-factor authentication:')
         result = 'successful' if expect_success else 'failed'
         process.expect_exact('Login {}.'.format(result))
 
@@ -277,8 +274,6 @@ class StoreTestCase(TestCase):
         process.expect_exact('Password: ')
         process.sendline(password)
         if expect_success:
-            process.expect_exact(
-                'We strongly recommend enabling multi-factor authentication:')
             process.expect_exact('Login successful.')
             process.expect(
                 r'Done\. The key "{}" .* may be used to sign your '

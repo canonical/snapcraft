@@ -278,8 +278,6 @@ class RegisterKeyTestCase(tests.TestCase):
             [mock.call('Key number: '), mock.call('Key number: ')])
 
         self.assertEqual(
-            'We strongly recommend enabling multi-factor authentication: '
-            'https://help.ubuntu.com/community/SSO/FAQs/2FA\n'
             'Login successful.\n'
             'Registering key ...\n'
             'Done. The key "another" ({}) may be used to sign your '

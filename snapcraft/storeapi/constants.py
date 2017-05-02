@@ -43,9 +43,6 @@ AGREEMENT_SIGN_ERROR = (
     'Unexpected error encountered during signing the developer terms and '
     'conditions. Please visit {} and agree to the terms and conditions before '
     'continuing.')
-TWO_FACTOR_WARNING = (
-    'We strongly recommend enabling multi-factor authentication: '
-    'https://help.ubuntu.com/community/SSO/FAQs/2FA')
 INVALID_CREDENTIALS = 'Invalid credentials supplied.'
 AUTHENTICATION_ERROR = ('Problems encountered when authenticating your '
                         'credentials.')
