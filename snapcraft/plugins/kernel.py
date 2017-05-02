@@ -81,9 +81,6 @@ default_kernel_image_target = {
     'arm64': 'Image.gz',
 }
 
-builtin = []
-modules = []
-
 required_generic = ['DEVTMPFS', 'DEVTMPFS_MOUNT', 'TMPFS_POSIX_ACL', 'IPV6',
                     'SYSVIPC', 'SYSVIPC_SYSCTL', 'VFAT_FS', 'NLS_CODEPAGE_437',
                     'NLS_ISO8859_1']
@@ -383,6 +380,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 os.link(f, os.path.join(dtb_dir, os.path.basename(f)))
 
     def _do_parse_config(self, config_path):
+        builtin = []
+        modules = []
         # tokenize .config and store options in builtin[] or modules[]
         with open(config_path) as f:
             for line in f:
@@ -395,8 +394,9 @@ class KernelPlugin(kbuild.KBuildPlugin):
                         builtin.append(opt)
                     elif val == 'M':
                         modules.append(opt)
+        return builtin, modules
 
-    def _do_check_config(self):
+    def _do_check_config(self, builtin, modules):
         # check the resulting .config has all the necessary options
         msg = ("**** WARNING **** WARNING **** WARNING **** WARNING ****\n"
                "Your kernel config is missing some features that ubuntu\n"
@@ -423,7 +423,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
             warn += '\n'
             logger.warn(warn)
 
-    def _do_check_initrd(self):
+    def _do_check_initrd(self, builtin, modules):
         # check all required_boot[] items are either builtin or part of initrd
         msg = ("The following feature is boot essential, consider making\n"
                "it static or adding the relevant module to initrd:")
@@ -452,9 +452,9 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def build(self):
         super().do_configure()
-        self._do_parse_config(self.get_config_path())
-        self._do_check_config()
-        self._do_check_initrd()
+        builtin, modules = self._do_parse_config(self.get_config_path())
+        self._do_check_config(builtin, modules)
+        self._do_check_initrd(builtin, modules)
         super().do_build()
         self.do_install()
 
