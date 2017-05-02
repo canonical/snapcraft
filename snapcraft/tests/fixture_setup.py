@@ -14,14 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import contextlib
-from functools import partial
 import io
 import os
 import sys
 import threading
-from types import ModuleType
 import urllib.parse
+from functools import partial
+from types import ModuleType
 from unittest import mock
 from subprocess import CalledProcessError
 
@@ -564,7 +565,7 @@ class FakeAptCache(fixtures.Fixture):
         mock_apt_cache = patcher.start()
         self.addCleanup(patcher.stop)
 
-        cache = {}
+        cache = collections.OrderedDict()
         for package, version in self.packages:
             cache[package] = FakeAptCachePackage(
                 temp_dir.path, package, version)
