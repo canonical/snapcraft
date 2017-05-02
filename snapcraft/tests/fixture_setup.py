@@ -570,22 +570,15 @@ class FakeAptCache(fixtures.Fixture):
         mock_apt_cache = patcher.start()
         self.addCleanup(patcher.stop)
 
-<<<<<<< ecb3157c89bcec44e299f1413d2955cc71fa08de
         cache = collections.OrderedDict()
-=======
-        cache = {}
->>>>>>> Complete the unit tests
         for package, version in self.packages:
             cache[package] = FakeAptCachePackage(
                 temp_dir.path, package, version)
 
         mock_apt_cache().__getitem__.side_effect = (
             lambda item: cache[item])
-<<<<<<< ecb3157c89bcec44e299f1413d2955cc71fa08de
         mock_apt_cache().__enter__().__getitem__.side_effect = (
             lambda item: cache[item])
-=======
->>>>>>> Complete the unit tests
 
         mock_apt_cache().get_changes.return_value = cache.values()
 
