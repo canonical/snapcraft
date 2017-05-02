@@ -404,7 +404,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
                "you from building this kernel snap, we suggest you take\n"
                "a look at these:\n")
         required_opts = (required_generic + required_security +
-            required_snappy + required_systemd)
+                         required_snappy + required_systemd)
         missing = []
 
         for code in required_opts:
