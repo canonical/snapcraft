@@ -84,12 +84,13 @@ class RustPluginTestCase(RustPluginBaseTestCase):
         snapcraft_yaml['parts']['rust-subdir']['source-subdir'] = 'subdir'
         with open('snapcraft.yaml', 'w') as snapcraft_yaml_file:
             yaml.dump(snapcraft_yaml, snapcraft_yaml_file)
-        
+
         self.run_snapcraft('pull')
-        
+
         self.assertThat(
-            os.path.join('parts', 'rust-subdir', 'src', 'subdir', 'Cargo.lock'), 
-            FileExists())
+            os.path.join('parts', 'rust-subdir', 'src', 'subdir',
+            'Cargo.lock'), FileExists())
+
 
 class RustPluginConfinementTestCase(testscenarios.WithScenarios,
                                     RustPluginBaseTestCase):

@@ -176,10 +176,10 @@ class RustPluginTestCase(tests.TestCase):
 
         plugin.pull()
 
-        rustdir = os.path.join(plugin.partdir, 'rust')
         run_mock.assert_has_calls([
             mock.ANY,
             mock.call([
                 plugin._cargo, 'fetch',
-                '--manifest-path', os.path.join(plugin.sourcedir, 'test-subdir', 'Cargo.toml')
+                '--manifest-path',
+                os.path.join(plugin.sourcedir, 'test-subdir', 'Cargo.toml')
             ])])
