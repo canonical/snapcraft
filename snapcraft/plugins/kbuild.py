@@ -233,10 +233,7 @@ class KBuildPlugin(BasePlugin):
         self.do_patch_config(config_path)
         self.do_remake_config()
 
-    def finish_build(self):
-        self.do_build()
-        self.do_install()
-
     def build(self):
         self.do_configure()
-        self.finish_build()
+        self.do_build()
+        self.do_install()

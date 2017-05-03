@@ -455,7 +455,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
         self._do_parse_config(self.get_config_path())
         self._do_check_config()
         self._do_check_initrd()
-        super().finish_build()
+        super().do_build()
+        self.do_install()
 
     def do_install(self):
         super().do_install()
