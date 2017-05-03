@@ -163,6 +163,7 @@ class KBuildPlugin(BasePlugin):
         except OSError as e:
             raise RuntimeError('Unable to access {!r}: '
                                '{}'.format(e.filename, e.strerror))
+
     def get_config_path(self):
         return os.path.join(self.builddir, '.config')
 
