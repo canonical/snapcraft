@@ -20,7 +20,9 @@ import os
 from unittest import mock
 
 import fixtures
-from testtools.matchers import Equals, HasLength
+from testtools.matchers import Equals, FileContains, HasLength
+
+from textwrap import dedent
 
 import snapcraft
 from snapcraft import (
@@ -38,6 +40,7 @@ class KernelPluginTestCase(tests.TestCase):
         class Options:
             build_parameters = []
             kconfigfile = None
+            kconfigflavour = None
             kdefconfig = []
             kconfigs = []
             kernel_image_target = 'bzImage'
@@ -91,6 +94,9 @@ class KernelPluginTestCase(tests.TestCase):
 
         self.assertEqual(properties['kconfigfile']['type'], 'string')
         self.assertEqual(properties['kconfigfile']['default'], None)
+
+        self.assertEqual(properties['kconfigflavour']['type'], 'string')
+        self.assertEqual(properties['kconfigflavour']['default'], None)
 
         for prop in ['kconfigs', 'kernel-initrd-modules',
                      'kernel-initrd-firmware', 'kernel-device-trees']:
@@ -816,6 +822,70 @@ ACCEPT=n
 
         config_file = os.path.join(plugin.builddir, '.config')
         self.assertTrue(os.path.exists(config_file))
+
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
+    def test_build_with_kconfigflavour(self):
+        arch = self.project_options.deb_arch
+        branch = 'master'
+        flavour = 'vanilla'
+        self.options.kconfigflavour = flavour
+        os.mkdir('debian')
+        with open('debian/debian.env', 'w') as f:
+            f.write('DEBIAN=debian.{}'.format(branch))
+        os.mkdir('debian.{}'.format(branch))
+        basedir = os.path.join('debian.{}'.format(branch), 'config')
+        archdir = os.path.join('debian.{}'.format(branch), 'config', arch)
+        os.mkdir(basedir)
+        os.mkdir(archdir)
+        commoncfg = os.path.join(basedir, 'config.common.ports')
+        ubuntucfg = os.path.join(basedir, 'config.common.ubuntu')
+        archcfg = os.path.join(archdir, 'config.common.{}'.format(arch))
+        flavourcfg = os.path.join(archdir, 'config.flavour.{}'.format(flavour))
+
+        with open(commoncfg, 'w') as f:
+            f.write('ACCEPT=y\n')
+        with open(ubuntucfg, 'w') as f:
+            f.write('ACCEPT=m\n')
+        with open(archcfg, 'w') as f:
+            f.write('ACCEPT=y\n')
+        with open(flavourcfg, 'w') as f:
+            f.write('# ACCEPT is not set\n')
+
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        self._simulate_build(
+            plugin.sourcedir, plugin.builddir, plugin.installdir)
+
+        plugin.build()
+
+        self._assert_generic_check_call(plugin.builddir, plugin.installdir,
+                                        plugin.os_snap)
+
+        self.assertEqual(2, self.run_mock.call_count)
+        self.run_mock.assert_has_calls([
+            mock.call(['make', '-j2', 'bzImage', 'modules']),
+            mock.call(['make', '-j2',
+                       'CONFIG_PREFIX={}'.format(plugin.installdir),
+                       'modules_install',
+                       'INSTALL_MOD_PATH={}'.format(plugin.installdir),
+                       'firmware_install',
+                       'INSTALL_FW_PATH={}'.format(os.path.join(
+                           plugin.installdir, 'lib', 'firmware'))])
+        ])
+
+        config_file = os.path.join(plugin.builddir, '.config')
+        self.assertTrue(os.path.exists(config_file))
+
+        self.assertThat(config_file, FileContains(dedent("""\
+        ACCEPT=y
+        ACCEPT=m
+        ACCEPT=y
+        # ACCEPT is not set
+        """)))
+        self._assert_common_assets(plugin.installdir)
 
     def test_build_with_missing_kernel_fails(self):
         self.options.kconfigfile = 'config'
