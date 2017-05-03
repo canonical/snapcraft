@@ -420,7 +420,6 @@ class KernelPlugin(kbuild.KBuildPlugin):
             warn = '\n{}\n'.format(msg)
             for opt in missing:
                 warn += '{}\n'.format(opt)
-            warn += '\n'
             logger.warn(warn)
 
     def _do_check_initrd(self, builtin, modules):
@@ -447,7 +446,6 @@ class KernelPlugin(kbuild.KBuildPlugin):
             warn = '\n{}\n'.format(msg)
             for opt in missing:
                 warn += '{}\n'.format(opt)
-            warn += '\n'
             logger.warn(warn)
 
     def pull(self):
