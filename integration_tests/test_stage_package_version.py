@@ -32,7 +32,8 @@ class StagePackageVersionTestCase(integration_tests.TestCase):
             subprocess.CalledProcessError,
             self.run_snapcraft, 'pull')
         self.assertIn(
-            "Error downloading stage packages for part 'hello': "
+            "Error downloading stage packages for part "
+            "'part-with-stage-package': "
             "The package 'hello=invalid' was not found.",
             str(error.output)
         )
