@@ -39,19 +39,18 @@ class LXDTestCase(tests.TestCase):
     ]
 
     @patch('petname.Generate')
-    def test_cleanbuild(self, mock_pet):
+    @patch('platform.machine')
+    @patch('platform.architecture')
+    def test_cleanbuild(self, mock_arch, mock_machine, mock_pet):
         fake_lxd = tests.fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
         mock_pet.return_value = 'my-pet'
-
-        with patch('platform.machine') as machine_mock, \
-                patch('platform.architecture') as arch_mock:
-            arch_mock.return_value = ('64bit', 'ELF')
-            machine_mock.return_value = 'x86_64'
-            project_options = ProjectOptions(target_deb_arch=self.target_arch)
+        mock_arch.return_value = ('64bit', 'ELF')
+        mock_machine.return_value = 'x86_64'
+        project_options = ProjectOptions(target_deb_arch=self.target_arch)
         metadata = {'name': 'project'}
         project_folder = 'build_project'
         lxd.Cleanbuilder(output='snap.snap', source='project.tar',
