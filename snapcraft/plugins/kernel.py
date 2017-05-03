@@ -438,6 +438,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
                     continue
                 else:
                     missing.append(opt)
+            else:
+                missing.append(opt)
 
         if missing:
             logger.warn('\n{}\n'.format(msg))
