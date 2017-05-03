@@ -26,7 +26,7 @@ class StagePackageVersionTestCase(integration_tests.TestCase):
         self.copy_project_to_cwd('stage-package-missing-dependency')
         self.set_stage_package_version(
             os.path.join('snap', 'snapcraft.yaml'),
-            part='part-with-stage-pacakge',
+            part='part-with-stage-package',
             package='hello', version='invalid')
         error = self.assertRaises(
             subprocess.CalledProcessError,
