@@ -656,8 +656,8 @@ parts:
     plugin: nil
     prime: []
     stage: []
-architectures: [amd64]
-""")
+architectures: [{}]
+""".format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'snapcraft.yaml'),
             FileContains(expected))
@@ -692,8 +692,8 @@ parts:
     plugin: nil
     prime: [-*]
     stage: []
-architectures: [amd64]
-""")
+architectures: [{}]
+""".format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'snapcraft.yaml'),
             FileContains(expected))
