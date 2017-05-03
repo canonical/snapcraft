@@ -453,6 +453,56 @@ class KernelPluginTestCase(tests.TestCase):
     @mock.patch.object(
         snapcraft._options.ProjectOptions,
         'kernel_arch', new='not_arm')
+    def test_check_config(self):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
+        self.options.kconfigfile = 'config'
+        with open(self.options.kconfigfile, 'w') as f:
+            f.write('ACCEPT=y\n')
+
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        self._simulate_build(
+            plugin.sourcedir, plugin.builddir, plugin.installdir)
+
+        builtin, modules = plugin._do_parse_config(self.options.kconfigfile)
+        plugin._do_check_config(builtin, modules)
+
+        required_opts = (kernel.required_generic + kernel.required_security +
+                         kernel.required_snappy + kernel.required_systemd)
+        for warn in required_opts:
+            self.assertIn('CONFIG_{}'.format(warn), fake_logger.output)
+
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
+    def test_check_initrd(self):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
+        self.options.kconfigfile = 'config'
+        self.options.kernel_initrd_modules = ['my-fake-module']
+        with open(self.options.kconfigfile, 'w') as f:
+            f.write('ACCEPT=y\n')
+
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        self._simulate_build(
+            plugin.sourcedir, plugin.builddir, plugin.installdir)
+
+        builtin, modules = plugin._do_parse_config(self.options.kconfigfile)
+        plugin._do_check_initrd(builtin, modules)
+
+        for module in kernel.required_boot:
+            self.assertIn('CONFIG_{}'.format(module.upper()),
+                          fake_logger.output)
+
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_kconfigs(self):
         self.options.kconfigfile = 'config'
         self.options.kconfigs = [
