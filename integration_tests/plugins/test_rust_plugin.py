@@ -69,13 +69,27 @@ class RustPluginTestCase(RustPluginBaseTestCase):
 
     def test_stage_rust_with_source_subdir(self):
         self.run_snapcraft('stage', 'rust-subdir')
-
+        
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'rust-subdir'))
         self.assertEqual('Rust in a subdirectory works\n', binary_output)
         # Test for bug https://bugs.launchpad.net/snapcraft/+bug/1654764
         self.assertThat('Cargo.lock', Not(FileExists()))
 
+    def test_stage_rust_with_source_and_source_subdir(self):
+        self.copy_project_to_cwd('rust-subdir')
+        with open('snapcraft.yaml') as snapcraft_yaml_file:
+            snapcraft_yaml = yaml.load(snapcraft_yaml_file)
+        snapcraft_yaml['parts']['rust-subdir']['source'] = '.'
+        snapcraft_yaml['parts']['rust-subdir']['source-subdir'] = 'subdir'
+        with open('snapcraft.yaml', 'w') as snapcraft_yaml_file:
+            yaml.dump(snapcraft_yaml, snapcraft_yaml_file)
+        
+        self.run_snapcraft('pull')
+        
+        self.assertThat(
+            os.path.join('parts', 'rust-subdir', 'src', 'subdir', 'Cargo.lock'), 
+            FileExists())
 
 class RustPluginConfinementTestCase(testscenarios.WithScenarios,
                                     RustPluginBaseTestCase):
