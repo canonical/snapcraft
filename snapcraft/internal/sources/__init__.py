@@ -151,7 +151,8 @@ _source_handler = {
     'svn': Subversion,
     'tar': Tar,
     'zip': Zip,
-    '7z': SevenZip
+    '7z': SevenZip,
+    '': Local
 }
 if sys.platform == 'linux':
     _source_handler['deb'] = Deb
@@ -167,7 +168,7 @@ def get_source_handler(source, *, source_type=''):
     if not source_type:
         source_type = _get_source_type_from_uri(source)
 
-    return _source_handler.get(source_type, Local)
+    return _source_handler[source_type]
 
 
 _tar_type_regex = re.compile(r'.*\.((tar(\.(xz|gz|bz2))?)|tgz)$')

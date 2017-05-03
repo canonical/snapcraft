@@ -254,6 +254,7 @@ properties:
               - zip
               - deb
               - rpm
+              - 7z
           disable-parallel:
             type: boolean
             default: false
