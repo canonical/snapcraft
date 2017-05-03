@@ -19,7 +19,7 @@
 snapcraft
 
 Usage:
-  snapcraft [options] [--enable-geoip --no-parallel-build --remote=<remote>]
+  snapcraft [options] [--enable-geoip --no-parallel-build]
   snapcraft [options] init
   snapcraft [options] pull [<part> ...]  [--enable-geoip]
   snapcraft [options] build [<part> ...] [--no-parallel-build]
@@ -27,7 +27,7 @@ Usage:
   snapcraft [options] prime [<part> ...]
   snapcraft [options] strip [<part> ...]
   snapcraft [options] clean [<part> ...] [--step <step>]
-  snapcraft [options] snap [<directory> --output <snap-file>] [--remote=<remote>]
+  snapcraft [options] snap [<directory> --output <snap-file>]
   snapcraft [options] cleanbuild [--remote=<remote>]
   snapcraft [options] login
   snapcraft [options] logout
@@ -281,16 +281,29 @@ def _get_command_from_arg(args):
     return functions[function[0]]
 
 
+def _is_containerbuild():
+    return os.environ.get('SNAPCRAFT_CONTAINER_BUILDS')
+
+
 def run(args, project_options):  # noqa
     lifecycle_command = _get_lifecycle_command(args)
     argless_command = _get_command_from_arg(args)
     if lifecycle_command:
-        lifecycle.execute(
-            lifecycle_command, project_options, args['<part>'])
+        if _is_containerbuild():
+            lifecycle.containerbuild(lifecycle_command, project_options,
+                                     args['<part>'])
+        else:
+            lifecycle.execute(
+                lifecycle_command, project_options, args['<part>'])
     elif argless_command:
         argless_command()
     elif args['clean']:
-        _run_clean(args, project_options)
+        if _is_containerbuild():
+            step = args['--step'] or 'pull'
+            lifecycle.containerbuild('clean', project_options,
+                                     args=['--step', step] + args['<part>'])
+        else:
+            _run_clean(args, project_options)
     elif args['cleanbuild']:
         lifecycle.cleanbuild(project_options, remote=args['--remote']),
     elif _is_store_command(args):
@@ -303,19 +316,29 @@ def run(args, project_options):  # noqa
     elif args['enable-ci']:
         enable_ci(args['<ci-system>'], args['--refresh'])
     elif args['update']:
-        parts.update()
+        if _is_containerbuild():
+            lifecycle.containerbuild('update', project_options)
+        else:
+            parts.update()
     elif args['define']:
-        parts.define(args['<part-name>'])
+        if _is_containerbuild():
+            lifecycle.containerbuild('update', project_options,
+                                     args=args['<part-name>'])
+        else:
+            parts.define(args['<part-name>'])
     elif args['search']:
-        parts.search(' '.join(args['<query>']))
-    elif os.environ.get('SNAPCRAFT_CONTAINER_BUILDS'):
-        lifecycle.containerbuild(project_options,
-                                 args['--output'], args['--remote'])
+        if _is_containerbuild():
+            lifecycle.containerbuild('search', project_options,
+                                     args=' '.join(args['<query>']))
+        else:
+            parts.search(' '.join(args['<query>']))
     else:  # snap by default:
-        if args['--remote']:
-            raise RuntimeError(
-                '--remote can only be used with SNAPCRAFT_CONTAINER_BUILDS')
-        lifecycle.snap(project_options, args['<directory>'], args['--output'])
+        if _is_containerbuild():
+            lifecycle.containerbuild('snap', project_options, args['--output'],
+                                     args['<directory>'])
+        else:
+            lifecycle.snap(project_options, args['<directory>'],
+                           args['--output'])
 
     return project_options
 

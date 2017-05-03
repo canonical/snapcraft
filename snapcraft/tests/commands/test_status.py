@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,17 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
+
 from unittest import mock
 
 import docopt
 import fixtures
 
-from snapcraft import (
-    storeapi,
-    tests
-)
+from snapcraft import storeapi, tests
 from snapcraft.main import main
-from snapcraft.tests import fixture_setup
 
 
 class StatusCommandTestCase(tests.TestCase):
@@ -152,9 +149,6 @@ class StatusCommandTestCase(tests.TestCase):
     @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status(self, mock_account_api, mock_status):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
-
         mock_status.return_value = {
             'channel_map_tree': {
                 'latest': {
@@ -167,7 +161,7 @@ class StatusCommandTestCase(tests.TestCase):
 
         mock_status.assert_called_once_with('snap-test', '16', None)
 
-        terminal_output = fake_terminal.getvalue()
+        terminal_output = self.fake_terminal.getvalue()
         expected_output = [
             'Track    Arch    Channel    Version    Revision',
             'latest   amd64   stable     1.0-amd64  2',
@@ -181,8 +175,6 @@ class StatusCommandTestCase(tests.TestCase):
     @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_by_arch(self, mock_account_api, mock_status):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
         mock_status.return_value = {
             'channel_map_tree': {
                 'latest': {
@@ -197,7 +189,7 @@ class StatusCommandTestCase(tests.TestCase):
 
         mock_status.assert_called_once_with('snap-test', '16', 'i386')
 
-        terminal_output = fake_terminal.getvalue()
+        terminal_output = self.fake_terminal.getvalue()
         expected_output = [
             'Track    Arch    Channel    Version    Revision',
             'latest   i386    stable     -          -',
@@ -208,8 +200,6 @@ class StatusCommandTestCase(tests.TestCase):
     @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_by_series(self, mock_account_api, mock_status):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
         mock_status.return_value = {
             'channel_map_tree': {
                 'latest': {
@@ -222,7 +212,7 @@ class StatusCommandTestCase(tests.TestCase):
 
         mock_status.assert_called_once_with('snap-test', '16', None)
 
-        terminal_output = fake_terminal.getvalue()
+        terminal_output = self.fake_terminal.getvalue()
         expected_output = [
             'Track    Arch    Channel    Version    Revision',
             'latest   amd64   stable     1.0-amd64  2',
@@ -231,4 +221,46 @@ class StatusCommandTestCase(tests.TestCase):
             '         i386    stable     -          -',
             '                 beta       -          -',
             '                 edge       1.0-i386   3']
+        self.assertEqual(expected_output, terminal_output.splitlines())
+
+    @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    def test_status_including_branch(self, mock_account_api, mock_status):
+        expected = {
+            'i386': [
+                {
+                    'info': 'none',
+                    'channel': 'stable'
+                },
+                {
+                    'info': 'none',
+                    'channel': 'beta'
+                },
+                {
+                    'info': 'branch',
+                    'version': '1.0-i386',
+                    'channel': 'stable/hotfix',
+                    'revision': 3,
+                    'expires_at': '2017-05-21T18:52:14.578435',
+                },
+            ],
+        }
+        mock_status.return_value = {
+            'channel_map_tree': {
+                'latest': {
+                    '16': expected
+                }
+            }
+        }
+
+        main(['status', 'snap-test'])
+
+        mock_status.assert_called_once_with('snap-test', '16', None)
+
+        terminal_output = self.fake_terminal.getvalue()
+        expected_output = [
+            'Track    Arch    Channel        Version    Revision    Expires at',  # NOQA
+            'latest   i386    stable         -          -',
+            '                 beta           -          -',
+            '                 stable/hotfix  1.0-i386   3           2017-05-21T18:52:14.578435']  # NOQA
         self.assertEqual(expected_output, terminal_output.splitlines())
