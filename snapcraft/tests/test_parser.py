@@ -1189,7 +1189,7 @@ class MissingAssetsTestCase(TestCase):
     @mock.patch('snapcraft.internal.sources._get_source_type_from_uri')
     def test_filenotfound_for_non_repos(self, mock_type, mock_pull):
         mock_pull.side_effect = FileNotFoundError()
-        mock_type.return_value = None
+        mock_type.return_value = ''
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
