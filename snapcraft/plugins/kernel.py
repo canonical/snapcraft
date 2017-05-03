@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -399,11 +399,11 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def _do_check_config(self, builtin, modules):
         # check the resulting .config has all the necessary options
-        msg = ("**** WARNING **** WARNING **** WARNING **** WARNING ****\n"
-               "Your kernel config is missing some features that ubuntu\n"
-               "core recommends / requires, and while we won\'t prevent\n"
-               "you from building this kernel snap, we suggest you take\n"
-               "a look at these:\n")
+        msg = ('**** WARNING **** WARNING **** WARNING **** WARNING ****\n'
+               'Your kernel config is missing some features that Ubuntu Core '
+               'recommends or requires.\n'
+               'While we will not prevent you from building this kernel snap, '
+               'we suggest you take a look at these:\n')
         required_opts = (required_generic + required_security +
                          required_snappy + required_systemd)
         missing = []
@@ -454,13 +454,12 @@ class KernelPlugin(kbuild.KBuildPlugin):
         snapcraft.download(
             'ubuntu-core', 'edge', self.os_snap, self.project.deb_arch)
 
-    def build(self):
+    def do_configure(self):
         super().do_configure()
+
         builtin, modules = self._do_parse_config(self.get_config_path())
         self._do_check_config(builtin, modules)
         self._do_check_initrd(builtin, modules)
-        super().do_build()
-        self.do_install()
 
     def do_install(self):
         super().do_install()

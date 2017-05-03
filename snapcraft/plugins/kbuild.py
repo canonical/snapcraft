@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -208,6 +208,13 @@ class KBuildPlugin(BasePlugin):
         cmd = 'yes "" | {} oldconfig'.format(' '.join(self.make_cmd))
         subprocess.check_call(cmd, shell=True, cwd=self.builddir)
 
+    def do_configure(self):
+        config_path = self.get_config_path()
+
+        self.do_base_config(config_path)
+        self.do_patch_config(config_path)
+        self.do_remake_config()
+
     def do_build(self):
         # Linux's kernel Makefile gets confused if it is invoked with the
         # environment setup by another Linux's Makefile:
@@ -225,16 +232,9 @@ class KBuildPlugin(BasePlugin):
                  ['CONFIG_PREFIX={}'.format(self.installdir)] +
                  self.make_install_targets)
 
-    def do_configure(self):
+    def build(self):
         super().build()
 
-        config_path = self.get_config_path()
-
-        self.do_base_config(config_path)
-        self.do_patch_config(config_path)
-        self.do_remake_config()
-
-    def build(self):
         self.do_configure()
         self.do_build()
         self.do_install()
