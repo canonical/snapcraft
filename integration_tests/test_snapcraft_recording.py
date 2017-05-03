@@ -132,7 +132,6 @@ class SnapcraftRecordingPackagesTestCase(
         with open(os.path.join('snap', 'snapcraft.yaml')) as source_yaml_file:
             source_yaml = yaml.load(source_yaml_file)
         part_name = 'part-with-{}'.format(self.packages_type)
-        # Add the versions recorded by snapcraft.
         expected_stage_packages = [
             '{}={}'.format(
                 package, integration_tests.get_package_version(
@@ -145,6 +144,4 @@ class SnapcraftRecordingPackagesTestCase(
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(
-            recorded_yaml['parts'][part_name][self.packages_type],
-            expected_stage_packages)
+        self.assertEqual(recorded_yaml, source_yaml)
