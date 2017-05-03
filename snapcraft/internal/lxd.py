@@ -40,11 +40,6 @@ _PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
 
 class Containerbuild:
 
-    def _get_server_info(self):
-        remote = self._container_name.split(':')[0]
-        return yaml.load(check_output([
-            'lxc', 'info', '{}:'.format(remote)]).decode())
-
     def __init__(self, *, output, source, project_options,
                  metadata, container_name, remote=None):
         if not output:
@@ -60,13 +55,18 @@ class Containerbuild:
         _verify_remote(remote)
         self._container_name = '{}:snapcraft-{}'.format(remote, container_name)
         # Use the server architecture to avoid emulation overhead
-        kernel = self._get_server_info()['environment']['kernel_architecture']
+        kernel = self._get_remote_info()['environment']['kernel_architecture']
         deb_arch = _get_deb_arch(kernel)
         if not deb_arch:
             raise SnapcraftEnvironmentError(
                 'Unrecognized server architecture {}'.format(kernel))
         self._host_arch = deb_arch
         self._image = 'ubuntu:xenial/{}'.format(deb_arch)
+
+    def _get_remote_info(self):
+        remote = self._container_name.split(':')[0]
+        return yaml.load(check_output([
+            'lxc', 'info', '{}:'.format(remote)]).decode())
 
     def _push_file(self, src, dst):
         check_call(['lxc', 'file', 'push',
