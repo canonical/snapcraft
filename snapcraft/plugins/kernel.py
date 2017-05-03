@@ -425,8 +425,10 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def _do_check_initrd(self, builtin, modules):
         # check all required_boot[] items are either builtin or part of initrd
-        msg = ("The following feature is boot essential, consider making\n"
-               "it static or adding the relevant module to initrd:")
+        msg = ("**** WARNING **** WARNING **** WARNING **** WARNING ****\n"
+               "The following features are deemed boot essential for\n"
+               "ubuntu core, consider making them static[=Y] or adding\n"
+               "the corresponding module to initrd:\n")
         missing = []
 
         for code in required_boot:
@@ -442,10 +444,11 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 missing.append(opt)
 
         if missing:
-            logger.warn('\n{}\n'.format(msg))
+            warn = '\n{}\n'.format(msg)
             for opt in missing:
-                logger.warn('  - {}'.format(opt))
-            logger.warn('')
+                warn += '{}\n'.format(opt)
+            warn += '\n'
+            logger.warn(warn)
 
     def pull(self):
         super().pull()
