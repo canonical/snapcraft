@@ -69,7 +69,7 @@ class RustPluginTestCase(RustPluginBaseTestCase):
 
     def test_stage_rust_with_source_subdir(self):
         self.run_snapcraft('stage', 'rust-subdir')
-        
+
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'rust-subdir'))
         self.assertEqual('Rust in a subdirectory works\n', binary_output)
