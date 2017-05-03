@@ -961,7 +961,8 @@ ACCEPT=n
         project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      project_options)
-        os.environ['CROSS_COMPILE'] = 'foo-bar-toolchain-'
+        self.useFixture(fixtures.EnvironmentVariable('CROSS_COMPILE',
+                                                     'foo-bar-toolchain-'))
         plugin.enable_cross_compilation()
 
         self.assertEqual(
