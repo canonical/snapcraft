@@ -153,7 +153,8 @@ class RustPlugin(snapcraft.BasePlugin):
 
     def _fetch_deps(self):
         if self.options.source_subdir:
-            sourcedir = os.path.join(self.sourcedir, self.options.source_subdir)
+            sourcedir = os.path.join(self.sourcedir,
+                                     self.options.source_subdir)
         else:
             sourcedir = self.sourcedir
 
