@@ -89,7 +89,7 @@ class RustPluginTestCase(RustPluginBaseTestCase):
 
         self.assertThat(
             os.path.join('parts', 'rust-subdir', 'src', 'subdir',
-            'Cargo.lock'), FileExists())
+                         'Cargo.lock'), FileExists())
 
 
 class RustPluginConfinementTestCase(testscenarios.WithScenarios,
