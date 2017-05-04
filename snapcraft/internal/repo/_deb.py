@@ -229,23 +229,31 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def get_installed_build_packages(cls, package_names):
-        # It's important to preserve the order of packages to record on the
-        # state the same value received from the snapcraft.yaml
-        seen = set()
-        unique_packages = [
-            package for package in package_names if not
-            (package in seen or seen.add(package))
-        ]
-        pkg_list = []
+        build_packages = package_names[:]
+        installed_packages = []
         with apt.Cache() as apt_cache:
-            for pkg in unique_packages:
+            while build_packages:
+                # Before we get to this point, the version specified in the
+                # yaml must have been installed. So we are ignoring the
+                # versions of the packages passed as arguments and we just use
+                # the versions installed.
+                # --elopio - 20170504
+                package_name, _ = repo.get_pkg_name_parts(
+                    build_packages.pop(0))
                 try:
-                    pkg_name, version = repo.get_pkg_name_parts(pkg)
-                    pkg_list.append(str(apt_cache[pkg_name].candidate))
+                    installed_package = apt_cache[package_name].candidate
                 except KeyError as e:
                     raise errors.BuildPackageNotFoundError(e) from e
-
-        return pkg_list
+                if str(installed_package) not in installed_packages:
+                    installed_packages.append(str(installed_package))
+                    for depends in installed_package.get_dependencies(
+                            'Depends'):
+                        # deps is a list of or dependencies. We are taking
+                        # the first one that satisfies the dependency, which
+                        # might or might not be problematic.
+                        # --elopio - 20170504
+                        build_packages.append(depends[0].name)
+        return installed_packages
 
     @classmethod
     def is_package_installed(cls, package_name):
