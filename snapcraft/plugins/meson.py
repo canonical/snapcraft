@@ -62,6 +62,12 @@ class MesonPlugin(snapcraft.BasePlugin):
         self.build_packages.append('meson')
         self.build_packages.append('ninja-build')
 
+    def build(self):
+        super().build()
+        self._run_meson()
+        self._run_ninja_build_default()
+        self._run_ninja_install()
+
     def _run_meson(self):
         os.makedirs(self.mesonbuilddir, exist_ok=True)
         meson_command = ['meson']
@@ -79,9 +85,3 @@ class MesonPlugin(snapcraft.BasePlugin):
         env['DESTDIR'] = self.installdir
         ninja_install_command = ['ninja', 'install']
         self.run(ninja_install_command, env=env, cwd=self.mesonbuilddir)
-
-    def build(self):
-        super().build()
-        self._run_meson()
-        self._run_ninja_build_default()
-        self._run_ninja_install()
