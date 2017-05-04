@@ -188,10 +188,12 @@ class PartsConfig:
             if 'filesets' in properties:
                 del properties['filesets']
 
-            # FIXME: snap is deprecated, rewrite it to prime instead.
-            if properties.get('snap'):
-                deprecations.handle_deprecation_notice('dn1')
-                properties['prime'] = properties.pop('snap')
+            # Handle the deprecated snap keyword.
+            if 'snap' in properties:
+                snap = properties.pop('snap')
+                if snap:
+                    deprecations.handle_deprecation_notice('dn1')
+                    properties['prime'] = snap
 
             self.load_plugin(part_name, plugin_name, properties)
 

@@ -8,5 +8,5 @@ confinement: strict
 parts:
   asset-tracking:
     plugin: nil
-    stage-packages: ['hello=2.10-1']
-    build-packages: ['hello=2.10-1']
+    stage-packages: ['hello']
+    build-packages: ['hello']

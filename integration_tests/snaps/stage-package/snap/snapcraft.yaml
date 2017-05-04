@@ -1,0 +1,13 @@
+name: stage-package
+version: '0.1'
+summary: install a stage package
+description: |
+  Install a stage package.
+
+grade: stable
+confinement: strict
+
+parts:
+  hello:
+    plugin: nil
+    stage-packages: ['hello']

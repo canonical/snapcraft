@@ -85,15 +85,19 @@ class Containerbuild:
             print('Stopping {}'.format(self._container_name))
             check_call(['lxc', 'stop', '-f', self._container_name])
 
-    def execute(self):
+    def execute(self, step='snap', args=None):
         with self._ensure_started():
             self._setup_project()
             self._wait_for_network()
             self._container_run(['apt-get', 'update'])
             self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
+            command = ['snapcraft', step]
+            if step == 'snap':
+                command += ['--output', self._snap_output]
+            if args:
+                command += args
             try:
-                self._container_run(
-                    ['snapcraft', 'snap', '--output', self._snap_output])
+                self._container_run(command)
             except CalledProcessError as e:
                 if self._project_options.debug:
                     logger.info('Debug mode enabled, dropping into a shell')
@@ -191,6 +195,12 @@ class Project(Containerbuild):
     def _finish(self):
         # Nothing to do
         pass
+
+    def execute(self, step='snap', args=None):
+        super().execute(step, args)
+        if step == 'clean' and not args:
+            print('Deleting {}'.format(self._container_name))
+            check_call(['lxc', 'delete', '-f', self._container_name])
 
 
 def _get_default_remote():

@@ -77,3 +77,10 @@ We assume you have run through the installation instructions, to run all the tes
 You can selectively run a selective group of tests like:
 
     ./runtests.sh [static|unit|integration|snaps]
+
+The test groups mean:
+
+- static: static code analysis done with flake8
+- unit: run the standard unit tests
+- integration: shells to snapcraft, builds
+- snaps: builds snaps, installs and checks how they run
