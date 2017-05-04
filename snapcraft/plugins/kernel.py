@@ -88,11 +88,12 @@ required_generic = ['DEVTMPFS', 'DEVTMPFS_MOUNT', 'TMPFS_POSIX_ACL', 'IPV6',
 required_security = ['SECURITY', 'SECURITY_APPARMOR', 'SYN_COOKIES',
                      'STRICT_DEVMEM', 'DEFAULT_SECURITY_APPARMOR', 'SECCOMP',
                      'SECCOMP_FILTER', 'CC_STACKPROTECTOR',
-                     'CC_STACKPROTECTOR_REGULAR', 'DEBUG_RODATA',
+                     'CC_STACKPROTECTOR_STRONG', 'DEBUG_RODATA',
                      'DEBUG_SET_MODULE_RONX']
 
 required_snappy = ['RD_LZMA', 'KEYS', 'ENCRYPTED_KEYS', 'SQUASHFS',
-                   'SQUASHFS_XATTR', 'SQUASHFS_XZ']
+                   'SQUASHFS_XATTR', 'SQUASHFS_XZ',
+                   'DEVPTS_MULTIPLE_INSTANCES']
 
 required_systemd = ['DEVTMPFS', 'CGROUPS', 'INOTIFY_USER', 'SIGNALFD',
                     'TIMERFD', 'EPOLL', 'NET', 'SYSFS', 'PROC_FS', 'FHANDLE',
