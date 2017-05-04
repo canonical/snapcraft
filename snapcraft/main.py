@@ -339,7 +339,7 @@ def run(args, project_options):  # noqa
         elif os.getenv('SNAPCRAFT_COLLABORATE'):
             # this is only for testing
             snapcraft.collaborate(
-                os.getenv('SNAPRAFT_COLLABORATORS_SNAP_NAME'),
+                os.getenv('SNAPCRAFT_COLLABORATORS_SNAP_NAME'),
                 os.getenv('SNAPCRAFT_COLLABORATORS_SIGN_KEY'))
         else:
             lifecycle.snap(project_options, args['<directory>'],
