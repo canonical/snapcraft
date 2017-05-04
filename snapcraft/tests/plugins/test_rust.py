@@ -31,6 +31,7 @@ class RustPluginTestCase(tests.TestCase):
             rust_features = []
             rust_revision = ''
             rust_channel = ''
+            source_subdir = ''
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
