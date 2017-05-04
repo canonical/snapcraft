@@ -842,7 +842,7 @@ def collaborate(snap_name, key):
 
 
 _COLLABORATION_HEADER = dedent("""\
-    # Change which developers may build or upload snaps on the publisher's behalf.
+    # Change which developers may push or release snaps on the publisher's behalf.
     #
     # Sample entry:
     #
