@@ -359,9 +359,9 @@ parts:
         config = project_loader.Config(project_options)
 
         self.assertEqual(config.parts.build_tools,
-                         ['gcc-arm-linux-gnueabihf',
-                          'libc6-dev-armhf-cross',
-                          'libglib2.0-dev:armhf'])
+                         ['gcc-arm-linux-gnueabihf:native',
+                          'libc6-dev-armhf-cross:native',
+                          'libglib2.0-dev'])
 
     def test_config_has_no_extra_build_tools_when_not_cross_compiling(self):
         class ProjectOptionsFake(snapcraft.ProjectOptions):
