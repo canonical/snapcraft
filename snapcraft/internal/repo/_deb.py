@@ -205,12 +205,12 @@ class Ubuntu(BaseRepo):
             release = platform.linux_distribution()[2]
             sources = _format_sources_list(None, deb_arch=arch,
                                            release=release, foreign=True)
-            sources_arch = tempfile.NamedTemporaryFile().name
-            with open(sources_arch, 'w') as f:
-                f.write(sources)
-            sources_lists = '/etc/apt/sources.list.d/'
-            subprocess.check_call(['sudo', 'mv', sources_arch, os.path.join(
-                sources_lists, 'ubuntu-{}.list'.format(arch))])
+            with tempfile.NamedTemporaryFile() as sources_arch:
+                sources_arch.write(sources)
+                sources_lists = os.path.join('/etc/apt/sources.list.d/',
+                                             'ubuntu-{}.list'.format(arch))
+                subprocess.check_call(['sudo', 'cp', sources_arch,
+                                       sources_lists])
 
         try:
             update_output = subprocess.check_output(
@@ -226,8 +226,27 @@ class Ubuntu(BaseRepo):
         return True
 
     @classmethod
-    def install_build_packages(cls, package_names):
-        unique_packages = set(package_names)
+    def _get_build_deps(cls, package_names, arch):
+        if not package_names:
+            return []
+        with open(tempfile.mkstemp(suffix='.dsc')[1], 'w') as fake_source:
+            depends = 'Build-Depends: {}\n'.format(', '.join(package_names))
+            fake_source.write(depends)
+            fake_source.close()
+            actions = subprocess.check_output(
+                ['apt-get', 'build-dep', '-qq', '-s',
+                 '-a{}'.format(arch), fake_source.name],
+                universal_newlines=True).split('\n')
+            os.remove(fake_source.name)
+            build_deps = []
+            for line in actions:
+                if line.startswith('Inst'):
+                    build_deps.append(line.split(' ')[1])
+            return build_deps
+
+    @classmethod
+    def install_build_packages(cls, package_names, arch):
+        unique_packages = set(cls._get_build_deps(package_names, arch))
         new_packages = []
         with apt.Cache() as apt_cache:
             for pkg in unique_packages:

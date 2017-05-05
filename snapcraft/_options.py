@@ -143,8 +143,8 @@ class ProjectOptions:
     def additional_build_packages(self):
         packages = []
         if self.is_cross_compiling:
-            packages.extend(self.__machine_info.get(
-                'cross-build-packages', []))
+            for package in self.__machine_info.get('cross-build-packages', []):
+                packages.append('{}:native'.format(package))
         return packages
 
     @property

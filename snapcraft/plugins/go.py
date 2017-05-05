@@ -101,7 +101,7 @@ class GoPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.append('golang-go')
+        self.build_packages.append('golang-go:native')
         self._gopath = os.path.join(self.partdir, 'go')
         self._gopath_src = os.path.join(self._gopath, 'src')
         self._gopath_bin = os.path.join(self._gopath, 'bin')

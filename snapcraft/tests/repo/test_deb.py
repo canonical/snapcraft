@@ -240,7 +240,9 @@ class BuildPackagesTestCase(tests.TestCase):
         mock_apt_cache_with = mock_apt_cache.__enter__.return_value
         mock_apt_cache_with.__getitem__.side_effect = lambda p: test_pkgs[p]
 
-        repo.Ubuntu.install_build_packages(test_pkgs.keys())
+        project_options = snapcraft.ProjectOptions()
+        repo.Ubuntu.install_build_packages(test_pkgs.keys(),
+                                           project_options.deb_arch)
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
     @patch('subprocess.check_call')
@@ -293,10 +295,11 @@ class BuildPackagesTestCase(tests.TestCase):
         self.install_test_packages(self.test_packages)
 
     def test_invalid_package_requested(self):
+        project_options = snapcraft.ProjectOptions()
         raised = self.assertRaises(
             errors.BuildPackageNotFoundError,
             repo.Ubuntu.install_build_packages,
-            ['package-does-not-exist'])
+            ['package-does-not-exist'], project_options.deb_arch)
 
         self.assertEqual(
             "Could not find a required package in 'build-packages': "
