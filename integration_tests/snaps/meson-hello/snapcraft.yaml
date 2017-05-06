@@ -1,0 +1,17 @@
+name: meson-hello
+version: 0.1
+summary: test the meson plugin
+description: |
+  This is a basic meson snap. It just prints a hello world.
+  If you want to add other functionalities to this snap, please don't.
+  Make a new one.
+confinement: strict
+
+build-packages: [gcc, libc6-dev]
+
+parts:
+  meson-project:
+    meson-parameters:
+      - --prefix=/opt
+    plugin: meson
+    source: .
