@@ -63,6 +63,8 @@ class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
         source_yaml['parts']['dummy-part'].move_to_end(
             'build-packages', last=False)
 
+        source_yaml.update({'build-packages': []})
+
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
@@ -94,6 +96,44 @@ class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
         source_yaml['parts']['dummy-part'].move_to_end(
             'build-packages', last=False)
 
+        source_yaml.update({'build-packages': []})
+
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        self.assertEqual(recorded_yaml, source_yaml)
+
+    def test_prime_with_global_build_packages(self):
+        """Test the recorded snapcraft.yaml for a snap with build packages
+
+        This snap declares one global build package that has undeclared
+        dependencies.
+        """
+        self.run_snapcraft('prime', 'build-package-global')
+
+        # Annotate the source snapcraft.yaml with the expected values.
+        with open(os.path.join('snap', 'snapcraft.yaml')) as source_yaml_file:
+            source_yaml = yaml.load(source_yaml_file)
+        part_name = 'empty-part'
+        # Append the default values.
+        for key in ('build-packages', 'prime', 'stage', 'stage-packages'):
+            source_yaml['parts'][part_name].update({key: []})
+        # build packages end up at the start.
+        source_yaml['parts'][part_name].move_to_end(
+            'build-packages', last=False)
+        # annotate the yaml with the global build packages installed.
+        source_yaml['build-packages'] = [
+            '{}={}'.format(
+                package,
+                integration_tests.get_package_version(
+                    package, self.distro_series, self.deb_arch))
+            for package in ['hello', 'libc6', 'libgcc1', 'gcc-6-base']
+        ]
+        source_yaml.update(
+            architectures=[snapcraft.ProjectOptions().deb_arch])
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
@@ -150,6 +190,7 @@ class SnapcraftRecordingPackagesTestCase(
 
         source_yaml.update(
             architectures=[snapcraft.ProjectOptions().deb_arch])
+        source_yaml.update({'build-packages': []})
 
         recorded_yaml_path = os.path.join(
             self.prime_dir, 'snap', 'snapcraft.yaml')
@@ -194,6 +235,7 @@ class SnapcraftRecordingPackagesTestCase(
         ]
         source_yaml.update(
             architectures=[snapcraft.ProjectOptions().deb_arch])
+        source_yaml.update({'build-packages': []})
 
         recorded_yaml_path = os.path.join(
             self.prime_dir, 'snap', 'snapcraft.yaml')
@@ -301,6 +343,7 @@ class SnapcraftRecordingPackagesTestCase(
         ]
         source_yaml.update(
             architectures=[snapcraft.ProjectOptions().deb_arch])
+        source_yaml.update({'build-packages': []})
 
         recorded_yaml_path = os.path.join(
             self.prime_dir, 'snap', 'snapcraft.yaml')
