@@ -139,6 +139,10 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.parts_dir = os.path.join(os.getcwd(), 'parts')
         self.local_plugins_dir = os.path.join(self.snap_dir, 'plugins')
 
+        # Clean experimental variables
+        self.useFixture(
+            fixtures.EnvironmentVariable('DELTA_UPLOADS_EXPERIMENTAL'))
+
     def make_snapcraft_yaml(self, content, encoding='utf-8'):
         with contextlib.suppress(FileExistsError):
             os.mkdir('snap')
