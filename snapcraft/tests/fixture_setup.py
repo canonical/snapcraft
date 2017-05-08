@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,14 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import contextlib
-from functools import partial
 import io
 import os
 import sys
 import threading
-from types import ModuleType
 import urllib.parse
+from functools import partial
+from types import ModuleType
 from unittest import mock
 from subprocess import CalledProcessError
 
@@ -394,6 +395,11 @@ def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
                 return 'local'.encode('utf-8')
         elif args[0] == ['lxc', 'list', 'my-remote:'] and fail_on_remote:
             raise CalledProcessError(returncode=255, cmd=args[0])
+        elif args[0][:2] == ['lxc', 'info']:
+            return '''
+                environment:
+                  kernel_architecture: x86_64
+                '''.encode('utf-8')
         elif args[0][:3] == ['lxc', 'list', '--format=json']:
             return '''
                 [{"name": "snapcraft-snap-test",
@@ -548,3 +554,50 @@ class HgRepo(fixtures.Fixture):
             revno = call_with_output(['hg', 'id']).split()[0]
 
             self.commit = revno
+
+
+class FakeAptCache(fixtures.Fixture):
+
+    def __init__(self, packages):
+        super().__init__()
+        self.packages = packages
+
+    def setUp(self):
+        super().setUp()
+        temp_dir = fixtures.TempDir()
+        self.useFixture(temp_dir)
+        patcher = mock.patch('snapcraft.repo._deb.apt.Cache')
+        mock_apt_cache = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        cache = collections.OrderedDict()
+        for package, version in self.packages:
+            cache[package] = FakeAptCachePackage(
+                temp_dir.path, package, version)
+
+        mock_apt_cache().__getitem__.side_effect = (
+            lambda item: cache[item])
+
+        mock_apt_cache().get_changes.return_value = cache.values()
+
+
+class FakeAptCachePackage():
+
+    def __init__(self, temp_dir, name, version):
+        super().__init__()
+        self.temp_dir = temp_dir
+        self.name = name
+        self.version = version
+        self.versions = {version: self}
+        self.candidate = self
+
+    def __str__(self):
+        return '{}={}'.format(self.name, self.version)
+
+    def mark_install(self):
+        pass
+
+    def fetch_binary(self, dir_, progress):
+        path = os.path.join(self.temp_dir, self.name)
+        open(path, 'w').close()
+        return path

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -164,6 +164,9 @@ class KBuildPlugin(BasePlugin):
             raise RuntimeError('Unable to access {!r}: '
                                '{}'.format(e.filename, e.strerror))
 
+    def get_config_path(self):
+        return os.path.join(self.builddir, '.config')
+
     def do_base_config(self, config_path):
         # if kconfigfile is provided use that
         # elif kconfigflavour is provided, assemble the ubuntu.flavour config
@@ -205,6 +208,13 @@ class KBuildPlugin(BasePlugin):
         cmd = 'yes "" | {} oldconfig'.format(' '.join(self.make_cmd))
         subprocess.check_call(cmd, shell=True, cwd=self.builddir)
 
+    def do_configure(self):
+        config_path = self.get_config_path()
+
+        self.do_base_config(config_path)
+        self.do_patch_config(config_path)
+        self.do_remake_config()
+
     def do_build(self):
         # Linux's kernel Makefile gets confused if it is invoked with the
         # environment setup by another Linux's Makefile:
@@ -225,10 +235,6 @@ class KBuildPlugin(BasePlugin):
     def build(self):
         super().build()
 
-        config_path = os.path.join(self.builddir, '.config')
-
-        self.do_base_config(config_path)
-        self.do_patch_config(config_path)
-        self.do_remake_config()
+        self.do_configure()
         self.do_build()
         self.do_install()

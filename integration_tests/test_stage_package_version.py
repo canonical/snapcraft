@@ -23,15 +23,17 @@ import integration_tests
 class StagePackageVersionTestCase(integration_tests.TestCase):
 
     def test_stage_package_with_invalid_version_must_fail(self):
-        self.copy_project_to_cwd('stage-package')
+        self.copy_project_to_cwd('stage-package-missing-dependency')
         self.set_stage_package_version(
             os.path.join('snap', 'snapcraft.yaml'),
-            part='hello', package='hello', version='invalid')
+            part='part-with-stage-package',
+            package='hello', version='invalid')
         error = self.assertRaises(
             subprocess.CalledProcessError,
             self.run_snapcraft, 'pull')
         self.assertIn(
-            "Error downloading stage packages for part 'hello': "
+            "Error downloading stage packages for part "
+            "'part-with-stage-package': "
             "The package 'hello=invalid' was not found.",
             str(error.output)
         )
