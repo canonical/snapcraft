@@ -395,6 +395,11 @@ def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
                 return 'local'.encode('utf-8')
         elif args[0] == ['lxc', 'list', 'my-remote:'] and fail_on_remote:
             raise CalledProcessError(returncode=255, cmd=args[0])
+        elif args[0][:2] == ['lxc', 'info']:
+            return '''
+                environment:
+                  kernel_architecture: x86_64
+                '''.encode('utf-8')
         elif args[0][:3] == ['lxc', 'list', '--format=json']:
             return '''
                 [{"name": "snapcraft-snap-test",

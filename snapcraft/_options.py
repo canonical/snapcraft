@@ -240,6 +240,10 @@ class ProjectOptions:
         self.__machine_info = _ARCH_TRANSLATIONS[self.__target_machine]
 
 
+def _get_deb_arch(machine):
+    return _ARCH_TRANSLATIONS[machine].get('deb', None)
+
+
 def _find_machine(deb_arch):
     for machine in _ARCH_TRANSLATIONS:
         if _ARCH_TRANSLATIONS[machine].get('deb', '') == deb_arch:
