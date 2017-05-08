@@ -96,7 +96,7 @@ class SnapcraftRecordingBaseTestCase(integration_tests.TestCase):
         """Test the recorded snapcraft.yaml for a snap with stage packages
 
         This snap declares all the stage packages that it requires, there are
-        no additional depenencies. The stage packages specify their version.
+        no additional dependencies. The stage packages specify their version.
         """
         self.copy_project_to_cwd('stage-packages-without-dependencies')
         part_name = 'part-with-stage-packages'
@@ -140,7 +140,7 @@ class SnapcraftRecordingBaseTestCase(integration_tests.TestCase):
         """Test the recorded snapcraft.yaml for a snap with stage packages
 
         This snap declares all the stage packages that it requires, there are
-        no additional depenencies. The stage packages dont' specify their
+        no additional dependencies. The stage packages don't specify their
         version.
         """
         self.run_snapcraft(
