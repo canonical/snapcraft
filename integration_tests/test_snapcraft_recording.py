@@ -144,4 +144,6 @@ class SnapcraftRecordingPackagesTestCase(
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(recorded_yaml, source_yaml)
+        self.assertEqual(
+            recorded_yaml['parts'][part_name][self.packages_type],
+            expected_stage_packages)
