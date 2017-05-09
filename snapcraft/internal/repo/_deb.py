@@ -20,6 +20,7 @@ import hashlib
 import logging
 import os
 import platform
+import re
 import shutil
 import stat
 import string
@@ -188,7 +189,7 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def _setup_multi_arch(cls, package_name):
-        if ':' not in package_name:
+        if ':' not in package_name or package_name.endswith(':native'):
             return False
 
         (name, arch) = package_name.split(':', 2)
@@ -206,11 +207,14 @@ class Ubuntu(BaseRepo):
             sources = _format_sources_list(None, deb_arch=arch,
                                            release=release, foreign=True)
             with tempfile.NamedTemporaryFile() as sources_arch:
-                sources_arch.write(sources)
+                sources_arch.write(sources.encode())
+                sources_arch.flush()
                 sources_lists = os.path.join('/etc/apt/sources.list.d/',
                                              'ubuntu-{}.list'.format(arch))
-                subprocess.check_call(['sudo', 'cp', sources_arch,
-                                       sources_lists])
+                subprocess.check_call(['sudo', 'cp',
+                                       sources_arch.name, sources_lists])
+                subprocess.check_call(['sudo', 'chmod',
+                                       '644', sources_lists])
 
         try:
             update_output = subprocess.check_output(
@@ -229,20 +233,24 @@ class Ubuntu(BaseRepo):
     def _get_build_deps(cls, package_names, arch):
         if not package_names:
             return []
-        with open(tempfile.mkstemp(suffix='.dsc')[1], 'w') as fake_source:
+        with tempfile.NamedTemporaryFile(suffix='.dsc') as fake_source:
             depends = 'Build-Depends: {}\n'.format(', '.join(package_names))
-            fake_source.write(depends)
-            fake_source.close()
-            actions = subprocess.check_output(
-                ['apt-get', 'build-dep', '-qq', '-s',
-                 '-a{}'.format(arch), fake_source.name],
-                universal_newlines=True).split('\n')
-            os.remove(fake_source.name)
+            fake_source.write(depends.encode())
+            fake_source.flush()
             build_deps = []
-            for line in actions:
-                if line.startswith('Inst'):
-                    build_deps.append(line.split(' ')[1])
-            return build_deps
+            try:
+                actions = subprocess.check_output(
+                    ['apt-get', 'build-dep', '-q', '-s',
+                     '-a{}'.format(arch), fake_source.name],
+                    stderr=subprocess.STDOUT).decode()
+                rx = re.compile('(Inst ([^ ]+).+|.+)')
+            except subprocess.CalledProcessError as e:
+                actions = e.output.decode()
+                rx = re.compile(
+                    '(.+Depends: (.+) but it is not installable|.+)')
+            for line in actions.split('\n'):
+                build_deps.append(rx.sub('\\2', line))
+            return [package for package in build_deps if package]
 
     @classmethod
     def install_build_packages(cls, package_names, arch):
