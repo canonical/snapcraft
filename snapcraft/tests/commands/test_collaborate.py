@@ -25,10 +25,10 @@ from snapcraft import (
     tests
 )
 
-from snapcraft._store import collaborate
+from snapcraft import _store
 
 
-class CollaborateTestCase(tests.TestCase):
+class CollaborateBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -44,10 +44,21 @@ class CollaborateTestCase(tests.TestCase):
         process_mock.communicate.return_value = [b'foo', b'']
         self.popen_mock.return_value = process_mock
         self.addCleanup(patcher.stop)
+        patcher = mock.patch('snapcraft._store._edit_collaborators')
+        self.edit_collaborators_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+
+class CollaborateTestCase(CollaborateBaseTestCase):
 
     def test_collaborate_success(self):
+        self.edit_collaborators_mock.return_value = {
+            'developers': [{
+                'developer-id': 'dummy-id',
+                'since': '2015-07-19 19:30:00'}]
+        }
         self.client.login('dummy', 'test correct password')
-        collaborate('ubuntu-core', 'keyname')
+        _store.collaborate('ubuntu-core', 'keyname')
 
         self.popen_mock.assert_called_with(['snap', 'sign', '-k', 'keyname'],
                                            stderr=-1, stdin=-1, stdout=-1)
@@ -58,12 +69,23 @@ class CollaborateTestCase(tests.TestCase):
         self.assertNotIn('Invalid response from the server',
                          self.fake_logger.output)
 
+
+class CollaborateErrorsTestCase(CollaborateBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.edit_collaborators_mock.return_value = {
+            'developers': [{
+                'developer-id': 'dummy-id',
+                'since': '2015-07-19 19:30:00'}]
+        }
+
     def test_collaborate_snap_not_found(self):
         self.client.login('dummy', 'test correct password')
 
         err = self.assertRaises(
             storeapi.errors.SnapNotFoundError,
-            collaborate,
+            _store.collaborate,
             'notfound', 'key')
 
         self.assertIn("Snap 'notfound' was not found", str(err))
@@ -71,7 +93,7 @@ class CollaborateTestCase(tests.TestCase):
     def test_collaborate_snap_developer_not_found(self):
         self.client.login('dummy', 'test correct password')
 
-        collaborate('core-no-dev', 'keyname')
+        _store.collaborate('core-no-dev', 'keyname')
 
         self.assertIn('Signing developers assertion for core-no-dev',
                       self.fake_logger.output)
@@ -84,9 +106,23 @@ class CollaborateTestCase(tests.TestCase):
         self.client.login('dummy', 'test correct password')
         err = self.assertRaises(
             storeapi.errors.StoreValidationError,
-            collaborate,
+            _store.collaborate,
             'badrequest', 'keyname')
 
         self.assertEqual(
                 'Received error 400: "The given `snap-id` does not match '
                 'the assertion\'s."', str(err))
+
+    def test_collaborate_unchanged_collaborators(self):
+        self.edit_collaborators_mock.return_value = [{
+            'developer-id': 'test-dev-id',
+            'since': '2017-02-10T08:35:00.000000Z',
+            'until': '2018-02-10T08:35:00.000000Z'
+        }]
+        self.client.login('dummy', 'test correct password')
+        _store.collaborate('test-snap-with-dev', 'keyname')
+
+        self.assertIn('Aborting due to unchanged collaborators list.',
+                      self.fake_logger.output)
+        self.assertNotIn('Signing developers assertion for ubuntu-core',
+                         self.fake_logger.output)
