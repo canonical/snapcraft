@@ -18,10 +18,7 @@ import os
 import yaml
 
 import fixtures
-from testtools.matchers import (
-    FileExists,
-    MatchesRegex
-)
+import testscenarios
 
 import snapcraft
 import integration_tests
@@ -39,32 +36,25 @@ class SnapcraftRecordingBaseTestCase(integration_tests.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
 
-    def test_prime_records_snapcraft_yaml(self):
+
+class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
+
+    def test_prime_with_architectures(self):
         """Test the recorded snapcraft.yaml for a basic snap
 
         This snap doesn't have stage or build packages and is declared that it
         works on all architectures.
         """
         self.run_snapcraft('prime', project_dir='basic')
+
         recorded_yaml_path = os.path.join(
             self.prime_dir, 'snap', 'snapcraft.yaml')
-        self.assertThat(recorded_yaml_path, FileExists())
-
-        # Annotate the source snapcraft.yaml with the expected values.
-        with open(os.path.join('snap', 'snapcraft.yaml')) as source_yaml_file:
-            source_yaml = yaml.load(source_yaml_file)
-        for key in ('prime', 'stage', 'stage-packages'):
-            # prime and stage come from when the yaml is loaded.
-            # stage-packages comes from the annotation from state.
-            source_yaml['parts']['dummy-part'].update({key: []})
-        source_yaml.update(grade='stable')
-
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(recorded_yaml, source_yaml)
+        self.assertEqual(recorded_yaml['architectures'], ['all'])
 
-    def test_prime_without_arch_records_current_arch(self):
+    def test_prime_without_architectures_records_current_arch(self):
         """Test the recorded snapcraft.yaml for a basic snap
 
         This snap doesn't have stage or build packages and it is not declared
@@ -72,136 +62,139 @@ class SnapcraftRecordingBaseTestCase(integration_tests.TestCase):
         current architecture.
         """
         self.run_snapcraft('prime', project_dir='basic-without-arch')
+
         recorded_yaml_path = os.path.join(
             self.prime_dir, 'snap', 'snapcraft.yaml')
-        self.assertThat(recorded_yaml_path, FileExists())
-
-        # Annotate the source snapcraft.yaml with the expected values.
-        with open(os.path.join('snap', 'snapcraft.yaml')) as source_yaml_file:
-            source_yaml = yaml.load(source_yaml_file)
-        for key in ('prime', 'stage', 'stage-packages'):
-            # prime and stage come from when the yaml is loaded.
-            # stage-packages comes from the annotation from state.
-            source_yaml['parts']['dummy-part'].update({key: []})
-        source_yaml.update(grade='stable')
-        source_yaml.update(
-            architectures=[snapcraft.ProjectOptions().deb_arch])
-
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(recorded_yaml, source_yaml)
+        self.assertEqual(
+            recorded_yaml['architectures'],
+            [snapcraft.ProjectOptions().deb_arch])
 
-    def test_prime_records_stage_packages_version(self):
-        """Test the recorded snapcraft.yaml for a snap with stage packages
+    def test_prime_with_global_build_packages(self):
+        """Test the recorded snapcraft.yaml for a snap with build packages
 
-        This snap declares all the stage packages that it requires, there are
-        no additional dependencies. The stage packages specify their version.
+        This snap declares one global build package that has undeclared
+        dependencies.
         """
-        self.copy_project_to_cwd('stage-packages-without-dependencies')
-        part_name = 'part-with-stage-packages'
-        self.set_stage_package_version(
-            os.path.join('snap', 'snapcraft.yaml'),
-            part_name, package='hello')
-        self.set_stage_package_version(
-            os.path.join('snap', 'snapcraft.yaml'),
-            part_name, package='gcc-6-base')
+        self.run_snapcraft('prime', 'build-package-global')
+
+        expected_packages = [
+            '{}={}'.format(
+                package,
+                integration_tests.get_package_version(
+                    package, self.distro_series, self.deb_arch))
+            for package in ['hello', 'libc6', 'libgcc1', 'gcc-6-base']
+        ]
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        self.assertEqual(recorded_yaml['build-packages'], expected_packages)
+
+
+class SnapcraftRecordingPackagesTestCase(
+        testscenarios.WithScenarios, SnapcraftRecordingBaseTestCase):
+
+    scenarios = (
+        ('stage-packages', {
+            'packages_type': 'stage-packages',
+            'expected_packages': ['gcc-6-base', 'hello']
+         }),
+        ('build-packages', {
+            'packages_type': 'build-packages',
+            'expected_packages': ['hello', 'libc6', 'libgcc1', 'gcc-6-base']
+         })
+    )
+
+    def test_prime_records_packages_version(self):
+        """Test the recorded snapcraft.yaml for a snap with packages
+
+        This snap declares all the packages that it requires, there are
+        no additional dependencies. The packages specify their version.
+        """
+        self.copy_project_to_cwd(
+            '{}-without-dependencies'.format(self.packages_type))
+        part_name = 'part-with-{}'.format(self.packages_type)
+        for package in ['hello'] + self.expected_packages:
+            self.set_package_version(
+                self.packages_type,
+                os.path.join('snap', 'snapcraft.yaml'), part_name, package)
 
         self.run_snapcraft('prime')
 
         with open(os.path.join('snap', 'snapcraft.yaml')) as source_yaml_file:
             source_yaml = yaml.load(source_yaml_file)
 
-        # Safeguard assertion for the version in the source.
-        self.assertThat(
-            source_yaml['parts'][part_name]['stage-packages'][0],
-            MatchesRegex('gcc-6-base=.+'))
-        self.assertThat(
-            source_yaml['parts'][part_name]['stage-packages'][1],
-            MatchesRegex('hello=.+'))
-
-        # Annotate the source snapcraft.yaml with the expected values.
-        for key in ('prime', 'stage'):
-            source_yaml['parts'][part_name].update({key: []})
-        # stage packages end up at the end.
-        source_yaml['parts'][part_name].move_to_end('stage-packages')
-
-        source_yaml.update(
-            architectures=[snapcraft.ProjectOptions().deb_arch])
-
         recorded_yaml_path = os.path.join(
             self.prime_dir, 'snap', 'snapcraft.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(recorded_yaml, source_yaml)
+        self.assertEqual(
+            recorded_yaml['parts'][part_name][self.packages_type],
+            source_yaml['parts'][part_name][self.packages_type])
 
-    def test_prime_without_stage_packages_version(self):
-        """Test the recorded snapcraft.yaml for a snap with stage packages
+    def test_prime_without_packages_version(self):
+        """Test the recorded snapcraft.yaml for a snap with packages
 
-        This snap declares all the stage packages that it requires, there are
-        no additional dependencies. The stage packages don't specify their
+        This snap declares all the packages that it requires, there are
+        no additional dependencies. The packages don't specify their
         version.
         """
         self.run_snapcraft(
-            'prime', project_dir='stage-packages-without-dependencies')
+            'prime',
+            project_dir='{}-without-dependencies'.format(self.packages_type))
 
-        # Annotate the source snapcraft.yaml with the expected values.
         with open(os.path.join('snap', 'snapcraft.yaml')) as source_yaml_file:
             source_yaml = yaml.load(source_yaml_file)
-        part_name = 'part-with-stage-packages'
-        for key in ('prime', 'stage'):
-            source_yaml['parts'][part_name].update({key: []})
-        # stage packages end up at the end.
-        source_yaml['parts'][part_name].move_to_end('stage-packages')
-        # annotate the yaml with the staged versions.
-        source_yaml['parts'][part_name]['stage-packages'] = [
+        part_name = 'part-with-{}'.format(self.packages_type)
+        # Add the versions recorded by snapcraft.
+        expected_packages = [
             '{}={}'.format(
                 package, integration_tests.get_package_version(
                     package, self.distro_series, self.deb_arch)) for
-            package in source_yaml['parts'][part_name]['stage-packages']
+            package in source_yaml['parts'][part_name][self.packages_type]
         ]
-        source_yaml.update(
-            architectures=[snapcraft.ProjectOptions().deb_arch])
 
         recorded_yaml_path = os.path.join(
             self.prime_dir, 'snap', 'snapcraft.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(recorded_yaml, source_yaml)
+        self.assertEqual(
+            recorded_yaml['parts'][part_name][self.packages_type],
+            expected_packages)
 
-    def test_prime_with_stage_package_missing_dependecy(self):
-        """Test the recorded snapcraft.yaml for a snap with stage packages
+    def test_prime_with_packages_missing_dependency(self):
+        """Test the recorded snapcraft.yaml for a snap with packages
 
-        This snap declares one stage packages that has one undeclared
-        dependency.
+        This snap declares one package that has undeclared dependencies.
         """
-        self.copy_project_to_cwd('stage-package-missing-dependency')
-        part_name = 'part-with-stage-package'
-        self.set_stage_package_version(
+        self.copy_project_to_cwd('{}-missing-dependency'.format(
+            self.packages_type))
+        part_name = 'part-with-{}'.format(self.packages_type)
+        self.set_package_version(
+            self.packages_type,
             os.path.join('snap', 'snapcraft.yaml'), part_name, package='hello')
         self.run_snapcraft('prime')
 
-        # Annotate the source snapcraft.yaml with the expected values.
-        with open(os.path.join('snap', 'snapcraft.yaml')) as source_yaml_file:
-            source_yaml = yaml.load(source_yaml_file)
-        part_name = 'part-with-stage-package'
-        # Append the default values.
-        for key in ('prime', 'stage'):
-            source_yaml['parts'][part_name].update({key: []})
-        # stage packages end up at the end.
-        source_yaml['parts'][part_name].move_to_end('stage-packages')
-        # annotate the yaml with the installed version.
-        source_yaml['parts'][part_name]['stage-packages'].insert(
-            0, 'gcc-6-base={}'.format(integration_tests.get_package_version(
-                'gcc-6-base', self.distro_series, self.deb_arch)))
-        source_yaml.update(
-            architectures=[snapcraft.ProjectOptions().deb_arch])
+        expected_packages = [
+            '{}={}'.format(
+                package,
+                integration_tests.get_package_version(
+                    package, self.distro_series, self.deb_arch))
+            for package in self.expected_packages
+        ]
 
         recorded_yaml_path = os.path.join(
             self.prime_dir, 'snap', 'snapcraft.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(recorded_yaml, source_yaml)
+        self.assertEqual(
+            recorded_yaml['parts'][part_name][self.packages_type],
+            expected_packages)

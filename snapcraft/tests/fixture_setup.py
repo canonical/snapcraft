@@ -577,6 +577,8 @@ class FakeAptCache(fixtures.Fixture):
 
         mock_apt_cache().__getitem__.side_effect = (
             lambda item: cache[item])
+        mock_apt_cache().__enter__().__getitem__.side_effect = (
+            lambda item: cache[item])
 
         mock_apt_cache().get_changes.return_value = cache.values()
 
@@ -590,6 +592,7 @@ class FakeAptCachePackage():
         self.version = version
         self.versions = {version: self}
         self.candidate = self
+        self.installed = version
 
     def __str__(self):
         return '{}={}'.format(self.name, self.version)
@@ -601,3 +604,6 @@ class FakeAptCachePackage():
         path = os.path.join(self.temp_dir, self.name)
         open(path, 'w').close()
         return path
+
+    def get_dependencies(self, _):
+        return []

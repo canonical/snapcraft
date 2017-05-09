@@ -654,11 +654,13 @@ confinement: strict
 grade: stable
 parts:
   test-part:
+    build-packages: []
     plugin: nil
     prime: []
     stage: []
     stage-packages: []
 architectures: [{}]
+build-packages: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'snapcraft.yaml'),
@@ -687,11 +689,85 @@ confinement: strict
 grade: stable
 parts:
   test-part:
+    build-packages: []
     plugin: nil
     prime: []
     stage: []
     stage-packages: [test-package1=test-version1, test-package2=test-version2]
 architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+    @mock.patch('subprocess.check_call')
+    def test_prime_with_global_build_packages(self, _):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.useFixture(fixture_setup.FakeAptCache([
+            ('test-package1', 'test-version1'),
+            ('test-package2', 'test-version2')]))
+
+        self.make_snapcraft_yaml("""build-packages: [test-package1=test-version1, test-package2]
+parts:
+  test-part:
+    plugin: nil
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+build-packages: [test-package1=test-version1, test-package2=test-version2]
+parts:
+  test-part:
+    build-packages: []
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+architectures: [{}]
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+    @mock.patch('subprocess.check_call')
+    def test_prime_with_part_build_packages(self, _):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.useFixture(fixture_setup.FakeAptCache([
+            ('test-package1', 'test-version1'),
+            ('test-package2', 'test-version2')]))
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+    build-packages: [test-package1=test-version1, test-package2]
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: [test-package1=test-version1, test-package2=test-version2]
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+architectures: [{}]
+build-packages: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'snapcraft.yaml'),
@@ -724,11 +800,13 @@ confinement: strict
 grade: stable
 parts:
   test-part:
+    build-packages: []
     plugin: nil
     prime: [-*]
     stage: []
     stage-packages: []
 architectures: [{}]
+build-packages: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'snapcraft.yaml'),

@@ -9,5 +9,5 @@ confinement: strict
 build-packages: ['hello']
 
 parts:
-  build-package-global:
+  empty-part:
     plugin: nil

@@ -178,15 +178,15 @@ class TestCase(testtools.TestCase):
 
     def set_stage_package_version(
             self, snapcraft_yaml_path, part, package, version=None):
-        return self._set_package_version(
+        return self.set_package_version(
             'stage-packages', snapcraft_yaml_path, part, package, version)
 
     def set_build_package_version(
             self, snapcraft_yaml_path, part, package, version=None):
-        return self._set_package_version(
+        return self.set_package_version(
             'build-packages', snapcraft_yaml_path, part, package, version)
 
-    def _set_package_version(
+    def set_package_version(
             self, type_, snapcraft_yaml_path, part, package, version=None):
         # This doesn't handle complex package syntax.
         with open(snapcraft_yaml_path) as snapcraft_yaml_file:
@@ -437,12 +437,13 @@ def get_package_version(package_name, series, deb_arch):
     # http://people.canonical.com/~ubuntu-archive/madison.cgi?package=hello&a=amd64&c=&s=zesty&text=on
     params = {
         'package': package_name,
-        's': series,
+        's': '{0},{0}-updates,{0}-security'.format(series),
         'a': deb_arch,
         'text': 'on',
     }
     query = requests.get('http://people.canonical.com/~ubuntu-archive/'
                          'madison.cgi', params)
     query.raise_for_status()
-    package_status = [i.strip() for i in query.text.strip().split('|')]
+    package = query.text.strip().split('\n')[-1]
+    package_status = [i.strip() for i in package.strip().split('|')]
     return package_status[1]
