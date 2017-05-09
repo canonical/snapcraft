@@ -178,15 +178,15 @@ class TestCase(testtools.TestCase):
 
     def set_stage_package_version(
             self, snapcraft_yaml_path, part, package, version=None):
-        return self._set_package_version(
+        return self.set_package_version(
             'stage-packages', snapcraft_yaml_path, part, package, version)
 
     def set_build_package_version(
             self, snapcraft_yaml_path, part, package, version=None):
-        return self._set_package_version(
+        return self.set_package_version(
             'build-packages', snapcraft_yaml_path, part, package, version)
 
-    def _set_package_version(
+    def set_package_version(
             self, type_, snapcraft_yaml_path, part, package, version=None):
         # This doesn't handle complex package syntax.
         with open(snapcraft_yaml_path) as snapcraft_yaml_file:

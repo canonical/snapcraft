@@ -147,6 +147,8 @@ class _SnapPackaging:
         for part in data['parts']:
             pull_state = get_state(
                 os.path.join(self._parts_dir, part, 'state'), 'pull')
+            data['parts'][part]['build-packages'] = (
+                pull_state.assets.get('build-packages', []))
             data['parts'][part]['stage-packages'] = (
                 pull_state.assets.get('stage-packages', []))
         return data
