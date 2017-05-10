@@ -219,7 +219,7 @@ class Ubuntu(BaseRepo):
         try:
             update_output = subprocess.check_output(
                 ['sudo', 'apt-get', 'update'],
-                stderr=subprocess.STDOUT, universal_newlines=True)
+                stderr=subprocess.STDOUT).decode(sys.getfilesystemencoding())
             # Failure to download doesn't return an error code
             if 'Err:' in update_output:
                 raise subprocess.CalledProcessError(
@@ -242,10 +242,11 @@ class Ubuntu(BaseRepo):
                 actions = subprocess.check_output(
                     ['apt-get', 'build-dep', '-q', '-s',
                      '-a{}'.format(arch), fake_source.name],
-                    stderr=subprocess.STDOUT).decode()
+                    stderr=subprocess.STDOUT, env={}).decode(
+                        sys.getfilesystemencoding())
                 rx = re.compile('(Inst ([^ ]+).+|.+)')
             except subprocess.CalledProcessError as e:
-                actions = e.output.decode()
+                actions = e.output.decode(sys.getfilesystemencoding())
                 rx = re.compile(
                     '(.+Depends: (.+) but it is not installable|.+)')
             for line in actions.split('\n'):
