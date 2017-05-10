@@ -470,12 +470,9 @@ class KernelPluginTestCase(tests.TestCase):
         builtin, modules = plugin._do_parse_config(self.options.kconfigfile)
         plugin._do_check_config(builtin, modules)
 
-        required_opts = {}
-        for dictionary in (kernel.required_generic, kernel.required_security,
-                           kernel.required_snappy, kernel.required_systemd):
-            required_opts.update(dictionary)
-
-        for warn in required_opts.keys():
+        required_opts = (kernel.required_generic + kernel.required_security +
+                         kernel.required_snappy + kernel.required_systemd)
+        for warn in required_opts:
             self.assertIn('CONFIG_{}'.format(warn), fake_logger.output)
 
     @mock.patch.object(
