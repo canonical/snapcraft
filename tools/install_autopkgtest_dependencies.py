@@ -27,8 +27,17 @@ def main():
         sys.exit('Usage: {} test_name'.format(sys.argv[0]))
     test_name = sys.argv[1]
     dependencies = get_dependencies(
-        os.path.join('debian', 'tests', 'control'), test_name)
-    subprocess.check_call(['sudo', 'apt', 'install'] + dependencies)
+        os.path.join(
+            os.path.dirname(__file__), '..', 'debian', 'tests', 'control'),
+        test_name)
+    dependencies_to_install = []
+    for dependency in dependencies:
+        if subprocess.call(
+                ['dpkg', '-l', dependency], stdout=subprocess.DEVNULL):
+            dependencies_to_install.append(dependency)
+    subprocess.check_call(['sudo', 'apt', 'install'] + dependencies_to_install)
+    subprocess.check_call(
+        ['sudo', 'apt-mark', 'auto'] + dependencies_to_install)
 
 
 def get_dependencies(control_file_path, test_name):
