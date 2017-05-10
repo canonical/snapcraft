@@ -398,7 +398,7 @@ def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
         elif args[0][:2] == ['lxc', 'info']:
             return '''
                 environment:
-                  architectures: [x86_64, i686]
+                  kernel_architecture: x86_64
                 '''.encode('utf-8')
         elif args[0][:3] == ['lxc', 'list', '--format=json']:
             return '''

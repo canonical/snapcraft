@@ -54,8 +54,12 @@ class Containerbuild:
             remote = _get_default_remote()
         _verify_remote(remote)
         self._container_name = '{}:snapcraft-{}'.format(remote, container_name)
+        server_environment = self._get_remote_info()['environment']
         # Use the server architecture to avoid emulation overhead
-        kernel = self._get_remote_info()['environment']['architectures'][0]
+        try:
+            kernel = server_environment['kernel_architecture']
+        except KeyError:
+            kernel = server_environment['kernelarchitecture']
         deb_arch = _get_deb_arch(kernel)
         if not deb_arch:
             raise SnapcraftEnvironmentError(
