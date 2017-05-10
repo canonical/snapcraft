@@ -55,7 +55,7 @@ class Containerbuild:
         _verify_remote(remote)
         self._container_name = '{}:snapcraft-{}'.format(remote, container_name)
         # Use the server architecture to avoid emulation overhead
-        kernel = self._get_remote_info()['environment']['kernel_architecture']
+        kernel = self._get_remote_info()['environment']['kernelarchitecture']
         deb_arch = _get_deb_arch(kernel)
         if not deb_arch:
             raise SnapcraftEnvironmentError(
@@ -90,7 +90,7 @@ class Containerbuild:
         # Necessary to read asset files with non-ascii characters.
         check_call([
             'lxc', 'config', 'set', self._container_name,
-            'environment.LC_ALL', 'en_US.UTF-8'])
+            'environment.LC_ALL', 'C.UTF-8'])
 
     @contextmanager
     def _ensure_started(self):

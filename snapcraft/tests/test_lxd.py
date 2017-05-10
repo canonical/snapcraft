@@ -75,7 +75,7 @@ class LXDTestCase(tests.TestCase):
             call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'config', 'set', container_name,
-                  'environment.LC_ALL', 'en_US.UTF-8']),
+                  'environment.LC_ALL', 'C.UTF-8']),
             call(['lxc', 'exec', container_name,
                   '--env', 'HOME=/{}'.format(project_folder), '--',
                   'mkdir', project_folder]),
