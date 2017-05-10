@@ -137,12 +137,36 @@ class TravisPreconditionsTestCase(tests.TestCase):
 
 class TravisSuccessfulTestCase(tests.TestCase):
 
+    scenarios = [
+        ('default', dict(
+            channels=[])),
+        ('edge', dict(
+            channels=['edge'])),
+        ('beta', dict(
+            channels=['beta'])),
+        ('candidate', dict(
+            channels=['candidate'])),
+        ('stable', dict(
+            channels=['stable'])),
+        ('edge, beta, candidate, stable', dict(
+            channels=['edge', 'beta', 'candidate', 'stable'])),
+        ('edge, beta', dict(
+            channels=['edge', 'beta'])),
+        ('beta, candidate, stable', dict(
+            channels=['beta', 'candidate'])),
+    ]
+
     def setUp(self):
         super().setUp()
         self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
         self.useFixture(self.fake_logger)
         self.fake_terminal = tests.fixture_setup.FakeTerminal()
         self.useFixture(self.fake_terminal)
+        self.use_default_arguments = False
+
+        if not self.channels:
+            self.use_default_arguments = True
+            self.channels = travis.DEFAULT_CHANNELS
 
     def make_travis_yml(self, content):
         with open('.travis.yml', 'w') as fd:
@@ -168,13 +192,16 @@ class TravisSuccessfulTestCase(tests.TestCase):
         self.make_snapcraft_yaml(test_snapcraft_yaml)
         self.make_travis_yml('after_success: ["<travis-cli-decrypt>"]')
 
-        travis.enable()
+        if self.use_default_arguments:
+            travis.enable(None)
+        else:
+            travis.enable(self.channels)
 
         # Attenuated credentials requested from the Store.
         mock_login.assert_called_with(
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=None, save=False,
-            channels=['edge'], packages=[{'series': '16', 'name': 'foo'}])
+            channels=self.channels, packages=[{'series': '16', 'name': 'foo'}])
 
         # Credentials encrypted with travis CLI.
         mock_check_output.assert_called_with(
@@ -199,7 +226,8 @@ class TravisSuccessfulTestCase(tests.TestCase):
                     'docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c '
                     '"apt update -qq && apt install snapcraft -y && '
                     'cd $(pwd) && '
-                    'snapcraft && snapcraft push *.snap --release edge"'),
+                    'snapcraft && snapcraft push *.snap --release {}"'.format(
+                        ','.join(self.channels))),
                 'on': {
                     'branch': 'master',
                 },
@@ -208,7 +236,7 @@ class TravisSuccessfulTestCase(tests.TestCase):
         # Descriptive logging ...
         self.assertEqual([
             "Enabling Travis testbeds to push and release 'foo' snaps "
-            "to edge channel in series '16'",
+            "to channels {!r} in series '16'".format(', '.join(self.channels)),
             'Acquiring specific authorization information ...',
             'Login successful.',
             'Encrypting authorization for Travis and adjusting project '
@@ -241,13 +269,16 @@ class TravisSuccessfulTestCase(tests.TestCase):
         self.make_snapcraft_yaml(test_snapcraft_yaml)
         self.make_travis_yml('after_success: ["<travis-cli-decrypt>"]')
 
-        travis.refresh()
+        if self.use_default_arguments:
+            travis.refresh(None)
+        else:
+            travis.refresh(self.channels)
 
         # Attenuated credentials requested from the Store.
         mock_login.assert_called_with(
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=None, save=False,
-            channels=['edge'], packages=[{'series': '16', 'name': 'foo'}])
+            channels=self.channels, packages=[{'series': '16', 'name': 'foo'}])
 
         # Credentials encrypted with travis CLI.
         mock_check_output.assert_called_with(
@@ -267,7 +298,7 @@ class TravisSuccessfulTestCase(tests.TestCase):
         # Descriptive logging ...
         self.assertEqual([
             'Refreshing credentials to push and release "foo" snaps to '
-            'edge channel in series 16',
+            'channels {!r} in series 16'.format(', '.join(self.channels)),
             'Acquiring specific authorization information ...',
             'Login successful.',
             'Encrypting authorization for Travis and adjusting project '

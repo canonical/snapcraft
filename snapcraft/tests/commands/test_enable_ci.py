@@ -67,10 +67,32 @@ class EnableCITestCase(tests.TestCase):
         self.assertEqual(
             '<module docstring>\n', self.fake_terminal.getvalue())
 
+    @mock.patch.object(travis, '__doc__')
+    @mock.patch.object(travis, 'enable')
+    @mock.patch('builtins.input')
+    def test_enable_ci_travis_channels(
+            self, mock_input, mock_enable, mock_doc):
+        mock_input.side_effect = ['y']
+        mock_doc.__str__.return_value = '<module docstring>'
+
+        main(['enable-ci', 'travis', '--channels=edge,stable'])
+
+        self.assertEqual(1, mock_enable.call_count)
+        self.assertEqual(
+            '<module docstring>\n', self.fake_terminal.getvalue())
+
     @mock.patch.object(travis, 'refresh')
     def test_enable_ci_travis_refresh(self, mock_refresh):
 
         main(['enable-ci', 'travis', '--refresh'])
+
+        self.assertEqual(1, mock_refresh.call_count)
+        self.assertEqual('', self.fake_terminal.getvalue())
+
+    @mock.patch.object(travis, 'refresh')
+    def test_enable_ci_travis_refresh_channels(self, mock_refresh):
+
+        main(['enable-ci', 'travis', '--refresh', '--channels=beta,candidate'])
 
         self.assertEqual(1, mock_refresh.call_count)
         self.assertEqual('', self.fake_terminal.getvalue())
