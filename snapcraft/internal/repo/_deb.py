@@ -188,7 +188,7 @@ class Ubuntu(BaseRepo):
         return packages
 
     @classmethod
-    def _setup_multi_arch(cls, package_name):
+    def _setup_multi_arch(cls, apt_cache, package_name):
         if ':' not in package_name or package_name.endswith(':native'):
             return False
 
@@ -227,7 +227,7 @@ class Ubuntu(BaseRepo):
         except subprocess.CalledProcessError as e:
             logger.error(e.output)
             raise e
-        return True
+        return package_name in apt_cache
 
     @classmethod
     def _get_build_deps(cls, package_names, arch):
@@ -265,7 +265,7 @@ class Ubuntu(BaseRepo):
                             version and installed_version != version):
                         new_packages.append(pkg)
                 except KeyError as e:
-                    if cls._setup_multi_arch(pkg_name):
+                    if cls._setup_multi_arch(apt_cache, pkg_name):
                         new_packages.append(pkg)
                     else:
                         raise errors.BuildPackageNotFoundError(pkg) from e
