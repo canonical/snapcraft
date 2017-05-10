@@ -81,30 +81,25 @@ default_kernel_image_target = {
     'arm64': 'Image.gz',
 }
 
-required_generic = {'DEVTMPFS': '', 'DEVTMPFS_MOUNT': '',
-                    'TMPFS_POSIX_ACL': '', 'IPV6': '', 'SYSVIPC': '',
-                    'SYSVIPC_SYSCTL': '', 'VFAT_FS': '',
-                    'NLS_CODEPAGE_437': '', 'NLS_ISO8859_1': ''}
+required_generic = ['DEVTMPFS', 'DEVTMPFS_MOUNT', 'TMPFS_POSIX_ACL', 'IPV6',
+                    'SYSVIPC', 'SYSVIPC_SYSCTL', 'VFAT_FS', 'NLS_CODEPAGE_437',
+                    'NLS_ISO8859_1']
 
-required_security = {'SECURITY': '', 'SECURITY_APPARMOR': '',
-                     'SYN_COOKIES': '', 'STRICT_DEVMEM': '',
-                     'DEFAULT_SECURITY_APPARMOR': '', 'SECCOMP': '',
-                     'SECCOMP_FILTER': '', 'CC_STACKPROTECTOR': '',
-                     'CC_STACKPROTECTOR_STRONG':
-                     '(4.1.x and later versions only)',
-                     'DEBUG_RODATA': '', 'DEBUG_SET_MODULE_RONX': ''}
+required_security = ['SECURITY', 'SECURITY_APPARMOR', 'SYN_COOKIES',
+                     'STRICT_DEVMEM', 'DEFAULT_SECURITY_APPARMOR', 'SECCOMP',
+                     'SECCOMP_FILTER', 'CC_STACKPROTECTOR',
+                     'CC_STACKPROTECTOR_STRONG', 'DEBUG_RODATA',
+                     'DEBUG_SET_MODULE_RONX']
 
-required_snappy = {'RD_LZMA': '', 'KEYS': '', 'ENCRYPTED_KEYS': '',
-                   'SQUASHFS': '', 'SQUASHFS_XATTR': '', 'SQUASHFS_XZ': '',
-                   'DEVPTS_MULTIPLE_INSTANCES':
-                   '(4.8.x and earlier versions only)'}
+required_snappy = ['RD_LZMA', 'KEYS', 'ENCRYPTED_KEYS', 'SQUASHFS',
+                   'SQUASHFS_XATTR', 'SQUASHFS_XZ',
+                   'DEVPTS_MULTIPLE_INSTANCES']
 
-required_systemd = {'DEVTMPFS': '', 'CGROUPS': '', 'INOTIFY_USER': '',
-                    'SIGNALFD': '', 'TIMERFD': '', 'EPOLL': '',
-                    'NET': '', 'SYSFS': '', 'PROC_FS': '', 'FHANDLE': '',
-                    'DMIID': '', 'BLK_DEV_BSG': '', 'NET_NS': '',
-                    'IPV6': '', 'AUTOFS4_FS': '',
-                    'TMPFS_POSIX_ACL': '', 'TMPFS_XATTR': '', 'SECCOMP': ''}
+required_systemd = ['DEVTMPFS', 'CGROUPS', 'INOTIFY_USER', 'SIGNALFD',
+                    'TIMERFD', 'EPOLL', 'NET', 'SYSFS', 'PROC_FS', 'FHANDLE',
+                    'DMIID', 'BLK_DEV_BSG', 'NET_NS',
+                    'IPV6', 'AUTOFS4_FS',
+                    'TMPFS_POSIX_ACL', 'TMPFS_XATTR', 'SECCOMP']
 
 required_boot = ['squashfs']
 
@@ -409,31 +404,23 @@ class KernelPlugin(kbuild.KBuildPlugin):
                'recommends or requires.\n'
                'While we will not prevent you from building this kernel snap, '
                'we suggest you take a look at these:\n')
-
-        required_opts = {}
-        for dictionary in (required_generic, required_security,
-                           required_snappy, required_systemd):
-            required_opts.update(dictionary)
-
+        required_opts = (required_generic + required_security +
+                         required_snappy + required_systemd)
         missing = []
 
-        for code in required_opts.keys():
+        for code in required_opts:
             opt = 'CONFIG_{}'.format(code)
             if opt in builtin:
                 continue
             elif opt in modules:
                 continue
             else:
-                missing.append(code)
+                missing.append(opt)
 
         if missing:
             warn = '\n{}\n'.format(msg)
             for opt in missing:
-                warn += 'CONFIG_{}'.format(opt)
-                note = required_opts[opt]
-                if note:
-                    warn += ' {}'.format(note)
-                warn += '\n'
+                warn += '{}\n'.format(opt)
             logger.warn(warn)
 
     def _do_check_initrd(self, builtin, modules):
