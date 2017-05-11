@@ -145,7 +145,7 @@ def snap(directory, output, **kwargs):
 @lifecyclecli.command()
 @add_build_options()
 @click.argument('parts', nargs=-1, metavar='<part>...', required=False)
-@click.option('--step',
+@click.option('--step', '-s',
               type=click.Choice(['pull', 'build', 'stage', 'prime', 'strip']),
               help='only clean the specified step and those that '
                    'depend on it.')
