@@ -604,3 +604,6 @@ class FakeAptCachePackage():
         path = os.path.join(self.temp_dir, self.name)
         open(path, 'w').close()
         return path
+
+    def get_dependencies(self, _):
+        return []
