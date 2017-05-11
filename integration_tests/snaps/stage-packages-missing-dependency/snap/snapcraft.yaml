@@ -1,4 +1,4 @@
-name: stage-package-missing-dependency
+name: stage-packages-missing-dependency
 version: '0.1'
 summary: install a stage package
 description: |
@@ -9,6 +9,6 @@ grade: stable
 confinement: strict
 
 parts:
-  part-with-stage-package:
+  part-with-stage-packages:
     plugin: nil
     stage-packages: ['hello']
