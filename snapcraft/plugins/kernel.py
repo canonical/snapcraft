@@ -420,15 +420,12 @@ class KernelPlugin(kbuild.KBuildPlugin):
         if missing:
             warn = '\n{}\n'.format(msg)
             for opt in missing:
-                ver = ''
+                note = ''
                 if opt == 'CONFIG_CC_STACKPROTECTOR_STRONG':
-                    ver = '(4.1.x and later versions only)'
+                    note = '(4.1.x and later versions only)'
                 elif opt == 'CONFIG_DEVPTS_MULTIPLE_INSTANCES':
-                    ver = '(4.8.x and earlier versions only)'
-                warn += '{}'.format(opt)
-                if ver:
-                    warn += ' {}'.format(ver)
-                warn += '\n'
+                    note = '(4.8.x and earlier versions only)'
+                warn += '{} {}'.format(opt, note)
             logger.warn(warn)
 
     def _do_check_initrd(self, builtin, modules):
