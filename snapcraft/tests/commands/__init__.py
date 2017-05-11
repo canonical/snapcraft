@@ -76,8 +76,7 @@ class CommandBaseTestCase(tests.TestCase):
         self.runner = CliRunner()
 
     def run_command(self, args, **kwargs):
-        return self.runner.invoke(run, args, env=os.environ,
-                                  catch_exceptions=False, **kwargs)
+        return self.runner.invoke(run, args, catch_exceptions=False, **kwargs)
 
 
 class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
