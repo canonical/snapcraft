@@ -229,7 +229,13 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def get_installed_build_packages(cls, package_names):
-        unique_packages = set(package_names)
+        # It's important to preserve the order of packages to record on the
+        # state the same value received from the snapcraft.yaml
+        seen = set()
+        unique_packages = [
+            package for package in package_names if not
+            (package in seen or seen.add(package))
+        ]
         pkg_list = []
         with apt.Cache() as apt_cache:
             for pkg in unique_packages:

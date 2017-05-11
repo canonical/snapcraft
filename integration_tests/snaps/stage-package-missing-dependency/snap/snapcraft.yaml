@@ -1,0 +1,14 @@
+name: stage-package-missing-dependency
+version: '0.1'
+summary: install a stage package
+description: |
+  Install a stage package.
+  This package has one dependency: gcc-6-base.
+
+grade: stable
+confinement: strict
+
+parts:
+  part-with-stage-package:
+    plugin: nil
+    stage-packages: ['hello']
