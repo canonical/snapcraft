@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+import os
 
 import click
 
@@ -86,6 +87,8 @@ def run(ctx, debug, catch_exceptions=False):
     """Snapcraft is a delightful packaging tool."""
     if debug:
         log_level = logging.DEBUG
+        click.echo('Starting snapcraft {} from {}.'.format(
+            snapcraft.__version__, os.path.dirname(__file__)))
     else:
         log_level = logging.INFO
     # In an ideal world, this logger setup would be replaced
