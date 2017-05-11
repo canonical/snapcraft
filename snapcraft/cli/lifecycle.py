@@ -121,7 +121,7 @@ def prime(parts, **kwargs):
 @lifecyclecli.command()
 @add_build_options()
 @click.argument('directory', required=False)
-@click.option('--output', help='path to the resulting snap.')
+@click.option('--output', '-o', help='path to the resulting snap.')
 def snap(directory, output, **kwargs):
     """Create a snap.
 
