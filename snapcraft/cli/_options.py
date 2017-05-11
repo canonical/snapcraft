@@ -18,7 +18,7 @@ import click
 from snapcraft import ProjectOptions
 
 
-_build_options = [
+_BUILD_OPTIONS = [
     click.option('--enable-geoip', is_flag=True,
                  help=('Detect best candidate location for stage-packages '
                        'using geoip')),
@@ -31,7 +31,7 @@ _build_options = [
 
 def add_build_options():
     def _add_build_options(func):
-        for option in reversed(_build_options):
+        for option in reversed(_BUILD_OPTIONS):
             func = option(func)
         return func
     return _add_build_options
