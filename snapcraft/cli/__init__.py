@@ -78,13 +78,8 @@ class SnapcraftGroup(click.Group):
             cmd = click.Group.get_command(self, ctx, cmd_name)
         return cmd
 
-    def parse_args(self, ctx, args):
-        if not args:
-            args.insert(0, 'snap')
-        return super().parse_args(ctx, args)
 
-
-@click.group(cls=SnapcraftGroup)
+@click.group(cls=SnapcraftGroup, invoke_without_command=True)
 @click.pass_context
 @click.option('--debug', '-d', is_flag=True)
 def run(ctx, debug, catch_exceptions=False):
@@ -95,6 +90,9 @@ def run(ctx, debug, catch_exceptions=False):
         log_level = logging.INFO
     # In an ideal world, this logger setup would be replaced
     log.configure(log_level=log_level)
+    # The default command
+    if not ctx.invoked_subcommand:
+        ctx.forward(lifecyclecli.commands['snap'])
 
 
 # This would be much easier if they were subcommands
