@@ -86,7 +86,7 @@ class SnapcraftGroup(click.Group):
 
 @click.group(cls=SnapcraftGroup)
 @click.pass_context
-@click.option('--debug', is_flag=True)
+@click.option('--debug', '-d', is_flag=True)
 def run(ctx, debug, catch_exceptions=False):
     """Snapcraft is a delightful packaging tool."""
     if debug:
