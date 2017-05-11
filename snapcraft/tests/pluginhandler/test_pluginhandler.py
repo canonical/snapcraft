@@ -958,6 +958,7 @@ class StateTestCase(StateBaseTestCase):
     @patch('snapcraft.internal.repo.Repo')
     def test_pull_state(self, repo_mock):
         self.assertEqual(None, self.handler.last_step())
+        repo_mock.get_installed_build_packages.return_value = []
 
         self.handler.pull()
 
