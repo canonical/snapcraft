@@ -425,7 +425,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
                     note = '(4.1.x and later versions only)'
                 elif opt == 'CONFIG_DEVPTS_MULTIPLE_INSTANCES':
                     note = '(4.8.x and earlier versions only)'
-                warn += '{} {}'.format(opt, note)
+                warn += '{} {}\n'.format(opt, note)
             logger.warn(warn)
 
     def _do_check_initrd(self, builtin, modules):
