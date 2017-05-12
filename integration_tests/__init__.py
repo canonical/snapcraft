@@ -411,7 +411,7 @@ class StoreTestCase(TestCase):
         if expect_success:
             if local:
                 process.expect(
-                    'Build assertion {}-build saved to disk.'.format(
+                    'Build assertion .*{}-build saved to disk.'.format(
                         snap_filename))
             else:
                 process.expect(
