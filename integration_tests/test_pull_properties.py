@@ -96,7 +96,7 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.run_snapcraft('pull')
 
         state_file = os.path.join(
-            self.parts_dir, 'build-package-global', 'state', 'pull')
+            self.parts_dir, 'empty-part', 'state', 'pull')
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
             state = yaml.load(f)
