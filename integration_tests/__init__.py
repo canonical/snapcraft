@@ -415,7 +415,7 @@ class StoreTestCase(TestCase):
                         snap_filename))
             else:
                 process.expect(
-                    'Build assertion {}-build pushed.'.format(snap_filename))
+                    'Build assertion .*{}-build pushed.'.format(snap_filename))
 
         process.expect(pexpect.EOF)
         process.close()
