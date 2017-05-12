@@ -22,41 +22,7 @@ from testtools.matchers import Contains, FileExists
 import integration_tests
 
 
-class GitSourceBaseTestCase(integration_tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        if shutil.which('git') is None:
-            self.skipTest('git is not installed')
-
-    def init_and_config_git(self):
-        subprocess.check_call(
-            ['git', 'init', '.'], stdout=subprocess.DEVNULL)
-        subprocess.check_call(
-            ['git', 'config', '--local', 'user.name', '"Example Dev"'])
-        subprocess.check_call(
-            ['git', 'config', '--local', 'user.email', 'dev@example.com'])
-
-    def add_file(self, file_path):
-        subprocess.check_call(
-            ['git', 'add', file_path], stdout=subprocess.DEVNULL)
-
-    def commit(self, message):
-        subprocess.check_call(
-            ['git', 'commit', '-m', message], stdout=subprocess.DEVNULL)
-
-    def tag(self, tag_name):
-        subprocess.check_call(
-            ['git', 'tag', '-a', '-m', tag_name, tag_name],
-            stdout=subprocess.DEVNULL)
-
-    def get_revno(self):
-        return subprocess.check_output([
-            'git', 'rev-list', 'HEAD', '--max-count=1']
-            ).decode('utf-8').strip()
-
-
-class GitSourceTestCase(GitSourceBaseTestCase):
+class GitSourceTestCase(integration_tests.GitSourceBaseTestCase):
 
     def _get_git_revno(self, path, revrange='-1'):
         return subprocess.check_output(
@@ -68,12 +34,8 @@ class GitSourceTestCase(GitSourceBaseTestCase):
         self.copy_project_to_cwd('git-head')
 
         self.init_and_config_git()
-        subprocess.check_call(
-            ['git', 'commit', '-m', '"1"', '--allow-empty'],
-            stdout=subprocess.DEVNULL)
-        subprocess.check_call(
-            ['git', 'commit', '-m', '"2"', '--allow-empty'],
-            stdout=subprocess.DEVNULL)
+        self.commit('"1"', allow_empty=True)
+        self.commit('"2"', allow_empty=True)
 
         self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src')
@@ -87,12 +49,8 @@ class GitSourceTestCase(GitSourceBaseTestCase):
         self.copy_project_to_cwd('git-tag')
 
         self.init_and_config_git()
-        subprocess.check_call(
-            ['git', 'commit', '-m', '"1"', '--allow-empty'],
-            stdout=subprocess.DEVNULL)
-        subprocess.check_call(
-            ['git', 'commit', '-m', '"2"', '--allow-empty'],
-            stdout=subprocess.DEVNULL)
+        self.commit('"1"', allow_empty=True)
+        self.commit('"2"', allow_empty=True)
         subprocess.check_call(
             ['git', 'tag', 'initial', 'HEAD@{1}'],
             stdout=subprocess.DEVNULL)
@@ -109,12 +67,8 @@ class GitSourceTestCase(GitSourceBaseTestCase):
         self.copy_project_to_cwd('git-commit')
 
         self.init_and_config_git()
-        subprocess.check_call(
-            ['git', 'commit', '-m', '"1"', '--allow-empty'],
-            stdout=subprocess.DEVNULL)
-        subprocess.check_call(
-            ['git', 'commit', '-m', '"2"', '--allow-empty'],
-            stdout=subprocess.DEVNULL)
+        self.commit('"1"', allow_empty=True)
+        self.commit('"2"', allow_empty=True)
 
         # The test uses "HEAD^" so we can only test it once
         self.run_snapcraft('pull')
@@ -125,21 +79,15 @@ class GitSourceTestCase(GitSourceBaseTestCase):
         self.copy_project_to_cwd('git-branch')
 
         self.init_and_config_git()
-        subprocess.check_call(
-            ['git', 'commit', '-m', '"1"', '--allow-empty'],
-            stdout=subprocess.DEVNULL)
-        subprocess.check_call(
-            ['git', 'commit', '-m', '"2"', '--allow-empty'],
-            stdout=subprocess.DEVNULL)
+        self.commit('"1"', allow_empty=True)
+        self.commit('"2"', allow_empty=True)
         subprocess.check_call(
             ['git', 'branch', 'second', 'HEAD@{1}'],
             stdout=subprocess.DEVNULL)
         subprocess.check_call(
             ['git', 'checkout', 'second'],
             stderr=subprocess.DEVNULL)
-        subprocess.check_call(
-            ['git', 'commit', '-m', '"3"', '--allow-empty'],
-            stdout=subprocess.DEVNULL)
+        self.commit('"3"', allow_empty=True)
         subprocess.check_call(
             ['git', 'checkout', 'master'],
             stderr=subprocess.DEVNULL)
@@ -157,17 +105,13 @@ class GitSourceTestCase(GitSourceBaseTestCase):
         self.copy_project_to_cwd('git-depth')
 
         self.init_and_config_git()
-        subprocess.check_call(
-            ['git', 'commit', '-m', '"1"', '--allow-empty'],
-            stdout=subprocess.DEVNULL)
-        subprocess.check_call(
-            ['git', 'commit', '-m', '"2"', '--allow-empty'],
-            stdout=subprocess.DEVNULL)
+        self.commit('"1"', allow_empty=True)
+        self.commit('"2"', allow_empty=True)
 
         self.run_snapcraft('pull')
 
 
-class GitGenerateVersionTestCase(GitSourceBaseTestCase):
+class GitGenerateVersionTestCase(integration_tests.GitSourceBaseTestCase):
 
     def setUp(self):
         super().setUp()

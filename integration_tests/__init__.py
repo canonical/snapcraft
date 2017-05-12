@@ -18,6 +18,7 @@ import fileinput
 import os
 import platform
 import re
+import shutil
 import subprocess
 import time
 import uuid
@@ -211,6 +212,42 @@ class TestCase(testtools.TestCase):
         with open(snapcraft_yaml_path, 'w') as snapcraft_yaml_file:
             yaml.dump(snapcraft_yaml, snapcraft_yaml_file)
         return version
+
+
+class GitSourceBaseTestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        if shutil.which('git') is None:
+            self.skipTest('git is not installed')
+
+    def init_and_config_git(self):
+        subprocess.check_call(
+            ['git', 'init', '.'], stdout=subprocess.DEVNULL)
+        subprocess.check_call(
+            ['git', 'config', '--local', 'user.name', '"Example Dev"'])
+        subprocess.check_call(
+            ['git', 'config', '--local', 'user.email', 'dev@example.com'])
+
+    def add_file(self, file_path):
+        subprocess.check_call(
+            ['git', 'add', file_path], stdout=subprocess.DEVNULL)
+
+    def commit(self, message, allow_empty=False):
+        command = ['git', 'commit', '-m', message]
+        if allow_empty:
+            command.append('--allow-empty')
+        subprocess.check_call(command, stdout=subprocess.DEVNULL)
+
+    def tag(self, tag_name):
+        subprocess.check_call(
+            ['git', 'tag', '-a', '-m', tag_name, tag_name],
+            stdout=subprocess.DEVNULL)
+
+    def get_revno(self):
+        return subprocess.check_output([
+            'git', 'rev-list', 'HEAD', '--max-count=1']
+            ).decode('utf-8').strip()
 
 
 class StoreTestCase(TestCase):

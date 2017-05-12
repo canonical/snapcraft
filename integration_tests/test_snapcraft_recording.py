@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 import yaml
 
 import fixtures
@@ -22,6 +23,7 @@ import testscenarios
 
 import snapcraft
 import integration_tests
+from snapcraft.tests import subprocess_utils
 
 
 class SnapcraftRecordingBaseTestCase(integration_tests.TestCase):
@@ -197,3 +199,25 @@ class SnapcraftRecordingPackagesTestCase(
         self.assertEqual(
             recorded_yaml['parts'][part_name][self.packages_type],
             expected_packages)
+
+
+class SnapcraftRecordingGitSourceTestCase(
+        integration_tests.GitSourceBaseTestCase, SnapcraftRecordingBaseTestCase):
+
+    def test_prime_with_git_source(self):
+        self.copy_project_to_cwd('git-head')
+
+        self.init_and_config_git()
+        self.commit('"1"', allow_empty=True)
+
+        self.run_snapcraft('prime')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        commit = subprocess_utils.call_with_output(
+            ['git', 'rev-parse', 'HEAD'])
+        self.assertEqual(
+            recorded_yaml['parts']['git']['source-commit'], commit)
