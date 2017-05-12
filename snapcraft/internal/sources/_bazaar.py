@@ -78,8 +78,8 @@ class Bazaar(Base):
         source = self.source
 
         return {
-            'commit': commit,
-            'branch': branch,
+            'source-commit': commit,
+            'source-branch': branch,
             'source': source,
-            'tag': tag,
+            'source-tag': tag,
         }

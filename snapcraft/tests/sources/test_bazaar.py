@@ -48,7 +48,7 @@ class TestBazaar(tests.sources.SourceTestCase):
 
     def test_pull_tag(self):
         bzr = sources.Bazaar(
-            'lp:my-source', 'source_dir', source_tag='tag')
+            'lp:my-source', 'source_dir', source_tag='source-tag')
         bzr.pull()
 
         self.mock_run.assert_called_once_with(
