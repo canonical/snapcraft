@@ -59,7 +59,7 @@ def search(ctx, query):
 
     \b
     Examples:
-        snapcraft serarch go
+        snapcraft search go
 
     """
     parts.search(' '.join(query))
