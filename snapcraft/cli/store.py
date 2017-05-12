@@ -53,7 +53,7 @@ _MESSAGE_REGISTER_NO = dedent("""
 
 @click.group()
 def storecli():
-    """Store relevant commands"""
+    """Store commands"""
     pass
 
 

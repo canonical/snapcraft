@@ -31,7 +31,7 @@ _TOPICS = {
 
 @click.group()
 def helpcli():
-    """Store relevant commands"""
+    """Help commands"""
     pass
 
 

@@ -25,7 +25,7 @@ from . import echo
 
 @click.group()
 def assertionscli():
-    """Store assertion relevant commands"""
+    """Store assertion commands"""
     pass
 
 
