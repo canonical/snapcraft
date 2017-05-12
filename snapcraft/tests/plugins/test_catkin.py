@@ -70,6 +70,7 @@ class CatkinPluginBaseTestCase(tests.TestCase):
             source_subdir = None
             include_roscore = False
             underlay = None
+            rosinstall_files = None
 
         self.properties = props()
         self.project_options = snapcraft.ProjectOptions()
@@ -91,10 +92,20 @@ class CatkinPluginBaseTestCase(tests.TestCase):
         self.catkin_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('snapcraft.plugins.catkin._Wstool')
+        self.wstool_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
     def verify_rosdep_setup(self, rosdistro, package_path, rosdep_path,
                             sources):
         self.rosdep_mock.assert_has_calls([
             mock.call(rosdistro, package_path, rosdep_path, sources,
+                      self.project_options),
+            mock.call().setup()])
+
+    def verify_wstool_setup(self, package_path, wstool_path, sources):
+        self.wstool_mock.assert_has_calls([
+            mock.call(package_path, wstool_path, sources,
                       self.project_options),
             mock.call().setup()])
 
@@ -248,6 +259,55 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         underlay_run_path = underlay_properties['run-path']
         self.assertThat(underlay_run_path, Contains('type'))
         self.assertThat(underlay_run_path['type'], Equals('string'))
+
+        # Check rosinstall-files property
+        self.assertTrue('rosinstall-files' in properties,
+                        'Expected "rosinstall-files" to be included in '
+                        'properties')
+
+        rosinstall_files = properties['rosinstall-files']
+        self.assertTrue('type' in rosinstall_files,
+                        'Expected "type" to be included in "rosinstall-files"')
+        self.assertTrue('default' in rosinstall_files,
+                        'Expected "default" to be included in '
+                        '"rosinstall-files"')
+        self.assertTrue('minitems' in rosinstall_files,
+                        'Expected "minitems" to be included in '
+                        '"rosinstall-files"')
+        self.assertTrue('uniqueItems' in rosinstall_files,
+                        'Expected "uniqueItems" to be included in '
+                        '"rosinstall-files"')
+        self.assertTrue('items' in rosinstall_files,
+                        'Expected "items" to be included in '
+                        '"rosinstall-files"')
+
+        rosinstall_files_type = rosinstall_files['type']
+        self.assertEqual(rosinstall_files_type, 'array',
+                         'Expected "rosinstall-files" "type" to be "array", '
+                         'but it was "{}"'.format(rosinstall_files_type))
+
+        rosinstall_files_default = rosinstall_files['default']
+        self.assertEqual(rosinstall_files_default, [],
+                         'Expected "rosinstall-files" "default" to be [], but '
+                         'it was {}'.format(rosinstall_files_default))
+
+        rosinstall_files_minitems = rosinstall_files['minitems']
+        self.assertEqual(rosinstall_files_minitems, 1,
+                         'Expected "rosinstall-files" "minitems" to be 1, but '
+                         'it was {}'.format(rosinstall_files_minitems))
+
+        self.assertTrue(rosinstall_files['uniqueItems'])
+
+        rosinstall_files_items = rosinstall_files['items']
+        self.assertTrue('type' in rosinstall_files_items,
+                        'Expected "type" to be included in "rosinstall-files" '
+                        '"items"')
+
+        rosinstall_files_items_type = rosinstall_files_items['type']
+        self.assertEqual(rosinstall_files_items_type, 'string',
+                         'Expected "rosinstall-files" "item" "type" to be '
+                         '"string", but it was "{}"'
+                         .format(rosinstall_files_items_type))
 
         # Check required
         self.assertTrue('catkin-packages' in schema['required'],
@@ -837,6 +897,8 @@ class PullTestCase(CatkinPluginBaseTestCase):
             os.path.join(plugin.partdir, 'rosdep'),
             plugin.PLUGIN_STAGE_SOURCES)
 
+        self.wstool_mock.assert_not_called()
+
         # This shouldn't be called unless there's an underlay
         if self.properties.underlay:
             generate_setup_mock.assert_called_once_with(
@@ -875,6 +937,8 @@ class PullTestCase(CatkinPluginBaseTestCase):
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
             plugin.PLUGIN_STAGE_SOURCES)
+
+        self.wstool_mock.assert_not_called()
 
         # This shouldn't be called unless there's an underlay
         if self.properties.underlay:
@@ -918,6 +982,8 @@ class PullTestCase(CatkinPluginBaseTestCase):
             os.path.join(plugin.partdir, 'rosdep'),
             plugin.PLUGIN_STAGE_SOURCES)
 
+        self.wstool_mock.assert_not_called()
+
         # This shouldn't be called unless there's an underlay
         if self.properties.underlay:
             generate_setup_mock.assert_called_once_with(
@@ -930,6 +996,46 @@ class PullTestCase(CatkinPluginBaseTestCase):
             {'ros-core-dependency'})
         self.ubuntu_mock.return_value.unpack.assert_called_with(
             plugin.installdir)
+
+    @mock.patch.object(catkin.CatkinPlugin, '_generate_snapcraft_setup_sh')
+    def test_pull_with_rosinstall_files(self, generate_setup_mock):
+        self.properties.rosinstall_files = ['rosinstall-file']
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        # No system dependencies
+        self.dependencies_mock.return_value = set()
+
+        plugin.pull()
+
+        self.verify_rosdep_setup(
+            self.properties.rosdistro,
+            os.path.join(plugin.sourcedir, 'src'),
+            os.path.join(plugin.partdir, 'rosdep'),
+            plugin.PLUGIN_STAGE_SOURCES)
+
+        self.verify_wstool_setup(
+            os.path.join(plugin.sourcedir, 'src'),
+            os.path.join(plugin.partdir, 'wstool'),
+            plugin.PLUGIN_STAGE_SOURCES)
+
+        self.wstool_mock.assert_has_calls([
+            mock.call().merge(
+                os.path.join(plugin.sourcedir, 'rosinstall-file')),
+            mock.call().update(),
+        ])
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                plugin.installdir, self.expected_underlay_path)
+        else:
+            generate_setup_mock.assert_not_called()
+
+        # Verify that no .deb packages were installed
+        self.assertTrue(mock.call().unpack(plugin.installdir) not in
+                        self.ubuntu_mock.mock_calls)
 
 
 class FinishBuildTestCase(CatkinPluginBaseTestCase):
@@ -1127,6 +1233,29 @@ class FindSystemDependenciesTestCase(tests.TestCase):
                          "add the Ubuntu package containing it to "
                          "stage-packages until you can get it into the rosdep "
                          "database.")
+
+
+class HandleRosinstallFilesTestCase(tests.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.wstool_mock = mock.MagicMock()
+
+    def test_single_rosinstall_file(self):
+        catkin._handle_rosinstall_files(
+            self.wstool_mock, 'source_path', ['rosinstall_file'])
+        self.wstool_mock.merge.assert_called_once_with(
+            os.path.join('source_path', 'rosinstall_file'))
+
+    def test_multiple_rosinstall_files(self):
+        catkin._handle_rosinstall_files(
+            self.wstool_mock, 'source_path', ['file1', 'file2'])
+
+        # The order matters here. It should be the same as how they were passed
+        self.wstool_mock.merge.assert_has_calls([
+            mock.call(os.path.join('source_path', 'file1')),
+            mock.call(os.path.join('source_path', 'file2'))
+        ])
 
 
 class RosdepTestCase(tests.TestCase):
@@ -1456,3 +1585,103 @@ class CatkinFindTestCase(tests.TestCase):
         self.assertThat(
             ' '.join(positional_args),
             Contains('catkin_find --first-only foo'))
+
+
+class WstoolTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.project = snapcraft.ProjectOptions()
+        self.wstool = catkin._Wstool(
+            'package_path', 'wstool_path', 'sources', self.project)
+
+        patcher = mock.patch('snapcraft.repo.Ubuntu')
+        self.ubuntu_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('subprocess.check_output')
+        self.check_output_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_setup(self):
+        # Return something other than a Mock to ease later assertions
+        self.check_output_mock.return_value = b''
+
+        self.wstool.setup()
+
+        # Verify that only wstool was installed (no other .debs)
+        self.assertEqual(self.ubuntu_mock.call_count, 1)
+        self.assertEqual(self.ubuntu_mock.return_value.get.call_count, 1)
+        self.assertEqual(self.ubuntu_mock.return_value.unpack.call_count, 1)
+        self.ubuntu_mock.assert_has_calls([
+            mock.call(self.wstool._wstool_path, sources='sources',
+                      project_options=self.project),
+            mock.call().get(['python-wstool']),
+            mock.call().unpack(self.wstool._wstool_install_path)])
+
+        # Verify that wstool was initialized
+        self.check_output_mock.assert_called_once_with(
+            ['wstool', 'init', 'package_path', '-j2'], env=mock.ANY)
+
+    def test_setup_can_run_multiple_times(self):
+        self.wstool.setup()
+
+        # Make sure running setup() again doesn't have problems with the old
+        # environment. An exception will be raised if setup can't be called
+        # twice.
+        self.wstool.setup()
+
+    def test_setup_initialization_rosinstall_already_exists(self):
+        """Test that an existing .rosinstall file is not an error."""
+
+        def run(args, **kwargs):
+            if args[0:2] == ['wstool', 'init']:
+                raise subprocess.CalledProcessError(
+                    1, 'foo',
+                    b'Error: There already is a workspace config file '
+                    b'.rosinstall at ".". Use wstool install/modify.')
+
+        self.check_output_mock.side_effect = run
+
+        self.wstool.setup()
+
+    def test_setup_initialization_failure(self):
+        def run(args, **kwargs):
+            if args[0:2] == ['wstool', 'init']:
+                raise subprocess.CalledProcessError(1, 'foo', b'bar')
+
+        self.check_output_mock.side_effect = run
+
+        raised = self.assertRaises(RuntimeError, self.wstool.setup)
+
+        self.assertThat(str(raised),
+                        Equals('Error initializing workspace:\nbar'))
+
+    def test_merge(self):
+        self.wstool.merge('rosinstall-file')
+
+        self.check_output_mock.assert_called_with(
+            ['wstool', 'merge', 'rosinstall-file', '--confirm-all',
+             '-tpackage_path'],
+            env=mock.ANY)
+
+    def test_update(self):
+        self.wstool.update()
+
+        self.check_output_mock.assert_called_with(
+            ['wstool', 'update', '-j2', '-tpackage_path'], env=mock.ANY)
+
+    def test_run(self):
+        wstool = self.wstool
+        wstool._run(['init'])
+
+        class check_env():
+            def __eq__(self, env):
+                return (
+                    env['PATH'] == os.environ['PATH'] + ':' + os.path.join(
+                        wstool._wstool_install_path, 'usr', 'bin') and
+                    env['PYTHONPATH'] == os.path.join(
+                        wstool._wstool_install_path, 'usr', 'lib',
+                        'python2.7', 'dist-packages'))
+
+        self.check_output_mock.assert_called_with(mock.ANY, env=check_env())
