@@ -405,6 +405,66 @@ def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
     return call_effect
 
 
+class FakeAptGetBuildDep(fixtures.Fixture):
+    '''Mock apt-get build-dep output'''
+
+    def __init__(self, packages, not_cached=False, not_available=False):
+        self.filename = '/tmp/tmp_abcdefg.dsc'
+        arch = ':armhf'
+        prolog = '''NOTE: This is only a simulation!
+      apt-get needs root privileges for real execution.
+      Keep also in mind that locking is deactivated,
+      so don't depend on the relevance to the real current situation!
+Note, using file '{}' to get the build dependencies
+Reading package lists...
+Building dependency tree...
+Reading state information...'''.format(self.filename)
+        if not_cached:
+            note = 'Depends: {} but it is not going to be installed'
+        elif not_available:
+            note = 'Depends: {} but it is not installable'
+        else:
+            note = 'Inst {} (1.2.3-0 Ubuntu:16.04/xenial-updates [amd64])'
+        errors = []
+        for package in packages:
+            errors.append(note.format(package))
+        if not_cached or not_available:
+            self.exception = True
+            details = '''Some packages could not be installed. This may mean that you have
+requested an impossible situation or if you are using the unstable
+distribution that some required packages have not yet been created
+or been moved out of Incoming.
+The following information may help to resolve the situation:
+
+The following packages have unmet dependencies:
+ builddeps:{}{} : {}
+E: Unable to correct problems, you have held broken packages.'''.format(
+                self.filename, arch, '\n'.join(errors))
+        else:
+            self.exception = False
+            details = '''The following NEW packages will be installed:
+  {}
+  0 upgraded, 1 newly installed, 0 to remove and 16 not upgraded.'''.format(
+                ' '.join(packages))
+        self.output = '{}\n{}'.format(prolog, details).encode(
+            sys.getfilesystemencoding())
+
+    def _setUp(self):
+        patcher = mock.patch('tempfile.NamedTemporaryFile')
+        tempfile_mock = patcher.start()
+        tempfile_mock.return_value.__enter__.return_value.name = self.filename
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('subprocess.check_output')
+        self.check_output_mock = patcher.start()
+        if self.exception:
+            self.check_output_mock.side_effect = CalledProcessError(
+                100, [], self.output)
+        else:
+            self.check_output_mock.return_value = self.output
+        self.addCleanup(patcher.stop)
+
+
 class FakeLXD(fixtures.Fixture):
     '''...'''
 

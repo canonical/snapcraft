@@ -248,7 +248,7 @@ class Ubuntu(BaseRepo):
             except subprocess.CalledProcessError as e:
                 actions = e.output.decode(sys.getfilesystemencoding())
                 rx = re.compile(
-                    '(.+Depends: (.+) but it is not installable|.+)')
+                    '(.+Depends: (.+) but it is not .+|.+)')
             for line in actions.split('\n'):
                 build_deps.append(rx.sub('\\2', line))
             return [package for package in build_deps if package]

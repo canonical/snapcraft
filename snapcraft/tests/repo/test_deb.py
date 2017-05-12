@@ -293,6 +293,9 @@ class BuildPackagesTestCase(tests.TestCase):
         self.install_test_packages(self.test_packages)
 
     def test_invalid_package_requested(self):
+        fake_apt = tests.fixture_setup.FakeAptGetBuildDep(
+            ['package-does-not-exist'], not_available=True)
+        self.useFixture(fake_apt)
         project_options = snapcraft.ProjectOptions()
         raised = self.assertRaises(
             errors.BuildPackageNotFoundError,
@@ -303,3 +306,8 @@ class BuildPackagesTestCase(tests.TestCase):
             "Could not find a required package in 'build-packages': "
             "package-does-not-exist",
             str(raised))
+        fake_apt.check_output_mock.assert_has_calls([
+            call(['apt-get', 'build-dep', '-q', '-s',
+                  '-a{}'.format(project_options.deb_arch),
+                  fake_apt.filename], env={}, stderr=-2)
+        ])
