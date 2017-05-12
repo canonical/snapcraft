@@ -327,7 +327,8 @@ def _create_tar_filter(tar_filename):
 def containerbuild(step, project_options, output=None, args=[]):
     config = snapcraft.internal.load_config(project_options)
     remote = os.environ.get('SNAPCRAFT_CONTAINER_BUILDS')
-    if remote in ['1', '0', None, '']:
+    # For 1 use the default, local remote - otherwise it's a remote name
+    if remote == '1':
         remote = None
     lxd.Project(output=output, source=os.path.curdir,
                 project_options=project_options,
