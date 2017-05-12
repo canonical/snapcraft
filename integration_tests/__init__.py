@@ -111,14 +111,31 @@ class TestCase(testtools.TestCase):
         snapcraft_command = [self.snapcraft_command]
         if debug:
             snapcraft_command.append('-d')
-        try:
-            pre_func()
-            snapcraft_output = subprocess.check_output(
-                snapcraft_command + command,
-                stderr=subprocess.STDOUT, universal_newlines=True)
-        except subprocess.CalledProcessError as e:
-            self.addDetail('output', content.text_content(e.output))
-            raise
+        # try:
+        #     pre_func()
+        #     snapcraft_output = subprocess.check_output(
+        #         snapcraft_command + command,
+        #         stderr=subprocess.STDOUT, universal_newlines=True)
+        # except subprocess.CalledProcessError as e:
+        #     self.addDetail('output', content.text_content(e.output))
+        #     raise
+
+        pre_func()
+        snapcraft_output = ''
+        cmd = snapcraft_command+command
+        with subprocess.Popen(
+                cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                bufsize=1, universal_newlines=True) as proc:
+            for line in proc.stdout:
+                if line.startswith('Processing...'):
+                    continue
+                print(line, end='')
+                snapcraft_output += line
+
+        if proc.returncode != 0:
+            self.addDetail(
+                'output', content.text_content(snapcraft_output))
+            raise subprocess.CalledProcessError(proc.returncode, proc.args)
 
         if not os.getenv('SNAPCRAFT_IGNORE_APT_AUTOREMOVE', False):
             self.addCleanup(self.run_apt_autoremove)
