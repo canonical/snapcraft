@@ -433,6 +433,15 @@ class FakeLXD(fixtures.Fixture):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('platform.machine')
+        self.machine_mock = patcher.start()
+        self.machine_mock.return_value = 'x86_64'
+        self.addCleanup(patcher.stop)
+        patcher = mock.patch('platform.architecture')
+        self.architecture_mock = patcher.start()
+        self.architecture_mock.return_value = ('64bit', 'ELF')
+        self.addCleanup(patcher.stop)
+
 
 class GitRepo(fixtures.Fixture):
     '''Create a git repo in the current directory'''
