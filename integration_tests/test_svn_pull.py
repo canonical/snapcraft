@@ -16,28 +16,18 @@
 
 import os
 import subprocess
-import shutil
 
 from testtools.matchers import FileExists
 
 import integration_tests
 
 
-class SubversionSourceTestCase(integration_tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        if shutil.which('svn') is None:
-            self.skipTest('svn is not installed')
-
-    def _init_svn(self):
-        subprocess.check_call(
-            ['svnadmin', 'create', 'repo'], stdout=subprocess.DEVNULL)
+class SubversionSourceTestCase(integration_tests.SubversionSourceBaseTestCase):
 
     def test_pull_svn_checkout(self):
         self.copy_project_to_cwd('svn-pull')
 
-        self._init_svn()
+        self.init_svn()
 
         subprocess.check_call(
             ['svn', 'checkout',
@@ -66,7 +56,7 @@ class SubversionSourceTestCase(integration_tests.TestCase):
     def test_pull_svn_update(self):
         self.copy_project_to_cwd('svn-pull-update')
 
-        self._init_svn()
+        self.init_svn()
 
         subprocess.check_call(
             ['svn', 'checkout',

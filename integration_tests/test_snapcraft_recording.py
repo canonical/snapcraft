@@ -201,7 +201,8 @@ class SnapcraftRecordingPackagesTestCase(
 
 
 class SnapcraftRecordingBzrSourceTestCase(
-        integration_tests.BzrSourceBaseTestCase, SnapcraftRecordingBaseTestCase):
+        integration_tests.BzrSourceBaseTestCase,
+        SnapcraftRecordingBaseTestCase):
 
     def test_prime_with_bzr_source(self):
         self.copy_project_to_cwd('bzr-head')
@@ -222,7 +223,8 @@ class SnapcraftRecordingBzrSourceTestCase(
 
 
 class SnapcraftRecordingGitSourceTestCase(
-        integration_tests.GitSourceBaseTestCase, SnapcraftRecordingBaseTestCase):
+        integration_tests.GitSourceBaseTestCase,
+        SnapcraftRecordingBaseTestCase):
 
     def test_prime_with_git_source(self):
         self.copy_project_to_cwd('git-head')
@@ -243,7 +245,8 @@ class SnapcraftRecordingGitSourceTestCase(
 
 
 class SnapcraftRecordingHgSourceTestCase(
-        integration_tests.HgSourceBaseTestCase, SnapcraftRecordingBaseTestCase):
+        integration_tests.HgSourceBaseTestCase,
+        SnapcraftRecordingBaseTestCase):
 
     def test_prime_with_hg_source(self):
         self.copy_project_to_cwd('hg-head')
@@ -262,3 +265,41 @@ class SnapcraftRecordingHgSourceTestCase(
         commit = self.get_id()
         self.assertEqual(
             recorded_yaml['parts']['mercurial']['source-commit'], commit)
+
+
+class SnapcraftRecordingSubversionSourceTestCase(
+        integration_tests.SubversionSourceBaseTestCase,
+        SnapcraftRecordingBaseTestCase):
+
+    def test_prime_with_subversion_source(self):
+        self.copy_project_to_cwd('svn-pull')
+
+        self.init_svn()
+
+        subprocess.check_call(
+            ['svn', 'checkout',
+             'file:///{}'.format(os.path.join(self.path, 'repo')),
+             'local'],
+            stdout=subprocess.DEVNULL)
+
+        open(os.path.join('local', 'file'), 'w').close()
+        subprocess.check_call(
+            ['svn', 'add', 'file'], stdout=subprocess.DEVNULL, cwd='local/')
+        subprocess.check_call(
+            ['svn', 'commit', '-m', 'test'],
+            stdout=subprocess.DEVNULL, cwd='local/')
+        subprocess.check_call(
+            ['svn', 'update'],
+            stdout=subprocess.DEVNULL, cwd='local/')
+        subprocess.check_call(
+            ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
+
+        self.run_snapcraft('prime')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        self.assertEqual(
+            recorded_yaml['parts']['svn']['source-commit'], '1')

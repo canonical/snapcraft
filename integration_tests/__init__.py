@@ -307,6 +307,18 @@ class HgSourceBaseTestCase(TestCase):
         return subprocess_utils.call_with_output(['hg', 'id']).split()[0]
 
 
+class SubversionSourceBaseTestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        if shutil.which('svn') is None:
+            self.skipTest('svn is not installed')
+
+    def init_svn(self):
+        subprocess.check_call(
+            ['svnadmin', 'create', 'repo'], stdout=subprocess.DEVNULL)
+
+
 class StoreTestCase(TestCase):
 
     def setUp(self):
