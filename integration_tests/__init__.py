@@ -34,7 +34,10 @@ from unittest import mock
 from testtools import content
 from testtools.matchers import MatchesRegex
 from snapcraft import ProjectOptions as _ProjectOptions
-from snapcraft.tests import fixture_setup
+from snapcraft.tests import (
+    fixture_setup,
+    subprocess_utils
+)
 
 
 class TestCase(testtools.TestCase):
@@ -214,6 +217,35 @@ class TestCase(testtools.TestCase):
         return version
 
 
+class BzrSourceBaseTestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        if shutil.which('bzr') is None:
+            self.skipTest('bzr is not installed')
+
+    def init_and_config_bzr(self):
+        subprocess.check_call(
+            ['bzr', 'init', '.'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.check_call(
+            ['bzr', 'whoami', '--branch', '"Example Dev <dev@example.com>"'])
+
+    def commit(self, message, unchanged=False):
+        command = ['bzr', 'commit', '-m', message]
+        if unchanged:
+            command.append('--unchanged')
+        subprocess.check_call(
+            command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    def get_revno(self, path=None):
+        command = ['bzr', 'revno', '-r', '-1']
+        if path:
+            command.append(path)
+        return subprocess.check_output(
+            command, universal_newlines=True).strip()
+
+
 class GitSourceBaseTestCase(TestCase):
 
     def setUp(self):
@@ -245,9 +277,34 @@ class GitSourceBaseTestCase(TestCase):
             stdout=subprocess.DEVNULL)
 
     def get_revno(self):
-        return subprocess.check_output([
-            'git', 'rev-list', 'HEAD', '--max-count=1']
-            ).decode('utf-8').strip()
+        return subprocess_utils.call_with_output(
+            ['git', 'rev-list', 'HEAD', '--max-count=1'])
+
+
+class HgSourceBaseTestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        if shutil.which('hg') is None:
+            self.skipTest('mercurial is not installed')
+
+    def init_hg(self):
+        subprocess.check_call(['hg', 'init', '.'])
+
+    def commit(self, message, file_):
+        subprocess.check_call(
+            ['hg', 'commit', '-m', message, '--user',
+             '"Example Dev"', '-A', file_])
+
+    def get_revno(self, path=None):
+        command = ['hg', 'log', '--template', '"{desc}"', '-r', '-1']
+        if path:
+            command.extend(['--cwd', path])
+        return subprocess.check_output(
+            command, universal_newlines=True).strip()
+
+    def get_id(self):
+        return subprocess_utils.call_with_output(['hg', 'id']).split()[0]
 
 
 class StoreTestCase(TestCase):

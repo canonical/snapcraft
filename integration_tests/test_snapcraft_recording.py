@@ -240,3 +240,25 @@ class SnapcraftRecordingGitSourceTestCase(
         commit = self.get_revno()
         self.assertEqual(
             recorded_yaml['parts']['git']['source-commit'], commit)
+
+
+class SnapcraftRecordingHgSourceTestCase(
+        integration_tests.HgSourceBaseTestCase, SnapcraftRecordingBaseTestCase):
+
+    def test_prime_with_hg_source(self):
+        self.copy_project_to_cwd('hg-head')
+
+        self.init_hg()
+        open('1', 'w').close()
+        self.commit('1', '1')
+
+        self.run_snapcraft('prime')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        commit = self.get_id()
+        self.assertEqual(
+            recorded_yaml['parts']['mercurial']['source-commit'], commit)
