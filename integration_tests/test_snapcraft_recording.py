@@ -23,7 +23,6 @@ import testscenarios
 
 import snapcraft
 import integration_tests
-from snapcraft.tests import subprocess_utils
 
 
 class SnapcraftRecordingBaseTestCase(integration_tests.TestCase):
@@ -201,14 +200,14 @@ class SnapcraftRecordingPackagesTestCase(
             expected_packages)
 
 
-class SnapcraftRecordingGitSourceTestCase(
-        integration_tests.GitSourceBaseTestCase, SnapcraftRecordingBaseTestCase):
+class SnapcraftRecordingBzrSourceTestCase(
+        integration_tests.BzrSourceBaseTestCase, SnapcraftRecordingBaseTestCase):
 
-    def test_prime_with_git_source(self):
-        self.copy_project_to_cwd('git-head')
+    def test_prime_with_bzr_source(self):
+        self.copy_project_to_cwd('bzr-head')
 
-        self.init_and_config_git()
-        self.commit('"1"', allow_empty=True)
+        self.init_and_config_bzr()
+        self.commit('"test-commit"', unchanged=True)
 
         self.run_snapcraft('prime')
 
@@ -217,7 +216,27 @@ class SnapcraftRecordingGitSourceTestCase(
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        commit = subprocess_utils.call_with_output(
-            ['git', 'rev-parse', 'HEAD'])
+        commit = self.get_revno()
+        self.assertEqual(
+            recorded_yaml['parts']['bzr']['source-commit'], commit)
+
+
+class SnapcraftRecordingGitSourceTestCase(
+        integration_tests.GitSourceBaseTestCase, SnapcraftRecordingBaseTestCase):
+
+    def test_prime_with_git_source(self):
+        self.copy_project_to_cwd('git-head')
+
+        self.init_and_config_git()
+        self.commit('"test-commit"', allow_empty=True)
+
+        self.run_snapcraft('prime')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        commit = self.get_revno()
         self.assertEqual(
             recorded_yaml['parts']['git']['source-commit'], commit)
