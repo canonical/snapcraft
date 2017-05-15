@@ -24,7 +24,7 @@ class BzrSourceTestCase(integration_tests.BzrSourceBaseTestCase):
     def test_pull_bzr_head(self):
         self.copy_project_to_cwd('bzr-head')
 
-        self.init_and_config_bzr()
+        self.init_source_control()
         self.commit('"1"', unchanged=True)
         self.commit('"2"', unchanged=True)
         # test initial branch
@@ -43,7 +43,7 @@ class BzrSourceTestCase(integration_tests.BzrSourceBaseTestCase):
     def test_pull_bzr_tag(self):
         self.copy_project_to_cwd('bzr-tag')
 
-        self.init_and_config_bzr()
+        self.init_source_control()
         self.commit('"1"', unchanged=True)
         self.commit('"2"', unchanged=True)
         subprocess.check_call(
@@ -61,7 +61,7 @@ class BzrSourceTestCase(integration_tests.BzrSourceBaseTestCase):
     def test_pull_bzr_commit(self):
         self.copy_project_to_cwd('bzr-commit')
 
-        self.init_and_config_bzr()
+        self.init_source_control()
         self.commit('"1"', unchanged=True)
         self.commit('"2"', unchanged=True)
         # test initial branch

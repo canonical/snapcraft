@@ -27,7 +27,7 @@ class SubversionSourceTestCase(integration_tests.SubversionSourceBaseTestCase):
     def test_pull_svn_checkout(self):
         self.copy_project_to_cwd('svn-pull')
 
-        self.init_svn()
+        self.init_source_control()
 
         subprocess.check_call(
             ['svn', 'checkout',
@@ -38,9 +38,7 @@ class SubversionSourceTestCase(integration_tests.SubversionSourceBaseTestCase):
         open(os.path.join('local', 'file'), 'w').close()
         subprocess.check_call(
             ['svn', 'add', 'file'], stdout=subprocess.DEVNULL, cwd='local/')
-        subprocess.check_call(
-            ['svn', 'commit', '-m', 'test'],
-            stdout=subprocess.DEVNULL, cwd='local/')
+        self.commit('test', cwd='local/')
         subprocess.check_call(
             ['svn', 'update'],
             stdout=subprocess.DEVNULL, cwd='local/')
@@ -56,7 +54,7 @@ class SubversionSourceTestCase(integration_tests.SubversionSourceBaseTestCase):
     def test_pull_svn_update(self):
         self.copy_project_to_cwd('svn-pull-update')
 
-        self.init_svn()
+        self.init_source_control()
 
         subprocess.check_call(
             ['svn', 'checkout',
@@ -67,9 +65,7 @@ class SubversionSourceTestCase(integration_tests.SubversionSourceBaseTestCase):
         open(os.path.join('local', 'file'), 'w').close()
         subprocess.check_call(
             ['svn', 'add', 'file'], stdout=subprocess.DEVNULL, cwd='local/')
-        subprocess.check_call(
-            ['svn', 'commit', '-m', 'test'],
-            stdout=subprocess.DEVNULL, cwd='local/')
+        self.commit('test', cwd='local/')
         subprocess.check_call(
             ['svn', 'update'],
             stdout=subprocess.DEVNULL, cwd='local/')
@@ -91,9 +87,7 @@ class SubversionSourceTestCase(integration_tests.SubversionSourceBaseTestCase):
         open(os.path.join('local', 'filetwo'), 'w').close()
         subprocess.check_call(
             ['svn', 'add', 'filetwo'], stdout=subprocess.DEVNULL, cwd='local/')
-        subprocess.check_call(
-            ['svn', 'commit', '-m', 'testtwo'], stdout=subprocess.DEVNULL,
-            cwd='local/')
+        self.commit('testtwo', cwd='local/')
         subprocess.check_call(
             ['svn', 'update'], stdout=subprocess.DEVNULL,
             cwd='local/')

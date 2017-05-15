@@ -207,7 +207,7 @@ class SnapcraftRecordingBzrSourceTestCase(
     def test_prime_with_bzr_source(self):
         self.copy_project_to_cwd('bzr-head')
 
-        self.init_and_config_bzr()
+        self.init_source_control()
         self.commit('"test-commit"', unchanged=True)
 
         self.run_snapcraft('prime')
@@ -229,7 +229,7 @@ class SnapcraftRecordingGitSourceTestCase(
     def test_prime_with_git_source(self):
         self.copy_project_to_cwd('git-head')
 
-        self.init_and_config_git()
+        self.init_source_control()
         self.commit('"test-commit"', allow_empty=True)
 
         self.run_snapcraft('prime')
@@ -251,7 +251,7 @@ class SnapcraftRecordingHgSourceTestCase(
     def test_prime_with_hg_source(self):
         self.copy_project_to_cwd('hg-head')
 
-        self.init_hg()
+        self.init_source_control()
         open('1', 'w').close()
         self.commit('1', '1')
 
@@ -274,7 +274,7 @@ class SnapcraftRecordingSubversionSourceTestCase(
     def test_prime_with_subversion_source(self):
         self.copy_project_to_cwd('svn-pull')
 
-        self.init_svn()
+        self.init_source_control()
 
         subprocess.check_call(
             ['svn', 'checkout',
@@ -285,9 +285,7 @@ class SnapcraftRecordingSubversionSourceTestCase(
         open(os.path.join('local', 'file'), 'w').close()
         subprocess.check_call(
             ['svn', 'add', 'file'], stdout=subprocess.DEVNULL, cwd='local/')
-        subprocess.check_call(
-            ['svn', 'commit', '-m', 'test'],
-            stdout=subprocess.DEVNULL, cwd='local/')
+        self.commit('test', cwd='local/')
         subprocess.check_call(
             ['svn', 'update'],
             stdout=subprocess.DEVNULL, cwd='local/')

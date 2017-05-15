@@ -27,7 +27,7 @@ class HgSourceTestCase(integration_tests.HgSourceBaseTestCase):
     def test_pull_hg_head(self):
         self.copy_project_to_cwd('hg-head')
 
-        self.init_hg()
+        self.init_source_control()
         open('1', 'w').close()
         self.commit('1', '1')
         open('2', 'w').close()
@@ -46,7 +46,7 @@ class HgSourceTestCase(integration_tests.HgSourceBaseTestCase):
     def test_pull_hg_tag(self):
         self.copy_project_to_cwd('hg-tag')
 
-        self.init_hg()
+        self.init_source_control()
         open('1', 'w').close()
         self.commit('1', '1')
         subprocess.check_call(
@@ -71,7 +71,7 @@ class HgSourceTestCase(integration_tests.HgSourceBaseTestCase):
     def test_pull_hg_commit(self):
         self.copy_project_to_cwd('hg-commit')
 
-        self.init_hg()
+        self.init_source_control()
         open('1', 'w').close()
         self.commit('1', '1')
         open('2', 'w').close()
@@ -94,7 +94,7 @@ class HgSourceTestCase(integration_tests.HgSourceBaseTestCase):
     def test_pull_hg_branch(self):
         self.copy_project_to_cwd('hg-branch')
 
-        self.init_hg()
+        self.init_source_control()
         subprocess.check_call(
             ['hg', 'branch', 'second'], stdout=subprocess.DEVNULL)
         open('second', 'w').close()

@@ -224,7 +224,7 @@ class BzrSourceBaseTestCase(TestCase):
         if shutil.which('bzr') is None:
             self.skipTest('bzr is not installed')
 
-    def init_and_config_bzr(self):
+    def init_source_control(self):
         subprocess.check_call(
             ['bzr', 'init', '.'],
             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
@@ -253,7 +253,7 @@ class GitSourceBaseTestCase(TestCase):
         if shutil.which('git') is None:
             self.skipTest('git is not installed')
 
-    def init_and_config_git(self):
+    def init_source_control(self):
         subprocess.check_call(
             ['git', 'init', '.'], stdout=subprocess.DEVNULL)
         subprocess.check_call(
@@ -288,7 +288,7 @@ class HgSourceBaseTestCase(TestCase):
         if shutil.which('hg') is None:
             self.skipTest('mercurial is not installed')
 
-    def init_hg(self):
+    def init_source_control(self):
         subprocess.check_call(['hg', 'init', '.'])
 
     def commit(self, message, file_):
@@ -314,9 +314,14 @@ class SubversionSourceBaseTestCase(TestCase):
         if shutil.which('svn') is None:
             self.skipTest('svn is not installed')
 
-    def init_svn(self):
+    def init_source_control(self):
         subprocess.check_call(
             ['svnadmin', 'create', 'repo'], stdout=subprocess.DEVNULL)
+
+    def commit(self, message, cwd=None):
+        subprocess.check_call(
+            ['svn', 'commit', '-m', message],
+            stdout=subprocess.DEVNULL, cwd=cwd)
 
 
 class StoreTestCase(TestCase):

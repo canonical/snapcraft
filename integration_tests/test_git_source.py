@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import subprocess
 import shutil
@@ -33,7 +34,7 @@ class GitSourceTestCase(integration_tests.GitSourceBaseTestCase):
     def test_pull_git_head(self):
         self.copy_project_to_cwd('git-head')
 
-        self.init_and_config_git()
+        self.init_source_control()
         self.commit('"1"', allow_empty=True)
         self.commit('"2"', allow_empty=True)
 
@@ -48,7 +49,7 @@ class GitSourceTestCase(integration_tests.GitSourceBaseTestCase):
     def test_pull_git_tag(self):
         self.copy_project_to_cwd('git-tag')
 
-        self.init_and_config_git()
+        self.init_source_control()
         self.commit('"1"', allow_empty=True)
         self.commit('"2"', allow_empty=True)
         subprocess.check_call(
@@ -66,7 +67,7 @@ class GitSourceTestCase(integration_tests.GitSourceBaseTestCase):
     def test_pull_git_commit(self):
         self.copy_project_to_cwd('git-commit')
 
-        self.init_and_config_git()
+        self.init_source_control()
         self.commit('"1"', allow_empty=True)
         self.commit('"2"', allow_empty=True)
 
@@ -78,7 +79,7 @@ class GitSourceTestCase(integration_tests.GitSourceBaseTestCase):
     def test_pull_git_branch(self):
         self.copy_project_to_cwd('git-branch')
 
-        self.init_and_config_git()
+        self.init_source_control()
         self.commit('"1"', allow_empty=True)
         self.commit('"2"', allow_empty=True)
         subprocess.check_call(
@@ -104,7 +105,7 @@ class GitSourceTestCase(integration_tests.GitSourceBaseTestCase):
         """Regression test for LP: #1627772."""
         self.copy_project_to_cwd('git-depth')
 
-        self.init_and_config_git()
+        self.init_source_control()
         self.commit('"1"', allow_empty=True)
         self.commit('"2"', allow_empty=True)
 
@@ -115,7 +116,7 @@ class GitGenerateVersionTestCase(integration_tests.GitSourceBaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.init_and_config_git()
+        self.init_source_control()
         os.mkdir('snap')
 
         with open(os.path.join('snap', 'snapcraft.yaml'), 'w') as f:
