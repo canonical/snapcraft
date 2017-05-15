@@ -97,11 +97,6 @@ _32BIT_USERSPACE_ARCHITECTURE = {
 
 
 def _get_platform_architecture():
-    mock_machine = os.environ.get('MOCK_MACHINE', None)
-    if mock_machine:
-        from unittest.mock import patch, MagicMock
-        if not isinstance(platform.machine, MagicMock):
-            patch('platform.machine').start().return_value = mock_machine
     architecture = platform.machine()
     if platform.architecture()[0] == '32bit':
         userspace = _32BIT_USERSPACE_ARCHITECTURE.get(architecture)
