@@ -408,9 +408,11 @@ def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
 class FakeAptGetBuildDep(fixtures.Fixture):
     '''Mock apt-get build-dep output'''
 
-    def __init__(self, packages, not_cached=False, not_available=False):
-        self.filename = '/tmp/tmp_abcdefg.dsc'
-        arch = ':armhf'
+    def __init__(self, packages, arch='',
+                 not_cached=False, not_available=False):
+        self.filename = '/tmp/tmpabcdefg.dsc'
+        if arch:
+            arch = ':{}'.format(arch)
         prolog = '''NOTE: This is only a simulation!
       apt-get needs root privileges for real execution.
       Keep also in mind that locking is deactivated,
@@ -420,14 +422,14 @@ Reading package lists...
 Building dependency tree...
 Reading state information...'''.format(self.filename)
         if not_cached:
-            note = 'Depends: {} but it is not going to be installed'
+            note = 'Depends: {}{} but it is not going to be installed'
         elif not_available:
-            note = 'Depends: {} but it is not installable'
+            note = 'Depends: {}{} but it is not installable'
         else:
-            note = 'Inst {} (1.2.3-0 Ubuntu:16.04/xenial-updates [amd64])'
+            note = '{}{}'
         errors = []
         for package in packages:
-            errors.append(note.format(package))
+            errors.append(note.format(package, arch))
         if not_cached or not_available:
             self.exception = True
             details = '''Some packages could not be installed. This may mean that you have
@@ -444,8 +446,8 @@ E: Unable to correct problems, you have held broken packages.'''.format(
             self.exception = False
             details = '''The following NEW packages will be installed:
   {}
-  0 upgraded, 1 newly installed, 0 to remove and 16 not upgraded.'''.format(
-                ' '.join(packages))
+0 upgraded, {} newly installed, 0 to remove and 0 not upgraded.'''.format(
+                ' '.join(errors), len(errors))
         self.output = '{}\n{}'.format(prolog, details).encode(
             sys.getfilesystemencoding())
 

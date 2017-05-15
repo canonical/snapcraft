@@ -244,13 +244,16 @@ class Ubuntu(BaseRepo):
                      '-a{}'.format(arch), fake_source.name],
                     stderr=subprocess.STDOUT, env={}).decode(
                         sys.getfilesystemencoding())
-                rx = re.compile('(Inst ([^ ]+).+|.+)')
+                msg = 'The following NEW packages will be installed:\n  '
+                msg_end = len(msg) + actions.find(msg)
+                packages_end = actions.find('\n', msg_end)
+                build_deps = actions[msg_end:packages_end].split(' ')
             except subprocess.CalledProcessError as e:
                 actions = e.output.decode(sys.getfilesystemencoding())
                 rx = re.compile(
                     '(.+Depends: (.+) but it is not .+|.+)')
-            for line in actions.split('\n'):
-                build_deps.append(rx.sub('\\2', line))
+                for line in actions.split('\n'):
+                    build_deps.append(rx.sub('\\2', line))
             return [package for package in build_deps if package]
 
     @classmethod
@@ -266,7 +269,7 @@ class Ubuntu(BaseRepo):
                             version and installed_version != version):
                         new_packages.append(pkg)
                 except KeyError as e:
-                    if cls._setup_multi_arch(apt_cache, pkg_name):
+                    if cls._setup_multi_arch(apt_cache, pkg):
                         new_packages.append(pkg)
                     else:
                         raise errors.BuildPackageNotFoundError(pkg) from e

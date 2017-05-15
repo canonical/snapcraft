@@ -246,6 +246,9 @@ class BuildPackagesTestCase(tests.TestCase):
     @patch('subprocess.check_call')
     def test_install_build_package(
             self, mock_check_call, mock_is_dumb_terminal):
+        fake_apt = tests.fixture_setup.FakeAptGetBuildDep(
+            self.test_packages.keys())
+        self.useFixture(fake_apt)
         mock_is_dumb_terminal.return_value = False
         self.install_test_packages(self.test_packages)
 
@@ -271,6 +274,29 @@ class BuildPackagesTestCase(tests.TestCase):
                  sorted(set(installable)),
                  env={'DEBIAN_FRONTEND': 'noninteractive',
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
+        ])
+
+    @patch('snapcraft.repo._deb.is_dumb_terminal')
+    @patch('subprocess.check_call')
+    def test_install_build_package_with_arch(
+            self, mock_check_call, mock_is_dumb_terminal):
+        mock_is_dumb_terminal.return_value = True
+        fake_apt = tests.fixture_setup.FakeAptGetBuildDep(
+            self.test_packages, 'armhf')
+        self.useFixture(fake_apt)
+        raised = self.assertRaises(
+            errors.BuildPackageNotFoundError,
+            repo.Ubuntu.install_build_packages,
+            self.test_packages.keys(),
+            'armhf')
+
+        self.assertIn(':armhf', str(raised))
+        fake_apt.check_output_mock.assert_has_calls([
+            call('apt-get build-dep -q -s -aarmhf /tmp/tmpabcdefg.dsc'.split(),
+                 env={}, stderr=-2),
+            call('dpkg --print-foreign-architectures'.split()),
+            call('sudo apt-get update'.split(),
+                 stderr=-2),
         ])
 
     @patch('subprocess.check_call')
