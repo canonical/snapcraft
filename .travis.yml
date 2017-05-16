@@ -3,8 +3,7 @@ dist: trusty
 
 services: [docker]
 
-language: python
-python: [3.5]
+language: bash
 
 jobs:
   include:
