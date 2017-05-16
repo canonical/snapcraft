@@ -42,6 +42,12 @@
 6. Ensure you are dropped back into your original shell session.
 
 
+# Test cleanbuild with non-ascii characters in the desktop file.
+
+1. Run `snapcraft cleanbuild` for the snap in `integration_tests/snaps/desktop-with-non-ascii`
+   * Check that the build succeeds and you get the `.snap` file.
+
+
 # Test cleanbuild with a remote.
 
 1. Setup a remote as described on
