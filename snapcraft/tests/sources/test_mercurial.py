@@ -226,7 +226,8 @@ class MercurialDetailsTestCase(MercurialBaseTestCase):
         self.source_details = self.hg._get_source_details()
 
     def test_hg_details_commit(self):
-        self.assertEqual(self.expected_commit, self.source_details['commit'])
+        self.assertEqual(
+            self.expected_commit, self.source_details['source-commit'])
 
     def test_hg_details_branch(self):
         self.clean_dir(self.source_dir)
@@ -235,7 +236,8 @@ class MercurialDetailsTestCase(MercurialBaseTestCase):
         self.hg.pull()
 
         self.source_details = self.hg._get_source_details()
-        self.assertEqual(self.expected_branch, self.source_details['branch'])
+        self.assertEqual(
+            self.expected_branch, self.source_details['source-branch'])
 
     def test_hg_details_tag(self):
         self.clean_dir(self.source_dir)
@@ -244,4 +246,4 @@ class MercurialDetailsTestCase(MercurialBaseTestCase):
         self.hg.pull()
 
         self.source_details = self.hg._get_source_details()
-        self.assertEqual(self.expected_tag, self.source_details['tag'])
+        self.assertEqual(self.expected_tag, self.source_details['source-tag'])

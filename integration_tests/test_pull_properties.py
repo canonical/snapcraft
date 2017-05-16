@@ -96,7 +96,7 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.run_snapcraft('pull')
 
         state_file = os.path.join(
-            self.parts_dir, 'build-package-global', 'state', 'pull')
+            self.parts_dir, 'empty-part', 'state', 'pull')
         self.assertThat(state_file, FileExists())
         with open(state_file) as f:
             state = yaml.load(f)
@@ -119,11 +119,11 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
         }),
         ('branch', {
             'part_name': 'git-part-branch',
-            'expected_details': TestDetail('branch', 'test-branch'),
+            'expected_details': TestDetail('source-branch', 'test-branch'),
         }),
         ('tag', {
             'part_name': 'git-part-tag',
-            'expected_details': TestDetail('tag', 'feature-tag'),
+            'expected_details': TestDetail('source-tag', 'feature-tag'),
         }),
     ]
 
@@ -150,7 +150,7 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
                 Equals(self.expected_details.value))
         else:
             self.assertThat(
-                state.assets['source-details']['commit'],
+                state.assets['source-details']['source-commit'],
                 Equals(repo_fixture.commit))
 
 
@@ -163,7 +163,7 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
         }),
         ('tag', {
             'part_name': 'bzr-part-tag',
-            'expected_details': TestDetail('tag', 'feature-tag'),
+            'expected_details': TestDetail('source-tag', 'feature-tag'),
         }),
     ]
 
@@ -188,7 +188,7 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
                 Equals(self.expected_details.value))
         else:
             self.assertThat(
-                state.assets['source-details']['commit'],
+                state.assets['source-details']['source-commit'],
                 Equals(repo_fixture.commit))
 
 
@@ -201,7 +201,7 @@ class MercurialAssetTrackingTestCase(testscenarios.WithScenarios,
         }),
         ('tag', {
             'part_name': 'hg-part-tag',
-            'expected_details': TestDetail('tag', 'feature-tag'),
+            'expected_details': TestDetail('source-tag', 'feature-tag'),
         }),
     ]
 
@@ -226,7 +226,7 @@ class MercurialAssetTrackingTestCase(testscenarios.WithScenarios,
                 Equals(self.expected_details.value))
         else:
             self.assertThat(
-                state.assets['source-details']['commit'],
+                state.assets['source-details']['source-commit'],
                 Equals(repo_fixture.commit))
 
 
@@ -248,4 +248,4 @@ class SubversionAssetTrackingTestCase(integration_tests.TestCase):
 
         self.assertIn('source-details', state.assets)
         self.assertEqual(expected_commit,
-                         state.assets['source-details']['commit'])
+                         state.assets['source-details']['source-commit'])

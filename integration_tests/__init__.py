@@ -102,7 +102,7 @@ class TestCase(testtools.TestCase):
 
     def run_snapcraft(
             self, command, project_dir=None, debug=True,
-            pre_func=lambda: None):
+            pre_func=lambda: None, env=None):
         if project_dir:
             self.copy_project_to_cwd(project_dir)
 
@@ -115,7 +115,8 @@ class TestCase(testtools.TestCase):
             pre_func()
             snapcraft_output = subprocess.check_output(
                 snapcraft_command + command,
-                stderr=subprocess.STDOUT, universal_newlines=True)
+                stderr=subprocess.STDOUT, universal_newlines=True,
+                env=env)
         except subprocess.CalledProcessError as e:
             self.addDetail('output', content.text_content(e.output))
             raise
@@ -437,12 +438,13 @@ def get_package_version(package_name, series, deb_arch):
     # http://people.canonical.com/~ubuntu-archive/madison.cgi?package=hello&a=amd64&c=&s=zesty&text=on
     params = {
         'package': package_name,
-        's': series,
+        's': '{0},{0}-updates,{0}-security'.format(series),
         'a': deb_arch,
         'text': 'on',
     }
     query = requests.get('http://people.canonical.com/~ubuntu-archive/'
                          'madison.cgi', params)
     query.raise_for_status()
-    package_status = [i.strip() for i in query.text.strip().split('|')]
+    package = query.text.strip().split('\n')[-1]
+    package_status = [i.strip() for i in package.strip().split('|')]
     return package_status[1]

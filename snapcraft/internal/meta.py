@@ -29,7 +29,10 @@ import yaml
 
 from snapcraft import file_utils
 from snapcraft import shell_utils
-from snapcraft.internal import common
+from snapcraft.internal import (
+    common,
+    repo
+)
 from snapcraft.internal.errors import MissingGadgetError
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.sources import get_source_handler_from_type
@@ -144,6 +147,8 @@ class _SnapPackaging:
                 yaml.dump(annotated_snapcraft, record_file)
 
     def _annotate_snapcraft(self, data):
+        data['build-packages'] = repo.Repo.get_installed_build_packages(
+            data.get('build-packages', []))
         for part in data['parts']:
             pull_state = get_state(
                 os.path.join(self._parts_dir, part, 'state'), 'pull')
@@ -395,7 +400,7 @@ class _DesktopFile:
     def parse_and_reformat(self):
         self._parser = configparser.ConfigParser(interpolation=None)
         self._parser.optionxform = str
-        self._parser.read(self._path)
+        self._parser.read(self._path, encoding='utf-8')
         section = 'Desktop Entry'
         if section not in self._parser.sections():
             raise EnvironmentError(
@@ -431,7 +436,7 @@ class _DesktopFile:
             # Unlikely. A desktop file in setup/gui/ already existed for
             # this app. Let's pretend it wasn't there and overwrite it.
             os.remove(target)
-        with open(target, 'w') as f:
+        with open(target, 'w', encoding='utf-8') as f:
             self._parser.write(f, space_around_delimiters=False)
 
 
