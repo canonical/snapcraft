@@ -10,7 +10,7 @@ jobs:
   include:
     # CLA check, only in pull requests.
     - stage: travis
-      script: [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ]; then ./tools/travis/run_cla_check.sh; fi
+      script: if [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ]; then ./tools/travis/run_cla_check.sh; fi
     # Tests, only when not triggered by the daily cron.
     - stage: travis
       script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh static; fi
@@ -24,7 +24,7 @@ jobs:
       script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh store; fi
     # Trigger beta tests, only in the daily cron.
     - stage: beta
-    if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then ./tools/travis/make_beta_pr.sh; fi
+      script: if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then ./tools/travis/make_beta_pr.sh; fi
     # Generate docs, only in pushes to master.
     - stage: deploy
-    if [ "$TRAVIS_EVENT_TYPE" = "push" ] && [ "$TRAVIS_BRANCH" = "master" ]; then ./tools/travis/deploy_docs.sh; fi
+      script: if [ "$TRAVIS_EVENT_TYPE" = "push" ] && [ "$TRAVIS_BRANCH" = "master" ]; then ./tools/travis/deploy_docs.sh; fi
