@@ -30,7 +30,7 @@ test="$1"
 if [ "$test" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
 elif [ "$test" = "unit" ]; then
-    dependencies="apt install -y git bzr subversion mercurial libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt && apt install -y python3-coverage"
+    dependencies="apt install -y git bzr subversion mercurial libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov && apt install -y python3-coverage"
 elif [ "$test" = "integration" ] || [ "$test" = "plugins" ] || [ "$test" = "store" ]; then
     dependencies="apt install -y bzr curl git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev mercurial python3-pip subversion squashfs-tools sudo snapd xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
 else
@@ -42,4 +42,11 @@ script_path="$(dirname "$0")"
 "$script_path/run_docker_container.sh" test-runner
 docker exec -i test-runner sh -c "$dependencies"
 docker exec -i test-runner ./runtests.sh $test
+
+if [ "$test" = "unit" ]; then
+    # Report code coverage.
+    docker exec -i test-runner sh -c "python3 -m coverage xml"
+    docker exec -i test-runner sh -c "codecov --token=$CODECOV_TOKEN"
+fi
+
 docker rm -f test-runner

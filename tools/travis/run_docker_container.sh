@@ -26,7 +26,7 @@ if [ "$#" -lt 1 ]; then
 fi
 
 script_path="$(dirname "$0")"
-project_path="$(realpath "$script_path/../..")"
+project_path="$(readlink -f "$script_path/../..")"
 name="$1"
 
 echo "Start the docker container."
@@ -41,9 +41,10 @@ docker run \
   --env GITHUB_TEST_PASSWORD=$GITHUB_TEST_PASSWORD \
   --env SNAPCRAFT_AUTOPKGTEST_SECRET=$SNAPCRAFT_AUTOPKGTEST_SECRET \
   --env GH_TOKEN=$GH_TOKEN \
+  --env CODECOV_TOKEN=$CODECOV_TOKEN \
   --env LC_ALL=C.UTF-8 \
-  --volume "$project_path":/cwd \
-  --workdir /cwd \
+  --volume "$project_path":"$project_path" \
+  --workdir "$project_path" \
   --tty \
   --detach \
   ubuntu:xenial

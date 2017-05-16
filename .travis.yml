@@ -7,20 +7,15 @@ language: bash
 
 jobs:
   include:
-    # CLA check, only in pull requests.
     - stage: test
+      # CLA check, only in pull requests.
       script: if [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ]; then ./tools/travis/run_cla_check.sh; fi
     # Tests, only when not triggered by the daily cron.
-    - stage: test
-      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh static; fi
-    - stage: test
-      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh unit && pip install codecov coverage && python3 -m coverage xml && codecov; fi
-    - stage: test
-      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh integration; fi
-    - stage: test
-      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh plugins; fi
-    - stage: travis
-      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh store; fi
+    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh static; fi
+    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh unit; fi
+    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh integration; fi
+    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh plugins; fi
+    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh store; fi
     # Trigger beta tests, only in the daily cron.
     - stage: beta
       script: if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then ./tools/travis/make_beta_pr.sh; fi
