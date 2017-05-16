@@ -275,20 +275,13 @@ class SnapcraftRecordingSubversionSourceTestCase(
         self.copy_project_to_cwd('svn-pull')
 
         self.init_source_control()
-
-        subprocess.check_call(
-            ['svn', 'checkout',
-             'file:///{}'.format(os.path.join(self.path, 'repo')),
-             'local'],
-            stdout=subprocess.DEVNULL)
+        self.checkout(
+            'file:///{}'.format(os.path.join(self.path, 'repo')), 'local')
 
         open(os.path.join('local', 'file'), 'w').close()
-        subprocess.check_call(
-            ['svn', 'add', 'file'], stdout=subprocess.DEVNULL, cwd='local/')
+        self.add('file', cwd='local')
         self.commit('test', cwd='local/')
-        subprocess.check_call(
-            ['svn', 'update'],
-            stdout=subprocess.DEVNULL, cwd='local/')
+        self.update(cwd='local/')
         subprocess.check_call(
             ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
 

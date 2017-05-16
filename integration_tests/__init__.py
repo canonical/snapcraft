@@ -318,10 +318,23 @@ class SubversionSourceBaseTestCase(TestCase):
         subprocess.check_call(
             ['svnadmin', 'create', 'repo'], stdout=subprocess.DEVNULL)
 
+    def checkout(self, source, destination):
+        subprocess.check_call(
+            ['svn', 'checkout', source, destination],
+            stdout=subprocess.DEVNULL)
+
+    def add(self, file_path, cwd=None):
+        subprocess.check_call(
+            ['svn', 'add', file_path], stdout=subprocess.DEVNULL, cwd=cwd)
+
     def commit(self, message, cwd=None):
         subprocess.check_call(
             ['svn', 'commit', '-m', message],
             stdout=subprocess.DEVNULL, cwd=cwd)
+
+    def update(self, cwd=None):
+        subprocess.check_call(
+            ['svn', 'update'], stdout=subprocess.DEVNULL, cwd=cwd)
 
 
 class StoreTestCase(TestCase):

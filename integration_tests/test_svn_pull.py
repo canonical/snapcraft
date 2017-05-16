@@ -28,20 +28,13 @@ class SubversionSourceTestCase(integration_tests.SubversionSourceBaseTestCase):
         self.copy_project_to_cwd('svn-pull')
 
         self.init_source_control()
-
-        subprocess.check_call(
-            ['svn', 'checkout',
+        self.checkout(
              'file:///{}'.format(os.path.join(self.path, 'repo')),
-             'local'],
-            stdout=subprocess.DEVNULL)
-
+             'local')
         open(os.path.join('local', 'file'), 'w').close()
-        subprocess.check_call(
-            ['svn', 'add', 'file'], stdout=subprocess.DEVNULL, cwd='local/')
+        self.add('file', cwd='local/')
         self.commit('test', cwd='local/')
-        subprocess.check_call(
-            ['svn', 'update'],
-            stdout=subprocess.DEVNULL, cwd='local/')
+        self.update(cwd='local/')
         subprocess.check_call(
             ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
 
@@ -56,41 +49,28 @@ class SubversionSourceTestCase(integration_tests.SubversionSourceBaseTestCase):
 
         self.init_source_control()
 
-        subprocess.check_call(
-            ['svn', 'checkout',
-             'file:///{}'.format(os.path.join(self.path, 'repo')),
-             'local'],
-            stdout=subprocess.DEVNULL)
-
+        self.checkout(
+            'file:///{}'.format(os.path.join(self.path, 'repo')),
+             'local')
         open(os.path.join('local', 'file'), 'w').close()
-        subprocess.check_call(
-            ['svn', 'add', 'file'], stdout=subprocess.DEVNULL, cwd='local/')
+        self.add('file', cwd='local/')
         self.commit('test', cwd='local/')
-        subprocess.check_call(
-            ['svn', 'update'],
-            stdout=subprocess.DEVNULL, cwd='local/')
+        self.update(cwd='local/')
         subprocess.check_call(
             ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
 
         part_src_path = os.path.join(self.parts_dir, 'svn', 'src')
-        subprocess.check_call(
-            ['svn', 'checkout',
+        self.checkout(
              'file:///{}'.format(os.path.join(self.path, 'repo')),
-             part_src_path],
-            stdout=subprocess.DEVNULL)
-
+             part_src_path)
+        self.checkout(
         subprocess.check_call(
-            ['svn', 'checkout',
-             'file:///{}'.format(os.path.join(self.path, 'repo')),
-             'local'],
-            stdout=subprocess.DEVNULL)
+            'file:///{}'.format(os.path.join(self.path, 'repo')),
+             'local')
         open(os.path.join('local', 'filetwo'), 'w').close()
-        subprocess.check_call(
-            ['svn', 'add', 'filetwo'], stdout=subprocess.DEVNULL, cwd='local/')
+        self.add('filetwo', cwd='local/')
         self.commit('testtwo', cwd='local/')
-        subprocess.check_call(
-            ['svn', 'update'], stdout=subprocess.DEVNULL,
-            cwd='local/')
+        self.update(cwd='local/')
         subprocess.check_call(
             ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
 
