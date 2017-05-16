@@ -19,6 +19,7 @@ from functools import partial
 import io
 import os
 import sys
+import tempfile
 import threading
 from types import ModuleType
 import urllib.parse
@@ -408,9 +409,10 @@ def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
 class FakeAptGetBuildDep(fixtures.Fixture):
     '''Mock apt-get build-dep output'''
 
-    def __init__(self, packages, arch='',
+    def __init__(self, packages, arch='', update_error=False,
                  not_cached=False, not_available=False):
-        self.filename = '/tmp/tmpabcdefg.dsc'
+        self.filename = '{}/{}abcdef.dsc'.format(tempfile.gettempdir(),
+                                                 tempfile.gettempprefix())
         if arch:
             arch = ':{}'.format(arch)
         prolog = '''NOTE: This is only a simulation!
@@ -450,6 +452,7 @@ E: Unable to correct problems, you have held broken packages.'''.format(
                 ' '.join(errors), len(errors))
         self.output = '{}\n{}'.format(prolog, details).encode(
             sys.getfilesystemencoding())
+        self.update_error = update_error
 
     def _setUp(self):
         patcher = mock.patch('tempfile.NamedTemporaryFile')
@@ -474,6 +477,13 @@ E: Unable to correct problems, you have held broken packages.'''.format(
                     raise CalledProcessError(100, args[0], self.output)
                 else:
                     return self.output
+            if args[0][:3] == ['sudo', 'apt-get', 'update']:
+                server = 'http://archive.ubuntu.com/ubuntu'
+                template = '{}:{} {} xenial InRelease\n'
+                output = template.format('Get', '9', server)
+                if self.update_error:
+                    output += template.format('Err', '9', server)
+                return output.encode(sys.getfilesystemencoding())
             else:
                 return 'amd64\n'.encode(sys.getfilesystemencoding())
         return call_effect

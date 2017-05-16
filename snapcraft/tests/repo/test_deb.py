@@ -282,15 +282,15 @@ class BuildPackagesTestCase(tests.TestCase):
             self, mock_check_call, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = True
         fake_apt = tests.fixture_setup.FakeAptGetBuildDep(
-            self.test_packages, 'armhf')
+            self.test_packages, 'armhf', update_error=True)
         self.useFixture(fake_apt)
-        raised = self.assertRaises(
-            errors.BuildPackageNotFoundError,
+
+        self.assertRaises(
+            (errors.BuildPackageNotFoundError, CalledProcessError),
             repo.Ubuntu.install_build_packages,
             self.test_packages.keys(),
             'armhf')
 
-        self.assertIn(':armhf', str(raised))
         fake_apt.check_output_mock.assert_has_calls([
             call(['apt-get', 'build-dep', '-q', '-s',
                   '-aarmhf', fake_apt.filename],
