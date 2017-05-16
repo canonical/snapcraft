@@ -459,12 +459,24 @@ E: Unable to correct problems, you have held broken packages.'''.format(
 
         patcher = mock.patch('subprocess.check_output')
         self.check_output_mock = patcher.start()
-        if self.exception:
-            self.check_output_mock.side_effect = CalledProcessError(
-                100, [], self.output)
-        else:
-            self.check_output_mock.return_value = self.output
+        self.check_output_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.repo._deb.open',
+                             mock.mock_open())
+        self.open_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def check_output_side_effect(self):
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['apt-get', 'build-dep']:
+                if self.exception:
+                    raise CalledProcessError(100, args[0], self.output)
+                else:
+                    return self.output
+            else:
+                return 'amd64\n'.encode(sys.getfilesystemencoding())
+        return call_effect
 
 
 class FakeLXD(fixtures.Fixture):

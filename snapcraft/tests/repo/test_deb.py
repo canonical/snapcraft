@@ -292,11 +292,22 @@ class BuildPackagesTestCase(tests.TestCase):
 
         self.assertIn(':armhf', str(raised))
         fake_apt.check_output_mock.assert_has_calls([
-            call('apt-get build-dep -q -s -aarmhf /tmp/tmpabcdefg.dsc'.split(),
+            call(['apt-get', 'build-dep', '-q', '-s',
+                  '-aarmhf', fake_apt.filename],
                  env={}, stderr=-2),
             call('dpkg --print-foreign-architectures'.split()),
             call('sudo apt-get update'.split(),
                  stderr=-2),
+        ])
+
+        sources_list = '/etc/apt/sources.list.d/ubuntu-{}.list'.format('armhf')
+        mock_check_call.assert_has_calls([
+            call(['sudo', 'dpkg', '--add-architecture', 'armhf']),
+            call(['sudo', 'cp', fake_apt.filename, sources_list]),
+            call(['sudo', 'chmod', '644', sources_list]),
+        ])
+        fake_apt.open_mock.assert_has_calls([
+            call('/etc/apt/sources.list')
         ])
 
     @patch('subprocess.check_call')
