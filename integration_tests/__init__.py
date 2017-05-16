@@ -102,7 +102,7 @@ class TestCase(testtools.TestCase):
 
     def run_snapcraft(
             self, command, project_dir=None, debug=True,
-            pre_func=lambda: None):
+            pre_func=lambda: None, env=None):
         if project_dir:
             self.copy_project_to_cwd(project_dir)
 
@@ -115,7 +115,8 @@ class TestCase(testtools.TestCase):
             pre_func()
             snapcraft_output = subprocess.check_output(
                 snapcraft_command + command,
-                stderr=subprocess.STDOUT, universal_newlines=True)
+                stderr=subprocess.STDOUT, universal_newlines=True,
+                env=env)
         except subprocess.CalledProcessError as e:
             self.addDetail('output', content.text_content(e.output))
             raise

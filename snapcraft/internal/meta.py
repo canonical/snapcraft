@@ -400,7 +400,7 @@ class _DesktopFile:
     def parse_and_reformat(self):
         self._parser = configparser.ConfigParser(interpolation=None)
         self._parser.optionxform = str
-        self._parser.read(self._path)
+        self._parser.read(self._path, encoding='utf-8')
         section = 'Desktop Entry'
         if section not in self._parser.sections():
             raise EnvironmentError(
@@ -436,7 +436,7 @@ class _DesktopFile:
             # Unlikely. A desktop file in setup/gui/ already existed for
             # this app. Let's pretend it wasn't there and overwrite it.
             os.remove(target)
-        with open(target, 'w') as f:
+        with open(target, 'w', encoding='utf-8') as f:
             self._parser.write(f, space_around_delimiters=False)
 
 

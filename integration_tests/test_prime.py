@@ -19,6 +19,7 @@ from textwrap import dedent
 
 import testscenarios
 from testtools.matchers import (
+    Contains,
     FileContains,
     FileExists,
     Not,
@@ -57,6 +58,17 @@ class PrimeTestCase(integration_tests.TestCase):
         self.assertThat(
             os.path.join(self.prime_dir, 'with-c'),
             FileExists())
+
+    def test_prime_with_non_ascii_desktop_file(self):
+        env = os.environ.copy()
+        env['LC_ALL'] = 'C'
+        self.run_snapcraft('prime', 'desktop-with-non-ascii', env=env)
+
+        desktop_path = os.path.join(
+            self.prime_dir, 'meta', 'gui', 'test-app.desktop')
+
+        self.expectThat(
+            desktop_path, FileContains(matcher=Contains('non ascíí')))
 
 
 class PrimedAssetsTestCase(testscenarios.WithScenarios,
