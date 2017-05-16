@@ -96,14 +96,14 @@ class CatkinPluginBaseTestCase(tests.TestCase):
         self.wstool_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-    def verify_rosdep_setup(self, rosdistro, package_path, rosdep_path,
+    def assert_rosdep_setup(self, rosdistro, package_path, rosdep_path,
                             sources):
         self.rosdep_mock.assert_has_calls([
             mock.call(rosdistro, package_path, rosdep_path, sources,
                       self.project_options),
             mock.call().setup()])
 
-    def verify_wstool_setup(self, package_path, wstool_path, sources):
+    def assert_wstool_setup(self, package_path, wstool_path, sources):
         self.wstool_mock.assert_has_calls([
             mock.call(package_path, wstool_path, sources,
                       self.project_options),
@@ -115,199 +115,91 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
     def test_schema(self):
         schema = catkin.CatkinPlugin.schema()
 
-        # Check rosdistro property
         properties = schema['properties']
-        self.assertTrue('rosdistro' in properties,
-                        'Expected "rosdistro" to be included in properties')
+        expected = ('rosdistro', 'catkin-packages', 'source-space',
+                    'include-roscore', 'underlay', 'rosinstall-files')
+        self.assertThat(properties, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(properties, Contains(prop))
 
+        # Check rosdistro property
         rosdistro = properties['rosdistro']
-        self.assertTrue('type' in rosdistro,
-                        'Expected "type" to be included in "rosdistro"')
-        self.assertTrue('default' in rosdistro,
-                        'Expected "default" to be included in "rosdistro"')
-
-        rosdistro_type = rosdistro['type']
-        self.assertEqual(rosdistro_type, 'string',
-                         'Expected "rosdistro" "type" to be "string", but it '
-                         'was "{}"'.format(rosdistro_type))
-
-        rosdistro_default = rosdistro['default']
-        self.assertEqual(rosdistro_default, 'indigo',
-                         'Expected "rosdistro" "default" to be "indigo", but '
-                         'it was "{}"'.format(rosdistro_default))
+        expected = ('type', 'default')
+        self.assertThat(rosdistro, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(rosdistro, Contains(prop))
+        self.assertThat(rosdistro['type'], Equals('string'))
+        self.assertThat(rosdistro['default'], Equals('indigo'))
 
         # Check catkin-packages property
-        self.assertTrue('catkin-packages' in properties,
-                        'Expected "catkin-packages" to be included in '
-                        'properties')
-
         catkin_packages = properties['catkin-packages']
-        self.assertTrue('type' in catkin_packages,
-                        'Expected "type" to be included in "catkin-packages"')
-        self.assertTrue('default' in catkin_packages,
-                        'Expected "default" to be included in '
-                        '"catkin-packages"')
-        self.assertTrue('minitems' in catkin_packages,
-                        'Expected "minitems" to be included in '
-                        '"catkin-packages"')
-        self.assertTrue('uniqueItems' in catkin_packages,
-                        'Expected "uniqueItems" to be included in '
-                        '"catkin-packages"')
-        self.assertTrue('items' in catkin_packages,
-                        'Expected "items" to be included in "catkin-packages"')
-
-        catkin_packages_type = catkin_packages['type']
-        self.assertEqual(catkin_packages_type, 'array',
-                         'Expected "catkin-packages" "type" to be "aray", but '
-                         'it was "{}"'.format(catkin_packages_type))
-
-        catkin_packages_default = catkin_packages['default']
-        self.assertEqual(catkin_packages_default, [],
-                         'Expected "catkin-packages" "default" to be [], but '
-                         'it was {}'.format(catkin_packages_default))
-
-        catkin_packages_minitems = catkin_packages['minitems']
-        self.assertEqual(catkin_packages_minitems, 1,
-                         'Expected "catkin-packages" "minitems" to be 1, but '
-                         'it was {}'.format(catkin_packages_minitems))
-
+        expected = ('type', 'default', 'minitems', 'uniqueItems', 'items')
+        self.assertThat(catkin_packages, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(catkin_packages, Contains(prop))
+        self.assertThat(catkin_packages['type'], Equals('array'))
+        self.assertThat(catkin_packages['default'], Equals([]))
+        self.assertThat(catkin_packages['minitems'], Equals(1))
         self.assertTrue(catkin_packages['uniqueItems'])
-
-        catkin_packages_items = catkin_packages['items']
-        self.assertTrue('type' in catkin_packages_items,
-                        'Expected "type" to be included in "catkin-packages" '
-                        '"items"')
-
-        catkin_packages_items_type = catkin_packages_items['type']
-        self.assertEqual(catkin_packages_items_type, 'string',
-                         'Expected "catkin-packages" "item" "type" to be '
-                         '"string", but it was "{}"'
-                         .format(catkin_packages_items_type))
+        self.assertThat(catkin_packages['items'], Contains('type'))
+        self.assertThat(catkin_packages['items']['type'], Equals('string'))
 
         # Check source-space property
-        self.assertTrue('source-space' in properties,
-                        'Expected "source-space" to be included in properties')
-
         source_space = properties['source-space']
-        self.assertTrue('type' in source_space,
-                        'Expected "type" to be included in "source-space"')
-        self.assertTrue('default' in source_space,
-                        'Expected "default" to be included in "source-space"')
-
-        source_space_type = source_space['type']
-        self.assertEqual(source_space_type, 'string',
-                         'Expected "source-space" "type" to be "string", but '
-                         'it was "{}"'.format(source_space_type))
-
-        source_space_default = source_space['default']
-        self.assertEqual(source_space_default, 'src',
-                         'Expected "source-space" "default" to be "src", but '
-                         'it was "{}"'.format(source_space_default))
+        expected = ('type', 'default')
+        self.assertThat(source_space, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(source_space, Contains(prop))
+        self.assertThat(source_space['type'], Equals('string'))
+        self.assertThat(source_space['default'], Equals('src'))
 
         # Check include-roscore property
-        self.assertTrue('include-roscore' in properties,
-                        'Expected "include-roscore" to be included in '
-                        'properties')
-
         include_roscore = properties['include-roscore']
-        self.assertTrue('type' in include_roscore,
-                        'Expected "type" to be included in "include-roscore"')
-        self.assertTrue('default' in include_roscore,
-                        'Expected "default" to be included in '
-                        '"include-roscore"')
-
-        include_roscore_type = include_roscore['type']
-        self.assertEqual(include_roscore_type, 'boolean',
-                         'Expected "include-roscore" "type" to be "boolean", '
-                         'but it was "{}"'.format(include_roscore_type))
-
-        include_roscore_default = include_roscore['default']
-        self.assertEqual(include_roscore_default, 'true',
-                         'Expected "include-roscore" "default" to be "true", '
-                         'but it was "{}"'.format(include_roscore_default))
+        expected = ('type', 'default')
+        self.assertThat(include_roscore, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(include_roscore, Contains(prop))
+        self.assertThat(include_roscore['type'], Equals('boolean'))
+        self.assertThat(include_roscore['default'], Equals('true'))
 
         # Check underlay property
-        self.assertThat(properties, Contains('underlay'),
-                        'Expected "underlay" to be included in properties')
-
         underlay = properties['underlay']
-        self.assertThat(underlay, Contains('type'),
-                        'Expected "type" to be included in "underlay"')
-        self.assertThat(underlay, Contains('properties'),
-                        'Expected "properties" to be included in "underlay"')
-        self.assertThat(underlay, Contains('required'),
-                        'Expected "required" to be included in "underlay"')
-
-        underlay_type = underlay['type']
-        self.assertThat(underlay_type, Equals('object'),
-                        'Expected "underlay" "type" to be "object", but it '
-                        'was "{}"'.format(underlay_type))
+        expected = ('type', 'properties', 'required')
+        self.assertThat(underlay, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(underlay, Contains(prop))
+        self.assertThat(underlay['type'], Equals('object'))
 
         underlay_required = underlay['required']
-        self.assertThat(underlay_required, HasLength(2))
-        self.assertThat(underlay_required, Contains('build-path'))
-        self.assertThat(underlay_required, Contains('run-path'))
+        expected = ('build-path', 'run-path')
+        self.assertThat(underlay_required, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(underlay_required, Contains(prop))
 
         underlay_properties = underlay['properties']
-        self.assertThat(underlay_properties, Contains('build-path'))
-        self.assertThat(underlay_properties, Contains('run-path'))
-
+        expected = ('build-path', 'run-path')
+        self.assertThat(underlay_properties, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(underlay_properties, Contains(prop))
         underlay_build_path = underlay_properties['build-path']
         self.assertThat(underlay_build_path, Contains('type'))
         self.assertThat(underlay_build_path['type'], Equals('string'))
-
         underlay_run_path = underlay_properties['run-path']
         self.assertThat(underlay_run_path, Contains('type'))
         self.assertThat(underlay_run_path['type'], Equals('string'))
 
         # Check rosinstall-files property
-        self.assertTrue('rosinstall-files' in properties,
-                        'Expected "rosinstall-files" to be included in '
-                        'properties')
-
         rosinstall_files = properties['rosinstall-files']
-        self.assertTrue('type' in rosinstall_files,
-                        'Expected "type" to be included in "rosinstall-files"')
-        self.assertTrue('default' in rosinstall_files,
-                        'Expected "default" to be included in '
-                        '"rosinstall-files"')
-        self.assertTrue('minitems' in rosinstall_files,
-                        'Expected "minitems" to be included in '
-                        '"rosinstall-files"')
-        self.assertTrue('uniqueItems' in rosinstall_files,
-                        'Expected "uniqueItems" to be included in '
-                        '"rosinstall-files"')
-        self.assertTrue('items' in rosinstall_files,
-                        'Expected "items" to be included in '
-                        '"rosinstall-files"')
-
-        rosinstall_files_type = rosinstall_files['type']
-        self.assertEqual(rosinstall_files_type, 'array',
-                         'Expected "rosinstall-files" "type" to be "array", '
-                         'but it was "{}"'.format(rosinstall_files_type))
-
-        rosinstall_files_default = rosinstall_files['default']
-        self.assertEqual(rosinstall_files_default, [],
-                         'Expected "rosinstall-files" "default" to be [], but '
-                         'it was {}'.format(rosinstall_files_default))
-
-        rosinstall_files_minitems = rosinstall_files['minitems']
-        self.assertEqual(rosinstall_files_minitems, 1,
-                         'Expected "rosinstall-files" "minitems" to be 1, but '
-                         'it was {}'.format(rosinstall_files_minitems))
-
-        self.assertTrue(rosinstall_files['uniqueItems'])
-
-        rosinstall_files_items = rosinstall_files['items']
-        self.assertTrue('type' in rosinstall_files_items,
-                        'Expected "type" to be included in "rosinstall-files" '
-                        '"items"')
-
-        rosinstall_files_items_type = rosinstall_files_items['type']
-        self.assertEqual(rosinstall_files_items_type, 'string',
-                         'Expected "rosinstall-files" "item" "type" to be '
-                         '"string", but it was "{}"'
-                         .format(rosinstall_files_items_type))
+        expected = ('type', 'default', 'minitems', 'uniqueItems', 'items')
+        self.assertThat(rosinstall_files, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(rosinstall_files, Contains(prop))
+        self.assertThat(catkin_packages['type'], Equals('array'))
+        self.assertThat(catkin_packages['default'], Equals([]))
+        self.assertThat(catkin_packages['minitems'], Equals(1))
+        self.assertTrue(catkin_packages['uniqueItems'])
+        self.assertThat(catkin_packages['items'], Contains('type'))
+        self.assertThat(catkin_packages['items']['type'], Equals('string'))
 
         # Check required
         self.assertTrue('catkin-packages' in schema['required'],
@@ -891,7 +783,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
 
         plugin.pull()
 
-        self.verify_rosdep_setup(
+        self.assert_rosdep_setup(
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
@@ -932,7 +824,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
 
         plugin.pull()
 
-        self.verify_rosdep_setup(
+        self.assert_rosdep_setup(
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
@@ -976,7 +868,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
 
         plugin.pull()
 
-        self.verify_rosdep_setup(
+        self.assert_rosdep_setup(
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
@@ -1009,13 +901,13 @@ class PullTestCase(CatkinPluginBaseTestCase):
 
         plugin.pull()
 
-        self.verify_rosdep_setup(
+        self.assert_rosdep_setup(
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
             plugin.PLUGIN_STAGE_SOURCES)
 
-        self.verify_wstool_setup(
+        self.assert_wstool_setup(
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'wstool'),
             plugin.PLUGIN_STAGE_SOURCES)
