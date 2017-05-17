@@ -97,8 +97,7 @@ required_snappy = ['RD_LZMA', 'KEYS', 'ENCRYPTED_KEYS', 'SQUASHFS',
 
 required_systemd = ['DEVTMPFS', 'CGROUPS', 'INOTIFY_USER', 'SIGNALFD',
                     'TIMERFD', 'EPOLL', 'NET', 'SYSFS', 'PROC_FS', 'FHANDLE',
-                    'DMIID', 'BLK_DEV_BSG', 'NET_NS',
-                    'IPV6', 'AUTOFS4_FS',
+                    'BLK_DEV_BSG', 'NET_NS', 'IPV6', 'AUTOFS4_FS',
                     'TMPFS_POSIX_ACL', 'TMPFS_XATTR', 'SECCOMP']
 
 required_boot = ['squashfs']
