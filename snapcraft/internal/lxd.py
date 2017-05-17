@@ -197,57 +197,18 @@ class Project(Containerbuild):
     def _setup_project(self):
         self._ensure_mount(self._project_folder, self._source)
 
-    def _container_login(self):
+    def _get_container_address(self):
         network = self._get_container_status()['state']['network']['eth0']
         for address in network['addresses']:
             if address['family'] == 'inet':
-                return address['address'], '22'
+                return address['address']
         raise RuntimeError('No IP found for {}'.format(self._container_name))
-
-    def _background(self, cmd, stdin=None, stdout=None):
-        self._processes += [Popen(cmd, stdin=stdin, stdout=stdout)]
 
     def _ensure_mount(self, destination, source):
         logger.info('Mounting {} into container'.format(source))
         remote, container_name = self._container_name.split(':')
         if remote != 'local':
-            # Remove project folder in case it was used "locally" before
-            devices = self._get_container_status()['devices']
-            if destination in devices:
-                check_call([
-                    'lxc', 'config', 'device', 'remove', self._container_name,
-                    destination, 'disk', 'source={}'.format(source),
-                    'path=/{}'.format(destination)])
-
-            self._install_packages(['sshfs'])
-            keyfile = 'id_{}'.format(self._container_name)
-            if not os.path.exists(keyfile):
-                check_output(['ssh-keygen', '-o', '-N', '', '-f', keyfile])
-            self._container_run(['mkdir', '-p', '/root/.ssh'])
-            self._container_run(['chmod', '700', '/root/.ssh'])
-            self._container_run(['tee', '-a',
-                                 '/root/.ssh/authorized_keys'],
-                                stdin=open('{}.pub'.format(keyfile), 'r'))
-            self._container_run(['chmod', '600',
-                                 '/root/.ssh/authorized_keys'])
-            self._container_run(['mkdir', '-p', '/{}'.format(destination)])
-            self._container_run(['mkdir', '-p', source])
-            r1, w1 = os.pipe()
-            r2, w2 = os.pipe()
-            ssh_hostname, ssh_port = self._container_login()
-            logger.info('Connecting via SSH to {}:{}'.format(
-                ssh_hostname, ssh_port))
-            self._background(['/usr/lib/sftp-server'], stdin=r1, stdout=w2)
-            self._background(['ssh', '-C', '-F', '/dev/null',
-                              '-o', 'IdentityFile={}'.format(keyfile),
-                              '-o', 'StrictHostKeyChecking=no',
-                              '-o', 'UserKnownHostsFile=/dev/null',
-                              '-o', 'User=root',
-                              '-p', ssh_port, ssh_hostname,
-                              'sshfs -o slave -o nonempty :{} /{}'.format(
-                                  source, destination)],
-                             stdin=r2, stdout=w1)
-            # -o allow_other, -o, idmap=user,uid=1000,gid=1000
+            self._remote_mount(destination, source)
         else:
             devices = self._get_container_status()['devices']
             if destination not in devices:
@@ -255,6 +216,51 @@ class Project(Containerbuild):
                     'lxc', 'config', 'device', 'add', self._container_name,
                     destination, 'disk', 'source={}'.format(source),
                     'path=/{}'.format(destination)])
+
+    def _remote_mount(self, destination, source):
+        # Remove project folder in case it was used "locally" before
+        devices = self._get_container_status()['devices']
+        if destination in devices:
+            check_call([
+                'lxc', 'config', 'device', 'remove', self._container_name,
+                destination, 'disk', 'source={}'.format(source),
+                'path=/{}'.format(destination)])
+
+        # Generate an SSH key and add it to the container's known keys
+        keyfile = 'id_{}'.format(self._container_name)
+        if not os.path.exists(keyfile):
+            check_call(['ssh-keygen', '-o', '-N', '', '-f', keyfile],
+                       stdout=os.devnull)
+        self._container_run(['mkdir', '-p', '/root/.ssh'])
+        self._container_run(['chmod', '700', '/root/.ssh'])
+        self._container_run(['tee', '-a',
+                             '/root/.ssh/authorized_keys'],
+                            stdin=open('{}.pub'.format(keyfile), 'r'))
+        self._container_run(['chmod', '600',
+                             '/root/.ssh/authorized_keys'])
+
+        # Use sshfs in slave mode inside SSH to reverse mount destination
+        self._install_packages(['sshfs'])
+        self._container_run(['mkdir', '-p', '/{}'.format(destination)])
+        self._container_run(['mkdir', '-p', source])
+        ssh_address = self._get_container_address()
+        logger.info('Connecting via SSH to {}'.format(ssh_address))
+        stdin1, stdout1 = os.pipe()
+        stdin2, stdout2 = os.pipe()
+        self._host_run(['/usr/lib/sftp-server'],
+                       stdin=stdin1, stdout=stdout2)
+        self._host_run(['ssh', '-C', '-F', '/dev/null',
+                        '-o', 'IdentityFile={}'.format(keyfile),
+                        '-o', 'StrictHostKeyChecking=no',
+                        '-o', 'UserKnownHostsFile=/dev/null',
+                        '-o', 'User=root',
+                        '-p', '22', ssh_address,
+                        'sshfs -o slave -o nonempty :{} /{}'.format(
+                            source, destination)],
+                       stdin=stdin2, stdout=stdout1)
+
+    def _host_run(self, cmd, stdin=None, stdout=None):
+        self._processes += [Popen(cmd, stdin=stdin, stdout=stdout)]
 
     def _finish(self):
         for process in self._processes:
