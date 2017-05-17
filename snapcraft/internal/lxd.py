@@ -62,14 +62,14 @@ class Containerbuild:
         check_call(['lxc', 'file', 'pull',
                     '{}/{}'.format(self._container_name, src), dst])
 
-    def _container_run(self, cmd, stdin=None, stdout=None):
+    def _container_run(self, cmd, **kwargs):
         # Set HOME here as 'lxc config set ... environment.HOME' doesn't work
         # Use 'cd' because --env has no effect with sshfs mounts
         check_call(['lxc', 'exec', self._container_name, '--',
                    'bash', '-c', 'cd /{}; {}'.format(
                        self._project_folder,
                        ' '.join(pipes.quote(arg) for arg in cmd))],
-                   stdin=stdin, stdout=stdout)
+                   *kwargs)
 
     def _ensure_container(self):
         check_call([
