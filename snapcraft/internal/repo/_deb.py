@@ -193,6 +193,8 @@ class Ubuntu(BaseRepo):
             for pkg in unique_packages:
                 try:
                     pkg_name, version = repo.get_pkg_name_parts(pkg)
+                    if pkg_name.endswith(':any'):
+                        pkg_name = pkg_name[:-4]
                     installed_version = apt_cache[pkg_name].installed
                     if not installed_version:
                         new_packages.append(pkg)
@@ -240,6 +242,8 @@ class Ubuntu(BaseRepo):
                 # --elopio - 20170504
                 package_name, _ = repo.get_pkg_name_parts(
                     build_packages.pop(0))
+                if package_name.endswith(':any'):
+                    package_name = package_name[:-4]
                 try:
                     installed_package = apt_cache[package_name].candidate
                 except KeyError as e:
