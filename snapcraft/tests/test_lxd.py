@@ -70,6 +70,8 @@ class LXDTestCase(tests.TestCase):
                   'ubuntu:xenial/{}'.format(expected_arch), container_name]),
             call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
+            call(['lxc', 'config', 'set', container_name,
+                  'environment.LC_ALL', 'C.UTF-8']),
             call(['lxc', 'exec', container_name,
                   '--env', 'HOME=/{}'.format(project_folder), '--',
                   'mkdir', project_folder]),
