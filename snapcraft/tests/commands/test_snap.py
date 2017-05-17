@@ -100,7 +100,8 @@ parts:
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
-    def test_snap_containerized(self):
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    def test_snap_containerized(self, mock_container_run):
         fake_lxd = tests.fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -109,6 +110,7 @@ parts:
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()
 
+        mock_container_run.side_effect = lambda cmd: cmd
         main(['snap', '--debug'])
 
         source = os.path.realpath(os.path.curdir)
@@ -125,24 +127,18 @@ parts:
             call(['lxc', 'config', 'device', 'add', container_name,
                   project_folder, 'disk', 'source={}'.format(source),
                   'path=/{}'.format(project_folder)]),
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
-                  'python3', '-c',
-                  'import urllib.request; '
-                  'urllib.request.urlopen('
-                  '"http://start.ubuntu.com/connectivity-check.html", '
-                  'timeout=5)']),
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
-                  'apt-get', 'update']),
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
-                  'apt-get', 'install', 'snapcraft', '-y']),
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
-                  'snapcraft', 'snap', '--output',
-                  'snap-test_1.0_amd64.snap']),
             call(['lxc', 'stop', '-f', container_name]),
+        ])
+        mock_container_run.assert_has_calls([
+            call(['python3', '-c', 'import urllib.request; ' +
+                  'urllib.request.urlopen(' +
+                  '"http://start.ubuntu.com/connectivity-check.html"' +
+                  ', timeout=5)']),
+            call(['apt-get', 'update']),
+            call(['apt-get', 'install', '-y', 'snapcraft']),
+            call(['rm', '-f', '/var/lib/apt/lists/lock']),
+            call(['snapcraft', 'snap', '--output',
+                  'snap-test_1.0_amd64.snap']),
         ])
 
     @mock.patch('snapcraft.internal.lifecycle.ProgressBar')
