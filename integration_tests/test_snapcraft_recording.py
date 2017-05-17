@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 import yaml
 
 import fixtures
@@ -197,3 +198,99 @@ class SnapcraftRecordingPackagesTestCase(
         self.assertEqual(
             recorded_yaml['parts'][part_name][self.packages_type],
             expected_packages)
+
+
+class SnapcraftRecordingBzrSourceTestCase(
+        integration_tests.BzrSourceBaseTestCase,
+        SnapcraftRecordingBaseTestCase):
+
+    def test_prime_with_bzr_source(self):
+        self.copy_project_to_cwd('bzr-head')
+
+        self.init_source_control()
+        self.commit('"test-commit"', unchanged=True)
+
+        self.run_snapcraft('prime')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        commit = self.get_revno()
+        self.assertEqual(
+            recorded_yaml['parts']['bzr']['source-commit'], commit)
+
+
+class SnapcraftRecordingGitSourceTestCase(
+        integration_tests.GitSourceBaseTestCase,
+        SnapcraftRecordingBaseTestCase):
+
+    def test_prime_with_git_source(self):
+        self.copy_project_to_cwd('git-head')
+
+        self.init_source_control()
+        self.commit('"test-commit"', allow_empty=True)
+
+        self.run_snapcraft('prime')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        commit = self.get_revno()
+        self.assertEqual(
+            recorded_yaml['parts']['git']['source-commit'], commit)
+
+
+class SnapcraftRecordingHgSourceTestCase(
+        integration_tests.HgSourceBaseTestCase,
+        SnapcraftRecordingBaseTestCase):
+
+    def test_prime_with_hg_source(self):
+        self.copy_project_to_cwd('hg-head')
+
+        self.init_source_control()
+        open('1', 'w').close()
+        self.commit('1', '1')
+
+        self.run_snapcraft('prime')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        commit = self.get_id()
+        self.assertEqual(
+            recorded_yaml['parts']['mercurial']['source-commit'], commit)
+
+
+class SnapcraftRecordingSubversionSourceTestCase(
+        integration_tests.SubversionSourceBaseTestCase,
+        SnapcraftRecordingBaseTestCase):
+
+    def test_prime_with_subversion_source(self):
+        self.copy_project_to_cwd('svn-pull')
+
+        self.init_source_control()
+        self.checkout(
+            'file:///{}'.format(os.path.join(self.path, 'repo')), 'local')
+
+        open(os.path.join('local', 'file'), 'w').close()
+        self.add('file', cwd='local')
+        self.commit('test', cwd='local/')
+        self.update(cwd='local/')
+        subprocess.check_call(
+            ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
+
+        self.run_snapcraft('prime')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        self.assertEqual(
+            recorded_yaml['parts']['svn']['source-commit'], '1')

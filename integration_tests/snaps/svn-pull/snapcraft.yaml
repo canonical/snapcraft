@@ -5,7 +5,7 @@ description: use svn
 confinement: strict
 
 parts:
-    svn:
-        plugin: make
-        source: repo/
-        source-type: svn
+ svn:
+   plugin: dump
+   source: repo/
+   source-type: svn
