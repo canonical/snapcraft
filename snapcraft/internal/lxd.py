@@ -91,6 +91,10 @@ class Containerbuild:
         check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.SNAPCRAFT_SETUP_CORE', '1'])
+        # Necessary to read asset files with non-ascii characters.
+        check_call([
+            'lxc', 'config', 'set', self._container_name,
+            'environment.LC_ALL', 'C.UTF-8'])
 
     @contextmanager
     def _ensure_started(self):
