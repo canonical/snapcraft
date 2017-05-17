@@ -51,7 +51,7 @@ class SubversionSourceTestCase(integration_tests.SubversionSourceBaseTestCase):
 
         self.checkout(
             'file:///{}'.format(os.path.join(self.path, 'repo')),
-             'local')
+            'local')
         open(os.path.join('local', 'file'), 'w').close()
         self.add('file', cwd='local/')
         self.commit('test', cwd='local/')
@@ -64,9 +64,8 @@ class SubversionSourceTestCase(integration_tests.SubversionSourceBaseTestCase):
              'file:///{}'.format(os.path.join(self.path, 'repo')),
              part_src_path)
         self.checkout(
-        subprocess.check_call(
             'file:///{}'.format(os.path.join(self.path, 'repo')),
-             'local')
+            'local')
         open(os.path.join('local', 'filetwo'), 'w').close()
         self.add('filetwo', cwd='local/')
         self.commit('testtwo', cwd='local/')
