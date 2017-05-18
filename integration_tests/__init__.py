@@ -216,6 +216,23 @@ class TestCase(testtools.TestCase):
             yaml.dump(snapcraft_yaml, snapcraft_yaml_file)
         return version
 
+    def set_build_package_architecture(
+            self, snapcraft_yaml_path, part, package, architecture):
+        # This doesn't handle complex package syntax.
+        with open(snapcraft_yaml_path) as snapcraft_yaml_file:
+            snapcraft_yaml = yaml.load(snapcraft_yaml_file)
+        packages = snapcraft_yaml['parts'][part]['build-packages']
+        for index, package_in_yaml in enumerate(packages):
+            if package_in_yaml == package:
+                packages[index] = '{}:{}'.format(package, architecture)
+                break
+        else:
+            self.fail("The part {} doesn't have a package {}".format(
+                part, package))
+
+        with open(snapcraft_yaml_path, 'w') as snapcraft_yaml_file:
+            yaml.dump(snapcraft_yaml, snapcraft_yaml_file)
+
 
 class BzrSourceBaseTestCase(TestCase):
 

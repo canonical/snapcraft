@@ -778,6 +778,41 @@ build-packages: []
             os.path.join('prime', 'snap', 'snapcraft.yaml'),
             FileContains(expected))
 
+    @mock.patch('subprocess.check_call')
+    def test_prime_with_build_package_with_any_architecture(self, _):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.useFixture(fixture_setup.FakeAptCache([
+            ('test-package', 'test-version')]))
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+    build-packages: ['test-package:any']
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: [test-package=test-version]
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
 
 class RecordSnapcraftWithDeprecatedSnapKeywordTestCase(BaseExecutionTestCase):
 
