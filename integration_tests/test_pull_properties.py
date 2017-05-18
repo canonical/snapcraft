@@ -105,6 +105,19 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.assertNotIn(
             'hello={}'.format(version), state.assets['build-packages'])
 
+    def test_pull_build_package_with_any_architecture(self):
+        self.copy_project_to_cwd('build-package')
+        self.set_build_package_architecture(
+            os.path.join('snap', 'snapcraft.yaml'),
+            part='hello', package='hello', architecture='any')
+        self.run_snapcraft('pull')
+
+        state_file = os.path.join(
+            self.parts_dir, 'hello', 'state', 'pull')
+        with open(state_file) as f:
+            state = yaml.load(f)
+        self.assertIn('hello', state.assets['build-packages'][0])
+
 
 TestDetail = namedtuple('TestDetail', ['field', 'value'])
 
