@@ -19,7 +19,6 @@ from unittest import mock
 from xdg import BaseDirectory
 from testtools.matchers import Contains, Equals, FileExists, Not
 
-import snapcraft
 from snapcraft import (
     file_utils,
     storeapi,
