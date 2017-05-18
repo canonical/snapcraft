@@ -738,17 +738,16 @@ architectures: [{}]
             FileContains(expected))
 
     @mock.patch('subprocess.check_call')
-    def test_prime_with_part_build_packages(self, _):
+    def test_prime_with_source_details(self, _):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
-        self.useFixture(fixture_setup.FakeAptCache([
-            ('test-package1', 'test-version1'),
-            ('test-package2', 'test-version2')]))
 
         self.make_snapcraft_yaml("""parts:
   test-part:
     plugin: nil
-    build-packages: [test-package1=test-version1, test-package2]
+    source: test-source
+    source-type: git
+    source-commit: test-commit
 """)
 
         lifecycle.execute('prime', self.project_options)
@@ -761,9 +760,15 @@ confinement: strict
 grade: stable
 parts:
   test-part:
-    build-packages: [test-package1=test-version1, test-package2=test-version2]
+    build-packages: []
     plugin: nil
     prime: []
+    source: test-source
+    source-branch: ''
+    source-checksum: ''
+    source-commit: test-commit
+    source-tag: ''
+    source-type: git
     stage: []
     stage-packages: []
 architectures: [{}]
