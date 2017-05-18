@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -204,30 +204,34 @@ class Ubuntu(BaseRepo):
                     raise errors.BuildPackageNotFoundError(e) from e
 
         if new_packages:
-            new_packages.sort()
-            logger.info(
-                'Installing build dependencies: %s', ' '.join(new_packages))
-            env = os.environ.copy()
-            env.update({
-                'DEBIAN_FRONTEND': 'noninteractive',
-                'DEBCONF_NONINTERACTIVE_SEEN': 'true',
-            })
+            cls._install_new_build_packages(new_packages)
 
-            apt_command = ['sudo', 'apt-get',
-                           '--no-install-recommends', '-y']
-            if not is_dumb_terminal():
-                apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
-            apt_command.append('install')
+    @classmethod
+    def _install_new_build_packages(cls, new_packages):
+        new_packages.sort()
+        logger.info(
+            'Installing build dependencies: %s', ' '.join(new_packages))
+        env = os.environ.copy()
+        env.update({
+            'DEBIAN_FRONTEND': 'noninteractive',
+            'DEBCONF_NONINTERACTIVE_SEEN': 'true',
+        })
 
-            subprocess.check_call(apt_command + new_packages, env=env)
+        apt_command = ['sudo', 'apt-get',
+                       '--no-install-recommends', '-y']
+        if not is_dumb_terminal():
+            apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
+        apt_command.append('install')
 
-            try:
-                subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
-                                      new_packages, env=env)
-            except subprocess.CalledProcessError as e:
-                logger.warning(
-                    'Impossible to mark packages as auto-installed: {}'
-                    .format(e))
+        subprocess.check_call(apt_command + new_packages, env=env)
+
+        try:
+            subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
+                                  new_packages, env=env)
+        except subprocess.CalledProcessError as e:
+            logger.warning(
+                'Impossible to mark packages as auto-installed: {}'
+                .format(e))
 
     @classmethod
     def get_installed_build_packages(cls, package_names):
