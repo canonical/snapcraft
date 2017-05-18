@@ -201,10 +201,9 @@ class Ubuntu(BaseRepo):
                     elif version and installed_version != version:
                         new_packages.append(pkg)
                 except KeyError as e:
-                    package_provider = _find_virtual_package_provider(
-                        apt_cache, pkg_name)
-                    if package_provider:
-                        new_packages.append(package_provider.package.name)
+                    providers = apt_cache.get_providing_packages(pkg_name)
+                    if providers:
+                        new_packages.append(providers[0].name)
                     else:
                         raise errors.BuildPackageNotFoundError(e) from e
 
@@ -256,9 +255,10 @@ class Ubuntu(BaseRepo):
                 try:
                     installed_package = apt_cache[package_name].candidate
                 except KeyError as e:
-                    installed_package = _find_virtual_package_provider(
-                        apt_cache, package_name)
-                    if not installed_package:
+                    providers = apt_cache.get_providing_packages(package_name)
+                    if providers:
+                        installed_package = providers[0].candidate
+                    else:
                         raise errors.BuildPackageNotFoundError(e) from e
                 if str(installed_package) not in installed_packages:
                     installed_packages.append(str(installed_package))
@@ -394,12 +394,6 @@ class Ubuntu(BaseRepo):
                     manifest_dep_names.add(pkg)
 
         return manifest_dep_names
-
-
-def _find_virtual_package_provider(apt_cache, package_name):
-    for package in apt_cache:
-        if package_name in package.candidate.provides:
-            return package.candidate
 
 
 def _get_local_sources_list():
