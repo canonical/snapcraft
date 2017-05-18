@@ -290,8 +290,6 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
         self.addCleanup(patcher.stop)
         self.mock_upload.return_value = mock_tracker
 
-        self.deb_arch = snapcraft.ProjectOptions().deb_arch
-
     def test_push_revision_cached_with_experimental_deltas(self):
         # Upload
         with mock.patch('snapcraft.storeapi.StatusTracker'):
@@ -304,7 +302,7 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
             'projects',
             'basic',
             'snap_hashes',
-            self.deb_arch,
+            'amd64'
         )
         cached_snap = os.path.join(
             snap_cache, file_utils.calculate_sha3_384(self.snap_file))
@@ -400,7 +398,7 @@ class PushCommandDeltasWithPruneTestCase(PushCommandBaseTestCase):
         self.addCleanup(patcher.stop)
         mock_upload.return_value = mock_tracker
 
-        deb_arch = snapcraft.ProjectOptions().deb_arch
+        deb_arch = 'amd64'
 
         snap_cache = os.path.join(
             BaseDirectory.xdg_cache_home,

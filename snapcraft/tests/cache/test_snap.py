@@ -58,7 +58,7 @@ class SnapCacheTestCase(SnapCacheBaseTestCase):
 
         expected_snap_path = os.path.join(
             snap_cache.snap_cache_root,
-            self.deb_arch,
+            'amd64',
             file_utils.calculate_sha3_384(self.snap_path)
         )
 
@@ -133,10 +133,10 @@ parts:
         snap_hash = file_utils.calculate_sha3_384(self.snap_path)
 
         # get snap by hash
-        snap = snap_cache.get(deb_arch=self.deb_arch, snap_hash=snap_hash)
+        snap = snap_cache.get(deb_arch='amd64', snap_hash=snap_hash)
 
         self.assertEqual(
-            os.path.join(snap_cache.snap_cache_root, self.deb_arch, snap_hash),
+            os.path.join(snap_cache.snap_cache_root, 'amd64', snap_hash),
             snap
         )
 
