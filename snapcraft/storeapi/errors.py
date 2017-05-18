@@ -335,7 +335,9 @@ class StoreValidationError(StoreError):
     def __init__(self, snap_id, response, message=None):
         try:
             response_json = response.json()
-            response_json['text'] = response.json()['error_list'][0]['message']
+            error = response.json()['error_list'][0]
+            response_json['text'] = error.get('message')
+            response_json['extra'] = error.get('extra')
         except (AttributeError, JSONDecodeError):
             response_json = {'text': message or response}
 

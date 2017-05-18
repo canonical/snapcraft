@@ -1002,6 +1002,12 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
             'badrequest': {'snap-id': 'badrequest', 'status': 'Approved',
                            'private': False, 'price': None,
                            'since': '2016-12-12T01:01:01Z'},
+            'revoked': {'snap-id': 'revoked', 'status': 'Approved',
+                        'private': False, 'price': None,
+                        'since': '2016-12-12T01:01:01Z'},
+            'no-revoked': {'snap-id': 'no-revoked', 'status': 'Approved',
+                           'private': False, 'price': None,
+                           'since': '2016-12-12T01:01:01Z'},
             }
         snaps.update({
             name: {'snap-id': 'fake-snap-id', 'status': 'Approved',
@@ -1167,6 +1173,22 @@ class FakeStoreAPIRequestHandler(BaseHTTPRequestHandler):
                 {'message': "The given `snap-id` does not match the "
                             "assertion's.",
                  'code': 'invalid-request'}]}
+            response = json.dumps(response).encode()
+        elif code == 'revoked':
+            status = 409
+            response = {'error_list': [
+                {'message': "The assertion's `developers` would revoke "
+                            "existing uploads.",
+                 'code': 'revoked-uploads',
+                 'extra': ['this']}]}
+            response = json.dumps(response).encode()
+        elif code == 'no-revoked':
+            status = 409
+            response = {'error_list': [
+                {'message': "The collaborators for this snap haven't been "
+                            "altered. Exiting... ",
+                 'code': 'revoked-uploads',
+                 'extra': ['this']}]}
             response = json.dumps(response).encode()
         self.send_response(status)
         self.send_header('Content-Type', 'application/json')

@@ -1,3 +1,4 @@
+
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2017 Canonical Ltd
@@ -110,6 +111,37 @@ class CollaborateErrorsTestCase(CollaborateBaseTestCase):
             'badrequest', 'keyname')
 
         self.assertEqual(
+                'Received error 400: "{}"'.format(
+                    "The given `snap-id` does not match the assertion's."),
+                str(err))
+
+    def test_collaborate_yes_revoke_uploads_request(self):
+        patcher = mock.patch('builtins.input')
+        mock_input = patcher.start()
+        mock_input.return_value = 'y'
+        self.client.login('dummy', 'test correct password')
+        err = self.assertRaises(
+            storeapi.errors.StoreValidationError,
+            collaborate,
+            'revoked', 'keyname')
+
+        self.assertEqual(
+            'Received error 409: "{}"'.format(
+                "The assertion's `developers` would revoke existing uploads."),
+            str(err))
+
+    def test_collaborate_no_revoke_uploads_request(self):
+        patcher = mock.patch('builtins.input')
+        mock_input = patcher.start()
+        mock_input.return_value = 'N'
+        self.client.login('dummy', 'test correct password')
+        err = self.assertRaises(
+            storeapi.errors.StoreValidationError,
+            collaborate,
+            'no-revoked', 'keyname')
+        self.assertIn(
+            "The collaborators for this snap haven't been altered. Exiting...",
+            str(err))
                 'Received error 400: "The given `snap-id` does not match '
                 'the assertion\'s."', str(err))
 

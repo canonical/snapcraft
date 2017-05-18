@@ -838,9 +838,21 @@ def collaborate(snap_name, key):
     assertion['authority-id'] = publisher_id
 
     signed_assertion = _sign_assertion(snap_name, assertion, key, 'developers')
-    store.push_assertion(snap_id, signed_assertion, 'developers')
-
-
+    try:
+        store.push_assertion(snap_id, assertion, 'developers')
+    except storeapi.errors.StoreValidationError as e:
+        if e.error_list[0]['code'] == 'revoked-uploads':
+            print("This will revoke the following uploads: {}".format(
+                e.error_list[0]['extra']))
+            if input("Are you sure you want to continue (y/N): ") == "y":
+                store.push_assertion(
+                    snap_id, assertion, 'developers', force=True)
+            else:
+                print("The collaborators for this snap haven't been altered. "
+                      "Exiting...")
+                raise
+        else:
+            raise
 _COLLABORATION_HEADER = dedent("""\
     # Change which developers may push or release snaps on the publisher's behalf.
     #
@@ -916,6 +928,7 @@ def _are_developers_unchanged(edited_developers, developers_from_assertion):
                     developer[range_], '%Y-%m-%dT%H:%M:%S.%fZ')
                 developer[range_] = date.strftime('%Y-%m-%dT%H:%M:%S.000000Z')
     return developers_from_assertion == edited_developers
+
 
 
 def _get_developers(snap_id, publisher_id):
