@@ -118,6 +118,15 @@ class AssetTrackingTestCase(integration_tests.TestCase):
             state = yaml.load(f)
         self.assertIn('hello', state.assets['build-packages'][0])
 
+    def test_pull_with_virtual_build_package(self):
+        self.run_snapcraft('pull', 'build-virtual-package')
+
+        state_file = os.path.join(
+            self.parts_dir, 'part-with-virtual-build-package', 'state', 'pull')
+        with open(state_file) as f:
+            state = yaml.load(f)
+        self.assertIn('libc6-dev', state.assets['build-packages'][0])
+
 
 TestDetail = namedtuple('TestDetail', ['field', 'value'])
 

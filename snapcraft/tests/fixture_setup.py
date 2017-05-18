@@ -558,34 +558,45 @@ class HgRepo(fixtures.Fixture):
 
 class FakeAptCache(fixtures.Fixture):
 
-    def __init__(self, packages):
+    def __init__(self, packages=None):
         super().__init__()
-        self.packages = packages
+        self.packages = packages if packages else []
+        self.cache = collections.OrderedDict()
 
     def setUp(self):
         super().setUp()
-        temp_dir = fixtures.TempDir()
-        self.useFixture(temp_dir)
+        temp_dir_fixture = fixtures.TempDir()
+        self.useFixture(temp_dir_fixture)
+        self.path = temp_dir_fixture.path
         patcher = mock.patch('snapcraft.repo._deb.apt.Cache')
         mock_apt_cache = patcher.start()
         self.addCleanup(patcher.stop)
 
-        cache = collections.OrderedDict()
         for package, version in self.packages:
-            cache[package] = FakeAptCachePackage(
-                temp_dir.path, package, version)
+            self.cache[package] = FakeAptCachePackage(
+                self.path, package, version)
 
         mock_apt_cache().__getitem__.side_effect = (
-            lambda item: cache[item])
+            lambda item: self.cache[item])
         mock_apt_cache().__enter__().__getitem__.side_effect = (
-            lambda item: cache[item])
+            lambda item: self.cache[item])
 
-        mock_apt_cache().get_changes.return_value = cache.values()
+        mock_apt_cache().get_changes.return_value = self.cache.values()
+
+        mock_apt_cache().__enter__().get_providing_packages.side_effect = (
+            self.get_providing_packages)
+
+    def get_providing_packages(self, package_name):
+        providing_packages = []
+        for package in self.cache:
+            if package_name in self.cache[package].provides:
+                providing_packages.append(self.cache[package])
+        return providing_packages
 
 
 class FakeAptCachePackage():
 
-    def __init__(self, temp_dir, name, version):
+    def __init__(self, temp_dir, name, version, provides=None):
         super().__init__()
         self.temp_dir = temp_dir
         self.name = name
@@ -593,6 +604,7 @@ class FakeAptCachePackage():
         self.versions = {version: self}
         self.candidate = self
         self.installed = version
+        self.provides = provides
 
     def __str__(self):
         return '{}={}'.format(self.name, self.version)

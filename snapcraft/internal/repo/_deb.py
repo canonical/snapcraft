@@ -201,7 +201,11 @@ class Ubuntu(BaseRepo):
                     elif version and installed_version != version:
                         new_packages.append(pkg)
                 except KeyError as e:
-                    raise errors.BuildPackageNotFoundError(e) from e
+                    providers = apt_cache.get_providing_packages(pkg_name)
+                    if providers:
+                        new_packages.append(providers[0].name)
+                    else:
+                        raise errors.BuildPackageNotFoundError(e) from e
 
         if new_packages:
             cls._install_new_build_packages(new_packages)
@@ -251,7 +255,11 @@ class Ubuntu(BaseRepo):
                 try:
                     installed_package = apt_cache[package_name].candidate
                 except KeyError as e:
-                    raise errors.BuildPackageNotFoundError(e) from e
+                    providers = apt_cache.get_providing_packages(package_name)
+                    if providers:
+                        installed_package = providers[0].candidate
+                    else:
+                        raise errors.BuildPackageNotFoundError(e) from e
                 if str(installed_package) not in installed_packages:
                     installed_packages.append(str(installed_package))
                     for depends in installed_package.get_dependencies(
