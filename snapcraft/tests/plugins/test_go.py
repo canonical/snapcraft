@@ -68,9 +68,11 @@ class GoPluginCrossCompileTestCase(tests.TestCase):
         self.assertEqual(1, self.run_mock.call_count)
         for call_args in self.run_mock.call_args_list:
             env = call_args[1]['env']
-            self.assertTrue(
-                'GOARCH' in env, 'Expected environment to include GOARCH')
+            self.assertIn('GOARCH', env)
             self.assertEqual(env['GOARCH'], self.go_arch)
+            if self.deb_arch == 'armhf':
+                self.assertIn('GOARM', env)
+                self.assertEqual(env['GOARM'], '7')
 
 
 class GoPluginTestCase(tests.TestCase):

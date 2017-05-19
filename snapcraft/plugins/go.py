@@ -209,7 +209,8 @@ class GoPlugin(snapcraft.BasePlugin):
             }
             env['GOARCH'] = go_archs.get(self.project.deb_arch,
                                          self.project.deb_arch)
-            env['GOARM'] = '7'
+            if self.project.deb_arch == 'armhf':
+                env['GOARM'] = '7'
         return env
 
     def enable_cross_compilation(self):
