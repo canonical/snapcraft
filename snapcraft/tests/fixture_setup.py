@@ -21,6 +21,7 @@ import os
 import sys
 import tempfile
 import threading
+from textwrap import dedent
 from types import ModuleType
 import urllib.parse
 from unittest import mock
@@ -409,20 +410,36 @@ def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
 class FakeAptGetBuildDep(fixtures.Fixture):
     '''Mock apt-get build-dep output'''
 
+    _PROLOG = dedent('''
+        NOTE: This is only a simulation!
+              apt-get needs root privileges for real execution.
+              Keep also in mind that locking is deactivated,
+              so don't depend on the relevance to the real current situation!
+        Note, using file '{}' to get the build dependencies
+        Reading package lists...
+        Building dependency tree...
+        Reading state information...''')
+    _PROBLEMS = dedent('''
+        Some packages could not be installed. This may mean that you have
+        requested an impossible situation or if you are using the unstable
+        distribution that some required packages have not yet been created
+        or been moved out of Incoming.
+        The following information may help to resolve the situation:
+
+        The following packages have unmet dependencies:
+         builddeps:{}{} : {}
+        E: Unable to correct problems, you have held broken packages.''')
+    _NEW = dedent('''
+        The following NEW packages will be installed:
+          {}
+        0 upgraded, {} newly installed, 0 to remove and 0 not upgraded.''')
+
     def __init__(self, packages, arch='', update_error=False,
                  not_cached=False, not_available=False):
         self.filename = '{}/{}abcdef.dsc'.format(tempfile.gettempdir(),
                                                  tempfile.gettempprefix())
         if arch:
             arch = ':{}'.format(arch)
-        prolog = '''NOTE: This is only a simulation!
-      apt-get needs root privileges for real execution.
-      Keep also in mind that locking is deactivated,
-      so don't depend on the relevance to the real current situation!
-Note, using file '{}' to get the build dependencies
-Reading package lists...
-Building dependency tree...
-Reading state information...'''.format(self.filename)
         if not_cached:
             note = 'Depends: {}{} but it is not going to be installed'
         elif not_available:
@@ -434,24 +451,14 @@ Reading state information...'''.format(self.filename)
             errors.append(note.format(package, arch))
         if not_cached or not_available:
             self.exception = True
-            details = '''Some packages could not be installed. This may mean that you have
-requested an impossible situation or if you are using the unstable
-distribution that some required packages have not yet been created
-or been moved out of Incoming.
-The following information may help to resolve the situation:
-
-The following packages have unmet dependencies:
- builddeps:{}{} : {}
-E: Unable to correct problems, you have held broken packages.'''.format(
+            details = self._PROBLEMS.format(
                 self.filename, arch, '\n'.join(errors))
         else:
             self.exception = False
-            details = '''The following NEW packages will be installed:
-  {}
-0 upgraded, {} newly installed, 0 to remove and 0 not upgraded.'''.format(
-                ' '.join(errors), len(errors))
-        self.output = '{}\n{}'.format(prolog, details).encode(
-            sys.getfilesystemencoding())
+            details = self._NEW.format(' '.join(errors), len(errors))
+        self.output = '{}\n{}'.format(self._PROLOG.format(self.filename),
+                                      details).encode(
+                                          sys.getfilesystemencoding())
         self.update_error = update_error
 
     def _setUp(self):
