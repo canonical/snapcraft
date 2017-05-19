@@ -189,6 +189,11 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def _setup_multi_arch(cls, apt_cache, package_name):
+        """Three steps to enable multi-arch generically:
+        1. Add the architecture to the system if it isn't known to dpkg
+        2. Generate arch-specific sources to retrieve packages from
+        3. Update the package cache
+        """
         if ':' not in package_name or package_name.endswith(':native'):
             return False
 
@@ -231,6 +236,9 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def _get_build_deps(cls, package_names, arch):
+        """Use apt-get build-dep with a fake source package file to find
+           all dependencies and correct architectures.
+        """
         if not package_names:
             return []
         with tempfile.NamedTemporaryFile(suffix='.dsc') as fake_source:
