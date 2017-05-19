@@ -21,7 +21,7 @@ import os
 import sys
 import tempfile
 import threading
-from textwrap import dedent
+from textwrap import dedent, fill
 from types import ModuleType
 import urllib.parse
 from unittest import mock
@@ -432,7 +432,7 @@ class FakeAptGetBuildDep(fixtures.Fixture):
     _NEW = dedent('''
         The following NEW packages will be installed:
           {}
-        0 upgraded, {} newly installed, 0 to remove and 0 not upgraded.''')
+        3 upgraded, {} newly installed, 0 to remove and 5 not upgraded.''')
 
     def __init__(self, packages, arch='', update_error=False,
                  not_cached=False, not_available=False):
@@ -455,7 +455,10 @@ class FakeAptGetBuildDep(fixtures.Fixture):
                 self.filename, arch, '\n'.join(errors))
         else:
             self.exception = False
-            details = self._NEW.format(' '.join(errors), len(errors))
+            details = self._NEW.format(fill(' '.join(errors),
+                                            subsequent_indent='  ',
+                                            break_on_hyphens=False),
+                                       len(errors))
         self.output = '{}\n{}'.format(self._PROLOG.format(self.filename),
                                       details).encode(
                                           sys.getfilesystemencoding())

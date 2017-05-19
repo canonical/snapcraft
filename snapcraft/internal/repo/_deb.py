@@ -254,8 +254,8 @@ class Ubuntu(BaseRepo):
                         sys.getfilesystemencoding())
                 msg = 'The following NEW packages will be installed:\n  '
                 msg_end = len(msg) + actions.find(msg)
-                packages_end = actions.find('\n', msg_end)
-                build_deps = actions[msg_end:packages_end].split(' ')
+                packages_end = re.search('\d+ upgraded', actions).start()
+                build_deps = actions[msg_end:packages_end].split()
             except subprocess.CalledProcessError as e:
                 actions = e.output.decode(sys.getfilesystemencoding())
                 rx = re.compile(
@@ -292,7 +292,7 @@ class Ubuntu(BaseRepo):
                             version and installed_version != version):
                         new_packages.append(pkg)
                 except KeyError as e:
-                    if cls._setup_multi_arch(apt_cache, pkg):
+                    if cls._setup_multi_arch(apt_cache, pkg_name):
                         new_packages.append(pkg)
                     else:
                         raise errors.BuildPackageNotFoundError(pkg) from e
