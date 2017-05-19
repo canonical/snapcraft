@@ -60,12 +60,11 @@ class PrimeTestCase(integration_tests.TestCase):
             FileExists())
 
     def test_prime_with_non_ascii_desktop_file(self):
-        env = os.environ.copy()
         # Originally, in this test we forced LC_ALL=C. However, now that we
         # are using the click python library we can't do it because it fails
         # to run any command when the system language is ascii.
         # --20170518 - elopio
-        self.run_snapcraft('prime', 'desktop-with-non-ascii', env=env)
+        self.run_snapcraft('prime', 'desktop-with-non-ascii')
 
         desktop_path = os.path.join(
             self.prime_dir, 'meta', 'gui', 'test-app.desktop')
