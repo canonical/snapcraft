@@ -211,13 +211,13 @@ class Ubuntu(BaseRepo):
             release = platform.linux_distribution()[2]
             sources = _format_sources_list(None, deb_arch=arch,
                                            release=release, foreign=True)
-            with tempfile.NamedTemporaryFile() as sources_arch:
-                sources_arch.write(sources.encode())
-                sources_arch.flush()
+            with tempfile.NamedTemporaryFile() as sources_arch_file:
+                sources_arch_file.write(sources.encode())
+                sources_arch_file.flush()
                 sources_lists = os.path.join('/etc/apt/sources.list.d/',
                                              'ubuntu-{}.list'.format(arch))
                 subprocess.check_call(['sudo', 'cp',
-                                       sources_arch.name, sources_lists])
+                                       sources_arch_file.name, sources_lists])
                 subprocess.check_call(['sudo', 'chmod',
                                        '644', sources_lists])
 
