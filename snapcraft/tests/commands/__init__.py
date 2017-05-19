@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,9 +13,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import json
+import os
 from textwrap import dedent
+
+from click.testing import CliRunner
+
+from snapcraft import storeapi
+from snapcraft import tests
+from snapcraft.cli import run
+
 
 _sample_keys = [
     {
@@ -60,3 +67,58 @@ def mock_snap_output(command, *args, **kwargs):
                 sha3_384=get_sample_key(name)['sha3-384'])
     else:
         raise AssertionError('Unhandled command: {}'.format(command))
+
+
+class CommandBaseTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.runner = CliRunner()
+
+    def run_command(self, args, **kwargs):
+        return self.runner.invoke(run, args, catch_exceptions=False, **kwargs)
+
+
+class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
+
+    yaml_template = """name: {step}-test
+version: 1.0
+summary: test {step}
+description: if the {step} is succesful the state file will be updated
+confinement: strict
+grade: stable
+
+parts:
+{parts}"""
+
+    yaml_part = """  {step}{iter:d}:
+    plugin: nil"""
+
+    def make_snapcraft_yaml(self, step, n=1, yaml_part=None, create=False):
+        if not yaml_part:
+            yaml_part = self.yaml_part
+
+        parts = '\n'.join([yaml_part.format(step=step, iter=i)
+                           for i in range(n)])
+        super().make_snapcraft_yaml(self.yaml_template.format(step=step,
+                                                              parts=parts))
+
+        parts = []
+        for i in range(n):
+            part_dir = os.path.join(self.parts_dir, '{}{}'.format(step, i))
+            state_dir = os.path.join(part_dir, 'state')
+            parts.append({
+                'part_dir': part_dir,
+                'state_dir': state_dir,
+            })
+
+        return parts
+
+
+class StoreCommandsBaseTestCase(CommandBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_store = tests.fixture_setup.FakeStore()
+        self.useFixture(self.fake_store)
+        self.client = storeapi.StoreClient()

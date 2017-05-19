@@ -152,6 +152,12 @@ class RustPlugin(snapcraft.BasePlugin):
                   '--disable-sudo', '--save'] + options)
 
     def _fetch_deps(self):
+        if self.options.source_subdir:
+            sourcedir = os.path.join(self.sourcedir,
+                                     self.options.source_subdir)
+        else:
+            sourcedir = self.sourcedir
+
         self.run([self._cargo, 'fetch',
                   '--manifest-path',
-                  os.path.join(self.sourcedir, 'Cargo.toml')])
+                  os.path.join(sourcedir, 'Cargo.toml')])

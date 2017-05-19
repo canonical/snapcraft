@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -958,6 +958,7 @@ class StateTestCase(StateBaseTestCase):
     @patch('snapcraft.internal.repo.Repo')
     def test_pull_state(self, repo_mock):
         self.assertEqual(None, self.handler.last_step())
+        repo_mock.get_installed_build_packages.return_value = []
 
         self.handler.pull()
 
@@ -1221,7 +1222,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertEqual('prime', self.handler.last_step())
-        mock_find_dependencies.assert_called_once_with(self.handler.snapdir,
+        mock_find_dependencies.assert_called_once_with(self.handler.primedir,
                                                        {'bin/1', 'bin/2'})
         self.assertFalse(mock_copy.called)
 
@@ -1254,7 +1255,7 @@ class StateTestCase(StateBaseTestCase):
         bindir = os.path.join(self.handler.code.installdir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
-        bindir = os.path.join(self.handler.snapdir, 'bin')
+        bindir = os.path.join(self.handler.primedir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '2'), 'w').close()
 
@@ -1265,7 +1266,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertEqual('prime', self.handler.last_step())
         # bin/2 shouldn't be in this list as it was already primed by another
         # part.
-        mock_find_dependencies.assert_called_once_with(self.handler.snapdir,
+        mock_find_dependencies.assert_called_once_with(self.handler.primedir,
                                                        {'bin/1'})
         self.assertFalse(mock_copy.called)
 
@@ -1309,11 +1310,11 @@ class StateTestCase(StateBaseTestCase):
 
         self.assertEqual('prime', self.handler.last_step())
         mock_find_dependencies.assert_called_once_with(
-            self.handler.snapdir, {'bin/1', 'bin/2'})
+            self.handler.primedir, {'bin/1', 'bin/2'})
         mock_migrate_files.assert_has_calls([
             call({'bin/1', 'bin/2'}, {'bin'}, self.handler.stagedir,
-                 self.handler.snapdir),
-            call({'foo/bar/baz'}, {'foo/bar'}, '/', self.handler.snapdir,
+                 self.handler.primedir),
+            call({'foo/bar/baz'}, {'foo/bar'}, '/', self.handler.primedir,
                  follow_symlinks=True),
         ])
 
@@ -1368,11 +1369,12 @@ class StateTestCase(StateBaseTestCase):
 
         self.assertEqual('prime', self.handler.last_step())
         mock_find_dependencies.assert_called_once_with(
-            self.handler.snapdir, {'bin/file'})
+            self.handler.primedir, {'bin/file'})
         # Verify that only the part's files were migrated-- not the system
         # dependency.
         mock_migrate_files.assert_called_once_with(
-            {'bin/file'}, {'bin'}, self.handler.stagedir, self.handler.snapdir)
+            {'bin/file'}, {'bin'}, self.handler.stagedir,
+            self.handler.primedir)
 
         state = states.get_state(self.handler.statedir, 'prime')
 
@@ -1410,10 +1412,10 @@ class StateTestCase(StateBaseTestCase):
 
         self.assertEqual('prime', self.handler.last_step())
         mock_find_dependencies.assert_called_once_with(
-            self.handler.snapdir, {'bin/1', 'foo/bar/baz'})
+            self.handler.primedir, {'bin/1', 'foo/bar/baz'})
         mock_migrate_files.assert_called_once_with(
             {'bin/1', 'foo/bar/baz'}, {'bin', 'foo', 'foo/bar'},
-            self.handler.stagedir, self.handler.snapdir)
+            self.handler.stagedir, self.handler.primedir)
 
         state = states.get_state(self.handler.statedir, 'prime')
 
@@ -1441,7 +1443,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertEqual('prime', self.handler.last_step())
-        mock_find_dependencies.assert_called_once_with(self.handler.snapdir,
+        mock_find_dependencies.assert_called_once_with(self.handler.primedir,
                                                        {'bin/1'})
         self.assertFalse(mock_copy.called)
 
@@ -2047,7 +2049,7 @@ class CleanPrimeTestCase(CleanBaseTestCase):
         handler.clean_prime({})
 
         self.assertFalse(os.listdir(self.prime_dir),
-                         'Expected snapdir to be completely cleaned')
+                         'Expected prime dir to be completely cleaned')
 
 
 class CleanStageTestCase(CleanBaseTestCase):
@@ -2087,7 +2089,7 @@ class CleanStageTestCase(CleanBaseTestCase):
         handler.clean_stage({})
 
         self.assertFalse(os.listdir(self.stage_dir),
-                         'Expected snapdir to be completely cleaned')
+                         'Expected stage dir to be completely cleaned')
 
 
 class PerStepCleanTestCase(tests.TestCase):

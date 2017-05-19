@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import contextmanager
-import datetime
 import getpass
 import hashlib
 import json
@@ -25,15 +24,21 @@ import os
 import re
 import subprocess
 import tempfile
-
+from datetime import datetime
+from textwrap import dedent
 from subprocess import Popen
 
-from tabulate import tabulate
 import yaml
+# Ideally we would move stuff into more logical components
+from snapcraft.cli import echo
+from tabulate import tabulate
 
 from snapcraft.file_utils import calculate_sha3_384
 from snapcraft import storeapi
-from snapcraft.storeapi.errors import StoreDeltaApplicationError
+from snapcraft.storeapi.errors import (
+    StoreDeltaApplicationError,
+    StoreAssertionError,
+)
 from snapcraft.internal import (
     cache,
     deltas,
@@ -64,8 +69,8 @@ def _get_data_from_snap_file(snap_path):
 
 
 def _fail_login(msg=''):
-    logger.error(msg)
-    logger.error('Login failed.')
+    echo.error(msg)
+    echo.error('Login failed.')
     return False
 
 
@@ -91,7 +96,7 @@ def _check_dev_agreement_and_namespace_statuses(store):
                    storeapi.constants.UBUNTU_STORE_TOS_URL)
             choice = input(
                 storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
-            if choice == 'y':
+            if choice in {'y', 'Y'}:
                 try:
                     store.sign_developer_agreement(latest_tos_accepted=True)
                 except:
@@ -147,20 +152,13 @@ def _login(store, packages=None, acls=None, channels=None, save=True):
         return _fail_login(e.message)
     else:
         print()
-        logger.info('Login successful.')
+        echo.info('Login successful.')
         return True
 
 
 def login():
     store = storeapi.StoreClient()
     return _login(store)
-
-
-def logout():
-    logger.info('Clearing credentials for Ubuntu One SSO.')
-    store = storeapi.StoreClient()
-    store.logout()
-    logger.info('Credentials cleared.')
 
 
 @contextmanager
@@ -419,10 +417,6 @@ def push(snap_filename, release_channels=None):
     If release_channels is defined it also releases it to those channels if the
     store deems the uploaded snap as ready to release.
     """
-    if not os.path.exists(snap_filename):
-        raise FileNotFoundError(
-            'The file {!r} does not exist.'.format(snap_filename))
-
     snap_yaml = _get_data_from_snap_file(snap_filename)
     snap_name = snap_yaml['name']
     store = storeapi.StoreClient()
@@ -534,18 +528,27 @@ def _get_text_for_opened_channels(opened_channels):
 
 def _get_text_for_channel(channel):
     if channel['info'] == 'none':
-        channel_text = (channel['channel'], '-', '-')
+        channel_text = (channel['channel'], '-', '-', '')
     elif channel['info'] == 'tracking':
-        channel_text = (channel['channel'], '^', '^')
+        channel_text = (channel['channel'], '^', '^', '')
     elif channel['info'] == 'specific':
         channel_text = (
             channel['channel'],
             channel['version'],
             channel['revision'],
+            '',
+        )
+    elif channel['info'] == 'branch':
+        channel_text = (
+            channel['channel'],
+            channel['version'],
+            channel['revision'],
+            channel['expires_at'],
         )
     else:
-        raise RuntimeError('Unexpected channel info {!r}.'.format(
-            channel['info']))
+        logger.error('Unexpected channel info: %r in channel %s',
+                     channel['info'], channel['channel'])
+        channel_text = (channel['channel'], '', '', '')
 
     return channel_text
 
@@ -603,30 +606,11 @@ def _tabulated_channel_map_tree(channel_map_tree):
         ]
         data += parsed_channels
 
-    headers = ['Track', 'Arch', 'Channel', 'Version', 'Revision']
-    return tabulate(
-        data, numalign='left',
-        headers=headers,
-        tablefmt='plain'
-    )
-
-
-def _tabulated_status(status):
-    """Tabulate status (architecture-specific channel-maps)."""
-    def _format_channel_map(channel_map, arch):
-        return [
-            (printable_arch,) + _get_text_for_channel(channel)
-            for printable_arch, channel in zip(
-                    [arch] + [''] * len(channel_map), channel_map)]
-
-    parsed_channels = [
-        channel
-        for arch, channel_map in sorted(status.items())
-        for channel in _format_channel_map(channel_map, arch)]
-    return tabulate(
-        parsed_channels, numalign='left',
-        headers=['Arch', 'Channel', 'Version', 'Revision'],
-        tablefmt='plain')
+    have_expiration = any(x[5] for x in data)
+    expires_at_header = "Expires at" if have_expiration else ""
+    headers = ['Track', 'Arch', 'Channel',
+               'Version', 'Revision', expires_at_header]
+    return tabulate(data, numalign='left', headers=headers, tablefmt='plain')
 
 
 def close(snap_name, channel_names):
@@ -641,10 +625,11 @@ def close(snap_name, channel_names):
     try:
         snap_id = info['snaps'][snap_series][snap_name]['snap-id']
     except KeyError:
-        raise RuntimeError(
+        echo.error(
             'Your account lacks permission to close channels for this snap. '
             'Make sure the logged in account has upload permissions on '
             '\'{}\' in series \'{}\'.'.format(snap_name, snap_series))
+        raise
 
     closed_channels, c_m_tree = store.close_channels(snap_id, channel_names)
 
@@ -758,7 +743,6 @@ def gated(snap_name):
 
 def validate(snap_name, validations, revoke=False, key=None):
     """Generate, sign and upload validation assertions."""
-
     # Check validations format
     _check_validations(validations)
 
@@ -779,6 +763,7 @@ def validate(snap_name, validations, revoke=False, key=None):
     # Then, for each requested validation, generate assertion
     for validation in validations:
         gated_name, rev = validation.split('=', 1)
+        echo.info('Getting details for {}'.format(gated_name))
         approved_data = store.cpi.get_package(gated_name, 'stable')
         assertion = {
             'type': 'validation',
@@ -787,7 +772,7 @@ def validate(snap_name, validations, revoke=False, key=None):
             'snap-id': snap_id,
             'approved-snap-id': approved_data['snap_id'],
             'approved-snap-revision': rev,
-            'timestamp': datetime.datetime.utcnow().isoformat() + 'Z',
+            'timestamp': datetime.utcnow().isoformat() + 'Z',
             'revoked': "false"
         }
         if revoke:
@@ -819,12 +804,9 @@ def collaborate(snap_name, key):
     except KeyError:
         raise storeapi.errors.SnapNotFoundError(snap_name)
     assertion = _get_developers(snap_id, publisher_id)
-
-    # XXX: Do the amendments via UI here.
-    #
     # The data will look like:
     # {'snap_developer': {
-    #      'type: 'snap-developer',
+    #      'type': 'snap-developer',
     #      'authority-id': <account_id of the publisher>,
     #      'publisher-id': <account_id of the publisher>,
     #      'snap-id': 'snap_id',
@@ -838,16 +820,98 @@ def collaborate(snap_name, key):
     #         }],
     #      }
     # }
+    developers = _edit_collaborators(assertion.get('developers', []))
+    if _are_developers_unchanged(developers, assertion.get('developers', [])):
+        logger.warning('Aborting due to unchanged collaborators list.')
+        return
+    assertion['developers'] = developers
 
     # The revision should be incremented, to avoid `invalid-revision` errors.
     assertion['revision'] = str(int(assertion.get('revision', '0'))+1)
+
     # There is a possibility that the `authority-id` to be `canonical`,
     # which should be changed to the `publisher_id` to match the signing key.
     assertion['authority-id'] = publisher_id
 
-    assertion = _sign_assertion(snap_name, assertion, key, 'developers')
+    signed_assertion = _sign_assertion(snap_name, assertion, key, 'developers')
+    store.push_assertion(snap_id, signed_assertion, 'developers')
 
-    store.push_assertion(snap_id, assertion, 'developers')
+
+_COLLABORATION_HEADER = dedent("""\
+    # Change which developers may push or release snaps on the publisher's behalf.
+    #
+    # Sample entry:
+    #
+    # developers:
+    #   - developer-id: "dev-one"      # Which developer
+    #     since: "2017-02-10 08:35:00" # When contributions started
+    #     until: "2018-02-10 08:35:00" # When contributions ceased (optional)
+    #
+    # All timestamps are UTC, and the "now" special string will be replaced by
+    # the current time. Do not remove entries or use an until time in the past
+    # unless you want existing snaps provided by the developer to stop working.""") # noqa
+
+
+def _edit_collaborators(developers):
+    """Spawn an editor to modify the snap-developer assertion for a snap."""
+    editor_cmd = os.getenv('EDITOR', 'vi')
+
+    developer_wrapper = {'developers': _reformat_time_from_assertion(
+        developers)}
+
+    with tempfile.NamedTemporaryFile() as ft:
+        ft.close()
+        with open(ft.name, 'w') as fw:
+            print(_COLLABORATION_HEADER, file=fw)
+            yaml.dump(developer_wrapper, stream=fw, default_flow_style=False)
+        subprocess.check_call([editor_cmd, ft.name])
+        with open(ft.name, 'r') as fr:
+            developers = yaml.load(fr).get('developers')
+    return _reformat_time_for_assertion(developers)
+
+
+def _reformat_time_from_assertion(developers):
+    reformatted_developers = []
+    for developer in developers:
+        developer_it = {'developer-id': developer['developer-id']}
+        for range in ['since', 'until']:
+            if range in developer:
+                date = datetime.strptime(developer[range],
+                                         '%Y-%m-%dT%H:%M:%S.%fZ')
+                developer_it[range] = datetime.strftime(date,
+                                                        '%Y-%m-%d %H:%M:%S')
+        reformatted_developers.append(developer_it)
+    return reformatted_developers
+
+
+def _reformat_time_for_assertion(developers):
+    reformatted_developers = []
+    for developer in developers:
+        developer_it = {'developer-id': developer['developer-id']}
+        for range_ in ['since', 'until']:
+            if range_ in developer:
+                if developer[range_] == 'now':
+                    date = datetime.now()
+                else:
+                    date = datetime.strptime(developer[range_],
+                                             '%Y-%m-%d %H:%M:%S')
+                # We don't care about microseconds because we cannot edit
+                # later so we set that to 0.
+                developer_it[range_] = date.strftime(
+                    '%Y-%m-%dT%H:%M:%S.000000Z')
+        reformatted_developers.append(developer_it)
+    return reformatted_developers
+
+
+def _are_developers_unchanged(edited_developers, developers_from_assertion):
+    # We need to compare without milliseconds, so drop them from the assertion.
+    for developer in developers_from_assertion:
+        for range_ in ['since', 'until']:
+            if range_ in developer:
+                date = datetime.strptime(
+                    developer[range_], '%Y-%m-%dT%H:%M:%S.%fZ')
+                developer[range_] = date.strftime('%Y-%m-%dT%H:%M:%S.000000Z')
+    return developers_from_assertion == edited_developers
 
 
 def _get_developers(snap_id, publisher_id):
@@ -868,8 +932,8 @@ def _check_validations(validations):
     invalids = [v for v in validations if not validation_re.match(v)]
     if invalids:
         for v in invalids:
-            logger.error('Invalid validation request "{}", format must be'
-                         ' name=revision'.format(v))
+            echo.error('Invalid validation request "{}", format must be'
+                       ' name=revision'.format(v))
         raise RuntimeError()
 
 
@@ -881,12 +945,11 @@ def _sign_assertion(snap_name, assertion, key, endpoint):
         cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     data = json.dumps(assertion).encode('utf8')
-    logger.info('Signing {} assertion for {}'.format(endpoint, snap_name))
+    echo.info('Signing {} assertion for {}'.format(endpoint, snap_name))
     assertion, err = snap_sign.communicate(input=data)
     if snap_sign.returncode != 0:
         err = err.decode('ascii', errors='replace')
-        raise RuntimeError(
-            'Error signing {} assertion for {}: {!s}'.format(
-                endpoint, snap_name, err))
+        raise StoreAssertionError(
+            endpoint=endpoint, snap_name=snap_name, error=err)
 
     return assertion

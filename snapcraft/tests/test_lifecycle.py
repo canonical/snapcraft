@@ -35,9 +35,10 @@ from snapcraft import storeapi
 from snapcraft.file_utils import calculate_sha3_384
 from snapcraft.internal import pluginhandler, lifecycle
 from snapcraft import tests
+from snapcraft.tests import fixture_setup
 
 
-class ExecutionTestCases(tests.TestCase):
+class BaseExecutionTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -59,6 +60,9 @@ grade: stable
 """
 
         super().make_snapcraft_yaml(yaml.format(parts=parts, type=snap_type))
+
+
+class ExecutionTestCase(BaseExecutionTestCase):
 
     def test__replace_in_parts(self):
         class Options:
@@ -617,6 +621,276 @@ grade: stable
             "In order to continue, please clean that part's 'pull' step "
             "by running: snapcraft clean part1 -s pull\n",
             str(raised))
+
+
+class RecordSnapcraftTestCase(BaseExecutionTestCase):
+
+    def test_prime_without_build_info_does_not_record_snapcraft_yaml(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', None))
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            Not(FileExists()))
+
+    def test_prime_with_build_info_records_snapcraft_yaml(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: []
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+    def test_prime_with_stage_packages(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.useFixture(fixture_setup.FakeAptCache([
+            ('test-package1', 'test-version1'),
+            ('test-package2', 'test-version2')]))
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+    stage-packages: [test-package1=test-version1, test-package2]
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: []
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: [test-package1=test-version1, test-package2=test-version2]
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+    @mock.patch('subprocess.check_call')
+    def test_prime_with_global_build_packages(self, _):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.useFixture(fixture_setup.FakeAptCache([
+            ('test-package1', 'test-version1'),
+            ('test-package2', 'test-version2')]))
+
+        self.make_snapcraft_yaml("""build-packages: [test-package1=test-version1, test-package2]
+parts:
+  test-part:
+    plugin: nil
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+build-packages: [test-package1=test-version1, test-package2=test-version2]
+parts:
+  test-part:
+    build-packages: []
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+architectures: [{}]
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+    @mock.patch('subprocess.check_call')
+    def test_prime_with_source_details(self, _):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+    source: test-source
+    source-type: git
+    source-commit: test-commit
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: []
+    plugin: nil
+    prime: []
+    source: test-source
+    source-branch: ''
+    source-checksum: ''
+    source-commit: test-commit
+    source-tag: ''
+    source-type: git
+    stage: []
+    stage-packages: []
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+    @mock.patch('subprocess.check_call')
+    def test_prime_with_build_package_with_any_architecture(self, _):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.useFixture(fixture_setup.FakeAptCache([
+            ('test-package', 'test-version')]))
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+    build-packages: ['test-package:any']
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: [test-package=test-version]
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+    @mock.patch('subprocess.check_call')
+    def test_prime_with_virtual_build_package(self, _):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        fake_apt_cache = fixture_setup.FakeAptCache()
+        self.useFixture(fake_apt_cache)
+        fake_apt_cache.cache['test-provider-package'] = (
+            fixture_setup.FakeAptCachePackage(
+                fake_apt_cache.path,
+                'test-provider-package', 'test-version',
+                provides=['test-virtual-package']))
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+    build-packages: ['test-virtual-package']
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: [test-provider-package=test-version]
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+
+class RecordSnapcraftWithDeprecatedSnapKeywordTestCase(BaseExecutionTestCase):
+
+    scenarios = (
+        ('using snap keyword', {'keyword': 'snap'}),
+        ('using prime keyword', {'keyword': 'prime'})
+    )
+
+    def test_prime_step_records_prime_keyword(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        parts = ("""parts:
+  test-part:
+    plugin: nil
+    {}: [-*]
+""")
+        self.make_snapcraft_yaml(parts.format(self.keyword))
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: []
+    plugin: nil
+    prime: [-*]
+    stage: []
+    stage-packages: []
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
 
 
 class CoreSetupTestCase(tests.TestCase):

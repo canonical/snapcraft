@@ -7,7 +7,7 @@ description: |
     natural workflow of an upstream to be extended with a simple release step
     into Snappy.
 
-grade: devel
+grade: stable
 confinement: classic
 
 apps:

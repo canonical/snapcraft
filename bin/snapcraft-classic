@@ -16,5 +16,6 @@ arm64)
 esac
 
 export LD_LIBRARY_PATH=$SNAP/usr/lib:$SNAP/usr/lib/$TRIPLET
+export MAGIC=$SNAP/usr/share/file/magic.mgc
 
 exec $SNAP/usr/bin/python3 $SNAP/bin/snapcraft "$@"

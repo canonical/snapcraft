@@ -88,7 +88,7 @@ class PluginHandler:
         self.deps = []
 
         self.stagedir = project_options.stage_dir
-        self.snapdir = project_options.snap_dir
+        self.primedir = project_options.prime_dir
 
         parts_dir = project_options.parts_dir
         self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
@@ -193,7 +193,7 @@ class PluginHandler:
     def makedirs(self):
         dirs = [
             self.code.sourcedir, self.code.builddir, self.code.installdir,
-            self.stagedir, self.snapdir, self.statedir
+            self.stagedir, self.primedir, self.statedir
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
@@ -324,21 +324,14 @@ class PluginHandler:
 
         # Add the annotated list of build packages
         part_build_packages = self._part_properties.get('build-packages', [])
+
         build_packages = repo.Repo.get_installed_build_packages(
             part_build_packages)
-        versioned_build_packages = []
-        for pkg in build_packages:
-            if pkg in part_build_packages:
-                versioned_build_packages.append(pkg)
-            else:
-                pkg_name, version = repo.get_pkg_name_parts(pkg)
-                if pkg_name in part_build_packages:
-                    versioned_build_packages.append(pkg)
 
         self.mark_done('pull', states.PullState(
             pull_properties, part_properties=self._part_properties,
             project=self._project_options, stage_packages=self.stage_packages,
-            build_packages=versioned_build_packages,
+            build_packages=build_packages,
             source_details=self.source_handler.source_details
         ))
 
@@ -508,9 +501,9 @@ class PluginHandler:
         self.makedirs()
         self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
-        _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
+        _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 
-        dependencies = _find_dependencies(self.snapdir, snap_files)
+        dependencies = _find_dependencies(self.primedir, snap_files)
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
@@ -518,7 +511,7 @@ class PluginHandler:
         # already been primed by other means, and migrating them again could
         # potentially override the `stage` or `snap` filtering.
         (in_part, staged, primed, system) = _split_dependencies(
-            dependencies, self.installdir, self.stagedir, self.snapdir)
+            dependencies, self.installdir, self.stagedir, self.primedir)
 
         part_dependency_paths = {os.path.dirname(d) for d in in_part}
         staged_dependency_paths = {os.path.dirname(d) for d in staged}
@@ -534,7 +527,7 @@ class PluginHandler:
                 # make sure we follow those symlinks when we migrate the
                 # dependencies.
                 _migrate_files(system, system_dependency_paths, '/',
-                               self.snapdir, follow_symlinks=True)
+                               self.primedir, follow_symlinks=True)
 
         self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
 
@@ -555,7 +548,7 @@ class PluginHandler:
         state = states.get_state(self.statedir, 'prime')
 
         try:
-            self._clean_shared_area(self.snapdir, state,
+            self._clean_shared_area(self.primedir, state,
                                     project_primed_state)
         except AttributeError:
             raise MissingState(
@@ -588,7 +581,7 @@ class PluginHandler:
         if state:
             for path in state.dependency_paths:
                 dependency_paths.add(
-                    os.path.join(self.snapdir, path.lstrip('/')))
+                    os.path.join(self.primedir, path.lstrip('/')))
 
         return dependency_paths
 
@@ -649,7 +642,7 @@ class PluginHandler:
             self.clean_pull(hint)
 
 
-def _split_dependencies(dependencies, installdir, stagedir, snapdir):
+def _split_dependencies(dependencies, installdir, stagedir, primedir):
     """Split dependencies into their corresponding location.
 
     Return a tuple of sets for each location.
@@ -665,8 +658,8 @@ def _split_dependencies(dependencies, installdir, stagedir, snapdir):
             part_dependencies.add(os.path.relpath(file_path, installdir))
         elif file_path.startswith(stagedir):
             staged_dependencies.add(os.path.relpath(file_path, stagedir))
-        elif file_path.startswith(snapdir):
-            primed_dependencies.add(os.path.relpath(file_path, snapdir))
+        elif file_path.startswith(primedir):
+            primed_dependencies.add(os.path.relpath(file_path, primedir))
         else:
             file_path = file_path.lstrip('/')
 
@@ -679,7 +672,7 @@ def _split_dependencies(dependencies, installdir, stagedir, snapdir):
                 part_dependencies.add(file_path)
             elif os.path.exists(os.path.join(stagedir, file_path)):
                 staged_dependencies.add(file_path)
-            elif os.path.exists(os.path.join(snapdir, file_path)):
+            elif os.path.exists(os.path.join(primedir, file_path)):
                 primed_dependencies.add(file_path)
             else:
                 system_dependencies.add(file_path)

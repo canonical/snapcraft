@@ -25,7 +25,10 @@ from xdg import BaseDirectory
 
 from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.internal.common import get_terminal_width
-from snapcraft.internal.errors import SnapcraftPartMissingError
+from snapcraft.internal.errors import (
+    SnapcraftEnvironmentError,
+    SnapcraftPartMissingError,
+)
 from snapcraft.internal import (
     deprecations,
     pluginhandler,
@@ -188,10 +191,12 @@ class PartsConfig:
             if 'filesets' in properties:
                 del properties['filesets']
 
-            # FIXME: snap is deprecated, rewrite it to prime instead.
-            if properties.get('snap'):
-                deprecations.handle_deprecation_notice('dn1')
-                properties['prime'] = properties.pop('snap')
+            # Handle the deprecated snap keyword.
+            if 'snap' in properties:
+                snap = properties.pop('snap')
+                if snap:
+                    deprecations.handle_deprecation_notice('dn1')
+                    properties['prime'] = snap
 
             self.load_plugin(part_name, plugin_name, properties)
 
@@ -260,7 +265,7 @@ class PartsConfig:
     def validate(self, part_names):
         for part_name in part_names:
             if part_name not in self._part_names:
-                raise EnvironmentError(
+                raise SnapcraftEnvironmentError(
                     'The part named {!r} is not defined in '
                     '{!r}'.format(part_name, self._snapcraft_yaml))
 

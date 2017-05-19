@@ -1,0 +1,9 @@
+name: basic
+version: 0.1
+summary: Summary of the most simple snap
+description: Description of the most simple snap
+confinement: strict
+
+parts:
+  dummy-part:
+    plugin: nil

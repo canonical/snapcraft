@@ -161,7 +161,7 @@ parts:
         project_loader.Config()
         mock_loadPlugin.assert_called_with('part1', 'go', {
             'stage-packages': ['fswebcam'],
-            'plugin': 'go', 'stage': [], 'prime': [], 'snap': [],
+            'plugin': 'go', 'stage': [], 'prime': [],
         })
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
@@ -184,7 +184,7 @@ parts:
 
         mock_loadPlugin.assert_called_with('part1', 'go', {
             'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
-            'plugin': 'go', 'stage': [], 'prime': [], 'snap': []})
+            'plugin': 'go', 'stage': [], 'prime': []})
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_config_composes_with_remote_subpart(self, mock_loadPlugin):
@@ -206,7 +206,7 @@ parts:
 
         mock_loadPlugin.assert_called_with('part1', 'go', {
             'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
-            'plugin': 'go', 'stage': [], 'prime': [], 'snap': []})
+            'plugin': 'go', 'stage': [], 'prime': []})
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_chaining_remotes_not_locally_declared(self, mock_loadPlugin):
@@ -319,7 +319,7 @@ parts:
             'curl',
             plugin_name='autotools',
             part_properties={
-                'plugin': 'autotools', 'stage': [], 'prime': [], 'snap': [],
+                'plugin': 'autotools', 'stage': [], 'prime': [],
                 'source': 'http://curl.org'},
             project_options=project_options,
             part_schema=self.part_schema,
@@ -328,7 +328,7 @@ parts:
             'part1',
             plugin_name='go',
             part_properties={
-                'plugin': 'go', 'stage': [], 'prime': [], 'snap': [],
+                'plugin': 'go', 'stage': [], 'prime': [],
                 'stage-packages': ['fswebcam']},
             project_options=project_options,
             part_schema=self.part_schema,
@@ -756,7 +756,6 @@ parts:
         project_loader.Config()
 
         mock_loadPlugin.assert_called_with('part1', 'go', {
-            'snap': [],
             'prime': ['/usr/lib/wget.so', '/usr/bin/wget',
                       '/usr/share/my-icon.png'],
             'plugin': 'go', 'stage-packages': ['fswebcam'],
@@ -825,7 +824,7 @@ parts:
 
         mock_load_plugin.assert_called_with('main', 'make', {
             'source': 'project-name-1',
-            'plugin': 'make', 'stage': [], 'prime': [], 'snap': [],
+            'plugin': 'make', 'stage': [], 'prime': [],
             'make-options': ['DEP={}'.format(self.stage_dir)],
         })
 
@@ -919,7 +918,7 @@ parts:
 
         mock_loadPlugin.assert_called_with('part1', 'go', {
             'plugin': 'go', 'stage-packages': ['fswebcam'],
-            'stage': [], 'prime': [], 'snap': [],
+            'stage': [], 'prime': [],
         })
 
 

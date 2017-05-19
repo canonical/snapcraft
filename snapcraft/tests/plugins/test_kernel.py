@@ -20,7 +20,9 @@ import os
 from unittest import mock
 
 import fixtures
-from testtools.matchers import Equals, HasLength
+from testtools.matchers import Equals, FileContains, HasLength
+
+from textwrap import dedent
 
 import snapcraft
 from snapcraft import (
@@ -38,6 +40,7 @@ class KernelPluginTestCase(tests.TestCase):
         class Options:
             build_parameters = []
             kconfigfile = None
+            kconfigflavour = None
             kdefconfig = []
             kconfigs = []
             kernel_image_target = 'bzImage'
@@ -91,6 +94,9 @@ class KernelPluginTestCase(tests.TestCase):
 
         self.assertEqual(properties['kconfigfile']['type'], 'string')
         self.assertEqual(properties['kconfigfile']['default'], None)
+
+        self.assertEqual(properties['kconfigflavour']['type'], 'string')
+        self.assertEqual(properties['kconfigflavour']['default'], None)
 
         for prop in ['kconfigs', 'kernel-initrd-modules',
                      'kernel-initrd-firmware', 'kernel-device-trees']:
@@ -443,6 +449,56 @@ class KernelPluginTestCase(tests.TestCase):
 
         self.assertEqual(config_contents, 'ACCEPT=y\n')
         self._assert_common_assets(plugin.installdir)
+
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
+    def test_check_config(self):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
+        self.options.kconfigfile = 'config'
+        with open(self.options.kconfigfile, 'w') as f:
+            f.write('ACCEPT=y\n')
+
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        self._simulate_build(
+            plugin.sourcedir, plugin.builddir, plugin.installdir)
+
+        builtin, modules = plugin._do_parse_config(self.options.kconfigfile)
+        plugin._do_check_config(builtin, modules)
+
+        required_opts = (kernel.required_generic + kernel.required_security +
+                         kernel.required_snappy + kernel.required_systemd)
+        for warn in required_opts:
+            self.assertIn('CONFIG_{}'.format(warn), fake_logger.output)
+
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
+    def test_check_initrd(self):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
+        self.options.kconfigfile = 'config'
+        self.options.kernel_initrd_modules = ['my-fake-module']
+        with open(self.options.kconfigfile, 'w') as f:
+            f.write('ACCEPT=y\n')
+
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        self._simulate_build(
+            plugin.sourcedir, plugin.builddir, plugin.installdir)
+
+        builtin, modules = plugin._do_parse_config(self.options.kconfigfile)
+        plugin._do_check_initrd(builtin, modules)
+
+        for module in kernel.required_boot:
+            self.assertIn('CONFIG_{}'.format(module.upper()),
+                          fake_logger.output)
 
     @mock.patch.object(
         snapcraft._options.ProjectOptions,
@@ -817,6 +873,70 @@ ACCEPT=n
         config_file = os.path.join(plugin.builddir, '.config')
         self.assertTrue(os.path.exists(config_file))
 
+    @mock.patch.object(
+        snapcraft._options.ProjectOptions,
+        'kernel_arch', new='not_arm')
+    def test_build_with_kconfigflavour(self):
+        arch = self.project_options.deb_arch
+        branch = 'master'
+        flavour = 'vanilla'
+        self.options.kconfigflavour = flavour
+        os.mkdir('debian')
+        with open('debian/debian.env', 'w') as f:
+            f.write('DEBIAN=debian.{}'.format(branch))
+        os.mkdir('debian.{}'.format(branch))
+        basedir = os.path.join('debian.{}'.format(branch), 'config')
+        archdir = os.path.join('debian.{}'.format(branch), 'config', arch)
+        os.mkdir(basedir)
+        os.mkdir(archdir)
+        commoncfg = os.path.join(basedir, 'config.common.ports')
+        ubuntucfg = os.path.join(basedir, 'config.common.ubuntu')
+        archcfg = os.path.join(archdir, 'config.common.{}'.format(arch))
+        flavourcfg = os.path.join(archdir, 'config.flavour.{}'.format(flavour))
+
+        with open(commoncfg, 'w') as f:
+            f.write('ACCEPT=y\n')
+        with open(ubuntucfg, 'w') as f:
+            f.write('ACCEPT=m\n')
+        with open(archcfg, 'w') as f:
+            f.write('ACCEPT=y\n')
+        with open(flavourcfg, 'w') as f:
+            f.write('# ACCEPT is not set\n')
+
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     self.project_options)
+
+        self._simulate_build(
+            plugin.sourcedir, plugin.builddir, plugin.installdir)
+
+        plugin.build()
+
+        self._assert_generic_check_call(plugin.builddir, plugin.installdir,
+                                        plugin.os_snap)
+
+        self.assertEqual(2, self.run_mock.call_count)
+        self.run_mock.assert_has_calls([
+            mock.call(['make', '-j2', 'bzImage', 'modules']),
+            mock.call(['make', '-j2',
+                       'CONFIG_PREFIX={}'.format(plugin.installdir),
+                       'modules_install',
+                       'INSTALL_MOD_PATH={}'.format(plugin.installdir),
+                       'firmware_install',
+                       'INSTALL_FW_PATH={}'.format(os.path.join(
+                           plugin.installdir, 'lib', 'firmware'))])
+        ])
+
+        config_file = os.path.join(plugin.builddir, '.config')
+        self.assertTrue(os.path.exists(config_file))
+
+        self.assertThat(config_file, FileContains(dedent("""\
+        ACCEPT=y
+        ACCEPT=m
+        ACCEPT=y
+        # ACCEPT is not set
+        """)))
+        self._assert_common_assets(plugin.installdir)
+
     def test_build_with_missing_kernel_fails(self):
         self.options.kconfigfile = 'config'
 
@@ -886,6 +1006,18 @@ ACCEPT=n
         self.assertEqual(
             plugin.make_cmd,
             ['make', '-j2', 'ARCH=arm64', 'CROSS_COMPILE=aarch64-linux-gnu-'])
+
+    def test_override_cross_compile(self):
+        project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     project_options)
+        self.useFixture(fixtures.EnvironmentVariable('CROSS_COMPILE',
+                                                     'foo-bar-toolchain-'))
+        plugin.enable_cross_compilation()
+
+        self.assertEqual(
+            plugin.make_cmd,
+            ['make', '-j2', 'ARCH=arm64', 'CROSS_COMPILE=foo-bar-toolchain-'])
 
     def test_kernel_image_target_as_map(self):
         self.options.kernel_image_target = {'arm64': 'Image'}

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,102 +13,73 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+from textwrap import dedent
 import logging
 
 import fixtures
+from testtools.matchers import Contains, Equals
 
-from snapcraft import main, tests
+from snapcraft.tests import TestWithFakeRemoteParts
 from snapcraft.tests import fixture_setup
+from . import CommandBaseTestCase
 
 
-class SearchCommandTestCase(tests.TestWithFakeRemoteParts):
+class SearchCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
 
     def test_searching_for_a_part_that_exists(self):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
+        result = self.run_command(['search', 'curl'])
 
-        main.main(['search', 'curl'])
-
-        expected_output = """PART NAME  DESCRIPTION
-curl       test entry for curl
-"""
-        self.assertEqual(fake_terminal.getvalue(), expected_output)
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            PART NAME  DESCRIPTION
+            curl       test entry for curl""")))
 
     def test_empty_search_searches_all(self):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
+        result = self.run_command(['search'])
 
-        main.main(['search'])
-
-        output = fake_terminal.getvalue()
-        self.assertEqual(
-            output.split('\n')[0], 'PART NAME            DESCRIPTION')
-        self.assertTrue('part1                test entry for part1' in output)
-        self.assertTrue('curl                 test entry for curl' in output)
-        self.assertTrue(
-            'long-described-part  this is a repetitive description '
-            'this is a repetitive de...' in output)
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            PART NAME            DESCRIPTION
+            curl                 test entry for curl
+            long-described-part  this is a repetitive description this is a repetitive de...
+            multiline-part       this is a multiline description
+            part1                test entry for part1"""))) # noqa
 
     def test_search_trims_long_descriptions(self):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
+        result = self.run_command(['search', 'long-described-part'])
 
-        main.main(['search', 'long-described-part'])
-
-        expected_output = (
-            'PART NAME            DESCRIPTION\n'
-            'long-described-part  this is a repetitive description this is a '
-            'repetitive de...\n')
-        self.assertEqual(fake_terminal.getvalue(), expected_output)
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            PART NAME            DESCRIPTION
+            long-described-part  this is a repetitive description this is a repetitive de...
+            """))) # noqa
 
     def test_search_only_first_line_of_description(self):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
+        result = self.run_command(['search', 'mulitline-part'])
 
-        main.main(['search', 'mulitline-part'])
-
-        expected_output = (
-            'PART NAME       DESCRIPTION\n'
-            'multiline-part  this is a multiline description\n')
-        self.assertEqual(fake_terminal.getvalue(), expected_output)
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            PART NAME       DESCRIPTION
+            multiline-part  this is a multiline description""")))
 
     def test_searching_for_a_part_that_doesnt_exist_helps_out(self):
-        self.useFixture(fixture_setup.FakeTerminal())
-
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
-        main.main(['search', 'part that does not exist'])
+        result = self.run_command(['search', 'part that does not exist'])
 
-        self.assertEqual(
-            fake_logger.output,
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(fake_logger.output, Contains(
             'No matches found, try to run `snapcraft update` to refresh the '
-            'remote parts cache.\n')
+            'remote parts cache.\n'))
 
     def test_search_on_non_tty(self):
         fake_terminal = fixture_setup.FakeTerminal(isatty=False)
         self.useFixture(fake_terminal)
 
-        main.main(['search', 'curl'])
+        result = self.run_command(['search', 'curl'])
 
-        expected_output = """PART NAME  DESCRIPTION
-curl       test entry for curl
-"""
-        self.assertEqual(fake_terminal.getvalue(), expected_output)
-
-    def test_search_output_alphabetical_order(self):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
-
-        main.main(['search'])
-        output = fake_terminal.getvalue()
-        expected_output = (
-            'PART NAME            DESCRIPTION\n'
-            'curl                 test entry for curl\n'
-            'long-described-part  this is a repetitive description this is a '
-            'repetitive de...\n'
-            'multiline-part       this is a multiline description\n'
-            'part1                test entry for part1\n')
-
-        self.assertEqual(output, expected_output)
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            PART NAME  DESCRIPTION
+            curl       test entry for curl""")))

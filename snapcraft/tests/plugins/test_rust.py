@@ -29,6 +29,9 @@ class RustPluginTestCase(tests.TestCase):
             makefile = None
             make_parameters = []
             rust_features = []
+            rust_revision = ''
+            rust_channel = ''
+            source_subdir = ''
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -162,4 +165,22 @@ class RustPluginTestCase(tests.TestCase):
             mock.call([
                 plugin._cargo, 'fetch',
                 '--manifest-path', os.path.join(plugin.sourcedir, 'Cargo.toml')
+            ])])
+
+    @mock.patch.object(rust.sources, 'Script')
+    @mock.patch.object(rust.RustPlugin, 'run')
+    def test_pull_with_source_and_source_subdir(self, run_mock, script_mock):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+        plugin.options.source_subdir = 'test-subdir'
+
+        plugin.pull()
+
+        run_mock.assert_has_calls([
+            mock.ANY,
+            mock.call([
+                plugin._cargo, 'fetch',
+                '--manifest-path',
+                os.path.join(plugin.sourcedir, 'test-subdir', 'Cargo.toml')
             ])])
