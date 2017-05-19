@@ -229,8 +229,17 @@ class BuildPackagesTestCase(tests.TestCase):
                      'versioned-package': MagicMock(installed=True,
                                                     version='0.1')}
 
-    def get_installable_packages(self, pkgs):
-        return [p for p in pkgs if not pkgs[p].installed]
+    def get_installable_packages(self, pkgs, arch=''):
+        installable = []
+        for pkg in pkgs:
+            if not pkgs[pkg].installed:
+                name, version = repo.get_pkg_name_parts(pkg)
+                if arch:
+                    name += ':{}'.format(arch)
+                if version:
+                    name += '={}'.format(version)
+                installable.append(name)
+        return installable
 
     @patch('os.environ')
     @patch('snapcraft.repo._deb.apt')
@@ -278,7 +287,41 @@ class BuildPackagesTestCase(tests.TestCase):
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
     @patch('subprocess.check_call')
+    @patch('snapcraft.repo._deb.apt')
+    @patch('os.environ')
     def test_install_build_package_with_arch(
+            self, mock_env, mock_apt, mock_check_call, mock_is_dumb_terminal):
+        mock_is_dumb_terminal.return_value = True
+        fake_apt = tests.fixture_setup.FakeAptGetBuildDep(
+            self.test_packages, 'armhf')
+        self.useFixture(fake_apt)
+        mock_env.copy.return_value = {}
+        mock_apt_cache = mock_apt.Cache.return_value
+        mock_apt_cache_with = mock_apt_cache.__enter__.return_value
+        mock_apt_cache_with.__getitem__.side_effect = lambda p: \
+            self.test_packages[p.replace(':armhf', '')]
+
+        repo.Ubuntu.install_build_packages(self.test_packages.keys(), 'armhf')
+
+        fake_apt.check_output_mock.assert_has_calls([
+            call(['apt-get', 'build-dep', '-q', '-s',
+                  '-aarmhf', fake_apt.filename],
+                 env={}, stderr=-2),
+        ])
+
+        installable = self.get_installable_packages(self.test_packages,
+                                                    'armhf')
+        mock_check_call.assert_has_calls([
+            call(['sudo', 'apt-get', '--no-install-recommends',
+                  '-y', 'install'] +
+                 sorted(set(installable)),
+                 env={'DEBIAN_FRONTEND': 'noninteractive',
+                      'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
+        ])
+
+    @patch('snapcraft.repo._deb.is_dumb_terminal')
+    @patch('subprocess.check_call')
+    def test_install_build_package_with_arch_update_failed(
             self, mock_check_call, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = True
         fake_apt = tests.fixture_setup.FakeAptGetBuildDep(
@@ -295,8 +338,8 @@ class BuildPackagesTestCase(tests.TestCase):
             call(['apt-get', 'build-dep', '-q', '-s',
                   '-aarmhf', fake_apt.filename],
                  env={}, stderr=-2),
-            call('dpkg --print-foreign-architectures'.split()),
-            call('sudo apt-get update'.split(),
+            call(['dpkg', '--print-foreign-architectures']),
+            call(['sudo', 'apt-get', 'update'],
                  stderr=-2),
         ])
 

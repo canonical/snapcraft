@@ -254,7 +254,22 @@ class Ubuntu(BaseRepo):
                     '(.+Depends: (.+) but it is not .+|.+)')
                 for line in actions.split('\n'):
                     build_deps.append(rx.sub('\\2', line))
-            return [package for package in build_deps if package]
+            # apt-get build-dep will output name=version:arch
+            # Ensure that the format is always name:arch=version
+            pkgs = []
+            for pkg in build_deps:
+                if not pkg:
+                    continue
+                name, version_with_arch = repo.get_pkg_name_parts(pkg)
+                if version_with_arch:
+                    if ':' in version_with_arch:
+                        version, arch = version_with_arch.split(':')
+                        name += ':{}'.format(arch)
+                    else:
+                        version = version_with_arch
+                    name += '={}'.format(version)
+                pkgs.append(name)
+            return pkgs
 
     @classmethod
     def install_build_packages(cls, package_names, arch):

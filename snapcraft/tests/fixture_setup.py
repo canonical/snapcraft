@@ -484,7 +484,7 @@ E: Unable to correct problems, you have held broken packages.'''.format(
                 if self.update_error:
                     output += template.format('Err', '9', server)
                 return output.encode(sys.getfilesystemencoding())
-            else:
+            elif args[0][:2] == ['dpkg', '--print-foreign-architectures']:
                 return 'amd64\n'.encode(sys.getfilesystemencoding())
         return call_effect
 
