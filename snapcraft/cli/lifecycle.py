@@ -137,8 +137,12 @@ def snap(directory, output, **kwargs):
     if env.is_containerbuild():
         lifecycle.containerbuild('snap', project_options, output, directory)
     else:
-        snap_name = lifecycle.snap(
-            project_options, directory=directory, output=output)
+        try:
+            snap_name = lifecycle.snap(
+                project_options, directory=directory, output=output)
+        except Exception as e:
+            echo.error(e)
+            sys.exit(1)
         click.echo('Snapped {}'.format(snap_name))
 
 

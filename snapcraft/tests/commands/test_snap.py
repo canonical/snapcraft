@@ -83,6 +83,15 @@ parts:
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
+    def test_snap_fails_with_bad_type(self):
+        self.make_snapcraft_yaml(snap_type='bad-type')
+
+        result = self.run_command(['snap'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            "bad-type' is not one of ['app', 'gadget', 'kernel', 'os']"))
+
     def test_snap_is_the_default(self):
         self.make_snapcraft_yaml()
 
