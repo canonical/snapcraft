@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -183,7 +183,7 @@ def reset_env():
 
 
 def get_terminal_width(max_width=MAX_CHARACTERS_WRAP):
-    if os.isatty(sys.stdout.fileno()):
+    if os.isatty(1):
         width = shutil.get_terminal_size().columns
     else:
         width = MAX_CHARACTERS_WRAP

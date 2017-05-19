@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,9 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import os
-import sys
 
 from urllib.request import urlretrieve
 from progressbar import (
@@ -103,6 +101,6 @@ def download_urllib_source(uri, destination, message=None):
 
 def is_dumb_terminal():
     """Return True if on a dumb terminal."""
-    is_stdout_tty = os.isatty(sys.stdout.fileno())
+    is_stdout_tty = os.isatty(1)
     is_term_dumb = os.environ.get('TERM', '') == 'dumb'
     return not is_stdout_tty or is_term_dumb

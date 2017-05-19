@@ -20,6 +20,7 @@ import platform
 import re
 import shutil
 import subprocess
+import sys
 import time
 import uuid
 import xdg
@@ -38,6 +39,10 @@ from snapcraft.tests import (
     fixture_setup,
     subprocess_utils
 )
+
+
+class RegisterError(Exception):
+    pass
 
 
 class TestCase(testtools.TestCase):
@@ -389,20 +394,26 @@ class StoreTestCase(TestCase):
         command = ['register', snap_name]
         if private:
             command.append('--private')
+        process = pexpect.spawn(self.snapcraft_command, command)
+        process.expect(r'.*\[y/N\]: ')
+        process.sendline('y')
         try:
-            self.run_snapcraft(command)
-        except subprocess.CalledProcessError as e:
+            process.expect_exact(
+                'Congrats! You are now the publisher of {!r}.'.format(
+                    snap_name))
+        except pexpect.exceptions.EOF:
             wait_error_regex = (
                 '.*You must wait (\d+) seconds before trying to register your '
                 'next snap.*')
-            match = re.search(wait_error_regex, e.output)
+            output = process.before.decode(sys.getfilesystemencoding())
+            match = re.search(wait_error_regex, output)
             if wait and match:
                 time.sleep(int(match.group(1)))
                 # This could get stuck for ever if the user is registering
                 # other snaps in parallel.
                 self.register(snap_name, private, wait)
             else:
-                raise
+                raise RegisterError(output)
 
     def register_key(self, key_name, email=None, password=None,
                      expect_success=True):
@@ -542,11 +553,11 @@ class StoreTestCase(TestCase):
         if expect_success:
             if local:
                 process.expect(
-                    'Build assertion {}-build saved to disk.'.format(
+                    'Build assertion .*{}-build saved to disk.'.format(
                         snap_filename))
             else:
                 process.expect(
-                    'Build assertion {}-build pushed.'.format(snap_filename))
+                    'Build assertion .*{}-build pushed.'.format(snap_filename))
 
         process.expect(pexpect.EOF)
         process.close()
