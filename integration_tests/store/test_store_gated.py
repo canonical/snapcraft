@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -46,6 +46,8 @@ class GatedTestCase(integration_tests.StoreTestCase):
     def test_gated_no_validations(self):
         self.addCleanup(self.logout)
         self.login()
+        snap_name = 'test-snap-with-no-validations'
         self.assertEqual(0, self.gated(
-            'basic',
-            expected_output="There are no validations for snap 'basic'"))
+            snap_name,
+            expected_output="There are no validations for snap '{}'".format(
+                snap_name)))

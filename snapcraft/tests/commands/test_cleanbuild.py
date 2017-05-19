@@ -17,15 +17,15 @@
 import logging
 import os
 import tarfile
-from testtools.matchers import Contains
+from testtools.matchers import Equals, Contains
 
 import fixtures
 
-from snapcraft.main import main
 from snapcraft import tests
+from . import CommandBaseTestCase
 
 
-class CleanBuildCommandTestCase(tests.TestCase):
+class CleanBuildCommandTestCase(CommandBaseTestCase):
 
     yaml_template = """name: snap-test
 version: 1.0
@@ -73,8 +73,9 @@ parts:
         for f in files_tar + files_no_tar:
             open(f, 'w').close()
 
-        main(['cleanbuild', '--debug'])
+        result = self.run_command(['cleanbuild', '--debug'])
 
+        self.assertThat(result.exit_code, Equals(0))
         self.assertIn(
             'Setting up container with project assets\n'
             'Waiting for a network connection...\n'
@@ -108,16 +109,12 @@ parts:
 
         self.useFixture(tests.fixture_setup.FakeLXD(fail_on_default=True))
 
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['cleanbuild'])
+        result = self.run_command(['cleanbuild'])
 
-        self.maxDiff = None
-        self.assertEqual(1, raised.code)
-        self.assertEqual(
-            fake_logger.output,
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Equals(
             'You must have LXD installed in order to use cleanbuild. '
             'However, it is either not installed or not configured '
             'properly.\n'
             'Refer to the documentation at '
-            'https://linuxcontainers.org/lxd/getting-started-cli.\n')
+            'https://linuxcontainers.org/lxd/getting-started-cli.\n'))

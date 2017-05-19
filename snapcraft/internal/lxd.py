@@ -25,9 +25,11 @@ from subprocess import check_call, check_output, CalledProcessError, Popen
 from time import sleep
 
 import petname
+import yaml
 
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal import common
+from snapcraft._options import _get_deb_arch
 
 logger = logging.getLogger(__name__)
 
@@ -53,6 +55,23 @@ class Containerbuild:
             remote = _get_default_remote()
         _verify_remote(remote)
         self._container_name = '{}:snapcraft-{}'.format(remote, container_name)
+        server_environment = self._get_remote_info()['environment']
+        # Use the server architecture to avoid emulation overhead
+        try:
+            kernel = server_environment['kernel_architecture']
+        except KeyError:
+            kernel = server_environment['kernelarchitecture']
+        deb_arch = _get_deb_arch(kernel)
+        if not deb_arch:
+            raise SnapcraftEnvironmentError(
+                'Unrecognized server architecture {}'.format(kernel))
+        self._host_arch = deb_arch
+        self._image = 'ubuntu:xenial/{}'.format(deb_arch)
+
+    def _get_remote_info(self):
+        remote = self._container_name.split(':')[0]
+        return yaml.load(check_output([
+            'lxc', 'info', '{}:'.format(remote)]).decode())
 
     def _push_file(self, src, dst):
         check_call(['lxc', 'file', 'push',
@@ -73,12 +92,14 @@ class Containerbuild:
 
     def _ensure_container(self):
         check_call([
-            'lxc', 'launch', '-e',
-            'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
-            self._container_name])
+            'lxc', 'launch', '-e', self._image, self._container_name])
         check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.SNAPCRAFT_SETUP_CORE', '1'])
+        # Necessary to read asset files with non-ascii characters.
+        check_call([
+            'lxc', 'config', 'set', self._container_name,
+            'environment.LC_ALL', 'C.UTF-8'])
 
     @contextmanager
     def _ensure_started(self):
@@ -106,6 +127,8 @@ class Containerbuild:
             command = ['snapcraft', step]
             if step == 'snap':
                 command += ['--output', self._snap_output]
+            if self._host_arch != self._project_options.deb_arch:
+                command += ['--target-arch', self._project_options.deb_arch]
             if args:
                 command += args
             try:
@@ -180,9 +203,7 @@ class Project(Containerbuild):
     def _ensure_container(self):
         if not self._get_container_status():
             check_call([
-                'lxc', 'init',
-                'ubuntu:xenial/{}'.format(self._project_options.deb_arch),
-                self._container_name])
+                'lxc', 'init', self._image, self._container_name])
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'environment.SNAPCRAFT_SETUP_CORE', '1'])

@@ -13,24 +13,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import logging
-
+from textwrap import dedent
 from unittest import mock
 
-import docopt
-import fixtures
+from testtools.matchers import Contains, Equals
 
-from snapcraft import storeapi, tests
-from snapcraft.main import main
+from snapcraft import storeapi
+from . import CommandBaseTestCase
 
 
-class StatusCommandTestCase(tests.TestCase):
+class StatusCommandTestCase(CommandBaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
         self.expected = {
             'i386': [
                 {
@@ -69,82 +64,72 @@ class StatusCommandTestCase(tests.TestCase):
         }
 
     def test_status_without_snap_raises_exception(self):
-        raised = self.assertRaises(
-            docopt.DocoptExit,
-            main, ['status'])
+        result = self.run_command(['status'])
 
-        self.assertIn('Usage:', str(raised))
+        self.assertThat(result.exit_code, Equals(2))
+        self.assertThat(result.output, Contains('Usage:'))
 
     def test_status_with_no_permissions(self):
-        self.assertRaises(
-            SystemExit,
-            main, ['status', 'snap-test'])
+        result = self.run_command(['status', 'snap-test'])
 
-        self.assertIn(
-            'No valid credentials found. Have you run "snapcraft login"?',
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            'No valid credentials found. Have you run "snapcraft login"?'))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_with_3rd_party_snap(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, ['status', 'snap-test'])
+        result = self.run_command(['status', 'snap-test'])
 
-        self.assertIn(
-            "Snap 'snap-test' was not found in '16' series.",
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            "Snap 'snap-test' was not found in '16' series."))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_with_3rd_party_snap_by_arch(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, ['status', 'snap-test', '--arch=arm64'])
+        result = self.run_command(['status', 'snap-test', '--arch=arm64'])
 
-        self.assertIn(
-            "Snap 'snap-test' for 'arm64' was not found in '16' series.",
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            "Snap 'snap-test' for 'arm64' was not found in '16' series."))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_with_3rd_party_snap_by_series(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, ['status', 'snap-test', '--series=15'])
+        result = self.run_command(['status', 'snap-test', '--series=18'])
 
-        self.assertIn(
-            "Snap 'snap-test' was not found in '15' series.",
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            "Snap 'snap-test' was not found in '18' series."))
 
     @mock.patch.object(storeapi.SCAClient, 'snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_by_unknown_arch(self, mock_account_api, mock_status):
         mock_status.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, ['status', 'snap-test', '--arch=some-arch'])
+        result = self.run_command(['status', 'snap-test', '--arch=some-arch'])
 
-        self.assertIn(
-            "Snap 'snap-test' for 'some-arch' was not found in '16' series.",
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            "Snap 'snap-test' for 'some-arch' was not found in '16' series."))
 
     @mock.patch.object(storeapi.SCAClient, 'snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_by_unknown_series(self, mock_account_api, mock_status):
         mock_status.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, ['status', 'snap-test', '--series=some-series'])
+        mock_status.return_value = {}
 
-        self.assertIn(
-            "Snap 'snap-test' was not found in 'some-series' series.",
-            self.fake_logger.output)
+        result = self.run_command(['status', 'snap-test',
+                                   '--series=some-series'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            "Snap 'snap-test' was not found in 'some-series' series."))
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
@@ -157,20 +142,18 @@ class StatusCommandTestCase(tests.TestCase):
             }
         }
 
-        main(['status', 'snap-test'])
+        result = self.run_command(['status', 'snap-test'])
 
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Track    Arch    Channel    Version    Revision
+            latest   amd64   stable     1.0-amd64  2
+                             beta       1.1-amd64  4
+                             edge       ^          ^
+                     i386    stable     -          -
+                             beta       -          -
+                             edge       1.0-i386   3""")))
         mock_status.assert_called_once_with('snap-test', '16', None)
-
-        terminal_output = self.fake_terminal.getvalue()
-        expected_output = [
-            'Track    Arch    Channel    Version    Revision',
-            'latest   amd64   stable     1.0-amd64  2',
-            '                 beta       1.1-amd64  4',
-            '                 edge       ^          ^',
-            '         i386    stable     -          -',
-            '                 beta       -          -',
-            '                 edge       1.0-i386   3']
-        self.assertEqual(expected_output, terminal_output.splitlines())
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
@@ -185,17 +168,15 @@ class StatusCommandTestCase(tests.TestCase):
             }
         }
 
-        main(['status', 'snap-test', '--arch=i386'])
+        result = self.run_command(['status', 'snap-test', '--arch=i386'])
 
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Track    Arch    Channel    Version    Revision
+            latest   i386    stable     -          -
+                             beta       -          -
+                             edge       1.0-i386   3""")))
         mock_status.assert_called_once_with('snap-test', '16', 'i386')
-
-        terminal_output = self.fake_terminal.getvalue()
-        expected_output = [
-            'Track    Arch    Channel    Version    Revision',
-            'latest   i386    stable     -          -',
-            '                 beta       -          -',
-            '                 edge       1.0-i386   3']
-        self.assertEqual(expected_output, terminal_output.splitlines())
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
@@ -208,20 +189,18 @@ class StatusCommandTestCase(tests.TestCase):
             }
         }
 
-        main(['status', 'snap-test', '--series=16'])
+        result = self.run_command(['status', 'snap-test', '--series=16'])
 
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Track    Arch    Channel    Version    Revision
+            latest   amd64   stable     1.0-amd64  2
+                             beta       1.1-amd64  4
+                             edge       ^          ^
+                     i386    stable     -          -
+                             beta       -          -
+                             edge       1.0-i386   3""")))
         mock_status.assert_called_once_with('snap-test', '16', None)
-
-        terminal_output = self.fake_terminal.getvalue()
-        expected_output = [
-            'Track    Arch    Channel    Version    Revision',
-            'latest   amd64   stable     1.0-amd64  2',
-            '                 beta       1.1-amd64  4',
-            '                 edge       ^          ^',
-            '         i386    stable     -          -',
-            '                 beta       -          -',
-            '                 edge       1.0-i386   3']
-        self.assertEqual(expected_output, terminal_output.splitlines())
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
@@ -253,14 +232,13 @@ class StatusCommandTestCase(tests.TestCase):
             }
         }
 
-        main(['status', 'snap-test'])
+        result = self.run_command(['status', 'snap-test'])
 
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Track    Arch    Channel        Version    Revision    Expires at
+            latest   i386    stable         -          -
+                             beta           -          -
+                             stable/hotfix  1.0-i386   3           2017-05-21T18:52:14.578435
+            """))) # noqa
         mock_status.assert_called_once_with('snap-test', '16', None)
-
-        terminal_output = self.fake_terminal.getvalue()
-        expected_output = [
-            'Track    Arch    Channel        Version    Revision    Expires at',  # NOQA
-            'latest   i386    stable         -          -',
-            '                 beta           -          -',
-            '                 stable/hotfix  1.0-i386   3           2017-05-21T18:52:14.578435']  # NOQA
-        self.assertEqual(expected_output, terminal_output.splitlines())

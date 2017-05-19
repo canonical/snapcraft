@@ -14,10 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import contextlib
-import os
 import configparser
 import logging
+import os
 import re
 import shlex
 import shutil
@@ -28,10 +29,14 @@ import yaml
 
 from snapcraft import file_utils
 from snapcraft import shell_utils
-from snapcraft.internal import common
+from snapcraft.internal import (
+    common,
+    repo
+)
 from snapcraft.internal.errors import MissingGadgetError
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.sources import get_source_handler_from_type
+from snapcraft.internal.states import get_state
 
 
 logger = logging.getLogger(__name__)
@@ -137,7 +142,24 @@ class _SnapPackaging:
         if os.environ.get('SNAPCRAFT_BUILD_INFO'):
             os.makedirs(record_dir, exist_ok=True)
             with open(record_file_path, 'w') as record_file:
-                yaml.dump(self._config_data, record_file)
+                annotated_snapcraft = self._annotate_snapcraft(
+                    copy.deepcopy(self._config_data))
+                yaml.dump(annotated_snapcraft, record_file)
+
+    def _annotate_snapcraft(self, data):
+        data['build-packages'] = repo.Repo.get_installed_build_packages(
+            data.get('build-packages', []))
+        for part in data['parts']:
+            pull_state = get_state(
+                os.path.join(self._parts_dir, part, 'state'), 'pull')
+            data['parts'][part]['build-packages'] = (
+                pull_state.assets.get('build-packages', []))
+            data['parts'][part]['stage-packages'] = (
+                pull_state.assets.get('stage-packages', []))
+            source_details = pull_state.assets.get('source-details', {})
+            if source_details:
+                data['parts'][part].update(source_details)
+        return data
 
     def write_snap_directory(self):
         # First migrate the snap directory. It will overwrite any conflicting
@@ -381,7 +403,7 @@ class _DesktopFile:
     def parse_and_reformat(self):
         self._parser = configparser.ConfigParser(interpolation=None)
         self._parser.optionxform = str
-        self._parser.read(self._path)
+        self._parser.read(self._path, encoding='utf-8')
         section = 'Desktop Entry'
         if section not in self._parser.sections():
             raise EnvironmentError(
@@ -417,7 +439,7 @@ class _DesktopFile:
             # Unlikely. A desktop file in setup/gui/ already existed for
             # this app. Let's pretend it wasn't there and overwrite it.
             os.remove(target)
-        with open(target, 'w') as f:
+        with open(target, 'w', encoding='utf-8') as f:
             self._parser.write(f, space_around_delimiters=False)
 
 

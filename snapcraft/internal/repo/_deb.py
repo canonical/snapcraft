@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -193,53 +193,83 @@ class Ubuntu(BaseRepo):
             for pkg in unique_packages:
                 try:
                     pkg_name, version = repo.get_pkg_name_parts(pkg)
+                    if pkg_name.endswith(':any'):
+                        pkg_name = pkg_name[:-4]
                     installed_version = apt_cache[pkg_name].installed
                     if not installed_version:
                         new_packages.append(pkg)
                     elif version and installed_version != version:
                         new_packages.append(pkg)
                 except KeyError as e:
-                    raise errors.BuildPackageNotFoundError(e) from e
+                    providers = apt_cache.get_providing_packages(pkg_name)
+                    if providers:
+                        new_packages.append(providers[0].name)
+                    else:
+                        raise errors.BuildPackageNotFoundError(e) from e
 
         if new_packages:
-            new_packages.sort()
-            logger.info(
-                'Installing build dependencies: %s', ' '.join(new_packages))
-            env = os.environ.copy()
-            env.update({
-                'DEBIAN_FRONTEND': 'noninteractive',
-                'DEBCONF_NONINTERACTIVE_SEEN': 'true',
-            })
+            cls._install_new_build_packages(new_packages)
 
-            apt_command = ['sudo', 'apt-get',
-                           '--no-install-recommends', '-y']
-            if not is_dumb_terminal():
-                apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
-            apt_command.append('install')
+    @classmethod
+    def _install_new_build_packages(cls, new_packages):
+        new_packages.sort()
+        logger.info(
+            'Installing build dependencies: %s', ' '.join(new_packages))
+        env = os.environ.copy()
+        env.update({
+            'DEBIAN_FRONTEND': 'noninteractive',
+            'DEBCONF_NONINTERACTIVE_SEEN': 'true',
+        })
 
-            subprocess.check_call(apt_command + new_packages, env=env)
+        apt_command = ['sudo', 'apt-get',
+                       '--no-install-recommends', '-y']
+        if not is_dumb_terminal():
+            apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
+        apt_command.append('install')
 
-            try:
-                subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
-                                      new_packages, env=env)
-            except subprocess.CalledProcessError as e:
-                logger.warning(
-                    'Impossible to mark packages as auto-installed: {}'
-                    .format(e))
+        subprocess.check_call(apt_command + new_packages, env=env)
+
+        try:
+            subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
+                                  new_packages, env=env)
+        except subprocess.CalledProcessError as e:
+            logger.warning(
+                'Impossible to mark packages as auto-installed: {}'
+                .format(e))
 
     @classmethod
     def get_installed_build_packages(cls, package_names):
-        unique_packages = set(package_names)
-        pkg_list = []
+        build_packages = package_names[:]
+        installed_packages = []
         with apt.Cache() as apt_cache:
-            for pkg in unique_packages:
+            while build_packages:
+                # Before we get to this point, the version specified in the
+                # yaml must have been installed. So we are ignoring the
+                # versions of the packages passed as arguments and we just use
+                # the versions installed.
+                # --elopio - 20170504
+                package_name, _ = repo.get_pkg_name_parts(
+                    build_packages.pop(0))
+                if package_name.endswith(':any'):
+                    package_name = package_name[:-4]
                 try:
-                    pkg_name, version = repo.get_pkg_name_parts(pkg)
-                    pkg_list.append(str(apt_cache[pkg_name].candidate))
+                    installed_package = apt_cache[package_name].candidate
                 except KeyError as e:
-                    raise errors.BuildPackageNotFoundError(e) from e
-
-        return pkg_list
+                    providers = apt_cache.get_providing_packages(package_name)
+                    if providers:
+                        installed_package = providers[0].candidate
+                    else:
+                        raise errors.BuildPackageNotFoundError(e) from e
+                if str(installed_package) not in installed_packages:
+                    installed_packages.append(str(installed_package))
+                    for depends in installed_package.get_dependencies(
+                            'Depends'):
+                        # deps is a list of or dependencies. We are taking
+                        # the first one that satisfies the dependency, which
+                        # might or might not be problematic.
+                        # --elopio - 20170504
+                        build_packages.append(depends[0].name)
+        return installed_packages
 
     @classmethod
     def is_package_installed(cls, package_name):

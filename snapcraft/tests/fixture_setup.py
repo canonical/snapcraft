@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,14 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import contextlib
-from functools import partial
 import io
 import os
 import sys
 import threading
-from types import ModuleType
 import urllib.parse
+from functools import partial
+from types import ModuleType
 from unittest import mock
 from subprocess import CalledProcessError
 
@@ -346,7 +347,7 @@ class TestStore(fixtures.Fixture):
             self.already_owned_snap_name = 'test-already-owned-snap-name'
         elif test_store == 'staging':
             self.useFixture(StagingStore())
-            self.register_count_limit = 10
+            self.register_count_limit = 100
             self.reserved_snap_name = 'bash'
         elif test_store == 'production':
             # Use the default server URLs
@@ -394,6 +395,11 @@ def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
                 return 'local'.encode('utf-8')
         elif args[0] == ['lxc', 'list', 'my-remote:'] and fail_on_remote:
             raise CalledProcessError(returncode=255, cmd=args[0])
+        elif args[0][:2] == ['lxc', 'info']:
+            return '''
+                environment:
+                  kernel_architecture: x86_64
+                '''.encode('utf-8')
         elif args[0][:3] == ['lxc', 'list', '--format=json']:
             return '''
                 [{"name": "snapcraft-snap-test",
@@ -425,6 +431,15 @@ class FakeLXD(fixtures.Fixture):
 
         patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
         patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('platform.machine')
+        self.machine_mock = patcher.start()
+        self.machine_mock.return_value = 'x86_64'
+        self.addCleanup(patcher.stop)
+        patcher = mock.patch('platform.architecture')
+        self.architecture_mock = patcher.start()
+        self.architecture_mock.return_value = ('64bit', 'ELF')
         self.addCleanup(patcher.stop)
 
 
@@ -548,3 +563,68 @@ class HgRepo(fixtures.Fixture):
             revno = call_with_output(['hg', 'id']).split()[0]
 
             self.commit = revno
+
+
+class FakeAptCache(fixtures.Fixture):
+
+    def __init__(self, packages=None):
+        super().__init__()
+        self.packages = packages if packages else []
+        self.cache = collections.OrderedDict()
+
+    def setUp(self):
+        super().setUp()
+        temp_dir_fixture = fixtures.TempDir()
+        self.useFixture(temp_dir_fixture)
+        self.path = temp_dir_fixture.path
+        patcher = mock.patch('snapcraft.repo._deb.apt.Cache')
+        mock_apt_cache = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        for package, version in self.packages:
+            self.cache[package] = FakeAptCachePackage(
+                self.path, package, version)
+
+        mock_apt_cache().__getitem__.side_effect = (
+            lambda item: self.cache[item])
+        mock_apt_cache().__enter__().__getitem__.side_effect = (
+            lambda item: self.cache[item])
+
+        mock_apt_cache().get_changes.return_value = self.cache.values()
+
+        mock_apt_cache().__enter__().get_providing_packages.side_effect = (
+            self.get_providing_packages)
+
+    def get_providing_packages(self, package_name):
+        providing_packages = []
+        for package in self.cache:
+            if package_name in self.cache[package].provides:
+                providing_packages.append(self.cache[package])
+        return providing_packages
+
+
+class FakeAptCachePackage():
+
+    def __init__(self, temp_dir, name, version, provides=None):
+        super().__init__()
+        self.temp_dir = temp_dir
+        self.name = name
+        self.version = version
+        self.versions = {version: self}
+        self.candidate = self
+        self.installed = version
+        self.provides = provides
+
+    def __str__(self):
+        return '{}={}'.format(self.name, self.version)
+
+    def mark_install(self):
+        pass
+
+    def fetch_binary(self, dir_, progress):
+        path = os.path.join(self.temp_dir, self.name)
+        open(path, 'w').close()
+        return path
+
+    def get_dependencies(self, _):
+        return []

@@ -13,23 +13,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import logging
-
+from textwrap import dedent
 from unittest import mock
 
-import fixtures
+from testtools.matchers import Contains, Equals
 
-from snapcraft.main import main
-from snapcraft import storeapi, tests
+from snapcraft import storeapi
+from . import CommandBaseTestCase
 
 
-class ChannelClosingTestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
-        self.useFixture(self.fake_logger)
+class CloseCommandTestCase(CommandBaseTestCase):
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     def test_close_missing_permission(self, mock_get_account_info):
@@ -38,16 +31,14 @@ class ChannelClosingTestCase(tests.TestCase):
             'snaps': {
             }
         }
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['close', 'foo', 'beta'])
 
-        self.assertEqual(1, raised.code)
-        self.assertEqual([
+        result = self.run_command(['close', 'foo', 'beta'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
             'Your account lacks permission to close channels for this snap. '
             'Make sure the logged in account has upload permissions on '
-            "'foo' in series '16'.",
-        ], self.fake_logger.output.splitlines())
+            "'foo' in series '16'."))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.SCAClient, 'close_channels')
@@ -75,17 +66,17 @@ class ChannelClosingTestCase(tests.TestCase):
             (closed_channels, channel_map_tree),
         ]
 
-        main(['close', 'basic', 'beta'])
+        result = self.run_command(['close', 'basic', 'beta'])
 
-        self.assertEqual([
-            'Track    Arch    Channel    Version    Revision',
-            'latest   amd64   stable     -          -',
-            '                 candidate  -          -',
-            '                 beta       1.1        42',
-            '                 edge       ^          ^',
-            '',
-            '\x1b[0;32mThe beta channel is now closed.\x1b[0m'
-        ], self.fake_terminal.getvalue().splitlines())
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Track    Arch    Channel    Version    Revision
+            latest   amd64   stable     -          -
+                             candidate  -          -
+                             beta       1.1        42
+                             edge       ^          ^
+
+            \x1b[0;32mThe beta channel is now closed.\x1b[0m""")))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.SCAClient, 'close_channels')
@@ -114,17 +105,17 @@ class ChannelClosingTestCase(tests.TestCase):
             (closed_channels, channel_map_tree),
         ]
 
-        main(['close', 'basic', 'beta', 'edge'])
+        result = self.run_command(['close', 'basic', 'beta', 'edge'])
 
-        self.assertEqual([
-            'Track    Arch    Channel    Version    Revision',
-            'latest   amd64   stable     -          -',
-            '                 candidate  1.1        42',
-            '                 beta       ^          ^',
-            '                 edge       ^          ^',
-            '',
-            '\x1b[0;32mThe beta and edge channels are now closed.\x1b[0m'
-        ], self.fake_terminal.getvalue().splitlines())
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Track    Arch    Channel    Version    Revision
+            latest   amd64   stable     -          -
+                             candidate  1.1        42
+                             beta       ^          ^
+                             edge       ^          ^
+
+            \x1b[0;32mThe beta and edge channels are now closed.\x1b[0m""")))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.SCAClient, 'close_channels')
@@ -161,21 +152,21 @@ class ChannelClosingTestCase(tests.TestCase):
             (closed_channels, channel_map_tree),
         ]
 
-        main(['close', 'basic', 'beta'])
+        result = self.run_command(['close', 'basic', 'beta'])
 
-        self.assertEqual([
-            'Track    Arch    Channel    Version    Revision',
-            'latest   amd64   stable     -          -',
-            '                 candidate  -          -',
-            '                 beta       1.1        42',
-            '                 edge       ^          ^',
-            '         armhf   stable     -          -',
-            '                 beta       1.2        24',
-            '                 beta       ^          ^',
-            '                 edge       ^          ^',
-            '',
-            '\x1b[0;32mThe beta channel is now closed.\x1b[0m'
-        ], self.fake_terminal.getvalue().splitlines())
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Track    Arch    Channel    Version    Revision
+            latest   amd64   stable     -          -
+                             candidate  -          -
+                             beta       1.1        42
+                             edge       ^          ^
+                     armhf   stable     -          -
+                             beta       1.2        24
+                             beta       ^          ^
+                             edge       ^          ^
+
+            \x1b[0;32mThe beta channel is now closed.\x1b[0m""")))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.SCAClient, 'close_channels')
@@ -206,15 +197,15 @@ class ChannelClosingTestCase(tests.TestCase):
             (closed_channels, channel_map_tree),
         ]
 
-        main(['close', 'basic', 'stable/hotfix-1'])
+        result = self.run_command(['close', 'basic', 'stable/hotfix-1'])
 
-        self.assertEqual([
-            'Track    Arch    Channel          Version    Revision    Expires at',  # NOQA
-            'latest   amd64   stable           -          -',
-            '                 candidate        -          -',
-            '                 beta             1.1        42',
-            '                 edge             ^          ^',
-            '                 stable/hotfix-2  1.3        49          2017-05-21T18:52:14.578435',  # NOQA
-            '',
-            '\x1b[0;32mThe stable/hotfix-1 channel is now closed.\x1b[0m'
-        ], self.fake_terminal.getvalue().splitlines())
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Track    Arch    Channel          Version    Revision    Expires at
+            latest   amd64   stable           -          -
+                             candidate        -          -
+                             beta             1.1        42
+                             edge             ^          ^
+                             stable/hotfix-2  1.3        49          2017-05-21T18:52:14.578435
+
+            \x1b[0;32mThe stable/hotfix-1 channel is now closed.\x1b[0m"""))) # noqa
