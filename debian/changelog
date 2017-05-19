@@ -35,7 +35,7 @@ snapcraft (2.30) xenial; urgency=medium
   [ Christian Dywan ]
   * lxd: pass through commands into the container (#1263)
   * lxd: setup image and target arch for cross-compilation (#1286)
-  * lxd: support the architectures field  from older LXDs (#1305)
+  * lxd: support the architectures field from older LXDs (#1305)
   * lxd: mock platform in the FakeLXD fixture (#1315)
 
   [ Paolo Pisati ]
