@@ -1,0 +1,22 @@
+name: libapitest
+version: 0.1
+summary: Testing api packaging
+description: Testing api packaging
+confinement: strict
+
+build-packages: [gcc, libc6-dev]
+
+parts:
+  project:
+    plugin: make
+    source: .
+
+  api:
+    plugin: development
+    source: .
+    exclude:  ['Makefile','*.c','*.o', '*tar.gz', '*.snap']
+    extension: api
+    after:
+      - project
+ 
+
