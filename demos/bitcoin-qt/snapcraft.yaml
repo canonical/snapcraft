@@ -1,0 +1,50 @@
+name: bitcoin-qt
+version: '1.0.0.1-git-5a0fd1a'
+summary: Bitcoin Unlimited - The Only Bitcoin Client That Gives You Complete Freedom!
+description: |
+  Bitcoin is a free open source peer-to-peer electronic cash system that is completely decentralized, without the need for a central server or trusted parties. Users hold the crypto keys to their own money and transact directly with each other, with the help of a P2P network to check for double-spending.
+
+grade: stable
+confinement: strict
+
+apps:
+  bitcoin-qt:
+    command: desktop-launch $SNAP/usr/local/bin/bitcoin-qt
+    plugs: [network, network-bind, home, unity7]
+
+parts:
+  libdb4.8:
+    plugin: autotools
+    source: http://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz
+#    source-checksum: sha256/12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef
+    source-subdir: dist
+    stage:
+      - usr/local/BerkeleyDB.4.8/lib/*
+      - usr/local/BerkeleyDB.4.8/include/*
+    build: |
+      cd build_unix
+      ../dist/configure --disable-shared --enable-cxx --with-pic && make && make install DESTDIR=$SNAPCRAFT_PART_INSTALL
+  bitcoin-qt:
+    after: [libdb4.8, desktop-qt4]
+    build-packages: [libdb4.8]
+    plugin: autotools
+    source: git://github.com/BitcoinUnlimited/BitcoinUnlimited.git
+    source-type: git
+    source-commit: 5a0fd1a2a77b1b4411aa6c8fbc1132cda225e359
+    build-packages:
+      - g++
+      - libboost-dev
+      - libboost-system-dev 
+      - libboost-filesystem-dev
+      - libboost-program-options-dev
+      - libboost-thread-dev
+      - libboost-test-dev
+      - libssl-dev
+      - libevent-dev
+      - protobuf-compiler
+      - libzmq3-dev
+      - libminiupnpc-dev
+      - libqrencode-dev
+    build: |
+      ./autogen.sh && ./configure LDFLAGS='-L$SNAPCRAFT_STAGE/usr/local/BerkeleyDB.4.8/lib/' CPPFLAGS='-I$SNAPCRAFT_STAGE/usr/local/BerkeleyDB.4.8/include/' --with-gui --enable-hardening --with-boost-libdir=/usr/lib/x86_64-linux-gnu/ && make && make install DESTDIR=$SNAPCRAFT_PART_INSTALL 
+
