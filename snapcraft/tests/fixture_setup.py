@@ -421,6 +421,9 @@ class FakeAptGetBuildDep(fixtures.Fixture):
               apt-get needs root privileges for real execution.
               Keep also in mind that locking is deactivated,
               so don't depend on the relevance to the real current situation!
+              ''')
+    _READING = dedent('''
+        {}
         Note, using file '{}' to get the build dependencies
         Reading package lists...
         Building dependency tree...
@@ -444,7 +447,10 @@ class FakeAptGetBuildDep(fixtures.Fixture):
                  not_cached=False, not_available=False):
         self.filename = '{}/{}abcdef.dsc'.format(tempfile.gettempdir(),
                                                  tempfile.gettempprefix())
+        self.arch = 'amd64'
+        self.archs = [self.arch]
         if arch:
+            self.arch = arch
             arch = ':{}'.format(arch)
         if not_cached:
             note = 'Depends: {}{} but it is not going to be installed'
@@ -465,9 +471,9 @@ class FakeAptGetBuildDep(fixtures.Fixture):
                                             subsequent_indent='  ',
                                             break_on_hyphens=False),
                                        len(errors))
-        self.output = '{}\n{}'.format(self._PROLOG.format(self.filename),
-                                      details).encode(
-                                          sys.getfilesystemencoding())
+        self.output = '{}\n{}'.format(self._READING.format(
+            self._PROLOG, self.filename), details).encode(
+                  sys.getfilesystemencoding())
         self.update_error = update_error
 
     def _setUp(self):
@@ -481,6 +487,11 @@ class FakeAptGetBuildDep(fixtures.Fixture):
         self.check_output_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('subprocess.check_call')
+        self.check_call_mock = patcher.start()
+        self.check_call_mock.side_effect = self.check_call_side_effect()
+        self.addCleanup(patcher.stop)
+
         patcher = mock.patch('snapcraft.internal.repo._deb.open',
                              mock.mock_open())
         self.open_mock = patcher.start()
@@ -489,7 +500,15 @@ class FakeAptGetBuildDep(fixtures.Fixture):
     def check_output_side_effect(self):
         def call_effect(*args, **kwargs):
             if args[0][:2] == ['apt-get', 'build-dep']:
-                if self.exception:
+                if self.arch not in self.archs:
+                    output = '{}\n{} {}. {}\n'.format(
+                        self._PROLOG,
+                        'E: No architecture information available for',
+                        self.arch,
+                        'See apt.conf(5) APT::Architectures for setup').encode(
+                            sys.getfilesystemencoding())
+                    raise CalledProcessError(100, args[0], output)
+                elif self.exception:
                     raise CalledProcessError(100, args[0], self.output)
                 else:
                     return self.output
@@ -501,7 +520,18 @@ class FakeAptGetBuildDep(fixtures.Fixture):
                     output += template.format('Err', '9', server)
                 return output.encode(sys.getfilesystemencoding())
             elif args[0][:2] == ['dpkg', '--print-foreign-architectures']:
-                return 'amd64\n'.encode(sys.getfilesystemencoding())
+                return '\n'.join(self.archs).encode(
+                    sys.getfilesystemencoding())
+        return call_effect
+
+    def check_call_side_effect(self):
+        def call_effect(*args, **kwargs):
+            if args[0][:3] == ['sudo', 'dpkg', '--add-architecture']:
+                self.archs.append(args[0][3])
+                return dedent('''
+                    Odd number of elements in hash assignment at
+                     /usr/share/pkg-config-dpkghook line 30
+                    ''').encode(sys.getfilesystemencoding())
         return call_effect
 
 

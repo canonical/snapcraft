@@ -252,9 +252,8 @@ class BuildPackagesTestCase(tests.TestCase):
         repo.Ubuntu.install_build_packages(test_pkgs.keys(), 'amd64')
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
-    @patch('subprocess.check_call')
     def test_install_build_package(
-            self, mock_check_call, mock_is_dumb_terminal):
+            self, mock_is_dumb_terminal):
         fake_apt = tests.fixture_setup.FakeAptGetBuildDep(
             self.test_packages.keys())
         self.useFixture(fake_apt)
@@ -262,7 +261,7 @@ class BuildPackagesTestCase(tests.TestCase):
         self.install_test_packages(self.test_packages)
 
         installable = self.get_installable_packages(self.test_packages)
-        mock_check_call.assert_has_calls([
+        fake_apt.check_call_mock.assert_has_calls([
             call('sudo apt-get --no-install-recommends -y '
                  '-o Dpkg::Progress-Fancy=1 install'.split() +
                  sorted(set(installable)),
@@ -271,14 +270,15 @@ class BuildPackagesTestCase(tests.TestCase):
         ])
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
-    @patch('subprocess.check_call')
     def test_install_buid_package_in_dumb_terminal(
-            self, mock_check_call, mock_is_dumb_terminal):
+            self, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = True
+        fake_apt = tests.fixture_setup.FakeAptGetBuildDep(self.test_packages)
+        self.useFixture(fake_apt)
         self.install_test_packages(self.test_packages)
 
         installable = self.get_installable_packages(self.test_packages)
-        mock_check_call.assert_has_calls([
+        fake_apt.check_call_mock.assert_has_calls([
             call('sudo apt-get --no-install-recommends -y install'.split() +
                  sorted(set(installable)),
                  env={'DEBIAN_FRONTEND': 'noninteractive',
@@ -286,11 +286,10 @@ class BuildPackagesTestCase(tests.TestCase):
         ])
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
-    @patch('subprocess.check_call')
     @patch('snapcraft.repo._deb.apt')
     @patch('os.environ')
     def test_install_build_package_with_arch(
-            self, mock_env, mock_apt, mock_check_call, mock_is_dumb_terminal):
+            self, mock_env, mock_apt, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = True
         fake_apt = tests.fixture_setup.FakeAptGetBuildDep(
             self.test_packages, 'armhf')
@@ -300,9 +299,11 @@ class BuildPackagesTestCase(tests.TestCase):
         mock_apt_cache_with = mock_apt_cache.__enter__.return_value
         mock_apt_cache_with.__getitem__.side_effect = lambda p: \
             self.test_packages[p.replace(':armhf', '')]
+        self.assertEqual(['amd64'], fake_apt.archs)
 
         repo.Ubuntu.install_build_packages(self.test_packages.keys(), 'armhf')
 
+        self.assertEqual(['amd64', 'armhf'], fake_apt.archs)
         fake_apt.check_output_mock.assert_has_calls([
             call(['apt-get', 'build-dep', '-q', '-s',
                   '-aarmhf', fake_apt.filename],
@@ -311,7 +312,7 @@ class BuildPackagesTestCase(tests.TestCase):
 
         installable = self.get_installable_packages(self.test_packages,
                                                     'armhf')
-        mock_check_call.assert_has_calls([
+        fake_apt.check_call_mock.assert_has_calls([
             call(['sudo', 'apt-get', '--no-install-recommends',
                   '-y', 'install'] +
                  sorted(set(installable)),
@@ -320,13 +321,13 @@ class BuildPackagesTestCase(tests.TestCase):
         ])
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
-    @patch('subprocess.check_call')
     def test_install_build_package_with_arch_update_failed(
-            self, mock_check_call, mock_is_dumb_terminal):
+            self, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = True
         fake_apt = tests.fixture_setup.FakeAptGetBuildDep(
             self.test_packages, 'armhf', update_error=True)
         self.useFixture(fake_apt)
+        self.assertEqual(['amd64'], fake_apt.archs)
 
         self.assertRaises(
             (errors.BuildPackageNotFoundError, CalledProcessError),
@@ -335,17 +336,19 @@ class BuildPackagesTestCase(tests.TestCase):
             'armhf')
 
         fake_apt.check_output_mock.assert_has_calls([
+            call(['dpkg', '--print-foreign-architectures']),
             call(['apt-get', 'build-dep', '-q', '-s',
                   '-aarmhf', fake_apt.filename],
                  env={}, stderr=-2),
-            call(['dpkg', '--print-foreign-architectures']),
             call(['sudo', 'apt-get', 'update'],
                  stderr=-2),
         ])
 
         sources_list = '/etc/apt/sources.list.d/ubuntu-{}.list'.format('armhf')
-        mock_check_call.assert_has_calls([
-            call(['sudo', 'dpkg', '--add-architecture', 'armhf']),
+        self.assertEqual(['amd64', 'armhf'], fake_apt.archs)
+        fake_apt.check_call_mock.assert_has_calls([
+            call(['sudo', 'dpkg', '--add-architecture', 'armhf'],
+                 stdout=os.devnull),
             call(['sudo', 'cp', fake_apt.filename, sources_list]),
             call(['sudo', 'chmod', '644', sources_list]),
         ])
@@ -353,12 +356,13 @@ class BuildPackagesTestCase(tests.TestCase):
             call('/etc/apt/sources.list')
         ])
 
-    @patch('subprocess.check_call')
-    def test_install_buid_package_marks_auto_installed(self, mock_check_call):
+    def test_install_buid_package_marks_auto_installed(self):
+        fake_apt = tests.fixture_setup.FakeAptGetBuildDep(self.test_packages)
+        self.useFixture(fake_apt)
         self.install_test_packages(self.test_packages)
 
         installable = self.get_installable_packages(self.test_packages)
-        mock_check_call.assert_has_calls([
+        fake_apt.check_call_mock.assert_has_calls([
             call('sudo apt-mark auto'.split() +
                  sorted(set(installable)),
                  env={'DEBIAN_FRONTEND': 'noninteractive',
@@ -367,6 +371,8 @@ class BuildPackagesTestCase(tests.TestCase):
 
     @patch('subprocess.check_call')
     def test_mark_installed_auto_error_is_not_fatal(self, mock_check_call):
+        fake_apt = tests.fixture_setup.FakeAptGetBuildDep(self.test_packages)
+        self.useFixture(fake_apt)
         error = CalledProcessError(101, 'bad-cmd')
         mock_check_call.side_effect = \
             lambda c, env: error if 'apt-mark' in c else None

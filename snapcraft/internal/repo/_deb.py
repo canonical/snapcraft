@@ -188,23 +188,27 @@ class Ubuntu(BaseRepo):
         return packages
 
     @classmethod
-    def _setup_multi_arch(cls, apt_cache, package_name):
-        """Three steps to enable multi-arch generically:
-        1. Add the architecture to the system if it isn't known to dpkg
-        2. Generate arch-specific sources to retrieve packages from
-        3. Update the package cache
+    def _setup_foreign_arch(cls, arch):
+        foreign_archs = subprocess.check_output(
+            ['dpkg', '--print-foreign-architectures']).decode(
+                sys.getfilesystemencoding())
+        if arch not in foreign_archs:
+            logger.info('Adding foreign architecture {}'.format(arch))
+            subprocess.check_call(
+                ['sudo', 'dpkg', '--add-architecture', arch],
+                stdout=os.devnull)
+
+    @classmethod
+    def _setup_multi_arch_sources(cls, apt_cache, package_name):
+        """If the given package has an arch suffix:
+        Generate arch-specific sources list
+        Update the package cache to pull in the new packages
+        Verify that the package is in the cache
         """
         if ':' not in package_name or package_name.endswith(':native'):
             return False
 
         (name, arch) = package_name.split(':', 2)
-        foreign_archs = subprocess.check_output(
-            ['dpkg', '--print-foreign-architectures']).decode()
-        if arch not in foreign_archs:
-            logger.info('Adding foreign architecture {}'.format(arch))
-            subprocess.check_call(
-                ['sudo', 'dpkg', '--add-architecture', arch])
-
         sources = _get_local_sources_list()
         if '[arch={}]'.format(arch) not in sources:
             logger.info('Adding sources for {}'.format(arch))
@@ -241,6 +245,9 @@ class Ubuntu(BaseRepo):
         """
         if not package_names:
             return []
+
+        cls._setup_foreign_arch(arch)
+
         with tempfile.NamedTemporaryFile(suffix='.dsc') as fake_source:
             depends = 'Build-Depends: {}\n'.format(', '.join(package_names))
             fake_source.write(depends.encode())
@@ -258,6 +265,11 @@ class Ubuntu(BaseRepo):
                 build_deps = actions[msg_end:packages_end].split()
             except subprocess.CalledProcessError as e:
                 actions = e.output.decode(sys.getfilesystemencoding())
+
+                # Bail out if it's not a package problems error
+                if 'E: Unable to correct problems' not in actions:
+                    raise e
+
                 rx = re.compile(
                     '(.+Depends: (.+) but it is not .+|.+)')
                 for line in actions.split('\n'):
@@ -295,7 +307,7 @@ class Ubuntu(BaseRepo):
                         new_packages.append(pkg)
                 except KeyError as e:
 
-                    if cls._setup_multi_arch(apt_cache, pkg_name):
+                    if cls._setup_multi_arch_sources(apt_cache, pkg_name):
                         new_packages.append(pkg)
                     else:
                         providers = apt_cache.get_providing_packages(pkg_name)
