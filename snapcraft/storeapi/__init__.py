@@ -298,10 +298,16 @@ class StoreClient():
                 download_requests_stream(request, download_path)
                 not_downloaded = False
             except requests.exceptions.ChunkedEncodingError as e:
+                logger.debug('Retries left to download {!r}: {!r}.'.format(
+                    download_url, retry_count))
                 retry_count -= 1
                 if not retry_count:
                     raise e
                 sleep(1)
+            except Exception as e:
+                logger.debug('Exception {!r} occured while downloading: {!r}'
+                             .format(type(e), e))
+                raise e
 
         if self._is_downloaded(download_path, expected_sha512):
             logger.info('Successfully downloaded {} at {}'.format(
