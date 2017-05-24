@@ -294,21 +294,21 @@ class StoreClient():
         while not_downloaded and retry_count:
             request = self.cpi.get(download_url, stream=True)
             request.raise_for_status()
+            redirections = [h.headers['Location'] for h in request.history]
+            if redirections:
+                logger.debug('Redirections for {!r}: {}'.format(
+                    download_url, ', '.join(redirections)))
             try:
                 download_requests_stream(request, download_path)
                 not_downloaded = False
             except requests.exceptions.ChunkedEncodingError as e:
-                location_history = [history.headers['Location']
-                                    for history in request.history]
                 logger.debug('Error while downloading: {!r}. '
-                             'Location history is {!r}. '
                              'Retries left to download: {!r}.'.format(
-                                 e, location_history, retry_count))
+                                 e, retry_count))
                 retry_count -= 1
                 if not retry_count:
                     raise e
                 sleep(1)
-                raise e
 
         if self._is_downloaded(download_path, expected_sha512):
             logger.info('Successfully downloaded {} at {}'.format(
