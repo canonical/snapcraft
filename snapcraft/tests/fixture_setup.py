@@ -442,6 +442,8 @@ class FakeAptGetBuildDep(fixtures.Fixture):
         The following NEW packages will be installed:
           {}
         3 upgraded, {} newly installed, 0 to remove and 5 not upgraded.''')
+    _NONE = dedent('''
+        0 upgraded, 0 newly installed, 0 to remove and 6 not upgraded.''')
 
     def __init__(self, packages, arch='', update_error=False,
                  not_cached=False, not_available=False):
@@ -461,17 +463,19 @@ class FakeAptGetBuildDep(fixtures.Fixture):
         errors = []
         for package in packages:
             errors.append(note.format(package, arch))
+        self.exception = False
         if not_cached or not_available:
             self.exception = True
             details = self._PROBLEMS.format(
                 self.filename, arch, '\n'.join(errors))
+        elif not packages:
+            details = self._NONE
         else:
-            self.exception = False
             details = self._NEW.format(fill(' '.join(errors),
                                             subsequent_indent='  ',
                                             break_on_hyphens=False),
                                        len(errors))
-        self.output = '{}\n{}'.format(self._READING.format(
+        self.output = '{}{}'.format(self._READING.format(
             self._PROLOG, self.filename), details).encode(
                   sys.getfilesystemencoding())
         self.update_error = update_error

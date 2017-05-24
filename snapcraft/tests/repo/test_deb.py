@@ -321,6 +321,24 @@ class BuildPackagesTestCase(tests.TestCase):
         ])
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
+    @patch('snapcraft.repo._deb.apt')
+    def test_install_build_package_already_installed(
+            self, mock_apt, mock_is_dumb_terminal):
+        mock_is_dumb_terminal.return_value = True
+        fake_apt = tests.fixture_setup.FakeAptGetBuildDep([])
+        self.useFixture(fake_apt)
+        self.install_test_packages(
+            {'package-installed': MagicMock(installed=True)})
+
+        fake_apt.check_output_mock.assert_has_calls([
+            call(['apt-get', 'build-dep', '-q', '-s',
+                  '-aamd64', fake_apt.filename],
+                 env={}, stderr=-2),
+        ])
+
+        fake_apt.check_call_mock.assert_has_calls([])
+
+    @patch('snapcraft.repo._deb.is_dumb_terminal')
     def test_install_build_package_with_arch_update_failed(
             self, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = True

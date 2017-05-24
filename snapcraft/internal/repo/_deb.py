@@ -260,9 +260,11 @@ class Ubuntu(BaseRepo):
                     stderr=subprocess.STDOUT, env={}).decode(
                         sys.getfilesystemencoding())
                 msg = 'The following NEW packages will be installed:\n  '
-                msg_end = len(msg) + actions.find(msg)
-                packages_end = re.search('\d+ upgraded', actions).start()
-                build_deps = actions[msg_end:packages_end].split()
+                msg_begin = actions.find(msg)
+                if msg_begin > -1:
+                    msg_end = msg_begin + len(msg)
+                    packages_end = re.search('\d+ upgraded', actions).start()
+                    build_deps = actions[msg_end:packages_end].split()
             except subprocess.CalledProcessError as e:
                 actions = e.output.decode(sys.getfilesystemencoding())
 
