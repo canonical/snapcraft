@@ -41,6 +41,9 @@ from snapcraft.tests import (
 )
 
 
+_SNAPCRAFT_YAML_PATH = os.path.join('snap', 'snapcraft.yaml')
+
+
 class RegisterError(Exception):
     pass
 
@@ -185,6 +188,14 @@ class TestCase(testtools.TestCase):
         except subprocess.CalledProcessError as exception:
             output = exception.output
         return output
+
+    def load_snapcraft_yaml(self):
+        with open(_SNAPCRAFT_YAML_PATH) as snapcraft_yaml_file:
+            return yaml.load(snapcraft_yaml_file)
+
+    def save_snapcraft_yaml(self, snapcraft_dict):
+        with open(_SNAPCRAFT_YAML_PATH, 'w') as snapcraft_yaml_file:
+            yaml.dump(snapcraft_dict, snapcraft_yaml_file)
 
     def set_stage_package_version(
             self, snapcraft_yaml_path, part, package, version=None):
