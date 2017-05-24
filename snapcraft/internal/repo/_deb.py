@@ -258,7 +258,7 @@ class Ubuntu(BaseRepo):
                     installed_packages.append(str(installed_package))
                     dependencies = cls._get_dependencies(
                         apt_cache, installed_package)
-                    installed_packages.extend(
+                    build_packages.extend(
                         [dependency for dependency in dependencies
                          if dependency not in installed_packages])
 
