@@ -298,9 +298,12 @@ class StoreClient():
                 download_requests_stream(request, download_path)
                 not_downloaded = False
             except requests.exceptions.ChunkedEncodingError as e:
-                logger.debug('Error while downloading ({!r}): {!r}. '
-                             'Retries left to download {!r}: {!r}.'.format(
-                                type(e), e, download_url, retry_count))
+                location_history = [history.headers['Location']
+                                    for history in request.history]
+                logger.debug('Error while downloading: {!r}. '
+                             'Location history is {!r}. '
+                             'Retries left to download: {!r}.'.format(
+                                 e, location_history, retry_count))
                 retry_count -= 1
                 if not retry_count:
                     raise e
