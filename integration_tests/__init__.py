@@ -18,7 +18,9 @@ import fileinput
 import os
 import platform
 import re
+import shutil
 import subprocess
+import sys
 import time
 import uuid
 import xdg
@@ -33,7 +35,14 @@ from unittest import mock
 from testtools import content
 from testtools.matchers import MatchesRegex
 from snapcraft import ProjectOptions as _ProjectOptions
-from snapcraft.tests import fixture_setup
+from snapcraft.tests import (
+    fixture_setup,
+    subprocess_utils
+)
+
+
+class RegisterError(Exception):
+    pass
 
 
 class TestCase(testtools.TestCase):
@@ -212,6 +221,143 @@ class TestCase(testtools.TestCase):
             yaml.dump(snapcraft_yaml, snapcraft_yaml_file)
         return version
 
+    def set_build_package_architecture(
+            self, snapcraft_yaml_path, part, package, architecture):
+        # This doesn't handle complex package syntax.
+        with open(snapcraft_yaml_path) as snapcraft_yaml_file:
+            snapcraft_yaml = yaml.load(snapcraft_yaml_file)
+        packages = snapcraft_yaml['parts'][part]['build-packages']
+        for index, package_in_yaml in enumerate(packages):
+            if package_in_yaml == package:
+                packages[index] = '{}:{}'.format(package, architecture)
+                break
+        else:
+            self.fail("The part {} doesn't have a package {}".format(
+                part, package))
+
+        with open(snapcraft_yaml_path, 'w') as snapcraft_yaml_file:
+            yaml.dump(snapcraft_yaml, snapcraft_yaml_file)
+
+
+class BzrSourceBaseTestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        if shutil.which('bzr') is None:
+            self.skipTest('bzr is not installed')
+
+    def init_source_control(self):
+        subprocess.check_call(
+            ['bzr', 'init', '.'],
+            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.check_call(
+            ['bzr', 'whoami', '--branch', '"Example Dev <dev@example.com>"'])
+
+    def commit(self, message, unchanged=False):
+        command = ['bzr', 'commit', '-m', message]
+        if unchanged:
+            command.append('--unchanged')
+        subprocess.check_call(
+            command, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    def get_revno(self, path=None):
+        command = ['bzr', 'revno', '-r', '-1']
+        if path:
+            command.append(path)
+        return subprocess.check_output(
+            command, universal_newlines=True).strip()
+
+
+class GitSourceBaseTestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        if shutil.which('git') is None:
+            self.skipTest('git is not installed')
+
+    def init_source_control(self):
+        subprocess.check_call(
+            ['git', 'init', '.'], stdout=subprocess.DEVNULL)
+        subprocess.check_call(
+            ['git', 'config', '--local', 'user.name', '"Example Dev"'])
+        subprocess.check_call(
+            ['git', 'config', '--local', 'user.email', 'dev@example.com'])
+
+    def add_file(self, file_path):
+        subprocess.check_call(
+            ['git', 'add', file_path], stdout=subprocess.DEVNULL)
+
+    def commit(self, message, allow_empty=False):
+        command = ['git', 'commit', '-m', message]
+        if allow_empty:
+            command.append('--allow-empty')
+        subprocess.check_call(command, stdout=subprocess.DEVNULL)
+
+    def tag(self, tag_name):
+        subprocess.check_call(
+            ['git', 'tag', '-a', '-m', tag_name, tag_name],
+            stdout=subprocess.DEVNULL)
+
+    def get_revno(self):
+        return subprocess_utils.call_with_output(
+            ['git', 'rev-list', 'HEAD', '--max-count=1'])
+
+
+class HgSourceBaseTestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        if shutil.which('hg') is None:
+            self.skipTest('mercurial is not installed')
+
+    def init_source_control(self):
+        subprocess.check_call(['hg', 'init', '.'])
+
+    def commit(self, message, file_):
+        subprocess.check_call(
+            ['hg', 'commit', '-m', message, '--user',
+             '"Example Dev"', '-A', file_])
+
+    def get_revno(self, path=None):
+        command = ['hg', 'log', '--template', '"{desc}"', '-r', '-1']
+        if path:
+            command.extend(['--cwd', path])
+        return subprocess.check_output(
+            command, universal_newlines=True).strip()
+
+    def get_id(self):
+        return subprocess_utils.call_with_output(['hg', 'id']).split()[0]
+
+
+class SubversionSourceBaseTestCase(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        if shutil.which('svn') is None:
+            self.skipTest('svn is not installed')
+
+    def init_source_control(self):
+        subprocess.check_call(
+            ['svnadmin', 'create', 'repo'], stdout=subprocess.DEVNULL)
+
+    def checkout(self, source, destination):
+        subprocess.check_call(
+            ['svn', 'checkout', source, destination],
+            stdout=subprocess.DEVNULL)
+
+    def add(self, file_path, cwd=None):
+        subprocess.check_call(
+            ['svn', 'add', file_path], stdout=subprocess.DEVNULL, cwd=cwd)
+
+    def commit(self, message, cwd=None):
+        subprocess.check_call(
+            ['svn', 'commit', '-m', message],
+            stdout=subprocess.DEVNULL, cwd=cwd)
+
+    def update(self, cwd=None):
+        subprocess.check_call(
+            ['svn', 'update'], stdout=subprocess.DEVNULL, cwd=cwd)
+
 
 class StoreTestCase(TestCase):
 
@@ -248,20 +394,26 @@ class StoreTestCase(TestCase):
         command = ['register', snap_name]
         if private:
             command.append('--private')
+        process = pexpect.spawn(self.snapcraft_command, command)
+        process.expect(r'.*\[y/N\]: ')
+        process.sendline('y')
         try:
-            self.run_snapcraft(command)
-        except subprocess.CalledProcessError as e:
+            process.expect_exact(
+                'Congrats! You are now the publisher of {!r}.'.format(
+                    snap_name))
+        except pexpect.exceptions.EOF:
             wait_error_regex = (
                 '.*You must wait (\d+) seconds before trying to register your '
                 'next snap.*')
-            match = re.search(wait_error_regex, e.output)
+            output = process.before.decode(sys.getfilesystemencoding())
+            match = re.search(wait_error_regex, output)
             if wait and match:
                 time.sleep(int(match.group(1)))
                 # This could get stuck for ever if the user is registering
                 # other snaps in parallel.
                 self.register(snap_name, private, wait)
             else:
-                raise
+                raise RegisterError(output)
 
     def register_key(self, key_name, email=None, password=None,
                      expect_success=True):
@@ -401,11 +553,11 @@ class StoreTestCase(TestCase):
         if expect_success:
             if local:
                 process.expect(
-                    'Build assertion {}-build saved to disk.'.format(
+                    'Build assertion .*{}-build saved to disk.'.format(
                         snap_filename))
             else:
                 process.expect(
-                    'Build assertion {}-build pushed.'.format(snap_filename))
+                    'Build assertion .*{}-build pushed.'.format(snap_filename))
 
         process.expect(pexpect.EOF)
         process.close()

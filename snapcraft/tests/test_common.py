@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,18 +22,10 @@ from snapcraft import tests
 
 class CommonTestCase(tests.TestCase):
 
-    def test_get_default_plugindir(self):
-        self.assertEqual(
-            '/usr/share/snapcraft/plugins', common.get_plugindir())
-
     def test_set_plugindir(self):
         plugindir = os.path.join(self.path, 'testplugin')
         common.set_plugindir(plugindir)
         self.assertEqual(plugindir, common.get_plugindir())
-
-    def test_get_default_tourdir(self):
-        self.assertEqual(
-            '/usr/share/snapcraft/tour', common.get_tourdir())
 
     def test_set_tourdir(self):
         tourdir = os.path.join(self.path, 'testtour')

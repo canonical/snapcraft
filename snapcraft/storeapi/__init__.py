@@ -428,7 +428,7 @@ class SnapIndexClient(Client):
                       'download_sha3_384,download_sha512,snap_id,'
                       'revision,release',
         }
-        logger.info('Getting details for {}'.format(snap_name))
+        logger.debug('Getting details for {}'.format(snap_name))
         url = 'api/v1/snaps/details/{}'.format(snap_name)
         resp = self.get(url, headers=headers, params=params)
         if resp.status_code != 200:

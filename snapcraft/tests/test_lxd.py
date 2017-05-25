@@ -39,17 +39,13 @@ class LXDTestCase(tests.TestCase):
     ]
 
     @patch('petname.Generate')
-    @patch('platform.machine')
-    @patch('platform.architecture')
-    def test_cleanbuild(self, mock_arch, mock_machine, mock_pet):
+    def test_cleanbuild(self, mock_pet):
         fake_lxd = tests.fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
         mock_pet.return_value = 'my-pet'
-        mock_arch.return_value = ('64bit', 'ELF')
-        mock_machine.return_value = 'x86_64'
         project_options = ProjectOptions(target_deb_arch=self.target_arch)
         metadata = {'name': 'project'}
         project_folder = 'build_project'
@@ -132,7 +128,7 @@ class LXDTestCase(tests.TestCase):
 
         def run_effect(*args, **kwargs):
             call_list.append(args[0])
-            if args[0] == ['snapcraft', 'snap', '--output', 'snap.snap']:
+            if args[0][:4] == ['snapcraft', 'snap', '--output', 'snap.snap']:
                 raise CalledProcessError(returncode=255, cmd=args[0])
 
         mock_run.side_effect = run_effect
@@ -152,7 +148,7 @@ class LXDTestCase(tests.TestCase):
 
         def run_effect(*args, **kwargs):
             call_list.append(args[0])
-            if args[0] == ['snapcraft', 'snap', '--output', 'snap.snap']:
+            if args[0][:4] == ['snapcraft', 'snap', '--output', 'snap.snap']:
                 raise CalledProcessError(returncode=255, cmd=args[0])
 
         mock_run.side_effect = run_effect

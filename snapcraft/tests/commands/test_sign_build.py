@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,20 +13,16 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import os
-import logging
-from unittest import mock
 import shutil
 import subprocess
+from unittest import mock
 
 import fixtures
+from testtools.matchers import Contains, Equals, FileExists, Not
 
-from snapcraft.main import main
-from snapcraft import (
-    storeapi,
-    tests,
-)
+from snapcraft import storeapi, tests
+from . import CommandBaseTestCase
 
 
 class SnapTest(fixtures.TempDir):
@@ -48,14 +44,10 @@ class SnapTest(fixtures.TempDir):
         shutil.copyfile(test_snap_path, self.snap_path)
 
 
-class SignBuildTestCase(tests.TestCase):
+class SignBuildTestCase(CommandBaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
-        self.useFixture(self.fake_logger)
-        self.fake_terminal = tests.fixture_setup.FakeTerminal()
-        self.useFixture(self.fake_terminal)
         self.snap_test = SnapTest('test-snap.snap')
         self.useFixture(self.snap_test)
 
@@ -65,15 +57,14 @@ class SignBuildTestCase(tests.TestCase):
                                             mock_check_output):
         mock_installed.return_value = False
 
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['sign-build', self.snap_test.snap_path, '--local'])
+        result = self.run_command(['sign-build', self.snap_test.snap_path,
+                                   '--local'])
 
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            'The snapd package is not installed.'))
         mock_installed.assert_called_with('snapd')
         self.assertEqual(0, mock_check_output.call_count)
-        self.assertEqual(1, raised.code)
-        self.assertIn(
-            'The snapd package is not installed.', self.fake_logger.output)
 
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -81,15 +72,12 @@ class SignBuildTestCase(tests.TestCase):
                                          mock_check_output):
         mock_installed.return_value = True
 
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['sign-build', 'nonexisting.snap'])
+        result = self.run_command(['sign-build', 'nonexisting.snap'])
 
-        self.assertEqual(1, raised.code)
+        self.assertThat(result.exit_code, Equals(2))
+        self.assertThat(result.output, Contains(
+            'Path "nonexisting.snap" does not exist'))
         self.assertEqual(0, mock_check_output.call_count)
-        self.assertIn(
-            'The file \'nonexisting.snap\' does not exist.',
-            self.fake_logger.output)
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
@@ -109,17 +97,14 @@ class SignBuildTestCase(tests.TestCase):
             'grade': 'stable',
         }
 
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['sign-build', self.snap_test.snap_path])
+        result = self.run_command(['sign-build', self.snap_test.snap_path])
 
-        self.assertEqual(0, mock_check_output.call_count)
-        self.assertEqual(1, raised.code)
-        self.assertIn(
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
             'Your account lacks permission to assert builds for this '
             'snap. Make sure you are logged in as the publisher of '
-            "'test-snap' for series '16'",
-            self.fake_logger.output)
+            "'test-snap' for series '16'"))
+        self.assertEqual(0, mock_check_output.call_count)
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
@@ -145,19 +130,16 @@ class SignBuildTestCase(tests.TestCase):
             '[]',
         ]
 
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['sign-build', self.snap_test.snap_path])
+        result = self.run_command(['sign-build', self.snap_test.snap_path])
 
-        self.assertEqual(1, raised.code)
-        self.assertEqual([
-            'You have no usable keys.',
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains('You have no usable keys.'))
+        self.assertThat(result.output, Contains(
             'Please create at least one key with `snapcraft create-key` '
-            'for use with snap.',
-            ], self.fake_logger.output.splitlines())
+            'for use with snap.'))
 
         snap_build_path = self.snap_test.snap_path + '-build'
-        self.assertFalse(os.path.exists(snap_build_path))
+        self.assertThat(snap_build_path, Not(FileExists()))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
@@ -183,19 +165,17 @@ class SignBuildTestCase(tests.TestCase):
             '[{"name": "default"}]',
         ]
 
-        raised = self.assertRaises(
-            SystemExit,
-            main,
-            ['sign-build', '--key-name', 'zoing', self.snap_test.snap_path])
+        result = self.run_command(['sign-build', '--key-name', 'zoing',
+                                   self.snap_test.snap_path])
 
-        self.assertEqual(1, raised.code)
-        self.assertEqual([
-            'You have no usable key named "zoing".',
-            'See the keys available in your system with `snapcraft keys`.'
-        ], self.fake_logger.output.splitlines())
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            'You have no usable key named "zoing".'))
+        self.assertThat(result.output, Contains(
+            'See the keys available in your system with `snapcraft keys`.'))
 
         snap_build_path = self.snap_test.snap_path + '-build'
-        self.assertFalse(os.path.exists(snap_build_path))
+        self.assertThat(snap_build_path, Not(FileExists()))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
@@ -222,18 +202,16 @@ class SignBuildTestCase(tests.TestCase):
             '[{"name": "default", "sha3-384": "a_hash"}]',
         ]
 
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['sign-build', self.snap_test.snap_path])
+        result = self.run_command(['sign-build', self.snap_test.snap_path])
 
-        self.assertEqual(1, raised.code)
-        self.assertEqual([
-            'The key \'default\' is not registered in the Store.',
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            'The key \'default\' is not registered in the Store.'))
+        self.assertThat(result.output, Contains(
             'Please register it with `snapcraft register-key \'default\'` '
-            'before signing and pushing signatures to the Store.',
-        ], self.fake_logger.output.splitlines())
+            'before signing and pushing signatures to the Store.'))
         snap_build_path = self.snap_test.snap_path + '-build'
-        self.assertFalse(os.path.exists(snap_build_path))
+        self.assertThat(snap_build_path, Not(FileExists()))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
@@ -261,18 +239,14 @@ class SignBuildTestCase(tests.TestCase):
             subprocess.CalledProcessError(1, ['a', 'b'])
         ]
 
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['sign-build', self.snap_test.snap_path])
+        result = self.run_command(['sign-build', self.snap_test.snap_path])
 
-        self.assertEqual(1, raised.code)
-        self.assertEqual([
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
             'Failed to sign build assertion for {}.'.format(
-                self.snap_test.snap_path),
-            ], self.fake_logger.output.splitlines())
-
+                self.snap_test.snap_path)))
         snap_build_path = self.snap_test.snap_path + '-build'
-        self.assertFalse(os.path.exists(snap_build_path))
+        self.assertThat(snap_build_path, Not(FileExists()))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
@@ -299,13 +273,14 @@ class SignBuildTestCase(tests.TestCase):
             b'Mocked assertion'
         ]
 
-        main(['sign-build', self.snap_test.snap_path, '--local'])
+        result = self.run_command(['sign-build', self.snap_test.snap_path,
+                                   '--local'])
 
+        self.assertThat(result.exit_code, Equals(0))
         snap_build_path = self.snap_test.snap_path + '-build'
-        self.assertTrue(os.path.exists(snap_build_path))
-        self.assertEqual([
-            'Build assertion {} saved to disk.'.format(snap_build_path),
-        ], self.fake_logger.output.splitlines())
+        self.assertThat(result.output, Contains(
+            'Build assertion {} saved to disk.'.format(snap_build_path)))
+        self.assertThat(snap_build_path, FileExists())
         mock_check_output.assert_called_with([
             'snap', 'sign-build', '--developer-id=abcd', '--snap-id=snap-id',
             '--grade=stable', '-k', 'default', self.snap_test.snap_path,
@@ -334,13 +309,14 @@ class SignBuildTestCase(tests.TestCase):
             b'Mocked assertion'
         ]
 
-        main(['sign-build', self.snap_test.snap_path, '--local'])
+        result = self.run_command(['sign-build', self.snap_test.snap_path,
+                                   '--local'])
 
+        self.assertThat(result.exit_code, Equals(0))
         snap_build_path = self.snap_test.snap_path + '-build'
-        self.assertTrue(os.path.exists(snap_build_path))
-        self.assertEqual([
-            'Build assertion {} saved to disk.'.format(snap_build_path),
-        ], self.fake_logger.output.splitlines())
+        self.assertThat(result.output, Contains(
+            'Build assertion {} saved to disk.'.format(snap_build_path)))
+        self.assertThat(snap_build_path, FileExists())
         mock_check_output.assert_called_with([
             'snap', 'sign-build', '--developer-id=abcd', '--snap-id=snap-id',
             '--grade=stable', '-k', 'default', self.snap_test.snap_path,
@@ -373,14 +349,15 @@ class SignBuildTestCase(tests.TestCase):
             b'Mocked assertion'
         ]
 
-        main(['sign-build', self.snap_test.snap_path])
+        result = self.run_command(['sign-build', self.snap_test.snap_path])
 
+        self.assertThat(result.exit_code, Equals(0))
         snap_build_path = self.snap_test.snap_path + '-build'
-        self.assertTrue(os.path.exists(snap_build_path))
-        self.assertEqual([
-            'Build assertion {} saved to disk.'.format(snap_build_path),
-            'Build assertion {} pushed to the Store.'.format(snap_build_path),
-        ], self.fake_logger.output.splitlines())
+        self.assertThat(result.output, Contains(
+            'Build assertion {} saved to disk.'.format(snap_build_path)))
+        self.assertThat(result.output, Contains(
+            'Build assertion {} pushed to the Store.'.format(snap_build_path)))
+        self.assertThat(snap_build_path, FileExists())
         mock_check_output.assert_called_with([
             'snap', 'sign-build', '--developer-id=abcd', '--snap-id=snap-id',
             '--grade=stable', '-k', 'default', self.snap_test.snap_path,
@@ -412,11 +389,13 @@ class SignBuildTestCase(tests.TestCase):
         with open(snap_build_path, 'wb') as fd:
             fd.write(b'Already signed assertion')
 
-        main(['sign-build', self.snap_test.snap_path])
+        result = self.run_command(['sign-build', self.snap_test.snap_path])
 
-        self.assertEqual([
-            'A signed build assertion for this snap already exists.',
-            'Build assertion {} pushed to the Store.'.format(snap_build_path),
-        ], self.fake_logger.output.splitlines())
+        self.assertThat(result.exit_code, Equals(0))
+        snap_build_path = self.snap_test.snap_path + '-build'
+        self.assertThat(result.output, Contains(
+            'A signed build assertion for this snap already exists.'))
+        self.assertThat(result.output, Contains(
+            'Build assertion {} pushed to the Store.'.format(snap_build_path)))
         mock_push_snap_build.assert_called_with(
             'snap-id', 'Already signed assertion')

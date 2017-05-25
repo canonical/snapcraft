@@ -738,17 +738,16 @@ architectures: [{}]
             FileContains(expected))
 
     @mock.patch('subprocess.check_call')
-    def test_prime_with_part_build_packages(self, _):
+    def test_prime_with_source_details(self, _):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
-        self.useFixture(fixture_setup.FakeAptCache([
-            ('test-package1', 'test-version1'),
-            ('test-package2', 'test-version2')]))
 
         self.make_snapcraft_yaml("""parts:
   test-part:
     plugin: nil
-    build-packages: [test-package1=test-version1, test-package2]
+    source: test-source
+    source-type: git
+    source-commit: test-commit
 """)
 
         lifecycle.execute('prime', self.project_options)
@@ -761,7 +760,88 @@ confinement: strict
 grade: stable
 parts:
   test-part:
-    build-packages: [test-package1=test-version1, test-package2=test-version2]
+    build-packages: []
+    plugin: nil
+    prime: []
+    source: test-source
+    source-branch: ''
+    source-checksum: ''
+    source-commit: test-commit
+    source-tag: ''
+    source-type: git
+    stage: []
+    stage-packages: []
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+    @mock.patch('subprocess.check_call')
+    def test_prime_with_build_package_with_any_architecture(self, _):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.useFixture(fixture_setup.FakeAptCache([
+            ('test-package', 'test-version')]))
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+    build-packages: ['test-package:any']
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: [test-package=test-version]
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+    @mock.patch('subprocess.check_call')
+    def test_prime_with_virtual_build_package(self, _):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        fake_apt_cache = fixture_setup.FakeAptCache()
+        self.useFixture(fake_apt_cache)
+        fake_apt_cache.cache['test-provider-package'] = (
+            fixture_setup.FakeAptCachePackage(
+                fake_apt_cache.path,
+                'test-provider-package', 'test-version',
+                provides=['test-virtual-package']))
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+    build-packages: ['test-virtual-package']
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: [test-provider-package=test-version]
     plugin: nil
     prime: []
     stage: []

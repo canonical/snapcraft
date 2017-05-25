@@ -156,6 +156,9 @@ class _SnapPackaging:
                 pull_state.assets.get('build-packages', []))
             data['parts'][part]['stage-packages'] = (
                 pull_state.assets.get('stage-packages', []))
+            source_details = pull_state.assets.get('source-details', {})
+            if source_details:
+                data['parts'][part].update(source_details)
         return data
 
     def write_snap_directory(self):

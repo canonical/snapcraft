@@ -15,40 +15,18 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
-import shutil
 
 import integration_tests
 
 
-class BzrSourceTestCase(integration_tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        if shutil.which('bzr') is None:
-            self.skipTest('bzr is not installed')
-
-    def _init_and_config_bzr(self):
-        subprocess.check_call(
-            ['bzr', 'init', '.'],
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        subprocess.check_call(
-            ['bzr', 'whoami', '--branch', '"Example Dev <dev@example.com>"'])
-
-    def _get_bzr_revno(self, path):
-        return subprocess.check_output(
-            ['bzr', 'revno', '-r', '-1', path],
-            universal_newlines=True).strip()
+class BzrSourceTestCase(integration_tests.BzrSourceBaseTestCase):
 
     def test_pull_bzr_head(self):
         self.copy_project_to_cwd('bzr-head')
 
-        self._init_and_config_bzr()
-        subprocess.check_call(
-            ['bzr', 'commit', '-m', '"1"', '--unchanged'],
-            stderr=subprocess.DEVNULL)
-        subprocess.check_call(
-            ['bzr', 'commit', '-m', '"2"', '--unchanged'],
-            stderr=subprocess.DEVNULL)
+        self.init_source_control()
+        self.commit('"1"', unchanged=True)
+        self.commit('"2"', unchanged=True)
         # test initial branch
         self.run_snapcraft('pull')
         revno = subprocess.check_output(
@@ -65,40 +43,32 @@ class BzrSourceTestCase(integration_tests.TestCase):
     def test_pull_bzr_tag(self):
         self.copy_project_to_cwd('bzr-tag')
 
-        self._init_and_config_bzr()
-        subprocess.check_call(
-            ['bzr', 'commit', '-m', '"1"', '--unchanged'],
-            stderr=subprocess.DEVNULL)
-        subprocess.check_call(
-            ['bzr', 'commit', '-m', '"2"', '--unchanged'],
-            stderr=subprocess.DEVNULL)
+        self.init_source_control()
+        self.commit('"1"', unchanged=True)
+        self.commit('"2"', unchanged=True)
         subprocess.check_call(
             ['bzr', 'tag', '-r', '1', 'initial'],
             stderr=subprocess.DEVNULL)
         # test initial branch
         self.run_snapcraft('pull')
-        revno = self._get_bzr_revno('parts/bzr/src')
+        revno = self.get_revno('parts/bzr/src')
         self.assertEqual('1', revno)
         # test pull doesn't fail
         self.run_snapcraft('pull')
-        revno = self._get_bzr_revno('parts/bzr/src')
+        revno = self.get_revno('parts/bzr/src')
         self.assertEqual('1', revno)
 
     def test_pull_bzr_commit(self):
         self.copy_project_to_cwd('bzr-commit')
 
-        self._init_and_config_bzr()
-        subprocess.check_call(
-            ['bzr', 'commit', '-m', '"1"', '--unchanged'],
-            stderr=subprocess.DEVNULL)
-        subprocess.check_call(
-            ['bzr', 'commit', '-m', '"2"', '--unchanged'],
-            stderr=subprocess.DEVNULL)
+        self.init_source_control()
+        self.commit('"1"', unchanged=True)
+        self.commit('"2"', unchanged=True)
         # test initial branch
         self.run_snapcraft('pull')
-        revno = self._get_bzr_revno('parts/bzr/src')
+        revno = self.get_revno('parts/bzr/src')
         self.assertEqual('1', revno)
         # test pull doesn't fail
         self.run_snapcraft('pull')
-        revno = self._get_bzr_revno('parts/bzr/src')
+        revno = self.get_revno('parts/bzr/src')
         self.assertEqual('1', revno)

@@ -1,4 +1,4 @@
 import unittest
 
-unittest.main('snapcraft.tests.pluginhandler.test_scriptlets',
-              argv=['ScriptletsTestCase'])  # noqa
+unittest.main('snapcraft.tests.commands.test_build',
+              argv=['BuildCommandTestCase'])  # noqa
