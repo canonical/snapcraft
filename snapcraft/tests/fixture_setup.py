@@ -567,10 +567,53 @@ class HgRepo(fixtures.Fixture):
 
 class FakeAptCache(fixtures.Fixture):
 
+    class Cache():
+
+        def __init__(self):
+            super().__init__()
+            self.packages = collections.OrderedDict()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def __setitem__(self, key, item):
+            self.packages[key] = item
+
+        def __getitem__(self, key):
+            return self.packages[key]
+
+        def __contains__(self, key):
+            return key in self.packages
+
+        def __iter__(self):
+            return iter(self.packages.values())
+
+        def open(self):
+            pass
+
+        def close(self):
+            pass
+
+        def update(self, *args, **kwargs):
+            pass
+
+        def get_changes(self):
+            return [self.packages[package] for package in self.packages
+                    if self.packages[package].marked_install]
+
+        def get_providing_packages(self, package_name):
+            providing_packages = []
+            for package in self.packages:
+                if package_name in self.packages[package].provides:
+                    providing_packages.append(self.packages[package])
+            return providing_packages
+
     def __init__(self, packages=None):
         super().__init__()
         self.packages = packages if packages else []
-        self.cache = collections.OrderedDict()
 
     def setUp(self):
         super().setUp()
@@ -578,34 +621,31 @@ class FakeAptCache(fixtures.Fixture):
         self.useFixture(temp_dir_fixture)
         self.path = temp_dir_fixture.path
         patcher = mock.patch('snapcraft.repo._deb.apt.Cache')
-        mock_apt_cache = patcher.start()
+        self.mock_apt_cache = patcher.start()
         self.addCleanup(patcher.stop)
 
+        self.cache = self.Cache()
+        self.mock_apt_cache.return_value = self.cache
         for package, version in self.packages:
             self.cache[package] = FakeAptCachePackage(
                 self.path, package, version)
 
-        mock_apt_cache().__getitem__.side_effect = (
-            lambda item: self.cache[item])
-        mock_apt_cache().__enter__().__getitem__.side_effect = (
-            lambda item: self.cache[item])
-
-        mock_apt_cache().get_changes.return_value = self.cache.values()
-
-        mock_apt_cache().__enter__().get_providing_packages.side_effect = (
-            self.get_providing_packages)
-
-    def get_providing_packages(self, package_name):
-        providing_packages = []
-        for package in self.cache:
-            if package_name in self.cache[package].provides:
-                providing_packages.append(self.cache[package])
-        return providing_packages
+        # Add all the packages in the manifest.
+        with open(os.path.abspath(
+                os.path.join(
+                    __file__, '..', '..',
+                    'internal', 'repo', 'manifest.txt'))) as manifest_file:
+            for line in manifest_file:
+                package = line.strip()
+                self.cache[package] = FakeAptCachePackage(self.path, package)
 
 
 class FakeAptCachePackage():
 
-    def __init__(self, temp_dir, name, version, provides=None):
+    def __init__(
+            self, temp_dir, name, version=None,
+            provides=None, installed=False,
+            priority='non-essential'):
         super().__init__()
         self.temp_dir = temp_dir
         self.name = name
@@ -613,12 +653,18 @@ class FakeAptCachePackage():
         self.versions = {version: self}
         self.candidate = self
         self.installed = version
-        self.provides = provides
+        self.provides = provides if provides else []
+        self.installed = installed
+        self.priority = priority
+        self.marked_install = False
 
     def __str__(self):
         return '{}={}'.format(self.name, self.version)
 
     def mark_install(self):
+        self.marked_install = True
+
+    def mark_keep(self):
         pass
 
     def fetch_binary(self, dir_, progress):
