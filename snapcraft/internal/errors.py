@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import collections
+import re
 
 from snapcraft import formatting_utils
 
@@ -169,7 +171,7 @@ class SnapcraftSchemaError(SnapcraftError):
                 error.validator_value['validation-failure'].format(error))
 
         if not messages:
-            messages.append(error.message)
+            messages.append(_patternProperties(error) or error.message)
 
         path = []
         while error.absolute_path:
@@ -190,6 +192,25 @@ class SnapcraftSchemaError(SnapcraftError):
 
     def __init__(self, message):
         super().__init__(message=message)
+
+
+def _patternProperties(error):
+    """
+    Interpret a validation error caused by invalid pattern
+    in patternProperties.
+    """
+
+    if(isinstance(error.schema, collections.OrderedDict)):
+        if 'patternProperties' in error.schema:
+            pattern = list(error.schema['patternProperties'].keys())[0]
+
+            invalid_property = re.compile('\'.*\'').findall(error.message)[0]
+
+            message = '{0} does not match \'{1}\''.format(
+                invalid_property,
+                pattern)
+
+            return message
 
 
 def _determine_cause(error):

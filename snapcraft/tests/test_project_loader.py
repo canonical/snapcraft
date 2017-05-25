@@ -1875,8 +1875,8 @@ class ValidationTestCase(ValidationBaseTestCase):
             project_loader.Validator(self.data).validate)
 
         expected_message = ("The 'parts' property does not match the "
-                            "required schema: Additional properties are not "
-                            "allowed ('plugins' was unexpected)")
+                            "required schema: 'plugins' does not match "
+                            "'^(?!plugins$)[a-z0-9][a-z0-9+-\\/]*$'")
         self.assertEqual(raised.message, expected_message,
                          message=self.data)
 
@@ -2072,8 +2072,8 @@ class InvalidAppNamesTestCase(ValidationBaseTestCase):
 
         expected_message = (
             "The 'apps' property does not match the required "
-            "schema: Additional properties are not allowed ('{}' "
-            "was unexpected)").format(self.name)
+            "schema: '{}' does not match "
+            "'^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$'").format(self.name)
         self.assertEqual(raised.message, expected_message,
                          message=data)
 
