@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,7 +19,25 @@ import yaml
 
 
 class State(yaml.YAMLObject):
+
+    def __repr__(self):
+        items = sorted(self.__dict__.items())
+        strings = (': '.join((key, repr(value))) for key, value in items)
+        representation = ', '.join(strings)
+
+        return '{}({})'.format(self.__class__.__name__, representation)
+
+    def __eq__(self, other):
+        if type(other) is type(self):
+            return self.__dict__ == other.__dict__
+
+        return False
+
+
+class PartState(State):
+
     def __init__(self, part_properties, project):
+        super().__init__()
         if not part_properties:
             part_properties = {}
 
@@ -51,19 +69,6 @@ class State(yaml.YAMLObject):
         return _get_differing_keys(
             self.project_options, self.project_options_of_interest(
                 other_project_options))
-
-    def __repr__(self):
-        items = sorted(self.__dict__.items())
-        strings = (': '.join((key, repr(value))) for key, value in items)
-        representation = ', '.join(strings)
-
-        return '{}({})'.format(self.__class__.__name__, representation)
-
-    def __eq__(self, other):
-        if type(other) is type(self):
-            return self.__dict__ == other.__dict__
-
-        return False
 
 
 def _get_differing_keys(dict1, dict2):

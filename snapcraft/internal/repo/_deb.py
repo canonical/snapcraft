@@ -187,34 +187,36 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def install_build_packages(cls, package_names):
-        unique_packages = set(package_names)
         new_packages = []
         with apt.Cache() as apt_cache:
-            for pkg in unique_packages:
-                try:
-                    pkg_name, version = repo.get_pkg_name_parts(pkg)
-                    if pkg_name.endswith(':any'):
-                        pkg_name = pkg_name[:-4]
-                    installed_version = apt_cache[pkg_name].installed
-                    if not installed_version:
-                        new_packages.append(pkg)
-                    elif version and installed_version != version:
-                        new_packages.append(pkg)
-                except KeyError as e:
-                    providers = apt_cache.get_providing_packages(pkg_name)
-                    if providers:
-                        new_packages.append(providers[0].name)
-                    else:
-                        raise errors.BuildPackageNotFoundError(e) from e
+            cls._mark_install(apt_cache, package_names)
+            for package in apt_cache.get_changes():
+                new_packages.append((package.name, package.candidate.version))
 
         if new_packages:
-            cls._install_new_build_packages(new_packages)
+            cls._install_new_build_packages(
+               [package[0] for package in new_packages])
+        return ['{}={}'.format(package[0], package[1])
+                for package in new_packages]
 
     @classmethod
-    def _install_new_build_packages(cls, new_packages):
-        new_packages.sort()
+    def _mark_install(cls, apt_cache, package_names):
+        for name in package_names:
+            logger.debug('Marking {!r} (and its dependencies) to be '
+                         'fetched'.format(name))
+            name_arch, version = repo.get_pkg_name_parts(name)
+            try:
+                if version:
+                    _set_pkg_version(apt_cache[name_arch], version)
+                apt_cache[name_arch].mark_install()
+            except KeyError:
+                raise errors.PackageNotFoundError(name)
+
+    @classmethod
+    def _install_new_build_packages(cls, package_names):
+        package_names.sort()
         logger.info(
-            'Installing build dependencies: %s', ' '.join(new_packages))
+            'Installing build dependencies: %s', ' '.join(package_names))
         env = os.environ.copy()
         env.update({
             'DEBIAN_FRONTEND': 'noninteractive',
@@ -227,49 +229,15 @@ class Ubuntu(BaseRepo):
             apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
         apt_command.append('install')
 
-        subprocess.check_call(apt_command + new_packages, env=env)
+        subprocess.check_call(apt_command + package_names, env=env)
 
         try:
             subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
-                                  new_packages, env=env)
+                                  package_names, env=env)
         except subprocess.CalledProcessError as e:
             logger.warning(
                 'Impossible to mark packages as auto-installed: {}'
                 .format(e))
-
-    @classmethod
-    def get_installed_build_packages(cls, package_names):
-        build_packages = package_names[:]
-        installed_packages = []
-        with apt.Cache() as apt_cache:
-            while build_packages:
-                # Before we get to this point, the version specified in the
-                # yaml must have been installed. So we are ignoring the
-                # versions of the packages passed as arguments and we just use
-                # the versions installed.
-                # --elopio - 20170504
-                package_name, _ = repo.get_pkg_name_parts(
-                    build_packages.pop(0))
-                if package_name.endswith(':any'):
-                    package_name = package_name[:-4]
-                try:
-                    installed_package = apt_cache[package_name].candidate
-                except KeyError as e:
-                    providers = apt_cache.get_providing_packages(package_name)
-                    if providers:
-                        installed_package = providers[0].candidate
-                    else:
-                        raise errors.BuildPackageNotFoundError(e) from e
-                if str(installed_package) not in installed_packages:
-                    installed_packages.append(str(installed_package))
-                    for depends in installed_package.get_dependencies(
-                            'Depends'):
-                        # deps is a list of or dependencies. We are taking
-                        # the first one that satisfies the dependency, which
-                        # might or might not be problematic.
-                        # --elopio - 20170504
-                        build_packages.append(depends[0].name)
-        return installed_packages
 
     @classmethod
     def is_package_installed(cls, package_name):
@@ -300,18 +268,6 @@ class Ubuntu(BaseRepo):
             self._mark_install(apt_cache, package_names)
             self._filter_base_packages(apt_cache, package_names)
             return self._get(apt_cache)
-
-    def _mark_install(self, apt_cache, package_names):
-        for name in package_names:
-            logger.debug('Marking {!r} (and its dependencies) to be '
-                         'fetched'.format(name))
-            name_arch, version = repo.get_pkg_name_parts(name)
-            try:
-                if version:
-                    _set_pkg_version(apt_cache[name_arch], version)
-                apt_cache[name_arch].mark_install()
-            except KeyError:
-                raise errors.PackageNotFoundError(name)
 
     def _filter_base_packages(self, apt_cache, package_names):
         manifest_dep_names = self._manifest_dep_names(apt_cache)

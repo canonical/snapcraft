@@ -35,6 +35,7 @@ from snapcraft.internal import (
     meta,
     pluginhandler,
     repo,
+    states
 )
 from snapcraft.internal import errors
 from snapcraft.internal.cache import SnapCache
@@ -108,7 +109,11 @@ def execute(step, project_options, part_names=None):
     :returns: A dict with the snap name, version, type and architectures.
     """
     config = snapcraft.internal.load_config(project_options)
-    repo.Repo.install_build_packages(config.build_tools)
+    installed_packages = repo.Repo.install_build_packages(
+        config.build_tools)
+    os.makedirs('snap/.snapcraft', exist_ok=True)
+    with open('snap/.snapcraft/state', 'w') as f:
+        f.write(yaml.dump(states.GlobalState(installed_packages)))
 
     if (os.environ.get('SNAPCRAFT_SETUP_CORE') and
             config.data['confinement'] == 'classic'):
