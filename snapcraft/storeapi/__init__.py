@@ -287,15 +287,22 @@ class StoreClient():
             return
         logger.info('Downloading {}'.format(name, download_path))
 
+        resume_possible = False
+        total_read = 0
+        probe_url = requests.head(download_url)
+        if probe_url.is_redirect:
+            download_url = probe_url.headers['Location']
+            resume_possible = True
+
         # HttpAdapter cannot help here as this is a stream.
         # LP: #1617765
         not_downloaded = True
         retry_count = 5
         while not_downloaded and retry_count:
             headers = {}
-            if os.path.exists(download_path):
-                headers['Range'] = 'StartPos: %d'.format(
-                    os.path.getsize(download_path))
+            if resume_possible and os.path.exists(download_path):
+                total_read = os.path.getsize(download_path)
+                headers['Range'] = 'bytes={}-'.format(total_read)
             request = self.cpi.get(download_url, headers=headers, stream=True)
             request.raise_for_status()
             redirections = [h.headers['Location'] for h in request.history]
@@ -303,7 +310,8 @@ class StoreClient():
                 logger.debug('Redirections for {!r}: {}'.format(
                     download_url, ', '.join(redirections)))
             try:
-                download_requests_stream(request, download_path)
+                download_requests_stream(request, download_path,
+                                         total_read=total_read)
                 not_downloaded = False
             except requests.exceptions.ChunkedEncodingError as e:
                 logger.debug('Error while downloading: {!r}. '
