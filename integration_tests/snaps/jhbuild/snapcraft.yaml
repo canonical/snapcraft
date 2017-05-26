@@ -6,14 +6,14 @@ summary: Simple JHBuild integration test
 description: >
   This is a simple JHBuild integration test.
 
-  There are two modules: main-module and dep-module.
+  There are two modules 'main-module' and 'dep-module'.
   main-module depends on dep-module.
 
 apps:
   main:
-    command: jhbuild run cat $SNAP/share/doc/main-module/README
+    command: cat $SNAP/share/doc/main-module/README
   dep:
-    command: jhbuild run cat $SNAP/share/doc/dep-module/README
+    command: cat $SNAP/share/doc/dep-module/README
 
 parts:
   jhbuild:
@@ -21,6 +21,4 @@ parts:
     modules:
       - main-module
     module-set: simple-jhbuild
-    module-set-dir: $SNAPCRAFT_STAGE/..
-    jhbuild-archive:  $SNAPCRAFT_STAGE/..
-#   jhbuild-mirror: please set this
+    module-set-dir: .

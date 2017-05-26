@@ -4,7 +4,7 @@
 <!-- vim:set ts=2 expandtab: -->
 <moduleset>
   <repository name="system" type="system"/>
-  <repository name="simple-jhbuild" type="tarball" href="./" default="yes"/>
+  <repository name="simple-jhbuild" type="tarball" href="http://localhost:8000/" default="yes"/>
   <systemmodule id="libtool">
     <branch repo="system"/>
     <systemdependencies>

@@ -14,11 +14,50 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import http.client
+import http.server
+import glob
 import os
+import threading
 import integration_tests
 
 
+class StoppableHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+
+    def do_QUIT(self):
+        self.send_response(200)
+        self.end_headers()
+        self.server.stop = True
+
+
+class StoppableHTTPServer(http.server.HTTPServer):
+
+    def __init__(self, socket, handler):
+        self.stop = False
+        super(StoppableHTTPServer, self).__init__(socket, handler)
+
+    def serve_forever(self):
+        while not self.stop:
+            self.handle_request()
+
+
 class JHBuildPluginTestCase(integration_tests.TestCase):
+
+    @classmethod
+    def setUpClass(cls):
+        cls.port = 8000
+        handler = StoppableHTTPRequestHandler
+        httpd = StoppableHTTPServer(("127.0.0.1", cls.port), handler)
+        cls.server = threading.Thread(target=httpd.serve_forever)
+        cls.server.setDaemon(True)
+        cls.server.start()
+
+    @classmethod
+    def tearDownClass(cls):
+        conn = http.client.HTTPConnection("127.0.0.1:%d" % cls.port)
+        conn.request("QUIT", "/")
+        conn.getresponse()
+        cls.server.join()
 
     def test_snap(self):
 
@@ -52,16 +91,7 @@ class JHBuildPluginTestCase(integration_tests.TestCase):
             self.run_snapcraft(stage, 'jhbuild')
 
             for path in files[stage]:
-                self.assertIs(True, os.path.exists(path),
-                              "path '%s' does not exist" % path)
+                self.assertTrue(os.path.exists(path),
+                                "path '%s' does not exist" % path)
 
-        self.assertNotEqual([], [
-            snap
-            for snap in os.listdir(os.getcwd())
-            if snap.startswith('test-jhbuild_') and snap.endswith('.snap')
-        ])
-
-        conn = http.client.HTTPConnection("127.0.0.1:%d" % PORT)
-        conn.request("QUIT", "/")
-        conn.getresponse()
-        time.sleep(2)
+        self.assertNotEqual([], glob.glob('test-jhbuild_*.snap'))
