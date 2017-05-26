@@ -57,11 +57,23 @@ def download_requests_stream(request_stream, destination, message=None):
     total_length = 0
     if not request_stream.headers.get('Content-Encoding', ''):
         total_length = int(request_stream.headers.get('Content-Length', '0'))
+        # Content-Lenght in the case of resuming will be
+        # Content-Length - StartPos so we add back up to have the feel of
+        # resuming
+        if os.path.exists(destination):
+            total_length += os.path.getsize(destination)
 
     total_read = 0
     progress_bar = _init_progress_bar(total_length, destination, message)
     progress_bar.start()
-    with open(destination, 'wb') as destination_file:
+
+    if os.path.exists(destination):
+        mode = 'ab'
+        progress_bar.update(os.path.getsize(destination))
+    else:
+        mode = 'wb'
+
+    with open(destination, mode) as destination_file:
         for buf in request_stream.iter_content(1024):
             destination_file.write(buf)
             total_read += len(buf)

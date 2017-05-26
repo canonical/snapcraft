@@ -292,7 +292,11 @@ class StoreClient():
         not_downloaded = True
         retry_count = 5
         while not_downloaded and retry_count:
-            request = self.cpi.get(download_url, stream=True)
+            headers = {}
+            if os.path.exists(download_path):
+                headers['Range'] = 'StartPos: %d'.format(
+                    os.path.getsize(download_path))
+            request = self.cpi.get(download_url, headers=headers, stream=True)
             request.raise_for_status()
             redirections = [h.headers['Location'] for h in request.history]
             if redirections:
