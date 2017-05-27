@@ -202,6 +202,8 @@ class Ubuntu(BaseRepo):
     @classmethod
     def _mark_install(cls, apt_cache, package_names):
         for name in package_names:
+            if apt_cache.is_virtual(name):
+                name = apt_cache.get_providing_packages(name)[0].name
             logger.debug('Marking {!r} (and its dependencies) to be '
                          'fetched'.format(name))
             name_arch, version = repo.get_pkg_name_parts(name)
