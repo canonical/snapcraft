@@ -611,6 +611,15 @@ class FakeAptCache(fixtures.Fixture):
                     providing_packages.append(self.packages[package])
             return providing_packages
 
+        def is_virtual(self, package_name):
+            is_virtual = False
+            if package_name not in self.packages:
+                for package in self.packages:
+                    if package_name in self.packages[package].provides:
+                        return True
+            return is_virtual
+
+
     def __init__(self, packages=None):
         super().__init__()
         self.packages = packages if packages else []
@@ -651,8 +660,11 @@ class FakeAptCachePackage():
         super().__init__()
         self.temp_dir = temp_dir
         self.name = name
-        self.version = version
-        self.versions = {version: self}
+        if version is None and '=' in name:
+            self.version = name.split('=')[1]
+        else:
+            self.version = version
+        self.versions = {self.version: self}
         self.candidate = self
         self.installed = version
         self.provides = provides if provides else []
@@ -661,7 +673,13 @@ class FakeAptCachePackage():
         self.marked_install = False
 
     def __str__(self):
-        return '{}={}'.format(self.name, self.version)
+        if '=' in self.name:
+            return self.name
+        else:
+            return '{}={}'.format(self.name, self.version)
+
+    @property
+    def
 
     def mark_install(self):
         self.marked_install = True

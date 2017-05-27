@@ -189,7 +189,10 @@ class Ubuntu(BaseRepo):
     def install_build_packages(cls, package_names):
         new_packages = []
         with apt.Cache() as apt_cache:
-            cls._mark_install(apt_cache, package_names)
+            try:
+                cls._mark_install(apt_cache, package_names)
+            except errors.PackageNotFoundError as e:
+                raise errors.BuildPackageNotFoundError(e)
             for package in apt_cache.get_changes():
                 new_packages.append((package.name, package.candidate.version))
 
@@ -438,4 +441,5 @@ def _set_pkg_version(pkg, version):
         version = pkg.versions.get(version)
         pkg.candidate = version
     else:
+        raise Exception(pkg.versions.keys())
         raise errors.PackageNotFoundError('{}={}'.format(pkg.name, version))

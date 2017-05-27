@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -66,6 +66,8 @@ class UbuntuTestCase(RepoBaseTestCase):
 
     @patch('snapcraft.internal.repo._deb.apt.apt_pkg')
     def test_get_package(self, mock_apt_pkg):
+        self.mock_cache().is_virtual.return_value = False
+
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
@@ -103,6 +105,8 @@ class UbuntuTestCase(RepoBaseTestCase):
 
     @patch('snapcraft.repo._deb.apt.apt_pkg')
     def test_get_multiarch_package(self, mock_apt_pkg):
+        self.mock_cache().is_virtual.return_value = False
+
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
@@ -290,7 +294,7 @@ class BuildPackagesTestCase(tests.TestCase):
         error = CalledProcessError(101, 'bad-cmd')
         mock_check_call.side_effect = \
             lambda c, env: error if 'apt-mark' in c else None
-        self.install_test_packages(self.test_packages)
+        self.install_test_packages(['package-not-installed'])
 
     def test_invalid_package_requested(self):
         self.assertRaises(

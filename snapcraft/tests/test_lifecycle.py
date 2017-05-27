@@ -841,13 +841,13 @@ confinement: strict
 grade: stable
 parts:
   test-part:
-    build-packages: [test-provider-package=test-version]
+    build-packages: [test-virtual-package]
     plugin: nil
     prime: []
     stage: []
     stage-packages: []
 architectures: [{}]
-build-packages: []
+build-packages: [test-provider-package=test-version]
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'snapcraft.yaml'),
