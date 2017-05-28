@@ -287,10 +287,13 @@ class StoreClient():
             return
         logger.info('Downloading {}'.format(name, download_path))
 
+        # we only resume when redirected to our CDN since we use internap's
+        # special sauce.
         resume_possible = False
         total_read = 0
         probe_url = requests.head(download_url)
-        if probe_url.is_redirect:
+        if (probe_url.is_redirect and
+                'internap' in probe_url.headers['Location']):
             download_url = probe_url.headers['Location']
             resume_possible = True
 
