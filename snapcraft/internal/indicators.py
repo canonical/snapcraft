@@ -58,7 +58,7 @@ def download_requests_stream(request_stream, destination, message=None,
     total_length = 0
     if not request_stream.headers.get('Content-Encoding', ''):
         total_length = int(request_stream.headers.get('Content-Length', '0'))
-        # Content-Lenght in the case of resuming will be
+        # Content-Length in the case of resuming will be
         # Content-Length - total_read so we add back up to have the feel of
         # resuming
         if os.path.exists(destination):
