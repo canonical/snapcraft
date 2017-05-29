@@ -199,8 +199,6 @@ class GoPlugin(snapcraft.BasePlugin):
             env['CC'] = '{}-gcc'.format(self.project.arch_triplet)
             env['CXX'] = '{}-g++'.format(self.project.arch_triplet)
             env['CGO_ENABLED'] = '1'
-            env['PKG_CONFIG_PATH'] = '/usr/lib/{}/pkgconfig'.format(
-                self.project.arch_triplet)
             # See https://golang.org/doc/install/source#environment
             go_archs = {
                 'armhf': 'arm',
