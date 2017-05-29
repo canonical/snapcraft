@@ -224,17 +224,13 @@ class Ubuntu(BaseRepo):
                 subprocess.check_call(['sudo', 'chmod',
                                        '644', sources_lists])
 
-        try:
-            update_output = subprocess.check_output(
-                ['sudo', 'apt-get', 'update'],
-                stderr=subprocess.STDOUT).decode(sys.getfilesystemencoding())
-            # Failure to download doesn't return an error code
-            if 'Err:' in update_output:
-                raise subprocess.CalledProcessError(
-                    100, ['sudo', 'apt-get', 'update'], update_output)
-        except subprocess.CalledProcessError as e:
-            logger.error(e.output)
-            raise e
+        update_output = subprocess.check_output(
+            ['sudo', 'apt-get', 'update'],
+            stderr=subprocess.STDOUT).decode(sys.getfilesystemencoding())
+        # Failure to download doesn't return an error code
+        if 'Err:' in update_output:
+            raise subprocess.CalledProcessError(
+                100, ['sudo', 'apt-get', 'update'], update_output)
         return package_name in apt_cache
 
     @classmethod
