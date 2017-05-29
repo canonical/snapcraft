@@ -194,9 +194,8 @@ class Ubuntu(BaseRepo):
                 sys.getfilesystemencoding())
         if arch not in foreign_archs:
             logger.info('Adding foreign architecture {}'.format(arch))
-            subprocess.check_call(
-                ['sudo', 'dpkg', '--add-architecture', arch],
-                stdout=os.devnull)
+            subprocess.check_output(
+                ['sudo', 'dpkg', '--add-architecture', arch])
 
     @classmethod
     def _setup_multi_arch_sources(cls, apt_cache, package_name):
