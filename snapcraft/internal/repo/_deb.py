@@ -234,6 +234,34 @@ class Ubuntu(BaseRepo):
         return package_name in apt_cache
 
     @classmethod
+    def install_build_packages(cls, package_names, arch):
+        unique_packages = set(cls._get_build_deps(package_names, arch))
+        new_packages = []
+        with apt.Cache() as apt_cache:
+            for pkg in unique_packages:
+                try:
+                    pkg_name, version = repo.get_pkg_name_parts(pkg)
+                    if pkg_name.endswith(':any'):
+                        pkg_name = pkg_name[:-4]
+                    installed_version = apt_cache[pkg_name].installed
+                    if not installed_version or (
+                            version and installed_version != version):
+                        new_packages.append(pkg)
+                except KeyError as e:
+
+                    if cls._setup_multi_arch_sources(apt_cache, pkg_name):
+                        new_packages.append(pkg)
+                    else:
+                        providers = apt_cache.get_providing_packages(pkg_name)
+                        if providers:
+                            new_packages.append(providers[0].name)
+                        else:
+                            raise errors.BuildPackageNotFoundError(pkg) from e
+
+        if new_packages:
+            cls._install_new_build_packages(new_packages)
+
+    @classmethod
     def _get_build_deps(cls, package_names, arch):
         """Use apt-get build-dep with a fake source package file to find
            all dependencies and correct architectures.
@@ -293,34 +321,6 @@ class Ubuntu(BaseRepo):
                 name += '={}'.format(version)
             pkgs.append(name)
         return pkgs
-
-    @classmethod
-    def install_build_packages(cls, package_names, arch):
-        unique_packages = set(cls._get_build_deps(package_names, arch))
-        new_packages = []
-        with apt.Cache() as apt_cache:
-            for pkg in unique_packages:
-                try:
-                    pkg_name, version = repo.get_pkg_name_parts(pkg)
-                    if pkg_name.endswith(':any'):
-                        pkg_name = pkg_name[:-4]
-                    installed_version = apt_cache[pkg_name].installed
-                    if not installed_version or (
-                            version and installed_version != version):
-                        new_packages.append(pkg)
-                except KeyError as e:
-
-                    if cls._setup_multi_arch_sources(apt_cache, pkg_name):
-                        new_packages.append(pkg)
-                    else:
-                        providers = apt_cache.get_providing_packages(pkg_name)
-                        if providers:
-                            new_packages.append(providers[0].name)
-                        else:
-                            raise errors.BuildPackageNotFoundError(pkg) from e
-
-        if new_packages:
-            cls._install_new_build_packages(new_packages)
 
     @classmethod
     def _install_new_build_packages(cls, new_packages):
