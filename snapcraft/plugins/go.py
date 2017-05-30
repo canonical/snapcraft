@@ -144,10 +144,6 @@ class GoPlugin(snapcraft.BasePlugin):
             go_package = os.path.basename(os.path.abspath(self.options.source))
         return go_package
 
-    def _binary_name(self, package):
-        package = package.replace('/...', '')
-        return package.split('/')[-1]
-
     def build(self):
         super().build()
 
@@ -167,6 +163,10 @@ class GoPlugin(snapcraft.BasePlugin):
         for binary in os.listdir(self._gopath_bin):
             binary_path = os.path.join(self._gopath_bin, binary)
             shutil.copy2(binary_path, install_bin_path)
+
+    def _binary_name(self, package):
+        package = package.replace('/...', '')
+        return package.split('/')[-1]
 
     def clean_build(self):
         super().clean_build()
