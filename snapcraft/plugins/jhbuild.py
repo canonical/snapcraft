@@ -30,7 +30,6 @@ The plugin can be customized with the following keys:
              set to `.` to reference your project folder.
   - jhbuild-archive: the source tarball directory on the build host
   - jhbuild-mirror: the DVCS repository directory on the build host
-  - ccache-dir: the ccache directory on the build host
 
 Advice:
 
@@ -50,9 +49,6 @@ Advice:
     jhbuild-mirror to prevent repeated downloading of the JHBuild module
     sources. It's best to reserve common directories on your local machine that
     can be reused by all snaps you might want to build.
-
-  - If you find yourself re-building the same modules over-and-over again, you
-    can specify a local ccache directory on the build host using ccache-dir.
 """
 
 import glob
@@ -73,7 +69,6 @@ BUILD_PACKAGES = {
     'bison',
     'build-essential',
     'ca-certificates',
-    'ccache',
     'cvs',
     'docbook',
     'docbook-xml',
@@ -100,15 +95,6 @@ BUILD_PACKAGES = {
 
 
 LOG = logging.getLogger(__name__)
-
-
-def _make_jhbuild_env(env, ccache_dir):
-    os_env = os.environ.copy()
-    override = {
-        'HOME': HOME, 'PATH': '/usr/lib/ccache:%s' % os.getenv('PATH'),
-        'CCACHE_DIR': ccache_dir}
-
-    return {**os_env, **env, **override}
 
 
 def _get_jhbuild_user():
@@ -160,23 +146,19 @@ class JHBuildPlugin(snapcraft.BasePlugin):
             },
             'module-set-dir': {
                 'type': 'string',
-				'default': '.',
+                'default': '',
             },
             'jhbuild-archive': {
                 'type': 'string',
-				'default': '',
+                'default': '',
             },
             'jhbuild-mirror': {
                 'type': 'string',
-				'default': '',
-            },
-            'ccache-dir': {
-                'type': 'string',
-				'default': '',
+                'default': '',
             },
             'cflags': {
                 'type': 'string',
-				'default': '',
+                'default': '',
             },
         }
 
@@ -186,7 +168,7 @@ class JHBuildPlugin(snapcraft.BasePlugin):
 
     @classmethod
     def get_pull_properties(cls):
-		# Inform Snapcraft of the properties associated with pulling. If these
+        # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         return [
             'modules',
@@ -198,10 +180,9 @@ class JHBuildPlugin(snapcraft.BasePlugin):
 
     @classmethod
     def get_build_properties(cls):
-		# Inform Snapcraft of the properties associated with building. If these
+        # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         return [
-            'ccache-dir',
             'cflags',
         ]
 
@@ -220,8 +201,6 @@ class JHBuildPlugin(snapcraft.BasePlugin):
         self.jhbuild_program = os.path.join(
             self.partdir, 'jhbuild', 'usr', 'bin', 'jhbuild')
         self.jhbuildrc_path = os.path.join(self.partdir, 'jhbuildrc')
-        self.default_ccache_dir = os.sep + \
-            os.path.join(self.builddir, 'jhbuild', 'ccache')
 
     def enable_cross_compilation(self):
         """
@@ -239,9 +218,7 @@ class JHBuildPlugin(snapcraft.BasePlugin):
         :param list cmd: command arguments, first is the executable
         :param str cwd: working directory
         """
-        env = _make_jhbuild_env(kwargs.pop(
-            'env', {}), self.options.ccache_dir or self.default_ccache_dir)
-        return super().run(cmd, cwd=cwd, env=env, **kwargs)
+        return super().run(cmd, cwd=cwd, **kwargs)
 
     def run_output(self, cmd, cwd=None, **kwargs):
         """Run a command, capturing its output.
@@ -254,9 +231,7 @@ class JHBuildPlugin(snapcraft.BasePlugin):
         :return: the output of the command
         :rtype: str
         """
-        env = _make_jhbuild_env(kwargs.pop(
-            'env', {}), self.options.ccache_dir or self.default_ccache_dir)
-        return super().run_output(cmd, cwd=cwd, env=env, **kwargs)
+        return super().run_output(cmd, cwd=cwd, **kwargs)
 
     def jhbuild(self, args, output=True, **kwargs):
         """Run JHBuild in the build stage.
@@ -313,18 +288,15 @@ class JHBuildPlugin(snapcraft.BasePlugin):
         if not os.path.exists(self.jhbuild_program):
             LOG.info('Building JHBuild')
 
-            env = {'CCACHE_DIR': self.options.ccache_dir or
-                   self.default_ccache_dir}
-
             self.run(['./autogen.sh', '--prefix=%s' % os.sep +
-                     os.path.join(self.partdir, 'jhbuild', 'usr')],
-                     env=env, cwd=self.jhbuild_src)
+                      os.path.join(self.partdir, 'jhbuild', 'usr')],
+                      cwd=self.jhbuild_src)
 
             self.run(['make', '-j%d' % self.parallel_build_count],
-                     env=env, cwd=self.jhbuild_src)
+                      cwd=self.jhbuild_src)
 
             self.run(['make', '-j%d' % self.parallel_build_count,
-                      'install'], env=env, cwd=self.jhbuild_src)
+                      'install'], cwd=self.jhbuild_src)
 
         archive_path = os.path.join(self.partdir, 'jhbuild', 'packages')
         mirror_path = os.path.join(self.partdir, 'jhbuild', 'mirror')
