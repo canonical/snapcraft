@@ -290,10 +290,10 @@ class JHBuildPlugin(snapcraft.BasePlugin):
 
             self.run(['./autogen.sh', '--prefix=%s' % os.sep +
                       os.path.join(self.partdir, 'jhbuild', 'usr')],
-                      cwd=self.jhbuild_src)
+                     cwd=self.jhbuild_src)
 
             self.run(['make', '-j%d' % self.parallel_build_count],
-                      cwd=self.jhbuild_src)
+                     cwd=self.jhbuild_src)
 
             self.run(['make', '-j%d' % self.parallel_build_count,
                       'install'], cwd=self.jhbuild_src)

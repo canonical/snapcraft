@@ -45,19 +45,9 @@ class JHBuildPluginTestCase(snapcraft.tests.TestCase):
     def test_run_with_env(self):
         plugin = self._test_plugin()
 
-        plugin.run(['printenv', 'ANSWER'], env={'ANSWER': 42})
+        plugin.run(['printenv', 'ANSWER'], env={'ANSWER': '42'})
 
         self.assertEqual(
             '42',
-            plugin.run_output(['printenv', 'ANSWER'], env={'ANSWER': 42})
-        )
-
-    def test_run_with_input(self):
-        plugin = self._test_plugin()
-
-        plugin.run(['cat'], input='42')
-
-        self.assertEqual(
-            '42',
-            plugin.run_output(['cat'], input='42')
+            plugin.run_output(['printenv', 'ANSWER'], env={'ANSWER': '42'})
         )
