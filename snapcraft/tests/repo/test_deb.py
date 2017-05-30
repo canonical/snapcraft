@@ -355,6 +355,7 @@ class BuildPackagesTestCase(tests.TestCase):
 
         fake_apt.check_output_mock.assert_has_calls([
             call(['dpkg', '--print-foreign-architectures']),
+            call(['sudo', 'dpkg', '--add-architecture', 'armhf']),
             call(['apt-get', 'build-dep', '-q', '-s',
                   '-aarmhf', fake_apt.filename],
                  env={}, stderr=-2),
@@ -365,8 +366,6 @@ class BuildPackagesTestCase(tests.TestCase):
         sources_list = '/etc/apt/sources.list.d/ubuntu-{}.list'.format('armhf')
         self.assertEqual(['amd64', 'armhf'], fake_apt.archs)
         fake_apt.check_call_mock.assert_has_calls([
-            call(['sudo', 'dpkg', '--add-architecture', 'armhf'],
-                 stdout=os.devnull),
             call(['sudo', 'cp', fake_apt.filename, sources_list]),
             call(['sudo', 'chmod', '644', sources_list]),
         ])

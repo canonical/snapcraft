@@ -493,7 +493,7 @@ class FakeAptGetBuildDep(fixtures.Fixture):
 
         patcher = mock.patch('subprocess.check_call')
         self.check_call_mock = patcher.start()
-        self.check_call_mock.side_effect = self.check_call_side_effect()
+        self.check_call_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.internal.repo._deb.open',
@@ -516,7 +516,7 @@ class FakeAptGetBuildDep(fixtures.Fixture):
                     raise CalledProcessError(100, args[0], self.output)
                 else:
                     return self.output
-            if args[0][:3] == ['sudo', 'apt-get', 'update']:
+            elif args[0][:3] == ['sudo', 'apt-get', 'update']:
                 server = 'http://archive.ubuntu.com/ubuntu'
                 template = '{}:{} {} xenial InRelease\n'
                 output = template.format('Get', '9', server)
@@ -526,11 +526,7 @@ class FakeAptGetBuildDep(fixtures.Fixture):
             elif args[0][:2] == ['dpkg', '--print-foreign-architectures']:
                 return '\n'.join(self.archs).encode(
                     sys.getfilesystemencoding())
-        return call_effect
-
-    def check_call_side_effect(self):
-        def call_effect(*args, **kwargs):
-            if args[0][:3] == ['sudo', 'dpkg', '--add-architecture']:
+            elif args[0][:3] == ['sudo', 'dpkg', '--add-architecture']:
                 self.archs.append(args[0][3])
                 return dedent('''
                     Odd number of elements in hash assignment at
