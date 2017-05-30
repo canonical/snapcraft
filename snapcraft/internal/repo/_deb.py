@@ -238,8 +238,9 @@ class Ubuntu(BaseRepo):
         """Use apt-get build-dep with a fake source package file to find
            all dependencies and correct architectures.
         """
+        build_deps = []
         if not package_names:
-            return []
+            return build_deps
 
         cls._setup_foreign_arch(arch)
 
@@ -247,7 +248,6 @@ class Ubuntu(BaseRepo):
             depends = 'Build-Depends: {}\n'.format(', '.join(package_names))
             fake_source.write(depends.encode())
             fake_source.flush()
-            build_deps = []
             try:
                 actions = subprocess.check_output(
                     ['apt-get', 'build-dep', '-q', '-s',
@@ -271,22 +271,28 @@ class Ubuntu(BaseRepo):
                     '(.+Depends: (.+) but it is not .+|.+)')
                 for line in actions.split('\n'):
                     build_deps.append(rx.sub('\\2', line))
-            # apt-get build-dep will output name=version:arch
-            # Ensure that the format is always name:arch=version
-            pkgs = []
-            for pkg in build_deps:
-                if not pkg:
-                    continue
-                name, version_with_arch = repo.get_pkg_name_parts(pkg)
-                if version_with_arch:
-                    if ':' in version_with_arch:
-                        version, arch = version_with_arch.split(':')
-                        name += ':{}'.format(arch)
-                    else:
-                        version = version_with_arch
-                    name += '={}'.format(version)
-                pkgs.append(name)
-            return pkgs
+        return cls._ensure_package_format(build_deps)
+
+    @classmethod
+    def _ensure_package_format(cls, package_names):
+        """A list of packages output by apt-get build-dep may end up with
+           the format name=version:arch instead of name:arch=version - take
+           that list and enforce the correct format.
+        """
+        pkgs = []
+        for pkg in package_names:
+            if not pkg:
+                continue
+            name, version_with_arch = repo.get_pkg_name_parts(pkg)
+            if version_with_arch:
+                if ':' in version_with_arch:
+                    version, arch = version_with_arch.split(':')
+                    name += ':{}'.format(arch)
+                else:
+                    version = version_with_arch
+                name += '={}'.format(version)
+            pkgs.append(name)
+        return pkgs
 
     @classmethod
     def install_build_packages(cls, package_names, arch):
