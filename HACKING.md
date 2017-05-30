@@ -8,18 +8,19 @@ First install a few dependencies:
 
 Create and activate a new virtual environment:
 
-    python3 -m venv path/to/venv
-    source path/to/venv/bin/activate
+    mkdir -p ~/venv/snapcraft
+    python3 -m venv ~/venv/snapcraft
+    source ~/venv/snapcraft/bin/activate
 
 
 Make sure pip is up-to-date:
 
-    (venv) $ pip install --upgrade pip
+    (snapcraft) $ pip install --upgrade pip
 
 
 Install snapcraft (and its dependencies):
 
-    (venv) $ pip install -r requirements.txt .
+    (snapcraft) $ pip install -r requirements.txt .
 
 
 ## Running
@@ -39,9 +40,9 @@ We'd love the help!
 
 ### Installing for development
 
-You'll need to install the development dependencies, and you'll also probably want to install it in `editable` mode so your changes actually do something:
+You'll need to install the development dependencies, and you'll also probably want to install it in `editable` mode so any changes you make take affect:
 
-    (venv) $ pip install -r requirements.txt -r requirements-devel.txt --editable .
+    (snapcraft) $ pip install -r requirements.txt -r requirements-devel.txt --editable .
 
 
 ### Testing
@@ -56,7 +57,7 @@ To run all the tests execute:
 
 You can selectively run a selective group of tests like:
 
-    ./runtests.sh [static|unit|integration|snaps]
+    ./runtests.sh [static|unit|integration|plugins|store|snaps]
 
 The test groups mean:
 
