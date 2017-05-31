@@ -590,6 +590,7 @@ class ExecutionTestCase(BaseExecutionTestCase):
     @mock.patch('snapcraft.repo.Repo.install_build_packages')
     def test_pull_is_dirty_if_target_arch_changes(
             self, mock_install_build_packages, mock_enable_cross_compilation):
+        mock_install_build_packages.return_value = []
         self.make_snapcraft_yaml("""parts:
   part1:
     plugin: nil
@@ -801,13 +802,13 @@ confinement: strict
 grade: stable
 parts:
   test-part:
-    build-packages: [test-package=test-version]
+    build-packages: ['test-package:any']
     plugin: nil
     prime: []
     stage: []
     stage-packages: []
 architectures: [{}]
-build-packages: []
+build-packages: [test-package=test-version]
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'snapcraft.yaml'),

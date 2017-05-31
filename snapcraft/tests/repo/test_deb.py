@@ -66,7 +66,7 @@ class UbuntuTestCase(RepoBaseTestCase):
 
     @patch('snapcraft.internal.repo._deb.apt.apt_pkg')
     def test_get_package(self, mock_apt_pkg):
-        self.mock_cache().is_virtual.return_value = False
+        self.mock_cache().is_virtual_package.return_value = False
 
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
@@ -105,7 +105,7 @@ class UbuntuTestCase(RepoBaseTestCase):
 
     @patch('snapcraft.repo._deb.apt.apt_pkg')
     def test_get_multiarch_package(self, mock_apt_pkg):
-        self.mock_cache().is_virtual.return_value = False
+        self.mock_cache().is_virtual_package.return_value = False
 
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
@@ -238,8 +238,8 @@ class BuildPackagesTestCase(tests.TestCase):
         self.fake_apt_cache.cache['versioned-package'].version = '0.1'
 
     def get_installable_packages(self, packages):
-        return [package for package in packages
-                if not self.fake_apt_cache.cache[package].installed]
+        return ['package-not-installed', 'another-uninstalled',
+                'repeated-package', 'versioned-package=0.2']
 
     @patch('os.environ')
     def install_test_packages(self, test_pkgs, mock_env):

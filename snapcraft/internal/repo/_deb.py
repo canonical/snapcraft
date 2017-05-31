@@ -187,6 +187,11 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def install_build_packages(cls, package_names):
+        """Install build packages on the building machine.
+
+        :return: a list with the packages installed and their versions.
+
+        """
         new_packages = []
         with apt.Cache() as apt_cache:
             try:
@@ -205,7 +210,9 @@ class Ubuntu(BaseRepo):
     @classmethod
     def _mark_install(cls, apt_cache, package_names):
         for name in package_names:
-            if apt_cache.is_virtual(name):
+            if name.endswith(':any'):
+                name = name[:-4]
+            if apt_cache.is_virtual_package(name):
                 name = apt_cache.get_providing_packages(name)[0].name
             logger.debug('Marking {!r} (and its dependencies) to be '
                          'fetched'.format(name))
@@ -441,5 +448,4 @@ def _set_pkg_version(pkg, version):
         version = pkg.versions.get(version)
         pkg.candidate = version
     else:
-        raise Exception(pkg.versions.keys())
         raise errors.PackageNotFoundError('{}={}'.format(pkg.name, version))
