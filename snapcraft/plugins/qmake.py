@@ -28,8 +28,8 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (list of strings)
       additional options to pass to the qmake invocation.
     - qt-version:
-      (enum, 'qt4' or 'qt5')
-      Version of Qt to use with qmake.
+      (string; default: qt5)
+      Version of Qt to use with qmake. Valid options are: qt4 and qt5
     - project-files:
       (list of strings)
       list of .pro files to pass to the qmake invocation.
@@ -56,7 +56,9 @@ class QmakePlugin(snapcraft.BasePlugin):
             'default': [],
         }
         schema['properties']['qt-version'] = {
+            'type': 'string',
             'enum': ['qt4', 'qt5'],
+            'default': 'qt5'
         }
         schema['properties']['project-files'] = {
             'type': 'array',
@@ -68,8 +70,7 @@ class QmakePlugin(snapcraft.BasePlugin):
             'default': [],
         }
 
-        # Qt version must be specified
-        schema['required'].append('qt-version')
+        schema.pop('required')
 
         return schema
 

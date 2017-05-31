@@ -95,12 +95,15 @@ class QMakeTestCase(tests.TestCase):
         qt_version = properties['qt-version']
         self.assertTrue('enum' in qt_version,
                         'Expected "enum" to be included in "qt_version"')
-        self.assertFalse('default' in qt_version,
-                         '"default" was unexpectedly included in "qt_version"')
 
         qt_version_enum = qt_version['enum']
         # Using sets for order independence in the comparison
         self.assertEqual(set(['qt4', 'qt5']), set(qt_version_enum))
+
+        qt_version_default = qt_version['default']
+        self.assertEqual(qt_version_default, 'qt5',
+                         'Expected "qt_version" "default" to be "qt5", but '
+                         'it was {}'.format(qt_version_default))
 
         self.assertTrue('build-properties' in schema,
                         'Expected schema to include "build-properties"')
@@ -142,11 +145,6 @@ class QMakeTestCase(tests.TestCase):
                          'Expected "project_files" "items" "type" to be '
                          '"string", but it was "{}"'
                          .format(project_files_items_type))
-
-        # Finally, verify that qt-version is required
-        required = schema['required']
-        self.assertTrue('qt-version' in required,
-                        'Expected "qt-version" to be required')
 
     def test_get_build_properties(self):
         expected_build_properties = ['options', 'project-files']
