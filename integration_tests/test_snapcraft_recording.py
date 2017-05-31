@@ -78,15 +78,21 @@ class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
 
         This snap declares one global build package that has undeclared
         dependencies.
+
         """
+        expected_packages = ['grub-doc', 'grub-legacy-doc', 'multiboot-doc']
+        self.addCleanup(
+            subprocess.call,
+            ['sudo', 'apt', 'remove', '-y'] + expected_packages)
+
         self.run_snapcraft('prime', 'build-package-global')
 
-        expected_packages = [
+        expected_packages_with_version = [
             '{}={}'.format(
                 package,
                 integration_tests.get_package_version(
                     package, self.distro_series, self.deb_arch))
-            for package in ['hello', 'libc6', 'libgcc1', 'gcc-6-base']
+            for package in expected_packages
         ]
 
         recorded_yaml_path = os.path.join(
@@ -94,7 +100,8 @@ class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(recorded_yaml['build-packages'], expected_packages)
+        self.assertEqual(
+            recorded_yaml['build-packages'], expected_packages_with_version)
 
 
 class SnapcraftRecordingPackagesTestCase(
