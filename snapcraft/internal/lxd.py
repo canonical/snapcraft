@@ -268,8 +268,16 @@ class Project(Containerbuild):
         logger.info('Connecting via SSH to {}'.format(ssh_address))
         stdin1, stdout1 = os.pipe()
         stdin2, stdout2 = os.pipe()
-        self._host_run(['/usr/lib/sftp-server'],
-                       stdin=stdin1, stdout=stdout2)
+        try:
+            self._host_run(['/usr/lib/sftp-server'],
+                           stdin=stdin1, stdout=stdout2)
+        except CalledProcessError as e:
+            # XXX: This needs to be extended once we support other distros
+            raise SnapcraftEnvironmentError(
+                'sftp-server could not be run.\n'
+                'On Debian, Ubuntu and derivatives, the package '
+                'openssh-sftp-server needs to be installed.'
+                ) from e
         self._host_run(['ssh', '-C', '-F', '/dev/null',
                         '-o', 'IdentityFile={}'.format(keyfile),
                         '-o', 'StrictHostKeyChecking=no',
