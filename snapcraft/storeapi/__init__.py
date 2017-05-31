@@ -438,7 +438,7 @@ class SnapIndexClient(Client):
         headers = self.get_default_headers()
         headers.update({
             'Accept': 'application/hal+json',
-            'X-Ubuntu-Release': constants.DEFAULT_SERIES,
+            'X-Ubuntu-Series': constants.DEFAULT_SERIES,
         })
         if arch:
             headers['X-Ubuntu-Architecture'] = arch
