@@ -523,6 +523,9 @@ class FakeAptGetBuildDep(fixtures.Fixture):
                 if self.update_error:
                     output += template.format('Err', '9', server)
                 return output.encode(sys.getfilesystemencoding())
+            elif args[0][:2] == ['dpkg', '--print-architecture']:
+                return '\n'.join(self.archs[:1]).encode(
+                    sys.getfilesystemencoding())
             elif args[0][:2] == ['dpkg', '--print-foreign-architectures']:
                 return '\n'.join(self.archs).encode(
                     sys.getfilesystemencoding())

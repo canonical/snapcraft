@@ -189,13 +189,19 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def _setup_foreign_arch(cls, arch):
+        native_arch = subprocess.check_output(
+            ['dpkg', '--print-architecture']).decode(
+                sys.getfilesystemencoding())
+        if arch in native_arch:
+            return
         foreign_archs = subprocess.check_output(
             ['dpkg', '--print-foreign-architectures']).decode(
                 sys.getfilesystemencoding())
-        if arch not in foreign_archs:
-            logger.info('Adding foreign architecture {}'.format(arch))
-            subprocess.check_output(
-                ['sudo', 'dpkg', '--add-architecture', arch])
+        if arch in foreign_archs:
+            return
+        logger.info('Adding foreign architecture {}'.format(arch))
+        subprocess.check_output(
+            ['sudo', 'dpkg', '--add-architecture', arch])
 
     @classmethod
     def _setup_multi_arch_sources(cls, apt_cache, package_name):
@@ -204,10 +210,11 @@ class Ubuntu(BaseRepo):
         Update the package cache to pull in the new packages
         Verify that the package is in the cache
         """
-        if ':' not in package_name or package_name.endswith(':native'):
+        name, arch, version = repo.get_pkg_name_parts(package_name)
+        if not arch or arch == ':native':
             return False
+        arch = arch[1:]
 
-        (name, arch) = package_name.split(':', 2)
         sources = _get_local_sources_list()
         if '[arch={}]'.format(arch) not in sources:
             logger.info('Adding sources for {}'.format(arch))
@@ -240,19 +247,14 @@ class Ubuntu(BaseRepo):
         with apt.Cache() as apt_cache:
             for pkg in unique_packages:
                 try:
-                    pkg_name, version = repo.get_pkg_name_parts(pkg)
-                    if pkg_name.endswith(':any'):
-                        pkg_name = pkg_name[:-4]
-                    installed_version = apt_cache[pkg_name].installed
+                    name, arch, version = repo.get_pkg_name_parts(pkg)
+                    installed_version = apt_cache[name + arch].installed
                     if not installed_version or (
                             version and installed_version != version):
                         new_packages.append(pkg)
                 except KeyError as e:
-
-                    if cls._setup_multi_arch_sources(apt_cache, pkg_name):
-                        new_packages.append(pkg)
-                    else:
-                        providers = apt_cache.get_providing_packages(pkg_name)
+                    if cls._setup_multi_arch_sources(apt_cache, pkg):
+                        providers = apt_cache.get_providing_packages(name)
                         if providers:
                             new_packages.append(providers[0].name)
                         else:
@@ -311,15 +313,17 @@ class Ubuntu(BaseRepo):
         for pkg in package_names:
             if not pkg:
                 continue
-            name, version_with_arch = repo.get_pkg_name_parts(pkg)
+            name, arch, version_with_arch = repo.get_pkg_name_parts(pkg)
+            fixed_pkg = name
             if version_with_arch:
-                if ':' in version_with_arch:
-                    version, arch = version_with_arch.split(':')
-                    name += ':{}'.format(arch)
-                else:
-                    version = version_with_arch
-                name += '={}'.format(version)
-            pkgs.append(name)
+                version = version_with_arch
+                with contextlib.suppress(ValueError):
+                    version, arch = list(filter(None, re.split(
+                        '(.+)(:[a-z]+)', version_with_arch)))
+                fixed_pkg += '{}={}'.format(arch, version)
+            else:
+                fixed_pkg += arch
+            pkgs.append(fixed_pkg)
         return pkgs
 
     @classmethod
@@ -360,10 +364,9 @@ class Ubuntu(BaseRepo):
                 # versions of the packages passed as arguments and we just use
                 # the versions installed.
                 # --elopio - 20170504
-                package_name, _ = repo.get_pkg_name_parts(
+                package_name, arch, _ = repo.get_pkg_name_parts(
                     build_packages.pop(0))
-                if package_name.endswith(':any'):
-                    package_name = package_name[:-4]
+                package_name += arch
                 try:
                     installed_package = apt_cache[package_name].candidate
                 except KeyError as e:
@@ -414,16 +417,16 @@ class Ubuntu(BaseRepo):
             return self._get(apt_cache)
 
     def _mark_install(self, apt_cache, package_names):
-        for name in package_names:
+        for pkg in package_names:
             logger.debug('Marking {!r} (and its dependencies) to be '
-                         'fetched'.format(name))
-            name_arch, version = repo.get_pkg_name_parts(name)
+                         'fetched'.format(pkg))
+            name, arch, version = repo.get_pkg_name_parts(pkg)
             try:
                 if version:
-                    _set_pkg_version(apt_cache[name_arch], version)
-                apt_cache[name_arch].mark_install()
+                    _set_pkg_version(apt_cache[name + arch], version)
+                apt_cache[name + arch].mark_install()
             except KeyError as e:
-                raise errors.PackageNotFoundError(name) from e
+                raise errors.PackageNotFoundError(pkg) from e
 
     def _filter_base_packages(self, apt_cache, package_names):
         manifest_dep_names = self._manifest_dep_names(apt_cache)
