@@ -37,9 +37,8 @@ class DeltaGenerationTooBigError(SnapcraftError):
     """The generated delta was too large."""
 
     fmt = (
-        'delta generated was too large.'
+        'delta saving is less than {delta_min_percentage}%.'
     )
-
 
 class DeltaFormatError(SnapcraftError):
     """A delta format must be set."""
