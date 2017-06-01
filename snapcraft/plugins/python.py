@@ -219,7 +219,8 @@ class PythonPlugin(snapcraft.BasePlugin):
         if not self._get_python_command().startswith(self.project.stage_dir):
             env['PYTHONHOME'] = '/usr'
 
-        args = ['pip', 'setuptools', 'wheel']
+        # With the release of setuptools v36.0.0, six is needed here.
+        args = ['pip', 'six', 'setuptools', 'wheel']
 
         pip_command = [self._get_python_command(), '-m', 'pip']
 
