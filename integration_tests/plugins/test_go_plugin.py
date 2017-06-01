@@ -40,10 +40,10 @@ class GoPluginTestCase(integration_tests.TestCase):
         if snapcraft.ProjectOptions().deb_arch != 'amd64':
             self.skipTest('The test only handles amd64 to armhf')
 
-        expected_arch = 'armhf'
-        self.run_snapcraft('build', 'go-hello',
-                           '--target={}'.format(expected_arch))
-        binary = os.path.join(self.stage_dir, 'bin',
+        expected_arch = 'arm64'
+        self.run_snapcraft(['build', '--target-arch={}'.format(expected_arch)],
+                           'go-hello')
+        binary = os.path.join(self.parts_dir, 'go-hello', 'install', 'bin',
                               os.path.basename(self.path))
         arch = subprocess.check_output(['file', '-b', binary],
                                        universal_newlines=True)
