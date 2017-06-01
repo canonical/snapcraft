@@ -44,10 +44,6 @@ class GoPluginCrossCompileTestCase(tests.TestCase):
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('sys.stdout')
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
         patcher = mock.patch('snapcraft.ProjectOptions.is_cross_compiling')
         patcher.start()
         self.addCleanup(patcher.stop)
