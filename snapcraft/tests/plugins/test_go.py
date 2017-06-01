@@ -24,6 +24,57 @@ from snapcraft.plugins import go
 from snapcraft import tests
 
 
+class GoPluginCrossCompileTestCase(tests.TestCase):
+
+    scenarios = [
+        ('armv7l', dict(deb_arch='armhf', go_arch='arm')),
+        ('aarch64', dict(deb_arch='arm64', go_arch='arm64')),
+        ('i386', dict(deb_arch='i386', go_arch='386')),
+        ('x86_64', dict(deb_arch='amd64', go_arch='amd64')),
+        ('ppc64le', dict(deb_arch='ppc64el', go_arch='ppc64le')),
+    ]
+
+    def setUp(self):
+        super().setUp()
+
+        self.project_options = snapcraft.ProjectOptions(
+            target_deb_arch=self.deb_arch)
+
+        patcher = mock.patch('snapcraft.internal.common.run')
+        self.run_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('sys.stdout')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.ProjectOptions.is_cross_compiling')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_cross_compile(self):
+        class Options:
+            source = ''
+            go_packages = ['github.com/gotools/vet']
+            go_importpath = ''
+            go_buildtags = ''
+
+        plugin = go.GoPlugin('test-part', Options(), self.project_options)
+
+        os.makedirs(plugin.sourcedir)
+
+        plugin.pull()
+
+        self.assertEqual(1, self.run_mock.call_count)
+        for call_args in self.run_mock.call_args_list:
+            env = call_args[1]['env']
+            self.assertIn('GOARCH', env)
+            self.assertEqual(env['GOARCH'], self.go_arch)
+            if self.deb_arch == 'armhf':
+                self.assertIn('GOARM', env)
+                self.assertEqual(env['GOARM'], '7')
+
+
 class GoPluginTestCase(tests.TestCase):
 
     def setUp(self):
@@ -241,8 +292,9 @@ class GoPluginTestCase(tests.TestCase):
         self.run_mock.reset_mock()
         plugin.build()
 
+        binary = os.path.join(plugin._gopath_bin, 'dir')
         self.run_mock.assert_called_once_with(
-            ['go', 'install', './dir/...'],
+            ['go', 'build', '-o', binary, './dir/...'],
             cwd=plugin._gopath_src, env=mock.ANY)
 
         self.assertTrue(os.path.exists(plugin._gopath))
@@ -265,13 +317,14 @@ class GoPluginTestCase(tests.TestCase):
         os.makedirs(plugin._gopath_bin)
         os.makedirs(plugin.builddir)
         # fake some binaries
-        open(os.path.join(plugin._gopath_bin, 'vet'), 'w').close()
+        binary = os.path.join(plugin._gopath_bin, 'vet')
+        open(binary, 'w').close()
 
         self.run_mock.reset_mock()
         plugin.build()
 
         self.run_mock.assert_called_once_with(
-            ['go', 'install', plugin.options.go_packages[0]],
+            ['go', 'build', '-o', binary, plugin.options.go_packages[0]],
             cwd=plugin._gopath_src, env=mock.ANY)
 
         self.assertTrue(os.path.exists(plugin._gopath))
@@ -371,11 +424,13 @@ class GoPluginTestCase(tests.TestCase):
 
         plugin.build()
 
+        binary = os.path.join(plugin._gopath_bin, 'launcher')
         self.run_mock.assert_has_calls([
             mock.call(['go', 'get', '-t', '-d',
                        './github.com/snapcore/launcher/...'],
                       cwd=plugin._gopath_src, env=mock.ANY),
-            mock.call(['go', 'install', './github.com/snapcore/launcher/...'],
+            mock.call(['go', 'build', '-o', binary,
+                       './github.com/snapcore/launcher/...'],
                       cwd=plugin._gopath_src, env=mock.ANY),
         ])
 
@@ -441,7 +496,8 @@ class GoPluginTestCase(tests.TestCase):
         self.run_mock.reset_mock()
         plugin.build()
 
+        binary = os.path.join(plugin._gopath_bin, 'dir')
         self.run_mock.assert_called_once_with(
-            ['go', 'install',
+            ['go', 'build', '-o', binary,
              '-tags=testbuildtag1,testbuildtag2', './dir/...'],
             cwd=plugin._gopath_src, env=mock.ANY)
