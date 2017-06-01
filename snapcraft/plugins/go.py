@@ -196,6 +196,9 @@ class GoPlugin(snapcraft.BasePlugin):
             env.get('CGO_LDFLAGS', ''), flags, env.get('LDFLAGS', ''))
 
         if self.project.is_cross_compiling:
+            env['CC'] = '{}-gcc'.format(self.project.arch_triplet)
+            env['CXX'] = '{}-g++'.format(self.project.arch_triplet)
+            env['CGO_ENABLED'] = '1'
             # See https://golang.org/doc/install/source#environment
             go_archs = {
                 'armhf': 'arm',

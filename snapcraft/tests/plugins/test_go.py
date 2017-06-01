@@ -64,6 +64,14 @@ class GoPluginCrossCompileTestCase(tests.TestCase):
         self.assertEqual(1, self.run_mock.call_count)
         for call_args in self.run_mock.call_args_list:
             env = call_args[1]['env']
+            self.assertIn('CC', env)
+            self.assertEqual(env['CC'], '{}-gcc'.format(
+                self.project_options.arch_triplet))
+            self.assertIn('CXX', env)
+            self.assertEqual(env['CXX'], '{}-g++'.format(
+                self.project_options.arch_triplet))
+            self.assertIn('CGO_ENABLED', env)
+            self.assertEqual(env['CGO_ENABLED'], '1')
             self.assertIn('GOARCH', env)
             self.assertEqual(env['GOARCH'], self.go_arch)
             if self.deb_arch == 'armhf':
