@@ -1,3 +1,20 @@
+snapcraft (2.30.1) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * storeapi: resume snap downloads (#1330)
+
+  [ Colin Watson ]
+  * store: send X-Ubuntu-Series, not X-Ubuntu-Release (#1320)
+
+  [ Kyle Fazzari ]
+  * docs: improve onboarding experience (#1336)
+  * python plugin: install six before using setuptools (#1339)
+
+  [ Tim Süberkrüb ]
+  * qmake plugin: set default qt version (#1328)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Thu, 01 Jun 2017 12:28:24 +0100
+
 snapcraft (2.30) xenial; urgency=medium
 
   [ Sergio Schvezov ]
