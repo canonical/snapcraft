@@ -353,12 +353,15 @@ grade: stable
 parts:
   part1:
     plugin: nil
+    build-packages: [libglib2.0-dev]
 """
         self.make_snapcraft_yaml(yaml)
         config = project_loader.Config(project_options)
 
         self.assertEqual(config.parts.build_tools,
-                         ['gcc-arm-linux-gnueabihf'])
+                         ['gcc-arm-linux-gnueabihf:native',
+                          'libc6-dev-armhf-cross:native',
+                          'libglib2.0-dev'])
 
     def test_config_has_no_extra_build_tools_when_not_cross_compiling(self):
         class ProjectOptionsFake(snapcraft.ProjectOptions):

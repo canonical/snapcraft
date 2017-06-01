@@ -18,6 +18,7 @@ import os
 import subprocess
 
 import integration_tests
+import snapcraft
 
 
 class GoPluginTestCase(integration_tests.TestCase):
@@ -33,3 +34,10 @@ class GoPluginTestCase(integration_tests.TestCase):
 
     def test_building_multiple_main_packages(self):
         self.run_snapcraft('stage', 'go-with-multiple-main-packages')
+
+    def test_cross_compiling(self):
+        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+            self.skipTest('The test only handles amd64 to armhf')
+
+        arch = 'armhf'
+        self.run_snapcraft('stage', 'go-cgo', '--target={}'.format(arch))

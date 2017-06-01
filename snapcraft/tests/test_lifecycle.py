@@ -625,6 +625,10 @@ class ExecutionTestCase(BaseExecutionTestCase):
 
 class RecordSnapcraftTestCase(BaseExecutionTestCase):
 
+    def setUp(self):
+        super().setUp()
+        self.useFixture(tests.fixture_setup.FakeAptGetBuildDep([]))
+
     def test_prime_without_build_info_does_not_record_snapcraft_yaml(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', None))

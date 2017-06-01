@@ -101,7 +101,7 @@ class GoPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.append('golang-go')
+        self.build_packages.append('golang-go:native')
         self._gopath = os.path.join(self.partdir, 'go')
         self._gopath_src = os.path.join(self._gopath, 'src')
         self._gopath_bin = os.path.join(self._gopath, 'bin')
@@ -151,18 +151,22 @@ class GoPlugin(snapcraft.BasePlugin):
         if self.options.go_buildtags:
             tags = ['-tags={}'.format(','.join(self.options.go_buildtags))]
 
-        for go_package in self.options.go_packages:
-            self._run(['go', 'install'] + tags + [go_package])
-        if not self.options.go_packages:
-            self._run(['go', 'install'] + tags +
-                      ['./{}/...'.format(self._get_local_go_package())])
+        packages = self.options.go_packages
+        if not packages:
+            packages = ['./{}/...'.format(self._get_local_go_package())]
+        for package in packages:
+            binary = os.path.join(self._gopath_bin, self._binary_name(package))
+            self._run(['go', 'build', '-o', binary] + tags + [package])
 
         install_bin_path = os.path.join(self.installdir, 'bin')
         os.makedirs(install_bin_path, exist_ok=True)
-        os.makedirs(self._gopath_bin, exist_ok=True)
         for binary in os.listdir(self._gopath_bin):
             binary_path = os.path.join(self._gopath_bin, binary)
             shutil.copy2(binary_path, install_bin_path)
+
+    def _binary_name(self, package):
+        package = package.replace('/...', '')
+        return package.split('/')[-1]
 
     def clean_build(self):
         super().clean_build()
@@ -191,4 +195,21 @@ class GoPlugin(snapcraft.BasePlugin):
         env['CGO_LDFLAGS'] = '{} {} {}'.format(
             env.get('CGO_LDFLAGS', ''), flags, env.get('LDFLAGS', ''))
 
+        if self.project.is_cross_compiling:
+            env['CC'] = '{}-gcc'.format(self.project.arch_triplet)
+            env['CXX'] = '{}-g++'.format(self.project.arch_triplet)
+            env['CGO_ENABLED'] = '1'
+            # See https://golang.org/doc/install/source#environment
+            go_archs = {
+                'armhf': 'arm',
+                'i386': '386',
+                'ppc64el': 'ppc64le',
+            }
+            env['GOARCH'] = go_archs.get(self.project.deb_arch,
+                                         self.project.deb_arch)
+            if self.project.deb_arch == 'armhf':
+                env['GOARM'] = '7'
         return env
+
+    def enable_cross_compilation(self):
+        pass
