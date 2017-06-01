@@ -67,6 +67,15 @@
    build folders as well as the container `snapcraft-<project>` is gone.
 
 
+# Test cross-compilation
+
+1. Go to integration_tests/snaps/go-hello.
+2. Run `snapcraft snap --target-arch=armhf`.
+3. Copy the snap to a Raspberry Pi.
+4. Install the snap.
+5. Run `go-hello`.
+
+
 # Test the PC kernel.
 
 1. Get the PC kernel source:
