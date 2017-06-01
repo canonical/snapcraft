@@ -228,10 +228,7 @@ class BuildPackagesTestCase(tests.TestCase):
             'package-not-installed', 'package-installed',
             'another-uninstalled', 'another-installed', 'repeated-package',
             'repeated-package', 'versioned-package=0.2', 'versioned-package')
-        for package in self.test_packages:
-            self.fake_apt_cache.cache[package] = (
-                fixture_setup.FakeAptCachePackage(
-                    self.fake_apt_cache.path, package))
+        self.fake_apt_cache.add_packages(self.test_packages)
         self.fake_apt_cache.cache['package-installed'].installed = True
         self.fake_apt_cache.cache['another-installed'].installed = True
         self.fake_apt_cache.cache['versioned-package'].version = '0.1'

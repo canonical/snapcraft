@@ -635,9 +635,11 @@ class FakeAptCache(fixtures.Fixture):
                 os.path.join(
                     __file__, '..', '..',
                     'internal', 'repo', 'manifest.txt'))) as manifest_file:
-            for line in manifest_file:
-                package = line.strip()
-                self.cache[package] = FakeAptCachePackage(self.path, package)
+            self.add_packages([line.strip() for line in manifest_file])
+
+    def add_packages(self, package_names):
+        for name in package_names:
+            self.cache[name] = FakeAptCachePackage(self.path, name)
 
 
 class FakeAptCachePackage():
