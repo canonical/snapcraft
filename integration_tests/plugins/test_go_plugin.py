@@ -18,6 +18,8 @@ import os
 import subprocess
 
 import integration_tests
+import snapcraft
+from testtools.matchers import Contains
 
 
 class GoPluginTestCase(integration_tests.TestCase):
@@ -33,3 +35,16 @@ class GoPluginTestCase(integration_tests.TestCase):
 
     def test_building_multiple_main_packages(self):
         self.run_snapcraft('stage', 'go-with-multiple-main-packages')
+
+    def test_cross_compiling(self):
+        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+            self.skipTest('The test only handles amd64 to armhf')
+
+        expected_arch = 'armhf'
+        self.run_snapcraft('build', 'go-hello',
+                           '--target={}'.format(expected_arch))
+        binary = os.path.join(self.stage_dir, 'bin',
+                              os.path.basename(self.path))
+        arch = subprocess.check_output(['file', '-b', binary],
+                                       universal_newlines=True)
+        self.assertThat(arch, Contains('aarch64'))
