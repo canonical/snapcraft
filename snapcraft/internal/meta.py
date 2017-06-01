@@ -33,7 +33,10 @@ from snapcraft.internal import common
 from snapcraft.internal.errors import MissingGadgetError
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.sources import get_source_handler_from_type
-from snapcraft.internal.states import get_state
+from snapcraft.internal.states import (
+    get_global_state,
+    get_state
+)
 
 
 logger = logging.getLogger(__name__)
@@ -144,9 +147,7 @@ class _SnapPackaging:
                 yaml.dump(annotated_snapcraft, record_file)
 
     def _annotate_snapcraft(self, data):
-        with open('snap/.snapcraft/state', 'r') as global_state_file:
-            global_state = yaml.load(global_state_file)
-        data['build-packages'] = global_state.assets.get(
+        data['build-packages'] = get_global_state().assets.get(
             'build-packages', [])
         for part in data['parts']:
             pull_state = get_state(

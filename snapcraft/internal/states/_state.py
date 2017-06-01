@@ -86,6 +86,11 @@ def _get_differing_keys(dict1, dict2):
     return differing_keys
 
 
+def get_global_state():
+    with open(os.path.join('snap', '.snapcraft', 'state'), 'r') as state_file:
+        return yaml.load(state_file)
+
+
 def get_state(state_dir, step):
     state = None
     state_file = get_step_state_file(state_dir, step)
