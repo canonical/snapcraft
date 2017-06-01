@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import magic
 import os
 import subprocess
 
@@ -45,6 +46,7 @@ class GoPluginTestCase(integration_tests.TestCase):
                            'go-hello')
         binary = os.path.join(self.parts_dir, 'go-hello', 'install', 'bin',
                               os.path.basename(self.path))
-        arch = subprocess.check_output(['file', '-b', binary],
-                                       universal_newlines=True)
+        ms = magic.open(magic.NONE)
+        ms.load()
+        arch = ms.file(binary)
         self.assertThat(arch, Contains('aarch64'))
