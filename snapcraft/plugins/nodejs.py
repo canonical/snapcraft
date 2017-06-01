@@ -131,11 +131,16 @@ class NodePlugin(snapcraft.BasePlugin):
         self._nodejs_tar.download()
         if hasattr(self, '_yarn_tar'):
             self._yarn_tar.download()
+        source_subdir = getattr(self.options, 'source_subdir', None)
+        if source_subdir:
+            sourcedir = os.path.join(self.sourcedir, source_subdir)
+        else:
+            sourcedir = self.sourcedir
         # do the install in the pull phase to download all dependencies.
         if self.options.node_package_manager == 'npm':
-            self._npm_install(rootdir=self.sourcedir)
+            self._npm_install(rootdir=sourcedir)
         else:
-            self._yarn_install(rootdir=self.sourcedir)
+            self._yarn_install(rootdir=sourcedir)
 
     def clean_pull(self):
         super().clean_pull()
