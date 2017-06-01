@@ -12,7 +12,6 @@ parts:
   part-with-build-packages:
     plugin: nil
     build-packages:
-      - hello
-      - libc6
-      - libgcc1
-      - gcc-6-base
+      - grub-doc
+      - grub-legacy-doc
+      - multiboot-doc

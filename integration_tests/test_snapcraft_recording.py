@@ -73,7 +73,17 @@ class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
             recorded_yaml['architectures'],
             [snapcraft.ProjectOptions().deb_arch])
 
-    def test_prime_with_global_build_packages(self):
+
+class SnapcraftRecordingBuildPackagesTestCase(
+        testscenarios.WithScenarios, SnapcraftRecordingBaseTestCase):
+
+    scenarios = [
+        (snap, {'snap': snap}) for snap in
+        ['build-package-global', 'build-packages-missing-dependency',
+         'build-packages-without-dependencies']
+    ]
+
+    def test_prime_with_build_packages(self):
         """Test the recorded snapcraft.yaml for a snap with build packages
 
         This snap declares one global build package that has undeclared
@@ -85,7 +95,7 @@ class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
             subprocess.call,
             ['sudo', 'apt', 'remove', '-y'] + expected_packages)
 
-        self.run_snapcraft('prime', 'build-package-global')
+        self.run_snapcraft('prime', self.snap)
 
         expected_packages_with_version = [
             '{}={}'.format(
@@ -104,19 +114,7 @@ class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
             recorded_yaml['build-packages'], expected_packages_with_version)
 
 
-class SnapcraftRecordingPackagesTestCase(
-        testscenarios.WithScenarios, SnapcraftRecordingBaseTestCase):
-
-    scenarios = (
-        ('stage-packages', {
-            'packages_type': 'stage-packages',
-            'expected_packages': ['gcc-6-base', 'hello']
-         }),
-        ('build-packages', {
-            'packages_type': 'build-packages',
-            'expected_packages': ['hello', 'libc6', 'libgcc1', 'gcc-6-base']
-         })
-    )
+class SnapcraftRecordingStagePackagesTestCase(SnapcraftRecordingBaseTestCase):
 
     def test_prime_records_packages_version(self):
         """Test the recorded snapcraft.yaml for a snap with packages
@@ -124,12 +122,11 @@ class SnapcraftRecordingPackagesTestCase(
         This snap declares all the packages that it requires, there are
         no additional dependencies. The packages specify their version.
         """
-        self.copy_project_to_cwd(
-            '{}-without-dependencies'.format(self.packages_type))
-        part_name = 'part-with-{}'.format(self.packages_type)
-        for package in ['hello'] + self.expected_packages:
-            self.set_package_version(
-                self.packages_type,
+        expected_packages = ['gcc-6-base', 'hello']
+        self.copy_project_to_cwd('stage-packages-without-dependencies')
+        part_name = 'part-with-stage-packages'
+        for package in expected_packages:
+            self.set_stage_package_version(
                 os.path.join('snap', 'snapcraft.yaml'), part_name, package)
 
         self.run_snapcraft('prime')
@@ -143,8 +140,8 @@ class SnapcraftRecordingPackagesTestCase(
             recorded_yaml = yaml.load(recorded_yaml_file)
 
         self.assertEqual(
-            recorded_yaml['parts'][part_name][self.packages_type],
-            source_yaml['parts'][part_name][self.packages_type])
+            recorded_yaml['parts'][part_name]['stage-packages'],
+            source_yaml['parts'][part_name]['stage-packages'])
 
     def test_prime_without_packages_version(self):
         """Test the recorded snapcraft.yaml for a snap with packages
@@ -154,17 +151,16 @@ class SnapcraftRecordingPackagesTestCase(
         version.
         """
         self.run_snapcraft(
-            'prime',
-            project_dir='{}-without-dependencies'.format(self.packages_type))
+            'prime', project_dir='stage-packages-without-dependencies')
 
         with open(os.path.join('snap', 'snapcraft.yaml')) as source_yaml_file:
             source_yaml = yaml.load(source_yaml_file)
-        part_name = 'part-with-{}'.format(self.packages_type)
+        part_name = 'part-with-stage-packages'
         expected_packages = [
             '{}={}'.format(
                 package, integration_tests.get_package_version(
                     package, self.distro_series, self.deb_arch)) for
-            package in source_yaml['parts'][part_name][self.packages_type]
+            package in source_yaml['parts'][part_name]['stage-packages']
         ]
 
         recorded_yaml_path = os.path.join(
@@ -173,7 +169,7 @@ class SnapcraftRecordingPackagesTestCase(
             recorded_yaml = yaml.load(recorded_yaml_file)
 
         self.assertEqual(
-            recorded_yaml['parts'][part_name][self.packages_type],
+            recorded_yaml['parts'][part_name]['stage-packages'],
             expected_packages)
 
     def test_prime_with_packages_missing_dependency(self):
@@ -181,11 +177,9 @@ class SnapcraftRecordingPackagesTestCase(
 
         This snap declares one package that has undeclared dependencies.
         """
-        self.copy_project_to_cwd('{}-missing-dependency'.format(
-            self.packages_type))
-        part_name = 'part-with-{}'.format(self.packages_type)
-        self.set_package_version(
-            self.packages_type,
+        self.copy_project_to_cwd('stage-packages-missing-dependency')
+        part_name = 'part-with-stage-packages'
+        self.set_stage_package_version(
             os.path.join('snap', 'snapcraft.yaml'), part_name, package='hello')
         self.run_snapcraft('prime')
 
@@ -194,7 +188,7 @@ class SnapcraftRecordingPackagesTestCase(
                 package,
                 integration_tests.get_package_version(
                     package, self.distro_series, self.deb_arch))
-            for package in self.expected_packages
+            for package in ['gcc-6-base', 'hello']
         ]
 
         recorded_yaml_path = os.path.join(
@@ -203,7 +197,7 @@ class SnapcraftRecordingPackagesTestCase(
             recorded_yaml = yaml.load(recorded_yaml_file)
 
         self.assertEqual(
-            recorded_yaml['parts'][part_name][self.packages_type],
+            recorded_yaml['parts'][part_name]['stage-packages'],
             expected_packages)
 
 
