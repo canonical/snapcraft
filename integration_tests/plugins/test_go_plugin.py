@@ -14,13 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import magic
 import os
 import subprocess
 
 import integration_tests
 import snapcraft
-from testtools.matchers import Contains
+from snapcraft.tests.matchers import HasArchitecture
 
 
 class GoPluginTestCase(integration_tests.TestCase):
@@ -41,12 +40,9 @@ class GoPluginTestCase(integration_tests.TestCase):
         if snapcraft.ProjectOptions().deb_arch != 'amd64':
             self.skipTest('The test only handles amd64 to armhf')
 
-        expected_arch = 'arm64'
-        self.run_snapcraft(['build', '--target-arch={}'.format(expected_arch)],
+        target_arch = 'arm64'
+        self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
                            'go-hello')
         binary = os.path.join(self.parts_dir, 'go-hello', 'install', 'bin',
                               os.path.basename(self.path))
-        ms = magic.open(magic.NONE)
-        ms.load()
-        arch = ms.file(binary)
-        self.assertThat(arch, Contains('aarch64'))
+        self.assertThat(binary, HasArchitecture('aarch64'))
