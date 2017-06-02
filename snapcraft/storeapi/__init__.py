@@ -287,17 +287,39 @@ class StoreClient():
             return
         logger.info('Downloading {}'.format(name, download_path))
 
+        # we only resume when redirected to our CDN since we use internap's
+        # special sauce.
+        resume_possible = False
+        total_read = 0
+        probe_url = requests.head(download_url)
+        if (probe_url.is_redirect and
+                'internap' in probe_url.headers['Location']):
+            download_url = probe_url.headers['Location']
+            resume_possible = True
+
         # HttpAdapter cannot help here as this is a stream.
         # LP: #1617765
         not_downloaded = True
         retry_count = 5
         while not_downloaded and retry_count:
-            request = self.cpi.get(download_url, stream=True)
+            headers = {}
+            if resume_possible and os.path.exists(download_path):
+                total_read = os.path.getsize(download_path)
+                headers['Range'] = 'bytes={}-'.format(total_read)
+            request = self.cpi.get(download_url, headers=headers, stream=True)
             request.raise_for_status()
+            redirections = [h.headers['Location'] for h in request.history]
+            if redirections:
+                logger.debug('Redirections for {!r}: {}'.format(
+                    download_url, ', '.join(redirections)))
             try:
-                download_requests_stream(request, download_path)
+                download_requests_stream(request, download_path,
+                                         total_read=total_read)
                 not_downloaded = False
             except requests.exceptions.ChunkedEncodingError as e:
+                logger.debug('Error while downloading: {!r}. '
+                             'Retries left to download: {!r}.'.format(
+                                 e, retry_count))
                 retry_count -= 1
                 if not retry_count:
                     raise e
@@ -416,7 +438,7 @@ class SnapIndexClient(Client):
         headers = self.get_default_headers()
         headers.update({
             'Accept': 'application/hal+json',
-            'X-Ubuntu-Release': constants.DEFAULT_SERIES,
+            'X-Ubuntu-Series': constants.DEFAULT_SERIES,
         })
         if arch:
             headers['X-Ubuntu-Architecture'] = arch
