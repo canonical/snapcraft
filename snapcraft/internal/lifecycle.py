@@ -111,8 +111,9 @@ def execute(step, project_options, part_names=None):
     config = snapcraft.internal.load_config(project_options)
     installed_packages = repo.Repo.install_build_packages(
         config.build_tools)
-    os.makedirs('snap/.snapcraft', exist_ok=True)
-    with open('snap/.snapcraft/state', 'w') as f:
+    snapcraft_state_dir = os.path.join('snap', '.snapcraft')
+    os.makedirs(snapcraft_state_dir, exist_ok=True)
+    with open(os.path.join(snapcraft_state_dir, 'state'), 'w') as f:
         f.write(yaml.dump(states.GlobalState(installed_packages)))
 
     if (os.environ.get('SNAPCRAFT_SETUP_CORE') and
