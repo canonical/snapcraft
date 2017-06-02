@@ -88,7 +88,7 @@ class SnapcraftLogicError(SnapcraftError):
 
 class PluginError(SnapcraftError):
 
-    fmt = "Issue while loading part: {message}"
+    fmt = 'Issue while loading part: {message}'
 
     def __init__(self, message):
         super().__init__(message=message)
@@ -102,9 +102,9 @@ class PluginNotDefinedError(SnapcraftError):
 
 class SnapcraftYamlFileError(SnapcraftError):
 
-    fmt = ("Could not find {snapcraft_yaml}. Are you sure you are in the "
-           "right directory?\n"
-           "To start a new project, use `snapcraft init`")
+    fmt = ('Could not find {snapcraft_yaml}. Are you sure you are in the '
+           'right directory?\n'
+           'To start a new project, use `snapcraft init`')
 
 
 class SnapcraftPartConflictError(SnapcraftError):
