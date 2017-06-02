@@ -34,11 +34,19 @@ def check_for_command(command):
 
 
 def get_pkg_name_parts(pkg_name):
-    """Break package name into base parts"""
+    """Break package name:arch=version into base parts"""
 
     name = pkg_name
     version = None
     with contextlib.suppress(ValueError):
         name, version = pkg_name.split('=')
 
-    return name, version
+    arch = ''
+    if ':' in name:
+        name, arch = name.rsplit(':', 1)
+        if arch == 'any':
+            arch = ''
+        else:
+            arch = ':' + arch
+
+    return name, arch, version

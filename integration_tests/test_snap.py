@@ -124,7 +124,7 @@ class SnapTestCase(integration_tests.TestCase):
             subprocess.CalledProcessError, self.run_snapcraft, 'snap')
         expected = (
             "Could not find a required package in 'build-packages': "
-            '"The cache has no package named \'inexistent-package\'"\n')
+            'inexistent-package\n')
         self.assertThat(exception.output, EndsWith(expected))
 
     def test_snap_with_exposed_files(self):
