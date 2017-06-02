@@ -91,6 +91,18 @@ class RustPluginTestCase(RustPluginBaseTestCase):
             os.path.join('parts', 'rust-subdir', 'src', 'subdir',
                          'Cargo.lock'), FileExists())
 
+    def test_cross_compiling(self):
+        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+            self.skipTest('The test only handles amd64 to armhf')
+
+        target_arch = 'arm64'
+        self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
+                           'rust-hello')
+        binary = os.path.join(self.parts_dir, 'rust-hello', 'install', 'bin',
+                              os.path.basename(self.path))
+        self.assertThat(binary, FileExists())
+        # XXX: self.assertThat(binary, HasArchitecture('aarch64'))
+
 
 class RustPluginConfinementTestCase(testscenarios.WithScenarios,
                                     RustPluginBaseTestCase):

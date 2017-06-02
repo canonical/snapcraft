@@ -33,6 +33,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Features used to build optional dependencies
 """
 
+from contextlib import suppress
 import os
 import shutil
 
@@ -76,9 +77,6 @@ class RustPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.build_packages.extend([
-            'gcc',
-            'binutils',
-            'libc6-dev',
             'git',
             'curl',
             'file',
@@ -93,14 +91,52 @@ class RustPlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
-        cmd = [self._cargo, 'install',
-               '-j{}'.format(self.parallel_build_count),
-               '--root', self.installdir,
-               '--path', self.builddir]
+
+        cmd = [self._cargo, 'build',
+               '-j{}'.format(self.parallel_build_count)]
+        # from build:
+        # '-out-dir', self.builddir,
+        # from install:
+        # '--root', self.installdir
+        # '--path', self.builddir
         if self.options.rust_features:
             cmd.append("--features")
             cmd.append(' '.join(self.options.rust_features))
+        if self.project.is_cross_compiling:
+            cmd.append("--target")
+            cmd.append(self._target)
+            cmd.append("--verbose")
         self.run(cmd, env=self._build_env())
+
+    def enable_cross_compilation(self):
+        # Cf. rustc --print target-list
+        rust_targets = {
+            'armhf': 'armv7-{}-{}eabihf',
+            'arm64': 'aarch64-{}-{}',
+            'i386': 'i686-{}-{}',
+            'amd64': 'x86_64-{}-{}',
+            'ppc64el': 'powerpc64le-{}-{}',
+        }
+        self._target = rust_targets.get(self.project.deb_arch).format(
+            'unknown-linux', 'gnu')
+        if not self._target:
+            raise NotImplementedError(
+                '{!r} is not supported as a target architecture when '
+                'cross-compiling with the rust plugin'.format(
+                    self.project.deb_arch))
+
+        # Cf. http://doc.crates.io/config.html
+        with suppress(FileExistsError):
+            os.mkdir('.cargo')
+        with open('.cargo/config', 'w') as f:
+            f.write('''
+                [build]
+                target = "{}"
+
+                [target.{}]
+                linker = "{}"
+                '''.format(self._target, self._target,
+                           '{}-gcc'.format(self.project.arch_triplet)))
 
     def _build_env(self):
         env = os.environ.copy()
@@ -147,9 +183,12 @@ class RustPlugin(snapcraft.BasePlugin):
         if not os.path.exists(self._rustpath):
             os.makedirs(self._rustpath)
         self._rustup_get.download()
-        self.run([self._rustup,
-                  '--prefix={}'.format(self._rustpath),
-                  '--disable-sudo', '--save'] + options)
+        cmd = [self._rustup,
+               '--prefix={}'.format(self._rustpath),
+               '--disable-sudo', '--save'] + options
+        if self.project.is_cross_compiling:
+            cmd.append("--with-target={}".format(self._target))
+        self.run(cmd)
 
     def _fetch_deps(self):
         if self.options.source_subdir:
