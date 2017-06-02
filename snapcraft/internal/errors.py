@@ -42,10 +42,6 @@ class SnapcraftError(Exception):
         return self.fmt.format([], **self.__dict__)
 
 
-class PluginError(Exception):
-    pass
-
-
 class MissingState(Exception):
     pass
 
@@ -80,6 +76,35 @@ class SnapcraftPartMissingError(SnapcraftError):
         'It may be a remote part, run `snapcraft update` '
         'to refresh the remote parts cache.'
     )
+
+
+class SnapcraftLogicError(SnapcraftError):
+
+    fmt = 'Issue detected while analyzing snapcraft.yaml: {message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
+class PluginError(SnapcraftError):
+
+    fmt = "Issue while loading part: {message}"
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
+class PluginNotDefinedError(SnapcraftError):
+
+    fmt = ("Issues while validating snapcraft.yaml: the 'plugin' keyword is "
+           "missing for the {part_name} part.")
+
+
+class SnapcraftYamlFileError(SnapcraftError):
+
+    fmt = ("Could not find {snapcraft_yaml}. Are you sure you are in the "
+           "right directory?\n"
+           "To start a new project, use `snapcraft init`")
 
 
 class SnapcraftPartConflictError(SnapcraftError):
@@ -150,7 +175,7 @@ class RequiredPathDoesNotExist(SnapcraftError):
 
 class SnapcraftSchemaError(SnapcraftError):
 
-    fmt = '{message}'
+    fmt = 'Issues while validating {snapcraft_yaml}: {message}'
 
     @classmethod
     def from_validation_error(cls, error):
@@ -188,8 +213,8 @@ class SnapcraftSchemaError(SnapcraftError):
 
         return cls(' '.join(messages))
 
-    def __init__(self, message):
-        super().__init__(message=message)
+    def __init__(self, message, snapcraft_yaml='snapcraft.yaml'):
+        super().__init__(message=message, snapcraft_yaml=snapcraft_yaml)
 
 
 def _determine_cause(error):

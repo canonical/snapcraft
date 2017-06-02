@@ -18,6 +18,7 @@ import logging
 import os
 import os.path
 import subprocess
+from textwrap import dedent
 from unittest import mock
 from unittest.mock import call
 
@@ -35,19 +36,20 @@ from snapcraft.tests import fixture_setup
 
 class SnapCommandTestCase(CommandBaseTestCase):
 
-    yaml_template = """name: snap-test
-version: 1.0
-summary: test snapping
-description: if snap is succesful a snap package will be available
-architectures: ['amd64']
-type: {}
-confinement: strict
-grade: stable
+    yaml_template = dedent("""\
+        name: snap-test
+        version: 1.0
+        summary: test snapping
+        description: if snap is succesful a snap package will be available
+        architectures: ['amd64']
+        type: {}
+        confinement: strict
+        grade: stable
 
-parts:
-    part1:
-      plugin: nil
-"""
+        parts:
+            part1:
+                plugin: nil
+        """)
 
     def setUp(self):
         super().setUp()
@@ -64,8 +66,9 @@ parts:
         self.popen_spy = patcher.start()
         self.addCleanup(patcher.stop)
 
-    def make_snapcraft_yaml(self, n=1, snap_type='app'):
-        snapcraft_yaml = self.yaml_template.format(snap_type)
+    def make_snapcraft_yaml(self, n=1, snap_type='app', snapcraft_yaml=None):
+        if not snapcraft_yaml:
+            snapcraft_yaml = self.yaml_template.format(snap_type)
         super().make_snapcraft_yaml(snapcraft_yaml)
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
@@ -320,6 +323,26 @@ type: os
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('mysnap.snap', FileExists())
+
+    def test_load_config_with_invalid_plugin_exits_with_error(self):
+        self.make_snapcraft_yaml(snapcraft_yaml=dedent("""\
+            name: test-package
+            version: 1
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+
+            parts:
+              part1:
+                plugin: does-not-exist
+        """))
+
+        result = self.run_command(['snap'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            'Issue while loading part: unknown plugin: does-not-exist'))
 
     @mock.patch('time.time')
     def test_snap_renames_stale_snap_build(self, mocked_time):
