@@ -28,18 +28,20 @@ class BuildPackageVersionTestCase(testscenarios.WithScenarios,
                                   integration_tests.TestCase):
 
     scenarios = (
-        ('global', dict(project='build-package', part='hello')),
-        ('local', dict(project='build-package-global', part=None)),
+        ('global', dict(
+            project='build-package', package='hello', part='hello')),
+        ('local', dict(
+            project='build-package-global', package='grub-doc', part=None)),
     )
 
     def test_build_package_gets_version(self):
         self.copy_project_to_cwd(self.project)
         version = self.set_build_package_version(
-            os.path.join('snap', 'snapcraft.yaml'), self.part, package='hello')
+            os.path.join('snap', 'snapcraft.yaml'), self.part, package=self.package)
         self.run_snapcraft('pull')
 
         with apt.Cache() as apt_cache:
-            installed_version = apt_cache['hello'].candidate.version
+            installed_version = apt_cache[self.package].candidate.version
         self.assertThat(installed_version, Equals(version))
 
 
