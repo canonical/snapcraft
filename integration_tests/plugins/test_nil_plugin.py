@@ -26,7 +26,8 @@ class NilPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('snap', 'nil-basic')
 
         dirs = os.listdir(self.prime_dir)
-        self.assertEqual(['meta'], dirs)
+        dirs.sort()
+        self.assertEqual(['meta', 'snap'], dirs)
 
     def test_nil_no_additional_properties(self):
         exception = self.assertRaises(
