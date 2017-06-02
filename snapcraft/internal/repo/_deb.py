@@ -188,6 +188,59 @@ class Ubuntu(BaseRepo):
         return packages
 
     @classmethod
+    def _setup_foreign_arch(cls, arch):
+        native_arch = subprocess.check_output(
+            ['dpkg', '--print-architecture']).decode(
+                sys.getfilesystemencoding())
+        if arch in native_arch:
+            return
+        foreign_archs = subprocess.check_output(
+            ['dpkg', '--print-foreign-architectures']).decode(
+                sys.getfilesystemencoding())
+        if arch in foreign_archs:
+            return
+        logger.info('Adding foreign architecture {}'.format(arch))
+        subprocess.check_output(
+            ['sudo', 'dpkg', '--add-architecture', arch])
+
+    @classmethod
+    def _setup_multi_arch_sources(cls, apt_cache, package_name):
+        """If the given package has an arch suffix:
+        Generate arch-specific sources list
+        Update the package cache to pull in the new packages
+        Verify that the package is in the cache
+        """
+        name, arch, version = repo.get_pkg_name_parts(package_name)
+        if not arch or arch == ':native':
+            return False
+        arch = arch[1:]
+
+        sources = _get_local_sources_list()
+        if '[arch={}]'.format(arch) not in sources:
+            logger.info('Adding sources for {}'.format(arch))
+            release = platform.linux_distribution()[2]
+            sources = _format_sources_list(None, deb_arch=arch,
+                                           release=release, foreign=True)
+            with tempfile.NamedTemporaryFile() as sources_arch_file:
+                sources_arch_file.write(sources.encode())
+                sources_arch_file.flush()
+                sources_lists = os.path.join('/etc/apt/sources.list.d/',
+                                             'ubuntu-{}.list'.format(arch))
+                subprocess.check_call(['sudo', 'cp',
+                                       sources_arch_file.name, sources_lists])
+                subprocess.check_call(['sudo', 'chmod',
+                                       '644', sources_lists])
+
+        update_output = subprocess.check_output(
+            ['sudo', 'apt-get', 'update'],
+            stderr=subprocess.STDOUT).decode(sys.getfilesystemencoding())
+        # Failure to download doesn't return an error code
+        if 'Err:' in update_output:
+            raise subprocess.CalledProcessError(
+                100, ['sudo', 'apt-get', 'update'], update_output)
+        return package_name in apt_cache
+
+    @classmethod
     def install_build_packages(cls, package_names, arch):
         unique_packages = set(cls._get_build_deps(package_names, arch))
         new_packages = []
@@ -200,11 +253,12 @@ class Ubuntu(BaseRepo):
                             version and installed_version != version):
                         new_packages.append(pkg)
                 except KeyError as e:
-                    providers = apt_cache.get_providing_packages(pkg_name)
-                    if providers:
-                        new_packages.append(providers[0].name)
-                    else:
-                        raise errors.BuildPackageNotFoundError(e) from e
+                    if cls._setup_multi_arch_sources(apt_cache, pkg):
+                        providers = apt_cache.get_providing_packages(name)
+                        if providers:
+                            new_packages.append(providers[0].name)
+                        else:
+                            raise errors.BuildPackageNotFoundError(pkg) from e
 
         if new_packages:
             cls._install_new_build_packages(new_packages)
@@ -217,6 +271,8 @@ class Ubuntu(BaseRepo):
         build_deps = []
         if not package_names:
             return build_deps
+
+        cls._setup_foreign_arch(arch)
 
         with tempfile.NamedTemporaryFile(suffix='.dsc') as fake_source:
             depends = 'Build-Depends: {}\n'.format(', '.join(package_names))
@@ -505,7 +561,7 @@ def _format_sources_list(sources_list, *,
         'release': release,
         'suffix': suffix,
         'security': security,
-    })
+    }).replace('deb', 'deb [arch={}]'.format(deb_arch) if foreign else 'deb')
 
 
 def _fix_filemode(path):

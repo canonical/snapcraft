@@ -523,6 +523,18 @@ class FakeAptGetBuildDep(fixtures.Fixture):
                 if self.update_error:
                     output += template.format('Err', '9', server)
                 return output.encode(sys.getfilesystemencoding())
+            elif args[0][:2] == ['dpkg', '--print-architecture']:
+                return '\n'.join(self.archs[:1]).encode(
+                    sys.getfilesystemencoding())
+            elif args[0][:2] == ['dpkg', '--print-foreign-architectures']:
+                return '\n'.join(self.archs).encode(
+                    sys.getfilesystemencoding())
+            elif args[0][:3] == ['sudo', 'dpkg', '--add-architecture']:
+                self.archs.append(args[0][3])
+                return dedent('''
+                    Odd number of elements in hash assignment at
+                     /usr/share/pkg-config-dpkghook line 30
+                    ''').encode(sys.getfilesystemencoding())
         return call_effect
 
 

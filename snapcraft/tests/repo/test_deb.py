@@ -240,6 +240,27 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
             repo._deb.Ubuntu._ensure_package_format(
                 ['libfoo1:armhf=1:0.2-0ubu3', 'libpkg2=3:0.4-0ubu5:armhf']))
 
+    def test_setup_multi_arch_sources_skipped(self):
+        fake_apt = tests.fixture_setup.FakeAptGetBuildDep([])
+        self.useFixture(fake_apt)
+        repo._deb.Ubuntu._setup_multi_arch_sources(self.mock_cache,
+                                                   'libpkg2=3:0.4-0ubu5')
+        fake_apt.open_mock.assert_not_called()
+
+    def test_setup_multi_arch_sources(self):
+        fake_apt = tests.fixture_setup.FakeAptGetBuildDep([])
+        self.useFixture(fake_apt)
+        repo._deb.Ubuntu._setup_multi_arch_sources(self.mock_cache,
+                                                   'libpkg2:armhf=3:0.4-0ubu5')
+        fake_apt.open_mock.assert_has_calls([
+            call('/etc/apt/sources.list')
+        ])
+        sources_list = '/etc/apt/sources.list.d/ubuntu-{}.list'.format('armhf')
+        fake_apt.check_call_mock.assert_has_calls([
+            call(['sudo', 'cp', fake_apt.filename, sources_list]),
+            call(['sudo', 'chmod', '644', sources_list]),
+        ])
+
 
 class BuildPackagesTestCase(tests.TestCase):
 
@@ -297,6 +318,7 @@ class BuildPackagesTestCase(tests.TestCase):
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
         ])
         fake_apt.check_output_mock.assert_has_calls([
+            call(['dpkg', '--print-architecture']),
             call(['apt-get', 'build-dep', '-q', '-s',
                   '-aamd64', fake_apt.filename],
                  env={}, stderr=-2),
@@ -387,12 +409,24 @@ class BuildPackagesTestCase(tests.TestCase):
             'armhf')
 
         fake_apt.check_output_mock.assert_has_calls([
+            call(['dpkg', '--print-foreign-architectures']),
+            call(['sudo', 'dpkg', '--add-architecture', 'armhf']),
             call(['apt-get', 'build-dep', '-q', '-s',
                   '-aarmhf', fake_apt.filename],
                  env={}, stderr=-2),
+            call(['sudo', 'apt-get', 'update'],
+                 stderr=-2),
         ])
 
+        sources_list = '/etc/apt/sources.list.d/ubuntu-{}.list'.format('armhf')
         self.assertEqual(['amd64', 'armhf'], fake_apt.archs)
+        fake_apt.check_call_mock.assert_has_calls([
+            call(['sudo', 'cp', fake_apt.filename, sources_list]),
+            call(['sudo', 'chmod', '644', sources_list]),
+        ])
+        fake_apt.open_mock.assert_has_calls([
+            call('/etc/apt/sources.list')
+        ])
 
     def test_install_buid_package_marks_auto_installed(self):
         fake_apt = tests.fixture_setup.FakeAptGetBuildDep(self.test_packages)
