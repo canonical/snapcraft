@@ -16,6 +16,7 @@
 
 from collections import namedtuple
 import os
+import subprocess
 import yaml
 
 import testscenarios
@@ -117,13 +118,20 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.assertIn('hello', state.assets['build-packages'][0])
 
     def test_pull_with_virtual_build_package(self):
+        virtual_package = 'fortunes-off'
+        self.addCleanup(
+            subprocess.call, ['sudo', 'apt-get', 'remove', virtual_package])
         self.run_snapcraft('pull', 'build-virtual-package')
 
         state_file = os.path.join(
-            self.parts_dir, 'part-with-virtual-build-package', 'state', 'pull')
+            'snap', '.snapcraft', 'state')
         with open(state_file) as f:
             state = yaml.load(f)
-        self.assertIn('libc6-dev', state.assets['build-packages'][0])
+        self.assertIn(
+            '{}={}'.format(
+                virtual_package, integration_tests.get_package_version(
+                    virtual_package, self.distro_series, self.deb_arch)),
+            state.assets['build-packages'])
 
 
 TestDetail = namedtuple('TestDetail', ['field', 'value'])
