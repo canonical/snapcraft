@@ -92,7 +92,7 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.copy_project_to_cwd('build-package-global')
         version = self.set_build_package_version(
             os.path.join('snap', 'snapcraft.yaml'),
-            part=None, package='hello')
+            part=None, package='grub-doc')
         self.run_snapcraft('pull')
 
         state_file = os.path.join(
@@ -102,8 +102,6 @@ class AssetTrackingTestCase(integration_tests.TestCase):
             state = yaml.load(f)
 
         self.assertTrue(len(state.assets['build-packages']) == 0)
-        self.assertNotIn(
-            'hello={}'.format(version), state.assets['build-packages'])
 
     def test_pull_build_package_with_any_architecture(self):
         self.copy_project_to_cwd('build-package')
