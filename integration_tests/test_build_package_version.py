@@ -46,14 +46,15 @@ class BuildPackageVersionTestCase(testscenarios.WithScenarios,
 class BuildPackageVersionErrorsTestCase(integration_tests.TestCase):
 
     def test_build_package_with_invalid_version_must_fail(self):
-        self.copy_project_to_cwd('build-package')
+        self.copy_project_to_cwd('build-package-global')
         self.set_build_package_version(
             os.path.join('snap', 'snapcraft.yaml'),
-            part='hello', package='hello', version='invalid')
+            part=None, package='grub-doc', version='invalid')
         error = self.assertRaises(
             subprocess.CalledProcessError,
             self.run_snapcraft, 'pull')
         self.assertIn(
-            "Version 'invalid' for 'hello' was not found",
+            "Could not find a required package in 'build-packages': "
+            "grub-doc=invalid",
             str(error.output)
         )
