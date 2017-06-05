@@ -91,7 +91,7 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         build-packages data.
         """
         self.copy_project_to_cwd('build-package-global')
-        version = self.set_build_package_version(
+        self.set_build_package_version(
             os.path.join('snap', 'snapcraft.yaml'),
             part=None, package='grub-doc')
         self.run_snapcraft('pull')

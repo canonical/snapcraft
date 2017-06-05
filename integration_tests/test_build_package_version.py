@@ -37,7 +37,8 @@ class BuildPackageVersionTestCase(testscenarios.WithScenarios,
     def test_build_package_gets_version(self):
         self.copy_project_to_cwd(self.project)
         version = self.set_build_package_version(
-            os.path.join('snap', 'snapcraft.yaml'), self.part, package=self.package)
+            os.path.join('snap', 'snapcraft.yaml'), self.part,
+            package=self.package)
         self.run_snapcraft('pull')
 
         with apt.Cache() as apt_cache:
