@@ -889,9 +889,11 @@ class _Catkin:
 
     def _run(self, arguments):
         with tempfile.NamedTemporaryFile(mode='w+') as f:
-            lines = ['export PYTHONPATH={}'.format(os.path.join(
-                self._catkin_install_path, 'usr', 'lib', 'python2.7',
-                'dist-packages'))]
+            lines = ['export PYTHONPATH={}:{}'.format(
+                os.path.join(self._catkin_install_path, 'usr', 'lib',
+                             'python2.7', 'dist-packages'),
+                os.path.join(self._catkin_install_path, 'opt', 'ros',
+                             'kinetic', 'lib', 'python2.7', 'dist-packages'))]
 
             ros_path = os.path.join(
                 self._catkin_install_path, 'opt', 'ros', self._ros_distro)
