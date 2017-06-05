@@ -12,5 +12,4 @@ apps:
 parts:
   gnu-hello:
     plugin: autotools
-    source: http://ftp.gnu.org/gnu/hello/hello-2.10.tar.gz
-
+    source: https://ftp.gnu.org/gnu/hello/hello-2.10.tar.gz

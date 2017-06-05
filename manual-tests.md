@@ -67,12 +67,21 @@
    build folders as well as the container `snapcraft-<project>` is gone.
 
 
+# Test cross-compilation
+
+1. Go to integration_tests/snaps/go-hello.
+2. Run `snapcraft snap --target-arch=armhf`.
+3. Copy the snap to a Raspberry Pi.
+4. Install the snap.
+5. Run `go-hello`.
+
+
 # Test the PC kernel.
 
 1. Get the PC kernel source:
 
     $ git clone -b pc https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux-snap/+git/xenial
-    $ cd kernel
+    $ cd xenial
 
 2. Run `sudo snapcraft`.
 3. Create a file called `pc-model.json` with the following contents:
@@ -123,7 +132,7 @@
 
 1. Download https://developer.qualcomm.com/download/db410c/linux-board-support-package-v1.2.zip
 2. Extract it and copy the file `firmware.tar` to the directory `demos/96boards-kernel`.
-3. Run `snapcraft --target-arch arm64` in the `demos/96boards-kernel` directory.
+3. Run `snapcraft snap --target-arch arm64` in the `demos/96boards-kernel` directory.
 4. Create a file called `dragonboard-model.json` with the following contents:
 
     {
