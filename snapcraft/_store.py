@@ -323,8 +323,6 @@ def register(snap_name, is_private=False):
     store = storeapi.StoreClient()
     with _requires_login():
         store.register(snap_name, is_private)
-    logger.info("Congratulations! You're now the publisher for {!r}.".format(
-        snap_name))
 
 
 def _generate_snap_build(authority_id, snap_id, grade, key_name,

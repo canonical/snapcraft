@@ -100,7 +100,7 @@ class TestGit(SourceTestCase):
             mock.call(['git', '-C', 'source_dir', 'reset', '--hard',
                        'origin/master']),
             mock.call(['git', '-C', 'source_dir', 'submodule', 'update',
-                       '--recursive', '--remote'])
+                       '--recursive', '--force'])
         ])
 
     def test_pull_existing_with_tag(self):
@@ -115,7 +115,7 @@ class TestGit(SourceTestCase):
             mock.call(['git', '-C', 'source_dir', 'reset', '--hard',
                        'refs/tags/tag']),
             mock.call(['git', '-C', 'source_dir', 'submodule', 'update',
-                       '--recursive', '--remote'])
+                       '--recursive', '--force'])
         ])
 
     def test_pull_existing_with_commit(self):
@@ -132,7 +132,7 @@ class TestGit(SourceTestCase):
             mock.call(['git', '-C', 'source_dir', 'reset', '--hard',
                        '2514f9533ec9b45d07883e10a561b248497a8e3c']),
             mock.call(['git', '-C', 'source_dir', 'submodule', 'update',
-                       '--recursive', '--remote'])
+                       '--recursive', '--force'])
         ])
 
     def test_pull_existing_with_branch(self):
@@ -148,7 +148,7 @@ class TestGit(SourceTestCase):
             mock.call(['git', '-C', 'source_dir', 'reset', '--hard',
                        'refs/heads/my-branch']),
             mock.call(['git', '-C', 'source_dir', 'submodule', 'update',
-                       '--recursive', '--remote'])
+                       '--recursive', '--force'])
         ])
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
@@ -281,12 +281,14 @@ class TestGitConflicts(GitBaseTestCase):
         repo = '/tmp/submodules.git'
         sub_repo = '/tmp/subrepo'
         working_tree = '/tmp/git-submodules'
+        working_tree_two = '{}-two'.format(working_tree)
         sub_working_tree = '/tmp/git-submodules-sub'
         git = sources.Git(repo, working_tree, silent=True)
 
         self.clean_dir(repo)
         self.clean_dir(sub_repo)
         self.clean_dir(working_tree)
+        self.clean_dir(working_tree_two)
         self.clean_dir(sub_working_tree)
 
         os.chdir(sub_repo)
@@ -318,7 +320,30 @@ class TestGitConflicts(GitBaseTestCase):
         os.chdir(working_tree)
         git.pull()
 
-        self.check_file_contents(os.path.join(working_tree, 'subrepo', 'fake'),
+        # this shouldn't cause any change
+        self.check_file_contents(os.path.join(working_tree,
+                                              'subrepo', 'sub-file'),
+                                 'sub-file')
+        self.assertFalse(os.path.exists(os.path.join(working_tree,
+                                                     'subrepo', 'fake')))
+
+        # update the submodule
+        self.clone_repo(repo, working_tree_two)
+        call(['git', 'submodule', 'update', '--init', '--recursive',
+              '--remote'])
+        call(['git', 'add', 'subrepo'])
+        call(['git', 'commit', '-am', 'updated submodule'])
+        call(['git', 'push'])
+
+        os.chdir(working_tree)
+        git.pull()
+
+        # new file should be there now
+        self.check_file_contents(os.path.join(working_tree,
+                                              'subrepo', 'sub-file'),
+                                 'sub-file')
+        self.check_file_contents(os.path.join(working_tree,
+                                              'subrepo', 'fake'),
                                  'fake 1')
 
 

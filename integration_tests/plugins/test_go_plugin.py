@@ -18,6 +18,8 @@ import os
 import subprocess
 
 import integration_tests
+import snapcraft
+from snapcraft.tests.matchers import HasArchitecture
 
 
 class GoPluginTestCase(integration_tests.TestCase):
@@ -33,3 +35,14 @@ class GoPluginTestCase(integration_tests.TestCase):
 
     def test_building_multiple_main_packages(self):
         self.run_snapcraft('stage', 'go-with-multiple-main-packages')
+
+    def test_cross_compiling(self):
+        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+            self.skipTest('The test only handles amd64 to armhf')
+
+        target_arch = 'arm64'
+        self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
+                           'go-hello')
+        binary = os.path.join(self.parts_dir, 'go-hello', 'install', 'bin',
+                              os.path.basename(self.path))
+        self.assertThat(binary, HasArchitecture('aarch64'))
