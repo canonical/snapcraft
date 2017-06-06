@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import sys
 from unittest import mock
 
 from snapcraft.internal import sources
@@ -60,3 +61,7 @@ class TestDeb(tests.FakeFileHTTPServerBasedTestCase):
 
         with open(deb_download, 'r') as deb_file:
             self.assertEqual('Test fake compressed file', deb_file.read())
+
+    def test_has_source_handler_entry_on_linux(self):
+        if sys.platform == 'linux':
+            self.assertTrue(sources._source_handler['deb'] is sources.Deb)

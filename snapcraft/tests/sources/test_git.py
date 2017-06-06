@@ -199,6 +199,9 @@ class TestGit(SourceTestCase):
             "can't specify a source-checksum for a git source")
         self.assertEqual(raised.message, expected_message)
 
+    def test_has_source_handler_entry(self):
+        self.assertTrue(sources._source_handler['git'] is sources.Git)
+
 
 class GitBaseTestCase(tests.TestCase):
 

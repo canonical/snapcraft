@@ -121,6 +121,10 @@ class TestSubversion(tests.sources.SourceTestCase):
             "can't specify a source-checksum for a Subversion source")
         self.assertEqual(raised.message, expected_message)
 
+    def test_has_source_handler_entry(self):
+        self.assertTrue(sources._source_handler['subversion'] is
+                        sources.Subversion)
+
 
 class SubversionBaseTestCase(tests.TestCase):
 
