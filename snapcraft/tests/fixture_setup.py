@@ -30,6 +30,7 @@ import fixtures
 import xdg
 
 from snapcraft.tests import fake_servers
+from snapcraft.tests.fake_servers import upload
 from snapcraft.tests.subprocess_utils import (
     call,
     call_with_output,
@@ -302,7 +303,7 @@ class FakeSSOServerRunning(_FakeServerRunning):
 
 class FakeStoreUploadServerRunning(_FakeServerRunning):
 
-    fake_server = fake_servers.FakeStoreUploadServer
+    fake_server = upload.FakeStoreUploadServer
 
 
 class FakeStoreAPIServerRunning(_FakeServerRunning):

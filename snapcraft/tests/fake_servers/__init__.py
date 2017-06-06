@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,6 +22,7 @@ import http.server
 import os
 import re
 import urllib.parse
+
 
 import pymacaroons
 import yaml
@@ -286,38 +287,6 @@ class FakeSSORequestHandler(BaseHTTPRequestHandler):
     def _handle_tokens_refresh_request(self):
         self._send_tokens_discharge()
         self.server.fake_store.needs_refresh = False
-
-
-class FakeStoreUploadServer(http.server.HTTPServer):
-
-    def __init__(self, server_address):
-        super().__init__(
-            server_address, FakeStoreUploadRequestHandler)
-
-
-class FakeStoreUploadRequestHandler(BaseHTTPRequestHandler):
-
-    def do_POST(self):
-        parsed_path = urllib.parse.urlparse(self.path)
-        if parsed_path.path.startswith('/unscanned-upload/'):
-            self._handle_upload_request()
-        else:
-            self.raise_not_implemented(self.path)
-
-    def _handle_upload_request(self):
-        logger.info('Handling upload request')
-        if 'UPDOWN_BROKEN' in os.environ:
-            response_code = 500
-            content_type = 'text/plain'
-            response = b'Broken'
-        else:
-            response_code = 200
-            content_type = 'application/octet-stream'
-            response = json.dumps({'upload_id': 'test-upload-id'}).encode()
-        self.send_response(response_code)
-        self.send_header('Content-Type', content_type)
-        self.end_headers()
-        self.wfile.write(response)
 
 
 class FakeStoreAPIServer(http.server.HTTPServer):
