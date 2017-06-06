@@ -149,6 +149,12 @@ class SnapTestCase(integration_tests.TestCase):
 
         self.run_snapcraft('snap')
 
+    def test_implicit_command_with_arch(self):
+        self.run_snapcraft('init')
+
+        self.run_snapcraft('--target-arch=i386')
+        self.assertThat('my-snap-name_0.1_i386.snap', FileExists())
+
     def test_error_on_bad_yaml(self):
         error = self.assertRaises(
             subprocess.CalledProcessError,
