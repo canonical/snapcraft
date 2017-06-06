@@ -76,10 +76,16 @@ class GoPluginTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
+        self.useFixture(tests.fixture_setup.CleanEnvironment())
+
         self.project_options = snapcraft.ProjectOptions()
 
         patcher = mock.patch('snapcraft.internal.common.run')
         self.run_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.common.run_output')
+        self.run_output_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('sys.stdout')
@@ -286,11 +292,19 @@ class GoPluginTestCase(tests.TestCase):
         os.makedirs(plugin.builddir)
 
         self.run_mock.reset_mock()
+        self.run_output_mock.reset_mock()
+        self.run_output_mock.return_value = 'dir/pkg/main main'
+
         plugin.build()
 
-        binary = os.path.join(plugin._gopath_bin, 'dir')
+        self.run_output_mock.assert_called_once_with(
+            ['go', 'list', '-f', '{{.ImportPath}} {{.Name}}',
+             './dir/...'],
+            cwd=plugin._gopath_src, env=mock.ANY)
+
+        binary = os.path.join(plugin._gopath_bin, 'main')
         self.run_mock.assert_called_once_with(
-            ['go', 'build', '-o', binary, './dir/...'],
+            ['go', 'build', '-o', binary, 'dir/pkg/main'],
             cwd=plugin._gopath_src, env=mock.ANY)
 
         self.assertTrue(os.path.exists(plugin._gopath))
@@ -417,8 +431,14 @@ class GoPluginTestCase(tests.TestCase):
 
         os.makedirs(plugin._gopath_bin)
         os.makedirs(plugin.builddir)
+        self.run_output_mock.return_value = 'github.com/snapcore/launcher main'
 
         plugin.build()
+
+        self.run_output_mock.assert_called_once_with(
+            ['go', 'list', '-f', '{{.ImportPath}} {{.Name}}',
+             './github.com/snapcore/launcher/...'],
+            cwd=plugin._gopath_src, env=mock.ANY)
 
         binary = os.path.join(plugin._gopath_bin, 'launcher')
         self.run_mock.assert_has_calls([
@@ -426,7 +446,7 @@ class GoPluginTestCase(tests.TestCase):
                        './github.com/snapcore/launcher/...'],
                       cwd=plugin._gopath_src, env=mock.ANY),
             mock.call(['go', 'build', '-o', binary,
-                       './github.com/snapcore/launcher/...'],
+                       'github.com/snapcore/launcher'],
                       cwd=plugin._gopath_src, env=mock.ANY),
         ])
 
@@ -490,10 +510,17 @@ class GoPluginTestCase(tests.TestCase):
         os.makedirs(plugin.builddir)
 
         self.run_mock.reset_mock()
+        self.run_output_mock.return_value = 'dir/pkg/main main'
+
         plugin.build()
 
-        binary = os.path.join(plugin._gopath_bin, 'dir')
+        self.run_output_mock.assert_called_once_with(
+            ['go', 'list', '-f', '{{.ImportPath}} {{.Name}}',
+             './dir/...'],
+            cwd=plugin._gopath_src, env=mock.ANY)
+
+        binary = os.path.join(plugin._gopath_bin, 'main')
         self.run_mock.assert_called_once_with(
             ['go', 'build', '-o', binary,
-             '-tags=testbuildtag1,testbuildtag2', './dir/...'],
+             '-tags=testbuildtag1,testbuildtag2', 'dir/pkg/main'],
             cwd=plugin._gopath_src, env=mock.ANY)
