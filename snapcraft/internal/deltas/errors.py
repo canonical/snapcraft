@@ -40,6 +40,7 @@ class DeltaGenerationTooBigError(SnapcraftError):
         'delta saving is less than {delta_min_percentage}%.'
     )
 
+
 class DeltaFormatError(SnapcraftError):
     """A delta format must be set."""
 
