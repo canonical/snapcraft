@@ -39,11 +39,11 @@ class GoPluginTestCase(integration_tests.TestCase):
     def test_building_multiple_main_packages(self):
         self.run_snapcraft('stage', 'go-with-multiple-main-packages')
 
-    def test_building_multiple_main_packages_without_go_packages(self):
-        self.copy_project_to_cwd('go-with-multiple-main-packages')
-
         for bin in ['main1', 'main2', 'main3']:
             self.assertThat(os.path.join('stage', 'bin', bin), FileExists())
+
+    def test_building_multiple_main_packages_without_go_packages(self):
+        self.copy_project_to_cwd('go-with-multiple-main-packages')
 
         snapcraft_yaml_file = 'snapcraft.yaml'
         with open(snapcraft_yaml_file) as f:
