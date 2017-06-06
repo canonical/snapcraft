@@ -17,6 +17,9 @@
 import os
 import subprocess
 
+import yaml
+from testtools.matchers import FileContains, FileExists, Not
+
 import integration_tests
 import snapcraft
 from snapcraft.tests.matchers import HasArchitecture
@@ -35,6 +38,25 @@ class GoPluginTestCase(integration_tests.TestCase):
 
     def test_building_multiple_main_packages(self):
         self.run_snapcraft('stage', 'go-with-multiple-main-packages')
+
+    def test_building_multiple_main_packages_without_go_packages(self):
+        self.copy_project_to_cwd('go-with-multiple-main-packages')
+
+        for bin in ['main1', 'main2', 'main3']:
+            self.assertThat(os.path.join('stage', 'bin', bin), FileExists())
+
+        snapcraft_yaml_file = 'snapcraft.yaml'
+        with open(snapcraft_yaml_file) as f:
+            snapcraft_yaml = yaml.load(f)
+        del snapcraft_yaml['parts']['multiple-mains']['go-packages']
+        with open(snapcraft_yaml_file, 'w') as f:
+            yaml.dump(snapcraft_yaml, f)
+
+        self.assertThat(snapcraft_yaml_file, Not(FileContains('go-packages')))
+        self.run_snapcraft('stage')
+
+        for bin in ['main1', 'main2', 'main3']:
+            self.assertThat(os.path.join('stage', 'bin', bin), FileExists())
 
     def test_cross_compiling(self):
         if snapcraft.ProjectOptions().deb_arch != 'amd64':
