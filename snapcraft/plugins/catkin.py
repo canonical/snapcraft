@@ -1008,9 +1008,10 @@ class _Wstool:
     def _run(self, arguments):
         env = os.environ.copy()
 
-        # We want to make sure we use our own rosdep (which is python)
         env['PATH'] += ':' + os.path.join(self._wstool_install_path, 'usr',
                                           'bin')
+        # The execution path of python doesn't seem to cause these packages to
+        # be picked up, so put them on the PYTHONPATH manually.
         env['PYTHONPATH'] = os.path.join(self._wstool_install_path, 'usr',
                                          'lib', 'python2.7', 'dist-packages')
 

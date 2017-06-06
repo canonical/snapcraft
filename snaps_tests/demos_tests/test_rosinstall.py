@@ -38,4 +38,4 @@ class RosinstallTestCase(snaps_tests.SnapsTestCase):
         # a message.
         self.assert_command_in_snappy_testbed_with_regex([
             '/snap/bin/rosinstall-demo.run',
-            'exit-after-receive:=true'], r'.*I heard Hello world.*', re.DOTALL)
+            'exit-after-receive:=true'], r'.*I heard hello world.*', re.DOTALL)
