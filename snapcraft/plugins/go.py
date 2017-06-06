@@ -144,6 +144,15 @@ class GoPlugin(snapcraft.BasePlugin):
             go_package = os.path.basename(os.path.abspath(self.options.source))
         return go_package
 
+    def _get_local_main_packages(self):
+        search_path = './{}/...'.format(self._get_local_go_package())
+        packages = self.run_output(['go', 'list', '-f',
+                                    '{{.ImportPath}} {{.Name}}',
+                                    search_path], cwd=self._gopath_src)
+        packages_split = [p.split() for p in packages.splitlines()]
+        main_packages = [p[0] for p in packages_split if p[1] == 'main']
+        return main_packages
+
     def build(self):
         super().build()
 
@@ -153,7 +162,7 @@ class GoPlugin(snapcraft.BasePlugin):
 
         packages = self.options.go_packages
         if not packages:
-            packages = ['./{}/...'.format(self._get_local_go_package())]
+            packages = self._get_local_main_packages()
         for package in packages:
             binary = os.path.join(self._gopath_bin, self._binary_name(package))
             self._run(['go', 'build', '-o', binary] + tags + [package])
@@ -180,6 +189,10 @@ class GoPlugin(snapcraft.BasePlugin):
     def _run(self, cmd, **kwargs):
         env = self._build_environment()
         return self.run(cmd, cwd=self._gopath_src, env=env, **kwargs)
+
+    def _run_output(self, cmd, **kwargs):
+        env = self._build_environment()
+        return self.run_output(cmd, cwd=self._gopath_src, env=env, **kwargs)
 
     def _build_environment(self):
         env = os.environ.copy()
