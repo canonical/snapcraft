@@ -113,7 +113,7 @@ def execute(step, project_options, part_names=None):
         config.build_tools)
     if installed_packages is None:
         raise ValueError(
-            'The repo backed is not returning the list of installed packages')
+            'The repo backend is not returning the list of installed packages')
     snapcraft_state_dir = os.path.join('snap', '.snapcraft')
     os.makedirs(snapcraft_state_dir, exist_ok=True)
     with open(os.path.join(snapcraft_state_dir, 'state'), 'w') as f:
