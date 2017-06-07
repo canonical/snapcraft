@@ -26,7 +26,7 @@ from snapcraft.tests.fake_servers import base
 logger = logging.getLogger(__name__)
 
 
-class FakeStoreUploadServer(base.BasePyramidServer):
+class FakeStoreUploadServer(base.BaseFakeServer):
 
     def configure(self, configurator):
         configurator.add_route(
