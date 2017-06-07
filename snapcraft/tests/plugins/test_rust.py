@@ -15,6 +15,7 @@
 import os
 
 from unittest import mock
+from testtools.matchers import DirExists, FileExists, Not
 
 import snapcraft
 from snapcraft import tests
@@ -24,16 +25,30 @@ from snapcraft.plugins import rust
 class RustPluginCrossCompileTestCase(tests.TestCase):
 
     scenarios = [
-        ('armv7l', dict(deb_arch='armhf', go_arch='arm')),
-        ('aarch64', dict(deb_arch='arm64', go_arch='arm64')),
-        ('i386', dict(deb_arch='i386', go_arch='386')),
-        ('x86_64', dict(deb_arch='amd64', go_arch='amd64')),
-        ('ppc64le', dict(deb_arch='ppc64el', go_arch='ppc64le')),
+        ('armv7l', dict(deb_arch='armhf',
+                        target='armv7-unknown-linux-gnueabihf')),
+        ('aarch64', dict(deb_arch='arm64',
+                         target='aarch64-unknown-linux-gnu')),
+        ('i386', dict(deb_arch='i386',
+                      target='i686-unknown-linux-gnu')),
+        ('x86_64', dict(deb_arch='amd64',
+                        target='x86_64-unknown-linux-gnu')),
+        ('ppc64le', dict(deb_arch='ppc64el',
+                         target='powerpc64le-unknown-linux-gnu')),
     ]
 
     def setUp(self):
         super().setUp()
 
+        class Options:
+            makefile = None
+            make_parameters = []
+            rust_features = []
+            rust_revision = ''
+            rust_channel = ''
+            source_subdir = ''
+
+        self.options = Options()
         self.project_options = snapcraft.ProjectOptions(
             target_deb_arch=self.deb_arch)
 
@@ -45,25 +60,59 @@ class RustPluginCrossCompileTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch.dict(os.environ, {})
+        self.env_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
     def test_cross_compile(self):
         plugin = rust.RustPlugin('test-part', self.options,
                                  self.project_options)
         os.makedirs(plugin.sourcedir)
 
+        plugin.enable_cross_compilation()
+        self.assertEqual(self.target, plugin._target)
+        self.assertThat('.cargo', DirExists())
+        self.assertThat(os.path.join('.cargo', 'config'), FileExists())
+
+        plugin.pull()
+        self.assertEqual(2, self.run_mock.call_count)
+        self.run_mock.assert_has_calls([
+            mock.call(
+                [plugin._rustup,
+                 '--prefix={}'.format(os.path.join(plugin._rustpath)),
+                 '--disable-sudo',
+                 '--save',
+                 '--with-target={}'.format(self.target)],
+                cwd=os.path.join(plugin.partdir, 'build')),
+            mock.call(
+                [plugin._cargo, 'fetch',
+                 '--manifest-path',
+                 os.path.join(plugin.sourcedir, 'Cargo.toml')],
+                cwd=os.path.join(plugin.partdir, 'build')),
+        ])
+
         plugin.build()
 
-        self.assertEqual(1, self.run_mock.call_count)
-        for call_args in self.run_mock.call_args_list:
-            pass
-        # FIXME: Verify cargo --target
-        # FIXME: Verify rustup --with-target
+        self.assertEqual(3, self.run_mock.call_count)
+        self.run_mock.assert_has_calls([
+            mock.call(
+                [plugin._cargo, 'build',
+                 '-j{}'.format(plugin.project.parallel_build_count)],
+                cwd=os.path.join(plugin.partdir, 'build'),
+                env=plugin._build_env())
+        ])
 
-        # FIXME: Verify .cargo/config
+        plugin.clean_build()
+        self.assertThat('.cargo', Not(DirExists()))
 
 
 class RustPluginTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
+
+        patcher = mock.patch.dict(os.environ, {})
+        self.env_mock = patcher.start()
+        self.addCleanup(patcher.stop)
 
         class Options:
             makefile = None
@@ -114,10 +163,8 @@ class RustPluginTestCase(tests.TestCase):
         self.assertEqual(1, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(
-                [plugin._cargo, 'install',
-                 '-j{}'.format(plugin.project.parallel_build_count),
-                 '--root', plugin.installdir,
-                 '--path', plugin.builddir],
+                [plugin._cargo, 'build',
+                 '-j{}'.format(plugin.project.parallel_build_count)],
                 env=plugin._build_env())
         ])
 
@@ -133,10 +180,8 @@ class RustPluginTestCase(tests.TestCase):
         self.assertEqual(1, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(
-                [plugin._cargo, 'install',
+                [plugin._cargo, 'build',
                  '-j{}'.format(plugin.project.parallel_build_count),
-                 '--root', plugin.installdir,
-                 '--path', plugin.builddir,
                  '--features', 'conditional-compilation'],
                 env=plugin._build_env())
         ])

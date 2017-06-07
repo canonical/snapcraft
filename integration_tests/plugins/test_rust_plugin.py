@@ -25,6 +25,7 @@ from testtools.matchers import FileExists, MatchesRegex, Not
 
 import snapcraft
 import integration_tests
+from snapcraft.tests.matchers import HasArchitecture
 
 
 class RustPluginBaseTestCase(integration_tests.TestCase):
@@ -100,8 +101,7 @@ class RustPluginTestCase(RustPluginBaseTestCase):
                            'rust-hello')
         binary = os.path.join(self.parts_dir, 'rust-hello', 'install', 'bin',
                               os.path.basename(self.path))
-        self.assertThat(binary, FileExists())
-        # XXX: self.assertThat(binary, HasArchitecture('aarch64'))
+        self.assertThat(binary, HasArchitecture('aarch64'))
 
 
 class RustPluginConfinementTestCase(testscenarios.WithScenarios,

@@ -94,18 +94,9 @@ class RustPlugin(snapcraft.BasePlugin):
 
         cmd = [self._cargo, 'build',
                '-j{}'.format(self.parallel_build_count)]
-        # from build:
-        # '-out-dir', self.builddir,
-        # from install:
-        # '--root', self.installdir
-        # '--path', self.builddir
         if self.options.rust_features:
             cmd.append("--features")
             cmd.append(' '.join(self.options.rust_features))
-        if self.project.is_cross_compiling:
-            cmd.append("--target")
-            cmd.append(self._target)
-            cmd.append("--verbose")
         self.run(cmd, env=self._build_env())
 
     def enable_cross_compilation(self):
@@ -165,6 +156,12 @@ class RustPlugin(snapcraft.BasePlugin):
         # Remove the rust path (if any)
         if os.path.exists(self._rustpath):
             shutil.rmtree(self._rustpath)
+
+    def clean_build(self):
+        super().clean_build()
+
+        if os.path.exists('.cargo'):
+            shutil.rmtree('.cargo')
 
     def _fetch_rust(self):
         options = []
