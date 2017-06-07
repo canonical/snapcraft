@@ -180,3 +180,11 @@
   * Check that the user can be created.
   * Check that it's possible to ssh into the board.
   * Check that it's possible to install a snap.
+
+
+# Test installing with `pip`
+
+1. Follow HACKING.md to install using `pip` without using --editable.
+2. Make sure Snapcraft works by running `snapcraft init` followed by `snapcraft`.
+3. Follow HACKING.md to install using `pip` while using --editable.
+4. Repeat step 2.
