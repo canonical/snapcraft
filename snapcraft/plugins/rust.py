@@ -92,12 +92,33 @@ class RustPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
 
-        cmd = [self._cargo, 'build',
-               '-j{}'.format(self.parallel_build_count)]
+        self._write_config()
+
+        cmd = [self._cargo, 'install',
+               '-j{}'.format(self.parallel_build_count),
+               '--root', self.installdir,
+               '--path', self.builddir]
         if self.options.rust_features:
             cmd.append("--features")
             cmd.append(' '.join(self.options.rust_features))
         self.run(cmd, env=self._build_env())
+
+    def _write_config(self):
+        if not self.project.is_cross_compiling:
+            return
+
+        # Cf. http://doc.crates.io/config.html
+        with suppress(FileExistsError):
+            os.mkdir(os.path.join(self.builddir, '.cargo'))
+        with open(os.path.join(self.builddir, '.cargo', 'config'), 'w') as f:
+            f.write('''
+                [build]
+                target = "{}"
+
+                [target.{}]
+                linker = "{}"
+                '''.format(self._target, self._target,
+                           '{}-gcc'.format(self.project.arch_triplet)))
 
     def enable_cross_compilation(self):
         # Cf. rustc --print target-list
@@ -115,19 +136,6 @@ class RustPlugin(snapcraft.BasePlugin):
                 '{!r} is not supported as a target architecture when '
                 'cross-compiling with the rust plugin'.format(
                     self.project.deb_arch))
-
-        # Cf. http://doc.crates.io/config.html
-        with suppress(FileExistsError):
-            os.mkdir('.cargo')
-        with open('.cargo/config', 'w') as f:
-            f.write('''
-                [build]
-                target = "{}"
-
-                [target.{}]
-                linker = "{}"
-                '''.format(self._target, self._target,
-                           '{}-gcc'.format(self.project.arch_triplet)))
 
     def _build_env(self):
         env = os.environ.copy()
@@ -160,8 +168,8 @@ class RustPlugin(snapcraft.BasePlugin):
     def clean_build(self):
         super().clean_build()
 
-        if os.path.exists('.cargo'):
-            shutil.rmtree('.cargo')
+        if os.path.exists(os.path.join(self.builddir, '.cargo')):
+            shutil.rmtree(os.path.join(self.builddir, '.cargo'))
 
     def _fetch_rust(self):
         options = []

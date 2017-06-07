@@ -71,8 +71,6 @@ class RustPluginCrossCompileTestCase(tests.TestCase):
 
         plugin.enable_cross_compilation()
         self.assertEqual(self.target, plugin._target)
-        self.assertThat('.cargo', DirExists())
-        self.assertThat(os.path.join('.cargo', 'config'), FileExists())
 
         plugin.pull()
         self.assertEqual(2, self.run_mock.call_count)
@@ -92,18 +90,24 @@ class RustPluginCrossCompileTestCase(tests.TestCase):
         ])
 
         plugin.build()
+        self.assertThat(os.path.join(plugin.builddir, '.cargo'), DirExists())
+        self.assertThat(os.path.join(plugin.builddir, '.cargo', 'config'),
+                        FileExists())
 
         self.assertEqual(3, self.run_mock.call_count)
         self.run_mock.assert_has_calls([
             mock.call(
-                [plugin._cargo, 'build',
-                 '-j{}'.format(plugin.project.parallel_build_count)],
+                [plugin._cargo, 'install',
+                 '-j{}'.format(plugin.project.parallel_build_count),
+                 '--root', plugin.installdir,
+                 '--path', plugin.builddir],
                 cwd=os.path.join(plugin.partdir, 'build'),
                 env=plugin._build_env())
         ])
 
         plugin.clean_build()
-        self.assertThat('.cargo', Not(DirExists()))
+        self.assertThat(os.path.join(plugin.builddir, '.cargo'),
+                        Not(DirExists()))
 
 
 class RustPluginTestCase(tests.TestCase):
@@ -163,8 +167,10 @@ class RustPluginTestCase(tests.TestCase):
         self.assertEqual(1, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(
-                [plugin._cargo, 'build',
-                 '-j{}'.format(plugin.project.parallel_build_count)],
+                [plugin._cargo, 'install',
+                 '-j{}'.format(plugin.project.parallel_build_count),
+                 '--root', plugin.installdir,
+                 '--path', plugin.builddir],
                 env=plugin._build_env())
         ])
 
@@ -180,8 +186,10 @@ class RustPluginTestCase(tests.TestCase):
         self.assertEqual(1, run_mock.call_count)
         run_mock.assert_has_calls([
             mock.call(
-                [plugin._cargo, 'build',
+                [plugin._cargo, 'install',
                  '-j{}'.format(plugin.project.parallel_build_count),
+                 '--root', plugin.installdir,
+                 '--path', plugin.builddir,
                  '--features', 'conditional-compilation'],
                 env=plugin._build_env())
         ])
