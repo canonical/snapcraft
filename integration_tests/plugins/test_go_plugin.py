@@ -71,7 +71,7 @@ class GoPluginTestCase(integration_tests.TestCase):
 
     def test_cross_compiling_with_cgo(self):
         if snapcraft.ProjectOptions().deb_arch != 'amd64':
-            self.skipTest('The test only handles amd64 to armhf')
+            self.skipTest('The test only handles amd64 to arm64')
 
         target_arch = 'arm64'
         self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
