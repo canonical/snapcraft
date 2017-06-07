@@ -17,6 +17,8 @@
 import os
 from unittest import mock
 
+import fixtures
+
 from snapcraft.internal import sources
 from snapcraft import tests
 from snapcraft.tests.subprocess_utils import (
@@ -136,13 +138,16 @@ class BazaarDetailsTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
+        bzr_home = self.useFixture(fixtures.TempDir()).path
+        self.useFixture(fixtures.EnvironmentVariable('BZR_HOME', bzr_home))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'BZR_EMAIL',  'Test User <test.user@example.com>'))
         self.working_tree = 'bzr-test'
         self.source_dir = 'bzr-checkout'
         os.mkdir(self.working_tree)
         os.mkdir(self.source_dir)
         os.chdir(self.working_tree)
         call(['bzr', 'init'])
-        call(['bzr', 'whoami', 'Test User <test.user@example.com>'])
         with open('testing', 'w') as fp:
             fp.write('testing')
         call(['bzr', 'add', 'testing'])
