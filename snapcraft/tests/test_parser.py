@@ -25,10 +25,7 @@ import yaml
 from collections import OrderedDict
 
 import snapcraft                           # noqa, initialize yaml
-from snapcraft.internal.errors import (
-    MissingCommandError,
-    SnapcraftEnvironmentError
-)
+from snapcraft.internal import errors
 from snapcraft.internal import parser
 from snapcraft.internal.parser import (
     _get_origin_data,
@@ -1145,7 +1142,7 @@ parts: [child]
                   'snapcraft.yaml'), 'w') as fp:
             fp.write("")
 
-        self.assertRaises(SnapcraftEnvironmentError,
+        self.assertRaises(errors.SnapcraftEnvironmentError,
                           _get_origin_data,
                           self.tempdir_path)
 
@@ -1205,7 +1202,7 @@ parts: [main]
             main, ['--debug', '--index', TEST_OUTPUT_PATH])
 
     def test_missing_packages(self):
-        self.mock_check_command.side_effect = MissingCommandError('bzr')
+        self.mock_check_command.side_effect = errors.MissingCommandError('bzr')
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
