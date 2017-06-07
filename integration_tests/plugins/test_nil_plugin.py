@@ -27,7 +27,7 @@ class NilPluginTestCase(integration_tests.TestCase):
 
         dirs = os.listdir(self.prime_dir)
         dirs.sort()
-        self.assertEqual(['meta', 'snap'], dirs)
+        self.assertEqual(['meta'], dirs)
 
     def test_nil_no_additional_properties(self):
         exception = self.assertRaises(
