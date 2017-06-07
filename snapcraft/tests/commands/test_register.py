@@ -16,7 +16,7 @@
 from simplejson.scanner import JSONDecodeError
 from unittest import mock
 
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Contains, Equals, Not
 
 from snapcraft import storeapi
 from . import CommandBaseTestCase
@@ -45,7 +45,9 @@ class RegisterTestCase(CommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains('Registering test-snap'))
         self.assertThat(result.output, Contains(
-            "Congratulations! You're now the publisher for 'test-snap'."))
+            "Congrats! You are now the publisher of 'test-snap'."))
+        self.assertThat(result.output, Not(Contains(
+            "Congratulations! You're now the publisher for 'test-snap'.")))
         mock_register.assert_called_once_with('test-snap', False, '16')
 
     def test_register_private_name_successfully(self):
@@ -59,7 +61,9 @@ class RegisterTestCase(CommandBaseTestCase):
             'Even though this is private snap, you should think carefully'))
         self.assertThat(result.output, Contains('Registering test-snap'))
         self.assertThat(result.output, Contains(
-            "Congratulations! You're now the publisher for 'test-snap'."))
+            "Congrats! You are now the publisher of 'test-snap'."))
+        self.assertThat(result.output, Not(Contains(
+            "Congratulations! You're now the publisher for 'test-snap'.")))
         mock_register.assert_called_once_with('test-snap', True, '16')
 
     def test_registration_failed(self):

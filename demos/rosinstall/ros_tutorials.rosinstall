@@ -1,0 +1,4 @@
+- git:
+    local-name: ros_tutorials
+    uri: https://github.com/ros/ros_tutorials.git
+    version: kinetic-devel
