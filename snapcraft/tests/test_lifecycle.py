@@ -661,7 +661,7 @@ class RecordSnapcraftTestCase(BaseLifecycleTestCase):
         lifecycle.execute('prime', self.project_options)
         self.assertThat(
             os.path.join('prime', 'snap', 'snapcraft.yaml'),
-            Not(DirExists()))
+            Not(FileExists()))
 
     def test_prime_with_build_info_records_snapcraft_yaml(self):
         self.useFixture(fixtures.EnvironmentVariable(
