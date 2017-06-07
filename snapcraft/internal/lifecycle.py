@@ -46,6 +46,8 @@ from snapcraft.internal.project_loader import replace_attr
 logger = logging.getLogger(__name__)
 
 
+_SNAPCRAFT_INTERNAL_DIR = os.path.join('snap', '.snapcraft')
+
 _TEMPLATE_YAML = """name: my-snap-name # you probably want to 'snapcraft register <name>'
 version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
 summary: Single-line elevator pitch for your amazing snap # 79 char long summary
@@ -114,9 +116,8 @@ def execute(step, project_options, part_names=None):
     if installed_packages is None:
         raise ValueError(
             'The repo backend is not returning the list of installed packages')
-    snapcraft_state_dir = os.path.join('snap', '.snapcraft')
-    os.makedirs(snapcraft_state_dir, exist_ok=True)
-    with open(os.path.join(snapcraft_state_dir, 'state'), 'w') as f:
+    os.makedirs(_SNAPCRAFT_INTERNAL_DIR, exist_ok=True)
+    with open(os.path.join(_SNAPCRAFT_INTERNAL_DIR, 'state'), 'w') as f:
         f.write(yaml.dump(states.GlobalState(installed_packages)))
 
     if (os.environ.get('SNAPCRAFT_SETUP_CORE') and
@@ -523,6 +524,7 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
         _cleanup_parts_dir(
             project_options.parts_dir, project_options.local_plugins_dir,
             parts)
+        _cleanup_internal_snapcraft_dir()
 
     _remove_directory_if_empty(project_options.prime_dir)
     _remove_directory_if_empty(project_options.stage_dir)
@@ -550,6 +552,11 @@ def _cleanup_parts_dir(parts_dir, local_plugins_dir, parts):
     for part in parts:
         part.mark_cleaned('build')
         part.mark_cleaned('pull')
+
+
+def _cleanup_internal_snapcraft_dir():
+    if os.path.exists(_SNAPCRAFT_INTERNAL_DIR):
+        shutil.rmtree(_SNAPCRAFT_INTERNAL_DIR)
 
 
 def clean(project_options, parts, step=None):

@@ -24,6 +24,7 @@ from unittest import mock
 
 import fixtures
 from testtools.matchers import (
+    DirExists,
     FileContains,
     FileExists,
     MatchesRegex,
@@ -38,7 +39,7 @@ from snapcraft import tests
 from snapcraft.tests import fixture_setup
 
 
-class BaseExecutionTestCase(tests.TestCase):
+class BaseLifecycleTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -62,7 +63,7 @@ grade: stable
         super().make_snapcraft_yaml(yaml.format(parts=parts, type=snap_type))
 
 
-class ExecutionTestCase(BaseExecutionTestCase):
+class ExecutionTestCase(BaseLifecycleTestCase):
 
     def test__replace_in_parts(self):
         class Options:
@@ -623,8 +624,32 @@ class ExecutionTestCase(BaseExecutionTestCase):
             "by running: snapcraft clean part1 -s pull\n",
             str(raised))
 
+    def test_prime_excludes_internal_snapcraft_dir(self):
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+        self.assertThat(
+            os.path.join('prime', 'snap', '.snapcraft'),
+            Not(DirExists()))
 
-class RecordSnapcraftTestCase(BaseExecutionTestCase):
+
+class CleanTestCase(BaseLifecycleTestCase):
+
+    def test_clean_removes_global_state(self):
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('pull', self.project_options)
+        lifecycle.clean(self.project_options, parts=None)
+        self.assertThat(
+            os.path.join('snap', '.snapcraft'),
+            Not(DirExists()))
+
+
+class RecordSnapcraftTestCase(BaseLifecycleTestCase):
 
     def test_prime_without_build_info_does_not_record_snapcraft_yaml(self):
         self.useFixture(fixtures.EnvironmentVariable(
@@ -636,7 +661,7 @@ class RecordSnapcraftTestCase(BaseExecutionTestCase):
         lifecycle.execute('prime', self.project_options)
         self.assertThat(
             os.path.join('prime', 'snap', 'snapcraft.yaml'),
-            Not(FileExists()))
+            Not(DirExists()))
 
     def test_prime_with_build_info_records_snapcraft_yaml(self):
         self.useFixture(fixtures.EnvironmentVariable(
@@ -855,7 +880,7 @@ build-packages: [test-provider-package=test-version]
             FileContains(expected))
 
 
-class RecordSnapcraftWithDeprecatedSnapKeywordTestCase(BaseExecutionTestCase):
+class RecordSnapcraftWithDeprecatedSnapKeywordTestCase(BaseLifecycleTestCase):
 
     scenarios = (
         ('using snap keyword', {'keyword': 'snap'}),

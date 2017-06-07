@@ -165,6 +165,8 @@ class _SnapPackaging:
         # First migrate the snap directory. It will overwrite any conflicting
         # files.
         for root, directories, files in os.walk('snap'):
+            if '.snapcraft' in directories:
+                directories.remove('.snapcraft')
             for directory in directories:
                 source = os.path.join(root, directory)
                 destination = os.path.join(self._prime_dir, source)
