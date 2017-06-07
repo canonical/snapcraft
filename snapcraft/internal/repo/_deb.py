@@ -252,24 +252,50 @@ class Ubuntu(BaseRepo):
                     build_packages.pop(0))
                 if package_name.endswith(':any'):
                     package_name = package_name[:-4]
-                try:
-                    installed_package = apt_cache[package_name].candidate
-                except KeyError as e:
-                    providers = apt_cache.get_providing_packages(package_name)
-                    if providers:
-                        installed_package = providers[0].candidate
-                    else:
-                        raise errors.BuildPackageNotFoundError(e) from e
+                installed_package = cls._get_providing_package(
+                    apt_cache, package_name)
                 if str(installed_package) not in installed_packages:
                     installed_packages.append(str(installed_package))
-                    for depends in installed_package.get_dependencies(
-                            'Depends'):
-                        # deps is a list of or dependencies. We are taking
-                        # the first one that satisfies the dependency, which
-                        # might or might not be problematic.
-                        # --elopio - 20170504
-                        build_packages.append(depends[0].name)
+                    dependencies = cls._get_dependencies(
+                        apt_cache, installed_package)
+                    build_packages.extend(
+                        [dependency for dependency in dependencies
+                         if dependency not in installed_packages])
+
         return installed_packages
+
+    @classmethod
+    def _get_providing_package(cls, apt_cache, package_name):
+        try:
+            return apt_cache[package_name].candidate
+        except KeyError as e:
+            # If the package is not in the cache, it might be a virtual package
+            # provided by another one.
+            providers = apt_cache.get_providing_packages(package_name)
+            if providers:
+                return providers[0].candidate
+            else:
+                raise errors.BuildPackageNotFoundError(e) from e
+
+    @classmethod
+    def _get_dependencies(cls, apt_cache, package):
+        dependencies = []
+        for depends in package.get_dependencies(
+                'Depends'):
+            # Depends is a list of or dependencies. Some might not
+            # be in the cache, so search for the first one in the
+            # cache.
+            for depend in depends:
+                try:
+                    dependency = cls._get_providing_package(
+                        apt_cache, depend.name)
+                    dependencies.append(dependency.package.name)
+                    break
+                except errors.BuildPackageNotFoundError:
+                    pass
+            else:
+                raise errors.BuildPackageNotFoundError(depends)
+        return dependencies
 
     @classmethod
     def is_package_installed(cls, package_name):

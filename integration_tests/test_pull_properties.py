@@ -127,6 +127,25 @@ class AssetTrackingTestCase(integration_tests.TestCase):
             state = yaml.load(f)
         self.assertIn('libc6-dev', state.assets['build-packages'][0])
 
+    def test_pull_with_or_dependencies_first_unexisting(self):
+        # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1693058
+        self.copy_project_to_cwd('basic')
+        snapcraft_dict = self.load_snapcraft_yaml()
+        # This package depends on
+        # libc0.1-dev | libc-dev
+        # The first is not in the archive anymore.
+        snapcraft_dict['parts']['dummy-part']['build-packages'] = (
+            ['libipx-dev'])
+        self.save_snapcraft_yaml(snapcraft_dict)
+
+        self.run_snapcraft('pull')
+
+        state_file = os.path.join(
+            self.parts_dir, 'dummy-part', 'state', 'pull')
+        with open(state_file) as f:
+            state = yaml.load(f)
+        self.assertIn('libc6-dev', state.assets['build-packages'][2])
+
 
 TestDetail = namedtuple('TestDetail', ['field', 'value'])
 
