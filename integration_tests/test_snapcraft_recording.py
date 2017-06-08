@@ -123,7 +123,8 @@ class SnapcraftRecordingStagePackagesTestCase(SnapcraftRecordingBaseTestCase):
         This snap declares all the packages that it requires, there are
         no additional dependencies. The packages specify their version.
         """
-        expected_packages = ['gcc-6-base', 'hello']
+        expected_packages = [
+            'haskell-doc', 'haskell98-tutorial', 'haskell98-report']
         self.copy_project_to_cwd('stage-packages-without-dependencies')
         part_name = 'part-with-stage-packages'
         for package in expected_packages:
@@ -181,7 +182,8 @@ class SnapcraftRecordingStagePackagesTestCase(SnapcraftRecordingBaseTestCase):
         self.copy_project_to_cwd('stage-packages-missing-dependency')
         part_name = 'part-with-stage-packages'
         self.set_stage_package_version(
-            os.path.join('snap', 'snapcraft.yaml'), part_name, package='hello')
+            os.path.join('snap', 'snapcraft.yaml'),
+            part_name, package='haskell-doc')
         self.run_snapcraft('prime')
 
         expected_packages = [
@@ -189,7 +191,8 @@ class SnapcraftRecordingStagePackagesTestCase(SnapcraftRecordingBaseTestCase):
                 package,
                 integration_tests.get_package_version(
                     package, self.distro_series, self.deb_arch))
-            for package in ['gcc-6-base', 'hello']
+            for package in [
+                'haskell-doc', 'haskell98-tutorial', 'haskell98-report']
         ]
 
         recorded_yaml_path = os.path.join(
