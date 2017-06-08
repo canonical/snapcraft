@@ -6,7 +6,7 @@ description: |
 
 grade: stable
 confinement: strict
-build-packages: ['grub-doc']
+build-packages: ['haskell-doc']
 
 parts:
   empty-part:
