@@ -91,7 +91,7 @@ class SnapcraftRecordingBuildPackagesTestCase(
 
         """
         expected_packages = [
-            'haskell-doc', 'haskell98-report', 'haskell98-tutorial']
+            'haskell-doc', 'haskell98-tutorial', 'haskell98-report']
         self.addCleanup(
             subprocess.call,
             ['sudo', 'apt', 'remove', '-y'] + expected_packages)
