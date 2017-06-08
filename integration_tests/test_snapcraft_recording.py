@@ -90,7 +90,8 @@ class SnapcraftRecordingBuildPackagesTestCase(
         dependencies.
 
         """
-        expected_packages = ['grub-doc', 'grub-legacy-doc', 'multiboot-doc']
+        expected_packages = [
+            'haskell-doc', 'haskell98-report', 'haskell98-tutorial']
         self.addCleanup(
             subprocess.call,
             ['sudo', 'apt', 'remove', '-y'] + expected_packages)

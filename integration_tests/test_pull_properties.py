@@ -93,7 +93,7 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.copy_project_to_cwd('build-package-global')
         self.set_build_package_version(
             os.path.join('snap', 'snapcraft.yaml'),
-            part=None, package='grub-doc')
+            part=None, package='haskell-doc')
         self.run_snapcraft('pull')
 
         state_file = os.path.join(

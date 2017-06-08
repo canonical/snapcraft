@@ -4,8 +4,8 @@ summary: install a build package
 description: |
   Install a build package.
   This package has dependencies:
-    - grub-legacy-doc
-    - multiboot-doc
+    - haskell98-report
+    - haskell98-tutorial
 
 grade: stable
 confinement: strict
@@ -13,4 +13,4 @@ confinement: strict
 parts:
   part-with-build-packages:
     plugin: nil
-    build-packages: ['grub-doc']
+    build-packages: ['haskell-doc']
