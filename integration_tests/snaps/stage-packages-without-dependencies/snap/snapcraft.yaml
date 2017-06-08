@@ -13,5 +13,5 @@ parts:
     plugin: nil
     stage-packages:
       - haskell-doc
-      - haskell98-report
       - haskell98-tutorial
+      - haskell98-report
