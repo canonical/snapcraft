@@ -226,6 +226,30 @@ class NodePluginTestCase(tests.TestCase):
         ]
         self.run_mock.assert_has_calls(expected_run_calls)
 
+    def test_pull_executes_npm_run_commands_with_subdir(self):
+        class Options:
+            source = '.'
+            source_subdir = 'subdir'
+            node_packages = []
+            node_engine = '4'
+            npm_run = ['lychee']
+            node_package_manager = self.package_manager
+
+        plugin = nodejs.NodePlugin('test-part', Options(),
+                                   self.project_options)
+
+        plugin.pull()
+
+        if self.package_manager == 'npm':
+            cmd = ['npm', 'run']
+        else:
+            cmd = [os.path.join(plugin.partdir, 'npm', 'bin', 'yarn'), 'run']
+
+        expected_run_calls = [
+            mock.call(cmd + ['lychee'], cwd=os.path.join(plugin.sourcedir, 'subdir')),
+        ]
+        self.run_mock.assert_has_calls(expected_run_calls)
+
     @mock.patch('snapcraft.ProjectOptions.deb_arch', 'fantasy-arch')
     def test_unsupported_arch_raises_exception(self):
         class Options:
