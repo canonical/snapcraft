@@ -5,7 +5,7 @@ snapcraft (2.31) xenial; urgency=medium
   * cli: remove double congrats messaging (#1351)
   * cli: do not duplicate errors (#1347)
   * cli: default options for the implicit snap command (#1353)
-  * go plugin: filter the main packages go-packages are defined (#1355)
+  * go plugin: filter the main packages when go-packages are defined (#1355)
   * New upstream release 2.31 (LP: #1692102)
 
   [ Colin Watson ]
