@@ -30,8 +30,12 @@ class HasArchitecture:
         return 'HasArchitecture()'
 
     def match(self, file_path):
-        arch = self._ms.file(file_path).split(',')[1]
-        if self._expected_arch not in arch:
-            return testtools.matchers.Mismatch(
-                'Expected {!r} to be in {!r}'.format(
-                    self._expected_arch, arch))
+        try:
+            magic = self._ms.file(file_path)
+            arch = magic.split(',')[1]
+            if self._expected_arch not in arch:
+                return testtools.matchers.Mismatch(
+                    'Expected {!r} to be in {!r}'.format(
+                        self._expected_arch, arch))
+        except Exception as e:
+            raise ValueError('Unexpected magic {!r}'.format(magic)) from e
