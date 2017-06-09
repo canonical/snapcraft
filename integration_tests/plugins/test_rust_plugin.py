@@ -100,7 +100,7 @@ class RustPluginTestCase(RustPluginBaseTestCase):
         self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
                            'rust-hello')
         binary = os.path.join(self.parts_dir, 'rust-hello', 'install', 'bin',
-                              os.path.basename(self.path))
+                              'rust-hello')
         self.assertThat(binary, HasArchitecture('aarch64'))
 
 
