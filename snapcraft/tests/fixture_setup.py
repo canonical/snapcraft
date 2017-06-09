@@ -580,9 +580,20 @@ class FakeAptCache(fixtures.Fixture):
             pass
 
         def __setitem__(self, key, item):
-            self.packages[key] = item
+            package_parts = key.split('=')
+            package_name = package_parts[0]
+            version = (
+                package_parts[1] if len(package_parts) > 1 else item.version)
+            if package_name in self.packages:
+                self.packages[package_name].version = version
+            else:
+                if version and not item.version:
+                    item.version = version
+                self.packages[package_name] = item
 
         def __getitem__(self, key):
+            if '=' in key:
+                key = key.split('=')[0]
             return self.packages[key]
 
         def __contains__(self, key):
@@ -610,6 +621,14 @@ class FakeAptCache(fixtures.Fixture):
                 if package_name in self.packages[package].provides:
                     providing_packages.append(self.packages[package])
             return providing_packages
+
+        def is_virtual_package(self, package_name):
+            is_virtual = False
+            if package_name not in self.packages:
+                for package in self.packages:
+                    if package_name in self.packages[package].provides:
+                        return True
+            return is_virtual
 
     def __init__(self, packages=None):
         super().__init__()
@@ -651,8 +670,9 @@ class FakeAptCachePackage():
         super().__init__()
         self.temp_dir = temp_dir
         self.name = name
+        self._version = None
+        self.versions = {}
         self.version = version
-        self.versions = {version: self}
         self.candidate = self
         self.installed = version
         self.provides = provides if provides else []
@@ -661,10 +681,24 @@ class FakeAptCachePackage():
         self.marked_install = False
 
     def __str__(self):
-        return '{}={}'.format(self.name, self.version)
+        if '=' in self.name:
+            return self.name
+        else:
+            return '{}={}'.format(self.name, self.version)
+
+    @property
+    def version(self):
+        return self._version
+
+    @version.setter
+    def version(self, version):
+        self._version = version
+        if version is not None:
+            self.versions.update({version: self})
 
     def mark_install(self):
-        self.marked_install = True
+        if not self.installed:
+            self.marked_install = True
 
     def mark_keep(self):
         pass

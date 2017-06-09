@@ -16,6 +16,7 @@
 
 from collections import namedtuple
 import os
+import subprocess
 import yaml
 
 import testscenarios
@@ -90,9 +91,9 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         build-packages data.
         """
         self.copy_project_to_cwd('build-package-global')
-        version = self.set_build_package_version(
+        self.set_build_package_version(
             os.path.join('snap', 'snapcraft.yaml'),
-            part=None, package='hello')
+            part=None, package='haskell-doc')
         self.run_snapcraft('pull')
 
         state_file = os.path.join(
@@ -102,8 +103,6 @@ class AssetTrackingTestCase(integration_tests.TestCase):
             state = yaml.load(f)
 
         self.assertTrue(len(state.assets['build-packages']) == 0)
-        self.assertNotIn(
-            'hello={}'.format(version), state.assets['build-packages'])
 
     def test_pull_build_package_with_any_architecture(self):
         self.copy_project_to_cwd('build-package')
@@ -119,13 +118,20 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         self.assertIn('hello', state.assets['build-packages'][0])
 
     def test_pull_with_virtual_build_package(self):
+        virtual_package = 'fortunes-off'
+        self.addCleanup(
+            subprocess.call, ['sudo', 'apt-get', 'remove', virtual_package])
         self.run_snapcraft('pull', 'build-virtual-package')
 
         state_file = os.path.join(
-            self.parts_dir, 'part-with-virtual-build-package', 'state', 'pull')
+            'snap', '.snapcraft', 'state')
         with open(state_file) as f:
             state = yaml.load(f)
-        self.assertIn('libc6-dev', state.assets['build-packages'][0])
+        self.assertIn(
+            '{}={}'.format(
+                virtual_package, integration_tests.get_package_version(
+                    virtual_package, self.distro_series, self.deb_arch)),
+            state.assets['build-packages'])
 
 
 TestDetail = namedtuple('TestDetail', ['field', 'value'])
