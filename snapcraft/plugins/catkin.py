@@ -617,7 +617,6 @@ def _find_system_dependencies(catkin_packages, rosdep, catkin):
                 try:
                     catkin.find(dependency)
                 except CatkinPackageNotFoundError:
-                    logger.info("No underlay package: {}".format(dependency))
                     # No package by that name is available
                     pass
                 else:
