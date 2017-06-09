@@ -29,6 +29,7 @@ import yaml
 
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal import common
+from snapcraft.internal import lifecycle
 from snapcraft._options import _get_deb_arch
 
 logger = logging.getLogger(__name__)
@@ -122,7 +123,7 @@ class Containerbuild:
             self._setup_project()
             self._wait_for_network()
             self._container_run(['apt-get', 'update'])
-            self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
+            self._inject_snapcraft()
             command = ['snapcraft', step]
             if step == 'snap':
                 command += ['--output', self._snap_output]
@@ -151,6 +152,23 @@ class Containerbuild:
         self._push_file(tar_filename, dst)
         self._container_run(['tar', 'xvf', os.path.basename(tar_filename)],
                             cwd=self._project_folder)
+
+    def _inject_snapcraft(self):
+        if common.is_snap():
+            snap_name = os.environ.get('SNAP_NAME')
+            snap_revision = os.environ.get('SNAP_REVISION')
+            # Be sure to resolve symlinks or snapping won't work
+            snap_folder = os.path.realpath(
+                os.path.join('/snap', snap_name, snap_revision))
+            snap_file = lifecycle.snap(self._project_options, snap_folder)
+            self._push_file(snap_file, os.path.join(self._project_folder,
+                            os.path.basename(snap_file)))
+            # Because of https://bugs.launchpad.net/snappy/+bug/1628289
+            self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
+            self._container_run(['snap', 'install', '--dangerous',
+                                 snap_file, '--classic'])
+        else:
+            self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
 
     def _finish(self):
         # os.sep needs to be `/` and on Windows it will be set to `\`
