@@ -617,6 +617,7 @@ def _find_system_dependencies(catkin_packages, rosdep, catkin):
                 try:
                     catkin.find(dependency)
                 except CatkinPackageNotFoundError:
+                    logger.info("No underlay package: {}".format(dependency))
                     # No package by that name is available
                     pass
                 else:
@@ -893,7 +894,8 @@ class _Catkin:
                 os.path.join(self._catkin_install_path, 'usr', 'lib',
                              'python2.7', 'dist-packages'),
                 os.path.join(self._catkin_install_path, 'opt', 'ros',
-                             'kinetic', 'lib', 'python2.7', 'dist-packages'))]
+                             self._ros_distro, 'lib', 'python2.7',
+                             'dist-packages'))]
 
             ros_path = os.path.join(
                 self._catkin_install_path, 'opt', 'ros', self._ros_distro)
