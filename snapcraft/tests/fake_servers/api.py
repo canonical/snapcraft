@@ -462,7 +462,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             return self._register_name_409_error('reserved_name')
         elif snap_name == 'test-already-owned-snap-name':
             return self._register_name_409_error('already_owned')
-        elif snap_name == 'test-too-fast':
+        elif snap_name.startswith('test-too-fast'):
             return self._register_name_429_error('register_window')
         elif (
                 snap_name.startswith('test_invalid') or
