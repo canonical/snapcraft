@@ -32,6 +32,7 @@ import xdg
 from snapcraft.tests import fake_servers
 from snapcraft.tests.fake_servers import (
     api,
+    search,
     upload
 )
 from snapcraft.tests.subprocess_utils import (
@@ -318,7 +319,7 @@ class FakeStoreAPIServerRunning(_FakeServerRunning):
 
 class FakeStoreSearchServerRunning(_FakeServerRunning):
 
-    fake_server = fake_servers.FakeStoreSearchServer
+    fake_server = search.FakeStoreSearchServer
 
 
 class StagingStore(fixtures.Fixture):
