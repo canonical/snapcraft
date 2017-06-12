@@ -124,7 +124,7 @@ class SnapTestCase(integration_tests.TestCase):
             subprocess.CalledProcessError, self.run_snapcraft, 'snap')
         expected = (
             "Could not find a required package in 'build-packages': "
-            '"The cache has no package named \'inexistent-package\'"\n')
+            "inexistent-package\n")
         self.assertThat(exception.output, EndsWith(expected))
 
     def test_snap_with_exposed_files(self):
@@ -148,6 +148,12 @@ class SnapTestCase(integration_tests.TestCase):
         self.assertThat(os.path.join('snap', 'snapcraft.yaml'), FileExists())
 
         self.run_snapcraft('snap')
+
+    def test_implicit_command_with_arch(self):
+        self.run_snapcraft('init')
+
+        self.run_snapcraft('--target-arch=i386')
+        self.assertThat('my-snap-name_0.1_i386.snap', FileExists())
 
     def test_error_on_bad_yaml(self):
         error = self.assertRaises(

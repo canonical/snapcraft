@@ -17,6 +17,9 @@
 import os
 import subprocess
 
+import yaml
+from testtools.matchers import FileContains, FileExists, Not
+
 import integration_tests
 import snapcraft
 from snapcraft.tests.matchers import HasArchitecture
@@ -36,13 +39,43 @@ class GoPluginTestCase(integration_tests.TestCase):
     def test_building_multiple_main_packages(self):
         self.run_snapcraft('stage', 'go-with-multiple-main-packages')
 
+        for bin in ['main1', 'main2', 'main3']:
+            self.assertThat(os.path.join('stage', 'bin', bin), FileExists())
+
+    def test_building_multiple_main_packages_without_go_packages(self):
+        self.copy_project_to_cwd('go-with-multiple-main-packages')
+
+        snapcraft_yaml_file = 'snapcraft.yaml'
+        with open(snapcraft_yaml_file) as f:
+            snapcraft_yaml = yaml.load(f)
+        del snapcraft_yaml['parts']['multiple-mains']['go-packages']
+        with open(snapcraft_yaml_file, 'w') as f:
+            yaml.dump(snapcraft_yaml, f)
+
+        self.assertThat(snapcraft_yaml_file, Not(FileContains('go-packages')))
+        self.run_snapcraft('stage')
+
+        for bin in ['main1', 'main2', 'main3']:
+            self.assertThat(os.path.join('stage', 'bin', bin), FileExists())
+
     def test_cross_compiling(self):
         if snapcraft.ProjectOptions().deb_arch != 'amd64':
-            self.skipTest('The test only handles amd64 to armhf')
+            self.skipTest('The test only handles amd64 to arm64')
 
         target_arch = 'arm64'
         self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
                            'go-hello')
         binary = os.path.join(self.parts_dir, 'go-hello', 'install', 'bin',
+                              os.path.basename(self.path))
+        self.assertThat(binary, HasArchitecture('aarch64'))
+
+    def test_cross_compiling_with_cgo(self):
+        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+            self.skipTest('The test only handles amd64 to arm64')
+
+        target_arch = 'arm64'
+        self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
+                           'go-cgo')
+        binary = os.path.join(self.parts_dir, 'go-cgo', 'install', 'bin',
                               os.path.basename(self.path))
         self.assertThat(binary, HasArchitecture('aarch64'))

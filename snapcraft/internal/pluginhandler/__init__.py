@@ -71,7 +71,6 @@ class PluginHandler:
         self._part_properties = _expand_part_properties(
             part_properties, part_schema)
         self.stage_packages = []
-        self.build_packages = []
 
         # Some legacy parts can have a '/' in them to separate the main project
         # part with the subparts. This is rather unfortunate as it affects the
@@ -321,13 +320,10 @@ class PluginHandler:
         # Add the annotated list of build packages
         part_build_packages = self._part_properties.get('build-packages', [])
 
-        build_packages = repo.Repo.get_installed_build_packages(
-            part_build_packages)
-
         self.mark_done('pull', states.PullState(
             pull_properties, part_properties=self._part_properties,
             project=self._project_options, stage_packages=self.stage_packages,
-            build_packages=build_packages,
+            build_packages=part_build_packages,
             source_details=self.source_handler.source_details
         ))
 

@@ -34,7 +34,7 @@ from . import CommandBaseTestCase
 from snapcraft.tests import fixture_setup
 
 
-class SnapCommandTestCase(CommandBaseTestCase):
+class SnapCommandBaseTestCase(CommandBaseTestCase):
 
     yaml_template = dedent("""\
         name: snap-test
@@ -71,6 +71,9 @@ class SnapCommandTestCase(CommandBaseTestCase):
             snapcraft_yaml = self.yaml_template.format(snap_type)
         super().make_snapcraft_yaml(snapcraft_yaml)
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
+
+
+class SnapCommandTestCase(SnapCommandBaseTestCase):
 
     def test_snap_defaults(self):
         self.make_snapcraft_yaml()
@@ -378,3 +381,29 @@ type: os
         self.assertThat(snap_build_renamed, FileExists())
         self.assertThat(
             snap_build_renamed, FileContains('signed assertion?'))
+
+
+class SnapCommandAsDefaultTestCase(SnapCommandBaseTestCase):
+
+    scenarios = [
+        ('no parallel builds', dict(options=['--no-parallel-builds'])),
+        ('target architecture', dict(options=['--target-arch', 'i386'])),
+        ('geo ip', dict(options=['--enable-geoip'])),
+        ('all', dict(options=['--no-parallel-builds', '--target-arch=i386',
+                              '--enable-geoip']))
+    ]
+
+    def test_snap_defaults(self):
+        """The arguments should not be rejected when 'snap' is implicit."""
+        self.make_snapcraft_yaml()
+
+        result = self.run_command(self.options)
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output,
+                        Contains('\nSnapped snap-test_1.0'))
+
+        self.popen_spy.assert_called_once_with([
+            'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
