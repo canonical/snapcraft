@@ -1874,7 +1874,7 @@ class ValidationTestCase(ValidationBaseTestCase):
             project_loader.Validator(self.data).validate)
 
         expected_message = ("The 'parts' property does not match the "
-                            "required schema: 'plugins' does not match "
+                            "required schema: Part name does not match "
                             "'^(?!plugins$)[a-z0-9][a-z0-9+-\\/]*$'")
         self.assertEqual(raised.message, expected_message,
                          message=self.data)
@@ -2071,7 +2071,7 @@ class InvalidAppNamesTestCase(ValidationBaseTestCase):
 
         expected_message = (
             "The 'apps' property does not match the required "
-            "schema: '{}' does not match "
+            "schema: App name does not match "
             "'^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$'").format(self.name)
         self.assertEqual(raised.message, expected_message,
                          message=data)
