@@ -19,6 +19,7 @@ import json
 import logging
 import os
 import pipes
+import shutil
 import sys
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError
@@ -27,9 +28,9 @@ from time import sleep
 import petname
 import yaml
 
+# from snapcraft.internal.cache import SnapCache
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal import common
-from snapcraft.internal import lifecycle
 from snapcraft._options import _get_deb_arch
 
 logger = logging.getLogger(__name__)
@@ -155,20 +156,47 @@ class Containerbuild:
 
     def _inject_snapcraft(self):
         if common.is_snap():
-            snap_name = os.environ.get('SNAP_NAME')
-            snap_revision = os.environ.get('SNAP_REVISION')
-            # Be sure to resolve symlinks or snapping won't work
-            snap_folder = os.path.realpath(
-                os.path.join('/snap', snap_name, snap_revision))
-            snap_file = lifecycle.snap(self._project_options, snap_folder)
-            self._push_file(snap_file, os.path.join(self._project_folder,
-                            os.path.basename(snap_file)))
             # Because of https://bugs.launchpad.net/snappy/+bug/1628289
             self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
-            self._container_run(['snap', 'install', '--dangerous',
-                                 snap_file, '--classic'])
+
+            # Push core snap into container
+            self._inject_snap('core', '99T7MUlRhtI3U0QFgl5mXXESAiSwt776',
+                              rev='1689')
+            snapcraft_rev = os.environ.get('SNAP_REVISION')
+            self._inject_snap('snapcraft', 'vMTKRaLjnOJQetI78HjntT37VuoyssFE',
+                              rev=snapcraft_rev, classic=True)
         else:
             self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
+
+    def _inject_snap(self, name, id, *, rev, classic=False):
+        installed = '/var/lib/snapd/snaps/{}_{}.snap'.format(name, rev)
+        filename = os.path.basename(installed)
+        # Copy file to ensure LXD snap can access it
+        shutil.copyfile(installed, filename)
+        self._push_file(filename, os.path.join(self._project_folder, filename))
+        key = \
+            'BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul'
+        self._inject_assertions('{}_{}.assert'.format(name, rev), [
+            ['account-key', 'public-key-sha3-384={}'.format(key)],
+            ['snap-declaration', 'snap-name={}'.format(name)],
+            ['snap-revision', 'snap-revision={}'.format(rev),
+             'snap-id={}'.format(id)],
+        ])
+        logger.info('Installing {}'.format(filename))
+        cmd = ['snap', 'install', filename]
+        if classic:
+            cmd.append('--classic')
+        self._container_run(cmd)
+
+    def _inject_assertions(self, filename, assertions):
+        with open(filename, 'wb') as f:
+            for assertion in assertions:
+                logger.info('Looking up assertion {}'.format(assertion))
+                f.write(check_output(['snap', 'known', *assertion]))
+                f.write(b'\n')
+        self._push_file(filename, os.path.join(self._project_folder, filename))
+        logger.info('Adding assertion {}'.format(filename))
+        self._container_run(['snap', 'ack', filename])
 
     def _finish(self):
         # os.sep needs to be `/` and on Windows it will be set to `\`
