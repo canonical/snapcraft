@@ -160,20 +160,19 @@ class Containerbuild:
             self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
 
             # Push core snap into container
-            self._inject_snap('core', '99T7MUlRhtI3U0QFgl5mXXESAiSwt776',
-                              rev='1689')
+            self._inject_snap('core', '99T7MUlRhtI3U0QFgl5mXXESAiSwt776')
             snapcraft_rev = os.environ.get('SNAP_REVISION')
             self._inject_snap('snapcraft', 'vMTKRaLjnOJQetI78HjntT37VuoyssFE',
                               rev=snapcraft_rev, classic=True)
         else:
             self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
 
-    def _inject_snap(self, name, id, *, rev, classic=False):
-        installed = '/var/lib/snapd/snaps/{}_{}.snap'.format(name, rev)
-        filename = os.path.basename(installed)
-        # Copy file to ensure LXD snap can access it
-        shutil.copyfile(installed, filename)
-        self._push_file(filename, os.path.join(self._project_folder, filename))
+    def _inject_snap(self, name, id, *, rev=None, classic=False):
+        if not rev:
+            rev = check_output(['readlink',
+                                os.path.join(os.path.sep,
+                                             'var', 'snap',
+                                             name, 'current')]).decode()[:-1]
         key = \
             'BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul'
         self._inject_assertions('{}_{}.assert'.format(name, rev), [
@@ -182,6 +181,13 @@ class Containerbuild:
             ['snap-revision', 'snap-revision={}'.format(rev),
              'snap-id={}'.format(id)],
         ])
+
+        installed = os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps',
+                                 '{}_{}.snap'.format(name, rev))
+        filename = os.path.basename(installed)
+        # Copy file to ensure LXD snap can access it
+        shutil.copyfile(installed, filename)
+        self._push_file(filename, os.path.join(self._project_folder, filename))
         logger.info('Installing {}'.format(filename))
         cmd = ['snap', 'install', filename]
         if classic:
