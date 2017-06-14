@@ -67,6 +67,15 @@
    build folders as well as the container `snapcraft-<project>` is gone.
 
 
+# Test cross-compilation
+
+1. Go to integration_tests/snaps/go-hello.
+2. Run `snapcraft snap --target-arch=armhf`.
+3. Copy the snap to a Raspberry Pi.
+4. Install the snap.
+5. Run `go-hello`.
+
+
 # Test the PC kernel.
 
 1. Get the PC kernel source:
@@ -171,3 +180,11 @@
   * Check that the user can be created.
   * Check that it's possible to ssh into the board.
   * Check that it's possible to install a snap.
+
+
+# Test installing with `pip`
+
+1. Follow HACKING.md to install using `pip` without using --editable.
+2. Make sure Snapcraft works by running `snapcraft init` followed by `snapcraft`.
+3. Follow HACKING.md to install using `pip` while using --editable.
+4. Repeat step 2.
