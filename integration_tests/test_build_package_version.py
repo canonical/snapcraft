@@ -31,7 +31,7 @@ class BuildPackageVersionTestCase(testscenarios.WithScenarios,
         ('global', dict(
             project='build-package', package='hello', part='hello')),
         ('local', dict(
-            project='build-package-global', package='grub-doc', part=None)),
+            project='build-package-global', package='haskell-doc', part=None)),
     )
 
     def test_build_package_gets_version(self):
@@ -52,12 +52,12 @@ class BuildPackageVersionErrorsTestCase(integration_tests.TestCase):
         self.copy_project_to_cwd('build-package-global')
         self.set_build_package_version(
             os.path.join('snap', 'snapcraft.yaml'),
-            part=None, package='grub-doc', version='invalid')
+            part=None, package='haskell-doc', version='invalid')
         error = self.assertRaises(
             subprocess.CalledProcessError,
             self.run_snapcraft, 'pull')
         self.assertIn(
             "Could not find a required package in 'build-packages': "
-            "grub-doc=invalid",
+            "haskell-doc=invalid",
             str(error.output)
         )

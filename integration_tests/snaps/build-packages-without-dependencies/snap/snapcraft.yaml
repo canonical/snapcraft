@@ -12,6 +12,6 @@ parts:
   part-with-build-packages:
     plugin: nil
     build-packages:
-      - grub-doc
-      - grub-legacy-doc
-      - multiboot-doc
+      - haskell-doc
+      - haskell98-report
+      - haskell98-tutorial
