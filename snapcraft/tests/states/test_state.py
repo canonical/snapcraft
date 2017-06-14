@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal.states._state import State
+from snapcraft.internal.states._state import PartState
 from snapcraft import tests
 
 
-class _TestState(State):
+class _TestState(PartState):
     def properties_of_interest(self, part_properties):
         return {
             'foo': part_properties.get('foo'),

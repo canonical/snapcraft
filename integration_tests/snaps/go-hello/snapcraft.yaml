@@ -13,6 +13,10 @@ description: |
 icon: icon.png
 confinement: strict
 
+apps:
+  go-hello:
+    command: go-hello
+
 parts:
   go-hello:
     plugin: go

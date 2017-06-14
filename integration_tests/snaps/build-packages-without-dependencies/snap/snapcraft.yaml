@@ -12,7 +12,6 @@ parts:
   part-with-build-packages:
     plugin: nil
     build-packages:
-      - hello
-      - libc6
-      - libgcc1
-      - gcc-6-base
+      - haskell-doc
+      - haskell98-report
+      - haskell98-tutorial

@@ -11,4 +11,7 @@ confinement: strict
 parts:
   part-with-stage-packages:
     plugin: nil
-    stage-packages: [gcc-6-base, hello]
+    stage-packages:
+      - haskell-doc
+      - haskell98-tutorial
+      - haskell98-report
