@@ -65,3 +65,5 @@ class TestDeb(tests.FakeFileHTTPServerBasedTestCase):
     def test_has_source_handler_entry_on_linux(self):
         if sys.platform == 'linux':
             self.assertTrue(sources._source_handler['deb'] is sources.Deb)
+        else:
+            self.assertRaises(KeyError, sources._source_handler['deb'])
