@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,53 +14,36 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import http.client
 import http.server
 import glob
-import os
-import threading
 import integration_tests
+import os
+import urllib.parse
+
+from snapcraft.tests import fixture_setup
+from testtools.matchers import FileExists
 
 
-class StoppableHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+class TestFakeServer(http.server.HTTPServer):
 
-    def do_QUIT(self):
-        self.send_response(200)
-        self.end_headers()
-        self.server.stop = True
-
-
-class StoppableHTTPServer(http.server.HTTPServer):
-
-    def __init__(self, socket, handler):
-        self.stop = False
-        super(StoppableHTTPServer, self).__init__(socket, handler)
-
-    def serve_forever(self):
-        while not self.stop:
-            self.handle_request()
+    def __init__(self, server_address):
+        super().__init__(
+            server_address, http.server.SimpleHTTPRequestHandler)
 
 
 class JHBuildPluginTestCase(integration_tests.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        cls.port = 8000
-        handler = StoppableHTTPRequestHandler
-        httpd = StoppableHTTPServer(("127.0.0.1", cls.port), handler)
-        cls.server = threading.Thread(target=httpd.serve_forever)
-        cls.server.setDaemon(True)
-        cls.server.start()
+    def setUp(self):
+        super().setUp()
+        self.fake_server_fixture = fixture_setup._FakeServerRunning()
+        self.fake_server_fixture.fake_server = TestFakeServer
 
-    @classmethod
-    def tearDownClass(cls):
-        conn = http.client.HTTPConnection("127.0.0.1:%d" % cls.port)
-        conn.request("QUIT", "/")
-        conn.getresponse()
-        cls.server.join()
+    def start_fake_server(self):
+        self.useFixture(self.fake_server_fixture)
+        self.netloc = urllib.parse.urlparse(
+            self.fake_server_fixture.url).netloc
 
     def test_snap(self):
-
         files = {
             'pull': [os.path.join(self.parts_dir, 'jhbuild', 'jhbuildrc')],
             'build': [
@@ -87,11 +70,30 @@ class JHBuildPluginTestCase(integration_tests.TestCase):
             'snap': [],
         }
 
-        for stage in ['pull', 'build', 'stage', 'prime', 'snap']:
-            self.run_snapcraft(stage, 'jhbuild')
+        # start the test http server
+        self.start_fake_server()
 
-            for path in files[stage]:
-                self.assertTrue(os.path.exists(path),
-                                "path '%s' does not exist" % path)
+        # copy the .modules file into cwd and replace the placeholder with
+        # the local test http url.
+        infile_path = os.path.join(
+            self.snaps_dir, 'jhbuild', 'simple-jhbuild.modules.in')
+        outfile_path = os.path.join(self.path, 'simple-jhbuild.modules')
+
+        infile = open(infile_path, 'r')
+        outfile = open(outfile_path, 'w')
+
+        for line in infile:
+            outfile.write(line.replace('__TESTFIXTURE__', 'http://' +
+                                       self.netloc))
+
+        infile.close()
+        outfile.close()
+
+        # run the tests
+        for step in ['pull', 'build', 'stage', 'prime', 'snap']:
+            self.run_snapcraft(step, 'jhbuild')
+
+            for path in files[step]:
+                self.assertThat(os.path.join(self.path, path), FileExists())
 
         self.assertNotEqual([], glob.glob('test-jhbuild_*.snap'))

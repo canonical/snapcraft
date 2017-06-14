@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,12 +24,15 @@ The plugin can be customized with the following keys:
 
   - modules: (required) a list of modules to include in the part, modules that
              should be skipped should be prefixed with '-', e.g. '-WebKit'
-  - module-set: (default: gnome-world) the module set JHBuild should use
+  - module-set: (required) the module set JHBuild should use
   - module-set-dir: the directory where the module set is located
-               Either leave unset to use the default moduleset definitions, or
+             Either leave unset to use the default moduleset definitions, or
              set to `.` to reference your project folder.
   - jhbuild-archive: the source tarball directory on the build host
   - jhbuild-mirror: the DVCS repository directory on the build host
+  - cflags: customises the build by adding into the gcc or G++ command lines
+             when building. It is commonly used to add optimisation settings
+             (e.g -O3 or -Os) or additional library include paths.
 
 Advice:
 
@@ -49,6 +52,9 @@ Advice:
     jhbuild-mirror to prevent repeated downloading of the JHBuild module
     sources. It's best to reserve common directories on your local machine that
     can be reused by all snaps you might want to build.
+
+  - Add "-Os" into `cflags` to ensure that the compiled binaries are as small
+    as possible.
 """
 
 import glob
@@ -94,13 +100,19 @@ BUILD_PACKAGES = {
 }
 
 
-LOG = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
+jhbuild_repository = 'https://git.gnome.org/browse/jhbuild'
 
 
 def _get_jhbuild_user():
-    myuid = os.getuid()
-    if myuid != 0:
-        return myuid
+    """Discover the User ID of the jhbuild user
+    This is required because we add the user ourselves with a
+    non-deterministic ID
+    :return: The user ID
+    :rtype: int"""
+    uid = os.getuid()
+    if uid != 0:
+        return uid
 
     try:
         uid = common.run_output(['id', '-u', 'jhbuild'])
@@ -110,22 +122,30 @@ def _get_jhbuild_user():
 
 
 def _get_jhbuild_group():
-    mygid = os.getgid()
-    myuid = os.getuid()
-    if myuid != 0:
-        return mygid
+    """Discover the Group ID of the jhbuild user
+    This is required because we add the user ourselves with a
+    non-deterministic ID
+    :return: The group ID
+    :rtype: int"""
+    gid = os.getgid()
+    uid = os.getuid()
+    if uid != 0:
+        return gid
 
+    jhbuild_gid = 0
     try:
-        gid = common.run_output(['id', '-g', 'jhbuild'])
+        jhbuild_gid = common.run_output(['id', '-g', 'jhbuild'])
     except subprocess.CalledProcessError:
-        gid = 65534
-    return gid
+        jhbuild_gid = 65534
+
+    if jhbuild_gid == 0:
+        return 65534
+
+    return jhbuild_gid
 
 
 class JHBuildPlugin(snapcraft.BasePlugin):
-    """
-    JHBuildPlugin provides jhbuild functionality to snapcraft
-    """
+    """JHBuildPlugin provides jhbuild functionality to snapcraft"""
 
     @classmethod
     def schema(cls):
@@ -142,7 +162,6 @@ class JHBuildPlugin(snapcraft.BasePlugin):
             },
             'module-set': {
                 'type': 'string',
-                'default': 'gnome-world',
             },
             'module-set-dir': {
                 'type': 'string',
@@ -162,14 +181,15 @@ class JHBuildPlugin(snapcraft.BasePlugin):
             },
         }
 
-        schema['required'] = ['modules']
+        schema['required'].append('modules')
+        schema['required'].append('module-set')
 
         return schema
 
     @classmethod
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
-        # change in the YAML Snapcraft will consider the build step dirty.
+        # change in the YAML Snapcraft will consider the pull step dirty.
         return [
             'modules',
             'module-set',
@@ -193,7 +213,8 @@ class JHBuildPlugin(snapcraft.BasePlugin):
             module for module in self.options.modules if module[0] != '-']
 
         self.skip_modules = [
-            module[1:] for module in self.options.modules if module[0] == '-']
+            module[1:].strip() for module in self.options.modules
+            if module[0] == '-']
 
         self.build_packages += list(BUILD_PACKAGES)
 
@@ -202,78 +223,10 @@ class JHBuildPlugin(snapcraft.BasePlugin):
             self.partdir, 'jhbuild', 'usr', 'bin', 'jhbuild')
         self.jhbuildrc_path = os.path.join(self.partdir, 'jhbuildrc')
 
-    def enable_cross_compilation(self):
-        """
-        We don't support cross compilation (yet?)
-        """
-        raise NotImplementedError(
-            'The {!s} plugin does not support cross compilation'.format(
-                self.name))
+    def pull(self):
+        logger.info('Pulling JHBuild')
 
-    def run(self, cmd, cwd=None, **kwargs):
-        """Run a command.
-
-        Use run_output() if you need to capture or suppress output.
-
-        :param list cmd: command arguments, first is the executable
-        :param str cwd: working directory
-        """
-        return super().run(cmd, cwd=cwd, **kwargs)
-
-    def run_output(self, cmd, cwd=None, **kwargs):
-        """Run a command, capturing its output.
-
-        Use run() if you don't need the output and prefer it to be piped to
-        stdout.
-
-        :param list cmd: command arguments, first is the executable
-        :param str cwd: working directory
-        :return: the output of the command
-        :rtype: str
-        """
-        return super().run_output(cmd, cwd=cwd, **kwargs)
-
-    def jhbuild(self, args, output=True, **kwargs):
-        """Run JHBuild in the build stage.
-
-        :param list args: command arguments without executable
-        :return: the output of the command if captured
-        :rtype: str
-        """
-
-        cwd = kwargs.pop('cwd', os.getcwd())
-        cmd = []
-        if os.getuid() == 0:
-            cmd = ['sudo', '-H', '-u', 'jhbuild', '--']
-
-        cmd = cmd + [self.jhbuild_program,
-                     '--no-interact', '-f', self.jhbuildrc_path]
-
-        run = self.run_output if output else self.run
-        return run(cmd + args, cwd=cwd, **kwargs)
-
-    def _create_jhbuild_user(self):
-        common.run(['adduser', '--shell', '/bin/bash', '--disabled-password',
-                    '--system', '--quiet', '--home', os.sep +
-                    os.path.join(self.partdir, 'jhbuild', 'home'), 'jhbuild'])
-        return _get_jhbuild_user()
-
-    def _set_jhbuild_ownership(self, paths):
-        jhbuild_user = int(_get_jhbuild_user() or self._create_jhbuild_user())
-        jhbuild_group = int(_get_jhbuild_group())
-        for path in paths:
-            for filename in glob.iglob('%s/**' % path, recursive=True):
-                if not os.path.exists(filename):
-                    continue
-                os.chown(filename, jhbuild_user, jhbuild_group)
-
-    def _pull_jhbuild(self):
-        LOG.info('Pulling JHBuild')
-
-        repository = 'https://git.gnome.org/browse/jhbuild'
-
-        if self.options.jhbuild_mirror:
-            repository = self.options.jhbuild_mirror
+        repository = self.options.jhbuild_mirror or jhbuild_repository
 
         if os.path.isdir(self.jhbuild_src):
             self.run(['git', 'pull'], cwd=self.jhbuild_src)
@@ -281,12 +234,32 @@ class JHBuildPlugin(snapcraft.BasePlugin):
             env = {'https_proxy': os.getenv('https_proxy') or ''}
             self.run(['git', 'clone', repository, self.jhbuild_src], env=env)
 
+        self._setup_jhbuild()
+
+        self.run_jhbuild(['sanitycheck'], output=False)
+
+        modules = self.run_jhbuild(['list'] + self.modules,
+                                   output=True).splitlines()
+
+        logger.info('Pulling modules')
+        self.run_jhbuild(['update'] + modules, output=False)
+
+    def build(self):
+        self._setup_jhbuild()
+
+        logger.info('Building modules')
+        self.run_jhbuild(['build'] + self.modules,
+                         cwd=self.builddir, output=False)
+
+        logger.info('Fixing symbolic links')
+        self.run(['symlinks', '-c', '-d', '-r', '-s', '-v', self.installdir])
+
     def _setup_jhbuild(self):
         if not os.path.isfile(self.jhbuildrc_path):
             self._write_jhbuildrc()
 
         if not os.path.exists(self.jhbuild_program):
-            LOG.info('Building JHBuild')
+            logger.info('Building JHBuild')
 
             self.run(['./autogen.sh', '--prefix=%s' % os.sep +
                       os.path.join(self.partdir, 'jhbuild', 'usr')],
@@ -308,7 +281,13 @@ class JHBuildPlugin(snapcraft.BasePlugin):
         for folder in make_paths:
             os.makedirs(folder, exist_ok=True)
 
-        self._set_jhbuild_ownership(make_paths)
+        jhbuild_user = int(_get_jhbuild_user() or self._create_jhbuild_user())
+        jhbuild_group = int(_get_jhbuild_group())
+        for path in make_paths:
+            for filename in glob.iglob('%s/**' % path, recursive=True):
+                if not os.path.exists(filename):
+                    continue
+                os.chown(filename, jhbuild_user, jhbuild_group)
 
     def _write_jhbuildrc(self):
         """
@@ -356,28 +335,27 @@ cflags = {cflags!r}
                               cflags=self.options.cflags,
                               ))
 
-    def pull(self):
-        self._pull_jhbuild()
-        self._setup_jhbuild()
+    def _create_jhbuild_user(self):
+        if os.geteuid() == 0:
+            common.run(['adduser', '--shell', '/bin/bash',
+                        '--disabled-password', '--system', '--quiet', '--home',
+                        os.sep + os.path.join(self.partdir, 'jhbuild', 'home'),
+                        'jhbuild'])
+        return _get_jhbuild_user()
 
-        self.jhbuild(['sanitycheck'], output=False)
+    def run_jhbuild(self, args, output=True, **kwargs):
+        """Run JHBuild in the build step.
+        :param list args: command arguments without executable
+        :return: the output of the command if captured
+        :rtype: str
+        """
+        cwd = kwargs.pop('cwd', os.getcwd())
+        cmd = []
+        if os.getuid() == 0:
+            cmd = ['sudo', '-H', '-u', 'jhbuild', '--']
 
-        modules = self.jhbuild(['list'] + self.modules,
-                               output=True).splitlines()
+        cmd = cmd + [self.jhbuild_program,
+                     '--no-interact', '-f', self.jhbuildrc_path]
 
-        if 'gtk+' in modules or 'gtk+-3' in modules:
-            self.modules.append('adwaita-icon-theme')
-            self.stage_packages.append('ttf-ubuntu-font-family')
-
-        LOG.info('Pulling modules')
-        self.jhbuild(['update'] + self.modules, output=False)
-
-    def build(self):
-        self._setup_jhbuild()
-
-        LOG.info('Building modules')
-        self.jhbuild(['build'] + self.modules,
-                     cwd=self.builddir, output=False)
-
-        LOG.info('Fixing symbolic links')
-        self.run(['symlinks', '-c', '-d', '-r', '-s', '-v', self.installdir])
+        run = self.run_output if output else self.run
+        return run(cmd + args, cwd=cwd, **kwargs)

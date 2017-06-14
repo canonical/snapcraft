@@ -3,7 +3,7 @@ version: 1.0.0
 grade: stable
 confinement: strict
 summary: Simple JHBuild integration test
-description: >
+description: |
   This is a simple JHBuild integration test.
 
   There are two modules 'main-module' and 'dep-module'.
