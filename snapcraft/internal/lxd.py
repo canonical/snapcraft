@@ -24,11 +24,11 @@ import sys
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError
 from time import sleep
+import requests_unixsocket
 
 import petname
 import yaml
 
-# from snapcraft.internal.cache import SnapCache
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.internal import common
 from snapcraft._options import _get_deb_arch
@@ -39,6 +39,9 @@ _NETWORK_PROBE_COMMAND = \
     'import urllib.request; urllib.request.urlopen("{}", timeout=5)'.format(
         'http://start.ubuntu.com/connectivity-check.html')
 _PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
+# Canonical store account key
+_STORE_KEY = (
+    'BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul')
 
 
 class Containerbuild:
@@ -160,23 +163,28 @@ class Containerbuild:
             self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
 
             # Push core snap into container
-            self._inject_snap('core', '99T7MUlRhtI3U0QFgl5mXXESAiSwt776')
-            snapcraft_rev = os.environ.get('SNAP_REVISION')
-            self._inject_snap('snapcraft', 'vMTKRaLjnOJQetI78HjntT37VuoyssFE',
-                              rev=snapcraft_rev, classic=True)
+            self._inject_snap('core')
+            self._inject_snap('snapcraft', rev=os.environ.get('SNAP_REVISION'))
         else:
             self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
 
-    def _inject_snap(self, name, id, *, rev=None, classic=False):
+    def _inject_snap(self, name, *, rev=None):
+        session = requests_unixsocket.Session()
+        snapd_socket = '/run/snapd.socket'.replace('/', '%2F')
+        api = 'http+unix://{}/v2/snaps/{}'.format(snapd_socket, name)
+        try:
+            json = session.request('GET', api).json()
+        except Exception as e:
+            raise RuntimeError('Error connecting to {}'.format(api)) from e
+        if not json['status'] == 'OK':
+            raise RuntimeError('Error querying {} snap: {}'.format(name, json))
+        id = json['result']['id']
+        classic = json['result']['confinement'] == 'classic'
         if not rev:
-            rev = check_output(['readlink',
-                                os.path.join(os.path.sep,
-                                             'var', 'snap',
-                                             name, 'current')]).decode()[:-1]
-        key = \
-            'BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul'
+            rev = json['result']['revision']
+
         self._inject_assertions('{}_{}.assert'.format(name, rev), [
-            ['account-key', 'public-key-sha3-384={}'.format(key)],
+            ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
             ['snap-declaration', 'snap-name={}'.format(name)],
             ['snap-revision', 'snap-revision={}'.format(rev),
              'snap-id={}'.format(id)],
