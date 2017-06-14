@@ -94,7 +94,7 @@ class RustPluginTestCase(RustPluginBaseTestCase):
 
     def test_cross_compiling(self):
         if snapcraft.ProjectOptions().deb_arch != 'amd64':
-            self.skipTest('The test only handles amd64 to armhf')
+            self.skipTest('The test only handles amd64 to arm64')
 
         target_arch = 'arm64'
         self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],

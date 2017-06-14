@@ -85,6 +85,7 @@ class RustPlugin(snapcraft.BasePlugin):
         self._rustc = os.path.join(self._rustpath, "bin", "rustc")
         self._rustdoc = os.path.join(self._rustpath, "bin", "rustdoc")
         self._cargo = os.path.join(self._rustpath, "bin", "cargo")
+        self._cargo_dir = os.path.join(self.builddir, '.cargo')
         self._rustlib = os.path.join(self._rustpath, "lib")
         self._rustup_get = sources.Script(_RUSTUP, self._rustpath)
         self._rustup = os.path.join(self._rustpath, "rustup.sh")
@@ -92,7 +93,7 @@ class RustPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
 
-        self._write_config()
+        self._write_cross_compile_config()
 
         cmd = [self._cargo, 'install',
                '-j{}'.format(self.parallel_build_count),
@@ -103,14 +104,13 @@ class RustPlugin(snapcraft.BasePlugin):
             cmd.append(' '.join(self.options.rust_features))
         self.run(cmd, env=self._build_env())
 
-    def _write_config(self):
+    def _write_cross_compile_config(self):
         if not self.project.is_cross_compiling:
             return
 
         # Cf. http://doc.crates.io/config.html
-        with suppress(FileExistsError):
-            os.mkdir(os.path.join(self.builddir, '.cargo'))
-        with open(os.path.join(self.builddir, '.cargo', 'config'), 'w') as f:
+        os.makedirs(self._cargo_dir, exist_ok=True)
+        with open(os.path.join(self._cargo_dir, 'config'), 'w') as f:
             f.write('''
                 [build]
                 target = "{}"
@@ -168,8 +168,8 @@ class RustPlugin(snapcraft.BasePlugin):
     def clean_build(self):
         super().clean_build()
 
-        if os.path.exists(os.path.join(self.builddir, '.cargo')):
-            shutil.rmtree(os.path.join(self.builddir, '.cargo'))
+        with suppress(FileExistsError):
+            shutil.rmtree(self._cargo_dir)
 
     def _fetch_rust(self):
         options = []
@@ -185,14 +185,13 @@ class RustPlugin(snapcraft.BasePlugin):
                 raise EnvironmentError(
                     '{} is not a valid rust channel'.format(
                         self.options.rust_channel))
-        if not os.path.exists(self._rustpath):
-            os.makedirs(self._rustpath)
+        os.makedirs(self._rustpath, exist_ok=True)
         self._rustup_get.download()
         cmd = [self._rustup,
                '--prefix={}'.format(self._rustpath),
                '--disable-sudo', '--save'] + options
         if self.project.is_cross_compiling:
-            cmd.append("--with-target={}".format(self._target))
+            cmd.append('--with-target={}'.format(self._target))
         self.run(cmd)
 
     def _fetch_deps(self):
