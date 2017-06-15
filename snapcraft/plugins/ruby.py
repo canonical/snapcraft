@@ -68,11 +68,12 @@ class RubyPlugin(BasePlugin):
         self._ruby_version = self.options.ruby_version
         self._rubylib = join(self.installdir, 'lib', 'ruby')
         self._ruby_dir = join(self.partdir, 'ruby')
-        self._gem_path = join(self._rubylib, 'gems', self._ruby_version, 'gems')
+        self._gem_path = \
+            join(self._rubylib, 'gems', self._ruby_version, 'gems')
         self._gem_home = self._gem_path
         self._ruby_download_url = \
             ('https://cache.ruby-lang.org/pub/ruby/ruby-%s.tar.gz' % \
-             self.options.ruby_version)
+             self._ruby_version)
         self._ruby_tar = Tar(self._ruby_download_url, self._ruby_dir)
         self._gems = self.options.gems
         self._install_bundler = False
