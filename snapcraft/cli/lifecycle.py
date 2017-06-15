@@ -143,7 +143,7 @@ def snap(directory, output, **kwargs):
         except Exception as e:
             echo.error(e)
             sys.exit(1)
-        click.echo('Snapped {}'.format(snap_name))
+        echo.info('Snapped {}'.format(snap_name))
 
 
 @lifecyclecli.command()
@@ -165,7 +165,7 @@ def clean(parts, step, **kwargs):
     if env.is_containerbuild():
         step = step or 'pull'
         lifecycle.containerbuild('clean', project_options,
-                                 args=['--step', step + parts])
+                                 args=['--step', step, *parts])
     else:
         if step == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '

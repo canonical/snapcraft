@@ -101,6 +101,18 @@ class TestParser(TestCase):
 
         self.assertTrue(isinstance(yaml.load(output), OrderedDict))
 
+    def test_merge_tag_yaml(self):
+        test_yaml = """
+base: &base
+    property: value
+test:
+    <<: *base
+"""
+        doc = yaml.load(test_yaml)
+
+        self.assertTrue(isinstance(doc, OrderedDict))
+        self.assertEqual(doc['test']['property'], 'value')
+
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_main_nested_parts_valid(self, mock_get_origin_data):
         """Ensure that we fail if there are dependent parts that

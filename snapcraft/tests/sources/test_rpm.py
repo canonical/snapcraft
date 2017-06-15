@@ -17,6 +17,7 @@
 import os
 import libarchive
 import shutil
+import sys
 
 from snapcraft.internal import sources
 from snapcraft import tests
@@ -61,3 +62,9 @@ class TestRpm(tests.TestCase):
 
         test_output_files = ['test.txt', rpm_file_name]
         self.assertCountEqual(os.listdir(dest_dir), test_output_files)
+
+    def test_has_source_handler_entry_on_linux(self):
+        if sys.platform == 'linux':
+            self.assertTrue(sources._source_handler['rpm'] is sources.Rpm)
+        else:
+            self.assertRaises(KeyError, sources._source_handler['rpm'])

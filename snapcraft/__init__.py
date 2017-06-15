@@ -377,6 +377,20 @@ if _os.environ.get('SNAP_NAME') == 'snapcraft':
     import ctypes.util
     ctypes.util.find_library = find_library
 
+
+def _get_version():
+    if _os.environ.get('SNAP_NAME') == 'snapcraft':
+        return _os.environ['SNAP_VERSION']
+    try:
+        return pkg_resources.require('snapcraft')[0].version
+    except pkg_resources.DistributionNotFound:
+        return 'devel'
+
+
+# Set this early so that the circular imports aren't too painful
+__version__ = _get_version()
+
+
 from snapcraft._baseplugin import BasePlugin        # noqa
 from snapcraft._options import ProjectOptions       # noqa
 # FIXME LP: #1662658
@@ -406,20 +420,6 @@ from snapcraft import shell_utils                   # noqa
 from snapcraft.internal import repo                 # noqa
 
 
-def _get_version():
-    if _os.environ.get('SNAP_NAME') == 'snapcraft':
-        with open(_os.path.join(_os.getenv('SNAP'), 'meta', 'snap.yaml')) as f:
-            snap_yaml = yaml.load(f)
-        return snap_yaml['version']
-    try:
-        return pkg_resources.require('snapcraft')[0].version
-    except pkg_resources.DistributionNotFound:
-        return 'devel'
-
-
-__version__ = _get_version()
-
-
 # Setup yaml module globally
 # yaml OrderedDict loading and dumping
 # from http://stackoverflow.com/a/21048064 Wed Jun 22 16:05:34 UTC 2016
@@ -431,6 +431,8 @@ def dict_representer(dumper, data):
 
 
 def dict_constructor(loader, node):
+    # Necessary in order to make yaml merge tags work
+    loader.flatten_mapping(node)
     return OrderedDict(loader.construct_pairs(node))
 
 

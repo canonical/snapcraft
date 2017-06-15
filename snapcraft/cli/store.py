@@ -273,3 +273,22 @@ def logout():
     store = storeapi.StoreClient()
     store.logout()
     echo.info('Credentials cleared.')
+
+
+@storecli.command()
+def whoami():
+    """Returns your login information relevant to the store."""
+    try:
+        account_data = storeapi.StoreClient().whoami()
+    except storeapi.errors.InvalidCredentialsError:
+        echo.error('You need to first login to use this command.')
+        sys.exit(1)
+
+    click.echo(dedent("""\
+        email:        {email}
+        developer-id: {account_id}""".format(**account_data)))
+
+    # This is needed because we originally did not store the login information.
+    if account_data['email'] == 'unknown':
+        echo.warning('In order to view the correct email you will need to '
+                     'logout and login again.')

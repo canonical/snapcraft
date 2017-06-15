@@ -53,7 +53,6 @@ class AutotoolsPlugin(make.MakePlugin):
         schema['properties']['configflags'] = {
             'type': 'array',
             'minitems': 1,
-            'uniqueItems': True,
             'items': {
                 'type': 'string',
             },

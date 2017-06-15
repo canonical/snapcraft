@@ -31,6 +31,7 @@ from . import echo
 def discoverycli():
     pass
 
+
 _SNAPCRAFT_TOUR_DIR = './snapcraft-tour/'
 
 

@@ -885,6 +885,30 @@ parts:
             "The 'environment/INVALID' property does not match the required "
             "schema: \[1, 2\].*")
 
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_invalid_yaml_empty_version(self, mock_load_plugin):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: ''
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  part1:
+    plugin: nil
+""")
+        raised = self.assertRaises(
+            errors.SnapcraftSchemaError,
+            project_loader.Config)
+
+        self.assertEqual(
+            raised.message,
+            "The 'version' property does not match the required "
+            "schema: '' does not match '^[a-zA-Z0-9.+~-]+$'")
+
 
 class YamlEncodingsTestCase(YamlBaseTestCase):
 
