@@ -1,0 +1,35 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
+# Copyright (C) 2017 James Beedy <jamesbeedy@gmail.com>
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License version 3 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+import os
+
+import integration_tests
+
+
+class RubyPluginTestCase(integration_tests.TestCase):
+
+    def test_pull_with_gemfile(self):
+        return
+
+    def test_pull_with_user_gems(self):
+        return
+
+    def test_pull_with_user_gems_and_gemfile(self):
+        return
+
+    def test_pull_with_no_user_gems_and_no_gemfile(self):
+        return
+
