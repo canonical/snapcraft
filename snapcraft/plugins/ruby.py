@@ -74,7 +74,8 @@ class RubyPlugin(BasePlugin):
             ('https://cache.ruby-lang.org/pub/ruby/ruby-%s.tar.gz' % \
              self.options.ruby_version)
         self._ruby_tar = Tar(self._ruby_download_url, self._ruby_dir)
-        self._gems = self.options.gems + ['bundler']
+        self._gems = self.options.gems
+        self._install_bundler = False
 
         pkgs = ['gcc', 'g++', 'make', 'zlib1g-dev',
                 'libssl-dev', 'libreadline-dev']
@@ -90,7 +91,8 @@ class RubyPlugin(BasePlugin):
         super().build()
         self._ruby_install(builddir=self._ruby_dir)
         self._gem_install()
-        self._bundle_install()
+        if self._install_bundler:
+            self._bundle_install()
 
     def _env(self):
         """Ruby env vars."""
@@ -108,11 +110,11 @@ class RubyPlugin(BasePlugin):
         self.run(['make', 'install', 'DESTDIR={}'.format(self.installdir)], cwd=builddir)
 
     def _gem_install(self):
-        gem_install = ['gem', 'install'] 
+        if exists(join(self.builddir, 'Gemfile')):
+            self._install_bundler = True
+            self._gems = self._gems + ['bundler']
         for gem in self._gems:
-            self.run(gem_install + [gem], env=self._env())
+            self.run(['gem', 'install'] + [gem], env=self._env())
 
     def _bundle_install(self):
-        bundle_install = ['bundle', 'install'] 
-        if exists(join(self.builddir, 'Gemfile')):
-            self.run(bundle_install, env=self._env())
+        self.run(['bundle', 'install'], env=self._env())
