@@ -21,15 +21,15 @@ import integration_tests
 
 class RubyPluginTestCase(integration_tests.TestCase):
 
-    def test_pull_with_gemfile(self):
+    def test_build_with_gemfile(self):
         return
 
-    def test_pull_with_user_gems(self):
+    def test_build_with_user_gems(self):
         return
 
-    def test_pull_with_user_gems_and_gemfile(self):
+    def test_build_with_user_gems_and_gemfile(self):
         return
 
-    def test_pull_with_no_user_gems_and_no_gemfile(self):
+    def test_build_with_no_user_gems_and_no_gemfile(self):
         return
 
