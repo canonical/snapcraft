@@ -43,7 +43,7 @@ class RubyPlugin(BasePlugin):
 
         schema['properties']['ruby-version'] = {
             'type': 'string',
-            'default': "2.3.1"
+            'default': '2.3.1'
         }
         schema['properties']['gems'] = {
             'type': 'array',
@@ -60,28 +60,22 @@ class RubyPlugin(BasePlugin):
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['ruby-version']
+        return ['ruby-version', 'gems']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
         self._ruby_version = self.options.ruby_version
-        self._rubylib = join(self.installdir, 'lib', 'ruby')
         self._ruby_dir = join(self.partdir, 'ruby')
-        self._gem_path = \
-            join(self._rubylib, 'gems', self._ruby_version, 'gems')
-        self._gem_home = self._gem_path
         self._ruby_download_url = \
-            ('https://cache.ruby-lang.org/pub/ruby/ruby-%s.tar.gz' % \
-             self._ruby_version)
+            'https://cache.ruby-lang.org/pub/ruby/ruby-{}.tar.gz'.format(
+                self._ruby_version)
         self._ruby_tar = Tar(self._ruby_download_url, self._ruby_dir)
         self._gems = self.options.gems
         self._install_bundler = False
 
-        pkgs = ['gcc', 'g++', 'make', 'zlib1g-dev',
-                'libssl-dev', 'libreadline-dev']
-        for pkg in pkgs:
-            self.build_packages.append(pkg)
+        self.build_packages.extend(['gcc', 'g++', 'make', 'zlib1g-dev',
+                                    'libssl-dev', 'libreadline-dev'])
 
     def pull(self):
         super().pull()
@@ -95,13 +89,15 @@ class RubyPlugin(BasePlugin):
         if self._install_bundler:
             self._bundle_install()
 
-    def _env(self):
-        """Ruby env vars."""
-        env = environ.copy()
-        env['RUBYLIB'] = self._rubylib
-        env['GEM_PATH'] = self._gem_path
-        env['GEM_HOME'] = self._gem_home
-        return env
+    def env(self, root):
+        rubylib = join(root, 'lib', 'ruby')
+        gem_home = join(rubylib, 'gems', self._ruby_version)
+    
+        return [
+            'RUBYLIB={}'.format(rubylib),
+            'GEM_HOME={}'.format(gem_home),
+            'GEM_PATH={}'.format(gem_home)
+        ]
 
     def _ruby_install(self, builddir):
         self._ruby_tar.provision(
@@ -115,7 +111,7 @@ class RubyPlugin(BasePlugin):
             self._install_bundler = True
             self._gems = self._gems + ['bundler']
         for gem in self._gems:
-            self.run(['gem', 'install'] + [gem], env=self._env())
+            self.run(['gem', 'install'] + gem, env=self.env(root=self.installdir))
 
     def _bundle_install(self):
-        self.run(['bundle', 'install'], env=self._env())
+        self.run(['bundle', 'install'], env=self.env(root=self.installdir))
