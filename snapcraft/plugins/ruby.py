@@ -84,8 +84,6 @@ class RubyPlugin(BasePlugin):
         env['GEM_HOME'] = self._gem_home
         return env
 
-
-
     def _ruby_install(self, builddir):
         self._ruby_tar.provision(
             builddir, clean_target=False, keep_tarball=True)
