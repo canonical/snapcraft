@@ -45,6 +45,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import logging
 import os
 import shutil
+import subprocess
 from glob import iglob
 
 import snapcraft
@@ -101,7 +102,13 @@ class GoPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.append('golang-go')
+
+        # Do not try to install golang if it is already available in our PATH.
+        try:
+            subprocess.check_output(['go', 'version'])
+        except OSError:
+            self.build_packages.append('golang-go')
+
         self._gopath = os.path.join(self.partdir, 'go')
         self._gopath_src = os.path.join(self._gopath, 'src')
         self._gopath_bin = os.path.join(self._gopath, 'bin')
