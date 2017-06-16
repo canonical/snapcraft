@@ -21,15 +21,15 @@ import sys
 import tempfile
 import unittest
 import unittest.mock
+from textwrap import dedent
+
 import fixtures
-from testtools import ExpectedException
-from testtools.matchers import Equals
+from testtools.matchers import Contains, Equals, MatchesRegex
 
 import snapcraft
 from snapcraft.internal import dirs, parts
 from snapcraft.internal import project_loader
 from snapcraft.internal import errors
-from snapcraft.internal import pluginhandler
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
 
@@ -142,7 +142,7 @@ parts:
             '{alias!r} does not match '.format(
                 path='apps/test/aliases[0]', alias='.test'
             ))
-        self.assertEqual(expected, str(raised)[:len(expected)])
+        self.assertThat(str(raised), Contains(expected))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_config_loads_plugins(self, mock_loadPlugin):
@@ -248,13 +248,12 @@ parts:
         parts.update()
 
         raised = self.assertRaises(
-            parts.SnapcraftPartMissingError,
+            errors.SnapcraftPartMissingError,
             project_loader.Config)
-        self.assertEqual(
+        self.assertThat(str(raised), Contains(
             'Cannot find the definition for part {!r}.\n'
             'It may be a remote part, run `snapcraft update` to refresh '
-            'the remote parts cache.'.format('non-existing-part'),
-            str(raised))
+            'the remote parts cache.'.format('non-existing-part')))
 
     def test_config_after_is_an_undefined_part(self):
         self.useFixture(fixture_setup.FakeParts())
@@ -274,13 +273,12 @@ parts:
         parts.update()
 
         raised = self.assertRaises(
-            parts.SnapcraftPartMissingError,
+            errors.SnapcraftPartMissingError,
             project_loader.Config)
-        self.assertEqual(
+        self.assertThat(str(raised), Contains(
             'Cannot find the definition for part {!r}.\n'
             'It may be a remote part, run `snapcraft update` to refresh '
-            'the remote parts cache.'.format('non-existing-part'),
-            str(raised))
+            'the remote parts cache.'.format('non-existing-part')))
 
     @unittest.mock.patch('snapcraft.internal.pluginhandler.load_plugin')
     def test_config_uses_remote_part_from_after(self, mock_load):
@@ -407,7 +405,7 @@ parts:
     after: [p1]
 """)
         raised = self.assertRaises(
-            parts.SnapcraftLogicError,
+            errors.SnapcraftLogicError,
             project_loader.Config)
 
         self.assertEqual(
@@ -699,7 +697,7 @@ parts:
         raised = self.assertRaises(
             errors.SnapcraftSchemaError,
             project_loader.Config)
-        self.assertThat(str(raised), Equals(
+        self.assertThat(str(raised), Contains(
             "The 'parts/part1/organize/foo' property does not match the "
             "required schema: None is not of type 'string'"))
 
@@ -723,7 +721,7 @@ parts:
         raised = self.assertRaises(
             errors.SnapcraftSchemaError,
             project_loader.Config)
-        self.assertThat(str(raised), Equals(
+        self.assertThat(str(raised), Contains(
             "The 'parts/part1/organize/foo' property does not match the "
             "required schema: '' is too short (minimum length is 1)"))
 
@@ -1311,10 +1309,11 @@ class InitTestCase(tests.TestCase):
         """Test that an error is raised if snap/snapcraft.yaml is missing"""
 
         raised = self.assertRaises(
-            project_loader.SnapcraftYamlFileError,
+            errors.SnapcraftYamlFileError,
             project_loader.Config)
 
-        self.assertEqual(raised.file, os.path.join('snap', 'snapcraft.yaml'))
+        self.assertThat(str(raised), Contains(
+            os.path.join('snap', 'snapcraft.yaml')))
 
     def test_both_new_and_old_yamls_cause_error(self):
         os.mkdir('snap')
@@ -1926,21 +1925,22 @@ class ValidationTestCase(ValidationBaseTestCase):
             errors.SnapcraftSchemaError,
             project_loader.Validator(self.data).validate)
 
-        self.assertEqual(
+        self.assertThat(str(raised), Contains(
             "The 'apps/service1/restart-condition' property does not match "
             "the required schema: 'on-watchdog' is not one of ['on-success', "
-            "'on-failure', 'on-abnormal', 'on-abort', 'always', 'never']",
-            str(raised))
+            "'on-failure', 'on-abnormal', 'on-abort', 'always', 'never']"))
 
     def test_both_snap_and_prime_specified(self):
         self.data['parts']['part1']['snap'] = ['foo']
         self.data['parts']['part1']['prime'] = ['bar']
 
-        with ExpectedException(
-                errors.SnapcraftSchemaError,
-                "The 'parts/part1' property does not match the required "
-                "schema: .* cannot contain both 'snap' and 'prime' keywords."):
-            project_loader.Validator(self.data).validate()
+        raised = self.assertRaises(
+            errors.SnapcraftSchemaError,
+            project_loader.Validator(self.data).validate)
+
+        self.assertThat(str(raised), MatchesRegex(
+            ".*The 'parts/part1' property does not match the required "
+            "schema: .* cannot contain both 'snap' and 'prime' keywords.*"))
 
 
 class DaemonDependencyTestCase(ValidationBaseTestCase):
@@ -1967,10 +1967,9 @@ class DaemonDependencyTestCase(ValidationBaseTestCase):
             errors.SnapcraftSchemaError,
             project_loader.Validator(self.data).validate)
 
-        self.assertEqual(
+        self.assertThat(str(raised), Contains(
             "The 'apps/service1' property does not match the required schema: "
-            "'daemon' is a dependency of '{}'".format(self.option),
-            str(raised))
+            "'daemon' is a dependency of '{}'".format(self.option)))
 
 
 class RequiredPropertiesTestCase(ValidationBaseTestCase):
@@ -2083,45 +2082,32 @@ class InvalidAppNamesTestCase(ValidationBaseTestCase):
 
 class TestPluginLoadingProperties(tests.TestCase):
 
-    def setUp(self):
-        super().setUp()
-        dirs.setup_dirs()
+    scenarios = [
+        ('slots', dict(property='slots')),
+        ('plugs', dict(property='plugs')),
+    ]
 
-        self.data = """name: my-package-1
-version: 1.0-snapcraft1~ppa1
-summary: my summary less that 79 chars
-description: description which can be pretty long
-parts:
-    part1:
-        plugin: nil
-"""
+    def test_loading_properties(self):
+        self.make_snapcraft_yaml(dedent("""\
+            name: my-package-1
+            version: 1.0-snapcraft1~ppa1
+            summary: my summary less that 79 chars
+            description: description which can be pretty long
+            parts:
+                part1:
+                    plugin: nil
+                    {property}: [{property}1]
+            """).format(property=self.property))
 
-        self.fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(self.fake_logger)
-        self.expected_message_template = (
-            "Issue while loading plugin: properties failed to load for "
+        expected_message = (
+            "Issue while loading part: properties failed to load for "
             "part1: Additional properties are not allowed ('{}' was "
-            "unexpected)\n")
+            "unexpected)").format(self.property)
 
-    def test_slots_as_properties_should_fail(self):
-        self.data += '        slots: [slot1]'
-        self.make_snapcraft_yaml(self.data)
+        raised = self.assertRaises(errors.PluginError,
+                                   project_loader.load_config)
 
-        self.assertRaises(pluginhandler.PluginError,
-                          project_loader.load_config)
-
-        expected_message = self.expected_message_template.format('slots')
-        self.assertIn(expected_message, self.fake_logger.output)
-
-    def test_plugs_as_properties_should_fail(self):
-        self.data += '        plugs: [plug1]'
-        self.make_snapcraft_yaml(self.data)
-
-        self.assertRaises(pluginhandler.PluginError,
-                          project_loader.load_config)
-
-        expected_message = self.expected_message_template.format('plugs')
-        self.assertIn(expected_message, self.fake_logger.output)
+        self.assertThat(str(raised), Contains(expected_message))
 
 
 class TestFilesets(tests.TestCase):
@@ -2152,14 +2138,13 @@ class TestFilesets(tests.TestCase):
         self.properties['stage'] = ['$3']
 
         raised = self.assertRaises(
-            parts.SnapcraftLogicError,
+            errors.SnapcraftLogicError,
             project_loader._expand_filesets_for,
             'stage', self.properties)
 
-        self.assertEqual(
-            raised.message,
+        self.assertThat(str(raised), Contains(
             '\'$3\' referred to in the \'stage\' fileset but it is not '
-            'in filesets')
+            'in filesets'))
 
 
 class SnapcraftEnvTestCase(tests.TestCase):

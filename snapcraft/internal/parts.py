@@ -25,11 +25,8 @@ from xdg import BaseDirectory
 
 from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.internal.common import get_terminal_width
-from snapcraft.internal.errors import (
-    SnapcraftEnvironmentError,
-    SnapcraftPartMissingError,
-)
 from snapcraft.internal import (
+    errors,
     deprecations,
     pluginhandler,
     project_loader,
@@ -105,7 +102,7 @@ class _RemoteParts(_Base):
         try:
             remote_part = self._parts[part_name].copy()
         except KeyError:
-            raise SnapcraftPartMissingError(part_name=part_name)
+            raise errors.SnapcraftPartMissingError(part_name=part_name)
         if not full:
             for key in ['description', 'maintainer']:
                 remote_part.pop(key)
@@ -140,16 +137,6 @@ class _RemoteParts(_Base):
         remote_part.update(properties)
 
         return remote_part
-
-
-class SnapcraftLogicError(Exception):
-
-    @property
-    def message(self):
-        return self._message
-
-    def __init__(self, message):
-        self._message = message
 
 
 class PartsConfig:
@@ -230,7 +217,7 @@ class PartsConfig:
                     top_part = part
                     break
             if not top_part:
-                raise SnapcraftLogicError(
+                raise errors.SnapcraftLogicError(
                     'circular dependency chain found in parts definition')
             sorted_parts = [top_part] + sorted_parts
             self.all_parts.remove(top_part)
@@ -265,7 +252,7 @@ class PartsConfig:
     def validate(self, part_names):
         for part_name in part_names:
             if part_name not in self._part_names:
-                raise SnapcraftEnvironmentError(
+                raise errors.SnapcraftEnvironmentError(
                     'The part named {!r} is not defined in '
                     '{!r}'.format(part_name, self._snapcraft_yaml))
 
@@ -335,7 +322,7 @@ def update():
 def define(part_name):
     try:
         remote_part = _RemoteParts().get_part(part_name, full=True)
-    except SnapcraftPartMissingError as e:
+    except errors.SnapcraftPartMissingError as e:
         raise RuntimeError(
             'Cannot find the part name {!r} in the cache. Please '
             'run `snapcraft update` and try again.\nIf it is indeed missing, '
