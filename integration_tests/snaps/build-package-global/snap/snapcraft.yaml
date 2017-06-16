@@ -1,0 +1,13 @@
+name: build-package-global
+version: '0.1'
+summary: install a global build-package
+description: |
+  Install a global build-package.
+
+grade: stable
+confinement: strict
+build-packages: ['haskell-doc']
+
+parts:
+  empty-part:
+    plugin: nil

@@ -27,6 +27,6 @@ class EmptyDirTestCase(integration_tests.TestCase):
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft, 'pull')
         expected = (
-            "Could not find snap/snapcraft.yaml. Are you sure you're in the "
-            "right directory?\nTo start a new project, use 'snapcraft init'\n")
+            'Could not find snap/snapcraft.yaml. Are you sure you are in the '
+            'right directory?\nTo start a new project, use `snapcraft init`\n')
         self.assertThat(exception.output, Contains(expected))

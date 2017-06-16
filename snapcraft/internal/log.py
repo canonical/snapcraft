@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,7 +16,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import io
 import sys
 
 from snapcraft.internal.indicators import is_dumb_terminal
@@ -56,17 +55,6 @@ class _ColoredFormatter(logging.Formatter):
 def configure(logger_name=None, log_level=None):
     if not log_level:
         log_level = logging.INFO
-
-    if not is_dumb_terminal() and not sys.stdout.line_buffering:
-        # Line buffering makes logs easier to handle.
-        sys.stdout.flush()
-        try:
-            sys.stdout = io.TextIOWrapper(
-                sys.stdout.detach(), encoding='UTF-8', line_buffering=True)
-        except io.UnsupportedOperation:
-            # debuilding fails, we will just let it pass as if it were a
-            # isatty call
-            pass
 
     stdout_handler = logging.StreamHandler(stream=sys.stdout)
     stdout_handler.addFilter(_StdoutFilter())

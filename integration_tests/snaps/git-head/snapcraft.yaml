@@ -7,6 +7,6 @@ confinement: strict
 
 parts:
     git:
-        plugin: make
+        plugin: dump
         source: .
         source-type: git

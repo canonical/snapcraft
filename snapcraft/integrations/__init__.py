@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,35 +19,3 @@
 Defines 'enable-ci' command infrastructure to support multiple integrations
 systems in an isolated form.
 """
-import importlib
-
-
-SUPPORTED_CI_SYSTEMS = (
-    'travis',
-)
-
-
-def enable_ci(ci_system, refresh_only):
-    if not ci_system:
-        # XXX cprov 20161116: we could possibly auto-detect currently
-        # integration systems in master ?
-        raise EnvironmentError(
-            'Please select one of the supported integration systems: '
-            '{}.'.format(','.join(SUPPORTED_CI_SYSTEMS))
-        )
-    elif ci_system not in SUPPORTED_CI_SYSTEMS:
-        raise EnvironmentError(
-            '"{}" integration is not supported by snapcraft.\n'
-            'Please select one of the supported integration systems: '
-            '{}.'.format(ci_system, ','.join(SUPPORTED_CI_SYSTEMS))
-        )
-
-    module = importlib.import_module(
-        'snapcraft.integrations.{}'.format(ci_system))
-
-    if refresh_only:
-        module.refresh()
-    else:
-        print(module.__doc__)
-        if input('Continue (y/N): ') == 'y':
-            module.enable()

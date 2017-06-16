@@ -30,11 +30,10 @@ from snapcraft.internal import (
     errors,
     libraries,
     parts,
-    pluginhandler,
     states,
 )
 from snapcraft._schema import Validator
-from snapcraft.internal.parts import SnapcraftLogicError, get_remote_parts
+from snapcraft.internal.parts import get_remote_parts
 
 
 logger = logging.getLogger(__name__)
@@ -68,26 +67,6 @@ def _validate_epoch(instance):
             "epochs are positive integers followed by an optional asterisk")
 
     return True
-
-
-class SnapcraftYamlFileError(Exception):
-
-    @property
-    def file(self):
-        return self._file
-
-    def __init__(self, yaml_file):
-        self._file = yaml_file
-
-
-class PluginNotDefinedError(Exception):
-
-    @property
-    def part(self):
-        return self._part
-
-    def __init__(self, part):
-        self._part = part
 
 
 class Config:
@@ -188,13 +167,13 @@ class Config:
         return env
 
     def snap_env(self):
-        snap_dir = self._project_options.snap_dir
+        prime_dir = self._project_options.prime_dir
         env = []
 
-        env += _runtime_env(snap_dir, self._project_options.arch_triplet)
+        env += _runtime_env(prime_dir, self._project_options.arch_triplet)
         dependency_paths = set()
         for part in self.parts.all_parts:
-            env += part.env(snap_dir)
+            env += part.env(prime_dir)
             dependency_paths |= part.get_primed_dependency_paths()
 
         # Dependency paths are only valid if they actually exist. Sorting them
@@ -381,7 +360,8 @@ def get_snapcraft_yaml(base_dir=None):
     snapcraft_yamls = [y for y in possible_yamls if os.path.exists(y)]
 
     if not snapcraft_yamls:
-        raise SnapcraftYamlFileError('snap/snapcraft.yaml')
+        raise errors.SnapcraftYamlFileError(
+            snapcraft_yaml='snap/snapcraft.yaml')
     elif len(snapcraft_yamls) > 1:
         raise errors.SnapcraftEnvironmentError(
             'Found a {!r} and a {!r}, please remove one.'.format(
@@ -403,35 +383,12 @@ def _snapcraft_yaml_load(yaml_file):
         with open(yaml_file, encoding=encoding) as fp:
             return yaml.load(fp)
     except yaml.scanner.ScannerError as e:
-        raise errors.SnapcraftSchemaError(
-            '{} on line {} of {}'.format(
-                e.problem, e.problem_mark.line + 1, yaml_file))
+        raise errors.SnapcraftSchemaError('{} on line {} of {}'.format(
+            e.problem, e.problem_mark.line + 1, yaml_file))
 
 
 def load_config(project_options=None):
-    try:
-        return Config(project_options)
-    except SnapcraftYamlFileError as e:
-        logger.error(
-            "Could not find {}. Are you sure you're in the right directory?\n"
-            "To start a new project, use 'snapcraft init'".format(e.file))
-        raise e
-    except errors.SnapcraftSchemaError as e:
-        msg = 'Issues while validating snapcraft.yaml: {}'.format(e.message)
-        logger.error(msg)
-        raise e
-    except PluginNotDefinedError as e:
-        logger.error(
-            'Issues while validating snapcraft.yaml: the "plugin" keyword is '
-            'missing for the "{}" part.'.format(e.part))
-        raise e
-    except parts.SnapcraftLogicError as e:
-        logger.error('Issue detected while analyzing '
-                     'snapcraft.yaml: {}'.format(e.message))
-        raise e
-    except pluginhandler.PluginError as e:
-        logger.error('Issue while loading plugin: {}'.format(e))
-        raise e
+    return Config(project_options)
 
 
 def _ensure_confinement_default(yaml_data, schema):
@@ -462,7 +419,7 @@ def _expand_filesets_for(step, properties):
             try:
                 new_step_set.extend(filesets[item[1:]])
             except KeyError:
-                raise SnapcraftLogicError(
+                raise errors.SnapcraftLogicError(
                     '\'{}\' referred to in the \'{}\' fileset but it is not '
                     'in filesets'.format(item, step))
         else:

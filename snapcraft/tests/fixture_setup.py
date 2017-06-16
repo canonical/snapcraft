@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,14 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import contextlib
-from functools import partial
 import io
 import os
 import sys
 import threading
-from types import ModuleType
 import urllib.parse
+from functools import partial
+from types import ModuleType
 from unittest import mock
 from subprocess import CalledProcessError
 
@@ -346,7 +347,7 @@ class TestStore(fixtures.Fixture):
             self.already_owned_snap_name = 'test-already-owned-snap-name'
         elif test_store == 'staging':
             self.useFixture(StagingStore())
-            self.register_count_limit = 10
+            self.register_count_limit = 100
             self.reserved_snap_name = 'bash'
         elif test_store == 'production':
             # Use the default server URLs
@@ -394,6 +395,11 @@ def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
                 return 'local'.encode('utf-8')
         elif args[0] == ['lxc', 'list', 'my-remote:'] and fail_on_remote:
             raise CalledProcessError(returncode=255, cmd=args[0])
+        elif args[0][:2] == ['lxc', 'info']:
+            return '''
+                environment:
+                  kernel_architecture: x86_64
+                '''.encode('utf-8')
         elif args[0][:3] == ['lxc', 'list', '--format=json']:
             return '''
                 [{"name": "snapcraft-snap-test",
@@ -425,6 +431,15 @@ class FakeLXD(fixtures.Fixture):
 
         patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
         patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('platform.machine')
+        self.machine_mock = patcher.start()
+        self.machine_mock.return_value = 'x86_64'
+        self.addCleanup(patcher.stop)
+        patcher = mock.patch('platform.architecture')
+        self.architecture_mock = patcher.start()
+        self.architecture_mock.return_value = ('64bit', 'ELF')
         self.addCleanup(patcher.stop)
 
 
@@ -548,3 +563,150 @@ class HgRepo(fixtures.Fixture):
             revno = call_with_output(['hg', 'id']).split()[0]
 
             self.commit = revno
+
+
+class FakeAptCache(fixtures.Fixture):
+
+    class Cache():
+
+        def __init__(self):
+            super().__init__()
+            self.packages = collections.OrderedDict()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def __setitem__(self, key, item):
+            package_parts = key.split('=')
+            package_name = package_parts[0]
+            version = (
+                package_parts[1] if len(package_parts) > 1 else item.version)
+            if package_name in self.packages:
+                self.packages[package_name].version = version
+            else:
+                if version and not item.version:
+                    item.version = version
+                self.packages[package_name] = item
+
+        def __getitem__(self, key):
+            if '=' in key:
+                key = key.split('=')[0]
+            return self.packages[key]
+
+        def __contains__(self, key):
+            return key in self.packages
+
+        def __iter__(self):
+            return iter(self.packages.values())
+
+        def open(self):
+            pass
+
+        def close(self):
+            pass
+
+        def update(self, *args, **kwargs):
+            pass
+
+        def get_changes(self):
+            return [self.packages[package] for package in self.packages
+                    if self.packages[package].marked_install]
+
+        def get_providing_packages(self, package_name):
+            providing_packages = []
+            for package in self.packages:
+                if package_name in self.packages[package].provides:
+                    providing_packages.append(self.packages[package])
+            return providing_packages
+
+        def is_virtual_package(self, package_name):
+            is_virtual = False
+            if package_name not in self.packages:
+                for package in self.packages:
+                    if package_name in self.packages[package].provides:
+                        return True
+            return is_virtual
+
+    def __init__(self, packages=None):
+        super().__init__()
+        self.packages = packages if packages else []
+
+    def setUp(self):
+        super().setUp()
+        temp_dir_fixture = fixtures.TempDir()
+        self.useFixture(temp_dir_fixture)
+        self.path = temp_dir_fixture.path
+        patcher = mock.patch('snapcraft.repo._deb.apt.Cache')
+        self.mock_apt_cache = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.cache = self.Cache()
+        self.mock_apt_cache.return_value = self.cache
+        for package, version in self.packages:
+            self.cache[package] = FakeAptCachePackage(
+                self.path, package, version)
+
+        # Add all the packages in the manifest.
+        with open(os.path.abspath(
+                os.path.join(
+                    __file__, '..', '..',
+                    'internal', 'repo', 'manifest.txt'))) as manifest_file:
+            self.add_packages([line.strip() for line in manifest_file])
+
+    def add_packages(self, package_names):
+        for name in package_names:
+            self.cache[name] = FakeAptCachePackage(self.path, name)
+
+
+class FakeAptCachePackage():
+
+    def __init__(
+            self, temp_dir, name, version=None,
+            provides=None, installed=False,
+            priority='non-essential'):
+        super().__init__()
+        self.temp_dir = temp_dir
+        self.name = name
+        self._version = None
+        self.versions = {}
+        self.version = version
+        self.candidate = self
+        self.installed = version
+        self.provides = provides if provides else []
+        self.installed = installed
+        self.priority = priority
+        self.marked_install = False
+
+    def __str__(self):
+        if '=' in self.name:
+            return self.name
+        else:
+            return '{}={}'.format(self.name, self.version)
+
+    @property
+    def version(self):
+        return self._version
+
+    @version.setter
+    def version(self, version):
+        self._version = version
+        if version is not None:
+            self.versions.update({version: self})
+
+    def mark_install(self):
+        if not self.installed:
+            self.marked_install = True
+
+    def mark_keep(self):
+        pass
+
+    def fetch_binary(self, dir_, progress):
+        path = os.path.join(self.temp_dir, self.name)
+        open(path, 'w').close()
+        return path
+
+    def get_dependencies(self, _):
+        return []

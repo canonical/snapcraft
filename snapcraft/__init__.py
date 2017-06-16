@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -379,7 +379,6 @@ if _os.environ.get('SNAP_NAME') == 'snapcraft':
 
 from snapcraft._baseplugin import BasePlugin        # noqa
 from snapcraft._options import ProjectOptions       # noqa
-from snapcraft._help import topic_help              # noqa
 # FIXME LP: #1662658
 from snapcraft._store import (                      # noqa
     create_key,
@@ -390,7 +389,6 @@ from snapcraft._store import (                      # noqa
     list_keys,
     list_registered,
     login,
-    logout,
     push,
     register,
     register_key,
@@ -409,6 +407,10 @@ from snapcraft.internal import repo                 # noqa
 
 
 def _get_version():
+    if _os.environ.get('SNAP_NAME') == 'snapcraft':
+        with open(_os.path.join(_os.getenv('SNAP'), 'meta', 'snap.yaml')) as f:
+            snap_yaml = yaml.load(f)
+        return snap_yaml['version']
     try:
         return pkg_resources.require('snapcraft')[0].version
     except pkg_resources.DistributionNotFound:

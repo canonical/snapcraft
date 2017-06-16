@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -31,13 +31,14 @@ import urllib
 SNAPCRAFT_FILES = ['snapcraft.yaml', '.snapcraft.yaml', 'parts', 'stage',
                    'prime', 'snap']
 COMMAND_ORDER = ['pull', 'build', 'stage', 'prime']
-_DEFAULT_PLUGINDIR = '/usr/share/snapcraft/plugins'
+_DEFAULT_PLUGINDIR = os.path.join(sys.prefix, 'share', 'snapcraft', 'plugins')
 _plugindir = _DEFAULT_PLUGINDIR
-_DEFAULT_SCHEMADIR = '/usr/share/snapcraft/schema'
+_DEFAULT_SCHEMADIR = os.path.join(sys.prefix, 'share', 'snapcraft', 'schema')
 _schemadir = _DEFAULT_SCHEMADIR
-_DEFAULT_LIBRARIESDIR = '/usr/share/snapcraft/libraries'
+_DEFAULT_LIBRARIESDIR = os.path.join(sys.prefix, 'share', 'snapcraft',
+                                     'libraries')
 _librariesdir = _DEFAULT_LIBRARIESDIR
-_DEFAULT_TOURDIR = '/usr/share/snapcraft/tour'
+_DEFAULT_TOURDIR = os.path.join(sys.prefix, 'share', 'snapcraft', 'tour')
 _tourdir = _DEFAULT_TOURDIR
 
 MAX_CHARACTERS_WRAP = 120
@@ -97,6 +98,10 @@ def format_snap_name(snap):
     return '{name}_{version}_{arch}.snap'.format(**snap)
 
 
+def is_snap():
+    return os.environ.get('SNAP_NAME') == 'snapcraft'
+
+
 def set_plugindir(plugindir):
     global _plugindir
     _plugindir = plugindir
@@ -112,8 +117,8 @@ def set_schemadir(schemadir):
 
 
 def get_schemadir():
-    snap = os.environ.get('SNAP')
-    if snap:
+    if is_snap():
+        snap = os.environ.get('SNAP')
         return os.path.join(snap, 'share', 'snapcraft', 'schema')
     return _schemadir
 
@@ -148,8 +153,8 @@ def set_tourdir(tourdir):
 
 
 def get_tourdir():
-    snap = os.environ.get('SNAP')
-    if snap:
+    if is_snap():
+        snap = os.environ.get('SNAP')
         return os.path.join(snap, 'tour')
     return _tourdir
 
@@ -179,7 +184,7 @@ def reset_env():
 
 
 def get_terminal_width(max_width=MAX_CHARACTERS_WRAP):
-    if os.isatty(sys.stdout.fileno()):
+    if os.isatty(1):
         width = shutil.get_terminal_size().columns
     else:
         width = MAX_CHARACTERS_WRAP

@@ -1,0 +1,22 @@
+name: rosinstall-demo
+version: '1.0'
+summary: Demo using a rosinstall file.
+description: |
+  Build Catkin packages contained in a repo from a rosinstall file.
+
+grade: stable
+confinement: strict
+
+apps:
+  run:
+    command: roslaunch quittable_listener talk_and_listen.launch
+    plugs: [network, network-bind]
+
+parts:
+  rosinstall-part:
+    plugin: catkin
+    rosdistro: kinetic
+    rosinstall-files: [ros_tutorials.rosinstall]
+    catkin-packages:
+      - roscpp_tutorials
+      - quittable_listener

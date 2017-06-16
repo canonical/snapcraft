@@ -70,6 +70,7 @@ class CatkinPluginBaseTestCase(tests.TestCase):
             source_subdir = None
             include_roscore = False
             underlay = None
+            rosinstall_files = None
 
         self.properties = props()
         self.project_options = snapcraft.ProjectOptions()
@@ -91,10 +92,20 @@ class CatkinPluginBaseTestCase(tests.TestCase):
         self.catkin_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-    def verify_rosdep_setup(self, rosdistro, package_path, rosdep_path,
+        patcher = mock.patch('snapcraft.plugins.catkin._Wstool')
+        self.wstool_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def assert_rosdep_setup(self, rosdistro, package_path, rosdep_path,
                             sources):
         self.rosdep_mock.assert_has_calls([
             mock.call(rosdistro, package_path, rosdep_path, sources,
+                      self.project_options),
+            mock.call().setup()])
+
+    def assert_wstool_setup(self, package_path, wstool_path, sources):
+        self.wstool_mock.assert_has_calls([
+            mock.call(package_path, wstool_path, sources,
                       self.project_options),
             mock.call().setup()])
 
@@ -104,150 +115,91 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
     def test_schema(self):
         schema = catkin.CatkinPlugin.schema()
 
-        # Check rosdistro property
         properties = schema['properties']
-        self.assertTrue('rosdistro' in properties,
-                        'Expected "rosdistro" to be included in properties')
+        expected = ('rosdistro', 'catkin-packages', 'source-space',
+                    'include-roscore', 'underlay', 'rosinstall-files')
+        self.assertThat(properties, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(properties, Contains(prop))
 
+        # Check rosdistro property
         rosdistro = properties['rosdistro']
-        self.assertTrue('type' in rosdistro,
-                        'Expected "type" to be included in "rosdistro"')
-        self.assertTrue('default' in rosdistro,
-                        'Expected "default" to be included in "rosdistro"')
-
-        rosdistro_type = rosdistro['type']
-        self.assertEqual(rosdistro_type, 'string',
-                         'Expected "rosdistro" "type" to be "string", but it '
-                         'was "{}"'.format(rosdistro_type))
-
-        rosdistro_default = rosdistro['default']
-        self.assertEqual(rosdistro_default, 'indigo',
-                         'Expected "rosdistro" "default" to be "indigo", but '
-                         'it was "{}"'.format(rosdistro_default))
+        expected = ('type', 'default')
+        self.assertThat(rosdistro, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(rosdistro, Contains(prop))
+        self.assertThat(rosdistro['type'], Equals('string'))
+        self.assertThat(rosdistro['default'], Equals('indigo'))
 
         # Check catkin-packages property
-        self.assertTrue('catkin-packages' in properties,
-                        'Expected "catkin-packages" to be included in '
-                        'properties')
-
         catkin_packages = properties['catkin-packages']
-        self.assertTrue('type' in catkin_packages,
-                        'Expected "type" to be included in "catkin-packages"')
-        self.assertTrue('default' in catkin_packages,
-                        'Expected "default" to be included in '
-                        '"catkin-packages"')
-        self.assertTrue('minitems' in catkin_packages,
-                        'Expected "minitems" to be included in '
-                        '"catkin-packages"')
-        self.assertTrue('uniqueItems' in catkin_packages,
-                        'Expected "uniqueItems" to be included in '
-                        '"catkin-packages"')
-        self.assertTrue('items' in catkin_packages,
-                        'Expected "items" to be included in "catkin-packages"')
-
-        catkin_packages_type = catkin_packages['type']
-        self.assertEqual(catkin_packages_type, 'array',
-                         'Expected "catkin-packages" "type" to be "aray", but '
-                         'it was "{}"'.format(catkin_packages_type))
-
-        catkin_packages_default = catkin_packages['default']
-        self.assertEqual(catkin_packages_default, [],
-                         'Expected "catkin-packages" "default" to be [], but '
-                         'it was {}'.format(catkin_packages_default))
-
-        catkin_packages_minitems = catkin_packages['minitems']
-        self.assertEqual(catkin_packages_minitems, 1,
-                         'Expected "catkin-packages" "minitems" to be 1, but '
-                         'it was {}'.format(catkin_packages_minitems))
-
+        expected = ('type', 'default', 'minitems', 'uniqueItems', 'items')
+        self.assertThat(catkin_packages, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(catkin_packages, Contains(prop))
+        self.assertThat(catkin_packages['type'], Equals('array'))
+        self.assertThat(catkin_packages['default'], Equals([]))
+        self.assertThat(catkin_packages['minitems'], Equals(1))
         self.assertTrue(catkin_packages['uniqueItems'])
-
-        catkin_packages_items = catkin_packages['items']
-        self.assertTrue('type' in catkin_packages_items,
-                        'Expected "type" to be included in "catkin-packages" '
-                        '"items"')
-
-        catkin_packages_items_type = catkin_packages_items['type']
-        self.assertEqual(catkin_packages_items_type, 'string',
-                         'Expected "catkin-packages" "item" "type" to be '
-                         '"string", but it was "{}"'
-                         .format(catkin_packages_items_type))
+        self.assertThat(catkin_packages['items'], Contains('type'))
+        self.assertThat(catkin_packages['items']['type'], Equals('string'))
 
         # Check source-space property
-        self.assertTrue('source-space' in properties,
-                        'Expected "source-space" to be included in properties')
-
         source_space = properties['source-space']
-        self.assertTrue('type' in source_space,
-                        'Expected "type" to be included in "source-space"')
-        self.assertTrue('default' in source_space,
-                        'Expected "default" to be included in "source-space"')
-
-        source_space_type = source_space['type']
-        self.assertEqual(source_space_type, 'string',
-                         'Expected "source-space" "type" to be "string", but '
-                         'it was "{}"'.format(source_space_type))
-
-        source_space_default = source_space['default']
-        self.assertEqual(source_space_default, 'src',
-                         'Expected "source-space" "default" to be "src", but '
-                         'it was "{}"'.format(source_space_default))
+        expected = ('type', 'default')
+        self.assertThat(source_space, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(source_space, Contains(prop))
+        self.assertThat(source_space['type'], Equals('string'))
+        self.assertThat(source_space['default'], Equals('src'))
 
         # Check include-roscore property
-        self.assertTrue('include-roscore' in properties,
-                        'Expected "include-roscore" to be included in '
-                        'properties')
-
         include_roscore = properties['include-roscore']
-        self.assertTrue('type' in include_roscore,
-                        'Expected "type" to be included in "include-roscore"')
-        self.assertTrue('default' in include_roscore,
-                        'Expected "default" to be included in '
-                        '"include-roscore"')
-
-        include_roscore_type = include_roscore['type']
-        self.assertEqual(include_roscore_type, 'boolean',
-                         'Expected "include-roscore" "type" to be "boolean", '
-                         'but it was "{}"'.format(include_roscore_type))
-
-        include_roscore_default = include_roscore['default']
-        self.assertEqual(include_roscore_default, 'true',
-                         'Expected "include-roscore" "default" to be "true", '
-                         'but it was "{}"'.format(include_roscore_default))
+        expected = ('type', 'default')
+        self.assertThat(include_roscore, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(include_roscore, Contains(prop))
+        self.assertThat(include_roscore['type'], Equals('boolean'))
+        self.assertThat(include_roscore['default'], Equals('true'))
 
         # Check underlay property
-        self.assertThat(properties, Contains('underlay'),
-                        'Expected "underlay" to be included in properties')
-
         underlay = properties['underlay']
-        self.assertThat(underlay, Contains('type'),
-                        'Expected "type" to be included in "underlay"')
-        self.assertThat(underlay, Contains('properties'),
-                        'Expected "properties" to be included in "underlay"')
-        self.assertThat(underlay, Contains('required'),
-                        'Expected "required" to be included in "underlay"')
-
-        underlay_type = underlay['type']
-        self.assertThat(underlay_type, Equals('object'),
-                        'Expected "underlay" "type" to be "object", but it '
-                        'was "{}"'.format(underlay_type))
+        expected = ('type', 'properties', 'required')
+        self.assertThat(underlay, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(underlay, Contains(prop))
+        self.assertThat(underlay['type'], Equals('object'))
 
         underlay_required = underlay['required']
-        self.assertThat(underlay_required, HasLength(2))
-        self.assertThat(underlay_required, Contains('build-path'))
-        self.assertThat(underlay_required, Contains('run-path'))
+        expected = ('build-path', 'run-path')
+        self.assertThat(underlay_required, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(underlay_required, Contains(prop))
 
         underlay_properties = underlay['properties']
-        self.assertThat(underlay_properties, Contains('build-path'))
-        self.assertThat(underlay_properties, Contains('run-path'))
-
+        expected = ('build-path', 'run-path')
+        self.assertThat(underlay_properties, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(underlay_properties, Contains(prop))
         underlay_build_path = underlay_properties['build-path']
         self.assertThat(underlay_build_path, Contains('type'))
         self.assertThat(underlay_build_path['type'], Equals('string'))
-
         underlay_run_path = underlay_properties['run-path']
         self.assertThat(underlay_run_path, Contains('type'))
         self.assertThat(underlay_run_path['type'], Equals('string'))
+
+        # Check rosinstall-files property
+        rosinstall_files = properties['rosinstall-files']
+        expected = ('type', 'default', 'minitems', 'uniqueItems', 'items')
+        self.assertThat(rosinstall_files, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(rosinstall_files, Contains(prop))
+        self.assertThat(catkin_packages['type'], Equals('array'))
+        self.assertThat(catkin_packages['default'], Equals([]))
+        self.assertThat(catkin_packages['minitems'], Equals(1))
+        self.assertTrue(catkin_packages['uniqueItems'])
+        self.assertThat(catkin_packages['items'], Contains('type'))
+        self.assertThat(catkin_packages['items']['type'], Equals('string'))
 
         # Check required
         self.assertTrue('catkin-packages' in schema['required'],
@@ -831,11 +783,13 @@ class PullTestCase(CatkinPluginBaseTestCase):
 
         plugin.pull()
 
-        self.verify_rosdep_setup(
+        self.assert_rosdep_setup(
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
             plugin.PLUGIN_STAGE_SOURCES)
+
+        self.wstool_mock.assert_not_called()
 
         # This shouldn't be called unless there's an underlay
         if self.properties.underlay:
@@ -870,11 +824,13 @@ class PullTestCase(CatkinPluginBaseTestCase):
 
         plugin.pull()
 
-        self.verify_rosdep_setup(
+        self.assert_rosdep_setup(
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
             plugin.PLUGIN_STAGE_SOURCES)
+
+        self.wstool_mock.assert_not_called()
 
         # This shouldn't be called unless there's an underlay
         if self.properties.underlay:
@@ -912,11 +868,13 @@ class PullTestCase(CatkinPluginBaseTestCase):
 
         plugin.pull()
 
-        self.verify_rosdep_setup(
+        self.assert_rosdep_setup(
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
             plugin.PLUGIN_STAGE_SOURCES)
+
+        self.wstool_mock.assert_not_called()
 
         # This shouldn't be called unless there's an underlay
         if self.properties.underlay:
@@ -930,6 +888,46 @@ class PullTestCase(CatkinPluginBaseTestCase):
             {'ros-core-dependency'})
         self.ubuntu_mock.return_value.unpack.assert_called_with(
             plugin.installdir)
+
+    @mock.patch.object(catkin.CatkinPlugin, '_generate_snapcraft_setup_sh')
+    def test_pull_with_rosinstall_files(self, generate_setup_mock):
+        self.properties.rosinstall_files = ['rosinstall-file']
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        # No system dependencies
+        self.dependencies_mock.return_value = set()
+
+        plugin.pull()
+
+        self.assert_rosdep_setup(
+            self.properties.rosdistro,
+            os.path.join(plugin.sourcedir, 'src'),
+            os.path.join(plugin.partdir, 'rosdep'),
+            plugin.PLUGIN_STAGE_SOURCES)
+
+        self.assert_wstool_setup(
+            os.path.join(plugin.sourcedir, 'src'),
+            os.path.join(plugin.partdir, 'wstool'),
+            plugin.PLUGIN_STAGE_SOURCES)
+
+        self.wstool_mock.assert_has_calls([
+            mock.call().merge(
+                os.path.join(plugin.sourcedir, 'rosinstall-file')),
+            mock.call().update(),
+        ])
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                plugin.installdir, self.expected_underlay_path)
+        else:
+            generate_setup_mock.assert_not_called()
+
+        # Verify that no .deb packages were installed
+        self.assertTrue(mock.call().unpack(plugin.installdir) not in
+                        self.ubuntu_mock.mock_calls)
 
 
 class FinishBuildTestCase(CatkinPluginBaseTestCase):
@@ -1127,6 +1125,29 @@ class FindSystemDependenciesTestCase(tests.TestCase):
                          "add the Ubuntu package containing it to "
                          "stage-packages until you can get it into the rosdep "
                          "database.")
+
+
+class HandleRosinstallFilesTestCase(tests.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.wstool_mock = mock.MagicMock()
+
+    def test_single_rosinstall_file(self):
+        catkin._handle_rosinstall_files(
+            self.wstool_mock, 'source_path', ['rosinstall_file'])
+        self.wstool_mock.merge.assert_called_once_with(
+            os.path.join('source_path', 'rosinstall_file'))
+
+    def test_multiple_rosinstall_files(self):
+        catkin._handle_rosinstall_files(
+            self.wstool_mock, 'source_path', ['file1', 'file2'])
+
+        # The order matters here. It should be the same as how they were passed
+        self.wstool_mock.merge.assert_has_calls([
+            mock.call(os.path.join('source_path', 'file1')),
+            mock.call(os.path.join('source_path', 'file2'))
+        ])
 
 
 class RosdepTestCase(tests.TestCase):
@@ -1456,3 +1477,103 @@ class CatkinFindTestCase(tests.TestCase):
         self.assertThat(
             ' '.join(positional_args),
             Contains('catkin_find --first-only foo'))
+
+
+class WstoolTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.project = snapcraft.ProjectOptions()
+        self.wstool = catkin._Wstool(
+            'package_path', 'wstool_path', 'sources', self.project)
+
+        patcher = mock.patch('snapcraft.repo.Ubuntu')
+        self.ubuntu_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('subprocess.check_output')
+        self.check_output_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_setup(self):
+        # Return something other than a Mock to ease later assertions
+        self.check_output_mock.return_value = b''
+
+        self.wstool.setup()
+
+        # Verify that only wstool was installed (no other .debs)
+        self.assertEqual(self.ubuntu_mock.call_count, 1)
+        self.assertEqual(self.ubuntu_mock.return_value.get.call_count, 1)
+        self.assertEqual(self.ubuntu_mock.return_value.unpack.call_count, 1)
+        self.ubuntu_mock.assert_has_calls([
+            mock.call(self.wstool._wstool_path, sources='sources',
+                      project_options=self.project),
+            mock.call().get(['python-wstool']),
+            mock.call().unpack(self.wstool._wstool_install_path)])
+
+        # Verify that wstool was initialized
+        self.check_output_mock.assert_called_once_with(
+            ['wstool', 'init', 'package_path', '-j2'], env=mock.ANY)
+
+    def test_setup_can_run_multiple_times(self):
+        self.wstool.setup()
+
+        # Make sure running setup() again doesn't have problems with the old
+        # environment. An exception will be raised if setup can't be called
+        # twice.
+        self.wstool.setup()
+
+    def test_setup_initialization_rosinstall_already_exists(self):
+        """Test that an existing .rosinstall file is not an error."""
+
+        def run(args, **kwargs):
+            if args[0:2] == ['wstool', 'init']:
+                raise subprocess.CalledProcessError(
+                    1, 'foo',
+                    b'Error: There already is a workspace config file '
+                    b'.rosinstall at ".". Use wstool install/modify.')
+
+        self.check_output_mock.side_effect = run
+
+        self.wstool.setup()
+
+    def test_setup_initialization_failure(self):
+        def run(args, **kwargs):
+            if args[0:2] == ['wstool', 'init']:
+                raise subprocess.CalledProcessError(1, 'foo', b'bar')
+
+        self.check_output_mock.side_effect = run
+
+        raised = self.assertRaises(RuntimeError, self.wstool.setup)
+
+        self.assertThat(str(raised),
+                        Equals('Error initializing workspace:\nbar'))
+
+    def test_merge(self):
+        self.wstool.merge('rosinstall-file')
+
+        self.check_output_mock.assert_called_with(
+            ['wstool', 'merge', 'rosinstall-file', '--confirm-all',
+             '-tpackage_path'],
+            env=mock.ANY)
+
+    def test_update(self):
+        self.wstool.update()
+
+        self.check_output_mock.assert_called_with(
+            ['wstool', 'update', '-j2', '-tpackage_path'], env=mock.ANY)
+
+    def test_run(self):
+        wstool = self.wstool
+        wstool._run(['init'])
+
+        class check_env():
+            def __eq__(self, env):
+                return (
+                    env['PATH'] == os.environ['PATH'] + ':' + os.path.join(
+                        wstool._wstool_install_path, 'usr', 'bin') and
+                    env['PYTHONPATH'] == os.path.join(
+                        wstool._wstool_install_path, 'usr', 'lib',
+                        'python2.7', 'dist-packages'))
+
+        self.check_output_mock.assert_called_with(mock.ANY, env=check_env())

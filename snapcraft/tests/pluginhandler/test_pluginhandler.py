@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -34,12 +34,9 @@ from testtools.matchers import Equals
 
 import snapcraft
 from . import mocks
-from snapcraft.internal.errors import (
-    PrimeFileConflictError,
-    SnapcraftPartConflictError,
-)
 from snapcraft.internal import (
     common,
+    errors,
     lifecycle,
     pluginhandler,
     repo,
@@ -97,20 +94,20 @@ class PluginTestCase(tests.TestCase):
 
         mock_isdir.assert_any_call('file')
 
-        self.assertEqual(raised.__str__(),
-                         'local source (file) is not a directory')
+        self.assertThat(str(raised), Equals(
+             'local source (file) is not a directory'))
 
     def test_init_unknown_plugin_must_raise_exception(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
         raised = self.assertRaises(
-            pluginhandler.PluginError,
+            errors.PluginError,
             mocks.loadplugin,
             'fake-part', 'test_unexisting')
 
-        self.assertEqual(raised.__str__(),
-                         'unknown plugin: test_unexisting')
+        self.assertThat(str(raised), Equals(
+            'Issue while loading part: unknown plugin: test_unexisting'))
 
     def test_fileset_include_excludes(self):
         stage_set = [
@@ -494,21 +491,21 @@ class PluginTestCase(tests.TestCase):
 
     def test_filesets_includes_without_relative_paths(self):
         raised = self.assertRaises(
-            pluginhandler.PluginError,
+            errors.PluginError,
             pluginhandler._get_file_list,
             ['rel', '/abs/include'])
 
-        self.assertEqual(
-            'path "/abs/include" must be relative', str(raised))
+        self.assertThat(str(raised), Equals(
+            'Issue while loading part: path "/abs/include" must be relative'))
 
     def test_filesets_exlcudes_without_relative_paths(self):
         raised = self.assertRaises(
-            pluginhandler.PluginError,
+            errors.PluginError,
             pluginhandler._get_file_list,
             ['rel', '-/abs/exclude'])
 
-        self.assertEqual(
-            'path "/abs/exclude" must be relative', str(raised))
+        self.assertThat(str(raised), Equals(
+            'Issue while loading part: path "/abs/exclude" must be relative'))
 
 
 class MigratePluginTestCase(tests.TestCase):
@@ -958,6 +955,7 @@ class StateTestCase(StateBaseTestCase):
     @patch('snapcraft.internal.repo.Repo')
     def test_pull_state(self, repo_mock):
         self.assertEqual(None, self.handler.last_step())
+        repo_mock.get_installed_build_packages.return_value = []
 
         self.handler.pull()
 
@@ -1196,7 +1194,7 @@ class StateTestCase(StateBaseTestCase):
     def test_clean_stage_old_state(self):
         self.handler.mark_done('stage', None)
         raised = self.assertRaises(
-            pluginhandler.MissingState,
+            errors.MissingState,
             self.handler.clean_stage, {})
 
         self.assertEqual(
@@ -1221,7 +1219,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertEqual('prime', self.handler.last_step())
-        mock_find_dependencies.assert_called_once_with(self.handler.snapdir,
+        mock_find_dependencies.assert_called_once_with(self.handler.primedir,
                                                        {'bin/1', 'bin/2'})
         self.assertFalse(mock_copy.called)
 
@@ -1254,7 +1252,7 @@ class StateTestCase(StateBaseTestCase):
         bindir = os.path.join(self.handler.code.installdir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
-        bindir = os.path.join(self.handler.snapdir, 'bin')
+        bindir = os.path.join(self.handler.primedir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '2'), 'w').close()
 
@@ -1265,7 +1263,7 @@ class StateTestCase(StateBaseTestCase):
         self.assertEqual('prime', self.handler.last_step())
         # bin/2 shouldn't be in this list as it was already primed by another
         # part.
-        mock_find_dependencies.assert_called_once_with(self.handler.snapdir,
+        mock_find_dependencies.assert_called_once_with(self.handler.primedir,
                                                        {'bin/1'})
         self.assertFalse(mock_copy.called)
 
@@ -1309,11 +1307,11 @@ class StateTestCase(StateBaseTestCase):
 
         self.assertEqual('prime', self.handler.last_step())
         mock_find_dependencies.assert_called_once_with(
-            self.handler.snapdir, {'bin/1', 'bin/2'})
+            self.handler.primedir, {'bin/1', 'bin/2'})
         mock_migrate_files.assert_has_calls([
             call({'bin/1', 'bin/2'}, {'bin'}, self.handler.stagedir,
-                 self.handler.snapdir),
-            call({'foo/bar/baz'}, {'foo/bar'}, '/', self.handler.snapdir,
+                 self.handler.primedir),
+            call({'foo/bar/baz'}, {'foo/bar'}, '/', self.handler.primedir,
                  follow_symlinks=True),
         ])
 
@@ -1368,11 +1366,12 @@ class StateTestCase(StateBaseTestCase):
 
         self.assertEqual('prime', self.handler.last_step())
         mock_find_dependencies.assert_called_once_with(
-            self.handler.snapdir, {'bin/file'})
+            self.handler.primedir, {'bin/file'})
         # Verify that only the part's files were migrated-- not the system
         # dependency.
         mock_migrate_files.assert_called_once_with(
-            {'bin/file'}, {'bin'}, self.handler.stagedir, self.handler.snapdir)
+            {'bin/file'}, {'bin'}, self.handler.stagedir,
+            self.handler.primedir)
 
         state = states.get_state(self.handler.statedir, 'prime')
 
@@ -1410,10 +1409,10 @@ class StateTestCase(StateBaseTestCase):
 
         self.assertEqual('prime', self.handler.last_step())
         mock_find_dependencies.assert_called_once_with(
-            self.handler.snapdir, {'bin/1', 'foo/bar/baz'})
+            self.handler.primedir, {'bin/1', 'foo/bar/baz'})
         mock_migrate_files.assert_called_once_with(
             {'bin/1', 'foo/bar/baz'}, {'bin', 'foo', 'foo/bar'},
-            self.handler.stagedir, self.handler.snapdir)
+            self.handler.stagedir, self.handler.primedir)
 
         state = states.get_state(self.handler.statedir, 'prime')
 
@@ -1441,7 +1440,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertEqual('prime', self.handler.last_step())
-        mock_find_dependencies.assert_called_once_with(self.handler.snapdir,
+        mock_find_dependencies.assert_called_once_with(self.handler.primedir,
                                                        {'bin/1'})
         self.assertFalse(mock_copy.called)
 
@@ -1526,7 +1525,7 @@ class StateTestCase(StateBaseTestCase):
     def test_clean_prime_old_state(self):
         self.handler.mark_done('prime', None)
         raised = self.assertRaises(
-            pluginhandler.MissingState,
+            errors.MissingState,
             self.handler.clean_prime, {})
 
         self.assertEqual(
@@ -1882,7 +1881,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler.mark_done('prime', None)
 
         raised = self.assertRaises(
-            pluginhandler.MissingState,
+            errors.MissingState,
             handler.clean, step='prime')
 
         self.assertEqual(
@@ -1996,7 +1995,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler.mark_done('stage', None)
 
         raised = self.assertRaises(
-            pluginhandler.MissingState,
+            errors.MissingState,
             handler.clean, step='stage')
 
         self.assertEqual(
@@ -2047,7 +2046,7 @@ class CleanPrimeTestCase(CleanBaseTestCase):
         handler.clean_prime({})
 
         self.assertFalse(os.listdir(self.prime_dir),
-                         'Expected snapdir to be completely cleaned')
+                         'Expected prime dir to be completely cleaned')
 
 
 class CleanStageTestCase(CleanBaseTestCase):
@@ -2087,7 +2086,7 @@ class CleanStageTestCase(CleanBaseTestCase):
         handler.clean_stage({})
 
         self.assertFalse(os.listdir(self.stage_dir),
-                         'Expected snapdir to be completely cleaned')
+                         'Expected stage dir to be completely cleaned')
 
 
 class PerStepCleanTestCase(tests.TestCase):
@@ -2227,7 +2226,7 @@ class CollisionTestCase(tests.TestCase):
 
     def test_collisions_between_two_parts(self):
         raised = self.assertRaises(
-            SnapcraftPartConflictError,
+            errors.SnapcraftPartConflictError,
             pluginhandler.check_for_collisions,
             [self.part1, self.part2, self.part3])
 
@@ -2238,7 +2237,7 @@ class CollisionTestCase(tests.TestCase):
 
     def test_collisions_between_two_parts_pc_files(self):
         raised = self.assertRaises(
-            SnapcraftPartConflictError,
+            errors.SnapcraftPartConflictError,
             pluginhandler.check_for_collisions,
             [self.part1, self.part4])
 
@@ -2457,7 +2456,7 @@ class FindDependenciesTestCase(tests.TestCase):
         fileset_2 = ['a']
 
         raised = self.assertRaises(
-            PrimeFileConflictError,
+            errors.PrimeFileConflictError,
             pluginhandler._combine_filesets, fileset_1, fileset_2
         )
         self.assertEqual(

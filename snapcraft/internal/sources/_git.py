@@ -121,7 +121,7 @@ class Git(Base):
         # Merge any updates for the submodules (if any).
         subprocess.check_call([self.command, '-C', self.source_dir,
                               'submodule', 'update', '--recursive',
-                               '--remote'], **self._call_kwargs)
+                               '--force'], **self._call_kwargs)
 
     def _clone_new(self):
         command = [self.command, 'clone', '--recursive']
@@ -158,9 +158,9 @@ class Git(Base):
                                                   'utf-8').strip()
 
         return {
-            'commit': commit,
-            'branch': branch,
+            'source-commit': commit,
+            'source-branch': branch,
             'source': source,
-            'tag': tag,
-            'checksum': checksum,
+            'source-tag': tag,
+            'source-checksum': checksum,
         }

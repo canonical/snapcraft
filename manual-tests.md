@@ -42,6 +42,12 @@
 6. Ensure you are dropped back into your original shell session.
 
 
+# Test cleanbuild with non-ascii characters in the desktop file.
+
+1. Run `snapcraft cleanbuild` for the snap in `integration_tests/snaps/desktop-with-non-ascii`
+   * Check that the build succeeds and you get the `.snap` file.
+
+
 # Test cleanbuild with a remote.
 
 1. Setup a remote as described on
@@ -50,12 +56,32 @@
 3. Run `snapcraft cleanbuild --remote <remote>` where `<remote>` is
    the name you gave the remote on step 1.
 
+
+# Test containerized building
+
+1. Setup LXD as described on
+   https://linuxcontainers.org/lxd/getting-started-cli/
+2. Select a project <project> to build.
+3. Run `SNAPCRAFT_CONTAINER_BUILDS=1 snapcraft`.
+4. Run `SNAPCRAFT_CONTAINER_BUILDS=1 snapcraft clean` and observe that
+   build folders as well as the container `snapcraft-<project>` is gone.
+
+
+# Test cross-compilation
+
+1. Go to integration_tests/snaps/go-hello.
+2. Run `snapcraft snap --target-arch=armhf`.
+3. Copy the snap to a Raspberry Pi.
+4. Install the snap.
+5. Run `go-hello`.
+
+
 # Test the PC kernel.
 
 1. Get the PC kernel source:
 
     $ git clone -b pc https://git.launchpad.net/~ubuntu-kernel/ubuntu/+source/linux-snap/+git/xenial
-    $ cd kernel
+    $ cd xenial
 
 2. Run `sudo snapcraft`.
 3. Create a file called `pc-model.json` with the following contents:
@@ -106,7 +132,7 @@
 
 1. Download https://developer.qualcomm.com/download/db410c/linux-board-support-package-v1.2.zip
 2. Extract it and copy the file `firmware.tar` to the directory `demos/96boards-kernel`.
-3. Run `snapcraft --target-arch arm64` in the `demos/96boards-kernel` directory.
+3. Run `snapcraft snap --target-arch arm64` in the `demos/96boards-kernel` directory.
 4. Create a file called `dragonboard-model.json` with the following contents:
 
     {
@@ -154,3 +180,11 @@
   * Check that the user can be created.
   * Check that it's possible to ssh into the board.
   * Check that it's possible to install a snap.
+
+
+# Test installing with `pip`
+
+1. Follow HACKING.md to install using `pip` without using --editable.
+2. Make sure Snapcraft works by running `snapcraft init` followed by `snapcraft`.
+3. Follow HACKING.md to install using `pip` while using --editable.
+4. Repeat step 2.

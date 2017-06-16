@@ -1,0 +1,17 @@
+name: stage-packages-without-dependencies
+version: '0.1'
+summary: install stage packages
+description: |
+  Install stage packages.
+  These packages don't require any additional dependency.
+
+grade: stable
+confinement: strict
+
+parts:
+  part-with-stage-packages:
+    plugin: nil
+    stage-packages:
+      - haskell-doc
+      - haskell98-tutorial
+      - haskell98-report

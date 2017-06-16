@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -33,7 +33,7 @@ from xml.etree import ElementTree
 
 import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal import cache, repo
+from snapcraft.internal import cache, repo, common
 from snapcraft.internal.indicators import is_dumb_terminal
 from ._base import BaseRepo
 from . import errors
@@ -68,7 +68,7 @@ class _AptCache:
         apt.apt_pkg.config.set('Apt::Install-Recommends', 'False')
 
         # Methods and solvers dir for when in the SNAP
-        if os.getenv('SNAP'):
+        if common.is_snap():
             snap_dir = os.getenv('SNAP')
             apt_dir = os.path.join(snap_dir, 'apt')
             apt.apt_pkg.config.set('Dir', apt_dir)
@@ -187,59 +187,69 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def install_build_packages(cls, package_names):
-        unique_packages = set(package_names)
+        """Install build packages on the building machine.
+
+        :return: a list with the packages installed and their versions.
+
+        """
         new_packages = []
         with apt.Cache() as apt_cache:
-            for pkg in unique_packages:
-                try:
-                    pkg_name, version = repo.get_pkg_name_parts(pkg)
-                    installed_version = apt_cache[pkg_name].installed
-                    if not installed_version:
-                        new_packages.append(pkg)
-                    elif version and installed_version != version:
-                        new_packages.append(pkg)
-                except KeyError as e:
-                    raise errors.BuildPackageNotFoundError(e) from e
+            try:
+                cls._mark_install(apt_cache, package_names)
+            except errors.PackageNotFoundError as e:
+                raise errors.BuildPackageNotFoundError(e)
+            for package in apt_cache.get_changes():
+                new_packages.append((package.name, package.candidate.version))
 
         if new_packages:
-            new_packages.sort()
-            logger.info(
-                'Installing build dependencies: %s', ' '.join(new_packages))
-            env = os.environ.copy()
-            env.update({
-                'DEBIAN_FRONTEND': 'noninteractive',
-                'DEBCONF_NONINTERACTIVE_SEEN': 'true',
-            })
-
-            apt_command = ['sudo', 'apt-get',
-                           '--no-install-recommends', '-y']
-            if not is_dumb_terminal():
-                apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
-            apt_command.append('install')
-
-            subprocess.check_call(apt_command + new_packages, env=env)
-
-            try:
-                subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
-                                      new_packages, env=env)
-            except subprocess.CalledProcessError as e:
-                logger.warning(
-                    'Impossible to mark packages as auto-installed: {}'
-                    .format(e))
+            cls._install_new_build_packages(
+               [package[0] for package in new_packages])
+        return ['{}={}'.format(package[0], package[1])
+                for package in new_packages]
 
     @classmethod
-    def get_installed_build_packages(cls, package_names):
-        unique_packages = set(package_names)
-        pkg_list = []
-        with apt.Cache() as apt_cache:
-            for pkg in unique_packages:
-                try:
-                    pkg_name, version = repo.get_pkg_name_parts(pkg)
-                    pkg_list.append(str(apt_cache[pkg_name].candidate))
-                except KeyError as e:
-                    raise errors.BuildPackageNotFoundError(e) from e
+    def _mark_install(cls, apt_cache, package_names):
+        for name in package_names:
+            if name.endswith(':any'):
+                name = name[:-4]
+            if apt_cache.is_virtual_package(name):
+                name = apt_cache.get_providing_packages(name)[0].name
+            logger.debug('Marking {!r} (and its dependencies) to be '
+                         'fetched'.format(name))
+            name_arch, version = repo.get_pkg_name_parts(name)
+            try:
+                if version:
+                    _set_pkg_version(apt_cache[name_arch], version)
+                apt_cache[name_arch].mark_install()
+            except KeyError:
+                raise errors.PackageNotFoundError(name)
 
-        return pkg_list
+    @classmethod
+    def _install_new_build_packages(cls, package_names):
+        package_names.sort()
+        logger.info(
+            'Installing build dependencies: %s', ' '.join(package_names))
+        env = os.environ.copy()
+        env.update({
+            'DEBIAN_FRONTEND': 'noninteractive',
+            'DEBCONF_NONINTERACTIVE_SEEN': 'true',
+        })
+
+        apt_command = ['sudo', 'apt-get',
+                       '--no-install-recommends', '-y']
+        if not is_dumb_terminal():
+            apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
+        apt_command.append('install')
+
+        subprocess.check_call(apt_command + package_names, env=env)
+
+        try:
+            subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
+                                  package_names, env=env)
+        except subprocess.CalledProcessError as e:
+            logger.warning(
+                'Impossible to mark packages as auto-installed: {}'
+                .format(e))
 
     @classmethod
     def is_package_installed(cls, package_name):
@@ -270,18 +280,6 @@ class Ubuntu(BaseRepo):
             self._mark_install(apt_cache, package_names)
             self._filter_base_packages(apt_cache, package_names)
             return self._get(apt_cache)
-
-    def _mark_install(self, apt_cache, package_names):
-        for name in package_names:
-            logger.debug('Marking {!r} (and its dependencies) to be '
-                         'fetched'.format(name))
-            name_arch, version = repo.get_pkg_name_parts(name)
-            try:
-                if version:
-                    _set_pkg_version(apt_cache[name_arch], version)
-                apt_cache[name_arch].mark_install()
-            except KeyError:
-                raise errors.PackageNotFoundError(name)
 
     def _filter_base_packages(self, apt_cache, package_names):
         manifest_dep_names = self._manifest_dep_names(apt_cache)

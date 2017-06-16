@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -31,50 +31,62 @@ _ARCH_TRANSLATIONS = {
     'armv7l': {
         'kernel': 'arm',
         'deb': 'armhf',
+        'uts_machine': 'arm',
         'cross-compiler-prefix': 'arm-linux-gnueabihf-',
-        'cross-build-packages': ['gcc-arm-linux-gnueabihf'],
+        'cross-build-packages': ['gcc-arm-linux-gnueabihf',
+                                 'libc6-dev-armhf-cross'],
         'triplet': 'arm-linux-gnueabihf',
         'core-dynamic-linker': 'lib/ld-linux-armhf.so.3',
     },
     'aarch64': {
         'kernel': 'arm64',
         'deb': 'arm64',
+        'uts_machine': 'aarch64',
         'cross-compiler-prefix': 'aarch64-linux-gnu-',
-        'cross-build-packages': ['gcc-aarch64-linux-gnu'],
+        'cross-build-packages': ['gcc-aarch64-linux-gnu',
+                                 'libc6-dev-arm64-cross'],
         'triplet': 'aarch64-linux-gnu',
         'core-dynamic-linker': 'lib/ld-linux-aarch64.so.1',
     },
     'i686': {
         'kernel': 'x86',
         'deb': 'i386',
+        'uts_machine': 'i686',
         'triplet': 'i386-linux-gnu',
     },
     'ppc64le': {
         'kernel': 'powerpc',
         'deb': 'ppc64el',
+        'uts_machine': 'ppc64el',
         'cross-compiler-prefix': 'powerpc64le-linux-gnu-',
-        'cross-build-packages': ['gcc-powerpc64le-linux-gnu'],
+        'cross-build-packages': ['gcc-powerpc64le-linux-gnu',
+                                 'libc6-dev-ppc64el-cross'],
         'triplet': 'powerpc64le-linux-gnu',
         'core-dynamic-linker': '/lib64/ld64.so.2',
     },
     'ppc': {
         'kernel': 'powerpc',
         'deb': 'powerpc',
+        'uts_machine': 'powerpc',
         'cross-compiler-prefix': 'powerpc-linux-gnu-',
-        'cross-build-packages': ['gcc-powerpc-linux-gnu'],
+        'cross-build-packages': ['gcc-powerpc-linux-gnu',
+                                 'libc6-dev-powerpc-cross'],
         'triplet': 'powerpc-linux-gnu',
     },
     'x86_64': {
         'kernel': 'x86',
         'deb': 'amd64',
+        'uts_machine': 'x86_64',
         'triplet': 'x86_64-linux-gnu',
         'core-dynamic-linker': 'lib64/ld-linux-x86-64.so.2',
     },
     's390x': {
         'kernel': 's390x',
         'deb': 's390x',
+        'uts_machine': 's390x',
         'cross-compiler-prefix': 's390x-linux-gnu-',
-        'cross-build-packages': ['gcc-s390x-linux-gnu'],
+        'cross-build-packages': ['gcc-s390x-linux-gnu',
+                                 'libc6-dev-s390x-cross'],
         'triplet': 's390x-linux-gnu',
         'core-dynamic-linker': '/lib/ld64.so.1',
     }
@@ -171,7 +183,7 @@ class ProjectOptions:
         return os.path.join(self.__project_dir, 'stage')
 
     @property
-    def snap_dir(self):
+    def prime_dir(self):
         return os.path.join(self.__project_dir, 'prime')
 
     @property
@@ -233,9 +245,15 @@ class ProjectOptions:
         self.__machine_info = _ARCH_TRANSLATIONS[self.__target_machine]
 
 
+def _get_deb_arch(machine):
+    return _ARCH_TRANSLATIONS[machine].get('deb', None)
+
+
 def _find_machine(deb_arch):
     for machine in _ARCH_TRANSLATIONS:
         if _ARCH_TRANSLATIONS[machine].get('deb', '') == deb_arch:
+            return machine
+        elif _ARCH_TRANSLATIONS[machine].get('uts_machine', '') == deb_arch:
             return machine
 
     raise EnvironmentError(
