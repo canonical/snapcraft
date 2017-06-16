@@ -181,16 +181,8 @@ class Containerbuild:
         if not json['status'] == 'OK':
             raise SnapcraftEnvironmentError(
                 'Error querying {r!} snap: {}'.format(name, json))
-        id = json['result']['id']
         classic = json['result']['confinement'] == 'classic'
         rev = json['result']['revision']
-
-        self._inject_assertions('{}_{}.assert'.format(name, rev), [
-            ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
-            ['snap-declaration', 'snap-name={}'.format(name)],
-            ['snap-revision', 'snap-revision={}'.format(rev),
-             'snap-id={}'.format(id)],
-        ])
 
         installed = os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps',
                                  '{}_{}.snap'.format(name, rev))
@@ -199,20 +191,10 @@ class Containerbuild:
         shutil.copyfile(installed, filename)
         self._push_file(filename, os.path.join(self._project_folder, filename))
         logger.info('Installing {}'.format(filename))
-        cmd = ['snap', 'install', filename]
+        cmd = ['snap', 'install', '--dangerous', filename]
         if classic:
             cmd.append('--classic')
         self._container_run(cmd)
-
-    def _inject_assertions(self, filename, assertions):
-        with open(filename, 'wb') as f:
-            for assertion in assertions:
-                logger.info('Looking up assertion {}'.format(assertion))
-                f.write(check_output(['snap', 'known', *assertion]))
-                f.write(b'\n')
-        self._push_file(filename, os.path.join(self._project_folder, filename))
-        logger.info('Adding assertion {}'.format(filename))
-        self._container_run(['snap', 'ack', filename])
 
     def _finish(self):
         # os.sep needs to be `/` and on Windows it will be set to `\`
