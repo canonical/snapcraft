@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,7 +16,7 @@
 
 import yaml
 
-from snapcraft.internal.states._state import State
+from snapcraft.internal.states._state import PartState
 
 
 def _stage_state_constructor(loader, node):
@@ -26,7 +26,7 @@ def _stage_state_constructor(loader, node):
 yaml.add_constructor(u'!StageState', _stage_state_constructor)
 
 
-class StageState(State):
+class StageState(PartState):
     yaml_tag = u'!StageState'
 
     def __init__(self, files, directories, part_properties=None, project=None):

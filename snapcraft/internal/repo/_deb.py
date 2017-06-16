@@ -188,80 +188,41 @@ class Ubuntu(BaseRepo):
         return packages
 
     @classmethod
-    def _setup_foreign_arch(cls, arch):
-        native_arch = subprocess.check_output(
-            ['dpkg', '--print-architecture']).decode(
-                sys.getfilesystemencoding())
-        if arch in native_arch:
-            return
-        foreign_archs = subprocess.check_output(
-            ['dpkg', '--print-foreign-architectures']).decode(
-                sys.getfilesystemencoding())
-        if arch in foreign_archs:
-            return
-        logger.info('Adding foreign architecture {}'.format(arch))
-        subprocess.check_output(
-            ['sudo', 'dpkg', '--add-architecture', arch])
-
-    @classmethod
-    def _setup_multi_arch_sources(cls, apt_cache, package_name):
-        """If the given package has an arch suffix:
-        Generate arch-specific sources list
-        Update the package cache to pull in the new packages
-        Verify that the package is in the cache
-        """
-        name, arch, version = repo.get_pkg_name_parts(package_name)
-        if not arch or arch == ':native':
-            return False
-        arch = arch[1:]
-
-        sources = _get_local_sources_list()
-        if '[arch={}]'.format(arch) not in sources:
-            logger.info('Adding sources for {}'.format(arch))
-            release = platform.linux_distribution()[2]
-            sources = _format_sources_list(None, deb_arch=arch,
-                                           release=release, foreign=True)
-            with tempfile.NamedTemporaryFile() as sources_arch_file:
-                sources_arch_file.write(sources.encode())
-                sources_arch_file.flush()
-                sources_lists = os.path.join('/etc/apt/sources.list.d/',
-                                             'ubuntu-{}.list'.format(arch))
-                subprocess.check_call(['sudo', 'cp',
-                                       sources_arch_file.name, sources_lists])
-                subprocess.check_call(['sudo', 'chmod',
-                                       '644', sources_lists])
-
-        update_output = subprocess.check_output(
-            ['sudo', 'apt-get', 'update'],
-            stderr=subprocess.STDOUT).decode(sys.getfilesystemencoding())
-        # Failure to download doesn't return an error code
-        if 'Err:' in update_output:
-            raise subprocess.CalledProcessError(
-                100, ['sudo', 'apt-get', 'update'], update_output)
-        return package_name in apt_cache
-
-    @classmethod
     def install_build_packages(cls, package_names, arch):
-        unique_packages = set(cls._get_build_deps(package_names, arch))
-        new_packages = []
+        """Install build packages on the building machine.
+
+        :return: a list with the packages installed and their versions.
+
+        """
+        new_packages = set(cls._get_build_deps(package_names, arch))
         with apt.Cache() as apt_cache:
-            for pkg in unique_packages:
-                try:
-                    name, arch, version = repo.get_pkg_name_parts(pkg)
-                    installed_version = apt_cache[name + arch].installed
-                    if not installed_version or (
-                            version and installed_version != version):
-                        new_packages.append(pkg)
-                except KeyError as e:
-                    if cls._setup_multi_arch_sources(apt_cache, pkg):
-                        providers = apt_cache.get_providing_packages(name)
-                        if providers:
-                            new_packages.append(providers[0].name)
-                        else:
-                            raise errors.BuildPackageNotFoundError(pkg) from e
+            try:
+                cls._mark_install(apt_cache, package_names)
+            except errors.PackageNotFoundError as e:
+                raise errors.BuildPackageNotFoundError(e)
+            for package in apt_cache.get_changes():
+                new_packages.append((package.name, package.candidate.version))
 
         if new_packages:
-            cls._install_new_build_packages(new_packages)
+            cls._install_new_build_packages(
+               [package[0] for package in new_packages])
+        return ['{}={}'.format(package[0], package[1])
+                for package in new_packages]
+
+    @classmethod
+    def _mark_install(cls, apt_cache, package_names):
+        for pkg in package_names:
+            logger.debug('Marking {!r} (and its dependencies) to be '
+                         'fetched'.format(pkg))
+            name, arch, version = repo.get_pkg_name_parts(pkg)
+            if apt_cache.is_virtual_package(name):
+                name = apt_cache.get_providing_packages(name)[0].name
+            try:
+                if version:
+                    _set_pkg_version(apt_cache[name + arch], version)
+                apt_cache[name + arch].mark_install()
+            except KeyError as e:
+                raise errors.PackageNotFoundError(pkg) from e
 
     @classmethod
     def _get_build_deps(cls, package_names, arch):
@@ -271,8 +232,6 @@ class Ubuntu(BaseRepo):
         build_deps = []
         if not package_names:
             return build_deps
-
-        cls._setup_foreign_arch(arch)
 
         with tempfile.NamedTemporaryFile(suffix='.dsc') as fake_source:
             depends = 'Build-Depends: {}\n'.format(', '.join(package_names))
@@ -327,10 +286,10 @@ class Ubuntu(BaseRepo):
         return pkgs
 
     @classmethod
-    def _install_new_build_packages(cls, new_packages):
-        new_packages.sort()
+    def _install_new_build_packages(cls, package_names):
+        package_names.sort()
         logger.info(
-            'Installing build dependencies: %s', ' '.join(new_packages))
+            'Installing build dependencies: %s', ' '.join(package_names))
         env = os.environ.copy()
         env.update({
             'DEBIAN_FRONTEND': 'noninteractive',
@@ -343,48 +302,15 @@ class Ubuntu(BaseRepo):
             apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
         apt_command.append('install')
 
-        subprocess.check_call(apt_command + new_packages, env=env)
+        subprocess.check_call(apt_command + package_names, env=env)
 
         try:
             subprocess.check_call(['sudo', 'apt-mark', 'auto'] +
-                                  new_packages, env=env)
+                                  package_names, env=env)
         except subprocess.CalledProcessError as e:
             logger.warning(
                 'Impossible to mark packages as auto-installed: {}'
                 .format(e))
-
-    @classmethod
-    def get_installed_build_packages(cls, package_names):
-        build_packages = package_names[:]
-        installed_packages = []
-        with apt.Cache() as apt_cache:
-            while build_packages:
-                # Before we get to this point, the version specified in the
-                # yaml must have been installed. So we are ignoring the
-                # versions of the packages passed as arguments and we just use
-                # the versions installed.
-                # --elopio - 20170504
-                package_name, arch, _ = repo.get_pkg_name_parts(
-                    build_packages.pop(0))
-                package_name += arch
-                try:
-                    installed_package = apt_cache[package_name].candidate
-                except KeyError as e:
-                    providers = apt_cache.get_providing_packages(package_name)
-                    if providers:
-                        installed_package = providers[0].candidate
-                    else:
-                        raise errors.BuildPackageNotFoundError(e) from e
-                if str(installed_package) not in installed_packages:
-                    installed_packages.append(str(installed_package))
-                    for depends in installed_package.get_dependencies(
-                            'Depends'):
-                        # deps is a list of or dependencies. We are taking
-                        # the first one that satisfies the dependency, which
-                        # might or might not be problematic.
-                        # --elopio - 20170504
-                        build_packages.append(depends[0].name)
-        return installed_packages
 
     @classmethod
     def is_package_installed(cls, package_name):
@@ -415,18 +341,6 @@ class Ubuntu(BaseRepo):
             self._mark_install(apt_cache, package_names)
             self._filter_base_packages(apt_cache, package_names)
             return self._get(apt_cache)
-
-    def _mark_install(self, apt_cache, package_names):
-        for pkg in package_names:
-            logger.debug('Marking {!r} (and its dependencies) to be '
-                         'fetched'.format(pkg))
-            name, arch, version = repo.get_pkg_name_parts(pkg)
-            try:
-                if version:
-                    _set_pkg_version(apt_cache[name + arch], version)
-                apt_cache[name + arch].mark_install()
-            except KeyError as e:
-                raise errors.PackageNotFoundError(pkg) from e
 
     def _filter_base_packages(self, apt_cache, package_names):
         manifest_dep_names = self._manifest_dep_names(apt_cache)
@@ -538,8 +452,7 @@ def _get_geoip_country_code_prefix():
 
 
 def _format_sources_list(sources_list, *,
-                         deb_arch, use_geoip=False, release='xenial',
-                         foreign=False):
+                         deb_arch, use_geoip=False, release='xenial'):
     if not sources_list:
         sources_list = _DEFAULT_SOURCES
 
@@ -561,7 +474,7 @@ def _format_sources_list(sources_list, *,
         'release': release,
         'suffix': suffix,
         'security': security,
-    }).replace('deb', 'deb [arch={}]'.format(deb_arch) if foreign else 'deb')
+    })
 
 
 def _fix_filemode(path):

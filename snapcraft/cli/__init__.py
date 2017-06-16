@@ -29,6 +29,7 @@ from .store import storecli
 from .parts import partscli
 from .help import helpcli
 from .ci import cicli
+from ._options import add_build_options
 
 
 command_groups = [
@@ -82,8 +83,9 @@ class SnapcraftGroup(click.Group):
 
 @click.group(cls=SnapcraftGroup, invoke_without_command=True)
 @click.pass_context
+@add_build_options(hidden=True)
 @click.option('--debug', '-d', is_flag=True)
-def run(ctx, debug, catch_exceptions=False):
+def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
     if debug:
         log_level = logging.DEBUG

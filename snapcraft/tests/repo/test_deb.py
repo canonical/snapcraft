@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,6 +27,7 @@ import snapcraft
 from snapcraft.internal import repo
 from snapcraft.internal.repo import errors
 from snapcraft import tests
+from snapcraft.tests import fixture_setup
 from . import RepoBaseTestCase
 
 
@@ -81,6 +82,8 @@ class UbuntuTestCase(RepoBaseTestCase):
 
     @patch('snapcraft.internal.repo._deb.apt.apt_pkg')
     def test_get_package(self, mock_apt_pkg):
+        self.mock_cache().is_virtual_package.return_value = False
+
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
@@ -118,6 +121,8 @@ class UbuntuTestCase(RepoBaseTestCase):
 
     @patch('snapcraft.repo._deb.apt.apt_pkg')
     def test_get_multiarch_package(self, mock_apt_pkg):
+        self.mock_cache().is_virtual_package.return_value = False
+
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
@@ -240,47 +245,27 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
             repo._deb.Ubuntu._ensure_package_format(
                 ['libfoo1:armhf=1:0.2-0ubu3', 'libpkg2=3:0.4-0ubu5:armhf']))
 
-    def test_setup_multi_arch_sources_skipped(self):
-        fake_apt = tests.fixture_setup.FakeAptGetBuildDep([])
-        self.useFixture(fake_apt)
-        repo._deb.Ubuntu._setup_multi_arch_sources(self.mock_cache,
-                                                   'libpkg2=3:0.4-0ubu5')
-        fake_apt.open_mock.assert_not_called()
-
-    def test_setup_multi_arch_sources(self):
-        fake_apt = tests.fixture_setup.FakeAptGetBuildDep([])
-        self.useFixture(fake_apt)
-        repo._deb.Ubuntu._setup_multi_arch_sources(self.mock_cache,
-                                                   'libpkg2:armhf=3:0.4-0ubu5')
-        fake_apt.open_mock.assert_has_calls([
-            call('/etc/apt/sources.list')
-        ])
-        sources_list = '/etc/apt/sources.list.d/ubuntu-{}.list'.format('armhf')
-        fake_apt.check_call_mock.assert_has_calls([
-            call(['sudo', 'cp', fake_apt.filename, sources_list]),
-            call(['sudo', 'chmod', '644', sources_list]),
-        ])
-
 
 class BuildPackagesTestCase(tests.TestCase):
 
-    test_packages = {'package-not-installed': MagicMock(installed=False),
-                     'package-installed': MagicMock(installed=True),
-                     'another-uninstalled': MagicMock(installed=False),
-                     'another-installed': MagicMock(installed=True),
-                     'repeated-package': MagicMock(installed=False),
-                     'repeated-package': MagicMock(installed=False),
-                     'libpkg2=3:0.4-0ubu5': MagicMock(installed=False),
-                     'libpkg2': MagicMock(installed=True,
-                                          version='2:0.3-0ubu4'),
-                     'versioned-package=0.2': MagicMock(installed=False),
-                     'versioned-package': MagicMock(installed=True,
-                                                    version='0.1')}
+    def setUp(self):
+        super().setUp()
+        self.fake_apt_cache = fixture_setup.FakeAptCache()
+        self.useFixture(self.fake_apt_cache)
+        self.test_packages = (
+            'package-not-installed', 'package-installed', 'libpkg2',
+            'another-uninstalled', 'another-installed', 'repeated-package',
+            'repeated-package', 'versioned-package=0.2', 'versioned-package')
+        self.fake_apt_cache.add_packages(self.test_packages)
+        self.fake_apt_cache.cache['package-installed'].installed = True
+        self.fake_apt_cache.cache['libpkg2'].version = '3:0.4-0ubu5'
+        self.fake_apt_cache.cache['another-installed'].installed = True
+        self.fake_apt_cache.cache['versioned-package'].version = '0.1'
 
-    def get_installable_packages(self, pkgs, target_arch=''):
+    def get_installable_packages(self, packages, target_arch=''):
         installable = []
-        for pkg in pkgs:
-            if not pkgs[pkg].installed:
+        for pkg in packages:
+            if not packages[pkg].installed:
                 name, arch, version = repo.get_pkg_name_parts(pkg)
                 if not arch:
                     arch = target_arch
@@ -290,15 +275,15 @@ class BuildPackagesTestCase(tests.TestCase):
                 installable.append(name)
         return installable
 
-    @patch('os.environ')
     @patch('snapcraft.repo._deb.apt')
-    def install_test_packages(self, test_pkgs, mock_apt, mock_env):
+    @patch('os.environ')
+    def install_test_packages(self, test_pkgs, mock_env, mock_apt):
         mock_env.copy.return_value = {}
         mock_apt_cache = mock_apt.Cache.return_value
         mock_apt_cache_with = mock_apt_cache.__enter__.return_value
         mock_apt_cache_with.__getitem__.side_effect = lambda p: test_pkgs[p]
 
-        repo.Ubuntu.install_build_packages(test_pkgs.keys(), 'amd64')
+        repo.Ubuntu.install_build_packages(test_pkgs, 'amd64')
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
     def test_install_build_package(
@@ -318,7 +303,6 @@ class BuildPackagesTestCase(tests.TestCase):
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
         ])
         fake_apt.check_output_mock.assert_has_calls([
-            call(['dpkg', '--print-architecture']),
             call(['apt-get', 'build-dep', '-q', '-s',
                   '-aamd64', fake_apt.filename],
                  env={}, stderr=-2),
@@ -409,23 +393,9 @@ class BuildPackagesTestCase(tests.TestCase):
             'armhf')
 
         fake_apt.check_output_mock.assert_has_calls([
-            call(['dpkg', '--print-foreign-architectures']),
-            call(['sudo', 'dpkg', '--add-architecture', 'armhf']),
             call(['apt-get', 'build-dep', '-q', '-s',
                   '-aarmhf', fake_apt.filename],
                  env={}, stderr=-2),
-            call(['sudo', 'apt-get', 'update'],
-                 stderr=-2),
-        ])
-
-        sources_list = '/etc/apt/sources.list.d/ubuntu-{}.list'.format('armhf')
-        self.assertEqual(['amd64', 'armhf'], fake_apt.archs)
-        fake_apt.check_call_mock.assert_has_calls([
-            call(['sudo', 'cp', fake_apt.filename, sources_list]),
-            call(['sudo', 'chmod', '644', sources_list]),
-        ])
-        fake_apt.open_mock.assert_has_calls([
-            call('/etc/apt/sources.list')
         ])
 
     def test_install_buid_package_marks_auto_installed(self):
@@ -448,7 +418,7 @@ class BuildPackagesTestCase(tests.TestCase):
         error = CalledProcessError(101, 'bad-cmd')
         mock_check_call.side_effect = \
             lambda c, env: error if 'apt-mark' in c else None
-        self.install_test_packages(self.test_packages)
+        self.install_test_packages(['package-not-installed'])
 
     def test_invalid_package_requested(self):
         fake_apt = tests.fixture_setup.FakeAptGetBuildDep(

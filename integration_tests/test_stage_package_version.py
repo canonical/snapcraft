@@ -27,13 +27,13 @@ class StagePackageVersionTestCase(integration_tests.TestCase):
         self.set_stage_package_version(
             os.path.join('snap', 'snapcraft.yaml'),
             part='part-with-stage-packages',
-            package='hello', version='invalid')
+            package='haskell-doc', version='invalid')
         error = self.assertRaises(
             subprocess.CalledProcessError,
             self.run_snapcraft, 'pull')
         self.assertIn(
             "Error downloading stage packages for part "
             "'part-with-stage-packages': "
-            "The package 'hello=invalid' was not found.",
+            "The package 'haskell-doc=invalid' was not found.",
             str(error.output)
         )
