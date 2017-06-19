@@ -139,7 +139,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.parts_dir = os.path.join(os.getcwd(), 'parts')
         self.local_plugins_dir = os.path.join(self.snap_dir, 'plugins')
 
-        machine = os.environ.get('MOCK_MACHINE', None)
+        machine = os.environ.get('SNAPCRAFT_TEST_MOCK_MACHINE', None)
         if machine:
             patcher = mock.patch('platform.machine')
             self.mock_machine = patcher.start()
