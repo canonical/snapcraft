@@ -28,12 +28,17 @@ from datetime import datetime
 from textwrap import dedent
 from subprocess import Popen
 
-from tabulate import tabulate
 import yaml
+# Ideally we would move stuff into more logical components
+from snapcraft.cli import echo
+from tabulate import tabulate
 
 from snapcraft.file_utils import calculate_sha3_384
 from snapcraft import storeapi
-from snapcraft.storeapi.errors import StoreDeltaApplicationError
+from snapcraft.storeapi.errors import (
+    StoreDeltaApplicationError,
+    StoreAssertionError,
+)
 from snapcraft.internal import (
     cache,
     deltas,
@@ -64,8 +69,8 @@ def _get_data_from_snap_file(snap_path):
 
 
 def _fail_login(msg=''):
-    logger.error(msg)
-    logger.error('Login failed.')
+    echo.error(msg)
+    echo.error('Login failed.')
     return False
 
 
@@ -91,7 +96,7 @@ def _check_dev_agreement_and_namespace_statuses(store):
                    storeapi.constants.UBUNTU_STORE_TOS_URL)
             choice = input(
                 storeapi.constants.AGREEMENT_INPUT_MSG.format(url))
-            if choice == 'y':
+            if choice in {'y', 'Y'}:
                 try:
                     store.sign_developer_agreement(latest_tos_accepted=True)
                 except:
@@ -147,20 +152,13 @@ def _login(store, packages=None, acls=None, channels=None, save=True):
         return _fail_login(e.message)
     else:
         print()
-        logger.info('Login successful.')
+        echo.info('Login successful.')
         return True
 
 
 def login():
     store = storeapi.StoreClient()
     return _login(store)
-
-
-def logout():
-    logger.info('Clearing credentials for Ubuntu One SSO.')
-    store = storeapi.StoreClient()
-    store.logout()
-    logger.info('Credentials cleared.')
 
 
 @contextmanager
@@ -325,8 +323,6 @@ def register(snap_name, is_private=False):
     store = storeapi.StoreClient()
     with _requires_login():
         store.register(snap_name, is_private)
-    logger.info("Congratulations! You're now the publisher for {!r}.".format(
-        snap_name))
 
 
 def _generate_snap_build(authority_id, snap_id, grade, key_name,
@@ -419,10 +415,6 @@ def push(snap_filename, release_channels=None):
     If release_channels is defined it also releases it to those channels if the
     store deems the uploaded snap as ready to release.
     """
-    if not os.path.exists(snap_filename):
-        raise FileNotFoundError(
-            'The file {!r} does not exist.'.format(snap_filename))
-
     snap_yaml = _get_data_from_snap_file(snap_filename)
     snap_name = snap_yaml['name']
     store = storeapi.StoreClient()
@@ -631,10 +623,11 @@ def close(snap_name, channel_names):
     try:
         snap_id = info['snaps'][snap_series][snap_name]['snap-id']
     except KeyError:
-        raise RuntimeError(
+        echo.error(
             'Your account lacks permission to close channels for this snap. '
             'Make sure the logged in account has upload permissions on '
             '\'{}\' in series \'{}\'.'.format(snap_name, snap_series))
+        raise
 
     closed_channels, c_m_tree = store.close_channels(snap_id, channel_names)
 
@@ -768,6 +761,7 @@ def validate(snap_name, validations, revoke=False, key=None):
     # Then, for each requested validation, generate assertion
     for validation in validations:
         gated_name, rev = validation.split('=', 1)
+        echo.info('Getting details for {}'.format(gated_name))
         approved_data = store.cpi.get_package(gated_name, 'stable')
         assertion = {
             'type': 'validation',
@@ -936,8 +930,8 @@ def _check_validations(validations):
     invalids = [v for v in validations if not validation_re.match(v)]
     if invalids:
         for v in invalids:
-            logger.error('Invalid validation request "{}", format must be'
-                         ' name=revision'.format(v))
+            echo.error('Invalid validation request "{}", format must be'
+                       ' name=revision'.format(v))
         raise RuntimeError()
 
 
@@ -949,12 +943,11 @@ def _sign_assertion(snap_name, assertion, key, endpoint):
         cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     data = json.dumps(assertion).encode('utf8')
-    logger.info('Signing {} assertion for {}'.format(endpoint, snap_name))
+    echo.info('Signing {} assertion for {}'.format(endpoint, snap_name))
     assertion, err = snap_sign.communicate(input=data)
     if snap_sign.returncode != 0:
         err = err.decode('ascii', errors='replace')
-        raise RuntimeError(
-            'Error signing {} assertion for {}: {!s}'.format(
-                endpoint, snap_name, err))
+        raise StoreAssertionError(
+            endpoint=endpoint, snap_name=snap_name, error=err)
 
     return assertion

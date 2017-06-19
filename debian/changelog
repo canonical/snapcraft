@@ -1,3 +1,106 @@
+snapcraft (2.31) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * storeapi: resume snap downloads (#1330)
+  * cli: remove double congrats messaging (#1351)
+  * cli: do not duplicate errors (#1347)
+  * cli: default options for the implicit snap command (#1353)
+  * go plugin: filter the main packages when go-packages are defined (#1355)
+  * New upstream release 2.31 (LP: #1692102)
+
+  [ Colin Watson ]
+  * store: send X-Ubuntu-Series, not X-Ubuntu-Release (#1320)
+
+  [ Kyle Fazzari ]
+  * docs: improve onboarding experience (#1336)
+  * catkin plugin: add support for rosinstall files (#1314)
+  * common: find data files via sys.prefix (#1356)
+
+  [ Tim Süberkrüb ]
+  * qmake plugin: set default qt version (#1328)
+  * tour: use https for source urls (#1329)
+
+  [ Leo Arias ]
+  * tests: small updates for manual kernel tests (#1327)
+  * tests: use the fake apt cache in deb unit tests (#1334)
+  * state: save all the build packages as global (#1340)
+
+  [ Michał Sawicz ]
+  * sources: don't use --remote for updating git submodules (#1344)
+
+  [ Christian Dywan ]
+  * go plugin: add support for cross-compilation (#1338)
+  * go plugin: cross compile with CGo (#1343)
+  * plugins: clarify wording of cross-compilation unsupported error (#1349)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Wed, 07 Jun 2017 22:51:40 -0300
+
+snapcraft (2.30) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * cli: new UI and internal refactor (#1307)
+  * cli: proper error for failed snap command (#1325)
+  * Revert "tests: remove the reusable parts tour test (#1321)" (#1324)
+  * store: collaboration UI for snaps (#1288)
+  * New upstream release 2.30 (LP: #1692102)
+
+  [ Leo Arias ]
+  * tests: initial setup for the snapcraft snap tests with spread (#1272)
+  * misc: rename the snap dir variable to prime dir (#1279)
+  * recording: save the snapcraft.yaml in the resulting snap (#1278)
+  * tests: minor cleanups on the spread tests (#1287)
+  * tests: refactor tests with build and stage packages (#1290)
+  * parts: remove the deprecated snap keyword from the internal representation (#1282)
+  * tests: fix the recording tests to work in multiple architectures (#1292)
+  * recording: record stage packages installed in the snap (#1293)
+  * recording: record build packages installed in the snap (#1295)
+  * tests: increase the staging registration limit to 100 (#1271)
+  * tests: use C.UTF-8 for the docker locale (#1310)
+  * state: save the dependencies of build packages (#1299)
+  * recording: record global build-packages installed on the host (#1306)
+  * state: fix the name of the source details (#1312)
+  * meta: read and write the desktop file with utf-8 encoding (#1309)
+  * cleanbuild: set the container language to C.UTF-8 (#1304)
+  * tests: remove the reusable parts tour test (#1321)
+  * recording: save the details of the source pulled (#1317)
+  * state: ignore the 'any' architecture in the build packages apt cache (#1322)
+  * state: search for the build package that provides a virtual package (#1323)
+
+  [ Facundo Batista ]
+  * store: support for channel branches in responses for release, close, and status (#1280)
+
+  [ Christian Dywan ]
+  * lxd: pass through commands into the container (#1263)
+  * lxd: setup image and target arch for cross-compilation (#1286)
+  * lxd: support the architectures field from older LXDs (#1305)
+  * lxd: mock platform in the FakeLXD fixture (#1315)
+
+  [ Paolo Pisati ]
+  * kernel plugin: learn how to assemble the ubuntu config using kconfigflavour (#1285)
+  * kernel plugin: slightly improve the messaging of check_config() (#1303)
+  * kernel plugin: do not warn about DMIID in config check (#1319)
+  * kernel_plugin: use CROSS_COMPILE to override the default toolchain (#1242)
+  * cli: allow uts machine arch as a valid --target-arch option (#1204)
+  * kernel plugin: verify kernel config is correct (#1223)
+
+  [ Tim Süberkrüb ]
+  * sources: add support for 7-zip files (#1168)
+
+  [ JulianLiu ]
+  * meson plugin: add a plugin for meson build system (#1294)
+
+  [ roxd ]
+  * rust plugin: use of source-subdir without failing on pull (#1296)
+  
+  [ edvega ]
+  * sources: validate unknown source-type in yaml (#1297)
+
+  [ Ricardo N Feliciano ]
+  * docs: add missing VCS dependencies to HACKING.md (#1311)
+  * cli: allow capital Y to accept the dev agreement (#1308)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Fri, 19 May 2017 17:39:34 -0300
+
 snapcraft (2.29) xenial; urgency=medium
 
   [ Sergio Schvezov ]

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -27,6 +27,7 @@ import snapcraft
 from snapcraft.internal import repo
 from snapcraft.internal.repo import errors
 from snapcraft import tests
+from snapcraft.tests import fixture_setup
 from . import RepoBaseTestCase
 
 
@@ -65,6 +66,8 @@ class UbuntuTestCase(RepoBaseTestCase):
 
     @patch('snapcraft.internal.repo._deb.apt.apt_pkg')
     def test_get_package(self, mock_apt_pkg):
+        self.mock_cache().is_virtual_package.return_value = False
+
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
@@ -102,6 +105,8 @@ class UbuntuTestCase(RepoBaseTestCase):
 
     @patch('snapcraft.repo._deb.apt.apt_pkg')
     def test_get_multiarch_package(self, mock_apt_pkg):
+        self.mock_cache().is_virtual_package.return_value = False
+
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
         ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
@@ -219,28 +224,27 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
 
 class BuildPackagesTestCase(tests.TestCase):
 
-    test_packages = {'package-not-installed': MagicMock(installed=False),
-                     'package-installed': MagicMock(installed=True),
-                     'another-uninstalled': MagicMock(installed=False),
-                     'another-installed': MagicMock(installed=True),
-                     'repeated-package': MagicMock(installed=False),
-                     'repeated-package': MagicMock(installed=False),
-                     'versioned-package=0.2': MagicMock(installed=False),
-                     'versioned-package': MagicMock(installed=True,
-                                                    version='0.1')}
+    def setUp(self):
+        super().setUp()
+        self.fake_apt_cache = fixture_setup.FakeAptCache()
+        self.useFixture(self.fake_apt_cache)
+        self.test_packages = (
+            'package-not-installed', 'package-installed',
+            'another-uninstalled', 'another-installed', 'repeated-package',
+            'repeated-package', 'versioned-package=0.2', 'versioned-package')
+        self.fake_apt_cache.add_packages(self.test_packages)
+        self.fake_apt_cache.cache['package-installed'].installed = True
+        self.fake_apt_cache.cache['another-installed'].installed = True
+        self.fake_apt_cache.cache['versioned-package'].version = '0.1'
 
-    def get_installable_packages(self, pkgs):
-        return [p for p in pkgs if not pkgs[p].installed]
+    def get_installable_packages(self, packages):
+        return ['package-not-installed', 'another-uninstalled',
+                'repeated-package', 'versioned-package=0.2']
 
     @patch('os.environ')
-    @patch('snapcraft.repo._deb.apt')
-    def install_test_packages(self, test_pkgs, mock_apt, mock_env):
+    def install_test_packages(self, test_pkgs, mock_env):
         mock_env.copy.return_value = {}
-        mock_apt_cache = mock_apt.Cache.return_value
-        mock_apt_cache_with = mock_apt_cache.__enter__.return_value
-        mock_apt_cache_with.__getitem__.side_effect = lambda p: test_pkgs[p]
-
-        repo.Ubuntu.install_build_packages(test_pkgs.keys())
+        repo.Ubuntu.install_build_packages(test_pkgs)
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
     @patch('subprocess.check_call')
@@ -290,15 +294,10 @@ class BuildPackagesTestCase(tests.TestCase):
         error = CalledProcessError(101, 'bad-cmd')
         mock_check_call.side_effect = \
             lambda c, env: error if 'apt-mark' in c else None
-        self.install_test_packages(self.test_packages)
+        self.install_test_packages(['package-not-installed'])
 
     def test_invalid_package_requested(self):
-        raised = self.assertRaises(
+        self.assertRaises(
             errors.BuildPackageNotFoundError,
             repo.Ubuntu.install_build_packages,
             ['package-does-not-exist'])
-
-        self.assertEqual(
-            "Could not find a required package in 'build-packages': "
-            '"The cache has no package named \'package-does-not-exist\'"',
-            str(raised))

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,28 +13,22 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import logging
+from textwrap import dedent
 from unittest import mock
 
-import docopt
 import fixtures
-from testtools.matchers import Contains
+from testtools.matchers import Contains, Equals
 
-from snapcraft import (
-    storeapi,
-    tests
-)
-from snapcraft.main import main
+from snapcraft import storeapi
 from snapcraft.tests import fixture_setup
+from . import CommandBaseTestCase
 
 
-class RevisionsCommandBaseTestCase(tests.TestCase):
+class RevisionsCommandBaseTestCase(CommandBaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
         self.expected = [{
             'series': ['16'],
             'channels': [],
@@ -57,74 +51,66 @@ class RevisionsCommandBaseTestCase(tests.TestCase):
 class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
 
     scenarios = [
-        ('list-revisions', dict(command='list-revisions')),
-        ('revisions', dict(command='revisions')),
+        ('list-revisions', dict(command_name='list-revisions')),
+        ('revisions', dict(command_name='revisions')),
     ]
 
     def test_revisions_without_snap_raises_exception(self):
-        raised = self.assertRaises(
-            docopt.DocoptExit,
-            main, [self.command])
+        result = self.run_command([self.command_name])
 
-        self.assertIn('Usage:', str(raised))
+        self.assertThat(result.exit_code, Equals(2))
+        self.assertThat(result.output, Contains('Usage:'))
 
     def test_revisions_with_no_permissions(self):
-        self.assertRaises(
-            SystemExit,
-            main, [self.command, 'snap-test'])
+        result = self.run_command([self.command_name, 'snap-test'])
 
-        self.assertIn(
-            'No valid credentials found. Have you run "snapcraft login"?',
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            'No valid credentials found. Have you run "snapcraft login"?'))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_revisions_with_3rd_party_snap(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, [self.command, 'snap-test'])
+        result = self.run_command([self.command_name, 'snap-test'])
 
-        self.assertIn(
-            "Snap 'snap-test' was not found in '16' series.",
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            "Snap 'snap-test' was not found in '16' series."))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_revisions_with_3rd_party_snap_by_arch(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, [self.command, 'snap-test', '--arch=arm64'])
+        result = self.run_command([self.command_name, 'snap-test',
+                                   '--arch=arm64'])
 
-        self.assertIn(
-            "Snap 'snap-test' for 'arm64' was not found in '16' series.",
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            "Snap 'snap-test' for 'arm64' was not found in '16' series."))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_revisions_with_3rd_party_snap_by_series(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, [self.command, 'snap-test', '--series=15'])
+        result = self.run_command([self.command_name, 'snap-test',
+                                   '--series=18'])
 
-        self.assertIn(
-            "Snap 'snap-test' was not found in '15' series.",
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            "Snap 'snap-test' was not found in '18' series."))
 
     @mock.patch.object(storeapi.SCAClient, 'snap_revisions')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_revisions_by_unknown_arch(self, mock_account_api, mock_revisions):
         mock_revisions.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, [self.command, 'snap-test', '--arch=some-arch'])
+        result = self.run_command([self.command_name, 'snap-test',
+                                   '--arch=some-arch'])
 
-        self.assertIn(
-            "Snap 'snap-test' for 'some-arch' was not found in '16' series.",
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            "Snap 'snap-test' for 'some-arch' was not found in '16' series."))
 
     @mock.patch.object(storeapi.SCAClient, 'snap_revisions')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
@@ -132,33 +118,26 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
                                          mock_account_api, mock_revisions):
         mock_revisions.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, [self.command, 'snap-test', '--series=some-series'])
+        result = self.run_command([self.command_name, 'snap-test',
+                                   '--series=some-series'])
 
-        self.assertIn(
-            "Snap 'snap-test' was not found in 'some-series' series.",
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            "Snap 'snap-test' was not found in 'some-series' series."))
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_revisions')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_revisions(self, mock_account_api, mock_revisions):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
-
         mock_revisions.return_value = self.expected
 
-        main([self.command, 'snap-test'])
+        result = self.run_command([self.command_name, 'snap-test'])
 
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Rev.    Uploaded              Arch    Version    Channels
+            2       2016-09-27T19:23:40Z  i386    2.0.1      -
+            1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge"""))) # noqa
         mock_revisions.assert_called_once_with('snap-test', '16', None)
-
-        terminal_output = fake_terminal.getvalue()
-        expected_output = [
-            'Rev.    Uploaded              Arch    Version    Channels',
-            '2       2016-09-27T19:23:40Z  i386    2.0.1      -',
-            '1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge'
-        ]
-        self.assertEqual(expected_output, terminal_output.splitlines())
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_revisions')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
@@ -169,36 +148,29 @@ class RevisionsCommandTestCase(RevisionsCommandBaseTestCase):
         mock_revisions.return_value = [
             rev for rev in self.expected if rev['arch'] == 'amd64']
 
-        main([self.command, 'snap-test', '--arch=amd64'])
+        result = self.run_command([self.command_name, 'snap-test',
+                                   '--arch=amd64'])
 
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Rev.    Uploaded              Arch    Version    Channels
+            1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge"""))) # noqa
         mock_revisions.assert_called_once_with('snap-test', '16', 'amd64')
-
-        terminal_output = fake_terminal.getvalue()
-        expected_output = [
-            'Rev.    Uploaded              Arch    Version    Channels',
-            '1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge'
-        ]
-        self.assertEqual(expected_output, terminal_output.splitlines())
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_revisions')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_revisions_by_series(self, mock_account_api, mock_revisions):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
-
         mock_revisions.return_value = self.expected
 
-        main([self.command, 'snap-test', '--series=16'])
+        result = self.run_command([self.command_name, 'snap-test',
+                                   '--series=16'])
 
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Rev.    Uploaded              Arch    Version    Channels
+            2       2016-09-27T19:23:40Z  i386    2.0.1      -
+            1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge"""))) # noqa
         mock_revisions.assert_called_once_with('snap-test', '16', None)
-
-        terminal_output = fake_terminal.getvalue()
-        expected_output = [
-            'Rev.    Uploaded              Arch    Version    Channels',
-            '2       2016-09-27T19:23:40Z  i386    2.0.1      -',
-            '1       2016-09-27T18:38:43Z  amd64   2.0.2      stable*, edge'
-        ]
-        self.assertEqual(expected_output, terminal_output.splitlines())
 
 
 class DeprecatedHistoryCommandTestCase(RevisionsCommandBaseTestCase):
@@ -207,14 +179,12 @@ class DeprecatedHistoryCommandTestCase(RevisionsCommandBaseTestCase):
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_history_with_deprecation_message(self, mock_account_api,
                                               mock_revisions):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
 
-        mock_revisions.return_value = self.expected
+        result = self.run_command(['history', 'snap-test'])
 
-        main(['history', 'snap-test', '--series=16'])
-
-        self.assertThat(
-            fake_terminal.getvalue(), Contains(
-                "DEPRECATED: The 'history' command has been replaced by "
-                "'list-revisions'."))
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(self.fake_logger.output, Contains(
+            "DEPRECATED: The 'history' command has been replaced by "
+            "'list-revisions'."))

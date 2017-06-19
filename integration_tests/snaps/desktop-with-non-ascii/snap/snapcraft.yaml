@@ -1,0 +1,15 @@
+name: desktop-with-non-ascii
+version: '0.1'
+summary: Desktop file with non-ascii characters
+description: |
+  Test that a desktop file with non-ascii characters doesn't fail.
+
+apps:
+  test-app:
+      command: bash
+      desktop: test.desktop
+
+parts:
+  test-app:
+    plugin: dump
+    source: .

@@ -16,6 +16,7 @@
 
 from collections import namedtuple
 import os
+import subprocess
 import yaml
 
 import testscenarios
@@ -90,9 +91,9 @@ class AssetTrackingTestCase(integration_tests.TestCase):
         build-packages data.
         """
         self.copy_project_to_cwd('build-package-global')
-        version = self.set_build_package_version(
+        self.set_build_package_version(
             os.path.join('snap', 'snapcraft.yaml'),
-            part=None, package='hello')
+            part=None, package='haskell-doc')
         self.run_snapcraft('pull')
 
         state_file = os.path.join(
@@ -102,8 +103,35 @@ class AssetTrackingTestCase(integration_tests.TestCase):
             state = yaml.load(f)
 
         self.assertTrue(len(state.assets['build-packages']) == 0)
-        self.assertNotIn(
-            'hello={}'.format(version), state.assets['build-packages'])
+
+    def test_pull_build_package_with_any_architecture(self):
+        self.copy_project_to_cwd('build-package')
+        self.set_build_package_architecture(
+            os.path.join('snap', 'snapcraft.yaml'),
+            part='hello', package='hello', architecture='any')
+        self.run_snapcraft('pull')
+
+        state_file = os.path.join(
+            self.parts_dir, 'hello', 'state', 'pull')
+        with open(state_file) as f:
+            state = yaml.load(f)
+        self.assertIn('hello', state.assets['build-packages'][0])
+
+    def test_pull_with_virtual_build_package(self):
+        virtual_package = 'fortunes-off'
+        self.addCleanup(
+            subprocess.call, ['sudo', 'apt-get', 'remove', virtual_package])
+        self.run_snapcraft('pull', 'build-virtual-package')
+
+        state_file = os.path.join(
+            'snap', '.snapcraft', 'state')
+        with open(state_file) as f:
+            state = yaml.load(f)
+        self.assertIn(
+            '{}={}'.format(
+                virtual_package, integration_tests.get_package_version(
+                    virtual_package, self.distro_series, self.deb_arch)),
+            state.assets['build-packages'])
 
 
 TestDetail = namedtuple('TestDetail', ['field', 'value'])
@@ -119,11 +147,11 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
         }),
         ('branch', {
             'part_name': 'git-part-branch',
-            'expected_details': TestDetail('branch', 'test-branch'),
+            'expected_details': TestDetail('source-branch', 'test-branch'),
         }),
         ('tag', {
             'part_name': 'git-part-tag',
-            'expected_details': TestDetail('tag', 'feature-tag'),
+            'expected_details': TestDetail('source-tag', 'feature-tag'),
         }),
     ]
 
@@ -150,7 +178,7 @@ class GitAssetTrackingTestCase(testscenarios.WithScenarios,
                 Equals(self.expected_details.value))
         else:
             self.assertThat(
-                state.assets['source-details']['commit'],
+                state.assets['source-details']['source-commit'],
                 Equals(repo_fixture.commit))
 
 
@@ -163,7 +191,7 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
         }),
         ('tag', {
             'part_name': 'bzr-part-tag',
-            'expected_details': TestDetail('tag', 'feature-tag'),
+            'expected_details': TestDetail('source-tag', 'feature-tag'),
         }),
     ]
 
@@ -188,7 +216,7 @@ class BazaarAssetTrackingTestCase(testscenarios.WithScenarios,
                 Equals(self.expected_details.value))
         else:
             self.assertThat(
-                state.assets['source-details']['commit'],
+                state.assets['source-details']['source-commit'],
                 Equals(repo_fixture.commit))
 
 
@@ -201,7 +229,7 @@ class MercurialAssetTrackingTestCase(testscenarios.WithScenarios,
         }),
         ('tag', {
             'part_name': 'hg-part-tag',
-            'expected_details': TestDetail('tag', 'feature-tag'),
+            'expected_details': TestDetail('source-tag', 'feature-tag'),
         }),
     ]
 
@@ -226,7 +254,7 @@ class MercurialAssetTrackingTestCase(testscenarios.WithScenarios,
                 Equals(self.expected_details.value))
         else:
             self.assertThat(
-                state.assets['source-details']['commit'],
+                state.assets['source-details']['source-commit'],
                 Equals(repo_fixture.commit))
 
 
@@ -248,4 +276,4 @@ class SubversionAssetTrackingTestCase(integration_tests.TestCase):
 
         self.assertIn('source-details', state.assets)
         self.assertEqual(expected_commit,
-                         state.assets['source-details']['commit'])
+                         state.assets['source-details']['source-commit'])

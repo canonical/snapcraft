@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 import yaml
 
 import fixtures
@@ -72,20 +73,37 @@ class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
             recorded_yaml['architectures'],
             [snapcraft.ProjectOptions().deb_arch])
 
-    def test_prime_with_global_build_packages(self):
+
+class SnapcraftRecordingBuildPackagesTestCase(
+        testscenarios.WithScenarios, SnapcraftRecordingBaseTestCase):
+
+    scenarios = [
+        (snap, {'snap': snap}) for snap in
+        ['build-package-global', 'build-packages-missing-dependency',
+         'build-packages-without-dependencies']
+    ]
+
+    def test_prime_with_build_packages(self):
         """Test the recorded snapcraft.yaml for a snap with build packages
 
         This snap declares one global build package that has undeclared
         dependencies.
-        """
-        self.run_snapcraft('prime', 'build-package-global')
 
+        """
         expected_packages = [
+            'haskell-doc', 'haskell98-tutorial', 'haskell98-report']
+        self.addCleanup(
+            subprocess.call,
+            ['sudo', 'apt', 'remove', '-y'] + expected_packages)
+
+        self.run_snapcraft('prime', self.snap)
+
+        expected_packages_with_version = [
             '{}={}'.format(
                 package,
                 integration_tests.get_package_version(
                     package, self.distro_series, self.deb_arch))
-            for package in ['hello', 'libc6', 'libgcc1', 'gcc-6-base']
+            for package in expected_packages
         ]
 
         recorded_yaml_path = os.path.join(
@@ -93,22 +111,11 @@ class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(recorded_yaml['build-packages'], expected_packages)
+        self.assertEqual(
+            recorded_yaml['build-packages'], expected_packages_with_version)
 
 
-class SnapcraftRecordingPackagesTestCase(
-        testscenarios.WithScenarios, SnapcraftRecordingBaseTestCase):
-
-    scenarios = (
-        ('stage-packages', {
-            'packages_type': 'stage-packages',
-            'expected_packages': ['gcc-6-base', 'hello']
-         }),
-        ('build-packages', {
-            'packages_type': 'build-packages',
-            'expected_packages': ['hello', 'libc6', 'libgcc1', 'gcc-6-base']
-         })
-    )
+class SnapcraftRecordingStagePackagesTestCase(SnapcraftRecordingBaseTestCase):
 
     def test_prime_records_packages_version(self):
         """Test the recorded snapcraft.yaml for a snap with packages
@@ -116,12 +123,12 @@ class SnapcraftRecordingPackagesTestCase(
         This snap declares all the packages that it requires, there are
         no additional dependencies. The packages specify their version.
         """
-        self.copy_project_to_cwd(
-            '{}-without-dependencies'.format(self.packages_type))
-        part_name = 'part-with-{}'.format(self.packages_type)
-        for package in ['hello'] + self.expected_packages:
-            self.set_package_version(
-                self.packages_type,
+        expected_packages = [
+            'haskell-doc', 'haskell98-tutorial', 'haskell98-report']
+        self.copy_project_to_cwd('stage-packages-without-dependencies')
+        part_name = 'part-with-stage-packages'
+        for package in expected_packages:
+            self.set_stage_package_version(
                 os.path.join('snap', 'snapcraft.yaml'), part_name, package)
 
         self.run_snapcraft('prime')
@@ -135,8 +142,8 @@ class SnapcraftRecordingPackagesTestCase(
             recorded_yaml = yaml.load(recorded_yaml_file)
 
         self.assertEqual(
-            recorded_yaml['parts'][part_name][self.packages_type],
-            source_yaml['parts'][part_name][self.packages_type])
+            recorded_yaml['parts'][part_name]['stage-packages'],
+            source_yaml['parts'][part_name]['stage-packages'])
 
     def test_prime_without_packages_version(self):
         """Test the recorded snapcraft.yaml for a snap with packages
@@ -146,17 +153,16 @@ class SnapcraftRecordingPackagesTestCase(
         version.
         """
         self.run_snapcraft(
-            'prime',
-            project_dir='{}-without-dependencies'.format(self.packages_type))
+            'prime', project_dir='stage-packages-without-dependencies')
 
         with open(os.path.join('snap', 'snapcraft.yaml')) as source_yaml_file:
             source_yaml = yaml.load(source_yaml_file)
-        part_name = 'part-with-{}'.format(self.packages_type)
+        part_name = 'part-with-stage-packages'
         expected_packages = [
             '{}={}'.format(
                 package, integration_tests.get_package_version(
                     package, self.distro_series, self.deb_arch)) for
-            package in source_yaml['parts'][part_name][self.packages_type]
+            package in source_yaml['parts'][part_name]['stage-packages']
         ]
 
         recorded_yaml_path = os.path.join(
@@ -165,7 +171,7 @@ class SnapcraftRecordingPackagesTestCase(
             recorded_yaml = yaml.load(recorded_yaml_file)
 
         self.assertEqual(
-            recorded_yaml['parts'][part_name][self.packages_type],
+            recorded_yaml['parts'][part_name]['stage-packages'],
             expected_packages)
 
     def test_prime_with_packages_missing_dependency(self):
@@ -173,12 +179,11 @@ class SnapcraftRecordingPackagesTestCase(
 
         This snap declares one package that has undeclared dependencies.
         """
-        self.copy_project_to_cwd('{}-missing-dependency'.format(
-            self.packages_type))
-        part_name = 'part-with-{}'.format(self.packages_type)
-        self.set_package_version(
-            self.packages_type,
-            os.path.join('snap', 'snapcraft.yaml'), part_name, package='hello')
+        self.copy_project_to_cwd('stage-packages-missing-dependency')
+        part_name = 'part-with-stage-packages'
+        self.set_stage_package_version(
+            os.path.join('snap', 'snapcraft.yaml'),
+            part_name, package='haskell-doc')
         self.run_snapcraft('prime')
 
         expected_packages = [
@@ -186,7 +191,8 @@ class SnapcraftRecordingPackagesTestCase(
                 package,
                 integration_tests.get_package_version(
                     package, self.distro_series, self.deb_arch))
-            for package in self.expected_packages
+            for package in [
+                'haskell-doc', 'haskell98-tutorial', 'haskell98-report']
         ]
 
         recorded_yaml_path = os.path.join(
@@ -195,5 +201,101 @@ class SnapcraftRecordingPackagesTestCase(
             recorded_yaml = yaml.load(recorded_yaml_file)
 
         self.assertEqual(
-            recorded_yaml['parts'][part_name][self.packages_type],
+            recorded_yaml['parts'][part_name]['stage-packages'],
             expected_packages)
+
+
+class SnapcraftRecordingBzrSourceTestCase(
+        integration_tests.BzrSourceBaseTestCase,
+        SnapcraftRecordingBaseTestCase):
+
+    def test_prime_with_bzr_source(self):
+        self.copy_project_to_cwd('bzr-head')
+
+        self.init_source_control()
+        self.commit('"test-commit"', unchanged=True)
+
+        self.run_snapcraft('prime')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        commit = self.get_revno()
+        self.assertEqual(
+            recorded_yaml['parts']['bzr']['source-commit'], commit)
+
+
+class SnapcraftRecordingGitSourceTestCase(
+        integration_tests.GitSourceBaseTestCase,
+        SnapcraftRecordingBaseTestCase):
+
+    def test_prime_with_git_source(self):
+        self.copy_project_to_cwd('git-head')
+
+        self.init_source_control()
+        self.commit('"test-commit"', allow_empty=True)
+
+        self.run_snapcraft('prime')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        commit = self.get_revno()
+        self.assertEqual(
+            recorded_yaml['parts']['git']['source-commit'], commit)
+
+
+class SnapcraftRecordingHgSourceTestCase(
+        integration_tests.HgSourceBaseTestCase,
+        SnapcraftRecordingBaseTestCase):
+
+    def test_prime_with_hg_source(self):
+        self.copy_project_to_cwd('hg-head')
+
+        self.init_source_control()
+        open('1', 'w').close()
+        self.commit('1', '1')
+
+        self.run_snapcraft('prime')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        commit = self.get_id()
+        self.assertEqual(
+            recorded_yaml['parts']['mercurial']['source-commit'], commit)
+
+
+class SnapcraftRecordingSubversionSourceTestCase(
+        integration_tests.SubversionSourceBaseTestCase,
+        SnapcraftRecordingBaseTestCase):
+
+    def test_prime_with_subversion_source(self):
+        self.copy_project_to_cwd('svn-pull')
+
+        self.init_source_control()
+        self.checkout(
+            'file:///{}'.format(os.path.join(self.path, 'repo')), 'local')
+
+        open(os.path.join('local', 'file'), 'w').close()
+        self.add('file', cwd='local')
+        self.commit('test', cwd='local/')
+        self.update(cwd='local/')
+        subprocess.check_call(
+            ['rm', '-rf', 'local/'], stdout=subprocess.DEVNULL)
+
+        self.run_snapcraft('prime')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        self.assertEqual(
+            recorded_yaml['parts']['svn']['source-commit'], '1')

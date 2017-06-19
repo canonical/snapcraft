@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,82 +18,94 @@ import logging
 import os
 import os.path
 import subprocess
+from textwrap import dedent
 from unittest import mock
 from unittest.mock import call
 
 import fixtures
 from testtools.matchers import (
+    Contains,
+    Equals,
     FileContains,
     FileExists,
     Not,
 )
+from . import CommandBaseTestCase
+from snapcraft.tests import fixture_setup
 
-from snapcraft.main import main
-from snapcraft import tests
 
+class SnapCommandBaseTestCase(CommandBaseTestCase):
 
-class SnapCommandTestCase(tests.TestCase):
+    yaml_template = dedent("""\
+        name: snap-test
+        version: 1.0
+        summary: test snapping
+        description: if snap is succesful a snap package will be available
+        architectures: ['amd64']
+        type: {}
+        confinement: strict
+        grade: stable
 
-    yaml_template = """name: snap-test
-version: 1.0
-summary: test snapping
-description: if snap is succesful a snap package will be available
-architectures: ['amd64']
-type: {}
-confinement: strict
-grade: stable
-
-parts:
-    part1:
-      plugin: nil
-"""
+        parts:
+            part1:
+                plugin: nil
+        """)
 
     def setUp(self):
         super().setUp()
+
+        patcher = mock.patch('snapcraft.internal.indicators.is_dumb_terminal')
+        dumb_mock = patcher.start()
+        dumb_mock.return_value = True
+        self.addCleanup(patcher.stop)
+
+        self.useFixture(fixture_setup.FakeTerminal())
 
         patcher = mock.patch('snapcraft.internal.lifecycle.Popen',
                              new=mock.Mock(wraps=subprocess.Popen))
         self.popen_spy = patcher.start()
         self.addCleanup(patcher.stop)
 
-        # Avoiding a io.UnsupportedOperation: fileno
-        patcher = mock.patch('sys.stdout.fileno')
-        self.fileno_mock = patcher.start()
-        self.fileno_mock.return_value = 1
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('os.isatty')
-        self.isatty_mock = patcher.start()
-        self.isatty_mock.return_value = False
-        self.addCleanup(patcher.stop)
-
-    def make_snapcraft_yaml(self, n=1, snap_type='app'):
-        snapcraft_yaml = self.yaml_template.format(snap_type)
+    def make_snapcraft_yaml(self, n=1, snap_type='app', snapcraft_yaml=None):
+        if not snapcraft_yaml:
+            snapcraft_yaml = self.yaml_template.format(snap_type)
         super().make_snapcraft_yaml(snapcraft_yaml)
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
+
+class SnapCommandTestCase(SnapCommandBaseTestCase):
+
     def test_snap_defaults(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
 
-        main(['snap'])
+        result = self.run_command(['snap'])
 
-        self.assertEqual(
-            'Preparing to pull part1 \n'
-            'Pulling part1 \n'
-            'Preparing to build part1 \n'
-            'Building part1 \n'
-            'Staging part1 \n'
-            'Priming part1 \n'
-            'Snapping \'snap-test\' ...\n'
-            'Snapped snap-test_1.0_amd64.snap\n',
-            fake_logger.output)
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output,
+                        Contains('\nSnapped snap-test_1.0_amd64.snap\n'))
 
-        self.assertTrue(os.path.exists(self.stage_dir),
-                        'Expected a stage directory')
+        self.popen_spy.assert_called_once_with([
+            'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
-        self.verify_state('part1', self.state_dir, 'prime')
+    def test_snap_fails_with_bad_type(self):
+        self.make_snapcraft_yaml(snap_type='bad-type')
+
+        result = self.run_command(['snap'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            "bad-type' is not one of ['app', 'gadget', 'kernel', 'os']"))
+
+    def test_snap_is_the_default(self):
+        self.make_snapcraft_yaml()
+
+        result = self.run_command([])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output,
+                        Contains('\nSnapped snap-test_1.0_amd64.snap\n'))
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
@@ -101,7 +113,7 @@ parts:
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
     def test_snap_containerized(self):
-        fake_lxd = tests.fixture_setup.FakeLXD()
+        fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
@@ -109,7 +121,9 @@ parts:
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()
 
-        main(['snap', '--debug'])
+        result = self.run_command(['--debug', 'snap'])
+
+        self.assertThat(result.exit_code, Equals(0))
 
         source = os.path.realpath(os.path.curdir)
         self.assertIn(
@@ -149,25 +163,15 @@ parts:
     def test_snap_defaults_on_a_tty(self, progress_mock):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
+        self.useFixture(fixture_setup.FakeTerminal())
+
         self.make_snapcraft_yaml()
-        self.isatty_mock.return_value = True
 
-        main(['snap'])
+        result = self.run_command(['snap'])
 
-        self.assertEqual(
-            'Preparing to pull part1 \n'
-            'Pulling part1 \n'
-            'Preparing to build part1 \n'
-            'Building part1 \n'
-            'Staging part1 \n'
-            'Priming part1 \n'
-            'Snapped snap-test_1.0_amd64.snap\n',
-            fake_logger.output)
-
-        self.assertTrue(os.path.exists(self.stage_dir),
-                        'Expected a stage directory')
-
-        self.verify_state('part1', self.state_dir, 'prime')
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output,
+                        Contains('\nSnapped snap-test_1.0_amd64.snap\n'))
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
@@ -177,27 +181,13 @@ parts:
         self.assertThat('snap-test_1.0_amd64.snap', FileExists())
 
     def test_snap_type_os_does_not_use_all_root(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
         self.make_snapcraft_yaml(snap_type='os')
 
-        main(['snap'])
+        result = self.run_command(['snap'])
 
-        self.assertEqual(
-            'Preparing to pull part1 \n'
-            'Pulling part1 \n'
-            'Preparing to build part1 \n'
-            'Building part1 \n'
-            'Staging part1 \n'
-            'Priming part1 \n'
-            'Snapping \'snap-test\' ...\n'
-            'Snapped snap-test_1.0_amd64.snap\n',
-            fake_logger.output)
-
-        self.assertTrue(os.path.exists(self.stage_dir),
-                        'Expected a stage directory')
-
-        self.verify_state('part1', self.state_dir, 'prime')
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output,
+                        Contains('\nSnapped snap-test_1.0_amd64.snap\n'))
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
@@ -215,15 +205,17 @@ parts:
         os.makedirs(self.state_dir)
         open(os.path.join(self.state_dir, 'prime'), 'w').close()
 
-        main(['snap'])
+        result = self.run_command(['snap'])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            'Snapped snap-test_1.0_amd64.snap\n'))
 
         self.assertEqual(
             'Skipping pull part1 (already ran)\n'
             'Skipping build part1 (already ran)\n'
             'Skipping stage part1 (already ran)\n'
-            'Skipping prime part1 (already ran)\n'
-            'Snapping \'snap-test\' ...\n'
-            'Snapped snap-test_1.0_amd64.snap\n',
+            'Skipping prime part1 (already ran)\n',
             fake_logger.output)
 
         self.popen_spy.assert_called_once_with([
@@ -245,12 +237,11 @@ version: 99
 architectures: [amd64, armhf]
 """)
 
-        main(['snap', 'mysnap'])
+        result = self.run_command(['snap', 'mysnap'])
 
-        self.assertEqual(
-            'Snapping \'my_snap\' ...\n'
-            'Snapped my_snap_99_multi.snap\n',
-            fake_logger.output)
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            'Snapped my_snap_99_multi.snap\n'))
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_multi.snap',
@@ -270,12 +261,11 @@ architectures: [amd64, armhf]
 version: 99
 """)
 
-        main(['snap', 'mysnap'])
+        result = self.run_command(['snap', 'mysnap'])
 
-        self.assertEqual(
-            'Snapping \'my_snap\' ...\n'
-            'Snapped my_snap_99_all.snap\n',
-            fake_logger.output)
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            'Snapped my_snap_99_all.snap\n'))
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_all.snap',
@@ -296,13 +286,13 @@ version: 99
 architectures: [amd64, armhf]
 type: os
 """)
+        self.make_snapcraft_yaml()
 
-        main(['snap', 'mysnap'])
+        result = self.run_command(['snap', 'mysnap'])
 
-        self.assertEqual(
-            'Snapping \'my_snap\' ...\n'
-            'Snapped my_snap_99_multi.snap\n',
-            fake_logger.output)
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            'Snapped my_snap_99_multi.snap\n'))
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_multi.snap',
@@ -316,23 +306,19 @@ type: os
         self.useFixture(fake_logger)
         self.make_snapcraft_yaml()
 
-        main(['snap', '--output', 'mysnap.snap'])
+        result = self.run_command(['snap', '--output', 'mysnap.snap'])
 
-        self.assertEqual(
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            'Snapped mysnap.snap\n'))
+
+        self.assertThat(fake_logger.output, Equals(
             'Preparing to pull part1 \n'
             'Pulling part1 \n'
             'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
-            'Priming part1 \n'
-            'Snapping \'snap-test\' ...\n'
-            'Snapped mysnap.snap\n',
-            fake_logger.output)
-
-        self.assertTrue(os.path.exists(self.stage_dir),
-                        'Expected a stage directory')
-
-        self.verify_state('part1', self.state_dir, 'prime')
+            'Priming part1 \n'))
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'mysnap.snap',
@@ -340,6 +326,26 @@ type: os
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('mysnap.snap', FileExists())
+
+    def test_load_config_with_invalid_plugin_exits_with_error(self):
+        self.make_snapcraft_yaml(snapcraft_yaml=dedent("""\
+            name: test-package
+            version: 1
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+
+            parts:
+              part1:
+                plugin: does-not-exist
+        """))
+
+        result = self.run_command(['snap'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            'Issue while loading part: unknown plugin: does-not-exist'))
 
     @mock.patch('time.time')
     def test_snap_renames_stale_snap_build(self, mocked_time):
@@ -353,7 +359,11 @@ type: os
         with open(snap_build, 'w') as fd:
             fd.write('signed assertion?')
 
-        main(['snap'])
+        result = self.run_command(['snap'])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            'Snapped snap-test_1.0_amd64.snap\n'))
 
         snap_build_renamed = snap_build + '.1234'
         self.assertEqual([
@@ -364,8 +374,6 @@ type: os
             'Staging part1 ',
             'Priming part1 ',
             'Renaming stale build assertion to {}'.format(snap_build_renamed),
-            'Snapping \'snap-test\' ...',
-            'Snapped snap-test_1.0_amd64.snap',
             ], fake_logger.output.splitlines())
 
         self.assertThat('snap-test_1.0_amd64.snap', FileExists())
@@ -373,3 +381,29 @@ type: os
         self.assertThat(snap_build_renamed, FileExists())
         self.assertThat(
             snap_build_renamed, FileContains('signed assertion?'))
+
+
+class SnapCommandAsDefaultTestCase(SnapCommandBaseTestCase):
+
+    scenarios = [
+        ('no parallel builds', dict(options=['--no-parallel-builds'])),
+        ('target architecture', dict(options=['--target-arch', 'i386'])),
+        ('geo ip', dict(options=['--enable-geoip'])),
+        ('all', dict(options=['--no-parallel-builds', '--target-arch=i386',
+                              '--enable-geoip']))
+    ]
+
+    def test_snap_defaults(self):
+        """The arguments should not be rejected when 'snap' is implicit."""
+        self.make_snapcraft_yaml()
+
+        result = self.run_command(self.options)
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output,
+                        Contains('\nSnapped snap-test_1.0'))
+
+        self.popen_spy.assert_called_once_with([
+            'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)

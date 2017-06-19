@@ -11,6 +11,7 @@ Build-Depends: bash-completion,
                pkg-config,
                python3 (>= 3.4),
                python3-apt,
+               python3-click,
                python3-debian,
                python3-docopt,
                python3-fixtures,
@@ -45,7 +46,7 @@ Package: snapcraft
 Architecture: all
 Depends: python3-apt,
          python3-debian,
-         python3-docopt,
+         python3-click,
          python3-jsonschema,
          python3-libarchive-c,
          python3-lxml,
@@ -75,7 +76,10 @@ Description: easily craft snaps
 
 Package: snapcraft-parser
 Architecture: all
-Depends: snapcraft (= ${binary:Version}), ${misc:Depends}, ${python3:Depends}
+Depends: snapcraft (= ${binary:Version}),
+         python3-docopt,
+         ${misc:Depends},
+         ${python3:Depends},
 Description: cloud parser for shared snapcraft parts.
  The parser is in charge of getting all the shared parts out there
  indexed into a common cacheable file. It processes multiple origin's

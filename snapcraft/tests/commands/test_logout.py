@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,30 +13,23 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import logging
+import re
 from unittest import mock
 
-import fixtures
+from testtools.matchers import MatchesRegex, Equals
 
-from snapcraft.main import main
-from snapcraft import (
-    config,
-    tests
-)
+from snapcraft import config
+from . import CommandBaseTestCase
 
 
-class LogoutCommandTestCase(tests.TestCase):
+class LogoutCommandTestCase(CommandBaseTestCase):
 
     @mock.patch.object(config.Config, 'clear')
     def test_logout_clears_config(self, mock_clear):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
+        result = self.run_command(['logout'])
 
-        main(['logout'])
-
-        self.assertEqual(
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, MatchesRegex(
             'Clearing credentials for Ubuntu One SSO.\n'
-            'Credentials cleared.\n',
-            fake_logger.output)
-        mock_clear.assert_called_once_with()
+            '.*'
+            'Credentials cleared.\n', flags=re.DOTALL))

@@ -51,12 +51,7 @@ from docopt import docopt
 from collections import OrderedDict
 
 import snapcraft
-from snapcraft.internal import log, project_loader, repo, sources
-from snapcraft.internal.errors import (
-    SnapcraftError,
-    InvalidWikiEntryError,
-    SnapcraftEnvironmentError,
-)
+from snapcraft.internal import errors, log, project_loader, repo, sources
 
 
 class BadSnapcraftYAMLError(Exception):
@@ -105,7 +100,7 @@ def _get_origin_data(origin_dir):
         with open(yaml_file) as fp:
             origin_data = yaml.load(fp)
     except ScannerError as e:
-        raise InvalidWikiEntryError(e)
+        raise errors.InvalidWikiEntryError(e)
 
     return origin_data
 
@@ -186,7 +181,8 @@ def _process_entry(data):
         maintainer = data['maintainer']
         description = data['description']
     except KeyError as e:
-        raise InvalidWikiEntryError('Missing key in wiki entry: {}'.format(e))
+        raise errors.InvalidWikiEntryError(
+            'Missing key in wiki entry: {}'.format(e))
 
     logger.info('Processing origin {origin!r}'.format(origin=origin))
     origin_dir = os.path.join(_get_base_dir(), _encode_origin(origin))
@@ -204,11 +200,12 @@ def _process_entry(data):
     try:
         origin_data = _get_origin_data(origin_dir)
     except MissingSnapcraftYAMLError:
-        raise InvalidWikiEntryError(
+        raise errors.InvalidWikiEntryError(
             'Origin {origin!r} is missing a snapcraft.yaml file.'.format(
                 origin=origin))
     except BadSnapcraftYAMLError as e:
-        raise InvalidWikiEntryError('snapcraft.yaml error: {}'.format(e))
+        raise errors.InvalidWikiEntryError(
+            'snapcraft.yaml error: {}'.format(e))
 
     origin_parts = origin_data.get('parts', {})
     origin_name = origin_data.get('name')
@@ -232,17 +229,17 @@ def _process_wiki_entry(
     try:
         data = yaml.load(entry)
     except (ScannerError, ParserError) as e:
-        raise InvalidWikiEntryError(
+        raise errors.InvalidWikiEntryError(
             'Bad wiki entry, possibly malformed YAML for entry: {}'.format(e))
 
     try:
         parts = data['parts']
     except KeyError as e:
-        raise InvalidWikiEntryError(
+        raise errors.InvalidWikiEntryError(
             '"parts" missing from wiki entry: {}'.format(entry))
     for part_name in parts:
         if part_name and part_name in master_parts_list:
-            raise InvalidWikiEntryError(
+            raise errors.InvalidWikiEntryError(
                 'Duplicate part found in the wiki: {} in entry {}'.format(
                     part_name, entry))
 
@@ -270,8 +267,8 @@ def _try_process_entry(
         _process_wiki_entry(
             entry, master_parts_list, missing_parts,
             pending_validation_entries)
-    except (SnapcraftError, project_loader.SnapcraftYamlFileError,
-            SnapcraftEnvironmentError) as e:
+    except (errors.SnapcraftError, errors.SnapcraftYamlFileError,
+            errors.SnapcraftEnvironmentError) as e:
         logger.warning(e)
         wiki_errors += 1
 

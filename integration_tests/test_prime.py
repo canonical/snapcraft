@@ -19,6 +19,7 @@ from textwrap import dedent
 
 import testscenarios
 from testtools.matchers import (
+    Contains,
     FileContains,
     FileExists,
     Not,
@@ -57,6 +58,19 @@ class PrimeTestCase(integration_tests.TestCase):
         self.assertThat(
             os.path.join(self.prime_dir, 'with-c'),
             FileExists())
+
+    def test_prime_with_non_ascii_desktop_file(self):
+        # Originally, in this test we forced LC_ALL=C. However, now that we
+        # are using the click python library we can't do it because it fails
+        # to run any command when the system language is ascii.
+        # --20170518 - elopio
+        self.run_snapcraft('prime', 'desktop-with-non-ascii')
+
+        desktop_path = os.path.join(
+            self.prime_dir, 'meta', 'gui', 'test-app.desktop')
+
+        self.expectThat(
+            desktop_path, FileContains(matcher=Contains('non ascíí')))
 
 
 class PrimedAssetsTestCase(testscenarios.WithScenarios,

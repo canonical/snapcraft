@@ -35,7 +35,9 @@ from snapcraft.internal import (
     meta,
     pluginhandler,
     repo,
+    states
 )
+from snapcraft.internal import errors
 from snapcraft.internal.cache import SnapCache
 from snapcraft.internal.indicators import is_dumb_terminal
 from snapcraft.internal.project_loader import replace_attr
@@ -43,6 +45,8 @@ from snapcraft.internal.project_loader import replace_attr
 
 logger = logging.getLogger(__name__)
 
+
+_SNAPCRAFT_INTERNAL_DIR = os.path.join('snap', '.snapcraft')
 
 _TEMPLATE_YAML = """name: my-snap-name # you probably want to 'snapcraft register <name>'
 version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
@@ -70,20 +74,19 @@ def init():
     snapcraft_yaml_path = os.path.join('snap', 'snapcraft.yaml')
 
     if os.path.exists(snapcraft_yaml_path):
-        raise EnvironmentError(
+        raise errors.SnapcraftEnvironmentError(
             '{} already exists!'.format(snapcraft_yaml_path))
     elif os.path.exists('snapcraft.yaml'):
-        raise EnvironmentError('snapcraft.yaml already exists!')
+        raise errors.SnapcraftEnvironmentError(
+            'snapcraft.yaml already exists!')
     elif os.path.exists('.snapcraft.yaml'):
-        raise EnvironmentError('.snapcraft.yaml already exists!')
+        raise errors.SnapcraftEnvironmentError(
+            '.snapcraft.yaml already exists!')
     yaml = _TEMPLATE_YAML
     with contextlib.suppress(FileExistsError):
         os.mkdir(os.path.dirname(snapcraft_yaml_path))
     with open(snapcraft_yaml_path, mode='w') as f:
         f.write(yaml)
-    logger.info('Created {}.'.format(snapcraft_yaml_path))
-    logger.info(
-        'Edit the file to your liking or run `snapcraft` to get started')
 
     return snapcraft_yaml_path
 
@@ -108,7 +111,14 @@ def execute(step, project_options, part_names=None):
     :returns: A dict with the snap name, version, type and architectures.
     """
     config = snapcraft.internal.load_config(project_options)
-    repo.Repo.install_build_packages(config.build_tools)
+    installed_packages = repo.Repo.install_build_packages(
+        config.build_tools)
+    if installed_packages is None:
+        raise ValueError(
+            'The repo backend is not returning the list of installed packages')
+    os.makedirs(_SNAPCRAFT_INTERNAL_DIR, exist_ok=True)
+    with open(os.path.join(_SNAPCRAFT_INTERNAL_DIR, 'state'), 'w') as f:
+        f.write(yaml.dump(states.GlobalState(installed_packages)))
 
     if (os.environ.get('SNAPCRAFT_SETUP_CORE') and
             config.data['confinement'] == 'classic'):
@@ -411,7 +421,6 @@ def snap(project_options, directory=None, output=None):
 
         logger.debug(proc.stdout.read().decode('utf-8'))
 
-    logger.info('Snapped {}'.format(snap_name))
     return snap_name
 
 
@@ -451,7 +460,7 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
                 humanized_parts = formatting_utils.humanize_list(
                     dependents, 'and')
 
-                raise RuntimeError(
+                raise errors.SnapcraftEnvironmentError(
                     'Requested clean of {!r} but {} depend{} upon it. Please '
                     "add each to the clean command if that's what you "
                     'intended.'.format(part_name, humanized_parts,
@@ -515,6 +524,7 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
         _cleanup_parts_dir(
             project_options.parts_dir, project_options.local_plugins_dir,
             parts)
+        _cleanup_internal_snapcraft_dir()
 
     _remove_directory_if_empty(project_options.prime_dir)
     _remove_directory_if_empty(project_options.stage_dir)
@@ -542,6 +552,11 @@ def _cleanup_parts_dir(parts_dir, local_plugins_dir, parts):
     for part in parts:
         part.mark_cleaned('build')
         part.mark_cleaned('pull')
+
+
+def _cleanup_internal_snapcraft_dir():
+    if os.path.exists(_SNAPCRAFT_INTERNAL_DIR):
+        shutil.rmtree(_SNAPCRAFT_INTERNAL_DIR)
 
 
 def clean(project_options, parts, step=None):
