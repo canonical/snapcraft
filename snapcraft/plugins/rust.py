@@ -122,20 +122,20 @@ class RustPlugin(snapcraft.BasePlugin):
 
     def enable_cross_compilation(self):
         # Cf. rustc --print target-list
-        rust_targets = {
+        targets = {
             'armhf': 'armv7-{}-{}eabihf',
             'arm64': 'aarch64-{}-{}',
             'i386': 'i686-{}-{}',
             'amd64': 'x86_64-{}-{}',
             'ppc64el': 'powerpc64le-{}-{}',
         }
-        self._target = rust_targets.get(self.project.deb_arch).format(
-            'unknown-linux', 'gnu')
-        if not self._target:
+        fmt = targets.get(self.project.deb_arch)
+        if not fmt:
             raise NotImplementedError(
                 '{!r} is not supported as a target architecture when '
                 'cross-compiling with the rust plugin'.format(
                     self.project.deb_arch))
+        self._target = fmt.format('unknown-linux', 'gnu')
 
     def _build_env(self):
         env = os.environ.copy()
