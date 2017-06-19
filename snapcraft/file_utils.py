@@ -110,6 +110,11 @@ def link_or_copy(source, destination, follow_symlinks=False):
         # symlinks.
         os.link(source_path, destination, follow_symlinks=False)
     except OSError:
+        try:
+            # If os.link raised an I/O error, it may have left a file behind.
+            os.unlink(destination)
+        except FileNotFoundError:
+            pass
         shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
         uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid
         gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid
