@@ -82,7 +82,7 @@ class Containerbuild:
                     '{}/{}'.format(self._container_name, src), dst])
 
     def _container_run(self, cmd, **kwargs):
-        # Set HOME here as 'lxc config set ... environment.HOME' doesn't work
+        # 'lxc config set ... environment.HOME' doesn't work
         # Use 'cd' because --env has no effect with sshfs mounts
         check_call(['lxc', 'exec', self._container_name, '--',
                    'bash', '-c', 'cd /{}; {}'.format(
