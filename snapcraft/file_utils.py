@@ -112,7 +112,8 @@ def link_or_copy(source, destination, follow_symlinks=False):
     except OSError:
         try:
             # If os.link raised an I/O error, it may have left a file behind.
-            os.unlink(destination)
+            if not os.path.isdir(destination):
+                os.unlink(destination)
         except FileNotFoundError:
             pass
         shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
