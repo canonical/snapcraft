@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-import distutils
+from distutils import util
 import logging
 import os
 import shutil
@@ -330,7 +330,7 @@ def containerbuild(step, project_options, output=None, args=[]):
     remote = os.environ.get('SNAPCRAFT_CONTAINER_BUILDS')
     # Default remote if it's a truthy value - otherwise it's a remote name
     try:
-        distutils.util.strtobool(remote)
+        util.strtobool(remote)
         remote = None
     except ValueError:
         pass
