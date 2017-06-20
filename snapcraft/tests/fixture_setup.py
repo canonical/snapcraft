@@ -29,6 +29,7 @@ from subprocess import CalledProcessError
 import fixtures
 import xdg
 
+from snapcraft import internal, _options
 from snapcraft.tests import fake_servers
 from snapcraft.tests.subprocess_utils import (
     call,
@@ -401,11 +402,13 @@ def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
                   kernel_architecture: x86_64
                 '''.encode('utf-8')
         elif args[0][:3] == ['lxc', 'list', '--format=json']:
+            config = internal.load_config(_options.ProjectOptions())
+            metadata = config.get_metadata()
             return '''
-                [{"name": "snapcraft-snap-test",
+                [{"name": "snapcraft-$NAME",
                   "status": "Stopped",
-                  "devices": {"build-snap-test":[]}}]
-                '''.encode('utf-8')
+                  "devices": {"build-$NAME":[]}}]
+                '''.replace('$NAME', metadata['name']).encode('utf-8')
         else:
             return ''.encode('utf-8')
     return call_effect

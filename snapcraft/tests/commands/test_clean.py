@@ -15,8 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 import shutil
+import fixtures
+from unittest.mock import call
 
 from testtools.matchers import Contains, Equals, DirExists, FileExists, Not
+from snapcraft.tests import fixture_setup
 
 from snapcraft.internal import pluginhandler
 from snapcraft.internal import project_loader
@@ -89,6 +92,21 @@ parts:
         self.assertThat(self.parts_dir, Not(DirExists()))
         self.assertThat(self.stage_dir, Not(DirExists()))
         self.assertThat(self.prime_dir, Not(DirExists()))
+
+    def test_clean_containerized(self):
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml(n=3)
+
+        result = self.run_command(['clean'])
+
+        self.assertThat(result.exit_code, Equals(0))
+        container_name = 'local:snapcraft-clean-test'
+        fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'delete', '-f', container_name]),
+        ])
 
     def test_local_plugin_not_removed(self):
         self.make_snapcraft_yaml(n=3)

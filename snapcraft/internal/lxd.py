@@ -219,7 +219,7 @@ class Project(Containerbuild):
 
     def execute(self, step='snap', args=None):
         super().execute(step, args)
-        if step == 'clean' and not args:
+        if step == 'clean' and 'pull' in args:
             print('Deleting {}'.format(self._container_name))
             check_call(['lxc', 'delete', '-f', self._container_name])
 
