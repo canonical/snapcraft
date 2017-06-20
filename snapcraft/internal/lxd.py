@@ -122,6 +122,9 @@ class Containerbuild:
 
     def execute(self, step='snap', args=None):
         with self._ensure_started():
+            # Create folder early so _container_run can cd into it
+            check_call(['lxc', 'exec', self._container_name, '--',
+                        'mkdir', '-p', '/{}'.format(self._project_folder)])
             self._setup_project()
             self._install_packages(['snapcraft'])
             command = ['snapcraft', step]
@@ -147,7 +150,6 @@ class Containerbuild:
         tar_filename = self._source
         dst = os.path.join(self._project_folder,
                            os.path.basename(tar_filename))
-        self._container_run(['mkdir', self._project_folder])
         self._push_file(tar_filename, dst)
         self._container_run(['tar', 'xvf', os.path.basename(tar_filename)])
 
@@ -262,7 +264,6 @@ class Project(Containerbuild):
 
         # Use sshfs in slave mode inside SSH to reverse mount destination
         self._install_packages(['sshfs'])
-        self._container_run(['mkdir', '-p', '/{}'.format(destination)])
         self._container_run(['mkdir', '-p', source])
         ssh_address = self._get_container_address()
         logger.info('Connecting via SSH to {}'.format(ssh_address))
