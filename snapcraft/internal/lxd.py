@@ -252,13 +252,13 @@ class Project(Containerbuild):
         if not os.path.exists(keyfile):
             check_call(['ssh-keygen', '-o', '-N', '', '-f', keyfile],
                        stdout=os.devnull)
-        self._container_run(['mkdir', '-p', '/root/.ssh'])
-        self._container_run(['chmod', '700', '/root/.ssh'])
-        self._container_run(['tee', '-a',
-                             '/root/.ssh/authorized_keys'],
+        ssh_config = os.path.join(os.sep, 'root', '.ssh')
+        self._container_run(['mkdir', '-p', ssh_config])
+        self._container_run(['chmod', '700', ssh_config])
+        ssh_authorized_keys = os.path.join(ssh_config, 'authorized_keys')
+        self._container_run(['tee', '-a', ssh_authorized_keys],
                             stdin=open('{}.pub'.format(keyfile), 'r'))
-        self._container_run(['chmod', '600',
-                             '/root/.ssh/authorized_keys'])
+        self._container_run(['chmod', '600', ssh_authorized_keys])
 
         # Use sshfs in slave mode inside SSH to reverse mount destination
         self._install_packages(['sshfs'])
