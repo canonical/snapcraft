@@ -42,6 +42,26 @@ class LocalSourceTestCase(integration_tests.TestCase):
             FileExists())
 
 
+class LocalSourceTypeTestCase(integration_tests.TestCase):
+
+    def test_build_local_source(self):
+        self.run_snapcraft('build', 'local-source-type')
+
+        self.assertThat(
+            os.path.join(
+                self.parts_dir, 'make-project', 'build', 'stamp-all'),
+            FileExists())
+
+    def test_stage_local_source(self):
+        self.run_snapcraft('stage', 'local-source')
+
+        self.assertThat(
+            os.path.join(
+                self.parts_dir, 'make-project', 'build',
+                'stamp-install'),
+            FileExists())
+
+
 class LocalSourceSubfoldersTestCase(
         testscenarios.WithScenarios, integration_tests.TestCase):
 
