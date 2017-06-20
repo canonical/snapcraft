@@ -161,14 +161,13 @@ class RustPlugin(snapcraft.BasePlugin):
     def clean_pull(self):
         super().clean_pull()
 
-        # Remove the rust path (if any)
-        if os.path.exists(self._rustpath):
+        with suppress(FileNotFoundError):
             shutil.rmtree(self._rustpath)
 
     def clean_build(self):
         super().clean_build()
 
-        with suppress(FileExistsError):
+        with suppress(FileNotFoundError):
             shutil.rmtree(self._cargo_dir)
 
     def _fetch_rust(self):

@@ -73,6 +73,7 @@ class RustPluginCrossCompileTestCase(tests.TestCase):
         self.assertEqual(self.target, plugin._target)
 
         plugin.pull()
+        self.assertThat(plugin._rustpath, DirExists())
         self.assertEqual(2, self.run_mock.call_count)
         self.run_mock.assert_has_calls([
             mock.call(
@@ -90,8 +91,7 @@ class RustPluginCrossCompileTestCase(tests.TestCase):
         ])
 
         plugin.build()
-        self.assertThat(os.path.join(plugin.builddir, '.cargo'), DirExists())
-        self.assertThat(os.path.join(plugin.builddir, '.cargo', 'config'),
+        self.assertThat(os.path.join(plugin._cargo_dir, 'config'),
                         FileExists())
 
         self.assertEqual(3, self.run_mock.call_count)
@@ -106,8 +106,12 @@ class RustPluginCrossCompileTestCase(tests.TestCase):
         ])
 
         plugin.clean_build()
-        self.assertThat(os.path.join(plugin.builddir, '.cargo'),
-                        Not(DirExists()))
+        self.assertThat(plugin._cargo_dir, Not(DirExists()))
+        plugin.clean_pull()
+        self.assertThat(plugin._rustpath, Not(DirExists()))
+        # Cleaning again shouldn't raise an exception
+        plugin.clean_build()
+        plugin.clean_pull()
 
 
 class RustPluginTestCase(tests.TestCase):
