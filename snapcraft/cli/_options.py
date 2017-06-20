@@ -59,10 +59,10 @@ def add_build_options(hidden=False):
 
 
 def get_project_options(**kwargs):
-    project_args = dict(
+    kwargs.update(
         use_geoip=kwargs.pop('enable_geoip'),
         parallel_builds=not kwargs.pop('no_parallel_builds'),
         target_deb_arch=kwargs.pop('target_arch'),
     )
 
-    return ProjectOptions(**project_args)
+    return ProjectOptions(**kwargs)
