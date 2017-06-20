@@ -88,7 +88,7 @@ class Containerbuild:
                    'bash', '-c', 'cd /{}; {}'.format(
                        self._project_folder,
                        ' '.join(pipes.quote(arg) for arg in cmd))],
-                   *kwargs)
+                   **kwargs)
 
     def _ensure_container(self):
         check_call([
@@ -266,6 +266,7 @@ class Project(Containerbuild):
         self._container_run(['mkdir', '-p', source])
         ssh_address = self._get_container_address()
         logger.info('Connecting via SSH to {}'.format(ssh_address))
+        # Pipes for sshfs and sftp-server to communicate
         stdin1, stdout1 = os.pipe()
         stdin2, stdout2 = os.pipe()
         try:
@@ -288,8 +289,8 @@ class Project(Containerbuild):
                             source, destination)],
                        stdin=stdin2, stdout=stdout1)
 
-    def _host_run(self, cmd, stdin=None, stdout=None):
-        self._processes += [Popen(cmd, stdin=stdin, stdout=stdout)]
+    def _host_run(self, cmd, **kwargs):
+        self._processes += [Popen(cmd, **kwargs)]
 
     def _finish(self):
         for process in self._processes:
