@@ -255,6 +255,7 @@ properties:
               - deb
               - rpm
               - 7z
+              - local
           disable-parallel:
             type: boolean
             default: false

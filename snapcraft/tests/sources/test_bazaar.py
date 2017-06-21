@@ -128,6 +128,9 @@ class TestBazaar(tests.sources.SourceTestCase):
             "can't specify a source-checksum for a bzr source")
         self.assertEqual(raised.message, expected_message)
 
+    def test_has_source_handler_entry(self):
+        self.assertTrue(sources._source_handler['bzr'] is sources.Bazaar)
+
 
 class BazaarDetailsTestCase(tests.TestCase):
 
