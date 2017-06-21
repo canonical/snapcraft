@@ -168,6 +168,6 @@ if [ ! -z "$RUN_UNIT" ]; then
         echo "View it by running 'x-www-browser htmlcov'"
         echo
     fi
-}
+fi
 
 echo -e "\e[1;32mEverything passed\e[0m"
