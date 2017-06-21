@@ -12,6 +12,7 @@ jobs:
       script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh static; fi
     - stage: unit
       script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh unit; fi
+    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then SNAPCRAFT_TEST_MOCK_MACHINE=armv7l ./tools/travis/run_tests.sh unit; fi
     - stage: integration
       script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh integration; fi
     - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh plugins; fi
