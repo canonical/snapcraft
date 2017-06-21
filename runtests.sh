@@ -117,17 +117,6 @@ run_spread(){
     spread -v linode:
 }
 
-if [ ! -z "$RUN_UNIT" ]; then
-    if [ ! -z "$coverage" ]; then
-        python3 -m coverage report
-
-        echo
-        echo "Run 'python3-coverage html' to get a nice report"
-        echo "View it by running 'x-www-browser htmlcov'"
-        echo
-    fi
-}
-
 parseargs "$@"
 
 if [ ! -z "$RUN_STATIC" ] ; then
@@ -169,5 +158,16 @@ fi
 if [ ! -z "$RUN_SPREAD" ]; then
     run_spread
 fi
+
+if [ ! -z "$RUN_UNIT" ]; then
+    if [ ! -z "$coverage" ]; then
+        python3 -m coverage report
+
+        echo
+        echo "Run 'python3-coverage html' to get a nice report"
+        echo "View it by running 'x-www-browser htmlcov'"
+        echo
+    fi
+}
 
 echo -e "\e[1;32mEverything passed\e[0m"
