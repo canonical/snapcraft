@@ -163,6 +163,7 @@ class TestLinkOrCopy(tests.TestCase):
 
     def test_link_file_ioerror(self):
         orig_link = os.link
+
         def link_and_ioerror(a, b, **kwargs):
             orig_link(a, b)
             raise IOError()
