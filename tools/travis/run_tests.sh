@@ -27,6 +27,10 @@ fi
 
 test="$1"
 
+if [ "$#" -gt 1 ]; then
+    pattern="$2"
+fi
+
 if [ "$test" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
 elif [ "$test" = "unit" ]; then
@@ -41,7 +45,7 @@ fi
 script_path="$(dirname "$0")"
 "$script_path/run_docker_container.sh" test-runner
 docker exec -i test-runner sh -c "$dependencies"
-docker exec -i test-runner ./runtests.sh $test
+docker exec -i test-runner ./runtests.sh $test $pattern
 
 if [ "$test" = "unit" ]; then
     # Report code coverage.
