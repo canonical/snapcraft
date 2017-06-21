@@ -281,3 +281,11 @@ class RustPluginTestCase(tests.TestCase):
                 '--manifest-path',
                 os.path.join(plugin.sourcedir, 'test-subdir', 'Cargo.toml')
             ])])
+
+    @mock.patch('snapcraft.ProjectOptions.deb_arch', 'fantasy-arch')
+    def test_cross_compiling_unsupported_arch_raises_exception(self):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+
+        self.assertRaises(NotImplementedError, plugin.enable_cross_compilation)
