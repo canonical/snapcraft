@@ -109,7 +109,6 @@ run_snaps(){
 
 run_spread(){
     TMP_SPREAD="$(mktemp -d)"
-    addtrap "rm -rf \"$TMP_SPREAD\""
 
     export PATH=$TMP_SPREAD:$PATH
     ( cd "$TMP_SPREAD" && curl -s -O https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz && tar xzvf spread-amd64.tar.gz )
