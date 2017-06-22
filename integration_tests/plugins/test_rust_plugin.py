@@ -25,6 +25,7 @@ from testtools.matchers import FileExists, MatchesRegex, Not
 
 import snapcraft
 import integration_tests
+from snapcraft.tests.matchers import HasArchitecture
 
 
 class RustPluginBaseTestCase(integration_tests.TestCase):
@@ -90,6 +91,16 @@ class RustPluginTestCase(RustPluginBaseTestCase):
         self.assertThat(
             os.path.join('parts', 'rust-subdir', 'src', 'subdir',
                          'Cargo.lock'), FileExists())
+
+    def test_cross_compiling(self):
+        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+            self.skipTest('The test only handles amd64 to arm64')
+
+        self.run_snapcraft(['build', '--target-arch=arm64'],
+                           'rust-hello')
+        binary = os.path.join(self.parts_dir, 'rust-hello', 'install', 'bin',
+                              'rust-hello')
+        self.assertThat(binary, HasArchitecture('aarch64'))
 
 
 class RustPluginConfinementTestCase(testscenarios.WithScenarios,
