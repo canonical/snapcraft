@@ -494,6 +494,34 @@ class FakeLXD(fixtures.Fixture):
         return call_effect
 
 
+class FakeSnapd(fixtures.Fixture):
+    '''...'''
+
+    def __init__(self):
+        pass
+
+    def _setUp(self):
+        patcher = mock.patch('requests_unixsocket.Session.request')
+        self.session_request_mock = patcher.start()
+        self.session_request_mock.side_effect = self.request_side_effect()
+        self.addCleanup(patcher.stop)
+
+    def request_side_effect(self):
+        def request_effect(*args, **kwargs):
+            if args[0] == 'GET' and '/v2/snaps/' in args[1]:
+                class Session:
+                    def __init__(self, name):
+                        self._name = name
+                        self._confinement = 'core' in name or 'classic'
+
+                    def json(self):
+                        return {'status': 'OK',
+                                'result': {'confinement': self._confinement,
+                                           'revision': '123'}}
+                return Session(args[1].split('/')[-1])
+        return request_effect
+
+
 class GitRepo(fixtures.Fixture):
     '''Create a git repo in the current directory'''
 

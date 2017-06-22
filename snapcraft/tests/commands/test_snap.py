@@ -113,7 +113,13 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
     @mock.patch('os.getuid')
-    def test_snap_containerized(self, mock_getuid):
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._inject_snapcraft')
+    def test_snap_containerized(self,
+                                mock_inject,
+                                mock_container_run,
+                                mock_getuid):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         mock_getuid.return_value = 1234
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
@@ -146,21 +152,69 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'config', 'device', 'add', container_name,
                   project_folder, 'disk', 'source={}'.format(source),
                   'path=/{}'.format(project_folder)]),
-            call(['lxc', 'exec', container_name, '--',
-                  'python3', '-c',
-                  'import urllib.request; '
-                  'urllib.request.urlopen('
-                  '"http://start.ubuntu.com/connectivity-check.html", '
-                  'timeout=5)']),
-            call(['lxc', 'exec', container_name, '--',
-                  'apt-get', 'update']),
-            call(['lxc', 'exec', container_name, '--',
-                  'apt-get', 'install', 'snapcraft', '-y']),
-            call(['lxc', 'exec', container_name, '--',
-                  'bash', '-c',
-                  'cd {}; snapcraft snap --output {}'.format(
-                      project_folder, 'snap-test_1.0_amd64.snap')]),
             call(['lxc', 'stop', '-f', container_name]),
+        ])
+        mock_container_run.assert_has_calls([
+              call(['python3', '-c', 'import urllib.request; ' +
+                    'urllib.request.urlopen(' +
+                    '"http://start.ubuntu.com/connectivity-check.html"' +
+                    ', timeout=5)']),
+              call(['apt-get', 'update']),
+              call(['snapcraft', 'snap', '--output',
+                    'snap-test_1.0_amd64.snap'],
+                   cwd=project_folder),
+        ])
+
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('snapcraft.internal.lxd.is_snap')
+    def test_snap_containerized_inject_apt(self,
+                                           mock_is_snap, mock_container_run):
+        mock_is_snap.side_effect = lambda: False
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml()
+
+        self.run_command(['snap'])
+        mock_container_run.assert_has_calls([
+            call(['apt-get', 'install', 'snapcraft', '-y']),
+        ])
+
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('snapcraft.internal.lxd.is_snap')
+    @mock.patch('snapcraft.internal.lxd.copyfile')
+    def test_snap_containerized_inject_snap(self,
+                                            mock_copyfile,
+                                            mock_is_snap,
+                                            mock_container_run):
+        mock_is_snap.side_effect = lambda: True
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        fake_snapd = fixture_setup.FakeSnapd()
+        self.useFixture(fake_snapd)
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml()
+
+        container_name = 'local:snapcraft-snap-test'
+        project_folder = '/root/build_snap-test'
+        self.run_command(['snap'])
+        fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'file', 'push', 'core_123.snap',
+                  '{}{}/core_123.snap'.format(
+                      container_name, project_folder)]),
+            call(['lxc', 'file', 'push', 'snapcraft_123.snap',
+                  '{}{}/snapcraft_123.snap'.format(
+                      container_name, project_folder)]),
+        ])
+        mock_container_run.assert_has_calls([
+            call(['apt-get', 'install', 'squashfuse', '-y']),
+            call(['snap', 'install', '--dangerous', 'core_123.snap']),
+            call(['snap', 'install', '--dangerous', 'snapcraft_123.snap',
+                  '--classic']),
         ])
 
     @mock.patch('snapcraft.internal.lifecycle.ProgressBar')
