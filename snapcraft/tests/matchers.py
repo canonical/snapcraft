@@ -30,7 +30,13 @@ class HasArchitecture:
         return 'HasArchitecture()'
 
     def match(self, file_path):
-        arch = self._ms.file(file_path).split(',')[1]
+        magic = self._ms.file(file_path)
+        # Catch exceptions on splitting the string to provide context
+        # This includes "cannot open `...' (No such file or directory)"
+        try:
+            arch = magic.split(',')[1]
+        except IndexError as e:
+            raise ValueError('Failed to parse magic {!r}'.format(magic)) from e
         if self._expected_arch not in arch:
             return testtools.matchers.Mismatch(
                 'Expected {!r} to be in {!r}'.format(
