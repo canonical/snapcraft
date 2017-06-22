@@ -166,6 +166,9 @@ class TestLocal(tests.TestCase):
             os.path.join('destination', 'dir', 'file_symlink'),
             tests.LinkExists('file'))
 
+    def test_has_source_handler_entry(self):
+        self.assertTrue(sources._source_handler['local'] is sources.Local)
+
 
 class TestLocalIgnores(tests.TestCase):
     """Verify that the snapcraft root dir does not get copied into itself."""
