@@ -19,7 +19,7 @@ import json
 import logging
 import os
 import pipes
-import shutil
+from shutil import copyfile
 import sys
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError
@@ -30,7 +30,7 @@ import petname
 import yaml
 
 from snapcraft.internal.errors import SnapcraftEnvironmentError
-from snapcraft.internal import common
+from snapcraft.internal.common import format_snap_name, is_snap
 from snapcraft._options import _get_deb_arch
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class Containerbuild:
     def __init__(self, *, output, source, project_options,
                  metadata, container_name, remote=None):
         if not output:
-            output = common.format_snap_name(metadata)
+            output = format_snap_name(metadata)
         self._snap_output = output
         self._source = os.path.realpath(source)
         self._project_options = project_options
@@ -158,7 +158,7 @@ class Containerbuild:
                             cwd=self._project_folder)
 
     def _inject_snapcraft(self):
-        if common.is_snap():
+        if is_snap():
             # Because of https://bugs.launchpad.net/snappy/+bug/1628289
             self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
 
@@ -188,7 +188,7 @@ class Containerbuild:
                                  '{}_{}.snap'.format(name, rev))
         filename = os.path.basename(installed)
         # Copy file to ensure LXD snap can access it
-        shutil.copyfile(installed, filename)
+        copyfile(installed, filename)
         self._push_file(filename, os.path.join(self._project_folder, filename))
         logger.info('Installing {}'.format(filename))
         cmd = ['snap', 'install', '--dangerous', filename]
