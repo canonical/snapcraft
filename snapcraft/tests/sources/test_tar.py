@@ -127,3 +127,6 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
         # The 'test_prefix' part of the path should have been removed
         self.assertTrue(os.path.exists(os.path.join('dst', 'test.txt')))
         self.assertTrue(os.path.exists(os.path.join('dst', 'link.txt')))
+
+    def test_has_source_handler_entry(self):
+        self.assertTrue(sources._source_handler['tar'] is sources.Tar)
