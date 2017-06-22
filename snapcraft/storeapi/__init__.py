@@ -194,16 +194,12 @@ class StoreClient():
         account_data = {}
 
         for k in ('email', 'account_id'):
-            try:
-                value = self.conf.get(k)
-            except KeyError as e:
-                value = None
-            finally:
-                if not value:
-                    account_info = self.get_account_information()
-                    value = account_info.get(k, 'unknown')
-                    self.conf.set(k, value)
-                    self.conf.save()
+            value = self.conf.get(k)
+            if not value:
+                account_info = self.get_account_information()
+                value = account_info.get(k, 'unknown')
+                self.conf.set(k, value)
+                self.conf.save()
             account_data[k] = value
 
         return account_data
