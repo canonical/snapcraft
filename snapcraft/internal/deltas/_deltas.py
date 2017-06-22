@@ -103,7 +103,8 @@ class BaseDeltasGenerator:
 
         ratio = int((delta_size / target_size) * 100)
         if ratio >= self.delta_size_min_pct:
-            raise DeltaGenerationTooBigError
+            raise DeltaGenerationTooBigError(
+                    delta_min_percentage=100-self.delta_size_min_pct)
 
     def find_unique_file_name(self, path_hint):
         """Return a path on disk similar to 'path_hint' that does not exist.
