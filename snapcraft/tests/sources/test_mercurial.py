@@ -166,6 +166,10 @@ class TestMercurial(tests.sources.SourceTestCase):
             "can't specify a source-checksum for a mercurial source")
         self.assertEqual(raised.message, expected_message)
 
+    def test_has_source_handler_entry(self):
+        self.assertTrue(sources._source_handler['mercurial'] is
+                        sources.Mercurial)
+
 
 class MercurialBaseTestCase(tests.TestCase):
 
