@@ -184,7 +184,11 @@ class Containerbuild:
         classic = json['result']['confinement'] == 'classic'
         rev = json['result']['revision']
 
+        # https://github.com/snapcore/snapd/blob/master/snap/info.go
+        # MountFile
         filename = '{}_{}.snap'.format(name, rev)
+        # https://github.com/snapcore/snapd/blob/master/dirs/dirs.go
+        # CoreLibExecDir
         installed = os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps',
                                  filename)
         # Copy file to a path the 'lxd' snap can access
