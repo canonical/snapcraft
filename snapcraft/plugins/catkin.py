@@ -34,6 +34,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - include-roscore:
       (boolean)
       Whether or not to include roscore with the part. Defaults to true.
+    - rosinstall-files:
+      (list of strings)
+      List of rosinstall files to merge while pulling. Paths are relative to
+      the source.
     - underlay:
       (object)
       Used to inform Snapcraft that this snap isn't standalone, and is actually
@@ -74,7 +78,8 @@ logger = logging.getLogger(__name__)
 _ROS_RELEASE_MAP = {
     'indigo': 'trusty',
     'jade': 'trusty',
-    'kinetic': 'xenial'
+    'kinetic': 'xenial',
+    'lunar': 'xenial'
 }
 
 
@@ -123,6 +128,16 @@ class CatkinPlugin(snapcraft.BasePlugin):
             'required': ['build-path', 'run-path'],
         }
 
+        schema['properties']['rosinstall-files'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string'
+            },
+            'default': [],
+        }
+
         schema['required'].append('catkin-packages')
 
         return schema
@@ -158,6 +173,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         self._rosdep_path = os.path.join(self.partdir, 'rosdep')
         self._compilers_path = os.path.join(self.partdir, 'compilers')
         self._catkin_path = os.path.join(self.partdir, 'catkin')
+        self._wstool_path = os.path.join(self.partdir, 'wstool')
 
         # The path created via the `source` key (or a combination of `source`
         # and `source-subdir` keys) needs to point to a valid Catkin workspace
@@ -258,6 +274,22 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         """
 
         super().pull()
+
+        # There may be nothing contained within the source but a rosinstall
+        # file. We need to use it to flesh out the workspace before continuing
+        # with the pull.
+        if self.options.rosinstall_files:
+            wstool = _Wstool(
+                self._ros_package_path, self._wstool_path,
+                self.PLUGIN_STAGE_SOURCES, self.project)
+            wstool.setup()
+
+            source_path = self.sourcedir
+            if self.options.source_subdir:
+                source_path = os.path.join(self.sourcedir,
+                                           self.options.source_subdir)
+            _handle_rosinstall_files(
+                wstool,  source_path, self.options.rosinstall_files)
 
         # Make sure the package path exists before continuing
         if self.catkin_packages and not os.path.exists(self._ros_package_path):
@@ -648,6 +680,17 @@ def _find_system_dependencies(catkin_packages, rosdep, catkin):
                for item in sublist)
 
 
+def _handle_rosinstall_files(wstool, source_path, rosinstall_files):
+    """Merge given rosinstall files into our workspace."""
+
+    for rosinstall_file in rosinstall_files:
+        logger.info('Merging {}'.format(rosinstall_file))
+        wstool.merge(os.path.join(source_path, rosinstall_file))
+
+    logger.info('Updating workspace...')
+    wstool.update()
+
+
 class SystemDependencyNotFoundError(errors.SnapcraftError):
     fmt = '{system_dependency!r} does not resolve to a system dependency'
 
@@ -919,3 +962,59 @@ def _get_highest_version_path(path):
         raise RuntimeError('nothing found in {!r}'.format(path))
 
     return paths[-1]
+
+
+class _Wstool:
+    def __init__(self, ros_package_path, wstool_path, ubuntu_sources, project):
+        self._ros_package_path = ros_package_path
+        self._ubuntu_sources = ubuntu_sources
+        self._wstool_path = wstool_path
+        self._wstool_install_path = os.path.join(wstool_path, 'install')
+        self._project = project
+
+    def setup(self):
+        os.makedirs(self._wstool_install_path, exist_ok=True)
+
+        # wstool isn't a dependency of the project, so we'll unpack it
+        # somewhere else, and use it from there.
+        logger.info('Preparing to fetch wstool...')
+        ubuntu = repo.Ubuntu(self._wstool_path, sources=self._ubuntu_sources,
+                             project_options=self._project)
+        logger.info('Fetching wstool...')
+        ubuntu.get(['python-wstool'])
+
+        logger.info('Installing wstool...')
+        ubuntu.unpack(self._wstool_install_path)
+
+        logger.info('Initializing workspace (if necessary)...')
+        try:
+            self._run(['init', self._ros_package_path, '-j{}'.format(
+                self._project.parallel_build_count)])
+        except subprocess.CalledProcessError as e:
+            output = e.output.decode('utf8').strip()
+            if 'already is a workspace' not in output:
+                raise RuntimeError(
+                    'Error initializing workspace:\n{}'.format(output))
+
+    def merge(self, rosinstall_file):
+        return self._run(
+            ['merge', rosinstall_file, '--confirm-all', '-t{}'.format(
+                self._ros_package_path)]).strip()
+
+    def update(self):
+        return self._run(
+            ['update', '-j{}'.format(self._project.parallel_build_count),
+             '-t{}'.format(self._ros_package_path)]).strip()
+
+    def _run(self, arguments):
+        env = os.environ.copy()
+
+        env['PATH'] += ':' + os.path.join(self._wstool_install_path, 'usr',
+                                          'bin')
+        # The execution path of python doesn't seem to cause these packages to
+        # be picked up, so put them on the PYTHONPATH manually.
+        env['PYTHONPATH'] = os.path.join(self._wstool_install_path, 'usr',
+                                         'lib', 'python2.7', 'dist-packages')
+
+        return subprocess.check_output(['wstool'] + arguments,
+                                       env=env).decode('utf8').strip()

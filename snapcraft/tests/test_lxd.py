@@ -33,8 +33,9 @@ from snapcraft.internal import lxd
 class LXDTestCase(tests.TestCase):
 
     scenarios = [
-        ('local', dict(remote='local')),
-        ('remote', dict(remote='my-remote')),
+        ('local', dict(remote='local', target_arch=None)),
+        ('remote', dict(remote='my-remote', target_arch=None)),
+        ('cross', dict(remote='local', target_arch='armhf')),
     ]
 
     @patch('petname.Generate')
@@ -45,21 +46,23 @@ class LXDTestCase(tests.TestCase):
         self.useFixture(fake_logger)
 
         mock_pet.return_value = 'my-pet'
-
-        project_options = ProjectOptions()
+        project_options = ProjectOptions(target_deb_arch=self.target_arch)
         metadata = {'name': 'project'}
         project_folder = 'build_project'
         lxd.Cleanbuilder(output='snap.snap', source='project.tar',
                          metadata=metadata, remote=self.remote,
                          project_options=project_options).execute()
-        expected_arch = project_options.deb_arch
+        expected_arch = 'amd64'
 
-        self.assertEqual(
-            'Setting up container with project assets\n'
-            'Waiting for a network connection...\n'
-            'Network connection established\n'
-            'Retrieved snap.snap\n',
-            fake_logger.output)
+        self.assertIn('Setting up container with project assets\n'
+                      'Waiting for a network connection...\n'
+                      'Network connection established\n'
+                      'Retrieved snap.snap\n', fake_logger.output)
+        args = []
+        if self.target_arch:
+            self.assertIn('Setting target machine to \'{}\'\n'.format(
+                          self.target_arch), fake_logger.output)
+            args += ['--target-arch', self.target_arch]
 
         container_name = '{}:snapcraft-my-pet'.format(self.remote)
         fake_lxd.check_call_mock.assert_has_calls([
@@ -67,6 +70,8 @@ class LXDTestCase(tests.TestCase):
                   'ubuntu:xenial/{}'.format(expected_arch), container_name]),
             call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
+            call(['lxc', 'config', 'set', container_name,
+                  'environment.LC_ALL', 'C.UTF-8']),
             call(['lxc', 'exec', container_name,
                   '--env', 'HOME=/{}'.format(project_folder), '--',
                   'mkdir', project_folder]),
@@ -90,7 +95,7 @@ class LXDTestCase(tests.TestCase):
                   'apt-get', 'install', 'snapcraft', '-y']),
             call(['lxc', 'exec', container_name,
                   '--env', 'HOME=/{}'.format(project_folder), '--',
-                  'snapcraft', 'snap', '--output', 'snap.snap']),
+                  'snapcraft', 'snap', '--output', 'snap.snap', *args]),
             call(['lxc', 'file', 'pull',
                   '{}/{}/snap.snap'.format(container_name, project_folder),
                   'snap.snap']),
@@ -123,7 +128,7 @@ class LXDTestCase(tests.TestCase):
 
         def run_effect(*args, **kwargs):
             call_list.append(args[0])
-            if args[0] == ['snapcraft', 'snap', '--output', 'snap.snap']:
+            if args[0][:4] == ['snapcraft', 'snap', '--output', 'snap.snap']:
                 raise CalledProcessError(returncode=255, cmd=args[0])
 
         mock_run.side_effect = run_effect
@@ -143,7 +148,7 @@ class LXDTestCase(tests.TestCase):
 
         def run_effect(*args, **kwargs):
             call_list.append(args[0])
-            if args[0] == ['snapcraft', 'snap', '--output', 'snap.snap']:
+            if args[0][:4] == ['snapcraft', 'snap', '--output', 'snap.snap']:
                 raise CalledProcessError(returncode=255, cmd=args[0])
 
         mock_run.side_effect = run_effect

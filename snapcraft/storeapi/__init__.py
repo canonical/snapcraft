@@ -160,6 +160,7 @@ class StoreClient():
         # The macaroon has been discharged, save it in the config
         self.conf.set('macaroon', macaroon)
         self.conf.set('unbound_discharge', unbound_discharge)
+        self.conf.set('email', email)
         if save:
             self.conf.save()
 
@@ -187,6 +188,21 @@ class StoreClient():
             self.conf.set('unbound_discharge', unbound_discharge)
             self.conf.save()
             return func(*args, **kwargs)
+
+    def whoami(self):
+        """Return user relevant login information."""
+        account_data = {}
+
+        for k in ('email', 'account_id'):
+            value = self.conf.get(k)
+            if not value:
+                account_info = self.get_account_information()
+                value = account_info.get(k, 'unknown')
+                self.conf.set(k, value)
+                self.conf.save()
+            account_data[k] = value
+
+        return account_data
 
     def get_account_information(self):
         return self._refresh_if_necessary(self.sca.get_account_information)
@@ -287,17 +303,39 @@ class StoreClient():
             return
         logger.info('Downloading {}'.format(name, download_path))
 
+        # we only resume when redirected to our CDN since we use internap's
+        # special sauce.
+        resume_possible = False
+        total_read = 0
+        probe_url = requests.head(download_url)
+        if (probe_url.is_redirect and
+                'internap' in probe_url.headers['Location']):
+            download_url = probe_url.headers['Location']
+            resume_possible = True
+
         # HttpAdapter cannot help here as this is a stream.
         # LP: #1617765
         not_downloaded = True
         retry_count = 5
         while not_downloaded and retry_count:
-            request = self.cpi.get(download_url, stream=True)
+            headers = {}
+            if resume_possible and os.path.exists(download_path):
+                total_read = os.path.getsize(download_path)
+                headers['Range'] = 'bytes={}-'.format(total_read)
+            request = self.cpi.get(download_url, headers=headers, stream=True)
             request.raise_for_status()
+            redirections = [h.headers['Location'] for h in request.history]
+            if redirections:
+                logger.debug('Redirections for {!r}: {}'.format(
+                    download_url, ', '.join(redirections)))
             try:
-                download_requests_stream(request, download_path)
+                download_requests_stream(request, download_path,
+                                         total_read=total_read)
                 not_downloaded = False
             except requests.exceptions.ChunkedEncodingError as e:
+                logger.debug('Error while downloading: {!r}. '
+                             'Retries left to download: {!r}.'.format(
+                                 e, retry_count))
                 retry_count -= 1
                 if not retry_count:
                     raise e
@@ -416,7 +454,7 @@ class SnapIndexClient(Client):
         headers = self.get_default_headers()
         headers.update({
             'Accept': 'application/hal+json',
-            'X-Ubuntu-Release': constants.DEFAULT_SERIES,
+            'X-Ubuntu-Series': constants.DEFAULT_SERIES,
         })
         if arch:
             headers['X-Ubuntu-Architecture'] = arch
@@ -428,7 +466,7 @@ class SnapIndexClient(Client):
                       'download_sha3_384,download_sha512,snap_id,'
                       'revision,release',
         }
-        logger.info('Getting details for {}'.format(snap_name))
+        logger.debug('Getting details for {}'.format(snap_name))
         url = 'api/v1/snaps/details/{}'.format(snap_name)
         resp = self.get(url, headers=headers, params=params)
         if resp.status_code != 200:

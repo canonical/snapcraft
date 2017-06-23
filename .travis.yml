@@ -3,46 +3,25 @@ dist: trusty
 
 services: [docker]
 
-language: python
-python: [3.5]
+language: bash
 
-env:
-  global:
-  - INTEGRATION_DEPENDENCIES="apt install -y bzr curl git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev mercurial python3-pip subversion squashfs-tools sudo snapd xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
-  matrix:
-  - DOCKER=1 CHECK_CLA=1 DEPENDENCIES="apt install -y git python-launchpadlib"
-  - DOCKER=1 TEST_SUITE=static DEPENDENCIES="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
-  - DOCKER=1 TEST_SUITE=unit DEPENDENCIES="apt install -y git bzr subversion mercurial libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt && apt install -y python3-coverage"
-  - DOCKER=1 TEST_SUITE=integration DEPENDENCIES=$INTEGRATION_DEPENDENCIES
-  - DOCKER=1 TEST_SUITE=store DEPENDENCIES=$INTEGRATION_DEPENDENCIES
-  - DOCKER=1 TEST_SUITE=plugins DEPENDENCIES=$INTEGRATION_DEPENDENCIES
-  - DOCKER=1 GEN_DOCS=1 DEPENDENCIES="apt install libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev git make python3-pip python3-sphinx -y && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
-  - DOCKER=1 TEST_SUITE=beta DEPENDENCIES="apt install -y python3-git python3-github wget"
-
-install:
-  - if [ ! -z $DOCKER ]; then docker run --name builder
-    -e TRAVIS_COMMIT_RANGE=$TRAVIS_COMMIT_RANGE
-    -e TEST_USER_EMAIL=$TEST_USER_EMAIL -e TEST_USER_PASSWORD=$TEST_USER_PASSWORD
-    -e TEST_STORE=$TEST_STORE -e TEST_SNAP_WITH_TRACKS=$TEST_SNAP_WITH_TRACKS
-    -e GITHUB_TEST_USER_NAME=$GITHUB_TEST_USER_NAME -e GITHUB_TEST_PASSWORD=$GITHUB_TEST_PASSWORD
-    -e SNAPCRAFT_AUTOPKGTEST_SECRET=$SNAPCRAFT_AUTOPKGTEST_SECRET -e GH_TOKEN=$GH_TOKEN
-    -e LC_ALL=en_US.UTF-8
-    -v $PWD:$PWD -w $PWD -td ubuntu:xenial; fi
-  - if [ ! -z $DOCKER ]; then docker exec -i builder sed -i s/archive.ubuntu.com/us.archive.ubuntu.com/g /etc/apt/sources.list; fi
-  - if [ ! -z $DOCKER ]; then docker exec -i builder apt update; fi
-  - if [ ! -z $DOCKER ]; then docker exec -i builder apt install -y locales; fi
-  - if [ ! -z $DOCKER ]; then docker exec -i builder /usr/sbin/locale-gen en_US.UTF-8; fi
-  - if [ ! -z $DOCKER ]; then docker exec -i builder sh -c "$DEPENDENCIES"; fi
-
-script:
-  # CLA check, only in pull requests.
-  - if [ ! -z $CHECK_CLA ] && [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ]; then docker exec -i builder ./tools/cla_check_in_travis.sh; fi
-  # Test suites from runtests.sh, in pull requests and landings to master.
-  - if [ ! -z $TEST_SUITE ] && [ "$TEST_SUITE" != "beta" ] &&  [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then docker exec -i builder ./runtests.sh $TEST_SUITE; fi
-  # Trigger beta tests, only in the daily cron.
-  - if [ "$TRAVIS_EVENT_TYPE" = "cron" ] && [ "$TEST_SUITE" == "beta" ]; then docker exec -i builder ./tools/make_beta_pr.py; fi
-  # Generate docs, only in pushes to master.
-  - if [ ! -z $GEN_DOCS ] && [ "$TRAVIS_EVENT_TYPE" = "push" ] && [ "$TRAVIS_BRANCH" = "master" ]; then docker exec -i builder ./tools/gen_api_docs.sh && ./tools/push_api_gh_pages.sh; fi
-
-after_success:
-  - if [ "$TEST_SUITE" == "unit" ]; then pip install codecov coverage && python3 -m coverage xml && codecov; fi
+jobs:
+  include:
+    # Tests, only when not triggered by the daily cron.
+    - stage: static
+      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh static; fi
+    - stage: unit
+      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh unit; fi
+    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then SNAPCRAFT_TEST_MOCK_MACHINE=armv7l ./tools/travis/run_tests.sh unit; fi
+    - stage: integration
+      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh integration; fi
+    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh plugins; fi
+    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh store; fi
+    # CLA check, only in pull requests.
+    - script: if [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ]; then ./tools/travis/run_cla_check.sh; fi
+    # Trigger beta tests, only in the daily cron.
+    - stage: beta
+      script: if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then ./tools/travis/make_beta_pr.sh; fi
+    # Generate docs, only in pushes to master.
+    - stage: deploy
+      script: if [ "$TRAVIS_EVENT_TYPE" = "push" ] && [ "$TRAVIS_BRANCH" = "master" ]; then ./tools/travis/deploy_docs.sh; fi

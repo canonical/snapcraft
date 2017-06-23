@@ -30,15 +30,9 @@ import yaml
 
 import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal.errors import (
-    PrimeFileConflictError,
-    PluginError,
-    MissingState,
-    SnapcraftPartConflictError,
-    SnapcraftSchemaError
-)
 from snapcraft.internal import (
     common,
+    errors,
     libraries,
     repo,
     sources,
@@ -77,7 +71,6 @@ class PluginHandler:
         self._part_properties = _expand_part_properties(
             part_properties, part_schema)
         self.stage_packages = []
-        self.build_packages = []
 
         # Some legacy parts can have a '/' in them to separate the main project
         # part with the subparts. This is rather unfortunate as it affects the
@@ -88,7 +81,7 @@ class PluginHandler:
         self.deps = []
 
         self.stagedir = project_options.stage_dir
-        self.snapdir = project_options.snap_dir
+        self.primedir = project_options.prime_dir
 
         parts_dir = project_options.parts_dir
         self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
@@ -107,9 +100,10 @@ class PluginHandler:
                 plugin_name, self._part_properties, part_schema,
                 definitions_schema)
         except jsonschema.ValidationError as e:
-            error = SnapcraftSchemaError.from_validation_error(e)
-            raise PluginError('properties failed to load for {}: {}'.format(
-                part_name, error.message))
+            error = errors.SnapcraftSchemaError.from_validation_error(e)
+            raise errors.PluginError(
+                'properties failed to load for {}: {}'.format(
+                    part_name, error.message))
 
         stage_packages = getattr(self.code, 'stage_packages', [])
         sources = getattr(self.code, 'PLUGIN_STAGE_SOURCES', None)
@@ -138,7 +132,8 @@ class PluginHandler:
                 module = _load_local(module_name,
                                      self._project_options.local_plugins_dir)
             if not module:
-                raise PluginError('unknown plugin: {}'.format(plugin_name))
+                raise errors.PluginError(
+                    'unknown plugin: {}'.format(plugin_name))
 
         plugin = _get_plugin(module)
         _validate_pull_and_build_properties(
@@ -193,7 +188,7 @@ class PluginHandler:
     def makedirs(self):
         dirs = [
             self.code.sourcedir, self.code.builddir, self.code.installdir,
-            self.stagedir, self.snapdir, self.statedir
+            self.stagedir, self.primedir, self.statedir
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
@@ -324,21 +319,11 @@ class PluginHandler:
 
         # Add the annotated list of build packages
         part_build_packages = self._part_properties.get('build-packages', [])
-        build_packages = repo.Repo.get_installed_build_packages(
-            part_build_packages)
-        versioned_build_packages = []
-        for pkg in build_packages:
-            if pkg in part_build_packages:
-                versioned_build_packages.append(pkg)
-            else:
-                pkg_name, version = repo.get_pkg_name_parts(pkg)
-                if pkg_name in part_build_packages:
-                    versioned_build_packages.append(pkg)
 
         self.mark_done('pull', states.PullState(
             pull_properties, part_properties=self._part_properties,
             project=self._project_options, stage_packages=self.stage_packages,
-            build_packages=versioned_build_packages,
+            build_packages=part_build_packages,
             source_details=self.source_handler.source_details
         ))
 
@@ -498,7 +483,7 @@ class PluginHandler:
             self._clean_shared_area(self.stagedir, state,
                                     project_staged_state)
         except AttributeError:
-            raise MissingState(
+            raise errors.MissingState(
                 "Failed to clean step 'stage': Missing necessary state. "
                 "This won't work until a complete clean has occurred.")
 
@@ -508,9 +493,9 @@ class PluginHandler:
         self.makedirs()
         self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
-        _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
+        _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 
-        dependencies = _find_dependencies(self.snapdir, snap_files)
+        dependencies = _find_dependencies(self.primedir, snap_files)
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
@@ -518,7 +503,7 @@ class PluginHandler:
         # already been primed by other means, and migrating them again could
         # potentially override the `stage` or `snap` filtering.
         (in_part, staged, primed, system) = _split_dependencies(
-            dependencies, self.installdir, self.stagedir, self.snapdir)
+            dependencies, self.installdir, self.stagedir, self.primedir)
 
         part_dependency_paths = {os.path.dirname(d) for d in in_part}
         staged_dependency_paths = {os.path.dirname(d) for d in staged}
@@ -534,7 +519,7 @@ class PluginHandler:
                 # make sure we follow those symlinks when we migrate the
                 # dependencies.
                 _migrate_files(system, system_dependency_paths, '/',
-                               self.snapdir, follow_symlinks=True)
+                               self.primedir, follow_symlinks=True)
 
         self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
 
@@ -555,10 +540,10 @@ class PluginHandler:
         state = states.get_state(self.statedir, 'prime')
 
         try:
-            self._clean_shared_area(self.snapdir, state,
+            self._clean_shared_area(self.primedir, state,
                                     project_primed_state)
         except AttributeError:
-            raise MissingState(
+            raise errors.MissingState(
                 "Failed to clean step 'prime': Missing necessary state. "
                 "This won't work until a complete clean has occurred.")
 
@@ -588,7 +573,7 @@ class PluginHandler:
         if state:
             for path in state.dependency_paths:
                 dependency_paths.add(
-                    os.path.join(self.snapdir, path.lstrip('/')))
+                    os.path.join(self.primedir, path.lstrip('/')))
 
         return dependency_paths
 
@@ -606,7 +591,7 @@ class PluginHandler:
         try:
             self._clean_steps(project_staged_state, project_primed_state,
                               step, hint)
-        except MissingState:
+        except errors.MissingState:
             # If one of the step cleaning rules is missing state, it must be
             # running on the output of an old Snapcraft. In that case, if we
             # were specifically asked to clean that step we need to fail.
@@ -649,7 +634,7 @@ class PluginHandler:
             self.clean_pull(hint)
 
 
-def _split_dependencies(dependencies, installdir, stagedir, snapdir):
+def _split_dependencies(dependencies, installdir, stagedir, primedir):
     """Split dependencies into their corresponding location.
 
     Return a tuple of sets for each location.
@@ -665,8 +650,8 @@ def _split_dependencies(dependencies, installdir, stagedir, snapdir):
             part_dependencies.add(os.path.relpath(file_path, installdir))
         elif file_path.startswith(stagedir):
             staged_dependencies.add(os.path.relpath(file_path, stagedir))
-        elif file_path.startswith(snapdir):
-            primed_dependencies.add(os.path.relpath(file_path, snapdir))
+        elif file_path.startswith(primedir):
+            primed_dependencies.add(os.path.relpath(file_path, primedir))
         else:
             file_path = file_path.lstrip('/')
 
@@ -679,7 +664,7 @@ def _split_dependencies(dependencies, installdir, stagedir, snapdir):
                 part_dependencies.add(file_path)
             elif os.path.exists(os.path.join(stagedir, file_path)):
                 staged_dependencies.add(file_path)
-            elif os.path.exists(os.path.join(snapdir, file_path)):
+            elif os.path.exists(os.path.join(primedir, file_path)):
                 primed_dependencies.add(file_path)
             else:
                 system_dependencies.add(file_path)
@@ -1049,7 +1034,7 @@ def _generate_exclude_set(directory, excludes):
 def _validate_relative_paths(files):
     for d in files:
         if os.path.isabs(d):
-            raise PluginError('path "{}" must be relative'.format(d))
+            raise errors.PluginError('path "{}" must be relative'.format(d))
 
 
 def _file_collides(file_this, file_other):
@@ -1096,7 +1081,7 @@ def check_for_collisions(parts):
                     conflict_files.append(f)
 
             if conflict_files:
-                raise SnapcraftPartConflictError(
+                raise errors.SnapcraftPartConflictError(
                     other_part_name=other_part_name,
                     part_name=part.name,
                     conflict_files=conflict_files)
@@ -1127,7 +1112,7 @@ def _combine_filesets(starting_fileset, modifying_fileset):
                                              modifying_includes)
 
     if contradicting_fileset:
-        raise PrimeFileConflictError(fileset=contradicting_fileset)
+        raise errors.PrimeFileConflictError(fileset=contradicting_fileset)
 
     to_combine = False
     # combine if starting_fileset has a wildcard

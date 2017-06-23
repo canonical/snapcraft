@@ -1,0 +1,13 @@
+name: 7z-hello
+version: '0.1'
+summary: test the 7z source
+description: |
+  This is a basic snap containing a 7z source.
+
+grade: devel
+confinement: devmode
+
+parts:
+  7z:
+    plugin: dump
+    source: test.7z

@@ -1,0 +1,16 @@
+name: stage-packages-missing-dependency
+version: '0.1'
+summary: install a stage package
+description: |
+  Install a stage package.
+  This package has dependencies:
+    - haskell98-report
+    - haskell98-tutorial
+
+grade: stable
+confinement: strict
+
+parts:
+  part-with-stage-packages:
+    plugin: nil
+    stage-packages: ['haskell-doc']

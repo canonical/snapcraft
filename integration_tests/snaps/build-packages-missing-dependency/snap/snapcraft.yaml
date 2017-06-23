@@ -1,0 +1,16 @@
+name: build-packages-missing-dependency
+version: '0.1'
+summary: install a build package
+description: |
+  Install a build package.
+  This package has dependencies:
+    - haskell98-report
+    - haskell98-tutorial
+
+grade: stable
+confinement: strict
+
+parts:
+  part-with-build-packages:
+    plugin: nil
+    build-packages: ['haskell-doc']

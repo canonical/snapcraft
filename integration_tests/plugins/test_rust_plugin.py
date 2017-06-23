@@ -25,6 +25,7 @@ from testtools.matchers import FileExists, MatchesRegex, Not
 
 import snapcraft
 import integration_tests
+from snapcraft.tests.matchers import HasArchitecture
 
 
 class RustPluginBaseTestCase(integration_tests.TestCase):
@@ -75,6 +76,31 @@ class RustPluginTestCase(RustPluginBaseTestCase):
         self.assertEqual('Rust in a subdirectory works\n', binary_output)
         # Test for bug https://bugs.launchpad.net/snapcraft/+bug/1654764
         self.assertThat('Cargo.lock', Not(FileExists()))
+
+    def test_stage_rust_with_source_and_source_subdir(self):
+        self.copy_project_to_cwd('rust-subdir')
+        with open('snapcraft.yaml') as snapcraft_yaml_file:
+            snapcraft_yaml = yaml.load(snapcraft_yaml_file)
+        snapcraft_yaml['parts']['rust-subdir']['source'] = '.'
+        snapcraft_yaml['parts']['rust-subdir']['source-subdir'] = 'subdir'
+        with open('snapcraft.yaml', 'w') as snapcraft_yaml_file:
+            yaml.dump(snapcraft_yaml, snapcraft_yaml_file)
+
+        self.run_snapcraft('pull')
+
+        self.assertThat(
+            os.path.join('parts', 'rust-subdir', 'src', 'subdir',
+                         'Cargo.lock'), FileExists())
+
+    def test_cross_compiling(self):
+        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+            self.skipTest('The test only handles amd64 to arm64')
+
+        self.run_snapcraft(['build', '--target-arch=arm64'],
+                           'rust-hello')
+        binary = os.path.join(self.parts_dir, 'rust-hello', 'install', 'bin',
+                              'rust-hello')
+        self.assertThat(binary, HasArchitecture('aarch64'))
 
 
 class RustPluginConfinementTestCase(testscenarios.WithScenarios,

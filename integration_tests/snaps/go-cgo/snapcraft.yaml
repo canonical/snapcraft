@@ -1,0 +1,13 @@
+name: go-cgo
+version: 0.1
+summary: A go project using libraries written in C.
+description: |
+  This is a basic go snap that uses cgo to access C APIs.
+  The name of the binary will be that of the directory containing it,
+  just like it is seen when using `go build` or `go install`.
+confinement: strict
+
+parts:
+  go-cgo:
+    plugin: go
+    source: .

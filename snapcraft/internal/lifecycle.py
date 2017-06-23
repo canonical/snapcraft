@@ -35,7 +35,9 @@ from snapcraft.internal import (
     meta,
     pluginhandler,
     repo,
+    states
 )
+from snapcraft.internal import errors
 from snapcraft.internal.cache import SnapCache
 from snapcraft.internal.indicators import is_dumb_terminal
 from snapcraft.internal.project_loader import replace_attr
@@ -43,6 +45,8 @@ from snapcraft.internal.project_loader import replace_attr
 
 logger = logging.getLogger(__name__)
 
+
+_SNAPCRAFT_INTERNAL_DIR = os.path.join('snap', '.snapcraft')
 
 _TEMPLATE_YAML = """name: my-snap-name # you probably want to 'snapcraft register <name>'
 version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
@@ -60,7 +64,7 @@ parts:
   my-part:
     # See 'snapcraft plugins'
     plugin: nil
-"""  # noqa, lines too long.
+""" # noqa, lines too long.
 
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 
@@ -70,20 +74,19 @@ def init():
     snapcraft_yaml_path = os.path.join('snap', 'snapcraft.yaml')
 
     if os.path.exists(snapcraft_yaml_path):
-        raise EnvironmentError(
+        raise errors.SnapcraftEnvironmentError(
             '{} already exists!'.format(snapcraft_yaml_path))
     elif os.path.exists('snapcraft.yaml'):
-        raise EnvironmentError('snapcraft.yaml already exists!')
+        raise errors.SnapcraftEnvironmentError(
+            'snapcraft.yaml already exists!')
     elif os.path.exists('.snapcraft.yaml'):
-        raise EnvironmentError('.snapcraft.yaml already exists!')
-    yaml = _TEMPLATE_YAML.strip()
+        raise errors.SnapcraftEnvironmentError(
+            '.snapcraft.yaml already exists!')
+    yaml = _TEMPLATE_YAML
     with contextlib.suppress(FileExistsError):
         os.mkdir(os.path.dirname(snapcraft_yaml_path))
     with open(snapcraft_yaml_path, mode='w') as f:
         f.write(yaml)
-    logger.info('Created {}.'.format(snapcraft_yaml_path))
-    logger.info(
-        'Edit the file to your liking or run `snapcraft` to get started')
 
     return snapcraft_yaml_path
 
@@ -108,7 +111,14 @@ def execute(step, project_options, part_names=None):
     :returns: A dict with the snap name, version, type and architectures.
     """
     config = snapcraft.internal.load_config(project_options)
-    repo.Repo.install_build_packages(config.build_tools)
+    installed_packages = repo.Repo.install_build_packages(
+        config.build_tools)
+    if installed_packages is None:
+        raise ValueError(
+            'The repo backend is not returning the list of installed packages')
+    os.makedirs(_SNAPCRAFT_INTERNAL_DIR, exist_ok=True)
+    with open(os.path.join(_SNAPCRAFT_INTERNAL_DIR, 'state'), 'w') as f:
+        f.write(yaml.dump(states.GlobalState(installed_packages)))
 
     if (os.environ.get('SNAPCRAFT_SETUP_CORE') and
             config.data['confinement'] == 'classic'):
@@ -249,8 +259,7 @@ class _Executor:
     def _create_meta(self, step, part_names):
         if step == 'prime' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
-            meta.create_snap_packaging(self.config.data,
-                                       self.project_options)
+            meta.create_snap_packaging(self.config.data, self.project_options)
 
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
@@ -325,11 +334,11 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
-def containerbuild(project_options, output=None, remote=''):
+def containerbuild(step, project_options, output=None, args=[]):
     config = snapcraft.internal.load_config(project_options)
     lxd.Project(output=output, source=os.path.curdir,
-                project_options=project_options, remote=remote,
-                metadata=config.get_metadata()).execute()
+                project_options=project_options,
+                metadata=config.get_metadata()).execute(step, args)
 
 
 def cleanbuild(project_options, remote=''):
@@ -356,13 +365,13 @@ def _snap_data_from_dir(directory):
 
 def snap(project_options, directory=None, output=None):
     if directory:
-        snap_dir = os.path.abspath(directory)
-        snap = _snap_data_from_dir(snap_dir)
+        prime_dir = os.path.abspath(directory)
+        snap = _snap_data_from_dir(prime_dir)
     else:
         # make sure the full lifecycle is executed
-        snap_dir = project_options.snap_dir
+        prime_dir = project_options.prime_dir
         execute('prime', project_options)
-        snap = _snap_data_from_dir(snap_dir)
+        snap = _snap_data_from_dir(prime_dir)
 
     snap_name = output or common.format_snap_name(snap)
 
@@ -381,7 +390,7 @@ def snap(project_options, directory=None, output=None):
     if snap['type'] != 'os':
         mksquashfs_args.append('-all-root')
 
-    with Popen(['mksquashfs', snap_dir, snap_name] + mksquashfs_args,
+    with Popen(['mksquashfs', prime_dir, snap_name] + mksquashfs_args,
                stdout=PIPE, stderr=STDOUT) as proc:
         ret = None
         if is_dumb_terminal():
@@ -412,7 +421,6 @@ def snap(project_options, directory=None, output=None):
 
         logger.debug(proc.stdout.read().decode('utf-8'))
 
-    logger.info('Snapped {}'.format(snap_name))
     return snap_name
 
 
@@ -452,7 +460,7 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
                 humanized_parts = formatting_utils.humanize_list(
                     dependents, 'and')
 
-                raise RuntimeError(
+                raise errors.SnapcraftEnvironmentError(
                     'Requested clean of {!r} but {} depend{} upon it. Please '
                     "add each to the clean command if that's what you "
                     'intended.'.format(part_name, humanized_parts,
@@ -502,7 +510,7 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
     if index <= common.COMMAND_ORDER.index('prime'):
         # Remove the priming area.
         _cleanup_common(
-            project_options.snap_dir, 'prime', 'Cleaning up priming area',
+            project_options.prime_dir, 'prime', 'Cleaning up priming area',
             parts)
 
     if index <= common.COMMAND_ORDER.index('stage'):
@@ -516,8 +524,9 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
         _cleanup_parts_dir(
             project_options.parts_dir, project_options.local_plugins_dir,
             parts)
+        _cleanup_internal_snapcraft_dir()
 
-    _remove_directory_if_empty(project_options.snap_dir)
+    _remove_directory_if_empty(project_options.prime_dir)
     _remove_directory_if_empty(project_options.stage_dir)
     _remove_directory_if_empty(project_options.parts_dir)
 
@@ -543,6 +552,11 @@ def _cleanup_parts_dir(parts_dir, local_plugins_dir, parts):
     for part in parts:
         part.mark_cleaned('build')
         part.mark_cleaned('pull')
+
+
+def _cleanup_internal_snapcraft_dir():
+    if os.path.exists(_SNAPCRAFT_INTERNAL_DIR):
+        shutil.rmtree(_SNAPCRAFT_INTERNAL_DIR)
 
 
 def clean(project_options, parts, step=None):

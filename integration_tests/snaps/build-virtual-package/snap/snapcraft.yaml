@@ -1,0 +1,14 @@
+name: build-virtual-package
+version: '0.1'
+summary: install a virtual build-package
+description: |
+  Install a virtual build-package.
+
+grade: stable
+confinement: strict
+
+build-packages: ['fortunes-off']
+
+parts:
+  empty-part:
+    plugin: nil

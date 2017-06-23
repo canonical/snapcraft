@@ -34,6 +34,7 @@ class KBuildPluginTestCase(tests.TestCase):
         class Options:
             build_parameters = []
             kconfigfile = None
+            kconfigflavour = None
             kdefconfig = []
             kconfigs = []
 
@@ -50,6 +51,9 @@ class KBuildPluginTestCase(tests.TestCase):
         self.assertEqual(properties['kconfigfile']['type'], 'string')
         self.assertEqual(properties['kconfigfile']['default'], None)
 
+        self.assertEqual(properties['kconfigflavour']['type'], 'string')
+        self.assertEqual(properties['kconfigflavour']['default'], None)
+
         self.assertEqual(properties['kconfigs']['type'], 'array')
         self.assertEqual(properties['kconfigs']['default'], [])
         self.assertEqual(properties['kconfigs']['minitems'], 1)
@@ -57,7 +61,8 @@ class KBuildPluginTestCase(tests.TestCase):
         self.assertTrue(properties['kconfigs']['uniqueItems'])
 
     def test_get_build_properties(self):
-        expected_build_properties = ['kdefconfig', 'kconfigfile', 'kconfigs']
+        expected_build_properties = ['kdefconfig', 'kconfigfile',
+                                     'kconfigflavour', 'kconfigs']
         resulting_build_properties = kbuild.KBuildPlugin.get_build_properties()
 
         self.assertThat(resulting_build_properties,

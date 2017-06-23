@@ -6,7 +6,7 @@ icon: icon.png
 confinement: strict
 
 parts:
-    mercurial:
-        plugin: make
-        source: .
-        source-type: hg
+  mercurial:
+    plugin: dump
+    source: .
+    source-type: hg

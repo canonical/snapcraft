@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -377,9 +377,22 @@ if _os.environ.get('SNAP_NAME') == 'snapcraft':
     import ctypes.util
     ctypes.util.find_library = find_library
 
+
+def _get_version():
+    if _os.environ.get('SNAP_NAME') == 'snapcraft':
+        return _os.environ['SNAP_VERSION']
+    try:
+        return pkg_resources.require('snapcraft')[0].version
+    except pkg_resources.DistributionNotFound:
+        return 'devel'
+
+
+# Set this early so that the circular imports aren't too painful
+__version__ = _get_version()
+
+
 from snapcraft._baseplugin import BasePlugin        # noqa
 from snapcraft._options import ProjectOptions       # noqa
-from snapcraft._help import topic_help              # noqa
 # FIXME LP: #1662658
 from snapcraft._store import (                      # noqa
     create_key,
@@ -390,7 +403,6 @@ from snapcraft._store import (                      # noqa
     list_keys,
     list_registered,
     login,
-    logout,
     push,
     register,
     register_key,
@@ -406,16 +418,6 @@ from snapcraft import sources                       # noqa
 from snapcraft import file_utils                    # noqa
 from snapcraft import shell_utils                   # noqa
 from snapcraft.internal import repo                 # noqa
-
-
-def _get_version():
-    try:
-        return pkg_resources.require('snapcraft')[0].version
-    except pkg_resources.DistributionNotFound:
-        return 'devel'
-
-
-__version__ = _get_version()
 
 
 # Setup yaml module globally

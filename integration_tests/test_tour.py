@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -25,7 +25,7 @@ class TourTestCase(integration_tests.TestCase):
         output = self.run_snapcraft('tour')
         self.assertTrue(os.path.isdir('snapcraft-tour'),
                         'Tour directory was created')
-        self.assertIn('Snapcraft tour initialized in ./snapcraft-tour/',
+        self.assertIn('Snapcraft tour initialized in \'./snapcraft-tour/\'',
                       output)
 
     def test_tour_with_relative_dir(self):
@@ -33,7 +33,7 @@ class TourTestCase(integration_tests.TestCase):
         output = self.run_snapcraft(['tour', dest_dir])
         self.assertTrue(os.path.isdir(dest_dir),
                         'Tour directory was created')
-        self.assertIn('Snapcraft tour initialized in {}'.format(dest_dir),
+        self.assertIn('Snapcraft tour initialized in {!r}'.format(dest_dir),
                       output)
 
     def test_tour_with_absolute_dir(self):
@@ -41,5 +41,5 @@ class TourTestCase(integration_tests.TestCase):
         output = self.run_snapcraft(['tour', dest_dir])
         self.assertTrue(os.path.isdir(dest_dir),
                         'Tour directory was created')
-        self.assertIn('Snapcraft tour initialized in {}'.format(dest_dir),
+        self.assertIn('Snapcraft tour initialized in {!r}'.format(dest_dir),
                       output)
