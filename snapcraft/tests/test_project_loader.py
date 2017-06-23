@@ -885,6 +885,30 @@ parts:
             "The 'environment/INVALID' property does not match the required "
             "schema: \[1, 2\].*")
 
+    @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
+    def test_invalid_yaml_empty_version(self, mock_loadPlugin):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version:''
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        raised = self.assertRaises(
+            errors.SnapcraftSchemaError,
+            project_loader.Config)
+
+        self.assertEqual(
+            raised.message,
+            "'version' can not be an empty string")
+
 
 class YamlEncodingsTestCase(YamlBaseTestCase):
 
