@@ -184,12 +184,14 @@ class Containerbuild:
         classic = json['result']['confinement'] == 'classic'
         rev = json['result']['revision']
 
+        filename = '{}_{}.snap'.format(name, rev)
         installed = os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps',
-                                 '{}_{}.snap'.format(name, rev))
-        filename = os.path.basename(installed)
-        # Copy file to ensure LXD snap can access it
-        copyfile(installed, filename)
-        self._push_file(filename, os.path.join(self._project_folder, filename))
+                                 filename)
+        # Copy file to a path the 'lxd' snap can access
+        filepath = os.path.join(os.path.sep, 'run', 'user', str(os.getuid()),
+                                'snap.lxd', filename)
+        copyfile(installed, filepath)
+        self._push_file(filepath, os.path.join(self._project_folder, filename))
         logger.info('Installing {}'.format(filename))
         cmd = ['snap', 'install', '--dangerous', filename]
         if classic:
