@@ -19,6 +19,9 @@ jobs:
     - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh store; fi
     # CLA check, only in pull requests.
     - script: if [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ]; then ./tools/travis/run_cla_check.sh; fi
+    # Trigger edge tests, only in the daily cron.
+    - stage: edge
+      script: if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then ./runtests.sh spread; fi
     # Trigger beta tests, only in the daily cron.
     - stage: beta
       script: if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then ./tools/travis/make_beta_pr.sh; fi
