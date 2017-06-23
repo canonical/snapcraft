@@ -18,16 +18,10 @@ import click
 from snapcraft import ProjectOptions
 
 
-class OptionWithHidden(click.Option):
-
-    def __init__(self, *args, **kwargs):
-        self.hidden = kwargs.pop('hidden', False)
-        super().__init__(*args, **kwargs)
+class HiddenOption(click.Option):
 
     def get_help_record(self, ctx):
-        if self.hidden:
-            return
-        super().get_help_record(ctx)
+        pass
 
 
 _BUILD_OPTION_NAMES = [
@@ -52,7 +46,7 @@ def add_build_options(hidden=False):
         for name, params in zip(reversed(_BUILD_OPTION_NAMES),
                                 reversed(_BUILD_OPTIONS)):
             option = click.option(name, **params,
-                                  cls=OptionWithHidden, hidden=hidden)
+                                  cls=HiddenOption if hidden else click.Option)
             func = option(func)
         return func
     return _add_build_options
