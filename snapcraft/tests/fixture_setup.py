@@ -27,6 +27,7 @@ from functools import partial
 from types import ModuleType
 from unittest import mock
 from subprocess import CalledProcessError
+from requests.exceptions import ConnectionError
 
 import fixtures
 import xdg
@@ -497,8 +498,9 @@ class FakeLXD(fixtures.Fixture):
 class FakeSnapd(fixtures.Fixture):
     '''...'''
 
-    def __init__(self):
-        pass
+    def __init__(self, *, socket_error=False, api_error=False):
+        self._socket_error = socket_error
+        self._api_error = api_error
 
     def _setUp(self):
         patcher = mock.patch('requests_unixsocket.Session.request')
@@ -509,16 +511,27 @@ class FakeSnapd(fixtures.Fixture):
     def request_side_effect(self):
         def request_effect(*args, **kwargs):
             if args[0] == 'GET' and '/v2/snaps/' in args[1]:
+                if self._socket_error:
+                    raise ConnectionError(
+                        'Connection aborted.',
+                        FileNotFoundError(2, 'No such file or directory'))
+
                 class Session:
-                    def __init__(self, name):
+                    def __init__(self, name, api_error):
                         self._name = name
                         self._confinement = 'core' in name or 'classic'
+                        self._api_error = api_error
 
                     def json(self):
+                        if self._api_error:
+                            return {'status': 'Not Found',
+                                    'result': {'message': 'not found'},
+                                    'status-code': 404,
+                                    'type': 'error'}
                         return {'status': 'OK',
                                 'result': {'confinement': self._confinement,
                                            'revision': '123'}}
-                return Session(args[1].split('/')[-1])
+                return Session(args[1].split('/')[-1], self._api_error)
         return request_effect
 
 

@@ -32,6 +32,7 @@ from testtools.matchers import (
 )
 from . import CommandBaseTestCase
 from snapcraft.tests import fixture_setup
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 
 class SnapCommandBaseTestCase(CommandBaseTestCase):
@@ -181,6 +182,30 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         mock_container_run.assert_has_calls([
             call(['apt-get', 'install', 'snapcraft', '-y']),
         ])
+
+    @mock.patch('snapcraft.internal.lxd.is_snap')
+    def test_snap_containerized_inject_snap_socket_error(self, mock_is_snap):
+        mock_is_snap.side_effect = lambda: True
+        self.useFixture(fixture_setup.FakeSnapd(socket_error=True))
+        self.useFixture(fixture_setup.FakeLXD())
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml()
+
+        self.assertRaises(SnapcraftEnvironmentError,
+                          self.run_command, ['snap'])
+
+    @mock.patch('snapcraft.internal.lxd.is_snap')
+    def test_snap_containerized_inject_snap_api_error(self, mock_is_snap):
+        mock_is_snap.side_effect = lambda: True
+        self.useFixture(fixture_setup.FakeSnapd(api_error=True))
+        self.useFixture(fixture_setup.FakeLXD())
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml()
+
+        self.assertRaises(SnapcraftEnvironmentError,
+                          self.run_command, ['snap'])
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('snapcraft.internal.lxd.is_snap')

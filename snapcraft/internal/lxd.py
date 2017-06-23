@@ -178,9 +178,10 @@ class Containerbuild:
         except Exception as e:
             raise SnapcraftEnvironmentError(
                 'Error connecting to {}'.format(api)) from e
-        if not json['status'] == 'OK':
+        if json['status'] == 'error':
             raise SnapcraftEnvironmentError(
-                'Error querying {r!} snap: {}'.format(name, json))
+                'Error querying {!r} snap: {}'.format(
+                    name, json['result']['message']))
         classic = json['result']['confinement'] == 'classic'
         rev = json['result']['revision']
 
