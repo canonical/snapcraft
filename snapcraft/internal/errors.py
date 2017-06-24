@@ -25,6 +25,16 @@ _VALIDATION_ERROR_CAUSES = {
     'minLength': 'minimum length is {validator_value}',
 }
 
+# dict with nice error messages for invalid names in parts, hooks and apps
+_PROPERTY_ERROR_MESSAGES = {
+    "parts": "Part name does not match "
+    "'^(?!plugins$)[a-z0-9][a-z0-9+-\\/]*$'",
+    "apps": "App name does not match "
+    "'^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$'",
+    "hooks": "Hook name does not match "
+    "'^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$'",
+}
+
 
 class SnapcraftError(Exception):
     """Base class for all snapcraft exceptions.
@@ -185,6 +195,15 @@ class SnapcraftSchemaError(SnapcraftError):
         class tries to make them a bit more understandable.
         """
 
+        path = []
+        while error.absolute_path:
+            element = error.absolute_path.popleft()
+            # assume numbers are indices and use 'xxx[123]' notation.
+            if isinstance(element, int):
+                path[-1] = '{}[{}]'.format(path[-1], element)
+            else:
+                path.append(str(element))
+
         messages = []
 
         # error.validator_value may contain a custom validation error message.
@@ -194,16 +213,9 @@ class SnapcraftSchemaError(SnapcraftError):
                 error.validator_value['validation-failure'].format(error))
 
         if not messages:
-            messages.append(error.message)
+            messages.append(
+                _PROPERTY_ERROR_MESSAGES.get('/'.join(path), error.message))
 
-        path = []
-        while error.absolute_path:
-            element = error.absolute_path.popleft()
-            # assume numbers are indices and use 'xxx[123]' notation.
-            if isinstance(element, int):
-                path[-1] = '{}[{}]'.format(path[-1], element)
-            else:
-                path.append(str(element))
         if path:
             messages.insert(0, "The '{}' property does not match the "
                                "required schema:".format('/'.join(path)))
