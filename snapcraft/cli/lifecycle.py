@@ -119,11 +119,10 @@ def prime(parts, **kwargs):
 
 
 @lifecyclecli.command()
-@click.pass_context
 @add_build_options()
 @click.argument('directory', required=False)
 @click.option('--output', '-o', help='path to the resulting snap.')
-def snap(ctx, directory, output, **kwargs):
+def snap(directory, output, **kwargs):
     """Create a snap.
 
     \b
@@ -134,9 +133,6 @@ def snap(ctx, directory, output, **kwargs):
     If you want to snap a directory, you should use the snap-dir command
     instead.
     """
-    for key, value in ctx.parent.params.items():
-        if not kwargs.get(key):
-            kwargs[key] = value
     project_options = get_project_options(**kwargs)
     if env.is_containerbuild():
         lifecycle.containerbuild('snap', project_options, output, directory)

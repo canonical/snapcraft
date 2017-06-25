@@ -53,6 +53,11 @@ def add_build_options(hidden=False):
 
 
 def get_project_options(**kwargs):
+    ctx = click.get_current_context()
+    for key, value in ctx.parent.params.items():
+        if not kwargs.get(key):
+            kwargs[key] = value
+
     project_args = dict(
         use_geoip=kwargs.pop('enable_geoip'),
         parallel_builds=not kwargs.pop('no_parallel_builds'),
