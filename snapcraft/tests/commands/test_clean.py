@@ -104,9 +104,25 @@ parts:
 
         self.assertThat(result.exit_code, Equals(0))
         container_name = 'local:snapcraft-clean-test'
+        # clean with no parts should delete the container
         fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'delete', '-f', container_name]),
         ])
+
+    def test_clean_containerized_with_part(self):
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml(n=3)
+
+        result = self.run_command(['clean', 'clean1'])
+
+        self.assertThat(result.exit_code, Equals(0))
+        container_name = 'local:snapcraft-clean-test'
+        # clean with parts should NOT delete the container
+        self.assertNotEqual(fake_lxd.check_call_mock.call_args,
+                            call(['lxc', 'delete', '-f', container_name]))
 
     def test_local_plugin_not_removed(self):
         self.make_snapcraft_yaml(n=3)
