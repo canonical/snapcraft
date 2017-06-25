@@ -58,6 +58,26 @@ class PullPropertiesTestCase(integration_tests.TestCase):
         self.assertEqual('bar', state.properties['foo'])
         self.assertEqual(['curl'], state.properties['stage-packages'])
 
+    def test_pull_with_arch(self):
+        self.run_snapcraft(['pull', '--target-arch=i386', 'go-hello'],
+                           'go-hello')
+        state_file = os.path.join(self.parts_dir,
+                                  'go-hello', 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+        self.assertEqual(state.project_options['deb_arch'], 'i386')
+
+    def test_arch_with_pull(self):
+        self.run_snapcraft(['--target-arch=i386', 'pull', 'go-hello'],
+                           'go-hello')
+        state_file = os.path.join(self.parts_dir,
+                                  'go-hello', 'state', 'pull')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+        self.assertEqual(state.project_options['deb_arch'], 'i386')
+
 
 class AssetTrackingTestCase(integration_tests.TestCase):
 
