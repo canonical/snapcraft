@@ -193,8 +193,10 @@ class Containerbuild:
         installed = os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps',
                                  filename)
         # Copy file to a path the 'lxd' snap can access
-        filepath = os.path.join(os.path.sep, 'run', 'user', str(os.getuid()),
-                                'snap.lxd', filename)
+        rundir = os.path.join(os.path.sep, 'run', 'user', str(os.getuid()),
+                              'snap.lxd')
+        os.makedirs(rundir, exist_ok=True)
+        filepath = os.path.join(rundir, filename)
         copyfile(installed, filepath)
         self._push_file(filepath, os.path.join(self._project_folder, filename))
         logger.info('Installing {}'.format(filename))
