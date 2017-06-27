@@ -30,6 +30,11 @@ import fixtures
 import xdg
 
 from snapcraft.tests import fake_servers
+from snapcraft.tests.fake_servers import (
+    api,
+    search,
+    upload
+)
 from snapcraft.tests.subprocess_utils import (
     call,
     call_with_output,
@@ -302,19 +307,19 @@ class FakeSSOServerRunning(_FakeServerRunning):
 
 class FakeStoreUploadServerRunning(_FakeServerRunning):
 
-    fake_server = fake_servers.FakeStoreUploadServer
+    fake_server = upload.FakeStoreUploadServer
 
 
 class FakeStoreAPIServerRunning(_FakeServerRunning):
 
     def __init__(self, fake_store):
         super().__init__()
-        self.fake_server = partial(fake_servers.FakeStoreAPIServer, fake_store)
+        self.fake_server = partial(api.FakeStoreAPIServer, fake_store)
 
 
 class FakeStoreSearchServerRunning(_FakeServerRunning):
 
-    fake_server = fake_servers.FakeStoreSearchServer
+    fake_server = search.FakeStoreSearchServer
 
 
 class StagingStore(fixtures.Fixture):
@@ -357,8 +362,9 @@ class TestStore(fixtures.Fixture):
             raise ValueError(
                 'Unknown test store option: {}'.format(test_store))
 
-        self.user_email = os.getenv(
-            'TEST_USER_EMAIL', 'u1test+snapcraft@canonical.com')
+        self.user_email = (
+            os.getenv('TEST_USER_EMAIL') or
+            'u1test+snapcraft@canonical.com')
         self.test_track_snap = os.getenv(
             'TEST_SNAP_WITH_TRACKS', 'test-snapcraft-tracks')
         if test_store == 'fake':

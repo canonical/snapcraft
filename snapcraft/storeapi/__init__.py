@@ -160,6 +160,7 @@ class StoreClient():
         # The macaroon has been discharged, save it in the config
         self.conf.set('macaroon', macaroon)
         self.conf.set('unbound_discharge', unbound_discharge)
+        self.conf.set('email', email)
         if save:
             self.conf.save()
 
@@ -187,6 +188,21 @@ class StoreClient():
             self.conf.set('unbound_discharge', unbound_discharge)
             self.conf.save()
             return func(*args, **kwargs)
+
+    def whoami(self):
+        """Return user relevant login information."""
+        account_data = {}
+
+        for k in ('email', 'account_id'):
+            value = self.conf.get(k)
+            if not value:
+                account_info = self.get_account_information()
+                value = account_info.get(k, 'unknown')
+                self.conf.set(k, value)
+                self.conf.save()
+            account_data[k] = value
+
+        return account_data
 
     def get_account_information(self):
         return self._refresh_if_necessary(self.sca.get_account_information)
