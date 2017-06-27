@@ -111,22 +111,15 @@ class Containerbuild:
             print('Stopping {}'.format(self._container_name))
             check_call(['lxc', 'stop', '-f', self._container_name])
 
-    def _install_packages(self, packages):
-        try:
-            self._wait_for_network()
-            self._container_run(['apt-get', 'update'])
-            self._container_run(['apt-get', 'install', '-y', *packages])
-        finally:
-            # Always remove apt lock in case we stop during install
-            self._container_run(['rm', '-f', '/var/lib/apt/lists/lock'])
-
     def execute(self, step='snap', args=None):
         with self._ensure_started():
             # Create folder early so _container_run can cd into it
             check_call(['lxc', 'exec', self._container_name, '--',
                         'mkdir', '-p', '/{}'.format(self._project_folder)])
             self._setup_project()
-            self._install_packages(['snapcraft'])
+            self._wait_for_network()
+            self._container_run(['apt-get', 'update'])
+            self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
             command = ['snapcraft', step]
             if step == 'snap':
                 command += ['--output', self._snap_output]
@@ -250,20 +243,24 @@ class Project(Containerbuild):
                 'path=/{}'.format(destination)])
 
         # Generate an SSH key and add it to the container's known keys
+        rundir = os.path.join(os.path.sep, 'run', 'user', str(os.getuid()),
+                              'snap.lxd')
+        os.makedirs(rundir, exist_ok=True)
         keyfile = 'id_{}'.format(self._container_name)
-        if not os.path.exists(keyfile):
-            check_call(['ssh-keygen', '-o', '-N', '', '-f', keyfile],
+        keyfile_path = os.path.join(rundir, keyfile)
+        if not os.path.exists(keyfile_path):
+            check_call(['ssh-keygen', '-o', '-N', '', '-f', keyfile_path],
                        stdout=os.devnull)
         ssh_config = os.path.join(os.sep, 'root', '.ssh')
         self._container_run(['mkdir', '-p', ssh_config])
         self._container_run(['chmod', '700', ssh_config])
         ssh_authorized_keys = os.path.join(ssh_config, 'authorized_keys')
         self._container_run(['tee', '-a', ssh_authorized_keys],
-                            stdin=open('{}.pub'.format(keyfile), 'r'))
+                            stdin=open('{}.pub'.format(keyfile_path), 'r'))
         self._container_run(['chmod', '600', ssh_authorized_keys])
 
         # Use sshfs in slave mode inside SSH to reverse mount destination
-        self._install_packages(['sshfs'])
+        self._container_run(['apt-get', 'install', '-y', 'sshfs'])
         self._container_run(['mkdir', '-p', source])
         ssh_address = self._get_container_address()
         logger.info('Connecting via SSH to {}'.format(ssh_address))

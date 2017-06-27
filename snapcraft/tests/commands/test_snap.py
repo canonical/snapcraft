@@ -123,6 +123,8 @@ parts:
         project_folder = 'build_snap-test'
         fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'start', container_name]),
+            call(['lxc', 'exec', container_name, '--',
+                  'mkdir', '-p', '/{}'.format(project_folder)]),
             call(['lxc', 'config', 'device', 'add', container_name,
                   project_folder, 'disk', 'source={}'.format(source),
                   'path=/{}'.format(project_folder)]),
@@ -138,6 +140,72 @@ parts:
             call(['rm', '-f', '/var/lib/apt/lists/lock']),
             call(['snapcraft', 'snap', '--output',
                   'snap-test_1.0_amd64.snap']),
+        ])
+
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('os.makedirs')
+    @mock.patch('snapcraft.internal.lxd.Popen')
+    @mock.patch('snapcraft.internal.lxd.open')
+    def test_snap_containerized_remote(self, mock_open, mock_popen,
+                                       mock_makedirs, mock_container_run):
+        mock_open.return_value = mock.MagicMock(spec=open)
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_CONTAINER_BUILDS', 'myremote'))
+        self.make_snapcraft_yaml()
+
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        result = self.run_command(['--debug', 'snap'])
+
+        self.assertThat(result.exit_code, Equals(0))
+
+        source = os.path.realpath(os.path.curdir)
+        self.assertIn(
+            'Mounting {} into container\n'
+            'Connecting via SSH to 127.0.0.1\n'
+            'Waiting for a network connection...\n'
+            'Network connection established\n'.format(source),
+            fake_logger.output)
+
+        container_name = 'myremote:snapcraft-snap-test'
+        project_folder = 'build_snap-test'
+        rundir = os.path.join(os.path.sep, 'run', 'user', str(os.getuid()),
+                              'snap.lxd')
+        mock_makedirs.assert_has_calls([
+            call(rundir, exist_ok=True),
+        ])
+        fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'start', container_name]),
+            call(['lxc', 'exec', container_name, '--',
+                  'mkdir', '-p', '/{}'.format(project_folder)]),
+            call(['ssh-keygen', '-o', '-N', '', '-f',
+                 os.path.join(rundir, 'id_{}'.format(container_name))],
+                 stdout=os.devnull),
+            call(['lxc', 'stop', '-f', container_name]),
+        ])
+        mock_container_run.assert_has_calls([
+            call(['mkdir', '-p', '/root/.ssh']),
+            call(['chmod', '700', '/root/.ssh']),
+            call(['tee', '-a', '/root/.ssh/authorized_keys'],
+                 stdin=mock_open.return_value),
+            call(['chmod', '600', '/root/.ssh/authorized_keys']),
+            call(['apt-get', 'install', '-y', 'sshfs']),
+        ])
+        mock_popen.assert_has_calls([
+            call(['/usr/lib/sftp-server'],
+                 stdin=4, stdout=7),
+            call(['ssh', '-C', '-F', '/dev/null',
+                  '-o', 'IdentityFile=id_{}'.format(container_name),
+                  '-o', 'StrictHostKeyChecking=no',
+                  '-o', 'UserKnownHostsFile=/dev/null',
+                  '-o', 'User=root',
+                  '-p', '22', '127.0.0.1',
+                  'sshfs -o slave -o nonempty :{} /{}'.format(
+                      source, project_folder)],
+                 stdin=6, stdout=5)
         ])
 
     @mock.patch('snapcraft.internal.lifecycle.ProgressBar')

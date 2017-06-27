@@ -404,6 +404,10 @@ def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
             return '''
                 [{"name": "snapcraft-snap-test",
                   "status": "Stopped",
+                  "state": {"network":
+                           {"eth0": {"addresses":
+                                     [{"family": "inet",
+                                       "address": "127.0.0.1"}]}}},
                   "devices": {"build-snap-test":[]}}]
                 '''.encode('utf-8')
         else:
