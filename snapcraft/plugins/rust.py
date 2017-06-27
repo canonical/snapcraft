@@ -31,11 +31,15 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - rust-features
       (list of strings)
       Features used to build optional dependencies
+    - libc:
+      (string; default: gnu)
+      Libc to link against. Valid options are: gnu (glibc) and musl
 """
 
 from contextlib import suppress
 import os
 import shutil
+import subprocess
 
 import snapcraft
 from snapcraft import sources
@@ -54,6 +58,11 @@ class RustPlugin(snapcraft.BasePlugin):
         }
         schema['properties']['rust-revision'] = {
             'type': 'string',
+        }
+        schema['properties']['libc'] = {
+            'type': 'string',
+            'enum': ['gnu', 'musl'],
+            'default': 'gnu',
         }
         schema['properties']['rust-features'] = {
             'type': 'array',
@@ -137,7 +146,7 @@ class RustPlugin(snapcraft.BasePlugin):
                 '{!r} is not supported as a target architecture when '
                 'cross-compiling with the rust plugin'.format(
                     self.project.deb_arch))
-        self._target = fmt.format('unknown-linux', 'gnu')
+        self._target = fmt.format('unknown-linux', self.options.libc)
 
     def _build_env(self):
         env = os.environ.copy()

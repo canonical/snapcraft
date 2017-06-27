@@ -25,7 +25,7 @@ from testtools.matchers import Equals, FileExists, MatchesRegex, Not
 
 import snapcraft
 import integration_tests
-from snapcraft.tests.matchers import HasArchitecture
+from snapcraft.tests.matchers import HasArchitecture, HasLinkage
 
 
 class RustPluginBaseTestCase(integration_tests.TestCase):
@@ -103,6 +103,18 @@ class RustPluginTestCase(RustPluginBaseTestCase):
         binary = os.path.join(self.parts_dir, 'rust-hello', 'install', 'bin',
                               'rust-hello')
         self.assertThat(binary, HasArchitecture('aarch64'))
+        self.assertThat(binary, HasLinkage('dynamically linked'))
+
+    def test_cross_compiling_musl(self):
+        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+            self.skipTest('The test only handles amd64 to armhf')
+
+        self.run_snapcraft(['build', '--target-arch=armhf'],
+                           'rust-musl')
+        binary = os.path.join(self.parts_dir, 'rust-musl', 'install', 'bin',
+                              'rust-musl')
+        self.assertThat(binary, HasArchitecture('ARM'))
+        self.assertThat(binary, HasLinkage('statically linked'))
 
 
 class RustPluginConfinementTestCase(testscenarios.WithScenarios,

@@ -18,16 +18,35 @@ import magic
 import testtools
 
 
-class HasArchitecture:
-    """Match if the file was built for the expected architecture"""
-
-    def __init__(self, expected_arch):
-        self._expected_arch = expected_arch
+class HasMagic:
+    def __init__(self, expected_magic):
+        self._expected_magic = expected_magic
         self._ms = magic.open(magic.NONE)
         self._ms.load()
 
     def __str__(self):
-        return 'HasArchitecture()'
+        return '{}()'.format(self.__name__)
+
+
+class HasLinkage(HasMagic):
+    """Match if the file was built for the expected architecture"""
+
+    def match(self, file_path):
+        magic = self._ms.file(file_path)
+        # Catch exceptions on splitting the string to provide context
+        # This includes "cannot open `...' (No such file or directory)"
+        try:
+            linkage = magic.split(',')[3]
+        except IndexError as e:
+            raise ValueError('Failed to parse magic {!r}'.format(magic)) from e
+        if self._expected_magic not in linkage:
+            return testtools.matchers.Mismatch(
+                'Expected {!r} to be in {!r}'.format(
+                    self._expected_magic, linkage))
+
+
+class HasArchitecture(HasMagic):
+    """Match if the file was built for the expected architecture"""
 
     def match(self, file_path):
         magic = self._ms.file(file_path)
@@ -37,7 +56,7 @@ class HasArchitecture:
             arch = magic.split(',')[1]
         except IndexError as e:
             raise ValueError('Failed to parse magic {!r}'.format(magic)) from e
-        if self._expected_arch not in arch:
+        if self._expected_magic not in arch:
             return testtools.matchers.Mismatch(
                 'Expected {!r} to be in {!r}'.format(
                     self._expected_arch, arch))
