@@ -6,3 +6,4 @@ requests_unixsocket==0.1.5
 testscenarios==0.5.0
 pexpect==4.2.0
 pyftpdlib==1.4.0
+pyramid==1.6
