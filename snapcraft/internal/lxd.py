@@ -196,7 +196,7 @@ class Project(Containerbuild):
             # Map host user to root inside container
             check_call([
                 'lxc', 'config', 'set', self._container_name,
-                'raw.idmap', 'both 1000 0'])
+                'raw.idmap', 'both {} 0'.format(str(os.getuid()))])
         if self._get_container_status()['status'] == 'Stopped':
             check_call([
                 'lxc', 'start', self._container_name])
