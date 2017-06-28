@@ -1,4 +1,4 @@
-# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#a -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015-2017 Canonical Ltd
 #
@@ -891,15 +891,14 @@ parts:
         self.useFixture(fake_logger)
 
         self.make_snapcraft_yaml("""name: test
-version:''
+version: ''
 summary: test
 description: test
 confinement: strict
 grade: stable
 parts:
   part1:
-    plugin: go
-    stage-packages: [fswebcam]
+    plugin: nil
 """)
         raised = self.assertRaises(
             errors.SnapcraftSchemaError,
@@ -907,8 +906,8 @@ parts:
 
         self.assertEqual(
             raised.message,
-            "'version' can not be an empty string")
-
+            "The 'version' property does not match the required "
+            "schema: '' does not match '^[a-zA-Z0-9.+~-]+$'")
 
 class YamlEncodingsTestCase(YamlBaseTestCase):
 
