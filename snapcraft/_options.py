@@ -81,7 +81,7 @@ _ARCH_TRANSLATIONS = {
         'core-dynamic-linker': 'lib64/ld-linux-x86-64.so.2',
     },
     's390x': {
-        'kernel': 's390x',
+        'kernel': 's390',
         'deb': 's390x',
         'uts_machine': 's390x',
         'cross-compiler-prefix': 's390x-linux-gnu-',

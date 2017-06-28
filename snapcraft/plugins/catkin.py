@@ -78,7 +78,8 @@ logger = logging.getLogger(__name__)
 _ROS_RELEASE_MAP = {
     'indigo': 'trusty',
     'jade': 'trusty',
-    'kinetic': 'xenial'
+    'kinetic': 'xenial',
+    'lunar': 'xenial'
 }
 
 
