@@ -128,6 +128,8 @@ class AutotoolsPlugin(make.MakePlugin):
             configure_command.append('--prefix=')
         else:
             configure_command.append('--prefix=' + self.installdir)
+        if self.project.is_cross_compiling:
+            configure_command.append('--host={}'.format(self.project.deb_arch))
 
         self.run(configure_command + self.options.configflags)
         self.make()
