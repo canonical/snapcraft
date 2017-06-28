@@ -75,6 +75,8 @@ class LXDTestCase(tests.TestCase):
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'config', 'set', container_name,
                   'environment.LC_ALL', 'C.UTF-8']),
+            call(['lxc', 'exec', container_name, '--',
+                  'mkdir', '-p', '/{}'.format(project_folder)]),
             call(['lxc', 'file', 'push', os.path.realpath('project.tar'),
                   '{}/build_project/project.tar'.format(container_name)]),
             call(['lxc', 'file', 'pull',
@@ -83,15 +85,13 @@ class LXDTestCase(tests.TestCase):
             call(['lxc', 'stop', '-f', container_name]),
         ])
         mock_container_run.assert_has_calls([
-            call(['mkdir', project_folder]),
             call(['tar', 'xvf', 'project.tar']),
             call(['python3', '-c', 'import urllib.request; ' +
                   'urllib.request.urlopen(' +
                   '"http://start.ubuntu.com/connectivity-check.html"' +
                   ', timeout=5)']),
             call(['apt-get', 'update']),
-            call(['apt-get', 'install', '-y', 'snapcraft']),
-            call(['rm', '-f', '/var/lib/apt/lists/lock']),
+            call(['apt-get', 'install', 'snapcraft', '-y']),
             call(['snapcraft', 'snap', '--output', 'snap.snap', *args]),
         ])
 

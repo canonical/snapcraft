@@ -136,8 +136,7 @@ parts:
                   '"http://start.ubuntu.com/connectivity-check.html"' +
                   ', timeout=5)']),
             call(['apt-get', 'update']),
-            call(['apt-get', 'install', '-y', 'snapcraft']),
-            call(['rm', '-f', '/var/lib/apt/lists/lock']),
+            call(['apt-get', 'install', 'snapcraft', '-y']),
             call(['snapcraft', 'snap', '--output',
                   'snap-test_1.0_amd64.snap']),
         ])
