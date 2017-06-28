@@ -39,7 +39,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
 from contextlib import suppress
 import os
 import shutil
-import subprocess
 
 import snapcraft
 from snapcraft import sources
