@@ -432,9 +432,6 @@ class FakeLXD(fixtures.Fixture):
                     raise CalledProcessError(returncode=255, cmd=args[0])
                 else:
                     return 'local'.encode('utf-8')
-            elif args[0] == ['lxc', 'list', 'my-remote:']:
-                if self.fail_on_remote:
-                    raise CalledProcessError(returncode=255, cmd=args[0])
             elif args[0][:2] == ['lxc', 'info']:
                 return '''
                     environment:
@@ -452,10 +449,11 @@ class FakeLXD(fixtures.Fixture):
                             'STATUS': self.status,
                             }).encode('utf-8')
                 return '[]'.encode('utf-8')
+            elif args[0][:2] == ['lxc', 'list'] and self.fail_on_remote:
+                    raise CalledProcessError(returncode=255, cmd=args[0])
             elif args[0][:2] == ['lxc', 'init']:
-                if len(args[0]) == 4:
-                    self.name = args[0][3]
-                    self.status = 'Stopped'
+                self.name = args[0][3]
+                self.status = 'Stopped'
             else:
                 return ''.encode('utf-8')
         return call_effect
