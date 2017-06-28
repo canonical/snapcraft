@@ -1,4 +1,4 @@
-#a -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015-2017 Canonical Ltd
 #
@@ -908,6 +908,7 @@ parts:
             raised.message,
             "The 'version' property does not match the required "
             "schema: '' does not match '^[a-zA-Z0-9.+~-]+$'")
+
 
 class YamlEncodingsTestCase(YamlBaseTestCase):
 
