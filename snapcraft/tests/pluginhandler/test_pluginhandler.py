@@ -101,6 +101,8 @@ class PluginTestCase(tests.TestCase):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
+        path = copy.copy(sys.path)
+
         raised = self.assertRaises(
             errors.PluginError,
             mocks.loadplugin,
@@ -108,6 +110,9 @@ class PluginTestCase(tests.TestCase):
 
         self.assertThat(str(raised), Equals(
             'Issue while loading part: unknown plugin: test_unexisting'))
+
+        # Make sure that nothing was added to sys.path.
+        self.assertEqual(path, sys.path)
 
     def test_fileset_include_excludes(self):
         stage_set = [
