@@ -226,12 +226,16 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         container_name = 'local:snapcraft-snap-test'
         project_folder = '/root/build_snap-test'
+        rundir = os.path.join(os.path.sep, 'run', 'user', str(os.getuid()),
+                              'snap.lxd')
         self.run_command(['snap'])
         fake_lxd.check_call_mock.assert_has_calls([
-            call(['lxc', 'file', 'push', 'core_123.snap',
+            call(['lxc', 'file', 'push',
+                  os.path.join(rundir, 'core_123.snap'),
                   '{}{}/core_123.snap'.format(
                       container_name, project_folder)]),
-            call(['lxc', 'file', 'push', 'snapcraft_123.snap',
+            call(['lxc', 'file', 'push',
+                  os.path.join(rundir, 'snapcraft_123.snap'),
                   '{}{}/snapcraft_123.snap'.format(
                       container_name, project_folder)]),
         ])
