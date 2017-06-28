@@ -529,6 +529,7 @@ class FakeSnapd(fixtures.Fixture):
                                     'status-code': 404,
                                     'type': 'error'}
                         return {'status': 'OK',
+                                'type': 'sync',
                                 'result': {'confinement': self._confinement,
                                            'revision': '123'}}
                 return Session(args[1].split('/')[-1], self._api_error)
