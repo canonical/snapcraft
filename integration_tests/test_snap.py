@@ -163,3 +163,11 @@ class SnapTestCase(integration_tests.TestCase):
             "Issues while validating snapcraft.yaml: found character '\\t' "
             "that cannot start any token on line 13 of snapcraft.yaml",
             str(error.output))
+
+    def test_yaml_merge_tag(self):
+        self.copy_project_to_cwd('yaml-merge-tag')
+        self.run_snapcraft('stage')
+        self.assertThat(
+            os.path.join(self.stage_dir, 'test.txt'),
+            FileExists()
+        )
