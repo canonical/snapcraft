@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 import hashlib
 import logging
 import os
@@ -110,12 +110,11 @@ def link_or_copy(source, destination, follow_symlinks=False):
         # symlinks.
         os.link(source_path, destination, follow_symlinks=False)
     except OSError:
-        try:
-            # If os.link raised an I/O error, it may have left a file behind.
-            if not os.path.isdir(destination):
-                os.unlink(destination)
-        except FileNotFoundError:
-            pass
+        # If os.link raised an I/O error, it may have left a file behind.
+        # Skip on OSError in case it doesn't exist or is a directory.
+        with suppress(OSError):
+            os.unlink(destination)
+
         shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
         uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid
         gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid
