@@ -886,7 +886,7 @@ parts:
             "schema: \[1, 2\].*")
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
-    def test_invalid_yaml_empty_version(self, mock_loadPlugin):
+    def test_invalid_yaml_empty_version(self, mock_load_plugin):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
