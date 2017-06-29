@@ -114,7 +114,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
     @mock.patch('os.getuid')
     def test_snap_containerized(self, mock_getuid):
-        mock_getuid.return_value = '1234'
+        mock_getuid.return_value = 1234
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
