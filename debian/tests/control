@@ -14,6 +14,7 @@ Depends: @,
          python3-fixtures,
          python3-pexpect,
          python3-pyftpdlib,
+         python3-pyramid,
          python3-testscenarios
 
 Tests: snapstests

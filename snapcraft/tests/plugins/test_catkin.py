@@ -228,7 +228,8 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
         self.assertEqual(str(raised),
                          "Unsupported rosdistro: 'invalid'. The supported ROS "
-                         "distributions are 'indigo', 'jade', and 'kinetic'")
+                         "distributions are 'indigo', 'jade', 'kinetic', and "
+                         "'lunar'")
 
     def test_get_stage_sources_indigo(self):
         self.properties.rosdistro = 'indigo'
@@ -244,6 +245,12 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
     def test_get_stage_sources_kinetic(self):
         self.properties.rosdistro = 'kinetic'
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        self.assertTrue('xenial' in plugin.PLUGIN_STAGE_SOURCES)
+
+    def test_get_stage_sources_lunar(self):
+        self.properties.rosdistro = 'lunar'
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
         self.assertTrue('xenial' in plugin.PLUGIN_STAGE_SOURCES)
