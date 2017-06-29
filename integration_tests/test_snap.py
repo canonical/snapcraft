@@ -149,6 +149,18 @@ class SnapTestCase(integration_tests.TestCase):
 
         self.run_snapcraft('snap')
 
+    def test_snap_with_arch(self):
+        self.run_snapcraft('init')
+
+        self.run_snapcraft(['snap', '--target-arch=i386'])
+        self.assertThat('my-snap-name_0.1_i386.snap', FileExists())
+
+    def test_arch_with_snap(self):
+        self.run_snapcraft('init')
+
+        self.run_snapcraft(['--target-arch=i386', 'snap'])
+        self.assertThat('my-snap-name_0.1_i386.snap', FileExists())
+
     def test_implicit_command_with_arch(self):
         self.run_snapcraft('init')
 
@@ -163,3 +175,11 @@ class SnapTestCase(integration_tests.TestCase):
             "Issues while validating snapcraft.yaml: found character '\\t' "
             "that cannot start any token on line 13 of snapcraft.yaml",
             str(error.output))
+
+    def test_yaml_merge_tag(self):
+        self.copy_project_to_cwd('yaml-merge-tag')
+        self.run_snapcraft('stage')
+        self.assertThat(
+            os.path.join(self.stage_dir, 'test.txt'),
+            FileExists()
+        )
