@@ -30,7 +30,9 @@ import yaml
 from snapcraft import file_utils
 from snapcraft import shell_utils
 from snapcraft.internal import common
-from snapcraft.internal.errors import MissingGadgetError
+from snapcraft.internal.errors import (
+    MissingGadgetError,
+    SnapcraftPathEntryError)
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.sources import get_source_handler_from_type
 from snapcraft.internal.states import (
@@ -260,6 +262,7 @@ class _SnapPackaging:
 
         if 'apps' in self._config_data:
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
+            _verify_app_paths(basedir='prime', apps=snap_yaml['apps'])
 
         return snap_yaml
 
@@ -458,3 +461,14 @@ def _validate_hook(hook_path):
     if not os.stat(hook_path).st_mode & stat.S_IEXEC:
         asset = os.path.basename(hook_path)
         raise CommandError('hook {!r} is not executable'.format(asset))
+
+
+def _verify_app_paths(basedir, apps):
+    for app in apps:
+        path_entries = [i for i in ('desktop', 'completer')
+                        if i in apps[app]]
+        for path_entry in path_entries:
+            file_path = os.path.join(basedir, apps[app][path_entry])
+            if not os.path.exists(file_path):
+                raise SnapcraftPathEntryError(
+                    app=app, key=path_entry, value=file_path)
