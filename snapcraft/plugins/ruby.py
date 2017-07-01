@@ -105,7 +105,7 @@ class RubyPlugin(BasePlugin):
 
     def env(self, root):
         rubydir = join(root, 'lib', 'ruby')
-        rubylib = join(ruby_dir, self._ruby_version_dir)
+        rubylib = join(rubydir, self._ruby_version_dir)
         rubylib = '{}:{}'.format(rubylib, join(rubylib, 'x86_64-linux'))
         gem_home = join(rubydir, 'gems', self._ruby_version_dir)
         return {'RUBYLIB': rubylib, 'GEM_HOME': gem_home, 'GEM_PATH': gem_home}
