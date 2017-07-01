@@ -81,7 +81,7 @@ class SnapTestCase(integration_tests.TestCase):
         self.assertThat(snap_file_path, FileExists())
 
     def test_cleanbuild(self):
-        subprocess.check_call(['sudo', 'apt', 'install', 'lxd'])
+        subprocess.check_call(['sudo', 'apt', 'install', '--yes', 'lxd'])
         subprocess.check_call(['sudo', 'lxd', 'init', '--auto'])
         subprocess.check_call(['newgrp', 'lxd'])
 
