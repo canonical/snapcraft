@@ -29,7 +29,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 """
 import re
 
-from os import makedirs
+from os import makedirs, environ
 from os.path import exists, join
 
 from snapcraft import BasePlugin
@@ -104,11 +104,14 @@ class RubyPlugin(BasePlugin):
             self._bundle_install()
 
     def env(self, root):
+        env = {}
+        env['PATH'] = '{}/bin:{}'.format(root, environ['PATH'])
         rubydir = join(root, 'lib', 'ruby')
         rubylib = join(rubydir, self._ruby_version_dir)
-        rubylib = '{}:{}'.format(rubylib, join(rubylib, 'x86_64-linux'))
-        gem_home = join(rubydir, 'gems', self._ruby_version_dir)
-        return {'RUBYLIB': rubylib, 'GEM_HOME': gem_home, 'GEM_PATH': gem_home}
+        env['RUBYLIB'] = '{}:{}'.format(rubylib, join(rubylib, 'x86_64-linux'))
+        env['GEM_HOME'] = join(rubydir, 'gems', self._ruby_version_dir)
+        env['GEM_PATH'] = join(rubydir, 'gems', self._ruby_version_dir)
+        return env
 
     def _ruby_install(self, builddir):
         self._ruby_tar.provision(
@@ -125,7 +128,7 @@ class RubyPlugin(BasePlugin):
             self._install_bundler = True
             self._gems = self._gems + ['bundler']
         if self._gems:
-            self.run(['gem', 'install'] + self._gems,
+            self.run([join(self.installdir, 'bin', 'gem'), 'install'] + self._gems,
                      env=self.env(root=self.installdir))
 
     def _bundle_install(self):
