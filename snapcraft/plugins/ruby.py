@@ -27,9 +27,8 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (string)
       The version of ruby you want this snap to run.
 """
-from shutil import rmtree
-from os import makedirs, environ
-from os.path import exists, join, abspath
+from os import makedirs
+from os.path import exists, join
 
 from snapcraft import BasePlugin
 from snapcraft.sources import Tar
@@ -87,7 +86,7 @@ class RubyPlugin(BasePlugin):
         super().pull()
         makedirs(self._ruby_part_dir, exist_ok=True)
         self._ruby_tar.download()
-        
+
     def build(self):
         super().build()
         self._ruby_install(builddir=self._ruby_part_dir)
@@ -105,16 +104,20 @@ class RubyPlugin(BasePlugin):
     def _ruby_install(self, builddir):
         self._ruby_tar.provision(
             builddir, clean_target=False, keep_tarball=True)
-        self.run(['./configure', '--disable-install-rdoc', '--prefix=/'], cwd=builddir)
-        self.run(['make', '-j{}'.format(self.parallel_build_count)], cwd=builddir)
-        self.run(['make', 'install', 'DESTDIR={}'.format(self.installdir)], cwd=builddir)
+        self.run(['./configure', '--disable-install-rdoc', '--prefix=/'],
+                 cwd=builddir)
+        self.run(['make', '-j{}'.format(self.parallel_build_count)],
+                 cwd=builddir)
+        self.run(['make', 'install', 'DESTDIR={}'.format(self.installdir)],
+                 cwd=builddir)
 
     def _gem_install(self):
         if exists(join(self.builddir, 'Gemfile')):
             self._install_bundler = True
             self._gems = self._gems + ['bundler']
         if self._gems:
-            self.run(['gem', 'install' + self._gems], env=self.env(root=self.installdir))
+            self.run(['gem', 'install' + self._gems],
+                     env=self.env(root=self.installdir))
 
     def _bundle_install(self):
         self.run(['bundle', 'install'], env=self.env(root=self.installdir))
