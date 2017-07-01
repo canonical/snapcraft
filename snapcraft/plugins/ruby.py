@@ -105,7 +105,8 @@ class RubyPlugin(BasePlugin):
 
     def env(self, root):
         env = {}
-        env['PATH'] = '{}/bin:{}'.format(root, environ['PATH'])
+        env['PATH'] = '{}:{}'.format(join(root, 'bin'), environ['PATH'])
+        env['RUBYPATH'] = '{}'.format(join(root, 'bin'))
         rubydir = join(root, 'lib', 'ruby')
         rubylib = join(rubydir, self._ruby_version_dir)
         env['RUBYLIB'] = '{}:{}'.format(rubylib, join(rubylib, 'x86_64-linux'))
@@ -128,8 +129,8 @@ class RubyPlugin(BasePlugin):
             self._install_bundler = True
             self._gems = self._gems + ['bundler']
         if self._gems:
-            self.run([join(self.installdir, 'bin', 'gem'), 'install'] + self._gems,
-                     env=self.env(root=self.installdir))
+            self.run([join(self.installdir, 'bin', 'gem'), 'install'] + \
+                self._gems, env=self.env(root=self.installdir))
 
     def _bundle_install(self):
         self.run(['bundle', 'install'], env=self.env(root=self.installdir))
