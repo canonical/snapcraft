@@ -72,11 +72,11 @@ class RubyPlugin(BasePlugin):
         super().__init__(name, options, project)
 
         self._ruby_version = self.options.ruby_version
-        self._ruby_dir = join(self.partdir, 'ruby')
+        self._ruby_part_dir = join(self.partdir, 'ruby')
         self._ruby_download_url = \
             'https://cache.ruby-lang.org/pub/ruby/ruby-{}.tar.gz'.format(
                 self._ruby_version)
-        self._ruby_tar = Tar(self._ruby_download_url, self._ruby_dir)
+        self._ruby_tar = Tar(self._ruby_download_url, self._ruby_part_dir)
         self._gems = self.options.gems
         self._install_bundler = False
 
@@ -85,25 +85,22 @@ class RubyPlugin(BasePlugin):
 
     def pull(self):
         super().pull()
-        makedirs(self._ruby_dir, exist_ok=True)
+        makedirs(self._ruby_part_dir, exist_ok=True)
         self._ruby_tar.download()
         
     def build(self):
         super().build()
-        self._ruby_install(builddir=self._ruby_dir)
+        self._ruby_install(builddir=self._ruby_part_dir)
         self._gem_install()
         if self._install_bundler:
             self._bundle_install()
 
     def env(self, root):
-        rubylib = join(root, 'lib', 'ruby')
-        gem_home = join(rubylib, 'gems', self._ruby_version)
-    
-        return [
-            'RUBYLIB={}'.format(rubylib),
-            'GEM_HOME={}'.format(gem_home),
-            'GEM_PATH={}'.format(gem_home)
-        ]
+        rubydir = join(root, 'lib', 'ruby')
+        rubylib = join(rubydir, '2.3.0')
+        rubylib = '{}:{}'.format(rubylib, join(rubylib, 'x86_64-linux'))
+        gem_home = join(rubydir, 'gems', '2.3.0')
+        return {'RUBYLIB': rubylib, 'GEM_HOME': gem_home, 'GEM_PATH': gem_home}
 
     def _ruby_install(self, builddir):
         self._ruby_tar.provision(
@@ -116,8 +113,8 @@ class RubyPlugin(BasePlugin):
         if exists(join(self.builddir, 'Gemfile')):
             self._install_bundler = True
             self._gems = self._gems + ['bundler']
-        for gem in self._gems:
-            self.run(['gem', 'install'] + gem, env=self.env(root=self.installdir))
+        if self._gems:
+            self.run(['gem', 'install' + self._gems], env=self.env(root=self.installdir))
 
     def _bundle_install(self):
         self.run(['bundle', 'install'], env=self.env(root=self.installdir))
