@@ -143,7 +143,7 @@ def snap(directory, output, **kwargs):
         except Exception as e:
             echo.error(e)
             sys.exit(1)
-        click.echo('Snapped {}'.format(snap_name))
+        echo.info('Snapped {}'.format(snap_name))
 
 
 @lifecyclecli.command()

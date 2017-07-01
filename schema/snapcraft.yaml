@@ -53,7 +53,7 @@ properties:
     # python's defaul yaml loading code loads 1.0 as an int
     # type: string
     description: package version
-    pattern: "^[a-zA-Z0-9.+~-]*$"
+    pattern: "^[a-zA-Z0-9.+~-]+$"
   version-script:
     type: string
     description: a script that echoes the version to set.
@@ -255,6 +255,7 @@ properties:
               - deb
               - rpm
               - 7z
+              - local
           disable-parallel:
             type: boolean
             default: false

@@ -1,3 +1,39 @@
+snapcraft (2.32) xenial; urgency=medium
+
+  [ Michał Sawicz ]
+  * autotools plugin: don't force uniqueness on configflags (#1337)
+
+  [ filibtester ]
+  * integrations: use the snapcore/snapcraft docker image in travis (#1331)
+
+  [ Jonathan Cave ]
+  * sources: allow source-type to specify local (#1352)
+
+  [ Christian Dywan ]
+  * tests: run unit tests on Travis with mock armhf (#1316)
+  * rust plugin: add support for cross-compilation (#1350)
+
+  [ Gustavo Silva ]
+  * deltas: improved message returned when delta is too big (#1345)
+
+  [ Adam Collard ]
+  * cli: add --version command (#1366)
+
+  [ Sergio Schvezov ]
+  * cli: provide a whoami command (#1332)
+
+  [ Kyle Fazzari ]
+  * cli: stop leaking green text (#1360)
+  * catkin plugin: add support for ROS Lunar (#1367)
+
+  [ Leo Arias ]
+  * tests: use pyramid as a router for the fake servers (#1363)
+  * tests: set up the spread execution in linode (#1374)
+  * integrations: add the snapcraft Dockerfile (#1370)
+  * tests: refactor the travis jobs using stages (#1318)
+
+ -- Kyle Fazzari <kyle@canonical.com>  Fri, 23 Jun 2017 10:00:19 -0700
+
 snapcraft (2.31) xenial; urgency=medium
 
   [ Sergio Schvezov ]

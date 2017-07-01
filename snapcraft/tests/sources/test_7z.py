@@ -62,3 +62,6 @@ class Test7z(tests.TestCase):
 
         test_output_files = self._7z_test_files.union({test_7z_file_name, })
         self.assertCountEqual(set(os.listdir(dest_dir)), test_output_files)
+
+    def test_has_source_handler_entry(self):
+        self.assertTrue(sources._source_handler['7z'] is sources.SevenZip)
