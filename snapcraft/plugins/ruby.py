@@ -27,6 +27,8 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (string)
       The version of ruby you want this snap to run.
 """
+import re
+
 from os import makedirs
 from os.path import exists, join
 
@@ -82,6 +84,13 @@ class RubyPlugin(BasePlugin):
         self.build_packages.extend(['gcc', 'g++', 'make', 'zlib1g-dev',
                                     'libssl-dev', 'libreadline-dev'])
 
+        version_map = [('2.%d.[0-9]' % i, '2.%d.0' % i) for i in range(5)]
+
+        for version_regex, version_dir in version_map:
+            if re.compile(version_regex).match(self._ruby_version):
+                self._ruby_version_dir = version_dir
+                break
+
     def pull(self):
         super().pull()
         makedirs(self._ruby_part_dir, exist_ok=True)
@@ -96,9 +105,9 @@ class RubyPlugin(BasePlugin):
 
     def env(self, root):
         rubydir = join(root, 'lib', 'ruby')
-        rubylib = join(rubydir, '2.3.0')
+        rubylib = join(ruby_dir, self._ruby_version_dir)
         rubylib = '{}:{}'.format(rubylib, join(rubylib, 'x86_64-linux'))
-        gem_home = join(rubydir, 'gems', '2.3.0')
+        gem_home = join(rubydir, 'gems', self._ruby_version_dir)
         return {'RUBYLIB': rubylib, 'GEM_HOME': gem_home, 'GEM_PATH': gem_home}
 
     def _ruby_install(self, builddir):
