@@ -18,18 +18,14 @@ import os
 
 import integration_tests
 
+from testtools.matchers import FileExists
+
 
 class RubyPluginTestCase(integration_tests.TestCase):
 
-    def test_build_with_gemfile(self):
-        return
-
-    def test_build_with_user_gems(self):
-        return
-
-    def test_build_with_user_gems_and_gemfile(self):
-        return
-
-    def test_build_with_no_user_gems_and_no_gemfile(self):
-        return
-
+    def test_build_with_no_gemfile(self):
+        # Test that the expected binary executables exist
+        self.run_snapcraft('stage', 'ruby-bins')
+        bins = ['gem', 'irb', 'ruby', 'erb']
+        for exe in bins:
+            self.assertThat(os.path.join('stage', 'bin', exe), FileExists())
