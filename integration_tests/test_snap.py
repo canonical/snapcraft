@@ -81,7 +81,6 @@ class SnapTestCase(integration_tests.TestCase):
         self.assertThat(snap_file_path, FileExists())
 
     def test_cleanbuild(self):
-        self.skipTest("Fails to run correctly on travis.")
         self.run_snapcraft('cleanbuild', 'assemble')
 
         snap_source_path = 'assemble_1.0_source.tar.bz2'
