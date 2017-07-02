@@ -129,8 +129,13 @@ class RubyPlugin(BasePlugin):
             self._install_bundler = True
             self._gems = self._gems + ['bundler']
         if self._gems:
-            self.run([join(self.installdir, 'bin', 'gem'), 'install'] + \
-                self._gems, env=self.env(root=self.installdir))
+            gem_install_cmd = [join(self.installdir, 'bin', 'ruby'),
+                               join(self.installdir, 'bin', 'gem'), 'install']
+            self.run(gem_install_cmd + self._gems,
+                     env=self.env(root=self.installdir))
 
     def _bundle_install(self):
-        self.run(['bundle', 'install'], env=self.env(root=self.installdir))
+        bundle_install_cmd = [join(self.installdir, 'bin', 'ruby'),
+                              join(self.installdir, 'bin', 'bundle'),
+                              'install']
+        self.run(bundle_install_cmd, env=self.env(root=self.installdir))
