@@ -15,11 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import distro
 import glob
 import hashlib
 import logging
 import os
-import platform
 import shutil
 import stat
 import string
@@ -147,7 +147,7 @@ class _AptCache:
 
     def _collected_sources_list(self):
         if self._use_geoip or self._sources_list:
-            release = platform.linux_distribution()[2]
+            release = distro.codename().split()[0].lower()
             return _format_sources_list(
                 self._sources_list, deb_arch=self._deb_arch,
                 use_geoip=self._use_geoip, release=release)

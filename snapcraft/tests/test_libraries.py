@@ -116,9 +116,9 @@ class TestSystemLibsOnNewRelease(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('platform.linux_distribution')
+        patcher = mock.patch('distro.version')
         distro_mock = patcher.start()
-        distro_mock.return_value = ('Ubuntu', '16.05', 'xenial')
+        distro_mock.return_value = '16.05'
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.internal.common.run_output')

@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from platform import linux_distribution as _linux_distribution
 from ._platform import _is_deb_based
 
 
@@ -35,8 +34,7 @@ class PackageNotFoundError(Exception):
         message = 'The package {!r} was not found.'.format(
             self.package_name)
         # If the package was multiarch, try to help.
-        distro = _linux_distribution()[0]
-        if _is_deb_based(distro) and ':' in self.package_name:
+        if _is_deb_based() and ':' in self.package_name:
             (name, arch) = self.package_name.split(':', 2)
             if arch:
                 message += (
