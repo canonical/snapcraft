@@ -18,6 +18,7 @@ import collections
 import contextlib
 import io
 import os
+import string
 import sys
 import threading
 import urllib.parse
@@ -29,7 +30,6 @@ from subprocess import CalledProcessError
 import fixtures
 import xdg
 
-from snapcraft import internal, _options
 from snapcraft.tests import fake_servers
 from snapcraft.tests.fake_servers import (
     api,
@@ -393,49 +393,23 @@ class FakePlugin(fixtures.Fixture):
         del sys.modules[self._import_name]
 
 
-def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
-    def call_effect(*args, **kwargs):
-        if args[0] == ['lxc', 'remote', 'get-default']:
-            if fail_on_default:
-                raise CalledProcessError(returncode=255, cmd=args[0])
-            else:
-                return 'local'.encode('utf-8')
-        elif args[0] == ['lxc', 'list', 'my-remote:'] and fail_on_remote:
-            raise CalledProcessError(returncode=255, cmd=args[0])
-        elif args[0][:2] == ['lxc', 'info']:
-            return '''
-                environment:
-                  kernel_architecture: x86_64
-                '''.encode('utf-8')
-        elif args[0][:3] == ['lxc', 'list', '--format=json']:
-            config = internal.load_config(_options.ProjectOptions())
-            metadata = config.get_metadata()
-            return '''
-                [{"name": "snapcraft-$NAME",
-                  "status": "Stopped",
-                  "devices": {"build-$NAME":[]}}]
-                '''.replace('$NAME', metadata['name']).encode('utf-8')
-        else:
-            return ''.encode('utf-8')
-    return call_effect
-
-
 class FakeLXD(fixtures.Fixture):
     '''...'''
 
     def __init__(self, fail_on_remote=False, fail_on_default=False):
+        self.status = None
         self.fail_on_remote = fail_on_remote
         self.fail_on_default = fail_on_default
 
     def _setUp(self):
         patcher = mock.patch('snapcraft.internal.lxd.check_call')
         self.check_call_mock = patcher.start()
+        self.check_call_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.internal.lxd.check_output')
         self.check_output_mock = patcher.start()
-        self.check_output_mock.side_effect = check_output_side_effect(
-            self.fail_on_remote, self.fail_on_default)
+        self.check_output_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
@@ -450,6 +424,39 @@ class FakeLXD(fixtures.Fixture):
         self.architecture_mock = patcher.start()
         self.architecture_mock.return_value = ('64bit', 'ELF')
         self.addCleanup(patcher.stop)
+
+    def check_output_side_effect(self):
+        def call_effect(*args, **kwargs):
+            if args[0] == ['lxc', 'remote', 'get-default']:
+                if self.fail_on_default:
+                    raise CalledProcessError(returncode=255, cmd=args[0])
+                else:
+                    return 'local'.encode('utf-8')
+            elif args[0][:2] == ['lxc', 'info']:
+                return '''
+                    environment:
+                      kernel_architecture: x86_64
+                    '''.encode('utf-8')
+            elif args[0][:3] == ['lxc', 'list', '--format=json']:
+                if self.status and args[0][3] == self.name:
+                    return string.Template('''
+                        [{"name": "$NAME",
+                          "status": "$STATUS",
+                          "devices": {"build-snap-test":[]}}]
+                        ''').substitute({
+                            # Container name without remote prefix
+                            'NAME': self.name.split(':')[-1],
+                            'STATUS': self.status,
+                            }).encode('utf-8')
+                return '[]'.encode('utf-8')
+            elif args[0][:2] == ['lxc', 'list'] and self.fail_on_remote:
+                    raise CalledProcessError(returncode=255, cmd=args[0])
+            elif args[0][:2] == ['lxc', 'init']:
+                self.name = args[0][3]
+                self.status = 'Stopped'
+            else:
+                return ''.encode('utf-8')
+        return call_effect
 
 
 class GitRepo(fixtures.Fixture):
