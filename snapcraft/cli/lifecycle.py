@@ -165,7 +165,7 @@ def clean(parts, step, **kwargs):
     if env.is_containerbuild():
         step = step or 'pull'
         lifecycle.containerbuild('clean', project_options,
-                                 args=['--step', step + parts])
+                                 args=['--step', step, *parts])
     else:
         if step == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '
