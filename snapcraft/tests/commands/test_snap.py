@@ -123,7 +123,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()
 
-        result = self.run_command(['--debug', 'snap'])
+        result = self.run_command(['snap'])
 
         self.assertThat(result.exit_code, Equals(0))
 
