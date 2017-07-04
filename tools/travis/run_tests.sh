@@ -27,9 +27,7 @@ fi
 
 test="$1"
 
-if [ "$#" -gt 1 ]; then
-    pattern="$2"
-fi
+pattern="$2"
 
 if [ "$test" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
