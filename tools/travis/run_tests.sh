@@ -20,8 +20,8 @@
 
 set -ev
 
-if [ "$#" -lt 1 ]; then
-    echo "Usage: "$0" <test>"
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ] ; then
+    echo "Usage: "$0" <test> [PATTERN]"
     exit 1
 fi
 
