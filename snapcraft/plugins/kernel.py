@@ -79,6 +79,9 @@ default_kernel_image_target = {
     'i386': 'bzImage',
     'armhf': 'zImage',
     'arm64': 'Image.gz',
+    'powerpc': 'uImage',
+    'ppc64el': 'vmlinux.strip',
+    's390x': 'bzImage',
 }
 
 required_generic = ['DEVTMPFS', 'DEVTMPFS_MOUNT', 'TMPFS_POSIX_ACL', 'IPV6',

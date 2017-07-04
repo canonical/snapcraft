@@ -804,8 +804,10 @@ def _get_plugin(module):
 
 def _load_local(module_name, local_plugin_dir):
     sys.path = [local_plugin_dir] + sys.path
-    module = importlib.import_module(module_name)
-    sys.path.pop(0)
+    try:
+        module = importlib.import_module(module_name)
+    finally:
+        sys.path.pop(0)
 
     return module
 
