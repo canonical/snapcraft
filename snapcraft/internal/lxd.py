@@ -19,7 +19,7 @@ import json
 import logging
 import os
 import pipes
-from shutil import copyfile
+import shutil
 import sys
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError
@@ -31,7 +31,7 @@ import petname
 import yaml
 
 from snapcraft.internal.errors import SnapcraftEnvironmentError
-from snapcraft.internal.common import format_snap_name, is_snap
+from snapcraft.internal import common
 from snapcraft._options import _get_deb_arch
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ class Containerbuild:
     def __init__(self, *, output, source, project_options,
                  metadata, container_name, remote=None):
         if not output:
-            output = format_snap_name(metadata)
+            output = common.format_snap_name(metadata)
         self._snap_output = output
         self._source = os.path.realpath(source)
         self._project_options = project_options
@@ -159,7 +159,7 @@ class Containerbuild:
                             cwd=self._project_folder)
 
     def _inject_snapcraft(self):
-        if is_snap():
+        if common.is_snap():
             # Because of https://bugs.launchpad.net/snappy/+bug/1628289
             self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
 
@@ -200,7 +200,7 @@ class Containerbuild:
                               'snap.lxd')
         os.makedirs(rundir, exist_ok=True)
         filepath = os.path.join(rundir, filename)
-        copyfile(installed, filepath)
+        shutil.copyfile(installed, filepath)
         self._push_file(filepath, os.path.join(self._project_folder, filename))
         logger.info('Installing {}'.format(filename))
         # We use --dangerous rather than pushing the assertions because we

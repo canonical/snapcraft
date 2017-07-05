@@ -168,7 +168,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         ])
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
-    @mock.patch('snapcraft.internal.lxd.is_snap')
+    @mock.patch('snapcraft.internal.common.is_snap')
     def test_snap_containerized_inject_apt(self,
                                            mock_is_snap, mock_container_run):
         mock_is_snap.side_effect = lambda: False
@@ -184,7 +184,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['apt-get', 'install', 'snapcraft', '-y']),
         ])
 
-    @mock.patch('snapcraft.internal.lxd.is_snap')
+    @mock.patch('snapcraft.internal.common.is_snap')
     def test_snap_containerized_inject_snap_socket_error(self, mock_is_snap):
         mock_is_snap.side_effect = lambda: True
         fake_snapd = fixture_setup.FakeSnapd()
@@ -202,8 +202,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                       str(self.assertRaises(SnapcraftEnvironmentError,
                                             self.run_command, ['snap'])))
 
-    @mock.patch('snapcraft.internal.lxd.is_snap')
-    @mock.patch('snapcraft.internal.lxd.copyfile')
+    @mock.patch('snapcraft.internal.common.is_snap')
+    @mock.patch('shutil.copyfile')
     def test_snap_containerized_inject_snap_api_error(self,
                                                       mock_copyfile,
                                                       mock_is_snap):
@@ -221,8 +221,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                                             self.run_command, ['snap'])))
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
-    @mock.patch('snapcraft.internal.lxd.is_snap')
-    @mock.patch('snapcraft.internal.lxd.copyfile')
+    @mock.patch('snapcraft.internal.common.is_snap')
+    @mock.patch('shutil.copyfile')
     def test_snap_containerized_inject_snap(self,
                                             mock_copyfile,
                                             mock_is_snap,
