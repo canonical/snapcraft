@@ -14,9 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import distro
 import fileinput
 import os
-import platform
 import re
 import shutil
 import subprocess
@@ -107,7 +107,7 @@ class TestCase(testtools.TestCase):
         self.prime_dir = 'prime'
 
         self.deb_arch = _ProjectOptions().deb_arch
-        self.distro_series = platform.linux_distribution()[2]
+        self.distro_series = distro.codename().split()[0].lower()
 
     def run_snapcraft(
             self, command, project_dir=None, debug=True,

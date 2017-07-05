@@ -14,11 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import distro
 import re
 import glob
 import logging
 import os
-import platform
 import subprocess
 
 from snapcraft.internal import common
@@ -67,8 +67,7 @@ def _get_system_libs():
     if _libraries:
         return _libraries
 
-    release = platform.linux_distribution()[1]
-    lib_path = os.path.join(common.get_librariesdir(), release)
+    lib_path = os.path.join(common.get_librariesdir(), distro.version())
 
     if not os.path.exists(lib_path):
         logger.debug('No libraries to exclude from this release')

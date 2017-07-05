@@ -16,10 +16,10 @@
 
 import snaps_tests
 
+import distro
 import os
 import re
 import subprocess
-from platform import linux_distribution
 from unittest import skipUnless
 
 
@@ -27,7 +27,7 @@ class SharedROSTestCase(snaps_tests.SnapsTestCase):
 
     snap_content_dir = 'shared-ros'
 
-    @skipUnless(linux_distribution()[2] == 'xenial',
+    @skipUnless(distro.codename() == 'Xenial Xerus',
                 'This test fails on yakkety LP: #1614476')
     def test_shared_ros(self):
         ros_base_path = os.path.join(self.snap_content_dir, 'ros-base')
