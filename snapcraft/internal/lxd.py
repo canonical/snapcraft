@@ -183,7 +183,9 @@ class Containerbuild:
             raise SnapcraftEnvironmentError(
                 'Error querying {!r} snap: {}'.format(
                     name, json['result']['message']))
+        # Lookup confinement to know if we need to --classic when installing
         classic = json['result']['confinement'] == 'classic'
+        # Revisions are unique, so we don't need to know the channel
         rev = json['result']['revision']
 
         # https://github.com/snapcore/snapd/blob/master/snap/info.go
@@ -201,6 +203,8 @@ class Containerbuild:
         copyfile(installed, filepath)
         self._push_file(filepath, os.path.join(self._project_folder, filename))
         logger.info('Installing {}'.format(filename))
+        # We use --dangerous rather than pushing the assertions because we
+        # don't want snapd to refresh during an on-going build
         cmd = ['snap', 'install', '--dangerous', filename]
         if classic:
             cmd.append('--classic')
