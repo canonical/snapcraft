@@ -24,6 +24,7 @@ import sys
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError
 from time import sleep
+import requests
 import requests_unixsocket
 
 import petname
@@ -175,7 +176,7 @@ class Containerbuild:
         api = 'http+unix://{}/v2/snaps/{}'.format(snapd_socket, name)
         try:
             json = session.request('GET', api).json()
-        except Exception as e:
+        except requests.exceptions.ConnectionError as e:
             raise SnapcraftEnvironmentError(
                 'Error connecting to {}'.format(api)) from e
         if json['type'] == 'error':

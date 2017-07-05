@@ -19,6 +19,7 @@ import os
 import os.path
 import subprocess
 from textwrap import dedent
+import requests
 from unittest import mock
 from unittest.mock import call
 
@@ -186,26 +187,38 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
     @mock.patch('snapcraft.internal.lxd.is_snap')
     def test_snap_containerized_inject_snap_socket_error(self, mock_is_snap):
         mock_is_snap.side_effect = lambda: True
-        self.useFixture(fixture_setup.FakeSnapd(socket_error=True))
+        fake_snapd = fixture_setup.FakeSnapd()
+        self.useFixture(fake_snapd)
+        fake_snapd.session_request_mock.side_effect = (
+            requests.exceptions.ConnectionError(
+                'Connection aborted.',
+                FileNotFoundError(2, 'No such file or directory')))
         self.useFixture(fixture_setup.FakeLXD())
         self.useFixture(fixtures.EnvironmentVariable(
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()
 
-        self.assertRaises(SnapcraftEnvironmentError,
-                          self.run_command, ['snap'])
+        self.assertIn('Error connecting to ',
+                      str(self.assertRaises(SnapcraftEnvironmentError,
+                                            self.run_command, ['snap'])))
 
     @mock.patch('snapcraft.internal.lxd.is_snap')
-    def test_snap_containerized_inject_snap_api_error(self, mock_is_snap):
+    @mock.patch('snapcraft.internal.lxd.copyfile')
+    def test_snap_containerized_inject_snap_api_error(self,
+                                                      mock_copyfile,
+                                                      mock_is_snap):
         mock_is_snap.side_effect = lambda: True
-        self.useFixture(fixture_setup.FakeSnapd(api_error=True))
+        fake_snapd = fixture_setup.FakeSnapd()
+        self.useFixture(fake_snapd)
+        fake_snapd._snaps = {}
         self.useFixture(fixture_setup.FakeLXD())
         self.useFixture(fixtures.EnvironmentVariable(
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()
 
-        self.assertRaises(SnapcraftEnvironmentError,
-                          self.run_command, ['snap'])
+        self.assertIn('Error querying \'core\' snap: not found',
+                      str(self.assertRaises(SnapcraftEnvironmentError,
+                                            self.run_command, ['snap'])))
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('snapcraft.internal.lxd.is_snap')
@@ -235,14 +248,14 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                   '{}{}/core_123.snap'.format(
                       container_name, project_folder)]),
             call(['lxc', 'file', 'push',
-                  os.path.join(rundir, 'snapcraft_123.snap'),
-                  '{}{}/snapcraft_123.snap'.format(
+                  os.path.join(rundir, 'snapcraft_345.snap'),
+                  '{}{}/snapcraft_345.snap'.format(
                       container_name, project_folder)]),
         ])
         mock_container_run.assert_has_calls([
             call(['apt-get', 'install', 'squashfuse', '-y']),
             call(['snap', 'install', '--dangerous', 'core_123.snap']),
-            call(['snap', 'install', '--dangerous', 'snapcraft_123.snap',
+            call(['snap', 'install', '--dangerous', 'snapcraft_345.snap',
                   '--classic']),
         ])
 
