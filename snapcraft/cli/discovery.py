@@ -78,7 +78,8 @@ def list_plugins():
     plugins = []
     for importer, modname, is_package in pkgutil.iter_modules(
             snapcraft.plugins.__path__):
-        plugins.append(modname.replace('_', '-'))
+        if not (is_package and modname == 'internal'):
+            plugins.append(modname.replace('_', '-'))
 
     # we wrap the output depending on terminal size
     width = get_terminal_width()

@@ -114,6 +114,25 @@ class PluginTestCase(tests.TestCase):
         # Make sure that nothing was added to sys.path.
         self.assertEqual(path, sys.path)
 
+    def test_init_known_module_but_unknown_plugin_must_raise_exception(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        path = copy.copy(sys.path)
+
+        # "internal" is a valid module within the plugin path, but contains no
+        # plugins.
+        raised = self.assertRaises(
+            errors.PluginError,
+            mocks.loadplugin,
+            'fake-part', 'internal')
+
+        self.assertThat(str(raised), Equals(
+            'Issue while loading part: no plugin found in module: internal'))
+
+        # Make sure that nothing was added to sys.path.
+        self.assertEqual(path, sys.path)
+
     def test_fileset_include_excludes(self):
         stage_set = [
             '-etc',

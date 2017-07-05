@@ -49,6 +49,7 @@ setup(
               'snapcraft.internal.sources',
               'snapcraft.internal.states',
               'snapcraft.plugins',
+              'snapcraft.plugins.internal',
               'snapcraft.storeapi'],
     package_data={'snapcraft.internal.repo': ['manifest.txt']},
     entry_points={
