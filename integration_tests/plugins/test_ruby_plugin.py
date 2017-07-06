@@ -28,4 +28,5 @@ class RubyPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', 'hello-ruby-no-gemfile')
         bins = ['gem', 'irb', 'ruby', 'erb']
         for exe in bins:
-            self.assertThat(os.path.join(self.stage_dir, 'bin', exe), FileExists())
+            self.assertThat(os.path.join(self.stage_dir, 'bin', exe),
+                FileExists())
