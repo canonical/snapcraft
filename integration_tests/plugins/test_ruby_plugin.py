@@ -29,4 +29,4 @@ class RubyPluginTestCase(integration_tests.TestCase):
         bins = ['gem', 'irb', 'ruby', 'erb']
         for exe in bins:
             self.assertThat(os.path.join(self.stage_dir, 'bin', exe),
-                FileExists())
+                            FileExists())
