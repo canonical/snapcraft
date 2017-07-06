@@ -310,11 +310,11 @@ class PluginHandler:
         self.notify_part_progress('Pulling')
         if self.source_handler:
             self.source_handler.pull()
-        self.code.pull()
+        plugin_assets = self.code.pull()
 
-        self.mark_pull_done()
+        self.mark_pull_done(plugin_assets)
 
-    def mark_pull_done(self):
+    def mark_pull_done(self, plugin_assets):
         pull_properties = self.code.get_pull_properties()
 
         # Add the annotated list of build packages
@@ -324,7 +324,8 @@ class PluginHandler:
             pull_properties, part_properties=self._part_properties,
             project=self._project_options, stage_packages=self.stage_packages,
             build_packages=part_build_packages,
-            source_details=self.source_handler.source_details
+            source_details=self.source_handler.source_details,
+            plugin_assets=plugin_assets
         ))
 
     def clean_pull(self, hint=''):
