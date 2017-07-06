@@ -64,6 +64,12 @@ You can selectively run only one of the suites, and apply a filter:
 
 Examples:
 
+  * To run only the static tests:
+
+    ```
+    ./runtests.sh static
+    ```
+
   * To run only the full unit test suite:
 
     ```
@@ -86,6 +92,16 @@ Examples:
     ```
     ./runtests.sh plugins *python*
     ```
+
+  * To run the integration tests that are not related to plugins or the store:
+
+    ```
+    ./runtests.sh integration
+    ```
+
+The snaps tests script has more complex arguments. For an explanation of them, run:
+
+    python3 -m snaps_tests -h
 
 The integration and snaps suites can be run using the snapcraft source from the repository, or using the snapacraft command installed in the system. By default, they will use the source code, so you can modify your clone of the repository and verify that your changes are correct. If instead you want to verify that the snapcraft version installed in your system is correct, run them with the environment variable `SNAPCRAFT_FROM_INSTALLED` set, like this:
 
