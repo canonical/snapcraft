@@ -29,6 +29,8 @@ Additionally, this plugin uses the following plugin-specific keywords:
 """
 import re
 
+import platform
+
 from os import makedirs, environ
 from os.path import exists, join
 
@@ -109,7 +111,8 @@ class RubyPlugin(BasePlugin):
         env['RUBYPATH'] = '{}'.format(join(root, 'bin'))
         rubydir = join(root, 'lib', 'ruby')
         rubylib = join(rubydir, self._ruby_version_dir)
-        env['RUBYLIB'] = '{}:{}'.format(rubylib, join(rubylib, 'x86_64-linux'))
+        env['RUBYLIB'] = '{}:{}'.format(rubylib,
+            join(rubylib, '{}-linux'.format(platform.machine()))
         env['GEM_HOME'] = join(rubydir, 'gems', self._ruby_version_dir)
         env['GEM_PATH'] = join(rubydir, 'gems', self._ruby_version_dir)
         return env
