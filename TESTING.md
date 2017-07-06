@@ -86,3 +86,7 @@ Examples:
     ```
     ./runtests.sh plugins *python*
     ```
+
+The integration and snaps suites can be run using the snapcraft source from the repository, or using the snapacraft command installed in the system. By default, they will use the source code, so you can modify your clone of the repository and verify that your changes are correct. If instead you want to verify that the snapcraft version installed in your system is correct, run them with the environment variable `SNAPCRAFT_FROM_INSTALLED` set, like this:
+
+    SNAPCRAFT_FROM_INSTALLED=1 ./runtests.sh [integration|plugins|store] [pattern]
