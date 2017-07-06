@@ -25,7 +25,7 @@ class RubyPluginTestCase(integration_tests.TestCase):
 
     def test_build_with_no_gemfile(self):
         # Test that the expected binary executables exist
-        self.run_snapcraft('stage', 'ruby-bins')
+        self.run_snapcraft('stage', 'hello-ruby-no-gemfile')
         bins = ['gem', 'irb', 'ruby', 'erb']
         for exe in bins:
-            self.assertThat(os.path.join('stage', 'bin', exe), FileExists())
+            self.assertThat(os.path.join(self.stage_dir, 'bin', exe), FileExists())
