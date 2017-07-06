@@ -66,16 +66,23 @@ Examples:
 
   * To run only the full unit test suite:
 
-   ./runtests.sh unit
+    ```
+    ./runtests.sh unit
+    ```
 
   * To run only the unit tests in the file called `test_init.py`:
 
-   ./runtests.sh unit test_init.py
+    ```
+    ./runtests.sh unit test_init.py
 
   * To run only the integration tests that interact with the store:
 
-   ./runtests.sh store
+    ```
+    ./runtests.sh store
+    ```
 
   * To run only the integration tests for the python plugin:
 
-   ./runtests.sh plugins *python*
+    ```
+    ./runtests.sh plugins *python*
+    ```
