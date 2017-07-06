@@ -93,4 +93,4 @@ The integration and snaps suites can be run using the snapcraft source from the 
 
 The store tests by default will start fake servers that are configured to reply like the real store does. But you can run them also against the staging and production store servers. To do that, you will need to set the `TEST_STORE` environment variable to either `staging` or `production`, and you also have to pass credentials for a valid user in that store with the environment variable `TEST_USER_EMAIL` and `TEST_USER_PASSWORD`, like this:
 
-    TEST_STORE=staging TEST_USER_EMAIL=test@example.com TEST_USER_PASSWORD=hola123* ./runtests.sh store [pattern]
+    TEST_STORE=staging TEST_USER_EMAIL=test@example.com TEST_USER_PASSWORD=Hola123* ./runtests.sh store [pattern]
