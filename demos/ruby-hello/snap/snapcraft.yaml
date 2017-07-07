@@ -1,0 +1,25 @@
+name: "ruby-hello"
+version: 0.1
+summary: Test ruby
+description: |
+  Snap to test ruby compiled correctly, exists, and works
+
+grade: stable
+confinement: strict
+
+apps:
+  ruby-hello:
+    command: ruby-hello.rb
+
+parts:
+  ruby-hello:
+    plugin: ruby
+    source: .
+    stage:
+      - bin
+      - lib
+    prime:
+      - bin
+      - lib
+    install: |
+      cp ./ruby-hello.rb $SNAPCRAFT_PART_INSTALL/ruby-hello.rb
