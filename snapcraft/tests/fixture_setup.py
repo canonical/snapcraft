@@ -499,8 +499,12 @@ class FakeSnapd(fixtures.Fixture):
 
     def __init__(self):
         self._snaps = {
-            'core': {'revision': '123', 'confinement': 'strict'},
-            'snapcraft': {'revision': '345', 'confinement': 'classic'},
+            'core': {'confinement': 'strict',
+                     'id': '2kkitQurgOkL3foImG4wDwn9CIANuHlt',
+                     'revision': '123'},
+            'snapcraft': {'confinement': 'classic',
+                          'id': '3lljuRvshPlM4gpJnH5xExo0DJBOvImu',
+                          'revision': '345'},
         }
 
     def _setUp(self):

@@ -183,10 +183,23 @@ class Containerbuild:
             raise SnapcraftEnvironmentError(
                 'Error querying {!r} snap: {}'.format(
                     name, json['result']['message']))
+        id = json['result']['id']
         # Lookup confinement to know if we need to --classic when installing
         classic = json['result']['confinement'] == 'classic'
         # Revisions are unique, so we don't need to know the channel
         rev = json['result']['revision']
+
+        # Copy files to a path the 'lxd' snap can access
+        rundir = os.path.join(os.path.sep, 'run', 'user', str(os.getuid()),
+                              'snap.lxd')
+        os.makedirs(rundir, exist_ok=True)
+
+        self._inject_assertions(rundir, '{}_{}.assert'.format(name, rev), [
+            ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
+            ['snap-declaration', 'snap-name={}'.format(name)],
+            ['snap-revision', 'snap-revision={}'.format(rev),
+             'snap-id={}'.format(id)],
+        ])
 
         # https://github.com/snapcore/snapd/blob/master/snap/info.go
         # MountFile
@@ -195,20 +208,26 @@ class Containerbuild:
         # CoreLibExecDir
         installed = os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps',
                                  filename)
-        # Copy file to a path the 'lxd' snap can access
-        rundir = os.path.join(os.path.sep, 'run', 'user', str(os.getuid()),
-                              'snap.lxd')
-        os.makedirs(rundir, exist_ok=True)
+
         filepath = os.path.join(rundir, filename)
         shutil.copyfile(installed, filepath)
         self._push_file(filepath, os.path.join(self._project_folder, filename))
         logger.info('Installing {}'.format(filename))
-        # We use --dangerous rather than pushing the assertions because we
-        # don't want snapd to refresh during an on-going build
-        cmd = ['snap', 'install', '--dangerous', filename]
+        cmd = ['snap', 'install', filename]
         if classic:
             cmd.append('--classic')
         self._container_run(cmd)
+
+    def _inject_assertions(self, rundir, filename, assertions):
+        filepath = os.path.join(rundir, filename)
+        with open(filepath, 'wb') as f:
+            for assertion in assertions:
+                logger.info('Looking up assertion {}'.format(assertion))
+                f.write(check_output(['snap', 'known', *assertion]))
+                f.write(b'\n')
+        self._push_file(filepath, os.path.join(self._project_folder, filename))
+        logger.info('Adding assertion {}'.format(filename))
+        self._container_run(['snap', 'ack', filename])
 
     def _finish(self):
         # os.sep needs to be `/` and on Windows it will be set to `\`

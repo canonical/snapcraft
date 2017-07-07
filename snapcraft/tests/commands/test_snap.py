@@ -223,10 +223,18 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('snapcraft.internal.common.is_snap')
     @mock.patch('shutil.copyfile')
+    @mock.patch('os.makedirs')
     def test_snap_containerized_inject_snap(self,
+                                            mock_makedirs,
                                             mock_copyfile,
                                             mock_is_snap,
                                             mock_container_run):
+        # Create open mock here for context manager to work correctly
+        patcher = mock.patch('snapcraft.internal.lxd.open',
+                             mock.mock_open())
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
         mock_is_snap.side_effect = lambda: True
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         fake_snapd = fixture_setup.FakeSnapd()
@@ -244,8 +252,16 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.run_command(['snap'])
         fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'file', 'push',
+                  os.path.join(rundir, 'core_123.assert'),
+                  '{}/{}/core_123.assert'.format(
+                      container_name, project_folder)]),
+            call(['lxc', 'file', 'push',
                   os.path.join(rundir, 'core_123.snap'),
                   '{}{}/core_123.snap'.format(
+                      container_name, project_folder)]),
+            call(['lxc', 'file', 'push',
+                  os.path.join(rundir, 'snapcraft_345.assert'),
+                  '{}/{}/snapcraft_345.assert'.format(
                       container_name, project_folder)]),
             call(['lxc', 'file', 'push',
                   os.path.join(rundir, 'snapcraft_345.snap'),
@@ -254,9 +270,10 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         ])
         mock_container_run.assert_has_calls([
             call(['apt-get', 'install', 'squashfuse', '-y']),
-            call(['snap', 'install', '--dangerous', 'core_123.snap']),
-            call(['snap', 'install', '--dangerous', 'snapcraft_345.snap',
-                  '--classic']),
+            call(['snap', 'ack', 'core_123.assert']),
+            call(['snap', 'install', 'core_123.snap']),
+            call(['snap', 'ack', 'snapcraft_345.assert']),
+            call(['snap', 'install', 'snapcraft_345.snap', '--classic']),
         ])
 
     @mock.patch('snapcraft.internal.lifecycle.ProgressBar')
