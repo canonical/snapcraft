@@ -352,7 +352,7 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         setup_file = os.path.join(self.builddir, 'setup.py')
         with simple_env_bzr(os.path.join(self.installdir, 'bin')):
-            self._run_pip(setup_file)
+            installed_pipy_packages = self._run_pip(setup_file)
 
         self._fix_permissions()
 
@@ -362,6 +362,12 @@ class PythonPlugin(snapcraft.BasePlugin):
                                    r'#!/usr/bin/env python')
 
         self._setup_sitecustomize()
+        return {
+            'python-packages': [
+                '{}={}'.format(name, installed_pipy_packages[name])
+                for name in installed_pipy_packages
+            ]
+        }
 
     def _setup_sitecustomize(self):
         # This avoids needing to leak PYTHONUSERBASE

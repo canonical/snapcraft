@@ -45,7 +45,7 @@ class PullState(PartState):
 
     def __init__(self, property_names, part_properties=None, project=None,
                  stage_packages=None, build_packages=None,
-                 source_details=None, plugin_assets=None):
+                 source_details=None):
         # Save this off before calling super() since we'll need it
         # FIXME: for 3.x the name `schema_properties` is leaking
         #        implementation details from a higher layer.
@@ -55,8 +55,6 @@ class PullState(PartState):
             'build-packages': build_packages,
             'source-details': source_details,
         }
-        if plugin_assets:
-            self.assets.update(plugin_assets)
 
         super().__init__(part_properties, project)
 
