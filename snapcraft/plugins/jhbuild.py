@@ -353,7 +353,7 @@ cflags = {cflags!r}
         cmd = []
         if os.getuid() == 0:
             envvars = []
-            envtmpl = '''{key!s}={value!r}'''
+            envtmpl = '''{key!s}={value!s}'''
             for var in ['https_proxy', 'http_proxy', 'GIT_PROXY_COMMAND']:
                 if os.environ.get(var) != None:
                     envvars += [envtmpl.format(key=var, value=os.environ[var])]
