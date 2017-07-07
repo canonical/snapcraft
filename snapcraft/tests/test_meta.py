@@ -37,7 +37,10 @@ from snapcraft.internal.meta import (
     _SnapPackaging
 )
 from snapcraft.internal import common
-from snapcraft.internal.errors import MissingGadgetError
+from snapcraft.internal.errors import (
+    MissingGadgetError,
+    SnapcraftPathEntryError,
+)
 from snapcraft import ProjectOptions, tests
 
 
@@ -519,6 +522,45 @@ class CreateWithConfinementTestCase(CreateBaseTestCase):
             'confinement' in y,
             'Expected "confinement" property to be in snap.yaml')
         self.assertEqual(y['confinement'], self.confinement)
+
+
+class EnsureFilePathsTestCase(CreateBaseTestCase):
+
+    scenarios = [
+        ('desktop', dict(
+            filepath='usr/share/dekstop/desktop.desktop',
+            content='[Desktop Entry]\nExec=app2.exe\nIcon=/usr/share/app2.png',
+            key='desktop')),
+        ('completer', dict(
+            filepath='usr/share/completions/complete.sh',
+            content='#/bin/bash\n',
+            key='completer')),
+    ]
+
+    def test_file_path_entry(self):
+        self.config_data['apps'] = {'app': {self.key: self.filepath}}
+        _create_file(os.path.join('prime', self.filepath),
+                     content=self.content)
+
+        # If the path exists this should not fail
+        self.generate_meta_yaml()
+
+
+class EnsureFilePathsTestCaseFails(CreateBaseTestCase):
+
+    scenarios = [
+        ('desktop', dict(
+            filepath='usr/share/dekstop/desktop.desktop',
+            key='desktop')),
+        ('completer', dict(
+            filepath='usr/share/completions/complete.sh',
+            key='completer')),
+    ]
+
+    def test_file_path_entry(self):
+        self.config_data['apps'] = {'app': {self.key: self.filepath}}
+
+        self.assertRaises(SnapcraftPathEntryError, self.generate_meta_yaml)
 
 
 class CreateWithGradeTestCase(CreateBaseTestCase):
