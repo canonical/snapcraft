@@ -112,8 +112,9 @@ class FakeProjectOptions(fixtures.Fixture):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+        project_options_t = type(snapcraft.ProjectOptions.return_value)
         for key in self._kwargs:
-            setattr(type(snapcraft.ProjectOptions.return_value), key, self._kwargs[key])
+            setattr(project_options_t, key, self._kwargs[key])
 
 
 class SilentSnapProgress(fixtures.Fixture):
