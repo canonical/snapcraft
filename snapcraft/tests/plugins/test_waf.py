@@ -120,3 +120,46 @@ class WafPluginTestCase(tests.TestCase):
             mock.call(['./waf', 'install',
                        '--destdir={}'.format(plugin.installdir)])
         ])
+
+
+class WafCrossCompilePluginTestCase(tests.TestCase):
+
+    scenarios = [
+        ('armv7l', dict(deb_arch='armhf')),
+        ('aarch64', dict(deb_arch='arm64')),
+        ('i386', dict(deb_arch='i386')),
+        ('x86_64', dict(deb_arch='amd64')),
+        ('ppc64le', dict(deb_arch='ppc64el')),
+    ]
+
+    def setUp(self):
+        super().setUp()
+
+        class Options:
+            configflags = []
+
+        self.options = Options()
+        self.project_options = snapcraft.ProjectOptions(
+            target_deb_arch=self.deb_arch)
+
+        patcher = mock.patch('snapcraft.internal.common.run')
+        self.run_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.ProjectOptions.is_cross_compiling')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch.dict(os.environ, {})
+        self.env_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_cross_compile(self):
+        plugin = waf.WafPlugin('test-part', self.options,
+                               self.project_options)
+        plugin.enable_cross_compilation()
+        env = plugin.env(plugin.sourcedir)
+        self.assertIn('CC={}-gcc'.format(
+            self.project_options.arch_triplet), env)
+        self.assertIn('CXX={}-g++'.format(
+            self.project_options.arch_triplet), env)
