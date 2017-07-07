@@ -1,6 +1,6 @@
-# -*- Mode:Python; indent-tabs-buildnil; tab-width:4 -*-
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017 James Beedy <jamesbeedy@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,25 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import yaml
+import os
 
-from snapcraft.internal.states._state import State
-
-
-def _global_state_constructor(loader, node):
-    parameters = loader.construct_mapping(node)
-    return GlobalState(**parameters)
+import integration_tests
 
 
-yaml.add_constructor(u'!GlobalState', _global_state_constructor)
+class RubyPluginTestCase(integration_tests.TestCase):
 
-
-class GlobalState(State):
-
-    yaml_tag = u'!GlobalState'
-
-    def __init__(self, build_packages):
-        super().__init__()
-        self.assets = {
-            'build-packages': build_packages,
-        }
+    def test_ruby_exists(self):
+        self.run_snapcraft('stage', 'ruby-exists')
+        ruby_exe = os.path.join(self.stage_dir, 'bin', 'ruby')
+        self.assertTrue(os.path.exists(ruby_exe))

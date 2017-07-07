@@ -23,6 +23,7 @@ def _build_state_constructor(loader, node):
     parameters = loader.construct_mapping(node)
     return BuildState(**parameters)
 
+
 yaml.add_constructor(u'!BuildState', _build_state_constructor)
 
 
