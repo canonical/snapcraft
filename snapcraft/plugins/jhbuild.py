@@ -352,7 +352,12 @@ cflags = {cflags!r}
         cwd = kwargs.pop('cwd', os.getcwd())
         cmd = []
         if os.getuid() == 0:
-            cmd = ['sudo', '-H', '-u', 'jhbuild', '--']
+            envvars = []
+            envtmpl = '''{key!s}={value!r}'''
+            for var in ['https_proxy', 'http_proxy', 'GIT_PROXY_COMMAND']:
+                if os.environ.get(var) != None:
+                    envvars += [envtmpl.format(key=var, value=os.environ[var])]
+            cmd = ['sudo'] + envvars + ['-H', '-u', 'jhbuild', '--']
 
         cmd = cmd + [self.jhbuild_program,
                      '--no-interact', '-f', self.jhbuildrc_path]
