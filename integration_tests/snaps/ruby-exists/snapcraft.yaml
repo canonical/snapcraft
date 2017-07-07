@@ -1,0 +1,12 @@
+name: ruby-exists
+version: 0.1
+summary: Test ruby binary exists in stage
+description: |
+  Snap to runt ruby-exists test against
+confinement: strict
+
+parts:
+  ruby-exists:
+    plugin: ruby
+    stage:
+      - bin

@@ -21,8 +21,7 @@ import integration_tests
 
 class RubyPluginTestCase(integration_tests.TestCase):
 
-    def test_ruby_hello_world(self):
-        self.run_snapcraft('stage', 'ruby-hello')
-        binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join(self.stage_dir, 'ruby-hello'))
-        self.assertEqual('Hello snapcraft world! ~ RUBY\n', binary_output)
+    def test_ruby_exists(self):
+        self.run_snapcraft('stage', 'ruby-exists')
+        ruby_exe = os.path.join(self.stage_dir, 'bin', 'ruby')
+        self.assertTrue(os.path.exists(ruby_exe))
