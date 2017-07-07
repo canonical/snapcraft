@@ -18,15 +18,10 @@ import os
 
 import integration_tests
 
-from testtools.matchers import FileExists
-
-
 class RubyPluginTestCase(integration_tests.TestCase):
 
-    def test_build_with_no_gemfile(self):
-        # Test that the expected binary executables exist
-        self.run_snapcraft('stage', 'ruby-no-gemfile')
-        bins = ['gem', 'irb', 'ruby', 'erb']
-        for exe in bins:
-            self.assertThat(os.path.join(self.stage_dir, 'bin', exe),
-                            FileExists())
+    def test_ruby_hello_world():
+        self.run_snapcraft('stage', 'ruby-hello')
+        binary_output = self.get_output_ignoring_non_zero_exit(
+            os.path.join(self.stage_dir, 'ruby-hello'))
+        self.assertEqual('Hello snapcraft world! ~ RUBY\n', binary_output)
