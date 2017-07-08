@@ -110,3 +110,50 @@ The integration and snaps suites can be run using the snapcraft source from the 
 The store tests by default will start fake servers that are configured to reply like the real store does. But you can run them also against the staging and production store servers. To do that, you will need to set the `TEST_STORE` environment variable to either `staging` or `production`, and you also have to pass credentials for a valid user in that store with the environment variable `TEST_USER_EMAIL` and `TEST_USER_PASSWORD`, like this:
 
     TEST_STORE=staging TEST_USER_EMAIL=test@example.com TEST_USER_PASSWORD=Hola123* ./runtests.sh store [pattern]
+
+## Autopkgtests for the snapcraft deb
+
+Autopkgtests are tests for the project packaged as a deb. The unit tests are run during autopkgtests while the snapcraft deb is being built. Then the resulting deb is installed, and the integration and snaps suites are executed using the installed snapcraft.
+
+To run them locally, the easiest way is to use a LXC container. From the root of the project, run:
+
+    sudo apt install autopkgtest
+    adt-run --unbuilt-tree . --apt-upgrade --- lxd ubuntu:xenial
+
+It's possible to select only one of the suites, with:
+
+    adt-run --unbuilt-tree . --apt-upgrade --testname=integrationtests --- lxd ubuntu:xenial
+
+or:
+
+    adt-run --unbuilt-tree . --apt-upgrade --testname=snapstests --- lxd ubuntu:xenial
+
+## Spread tests for the snapcraft snap
+
+[Spread](https://github.com/snapcore/spread) is a system to distribute tests and execute them in different backends, in parallel. We are currently using spread only to run the integration suite using the installed snapcraft snap from the edge channel.
+
+To run them, first, download the spread binary:
+
+    curl -s -O https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz && tar xzvf spread-amd64.tar.gz
+
+Then, you can run them using a local LXD as the backend with:
+
+    ./spread -v lxd:
+
+Or, you can run them in linode if you have a `SPREAD_LINODE_KEY`, with:
+
+    SPREAD_LINODE_KEY={key} ./spread -v linode:
+
+## External snaps tests
+
+The idea of the external snaps tests is to clone a repository external to snapcraft that contains a `snapcraft.yaml`, and check that snapcraft can build successfully that snap. There is a script in the snapcraft repo to help with this. You can see how to use it running:
+
+    python3 -m external_snaps_tests --help
+
+We have a suite of external snaps tests that runs each night using the latest snapcraft master to build a big variety of snaps. It is located in https://github.com/elopio/snapcraft-de-noche and you can add new snaps to the suite just by adding them to the `.travis.yml` file.
+
+## Reproducible builds tests
+
+This is an experimental suite, with still some details to define. The idea is to build a snap recording a manifest of all the details of the build. Then build the snap again, but this time using the manifest instead of the source `snapcraft.yaml`, and compare that both snaps are equal.
+
+Currently, the suite is using the snaps of the integration suite to check the reproducibility. It is located in https://github.com/elopio/snapcraft-reproducible/
