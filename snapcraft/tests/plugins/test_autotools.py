@@ -56,7 +56,7 @@ class AutotoolsPluginTestCase(tests.TestCase):
 
         # Check configflags property
         configflags = properties['configflags']
-        for item in ['type', 'minitems', 'uniqueItems', 'items', 'default']:
+        for item in ['type', 'minitems', 'items', 'default']:
             self.assertTrue(item in configflags,
                             'Expected "{}" to be included in "configflags"'
                             .format(item))
@@ -70,8 +70,6 @@ class AutotoolsPluginTestCase(tests.TestCase):
         self.assertEqual(configflags_minitems, 1,
                          'Expected "configflags" "minitems" to be 1, but '
                          'it was {}'.format(configflags_minitems))
-
-        self.assertTrue(configflags['uniqueItems'])
 
         configflags_default = configflags['default']
         self.assertEqual(configflags_default, [],

@@ -196,8 +196,8 @@ class TravisSuccessfulTestCase(tests.TestCase):
                 'skip_cleanup': True,
                 'provider': 'script',
                 'script': (
-                    'docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c '
-                    '"apt update -qq && apt install snapcraft -y && '
+                    'docker run -v $(pwd):$(pwd) -t snapcore/snapcraft sh -c '
+                    '"apt update -qq && '
                     'cd $(pwd) && '
                     'snapcraft && snapcraft push *.snap --release edge"'),
                 'on': {
@@ -210,7 +210,6 @@ class TravisSuccessfulTestCase(tests.TestCase):
             "Enabling Travis testbeds to push and release 'foo' snaps "
             "to edge channel in series '16'",
             'Acquiring specific authorization information ...',
-            'Login successful.',
             'Encrypting authorization for Travis and adjusting project '
             'to automatically decrypt and use it during "after_success".',
             'Configuring "deploy" phase to build and release the snap in '
@@ -269,7 +268,6 @@ class TravisSuccessfulTestCase(tests.TestCase):
             'Refreshing credentials to push and release "foo" snaps to '
             'edge channel in series 16',
             'Acquiring specific authorization information ...',
-            'Login successful.',
             'Encrypting authorization for Travis and adjusting project '
             'to automatically decrypt and use it during "after_success".',
             'Done. Please commit the changes to '

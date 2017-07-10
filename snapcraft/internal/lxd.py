@@ -205,7 +205,7 @@ class Project(Containerbuild):
             # Map host user to root inside container
             check_call([
                 'lxc', 'config', 'set', self._container_name,
-                'raw.idmap', 'both 1000 0'])
+                'raw.idmap', 'both {} 0'.format(os.getuid())])
         if self._get_container_status()['status'] == 'Stopped':
             check_call([
                 'lxc', 'start', self._container_name])
@@ -297,7 +297,8 @@ class Project(Containerbuild):
 
     def execute(self, step='snap', args=None):
         super().execute(step, args)
-        if step == 'clean' and not args:
+        # clean with no parts deletes the container
+        if step == 'clean' and args == ['--step', 'pull']:
             print('Deleting {}'.format(self._container_name))
             check_call(['lxc', 'delete', '-f', self._container_name])
 

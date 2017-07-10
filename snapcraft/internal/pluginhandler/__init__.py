@@ -30,15 +30,9 @@ import yaml
 
 import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal.errors import (
-    PrimeFileConflictError,
-    PluginError,
-    MissingState,
-    SnapcraftPartConflictError,
-    SnapcraftSchemaError
-)
 from snapcraft.internal import (
     common,
+    errors,
     libraries,
     repo,
     sources,
@@ -77,7 +71,6 @@ class PluginHandler:
         self._part_properties = _expand_part_properties(
             part_properties, part_schema)
         self.stage_packages = []
-        self.build_packages = []
 
         # Some legacy parts can have a '/' in them to separate the main project
         # part with the subparts. This is rather unfortunate as it affects the
@@ -107,9 +100,10 @@ class PluginHandler:
                 plugin_name, self._part_properties, part_schema,
                 definitions_schema)
         except jsonschema.ValidationError as e:
-            error = SnapcraftSchemaError.from_validation_error(e)
-            raise PluginError('properties failed to load for {}: {}'.format(
-                part_name, error.message))
+            error = errors.SnapcraftSchemaError.from_validation_error(e)
+            raise errors.PluginError(
+                'properties failed to load for {}: {}'.format(
+                    part_name, error.message))
 
         stage_packages = getattr(self.code, 'stage_packages', [])
         sources = getattr(self.code, 'PLUGIN_STAGE_SOURCES', None)
@@ -138,7 +132,8 @@ class PluginHandler:
                 module = _load_local(module_name,
                                      self._project_options.local_plugins_dir)
             if not module:
-                raise PluginError('unknown plugin: {}'.format(plugin_name))
+                raise errors.PluginError(
+                    'unknown plugin: {}'.format(plugin_name))
 
         plugin = _get_plugin(module)
         _validate_pull_and_build_properties(
@@ -325,13 +320,10 @@ class PluginHandler:
         # Add the annotated list of build packages
         part_build_packages = self._part_properties.get('build-packages', [])
 
-        build_packages = repo.Repo.get_installed_build_packages(
-            part_build_packages)
-
         self.mark_done('pull', states.PullState(
             pull_properties, part_properties=self._part_properties,
             project=self._project_options, stage_packages=self.stage_packages,
-            build_packages=build_packages,
+            build_packages=part_build_packages,
             source_details=self.source_handler.source_details
         ))
 
@@ -491,7 +483,7 @@ class PluginHandler:
             self._clean_shared_area(self.stagedir, state,
                                     project_staged_state)
         except AttributeError:
-            raise MissingState(
+            raise errors.MissingState(
                 "Failed to clean step 'stage': Missing necessary state. "
                 "This won't work until a complete clean has occurred.")
 
@@ -551,7 +543,7 @@ class PluginHandler:
             self._clean_shared_area(self.primedir, state,
                                     project_primed_state)
         except AttributeError:
-            raise MissingState(
+            raise errors.MissingState(
                 "Failed to clean step 'prime': Missing necessary state. "
                 "This won't work until a complete clean has occurred.")
 
@@ -599,7 +591,7 @@ class PluginHandler:
         try:
             self._clean_steps(project_staged_state, project_primed_state,
                               step, hint)
-        except MissingState:
+        except errors.MissingState:
             # If one of the step cleaning rules is missing state, it must be
             # running on the output of an old Snapcraft. In that case, if we
             # were specifically asked to clean that step we need to fail.
@@ -812,8 +804,10 @@ def _get_plugin(module):
 
 def _load_local(module_name, local_plugin_dir):
     sys.path = [local_plugin_dir] + sys.path
-    module = importlib.import_module(module_name)
-    sys.path.pop(0)
+    try:
+        module = importlib.import_module(module_name)
+    finally:
+        sys.path.pop(0)
 
     return module
 
@@ -1042,7 +1036,7 @@ def _generate_exclude_set(directory, excludes):
 def _validate_relative_paths(files):
     for d in files:
         if os.path.isabs(d):
-            raise PluginError('path "{}" must be relative'.format(d))
+            raise errors.PluginError('path "{}" must be relative'.format(d))
 
 
 def _file_collides(file_this, file_other):
@@ -1089,7 +1083,7 @@ def check_for_collisions(parts):
                     conflict_files.append(f)
 
             if conflict_files:
-                raise SnapcraftPartConflictError(
+                raise errors.SnapcraftPartConflictError(
                     other_part_name=other_part_name,
                     part_name=part.name,
                     conflict_files=conflict_files)
@@ -1120,7 +1114,7 @@ def _combine_filesets(starting_fileset, modifying_fileset):
                                              modifying_includes)
 
     if contradicting_fileset:
-        raise PrimeFileConflictError(fileset=contradicting_fileset)
+        raise errors.PrimeFileConflictError(fileset=contradicting_fileset)
 
     to_combine = False
     # combine if starting_fileset has a wildcard

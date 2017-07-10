@@ -6,7 +6,7 @@ description: |
 
 grade: stable
 confinement: strict
-build-packages: ['hello']
+build-packages: ['haskell-doc']
 
 parts:
   empty-part:

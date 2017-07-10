@@ -34,12 +34,9 @@ from testtools.matchers import Equals
 
 import snapcraft
 from . import mocks
-from snapcraft.internal.errors import (
-    PrimeFileConflictError,
-    SnapcraftPartConflictError,
-)
 from snapcraft.internal import (
     common,
+    errors,
     lifecycle,
     pluginhandler,
     repo,
@@ -97,20 +94,25 @@ class PluginTestCase(tests.TestCase):
 
         mock_isdir.assert_any_call('file')
 
-        self.assertEqual(raised.__str__(),
-                         'local source (file) is not a directory')
+        self.assertThat(str(raised), Equals(
+             'local source (file) is not a directory'))
 
     def test_init_unknown_plugin_must_raise_exception(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
+        path = copy.copy(sys.path)
+
         raised = self.assertRaises(
-            pluginhandler.PluginError,
+            errors.PluginError,
             mocks.loadplugin,
             'fake-part', 'test_unexisting')
 
-        self.assertEqual(raised.__str__(),
-                         'unknown plugin: test_unexisting')
+        self.assertThat(str(raised), Equals(
+            'Issue while loading part: unknown plugin: test_unexisting'))
+
+        # Make sure that nothing was added to sys.path.
+        self.assertEqual(path, sys.path)
 
     def test_fileset_include_excludes(self):
         stage_set = [
@@ -494,21 +496,21 @@ class PluginTestCase(tests.TestCase):
 
     def test_filesets_includes_without_relative_paths(self):
         raised = self.assertRaises(
-            pluginhandler.PluginError,
+            errors.PluginError,
             pluginhandler._get_file_list,
             ['rel', '/abs/include'])
 
-        self.assertEqual(
-            'path "/abs/include" must be relative', str(raised))
+        self.assertThat(str(raised), Equals(
+            'Issue while loading part: path "/abs/include" must be relative'))
 
     def test_filesets_exlcudes_without_relative_paths(self):
         raised = self.assertRaises(
-            pluginhandler.PluginError,
+            errors.PluginError,
             pluginhandler._get_file_list,
             ['rel', '-/abs/exclude'])
 
-        self.assertEqual(
-            'path "/abs/exclude" must be relative', str(raised))
+        self.assertThat(str(raised), Equals(
+            'Issue while loading part: path "/abs/exclude" must be relative'))
 
 
 class MigratePluginTestCase(tests.TestCase):
@@ -1197,7 +1199,7 @@ class StateTestCase(StateBaseTestCase):
     def test_clean_stage_old_state(self):
         self.handler.mark_done('stage', None)
         raised = self.assertRaises(
-            pluginhandler.MissingState,
+            errors.MissingState,
             self.handler.clean_stage, {})
 
         self.assertEqual(
@@ -1528,7 +1530,7 @@ class StateTestCase(StateBaseTestCase):
     def test_clean_prime_old_state(self):
         self.handler.mark_done('prime', None)
         raised = self.assertRaises(
-            pluginhandler.MissingState,
+            errors.MissingState,
             self.handler.clean_prime, {})
 
         self.assertEqual(
@@ -1884,7 +1886,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler.mark_done('prime', None)
 
         raised = self.assertRaises(
-            pluginhandler.MissingState,
+            errors.MissingState,
             handler.clean, step='prime')
 
         self.assertEqual(
@@ -1998,7 +2000,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler.mark_done('stage', None)
 
         raised = self.assertRaises(
-            pluginhandler.MissingState,
+            errors.MissingState,
             handler.clean, step='stage')
 
         self.assertEqual(
@@ -2229,7 +2231,7 @@ class CollisionTestCase(tests.TestCase):
 
     def test_collisions_between_two_parts(self):
         raised = self.assertRaises(
-            SnapcraftPartConflictError,
+            errors.SnapcraftPartConflictError,
             pluginhandler.check_for_collisions,
             [self.part1, self.part2, self.part3])
 
@@ -2240,7 +2242,7 @@ class CollisionTestCase(tests.TestCase):
 
     def test_collisions_between_two_parts_pc_files(self):
         raised = self.assertRaises(
-            SnapcraftPartConflictError,
+            errors.SnapcraftPartConflictError,
             pluginhandler.check_for_collisions,
             [self.part1, self.part4])
 
@@ -2459,7 +2461,7 @@ class FindDependenciesTestCase(tests.TestCase):
         fileset_2 = ['a']
 
         raised = self.assertRaises(
-            PrimeFileConflictError,
+            errors.PrimeFileConflictError,
             pluginhandler._combine_filesets, fileset_1, fileset_2
         )
         self.assertEqual(

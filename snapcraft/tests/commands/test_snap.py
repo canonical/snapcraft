@@ -18,6 +18,7 @@ import logging
 import os
 import os.path
 import subprocess
+from textwrap import dedent
 from unittest import mock
 from unittest.mock import call
 
@@ -33,21 +34,22 @@ from . import CommandBaseTestCase
 from snapcraft.tests import fixture_setup
 
 
-class SnapCommandTestCase(CommandBaseTestCase):
+class SnapCommandBaseTestCase(CommandBaseTestCase):
 
-    yaml_template = """name: snap-test
-version: 1.0
-summary: test snapping
-description: if snap is succesful a snap package will be available
-architectures: ['amd64']
-type: {}
-confinement: strict
-grade: stable
+    yaml_template = dedent("""\
+        name: snap-test
+        version: 1.0
+        summary: test snapping
+        description: if snap is succesful a snap package will be available
+        architectures: ['amd64']
+        type: {}
+        confinement: strict
+        grade: stable
 
-parts:
-    part1:
-      plugin: nil
-"""
+        parts:
+            part1:
+                plugin: nil
+        """)
 
     def setUp(self):
         super().setUp()
@@ -64,10 +66,14 @@ parts:
         self.popen_spy = patcher.start()
         self.addCleanup(patcher.stop)
 
-    def make_snapcraft_yaml(self, n=1, snap_type='app'):
-        snapcraft_yaml = self.yaml_template.format(snap_type)
+    def make_snapcraft_yaml(self, n=1, snap_type='app', snapcraft_yaml=None):
+        if not snapcraft_yaml:
+            snapcraft_yaml = self.yaml_template.format(snap_type)
         super().make_snapcraft_yaml(snapcraft_yaml)
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
+
+
+class SnapCommandTestCase(SnapCommandBaseTestCase):
 
     def test_snap_defaults(self):
         self.make_snapcraft_yaml()
@@ -82,6 +88,15 @@ parts:
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+    def test_snap_fails_with_bad_type(self):
+        self.make_snapcraft_yaml(snap_type='bad-type')
+
+        result = self.run_command(['snap'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            "bad-type' is not one of ['app', 'gadget', 'kernel', 'os']"))
 
     def test_snap_is_the_default(self):
         self.make_snapcraft_yaml()
@@ -98,7 +113,10 @@ parts:
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
-    def test_snap_containerized(self, mock_container_run):
+    @mock.patch('os.getuid')
+    def test_snap_containerized(self, mock_getuid, mock_container_run):
+        mock_getuid.return_value = 1234
+        mock_container_run.side_effect = lambda cmd: cmd
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -107,8 +125,7 @@ parts:
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()
 
-        mock_container_run.side_effect = lambda cmd: cmd
-        result = self.run_command(['--debug', 'snap'])
+        result = self.run_command(['snap'])
 
         self.assertThat(result.exit_code, Equals(0))
 
@@ -122,6 +139,11 @@ parts:
         container_name = 'local:snapcraft-snap-test'
         project_folder = 'build_snap-test'
         fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'init', 'ubuntu:xenial/amd64', container_name]),
+            call(['lxc', 'config', 'set', container_name,
+                  'environment.SNAPCRAFT_SETUP_CORE', '1']),
+            call(['lxc', 'config', 'set', container_name,
+                  'raw.idmap', 'both {} 0'.format(mock_getuid.return_value)]),
             call(['lxc', 'start', container_name]),
             call(['lxc', 'exec', container_name, '--',
                   'mkdir', '-p', '/{}'.format(project_folder)]),
@@ -375,6 +397,26 @@ type: os
 
         self.assertThat('mysnap.snap', FileExists())
 
+    def test_load_config_with_invalid_plugin_exits_with_error(self):
+        self.make_snapcraft_yaml(snapcraft_yaml=dedent("""\
+            name: test-package
+            version: 1
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+
+            parts:
+              part1:
+                plugin: does-not-exist
+        """))
+
+        result = self.run_command(['snap'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            'Issue while loading part: unknown plugin: does-not-exist'))
+
     @mock.patch('time.time')
     def test_snap_renames_stale_snap_build(self, mocked_time):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -409,3 +451,29 @@ type: os
         self.assertThat(snap_build_renamed, FileExists())
         self.assertThat(
             snap_build_renamed, FileContains('signed assertion?'))
+
+
+class SnapCommandAsDefaultTestCase(SnapCommandBaseTestCase):
+
+    scenarios = [
+        ('no parallel builds', dict(options=['--no-parallel-builds'])),
+        ('target architecture', dict(options=['--target-arch', 'i386'])),
+        ('geo ip', dict(options=['--enable-geoip'])),
+        ('all', dict(options=['--no-parallel-builds', '--target-arch=i386',
+                              '--enable-geoip']))
+    ]
+
+    def test_snap_defaults(self):
+        """The arguments should not be rejected when 'snap' is implicit."""
+        self.make_snapcraft_yaml()
+
+        result = self.run_command(self.options)
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output,
+                        Contains('\nSnapped snap-test_1.0'))
+
+        self.popen_spy.assert_called_once_with([
+            'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)

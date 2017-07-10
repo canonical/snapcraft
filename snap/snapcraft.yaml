@@ -13,6 +13,7 @@ confinement: classic
 apps:
   snapcraft:
     command: bin/snapcraft-classic
+    completer: snapcraft-completion
 
 parts:
   snapcraft-bin:
@@ -20,6 +21,11 @@ parts:
     plugin: dump
     organize:
         snapcraft-classic: bin/snapcraft-classic
+  bash-completion:
+    source: debian
+    plugin: dump
+    stage:
+      - snapcraft-completion
   snapcraft:
     source: .
     plugin: python

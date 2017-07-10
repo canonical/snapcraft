@@ -29,14 +29,16 @@ import yaml
 
 from snapcraft import file_utils
 from snapcraft import shell_utils
-from snapcraft.internal import (
-    common,
-    repo
-)
-from snapcraft.internal.errors import MissingGadgetError
+from snapcraft.internal import common
+from snapcraft.internal.errors import (
+    MissingGadgetError,
+    SnapcraftPathEntryError)
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.sources import get_source_handler_from_type
-from snapcraft.internal.states import get_state
+from snapcraft.internal.states import (
+    get_global_state,
+    get_state
+)
 
 
 logger = logging.getLogger(__name__)
@@ -147,8 +149,8 @@ class _SnapPackaging:
                 yaml.dump(annotated_snapcraft, record_file)
 
     def _annotate_snapcraft(self, data):
-        data['build-packages'] = repo.Repo.get_installed_build_packages(
-            data.get('build-packages', []))
+        data['build-packages'] = get_global_state().assets.get(
+            'build-packages', [])
         for part in data['parts']:
             pull_state = get_state(
                 os.path.join(self._parts_dir, part, 'state'), 'pull')
@@ -165,6 +167,8 @@ class _SnapPackaging:
         # First migrate the snap directory. It will overwrite any conflicting
         # files.
         for root, directories, files in os.walk('snap'):
+            if '.snapcraft' in directories:
+                directories.remove('.snapcraft')
             for directory in directories:
                 source = os.path.join(root, directory)
                 destination = os.path.join(self._prime_dir, source)
@@ -257,6 +261,7 @@ class _SnapPackaging:
                 snap_yaml[key_name] = self._config_data[key_name]
 
         if 'apps' in self._config_data:
+            _verify_app_paths(basedir='prime', apps=self._config_data['apps'])
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
 
         return snap_yaml
@@ -456,3 +461,14 @@ def _validate_hook(hook_path):
     if not os.stat(hook_path).st_mode & stat.S_IEXEC:
         asset = os.path.basename(hook_path)
         raise CommandError('hook {!r} is not executable'.format(asset))
+
+
+def _verify_app_paths(basedir, apps):
+    for app in apps:
+        path_entries = [i for i in ('desktop', 'completer')
+                        if i in apps[app]]
+        for path_entry in path_entries:
+            file_path = os.path.join(basedir, apps[app][path_entry])
+            if not os.path.exists(file_path):
+                raise SnapcraftPathEntryError(
+                    app=app, key=path_entry, value=file_path)

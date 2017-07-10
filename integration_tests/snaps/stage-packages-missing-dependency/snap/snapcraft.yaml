@@ -3,7 +3,9 @@ version: '0.1'
 summary: install a stage package
 description: |
   Install a stage package.
-  This package has one dependency: gcc-6-base.
+  This package has dependencies:
+    - haskell98-report
+    - haskell98-tutorial
 
 grade: stable
 confinement: strict
@@ -11,4 +13,4 @@ confinement: strict
 parts:
   part-with-stage-packages:
     plugin: nil
-    stage-packages: ['hello']
+    stage-packages: ['haskell-doc']

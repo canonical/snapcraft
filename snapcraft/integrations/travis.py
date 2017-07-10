@@ -33,7 +33,7 @@ to branches of the same repository, not forks.
 
 Then it will adjust Travis configuration ('.travis.yml') with the commands
 to decrypt credentials during 'after_success' phase and install latest
-`snapcraft` to build and release your snap (inside a ubuntu:xenial docker
+`snapcraft` to build and release your snap (inside a snapcore/snapcraft docker
 container) during the 'deploy' phase.
 
 See the example below::
@@ -48,8 +48,8 @@ See the example below::
     deploy:
       skip_cleanup: true
       provider: script
-      script: docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c
-        "apt update -qq && apt install snapcraft -y && cd $(pwd) &&
+      script: docker run -v $(pwd):$(pwd) -t snapcore/snapcraft sh -c
+        "apt update -qq && cd $(pwd) &&
         snapcraft && snapcraft push *.snap --release edge"
       on:
         branch: master
@@ -218,8 +218,8 @@ def enable():
             'skip_cleanup': True,
             'provider': 'script',
             'script': (
-                'docker run -v $(pwd):$(pwd) -t ubuntu:xenial sh -c '
-                '"apt update -qq && apt install snapcraft -y && cd $(pwd) && '
+                'docker run -v $(pwd):$(pwd) -t snapcore/snapcraft sh -c '
+                '"apt update -qq && cd $(pwd) && '
                 'snapcraft && snapcraft push *.snap --release edge"'),
             'on': {
                 'branch': 'master',

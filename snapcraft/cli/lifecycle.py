@@ -137,9 +137,13 @@ def snap(directory, output, **kwargs):
     if env.is_containerbuild():
         lifecycle.containerbuild('snap', project_options, output, directory)
     else:
-        snap_name = lifecycle.snap(
-            project_options, directory=directory, output=output)
-        click.echo('Snapped {}'.format(snap_name))
+        try:
+            snap_name = lifecycle.snap(
+                project_options, directory=directory, output=output)
+        except Exception as e:
+            echo.error(e)
+            sys.exit(1)
+        echo.info('Snapped {}'.format(snap_name))
 
 
 @lifecyclecli.command()
@@ -161,7 +165,7 @@ def clean(parts, step, **kwargs):
     if env.is_containerbuild():
         step = step or 'pull'
         lifecycle.containerbuild('clean', project_options,
-                                 args=['--step', step + parts])
+                                 args=['--step', step, *parts])
     else:
         if step == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '

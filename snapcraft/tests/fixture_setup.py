@@ -18,6 +18,7 @@ import collections
 import contextlib
 import io
 import os
+import string
 import sys
 import threading
 import urllib.parse
@@ -30,6 +31,11 @@ import fixtures
 import xdg
 
 from snapcraft.tests import fake_servers
+from snapcraft.tests.fake_servers import (
+    api,
+    search,
+    upload
+)
 from snapcraft.tests.subprocess_utils import (
     call,
     call_with_output,
@@ -302,19 +308,19 @@ class FakeSSOServerRunning(_FakeServerRunning):
 
 class FakeStoreUploadServerRunning(_FakeServerRunning):
 
-    fake_server = fake_servers.FakeStoreUploadServer
+    fake_server = upload.FakeStoreUploadServer
 
 
 class FakeStoreAPIServerRunning(_FakeServerRunning):
 
     def __init__(self, fake_store):
         super().__init__()
-        self.fake_server = partial(fake_servers.FakeStoreAPIServer, fake_store)
+        self.fake_server = partial(api.FakeStoreAPIServer, fake_store)
 
 
 class FakeStoreSearchServerRunning(_FakeServerRunning):
 
-    fake_server = fake_servers.FakeStoreSearchServer
+    fake_server = search.FakeStoreSearchServer
 
 
 class StagingStore(fixtures.Fixture):
@@ -357,8 +363,9 @@ class TestStore(fixtures.Fixture):
             raise ValueError(
                 'Unknown test store option: {}'.format(test_store))
 
-        self.user_email = os.getenv(
-            'TEST_USER_EMAIL', 'u1test+snapcraft@canonical.com')
+        self.user_email = (
+            os.getenv('TEST_USER_EMAIL') or
+            'u1test+snapcraft@canonical.com')
         self.test_track_snap = os.getenv(
             'TEST_SNAP_WITH_TRACKS', 'test-snapcraft-tracks')
         if test_store == 'fake':
@@ -386,51 +393,23 @@ class FakePlugin(fixtures.Fixture):
         del sys.modules[self._import_name]
 
 
-def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
-    def call_effect(*args, **kwargs):
-        if args[0] == ['lxc', 'remote', 'get-default']:
-            if fail_on_default:
-                raise CalledProcessError(returncode=255, cmd=args[0])
-            else:
-                return 'local'.encode('utf-8')
-        elif args[0] == ['lxc', 'list', 'my-remote:'] and fail_on_remote:
-            raise CalledProcessError(returncode=255, cmd=args[0])
-        elif args[0][:2] == ['lxc', 'info']:
-            return '''
-                environment:
-                  kernel_architecture: x86_64
-                '''.encode('utf-8')
-        elif args[0][:3] == ['lxc', 'list', '--format=json']:
-            return '''
-                [{"name": "snapcraft-snap-test",
-                  "status": "Stopped",
-                  "state": {"network":
-                           {"eth0": {"addresses":
-                                     [{"family": "inet",
-                                       "address": "127.0.0.1"}]}}},
-                  "devices": {"build-snap-test":[]}}]
-                '''.encode('utf-8')
-        else:
-            return ''.encode('utf-8')
-    return call_effect
-
-
 class FakeLXD(fixtures.Fixture):
     '''...'''
 
     def __init__(self, fail_on_remote=False, fail_on_default=False):
+        self.status = None
         self.fail_on_remote = fail_on_remote
         self.fail_on_default = fail_on_default
 
     def _setUp(self):
         patcher = mock.patch('snapcraft.internal.lxd.check_call')
         self.check_call_mock = patcher.start()
+        self.check_call_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.internal.lxd.check_output')
         self.check_output_mock = patcher.start()
-        self.check_output_mock.side_effect = check_output_side_effect(
-            self.fail_on_remote, self.fail_on_default)
+        self.check_output_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
@@ -445,6 +424,43 @@ class FakeLXD(fixtures.Fixture):
         self.architecture_mock = patcher.start()
         self.architecture_mock.return_value = ('64bit', 'ELF')
         self.addCleanup(patcher.stop)
+
+    def check_output_side_effect(self):
+        def call_effect(*args, **kwargs):
+            if args[0] == ['lxc', 'remote', 'get-default']:
+                if self.fail_on_default:
+                    raise CalledProcessError(returncode=255, cmd=args[0])
+                else:
+                    return 'local'.encode('utf-8')
+            elif args[0][:2] == ['lxc', 'info']:
+                return '''
+                    environment:
+                      kernel_architecture: x86_64
+                    '''.encode('utf-8')
+            elif args[0][:3] == ['lxc', 'list', '--format=json']:
+                if self.status and args[0][3] == self.name:
+                    return string.Template('''
+                        [{"name": "$NAME",
+                          "status": "$STATUS",
+                          "state": {"network":
+                                   {"eth0": {"addresses":
+                                             [{"family": "inet",
+                                               "address": "127.0.0.1"}]}}},
+                          "devices": {"build-snap-test":[]}}]
+                        ''').substitute({
+                            # Container name without remote prefix
+                            'NAME': self.name.split(':')[-1],
+                            'STATUS': self.status,
+                            }).encode('utf-8')
+                return '[]'.encode('utf-8')
+            elif args[0][:2] == ['lxc', 'list'] and self.fail_on_remote:
+                    raise CalledProcessError(returncode=255, cmd=args[0])
+            elif args[0][:2] == ['lxc', 'init']:
+                self.name = args[0][3]
+                self.status = 'Stopped'
+            else:
+                return ''.encode('utf-8')
+        return call_effect
 
 
 class GitRepo(fixtures.Fixture):
@@ -571,10 +587,72 @@ class HgRepo(fixtures.Fixture):
 
 class FakeAptCache(fixtures.Fixture):
 
+    class Cache():
+
+        def __init__(self):
+            super().__init__()
+            self.packages = collections.OrderedDict()
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            pass
+
+        def __setitem__(self, key, item):
+            package_parts = key.split('=')
+            package_name = package_parts[0]
+            version = (
+                package_parts[1] if len(package_parts) > 1 else item.version)
+            if package_name in self.packages:
+                self.packages[package_name].version = version
+            else:
+                if version and not item.version:
+                    item.version = version
+                self.packages[package_name] = item
+
+        def __getitem__(self, key):
+            if '=' in key:
+                key = key.split('=')[0]
+            return self.packages[key]
+
+        def __contains__(self, key):
+            return key in self.packages
+
+        def __iter__(self):
+            return iter(self.packages.values())
+
+        def open(self):
+            pass
+
+        def close(self):
+            pass
+
+        def update(self, *args, **kwargs):
+            pass
+
+        def get_changes(self):
+            return [self.packages[package] for package in self.packages
+                    if self.packages[package].marked_install]
+
+        def get_providing_packages(self, package_name):
+            providing_packages = []
+            for package in self.packages:
+                if package_name in self.packages[package].provides:
+                    providing_packages.append(self.packages[package])
+            return providing_packages
+
+        def is_virtual_package(self, package_name):
+            is_virtual = False
+            if package_name not in self.packages:
+                for package in self.packages:
+                    if package_name in self.packages[package].provides:
+                        return True
+            return is_virtual
+
     def __init__(self, packages=None):
         super().__init__()
         self.packages = packages if packages else []
-        self.cache = collections.OrderedDict()
 
     def setUp(self):
         super().setUp()
@@ -582,47 +660,67 @@ class FakeAptCache(fixtures.Fixture):
         self.useFixture(temp_dir_fixture)
         self.path = temp_dir_fixture.path
         patcher = mock.patch('snapcraft.repo._deb.apt.Cache')
-        mock_apt_cache = patcher.start()
+        self.mock_apt_cache = patcher.start()
         self.addCleanup(patcher.stop)
 
+        self.cache = self.Cache()
+        self.mock_apt_cache.return_value = self.cache
         for package, version in self.packages:
             self.cache[package] = FakeAptCachePackage(
                 self.path, package, version)
 
-        mock_apt_cache().__getitem__.side_effect = (
-            lambda item: self.cache[item])
-        mock_apt_cache().__enter__().__getitem__.side_effect = (
-            lambda item: self.cache[item])
+        # Add all the packages in the manifest.
+        with open(os.path.abspath(
+                os.path.join(
+                    __file__, '..', '..',
+                    'internal', 'repo', 'manifest.txt'))) as manifest_file:
+            self.add_packages([line.strip() for line in manifest_file])
 
-        mock_apt_cache().get_changes.return_value = self.cache.values()
-
-        mock_apt_cache().__enter__().get_providing_packages.side_effect = (
-            self.get_providing_packages)
-
-    def get_providing_packages(self, package_name):
-        providing_packages = []
-        for package in self.cache:
-            if package_name in self.cache[package].provides:
-                providing_packages.append(self.cache[package])
-        return providing_packages
+    def add_packages(self, package_names):
+        for name in package_names:
+            self.cache[name] = FakeAptCachePackage(self.path, name)
 
 
 class FakeAptCachePackage():
 
-    def __init__(self, temp_dir, name, version, provides=None):
+    def __init__(
+            self, temp_dir, name, version=None,
+            provides=None, installed=False,
+            priority='non-essential'):
         super().__init__()
         self.temp_dir = temp_dir
         self.name = name
+        self._version = None
+        self.versions = {}
         self.version = version
-        self.versions = {version: self}
         self.candidate = self
         self.installed = version
-        self.provides = provides
+        self.provides = provides if provides else []
+        self.installed = installed
+        self.priority = priority
+        self.marked_install = False
 
     def __str__(self):
-        return '{}={}'.format(self.name, self.version)
+        if '=' in self.name:
+            return self.name
+        else:
+            return '{}={}'.format(self.name, self.version)
+
+    @property
+    def version(self):
+        return self._version
+
+    @version.setter
+    def version(self, version):
+        self._version = version
+        if version is not None:
+            self.versions.update({version: self})
 
     def mark_install(self):
+        if not self.installed:
+            self.marked_install = True
+
+    def mark_keep(self):
         pass
 
     def fetch_binary(self, dir_, progress):
