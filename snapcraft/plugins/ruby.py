@@ -94,26 +94,25 @@ class RubyPlugin(BasePlugin):
         super().pull()
         os.makedirs(self._ruby_part_dir, exist_ok=True)
         self._ruby_tar.download()
-
-    def build(self):
-        super().build()
         self._ruby_install(builddir=self._ruby_part_dir)
         self._gem_install()
         if self._install_bundler:
             self._bundle_install()
 
     def env(self, root):
-        env = {}
-        env['PATH'] = '{}:{}'.format(
-            os.path.join(root, 'bin'), os.environ['PATH'])
-        env['RUBYPATH'] = '{}'.format(os.path.join(root, 'bin'))
+        env = super().env(root)
+        env.append('PATH={}:{}'.format(
+            os.path.join(root, 'bin'), os.environ['PATH']))
+        env.append('RUBYPATH={}'.format(os.path.join(root, 'bin')))
         rubydir = os.path.join(root, 'lib', 'ruby')
         rubylib = os.path.join(rubydir, self._ruby_version_dir)
-        env['RUBYLIB'] = '{}:{}'.format(
+        env.append('RUBYLIB={}:{}'.format(
             rubylib, os.path.join(
-                rubylib, '{}-linux'.format(platform.machine())))
-        env['GEM_HOME'] = os.path.join(rubydir, 'gems', self._ruby_version_dir)
-        env['GEM_PATH'] = os.path.join(rubydir, 'gems', self._ruby_version_dir)
+                rubylib, '{}-linux'.format(platform.machine()))))
+        env.append('GEM_HOME={}'.format(
+            os.path.join(rubydir, 'gems', self._ruby_version_dir)))
+        env.append('GEM_PATH={}'.format(
+            os.path.join(rubydir, 'gems', self._ruby_version_dir)))
         return env
 
     def _ruby_install(self, builddir):
@@ -134,11 +133,10 @@ class RubyPlugin(BasePlugin):
             gem_install_cmd = [os.path.join(self.installdir, 'bin', 'ruby'),
                                os.path.join(self.installdir, 'bin', 'gem'),
                                'install']
-            self.run(gem_install_cmd + self._gems,
-                     env=self.env(root=self.installdir))
+            self.run(gem_install_cmd + self._gems)
 
     def _bundle_install(self):
         bundle_install_cmd = [os.path.join(self.installdir, 'bin', 'ruby'),
                               os.path.join(self.installdir, 'bin', 'bundle'),
                               'install']
-        self.run(bundle_install_cmd, env=self.env(root=self.installdir))
+        self.run(bundle_install_cmd)
