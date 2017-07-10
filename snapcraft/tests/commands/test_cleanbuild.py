@@ -107,14 +107,14 @@ parts:
 
         self.make_snapcraft_yaml()
 
-        self.useFixture(tests.fixture_setup.FakeLXD(fail_on_default=True))
+        fake_lxd = tests.fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        fake_lxd.check_output_mock.side_effect = FileNotFoundError('lxc')
 
         result = self.run_command(['cleanbuild'])
 
         self.assertThat(result.exit_code, Equals(1))
         self.assertThat(result.output, Equals(
-            'You must have LXD installed in order to use cleanbuild. '
-            'However, it is either not installed or not configured '
-            'properly.\n'
+            'You must have LXD installed in order to use cleanbuild.\n'
             'Refer to the documentation at '
             'https://linuxcontainers.org/lxd/getting-started-cli.\n'))

@@ -25,7 +25,6 @@ import urllib.parse
 from functools import partial
 from types import ModuleType
 from unittest import mock
-from subprocess import CalledProcessError
 
 import fixtures
 import xdg
@@ -396,10 +395,8 @@ class FakePlugin(fixtures.Fixture):
 class FakeLXD(fixtures.Fixture):
     '''...'''
 
-    def __init__(self, fail_on_remote=False, fail_on_default=False):
+    def __init__(self):
         self.status = None
-        self.fail_on_remote = fail_on_remote
-        self.fail_on_default = fail_on_default
 
     def _setUp(self):
         patcher = mock.patch('snapcraft.internal.lxd.check_call')
@@ -428,10 +425,7 @@ class FakeLXD(fixtures.Fixture):
     def check_output_side_effect(self):
         def call_effect(*args, **kwargs):
             if args[0] == ['lxc', 'remote', 'get-default']:
-                if self.fail_on_default:
-                    raise CalledProcessError(returncode=255, cmd=args[0])
-                else:
-                    return 'local'.encode('utf-8')
+                return 'local'.encode('utf-8')
             elif args[0][:2] == ['lxc', 'info']:
                 return '''
                     environment:
@@ -449,8 +443,6 @@ class FakeLXD(fixtures.Fixture):
                             'STATUS': self.status,
                             }).encode('utf-8')
                 return '[]'.encode('utf-8')
-            elif args[0][:2] == ['lxc', 'list'] and self.fail_on_remote:
-                    raise CalledProcessError(returncode=255, cmd=args[0])
             elif args[0][:2] == ['lxc', 'init']:
                 self.name = args[0][3]
                 self.status = 'Stopped'
