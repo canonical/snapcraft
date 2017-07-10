@@ -173,6 +173,11 @@ class RequiredPathDoesNotExist(SnapcraftError):
     fmt = 'Required path does not exist: {path!r}'
 
 
+class SnapcraftPathEntryError(SnapcraftError):
+
+    fmt = 'The path {value!r} set for {key!r} in {app!r} does not exist.'
+
+
 class SnapcraftSchemaError(SnapcraftError):
 
     fmt = 'Issues while validating {snapcraft_yaml}: {message}'

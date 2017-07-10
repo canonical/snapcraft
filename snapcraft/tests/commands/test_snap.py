@@ -112,7 +112,9 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
-    def test_snap_containerized(self):
+    @mock.patch('os.getuid')
+    def test_snap_containerized(self, mock_getuid):
+        mock_getuid.return_value = 1234
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -121,7 +123,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()
 
-        result = self.run_command(['--debug', 'snap'])
+        result = self.run_command(['snap'])
 
         self.assertThat(result.exit_code, Equals(0))
 
@@ -135,6 +137,11 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         container_name = 'local:snapcraft-snap-test'
         project_folder = 'build_snap-test'
         fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'init', 'ubuntu:xenial/amd64', container_name]),
+            call(['lxc', 'config', 'set', container_name,
+                  'environment.SNAPCRAFT_SETUP_CORE', '1']),
+            call(['lxc', 'config', 'set', container_name,
+                  'raw.idmap', 'both {} 0'.format(mock_getuid.return_value)]),
             call(['lxc', 'start', container_name]),
             call(['lxc', 'config', 'device', 'add', container_name,
                   project_folder, 'disk', 'source={}'.format(source),

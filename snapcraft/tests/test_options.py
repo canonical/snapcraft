@@ -88,7 +88,7 @@ class OptionsTestCase(tests.TestCase):
             architecture=('64bit', 'ELF'),
             expected_arch_triplet='s390x-linux-gnu',
             expected_deb_arch='s390x',
-            expected_kernel_arch='s390x'))
+            expected_kernel_arch='s390'))
     ]
 
     @mock.patch('platform.architecture')

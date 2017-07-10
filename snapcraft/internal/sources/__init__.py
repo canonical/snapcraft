@@ -152,6 +152,7 @@ _source_handler = {
     'tar': Tar,
     'zip': Zip,
     '7z': SevenZip,
+    'local': Local,
     '': Local
 }
 if sys.platform == 'linux':

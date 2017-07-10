@@ -161,6 +161,16 @@ class TestLinkOrCopy(tests.TestCase):
         open(os.path.join('foo', 'bar', '3'), 'w').close()
         open(os.path.join('foo', 'bar', 'baz', '4'), 'w').close()
 
+    def test_link_file_ioerror(self):
+        orig_link = os.link
+
+        def link_and_ioerror(a, b, **kwargs):
+            orig_link(a, b)
+            raise IOError()
+        with mock.patch('os.link') as mock_link:
+            mock_link.side_effect = link_and_ioerror
+            file_utils.link_or_copy('1', 'foo/1')
+
     def test_copy_nested_file(self):
         file_utils.link_or_copy('foo/bar/baz/4', 'foo2/bar/baz/4')
         self.assertTrue(os.path.isfile('foo2/bar/baz/4'))

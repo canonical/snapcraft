@@ -33,6 +33,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Features used to build optional dependencies
 """
 
+from contextlib import suppress
 import os
 import shutil
 
@@ -77,8 +78,6 @@ class RustPlugin(snapcraft.BasePlugin):
         super().__init__(name, options, project)
         self.build_packages.extend([
             'gcc',
-            'binutils',
-            'libc6-dev',
             'git',
             'curl',
             'file',
@@ -87,12 +86,16 @@ class RustPlugin(snapcraft.BasePlugin):
         self._rustc = os.path.join(self._rustpath, "bin", "rustc")
         self._rustdoc = os.path.join(self._rustpath, "bin", "rustdoc")
         self._cargo = os.path.join(self._rustpath, "bin", "cargo")
+        self._cargo_dir = os.path.join(self.builddir, '.cargo')
         self._rustlib = os.path.join(self._rustpath, "lib")
         self._rustup_get = sources.Script(_RUSTUP, self._rustpath)
         self._rustup = os.path.join(self._rustpath, "rustup.sh")
 
     def build(self):
         super().build()
+
+        self._write_cross_compile_config()
+
         cmd = [self._cargo, 'install',
                '-j{}'.format(self.parallel_build_count),
                '--root', self.installdir,
@@ -101,6 +104,39 @@ class RustPlugin(snapcraft.BasePlugin):
             cmd.append("--features")
             cmd.append(' '.join(self.options.rust_features))
         self.run(cmd, env=self._build_env())
+
+    def _write_cross_compile_config(self):
+        if not self.project.is_cross_compiling:
+            return
+
+        # Cf. http://doc.crates.io/config.html
+        os.makedirs(self._cargo_dir, exist_ok=True)
+        with open(os.path.join(self._cargo_dir, 'config'), 'w') as f:
+            f.write('''
+                [build]
+                target = "{}"
+
+                [target.{}]
+                linker = "{}"
+                '''.format(self._target, self._target,
+                           '{}-gcc'.format(self.project.arch_triplet)))
+
+    def enable_cross_compilation(self):
+        # Cf. rustc --print target-list
+        targets = {
+            'armhf': 'armv7-{}-{}eabihf',
+            'arm64': 'aarch64-{}-{}',
+            'i386': 'i686-{}-{}',
+            'amd64': 'x86_64-{}-{}',
+            'ppc64el': 'powerpc64le-{}-{}',
+        }
+        fmt = targets.get(self.project.deb_arch)
+        if not fmt:
+            raise NotImplementedError(
+                '{!r} is not supported as a target architecture when '
+                'cross-compiling with the rust plugin'.format(
+                    self.project.deb_arch))
+        self._target = fmt.format('unknown-linux', 'gnu')
 
     def _build_env(self):
         env = os.environ.copy()
@@ -126,9 +162,14 @@ class RustPlugin(snapcraft.BasePlugin):
     def clean_pull(self):
         super().clean_pull()
 
-        # Remove the rust path (if any)
-        if os.path.exists(self._rustpath):
+        with suppress(FileNotFoundError):
             shutil.rmtree(self._rustpath)
+
+    def clean_build(self):
+        super().clean_build()
+
+        with suppress(FileNotFoundError):
+            shutil.rmtree(self._cargo_dir)
 
     def _fetch_rust(self):
         options = []
@@ -144,12 +185,14 @@ class RustPlugin(snapcraft.BasePlugin):
                 raise EnvironmentError(
                     '{} is not a valid rust channel'.format(
                         self.options.rust_channel))
-        if not os.path.exists(self._rustpath):
-            os.makedirs(self._rustpath)
+        os.makedirs(self._rustpath, exist_ok=True)
         self._rustup_get.download()
-        self.run([self._rustup,
-                  '--prefix={}'.format(self._rustpath),
-                  '--disable-sudo', '--save'] + options)
+        cmd = [self._rustup,
+               '--prefix={}'.format(self._rustpath),
+               '--disable-sudo', '--save'] + options
+        if self.project.is_cross_compiling:
+            cmd.append('--with-target={}'.format(self._target))
+        self.run(cmd)
 
     def _fetch_deps(self):
         if self.options.source_subdir:

@@ -18,6 +18,7 @@ import os
 
 import click
 
+import snapcraft
 import snapcraft.internal.dirs
 from snapcraft.internal import deprecations
 from snapcraft.internal import log
@@ -82,6 +83,7 @@ class SnapcraftGroup(click.Group):
 
 
 @click.group(cls=SnapcraftGroup, invoke_without_command=True)
+@click.version_option(version=snapcraft.__version__)
 @click.pass_context
 @add_build_options(hidden=True)
 @click.option('--debug', '-d', is_flag=True)
