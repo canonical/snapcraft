@@ -39,7 +39,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Enable the processing of dependency links.
     - python-packages:
       (list)
-      A list of dependencies to get from PyPi
+      A list of dependencies to get from PyPI
     - python-version:
       (string; default: python3)
       The python version to use. Valid options are: python2 and python3

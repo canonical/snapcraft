@@ -42,7 +42,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Enable the processing of dependency links.
     - python-packages:
       (list)
-      A list of dependencies to get from PyPi
+      A list of dependencies to get from PyPI
 """
 
 import logging
