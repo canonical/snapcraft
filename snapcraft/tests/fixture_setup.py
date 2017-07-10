@@ -112,6 +112,8 @@ class FakeProjectOptions(fixtures.Fixture):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+        # Special handling is required as ProjectOptions attributes are
+        # handled with the @property decorator.
         project_options_t = type(snapcraft.ProjectOptions.return_value)
         for key in self._kwargs:
             setattr(project_options_t, key, self._kwargs[key])
