@@ -355,7 +355,7 @@ cflags = {cflags!r}
             envvars = []
             envtmpl = '''{key!s}={value!s}'''
             for var in ['https_proxy', 'http_proxy', 'GIT_PROXY_COMMAND']:
-                if os.environ.get(var) != None:
+                if os.environ.get(var) is not None:
                     envvars += [envtmpl.format(key=var, value=os.environ[var])]
             cmd = ['sudo'] + envvars + ['-H', '-u', 'jhbuild', '--']
 
