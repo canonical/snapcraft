@@ -60,13 +60,7 @@ class RubyPlugin(BasePlugin):
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['ruby-version']
-
-    @classmethod
-    def get_build_properties(cls):
-        # Inform Snapcraft of the properties associated with building. If these
-        # change in the YAML Snapcraft will consider the build step dirty.
-        return ['gems']
+        return ['ruby-version', 'gems']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -130,13 +124,10 @@ class RubyPlugin(BasePlugin):
             self._install_bundler = True
             self._gems = self._gems + ['bundler']
         if self._gems:
-            gem_install_cmd = [os.path.join(self.installdir, 'bin', 'ruby'),
-                               os.path.join(self.installdir, 'bin', 'gem'),
-                               'install']
-            self.run(gem_install_cmd + self._gems)
+            self.run([os.path.join(self.installdir, 'bin', 'ruby'),
+                      os.path.join(self.installdir, 'bin', 'gem'),
+                      'install'] + self._gems)
 
     def _bundle_install(self):
-        bundle_install_cmd = [os.path.join(self.installdir, 'bin', 'ruby'),
-                              os.path.join(self.installdir, 'bin', 'bundle'),
-                              'install']
-        self.run(bundle_install_cmd)
+        self.run([os.path.join(self.installdir, 'bin', 'ruby'),
+                  os.path.join(self.installdir, 'bin', 'bundle'), 'install'])
