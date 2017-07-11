@@ -21,13 +21,13 @@ import integration_tests
 
 class RubyPluginTestCase(integration_tests.TestCase):
 
-    def test_bins_exists(self):
-        self.run_snapcraft('stage', 'ruby-bins-exists')
+    def test_bins_exist(self):
+        self.run_snapcraft('stage', 'ruby-bins-exist')
         for exe in ['erb', 'gem', 'irb', 'rake', 'rdoc', 'ri', 'ruby']:
             exe_path = os.path.join(self.stage_dir, 'bin', exe)
             self.assertTrue(os.path.exists(exe_path))
 
-    def test_ruby_gem_install(self):
+    def test_ruby_gem_install_rack(self):
         self.run_snapcraft('stage', 'ruby-gem-install-rack')
         rack_path = os.path.join(self.stage_dir, 'bin', 'rack')
         self.assertTrue(os.path.exists(rack_path))
