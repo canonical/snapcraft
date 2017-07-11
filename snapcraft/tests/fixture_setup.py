@@ -30,6 +30,7 @@ from subprocess import CalledProcessError
 import fixtures
 import xdg
 
+import snapcraft
 from snapcraft.tests import fake_servers
 from snapcraft.tests.fake_servers import (
     api,
@@ -88,6 +89,34 @@ class TempXDG(fixtures.Fixture):
             new=[xdg.BaseDirectory.xdg_data_home])
         patcher_dirs.start()
         self.addCleanup(patcher_dirs.stop)
+
+
+class FakeProjectOptions(fixtures.Fixture):
+
+    def __init__(self, **kwargs):
+        self._kwargs = dict(
+            arch_triplet=kwargs.pop('arch_triplet', 'x86_64-gnu-linux'),
+            parts_dir=kwargs.pop('parts_dir', 'parts'),
+            stage_dir=kwargs.pop('stage_dir', 'stage'),
+            prime_dir=kwargs.pop('prime_dir', 'prime'),
+            parallel_build_count=kwargs.pop('parallel_build_count', '1'),
+        )
+        if kwargs:
+            raise NotImplementedError(
+                'Handling of {!r} is not implemented'.format(kwargs.keys()))
+
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('snapcraft.ProjectOptions')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        # Special handling is required as ProjectOptions attributes are
+        # handled with the @property decorator.
+        project_options_t = type(snapcraft.ProjectOptions.return_value)
+        for key in self._kwargs:
+            setattr(project_options_t, key, self._kwargs[key])
 
 
 class SilentSnapProgress(fixtures.Fixture):

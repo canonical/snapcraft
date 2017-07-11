@@ -24,6 +24,7 @@ from unittest.mock import (
 
 import fixtures
 from testtools import ExpectedException
+from testtools.matchers import Contains
 
 from snapcraft import tests
 from snapcraft import ProjectOptions
@@ -117,9 +118,7 @@ class LXDTestCase(tests.TestCase):
             CalledProcessError,
             cb._wait_for_network)
 
-        self.assertEqual(
-            str(raised),
-            "Command '['my-cmd']' returned non-zero exit status -1")
+        self.assertThat(str(raised), Contains("Command '['my-cmd']'"))
 
     @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
     def test_failed_build_with_debug(self, mock_run):
