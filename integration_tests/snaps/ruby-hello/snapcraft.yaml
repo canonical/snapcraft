@@ -12,3 +12,4 @@ parts:
     stage:
       - bin
       - lib
+      - ruby-hello.rb
