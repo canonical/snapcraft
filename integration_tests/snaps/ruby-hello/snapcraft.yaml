@@ -1,0 +1,14 @@
+name: ruby-hello
+version: 0.1
+summary: Test ruby
+description: |
+  Snap to test ruby compiled correctly, exists, and works
+confinement: strict
+
+parts:
+  ruby-hello:
+    plugin: ruby
+    source: .
+    stage:
+      - bin
+      - lib

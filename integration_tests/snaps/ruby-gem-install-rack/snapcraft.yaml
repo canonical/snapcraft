@@ -1,0 +1,13 @@
+name: ruby-gem-install-rack
+version: 0.1
+summary: Test gem install
+description: |
+  Snap to test 'gem install' command
+confinement: strict
+
+parts:
+  ruby-gem-install-rack:
+    plugin: ruby
+    gems: ['rack']
+    stage:
+      - bin

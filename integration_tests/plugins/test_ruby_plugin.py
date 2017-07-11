@@ -21,7 +21,20 @@ import integration_tests
 
 class RubyPluginTestCase(integration_tests.TestCase):
 
-    def test_ruby_exists(self):
-        self.run_snapcraft('stage', 'ruby-exists')
-        ruby_exe = os.path.join(self.stage_dir, 'bin', 'ruby')
-        self.assertTrue(os.path.exists(ruby_exe))
+    def test_bins_exists(self):
+        self.run_snapcraft('stage', 'ruby-bins-exists')
+        for exe in ['erb', 'gem', 'irb', 'rake', 'rdoc', 'ri', 'ruby']:
+            exe_path = os.path.join(self.stage_dir, 'bin', exe)
+            self.assertTrue(os.path.exists(exe_path))
+
+    def test_ruby_gem_install(self):
+        self.run_snapcraft('stage', 'ruby-gem-install-rack')
+        rack_path = os.path.join(self.stage_dir, 'bin', 'rack')
+        self.assertTrue(os.path.exists(rack_path))
+
+    def test_ruby_hello(self):
+        self.run_snapcraft('stage', 'ruby-hello')
+        binary_output = self.get_output_ignoring_non_zero_exit(
+            os.path.join(self.stage_dir, 'bin', 'ruby'),
+            os.path.join(self.stage_dir, 'ruby-hello.rb'))
+        self.assertEqual("Ruby says, Hello snapcraft.\n", binary_output)
