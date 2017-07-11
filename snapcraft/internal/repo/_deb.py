@@ -194,10 +194,11 @@ class Ubuntu(BaseRepo):
         :return: a list with the packages installed and their versions.
 
         """
-        new_packages = set(cls._get_build_deps(package_names, arch))
+        new_packages = []
         with apt.Cache() as apt_cache:
             try:
-                cls._mark_install(apt_cache, package_names)
+                cls._mark_install(apt_cache,
+                                  cls._get_build_deps(package_names, arch))
             except errors.PackageNotFoundError as e:
                 raise errors.BuildPackageNotFoundError(e)
             for package in apt_cache.get_changes():

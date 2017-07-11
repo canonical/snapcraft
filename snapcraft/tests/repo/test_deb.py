@@ -265,31 +265,24 @@ class BuildPackagesTestCase(tests.TestCase):
     def get_installable_packages(self, packages, target_arch=''):
         installable = []
         for pkg in packages:
-            if not packages[pkg].installed:
-                name, arch, version = repo.get_pkg_name_parts(pkg)
-                if not arch:
-                    arch = target_arch
-                name += arch
-                if version:
-                    name += '={}'.format(version)
-                installable.append(name)
+            name, arch, version = repo.get_pkg_name_parts(pkg)
+            if not arch:
+                arch = target_arch
+            name += arch
+            if version:
+                name += '={}'.format(version)
+            installable.append(name)
         return installable
 
-    @patch('snapcraft.repo._deb.apt')
     @patch('os.environ')
-    def install_test_packages(self, test_pkgs, mock_env, mock_apt):
-        mock_env.copy.return_value = {}
-        mock_apt_cache = mock_apt.Cache.return_value
-        mock_apt_cache_with = mock_apt_cache.__enter__.return_value
-        mock_apt_cache_with.__getitem__.side_effect = lambda p: test_pkgs[p]
-
+    def install_test_packages(self, test_pkgs, mock_env):
         repo.Ubuntu.install_build_packages(test_pkgs, 'amd64')
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
     def test_install_build_package(
             self, mock_is_dumb_terminal):
         fake_apt = tests.fixture_setup.FakeAptGetBuildDep(
-            self.test_packages.keys())
+            self.test_packages)
         self.useFixture(fake_apt)
         mock_is_dumb_terminal.return_value = False
         self.install_test_packages(self.test_packages)
@@ -389,8 +382,7 @@ class BuildPackagesTestCase(tests.TestCase):
         self.assertRaises(
             (errors.BuildPackageNotFoundError, CalledProcessError),
             repo.Ubuntu.install_build_packages,
-            self.test_packages.keys(),
-            'armhf')
+            self.test_packages, 'armhf')
 
         fake_apt.check_output_mock.assert_has_calls([
             call(['apt-get', 'build-dep', '-q', '-s',
