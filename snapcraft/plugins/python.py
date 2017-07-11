@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -51,6 +51,7 @@ be preferred instead and no interpreter would be brought in through
 `stage-packages` mechanisms.
 """
 
+import json
 import os
 import re
 import shutil
@@ -438,17 +439,13 @@ class _Pip:
         """Return a dict of installed python packages with versions."""
         if not exec_func:
             exec_func = self._exec_func
-        cmd = [*self._runnable, 'list']
+        cmd = [*self._runnable, 'list', '--format=json']
 
         output = exec_func(cmd, env=self._env)
-        package_listing = {}
-        version_regex = re.compile('\((.+)\)')
-        for line in output.splitlines():
-            line = line.split()
-            m = version_regex.search(line[1])
-            package_listing[line[0]] = m.group(1)
-
-        return package_listing
+        return {
+            package['name']: package['version']
+            for package in json.loads(output)
+        }
 
     def wheel(self, args, **kwargs):
         cmd = [
