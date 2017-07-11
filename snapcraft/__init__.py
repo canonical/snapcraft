@@ -447,7 +447,7 @@ yaml.add_representer(str, str_presenter)
 yaml.add_representer(OrderedDict, dict_representer)
 yaml.add_constructor(_mapping_tag, dict_constructor)
 
-if _os.environ.get('SNAP_NAME') == 'snapcraft':
+if common.is_snap():
     snap = _os.environ.get('SNAP')
     common.set_schemadir(_os.path.join(snap, 'share', 'snapcraft', 'schema'))
     common.set_tourdir(_os.path.join(snap, 'tour'))
