@@ -21,6 +21,18 @@ import integration_tests
 
 class RubyPluginTestCase(integration_tests.TestCase):
 
+    def env(self, root):
+        env = os.environ.copy()
+        env['PATH'] = '{}:{}'.format(join(root, 'bin'), environ['PATH'])
+        env['RUBYPATH'] = '{}'.format(join(root, 'bin'))
+        rubydir = join(root, 'lib', 'ruby')
+        rubylib = join(rubydir, self._ruby_version_dir)
+        env['RUBYLIB'] = '{}:{}'.format(
+            rubylib, join(rubylib, '{}-linux'.format(platform.machine())))
+        env['GEM_HOME'] = join(rubydir, 'gems', self._ruby_version_dir)
+        env['GEM_PATH'] = join(rubydir, 'gems', self._ruby_version_dir)
+        return env
+
     def test_bins_exist(self):
         self.run_snapcraft('stage', 'ruby-bins-exist')
         for exe in ['erb', 'gem', 'irb', 'rake', 'rdoc', 'ri', 'ruby']:
@@ -28,12 +40,14 @@ class RubyPluginTestCase(integration_tests.TestCase):
             self.assertTrue(os.path.exists(exe_path))
 
     def test_ruby_gem_install_rack(self):
-        self.run_snapcraft('stage', 'ruby-gem-install-rack')
+        self.run_snapcraft('stage', 'ruby-gem-install-rack',
+                           env=self.env(root=self.stage_dir))
         rack_path = os.path.join(self.stage_dir, 'bin', 'rack')
         self.assertTrue(os.path.exists(rack_path))
 
     def test_ruby_hello(self):
-        self.run_snapcraft('stage', 'ruby-hello')
+        self.run_snapcraft('stage', 'ruby-hello',
+                           env=self.env(root=self.stage_dir))
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'ruby'),
             os.path.join(self.stage_dir, 'ruby-hello.rb'))
