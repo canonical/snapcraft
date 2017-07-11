@@ -24,17 +24,19 @@ import integration_tests
 class RubyPluginTestCase(integration_tests.TestCase):
 
     def env(self, root, ruby_version_dir):
-        env = os.environ.copy()
-        env['PATH'] = '{}:{}'.format(os.path.join(root, 'bin'),
-                                     os.environ['PATH'])
-        env['RUBYPATH'] = '{}'.format(os.path.join(root, 'bin'))
+        env = []
+        env.append('PATH={}:{}'.format(
+            os.path.join(root, 'bin'), os.environ['PATH']))
+        env.append('RUBYPATH={}'.format(os.path.join(root, 'bin')))
         rubydir = os.path.join(root, 'lib', 'ruby')
         rubylib = os.path.join(rubydir, ruby_version_dir)
-        env['RUBYLIB'] = '{}:{}'.format(
-            rubylib, os.path.join(rubylib, '{}-linux'.format(
-                platform.machine())))
-        env['GEM_HOME'] = os.path.join(rubydir, 'gems', ruby_version_dir)
-        env['GEM_PATH'] = os.path.join(rubydir, 'gems', ruby_version_dir)
+        env.append('RUBYLIB={}:{}'.format(
+            rubylib, os.path.join(
+                rubylib, '{}-linux'.format(platform.machine()))))
+        env.append('GEM_HOME={}'.format(
+            os.path.join(rubydir, 'gems', ruby_version_dir)))
+        env.append('GEM_PATH={}'.format(
+            os.path.join(rubydir, 'gems', ruby_version_dir)))
         return env
 
     def test_bins_exist(self):
