@@ -65,7 +65,7 @@ class RubyPluginTestCase(integration_tests.TestCase):
 
     def test_ruby_gem_install_rack(self):
         self.run_snapcraft('stage', 'ruby-gem-install-rack',
-                           env=self.env(self.stage_dir, "2.3.0"))
+                           env=self.env(self.stage_dir))
         rack_path = os.path.join(self.stage_dir, 'bin', 'rack')
         self.assertTrue(os.path.exists(rack_path))
 
