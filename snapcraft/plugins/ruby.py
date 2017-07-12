@@ -30,9 +30,19 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import os
 import re
 import platform
+import glob
+from contextlib import contextmanager
 
 from snapcraft import BasePlugin
 from snapcraft.sources import Tar
+
+
+@contextmanager
+def cd(path):
+    old_dir = os.getcwd()
+    os.chdir(path)
+    yield
+    os.chdir(old_dir)
 
 
 class RubyPlugin(BasePlugin):
@@ -77,13 +87,6 @@ class RubyPlugin(BasePlugin):
         self.build_packages.extend(['gcc', 'g++', 'make', 'zlib1g-dev',
                                     'libssl-dev', 'libreadline-dev'])
 
-        version_map = [('2.%d.[0-9]' % i, '2.%d.0' % i) for i in range(5)]
-
-        for version_regex, version_dir in version_map:
-            if re.compile(version_regex).match(self._ruby_version):
-                self._ruby_version_dir = version_dir
-                break
-
     def pull(self):
         super().pull()
         os.makedirs(self._ruby_part_dir, exist_ok=True)
@@ -95,18 +98,29 @@ class RubyPlugin(BasePlugin):
 
     def env(self, root):
         env = super().env(root)
+
         env.append('PATH={}:{}'.format(
             os.path.join(root, 'bin'), os.environ['PATH']))
+
         env.append('RUBYPATH={}'.format(os.path.join(root, 'bin')))
+
         rubydir = os.path.join(root, 'lib', 'ruby')
-        rubylib = os.path.join(rubydir, self._ruby_version_dir)
+
+        with cd(rubydir):
+            ruby_version_dir = glob.glob('[0-9].[0-9].[0-9]')[0]
+        
+        rubylib = os.path.join(rubydir, ruby_version_dir)
+
         env.append('RUBYLIB={}:{}'.format(
             rubylib, os.path.join(
                 rubylib, '{}-linux'.format(platform.machine()))))
+
         env.append('GEM_HOME={}'.format(
-            os.path.join(rubydir, 'gems', self._ruby_version_dir)))
+            os.path.join(rubydir, 'gems', ruby_version_dir)))
+
         env.append('GEM_PATH={}'.format(
-            os.path.join(rubydir, 'gems', self._ruby_version_dir)))
+            os.path.join(rubydir, 'gems', ruby_version_dir)))
+
         return env
 
     def _ruby_install(self, builddir):
