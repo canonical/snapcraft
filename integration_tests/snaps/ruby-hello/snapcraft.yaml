@@ -5,6 +5,10 @@ description: |
   Snap to test ruby compiled correctly, exists, and works
 confinement: strict
 
+apps:
+  ruby-hello:
+    command: bin/ruby ./ruby-hello.rb
+
 parts:
   ruby-hello:
     plugin: ruby
