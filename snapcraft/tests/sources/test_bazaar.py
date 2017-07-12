@@ -20,10 +20,6 @@ from unittest import mock
 from snapcraft.internal import sources
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
-from snapcraft.tests.subprocess_utils import (
-    call,
-    call_with_output,
-)
 
 
 class TestBazaar(tests.sources.SourceTestCase):
