@@ -17,52 +17,55 @@
 import logging
 import os
 import tarfile
-from testtools.matchers import Equals, Contains
+from textwrap import dedent
 
 import fixtures
+from testtools.matchers import Equals, Contains
 
 from snapcraft import tests
 from . import CommandBaseTestCase
 
 
-class CleanBuildCommandTestCase(CommandBaseTestCase):
+class CleanBuildCommandBaseTestCase(CommandBaseTestCase):
 
-    yaml_template = """name: snap-test
-version: 1.0
-summary: test cleanbuild
-description: if snap is succesful a snap package will be available
-architectures: ['amd64']
-confinement: strict
-grade: stable
+    def setUp(self):
+        super().setUp()
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
 
-parts:
-    part1:
-      plugin: nil
-"""
+        self.make_snapcraft_yaml(dedent("""\
+            name: snap-test
+            version: 1.0
+            summary: test cleanbuild
+            description: if snap is succesful a snap package will be available
+            architectures: ['amd64']
+            confinement: strict
+            grade: stable
 
-    def make_snapcraft_yaml(self, n=1):
-        super().make_snapcraft_yaml(self.yaml_template)
+            parts:
+                part1:
+                  plugin: nil
+        """))
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
-    def test_cleanbuild(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-        self.useFixture(tests.fixture_setup.FakeLXD())
 
-        self.make_snapcraft_yaml()
+class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+
         # simulate build artifacts
-
         dirs = [
             os.path.join(self.parts_dir, 'part1', 'src'),
             self.stage_dir,
             self.prime_dir,
             os.path.join(self.parts_dir, 'plugins'),
         ]
-        files_tar = [
+        self.files_tar = [
             os.path.join(self.parts_dir, 'plugins', 'x-plugin.py'),
             'main.c',
         ]
-        files_no_tar = [
+        self.files_no_tar = [
             os.path.join(self.stage_dir, 'binary'),
             os.path.join(self.prime_dir, 'binary'),
             'snap-test.snap',
@@ -70,10 +73,13 @@ parts:
         ]
         for d in dirs:
             os.makedirs(d)
-        for f in files_tar + files_no_tar:
+        for f in self.files_tar + self.files_no_tar:
             open(f, 'w').close()
 
-        result = self.run_command(['cleanbuild', '--debug'])
+    def test_cleanbuild(self):
+        self.useFixture(tests.fixture_setup.FakeLXD())
+
+        result = self.run_command(['cleanbuild'])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertIn(
@@ -81,16 +87,16 @@ parts:
             'Waiting for a network connection...\n'
             'Network connection established\n'
             'Retrieved snap-test_1.0_amd64.snap\n',
-            fake_logger.output)
+            self.fake_logger.output)
 
         with tarfile.open('snap-test_1.0_source.tar.bz2') as tar:
             tar_members = tar.getnames()
 
-        for f in files_no_tar:
+        for f in self.files_no_tar:
             f = os.path.relpath(f)
             self.assertFalse('./{}'.format(f) in tar_members,
                              '{} should not be in {}'.format(f, tar_members))
-        for f in files_tar:
+        for f in self.files_tar:
             f = os.path.relpath(f)
             self.assertTrue('./{}'.format(f) in tar_members,
                             '{} should be in {}'.format(f, tar_members))
@@ -101,12 +107,28 @@ parts:
             Contains(os.path.join('.', 'snap', 'snapcraft.yaml')),
             'snap/snapcraft unexpectedly excluded from tarball')
 
+    def test_cleanbuild_debug_appended_goes_to_shell_on_errors(self):
+        fake_lxd = tests.fixture_setup.FakeLXD(fail_on_snapcraft_run=True)
+        self.useFixture(fake_lxd)
+
+        result = self.run_command(['cleanbuild', '--debug'])
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(self.fake_logger.output, Contains(
+            'Debug mode enabled, dropping into a shell'))
+
+    def test_cleanbuild_debug_prepended_goes_to_shell_on_errors(self):
+        fake_lxd = tests.fixture_setup.FakeLXD(fail_on_snapcraft_run=True)
+        self.useFixture(fake_lxd)
+
+        result = self.run_command(['--debug', 'cleanbuild'])
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(self.fake_logger.output, Contains(
+            'Debug mode enabled, dropping into a shell'))
+
+
+class CleanBuildFailuresCommandTestCase(CleanBuildCommandBaseTestCase):
+
     def test_no_lxd(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        self.make_snapcraft_yaml()
-
         self.useFixture(tests.fixture_setup.FakeLXD(fail_on_default=True))
 
         result = self.run_command(['cleanbuild'])

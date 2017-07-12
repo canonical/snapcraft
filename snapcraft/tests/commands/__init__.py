@@ -74,9 +74,11 @@ class CommandBaseTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
         self.runner = CliRunner()
+        self.obj = dict()
 
     def run_command(self, args, **kwargs):
-        return self.runner.invoke(run, args, catch_exceptions=False, **kwargs)
+        return self.runner.invoke(run, args, catch_exceptions=False,
+                                  obj=self.obj, **kwargs)
 
 
 class LifecycleCommandsBaseTestCase(CommandBaseTestCase):
