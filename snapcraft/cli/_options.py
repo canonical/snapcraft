@@ -59,7 +59,7 @@ def get_project_options(**kwargs):
             kwargs[key] = value
 
     project_args = dict(
-        debug=ctx.obj['debug'] or kwargs.get('debug'),
+        debug=kwargs.pop('debug'),
         use_geoip=kwargs.pop('enable_geoip'),
         parallel_builds=not kwargs.pop('no_parallel_builds'),
         target_deb_arch=kwargs.pop('target_arch'),
