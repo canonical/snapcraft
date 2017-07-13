@@ -79,6 +79,7 @@ Examples:
 
     ```
     ./runtests.sh unit test_init.py
+    ```
 
   * To run only the integration tests that interact with the store:
 
