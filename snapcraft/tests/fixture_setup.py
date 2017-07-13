@@ -135,7 +135,7 @@ class CleanEnvironment(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
-        current_environment = copy.deepcopy(os.environ.copy)
+        current_environment = copy.deepcopy(os.environ)
         os.environ.clear()
 
         self.addCleanup(os.environ.update, current_environment)
