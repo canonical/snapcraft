@@ -20,6 +20,7 @@ import tarfile
 from textwrap import dedent
 
 import fixtures
+from testtools.matchers import Contains, Equals
 
 from snapcraft import tests
 from . import CommandBaseTestCase
@@ -51,6 +52,7 @@ class CleanBuildCommandBaseTestCase(CommandBaseTestCase):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.useFixture(tests.fixture_setup.FakeLXD())
+
 
 class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
 
