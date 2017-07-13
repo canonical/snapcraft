@@ -8,5 +8,6 @@ confinement: strict
 parts:
   ruby-exists:
     plugin: ruby
+    build-packages: [lsb-release]
     stage:
       - bin

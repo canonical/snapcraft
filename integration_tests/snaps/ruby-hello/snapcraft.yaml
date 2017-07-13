@@ -12,6 +12,7 @@ apps:
 parts:
   ruby-hello:
     plugin: ruby
+    build-packages: [lsb-release]
     source: .
     stage:
       - bin

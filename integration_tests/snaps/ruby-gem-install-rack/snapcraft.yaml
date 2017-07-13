@@ -9,5 +9,6 @@ parts:
   ruby-gem-install-rack:
     plugin: ruby
     gems: ['rack']
+    build-packages: [lsb-release]
     stage:
       - bin
