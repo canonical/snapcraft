@@ -16,7 +16,6 @@
 
 import os
 
-
 import snapcraft
 import integration_tests
 from snapcraft.tests.matchers import HasArchitecture

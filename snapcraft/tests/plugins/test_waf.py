@@ -157,7 +157,9 @@ class WafCrossCompilePluginTestCase(tests.TestCase):
     def test_cross_compile(self):
         plugin = waf.WafPlugin('test-part', self.options,
                                self.project_options)
+        # This shouldn't raise an exception
         plugin.enable_cross_compilation()
+
         env = plugin.env(plugin.sourcedir)
         self.assertIn('CC={}-gcc'.format(
             self.project_options.arch_triplet), env)

@@ -75,6 +75,8 @@ class WafPlugin(snapcraft.BasePlugin):
         return env
 
     def enable_cross_compilation(self):
+        # Let snapcraft know that this plugin can cross-compile
+        # If the method isn't implemented an exception is raised
         pass
 
     def build(self):
