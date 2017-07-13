@@ -89,7 +89,6 @@ class SnapcraftGroup(click.Group):
 @click.option('--debug', '-d', is_flag=True)
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
-    ctx.obj['debug'] = debug
     if debug:
         log_level = logging.DEBUG
         click.echo('Starting snapcraft {} from {}.'.format(
