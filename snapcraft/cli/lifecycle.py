@@ -179,13 +179,12 @@ def clean(parts, step, **kwargs):
 
 
 @lifecyclecli.command()
-@click.pass_context
 @add_build_options()
 @click.option('--remote', metavar='<remote>',
               help='Use a specific lxd remote instead of a local container.')
 @click.option('--debug', is_flag=True,
               help='Shells into the environment if the build fails.')
-def cleanbuild(ctx, remote, debug, **kwargs):
+def cleanbuild(remote, debug, **kwargs):
     """Create a snap using a clean environment managed by lxd.
 
     \b
