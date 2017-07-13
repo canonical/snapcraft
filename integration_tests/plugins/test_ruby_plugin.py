@@ -31,7 +31,7 @@ def cd(path):
 
 class RubyPluginTestCase(integration_tests.TestCase):
 
-    def env(self, root):
+    def env(self, root, ruby_version_dir):
         env = []
         env.append("PATH={}:{}".format(
             os.path.join(root, "bin"), os.environ["PATH"]))
@@ -40,8 +40,6 @@ class RubyPluginTestCase(integration_tests.TestCase):
 
         rubydir = os.path.join(root, "lib", "ruby")
 
-        with cd(rubydir):
-            ruby_version_dir = glob.glob("[0-9].[0-9].[0-9]")[0]
 
         rubylib = os.path.join(rubydir, ruby_version_dir)
 
@@ -64,14 +62,12 @@ class RubyPluginTestCase(integration_tests.TestCase):
             self.assertTrue(os.path.exists(exe_path))
 
     def test_ruby_gem_install_rack(self):
-        self.run_snapcraft('stage', 'ruby-gem-install-rack',
-                           env=self.env(self.stage_dir))
+        self.run_snapcraft('stage', 'ruby-gem-install-rack')
         rack_path = os.path.join(self.stage_dir, 'bin', 'rack')
         self.assertTrue(os.path.exists(rack_path))
 
     def test_ruby_hello(self):
-        self.run_snapcraft('stage', 'ruby-hello', env=self.env(self.stage_dir))
+        self.run_snapcraft('stage', 'ruby-hello')
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join(self.stage_dir, 'bin', os.path.basename(self.path)),
-            os.path.join(self.stage_dir, 'ruby-hello.rb'))
+            os.path.join(self.stage_dir, 'bin', os.path.basename(self.path)))
         self.assertEqual("Ruby says, Hello snapcraft.\n", binary_output)
