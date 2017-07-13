@@ -16,6 +16,7 @@
 
 import collections
 import contextlib
+import copy
 import io
 import os
 import string
@@ -134,8 +135,8 @@ class CleanEnvironment(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
-        current_environment = os.environ.copy()
-        os.environ = {}
+        current_environment = copy.deepcopy(os.environ.copy)
+        os.environ.clear()
 
         self.addCleanup(os.environ.update, current_environment)
 
