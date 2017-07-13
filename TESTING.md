@@ -9,8 +9,7 @@ We try very hard to automate as much as possible and to keep the manual test sui
 
 ### Staging server
 
-Snapcraft has the ability to upload snaps for publication in the Snappy Store. If you're working on a feature that requires you to interact with the store, you might want to use the staging server instead of the production store. To do
-that, make sure you have an account on the [staging server](https://login.staging.ubuntu.com), then run:
+Snapcraft has the ability to upload snaps for publication in the Snappy Store. If you're working on a feature that requires you to interact with the store, you might want to use the staging server instead of the production store. To do that, make sure you have an account on the [staging server](https://login.staging.ubuntu.com), then run:
 
     source tools/staging_env.sh
 
