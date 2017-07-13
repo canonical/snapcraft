@@ -15,45 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import glob
-import platform
 import integration_tests
-from contextlib import contextmanager
-
-
-@contextmanager
-def cd(path):
-    old_dir = os.getcwd()
-    os.chdir(path)
-    yield
-    os.chdir(old_dir)
 
 
 class RubyPluginTestCase(integration_tests.TestCase):
-
-    def env(self, root, ruby_version_dir):
-        env = []
-        env.append("PATH={}:{}".format(
-            os.path.join(root, "bin"), os.environ["PATH"]))
-
-        env.append("RUBYPATH={}".format(os.path.join(root, "bin")))
-
-        rubydir = os.path.join(root, "lib", "ruby")
-
-
-        rubylib = os.path.join(rubydir, ruby_version_dir)
-
-        env.append("RUBYLIB={}:{}".format(
-            rubylib, os.path.join(
-                rubylib, "{}-linux".format(platform.machine()))))
-
-        env.append("GEM_HOME={}".format(
-            os.path.join(rubydir, "gems", ruby_version_dir)))
-
-        env.append("GEM_PATH={}".format(
-            os.path.join(rubydir, "gems", ruby_version_dir)))
-
-        return env
 
     def test_bins_exist(self):
         self.run_snapcraft('stage', 'ruby-bins-exist')
