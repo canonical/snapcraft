@@ -16,6 +16,7 @@
 
 import collections
 import contextlib
+import copy
 import io
 import os
 import string
@@ -134,8 +135,8 @@ class CleanEnvironment(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
-        current_environment = os.environ.copy()
-        os.environ = {}
+        current_environment = copy.deepcopy(os.environ)
+        os.environ.clear()
 
         self.addCleanup(os.environ.update, current_environment)
 
@@ -550,11 +551,15 @@ class BzrRepo(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
+        bzr_home = self.useFixture(fixtures.TempDir()).path
+        self.useFixture(fixtures.EnvironmentVariable('BZR_HOME', bzr_home))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'BZR_EMAIL',  'Test User <test.user@example.com>'))
+
         with return_to_cwd():
             os.makedirs(self.name)
             os.chdir(self.name)
             call(['bzr', 'init'])
-            call(['bzr', 'whoami', 'Test User <test.user@example.com>'])
             with open('testing', 'w') as fp:
                 fp.write('testing')
 
