@@ -498,7 +498,7 @@ class FakeSnapd(fixtures.Fixture):
     '''...'''
 
     def __init__(self):
-        self._snaps = {
+        self.snaps = {
             'core': {'confinement': 'strict',
                      'id': '2kkitQurgOkL3foImG4wDwn9CIANuHlt',
                      'revision': '123'},
@@ -531,7 +531,7 @@ class FakeSnapd(fixtures.Fixture):
                                 'type': 'sync',
                                 'result': self._snaps[self._name]}
                 name = args[1].split('/')[-1]
-                return Session(name, self._snaps)
+                return Session(name, self.snaps)
         return request_effect
 
 

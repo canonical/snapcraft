@@ -185,7 +185,7 @@ class Containerbuild:
                     name, json['result']['message']))
         id = json['result']['id']
         # Lookup confinement to know if we need to --classic when installing
-        classic = json['result']['confinement'] == 'classic'
+        is_classic = json['result']['confinement'] == 'classic'
         # Revisions are unique, so we don't need to know the channel
         rev = json['result']['revision']
 
@@ -194,12 +194,13 @@ class Containerbuild:
                               'snap.lxd')
         os.makedirs(rundir, exist_ok=True)
 
-        self._inject_assertions(rundir, '{}_{}.assert'.format(name, rev), [
-            ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
-            ['snap-declaration', 'snap-name={}'.format(name)],
-            ['snap-revision', 'snap-revision={}'.format(rev),
-             'snap-id={}'.format(id)],
-        ])
+        if not rev.startswith('x'):
+            self._inject_assertions(rundir, '{}_{}.assert'.format(name, rev), [
+                ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
+                ['snap-declaration', 'snap-name={}'.format(name)],
+                ['snap-revision', 'snap-revision={}'.format(rev),
+                 'snap-id={}'.format(id)],
+            ])
 
         # https://github.com/snapcore/snapd/blob/master/snap/info.go
         # MountFile
@@ -214,7 +215,9 @@ class Containerbuild:
         self._push_file(filepath, os.path.join(self._project_folder, filename))
         logger.info('Installing {}'.format(filename))
         cmd = ['snap', 'install', filename]
-        if classic:
+        if rev.startswith('x'):
+            cmd.append('--dangerous')
+        if is_classic:
             cmd.append('--classic')
         self._container_run(cmd)
 
