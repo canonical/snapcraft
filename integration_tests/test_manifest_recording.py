@@ -196,7 +196,7 @@ class ManifestRecordingStagePackagesTestCase(ManifestRecordingBaseTestCase):
         ]
 
         recorded_yaml_path = os.path.join(
-            self.prime_dir, 'snap', 'snapcraft.yaml')
+            self.prime_dir, 'snap', 'manifest.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
