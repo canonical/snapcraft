@@ -1,3 +1,3 @@
-#!/usr/bin/env ruby
+#!/bin/ruby
 
 puts "Ruby says, Hello snapcraft.";
