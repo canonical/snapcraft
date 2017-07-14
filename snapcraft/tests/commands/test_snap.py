@@ -141,6 +141,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'config', 'set', container_name,
+                  'environment.XDG_CACHE_HOME', '/run/']),
+            call(['lxc', 'config', 'set', container_name,
                   'raw.idmap', 'both {} 0'.format(mock_getuid.return_value)]),
             call(['lxc', 'start', container_name]),
             call(['lxc', 'config', 'device', 'add', container_name,

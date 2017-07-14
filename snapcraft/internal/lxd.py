@@ -190,14 +190,17 @@ class Project(Containerbuild):
         if not self._get_container_status():
             check_call([
                 'lxc', 'init', self._image, self._container_name])
+        if self._get_container_status()['status'] == 'Stopped':
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'environment.SNAPCRAFT_SETUP_CORE', '1'])
+            check_call([
+                'lxc', 'config', 'set', self._container_name,
+                'environment.XDG_CACHE_HOME', '/run/'])
             # Map host user to root inside container
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'raw.idmap', 'both {} 0'.format(os.getuid())])
-        if self._get_container_status()['status'] == 'Stopped':
             check_call([
                 'lxc', 'start', self._container_name])
 
