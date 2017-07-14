@@ -73,7 +73,6 @@ cases you want to refer to the help text for the specific plugin.
   snapcraft help <plugin>
 
 """
-
 import logging
 import os
 import os.path
@@ -81,21 +80,37 @@ import re
 import hashlib
 import sys
 
-from . import errors
-from snapcraft.internal import common
-from ._bazaar import Bazaar          # noqa
-from ._git import Git                # noqa
-from ._local import Local            # noqa
-from ._mercurial import Mercurial    # noqa
-from ._script import Script          # noqa
-from ._subversion import Subversion  # noqa
-from ._tar import Tar                # noqa
-from ._zip import Zip                # noqa
-from ._7z import SevenZip            # noqa
-
 if sys.platform == 'linux':
-    from ._deb import Deb            # noqa
-    from ._rpm import Rpm            # noqa
+    from . import errors
+    from snapcraft.internal import common
+    from ._bazaar import Bazaar          # noqa
+    from ._git import Git                # noqa
+    from ._local import Local            # noqa
+    from ._mercurial import Mercurial    # noqa
+    from ._script import Script          # noqa
+    from ._subversion import Subversion  # noqa
+    from ._tar import Tar                # noqa
+    from ._zip import Zip                # noqa
+    from ._7z import SevenZip            # noqa
+    from ._deb import Deb                # noqa
+    from ._rpm import Rpm                # noqa
+
+    _source_handler = {
+        'bzr': Bazaar,
+        'git': Git,
+        'hg': Mercurial,
+        'mercurial': Mercurial,
+        'subversion': Subversion,
+        'svn': Subversion,
+        'tar': Tar,
+        'zip': Zip,
+        '7z': SevenZip,
+        'local': Local,
+        'deb': Deb,
+        'rpm': Rpm,
+        '': Local,
+    }
+
 
 # In python >= 3.6 sha3 support is upstreamed in hashlib
 if sys.version_info < (3, 6):
@@ -140,24 +155,6 @@ def get(sourcedir, builddir, options):
     handler_class = get_source_handler(options.source, source_type=source_type)
     handler = handler_class(options.source, sourcedir, **source_attributes)
     handler.pull()
-
-
-_source_handler = {
-    'bzr': Bazaar,
-    'git': Git,
-    'hg': Mercurial,
-    'mercurial': Mercurial,
-    'subversion': Subversion,
-    'svn': Subversion,
-    'tar': Tar,
-    'zip': Zip,
-    '7z': SevenZip,
-    'local': Local,
-    '': Local
-}
-if sys.platform == 'linux':
-    _source_handler['deb'] = Deb
-    _source_handler['rpm'] = Rpm
 
 
 def get_source_handler_from_type(source_type):

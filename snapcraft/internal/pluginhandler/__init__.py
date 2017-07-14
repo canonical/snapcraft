@@ -25,7 +25,8 @@ import sys
 from glob import glob, iglob
 
 import jsonschema
-import magic
+if sys.platform == 'linux':
+    import magic
 import yaml
 
 import snapcraft

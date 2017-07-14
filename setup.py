@@ -18,8 +18,11 @@
 import codecs
 import os
 import re
+import sys
 
 from setuptools import setup
+if sys.platform == 'win32':
+    import py2exe
 
 version = 'devel'
 # look/set what version we have
@@ -51,7 +54,13 @@ setup(
               'snapcraft.plugins',
               'snapcraft.storeapi'],
     package_data={'snapcraft.internal.repo': ['manifest.txt']},
-    scripts=['bin/snapcraft', 'bin/snapcraft-parser'],
+    scripts=['bin/snapcraft-parser'],
+    entry_points={
+        'console_scripts': [
+            'snapcraft = snapcraft.cli.__main__:run',
+            'snapcraft-parser = snapcraft.internal.parser:main',
+        ],
+    },
     data_files=[
         ('share/snapcraft/schema',
             ['schema/' + x for x in os.listdir('schema')]),

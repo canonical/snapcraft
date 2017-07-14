@@ -18,6 +18,7 @@ import logging
 import multiprocessing
 import os
 import platform
+import sys
 
 from snapcraft.internal import common
 from snapcraft.internal.deprecations import handle_deprecation_notice
@@ -242,8 +243,16 @@ class ProjectOptions:
             self.__target_machine = _find_machine(target_deb_arch)
             logger.info('Setting target machine to {!r}'.format(
                 target_deb_arch))
-        self.__machine_info = _ARCH_TRANSLATIONS[self.__target_machine]
-
+        if sys.platform == 'linux':
+            self.__machine_info = _ARCH_TRANSLATIONS[self.__target_machine]
+        else:
+            self.__machine_info = {
+                'kernel': 'NOBUILD',
+                'deb': 'NOBUILD',
+                'uts_machine': 'NOBUILD',
+                'triplet': 'NOBUILD',
+                'core-dynamic-linker': 'NOBUILD',
+            }
 
 def _get_deb_arch(machine):
     return _ARCH_TRANSLATIONS[machine].get('deb', None)
