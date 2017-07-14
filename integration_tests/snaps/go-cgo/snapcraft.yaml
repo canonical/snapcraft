@@ -11,3 +11,4 @@ parts:
   go-cgo:
     plugin: go
     source: .
+    build-packages: [libglib2.0-dev]

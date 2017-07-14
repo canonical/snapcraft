@@ -21,7 +21,9 @@ import io
 import os
 import string
 import sys
+import tempfile
 import threading
+from textwrap import dedent, fill
 import urllib.parse
 from functools import partial
 from types import ModuleType
@@ -421,6 +423,119 @@ class FakePlugin(fixtures.Fixture):
 
     def _remove_module(self):
         del sys.modules[self._import_name]
+
+
+class FakeAptGetBuildDep(fixtures.Fixture):
+    '''Mock apt-get build-dep output'''
+
+    _PROLOG = dedent('''
+        NOTE: This is only a simulation!
+              apt-get needs root privileges for real execution.
+              Keep also in mind that locking is deactivated,
+              so don't depend on the relevance to the real current situation!
+              ''')
+    _READING = dedent('''
+        {}
+        Note, using file '{}' to get the build dependencies
+        Reading package lists...
+        Building dependency tree...
+        Reading state information...''')
+    _PROBLEMS = dedent('''
+        Some packages could not be installed. This may mean that you have
+        requested an impossible situation or if you are using the unstable
+        distribution that some required packages have not yet been created
+        or been moved out of Incoming.
+        The following information may help to resolve the situation:
+
+        The following packages have unmet dependencies:
+         builddeps:{}{} : {}
+        E: Unable to correct problems, you have held broken packages.''')
+    _NEW = dedent('''
+        The following NEW packages will be installed:
+          {}
+        3 upgraded, {} newly installed, 0 to remove and 5 not upgraded.''')
+    _NONE = dedent('''
+        0 upgraded, 0 newly installed, 0 to remove and 6 not upgraded.''')
+
+    def __init__(self, packages, arch='', update_error=False,
+                 not_cached=False, not_available=False):
+        self.filename = '{}/{}abcdef.dsc'.format(tempfile.gettempdir(),
+                                                 tempfile.gettempprefix())
+        self.arch = 'amd64'
+        self.archs = [self.arch]
+        if arch:
+            self.arch = arch
+            arch = ':{}'.format(arch)
+        if not_cached:
+            note = 'Depends: {}{} but it is not going to be installed'
+        elif not_available:
+            note = 'Depends: {}{} but it is not installable'
+        else:
+            note = '{}{}'
+        errors = []
+        for package in packages:
+            errors.append(note.format(package, arch))
+        self.exception = False
+        if not_cached or not_available:
+            self.exception = True
+            details = self._PROBLEMS.format(
+                self.filename, arch, '\n'.join(errors))
+        elif not packages:
+            details = self._NONE
+        else:
+            details = self._NEW.format(fill(' '.join(errors),
+                                            subsequent_indent='  ',
+                                            break_on_hyphens=False),
+                                       len(errors))
+        self.output = '{}{}'.format(self._READING.format(
+            self._PROLOG, self.filename), details).encode(
+                  sys.getfilesystemencoding())
+        self.update_error = update_error
+
+    def _setUp(self):
+        patcher = mock.patch('tempfile.NamedTemporaryFile')
+        tempfile_mock = patcher.start()
+        tempfile_mock.return_value.__enter__.return_value.name = self.filename
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('subprocess.check_output')
+        self.check_output_mock = patcher.start()
+        self.check_output_mock.side_effect = self.check_output_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('subprocess.check_call')
+        self.check_call_mock = patcher.start()
+        self.check_call_mock.side_effect = self.check_output_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.repo._deb.open',
+                             mock.mock_open())
+        self.open_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def check_output_side_effect(self):
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['apt-get', 'build-dep']:
+                if self.arch not in self.archs:
+                    output = '{}\n{} {}. {}\n'.format(
+                        self._PROLOG,
+                        'E: No architecture information available for',
+                        self.arch,
+                        'See apt.conf(5) APT::Architectures for setup').encode(
+                            sys.getfilesystemencoding())
+                    raise CalledProcessError(100, args[0], output)
+                elif self.exception:
+                    raise CalledProcessError(100, args[0], self.output)
+                else:
+                    return self.output
+            elif args[0][:3] == ['sudo', 'apt-get', 'update']:
+                server = 'http://archive.ubuntu.com/ubuntu'
+                template = '{}:{} {} xenial InRelease\n'
+                output = template.format('Get', '9', server)
+                if self.update_error:
+                    output += template.format('Err', '9', server)
+                return output.encode(sys.getfilesystemencoding())
+        return call_effect
 
 
 class FakeLXD(fixtures.Fixture):

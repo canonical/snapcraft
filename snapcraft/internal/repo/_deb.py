@@ -20,11 +20,13 @@ import hashlib
 import logging
 import os
 import platform
+import re
 import shutil
 import stat
 import string
 import subprocess
 import sys
+import tempfile
 import urllib
 import urllib.request
 
@@ -186,7 +188,7 @@ class Ubuntu(BaseRepo):
         return packages
 
     @classmethod
-    def install_build_packages(cls, package_names):
+    def install_build_packages(cls, package_names, arch):
         """Install build packages on the building machine.
 
         :return: a list with the packages installed and their versions.
@@ -195,7 +197,8 @@ class Ubuntu(BaseRepo):
         new_packages = []
         with apt.Cache() as apt_cache:
             try:
-                cls._mark_install(apt_cache, package_names)
+                cls._mark_install(apt_cache,
+                                  cls._get_build_deps(package_names, arch))
             except errors.PackageNotFoundError as e:
                 raise errors.BuildPackageNotFoundError(e)
             for package in apt_cache.get_changes():
@@ -209,20 +212,79 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def _mark_install(cls, apt_cache, package_names):
-        for name in package_names:
-            if name.endswith(':any'):
-                name = name[:-4]
+        for pkg in package_names:
+            logger.debug('Marking {!r} (and its dependencies) to be '
+                         'fetched'.format(pkg))
+            name, arch, version = repo.get_pkg_name_parts(pkg)
             if apt_cache.is_virtual_package(name):
                 name = apt_cache.get_providing_packages(name)[0].name
-            logger.debug('Marking {!r} (and its dependencies) to be '
-                         'fetched'.format(name))
-            name_arch, version = repo.get_pkg_name_parts(name)
             try:
                 if version:
-                    _set_pkg_version(apt_cache[name_arch], version)
-                apt_cache[name_arch].mark_install()
-            except KeyError:
-                raise errors.PackageNotFoundError(name)
+                    _set_pkg_version(apt_cache[name + arch], version)
+                apt_cache[name + arch].mark_install()
+            except KeyError as e:
+                raise errors.PackageNotFoundError(pkg) from e
+
+    @classmethod
+    def _get_build_deps(cls, package_names, arch):
+        """Use apt-get build-dep with a fake source package file to find
+           all dependencies and correct architectures.
+        """
+        build_deps = []
+        if not package_names:
+            return build_deps
+
+        with tempfile.NamedTemporaryFile(suffix='.dsc') as fake_source:
+            depends = 'Build-Depends: {}\n'.format(', '.join(package_names))
+            fake_source.write(depends.encode())
+            fake_source.flush()
+            try:
+                actions = subprocess.check_output(
+                    ['apt-get', 'build-dep', '-q', '-s',
+                     '-a{}'.format(arch), fake_source.name],
+                    stderr=subprocess.STDOUT, env={}).decode(
+                        sys.getfilesystemencoding())
+                msg = 'The following NEW packages will be installed:\n  '
+                msg_begin = actions.find(msg)
+                if msg_begin > -1:
+                    msg_end = msg_begin + len(msg)
+                    packages_end = re.search('\d+ upgraded', actions).start()
+                    build_deps = actions[msg_end:packages_end].split()
+            except subprocess.CalledProcessError as e:
+                actions = e.output.decode(sys.getfilesystemencoding())
+
+                # Bail out if it's not a package problems error
+                if 'E: Unable to correct problems' not in actions:
+                    raise e
+
+                rx = re.compile(
+                    '(.+Depends: (.+) but it is not .+|.+)')
+                for line in actions.split('\n'):
+                    build_deps.append(rx.sub('\\2', line))
+        return cls._ensure_package_format(build_deps)
+
+    @classmethod
+    def _ensure_package_format(cls, package_names):
+        """A list of packages output by apt-get build-dep may end up with
+           the format name=version:arch instead of name:arch=version - take
+           that list and enforce the correct format.
+        """
+        pkgs = []
+        for pkg in package_names:
+            if not pkg:
+                continue
+            name, arch, version_with_arch = repo.get_pkg_name_parts(pkg)
+            fixed_pkg = name
+            if version_with_arch:
+                version = version_with_arch
+                with contextlib.suppress(ValueError):
+                    version, arch = list(filter(None, re.split(
+                        '(.+)(:[a-z]+)', version_with_arch)))
+                fixed_pkg += '{}={}'.format(arch, version)
+            else:
+                fixed_pkg += arch
+            pkgs.append(fixed_pkg)
+        return pkgs
 
     @classmethod
     def _install_new_build_packages(cls, package_names):

@@ -112,7 +112,8 @@ def execute(step, project_options, part_names=None):
     """
     config = snapcraft.internal.load_config(project_options)
     installed_packages = repo.Repo.install_build_packages(
-        config.build_tools)
+        config.build_tools,
+        project_options.deb_arch)
     if installed_packages is None:
         raise ValueError(
             'The repo backend is not returning the list of installed packages')

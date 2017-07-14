@@ -335,6 +335,10 @@ def _build_env(root, snap_name, confinement, arch_triplet,
         env.append(formatting_utils.format_path_variable(
             'PKG_CONFIG_PATH', paths, prepend='', separator=':'))
 
+    paths = common.get_pkg_config_paths('/', arch_triplet)
+    env.append(formatting_utils.format_path_variable(
+        'PKG_CONFIG_PATH', paths, prepend='', separator=':'))
+
     return env
 
 
