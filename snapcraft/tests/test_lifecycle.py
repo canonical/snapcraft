@@ -677,7 +677,7 @@ class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
         self.make_snapcraft_yaml("""parts:
   test-part:
     plugin: nil
-""")
+""", snap_type='type: app')
         lifecycle.execute('prime', self.project_options)
 
         expected = ("""name: test
@@ -686,7 +686,7 @@ summary: test
 description: test
 confinement: strict
 grade: stable
-
+type: app
 
 parts:
   test-part:
