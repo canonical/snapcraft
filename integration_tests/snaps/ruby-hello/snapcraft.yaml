@@ -3,18 +3,20 @@ version: 0.1
 summary: Test ruby
 description: |
   Snap to test ruby compiled correctly, exists, and works
+
 confinement: strict
 
 apps:
   ruby-hello:
-    command: bin/ruby ./ruby-hello.rb
+    command: ./ruby-hello
 
 parts:
   ruby-hello:
     plugin: ruby
-    build-packages: [lsb-release]
     source: .
     stage:
       - bin
       - lib
-      - ruby-hello.rb
+  dump:
+    plugin: dump
+    source: .
