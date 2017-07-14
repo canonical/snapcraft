@@ -649,9 +649,14 @@ class CleanTestCase(BaseLifecycleTestCase):
             Not(DirExists()))
 
 
-class RecordManifestTestCase(BaseLifecycleTestCase):
+class BuildInfoFlagUnsetTestCase(BaseLifecycleTestCase):
 
-    def test_prime_without_build_info_does_not_record_manifest(self):
+    scenarios = (
+        ('snapcraft_yaml', {'recorded_file': 'snapcraft.yaml'}),
+        ('manifest_yaml', {'recorded_file': 'manifest.yaml'})
+    )
+
+    def test_prime_without_build_info_does_not_record(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', None))
         self.make_snapcraft_yaml("""parts:
@@ -660,8 +665,41 @@ class RecordManifestTestCase(BaseLifecycleTestCase):
 """)
         lifecycle.execute('prime', self.project_options)
         self.assertThat(
-            os.path.join('prime', 'snap', 'manifest.yaml'),
+            os.path.join('prime', 'snap', self.recorded_file),
             Not(FileExists()))
+
+
+class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
+
+    def test_prime_with_build_info_records_snapcraft_yaml(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+
+
+parts:
+  test-part:
+    plugin: nil
+
+""")
+
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+
+class RecordManifestTestCase(BaseLifecycleTestCase):
 
     def test_prime_with_build_info_records_manifest(self):
         self.useFixture(fixtures.EnvironmentVariable(
