@@ -19,10 +19,7 @@ from unittest import mock
 
 from snapcraft.internal import sources
 from snapcraft import tests
-from snapcraft.tests.subprocess_utils import (
-    call,
-    call_with_output,
-)
+from snapcraft.tests import fixture_setup
 
 
 class TestBazaar(tests.sources.SourceTestCase):
@@ -137,21 +134,10 @@ class BazaarDetailsTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
         self.working_tree = 'bzr-test'
+        self.bzr_repo = fixture_setup.BzrRepo(self.working_tree)
+        self.useFixture(self.bzr_repo)
         self.source_dir = 'bzr-checkout'
-        os.mkdir(self.working_tree)
         os.mkdir(self.source_dir)
-        os.chdir(self.working_tree)
-        call(['bzr', 'init'])
-        call(['bzr', 'whoami', 'Test User <test.user@example.com>'])
-        with open('testing', 'w') as fp:
-            fp.write('testing')
-        call(['bzr', 'add', 'testing'])
-        call(['bzr', 'commit', '-m', 'testing'])
-        call(['bzr', 'tag', 'test-tag'])
-        self.expected_commit = call_with_output(['bzr', 'revno', '.'])
-        self.expected_tag = 'test-tag'
-
-        os.chdir('..')
 
         self.bzr = sources.Bazaar(self.working_tree, self.source_dir,
                                   silent=True)
@@ -161,12 +147,12 @@ class BazaarDetailsTestCase(tests.TestCase):
 
     def test_bzr_details_commit(self):
         self.assertEqual(
-            self.expected_commit, self.source_details['source-commit'])
+            self.bzr_repo.commit, self.source_details['source-commit'])
 
     def test_bzr_details_tag(self):
         self.bzr = sources.Bazaar(self.working_tree, self.source_dir,
-                                  source_tag='test-tag', silent=True)
+                                  source_tag='feature-tag', silent=True)
         self.bzr.pull()
 
         self.source_details = self.bzr._get_source_details()
-        self.assertEqual(self.expected_tag, self.source_details['source-tag'])
+        self.assertEqual('feature-tag', self.source_details['source-tag'])
