@@ -212,9 +212,10 @@ class Containerbuild:
 
         filepath = os.path.join(rundir, filename)
         shutil.copyfile(installed, filepath)
-        self._push_file(filepath, os.path.join(self._project_folder, filename))
-        logger.info('Installing {}'.format(filename))
-        cmd = ['snap', 'install', filename]
+        container_filename = os.path.join(os.sep, 'run', filename)
+        self._push_file(filepath, container_filename)
+        logger.info('Installing {}'.format(container_filename))
+        cmd = ['snap', 'install', container_filename]
         if rev.startswith('x'):
             cmd.append('--dangerous')
         if is_classic:
@@ -228,9 +229,10 @@ class Containerbuild:
                 logger.info('Looking up assertion {}'.format(assertion))
                 f.write(check_output(['snap', 'known', *assertion]))
                 f.write(b'\n')
-        self._push_file(filepath, os.path.join(self._project_folder, filename))
+        container_filename = os.path.join(os.path.sep, 'run', filename)
+        self._push_file(filepath, container_filename)
         logger.info('Adding assertion {}'.format(filename))
-        self._container_run(['snap', 'ack', filename])
+        self._container_run(['snap', 'ack', container_filename])
 
     def _finish(self):
         # os.sep needs to be `/` and on Windows it will be set to `\`
