@@ -34,5 +34,5 @@ class RubyPluginTestCase(integration_tests.TestCase):
     def test_ruby_hello(self):
         self.run_snapcraft('stage', 'ruby-hello')
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join(self.stage_dir, 'ruby-hello.rb'))
+            os.path.join(self.stage_dir, os.path.basename(self.path)))
         self.assertEqual("Ruby says, Hello snapcraft.\n", binary_output)

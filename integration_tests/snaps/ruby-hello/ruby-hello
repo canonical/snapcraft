@@ -7,4 +7,4 @@ export RUBYLIB=$SNAP/lib/ruby/2.3.0/:$SNAP/lib/ruby/2.3.0/x86_64-linux/
 export GEM_HOME=$SNAP/lib/ruby/gems
 export GEM_PATH=$SNAP/lib/ruby/gems
 
-./ruby-hello.rb
+exec "$SNAP/bin/ruby" "-e" "puts 'Ruby says, Hello snapcraft.';"
