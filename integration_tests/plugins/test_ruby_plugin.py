@@ -14,8 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from contextlib import contextmanager
+import glob
 import os
+
 import integration_tests
+
+
+@contextmanager
+def cd(path):
+    old_dir = os.getcwd()
+    os.chdir(path)
+    yield
+    os.chdir(old_dir)
 
 
 class RubyPluginTestCase(integration_tests.TestCase):
@@ -33,14 +44,19 @@ class RubyPluginTestCase(integration_tests.TestCase):
 
     def test_ruby_hello(self):
         self.run_snapcraft('stage', 'ruby-hello')
+
+        rubydir = os.path.join(self.stage_dir, 'lib', 'ruby')
+
+        with cd(rubydir):
+            ruby_minor_vers_dir = glob.glob('[0-9].[0-9].[0-9]')[0]
+
         os.environ['RUBYPATH'] = os.path.join(self.stage_dir, 'bin')
         os.environ['RUBYLIB'] = "{}:{}".format(
-            os.path.join(self.stage_dir, 'lib', 'ruby', '2.3.0'),
-            os.path.join(self.stage_dir, 'lib', 'ruby', 'x86_64-linux'))
-        os.environ['GEM_PATH'] = os.path.join(
-            self.stage_dir, 'lib', 'ruby', 'gems')
-        os.environ['GEM_HOME'] = os.path.join(
-            self.stage_dir, 'lib', 'ruby', 'gems')
+            os.path.join(rubydir, ruby_minor_vers_dir),
+            os.path.join(rubydir, 'x86_64-linux'))
+        os.environ['GEM_PATH'] = os.path.join(rubydir, 'gems')
+        os.environ['GEM_HOME'] = os.path.join(rubydir, 'gems')
+
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'ruby-hello'))
         self.assertEqual("Ruby says, Hello snapcraft.\n", binary_output)
