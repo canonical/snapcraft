@@ -33,6 +33,14 @@ class RubyPluginTestCase(integration_tests.TestCase):
 
     def test_ruby_hello(self):
         self.run_snapcraft('stage', 'ruby-hello')
+        os.environ['RUBYPATH'] = os.path.join(self.stage_dir, 'bin')
+        os.environ['RUBYLIB'] = "{}:{}".format(
+            os.path.join(self.stage_dir, 'lib', 'ruby', '2.3.0'),
+            os.path.join(self.stage_dir, 'lib', 'ruby', 'x86_64-linux'))
+        os.environ['GEM_PATH'] = os.path.join(
+            self.stage_dir, 'lib', 'ruby', 'gems')
+        os.environ['GEM_HOME'] = os.path.join(
+            self.stage_dir, 'lib', 'ruby', 'gems')
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join(self.stage_dir, 'ruby-hello'))
+            os.path.join(self.stage_dir, 'bin', 'ruby-hello'))
         self.assertEqual("Ruby says, Hello snapcraft.\n", binary_output)

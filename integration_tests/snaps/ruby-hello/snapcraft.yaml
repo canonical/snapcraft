@@ -6,9 +6,9 @@ description: |
 
 confinement: strict
 
-apps:
-  ruby-hello:
-    command: ./ruby-hello
+#apps:
+#  ruby-hello:
+#    command: ./ruby-hello
 
 parts:
   ruby-hello:
@@ -17,6 +17,8 @@ parts:
     stage:
       - bin
       - lib
+    install: |
+      cp ./ruby-hello $SNAPCRAFT_PART_INSTALL/bin/ruby-hello
   dump:
     plugin: dump
     source: .
