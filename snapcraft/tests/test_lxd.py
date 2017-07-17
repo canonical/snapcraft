@@ -55,9 +55,9 @@ class LXDTestCase(tests.TestCase):
                          project_options=project_options).execute()
         expected_arch = 'amd64'
 
-        self.assertIn('Setting up container with project assets\n'
-                      'Waiting for a network connection...\n'
+        self.assertIn('Waiting for a network connection...\n'
                       'Network connection established\n'
+                      'Setting up container with project assets\n'
                       'Retrieved snap.snap\n', fake_logger.output)
         args = []
         if self.target_arch:
@@ -75,14 +75,6 @@ class LXDTestCase(tests.TestCase):
                   'environment.LC_ALL', 'C.UTF-8']),
             call(['lxc', 'exec', container_name,
                   '--env', 'HOME=/{}'.format(project_folder), '--',
-                  'mkdir', project_folder]),
-            call(['lxc', 'file', 'push', os.path.realpath('project.tar'),
-                  '{}/build_project/project.tar'.format(container_name)]),
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
-                  'tar', 'xvf', 'project.tar']),
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
                   'python3', '-c',
                   'import urllib.request; '
                   'urllib.request.urlopen('
@@ -94,6 +86,14 @@ class LXDTestCase(tests.TestCase):
             call(['lxc', 'exec', container_name,
                   '--env', 'HOME=/{}'.format(project_folder), '--',
                   'apt-get', 'install', 'snapcraft', '-y']),
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/{}'.format(project_folder), '--',
+                  'mkdir', project_folder]),
+            call(['lxc', 'file', 'push', os.path.realpath('project.tar'),
+                  '{}/build_project/project.tar'.format(container_name)]),
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/{}'.format(project_folder), '--',
+                  'tar', 'xvf', 'project.tar']),
             call(['lxc', 'exec', container_name,
                   '--env', 'HOME=/{}'.format(project_folder), '--',
                   'snapcraft', 'snap', '--output', 'snap.snap', *args]),

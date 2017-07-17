@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import logging
 import os
 from collections import OrderedDict
 
@@ -20,18 +21,43 @@ import fixtures
 import yaml
 from testtools.matchers import Contains, Equals, FileExists
 from xdg import BaseDirectory
+from textwrap import dedent
+from unittest import mock
+from unittest.mock import call
 
 from snapcraft.tests import TestWithFakeRemoteParts
+from snapcraft.tests import fixture_setup
 from . import CommandBaseTestCase
 
 
 class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
+
+    yaml_template = dedent("""\
+        name: snap-test
+        version: 1.0
+        summary: test snapping
+        description: if snap is succesful a snap package will be available
+        architectures: ['amd64']
+        type: {}
+        confinement: strict
+        grade: stable
+
+        parts:
+            part1:
+                plugin: nil
+        """)
 
     def setUp(self):
         super().setUp()
         self.parts_dir = os.path.join(BaseDirectory.xdg_data_home, 'snapcraft')
         self.parts_yaml = os.path.join(self.parts_dir, 'parts.yaml')
         self.headers_yaml = os.path.join(self.parts_dir, 'headers.yaml')
+
+    def make_snapcraft_yaml(self, n=1, snap_type='app', snapcraft_yaml=None):
+        if not snapcraft_yaml:
+            snapcraft_yaml = self.yaml_template.format(snap_type)
+        super().make_snapcraft_yaml(snapcraft_yaml)
+        self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
     def test_update(self):
         result = self.run_command(['update'])
@@ -106,3 +132,56 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(self.parts_yaml, FileExists())
         self.assertThat(self.headers_yaml, FileExists())
+
+    @mock.patch('os.getuid')
+    def test_update_containerized_exists_running(self, mock_getuid):
+        mock_getuid.return_value = 1234
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        # Container was created before and is running
+        fake_lxd.name = 'local:snapcraft-snap-test'
+        fake_lxd.status = 'Running'
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml()
+
+        result = self.run_command(['update'])
+
+        self.assertThat(result.exit_code, Equals(0))
+
+        source = os.path.realpath(os.path.curdir)
+        self.assertIn(
+            'Waiting for a network connection...\n'
+            'Network connection established\n'
+            'Mounting {} into container\n'.format(source),
+            fake_logger.output)
+
+        container_name = fake_lxd.name
+        project_folder = 'build_snap-test'
+        fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/{}'.format(project_folder), '--',
+                  'python3', '-c',
+                  'import urllib.request; '
+                  'urllib.request.urlopen('
+                  '"http://start.ubuntu.com/connectivity-check.html", '
+                  'timeout=5)']),
+            call(['lxc', 'config', 'device', 'add', container_name,
+                  project_folder, 'disk', 'source={}'.format(source),
+                  'path=/{}'.format(project_folder)]),
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/build_snap-test', '--',
+                  'snapcraft', 'update']),
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/build_snap-test', '--',
+                  'apt-get', 'update']),
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/build_snap-test', '--',
+                  'apt-get', 'upgrade', '-y']),
+            call(['lxc', 'exec', container_name,
+                  '--env', 'HOME=/build_snap-test', '--',
+                  'snap', 'refresh']),
+            call(['lxc', 'stop', '-f', container_name]),
+        ])

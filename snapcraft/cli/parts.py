@@ -16,8 +16,10 @@
 import sys
 import click
 
-from snapcraft.internal import parts
+from snapcraft.internal import parts, lifecycle
+from ._options import get_project_options
 from . import echo
+from . import env
 
 
 @click.group(context_settings={})
@@ -28,9 +30,13 @@ def partscli(ctx):
 
 @partscli.command()
 @click.pass_context
-def update(ctx):
+def update(ctx, **kwargs):
     """Updates the parts listing from the cloud."""
-    parts.update()
+    if env.is_containerbuild():
+        project_options = get_project_options(**kwargs)
+        lifecycle.containerbuild('update', project_options)
+    else:
+        parts.update()
 
 
 @partscli.command()

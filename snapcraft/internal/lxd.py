@@ -95,6 +95,9 @@ class Containerbuild:
         check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.LC_ALL', 'C.UTF-8'])
+        self._wait_for_network()
+        self._container_run(['apt-get', 'update'])
+        self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
 
     @contextmanager
     def _ensure_started(self):
@@ -109,9 +112,6 @@ class Containerbuild:
     def execute(self, step='snap', args=None):
         with self._ensure_started():
             self._setup_project()
-            self._wait_for_network()
-            self._container_run(['apt-get', 'update'])
-            self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
             command = ['snapcraft', step]
             if step == 'snap':
                 command += ['--output', self._snap_output]
@@ -121,6 +121,10 @@ class Containerbuild:
                 command += args
             try:
                 self._container_run(command)
+                if step == 'update':
+                    self._container_run(['apt-get', 'update'])
+                    self._container_run(['apt-get', 'upgrade', '-y'])
+                    self._container_run(['snap', 'refresh'])
             except CalledProcessError as e:
                 if self._project_options.debug:
                     logger.info('Debug mode enabled, dropping into a shell')
@@ -187,7 +191,8 @@ class Project(Containerbuild):
                 return container
 
     def _ensure_container(self):
-        if not self._get_container_status():
+        new_container = not self._get_container_status()
+        if new_container:
             check_call([
                 'lxc', 'init', self._image, self._container_name])
             check_call([
@@ -200,6 +205,10 @@ class Project(Containerbuild):
         if self._get_container_status()['status'] == 'Stopped':
             check_call([
                 'lxc', 'start', self._container_name])
+        self._wait_for_network()
+        if new_container:
+            self._container_run(['apt-get', 'update'])
+            self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
 
     def _setup_project(self):
         self._ensure_mount(self._project_folder, self._source)

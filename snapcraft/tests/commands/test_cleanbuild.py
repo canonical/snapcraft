@@ -77,9 +77,9 @@ parts:
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertIn(
-            'Setting up container with project assets\n'
             'Waiting for a network connection...\n'
             'Network connection established\n'
+            'Setting up container with project assets\n'
             'Retrieved snap-test_1.0_amd64.snap\n',
             fake_logger.output)
 
