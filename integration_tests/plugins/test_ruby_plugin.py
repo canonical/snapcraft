@@ -27,7 +27,12 @@ class RubyPluginTestCase(integration_tests.TestCase):
             exe_path = os.path.join(self.stage_dir, 'bin', exe)
             self.assertTrue(os.path.exists(exe_path))
 
-    def test_ruby_gem_install_rack(self):
-        self.run_snapcraft('stage', 'ruby-gem-install-rack')
+    def test_gem_install(self):
+        self.run_snapcraft('stage', 'ruby-gem-install')
+        rack_path = os.path.join(self.stage_dir, 'bin', 'rackup')
+        self.assertTrue(os.path.exists(rack_path))
+
+    def test_bundle_install(self):
+        self.run_snapcraft('stage', 'ruby-bundle-install')
         rack_path = os.path.join(self.stage_dir, 'bin', 'rackup')
         self.assertTrue(os.path.exists(rack_path))

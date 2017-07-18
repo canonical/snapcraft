@@ -71,7 +71,7 @@ class RubyPlugin(BasePlugin):
             'https://cache.ruby-lang.org/pub/ruby/ruby-{}.tar.gz'.format(
                 self._ruby_version)
         self._ruby_tar = Tar(self._ruby_download_url, self._ruby_part_dir)
-        self._gems = self.options.gems
+        self._gems = self.options.gems or []
         self._install_bundler = False
 
         self.build_packages.extend(['gcc', 'g++', 'make', 'zlib1g-dev',
@@ -120,7 +120,7 @@ class RubyPlugin(BasePlugin):
                  cwd=builddir)
 
     def _gem_install(self):
-        if os.path.exists(os.path.join(self.builddir, 'Gemfile')):
+        if os.path.exists('Gemfile'):
             self._install_bundler = True
             self._gems = self._gems + ['bundler']
         if self._gems:
