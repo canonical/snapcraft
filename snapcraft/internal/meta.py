@@ -134,19 +134,19 @@ class _SnapPackaging:
             file_utils.link_or_copy(
                 'gadget.yaml', os.path.join(self.meta_dir, 'gadget.yaml'))
 
-    def _record_snapcraft(self):
-        record_dir = os.path.join(self._prime_dir, 'snap')
-        record_file_path = os.path.join(record_dir, 'snapcraft.yaml')
-        if os.path.isfile(record_file_path):
-            os.unlink(record_file_path)
+    def _record_manifest(self):
+        manifest_dir = os.path.join(self._prime_dir, 'snap')
+        manifest_file_path = os.path.join(manifest_dir, 'manifest.yaml')
+        if os.path.isfile(manifest_file_path):
+            os.unlink(manifest_file_path)
 
         # FIXME hide this functionality behind a feature flag for now
         if os.environ.get('SNAPCRAFT_BUILD_INFO'):
-            os.makedirs(record_dir, exist_ok=True)
-            with open(record_file_path, 'w') as record_file:
+            os.makedirs(manifest_dir, exist_ok=True)
+            with open(manifest_file_path, 'w') as manifest_file:
                 annotated_snapcraft = self._annotate_snapcraft(
                     copy.deepcopy(self._config_data))
-                yaml.dump(annotated_snapcraft, record_file)
+                yaml.dump(annotated_snapcraft, manifest_file)
 
     def _annotate_snapcraft(self, data):
         data['build-packages'] = get_global_state().assets.get(
@@ -201,7 +201,7 @@ class _SnapPackaging:
 
                     file_utils.link_or_copy(source, destination)
 
-        self._record_snapcraft()
+        self._record_manifest()
 
     def generate_hook_wrappers(self):
         snap_hooks_dir = os.path.join(self._prime_dir, 'snap', 'hooks')
