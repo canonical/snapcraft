@@ -41,22 +41,3 @@ class RubyPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', 'ruby-gem-install-rack')
         rack_path = os.path.join(self.stage_dir, 'bin', 'rackup')
         self.assertTrue(os.path.exists(rack_path))
-
-    def test_ruby_hello(self):
-        self.run_snapcraft('stage', 'ruby-hello')
-
-        rubydir = os.path.join(self.stage_dir, 'lib', 'ruby')
-
-        with cd(rubydir):
-            ruby_minor_vers_dir = glob.glob('[0-9].[0-9].[0-9]')[0]
-
-        os.environ['RUBYPATH'] = os.path.join(self.stage_dir, 'bin')
-        os.environ['RUBYLIB'] = "{}:{}".format(
-            os.path.join(rubydir, ruby_minor_vers_dir),
-            os.path.join(rubydir, 'x86_64-linux'))
-        os.environ['GEM_PATH'] = os.path.join(rubydir, 'gems')
-        os.environ['GEM_HOME'] = os.path.join(rubydir, 'gems')
-
-        binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join(self.stage_dir, 'bin', 'ruby-hello'))
-        self.assertEqual("Ruby says, Hello snapcraft.\n", binary_output)

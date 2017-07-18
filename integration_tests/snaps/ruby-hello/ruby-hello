@@ -1,5 +1,0 @@
-#!/bin/bash
-
-set -e
-
-ruby -e "puts 'Ruby says, Hello snapcraft.';"
