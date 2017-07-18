@@ -104,7 +104,9 @@ class MakePlugin(snapcraft.BasePlugin):
         if self.options.make_parameters:
             command.extend(self.options.make_parameters)
 
-        self.run(command + ['-j{}'.format(self.parallel_build_count)], env=env, cwd=cwd)
+        self.run(
+            command +
+            ['-j{}'.format(self.parallel_build_count)], env=env, cwd=cwd)
         if self.options.artifacts:
             for artifact in self.options.artifacts:
                 source_path = os.path.join(self.builddir, artifact)

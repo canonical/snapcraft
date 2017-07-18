@@ -31,7 +31,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
 """
 
 import os
-import shutil
 
 import snapcraft.plugins.make
 
