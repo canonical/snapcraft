@@ -229,7 +229,9 @@ class PythonPluginTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        mock_run_output.return_value = 'yaml (1.2)\bextras (1.0)'
+        mock_run_output.return_value = (
+            '[{"name": "yaml", "version": "1.2"},'
+            ' {"name": "extras", "version": "1.0"}]')
 
         self.useFixture(fixture_setup.CleanEnvironment())
         plugin = python.PythonPlugin('test-part', self.options,

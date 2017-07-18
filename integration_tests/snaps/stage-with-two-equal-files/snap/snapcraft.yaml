@@ -1,0 +1,19 @@
+name: stage-with-two-equal-files
+version: 0.1
+summary: A snap with two equal files to stage
+description: |
+  A snap with two parts, each with one file to stage, both files with the same
+  name. One part depends on the other.
+
+parts:
+  part1:
+    plugin: dump
+    source: .
+    stage:
+      - test-file
+  part2:
+    plugin: dump
+    source: .
+    stage:
+      - test-file
+    after: [part1]
