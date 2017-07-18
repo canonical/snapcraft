@@ -8,6 +8,6 @@ confinement: strict
 parts:
   ruby-bundle-install:
     plugin: ruby
-    version: "2.3.1"
+    ruby-version: "2.3.1"
     stage:
       - bin
