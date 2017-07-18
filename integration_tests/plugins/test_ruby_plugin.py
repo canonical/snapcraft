@@ -14,19 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager
-import glob
 import os
 
 import integration_tests
-
-
-@contextmanager
-def cd(path):
-    old_dir = os.getcwd()
-    os.chdir(path)
-    yield
-    os.chdir(old_dir)
 
 
 class RubyPluginTestCase(integration_tests.TestCase):
