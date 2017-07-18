@@ -25,8 +25,6 @@ import sys
 from glob import glob, iglob
 
 import jsonschema
-if sys.platform == 'linux':
-    import magic
 import yaml
 
 import snapcraft
@@ -42,6 +40,9 @@ from snapcraft.internal import (
 from ._scriptlets import ScriptRunner
 from ._build_attributes import BuildAttributes
 from ._stage_package_handler import StagePackageHandler
+
+if sys.platform == 'linux':
+    import magic
 
 logger = logging.getLogger(__name__)
 

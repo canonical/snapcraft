@@ -254,6 +254,7 @@ class ProjectOptions:
                 'core-dynamic-linker': 'NOBUILD',
             }
 
+
 def _get_deb_arch(machine):
     return _ARCH_TRANSLATIONS[machine].get('deb', None)
 
