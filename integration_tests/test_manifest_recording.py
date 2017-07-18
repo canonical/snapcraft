@@ -25,10 +25,10 @@ import snapcraft
 import integration_tests
 
 
-class SnapcraftRecordingBaseTestCase(integration_tests.TestCase):
-    """Test that the prime step records an annotated snapcraft.yaml
+class ManifestRecordingBaseTestCase(integration_tests.TestCase):
+    """Test that the prime step records an annotated manifest.yaml
 
-    The annotated file will be in prime/snap/snapcraft.yaml.
+    The annotated file will be in prime/snap/manifest.yaml.
 
     """
 
@@ -38,10 +38,10 @@ class SnapcraftRecordingBaseTestCase(integration_tests.TestCase):
             'SNAPCRAFT_BUILD_INFO', '1'))
 
 
-class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
+class ManifestRecordingTestCase(ManifestRecordingBaseTestCase):
 
     def test_prime_with_architectures(self):
-        """Test the recorded snapcraft.yaml for a basic snap
+        """Test the recorded manifest for a basic snap
 
         This snap doesn't have stage or build packages and is declared that it
         works on all architectures.
@@ -49,14 +49,14 @@ class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
         self.run_snapcraft('prime', project_dir='basic')
 
         recorded_yaml_path = os.path.join(
-            self.prime_dir, 'snap', 'snapcraft.yaml')
+            self.prime_dir, 'snap', 'manifest.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
         self.assertEqual(recorded_yaml['architectures'], ['all'])
 
     def test_prime_without_architectures_records_current_arch(self):
-        """Test the recorded snapcraft.yaml for a basic snap
+        """Test the recorded manifest for a basic snap
 
         This snap doesn't have stage or build packages and it is not declared
         that it works on all architectures, which makes it specific to the
@@ -65,7 +65,7 @@ class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
         self.run_snapcraft('prime', project_dir='basic-without-arch')
 
         recorded_yaml_path = os.path.join(
-            self.prime_dir, 'snap', 'snapcraft.yaml')
+            self.prime_dir, 'snap', 'manifest.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
@@ -74,8 +74,8 @@ class SnapcraftRecordingTestCase(SnapcraftRecordingBaseTestCase):
             [snapcraft.ProjectOptions().deb_arch])
 
 
-class SnapcraftRecordingBuildPackagesTestCase(
-        testscenarios.WithScenarios, SnapcraftRecordingBaseTestCase):
+class ManifestRecordingBuildPackagesTestCase(
+        testscenarios.WithScenarios, ManifestRecordingBaseTestCase):
 
     scenarios = [
         (snap, {'snap': snap}) for snap in
@@ -84,7 +84,7 @@ class SnapcraftRecordingBuildPackagesTestCase(
     ]
 
     def test_prime_with_build_packages(self):
-        """Test the recorded snapcraft.yaml for a snap with build packages
+        """Test the recorded manifest for a snap with build packages
 
         This snap declares one global build package that has undeclared
         dependencies.
@@ -107,7 +107,7 @@ class SnapcraftRecordingBuildPackagesTestCase(
         ]
 
         recorded_yaml_path = os.path.join(
-            self.prime_dir, 'snap', 'snapcraft.yaml')
+            self.prime_dir, 'snap', 'manifest.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
@@ -115,10 +115,10 @@ class SnapcraftRecordingBuildPackagesTestCase(
             recorded_yaml['build-packages'], expected_packages_with_version)
 
 
-class SnapcraftRecordingStagePackagesTestCase(SnapcraftRecordingBaseTestCase):
+class ManifestRecordingStagePackagesTestCase(ManifestRecordingBaseTestCase):
 
     def test_prime_records_packages_version(self):
-        """Test the recorded snapcraft.yaml for a snap with packages
+        """Test the recorded manifest for a snap with packages
 
         This snap declares all the packages that it requires, there are
         no additional dependencies. The packages specify their version.
@@ -137,7 +137,7 @@ class SnapcraftRecordingStagePackagesTestCase(SnapcraftRecordingBaseTestCase):
             source_yaml = yaml.load(source_yaml_file)
 
         recorded_yaml_path = os.path.join(
-            self.prime_dir, 'snap', 'snapcraft.yaml')
+            self.prime_dir, 'snap', 'manifest.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
@@ -146,7 +146,7 @@ class SnapcraftRecordingStagePackagesTestCase(SnapcraftRecordingBaseTestCase):
             source_yaml['parts'][part_name]['stage-packages'])
 
     def test_prime_without_packages_version(self):
-        """Test the recorded snapcraft.yaml for a snap with packages
+        """Test the recorded manifest for a snap with packages
 
         This snap declares all the packages that it requires, there are
         no additional dependencies. The packages don't specify their
@@ -166,7 +166,7 @@ class SnapcraftRecordingStagePackagesTestCase(SnapcraftRecordingBaseTestCase):
         ]
 
         recorded_yaml_path = os.path.join(
-            self.prime_dir, 'snap', 'snapcraft.yaml')
+            self.prime_dir, 'snap', 'manifest.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
@@ -175,7 +175,7 @@ class SnapcraftRecordingStagePackagesTestCase(SnapcraftRecordingBaseTestCase):
             expected_packages)
 
     def test_prime_with_packages_missing_dependency(self):
-        """Test the recorded snapcraft.yaml for a snap with packages
+        """Test the recorded manifest for a snap with packages
 
         This snap declares one package that has undeclared dependencies.
         """
@@ -196,7 +196,7 @@ class SnapcraftRecordingStagePackagesTestCase(SnapcraftRecordingBaseTestCase):
         ]
 
         recorded_yaml_path = os.path.join(
-            self.prime_dir, 'snap', 'snapcraft.yaml')
+            self.prime_dir, 'snap', 'manifest.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
@@ -205,9 +205,9 @@ class SnapcraftRecordingStagePackagesTestCase(SnapcraftRecordingBaseTestCase):
             expected_packages)
 
 
-class SnapcraftRecordingBzrSourceTestCase(
+class ManifestRecordingBzrSourceTestCase(
         integration_tests.BzrSourceBaseTestCase,
-        SnapcraftRecordingBaseTestCase):
+        ManifestRecordingBaseTestCase):
 
     def test_prime_with_bzr_source(self):
         self.copy_project_to_cwd('bzr-head')
@@ -218,7 +218,7 @@ class SnapcraftRecordingBzrSourceTestCase(
         self.run_snapcraft('prime')
 
         recorded_yaml_path = os.path.join(
-            self.prime_dir, 'snap', 'snapcraft.yaml')
+            self.prime_dir, 'snap', 'manifest.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
@@ -227,9 +227,9 @@ class SnapcraftRecordingBzrSourceTestCase(
             recorded_yaml['parts']['bzr']['source-commit'], commit)
 
 
-class SnapcraftRecordingGitSourceTestCase(
+class ManifestRecordingGitSourceTestCase(
         integration_tests.GitSourceBaseTestCase,
-        SnapcraftRecordingBaseTestCase):
+        ManifestRecordingBaseTestCase):
 
     def test_prime_with_git_source(self):
         self.copy_project_to_cwd('git-head')
@@ -240,7 +240,7 @@ class SnapcraftRecordingGitSourceTestCase(
         self.run_snapcraft('prime')
 
         recorded_yaml_path = os.path.join(
-            self.prime_dir, 'snap', 'snapcraft.yaml')
+            self.prime_dir, 'snap', 'manifest.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
@@ -249,9 +249,9 @@ class SnapcraftRecordingGitSourceTestCase(
             recorded_yaml['parts']['git']['source-commit'], commit)
 
 
-class SnapcraftRecordingHgSourceTestCase(
+class ManifestRecordingHgSourceTestCase(
         integration_tests.HgSourceBaseTestCase,
-        SnapcraftRecordingBaseTestCase):
+        ManifestRecordingBaseTestCase):
 
     def test_prime_with_hg_source(self):
         self.copy_project_to_cwd('hg-head')
@@ -263,7 +263,7 @@ class SnapcraftRecordingHgSourceTestCase(
         self.run_snapcraft('prime')
 
         recorded_yaml_path = os.path.join(
-            self.prime_dir, 'snap', 'snapcraft.yaml')
+            self.prime_dir, 'snap', 'manifest.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
@@ -272,9 +272,9 @@ class SnapcraftRecordingHgSourceTestCase(
             recorded_yaml['parts']['mercurial']['source-commit'], commit)
 
 
-class SnapcraftRecordingSubversionSourceTestCase(
+class ManifestRecordingSubversionSourceTestCase(
         integration_tests.SubversionSourceBaseTestCase,
-        SnapcraftRecordingBaseTestCase):
+        ManifestRecordingBaseTestCase):
 
     def test_prime_with_subversion_source(self):
         self.copy_project_to_cwd('svn-pull')
@@ -293,7 +293,7 @@ class SnapcraftRecordingSubversionSourceTestCase(
         self.run_snapcraft('prime')
 
         recorded_yaml_path = os.path.join(
-            self.prime_dir, 'snap', 'snapcraft.yaml')
+            self.prime_dir, 'snap', 'manifest.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 

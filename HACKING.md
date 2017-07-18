@@ -47,39 +47,7 @@ You'll need to install the development dependencies, and you'll also probably wa
 
 ### Testing
 
-You'll need a few more dependencies in order to run the tests:
-
-    sudo apt install squashfs-tools xdelta3 bzr git mercurial subversion
-
-To run all the tests execute:
-
-    ./runtests.sh
-
-You can selectively run a selective group of tests like:
-
-    ./runtests.sh [static|unit|integration|plugins|store|snaps]
-
-The test groups mean:
-
-- static: static code analysis done with flake8
-- unit: run the standard unit tests
-- integration: shells to snapcraft, builds
-- snaps: builds snaps, installs and checks how they run
-
-
-### Staging server
-
-Snapcraft has the ability to upload snaps for publication in the Snappy Store.
-If you're working on a feature that requires you to interact with the store, you
-might want to use the staging server instead of the production store. To do
-that, make sure you have an account on the
-[staging server](https://login.staging.ubuntu.com), then run:
-
-    source tools/staging_env.sh
-
-You will see a prompt indicating that you are going to be talking to the staging
-server. Once you are done working with the staging servers you can run `deactivate`.
-
+See the [Testing guide](TESTING.md).
 
 ### Project Layout
 

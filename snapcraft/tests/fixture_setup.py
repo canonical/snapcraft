@@ -16,6 +16,7 @@
 
 import collections
 import contextlib
+import copy
 import io
 import os
 import string
@@ -134,8 +135,8 @@ class CleanEnvironment(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
-        current_environment = os.environ.copy()
-        os.environ = {}
+        current_environment = copy.deepcopy(os.environ)
+        os.environ.clear()
 
         self.addCleanup(os.environ.update, current_environment)
 
@@ -425,10 +426,12 @@ class FakePlugin(fixtures.Fixture):
 class FakeLXD(fixtures.Fixture):
     '''...'''
 
-    def __init__(self, fail_on_remote=False, fail_on_default=False):
+    def __init__(self, fail_on_remote=False, fail_on_default=False,
+                 fail_on_snapcraft_run=False):
         self.status = None
         self.fail_on_remote = fail_on_remote
         self.fail_on_default = fail_on_default
+        self.fail_on_snapcraft_run = fail_on_snapcraft_run
 
     def _setUp(self):
         patcher = mock.patch('snapcraft.internal.lxd.check_call')
@@ -483,10 +486,15 @@ class FakeLXD(fixtures.Fixture):
                             }).encode('utf-8')
                 return '[]'.encode('utf-8')
             elif args[0][:2] == ['lxc', 'list'] and self.fail_on_remote:
-                    raise CalledProcessError(returncode=255, cmd=args[0])
+                raise CalledProcessError(returncode=255, cmd=args[0])
             elif args[0][:2] == ['lxc', 'init']:
                 self.name = args[0][3]
                 self.status = 'Stopped'
+            # Fail on an actual snapcraft command and not the command
+            # for the installation of it.
+            elif ('snapcraft' in args[0] and 'apt-get' not in args[0]
+                  and self.fail_on_snapcraft_run):
+                raise CalledProcessError(returncode=255, cmd=args[0])
             else:
                 return ''.encode('utf-8')
         return call_effect
@@ -547,11 +555,15 @@ class BzrRepo(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
+        bzr_home = self.useFixture(fixtures.TempDir()).path
+        self.useFixture(fixtures.EnvironmentVariable('BZR_HOME', bzr_home))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'BZR_EMAIL',  'Test User <test.user@example.com>'))
+
         with return_to_cwd():
             os.makedirs(self.name)
             os.chdir(self.name)
             call(['bzr', 'init'])
-            call(['bzr', 'whoami', 'Test User <test.user@example.com>'])
             with open('testing', 'w') as fp:
                 fp.write('testing')
 

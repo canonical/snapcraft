@@ -215,6 +215,8 @@ class _Executor:
 
         for step in common.COMMAND_ORDER[0:step_index]:
             if step == 'stage':
+                # XXX check only for collisions on the parts that have already
+                # been built --elopio - 20170713
                 pluginhandler.check_for_collisions(self.config.all_parts)
             for part in parts:
                 if step not in self._steps_run[part.name]:
