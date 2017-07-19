@@ -248,16 +248,16 @@ parts:
         self.assertThat(result.exit_code, Equals(0))
         self.assert_clean(['dependent', 'nested-dependent'])
 
-    def test_clean_part_unspecified_uncleaned_dependent_raises(self):
+    def test_clean_part_unspecified_uncleaned_dependent_notifies(self):
         # Not specifying nested-dependent here should result in clean raising
         # an exception, saying that it has dependents.
         result = self.run_command(['clean', 'dependent'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Equals(
-            "Requested clean of 'dependent' but 'nested-dependent' depends "
-            "upon it. Please add each to the clean command if that's what you "
-            "intended.\n"))
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            "Requested clean of 'dependent' which require also cleaning the "
+            "part 'nested-dependent'"))
+        self.assert_clean(['dependent', 'nested-dependent'])
 
     def test_clean_nested_dependent_parts(self):
         result = self.run_command([
@@ -288,24 +288,24 @@ parts:
         self.assertThat(result.exit_code, Equals(0))
         self.assert_clean(['main', 'dependent', 'nested-dependent'])
 
-    def test_clean_part_unspecified_uncleaned_dependent_with_nest_raises(self):
+    def test_clean_part_unspecified_uncleaned_dependent_nested_notifies(self):
         # Not specifying dependent here should result in clean raising
         # an exception, saying that it has dependents.
         result = self.run_command(['clean', 'main'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Equals(
-            "Requested clean of 'main' but 'dependent' depends upon it. "
-            "Please add each to the clean command if that's what you "
-            "intended.\n"))
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            "Requested clean of 'main' which require also cleaning the "
+            "part 'dependent'"))
+        self.assert_clean(['main', 'dependent'])
 
-    def test_clean_part_unspecified_uncleaned_nested_dependent_raises(self):
+    def test_clean_part_unspecified_uncleaned_nested_dependent_notifies(self):
         # Not specifying nested-dependent here should result in clean raising
         # an exception, saying that it has dependents.
         result = self.run_command(['clean', 'main', 'dependent'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Equals(
-            "Requested clean of 'dependent' but 'nested-dependent' depends "
-            "upon it. Please add each to the clean command if that's what you "
-            "intended.\n"))
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            "Requested clean of 'dependent' which require also cleaning the "
+            "part 'nested-dependent'"))
+        self.assert_clean(['main', 'dependent', 'nested-dependent'])
