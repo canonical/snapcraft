@@ -43,16 +43,14 @@ fi
 script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
 
-lxc=/snap/bin/lxc
-
 "$script_path/run_lxc_container.sh" test-runner
-sudo $lxc exec test-runner -- sh -c "cd $project_path && $dependencies"
-sudo $lxc exec test-runner -- su $USER -c "cd $project_path && ./runtests.sh $test $pattern"
+sudo /snap/bin/lxc exec test-runner -- sh -c "cd $project_path && $dependencies"
+sudo /snap/bin/lxc exec test-runner -- su $USER -c "cd $project_path && ./runtests.sh $test $pattern"
 
 if [ "$test" = "unit" ]; then
     # Report code coverage.
-    sudo $lxc exec test-runner -- su $USER -c "cd $project_path && python3 -m coverage xml"
-    sudo $lxc exec test-runner -- su $USER -c "cd $project_path && codecov --token=$CODECOV_TOKEN"
+    sudo /snap/bin/lxc exec test-runner -- su $USER -c "cd $project_path && python3 -m coverage xml"
+    sudo /snap/bin/lxc exec test-runner -- su $USER -c "cd $project_path && codecov --token=$CODECOV_TOKEN"
 fi
 
-sudo $lxc stop test-runner
+sudo /snap/bin/lxc stop test-runner
