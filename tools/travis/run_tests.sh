@@ -43,8 +43,7 @@ fi
 script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
 
-#lxc=/snap/bin/lxc
-lxc=lxc
+lxc=/snap/bin/lxc
 
 "$script_path/run_lxc_container.sh" test-runner
 sudo $lxc exec test-runner -- sh -c "cd $project_path && $dependencies"

@@ -29,8 +29,7 @@ script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
 name="$1"
 
-#lxc=/snap/bin/lxc
-lxc=lxc
+lxc=/snap/bin/lxc
 
 echo "Start the LXC container."
 sudo $lxc launch --ephemeral ubuntu:xenial "$name"
