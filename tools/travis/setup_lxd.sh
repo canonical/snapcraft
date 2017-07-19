@@ -18,12 +18,12 @@
 
 set -ev
 
-sudo apt-get update
-sudo apt-get install --yes snapd
-sudo snap install lxd
+apt-get update
+apt-get install --yes snapd
+snap install lxd
 # Wait while LXD first generates its keys. In a low entropy environment this
 # can take a while.
 sleep 10
-sudo /snap/bin/lxd init --auto
-sudo /snap/bin/lxc network create testbr0
-sudo /snap/bin/lxc network attach-profile testbr0 default eth0
+/snap/bin/lxd init --auto
+/snap/bin/lxc network create testbr0
+/snap/bin/lxc network attach-profile testbr0 default eth0

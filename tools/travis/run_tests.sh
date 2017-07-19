@@ -43,7 +43,8 @@ fi
 script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
 
-"$script_path/run_lxc_container.sh" test-runner
+sudo "$script_path/setup_lxd.sh"
+sudo "$script_path/run_lxc_container.sh" test-runner
 sudo /snap/bin/lxc exec test-runner -- sh -c "cd $project_path && $dependencies"
 sudo /snap/bin/lxc exec test-runner -- su $USER -c "cd $project_path && ./runtests.sh $test $pattern"
 
