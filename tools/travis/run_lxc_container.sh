@@ -36,7 +36,7 @@ $lxc launch --ephemeral ubuntu:xenial "$name"
 # This is likely needed to wait for systemd in the container to start and get
 # an IP, configure DNS. First boot is always a bit slow because cloud-init
 # needs to run too.
-sleep 10
+$lxc exec "$name" -- sh -c "for i in {1..50}; do ping -c1 www.ubuntu.com &> /dev/null && break; done"
 
 $lxc config set "$name" environment.TRAVIS_COMMIT_RANGE "$TRAVIS_COMMIT_RANGE"
 $lxc config set "$name" environment.TEST_USER_EMAIL "$TEST_USER_EMAIL"
