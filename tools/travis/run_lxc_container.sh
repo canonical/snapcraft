@@ -55,12 +55,11 @@ $lxc config device add "$name" project_dir disk path="$project_path" source="$pr
 
 $lxc exec "$name" -- apt update
 
-printf "lxd:$(id -u):1\nroot:$(id -u):1\n" | sudo tee -a /etc/subuid
-printf "lxd:$(id -g):1\nroot:$(id -g):1\n" | sudo tee -a /etc/subgid
+printf "lxd:$(id -u):1\nroot:$(id -u):1\n" | tee -a /etc/subuid
+printf "lxd:$(id -g):1\nroot:$(id -g):1\n" | tee -a /etc/subgid
 snap disable lxd
 snap enable lxd
-sleep 10
-printf "uid $(id -u) 1000\ngid $(id -g) 1000" | sudo lxc config set "$name" raw.idmap -
+printf "uid $(id -u) 1000\ngid $(id -g) 1000" | $lxc config set "$name" raw.idmap -
 $lxc restart "$name"
 $lxc exec test -- su ubuntu -c "ls -lah /home"
 $lxc exec test -- su ubuntu -c "ls -lah /home/ubuntu"
