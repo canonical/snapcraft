@@ -42,9 +42,5 @@ def _get_repo_for_platform():
         from ._deb import Ubuntu
         return Ubuntu
     else:
-        if _sys.platform == 'linux':
-            system = distro
-        else:
-            system = _sys.platform
         from ._base import DummyRepo
         return DummyRepo
