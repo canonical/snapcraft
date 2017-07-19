@@ -37,6 +37,7 @@ $lxc launch --ephemeral ubuntu:xenial "$name"
 # an IP, configure DNS. First boot is always a bit slow because cloud-init
 # needs to run too.
 $lxc exec "$name" -- sh -c "for i in {1..50}; do ping -c1 www.ubuntu.com &> /dev/null && break; done"
+sleep 5
 
 $lxc config set "$name" environment.TRAVIS_COMMIT_RANGE "$TRAVIS_COMMIT_RANGE"
 $lxc config set "$name" environment.TEST_USER_EMAIL "$TEST_USER_EMAIL"
