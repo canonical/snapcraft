@@ -47,6 +47,4 @@ def _get_repo_for_platform():
         else:
             system = _sys.platform
         from ._base import DummyRepo
-        logger.warning('Currently only `cleanbuild` will work on this system '
-                       '({!r})'.format(system))
         return DummyRepo
