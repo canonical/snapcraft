@@ -12,14 +12,14 @@ jobs:
   include:
     # Tests, only when not triggered by the daily cron.
     - stage: static
-      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh static; fi
+      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh static; fi
     - stage: unit
-      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh unit; fi
-    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then SNAPCRAFT_TEST_MOCK_MACHINE=armv7l ./tools/travis/run_tests.sh unit; fi
+      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh unit; fi
+    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh unit; fi
     - stage: integration
-      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh integration; fi
-    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh plugins; fi
-    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then ./tools/travis/run_tests.sh store; fi
+      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh integration; fi
+    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh plugins; fi
+    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh store; fi
     # CLA check, only in pull requests.
     - script: if [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ]; then ./tools/travis/run_cla_check.sh; fi
     # Trigger edge tests, only in the daily cron.
