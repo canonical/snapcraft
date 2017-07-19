@@ -51,16 +51,4 @@ $lxc config set "$name" environment.GH_TOKEN "$GH_TOKEN"
 $lxc config set "$name" environment.CODECOV_TOKEN "$CODECOV_TOKEN"
 $lxc config set "$name" environment.LC_ALL "C.UTF-8"
 
-$lxc config device add "$name" project_dir disk path="$project_path" source="$project_path"
-
 $lxc exec "$name" -- apt update
-
-printf "lxd:$(id -u):1\nroot:$(id -u):1\n" | tee -a /etc/subuid
-printf "lxd:$(id -g):1\nroot:$(id -g):1\n" | tee -a /etc/subgid
-snap disable lxd
-snap enable lxd
-printf "uid $(id -u) 1000\ngid $(id -g) 1000" | $lxc config set "$name" raw.idmap -
-$lxc restart "$name"
-$lxc exec test -- su ubuntu -c "ls -lah /home"
-$lxc exec test -- su ubuntu -c "ls -lah /home/ubuntu"
-$lxc exec test -- su ubuntu -c "ls -lah /home/travis"
