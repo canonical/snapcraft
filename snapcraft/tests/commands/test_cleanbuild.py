@@ -20,7 +20,7 @@ import tarfile
 from textwrap import dedent
 
 import fixtures
-from testtools.matchers import Equals, Contains
+from testtools.matchers import Contains, Equals
 
 from snapcraft import tests
 from . import CommandBaseTestCase
@@ -47,6 +47,11 @@ class CleanBuildCommandBaseTestCase(CommandBaseTestCase):
                   plugin: nil
         """))
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
+
+    def test_cleanbuild(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.useFixture(tests.fixture_setup.FakeLXD())
 
 
 class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
@@ -129,14 +134,14 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
 class CleanBuildFailuresCommandTestCase(CleanBuildCommandBaseTestCase):
 
     def test_no_lxd(self):
-        self.useFixture(tests.fixture_setup.FakeLXD(fail_on_default=True))
+        fake_lxd = tests.fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        fake_lxd.check_output_mock.side_effect = FileNotFoundError('lxc')
 
         result = self.run_command(['cleanbuild'])
 
         self.assertThat(result.exit_code, Equals(1))
         self.assertThat(result.output, Equals(
-            'You must have LXD installed in order to use cleanbuild. '
-            'However, it is either not installed or not configured '
-            'properly.\n'
+            'You must have LXD installed in order to use cleanbuild.\n'
             'Refer to the documentation at '
             'https://linuxcontainers.org/lxd/getting-started-cli.\n'))
