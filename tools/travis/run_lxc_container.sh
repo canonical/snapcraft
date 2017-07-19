@@ -29,10 +29,10 @@ script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
 name="$1"
 
-lxc=/snap/bin/lxc
+lxc="/snap/bin/lxc"
 
 echo "Start the LXC container."
-sudo $lxc launch --ephemeral ubuntu:xenial "$name"
+sudo "$lxc" launch --ephemeral ubuntu:xenial "$name"
 # This is likely needed to wait for systemd in the container to start and get
 # an IP, configure DNS. First boot is always a bit slow because cloud-init
 # needs to run too.
