@@ -20,7 +20,7 @@ set -ev
 
 apt-get update
 apt-get install --yes snapd
-snap install lxd
+snap install lxd --edge
 # Wait while LXD first generates its keys. In a low entropy environment this
 # can take a while.
 sleep 10
