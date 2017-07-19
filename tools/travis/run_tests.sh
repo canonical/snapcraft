@@ -48,14 +48,13 @@ lxc="/snap/bin/lxc"
 "$script_path/setup_lxd.sh"
 "$script_path/run_lxc_container.sh" test-runner
 $lxc file push --recursive $project_path test-runner/root/
-$lxc exec test-runner -- ls
-$lxc exec test-runner -- sh -c "$dependencies"
-$lxc exec test-runner -- sh -c "./runtests.sh $test $pattern"
+$lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
+$lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test $pattern"
 
 if [ "$test" = "unit" ]; then
     # Report code coverage.
-    $lxc exec test-runner -- sh -c "python3 -m coverage xml"
-    $lxc exec test-runner -- sh -c "codecov --token=$CODECOV_TOKEN"
+    $lxc exec test-runner -- sh -c "cd snapcraft && python3 -m coverage xml"
+    $lxc exec test-runner -- sh -c "cd snapcraft && codecov --token=$CODECOV_TOKEN"
 fi
 
 $lxc stop test-runner
