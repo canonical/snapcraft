@@ -41,14 +41,19 @@ else
 fi
 
 script_path="$(dirname "$0")"
-"$script_path/run_docker_container.sh" test-runner
-docker exec -i test-runner sh -c "$dependencies"
-docker exec -i test-runner ./runtests.sh $test $pattern
+project_path="$(readlink -f "$script_path/../..")"
+
+#lxc=/snap/bin/lxc
+lxc=lxc
+
+"$script_path/run_lxc_container.sh" test-runner
+sudo $lxc exec test-runner -- sh -c "cd $project_path && $dependencies"
+sudo $lxc exec test-runner -- su $USER -c "cd $project_path && ./runtests.sh $test $pattern"
 
 if [ "$test" = "unit" ]; then
     # Report code coverage.
-    docker exec -i test-runner sh -c "python3 -m coverage xml"
-    docker exec -i test-runner sh -c "codecov --token=$CODECOV_TOKEN"
+    sudo $lxc exec test-runner -- su $USER -c "cd $project_path && python3 -m coverage xml"
+    sudo $lxc exec test-runner -- su $USER -c "cd $project_path && codecov --token=$CODECOV_TOKEN"
 fi
 
-docker rm -f test-runner
+sudo $lxc stop test-runner
