@@ -102,8 +102,19 @@ _32BIT_USERSPACE_ARCHITECTURE = {
 }
 
 
+_WINDOWS_TRANSLATIONS = {
+    'AMD64': 'x86_64'
+}
+
+
 def _get_platform_architecture():
     architecture = platform.machine()
+
+    # Translate the windows architectures we know of to architectures
+    # we can work with.
+    if sys.platform == 'win32':
+        architecture = _WINDOWS_TRANSLATIONS.get(architecture)
+
     if platform.architecture()[0] == '32bit':
         userspace = _32BIT_USERSPACE_ARCHITECTURE.get(architecture)
         if userspace:
@@ -243,16 +254,7 @@ class ProjectOptions:
             self.__target_machine = _find_machine(target_deb_arch)
             logger.info('Setting target machine to {!r}'.format(
                 target_deb_arch))
-        if sys.platform == 'linux':
-            self.__machine_info = _ARCH_TRANSLATIONS[self.__target_machine]
-        else:
-            self.__machine_info = {
-                'kernel': 'NOBUILD',
-                'deb': 'NOBUILD',
-                'uts_machine': 'NOBUILD',
-                'triplet': 'NOBUILD',
-                'core-dynamic-linker': 'NOBUILD',
-            }
+        self.__machine_info = _ARCH_TRANSLATIONS[self.__target_machine]
 
 
 def _get_deb_arch(machine):

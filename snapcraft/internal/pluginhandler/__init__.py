@@ -90,7 +90,13 @@ class PluginHandler:
         self.statedir = os.path.join(parts_dir, part_name, 'state')
         self.sourcedir = os.path.join(parts_dir, part_name, 'src')
 
-        self.source_handler = self._get_source_handler(self._part_properties)
+        # We don't need to set the source_handler on systems where we do not
+        # build
+        if sys.platform == 'linux':
+            self.source_handler = self._get_source_handler(
+                self._part_properties)
+        else:
+            self.source_handler = None
 
         self._build_attributes = BuildAttributes(
             self._part_properties['build-attributes'])

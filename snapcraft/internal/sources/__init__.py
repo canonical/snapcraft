@@ -80,9 +80,10 @@ import re
 import hashlib
 import sys
 
+from snapcraft.internal import common
+from . import errors
+
 if sys.platform == 'linux':
-    from . import errors
-    from snapcraft.internal import common
     from ._bazaar import Bazaar          # noqa
     from ._git import Git                # noqa
     from ._local import Local            # noqa
