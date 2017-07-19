@@ -57,9 +57,10 @@ $lxc exec "$name" -- apt update
 
 printf "lxd:$(id -u):1\nroot:$(id -u):1\n" | sudo tee -a /etc/subuid
 printf "lxd:$(id -g):1\nroot:$(id -g):1\n" | sudo tee -a /etc/subgid
-sudo restart lxd
+snap disable lxd
+snap enable lxd
 printf "uid $(id -u) 1000\ngid $(id -g) 1000" | sudo lxc config set "$name" raw.idmap -
-sudo lxc restart "$name"
-sudo lxc exec test -- su ubuntu -c "ls -lah /home"
-sudo lxc exec test -- su ubuntu -c "ls -lah /home/ubuntu"
-sudo lxc exec test -- su ubuntu -c "ls -lah /home/travis"
+$lxc restart "$name"
+$lxc exec test -- su ubuntu -c "ls -lah /home"
+$lxc exec test -- su ubuntu -c "ls -lah /home/ubuntu"
+$lxc exec test -- su ubuntu -c "ls -lah /home/travis"
