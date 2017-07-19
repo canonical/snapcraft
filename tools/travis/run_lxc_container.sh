@@ -54,3 +54,12 @@ $lxc config set "$name" environment.LC_ALL "C.UTF-8"
 $lxc config device add "$name" project_dir disk path="$project_path" source="$project_path"
 
 $lxc exec "$name" -- apt update
+
+printf "lxd:$(id -u):1\nroot:$(id -u):1\n" | sudo tee -a /etc/subuid
+printf "lxd:$(id -g):1\nroot:$(id -g):1\n" | sudo tee -a /etc/subgid
+sudo restart lxd
+printf "uid $(id -u) 1000\ngid $(id -g) 1000" | sudo lxc config set "$name" raw.idmap -
+sudo lxc restart "$name"
+sudo lxc exec test -- su ubuntu -c "ls -lah /home"
+sudo lxc exec test -- su ubuntu -c "ls -lah /home/ubuntu"
+sudo lxc exec test -- su ubuntu -c "ls -lah /home/travis"
