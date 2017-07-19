@@ -135,36 +135,31 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             fake_logger.output)
 
         container_name = 'local:snapcraft-snap-test'
-        project_folder = 'build_snap-test'
+        project_folder = '/root/build_snap-test'
         fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'init', 'ubuntu:xenial/amd64', container_name]),
             call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
-            call(['lxc', 'config', 'set', container_name,
-                  'environment.XDG_CACHE_HOME', '/run/']),
             call(['lxc', 'config', 'set', container_name,
                   'raw.idmap', 'both {} 0'.format(mock_getuid.return_value)]),
             call(['lxc', 'start', container_name]),
             call(['lxc', 'config', 'device', 'add', container_name,
                   project_folder, 'disk', 'source={}'.format(source),
                   'path=/{}'.format(project_folder)]),
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
+            call(['lxc', 'exec', container_name, '--',
                   'python3', '-c',
                   'import urllib.request; '
                   'urllib.request.urlopen('
                   '"http://start.ubuntu.com/connectivity-check.html", '
                   'timeout=5)']),
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
+            call(['lxc', 'exec', container_name, '--',
                   'apt-get', 'update']),
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
+            call(['lxc', 'exec', container_name, '--',
                   'apt-get', 'install', 'snapcraft', '-y']),
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
-                  'snapcraft', 'snap', '--output',
-                  'snap-test_1.0_amd64.snap']),
+            call(['lxc', 'exec', container_name, '--',
+                  'bash', '-c',
+                  'cd {}; snapcraft snap --output {}'.format(
+                      project_folder, 'snap-test_1.0_amd64.snap')]),
             call(['lxc', 'stop', '-f', container_name]),
         ])
 

@@ -18,6 +18,7 @@
 import json
 import logging
 import os
+import pipes
 import sys
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError
@@ -48,7 +49,7 @@ class Containerbuild:
         self._source = os.path.realpath(source)
         self._project_options = project_options
         self._metadata = metadata
-        self._project_folder = 'build_{}'.format(metadata['name'])
+        self._project_folder = '/root/build_{}'.format(metadata['name'])
 
         if not remote:
             remote = _get_default_remote()
@@ -74,16 +75,20 @@ class Containerbuild:
 
     def _push_file(self, src, dst):
         check_call(['lxc', 'file', 'push',
-                    src, '{}/{}'.format(self._container_name, dst)])
+                    src, '{}{}'.format(self._container_name, dst)])
 
     def _pull_file(self, src, dst):
         check_call(['lxc', 'file', 'pull',
-                    '{}/{}'.format(self._container_name, src), dst])
+                    '{}{}'.format(self._container_name, src), dst])
 
-    def _container_run(self, cmd):
-        # Set HOME here as 'lxc config set ... environment.HOME' doesn't work
-        check_call(['lxc', 'exec', self._container_name, '--env',
-                   'HOME=/{}'.format(self._project_folder), '--'] + cmd)
+    def _container_run(self, cmd, cwd=None):
+        if cwd:
+            check_call(['lxc', 'exec', self._container_name, '--',
+                        'bash', '-c', 'cd {}; {}'.format(
+                            cwd,
+                            ' '.join(pipes.quote(arg) for arg in cmd))])
+        else:
+            check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
 
     def _ensure_container(self):
         check_call([
@@ -120,7 +125,7 @@ class Containerbuild:
             if args:
                 command += args
             try:
-                self._container_run(command)
+                self._container_run(command, cwd=self._project_folder)
             except CalledProcessError as e:
                 if self._project_options.debug:
                     logger.info('Debug mode enabled, dropping into a shell')
@@ -137,7 +142,8 @@ class Containerbuild:
                            os.path.basename(tar_filename))
         self._container_run(['mkdir', self._project_folder])
         self._push_file(tar_filename, dst)
-        self._container_run(['tar', 'xvf', os.path.basename(tar_filename)])
+        self._container_run(['tar', 'xvf', os.path.basename(tar_filename)],
+                            cwd=self._project_folder)
 
     def _finish(self):
         src = os.path.join(self._project_folder, self._snap_output)
@@ -194,9 +200,6 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'environment.SNAPCRAFT_SETUP_CORE', '1'])
-            check_call([
-                'lxc', 'config', 'set', self._container_name,
-                'environment.XDG_CACHE_HOME', '/run/'])
             # Map host user to root inside container
             check_call([
                 'lxc', 'config', 'set', self._container_name,
