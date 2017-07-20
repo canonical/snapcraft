@@ -23,7 +23,7 @@ jobs:
     # CLA check, only in pull requests.
     - script: if [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ]; then ./tools/travis/run_cla_check.sh; fi
     - stage: snap
-      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then docker run -v $(pwd):$(pwd) snapcore/snapcraft sh -c "apt update && cd $(pwd) && snapcraft"; fi
+      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/build_snapcraft_snap.sh; fi
     # Trigger edge tests, only in the daily cron.
     - stage: edge
       script: if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then ./runtests.sh spread; fi
