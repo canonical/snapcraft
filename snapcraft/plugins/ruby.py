@@ -30,13 +30,17 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (string)
       The version of ruby you want this snap to run.
 """
+import logging
 import os
-import re
 import platform
+import re
 
 from snapcraft import BasePlugin, file_utils
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.sources import Tar
+
+
+logger = logging.getLogger(__name__)
 
 
 class RubyPlugin(BasePlugin):
@@ -72,6 +76,10 @@ class RubyPlugin(BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+        # Beta Warning
+        # Remove this comment and warning once ruby plugin is stable.
+        logger.warn("The ruby plugin is currently in beta, "
+                    "its API may break. Use at your own risk")
 
         self._ruby_version = options.ruby_version
         self._ruby_part_dir = os.path.join(self.partdir, 'ruby')
