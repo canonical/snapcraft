@@ -122,6 +122,24 @@ class KBuildPlugin(BasePlugin):
         if logger.isEnabledFor(logging.DEBUG):
             self.make_cmd.append('V=1')
 
+    def enable_cross_compilation(self):
+        logger.info('Cross compiling kernel target {!r}'.format(
+            self.project.kernel_arch))
+        self.make_cmd.append('ARCH={}'.format(
+            self.project.kernel_arch))
+        if 'CROSS_COMPILE' in os.environ:
+            toolchain = os.environ['CROSS_COMPILE']
+        else:
+            toolchain = self.project.cross_compiler_prefix
+        self.make_cmd.append('CROSS_COMPILE={}'.format(toolchain))
+
+        env = os.environ.copy()
+        path = '/usr/{}/bin'.format(self.project.arch_triplet)
+        self.make_cmd.append('PATH={}:{}'.format(
+            env.get('PATH', ''), path))
+
+        return env
+
     def assemble_ubuntu_config(self, config_path):
         try:
             with open(os.path.join('debian', 'debian.env'), 'r') as f:
