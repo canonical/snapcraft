@@ -23,6 +23,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - gems:
       (list)
       A list of gems to install.
+    - use-bundler
+      (boolean)
+      Use bundler to install gems from a Gemfile.
     - ruby-version:
       (string)
       The version of ruby you want this snap to run.
@@ -31,7 +34,7 @@ import os
 import re
 import platform
 
-from snapcraft import BasePlugin
+from snapcraft import BasePlugin, file_utils
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.sources import Tar
 
@@ -42,6 +45,10 @@ class RubyPlugin(BasePlugin):
     def schema(cls):
         schema = super().schema()
 
+        schema['properties']['use-bundler'] = {
+            'type': 'boolean',
+            'default': 'false'
+        }
         schema['properties']['ruby-version'] = {
             'type': 'string',
             'default': '2.3.1'
@@ -66,14 +73,14 @@ class RubyPlugin(BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        self._ruby_version = self.options.ruby_version
+        self._ruby_version = options.ruby_version
         self._ruby_part_dir = os.path.join(self.partdir, 'ruby')
         self._ruby_download_url = \
             'https://cache.ruby-lang.org/pub/ruby/ruby-{}.tar.gz'.format(
                 self._ruby_version)
         self._ruby_tar = Tar(self._ruby_download_url, self._ruby_part_dir)
-        self._gems = self.options.gems or []
-        self._install_bundler = False
+        self._gems = options.gems or []
+        self._use_bundler = options.use_bundler or False
         self._ruby_version_dir = None
 
         self.build_packages.extend(['gcc', 'g++', 'make', 'zlib1g-dev',
@@ -90,13 +97,19 @@ class RubyPlugin(BasePlugin):
             raise SnapcraftEnvironmentError(
                 'Ruby version dir not in version_map.')
 
+    def snap_fileset(self):
+        fileset = super().snap_fileset()
+        fileset.append('-include/')
+        fileset.append('-share/')
+        return fileset
+
     def pull(self):
         super().pull()
         os.makedirs(self._ruby_part_dir, exist_ok=True)
         self._ruby_tar.download()
         self._ruby_install(builddir=self._ruby_part_dir)
         self._gem_install()
-        if self._install_bundler:
+        if self._use_bundler:
             self._bundle_install()
 
     def env(self, root):
@@ -124,10 +137,12 @@ class RubyPlugin(BasePlugin):
                  cwd=builddir)
         self.run(['make', 'install', 'DESTDIR={}'.format(self.installdir)],
                  cwd=builddir)
+        # Fix all shebangs to use the in-snap ruby
+        file_utils.replace_in_file(self.installdir, re.compile(r''),
+            re.compile(r'^#!.*ruby'), r'#!/usr/bin/env ruby')
 
     def _gem_install(self):
-        if os.path.exists('Gemfile'):
-            self._install_bundler = True
+        if self._use_bundler:
             self._gems = self._gems + ['bundler']
         if self._gems:
             gem_install_cmd = [os.path.join(self.installdir, 'bin', 'ruby'),
