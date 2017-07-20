@@ -47,7 +47,7 @@ class RubyPlugin(BasePlugin):
 
         schema['properties']['use-bundler'] = {
             'type': 'boolean',
-            'default': 'false'
+            'default': False
         }
         schema['properties']['ruby-version'] = {
             'type': 'string',
