@@ -21,3 +21,4 @@ simplejson==3.8.2
 tabulate==0.7.5
 python-debian==0.1.28
 chardet==2.3.0
+cx_Freeze>=5.0.2; sys_platform == 'win32'
