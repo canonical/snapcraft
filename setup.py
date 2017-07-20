@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -51,7 +51,12 @@ setup(
               'snapcraft.plugins',
               'snapcraft.storeapi'],
     package_data={'snapcraft.internal.repo': ['manifest.txt']},
-    scripts=['bin/snapcraft', 'bin/snapcraft-parser'],
+    entry_points={
+        'console_scripts': [
+            'snapcraft = snapcraft.cli.__main__:run',
+            'snapcraft-parser = snapcraft.internal.parser:main',
+        ],
+    },
     data_files=[
         ('share/snapcraft/schema',
             ['schema/' + x for x in os.listdir('schema')]),
