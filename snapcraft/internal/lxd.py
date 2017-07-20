@@ -244,11 +244,14 @@ def _get_default_remote():
     """
     try:
         default_remote = check_output(['lxc', 'remote', 'get-default'])
+    except FileNotFoundError:
+        raise SnapcraftEnvironmentError(
+            'You must have LXD installed in order to use cleanbuild.\n'
+            'Refer to the documentation at '
+            'https://linuxcontainers.org/lxd/getting-started-cli.')
     except CalledProcessError:
         raise SnapcraftEnvironmentError(
-            'You must have LXD installed in order to use cleanbuild. '
-            'However, it is either not installed or not configured '
-            'properly.\n'
+            'Something seems to be wrong with your installation of LXD.\n'
             'Refer to the documentation at '
             'https://linuxcontainers.org/lxd/getting-started-cli.')
     return default_remote.decode(sys.getfilesystemencoding()).strip()

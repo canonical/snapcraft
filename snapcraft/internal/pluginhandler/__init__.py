@@ -1077,10 +1077,11 @@ def check_for_collisions(parts):
                 other = os.path.join(
                     parts_files[other_part_name]['installdir'],
                     f)
-                if os.path.islink(this) and os.path.islink(other):
-                    continue
-                if _file_collides(this, other):
-                    conflict_files.append(f)
+                if os.path.exists(this) and os.path.exists(other):
+                    if os.path.islink(this) and os.path.islink(other):
+                        continue
+                    if _file_collides(this, other):
+                        conflict_files.append(f)
 
             if conflict_files:
                 raise errors.SnapcraftPartConflictError(
