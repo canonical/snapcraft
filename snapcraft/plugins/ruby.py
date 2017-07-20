@@ -147,13 +147,9 @@ class RubyPlugin(BasePlugin):
         if self.options.use_bundler:
             self._gems = self._gems + ['bundler']
         if self._gems:
-            gem_install_cmd = [os.path.join(self.installdir, 'bin', 'ruby'),
-                               os.path.join(self.installdir, 'bin', 'gem'),
-                               'install']
+            gem_install_cmd = ['ruby', 'bundle', 'install', '--env-shebang']
             self.run(gem_install_cmd + self._gems)
 
     def _bundle_install(self):
-        bundle_install_cmd = [os.path.join(self.installdir, 'bin', 'ruby'),
-                              os.path.join(self.installdir, 'bin', 'bundle'),
-                              'install']
+        bundle_install_cmd = ['ruby', 'bundle', 'install']
         self.run(bundle_install_cmd)
