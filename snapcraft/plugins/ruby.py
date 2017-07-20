@@ -138,8 +138,11 @@ class RubyPlugin(BasePlugin):
         self.run(['make', 'install', 'DESTDIR={}'.format(self.installdir)],
                  cwd=builddir)
         # Fix all shebangs to use the in-snap ruby
-        file_utils.replace_in_file(self.installdir, re.compile(r''),
-            re.compile(r'^#!.*ruby'), r'#!/usr/bin/env ruby')
+        file_utils.replace_in_file(
+            self.installdir,
+            re.compile(r''),
+            re.compile(r'^#!.*ruby'),
+            r'#!/usr/bin/env ruby')
 
     def _gem_install(self):
         if self._use_bundler:
