@@ -9,7 +9,7 @@ confinement: strict
 
 apps:
   ruby-hello:
-    command: bin/ruby-hello
+    command: ruby-hello.rb
 
 parts:
   ruby-hello:
@@ -22,4 +22,4 @@ parts:
       - bin
       - lib
     install: |
-      cp ./ruby-hello $SNAPCRAFT_PART_INSTALL/bin/ruby-hello
+      cp ./ruby-hello.rb $SNAPCRAFT_PART_INSTALL/ruby-hello.rb
