@@ -68,7 +68,7 @@ class RubyPlugin(BasePlugin):
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['ruby-version', 'gems']
+        return ['ruby-version', 'gems', 'use-bundler']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -80,7 +80,6 @@ class RubyPlugin(BasePlugin):
                 self._ruby_version)
         self._ruby_tar = Tar(self._ruby_download_url, self._ruby_part_dir)
         self._gems = options.gems or []
-        self._use_bundler = options.use_bundler or False
         self._ruby_version_dir = None
 
         self.build_packages.extend(['gcc', 'g++', 'make', 'zlib1g-dev',
@@ -109,7 +108,7 @@ class RubyPlugin(BasePlugin):
         self._ruby_tar.download()
         self._ruby_install(builddir=self._ruby_part_dir)
         self._gem_install()
-        if self._use_bundler:
+        if self.options.use_bundler:
             self._bundle_install()
 
     def env(self, root):
@@ -145,7 +144,7 @@ class RubyPlugin(BasePlugin):
             r'#!/usr/bin/env ruby')
 
     def _gem_install(self):
-        if self._use_bundler:
+        if self.options.use_bundler:
             self._gems = self._gems + ['bundler']
         if self._gems:
             gem_install_cmd = [os.path.join(self.installdir, 'bin', 'ruby'),
