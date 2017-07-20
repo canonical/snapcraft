@@ -25,7 +25,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
       A list of gems to install.
     - use-bundler
       (boolean)
-      Use bundler to install gems from a Gemfile.
+      Use bundler to install gems from a Gemfile (defaults 'false').
     - ruby-version:
       (string)
       The version of ruby you want this snap to run.
