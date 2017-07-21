@@ -30,12 +30,15 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (string)
       The version of ruby you want this snap to run.
 """
+
+import glob
 import logging
 import os
 import platform
 import re
 
 from snapcraft import BasePlugin, file_utils
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.sources import Tar
 
 
@@ -87,9 +90,6 @@ class RubyPlugin(BasePlugin):
                 self._ruby_version)
         self._ruby_tar = Tar(self._ruby_download_url, self._ruby_part_dir)
         self._gems = options.gems or []
-        self._ruby_version_dir = '{}.{}.0'.format(
-            self.options.ruby_version.split('.')[0],
-            self.options.ruby_version.split('.')[1])
 
         self.build_packages.extend(['gcc', 'g++', 'make', 'zlib1g-dev',
                                     'libssl-dev', 'libreadline-dev'])
@@ -103,37 +103,72 @@ class RubyPlugin(BasePlugin):
     def pull(self):
         super().pull()
         os.makedirs(self._ruby_part_dir, exist_ok=True)
+
+        logger.info('Fetching ruby {}...'.format(self._ruby_version))
         self._ruby_tar.download()
+
+        logger.info('Building/installing ruby...')
         self._ruby_install(builddir=self._ruby_part_dir)
+
         self._gem_install()
         if self.options.use_bundler:
             self._bundle_install()
 
     def env(self, root):
         env = super().env(root)
-        env.append('PATH={}:{}'.format(
-            os.path.join(root, 'bin'), os.environ['PATH']))
-        env.append('RUBYPATH={}'.format(os.path.join(root, 'bin')))
-        rubydir = os.path.join(root, 'lib', 'ruby')
-        rubylib = os.path.join(rubydir, self._ruby_version_dir)
-        env.append('RUBYLIB={}:{}'.format(
-            rubylib, os.path.join(
-                rubylib, '{}-linux'.format(platform.machine()))))
-        env.append('GEM_HOME={}'.format(
-            os.path.join(rubydir, 'gems', self._ruby_version_dir)))
-        env.append('GEM_PATH={}'.format(
-            os.path.join(rubydir, 'gems', self._ruby_version_dir)))
+
+        for key, value in self._env_dict(root).items():
+            env.append('{}="{}"'.format(key, value))
+
         return env
+
+    def _env_dict(self, root):
+        env = dict()
+        rubydir = os.path.join(root, 'lib', 'ruby')
+
+        # Patch versions of ruby continue to use the minor version's RUBYLIB,
+        # GEM_HOME, and GEM_PATH. Fortunately there should just be one, so we
+        # can detect it by globbing instead of trying to determine what the
+        # minor version is programatically
+        versions = glob.glob(os.path.join(rubydir, 'gems', '*'))
+
+        # Before Ruby has been pulled/installed, no versions will be found.
+        # If that's the case, we won't define any Ruby-specific variables yet
+        if len(versions) == 1:
+            ruby_version = os.path.basename(versions[0])
+
+            rubylib = os.path.join(rubydir, ruby_version)
+            env['RUBYLIB'] = '{}:{}'.format(rubylib, os.path.join(
+                rubylib, '{}-linux'.format(platform.machine())))
+            env['GEM_HOME'] = os.path.join(rubydir, 'gems', ruby_version)
+            env['GEM_PATH'] = os.path.join(rubydir, 'gems', ruby_version)
+        elif len(versions) > 1:
+            raise SnapcraftEnvironmentError(
+                'Expected a single Ruby version, but found {}'.format(
+                     len(versions)))
+
+        return env
+
+    def _run(self, command, **kwargs):
+        """Regenerate the build environment, then run requested command.
+
+        Without this function, the build environment would not be regenerated
+        and thus the newly installed Ruby would not be discovered.
+        """
+
+        env = os.environ.copy()
+        env.update(self._env_dict(self.installdir))
+        self.run(command, env=env, **kwargs)
 
     def _ruby_install(self, builddir):
         self._ruby_tar.provision(
             builddir, clean_target=False, keep_tarball=True)
-        self.run(['./configure', '--disable-install-rdoc', '--prefix=/'],
-                 cwd=builddir)
-        self.run(['make', '-j{}'.format(self.parallel_build_count)],
-                 cwd=builddir)
-        self.run(['make', 'install', 'DESTDIR={}'.format(self.installdir)],
-                 cwd=builddir)
+        self._run(['./configure', '--disable-install-rdoc', '--prefix=/'],
+                  cwd=builddir)
+        self._run(['make', '-j{}'.format(self.parallel_build_count)],
+                  cwd=builddir)
+        self._run(['make', 'install', 'DESTDIR={}'.format(self.installdir)],
+                  cwd=builddir)
         # Fix all shebangs to use the in-snap ruby
         file_utils.replace_in_file(
             self.installdir,
@@ -145,13 +180,14 @@ class RubyPlugin(BasePlugin):
         if self.options.use_bundler:
             self._gems = self._gems + ['bundler']
         if self._gems:
+            logger.info('Installing gems...')
             gem_install_cmd = [os.path.join(self.installdir, 'bin', 'ruby'),
                                os.path.join(self.installdir, 'bin', 'gem'),
                                'install', '--env-shebang']
-            self.run(gem_install_cmd + self._gems)
+            self._run(gem_install_cmd + self._gems)
 
     def _bundle_install(self):
         bundle_install_cmd = [os.path.join(self.installdir, 'bin', 'ruby'),
                               os.path.join(self.installdir, 'bin', 'bundle'),
                               'install']
-        self.run(bundle_install_cmd)
+        self._run(bundle_install_cmd)
