@@ -46,7 +46,7 @@ project_path="$(readlink -f "$script_path/../..")"
 lxc="/snap/bin/lxc"
 
 "$script_path/setup_lxd.sh"
-"$script_path/run_lxc_container.sh" test-runner
+"$script_path/run_lxd_container.sh" test-runner
 $lxc file push --recursive $project_path test-runner/root/
 $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
 $lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test $pattern"
