@@ -465,7 +465,7 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
                 additional_dependents.append(part_name)
 
                 logger.warning(
-                    'Requested clean of {!r} which require also cleaning '
+                    'Requested clean of {!r} which requires also cleaning '
                     'the part{} {}'.format(part_name,
                                            '' if len(dependents) == 1 else 's',
                                            humanized_parts))
