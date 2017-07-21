@@ -36,7 +36,6 @@ import platform
 import re
 
 from snapcraft import BasePlugin, file_utils
-from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.sources import Tar
 
 
@@ -88,21 +87,12 @@ class RubyPlugin(BasePlugin):
                 self._ruby_version)
         self._ruby_tar = Tar(self._ruby_download_url, self._ruby_part_dir)
         self._gems = options.gems or []
-        self._ruby_version_dir = None
+        self._ruby_version_dir = '{}.{}.0'.format(
+            self.options.ruby_version.split('.')[0],
+            self.options.ruby_version.split('.')[1])
 
         self.build_packages.extend(['gcc', 'g++', 'make', 'zlib1g-dev',
                                     'libssl-dev', 'libreadline-dev'])
-
-        version_map = [('2.%d.[0-9]' % i, '2.%d.0' % i) for i in range(5)]
-
-        for version_regex, version_dir in version_map:
-            if re.compile(version_regex).match(self._ruby_version):
-                self._ruby_version_dir = version_dir
-                break
-        # Raise exception when version_dir not found
-        if not self._ruby_version_dir:
-            raise SnapcraftEnvironmentError(
-                'Ruby version dir not in version_map.')
 
     def snap_fileset(self):
         fileset = super().snap_fileset()
