@@ -255,7 +255,7 @@ parts:
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
-            "Requested clean of 'dependent' which require also cleaning the "
+            "Requested clean of 'dependent' which requires also cleaning the "
             "part 'nested-dependent'"))
         self.assert_clean(['dependent', 'nested-dependent'])
 
@@ -295,7 +295,7 @@ parts:
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
-            "Requested clean of 'main' which require also cleaning the "
+            "Requested clean of 'main' which requires also cleaning the "
             "part 'dependent'"))
         self.assert_clean(['main', 'dependent'])
 
@@ -306,6 +306,6 @@ parts:
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
-            "Requested clean of 'dependent' which require also cleaning the "
+            "Requested clean of 'dependent' which requires also cleaning the "
             "part 'nested-dependent'"))
         self.assert_clean(['main', 'dependent', 'nested-dependent'])
