@@ -26,7 +26,12 @@ apt-get install --yes snapd
 snap install lxd --edge
 # Wait while LXD first generates its keys. In a low entropy environment this
 # can take a while.
-sleep 10
+# From LXD's CI.
+# shellcheck disable=SC2034
+for i in $(seq 12); do
+    lxd waitready --timeout=10 >/dev/null 2>&1 && break
+done
+
 /snap/bin/lxd init --auto
 /snap/bin/lxc network create testbr0
 /snap/bin/lxc network attach-profile testbr0 default eth0

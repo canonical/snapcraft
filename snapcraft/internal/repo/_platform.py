@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-import sys as _sys
 from platform import linux_distribution as _linux_distribution
 
 logger = logging.getLogger(__name__)
@@ -42,11 +41,5 @@ def _get_repo_for_platform():
         from ._deb import Ubuntu
         return Ubuntu
     else:
-        if _sys.platform == 'linux':
-            system = distro
-        else:
-            system = _sys.platform
         from ._base import DummyRepo
-        logger.warning('Currently only `cleanbuild` will work on this system '
-                       '({!r})'.format(system))
         return DummyRepo
