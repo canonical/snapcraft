@@ -83,12 +83,10 @@ class Containerbuild:
 
     def _container_run(self, cmd, cwd=None):
         if cwd:
-            check_call(['lxc', 'exec', self._container_name, '--',
-                        'bash', '-c', 'cd {}; {}'.format(
-                            cwd,
-                            ' '.join(pipes.quote(arg) for arg in cmd))])
-        else:
-            check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
+            cmd = ['bash', '-c', 'cd {}; {}'.format(
+                      cwd,
+                      ' '.join(pipes.quote(arg) for arg in cmd))]
+        check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
 
     def _ensure_container(self):
         check_call([
