@@ -26,6 +26,7 @@ apt-get install --yes snapd
 snap install lxd --edge
 # Wait while LXD first generates its keys. In a low entropy environment this
 # can take a while.
+
 # From LXD's CI.
 # shellcheck disable=SC2034
 for i in $(seq 12); do
