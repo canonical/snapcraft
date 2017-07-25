@@ -251,3 +251,56 @@ SOMETHING=y
 ACCEPT=n
 """
         self.assertEqual(config_contents, expected_config)
+
+
+class KBuildCrossCompilePluginTestCase(tests.TestCase):
+
+    scenarios = [
+        ('armv7l', dict(deb_arch='armhf')),
+        ('aarch64', dict(deb_arch='arm64')),
+        ('ppc64le', dict(deb_arch='ppc64el')),
+    ]
+
+    def setUp(self):
+        super().setUp()
+
+        class Options:
+            build_parameters = []
+            kconfigfile = None
+            kconfigflavour = None
+            kdefconfig = []
+            kconfigs = []
+
+        self.options = Options()
+        self.project_options = snapcraft.ProjectOptions(
+            target_deb_arch=self.deb_arch)
+
+        patcher = mock.patch('snapcraft.internal.common.run')
+        self.run_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.ProjectOptions.is_cross_compiling')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch.dict(os.environ, {})
+        self.env_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    @mock.patch('subprocess.check_call')
+    @mock.patch.object(kbuild.KBuildPlugin, 'run')
+    def test_cross_compile(self, run_mock, check_call_mock):
+        plugin = kbuild.KBuildPlugin('test-part', self.options,
+                                     self.project_options)
+        plugin.enable_cross_compilation()
+
+        plugin.build()
+        run_mock.assert_has_calls([
+            mock.call(['make', '-j1', 'ARCH={}'.format(
+                           self.project_options.kernel_arch),
+                       'CROSS_COMPILE={}'.format(
+                           self.project_options.cross_compiler_prefix),
+                       'PATH={}:/usr/{}/bin'.format(
+                           os.environ.copy().get('PATH', ''),
+                           self.project_options.arch_triplet)]),
+        ])

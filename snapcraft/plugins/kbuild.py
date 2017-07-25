@@ -134,11 +134,8 @@ class KBuildPlugin(BasePlugin):
         self.make_cmd.append('CROSS_COMPILE={}'.format(toolchain))
 
         env = os.environ.copy()
-        path = '/usr/{}/bin'.format(self.project.arch_triplet)
-        self.make_cmd.append('PATH={}:{}'.format(
-            env.get('PATH', ''), path))
-
-        return env
+        self.make_cmd.append('PATH={}:/usr/{}/bin'.format(
+            env.get('PATH', ''), self.project.arch_triplet))
 
     def assemble_ubuntu_config(self, config_path):
         try:
