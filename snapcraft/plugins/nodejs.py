@@ -47,6 +47,7 @@ import shutil
 
 import snapcraft
 from snapcraft import sources
+from snapcraft.file_utils import link_or_copy_tree
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +149,9 @@ class NodePlugin(snapcraft.BasePlugin):
         super().build()
         if self.options.node_package_manager == 'npm':
             self._npm_install(rootdir=self.builddir)
+            # Fix the symlink to the build directory LP: #1702661
+            modules_dir = os.path.join(self.installdir, 'lib', 'node_modules')
+            _fix_symlinks(modules_dir)
         else:
             self._yarn_install(rootdir=self.builddir)
 
@@ -212,3 +216,26 @@ def _get_nodejs_base(node_engine, machine):
 def get_nodejs_release(node_engine, arch):
     return _NODEJS_TMPL.format(version=node_engine,
                                base=_get_nodejs_base(node_engine, arch))
+
+
+def _fix_symlinks(modulesdir):
+    """Fix symlinks living in the part's build so that they live in install.
+    
+    When running newer versions of npm, symlinks to the local tree are
+    created from the part's installdir to the root of the builddir of the
+    part (this only affects some build configurations in some projects)
+    which is valid when running from the context of the part but invalid
+    as soon as the artifacts migrate across the stages,
+    i.e.; stage and prime.
+
+    If modulesdir does not exit we simply return.
+    """
+    if not os.path.exists(modulesdir):
+        return
+    modules = [os.path.join(modulesdir, d) for d in os.listdir(modulesdir)]
+    symlinks = [l for l in modules if os.path.islink(l)]
+    for link_path in symlinks:
+        print('Fixing', link_path)
+        link_target = os.path.realpath(link_path)
+        os.unlink(link_path)
+        link_or_copy_tree(link_target, link_path)
