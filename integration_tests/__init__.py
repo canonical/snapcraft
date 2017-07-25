@@ -111,7 +111,7 @@ class TestCase(testtools.TestCase):
 
     def run_snapcraft(
             self, command, project_dir=None, debug=True,
-            pre_func=lambda: None, env=None):
+            pre_func=lambda: None, env=None, sudo=False):
         if project_dir:
             self.copy_project_to_cwd(project_dir)
 
@@ -120,6 +120,8 @@ class TestCase(testtools.TestCase):
         snapcraft_command = [self.snapcraft_command]
         if debug:
             snapcraft_command.append('-d')
+        if sudo:
+            snapcraft_command = ['sudo'] + snapcraft_command
         try:
             pre_func()
             snapcraft_output = subprocess.check_output(
