@@ -18,6 +18,7 @@ import logging
 import multiprocessing
 import os
 import platform
+import sys
 
 from snapcraft.internal import common
 from snapcraft.internal.deprecations import handle_deprecation_notice
@@ -101,8 +102,19 @@ _32BIT_USERSPACE_ARCHITECTURE = {
 }
 
 
+_WINDOWS_TRANSLATIONS = {
+    'AMD64': 'x86_64'
+}
+
+
 def _get_platform_architecture():
     architecture = platform.machine()
+
+    # Translate the windows architectures we know of to architectures
+    # we can work with.
+    if sys.platform == 'win32':
+        architecture = _WINDOWS_TRANSLATIONS.get(architecture)
+
     if platform.architecture()[0] == '32bit':
         userspace = _32BIT_USERSPACE_ARCHITECTURE.get(architecture)
         if userspace:
