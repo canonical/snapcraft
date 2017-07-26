@@ -237,8 +237,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         mock_is_snap.side_effect = lambda: True
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
-        fake_snapd = fixture_setup.FakeSnapd()
-        self.useFixture(fake_snapd)
+        self.useFixture(fixture_setup.FakeSnapd())
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         self.useFixture(fixtures.EnvironmentVariable(

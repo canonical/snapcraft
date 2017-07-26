@@ -287,7 +287,6 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'raw.idmap', 'both {} 0'.format(os.getuid())])
-        if self._get_container_status()['status'] == 'Stopped':
             check_call([
                 'lxc', 'start', self._container_name])
 

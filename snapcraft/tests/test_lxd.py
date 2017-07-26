@@ -77,7 +77,7 @@ class LXDTestCase(tests.TestCase):
             call(['lxc', 'config', 'set', container_name,
                   'environment.LC_ALL', 'C.UTF-8']),
             call(['lxc', 'file', 'push', os.path.realpath('project.tar'),
-                  '{}{}/project.tar'.format(container_name, project_folder)]),
+                  '{}/root/build_project/project.tar'.format(container_name)]),
         ])
         mock_container_run.assert_has_calls([
             call(['mkdir', project_folder]),
