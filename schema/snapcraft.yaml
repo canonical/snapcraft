@@ -104,6 +104,9 @@ properties:
     enum:
       - stable
       - devel
+  base:
+    type: string
+    description: the base snap to use
   epoch:
     description: the snap epoch, used to specify upgrade paths
     format: epoch
