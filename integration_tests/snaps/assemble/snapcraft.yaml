@@ -10,6 +10,8 @@ apps:
     command: binary1
   binary2:
     command: subdir/binary2
+  binary-no-wrapper:
+    command: subdir/binary3
   assemble-service:
     command: service-start
     stop-command: service-stop with args

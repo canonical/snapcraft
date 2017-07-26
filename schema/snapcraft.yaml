@@ -190,10 +190,13 @@ properties:
                 - type: string
                   minLength: 1
                 - type: number
-          no-wrapper:
-            type: boolean
-            description: Do not generate a shell wrapper for the given command
-            default: false
+          wrapper:
+            type: string
+            description: What kind of wrapper to generate for the given command
+            default: legacy
+            enum:
+              - legacy
+              - none
   hooks:
     type: object
     additionalProperties: false

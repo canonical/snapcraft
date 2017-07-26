@@ -371,10 +371,10 @@ class _SnapPackaging:
             if os.path.splitext(f)[1] == '.desktop':
                 os.remove(os.path.join(gui_dir, f))
         for app in apps:
-            need_wrapper = True
-            if "no-wrapper" in apps[app]:
-                need_wrapper = not apps[app]["no-wrapper"]
-            if need_wrapper:
+            wrapper = "legacy"
+            if "wrapper" in apps[app]:
+                wrapper = apps[app]["wrapper"]
+            if wrapper == "legacy":
                 self._wrap_app(app, apps[app])
         return apps
 

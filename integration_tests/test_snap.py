@@ -73,6 +73,10 @@ class SnapTestCase(integration_tests.TestCase):
             os.path.join(self.prime_dir, 'bin', 'not-wrapped.wrapper'),
             Not(FileExists()))
 
+        self.assertThat(
+            os.path.join(self.prime_dir, 'bin', 'command-binary3.wrapper'),
+            Not(FileExists()))
+
     def test_snap_default(self):
         self.copy_project_to_cwd('assemble')
         self.run_snapcraft([])
