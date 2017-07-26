@@ -18,7 +18,13 @@
 
 set -ev
 
+while fuser /var/lib/apt/lists/lock >/dev/null 2>&1; do
+    sleep 1
+done
 apt-get update
+while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do
+    sleep 1
+done
 apt-get install --yes snapd
 # Use edge because the feature to copy links to the container has not yet been
 # released to stable:
