@@ -649,12 +649,7 @@ class CleanTestCase(BaseLifecycleTestCase):
             Not(DirExists()))
 
 
-class BuildInfoFlagUnsetTestCase(BaseLifecycleTestCase):
-
-    scenarios = (
-        ('snapcraft_yaml', {'recorded_file': 'snapcraft.yaml'}),
-        ('manifest_yaml', {'recorded_file': 'manifest.yaml'})
-    )
+class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
 
     def test_prime_without_build_info_does_not_record(self):
         self.useFixture(fixtures.EnvironmentVariable(
@@ -664,12 +659,10 @@ class BuildInfoFlagUnsetTestCase(BaseLifecycleTestCase):
     plugin: nil
 """)
         lifecycle.execute('prime', self.project_options)
-        self.assertThat(
-            os.path.join('prime', 'snap', self.recorded_file),
-            Not(FileExists()))
-
-
-class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
+        for file_name in ('snapcraft.yaml', 'manifest.yaml'):
+            self.assertThat(
+                os.path.join('prime', 'snap', file_name),
+                Not(FileExists()))
 
     def test_prime_with_build_info_records_snapcraft_yaml(self):
         self.useFixture(fixtures.EnvironmentVariable(
