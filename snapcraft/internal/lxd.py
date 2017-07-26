@@ -136,15 +136,17 @@ class Containerbuild:
     def _setup_project(self):
         logger.info('Setting up container with project assets')
         tar_filename = self._source
-        dst = os.path.join(self._project_folder,
-                           os.path.basename(tar_filename))
+        # os.sep needs to be `/` and on Windows it will be set to `\`
+        dst = '{}/{}'.format(self._project_folder,
+                             os.path.basename(tar_filename))
         self._container_run(['mkdir', self._project_folder])
         self._push_file(tar_filename, dst)
         self._container_run(['tar', 'xvf', os.path.basename(tar_filename)],
                             cwd=self._project_folder)
 
     def _finish(self):
-        src = os.path.join(self._project_folder, self._snap_output)
+        # os.sep needs to be `/` and on Windows it will be set to `\`
+        src = '{}/{}'.format(self._project_folder, self._snap_output)
         self._pull_file(src, self._snap_output)
         logger.info('Retrieved {}'.format(self._snap_output))
 
