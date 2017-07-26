@@ -220,7 +220,7 @@ def get_nodejs_release(node_engine, arch):
 
 def _fix_symlinks(modulesdir):
     """Fix symlinks living in the part's build so that they live in install.
-    
+
     When running newer versions of npm, symlinks to the local tree are
     created from the part's installdir to the root of the builddir of the
     part (this only affects some build configurations in some projects)
