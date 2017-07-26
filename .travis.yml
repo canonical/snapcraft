@@ -5,9 +5,6 @@ services: [docker]
 
 language: bash
 
-before_install:
-  - sudo sysctl net.netfilter.nf_conntrack_tcp_be_liberal=1
-
 jobs:
   include:
     # Tests, only when not triggered by the daily cron.
