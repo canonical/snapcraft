@@ -190,6 +190,10 @@ properties:
                 - type: string
                   minLength: 1
                 - type: number
+          no-wrapper:
+            type: boolean
+            description: Do not generate a shell wrapper for the given command
+            default: false
   hooks:
     type: object
     additionalProperties: false
