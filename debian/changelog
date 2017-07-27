@@ -1,3 +1,68 @@
+snapcraft (2.33) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * tests: reduce the amount of test code in test_meta (#1391)
+  * meta: bash completion support (#1390)
+  * tests: fix issues with python 3.6 (#1398)
+  * cleanbuild: ensure we enter a shell on failures on --debug (#1404)
+  * tests: do not break a systems `bzr whoami` (#1357)
+  * snap: remove completer entry (#1409)
+  * core: minimal cross OS support. (#1413)
+  * core: a clean command should clean. (#1416)
+  * Revert "tests: workaround issue that causes failures to download core (#1386)" (#1423)
+  * nodejs plugin: copy the content of out of tree symlinks (#1418)
+  * New upstream release (LP: #1707060)
+
+  [ Zygmunt Krynicki ]
+  * pluginhandler: don't clobber path on local import failure (#1361)
+
+  [ Paolo Pisati ]
+  * core: use the correct kernel arch for s390 (#1376)
+
+  [ Tim Süberkrüb ]
+  * core: support yaml merge tags (#1384)
+
+  [ roxd ]
+  * blank version should not be allowed in snapcraft.yaml (#1379)
+
+  [ Paolo Pisati ]
+  * kernel plugin: add a default target per powerpc, ppc64el and s390x (#1377)
+
+  [ Rex Tsai ]
+  * tests: mock download for rustup in the x-compile test. (#1396)
+
+  [ Evan Dandrea ]
+  * file_utils: handle I/O errors in os.link (#1369)
+  * Correct capitalisation for PyPI. (#1401)
+  * python plugin: better explain dependency link processing (#1402)
+
+  [ Leo Arias ]
+  * tests: workaround issue that causes failures to download core (#1386)
+  * python plugin: output json in pip list (#1393)
+  * tests: allow to filter tests in docker (#1375)
+  * tests: document the test suites in the snapcraft repo (#1394)
+  * recording: rename the file to manifest.yaml (#1406)
+  * pluginhandler: check for collisions only in existing files (#1405)
+  * tests: run the tests in travis using LXD containers (#1415)
+  * tests: build the snapcraft snap in travis tests (#1411)
+  * ci: remove the old script to run with lxc (#1422)
+
+  [ Christian Dywan ]
+  * cli: proper parsing of hidden options (#1378)
+  * core: clean the container on a full clean (#1372)
+  * lxd: do not assume user ID of 1000 for raw.idmap (#1385)
+  * autotools: Enable cross-compilation support (#1383)
+  * lxd: distingish FileNotFoundError for when not installed (#1400)
+  * waf plugin: enable cross-compilation support  (#1397)
+  * ci: wait for apt/dpkg lock when setting lxd up (#1421)
+  * lxd: stop setting `$HOME` in containers (#1408)
+  * lxd: only remove container if one exists (#1403)
+
+  [ Simon Davy ]
+  * meta: add support for `reload-command` (#1373)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 27 Jul 2017 20:19:01 +0000
+
 snapcraft (2.32) xenial; urgency=medium
 
   [ Michał Sawicz ]
