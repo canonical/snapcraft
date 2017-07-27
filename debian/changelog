@@ -49,7 +49,7 @@ snapcraft (2.33) xenial; urgency=medium
   * cli: proper parsing of hidden options (#1378)
   * core: clean the container on a full clean (#1372)
   * lxd: do not assume user ID of 1000 for raw.idmap (#1385)
-  * autotools: Enable cross-compilation support (#1383)
+  * autotools plugin: Enable cross-compilation support (#1383)
   * lxd: distingish FileNotFoundError for when not installed (#1400)
   * waf plugin: enable cross-compilation support  (#1397)
   * ci: wait for apt/dpkg lock when setting lxd up (#1421)
