@@ -211,7 +211,11 @@ class Containerbuild:
                                  filename)
 
         filepath = os.path.join(rundir, filename)
-        shutil.copyfile(installed, filepath)
+        if rev.startswith('x'):
+            check_call(['sudo', 'cp', installed, filepath])
+            check_call(['sudo', 'chown', str(os.getuid()), filepath])
+        else:
+            shutil.copyfile(installed, filepath)
         container_filename = os.path.join(os.sep, 'run', filename)
         self._push_file(filepath, container_filename)
         logger.info('Installing {}'.format(container_filename))

@@ -270,6 +270,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['snap', 'install', '/run/snapcraft_345.snap', '--classic']),
         ])
 
+    @mock.patch('os.getuid')
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('snapcraft.internal.common.is_snap')
     @mock.patch('shutil.copyfile')
@@ -278,7 +279,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                                                       mock_makedirs,
                                                       mock_copyfile,
                                                       mock_is_snap,
-                                                      mock_container_run):
+                                                      mock_container_run,
+                                                      mock_getuid):
         # Create open mock here for context manager to work correctly
         patcher = mock.patch('snapcraft.internal.lxd.open',
                              mock.mock_open())
@@ -287,6 +289,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         mock_is_snap.side_effect = lambda: True
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_getuid.return_value = 1234
         fake_snapd = fixture_setup.FakeSnapd()
         self.useFixture(fake_snapd)
         fake_snapd.snaps['snapcraft']['revision'] = 'x1'
@@ -308,6 +311,10 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'file', 'push',
                   os.path.join(rundir, 'core_123.snap'),
                   '{}/run/core_123.snap'.format(container_name)]),
+            call(['sudo', 'cp', '/var/lib/snapd/snaps/snapcraft_x1.snap',
+                  os.path.join(rundir, 'snapcraft_x1.snap')]),
+            call(['sudo', 'chown', str(os.getuid()),
+                  os.path.join(rundir, 'snapcraft_x1.snap')]),
             call(['lxc', 'file', 'push',
                   os.path.join(rundir, 'snapcraft_x1.snap'),
                   '{}/run/snapcraft_x1.snap'.format(container_name)]),
