@@ -155,8 +155,8 @@ class ProjectOptions:
             return self.__machine_info['cross-compiler-prefix']
         except KeyError:
             raise EnvironmentError(
-                'Cross compilation not support for target arch {!}'.format(
-                    self.__machine_target))
+                'Cross compilation not supported for target arch {!r}'.format(
+                    self.__target_machine))
 
     @property
     def additional_build_packages(self):
