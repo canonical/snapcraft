@@ -15,11 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import subprocess
 
 from testtools.matchers import (
     DirExists,
-    EndsWith,
     Not
 )
 
@@ -104,69 +102,35 @@ class CleanDependentsTestCase(integration_tests.TestCase):
         self.run_snapcraft('prime')
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
 
-    def test_clean_dependent_without_nested_dependents_raises(self):
-        # Test that p2 (which has both dependencies and dependents) fails to
-        # clean if its dependents (p3 and p4) are not also specified
-        exception = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft, ['clean', 'p2'])
-        self.assertThat(
-            exception.output,
-            EndsWith(
-                "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. "
-                "Please add each to the clean command if that's what you "
-                "intended.\n"))
-        self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
+    def test_clean_dependent_without_nested_dependents(self):
+        # Test that p2 (which has both dependencies and dependents)
+        # cleans its dependents (p3 and p4) are not specified
+        self.run_snapcraft(['clean', 'p2'])
+        self.assert_not_clean(['p1'], False)
+        self.assert_clean(['p2', 'p3', 'p4'], False)
 
-    def test_clean_dependent_without_nested_dependent_raises(self):
-        # Test that p2 (which has both dependencies and dependents) fails to
-        # clean if one of its dependents (p4) is not also specified
-        exception = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft,
-            ['clean', 'p2', 'p3'])
-        self.assertThat(
-            exception.output,
-            EndsWith(
-                "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. "
-                "Please add each to the clean command if that's what you "
-                "intended.\n"))
-        self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
+    def test_clean_dependent_without_nested_dependent(self):
+        # Test that p2 (which has both dependencies and dependents)
+        # cleans its dependents (p4) is not specified
+        self.run_snapcraft(['clean', 'p2', 'p3'])
+        self.assert_not_clean(['p1'], False)
+        self.assert_clean(['p2', 'p3', 'p4'], False)
 
-    def test_clean_main_without_any_dependent_raises(self):
-        # Test that p1 (which has no dependencies but dependents) fails to
-        # clean if none of its dependents are also specified.
-        exception = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft, ['clean', 'p1'])
-        self.assertThat(
-            exception.output,
-            EndsWith(
-                "Requested clean of 'p1' but 'p2' depends upon it. Please add "
-                "each to the clean command if that's what you intended.\n"))
-        self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
+    def test_clean_main_without_any_dependent(self):
+        # Test that p1 (which has no dependencies but dependents)
+        # cleans if none of its dependents are also specified.
+        self.run_snapcraft(['clean', 'p1'])
+        self.assert_clean(['p1', 'p2', 'p3', 'p4'], True)
 
-    def test_clean_main_without_dependent_raises(self):
-        # Test that p1 (which has no dependencies but dependents) fails to
-        # clean if its dependent (p2) is not also specified
-        exception = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft,
-            ['clean', 'p1', 'p3', 'p4'])
-        self.assertThat(
-            exception.output,
-            EndsWith(
-                "Requested clean of 'p1' but 'p2' depends upon it. Please add "
-                "each to the clean command if that's what you intended.\n"))
-        self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
+    def test_clean_main_without_dependent(self):
+        # Test that p1 (which has no dependencies but dependents)
+        # cleans if its dependent (p2) is not specified
+        self.run_snapcraft(['clean', 'p1', 'p3', 'p4'])
+        self.assert_clean(['p1', 'p2', 'p3', 'p4'], True)
 
-    def test_clean_main_without_nested_dependent_raises(self):
-        # Test that p1 (which has no dependencies but dependents) fails to
-        # clean if its nested dependent (p3, by way of p2) is not also
+    def test_clean_main_without_nested_dependent(self):
+        # Test that p1 (which has no dependencies but dependents)
+        # cleans if its nested dependent (p3, by way of p2) is not
         # specified
-        exception = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft,
-            ['clean', 'p1', 'p2'])
-        self.assertThat(
-            exception.output,
-            EndsWith(
-                "Requested clean of 'p2' but 'p3' and 'p4' depend upon it. "
-                "Please add each to the clean command if that's what you "
-                "intended.\n"))
-        self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
+        self.run_snapcraft(['clean', 'p1', 'p2'])
+        self.assert_clean(['p1', 'p2', 'p3', 'p4'], True)

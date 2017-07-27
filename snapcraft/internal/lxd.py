@@ -49,7 +49,7 @@ class Containerbuild:
         self._source = os.path.realpath(source)
         self._project_options = project_options
         self._metadata = metadata
-        self._project_folder = 'build_{}'.format(metadata['name'])
+        self._project_folder = '/root/build_{}'.format(metadata['name'])
 
         if not remote:
             remote = _get_default_remote()
@@ -75,19 +75,18 @@ class Containerbuild:
 
     def _push_file(self, src, dst):
         check_call(['lxc', 'file', 'push',
-                    src, '{}/{}'.format(self._container_name, dst)])
+                    src, '{}{}'.format(self._container_name, dst)])
 
     def _pull_file(self, src, dst):
         check_call(['lxc', 'file', 'pull',
-                    '{}/{}'.format(self._container_name, src), dst])
+                    '{}{}'.format(self._container_name, src), dst])
 
-    def _container_run(self, cmd, **kwargs):
-        # 'lxc config set ... environment.HOME' doesn't work
-        # Use 'cd' because --env has no effect with sshfs mounts
-        check_call(['lxc', 'exec', self._container_name, '--',
-                   'bash', '-c', 'cd /{}; {}'.format(
-                       self._project_folder,
-                       ' '.join(pipes.quote(arg) for arg in cmd))],
+    def _container_run(self, cmd, cwd=None, **kwargs):
+        if cwd:
+            cmd = ['bash', '-c', 'cd {}; {}'.format(
+                      cwd,
+                      ' '.join(pipes.quote(arg) for arg in cmd))]
+        check_call(['lxc', 'exec', self._container_name, '--'] + cmd,
                    **kwargs)
 
     def _ensure_container(self):
@@ -128,7 +127,7 @@ class Containerbuild:
             if args:
                 command += args
             try:
-                self._container_run(command)
+                self._container_run(command, cwd=self._project_folder)
             except CalledProcessError as e:
                 if self._project_options.debug:
                     logger.info('Debug mode enabled, dropping into a shell')
@@ -141,13 +140,17 @@ class Containerbuild:
     def _setup_project(self):
         logger.info('Setting up container with project assets')
         tar_filename = self._source
-        dst = os.path.join(self._project_folder,
-                           os.path.basename(tar_filename))
+        # os.sep needs to be `/` and on Windows it will be set to `\`
+        dst = '{}/{}'.format(self._project_folder,
+                             os.path.basename(tar_filename))
+        self._container_run(['mkdir', self._project_folder])
         self._push_file(tar_filename, dst)
-        self._container_run(['tar', 'xvf', os.path.basename(tar_filename)])
+        self._container_run(['tar', 'xvf', os.path.basename(tar_filename)],
+                            cwd=self._project_folder)
 
     def _finish(self):
-        src = os.path.join(self._project_folder, self._snap_output)
+        # os.sep needs to be `/` and on Windows it will be set to `\`
+        src = '{}/{}'.format(self._project_folder, self._snap_output)
         self._pull_file(src, self._snap_output)
         logger.info('Retrieved {}'.format(self._snap_output))
 
@@ -199,6 +202,7 @@ class Project(Containerbuild):
         if not self._get_container_status():
             check_call([
                 'lxc', 'init', self._image, self._container_name])
+        if self._get_container_status()['status'] == 'Stopped':
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'environment.SNAPCRAFT_SETUP_CORE', '1'])
@@ -206,7 +210,6 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'raw.idmap', 'both {} 0'.format(os.getuid())])
-        if self._get_container_status()['status'] == 'Stopped':
             check_call([
                 'lxc', 'start', self._container_name])
 
@@ -316,11 +319,14 @@ def _get_default_remote():
     """
     try:
         default_remote = check_output(['lxc', 'remote', 'get-default'])
+    except FileNotFoundError:
+        raise SnapcraftEnvironmentError(
+            'You must have LXD installed in order to use cleanbuild.\n'
+            'Refer to the documentation at '
+            'https://linuxcontainers.org/lxd/getting-started-cli.')
     except CalledProcessError:
         raise SnapcraftEnvironmentError(
-            'You must have LXD installed in order to use cleanbuild. '
-            'However, it is either not installed or not configured '
-            'properly.\n'
+            'Something seems to be wrong with your installation of LXD.\n'
             'Refer to the documentation at '
             'https://linuxcontainers.org/lxd/getting-started-cli.')
     return default_remote.decode(sys.getfilesystemencoding()).strip()

@@ -137,7 +137,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             fake_logger.output)
 
         container_name = 'local:snapcraft-snap-test'
-        project_folder = 'build_snap-test'
+        project_folder = '/root/build_snap-test'
         fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'init', 'ubuntu:xenial/amd64', container_name]),
             call(['lxc', 'config', 'set', container_name,
@@ -205,6 +205,20 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['ssh-keygen', '-o', '-N', '', '-f',
                  os.path.join(rundir, 'id_{}'.format(container_name))],
                  stdout=os.devnull),
+            call(['lxc', 'exec', container_name, '--',
+                  'python3', '-c',
+                  'import urllib.request; '
+                  'urllib.request.urlopen('
+                  '"http://start.ubuntu.com/connectivity-check.html", '
+                  'timeout=5)']),
+            call(['lxc', 'exec', container_name, '--',
+                  'apt-get', 'update']),
+            call(['lxc', 'exec', container_name, '--',
+                  'apt-get', 'install', 'snapcraft', '-y']),
+            call(['lxc', 'exec', container_name, '--',
+                  'bash', '-c',
+                  'cd {}; snapcraft snap --output {}'.format(
+                      project_folder, 'snap-test_1.0_amd64.snap')]),
             call(['lxc', 'stop', '-f', container_name]),
         ])
         mock_container_run.assert_has_calls([

@@ -56,7 +56,7 @@ class WafPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.build_packages.extend([
-            'python-dev',
+            'python-dev:native',
         ])
 
     @classmethod
@@ -64,6 +64,20 @@ class WafPlugin(snapcraft.BasePlugin):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         return ['configflags']
+
+    def env(self, root):
+        env = super().env(root)
+        if self.project.is_cross_compiling:
+            env.extend([
+                'CC={}-gcc'.format(self.project.arch_triplet),
+                'CXX={}-g++'.format(self.project.arch_triplet),
+            ])
+        return env
+
+    def enable_cross_compilation(self):
+        # Let snapcraft know that this plugin can cross-compile
+        # If the method isn't implemented an exception is raised
+        pass
 
     def build(self):
         super().build()

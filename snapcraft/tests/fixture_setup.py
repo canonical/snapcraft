@@ -426,11 +426,8 @@ class FakePlugin(fixtures.Fixture):
 class FakeLXD(fixtures.Fixture):
     '''...'''
 
-    def __init__(self, fail_on_remote=False, fail_on_default=False,
-                 fail_on_snapcraft_run=False):
+    def __init__(self, fail_on_snapcraft_run=False):
         self.status = None
-        self.fail_on_remote = fail_on_remote
-        self.fail_on_default = fail_on_default
         self.fail_on_snapcraft_run = fail_on_snapcraft_run
 
     def _setUp(self):
@@ -460,10 +457,7 @@ class FakeLXD(fixtures.Fixture):
     def check_output_side_effect(self):
         def call_effect(*args, **kwargs):
             if args[0] == ['lxc', 'remote', 'get-default']:
-                if self.fail_on_default:
-                    raise CalledProcessError(returncode=255, cmd=args[0])
-                else:
-                    return 'local'.encode('utf-8')
+                return 'local'.encode('utf-8')
             elif args[0][:2] == ['lxc', 'info']:
                 return '''
                     environment:
@@ -485,14 +479,12 @@ class FakeLXD(fixtures.Fixture):
                             'STATUS': self.status,
                             }).encode('utf-8')
                 return '[]'.encode('utf-8')
-            elif args[0][:2] == ['lxc', 'list'] and self.fail_on_remote:
-                raise CalledProcessError(returncode=255, cmd=args[0])
             elif args[0][:2] == ['lxc', 'init']:
                 self.name = args[0][3]
                 self.status = 'Stopped'
             # Fail on an actual snapcraft command and not the command
             # for the installation of it.
-            elif ('snapcraft' in args[0] and 'apt-get' not in args[0]
+            elif ('snapcraft snap' in ' '.join(args[0])
                   and self.fail_on_snapcraft_run):
                 raise CalledProcessError(returncode=255, cmd=args[0])
             else:
