@@ -114,7 +114,7 @@ class Containerbuild:
         with self._ensure_started():
             # Create folder early so _container_run can cd into it
             check_call(['lxc', 'exec', self._container_name, '--',
-                        'mkdir', '-p', '/{}'.format(self._project_folder)])
+                        'mkdir', '-p', '{}'.format(self._project_folder)])
             self._setup_project()
             self._wait_for_network()
             self._container_run(['apt-get', 'update'])
@@ -143,7 +143,7 @@ class Containerbuild:
         # os.sep needs to be `/` and on Windows it will be set to `\`
         dst = '{}/{}'.format(self._project_folder,
                              os.path.basename(tar_filename))
-        self._container_run(['mkdir', self._project_folder])
+        self._container_run(['mkdir', '-p', self._project_folder])
         self._push_file(tar_filename, dst)
         self._container_run(['tar', 'xvf', os.path.basename(tar_filename)],
                             cwd=self._project_folder)

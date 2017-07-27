@@ -48,7 +48,7 @@ class LXDTestCase(tests.TestCase):
         self.useFixture(fake_logger)
 
         mock_pet.return_value = 'my-pet'
-        mock_container_run.side_effect = lambda cmd: cmd
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         project_options = ProjectOptions(target_deb_arch=self.target_arch)
         metadata = {'name': 'project'}
         project_folder = '/root/build_project'
@@ -60,14 +60,8 @@ class LXDTestCase(tests.TestCase):
                       'Waiting for a network connection...\n'
                       'Network connection established\n'
                       'Retrieved snap.snap\n', fake_logger.output)
-        args = ''
-        if self.target_arch:
-            self.assertIn('Setting target machine to \'{}\'\n'.format(
-                          self.target_arch), fake_logger.output)
-            args = ' --target-arch {}'.format(self.target_arch)
 
         container_name = '{}:snapcraft-my-pet'.format(self.remote)
-
         fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'launch', '-e',
                   'ubuntu:xenial/{}'.format('amd64'),
@@ -77,43 +71,13 @@ class LXDTestCase(tests.TestCase):
             call(['lxc', 'config', 'set', container_name,
                   'environment.LC_ALL', 'C.UTF-8']),
             call(['lxc', 'exec', container_name, '--',
-                  'mkdir', '-p', '/{}'.format(project_folder)]),
+                  'mkdir', '-p', '{}'.format(project_folder)]),
             call(['lxc', 'file', 'push', os.path.realpath('project.tar'),
-                  '{}/build_project/project.tar'.format(container_name)]),
-                  'mkdir', project_folder]),
-            call(['lxc', 'file', 'push', os.path.realpath('project.tar'),
-                  '{}{}/project.tar'.format(container_name, project_folder)]),
-            call(['lxc', 'exec', container_name, '--',
-                  'bash', '-c',
-                  'cd {}; tar xvf project.tar'.format(project_folder)]),
-            call(['lxc', 'exec', container_name, '--',
-                  'python3', '-c',
-                  'import urllib.request; '
-                  'urllib.request.urlopen('
-                  '"http://start.ubuntu.com/connectivity-check.html", '
-                  'timeout=5)']),
-            call(['lxc', 'exec', container_name, '--',
-                  'apt-get', 'update']),
-            call(['lxc', 'exec', container_name, '--',
-                  'apt-get', 'install', 'snapcraft', '-y']),
-            call(['lxc', 'exec', container_name, '--',
-                  'bash', '-c',
-                  'cd {}; snapcraft snap --output snap.snap{}'.format(
-                      project_folder, args)]),
+                  '{}/root/build_project/project.tar'.format(container_name)]),
             call(['lxc', 'file', 'pull',
                   '{}{}/snap.snap'.format(container_name, project_folder),
                   'snap.snap']),
             call(['lxc', 'stop', '-f', container_name]),
-        ])
-        mock_container_run.assert_has_calls([
-            call(['tar', 'xvf', 'project.tar']),
-            call(['python3', '-c', 'import urllib.request; ' +
-                  'urllib.request.urlopen(' +
-                  '"http://start.ubuntu.com/connectivity-check.html"' +
-                  ', timeout=5)']),
-            call(['apt-get', 'update']),
-            call(['apt-get', 'install', 'snapcraft', '-y']),
-            call(['snapcraft', 'snap', '--output', 'snap.snap', *args]),
         ])
 
     def test_wait_for_network_loops(self):

@@ -116,7 +116,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
     @mock.patch('os.getuid')
     def test_snap_containerized(self, mock_getuid, mock_container_run):
         mock_getuid.return_value = 1234
-        mock_container_run.side_effect = lambda cmd: cmd
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -146,7 +146,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                   'raw.idmap', 'both {} 0'.format(mock_getuid.return_value)]),
             call(['lxc', 'start', container_name]),
             call(['lxc', 'exec', container_name, '--',
-                  'mkdir', '-p', '/{}'.format(project_folder)]),
+                  'mkdir', '-p', project_folder]),
             call(['lxc', 'config', 'device', 'add', container_name,
                   project_folder, 'disk', 'source={}'.format(source),
                   'path=/{}'.format(project_folder)]),
@@ -160,7 +160,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['apt-get', 'update']),
             call(['apt-get', 'install', 'snapcraft', '-y']),
             call(['snapcraft', 'snap', '--output',
-                  'snap-test_1.0_amd64.snap']),
+                  'snap-test_1.0_amd64.snap'], cwd=project_folder),
         ])
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
@@ -192,7 +192,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             fake_logger.output)
 
         container_name = 'myremote:snapcraft-snap-test'
-        project_folder = 'build_snap-test'
+        project_folder = '/root/build_snap-test'
         rundir = os.path.join(os.path.sep, 'run', 'user', str(os.getuid()),
                               'snap.lxd')
         mock_makedirs.assert_has_calls([
@@ -201,24 +201,10 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'start', container_name]),
             call(['lxc', 'exec', container_name, '--',
-                  'mkdir', '-p', '/{}'.format(project_folder)]),
+                  'mkdir', '-p', project_folder]),
             call(['ssh-keygen', '-o', '-N', '', '-f',
                  os.path.join(rundir, 'id_{}'.format(container_name))],
                  stdout=os.devnull),
-            call(['lxc', 'exec', container_name, '--',
-                  'python3', '-c',
-                  'import urllib.request; '
-                  'urllib.request.urlopen('
-                  '"http://start.ubuntu.com/connectivity-check.html", '
-                  'timeout=5)']),
-            call(['lxc', 'exec', container_name, '--',
-                  'apt-get', 'update']),
-            call(['lxc', 'exec', container_name, '--',
-                  'apt-get', 'install', 'snapcraft', '-y']),
-            call(['lxc', 'exec', container_name, '--',
-                  'bash', '-c',
-                  'cd {}; snapcraft snap --output {}'.format(
-                      project_folder, 'snap-test_1.0_amd64.snap')]),
             call(['lxc', 'stop', '-f', container_name]),
         ])
         mock_container_run.assert_has_calls([
