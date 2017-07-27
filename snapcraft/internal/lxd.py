@@ -198,14 +198,6 @@ class Project(Containerbuild):
                          remote=remote)
         self._processes = []
 
-    def _get_container_status(self):
-        containers = json.loads(check_output([
-            'lxc', 'list', '--format=json', self._container_name]).decode())
-        for container in containers:
-            remote, container_name = self._container_name.split(':')
-            if container['name'] == container_name:
-                return container
-
     def _ensure_container(self):
         if not self._get_container_status():
             check_call([
