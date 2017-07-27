@@ -97,6 +97,27 @@ class LXDTestCase(tests.TestCase):
 
         self.assertThat(str(raised), Contains("Command '['my-cmd']'"))
 
+    def test_failed_container_never_created(self):
+        fake_lxd = tests.fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['lxc', 'launch']:
+                raise CalledProcessError(returncode=255, cmd=args[0])
+            return fake_lxd.check_output_side_effect()(*args, **kwargs)
+
+        fake_lxd.check_call_mock.side_effect = call_effect
+
+        metadata = {'name': 'project'}
+        raised = self.assertRaises(
+            CalledProcessError,
+            lxd.Cleanbuilder(output='snap.snap', source='project.tar',
+                             metadata=metadata,
+                             project_options=ProjectOptions()).execute)
+        self.assertEquals(fake_lxd.status, None)
+        # lxc launch should fail and no further commands should come after that
+        self.assertThat(str(raised), Contains("Command '['lxc', 'launch'"))
+
     @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
     def test_failed_build_with_debug(self, mock_run):
         self.useFixture(tests.fixture_setup.FakeLXD())

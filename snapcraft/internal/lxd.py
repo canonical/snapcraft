@@ -106,9 +106,17 @@ class Containerbuild:
             self._ensure_container()
             yield
         finally:
-            # Stopping takes a while and lxc doesn't print anything.
-            print('Stopping {}'.format(self._container_name))
-            check_call(['lxc', 'stop', '-f', self._container_name])
+            if self._get_container_status():
+                # Stopping takes a while and lxc doesn't print anything.
+                print('Stopping {}'.format(self._container_name))
+                check_call(['lxc', 'stop', '-f', self._container_name])
+
+    def _get_container_status(self):
+        containers = json.loads(check_output([
+            'lxc', 'list', '--format=json', self._container_name]).decode())
+        for container in containers:
+            if container['name'] == self._container_name.split(':')[-1]:
+                return container
 
     def execute(self, step='snap', args=None):
         with self._ensure_started():
