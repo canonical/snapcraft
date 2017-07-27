@@ -22,7 +22,7 @@ snapcraft (2.33) xenial; urgency=medium
   * core: support yaml merge tags (#1384)
 
   [ roxd ]
-  * blank version should not be allowed in snapcraft.yaml (#1379)
+  * schema: blank version should not be allowed in snapcraft.yaml (#1379)
 
   [ Paolo Pisati ]
   * kernel plugin: add a default target per powerpc, ppc64el and s390x (#1377)
@@ -32,7 +32,7 @@ snapcraft (2.33) xenial; urgency=medium
 
   [ Evan Dandrea ]
   * file_utils: handle I/O errors in os.link (#1369)
-  * Correct capitalisation for PyPI. (#1401)
+  * python plugin: correct capitalisation for PyPI. (#1401)
   * python plugin: better explain dependency link processing (#1402)
 
   [ Leo Arias ]
