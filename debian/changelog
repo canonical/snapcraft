@@ -9,7 +9,6 @@ snapcraft (2.33) xenial; urgency=medium
   * snap: remove completer entry (#1409)
   * core: minimal cross OS support. (#1413)
   * core: a clean command should clean. (#1416)
-  * Revert "tests: workaround issue that causes failures to download core (#1386)" (#1423)
   * nodejs plugin: copy the content of out of tree symlinks (#1418)
   * New upstream release (LP: #1707060)
 
@@ -37,7 +36,6 @@ snapcraft (2.33) xenial; urgency=medium
   * python plugin: better explain dependency link processing (#1402)
 
   [ Leo Arias ]
-  * tests: workaround issue that causes failures to download core (#1386)
   * python plugin: output json in pip list (#1393)
   * tests: allow to filter tests in docker (#1375)
   * tests: document the test suites in the snapcraft repo (#1394)
