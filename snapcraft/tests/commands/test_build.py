@@ -13,7 +13,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from testtools.matchers import Equals, DirExists, Not
+import snapcraft.internal.errors
 
 from . import LifecycleCommandsBaseTestCase
 
@@ -30,6 +32,13 @@ class BuildCommandTestCase(LifecycleCommandsBaseTestCase):
             result.output,
             "The part named 'no-build' is not defined in "
             "'snap/snapcraft.yaml'\n")
+
+    def test_build_invalid_part_raises_when_debug(self):
+        self.make_snapcraft_yaml('build')
+
+        self.assertRaises(
+            snapcraft.internal.errors.SnapcraftError, self.run_command,
+            ['--debug', 'build', 'no-build'])
 
     def test_build_defaults(self):
         parts = self.make_snapcraft_yaml('build')

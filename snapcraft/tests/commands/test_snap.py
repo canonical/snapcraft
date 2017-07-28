@@ -21,6 +21,7 @@ import subprocess
 from textwrap import dedent
 from unittest import mock
 from unittest.mock import call
+import snapcraft.internal.errors
 
 import fixtures
 from testtools.matchers import (
@@ -97,6 +98,13 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(1))
         self.assertThat(result.output, Contains(
             "bad-type' is not one of ['app', 'gadget', 'kernel', 'os']"))
+
+    def test_snap_failure_raises_when_debug(self):
+        self.make_snapcraft_yaml(snap_type='bad-type')
+
+        self.assertRaises(
+            snapcraft.internal.errors.SnapcraftError, self.run_command,
+            ['--debug', 'snap'])
 
     def test_snap_is_the_default(self):
         self.make_snapcraft_yaml()

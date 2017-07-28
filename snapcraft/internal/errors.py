@@ -42,12 +42,18 @@ class SnapcraftError(Exception):
         return self.fmt.format([], **self.__dict__)
 
 
-class MissingState(Exception):
-    pass
+class MissingState(SnapcraftError):
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
 
 
-class SnapcraftEnvironmentError(Exception):
-    pass
+class SnapcraftEnvironmentError(SnapcraftError):
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
 
 
 class PrimeFileConflictError(SnapcraftError):

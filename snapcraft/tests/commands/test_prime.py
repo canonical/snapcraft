@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+import snapcraft.internal.errors
 
 import fixtures
 from testtools.matchers import Equals, DirExists, Not
@@ -32,6 +33,13 @@ class PrimeCommandTestCase(LifecycleCommandsBaseTestCase):
         self.assertThat(result.output, Equals(
             "The part named 'no-prime' is not defined in "
             "'snap/snapcraft.yaml'\n"))
+
+    def test_prime_invalid_part_raises_when_debug(self):
+        self.make_snapcraft_yaml('prime')
+
+        self.assertRaises(
+            snapcraft.internal.errors.SnapcraftError, self.run_command,
+            ['--debug', 'prime', 'no-prime'])
 
     def test_prime_defaults(self):
         parts = self.make_snapcraft_yaml('prime')
