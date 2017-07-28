@@ -130,6 +130,7 @@ properties:
         dependencies:
           stop-command: ["daemon"]
           post-stop-command: ["daemon"]
+          reload-command: ["daemon"]
         additionalProperties: false
         properties:
           desktop:
@@ -149,6 +150,8 @@ properties:
             description: command executed after stopping a service
           stop-timeout:
             description: timeout in seconds
+          reload-command:
+            description: command executed to reload a service
           daemon:
             type: string
             description: signals that the app is a service.

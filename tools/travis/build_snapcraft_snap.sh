@@ -24,7 +24,7 @@ project_path="$(readlink -f "$script_path/../..")"
 lxc="/snap/bin/lxc"
 
 "$script_path/setup_lxd.sh"
-"$script_path/run_lxc_container.sh" snap-builder
+"$script_path/run_lxd_container.sh" snap-builder
 $lxc file push --recursive $project_path snap-builder/root/
 # TODO use the stable snap once it's published.
 $lxc exec snap-builder -- sh -c "apt install squashfuse && snap install snapcraft --candidate --classic"

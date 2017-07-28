@@ -478,9 +478,15 @@ class FakeLXD(fixtures.Fixture):
             elif args[0][:2] == ['lxc', 'init']:
                 self.name = args[0][3]
                 self.status = 'Stopped'
+            elif args[0][:2] == ['lxc', 'launch']:
+                self.name = args[0][4]
+                self.status = 'Running'
+            elif args[0][:2] == ['lxc', 'stop'] and not self.status:
+                # error: not found
+                raise CalledProcessError(returncode=1, cmd=args[0])
             # Fail on an actual snapcraft command and not the command
             # for the installation of it.
-            elif ('snapcraft' in args[0] and 'apt-get' not in args[0]
+            elif ('snapcraft snap' in ' '.join(args[0])
                   and self.fail_on_snapcraft_run):
                 raise CalledProcessError(returncode=255, cmd=args[0])
             else:
