@@ -10,6 +10,7 @@ snapcraft (2.33) xenial; urgency=medium
   * core: minimal cross OS support. (#1413)
   * core: a clean command should clean. (#1416)
   * nodejs plugin: copy the content of out of tree symlinks (#1418)
+  * tests: adapt opencv's test expectations (#1426)
   * New upstream release (LP: #1707060)
 
   [ Zygmunt Krynicki ]
