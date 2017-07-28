@@ -86,8 +86,8 @@ class SnapTestCase(integration_tests.TestCase):
         subprocess.check_call([
             'sudo', '/snap/bin/lxc', 'network', 'create', 'snapcrafttestbr0'])
         subprocess.check_call([
-            'sudo', '/snap/bin/lxc', 'network', 'attach-profile', 'snapcrafttestbr0',
-            'default', 'eth0'
+            'sudo', '/snap/bin/lxc', 'network', 'attach-profile',
+            'snapcrafttestbr0', 'default', 'eth0'
         ])
 
         self.run_snapcraft('cleanbuild', 'assemble', sudo=True)
