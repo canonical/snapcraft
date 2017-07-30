@@ -40,8 +40,12 @@ class Zip(FileBase):
             raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-depth for a zip source')
 
-    def provision(self, dst, clean_target=True, keep_zip=False):
-        zip = os.path.join(self.source_dir, os.path.basename(self.source))
+    def provision(self, dst, clean_target=True, keep_zip=False, src=None):
+        if src:
+            zip = src
+        else:
+            zip = os.path.join(
+                self.source_dir, os.path.basename(self.source))
 
         if self.source_checksum:
             sources.verify_checksum(self.source_checksum, zip)

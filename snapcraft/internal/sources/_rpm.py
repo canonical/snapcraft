@@ -40,8 +40,12 @@ class Rpm(FileBase):
             raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-branch for a rpm source')
 
-    def provision(self, dst, clean_target=True, keep_rpm=False):
-        rpm_file = os.path.join(self.source_dir, os.path.basename(self.source))
+    def provision(self, dst, clean_target=True, keep_rpm=False, src=None):
+        if src:
+            rpm_file = src
+        else:
+            rpm_file = os.path.join(
+                self.source_dir, os.path.basename(self.source))
 
         if self.source_checksum:
             sources.verify_checksum(self.source_checksum, rpm_file)

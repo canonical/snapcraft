@@ -30,12 +30,13 @@ class TestFileBase(tests.TestCase):
 
     @mock.patch('snapcraft.internal.sources._base.FileBase.download')
     def test_pull_url(self, mock_download):
+        mock_download.return_value = 'dir'
         file_src = self.get_mock_file_base(
             'http://snapcraft.io/snapcraft.yaml', 'dir')
         file_src.pull()
 
         mock_download.assert_called_once_with()
-        file_src.provision.assert_called_once_with(file_src.source_dir)
+        file_src.provision.assert_called_once_with(file_src.source_dir, src='dir')
 
     @mock.patch('shutil.copy2')
     def test_pull_copy(self, mock_shutil_copy2):
@@ -44,7 +45,8 @@ class TestFileBase(tests.TestCase):
 
         mock_shutil_copy2.assert_called_once_with(
             file_src.source, file_src.source_dir)
-        file_src.provision.assert_called_once_with(file_src.source_dir)
+        file_src.provision.assert_called_once_with(
+            file_src.source_dir, src='snapcraft.yaml')
 
     @mock.patch('snapcraft.internal.sources._base.requests')
     @mock.patch(
