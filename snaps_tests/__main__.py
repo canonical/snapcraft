@@ -39,8 +39,6 @@ import sys
 
 import docopt
 
-import snapcraft
-
 import snaps_tests
 
 
