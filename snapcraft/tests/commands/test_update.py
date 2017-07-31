@@ -158,30 +158,25 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
             'Mounting {} into container\n'.format(source),
             fake_logger.output)
 
-        container_name = fake_lxd.name
-        project_folder = 'build_snap-test'
+        project_folder = '/root/build_snap-test'
         fake_lxd.check_call_mock.assert_has_calls([
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/{}'.format(project_folder), '--',
+            call(['lxc', 'exec', fake_lxd.name, '--',
                   'python3', '-c',
                   'import urllib.request; '
                   'urllib.request.urlopen('
                   '"http://start.ubuntu.com/connectivity-check.html", '
                   'timeout=5)']),
-            call(['lxc', 'config', 'device', 'add', container_name,
+            call(['lxc', 'config', 'device', 'add', fake_lxd.name,
                   project_folder, 'disk', 'source={}'.format(source),
                   'path=/{}'.format(project_folder)]),
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/build_snap-test', '--',
-                  'snapcraft', 'update']),
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/build_snap-test', '--',
+            call(['lxc', 'exec', fake_lxd.name, '--',
+                  'bash', '-c',
+                  'cd {}; snapcraft update'.format(project_folder)]),
+            call(['lxc', 'exec', fake_lxd.name, '--',
                   'apt-get', 'update']),
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/build_snap-test', '--',
+            call(['lxc', 'exec', fake_lxd.name, '--',
                   'apt-get', 'upgrade', '-y']),
-            call(['lxc', 'exec', container_name,
-                  '--env', 'HOME=/build_snap-test', '--',
+            call(['lxc', 'exec', fake_lxd.name, '--',
                   'snap', 'refresh']),
-            call(['lxc', 'stop', '-f', container_name]),
+            call(['lxc', 'stop', '-f', fake_lxd.name]),
         ])
