@@ -60,6 +60,7 @@ Advice:
 import glob
 import logging
 import os
+import stat
 import subprocess
 import snapcraft
 from snapcraft.internal import common
@@ -104,12 +105,20 @@ logger = logging.getLogger(__name__)
 jhbuild_repository = 'https://git.gnome.org/browse/jhbuild'
 
 
-def _get_jhbuild_user():
-    """Discover the User ID of the jhbuild user
-    This is required because we add the user ourselves with a
-    non-deterministic ID
+def _get_or_create_jhbuild_user():
+    """Discover the User ID of the jhbuild user or create one
     :return: The user ID
     :rtype: int"""
+    uid = _get_jhbuild_user()
+    if uid == 0:
+        _create_jhbuild_user()
+        uid = _get_jhbuild_user()
+
+    return uid
+
+
+def _get_jhbuild_user():
+    """Discover the User ID of the jhbuild user"""
     uid = os.getuid()
     if uid != 0:
         return uid
@@ -117,8 +126,18 @@ def _get_jhbuild_user():
     try:
         uid = common.run_output(['id', '-u', 'jhbuild'])
     except subprocess.CalledProcessError:
-        uid = None
+        uid = 0
+
     return uid
+
+
+def _create_jhbuild_user():
+    """Create the jhbuild user"""
+    if os.geteuid() == 0:
+        common.run(['adduser', '--shell', '/bin/bash',
+                    '--disabled-password', '--system', '--quiet', '--home',
+                    os.sep + os.path.join('home', 'jhbuild'),
+                    'jhbuild'])
 
 
 def _get_jhbuild_group():
@@ -127,21 +146,17 @@ def _get_jhbuild_group():
     non-deterministic ID
     :return: The group ID
     :rtype: int"""
-    gid = os.getgid()
     uid = os.getuid()
+    gid = os.getgid()
     if uid != 0:
-        return gid
+        return gid or 65534
 
-    jhbuild_gid = 0
     try:
-        jhbuild_gid = common.run_output(['id', '-g', 'jhbuild'])
+        gid = common.run(['id', '-g', 'jhbuild'])
     except subprocess.CalledProcessError:
-        jhbuild_gid = 65534
+        gid = os.getgid()
 
-    if jhbuild_gid == 0:
-        return 65534
-
-    return jhbuild_gid
+    return gid or 65534
 
 
 class JHBuildPlugin(snapcraft.BasePlugin):
@@ -255,39 +270,52 @@ class JHBuildPlugin(snapcraft.BasePlugin):
         self.run(['symlinks', '-c', '-d', '-r', '-s', '-v', self.installdir])
 
     def _setup_jhbuild(self):
+        jhbuild_user = int(_get_or_create_jhbuild_user())
+        jhbuild_group = int(_get_jhbuild_group())
+
         if not os.path.isfile(self.jhbuildrc_path):
             self._write_jhbuildrc()
-
-        if not os.path.exists(self.jhbuild_program):
-            logger.info('Building JHBuild')
-
-            self.run(['./autogen.sh', '--prefix=%s' % os.sep +
-                      os.path.join(self.partdir, 'jhbuild', 'usr')],
-                     cwd=self.jhbuild_src)
-
-            self.run(['make', '-j%d' % self.parallel_build_count],
-                     cwd=self.jhbuild_src)
-
-            self.run(['make', '-j%d' % self.parallel_build_count,
-                      'install'], cwd=self.jhbuild_src)
 
         archive_path = os.path.join(self.partdir, 'jhbuild', 'packages')
         mirror_path = os.path.join(self.partdir, 'jhbuild', 'mirror')
         unpacked_path = os.path.join(self.partdir, 'jhbuild', 'unpacked')
 
-        make_paths = [self.builddir, self.installdir,
+        make_paths = [self.builddir, self.installdir, self.partdir,
                       archive_path, mirror_path, unpacked_path]
 
         for folder in make_paths:
             os.makedirs(folder, exist_ok=True)
 
-        jhbuild_user = int(_get_jhbuild_user() or self._create_jhbuild_user())
-        jhbuild_group = int(_get_jhbuild_group())
-        for path in make_paths:
-            for filename in glob.iglob('%s/**' % path, recursive=True):
+        if jhbuild_user != os.getuid():
+            chmod_path = os.path.dirname(os.path.dirname(self.partdir))
+
+            for filename in glob.iglob('%s/**' % chmod_path,
+                                       recursive=True):
                 if not os.path.exists(filename):
                     continue
-                os.chown(filename, jhbuild_user, jhbuild_group)
+
+                if os.path.isdir(filename):
+                    # READ to everyone
+                    mode = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+                    # WRITE to owner
+                    mode |= stat.S_IWUSR
+                    # ENTER to all
+                    mode |= stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+                    os.chmod(filename, mode)
+                    os.chown(filename, jhbuild_user, jhbuild_group)
+
+        if not os.path.exists(self.jhbuild_program):
+            logger.info('Building JHBuild')
+
+            self.maybe_sudo(['./autogen.sh', '--prefix=%s' % os.sep +
+                             os.path.join(self.partdir, 'jhbuild', 'usr')],
+                            cwd=self.jhbuild_src)
+
+            self.maybe_sudo(['make', '-j%d' % self.parallel_build_count],
+                            cwd=self.jhbuild_src)
+
+            self.maybe_sudo(['make', '-j%d' % self.parallel_build_count,
+                            'install'], cwd=self.jhbuild_src)
 
     def _write_jhbuildrc(self):
         """
@@ -335,32 +363,28 @@ cflags = {cflags!r}
                               cflags=self.options.cflags,
                               ))
 
-    def _create_jhbuild_user(self):
-        if os.geteuid() == 0:
-            common.run(['adduser', '--shell', '/bin/bash',
-                        '--disabled-password', '--system', '--quiet', '--home',
-                        os.sep + os.path.join(self.partdir, 'jhbuild', 'home'),
-                        'jhbuild'])
-        return _get_jhbuild_user()
-
     def run_jhbuild(self, args, output=True, **kwargs):
         """Run JHBuild in the build step.
         :param list args: command arguments without executable
         :return: the output of the command if captured
         :rtype: str
         """
+        cmd = [self.jhbuild_program,
+               '--no-interact', '-f', self.jhbuildrc_path]
+
+        return self.maybe_sudo(cmd + args, output=output, **kwargs)
+
+    def maybe_sudo(self, args, output=True, **kwargs):
+        """Run a command with sudo if we're root"""
         cwd = kwargs.pop('cwd', os.getcwd())
-        cmd = []
+        sudo = []
         if os.getuid() == 0:
             envvars = []
             envtmpl = '''{key!s}={value!s}'''
             for var in ['https_proxy', 'http_proxy', 'GIT_PROXY_COMMAND']:
                 if os.environ.get(var) is not None:
                     envvars += [envtmpl.format(key=var, value=os.environ[var])]
-            cmd = ['sudo'] + envvars + ['-H', '-u', 'jhbuild', '--']
-
-        cmd = cmd + [self.jhbuild_program,
-                     '--no-interact', '-f', self.jhbuildrc_path]
+            sudo = ['sudo'] + envvars + ['-H', '-u', 'jhbuild', '--']
 
         run = self.run_output if output else self.run
-        return run(cmd + args, cwd=cwd, **kwargs)
+        return run(sudo + args, cwd=cwd, **kwargs)
