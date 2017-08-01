@@ -244,22 +244,22 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()
 
-        container_name = 'local:snapcraft-snap-test'
-        rundir = os.path.join(os.path.sep, 'run', 'user', str(os.getuid()),
-                              'snap.lxd')
         self.run_command(['snap'])
+        container_name = 'local:snapcraft-snap-test'
+        tmpdir = os.path.expanduser(
+            os.path.join('~', 'snap', 'lxd', 'common', 'snapcraft.tmp'))
         fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'file', 'push',
-                  os.path.join(rundir, 'core_123.assert'),
+                  os.path.join(tmpdir, 'core_123.assert'),
                   '{}/run/core_123.assert'.format(container_name)]),
             call(['lxc', 'file', 'push',
-                  os.path.join(rundir, 'core_123.snap'),
+                  os.path.join(tmpdir, 'core_123.snap'),
                   '{}/run/core_123.snap'.format(container_name)]),
             call(['lxc', 'file', 'push',
-                  os.path.join(rundir, 'snapcraft_345.assert'),
+                  os.path.join(tmpdir, 'snapcraft_345.assert'),
                   '{}/run/snapcraft_345.assert'.format(container_name)]),
             call(['lxc', 'file', 'push',
-                  os.path.join(rundir, 'snapcraft_345.snap'),
+                  os.path.join(tmpdir, 'snapcraft_345.snap'),
                   '{}/run/snapcraft_345.snap'.format(container_name)]),
         ])
         mock_container_run.assert_has_calls([
@@ -300,23 +300,23 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()
 
-        container_name = 'local:snapcraft-snap-test'
-        rundir = os.path.join(os.path.sep, 'run', 'user', str(os.getuid()),
-                              'snap.lxd')
         self.run_command(['snap'])
+        container_name = 'local:snapcraft-snap-test'
+        tmpdir = os.path.expanduser(
+            os.path.join('~', 'snap', 'lxd', 'common', 'snapcraft.tmp'))
         fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'file', 'push',
-                  os.path.join(rundir, 'core_123.assert'),
+                  os.path.join(tmpdir, 'core_123.assert'),
                   '{}/run/core_123.assert'.format(container_name)]),
             call(['lxc', 'file', 'push',
-                  os.path.join(rundir, 'core_123.snap'),
+                  os.path.join(tmpdir, 'core_123.snap'),
                   '{}/run/core_123.snap'.format(container_name)]),
             call(['sudo', 'cp', '/var/lib/snapd/snaps/snapcraft_x1.snap',
-                  os.path.join(rundir, 'snapcraft_x1.snap')]),
+                  os.path.join(tmpdir, 'snapcraft_x1.snap')]),
             call(['sudo', 'chown', str(os.getuid()),
-                  os.path.join(rundir, 'snapcraft_x1.snap')]),
+                  os.path.join(tmpdir, 'snapcraft_x1.snap')]),
             call(['lxc', 'file', 'push',
-                  os.path.join(rundir, 'snapcraft_x1.snap'),
+                  os.path.join(tmpdir, 'snapcraft_x1.snap'),
                   '{}/run/snapcraft_x1.snap'.format(container_name)]),
         ])
         mock_container_run.assert_has_calls([

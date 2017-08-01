@@ -190,12 +190,12 @@ class Containerbuild:
         rev = json['result']['revision']
 
         # Copy files to a path the 'lxd' snap can access
-        rundir = os.path.join(os.path.sep, 'run', 'user', str(os.getuid()),
-                              'snap.lxd')
-        os.makedirs(rundir, exist_ok=True)
+        tmpdir = os.path.expanduser(
+            os.path.join('~', 'snap', 'lxd', 'common', 'snapcraft.tmp'))
+        os.makedirs(tmpdir, exist_ok=True)
 
         if not rev.startswith('x'):
-            self._inject_assertions(rundir, '{}_{}.assert'.format(name, rev), [
+            self._inject_assertions(tmpdir, '{}_{}.assert'.format(name, rev), [
                 ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
                 ['snap-declaration', 'snap-name={}'.format(name)],
                 ['snap-revision', 'snap-revision={}'.format(rev),
@@ -210,7 +210,7 @@ class Containerbuild:
         installed = os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps',
                                  filename)
 
-        filepath = os.path.join(rundir, filename)
+        filepath = os.path.join(tmpdir, filename)
         if rev.startswith('x'):
             check_call(['sudo', 'cp', installed, filepath])
             check_call(['sudo', 'chown', str(os.getuid()), filepath])
@@ -226,8 +226,8 @@ class Containerbuild:
             cmd.append('--classic')
         self._container_run(cmd)
 
-    def _inject_assertions(self, rundir, filename, assertions):
-        filepath = os.path.join(rundir, filename)
+    def _inject_assertions(self, tmpdir, filename, assertions):
+        filepath = os.path.join(tmpdir, filename)
         with open(filepath, 'wb') as f:
             for assertion in assertions:
                 logger.info('Looking up assertion {}'.format(assertion))
