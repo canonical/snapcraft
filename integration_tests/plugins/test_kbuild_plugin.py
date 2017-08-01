@@ -23,9 +23,6 @@ import integration_tests
 
 class KBuildPluginTestCase(integration_tests.TestCase):
 
-    def setUp(self):
-        super().setUp()
-
     def test_stage(self):
         self.run_snapcraft('stage', 'kbuild-hello')
 
