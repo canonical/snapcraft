@@ -123,8 +123,6 @@ class KBuildPlugin(BasePlugin):
             self.make_cmd.append('V=1')
 
     def enable_cross_compilation(self):
-        logger.info('Cross compiling kernel target {!r}'.format(
-            self.project.kernel_arch))
         self.make_cmd.append('ARCH={}'.format(
             self.project.kernel_arch))
         if 'CROSS_COMPILE' in os.environ:
