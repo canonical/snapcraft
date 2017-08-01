@@ -43,6 +43,10 @@ explained above:
       definitions.  If you don't want default for one or more implicit configs
       coming out of these, just add them to this list as well.
 
+    - install-targets
+      (list of strings)
+      list of install targets to run after building. default: [install]
+
 The plugin applies your selected defconfig first by running
 
     make defconfig
@@ -103,20 +107,30 @@ class KBuildPlugin(BasePlugin):
             'default': None,
         }
 
+        schema['properties']['install-targets'] = {
+            'type': 'array',
+            'minitems': 0,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': ['install'],
+        }
+
         return schema
 
     @classmethod
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['kdefconfig', 'kconfigfile', 'kconfigs', 'kconfigflavour']
+        return ['kdefconfig', 'kconfigfile', 'kconfigs', 'kconfigflavour',
+                'install-targets']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.build_packages.extend(['bc', 'gcc', 'make'])
 
         self.make_targets = []
-        self.make_install_targets = ['install']
         self.make_cmd = [
             'make', '-j{}'.format(self.parallel_build_count)]
         if logger.isEnabledFor(logging.DEBUG):
@@ -230,11 +244,12 @@ class KBuildPlugin(BasePlugin):
         # install to installdir
         self.run(self.make_cmd +
                  ['CONFIG_PREFIX={}'.format(self.installdir)] +
-                 self.make_install_targets)
+                 self.options.install_targets)
 
     def build(self):
         super().build()
 
         self.do_configure()
         self.do_build()
-        self.do_install()
+        if self.options.install_targets:
+            self.do_install()
