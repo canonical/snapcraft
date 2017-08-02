@@ -185,7 +185,12 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         ])
 
     @mock.patch('snapcraft.internal.common.is_snap')
-    def test_snap_containerized_inject_snap_socket_error(self, mock_is_snap):
+    @mock.patch('shutil.rmtree')
+    @mock.patch('os.makedirs')
+    def test_snap_containerized_inject_snap_socket_error(self,
+                                                         mock_makedirs,
+                                                         mock_rmtree,
+                                                         mock_is_snap):
         mock_is_snap.side_effect = lambda: True
         fake_snapd = fixture_setup.FakeSnapd()
         self.useFixture(fake_snapd)
@@ -201,11 +206,17 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.assertIn('Error connecting to ',
                       str(self.assertRaises(SnapcraftEnvironmentError,
                                             self.run_command, ['snap'])))
+        # Temporary folder should remain in case of failure
+        mock_rmtree.assert_not_called()
 
     @mock.patch('snapcraft.internal.common.is_snap')
+    @mock.patch('shutil.rmtree')
     @mock.patch('shutil.copyfile')
+    @mock.patch('os.makedirs')
     def test_snap_containerized_inject_snap_api_error(self,
+                                                      mock_makedirs,
                                                       mock_copyfile,
+                                                      mock_rmtree,
                                                       mock_is_snap):
         mock_is_snap.side_effect = lambda: True
         fake_snapd = fixture_setup.FakeSnapd()
@@ -219,14 +230,18 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.assertIn('Error querying \'core\' snap: not found',
                       str(self.assertRaises(SnapcraftEnvironmentError,
                                             self.run_command, ['snap'])))
+        # Temporary folder should remain in case of failure
+        mock_rmtree.assert_not_called()
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('snapcraft.internal.common.is_snap')
+    @mock.patch('shutil.rmtree')
     @mock.patch('shutil.copyfile')
     @mock.patch('os.makedirs')
     def test_snap_containerized_inject_snap(self,
                                             mock_makedirs,
                                             mock_copyfile,
+                                            mock_rmtree,
                                             mock_is_snap,
                                             mock_container_run):
         # Create open mock here for context manager to work correctly
@@ -269,15 +284,19 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['snap', 'ack', '/run/snapcraft_345.assert']),
             call(['snap', 'install', '/run/snapcraft_345.snap', '--classic']),
         ])
+        # Temporary folder should be removed in the end
+        mock_rmtree.assert_has_calls([call(tmpdir)])
 
     @mock.patch('os.getuid')
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('snapcraft.internal.common.is_snap')
+    @mock.patch('shutil.rmtree')
     @mock.patch('shutil.copyfile')
     @mock.patch('os.makedirs')
     def test_snap_containerized_inject_snap_dangerous(self,
                                                       mock_makedirs,
                                                       mock_copyfile,
+                                                      mock_rmtree,
                                                       mock_is_snap,
                                                       mock_container_run,
                                                       mock_getuid):
@@ -326,6 +345,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['snap', 'install', '/run/snapcraft_x1.snap',
                   '--dangerous', '--classic']),
         ])
+        # Temporary folder should be removed in the end
+        mock_rmtree.assert_has_calls([call(tmpdir)])
 
     @mock.patch('snapcraft.internal.lifecycle.ProgressBar')
     def test_snap_defaults_on_a_tty(self, progress_mock):
