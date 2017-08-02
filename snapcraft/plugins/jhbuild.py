@@ -65,8 +65,6 @@ import subprocess
 import snapcraft
 from snapcraft.internal import common
 
-HOME = os.path.expanduser('~') if os.geteuid() else os.path.join('/', 'root')
-
 BUILD_PACKAGES = {
     'apt-file',
     'autoconf',
