@@ -82,10 +82,19 @@ class Containerbuild:
                     '{}{}'.format(self._container_name, src), dst])
 
     def _container_run(self, cmd, cwd=None):
+        sh = ''
+        # Automatically wait on lock files before running commands
+        if cmd[0] == 'apt-get':
+            lock_file = '/var/lib/dpkg/lock'
+            if cmd[1] == 'update':
+                lock_file = '/var/lib/apt/lists/lock'
+            sh += 'while fuser {} >/dev/null 2>&1; do sleep 1; done; '.format(
+                lock_file)
         if cwd:
-            cmd = ['bash', '-c', 'cd {}; {}'.format(
-                      cwd,
-                      ' '.join(pipes.quote(arg) for arg in cmd))]
+            sh += 'cd {}; '.format(cwd)
+        if sh:
+            cmd = ['sh', '-c', '{}{}'.format(sh,
+                   ' '.join(pipes.quote(arg) for arg in cmd))]
         check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
 
     def _ensure_container(self):
