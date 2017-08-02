@@ -34,8 +34,8 @@ class FileCache(SnapcraftCache):
     def cache(self, *, filename, algorithm, hash):
         """Cache a file revision with hash in XDG cache, unless it already exists.
         :param str filename: path to the file to cache.
-        :param str algorithm: algorithm used to calculate has as understood
-                              by hashlib.
+        :param str algorithm: algorithm used to calculate the hash as
+                              understood by hashlib.
         :param str hash: hash for filename calculated with algorithm.
         :returns: path to cached file.
         """
@@ -62,8 +62,8 @@ class FileCache(SnapcraftCache):
     def get(self, *, algorithm, hash):
         """Get the filepath which matches the hash calculated with algorithm.
 
-        :param str algorithm: algorithm used to calculate has as understood
-                              by hashlib.
+        :param str algorithm: algorithm used to calculate the hash as
+                              understood by hashlib.
         :param str hash: hash for filename calculated with algorithm.
         :returns: path to cached file.
         """
