@@ -243,10 +243,10 @@ def calculate_sha3_384(path):
 
 def calculate_hash(path, *, algorithm):
     """Calculate the hash for path with algorithm."""
-    blocksize = 2**20
     # This will raise an AttributeError if algorithm is unsupported
     hasher = getattr(hashlib, algorithm)()
 
+    blocksize = 2**20
     with open(path, 'rb') as f:
         while True:
             buf = f.read(blocksize)
