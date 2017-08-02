@@ -47,9 +47,6 @@ class Zip(FileBase):
             zip = os.path.join(
                 self.source_dir, os.path.basename(self.source))
 
-        if self.source_checksum:
-            sources.verify_checksum(self.source_checksum, zip)
-
         if clean_target:
             tmp_zip = tempfile.NamedTemporaryFile().name
             shutil.move(zip, tmp_zip)

@@ -44,10 +44,11 @@ class TestFileBase(tests.TestCase):
         file_src = self.get_mock_file_base('snapcraft.yaml', 'dir')
         file_src.pull()
 
+        expected = os.path.join(file_src.source_dir, 'snapcraft.yaml')
         mock_shutil_copy2.assert_called_once_with(
-            file_src.source, file_src.source_dir)
+            file_src.source, expected)
         file_src.provision.assert_called_once_with(
-            file_src.source_dir, src='snapcraft.yaml')
+            file_src.source_dir, src=expected)
 
     @mock.patch('snapcraft.internal.sources._base.requests')
     @mock.patch(

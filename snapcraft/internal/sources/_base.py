@@ -66,8 +66,11 @@ class FileBase(Base):
         if not source_file and is_source_url:
             source_file = self.download()
         elif not source_file:
-            source_file = self.source
-            shutil.copy2(source_file, self.source_dir)
+            basename = os.path.basename(self.source)
+            source_file = os.path.join(self.source_dir, basename)
+            # We make this copy as the provisioning logic can delete
+            # this file and we don't want that.
+            shutil.copy2(self.source, source_file)
 
         # Before provisioning we verify the file if source_checksum is defined
         # and we cache the file for future reuse.

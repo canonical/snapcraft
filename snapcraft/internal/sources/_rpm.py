@@ -47,9 +47,6 @@ class Rpm(FileBase):
             rpm_file = os.path.join(
                 self.source_dir, os.path.basename(self.source))
 
-        if self.source_checksum:
-            sources.verify_checksum(self.source_checksum, rpm_file)
-
         if clean_target:
             tmp_rpm = tempfile.NamedTemporaryFile().name
             shutil.move(rpm_file, tmp_rpm)
