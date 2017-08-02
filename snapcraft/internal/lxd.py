@@ -212,6 +212,7 @@ class Containerbuild:
 
         filepath = os.path.join(tmpdir, filename)
         if rev.startswith('x'):
+            logger.info('Making {} user-accessible'.format(filename))
             check_call(['sudo', 'cp', installed, filepath])
             check_call(['sudo', 'chown', str(os.getuid()), filepath])
         else:
