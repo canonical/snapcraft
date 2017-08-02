@@ -36,7 +36,8 @@ class TestFileBase(tests.TestCase):
         file_src.pull()
 
         mock_download.assert_called_once_with()
-        file_src.provision.assert_called_once_with(file_src.source_dir, src='dir')
+        file_src.provision.assert_called_once_with(
+            file_src.source_dir, src='dir')
 
     @mock.patch('shutil.copy2')
     def test_pull_copy(self, mock_shutil_copy2):
