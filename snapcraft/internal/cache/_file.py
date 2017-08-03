@@ -57,6 +57,7 @@ class FileCache(SnapcraftCache):
         except OSError:
             logger.warning(
                 'Unable to cache file {}.'.format(cached_file_path))
+            return None
         return cached_file_path
 
     def get(self, *, algorithm, hash):

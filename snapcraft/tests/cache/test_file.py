@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+from unittest.mock import patch
 
 from testtools.matchers import EndsWith, Is
 
@@ -68,4 +69,16 @@ class FileCacheTestCase(TestCase):
         file = self.file_cache.cache(filename='hash_file',
                                      algorithm=self.algo,
                                      hash=bad_calculated_hash)
+        self.assertThat(file, Is(None))
+
+    def test_cache_file_copy_error(self):
+        with open('hash_file', 'w') as f:
+            f.write('random stub data')
+
+        calculated_hash = calculate_hash('hash_file', algorithm=self.algo)
+        with patch('shutil.copyfile') as mock_copyfile:
+            mock_copyfile.side_effect = OSError()
+            file = self.file_cache.cache(filename='hash_file',
+                                         algorithm=self.algo,
+                                         hash=calculated_hash)
         self.assertThat(file, Is(None))
