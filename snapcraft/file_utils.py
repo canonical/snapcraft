@@ -230,15 +230,7 @@ def requires_path_exists(path, error_fmt=None):
 
 def calculate_sha3_384(path):
     """Calculate sha3 384 hash, reading the file in 1MB chunks."""
-    blocksize = 2**20
-    with open(path, 'rb') as snap_file:
-        hasher = hashlib.sha3_384()
-        while True:
-            buf = snap_file.read(blocksize)
-            if not buf:
-                break
-            hasher.update(buf)
-        return hasher.hexdigest()
+    return calculate_hash(path, algorithm='sha3_384')
 
 
 def calculate_hash(path, *, algorithm):
