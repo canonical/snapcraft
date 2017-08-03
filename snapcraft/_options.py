@@ -154,7 +154,7 @@ class ProjectOptions:
         try:
             return self.__machine_info['cross-compiler-prefix']
         except KeyError:
-            raise EnvironmentError(
+            raise SnapcraftEnvironmentError(
                 'Cross compilation not supported for target arch {!r}'.format(
                     self.__target_machine))
 
@@ -268,5 +268,5 @@ def _find_machine(deb_arch):
         elif _ARCH_TRANSLATIONS[machine].get('uts_machine', '') == deb_arch:
             return machine
 
-    raise EnvironmentError(
+    raise SnapcraftEnvironmentError(
         'Cannot set machine from deb_arch {!r}'.format(deb_arch))

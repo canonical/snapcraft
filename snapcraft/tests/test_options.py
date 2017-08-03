@@ -18,6 +18,7 @@ from unittest import mock
 import testtools
 
 import snapcraft
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft import tests
 
 
@@ -127,6 +128,6 @@ class OptionsTestCase(tests.TestCase):
         options = snapcraft.ProjectOptions(target_deb_arch='x86_64')
 
         with testtools.ExpectedException(
-                EnvironmentError,
+                SnapcraftEnvironmentError,
                 "Cross compilation not supported for target arch 'x86_64'"):
             options.cross_compiler_prefix
