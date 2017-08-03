@@ -37,7 +37,7 @@ class KBuildPluginTestCase(tests.TestCase):
             kconfigflavour = None
             kdefconfig = []
             kconfigs = []
-            install_targets = ['install']
+            build_attributes = []
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -64,7 +64,7 @@ class KBuildPluginTestCase(tests.TestCase):
     def test_get_build_properties(self):
         expected_build_properties = ['kdefconfig', 'kconfigfile',
                                      'kconfigflavour', 'kconfigs',
-                                     'install-targets']
+                                     'build-attributes']
         resulting_build_properties = kbuild.KBuildPlugin.get_build_properties()
 
         self.assertThat(resulting_build_properties,
@@ -258,7 +258,7 @@ ACCEPT=n
     @mock.patch.object(kbuild.KBuildPlugin, 'run')
     def test_build_without_install_target(self, run_mock, check_call_mock):
         self.options.kconfigfile = 'config'
-        self.options.install_targets = []
+        self.options.build_attributes = ['no-install']
         with open(self.options.kconfigfile, 'w') as f:
             f.write('ACCEPT=y\n')
 

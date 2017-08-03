@@ -14,7 +14,7 @@ parts:
     kconfigfile: defconfig
     kconfigs:
      - CONFIG_FOO=n
-    install-targets: []
+    build-attributes: [no-install]
     install: |
       mkdir -p $SNAPCRAFT_PART_INSTALL/bin
       cp myapp $SNAPCRAFT_PART_INSTALL/bin/
