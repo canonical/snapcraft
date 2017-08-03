@@ -185,6 +185,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
         self.kernel_release = ''
 
     def enable_cross_compilation(self):
+        logger.info('Cross compiling kernel target {!r}'.format(
+                    self.project.kernel_arch))
         super().enable_cross_compilation()
         # by enabling cross compilation, the kernel_arch and deb_arch
         # from the project options have effectively changed so we reset
