@@ -77,11 +77,9 @@ import logging
 import os
 import os.path
 import re
-import hashlib
 import sys
 
 from snapcraft.internal import common
-from . import errors
 
 if sys.platform == 'linux':
     from ._bazaar import Bazaar          # noqa
@@ -111,11 +109,6 @@ if sys.platform == 'linux':
         'rpm': Rpm,
         '': Local,
     }
-
-
-# In python >= 3.6 sha3 support is upstreamed in hashlib
-if sys.version_info < (3, 6):
-    import sha3  # noqa
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
@@ -198,21 +191,3 @@ def _get_source_type_from_uri(source, ignore_errors=False):  # noqa: C901
         raise ValueError('local source ({}) is not a directory'.format(source))
 
     return source_type
-
-
-def verify_checksum(source_checksum, checkfile):
-    try:
-        algorithm, digest = source_checksum.split('/', 1)
-
-    except ValueError:
-        raise ValueError('invalid checksum format: {!r}'
-                         .format(source_checksum))
-
-    with open(checkfile, 'rb') as f:
-        # This will raise an AttributeError if algorithm is unsupported
-        hashlib_algorithm = getattr(hashlib, algorithm)
-        calculated_digest = hashlib_algorithm(f.read())
-
-    calculated_digest = calculated_digest.hexdigest()
-    if digest != calculated_digest:
-        raise errors.DigestDoesNotMatchError(digest, calculated_digest)
