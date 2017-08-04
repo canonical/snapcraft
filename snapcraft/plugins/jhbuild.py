@@ -60,7 +60,6 @@ Advice:
 import glob
 import logging
 import os
-import stat
 import subprocess
 import snapcraft
 from snapcraft.internal import common
@@ -125,7 +124,6 @@ def _get_jhbuild_user():
         uid = common.run_output(['id', '-u', 'jhbuild'])
     except subprocess.CalledProcessError:
         uid = 0
-
     return uid
 
 
@@ -133,8 +131,8 @@ def _create_jhbuild_user():
     """Create the jhbuild user"""
     if os.geteuid() == 0:
         common.run(['adduser', '--shell', '/bin/bash',
-                    '--disabled-password', '--system', '--quiet', '--home',
-                    os.sep + os.path.join('home', 'jhbuild'),
+                    '--disabled-password', '--system', '--quiet',
+                    '--home', os.sep + os.path.join('home', 'jhbuild'),
                     'jhbuild'])
 
 
@@ -150,7 +148,7 @@ def _get_jhbuild_group():
         return gid or 65534
 
     try:
-        gid = common.run(['id', '-g', 'jhbuild'])
+        gid = common.run_output(['id', '-g', 'jhbuild'])
     except subprocess.CalledProcessError:
         gid = os.getgid()
 
@@ -287,20 +285,10 @@ class JHBuildPlugin(snapcraft.BasePlugin):
         if jhbuild_user != os.getuid():
             chmod_path = os.path.dirname(os.path.dirname(self.partdir))
 
-            for filename in glob.iglob('%s/**' % chmod_path,
-                                       recursive=True):
-                if not os.path.exists(filename):
-                    continue
-
-                if os.path.isdir(filename):
-                    # READ to everyone
-                    mode = stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
-                    # WRITE to owner
-                    mode |= stat.S_IWUSR
-                    # ENTER to all
-                    mode |= stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-                    os.chmod(filename, mode)
-                    os.chown(filename, jhbuild_user, jhbuild_group)
+        for filename in glob.iglob('%s/**' % chmod_path, recursive=True):
+            if not os.path.exists(filename):
+                continue
+            os.chown(filename, jhbuild_user, jhbuild_group)
 
         if not os.path.exists(self.jhbuild_program):
             logger.info('Building JHBuild')
@@ -313,7 +301,7 @@ class JHBuildPlugin(snapcraft.BasePlugin):
                             cwd=self.jhbuild_src)
 
             self.maybe_sudo(['make', '-j%d' % self.parallel_build_count,
-                            'install'], cwd=self.jhbuild_src)
+                             'install'], cwd=self.jhbuild_src)
 
     def _write_jhbuildrc(self):
         """
@@ -373,7 +361,7 @@ cflags = {cflags!r}
         return self.maybe_sudo(cmd + args, output=output, **kwargs)
 
     def maybe_sudo(self, args, output=True, **kwargs):
-        """Run a command with sudo if we're root"""
+        """Run a command with sudo if we're root to drop privileges"""
         cwd = kwargs.pop('cwd', os.getcwd())
         sudo = []
         if os.getuid() == 0:
