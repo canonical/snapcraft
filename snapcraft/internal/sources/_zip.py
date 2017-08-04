@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import os
 import shutil
 import tempfile
@@ -21,7 +20,6 @@ import zipfile
 
 from . import errors
 from ._base import FileBase
-from snapcraft.internal import sources
 
 
 class Zip(FileBase):
@@ -40,11 +38,12 @@ class Zip(FileBase):
             raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-depth for a zip source')
 
-    def provision(self, dst, clean_target=True, keep_zip=False):
-        zip = os.path.join(self.source_dir, os.path.basename(self.source))
-
-        if self.source_checksum:
-            sources.verify_checksum(self.source_checksum, zip)
+    def provision(self, dst, clean_target=True, keep_zip=False, src=None):
+        if src:
+            zip = src
+        else:
+            zip = os.path.join(
+                self.source_dir, os.path.basename(self.source))
 
         if clean_target:
             tmp_zip = tempfile.NamedTemporaryFile().name
