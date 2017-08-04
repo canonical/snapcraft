@@ -141,7 +141,7 @@ class CleanBuildFailuresCommandTestCase(CleanBuildCommandBaseTestCase):
 
         result = self.run_command(['cleanbuild'])
 
-        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Equals(
             'You must have LXD installed in order to use cleanbuild.\n'
             'Refer to the documentation at '

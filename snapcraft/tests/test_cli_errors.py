@@ -30,6 +30,10 @@ class TestSnapcraftError(snapcraft.internal.errors.SnapcraftError):
     def __init__(self, message):
         super().__init__(message=message)
 
+    @property
+    def exit_code(self):
+        return 123
+
 
 class ErrorsTestCase(tests.TestCase):
 
@@ -64,7 +68,7 @@ class ErrorsTestCase(tests.TestCase):
             self.fail('Exception unexpectedly raised')
 
         self.error_mock.assert_called_once_with('is a SnapcraftError')
-        self.exit_mock.assert_called_once_with(1)
+        self.exit_mock.assert_called_once_with(123)
 
     def test_catcher_raises_snapcraft_exceptions_with_debug(self):
         with testtools.ExpectedException(

@@ -79,5 +79,5 @@ class InitCommandExistingProjectTestCase(CommandBaseTestCase):
 
         result = self.run_command(['init'])
 
-        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.exit_code, Equals(2))
         self.assertEqual(result.output, self.message)

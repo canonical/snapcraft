@@ -29,7 +29,7 @@ class PrimeCommandTestCase(LifecycleCommandsBaseTestCase):
 
         result = self.run_command(['prime', 'no-prime'])
 
-        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Equals(
             "The part named 'no-prime' is not defined in "
             "'snap/snapcraft.yaml'\n"))

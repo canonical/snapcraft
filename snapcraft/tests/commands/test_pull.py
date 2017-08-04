@@ -27,7 +27,7 @@ class PullCommandTestCase(LifecycleCommandsBaseTestCase):
 
         result = self.run_command(['pull', 'no-pull'])
 
-        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.exit_code, Equals(2))
         self.assertEqual(
             result.output,
             "The part named 'no-pull' is not defined in "

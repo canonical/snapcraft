@@ -95,7 +95,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         result = self.run_command(['snap'])
 
-        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Contains(
             "bad-type' is not one of ['app', 'gadget', 'kernel', 'os']"))
 
@@ -355,7 +355,7 @@ type: os
 
         result = self.run_command(['snap'])
 
-        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Contains(
             'Issue while loading part: unknown plugin: does-not-exist'))
 

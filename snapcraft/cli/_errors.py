@@ -33,7 +33,7 @@ def exception_catcher(debug):
             raise
         else:
             echo.error(str(e))
-            sys.exit(1)
+            sys.exit(e.exit_code)
     except Exception:
         raise
 

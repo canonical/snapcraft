@@ -79,7 +79,7 @@ parts:
 
         result = self.run_command(['clean', 'no-clean'])
 
-        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Equals(
             "The part named 'no-clean' is not defined in "
             "'snap/snapcraft.yaml'\n"))

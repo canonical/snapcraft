@@ -29,7 +29,7 @@ class StageCommandTestCase(LifecycleCommandsBaseTestCase):
 
         result = self.run_command(['stage', 'no-stage'])
 
-        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.exit_code, Equals(2))
         self.assertEqual(
             result.output,
             "The part named 'no-stage' is not defined in "

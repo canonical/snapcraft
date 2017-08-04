@@ -27,7 +27,7 @@ class BuildCommandTestCase(LifecycleCommandsBaseTestCase):
 
         result = self.run_command(['build', 'no-build'])
 
-        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.exit_code, Equals(2))
         self.assertEqual(
             result.output,
             "The part named 'no-build' is not defined in "
