@@ -117,9 +117,6 @@ def set_schemadir(schemadir):
 
 
 def get_schemadir():
-    if is_snap():
-        snap = os.environ.get('SNAP')
-        return os.path.join(snap, 'share', 'snapcraft', 'schema')
     return _schemadir
 
 
@@ -153,9 +150,6 @@ def set_tourdir(tourdir):
 
 
 def get_tourdir():
-    if is_snap():
-        snap = os.environ.get('SNAP')
-        return os.path.join(snap, 'tour')
     return _tourdir
 
 
