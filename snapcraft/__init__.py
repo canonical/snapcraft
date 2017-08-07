@@ -350,6 +350,11 @@ of the choice of plugin.
         the dependencies of this part. This might be useful if one knows these
         dependencies will be satisfied in other manner, e.g. via content
         sharing from other snaps.
+
+      - no-install:
+        Do not run the install target provided by the plugin's build system.
+
+        Supported by: kbuild
 """
 
 from collections import OrderedDict                 # noqa

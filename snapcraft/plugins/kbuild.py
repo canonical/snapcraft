@@ -43,12 +43,6 @@ explained above:
       definitions.  If you don't want default for one or more implicit configs
       coming out of these, just add them to this list as well.
 
-    - build-attributes
-      (list of strings)
-      list of boolean build options:
-      - no-install
-        Don't run the 'make install' target
-
 The plugin applies your selected defconfig first by running
 
     make defconfig
@@ -107,16 +101,6 @@ class KBuildPlugin(BasePlugin):
         schema['properties']['kconfigflavour'] = {
             'type': 'string',
             'default': None,
-        }
-
-        schema['properties']['build-attributes'] = {
-            'type': 'array',
-            'minitems': 0,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string',
-            },
-            'default': [],
         }
 
         return schema
