@@ -288,7 +288,9 @@ properties:
             uniqueItems: true
             items:
               type: string
-              pattern: "(no-system-libraries|no-install)"
+              enum:
+                - no-system-libraries
+                - no-install
             default: []
           organize:
             type: object
