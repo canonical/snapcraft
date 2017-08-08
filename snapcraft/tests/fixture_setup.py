@@ -478,6 +478,12 @@ class FakeLXD(fixtures.Fixture):
             elif args[0][:2] == ['lxc', 'init']:
                 self.name = args[0][3]
                 self.status = 'Stopped'
+            elif args[0][:2] == ['lxc', 'launch']:
+                self.name = args[0][4]
+                self.status = 'Running'
+            elif args[0][:2] == ['lxc', 'stop'] and not self.status:
+                # error: not found
+                raise CalledProcessError(returncode=1, cmd=args[0])
             # Fail on an actual snapcraft command and not the command
             # for the installation of it.
             elif ('snapcraft snap' in ' '.join(args[0])
@@ -486,6 +492,47 @@ class FakeLXD(fixtures.Fixture):
             else:
                 return ''.encode('utf-8')
         return call_effect
+
+
+class FakeSnapd(fixtures.Fixture):
+    '''...'''
+
+    def __init__(self):
+        self.snaps = {
+            'core': {'confinement': 'strict',
+                     'id': '2kkitQurgOkL3foImG4wDwn9CIANuHlt',
+                     'revision': '123'},
+            'snapcraft': {'confinement': 'classic',
+                          'id': '3lljuRvshPlM4gpJnH5xExo0DJBOvImu',
+                          'revision': '345'},
+        }
+
+    def _setUp(self):
+        patcher = mock.patch('requests_unixsocket.Session.request')
+        self.session_request_mock = patcher.start()
+        self.session_request_mock.side_effect = self.request_side_effect()
+        self.addCleanup(patcher.stop)
+
+    def request_side_effect(self):
+        def request_effect(*args, **kwargs):
+            if args[0] == 'GET' and '/v2/snaps/' in args[1]:
+                class Session:
+                    def __init__(self, name, snaps):
+                        self._name = name
+                        self._snaps = snaps
+
+                    def json(self):
+                        if self._name not in self._snaps:
+                            return {'status': 'Not Found',
+                                    'result': {'message': 'not found'},
+                                    'status-code': 404,
+                                    'type': 'error'}
+                        return {'status': 'OK',
+                                'type': 'sync',
+                                'result': self._snaps[self._name]}
+                name = args[1].split('/')[-1]
+                return Session(name, self.snaps)
+        return request_effect
 
 
 class GitRepo(fixtures.Fixture):

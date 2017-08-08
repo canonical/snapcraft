@@ -1,6 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2016-2017 Neal Gompa
+# Copyright (C) 2017 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,7 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import os
 import libarchive
 import shutil
@@ -21,7 +21,6 @@ import tempfile
 
 from . import errors
 from ._base import FileBase
-from snapcraft.internal import sources
 
 
 class Rpm(FileBase):
@@ -40,11 +39,12 @@ class Rpm(FileBase):
             raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-branch for a rpm source')
 
-    def provision(self, dst, clean_target=True, keep_rpm=False):
-        rpm_file = os.path.join(self.source_dir, os.path.basename(self.source))
-
-        if self.source_checksum:
-            sources.verify_checksum(self.source_checksum, rpm_file)
+    def provision(self, dst, clean_target=True, keep_rpm=False, src=None):
+        if src:
+            rpm_file = src
+        else:
+            rpm_file = os.path.join(
+                self.source_dir, os.path.basename(self.source))
 
         if clean_target:
             tmp_rpm = tempfile.NamedTemporaryFile().name

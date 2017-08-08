@@ -15,5 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ._apt import AptStagePackageCache  # noqa
-from ._cache import SnapcraftCache  # noqa
-from ._snap import SnapCache  # noqa
+from ._cache import SnapcraftCache      # noqa
+from ._file import FileCache            # noqa
+from ._snap import SnapCache            # noqa
