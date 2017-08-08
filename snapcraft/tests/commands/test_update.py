@@ -133,8 +133,12 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         self.assertThat(self.parts_yaml, FileExists())
         self.assertThat(self.headers_yaml, FileExists())
 
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('os.getuid')
-    def test_update_containerized_exists_running(self, mock_getuid):
+    def test_update_containerized_exists_running(self,
+                                                 mock_getuid,
+                                                 mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         mock_getuid.return_value = 1234
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
@@ -160,23 +164,18 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
 
         project_folder = '/root/build_snap-test'
         fake_lxd.check_call_mock.assert_has_calls([
-            call(['lxc', 'exec', fake_lxd.name, '--',
-                  'python3', '-c',
-                  'import urllib.request; '
-                  'urllib.request.urlopen('
-                  '"http://start.ubuntu.com/connectivity-check.html", '
-                  'timeout=5)']),
             call(['lxc', 'config', 'device', 'add', fake_lxd.name,
                   project_folder, 'disk', 'source={}'.format(source),
                   'path=/{}'.format(project_folder)]),
-            call(['lxc', 'exec', fake_lxd.name, '--',
-                  'bash', '-c',
-                  'cd {}; snapcraft update'.format(project_folder)]),
-            call(['lxc', 'exec', fake_lxd.name, '--',
-                  'apt-get', 'update']),
-            call(['lxc', 'exec', fake_lxd.name, '--',
-                  'apt-get', 'upgrade', '-y']),
-            call(['lxc', 'exec', fake_lxd.name, '--',
-                  'snap', 'refresh']),
             call(['lxc', 'stop', '-f', fake_lxd.name]),
+        ])
+        mock_container_run.assert_has_calls([
+            call(['python3', '-c', 'import urllib.request; ' +
+                  'urllib.request.urlopen(' +
+                  '"http://start.ubuntu.com/connectivity-check.html"' +
+                  ', timeout=5)']),
+            call(['snapcraft', 'update'], cwd=project_folder),
+            call(['apt-get', 'update']),
+            call(['apt-get', 'upgrade', '-y']),
+            call(['snap', 'refresh']),
         ])

@@ -239,13 +239,13 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'stop', '-f', container_name]),
         ])
         mock_container_run.assert_has_calls([
-              call(['python3', '-c', 'import urllib.request; ' +
-                    'urllib.request.urlopen(' +
-                    '"http://start.ubuntu.com/connectivity-check.html"' +
-                    ', timeout=5)']),
-              call(['snapcraft', 'snap', '--output',
-                    'snap-test_1.0_amd64.snap'],
-                   cwd=project_folder),
+            call(['python3', '-c', 'import urllib.request; ' +
+                  'urllib.request.urlopen(' +
+                  '"http://start.ubuntu.com/connectivity-check.html"' +
+                  ', timeout=5)']),
+            call(['snapcraft', 'snap', '--output',
+                  'snap-test_1.0_amd64.snap'],
+                 cwd=project_folder),
         ])
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
