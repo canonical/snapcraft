@@ -109,7 +109,8 @@ class KBuildPlugin(BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['kdefconfig', 'kconfigfile', 'kconfigs', 'kconfigflavour']
+        return ['kdefconfig', 'kconfigfile', 'kconfigs', 'kconfigflavour',
+                'build-attributes']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -237,4 +238,5 @@ class KBuildPlugin(BasePlugin):
 
         self.do_configure()
         self.do_build()
-        self.do_install()
+        if 'no-install' not in self.options.build_attributes:
+            self.do_install()
