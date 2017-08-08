@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import filecmp
 import os
 import subprocess
 import yaml
@@ -25,7 +26,7 @@ import snapcraft
 import integration_tests
 
 
-class ManifestRecordingBaseTestCase(integration_tests.TestCase):
+class AssetRecordingBaseTestCase(integration_tests.TestCase):
     """Test that the prime step records an annotated manifest.yaml
 
     The annotated file will be in prime/snap/manifest.yaml.
@@ -38,7 +39,20 @@ class ManifestRecordingBaseTestCase(integration_tests.TestCase):
             'SNAPCRAFT_BUILD_INFO', '1'))
 
 
-class ManifestRecordingTestCase(ManifestRecordingBaseTestCase):
+class SnapcraftYamlRecordingTestCase(AssetRecordingBaseTestCase):
+
+    def test_prime_records_snapcraft_yaml_copy(self):
+        self.run_snapcraft('prime', project_dir='basic')
+        source_snapcraft_yaml_path = os.path.join('snap', 'snapcraft.yaml')
+        recorded_snapcraft_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'snapcraft.yaml')
+        self.assertTrue(
+            filecmp.cmp(
+                source_snapcraft_yaml_path, recorded_snapcraft_yaml_path,
+                shallow=False))
+
+
+class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
 
     def test_prime_with_architectures(self):
         """Test the recorded manifest for a basic snap
@@ -75,7 +89,7 @@ class ManifestRecordingTestCase(ManifestRecordingBaseTestCase):
 
 
 class ManifestRecordingBuildPackagesTestCase(
-        testscenarios.WithScenarios, ManifestRecordingBaseTestCase):
+        testscenarios.WithScenarios, AssetRecordingBaseTestCase):
 
     scenarios = [
         (snap, {'snap': snap}) for snap in
@@ -115,7 +129,7 @@ class ManifestRecordingBuildPackagesTestCase(
             recorded_yaml['build-packages'], expected_packages_with_version)
 
 
-class ManifestRecordingStagePackagesTestCase(ManifestRecordingBaseTestCase):
+class ManifestRecordingStagePackagesTestCase(AssetRecordingBaseTestCase):
 
     def test_prime_records_packages_version(self):
         """Test the recorded manifest for a snap with packages
@@ -207,7 +221,7 @@ class ManifestRecordingStagePackagesTestCase(ManifestRecordingBaseTestCase):
 
 class ManifestRecordingBzrSourceTestCase(
         integration_tests.BzrSourceBaseTestCase,
-        ManifestRecordingBaseTestCase):
+        AssetRecordingBaseTestCase):
 
     def test_prime_with_bzr_source(self):
         self.copy_project_to_cwd('bzr-head')
@@ -229,7 +243,7 @@ class ManifestRecordingBzrSourceTestCase(
 
 class ManifestRecordingGitSourceTestCase(
         integration_tests.GitSourceBaseTestCase,
-        ManifestRecordingBaseTestCase):
+        AssetRecordingBaseTestCase):
 
     def test_prime_with_git_source(self):
         self.copy_project_to_cwd('git-head')
@@ -251,7 +265,7 @@ class ManifestRecordingGitSourceTestCase(
 
 class ManifestRecordingHgSourceTestCase(
         integration_tests.HgSourceBaseTestCase,
-        ManifestRecordingBaseTestCase):
+        AssetRecordingBaseTestCase):
 
     def test_prime_with_hg_source(self):
         self.copy_project_to_cwd('hg-head')
@@ -274,7 +288,7 @@ class ManifestRecordingHgSourceTestCase(
 
 class ManifestRecordingSubversionSourceTestCase(
         integration_tests.SubversionSourceBaseTestCase,
-        ManifestRecordingBaseTestCase):
+        AssetRecordingBaseTestCase):
 
     def test_prime_with_subversion_source(self):
         self.copy_project_to_cwd('svn-pull')
