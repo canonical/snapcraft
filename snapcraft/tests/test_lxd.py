@@ -39,8 +39,11 @@ class LXDTestCase(tests.TestCase):
         ('cross', dict(remote='local', target_arch='armhf')),
     ]
 
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @patch('snapcraft.internal.lxd.Containerbuild._inject_snapcraft')
     @patch('petname.Generate')
-    def test_cleanbuild(self, mock_pet):
+    def test_cleanbuild(self, mock_pet, mock_inject, mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         fake_lxd = tests.fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -59,11 +62,11 @@ class LXDTestCase(tests.TestCase):
                       'Network connection established\n'
                       'Setting up container with project assets\n'
                       'Retrieved snap.snap\n', fake_logger.output)
-        args = ''
+        args = []
         if self.target_arch:
             self.assertIn('Setting target machine to \'{}\'\n'.format(
                           self.target_arch), fake_logger.output)
-            args = ' --target-arch {}'.format(self.target_arch)
+            args += ['--target-arch', self.target_arch]
 
         container_name = '{}:snapcraft-my-pet'.format(self.remote)
         fake_lxd.check_call_mock.assert_has_calls([
@@ -73,27 +76,22 @@ class LXDTestCase(tests.TestCase):
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'config', 'set', container_name,
                   'environment.LC_ALL', 'C.UTF-8']),
-            call(['lxc', 'exec', container_name, '--',
-                  'python3', '-c',
-                  'import urllib.request; '
-                  'urllib.request.urlopen('
-                  '"http://start.ubuntu.com/connectivity-check.html", '
-                  'timeout=5)']),
-            call(['lxc', 'exec', container_name, '--',
-                  'apt-get', 'update']),
-            call(['lxc', 'exec', container_name, '--',
-                  'apt-get', 'install', 'snapcraft', '-y']),
-            call(['lxc', 'exec', container_name, '--',
-                  'mkdir', project_folder]),
             call(['lxc', 'file', 'push', os.path.realpath('project.tar'),
                   '{}/root/build_project/project.tar'.format(container_name)]),
-            call(['lxc', 'exec', container_name, '--',
-                  'bash', '-c',
-                  'cd {}; tar xvf project.tar'.format(project_folder)]),
-            call(['lxc', 'exec', container_name, '--',
-                  'bash', '-c',
-                  'cd {}; snapcraft snap --output snap.snap{}'.format(
-                      project_folder, args)]),
+        ])
+        mock_container_run.assert_has_calls([
+            call(['python3', '-c', 'import urllib.request; ' +
+                  'urllib.request.urlopen(' +
+                  '"http://start.ubuntu.com/connectivity-check.html"' +
+                  ', timeout=5)']),
+            call(['apt-get', 'update']),
+            call(['mkdir', project_folder]),
+            call(['tar', 'xvf', 'project.tar'],
+                 cwd=project_folder),
+            call(['snapcraft', 'snap', '--output', 'snap.snap', *args],
+                 cwd=project_folder),
+        ])
+        fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'file', 'pull',
                   '{}{}/snap.snap'.format(container_name, project_folder),
                   'snap.snap']),
