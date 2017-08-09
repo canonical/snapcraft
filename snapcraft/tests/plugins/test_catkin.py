@@ -160,7 +160,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         for prop in expected:
             self.assertThat(include_roscore, Contains(prop))
         self.assertThat(include_roscore['type'], Equals('boolean'))
-        self.assertThat(include_roscore['default'], Equals('true'))
+        self.assertThat(include_roscore['default'], Equals(True))
 
         # Check underlay property
         underlay = properties['underlay']
