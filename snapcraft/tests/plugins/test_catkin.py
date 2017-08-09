@@ -70,9 +70,9 @@ class CatkinPluginBaseTestCase(tests.TestCase):
             source_space = 'src'
             source_subdir = None
             include_roscore = False
-            debug = False
             underlay = None
             rosinstall_files = None
+            build_attributes = []
 
         self.properties = props()
         self.project_options = snapcraft.ProjectOptions()
@@ -119,16 +119,13 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
         properties = schema['properties']
         expected = ('rosdistro', 'catkin-packages', 'source-space',
-                    'include-roscore', 'debug', 'underlay', 'rosinstall-files')
+                    'include-roscore', 'underlay', 'rosinstall-files')
         self.assertThat(properties, HasLength(len(expected)))
         for prop in expected:
             self.assertThat(properties, Contains(prop))
 
-    def test_schema_rosdistro(self):
-        schema = catkin.CatkinPlugin.schema()
-
         # Check rosdistro property
-        rosdistro = schema['properties']['rosdistro']
+        rosdistro = properties['rosdistro']
         expected = ('type', 'default')
         self.assertThat(rosdistro, HasLength(len(expected)))
         for prop in expected:
@@ -136,11 +133,8 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(rosdistro['type'], Equals('string'))
         self.assertThat(rosdistro['default'], Equals('indigo'))
 
-    def test_schema_catkin_packages(self):
-        schema = catkin.CatkinPlugin.schema()
-
         # Check catkin-packages property
-        catkin_packages = schema['properties']['catkin-packages']
+        catkin_packages = properties['catkin-packages']
         expected = ('type', 'default', 'minitems', 'uniqueItems', 'items')
         self.assertThat(catkin_packages, HasLength(len(expected)))
         for prop in expected:
@@ -157,11 +151,8 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
                         'Expected "catkin-packages" to be included in '
                         '"required"')
 
-    def test_schema_source_space(self):
-        schema = catkin.CatkinPlugin.schema()
-
         # Check source-space property
-        source_space = schema['properties']['source-space']
+        source_space = properties['source-space']
         expected = ('type', 'default')
         self.assertThat(source_space, HasLength(len(expected)))
         for prop in expected:
@@ -169,11 +160,8 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(source_space['type'], Equals('string'))
         self.assertThat(source_space['default'], Equals('src'))
 
-    def test_schema_include_roscore(self):
-        schema = catkin.CatkinPlugin.schema()
-
         # Check include-roscore property
-        include_roscore = schema['properties']['include-roscore']
+        include_roscore = properties['include-roscore']
         expected = ('type', 'default')
         self.assertThat(include_roscore, HasLength(len(expected)))
         for prop in expected:
@@ -181,23 +169,8 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(include_roscore['type'], Equals('boolean'))
         self.assertThat(include_roscore['default'], Equals(True))
 
-    def test_schema_debug(self):
-        schema = catkin.CatkinPlugin.schema()
-
-        # Check debug property
-        debug = schema['properties']['debug']
-        expected = ('type', 'default')
-        self.assertThat(debug, HasLength(len(expected)))
-        for prop in expected:
-            self.assertThat(debug, Contains(prop))
-        self.assertThat(debug['type'], Equals('boolean'))
-        self.assertThat(debug['default'], Equals(False))
-
-    def test_schema_underlay(self):
-        schema = catkin.CatkinPlugin.schema()
-
         # Check underlay property
-        underlay = schema['properties']['underlay']
+        underlay = properties['underlay']
         expected = ('type', 'properties', 'required')
         self.assertThat(underlay, HasLength(len(expected)))
         for prop in expected:
@@ -222,11 +195,8 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(underlay_run_path, Contains('type'))
         self.assertThat(underlay_run_path['type'], Equals('string'))
 
-    def test_schema_rosinstall_files(self):
-        schema = catkin.CatkinPlugin.schema()
-
         # Check rosinstall-files property
-        rosinstall_files = schema['properties']['rosinstall-files']
+        rosinstall_files = properties['rosinstall-files']
         expected = ('type', 'default', 'minitems', 'uniqueItems', 'items')
         self.assertThat(rosinstall_files, HasLength(len(expected)))
         for prop in expected:
@@ -251,7 +221,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             self.assertIn(property, actual_pull_properties)
 
     def test_get_build_properties(self):
-        expected_build_properties = ['debug']
+        expected_build_properties = ['build-attributes']
         actual_build_properties = catkin.CatkinPlugin.get_build_properties()
 
         self.assertThat(actual_build_properties,
@@ -944,16 +914,16 @@ class BuildTestCase(CatkinPluginBaseTestCase):
 
     scenarios = [
         ('release', {
-            'debug': False,
+            'build_attributes': []
         }),
         ('debug', {
-            'debug': True
+            'build_attributes': ['debug']
         })
     ]
 
     def setUp(self):
         super().setUp()
-        self.properties.debug = self.debug
+        self.properties.build_attributes.extend(self.build_attributes)
 
     @mock.patch('snapcraft.plugins.catkin._Compilers')
     @mock.patch.object(catkin.CatkinPlugin, 'run')
@@ -973,12 +943,12 @@ class BuildTestCase(CatkinPluginBaseTestCase):
 
         # Matching like this for order independence (otherwise it would be
         # quite fragile)
-        debug = self.debug
+        build_attributes = self.build_attributes
 
         class check_build_command():
             def __eq__(self, args):
                 command = ' '.join(args)
-                if debug:
+                if 'debug' in build_attributes:
                     build_type_valid = re.match(
                         '.*--cmake-args.*-DCMAKE_BUILD_TYPE=Debug', command)
                 else:

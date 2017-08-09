@@ -38,11 +38,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (list of strings)
       List of rosinstall files to merge while pulling. Paths are relative to
       the source.
-    - debug:
-      (boolean)
-      Whether or not to build the ROS packages with the Debug build type.
-      Defaults to false (i.e. the packages are built with the Release build
-      type).
     - underlay:
       (object)
       Used to inform Snapcraft that this snap isn't standalone, and is actually
@@ -120,11 +115,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
             'default': True,
         }
 
-        schema['properties']['debug'] = {
-            'type': 'boolean',
-            'default': False,
-        }
-
         schema['properties']['underlay'] = {
             'type': 'object',
             'properties': {
@@ -163,7 +153,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['debug']
+        return ['build-attributes']
 
     @property
     def PLUGIN_STAGE_SOURCES(self):
@@ -616,7 +606,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         compilers = _Compilers(
             self._compilers_path, self.PLUGIN_STAGE_SOURCES, self.project)
         build_type = 'Release'
-        if self.options.debug:
+        if 'debug' in self.options.build_attributes:
             build_type = 'Debug'
         catkincmd.extend([
             '-DCMAKE_C_FLAGS="$CFLAGS {}"'.format(compilers.cflags),
