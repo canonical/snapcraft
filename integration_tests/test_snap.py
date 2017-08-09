@@ -74,7 +74,8 @@ class SnapTestCase(integration_tests.TestCase):
             Not(FileExists()))
 
         self.assertThat(
-            os.path.join(self.prime_dir, 'bin', 'command-binary3.wrapper'),
+            os.path.join(self.prime_dir, 'bin',
+                         'command-binary-wrapper-none.wrapper.wrapper'),
             Not(FileExists()))
 
     def test_snap_default(self):
