@@ -19,6 +19,8 @@ import os
 from testtools.matchers import FileExists
 
 import integration_tests
+import snapcraft
+from snapcraft.tests.matchers import HasArchitecture
 
 
 class KBuildPluginTestCase(integration_tests.TestCase):
@@ -29,3 +31,13 @@ class KBuildPluginTestCase(integration_tests.TestCase):
         binary = os.path.join(self.parts_dir, 'kbuild-hello', 'install', 'bin',
                               'myapp')
         self.assertThat(binary, FileExists())
+
+    def test_cross_compiling(self):
+        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+            self.skipTest('The test only handles amd64 to arm64')
+
+        self.run_snapcraft(['build', '--target-arch=arm64'], 'kbuild-hello')
+
+        binary = os.path.join(self.parts_dir, 'kbuild-hello', 'install', 'bin',
+                              'myapp')
+        self.assertThat(binary, HasArchitecture('aarch64'))
