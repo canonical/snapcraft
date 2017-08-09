@@ -17,6 +17,7 @@
 import builtins
 import os
 import os.path
+import re
 import subprocess
 import shutil
 
@@ -69,6 +70,7 @@ class CatkinPluginBaseTestCase(tests.TestCase):
             source_space = 'src'
             source_subdir = None
             include_roscore = False
+            debug = False
             underlay = None
             rosinstall_files = None
 
@@ -117,13 +119,16 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
         properties = schema['properties']
         expected = ('rosdistro', 'catkin-packages', 'source-space',
-                    'include-roscore', 'underlay', 'rosinstall-files')
+                    'include-roscore', 'debug', 'underlay', 'rosinstall-files')
         self.assertThat(properties, HasLength(len(expected)))
         for prop in expected:
             self.assertThat(properties, Contains(prop))
 
+    def test_schema_rosdistro(self):
+        schema = catkin.CatkinPlugin.schema()
+
         # Check rosdistro property
-        rosdistro = properties['rosdistro']
+        rosdistro = schema['properties']['rosdistro']
         expected = ('type', 'default')
         self.assertThat(rosdistro, HasLength(len(expected)))
         for prop in expected:
@@ -131,8 +136,11 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(rosdistro['type'], Equals('string'))
         self.assertThat(rosdistro['default'], Equals('indigo'))
 
+    def test_schema_catkin_packages(self):
+        schema = catkin.CatkinPlugin.schema()
+
         # Check catkin-packages property
-        catkin_packages = properties['catkin-packages']
+        catkin_packages = schema['properties']['catkin-packages']
         expected = ('type', 'default', 'minitems', 'uniqueItems', 'items')
         self.assertThat(catkin_packages, HasLength(len(expected)))
         for prop in expected:
@@ -144,8 +152,16 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(catkin_packages['items'], Contains('type'))
         self.assertThat(catkin_packages['items']['type'], Equals('string'))
 
+        # Check required
+        self.assertTrue('catkin-packages' in schema['required'],
+                        'Expected "catkin-packages" to be included in '
+                        '"required"')
+
+    def test_schema_source_space(self):
+        schema = catkin.CatkinPlugin.schema()
+
         # Check source-space property
-        source_space = properties['source-space']
+        source_space = schema['properties']['source-space']
         expected = ('type', 'default')
         self.assertThat(source_space, HasLength(len(expected)))
         for prop in expected:
@@ -153,17 +169,35 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(source_space['type'], Equals('string'))
         self.assertThat(source_space['default'], Equals('src'))
 
+    def test_schema_include_roscore(self):
+        schema = catkin.CatkinPlugin.schema()
+
         # Check include-roscore property
-        include_roscore = properties['include-roscore']
+        include_roscore = schema['properties']['include-roscore']
         expected = ('type', 'default')
         self.assertThat(include_roscore, HasLength(len(expected)))
         for prop in expected:
             self.assertThat(include_roscore, Contains(prop))
         self.assertThat(include_roscore['type'], Equals('boolean'))
-        self.assertThat(include_roscore['default'], Equals('true'))
+        self.assertThat(include_roscore['default'], Equals(True))
+
+    def test_schema_debug(self):
+        schema = catkin.CatkinPlugin.schema()
+
+        # Check debug property
+        debug = schema['properties']['debug']
+        expected = ('type', 'default')
+        self.assertThat(debug, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(debug, Contains(prop))
+        self.assertThat(debug['type'], Equals('boolean'))
+        self.assertThat(debug['default'], Equals(False))
+
+    def test_schema_underlay(self):
+        schema = catkin.CatkinPlugin.schema()
 
         # Check underlay property
-        underlay = properties['underlay']
+        underlay = schema['properties']['underlay']
         expected = ('type', 'properties', 'required')
         self.assertThat(underlay, HasLength(len(expected)))
         for prop in expected:
@@ -188,35 +222,43 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(underlay_run_path, Contains('type'))
         self.assertThat(underlay_run_path['type'], Equals('string'))
 
+    def test_schema_rosinstall_files(self):
+        schema = catkin.CatkinPlugin.schema()
+
         # Check rosinstall-files property
-        rosinstall_files = properties['rosinstall-files']
+        rosinstall_files = schema['properties']['rosinstall-files']
         expected = ('type', 'default', 'minitems', 'uniqueItems', 'items')
         self.assertThat(rosinstall_files, HasLength(len(expected)))
         for prop in expected:
             self.assertThat(rosinstall_files, Contains(prop))
-        self.assertThat(catkin_packages['type'], Equals('array'))
-        self.assertThat(catkin_packages['default'], Equals([]))
-        self.assertThat(catkin_packages['minitems'], Equals(1))
-        self.assertTrue(catkin_packages['uniqueItems'])
-        self.assertThat(catkin_packages['items'], Contains('type'))
-        self.assertThat(catkin_packages['items']['type'], Equals('string'))
-
-        # Check required
-        self.assertTrue('catkin-packages' in schema['required'],
-                        'Expected "catkin-packages" to be included in '
-                        '"required"')
+        self.assertThat(rosinstall_files['type'], Equals('array'))
+        self.assertThat(rosinstall_files['default'], Equals([]))
+        self.assertThat(rosinstall_files['minitems'], Equals(1))
+        self.assertTrue(rosinstall_files['uniqueItems'])
+        self.assertThat(rosinstall_files['items'], Contains('type'))
+        self.assertThat(rosinstall_files['items']['type'], Equals('string'))
 
     def test_get_pull_properties(self):
         expected_pull_properties = ['rosdistro', 'catkin-packages',
                                     'source-space', 'include-roscore',
-                                    'underlay']
-        resulting_pull_properties = catkin.CatkinPlugin.get_pull_properties()
+                                    'underlay', 'rosinstall-files']
+        actual_pull_properties = catkin.CatkinPlugin.get_pull_properties()
 
-        self.assertThat(resulting_pull_properties,
+        self.assertThat(actual_pull_properties,
                         HasLength(len(expected_pull_properties)))
 
         for property in expected_pull_properties:
-            self.assertIn(property, resulting_pull_properties)
+            self.assertIn(property, actual_pull_properties)
+
+    def test_get_build_properties(self):
+        expected_build_properties = ['debug']
+        actual_build_properties = catkin.CatkinPlugin.get_build_properties()
+
+        self.assertThat(actual_build_properties,
+                        HasLength(len(expected_build_properties)))
+
+        for property in expected_build_properties:
+            self.assertIn(property, actual_build_properties)
 
     def test_invalid_rosdistro(self):
         self.properties.rosdistro = 'invalid'
@@ -389,45 +431,6 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertEqual(str(raised),
                          'source-space cannot be the root of the Catkin '
                          'workspace')
-
-    @mock.patch('snapcraft.plugins.catkin._Compilers')
-    @mock.patch.object(catkin.CatkinPlugin, 'run')
-    @mock.patch.object(catkin.CatkinPlugin, '_run_in_bash')
-    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
-    @mock.patch.object(catkin.CatkinPlugin, '_prepare_build')
-    @mock.patch.object(catkin.CatkinPlugin, '_finish_build')
-    def test_build(self, finish_build_mock, prepare_build_mock,
-                   run_output_mock, bashrun_mock, run_mock, compilers_mock):
-        plugin = catkin.CatkinPlugin('test-part', self.properties,
-                                     self.project_options)
-        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
-
-        plugin.build()
-
-        prepare_build_mock.assert_called_once_with()
-
-        # Matching like this for order independence (otherwise it would be
-        # quite fragile)
-        class check_build_command():
-            def __eq__(self, args):
-                command = ' '.join(args)
-                return (
-                    args[0] == 'catkin_make_isolated' and
-                    '--install' in command and
-                    '--pkg my_package' in command and
-                    '--directory {}'.format(plugin.builddir) in command and
-                    '--install-space {}'.format(plugin.rosdir) in command and
-                    '--source-space {}'.format(os.path.join(
-                        plugin.builddir,
-                        plugin.options.source_space)) in command)
-
-        bashrun_mock.assert_called_with(check_build_command(), env=mock.ANY)
-
-        self.assertFalse(
-            self.dependencies_mock.called,
-            'Dependencies should have been discovered in the pull() step')
-
-        finish_build_mock.assert_called_once_with()
 
     @mock.patch('snapcraft.plugins.catkin._Compilers')
     @mock.patch.object(catkin.CatkinPlugin, 'run')
@@ -935,6 +938,70 @@ class PullTestCase(CatkinPluginBaseTestCase):
         # Verify that no .deb packages were installed
         self.assertTrue(mock.call().unpack(plugin.installdir) not in
                         self.ubuntu_mock.mock_calls)
+
+
+class BuildTestCase(CatkinPluginBaseTestCase):
+
+    scenarios = [
+        ('release', {
+            'debug': False,
+        }),
+        ('debug', {
+            'debug': True
+        })
+    ]
+
+    def setUp(self):
+        super().setUp()
+        self.properties.debug = self.debug
+
+    @mock.patch('snapcraft.plugins.catkin._Compilers')
+    @mock.patch.object(catkin.CatkinPlugin, 'run')
+    @mock.patch.object(catkin.CatkinPlugin, '_run_in_bash')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
+    @mock.patch.object(catkin.CatkinPlugin, '_prepare_build')
+    @mock.patch.object(catkin.CatkinPlugin, '_finish_build')
+    def test_build(self, finish_build_mock, prepare_build_mock,
+                   run_output_mock, bashrun_mock, run_mock, compilers_mock):
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        plugin.build()
+
+        prepare_build_mock.assert_called_once_with()
+
+        # Matching like this for order independence (otherwise it would be
+        # quite fragile)
+        debug = self.debug
+
+        class check_build_command():
+            def __eq__(self, args):
+                command = ' '.join(args)
+                if debug:
+                    build_type_valid = re.match(
+                        '.*--cmake-args.*-DCMAKE_BUILD_TYPE=Debug', command)
+                else:
+                    build_type_valid = re.match(
+                        '.*--cmake-args.*-DCMAKE_BUILD_TYPE=Release', command)
+                return (
+                    build_type_valid and
+                    args[0] == 'catkin_make_isolated' and
+                    '--install' in command and
+                    '--pkg my_package' in command and
+                    '--directory {}'.format(plugin.builddir) in command and
+                    '--install-space {}'.format(plugin.rosdir) in command and
+                    '--source-space {}'.format(os.path.join(
+                        plugin.builddir,
+                        plugin.options.source_space)) in command)
+
+        bashrun_mock.assert_called_with(check_build_command(), env=mock.ANY)
+
+        self.assertFalse(
+            self.dependencies_mock.called,
+            'Dependencies should have been discovered in the pull() step')
+
+        finish_build_mock.assert_called_once_with()
 
 
 class FinishBuildTestCase(CatkinPluginBaseTestCase):
