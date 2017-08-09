@@ -116,6 +116,9 @@ properties:
         - type: string
           minLength: 1
         - type: number
+  contact:
+    type: string
+    description: contact information for the given snap
   apps:
     type: object
     additionalProperties: false
