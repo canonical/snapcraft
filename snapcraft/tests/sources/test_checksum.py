@@ -15,7 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from snapcraft import tests
-from snapcraft.internal import sources
+from snapcraft.internal.sources import errors
+from snapcraft.internal.sources._checksum import verify_checksum
 
 import os
 import hashlib
@@ -37,7 +38,7 @@ class TestChecksum(tests.TestCase):
         dummy_file = os.path.join('src', 'test')
         open(dummy_file, 'w').close()
 
-        self.assertRaises(AttributeError, sources.verify_checksum, '456/abcde',
+        self.assertRaises(AttributeError, verify_checksum, '456/abcde',
                           dummy_file)
 
     def test_correct_checksum(self):
@@ -54,8 +55,7 @@ class TestChecksum(tests.TestCase):
                                                'rb').read())
         calculated_checksum = calculated_checksum.hexdigest()
 
-        sources.verify_checksum('md5/' + calculated_checksum,
-                                'src/test.zip')
+        verify_checksum('md5/' + calculated_checksum, 'src/test.zip')
 
     def test_incorrect_checksum(self):
         # Create zip file for testing
@@ -73,8 +73,8 @@ class TestChecksum(tests.TestCase):
                                                'rb').read())
         calculated_checksum = calculated_checksum.hexdigest()
 
-        raised = self.assertRaises(sources.errors.DigestDoesNotMatchError,
-                                   sources.verify_checksum,
+        raised = self.assertRaises(errors.DigestDoesNotMatchError,
+                                   verify_checksum,
                                    'md5/' + incorrect_checksum,
                                    'src/test.zip')
 

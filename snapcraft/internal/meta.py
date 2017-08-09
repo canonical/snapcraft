@@ -68,7 +68,7 @@ class CommandError(Exception):
     pass
 
 
-def create_snap_packaging(config_data, project_options):
+def create_snap_packaging(config_data, project_options, snapcraft_yaml_path):
     """Create snap.yaml and related assets in meta.
 
     Create the meta directory and provision it with snap.yaml in the snap dir
@@ -78,7 +78,8 @@ def create_snap_packaging(config_data, project_options):
     :param dict config_data: project values defined in snapcraft.yaml.
     :return: meta_dir.
     """
-    packaging = _SnapPackaging(config_data, project_options)
+    packaging = _SnapPackaging(
+        config_data, project_options, snapcraft_yaml_path)
     packaging.write_snap_yaml()
     packaging.setup_assets()
     packaging.generate_hook_wrappers()
@@ -93,7 +94,8 @@ class _SnapPackaging:
     def meta_dir(self):
         return self._meta_dir
 
-    def __init__(self, config_data, project_options):
+    def __init__(self, config_data, project_options, snapcraft_yaml_path):
+        self._snapcraft_yaml_path = snapcraft_yaml_path
         self._prime_dir = project_options.prime_dir
         self._parts_dir = project_options.parts_dir
         self._arch_triplet = project_options.arch_triplet
@@ -134,19 +136,25 @@ class _SnapPackaging:
             file_utils.link_or_copy(
                 'gadget.yaml', os.path.join(self.meta_dir, 'gadget.yaml'))
 
-    def _record_snapcraft(self):
-        record_dir = os.path.join(self._prime_dir, 'snap')
-        record_file_path = os.path.join(record_dir, 'snapcraft.yaml')
-        if os.path.isfile(record_file_path):
-            os.unlink(record_file_path)
+    def _record_manifest_and_source_snapcraft_yaml(self):
+        prime_snap_dir = os.path.join(self._prime_dir, 'snap')
+        recorded_snapcraft_yaml_path = os.path.join(
+            prime_snap_dir, 'snapcraft.yaml')
+        if os.path.isfile(recorded_snapcraft_yaml_path):
+            os.unlink(recorded_snapcraft_yaml_path)
+        manifest_file_path = os.path.join(prime_snap_dir, 'manifest.yaml')
+        if os.path.isfile(manifest_file_path):
+            os.unlink(manifest_file_path)
 
         # FIXME hide this functionality behind a feature flag for now
         if os.environ.get('SNAPCRAFT_BUILD_INFO'):
-            os.makedirs(record_dir, exist_ok=True)
-            with open(record_file_path, 'w') as record_file:
+            os.makedirs(prime_snap_dir, exist_ok=True)
+            shutil.copy2(
+                self._snapcraft_yaml_path, recorded_snapcraft_yaml_path)
+            with open(manifest_file_path, 'w') as manifest_file:
                 annotated_snapcraft = self._annotate_snapcraft(
                     copy.deepcopy(self._config_data))
-                yaml.dump(annotated_snapcraft, record_file)
+                yaml.dump(annotated_snapcraft, manifest_file)
 
     def _annotate_snapcraft(self, data):
         data['build-packages'] = get_global_state().assets.get(
@@ -201,7 +209,7 @@ class _SnapPackaging:
 
                     file_utils.link_or_copy(source, destination)
 
-        self._record_snapcraft()
+        self._record_manifest_and_source_snapcraft_yaml()
 
     def generate_hook_wrappers(self):
         snap_hooks_dir = os.path.join(self._prime_dir, 'snap', 'hooks')

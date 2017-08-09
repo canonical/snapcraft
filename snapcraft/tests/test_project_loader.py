@@ -1797,10 +1797,9 @@ parts:
                 stage_dir=self.stage_dir,
                 arch_triplet=self.arch_triplet))
 
-    @unittest.mock.patch('snapcraft.ProjectOptions')
-    def test_parts_build_env_contains_parallel_build_count(self, pomock):
-        type(snapcraft.ProjectOptions.return_value).parallel_build_count = \
-            unittest.mock.PropertyMock(return_value='fortytwo')
+    def test_parts_build_env_contains_parallel_build_count(self):
+        self.useFixture(fixture_setup.FakeProjectOptions(
+            parallel_build_count='fortytwo'))
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -1928,6 +1927,11 @@ class ValidationTestCase(ValidationBaseTestCase):
             'service6': {
                 'command': 'binary6',
                 'post-stop-command': 'binary6 --post-stop',
+                'daemon': 'simple'
+            },
+            'service7': {
+                'command': 'binary7',
+                'reload-command': 'binary7 --reload',
                 'daemon': 'simple'
             },
         }

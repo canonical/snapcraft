@@ -64,7 +64,8 @@ class RustPluginCrossCompileTestCase(tests.TestCase):
         self.env_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_cross_compile(self):
+    @mock.patch('snapcraft.internal.sources._script.Script.download')
+    def test_cross_compile(self, mock_download):
         plugin = rust.RustPlugin('test-part', self.options,
                                  self.project_options)
         os.makedirs(plugin.sourcedir)
@@ -73,7 +74,7 @@ class RustPluginCrossCompileTestCase(tests.TestCase):
         self.assertEqual(self.target, plugin._target)
 
         plugin.pull()
-        self.assertThat(plugin._rustpath, DirExists())
+        mock_download.assert_called_once_with()
         self.assertEqual(2, self.run_mock.call_count)
         self.run_mock.assert_has_calls([
             mock.call(

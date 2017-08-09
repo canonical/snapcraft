@@ -85,6 +85,24 @@
 5. Run `rust-hello`.
 
 
+# Test cross-compilation with Autotools
+
+1. Go to integration_tests/snaps/autotools-hello.
+2. Run `snapcraft snap --target-arch=armhf`.
+3. Copy the snap to a Raspberry Pi.
+4. Install the snap.
+5. Run `autotools-hello`.
+
+
+# Test cross-compilation with Waf
+
+1. Go to integration_tests/snaps/waf-with-configflags.
+2. Run `snapcraft snap --target-arch=armhf`.
+3. Copy the snap to a Raspberry Pi.
+4. Install the snap.
+5. Run `waf-with-configflags`.
+
+
 # Test the PC kernel.
 
 1. Get the PC kernel source:

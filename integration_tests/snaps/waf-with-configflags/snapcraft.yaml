@@ -5,7 +5,11 @@ description: |
   This is a basic waf snap with configflags.
 confinement: strict
 
-build-packages: [gcc, libc6-dev]
+apps:
+  waf-with-configflags:
+    command: usr/local/bin/myprogram
+
+build-packages: [gcc]
 # so far there is no packaged waf, projects usually carry it in their git
 # for versioning, the plugin as well as this integration test reflect this
 

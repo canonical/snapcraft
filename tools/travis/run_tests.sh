@@ -20,12 +20,14 @@
 
 set -ev
 
-if [ "$#" -lt 1 ]; then
-    echo "Usage: "$0" <test>"
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ] ; then
+    echo "Usage: "$0" <test> [PATTERN]"
     exit 1
 fi
 
 test="$1"
+
+pattern="$2"
 
 if [ "$test" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
@@ -39,14 +41,20 @@ else
 fi
 
 script_path="$(dirname "$0")"
-"$script_path/run_docker_container.sh" test-runner
-docker exec -i test-runner sh -c "$dependencies"
-docker exec -i test-runner ./runtests.sh $test
+project_path="$(readlink -f "$script_path/../..")"
+
+lxc="/snap/bin/lxc"
+
+"$script_path/setup_lxd.sh"
+"$script_path/run_lxd_container.sh" test-runner
+$lxc file push --recursive $project_path test-runner/root/
+$lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
+$lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test $pattern"
 
 if [ "$test" = "unit" ]; then
     # Report code coverage.
-    docker exec -i test-runner sh -c "python3 -m coverage xml"
-    docker exec -i test-runner sh -c "codecov --token=$CODECOV_TOKEN"
+    $lxc exec test-runner -- sh -c "cd snapcraft && python3 -m coverage xml"
+    $lxc exec test-runner -- sh -c "cd snapcraft && codecov --token=$CODECOV_TOKEN"
 fi
 
-docker rm -f test-runner
+$lxc stop test-runner
