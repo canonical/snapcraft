@@ -649,9 +649,9 @@ class CleanTestCase(BaseLifecycleTestCase):
             Not(DirExists()))
 
 
-class RecordSnapcraftTestCase(BaseLifecycleTestCase):
+class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
 
-    def test_prime_without_build_info_does_not_record_snapcraft_yaml(self):
+    def test_prime_without_build_info_does_not_record(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', None))
         self.make_snapcraft_yaml("""parts:
@@ -659,11 +659,42 @@ class RecordSnapcraftTestCase(BaseLifecycleTestCase):
     plugin: nil
 """)
         lifecycle.execute('prime', self.project_options)
-        self.assertThat(
-            os.path.join('prime', 'snap', 'snapcraft.yaml'),
-            Not(FileExists()))
+        for file_name in ('snapcraft.yaml', 'manifest.yaml'):
+            self.assertThat(
+                os.path.join('prime', 'snap', file_name),
+                Not(FileExists()))
 
     def test_prime_with_build_info_records_snapcraft_yaml(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""", snap_type='type: app')
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+type: app
+
+parts:
+  test-part:
+    plugin: nil
+
+""")
+
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+
+class RecordManifestTestCase(BaseLifecycleTestCase):
+
+    def test_prime_with_build_info_records_manifest(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
         self.make_snapcraft_yaml("""parts:
@@ -689,7 +720,7 @@ architectures: [{}]
 build-packages: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     def test_prime_with_stage_packages(self):
@@ -724,7 +755,7 @@ architectures: [{}]
 build-packages: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     @mock.patch('subprocess.check_call')
@@ -760,7 +791,7 @@ parts:
 architectures: [{}]
 """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     @mock.patch('subprocess.check_call')
@@ -801,7 +832,7 @@ architectures: [{}]
 build-packages: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     @mock.patch('subprocess.check_call')
@@ -836,7 +867,7 @@ architectures: [{}]
 build-packages: [test-package=test-version]
 """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     @mock.patch('subprocess.check_call')
@@ -876,11 +907,11 @@ architectures: [{}]
 build-packages: [test-provider-package=test-version]
 """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
 
 
-class RecordSnapcraftWithDeprecatedSnapKeywordTestCase(BaseLifecycleTestCase):
+class RecordManifestWithDeprecatedSnapKeywordTestCase(BaseLifecycleTestCase):
 
     scenarios = (
         ('using snap keyword', {'keyword': 'snap'}),
@@ -915,7 +946,7 @@ architectures: [{}]
 build-packages: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
 
 

@@ -21,7 +21,6 @@ import tempfile
 
 from . import errors
 from ._base import FileBase
-from snapcraft.internal import sources
 
 
 class Deb(FileBase):
@@ -40,11 +39,12 @@ class Deb(FileBase):
             raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-branch for a deb source')
 
-    def provision(self, dst, clean_target=True, keep_deb=False):
-        deb_file = os.path.join(self.source_dir, os.path.basename(self.source))
-
-        if self.source_checksum:
-            sources.verify_checksum(self.source_checksum, deb_file)
+    def provision(self, dst, clean_target=True, keep_deb=False, src=None):
+        if src:
+            deb_file = src
+        else:
+            deb_file = os.path.join(
+                self.source_dir, os.path.basename(self.source))
 
         if clean_target:
             tmp_deb = tempfile.NamedTemporaryFile().name

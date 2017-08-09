@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,25 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal import errors
+import os
+
+from testtools.matchers import FileExists
+
+import integration_tests
 
 
-class VCSError(errors.SnapcraftError):
-    fmt = '{message}'
+class KBuildPluginTestCase(integration_tests.TestCase):
 
+    def test_stage(self):
+        self.run_snapcraft('stage', 'kbuild-hello')
 
-class IncompatibleOptionsError(errors.SnapcraftError):
-
-    fmt = '{message}'
-
-    def __init__(self, message):
-        super().__init__(message=message)
-
-
-class DigestDoesNotMatchError(errors.SnapcraftError):
-
-    fmt = ('Expected the digest for source to be {expected}, '
-           'but it was {calculated}')
-
-    def __init__(self, expected, calculated):
-        super().__init__(expected=expected, calculated=calculated)
+        binary = os.path.join(self.parts_dir, 'kbuild-hello', 'install', 'bin',
+                              'myapp')
+        self.assertThat(binary, FileExists())

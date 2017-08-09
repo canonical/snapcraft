@@ -2251,6 +2251,19 @@ class CollisionTestCase(tests.TestCase):
             "common which have different contents:\n    file.pc",
             raised.__str__())
 
+    def test_collision_with_part_not_built(self):
+        part_built = mocks.loadplugin(
+            'part_built', part_properties={'stage': ['collision']})
+        part_built.code.installdir = 'part_built_install'
+        # a part built has the stage file in the installdir.
+        os.makedirs(part_built.installdir)
+        open(os.path.join(part_built.installdir, 'collision'), 'w').close()
+        part_not_built = mocks.loadplugin(
+            'part_not_built', part_properties={'stage': ['collision']})
+        part_not_built.code.installdir = 'part_not_built_install'
+        # a part not built doesn't have the stage file in the installdir.
+        pluginhandler.check_for_collisions([part_built, part_not_built])
+
 
 class StagePackagesTestCase(tests.TestCase):
 

@@ -95,3 +95,9 @@ class StageTestCase(integration_tests.TestCase):
 
         # This will fail to build if the libc symlinks are missing
         self.run_snapcraft('stage', 'use_libc_dl')
+
+    def test_stage_with_file_to_check_for_collisions_not_build(self):
+        """Regression test for LP: #1660696"""
+        # This will fail if we try to check for collisions even in parts that
+        # haven't been build.
+        self.run_snapcraft('stage', 'stage-with-two-equal-files')

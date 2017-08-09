@@ -1,4 +1,4 @@
-# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#!/bin/bash
 #
 # Copyright (C) 2015-2017 Canonical Ltd
 #
@@ -14,25 +14,20 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal import errors
+# Build the snapcraft snap.
 
+set -ev
 
-class VCSError(errors.SnapcraftError):
-    fmt = '{message}'
+script_path="$(dirname "$0")"
+project_path="$(readlink -f "$script_path/../..")"
 
+lxc="/snap/bin/lxc"
 
-class IncompatibleOptionsError(errors.SnapcraftError):
+"$script_path/setup_lxd.sh"
+"$script_path/run_lxd_container.sh" snap-builder
+$lxc file push --recursive $project_path snap-builder/root/
+# TODO use the stable snap once it's published.
+$lxc exec snap-builder -- sh -c "apt install squashfuse && snap install snapcraft --candidate --classic"
+$lxc exec snap-builder -- sh -c "cd snapcraft && /snap/bin/snapcraft"
 
-    fmt = '{message}'
-
-    def __init__(self, message):
-        super().__init__(message=message)
-
-
-class DigestDoesNotMatchError(errors.SnapcraftError):
-
-    fmt = ('Expected the digest for source to be {expected}, '
-           'but it was {calculated}')
-
-    def __init__(self, expected, calculated):
-        super().__init__(expected=expected, calculated=calculated)
+$lxc stop snap-builder

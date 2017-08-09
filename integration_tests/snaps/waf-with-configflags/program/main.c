@@ -4,6 +4,9 @@
 
 #include "abc.h"
 
+#include <stdio.h>
+
 int main() {
+	printf("Hello Waf!\n");
 	return 0;
 }
