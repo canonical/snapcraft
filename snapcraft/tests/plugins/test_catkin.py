@@ -167,7 +167,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         for prop in expected:
             self.assertThat(include_roscore, Contains(prop))
         self.assertThat(include_roscore['type'], Equals('boolean'))
-        self.assertThat(include_roscore['default'], Equals(True))
+        self.assertThat(include_roscore['default'], Equals('true'))
 
         # Check underlay property
         underlay = properties['underlay']
@@ -211,7 +211,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
     def test_get_pull_properties(self):
         expected_pull_properties = ['rosdistro', 'catkin-packages',
                                     'source-space', 'include-roscore',
-                                    'underlay', 'rosinstall-files']
+                                    'underlay']
         actual_pull_properties = catkin.CatkinPlugin.get_pull_properties()
 
         self.assertThat(actual_pull_properties,
