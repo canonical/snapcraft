@@ -37,6 +37,7 @@ class KBuildPluginTestCase(tests.TestCase):
             kconfigflavour = None
             kdefconfig = []
             kconfigs = []
+            build_attributes = []
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -62,7 +63,8 @@ class KBuildPluginTestCase(tests.TestCase):
 
     def test_get_build_properties(self):
         expected_build_properties = ['kdefconfig', 'kconfigfile',
-                                     'kconfigflavour', 'kconfigs']
+                                     'kconfigflavour', 'kconfigs',
+                                     'build-attributes']
         resulting_build_properties = kbuild.KBuildPlugin.get_build_properties()
 
         self.assertThat(resulting_build_properties,
@@ -251,3 +253,29 @@ SOMETHING=y
 ACCEPT=n
 """
         self.assertEqual(config_contents, expected_config)
+
+    @mock.patch('subprocess.check_call')
+    @mock.patch.object(kbuild.KBuildPlugin, 'run')
+    def test_build_without_install_target(self, run_mock, check_call_mock):
+        self.options.kconfigfile = 'config'
+        self.options.build_attributes = ['no-install']
+        with open(self.options.kconfigfile, 'w') as f:
+            f.write('ACCEPT=y\n')
+
+        plugin = kbuild.KBuildPlugin('test-part', self.options,
+                                     self.project_options)
+
+        os.makedirs(plugin.builddir)
+
+        plugin.build()
+
+        self.assertEqual(1, check_call_mock.call_count)
+        check_call_mock.assert_has_calls([
+            mock.call('yes "" | make -j2 oldconfig', shell=True,
+                      cwd=plugin.builddir),
+        ])
+
+        self.assertEqual(1, run_mock.call_count)
+        run_mock.assert_has_calls([
+            mock.call(['make', '-j2']),
+        ])
