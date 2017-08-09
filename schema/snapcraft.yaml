@@ -211,6 +211,9 @@ properties:
   passthrough:
     type: object
     description: properties to be passed into snap.yaml as-is
+  website:
+    type: string
+    description: website for the given snap
   apps:
     type: object
     additionalProperties: false

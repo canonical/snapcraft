@@ -1,6 +1,7 @@
 name: base-example
 version: 1.0
 summary: Example base snap
+website: https://snapcraft.io
 description:
   A base snap is a special kind of snap that can be used by
   other snaps as an alternative base. This base will then
