@@ -1929,6 +1929,11 @@ class ValidationTestCase(ValidationBaseTestCase):
                 'post-stop-command': 'binary6 --post-stop',
                 'daemon': 'simple'
             },
+            'service7': {
+                'command': 'binary7',
+                'reload-command': 'binary7 --reload',
+                'daemon': 'simple'
+            },
         }
 
         project_loader.Validator(self.data).validate()

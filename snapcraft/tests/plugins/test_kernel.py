@@ -49,6 +49,7 @@ class KernelPluginTestCase(tests.TestCase):
             kernel_initrd_firmware = []
             kernel_device_trees = []
             kernel_initrd_compression = 'gz'
+            build_attributes = []
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()

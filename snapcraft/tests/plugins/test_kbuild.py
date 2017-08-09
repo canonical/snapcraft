@@ -37,6 +37,7 @@ class KBuildPluginTestCase(tests.TestCase):
             kconfigflavour = None
             kdefconfig = []
             kconfigs = []
+            build_attributes = []
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -62,7 +63,8 @@ class KBuildPluginTestCase(tests.TestCase):
 
     def test_get_build_properties(self):
         expected_build_properties = ['kdefconfig', 'kconfigfile',
-                                     'kconfigflavour', 'kconfigs']
+                                     'kconfigflavour', 'kconfigs',
+                                     'build-attributes']
         resulting_build_properties = kbuild.KBuildPlugin.get_build_properties()
 
         self.assertThat(resulting_build_properties,
@@ -270,6 +272,7 @@ class KBuildCrossCompilePluginTestCase(tests.TestCase):
             kconfigflavour = None
             kdefconfig = []
             kconfigs = []
+            build_attributes = []
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions(
