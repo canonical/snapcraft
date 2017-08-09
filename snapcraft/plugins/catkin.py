@@ -112,7 +112,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # minority.
         schema['properties']['include-roscore'] = {
             'type': 'boolean',
-            'default': 'true',
+            'default': True,
         }
 
         schema['properties']['underlay'] = {
