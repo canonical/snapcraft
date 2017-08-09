@@ -17,7 +17,7 @@
 import os
 import tarfile
 import fixtures
-import unittest
+from unittest import mock
 
 from snapcraft.internal import sources
 
@@ -35,7 +35,7 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
         self.useFixture(fixtures.EnvironmentVariable('TERM', self.term))
         super().setUp()
 
-    @unittest.mock.patch('snapcraft.sources.Tar.provision')
+    @mock.patch('snapcraft.sources.Tar.provision')
     def test_pull_tarball_must_download_to_sourcedir(self, mock_prov):
         plugin_name = 'test_plugin'
         dest_dir = os.path.join('parts', plugin_name, 'src')
@@ -47,9 +47,28 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
 
         tar_source.pull()
 
-        mock_prov.assert_called_once_with(dest_dir)
+        source_file = os.path.join(dest_dir, tar_file_name)
+        mock_prov.assert_called_once_with(dest_dir, src=source_file)
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
             self.assertEqual('Test fake compressed file', tar_file.read())
+
+    @mock.patch('snapcraft.sources.Tar.provision')
+    def test_pull_twice_downloads_once(self, mock_prov):
+        """If a source checksum is defined, the cache should be tried first."""
+        source = 'http://{}:{}/{file_name}'.format(
+            *self.server.server_address, file_name='test.tar')
+        expected_checksum = ('sha384/1075c294bb52ea0f71c4349a60b00c110f187ccf1'
+                             'f249ae5d83ae41285f9c4eefbed57271f31e7c0293acca6f'
+                             '347f369')
+        tar_source = sources.Tar(source, self.path,
+                                 source_checksum=expected_checksum)
+
+        tar_source.pull()
+        with mock.patch(
+                'snapcraft.sources.Tar.download',
+                new=mock.Mock(wraps=sources.Tar.download)) as download_spy:
+            tar_source.pull()
+            self.assertEqual(download_spy.call_count, 0)
 
     def test_strip_common_prefix(self):
         # Create tar file for testing
