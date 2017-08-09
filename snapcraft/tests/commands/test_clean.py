@@ -93,7 +93,7 @@ parts:
         self.assertThat(self.stage_dir, Not(DirExists()))
         self.assertThat(self.prime_dir, Not(DirExists()))
 
-    def test_clean_containerized(self):
+    def test_clean_containerized_noop(self):
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         self.useFixture(fixtures.EnvironmentVariable(
@@ -103,11 +103,28 @@ parts:
         result = self.run_command(['clean'])
 
         self.assertThat(result.exit_code, Equals(0))
-        container_name = 'local:snapcraft-clean-test'
+        # clean should be a noop if no container exists yet/ anymore
+        fake_lxd.check_call_mock.assert_not_called()
+
+    def test_clean_containerized_exists_stopped(self):
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        # Container was created before, and isn't running
+        fake_lxd.name = 'local:snapcraft-clean-test'
+        fake_lxd.status = 'Stopped'
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml(n=3)
+
+        result = self.run_command(['clean'])
+
+        self.assertThat(result.exit_code, Equals(0))
         # clean with no parts should delete the container
         fake_lxd.check_call_mock.assert_has_calls([
-            call(['lxc', 'delete', '-f', container_name]),
+            call(['lxc', 'delete', '-f', fake_lxd.name]),
         ])
+        # no other commands should be run in the container
+        self.assertEquals(fake_lxd.check_call_mock.call_count, 1)
 
     def test_clean_containerized_with_part(self):
         fake_lxd = fixture_setup.FakeLXD()
@@ -119,10 +136,9 @@ parts:
         result = self.run_command(['clean', 'clean1'])
 
         self.assertThat(result.exit_code, Equals(0))
-        container_name = 'local:snapcraft-clean-test'
         # clean with parts should NOT delete the container
         self.assertNotEqual(fake_lxd.check_call_mock.call_args,
-                            call(['lxc', 'delete', '-f', container_name]))
+                            call(['lxc', 'delete', '-f', fake_lxd.name]))
 
     def test_local_plugin_not_removed(self):
         self.make_snapcraft_yaml(n=3)

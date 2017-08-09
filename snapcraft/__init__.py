@@ -350,6 +350,11 @@ of the choice of plugin.
         the dependencies of this part. This might be useful if one knows these
         dependencies will be satisfied in other manner, e.g. via content
         sharing from other snaps.
+
+      - no-install:
+        Do not run the install target provided by the plugin's build system.
+
+        Supported by: kbuild
 """
 
 from collections import OrderedDict                 # noqa
@@ -446,3 +451,9 @@ def str_presenter(dumper, data):
 yaml.add_representer(str, str_presenter)
 yaml.add_representer(OrderedDict, dict_representer)
 yaml.add_constructor(_mapping_tag, dict_constructor)
+
+from snapcraft.internal import common as _common # noqa
+if _common.is_snap():
+    snap = _os.environ.get('SNAP')
+    _common.set_schemadir(_os.path.join(snap, 'share', 'snapcraft', 'schema'))
+    _common.set_tourdir(_os.path.join(snap, 'tour'))
