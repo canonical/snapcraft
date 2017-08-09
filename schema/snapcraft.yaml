@@ -80,6 +80,7 @@ properties:
     description: the snap type, the implicit type is 'app'
     enum:
       - app
+      - base
       - gadget
       - kernel
       - os
