@@ -42,7 +42,7 @@ packages = [
 	'snapcraft.plugins',
 	'snapcraft.storeapi'
 	]
-package_data = {'snapcraft.internal.repo': ['manifest.txt']},
+package_data = {'snapcraft.internal.repo': ['manifest.txt']}
 license = 'GPL v3'
 classifiers = (
 	'Development Status :: 4 - Beta',
