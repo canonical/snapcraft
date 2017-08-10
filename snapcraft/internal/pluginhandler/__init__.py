@@ -141,12 +141,12 @@ class PluginHandler:
                                      self._project_options.local_plugins_dir)
             if not module:
                 raise errors.PluginError(
-                    'unknown plugin: {}'.format(plugin_name))
+                    'unknown plugin: {!r}'.format(plugin_name))
 
         plugin = _get_plugin(module)
         if not plugin:
             raise errors.PluginError(
-                'no plugin found in package: {}'.format(plugin_name))
+                'no plugin found in {!r}'.format(plugin_name))
         _validate_pull_and_build_properties(
             plugin_name, plugin, part_schema, definitions_schema)
         options = _make_options(

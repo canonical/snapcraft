@@ -109,7 +109,7 @@ class PluginTestCase(tests.TestCase):
             'fake-part', 'test_unexisting')
 
         self.assertThat(str(raised), Equals(
-            'Issue while loading part: unknown plugin: test_unexisting'))
+            "Issue while loading part: unknown plugin: 'test_unexisting'"))
 
         # Make sure that nothing was added to sys.path.
         self.assertEqual(path, sys.path)
@@ -128,7 +128,7 @@ class PluginTestCase(tests.TestCase):
             'fake-part', '_ros')
 
         self.assertThat(str(raised), Equals(
-            'Issue while loading part: no plugin found in package: _ros'))
+            "Issue while loading part: no plugin found in '_ros'"))
 
         # Make sure that nothing was added to sys.path.
         self.assertEqual(path, sys.path)
