@@ -17,4 +17,3 @@ parts:
       - talker
       - listener
     include-roscore: true
-    build-attributes: [debug]
