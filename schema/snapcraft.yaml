@@ -291,6 +291,7 @@ properties:
               enum:
                 - no-system-libraries
                 - no-install
+                - debug
             default: []
           organize:
             type: object

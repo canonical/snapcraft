@@ -355,6 +355,11 @@ of the choice of plugin.
         Do not run the install target provided by the plugin's build system.
 
         Supported by: kbuild
+
+      - debug:
+        Plugins that support the concept of build types build in Release mode
+        by default. Setting the 'debug' attribute requests that they instead
+        build in Debug mode.
 """
 
 from collections import OrderedDict                 # noqa
