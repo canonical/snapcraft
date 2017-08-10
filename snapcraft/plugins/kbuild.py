@@ -125,7 +125,7 @@ class KBuildPlugin(BasePlugin):
 
     def enable_cross_compilation(self):
         self.make_cmd.append('ARCH={}'.format(
-            self.project.kernel_arch))
+            os.environ.get('ARCH', self.project.kernel_arch)))
         if 'CROSS_COMPILE' in os.environ:
             toolchain = os.environ['CROSS_COMPILE']
         else:
