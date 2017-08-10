@@ -120,15 +120,15 @@ class PluginTestCase(tests.TestCase):
 
         path = copy.copy(sys.path)
 
-        # "internal" is a valid module within the plugin path, but contains no
+        # "_ros" is a valid module within the plugin path, but contains no
         # plugins.
         raised = self.assertRaises(
             errors.PluginError,
             mocks.loadplugin,
-            'fake-part', 'internal')
+            'fake-part', '_ros')
 
         self.assertThat(str(raised), Equals(
-            'Issue while loading part: no plugin found in module: internal'))
+            'Issue while loading part: no plugin found in package: _ros'))
 
         # Make sure that nothing was added to sys.path.
         self.assertEqual(path, sys.path)

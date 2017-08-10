@@ -146,7 +146,7 @@ class PluginHandler:
         plugin = _get_plugin(module)
         if not plugin:
             raise errors.PluginError(
-                'no plugin found in module: {}'.format(plugin_name))
+                'no plugin found in package: {}'.format(plugin_name))
         _validate_pull_and_build_properties(
             plugin_name, plugin, part_schema, definitions_schema)
         options = _make_options(

@@ -64,7 +64,7 @@ import subprocess
 import textwrap
 
 import snapcraft
-from snapcraft.plugins.internal import pullers
+from snapcraft.plugins import _ros
 from snapcraft import (
     common,
     file_utils,
@@ -333,7 +333,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         compilers.setup()
 
         # Use rosdep for dependency detection and resolution
-        rosdep = pullers.rosdep.Rosdep(
+        rosdep = _ros.rosdep.Rosdep(
             ros_distro=self.options.rosdistro,
             ros_package_path=self._ros_package_path,
             rosdep_path=self._rosdep_path,
@@ -670,7 +670,7 @@ def _find_system_dependencies(catkin_packages, rosdep, catkin):
             # it.
             try:
                 these_dependencies = rosdep.resolve_dependency(dependency)
-            except pullers.rosdep.RosdepDependencyNotFoundError:
+            except _ros.rosdep.RosdepDependencyNotFoundError:
                 raise RuntimeError(
                     "Package {!r} isn't a valid system dependency. "
                     "Did you forget to add it to catkin-packages? If "

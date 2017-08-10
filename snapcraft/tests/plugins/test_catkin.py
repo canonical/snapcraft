@@ -32,7 +32,7 @@ from testtools.matchers import (
 
 import snapcraft
 from snapcraft.plugins import catkin
-from snapcraft.plugins.internal import pullers
+from snapcraft.plugins import _ros
 from snapcraft import (
     repo,
     tests,
@@ -87,7 +87,7 @@ class CatkinPluginBaseTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch(
-            'snapcraft.plugins.internal.pullers.rosdep.Rosdep')
+            'snapcraft.plugins._ros.rosdep.Rosdep')
         self.rosdep_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -1130,7 +1130,7 @@ class FindSystemDependenciesTestCase(tests.TestCase):
     def test_find_system_dependencies_missing_local_dependency(self):
         # Setup a dependency on a non-existing package, and it doesn't resolve
         # to a system dependency.'
-        exception = pullers.rosdep.RosdepDependencyNotFoundError('foo')
+        exception = _ros.rosdep.RosdepDependencyNotFoundError('foo')
         self.rosdep_mock.resolve_dependency.side_effect = exception
 
         raised = self.assertRaises(

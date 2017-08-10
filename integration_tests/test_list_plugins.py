@@ -34,7 +34,7 @@ class ListPluginsTestCase(integration_tests.TestCase):
         self.assertThat(version, StartsWith("Starting snapcraft "))
         plugins_list = set(plugins_list.split())
         expected = set()
-        for _, modname, is_package in pkgutil.iter_modules(plugins.__path__):
-            if not (is_package and modname == 'internal'):
+        for _, modname, _ in pkgutil.iter_modules(plugins.__path__):
+            if not modname.startswith('_'):
                 expected.add(modname.replace('_', '-'))
         self.assertThat(plugins_list, Equals(expected))

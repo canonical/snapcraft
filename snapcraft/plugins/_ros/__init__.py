@@ -14,4 +14,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.plugins.internal.pullers import rosdep  # noqa
+from snapcraft.plugins._ros import rosdep  # noqa

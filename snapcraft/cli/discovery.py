@@ -76,9 +76,10 @@ def list_plugins():
     This command has an alias of `plugins`.
     """
     plugins = []
-    for importer, modname, is_package in pkgutil.iter_modules(
+    for _, modname, _ in pkgutil.iter_modules(
             snapcraft.plugins.__path__):
-        if not (is_package and modname == 'internal'):
+        # Only add non-private modules/packages to the plugin list
+        if not modname.startswith('_'):
             plugins.append(modname.replace('_', '-'))
 
     # we wrap the output depending on terminal size

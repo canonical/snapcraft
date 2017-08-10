@@ -20,7 +20,7 @@ import subprocess
 from unittest import mock
 from testtools.matchers import Equals
 
-from snapcraft.plugins.internal.pullers import rosdep
+from snapcraft.plugins._ros import rosdep
 
 import snapcraft
 from snapcraft import (
