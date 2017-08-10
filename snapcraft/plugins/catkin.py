@@ -38,6 +38,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (list of strings)
       List of rosinstall files to merge while pulling. Paths are relative to
       the source.
+    - catkin-cmake-args:
+      (list of strings)
+      Configure flags to pass onto the cmake invocation from catkin.
     - underlay:
       (object)
       Used to inform Snapcraft that this snap isn't standalone, and is actually
@@ -138,6 +141,15 @@ class CatkinPlugin(snapcraft.BasePlugin):
             'default': [],
         }
 
+        schema['properties']['catkin-cmake-args'] = {
+            'type': 'array',
+            'minitems': 1,
+            'items': {
+                'type': 'string',
+            },
+            'default': [],
+        }
+
         schema['required'].append('catkin-packages')
 
         return schema
@@ -153,7 +165,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['build-attributes']
+        return ['build-attributes', 'catkin-cmake-args']
 
     @property
     def PLUGIN_STAGE_SOURCES(self):
@@ -616,6 +628,9 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
             '-DCMAKE_CXX_COMPILER={}'.format(compilers.cxx_compiler_path),
             '-DCMAKE_BUILD_TYPE={}'.format(build_type),
         ])
+
+        # Finally, add any cmake-args requested from the plugin options
+        catkincmd.extend(self.options.catkin_cmake_args)
 
         # This command must run in bash due to a bug in Catkin that causes it
         # to explode if there are spaces in the cmake args (which there are).
