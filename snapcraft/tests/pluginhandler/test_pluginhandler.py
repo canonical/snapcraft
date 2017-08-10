@@ -128,7 +128,7 @@ class PluginTestCase(tests.TestCase):
             'fake-part', '_ros')
 
         self.assertThat(str(raised), Equals(
-            "Issue while loading part: no plugin found in '_ros'"))
+            "Issue while loading part: no plugin found in module '_ros'"))
 
         # Make sure that nothing was added to sys.path.
         self.assertEqual(path, sys.path)
