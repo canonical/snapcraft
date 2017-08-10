@@ -86,6 +86,33 @@ _ROS_RELEASE_MAP = {
     'lunar': 'xenial'
 }
 
+_SUPPORTED_DEPENDENCY_TYPES = {
+    'apt',
+}
+
+
+class CatkinInvalidSystemDependencyError(errors.SnapcraftError):
+    fmt = (
+        "Package {dependency!r} isn't a valid system dependency. Did you "
+        'forget to add it to catkin-packages? If not, add the Ubuntu package '
+        'containing it to stage-packages until you can get it into the rosdep '
+        'database.'
+    )
+
+    def __init__(self, dependency):
+        super().__init__(dependency=dependency)
+
+
+class CatkinUnsupportedDependencyTypeError(errors.SnapcraftError):
+    fmt = (
+        'Package {dependency!r} resolved to an unsupported type of '
+        'dependency: {dependency_type!r}'
+    )
+
+    def __init__(self, dependency_type, dependency):
+        super().__init__(dependency_type=dependency_type,
+                         dependency=dependency)
+
 
 class CatkinPlugin(snapcraft.BasePlugin):
 
@@ -370,15 +397,19 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         # If the package requires roscore, resolve it into a system dependency
         # as well.
         if self.options.include_roscore:
-            roscore_dependency = rosdep.resolve_dependency('ros_core')
-            if roscore_dependency:
-                system_dependencies |= set(roscore_dependency)
+            roscore = rosdep.resolve_dependency('ros_core')
+            if roscore:
+                for dependency_type, dependencies in roscore.items():
+                    if dependency_type not in system_dependencies:
+                        system_dependencies[dependency_type] = set()
+                    system_dependencies[dependency_type] |= dependencies
             else:
                 raise RuntimeError(
                     'Unable to determine system dependency for roscore')
 
-        # Pull down and install any system dependencies that were discovered
-        if system_dependencies:
+        # Pull down and install any apt dependencies that were discovered
+        apt_dependencies = system_dependencies.get('apt')
+        if apt_dependencies:
             ubuntudir = os.path.join(self.partdir, 'ubuntu')
             os.makedirs(ubuntudir, exist_ok=True)
 
@@ -389,7 +420,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
             logger.info('Fetching package dependencies...')
             try:
-                ubuntu.get(system_dependencies)
+                ubuntu.get(apt_dependencies)
             except repo.errors.PackageNotFoundError as e:
                 raise RuntimeError(
                     'Failed to fetch system dependencies: {}'.format(
@@ -659,7 +690,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 def _find_system_dependencies(catkin_packages, rosdep, catkin):
     """Find system dependencies for a given set of Catkin packages."""
 
-    system_dependencies = {}
+    resolved_dependencies = {}
 
     logger.info('Determining system dependencies for Catkin packages...')
     for package in catkin_packages:
@@ -667,47 +698,69 @@ def _find_system_dependencies(catkin_packages, rosdep, catkin):
         dependencies = rosdep.get_dependencies(package)
 
         for dependency in dependencies:
-            # No need to resolve this dependency if we know it's local, or if
-            # we've already resolved it into a system dependency
-            if (dependency in catkin_packages or
-                    dependency in system_dependencies):
-                continue
+            _resolve_package_dependencies(
+                catkin_packages, dependency, catkin, rosdep,
+                resolved_dependencies)
 
-            if catkin:
-                # Before trying to resolve this dependency into a system
-                # dependency, see if it's already in the underlay.
-                try:
-                    catkin.find(dependency)
-                except CatkinPackageNotFoundError:
-                    # No package by that name is available
-                    pass
-                else:
-                    # Package was found-- don't pull anything extra to satisfy
-                    # this dependency.
-                    logger.debug(
-                        'Satisfied dependency {!r} in underlay'.format(
-                            dependency))
-                    continue
+    # We currently have nested dict structure of:
+    #    dependency name -> package type -> package names
+    #
+    # We want to return a flattened dict of package type -> package names.
+    flattened_dependencies = {}
+    for dependency_types in resolved_dependencies.values():
+        for key, value in dependency_types.items():
+            if key not in flattened_dependencies:
+                flattened_dependencies[key] = set()
+            flattened_dependencies[key] |= value
 
-            # In this situation, the package depends on something that we
-            # weren't instructed to build. It's probably a system dependency,
-            # but the developer could have also forgotten to tell us to build
-            # it.
-            try:
-                these_dependencies = rosdep.resolve_dependency(dependency)
-            except _ros.rosdep.RosdepDependencyNotFoundError:
-                raise RuntimeError(
-                    "Package {!r} isn't a valid system dependency. "
-                    "Did you forget to add it to catkin-packages? If "
-                    "not, add the Ubuntu package containing it to "
-                    "stage-packages until you can get it into the "
-                    "rosdep database.".format(dependency))
+    # Finally, return that dict of dependencies
+    return flattened_dependencies
 
-            system_dependencies[dependency] = these_dependencies
 
-    # Finally, return a list of all system dependencies
-    return set(item for sublist in system_dependencies.values()
-               for item in sublist)
+def _resolve_package_dependencies(catkin_packages, dependency, catkin, rosdep,
+                                  resolved_dependencies):
+    # No need to resolve this dependency if we know it's local, or if
+    # we've already resolved it into a system dependency
+    if (dependency in catkin_packages or
+            dependency in resolved_dependencies):
+        return
+
+    if _dependency_is_in_underlay(catkin, dependency):
+        # Package was found-- don't pull anything extra to satisfy
+        # this dependency.
+        logger.debug(
+            'Satisfied dependency {!r} in underlay'.format(
+                dependency))
+        return
+
+    # In this situation, the package depends on something that we
+    # weren't instructed to build. It's probably a system dependency,
+    # but the developer could have also forgotten to tell us to build
+    # it.
+    try:
+        these_dependencies = rosdep.resolve_dependency(dependency)
+    except _ros.rosdep.RosdepDependencyNotFoundError:
+        raise CatkinInvalidSystemDependencyError(dependency)
+
+    for key, value in these_dependencies.items():
+        if key not in _SUPPORTED_DEPENDENCY_TYPES:
+            raise CatkinUnsupportedDependencyTypeError(key, dependency)
+
+        resolved_dependencies[dependency] = {key: value}
+
+
+def _dependency_is_in_underlay(catkin, dependency):
+    if catkin:
+        # Before trying to resolve this dependency into a system
+        # dependency, see if it's already in the underlay.
+        try:
+            catkin.find(dependency)
+        except CatkinPackageNotFoundError:
+            # No package by that name is available
+            pass
+        else:
+            return True
+    return False
 
 
 def _handle_rosinstall_files(wstool, source_path, rosinstall_files):
