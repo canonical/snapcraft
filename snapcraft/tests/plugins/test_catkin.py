@@ -212,7 +212,6 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         expected_pull_properties = ['rosdistro', 'catkin-packages',
                                     'source-space', 'include-roscore',
                                     'underlay', 'rosinstall-files']
-        resulting_pull_properties = catkin.CatkinPlugin.get_pull_properties()
         actual_pull_properties = catkin.CatkinPlugin.get_pull_properties()
 
         self.assertThat(actual_pull_properties,
