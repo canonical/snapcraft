@@ -173,7 +173,13 @@ class PythonPlugin(snapcraft.BasePlugin):
         if os.listdir(self.sourcedir):
             setup = os.path.join(self.sourcedir, 'setup.py')
         with simple_env_bzr(os.path.join(self.installdir, 'bin')):
-            self._run_pip(setup, download=True)
+            installed_pipy_packages = self._run_pip(setup, download=True)
+        return {
+            'python-packages': [
+                '{}={}'.format(name, installed_pipy_packages[name])
+                for name in installed_pipy_packages
+            ]
+        }
 
     def clean_pull(self):
         super().clean_pull()
@@ -333,6 +339,7 @@ class PythonPlugin(snapcraft.BasePlugin):
                 #  this.
                 with suppress(subprocess.CalledProcessError):
                     self._setup_tools_install(setup)
+        return pip.list(self.run_output)
 
     def _fix_permissions(self):
         for root, dirs, files in os.walk(self.installdir):
@@ -346,7 +353,7 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         setup_file = os.path.join(self.builddir, 'setup.py')
         with simple_env_bzr(os.path.join(self.installdir, 'bin')):
-            self._run_pip(setup_file)
+            installed_pipy_packages = self._run_pip(setup_file)
 
         self._fix_permissions()
 
@@ -356,6 +363,12 @@ class PythonPlugin(snapcraft.BasePlugin):
                                    r'#!/usr/bin/env python')
 
         self._setup_sitecustomize()
+        return {
+            'python-packages': [
+                '{}={}'.format(name, installed_pipy_packages[name])
+                for name in installed_pipy_packages
+            ]
+        }
 
     def _setup_sitecustomize(self):
         # This avoids needing to leak PYTHONUSERBASE
