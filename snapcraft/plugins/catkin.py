@@ -147,7 +147,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
         return ['rosdistro', 'catkin-packages', 'source-space',
-                'include-roscore', 'underlay']
+                'include-roscore', 'underlay', 'rosinstall-files']
 
     @classmethod
     def get_build_properties(cls):
