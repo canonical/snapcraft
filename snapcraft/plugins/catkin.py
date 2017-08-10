@@ -113,7 +113,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # minority.
         schema['properties']['include-roscore'] = {
             'type': 'boolean',
-            'default': 'true',
+            'default': True,
         }
 
         schema['properties']['underlay'] = {
@@ -148,7 +148,13 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
         return ['rosdistro', 'catkin-packages', 'source-space',
-                'include-roscore', 'underlay']
+                'include-roscore', 'underlay', 'rosinstall-files']
+
+    @classmethod
+    def get_build_properties(cls):
+        # Inform Snapcraft of the properties associated with building. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        return ['build-attributes']
 
     @property
     def PLUGIN_STAGE_SOURCES(self):
@@ -604,12 +610,16 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         # be the wrong version).
         compilers = _Compilers(
             self._compilers_path, self.PLUGIN_STAGE_SOURCES, self.project)
+        build_type = 'Release'
+        if 'debug' in self.options.build_attributes:
+            build_type = 'Debug'
         catkincmd.extend([
             '-DCMAKE_C_FLAGS="$CFLAGS {}"'.format(compilers.cflags),
             '-DCMAKE_CXX_FLAGS="$CPPFLAGS {}"'.format(compilers.cxxflags),
             '-DCMAKE_LD_FLAGS="$LDFLAGS {}"'.format(compilers.ldflags),
             '-DCMAKE_C_COMPILER={}'.format(compilers.c_compiler_path),
-            '-DCMAKE_CXX_COMPILER={}'.format(compilers.cxx_compiler_path)
+            '-DCMAKE_CXX_COMPILER={}'.format(compilers.cxx_compiler_path),
+            '-DCMAKE_BUILD_TYPE={}'.format(build_type),
         ])
 
         # This command must run in bash due to a bug in Catkin that causes it
