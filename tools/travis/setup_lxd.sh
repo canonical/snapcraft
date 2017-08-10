@@ -36,7 +36,7 @@ snap install lxd --edge
 # From LXD's CI.
 # shellcheck disable=SC2034
 for i in $(seq 12); do
-    lxd waitready --timeout=10 >/dev/null 2>&1 && break
+    /snap/bin/lxd waitready --timeout=10 >/dev/null 2>&1 && break
 done
 
 /snap/bin/lxd init --auto
