@@ -81,17 +81,6 @@ class SnapTestCase(integration_tests.TestCase):
         self.assertThat(snap_file_path, FileExists())
 
     def test_cleanbuild(self):
-        subprocess.check_call([
-            'sudo', 'apt-get', 'install', '--yes', 'squashfuse'])
-        subprocess.check_call(['sudo', 'snap', 'install', 'lxd'])
-        subprocess.check_call(['sudo', '/snap/bin/lxd', 'init', '--auto'])
-        subprocess.check_call([
-            'sudo', '/snap/bin/lxc', 'network', 'create', 'snapcrafttestbr0'])
-        subprocess.check_call([
-            'sudo', '/snap/bin/lxc', 'network', 'attach-profile',
-            'snapcrafttestbr0', 'default', 'eth0'
-        ])
-
         self.run_snapcraft('cleanbuild', 'assemble', sudo=True)
 
         snap_source_path = 'assemble_1.0_source.tar.bz2'

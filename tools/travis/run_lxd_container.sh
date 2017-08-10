@@ -32,7 +32,7 @@ name="$1"
 lxc="/snap/bin/lxc"
 
 echo "Starting the LXD container."
-$lxc launch --ephemeral ubuntu:xenial "$name"
+$lxc launch --ephemeral ubuntu:xenial "$name" -c security.nesting=true
 # This is likely needed to wait for systemd in the container to start and get
 # an IP, configure DNS. First boot is always a bit slow because cloud-init
 # needs to run too.
