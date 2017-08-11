@@ -138,8 +138,6 @@ class MissingCommandError(SnapcraftError):
     )
 
     def __init__(self, required_commands):
-        if isinstance(required_commands, list):
-            required_commands = required_commands.join(' ')
         super().__init__(required_commands=required_commands)
 
 
