@@ -51,8 +51,11 @@ class MissingState(Exception):
     pass
 
 
-class SnapcraftEnvironmentError(Exception):
-    pass
+class SnapcraftEnvironmentError(SnapcraftError):
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
 
 
 class PrimeFileConflictError(SnapcraftError):

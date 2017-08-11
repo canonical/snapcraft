@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
+import snapcraft.internal.errors
 
 import fixtures
 from testtools.matchers import Equals, DirExists, Not
@@ -23,16 +24,15 @@ from . import LifecycleCommandsBaseTestCase
 
 class StageCommandTestCase(LifecycleCommandsBaseTestCase):
 
-    def test_stage_invalid_part(self):
+    def test_stage_invalid_part_raises(self):
         self.make_snapcraft_yaml('stage')
 
-        result = self.run_command(['stage', 'no-stage'])
-
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertEqual(
-            result.output,
+        raised = self.assertRaises(
+            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            self.run_command, ['stage', 'no-stage'])
+        self.assertThat(str(raised), Equals(
             "The part named 'no-stage' is not defined in "
-            "'snap/snapcraft.yaml'\n")
+            "'snap/snapcraft.yaml'"))
 
     def test_stage_defaults(self):
         parts = self.make_snapcraft_yaml('stage')
