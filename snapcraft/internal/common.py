@@ -27,6 +27,8 @@ import sys
 import tempfile
 import urllib
 
+from snapcraft.internal import errors
+
 
 SNAPCRAFT_FILES = ['snapcraft.yaml', '.snapcraft.yaml', 'parts', 'stage',
                    'prime', 'snap']
@@ -121,18 +123,15 @@ def get_schemadir():
 
 
 def get_arch_triplet():
-    raise EnvironmentError(
-        "This plugin is outdated, use 'project.arch_triplet'")
+    raise errors.PluginOutdatedError("use 'project.arch_triplet'")
 
 
 def get_arch():
-    raise EnvironmentError(
-        "This plugin is outdated, use 'project.deb_arch'")
+    raise errors.PluginOutdatedError("use 'project.deb_arch'")
 
 
 def get_parallel_build_count():
-    raise EnvironmentError(
-        "This plugin is outdated, use 'parallel_build_count'")
+    raise errors.PluginOutdatedError("use 'parallel_build_count'")
 
 
 def set_librariesdir(librariesdir):
@@ -160,7 +159,7 @@ def get_python2_path(root):
     try:
         return python_paths[0]
     except IndexError:
-        raise EnvironmentError(
+        raise errors.SnapcraftEnvironmentError(
             'PYTHONPATH cannot be set for {!r}'.format(root))
 
 

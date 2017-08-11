@@ -21,6 +21,7 @@ from testtools.matchers import DirExists, HasLength
 
 import snapcraft
 from snapcraft.plugins import nodejs
+from snapcraft.internal import errors
 from snapcraft import tests
 
 
@@ -240,7 +241,7 @@ class NodePluginTestCase(NodePluginBaseTestCase):
             source = '.'
 
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.SnapcraftEnvironmentError,
             nodejs.NodePlugin,
             'test-part', Options(),
             self.project_options)
