@@ -540,7 +540,7 @@ type: os
 
         self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Contains(
-            'Issue while loading part: unknown plugin: does-not-exist'))
+            "Issue while loading part: unknown plugin: 'does-not-exist'"))
 
     @mock.patch('time.time')
     def test_snap_renames_stale_snap_build(self, mocked_time):

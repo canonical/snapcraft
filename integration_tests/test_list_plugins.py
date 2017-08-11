@@ -20,7 +20,10 @@ from snapcraft import plugins
 
 import integration_tests
 
-from testtools.matchers import StartsWith
+from testtools.matchers import (
+    Equals,
+    StartsWith
+)
 
 
 class ListPluginsTestCase(integration_tests.TestCase):
@@ -30,8 +33,8 @@ class ListPluginsTestCase(integration_tests.TestCase):
         version, plugins_list = output.split('\n', 1)
         self.assertThat(version, StartsWith("Starting snapcraft "))
         plugins_list = set(plugins_list.split())
-        expected = {
-            module_name.replace('_', '-') for _, module_name, _ in
-            pkgutil.iter_modules(plugins.__path__)
-        }
-        self.assertEquals(plugins_list, expected)
+        expected = set()
+        for _, modname, _ in pkgutil.iter_modules(plugins.__path__):
+            if not modname.startswith('_'):
+                expected.add(modname.replace('_', '-'))
+        self.assertThat(plugins_list, Equals(expected))
