@@ -40,6 +40,7 @@ packages = [
 	'snapcraft.internal.sources',
 	'snapcraft.internal.states',
 	'snapcraft.plugins',
+  'snapcraft.plugins._ros',
 	'snapcraft.storeapi'
 	]
 package_data = {'snapcraft.internal.repo': ['manifest.txt']}
@@ -65,7 +66,6 @@ if os.path.exists(changelog):
     match = re.compile('.*\((.*)\).*').match(head)
     if match:
         version = match.group(1)
-
 
 
 # If on Windows, construct an exe distribution

@@ -33,6 +33,7 @@ from testtools.matchers import (
 
 import snapcraft
 from snapcraft.plugins import catkin
+from snapcraft.plugins import _ros
 from snapcraft import (
     repo,
     tests,
@@ -66,10 +67,12 @@ class CatkinPluginBaseTestCase(tests.TestCase):
 
         class props:
             rosdistro = 'indigo'
+            ubuntu_distro = 'trusty'
             catkin_packages = ['my_package']
             source_space = 'src'
             source_subdir = None
             include_roscore = False
+            catkin_cmake_args = []
             underlay = None
             rosinstall_files = None
             build_attributes = []
@@ -86,7 +89,8 @@ class CatkinPluginBaseTestCase(tests.TestCase):
         self.dependencies_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.plugins.catkin._Rosdep')
+        patcher = mock.patch(
+            'snapcraft.plugins._ros.rosdep.Rosdep')
         self.rosdep_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -99,10 +103,15 @@ class CatkinPluginBaseTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
     def assert_rosdep_setup(self, rosdistro, package_path, rosdep_path,
-                            sources):
+                            ubuntu_distro, sources):
         self.rosdep_mock.assert_has_calls([
-            mock.call(rosdistro, package_path, rosdep_path, sources,
-                      self.project_options),
+            mock.call(
+                ros_distro=rosdistro,
+                ros_package_path=package_path,
+                rosdep_path=rosdep_path,
+                ubuntu_distro=ubuntu_distro,
+                ubuntu_sources=sources,
+                project=self.project_options),
             mock.call().setup()])
 
     def assert_wstool_setup(self, package_path, wstool_path, sources):
@@ -119,13 +128,17 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
         properties = schema['properties']
         expected = ('rosdistro', 'catkin-packages', 'source-space',
-                    'include-roscore', 'underlay', 'rosinstall-files')
+                    'include-roscore', 'catkin-cmake-args', 'underlay',
+                    'rosinstall-files')
         self.assertThat(properties, HasLength(len(expected)))
         for prop in expected:
             self.assertThat(properties, Contains(prop))
 
+    def test_schema_rosdistro(self):
+        schema = catkin.CatkinPlugin.schema()
+
         # Check rosdistro property
-        rosdistro = properties['rosdistro']
+        rosdistro = schema['properties']['rosdistro']
         expected = ('type', 'default')
         self.assertThat(rosdistro, HasLength(len(expected)))
         for prop in expected:
@@ -133,8 +146,11 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(rosdistro['type'], Equals('string'))
         self.assertThat(rosdistro['default'], Equals('indigo'))
 
+    def test_schema_catkin_packages(self):
+        schema = catkin.CatkinPlugin.schema()
+
         # Check catkin-packages property
-        catkin_packages = properties['catkin-packages']
+        catkin_packages = schema['properties']['catkin-packages']
         expected = ('type', 'default', 'minitems', 'uniqueItems', 'items')
         self.assertThat(catkin_packages, HasLength(len(expected)))
         for prop in expected:
@@ -151,8 +167,11 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
                         'Expected "catkin-packages" to be included in '
                         '"required"')
 
+    def test_schema_source_space(self):
+        schema = catkin.CatkinPlugin.schema()
+
         # Check source-space property
-        source_space = properties['source-space']
+        source_space = schema['properties']['source-space']
         expected = ('type', 'default')
         self.assertThat(source_space, HasLength(len(expected)))
         for prop in expected:
@@ -160,8 +179,11 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(source_space['type'], Equals('string'))
         self.assertThat(source_space['default'], Equals('src'))
 
+    def test_schema_include_roscore(self):
+        schema = catkin.CatkinPlugin.schema()
+
         # Check include-roscore property
-        include_roscore = properties['include-roscore']
+        include_roscore = schema['properties']['include-roscore']
         expected = ('type', 'default')
         self.assertThat(include_roscore, HasLength(len(expected)))
         for prop in expected:
@@ -169,8 +191,26 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(include_roscore['type'], Equals('boolean'))
         self.assertThat(include_roscore['default'], Equals(True))
 
+    def test_schema_catkin_catkin_cmake_args(self):
+        schema = catkin.CatkinPlugin.schema()
+
+        # Check catkin-cmake-args property
+        catkin_cmake_args = schema['properties']['catkin-cmake-args']
+        expected = ('type', 'default', 'minitems', 'items')
+        self.assertThat(catkin_cmake_args, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(catkin_cmake_args, Contains(prop))
+        self.assertThat(catkin_cmake_args['type'], Equals('array'))
+        self.assertThat(catkin_cmake_args['default'], Equals([]))
+        self.assertThat(catkin_cmake_args['minitems'], Equals(1))
+        self.assertThat(catkin_cmake_args['items'], Contains('type'))
+        self.assertThat(catkin_cmake_args['items']['type'], Equals('string'))
+
+    def test_schema_underlay(self):
+        schema = catkin.CatkinPlugin.schema()
+
         # Check underlay property
-        underlay = properties['underlay']
+        underlay = schema['properties']['underlay']
         expected = ('type', 'properties', 'required')
         self.assertThat(underlay, HasLength(len(expected)))
         for prop in expected:
@@ -195,8 +235,11 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(underlay_run_path, Contains('type'))
         self.assertThat(underlay_run_path['type'], Equals('string'))
 
+    def test_schema_rosinstall_files(self):
+        schema = catkin.CatkinPlugin.schema()
+
         # Check rosinstall-files property
-        rosinstall_files = properties['rosinstall-files']
+        rosinstall_files = schema['properties']['rosinstall-files']
         expected = ('type', 'default', 'minitems', 'uniqueItems', 'items')
         self.assertThat(rosinstall_files, HasLength(len(expected)))
         for prop in expected:
@@ -221,7 +264,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             self.assertIn(property, actual_pull_properties)
 
     def test_get_build_properties(self):
-        expected_build_properties = ['build-attributes']
+        expected_build_properties = ['build-attributes', 'catkin-cmake-args']
         actual_build_properties = catkin.CatkinPlugin.get_build_properties()
 
         self.assertThat(actual_build_properties,
@@ -767,6 +810,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
+            self.properties.ubuntu_distro,
             plugin.PLUGIN_STAGE_SOURCES)
 
         self.wstool_mock.assert_not_called()
@@ -808,6 +852,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
+            self.properties.ubuntu_distro,
             plugin.PLUGIN_STAGE_SOURCES)
 
         self.wstool_mock.assert_not_called()
@@ -852,6 +897,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
+            self.properties.ubuntu_distro,
             plugin.PLUGIN_STAGE_SOURCES)
 
         self.wstool_mock.assert_not_called()
@@ -885,6 +931,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
             self.properties.rosdistro,
             os.path.join(plugin.sourcedir, 'src'),
             os.path.join(plugin.partdir, 'rosdep'),
+            self.properties.ubuntu_distro,
             plugin.PLUGIN_STAGE_SOURCES)
 
         self.assert_wstool_setup(
@@ -913,17 +960,28 @@ class PullTestCase(CatkinPluginBaseTestCase):
 class BuildTestCase(CatkinPluginBaseTestCase):
 
     scenarios = [
-        ('release', {
-            'build_attributes': []
+        ('release without catkin-cmake-args', {
+            'build_attributes': [],
+            'catkin_cmake_args': [],
         }),
-        ('debug', {
-            'build_attributes': ['debug']
+        ('release with catkin-cmake-args', {
+            'build_attributes': [],
+            'catkin_cmake_args': ['-DFOO'],
+        }),
+        ('debug without catkin-cmake-args', {
+            'build_attributes': ['debug'],
+            'catkin_cmake_args': [],
+        }),
+        ('debug with catkin-cmake-args', {
+            'build_attributes': ['debug'],
+            'catkin_cmake_args': ['-DFOO'],
         })
     ]
 
     def setUp(self):
         super().setUp()
         self.properties.build_attributes.extend(self.build_attributes)
+        self.properties.catkin_cmake_args = self.catkin_cmake_args
 
     @mock.patch('snapcraft.plugins.catkin._Compilers')
     @mock.patch.object(catkin.CatkinPlugin, 'run')
@@ -944,6 +1002,7 @@ class BuildTestCase(CatkinPluginBaseTestCase):
         # Matching like this for order independence (otherwise it would be
         # quite fragile)
         build_attributes = self.build_attributes
+        catkin_cmake_args = self.catkin_cmake_args
 
         class check_build_command():
             def __eq__(self, args):
@@ -954,7 +1013,14 @@ class BuildTestCase(CatkinPluginBaseTestCase):
                 else:
                     build_type_valid = re.match(
                         '.*--cmake-args.*-DCMAKE_BUILD_TYPE=Release', command)
+                args_valid = True
+                if catkin_cmake_args:
+                    expected_args = ' '.join(catkin_cmake_args)
+                    args_valid = re.match(
+                        '.*--cmake-args.*{}'.format(re.escape(expected_args)),
+                        command)
                 return (
+                    args_valid and
                     build_type_valid and
                     args[0] == 'catkin_make_isolated' and
                     '--install' in command and
@@ -1155,7 +1221,7 @@ class FindSystemDependenciesTestCase(tests.TestCase):
     def test_find_system_dependencies_missing_local_dependency(self):
         # Setup a dependency on a non-existing package, and it doesn't resolve
         # to a system dependency.'
-        exception = catkin.SystemDependencyNotFoundError('foo')
+        exception = _ros.rosdep.RosdepDependencyNotFoundError('foo')
         self.rosdep_mock.resolve_dependency.side_effect = exception
 
         raised = self.assertRaises(
@@ -1192,157 +1258,6 @@ class HandleRosinstallFilesTestCase(tests.TestCase):
             mock.call(os.path.join('source_path', 'file1')),
             mock.call(os.path.join('source_path', 'file2'))
         ])
-
-
-class RosdepTestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.project = snapcraft.ProjectOptions()
-        self.rosdep = catkin._Rosdep('kinetic', 'package_path',
-                                     'rosdep_path', 'sources',
-                                     self.project)
-
-        patcher = mock.patch('snapcraft.repo.Ubuntu')
-        self.ubuntu_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('subprocess.check_output')
-        self.check_output_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def test_setup(self):
-        # Return something other than a Mock to ease later assertions
-        self.check_output_mock.return_value = b''
-
-        self.rosdep.setup()
-
-        # Verify that only rosdep was installed (no other .debs)
-        self.assertEqual(self.ubuntu_mock.call_count, 1)
-        self.assertEqual(self.ubuntu_mock.return_value.get.call_count, 1)
-        self.assertEqual(self.ubuntu_mock.return_value.unpack.call_count, 1)
-        self.ubuntu_mock.assert_has_calls([
-            mock.call(self.rosdep._rosdep_path, sources='sources',
-                      project_options=self.project),
-            mock.call().get(['python-rosdep']),
-            mock.call().unpack(self.rosdep._rosdep_install_path)])
-
-        # Verify that rosdep was initialized and updated
-        self.assertEqual(self.check_output_mock.call_count, 2)
-        self.check_output_mock.assert_has_calls([
-            mock.call(['rosdep', 'init'], env=mock.ANY),
-            mock.call(['rosdep', 'update'], env=mock.ANY)
-        ])
-
-    def test_setup_can_run_multiple_times(self):
-        self.rosdep.setup()
-
-        # Make sure running setup() again doesn't have problems with the old
-        # environment
-        # An exception will be raised if setup can't be called twice.
-        self.rosdep.setup()
-
-    def test_setup_initialization_failure(self):
-        def run(args, **kwargs):
-            if args == ['rosdep', 'init']:
-                raise subprocess.CalledProcessError(1, 'foo', b'bar')
-
-        self.check_output_mock.side_effect = run
-
-        raised = self.assertRaises(RuntimeError, self.rosdep.setup)
-
-        self.assertEqual(str(raised),
-                         'Error initializing rosdep database:\nbar')
-
-    def test_setup_update_failure(self):
-        def run(args, **kwargs):
-            if args == ['rosdep', 'update']:
-                raise subprocess.CalledProcessError(1, 'foo', b'bar')
-
-            return mock.DEFAULT
-
-        self.check_output_mock.side_effect = run
-
-        raised = self.assertRaises(RuntimeError, self.rosdep.setup)
-
-        self.assertEqual(str(raised),
-                         'Error updating rosdep database:\nbar')
-
-    def test_get_dependencies(self):
-        self.check_output_mock.return_value = b'foo\nbar\nbaz'
-
-        self.assertEqual(self.rosdep.get_dependencies('foo'),
-                         ['foo', 'bar', 'baz'])
-
-        self.check_output_mock.assert_called_with(['rosdep', 'keys', 'foo'],
-                                                  env=mock.ANY)
-
-    def test_get_dependencies_no_dependencies(self):
-        self.check_output_mock.return_value = b''
-
-        self.assertEqual(self.rosdep.get_dependencies('foo'), [])
-
-    def test_get_dependencies_invalid_package(self):
-        self.check_output_mock.side_effect = subprocess.CalledProcessError(
-            1, 'foo')
-
-        raised = self.assertRaises(
-            FileNotFoundError,
-            self.rosdep.get_dependencies, 'bar')
-
-        self.assertEqual(str(raised),
-                         'Unable to find Catkin package "bar"')
-
-    def test_resolve_dependency(self):
-        self.check_output_mock.return_value = b'#apt\nmylib-dev'
-
-        self.assertEqual(self.rosdep.resolve_dependency('foo'), ['mylib-dev'])
-
-        self.check_output_mock.assert_called_with(
-            ['rosdep', 'resolve', 'foo', '--rosdistro', 'kinetic', '--os',
-             'ubuntu:xenial'],
-            env=mock.ANY)
-
-    def test_resolve_invalid_dependency(self):
-        self.check_output_mock.side_effect = subprocess.CalledProcessError(
-            1, 'foo')
-
-        raised = self.assertRaises(
-            catkin.SystemDependencyNotFoundError,
-            self.rosdep.resolve_dependency, 'bar')
-
-        self.assertEqual(str(raised),
-                         "'bar' does not resolve to a system dependency")
-
-    def test_resolve_no_dependency(self):
-        self.check_output_mock.return_value = b'#apt'
-
-        self.assertEqual(self.rosdep.resolve_dependency('bar'), [])
-
-    def test_resolve_multiple_dependencies(self):
-        self.check_output_mock.return_value = b'#apt\nlib1 lib2'
-
-        self.assertEqual(self.rosdep.resolve_dependency('foo'),
-                         ['lib1', 'lib2'])
-
-    def test_run(self):
-        rosdep = self.rosdep
-        rosdep._run(['qux'])
-
-        class check_env():
-            def __eq__(self, env):
-                rosdep_sources_path = rosdep._rosdep_sources_path
-                return (
-                    env['PATH'] == os.path.join(rosdep._rosdep_install_path,
-                                                'usr', 'bin') and
-                    env['PYTHONPATH'] == os.path.join(
-                        rosdep._rosdep_install_path, 'usr', 'lib', 'python2.7',
-                        'dist-packages') and
-                    env['ROSDEP_SOURCE_PATH'] == rosdep_sources_path and
-                    env['ROS_HOME'] == rosdep._rosdep_cache_path and
-                    env['ROS_PACKAGE_PATH'] == rosdep._ros_package_path)
-
-        self.check_output_mock.assert_called_with(mock.ANY, env=check_env())
 
 
 class CompilersTestCase(tests.TestCase):
