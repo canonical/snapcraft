@@ -153,7 +153,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'start', container_name]),
             call(['lxc', 'config', 'device', 'add', container_name,
                   project_folder, 'disk', 'source={}'.format(source),
-                  'path=/{}'.format(project_folder)]),
+                  'path={}'.format(project_folder)]),
             call(['lxc', 'stop', '-f', container_name]),
         ])
         mock_container_run.assert_has_calls([
