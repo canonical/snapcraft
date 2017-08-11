@@ -22,6 +22,7 @@ from textwrap import dedent
 import requests
 from unittest import mock
 from unittest.mock import call
+import snapcraft.internal.errors
 
 import fixtures
 from testtools.matchers import (
@@ -94,10 +95,11 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
     def test_snap_fails_with_bad_type(self):
         self.make_snapcraft_yaml(snap_type='bad-type')
 
-        result = self.run_command(['snap'])
+        raised = self.assertRaises(
+            snapcraft.internal.errors.SnapcraftSchemaError,
+            self.run_command, ['snap'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Contains(
             "bad-type' is not one of ['app', 'gadget', 'kernel', 'os']"))
 
     def test_snap_is_the_default(self):
@@ -528,10 +530,11 @@ type: os
                 plugin: does-not-exist
         """))
 
-        result = self.run_command(['snap'])
+        raised = self.assertRaises(
+            snapcraft.internal.errors.PluginError,
+            self.run_command, ['snap'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Equals(
             "Issue while loading part: unknown plugin: 'does-not-exist'"))
 
     @mock.patch('time.time')
