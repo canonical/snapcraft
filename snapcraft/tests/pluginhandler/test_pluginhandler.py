@@ -109,7 +109,26 @@ class PluginTestCase(tests.TestCase):
             'fake-part', 'test_unexisting')
 
         self.assertThat(str(raised), Equals(
-            'Issue while loading part: unknown plugin: test_unexisting'))
+            "Issue while loading part: unknown plugin: 'test_unexisting'"))
+
+        # Make sure that nothing was added to sys.path.
+        self.assertEqual(path, sys.path)
+
+    def test_init_known_module_but_unknown_plugin_must_raise_exception(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        path = copy.copy(sys.path)
+
+        # "_ros" is a valid module within the plugin path, but contains no
+        # plugins.
+        raised = self.assertRaises(
+            errors.PluginError,
+            mocks.loadplugin,
+            'fake-part', '_ros')
+
+        self.assertThat(str(raised), Equals(
+            "Issue while loading part: no plugin found in module '_ros'"))
 
         # Make sure that nothing was added to sys.path.
         self.assertEqual(path, sys.path)
