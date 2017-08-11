@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import subprocess
 import sys
 
 import click
@@ -23,6 +24,14 @@ from . import echo
 from . import env
 
 
+def _reexec_as_root():
+    click.echo('Reexecuting the build as root')
+    try:
+        subprocess.check_call(['sudo'] + sys.argv)
+    except subprocess.CalledProcessError:
+        sys.exit(1)
+
+
 def _execute(command, parts, **kwargs):
     project_options = get_project_options(**kwargs)
 
@@ -31,6 +40,9 @@ def _execute(command, parts, **kwargs):
     else:
         try:
             lifecycle.execute(command, project_options, parts)
+        except errors.SnapcraftUserPermissionError as user_error:
+            if user_error.user == 'root':
+                _reexec_as_root()
         except Exception as e:
             echo.error(e)
             sys.exit(1)
@@ -140,10 +152,13 @@ def snap(directory, output, **kwargs):
         try:
             snap_name = lifecycle.snap(
                 project_options, directory=directory, output=output)
+            echo.info('Snapped {}'.format(snap_name))
+        except errors.SnapcraftUserPermissionError as user_error:
+            if user_error.user == 'root':
+                _reexec_as_root()
         except Exception as e:
             echo.error(e)
             sys.exit(1)
-        echo.info('Snapped {}'.format(snap_name))
 
 
 @lifecyclecli.command()
@@ -173,6 +188,9 @@ def clean(parts, step, **kwargs):
             step = 'prime'
         try:
             lifecycle.clean(project_options, parts, step)
+        except errors.SnapcraftUserPermissionError as user_error:
+            if user_error.user == 'root':
+                _reexec_as_root()
         except errors.SnapcraftEnvironmentError as e:
             echo.error(e)
             sys.exit(1)

@@ -222,6 +222,11 @@ class SnapcraftSchemaError(SnapcraftError):
         super().__init__(message=message, snapcraft_yaml=snapcraft_yaml)
 
 
+class SnapcraftUserPermissionError(SnapcraftError):
+
+    fmt = '{user} privilidges are required to continue'
+
+
 def _determine_cause(error):
     """Attempt to determine a cause from validation error.
 

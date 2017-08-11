@@ -111,6 +111,7 @@ def execute(step, project_options, part_names=None):
     :returns: A dict with the snap name, version, type and architectures.
     """
     config = snapcraft.internal.load_config(project_options)
+    _ensure_user(config.data.get('type'))
     installed_packages = repo.Repo.install_build_packages(
         config.build_tools)
     if installed_packages is None:
@@ -380,6 +381,8 @@ def snap(project_options, directory=None, output=None):
         execute('prime', project_options)
         snap = _snap_data_from_dir(prime_dir)
 
+    _ensure_user(snap['type'])
+
     snap_name = output or common.format_snap_name(snap)
 
     # If a .snap-build exists at this point, when we are about to override
@@ -575,11 +578,15 @@ def clean(project_options, parts, step=None):
     if not step:
         step = 'pull'
 
+    # We won't be able to easily capture the root case without loading the
+    # config which is why we wrap in try/except.
     if not parts and step == 'pull':
-        _cleanup_common_directories_for_step(step, project_options)
-        return
+        with contextlib.suppress(PermissionError):
+            _cleanup_common_directories_for_step(step, project_options)
+            return
 
     config = snapcraft.internal.load_config()
+    _ensure_user(config.data.get('type'))
 
     if not parts and (step == 'stage' or step == 'prime'):
         # If we've been asked to clean stage or prime without being given
@@ -600,3 +607,11 @@ def clean(project_options, parts, step=None):
     _clean_parts(parts, step, config, staged_state, primed_state)
 
     _cleanup_common_directories(config, project_options)
+
+
+_TYPE_REQUIRES_ROOT = ['os']
+
+
+def _ensure_user(snap_type):
+    if (snap_type in _TYPE_REQUIRES_ROOT and os.getuid() != 0):
+        raise errors.SnapcraftUserPermissionError(user='root')
