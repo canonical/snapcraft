@@ -86,6 +86,16 @@ class SnapcraftPartMissingError(SnapcraftError):
     )
 
 
+class PartNotInCacheError(SnapcraftError):
+
+    fmt = (
+        'Cannot find the part name {part_name!r} in the cache. Please '
+        'run `snapcraft update` and try again.\nIf it is indeed missing, '
+        'consider going to https://wiki.ubuntu.com/snapcraft/parts '
+        'to add it.'
+    )
+
+
 class SnapcraftLogicError(SnapcraftError):
 
     fmt = 'Issue detected while analyzing snapcraft.yaml: {message}'
