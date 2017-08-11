@@ -261,7 +261,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
             # PYTHONPATH to include the dist-packages in /usr/lib as well.
             env.append('PYTHONPATH={0}:$PYTHONPATH'.format(
                 common.get_python2_path(root)))
-        except EnvironmentError as e:
+        except errors.SnapcraftEnvironmentError as e:
             logger.debug(e)
 
         # The setup.sh we source below requires the in-snap python. Here we

@@ -16,7 +16,10 @@
 
 import os
 
-from snapcraft.internal import common
+from snapcraft.internal import (
+    common,
+    errors
+)
 from snapcraft import tests
 
 
@@ -44,31 +47,30 @@ class CommonMigratedTestCase(tests.TestCase):
 
     def test_parallel_build_count_migration_message(self):
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.PluginOutdatedError,
             common.get_parallel_build_count)
 
         self.assertEqual(
             str(raised),
-            "This plugin is outdated, use "
-            "'parallel_build_count'")
+            "This plugin is outdated: use 'parallel_build_count'")
 
     def test_deb_arch_migration_message(self):
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.PluginOutdatedError,
             common.get_arch)
 
         self.assertEqual(
             str(raised),
-            "This plugin is outdated, use 'project.deb_arch'")
+            "This plugin is outdated: use 'project.deb_arch'")
 
     def test_arch_triplet_migration_message(self):
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.PluginOutdatedError,
             common.get_arch_triplet)
 
         self.assertEqual(
             str(raised),
-            "This plugin is outdated, use 'project.arch_triplet'")
+            "This plugin is outdated: use 'project.arch_triplet'")
 
 
 class FormatInColumnsTestCase(tests.TestCase):

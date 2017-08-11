@@ -24,6 +24,7 @@ from testtools.matchers import HasLength
 
 import snapcraft
 from snapcraft.plugins import gulp, nodejs
+from snapcraft.internal import errors
 from snapcraft import tests
 
 
@@ -117,7 +118,7 @@ class GulpPluginTestCase(tests.TestCase):
             node_engine = '4'
 
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.SnapcraftEnvironmentError,
             gulp.GulpPlugin, 'test-part', Options(), self.project_options)
 
         self.assertEqual(raised.__str__(),

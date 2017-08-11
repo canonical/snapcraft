@@ -166,6 +166,14 @@ class MissingGadgetError(SnapcraftError):
         'https://github.com/snapcore/snapd/wiki/Gadget-snap')
 
 
+class PluginOutdatedError(SnapcraftError):
+
+    fmt = 'This plugin is outdated: {message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
 class RequiredCommandFailure(SnapcraftError):
 
     fmt = '{command!r} failed.'
