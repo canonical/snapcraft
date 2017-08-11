@@ -13,12 +13,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import sys
 
 import click
+import functools
 
-from snapcraft.internal import errors, lifecycle
+from snapcraft.internal import lifecycle
 from ._options import add_build_options, get_project_options
+from ._errors import exception_handler
 from . import echo
 from . import env
 
@@ -29,11 +30,7 @@ def _execute(command, parts, **kwargs):
     if env.is_containerbuild():
         lifecycle.containerbuild(command, project_options, parts)
     else:
-        try:
-            lifecycle.execute(command, project_options, parts)
-        except Exception as e:
-            echo.error(e)
-            sys.exit(1)
+        lifecycle.execute(command, project_options, parts)
     return project_options
 
 
@@ -44,20 +41,26 @@ def lifecyclecli(ctx, **kwargs):
     pass
 
 
-@lifecyclecli.command()
+def lifecyclecli_command(func):
+    @lifecyclecli.command()
+    @exception_handler
+    @functools.wraps(func)
+    def _command(*args, **kwargs):
+        func(*args, **kwargs)
+
+    return _command
+
+
+@lifecyclecli_command
 def init():
     """Initialize a snapcraft project."""
-    try:
-        snapcraft_yaml_path = lifecycle.init()
-    except errors.SnapcraftEnvironmentError as e:
-        echo.error(e)
-        sys.exit(1)
+    snapcraft_yaml_path = lifecycle.init()
     echo.info('Created {}.'.format(snapcraft_yaml_path))
     echo.info(
         'Edit the file to your liking or run `snapcraft` to get started')
 
 
-@lifecyclecli.command()
+@lifecyclecli_command
 @click.pass_context
 @add_build_options()
 @click.argument('parts', nargs=-1, metavar='<part>...', required=False)
@@ -73,7 +76,7 @@ def pull(ctx, parts, **kwargs):
     _execute('pull', parts, **kwargs)
 
 
-@lifecyclecli.command()
+@lifecyclecli_command
 @add_build_options()
 @click.argument('parts', nargs=-1, metavar='<part>...', required=False)
 def build(parts, **kwargs):
@@ -88,7 +91,7 @@ def build(parts, **kwargs):
     _execute('build', parts, **kwargs)
 
 
-@lifecyclecli.command()
+@lifecyclecli_command
 @add_build_options()
 @click.argument('parts', nargs=-1, metavar='<part>...', required=False)
 def stage(parts, **kwargs):
@@ -103,7 +106,7 @@ def stage(parts, **kwargs):
     _execute('stage', parts, **kwargs)
 
 
-@lifecyclecli.command()
+@lifecyclecli_command
 @add_build_options()
 @click.argument('parts', nargs=-1, metavar='<part>...', required=False)
 def prime(parts, **kwargs):
@@ -118,7 +121,7 @@ def prime(parts, **kwargs):
     _execute('prime', parts, **kwargs)
 
 
-@lifecyclecli.command()
+@lifecyclecli_command
 @add_build_options()
 @click.argument('directory', required=False)
 @click.option('--output', '-o', help='path to the resulting snap.')
@@ -137,16 +140,12 @@ def snap(directory, output, **kwargs):
     if env.is_containerbuild():
         lifecycle.containerbuild('snap', project_options, output, directory)
     else:
-        try:
-            snap_name = lifecycle.snap(
-                project_options, directory=directory, output=output)
-        except Exception as e:
-            echo.error(e)
-            sys.exit(1)
+        snap_name = lifecycle.snap(
+            project_options, directory=directory, output=output)
         echo.info('Snapped {}'.format(snap_name))
 
 
-@lifecyclecli.command()
+@lifecyclecli_command
 @add_build_options()
 @click.argument('parts', nargs=-1, metavar='<part>...', required=False)
 @click.option('--step', '-s',
@@ -171,14 +170,10 @@ def clean(parts, step, **kwargs):
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '
                          'as the step to clean')
             step = 'prime'
-        try:
-            lifecycle.clean(project_options, parts, step)
-        except errors.SnapcraftEnvironmentError as e:
-            echo.error(e)
-            sys.exit(1)
+        lifecycle.clean(project_options, parts, step)
 
 
-@lifecyclecli.command()
+@lifecyclecli_command
 @add_build_options()
 @click.option('--remote', metavar='<remote>',
               help='Use a specific lxd remote instead of a local container.')
@@ -202,11 +197,7 @@ def cleanbuild(remote, debug, **kwargs):
     https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
     """
     project_options = get_project_options(**kwargs, debug=debug)
-    try:
-        lifecycle.cleanbuild(project_options, remote)
-    except errors.SnapcraftEnvironmentError as e:
-        echo.error(e)
-        sys.exit(1)
+    lifecycle.cleanbuild(project_options, remote)
 
 
 if __name__ == '__main__':

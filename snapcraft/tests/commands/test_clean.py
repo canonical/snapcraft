@@ -21,6 +21,7 @@ from unittest.mock import call
 from testtools.matchers import Contains, Equals, DirExists, FileExists, Not
 from snapcraft.tests import fixture_setup
 
+import snapcraft.internal.errors
 from snapcraft.internal import pluginhandler
 from snapcraft.internal import project_loader
 from . import CommandBaseTestCase
@@ -78,10 +79,17 @@ parts:
 
         result = self.run_command(['clean', 'no-clean'])
 
-        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Equals(
             "The part named 'no-clean' is not defined in "
             "'snap/snapcraft.yaml'\n"))
+
+    def test_part_to_remove_not_defined_raises_when_debug(self):
+        self.make_snapcraft_yaml(n=3)
+
+        self.assertRaises(
+            snapcraft.internal.errors.SnapcraftError, self.run_command,
+            ['--debug', 'clean', 'no-clean'])
 
     def test_clean_all(self):
         self.make_snapcraft_yaml(n=3)

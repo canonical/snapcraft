@@ -208,4 +208,4 @@ class CloseCommandTestCase(CommandBaseTestCase):
                              edge             ^          ^
                              stable/hotfix-2  1.3        49          2017-05-21T18:52:14.578435
 
-            \x1b[0;32mThe stable/hotfix-1 channel is now closed.\x1b[0m"""))) # noqa
+            \x1b[0;32mThe stable/hotfix-1 channel is now closed.\x1b[0m""")))  # noqa

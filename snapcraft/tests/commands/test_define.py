@@ -42,7 +42,7 @@ class DefineCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         self.assertThat(result.output, Contains(dedent("""\
             Cannot find the part name 'curler' in the cache. Please run `snapcraft update` and try again.
             If it is indeed missing, consider going to https://wiki.ubuntu.com/snapcraft/parts to add it.
-            """))) # noqa
+            """)))  # noqa
 
     def test_defining_a_part_with_multiline_description(self):
         result = self.run_command(['define', 'multiline-part'])

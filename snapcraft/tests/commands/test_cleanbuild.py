@@ -18,6 +18,7 @@ import logging
 import os
 import tarfile
 from textwrap import dedent
+import snapcraft.internal.errors
 
 import fixtures
 from testtools.matchers import Contains, Equals
@@ -140,8 +141,17 @@ class CleanBuildFailuresCommandTestCase(CleanBuildCommandBaseTestCase):
 
         result = self.run_command(['cleanbuild'])
 
-        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Equals(
             'You must have LXD installed in order to use cleanbuild.\n'
             'Refer to the documentation at '
             'https://linuxcontainers.org/lxd/getting-started-cli.\n'))
+
+    def test_no_lxd_raises_when_debug(self):
+        fake_lxd = tests.fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        fake_lxd.check_output_mock.side_effect = FileNotFoundError('lxc')
+
+        self.assertRaises(
+            snapcraft.internal.errors.SnapcraftError, self.run_command,
+            ['--debug', 'cleanbuild'])

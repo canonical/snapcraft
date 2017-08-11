@@ -64,7 +64,7 @@ parts:
   my-part:
     # See 'snapcraft plugins'
     plugin: nil
-""" # noqa, lines too long.
+"""  # noqa, lines too long.
 
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 

@@ -41,13 +41,24 @@ class SnapcraftError(Exception):
     def __str__(self):
         return self.fmt.format([], **self.__dict__)
 
+    @property
+    def exit_code(self):
+        """Exit code to use if this exception causes Snapcraft to exit."""
+        return 2
 
-class MissingState(Exception):
-    pass
+
+class MissingState(SnapcraftError):
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
 
 
-class SnapcraftEnvironmentError(Exception):
-    pass
+class SnapcraftEnvironmentError(SnapcraftError):
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
 
 
 class PrimeFileConflictError(SnapcraftError):
