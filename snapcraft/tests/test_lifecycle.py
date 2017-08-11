@@ -24,6 +24,7 @@ from unittest import mock
 
 import fixtures
 from testtools.matchers import (
+    Contains,
     DirExists,
     FileContains,
     FileExists,
@@ -34,7 +35,7 @@ from testtools.matchers import (
 import snapcraft
 from snapcraft import storeapi
 from snapcraft.file_utils import calculate_sha3_384
-from snapcraft.internal import pluginhandler, lifecycle
+from snapcraft.internal import errors, pluginhandler, lifecycle
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
 
@@ -1061,3 +1062,14 @@ class CoreSetupTestCase(tests.TestCase):
             print('description: description', file=f)
 
         return lifecycle.snap(self.project_options, directory=core_path)
+
+
+class SnapErrorsTestCase(BaseLifecycleTestCase):
+
+    def test_mksquashfs_missing(self):
+        with mock.patch('shutil.which') as which_mock:
+            which_mock.return_value = None
+            raised = self.assertRaises(
+                errors.MissingCommandError,
+                lifecycle.snap, self.project_options)
+        self.assertThat(str(raised), Contains('mksquashfs'))
