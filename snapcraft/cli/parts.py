@@ -13,11 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import sys
 import click
-
 from snapcraft.internal import parts
-from . import echo
 
 
 @click.group(context_settings={})
@@ -44,11 +41,7 @@ def define(ctx, part):
         snapcraft define my-part1
 
     """
-    try:
-        parts.define(part)
-    except RuntimeError as e:
-        echo.error(e)
-        sys.exit(1)
+    parts.define(part)
 
 
 @partscli.command()
