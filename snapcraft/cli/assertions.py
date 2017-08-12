@@ -14,13 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import sys
-
 import click
 
 import snapcraft
-from snapcraft.storeapi import errors
-from . import echo
 
 
 @click.group()
@@ -35,33 +31,21 @@ def list_keys():
 
     This command has an alias of `keys`.
     """
-    try:
-        snapcraft.list_keys()
-    except Exception as e:
-        echo.error(e)
-        sys.exit(1)
+    snapcraft.list_keys()
 
 
 @assertionscli.command('create-key')
 @click.argument('key-name', metavar='<key-name>', required=False)
 def create_key(key_name):
     """Create a key to sign assertions."""
-    try:
-        snapcraft.create_key(key_name)
-    except Exception as e:
-        echo.error(e)
-        sys.exit(1)
+    snapcraft.create_key(key_name)
 
 
 @assertionscli.command('register-key')
 @click.argument('key-name', metavar='<key-name>', required=False)
 def register_key(key_name):
     """Register a key with the store to sign assertions."""
-    try:
-        snapcraft.register_key(key_name)
-    except Exception as e:
-        echo.error(e)
-        sys.exit(1)
+    snapcraft.register_key(key_name)
 
 
 @assertionscli.command('sign-build')
@@ -75,11 +59,7 @@ def register_key(key_name):
               help='Do not push the generated assertion to the store')
 def sign_build(snap_file, key_name, local):
     """Sign a built snap file and assert it using the developer's key."""
-    try:
-        snapcraft.sign_build(snap_file, key_name=key_name, local=local)
-    except Exception as e:
-        echo.error(e)
-        sys.exit(1)
+    snapcraft.sign_build(snap_file, key_name=key_name, local=local)
 
 
 @assertionscli.command()
@@ -89,25 +69,11 @@ def sign_build(snap_file, key_name, local):
 @click.option('--key-name', metavar='<key-name>')
 def validate(snap_name, validations, key_name):
     """Validate a gated snap."""
-    try:
-        snapcraft.validate(snap_name, validations, key=key_name)
-    except errors.StoreError as e:
-        echo.error(e)
-        sys.exit(1)
-    # This one is here until an assertions refactor
-    except RuntimeError:
-        sys.exit(1)
+    snapcraft.validate(snap_name, validations, key=key_name)
 
 
 @assertionscli.command()
 @click.argument('snap-name', metavar='<snap-name>')
 def gated(snap_name):
     """Get the list of snaps and revisions gating a snap."""
-    try:
-        snapcraft.gated(snap_name)
-    except errors.StoreError as e:
-        echo.error(e)
-        sys.exit(1)
-    # This one is here until an assertions refactor
-    except RuntimeError:
-        sys.exit(1)
+    snapcraft.gated(snap_name)
