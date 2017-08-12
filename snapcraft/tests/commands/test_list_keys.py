@@ -35,10 +35,11 @@ class ListKeysCommandTestCase(CommandBaseTestCase):
                                            mock_check_output):
         mock_installed.return_value = False
 
-        result = self.run_command([self.command_name])
+        raised = self.assertRaises(
+            storeapi.errors.MissingSnapdError,
+            self.run_command, [self.command_name])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Contains(
             'The snapd package is not installed.'))
         mock_installed.assert_called_with('snapd')
         self.assertEqual(0, mock_check_output.call_count)
@@ -49,11 +50,11 @@ class ListKeysCommandTestCase(CommandBaseTestCase):
         mock_installed.return_value = True
         mock_check_output.side_effect = mock_snap_output
 
-        result = self.run_command([self.command_name])
+        raised = self.assertRaises(
+            storeapi.errors.InvalidCredentialsError,
+            self.run_command, [self.command_name])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'No valid credentials found. Have you run "snapcraft login"?'))
+        self.assertThat(str(raised), Contains('Invalid credentials'))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')

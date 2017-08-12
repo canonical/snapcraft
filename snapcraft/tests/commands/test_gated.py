@@ -17,6 +17,7 @@ import textwrap
 
 from testtools.matchers import Contains, Equals
 
+import snapcraft.storeapi.errors
 from . import StoreCommandsBaseTestCase
 
 
@@ -34,11 +35,11 @@ class GatedCommandTestCase(StoreCommandsBaseTestCase):
     def test_gated_unknown_snap(self):
         self.client.login('dummy', 'test correct password')
 
-        result = self.run_command(['gated', 'notfound'])
+        raised = self.assertRaises(
+            snapcraft.storeapi.errors.SnapNotFoundError,
+            self.run_command, ['gated', 'notfound'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            "Snap 'notfound' was not found."))
+        self.assertThat(str(raised), Equals("Snap 'notfound' was not found."))
 
     def test_gated_success(self):
         self.client.login('dummy', 'test correct password')
@@ -65,8 +66,8 @@ class GatedCommandTestCase(StoreCommandsBaseTestCase):
         self.assertThat(result.output, Contains(expected_output))
 
     def test_no_login(self):
-        result = self.run_command(['gated', 'notfound'])
+        raised = self.assertRaises(
+            snapcraft.storeapi.errors.InvalidCredentialsError,
+            self.run_command, ['gated', 'notfound'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'No valid credentials found. Have you run'))
+        self.assertThat(str(raised), Contains('Invalid credentials'))
