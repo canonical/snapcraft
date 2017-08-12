@@ -134,7 +134,7 @@ class ReleaseCommandTestCase(CommandBaseTestCase):
                              beta            0          19
                              edge            ^          ^
                              stable/hotfix1  1          20          2017-05-21T18:52:14.578435
-            \x1b[0;32mThe 'stable/hotfix1' channel is now open.\x1b[0m"""))) # noqa
+            \x1b[0;32mThe 'stable/hotfix1' channel is now open.\x1b[0m""")))  # noqa
         mock_release.assert_called_once_with(
             'nil-snap', '20', ['stable/hotfix1'])
 
@@ -169,7 +169,7 @@ class ReleaseCommandTestCase(CommandBaseTestCase):
                              candidate  -          -
                              beta       0          19
                              edge       ^          ^
-            \x1b[0;32mThe 'stable', 'beta' and 'edge' channels are now open.\x1b[0m"""))) # noqa
+            \x1b[0;32mThe 'stable', 'beta' and 'edge' channels are now open.\x1b[0m""")))  # noqa
         mock_release.assert_called_once_with('nil-snap', '19', ['beta'])
 
     def test_release_with_bad_channel_info(self):
@@ -213,8 +213,8 @@ class ReleaseCommandTestCase(CommandBaseTestCase):
             "'fake-bad-channel-info' in channel stable"))
 
     def test_release_without_login_must_raise_exception(self):
-        result = self.run_command(['release', 'nil-snap', '19', 'beta'])
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertIn(
-            'No valid credentials found. Have you run "snapcraft login"?\n',
-            self.fake_logger.output)
+        raised = self.assertRaises(
+            storeapi.errors.InvalidCredentialsError,
+            self.run_command, ['release', 'nil-snap', '19', 'beta'])
+
+        self.assertThat(str(raised), Contains('Invalid credentials'))
