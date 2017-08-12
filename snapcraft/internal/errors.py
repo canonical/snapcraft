@@ -47,8 +47,14 @@ class SnapcraftError(Exception):
         return 2
 
 
-class MissingState(Exception):
-    pass
+class MissingStateCleanError(SnapcraftError):
+    fmt = (
+        "Failed to clean step {step!r}: Missing necessary state. This won't "
+        "work until a complete clean has occurred."
+    )
+
+    def __init__(self, step):
+        super().__init__(step=step)
 
 
 class SnapcraftEnvironmentError(SnapcraftError):
@@ -75,6 +81,27 @@ class DuplicateAliasError(SnapcraftError):
             self.aliases = ','.join(self.aliases)
 
         return super().__str__()
+
+
+class InvalidAppCommandError(SnapcraftError):
+
+    fmt = (
+        'The specified command {command!r} defined in the app {app!r} does '
+        'not exist or is not executable'
+    )
+
+    def __init__(self, command, app):
+        super().__init__(command=command, app=app)
+
+
+class InvalidDesktopFileError(SnapcraftError):
+
+    fmt = (
+        'Invalid desktop file {filename!r}: {message}'
+    )
+
+    def __init__(self, filename, message):
+        super().__init__(filename=filename, message=message)
 
 
 class SnapcraftPartMissingError(SnapcraftError):

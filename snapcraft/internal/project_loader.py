@@ -304,7 +304,7 @@ def _build_env(root, snap_name, confinement, arch_triplet,
 
     if confinement == 'classic':
         if not core_dynamic_linker:
-            raise EnvironmentError(
+            raise errors.SnapcraftEnvironmentError(
                 'classic confinement requires the core snap to be installed. '
                 'Install it by running `snap install core`.')
 

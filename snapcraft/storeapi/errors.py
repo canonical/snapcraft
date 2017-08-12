@@ -386,8 +386,12 @@ class StoreSnapRevisionsError(StoreError):
             series=series or 'any', error=error)
 
 
-class StoreDeltaApplicationError(Exception):
-    pass
+class StoreDeltaApplicationError(StoreError):
+
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
 
 
 class StoreSnapStatusError(StoreSnapRevisionsError):

@@ -37,10 +37,7 @@ from snapcraft.internal.meta import (
     _SnapPackaging
 )
 from snapcraft.internal import common
-from snapcraft.internal.errors import (
-    MissingGadgetError,
-    SnapcraftPathEntryError,
-)
+from snapcraft.internal import errors
 from snapcraft import ProjectOptions, tests
 
 
@@ -136,7 +133,7 @@ class CreateTestCase(CreateBaseTestCase):
         self.config_data['type'] = 'gadget'
 
         self.assertRaises(
-            MissingGadgetError,
+            errors.MissingGadgetError,
             create_snap_packaging,
             self.config_data,
             self.project_options,
@@ -562,7 +559,8 @@ class EnsureFilePathsTestCaseFails(CreateBaseTestCase):
     def test_file_path_entry(self):
         self.config_data['apps'] = {'app': {self.key: self.filepath}}
 
-        self.assertRaises(SnapcraftPathEntryError, self.generate_meta_yaml)
+        self.assertRaises(
+            errors.SnapcraftPathEntryError, self.generate_meta_yaml)
 
 
 class CreateWithGradeTestCase(CreateBaseTestCase):
@@ -733,7 +731,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         apps = {'app1': {'command': 'command-does-not-exist'}}
 
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.InvalidAppCommandError,
             self.packager._wrap_apps, apps)
         self.assertEqual(
             "The specified command 'command-does-not-exist' defined in the "
@@ -749,7 +747,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         _create_file(cmd_path)
 
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.InvalidAppCommandError,
             self.packager._wrap_apps, apps)
         self.assertEqual(
             "The specified command 'command-not-executable' defined in the "
