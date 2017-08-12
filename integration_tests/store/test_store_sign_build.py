@@ -19,6 +19,7 @@ import fixtures
 import shutil
 
 from testtools.matchers import (
+    Equals,
     Contains,
     FileContains,
     FileExists,
@@ -47,7 +48,7 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
 
         status = self.sign_build(
             self.snap_path, local=True, expect_success=False)
-        self.assertEqual(1, status)
+        self.assertThat(status, Equals(2))
         self.assertThat(self.snap_build_path, Not(FileExists()))
 
     def test_successful_sign_build_local(self):
@@ -77,7 +78,7 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
         self.assertThat(self.snap_path, FileExists())
 
         status = self.sign_build(self.snap_path, expect_success=False)
-        self.assertEqual(1, status)
+        self.assertThat(status, Equals(2))
         self.assertThat(self.snap_build_path, Not(FileExists()))
 
     def test_successful_sign_build_push(self):
