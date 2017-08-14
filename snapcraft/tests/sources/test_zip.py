@@ -53,7 +53,7 @@ class TestZip(tests.FakeFileHTTPServerBasedTestCase):
         mock_zip.assert_called_once_with(zip_download)
 
         with open(zip_download, 'r') as zip_file:
-            self.assertEqual('Test fake compressed file', zip_file.read())
+            self.assertEqual('Test fake file', zip_file.read())
 
     def test_has_source_handler_entry(self):
         self.assertTrue(sources._source_handler['zip'] is sources.Zip)

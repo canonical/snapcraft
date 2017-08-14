@@ -50,7 +50,7 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
         source_file = os.path.join(dest_dir, tar_file_name)
         mock_prov.assert_called_once_with(dest_dir, src=source_file)
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
-            self.assertEqual('Test fake compressed file', tar_file.read())
+            self.assertEqual('Test fake file', tar_file.read())
 
     @mock.patch('snapcraft.sources.Tar.provision')
     def test_pull_twice_downloads_once(self, mock_prov):

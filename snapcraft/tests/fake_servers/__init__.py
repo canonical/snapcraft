@@ -45,7 +45,7 @@ class BaseHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 class FakeFileHTTPRequestHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
-        data = 'Test fake compressed file'
+        data = 'Test fake file'
         self.send_response(200)
         self.send_header('Content-Length', len(data))
         self.send_header('Content-type', 'text/html')

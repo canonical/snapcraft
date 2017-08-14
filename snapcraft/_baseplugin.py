@@ -131,6 +131,10 @@ class BasePlugin:
         """Clean the artifacts that resulted from building this part."""
         pass
 
+    def get_manifest(self):
+        """Return the information to record after the build of this part."""
+        pass
+
     def snap_fileset(self):
         """Return a list of files to include or exclude in the resulting snap
 
