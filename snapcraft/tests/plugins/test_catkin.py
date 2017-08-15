@@ -316,7 +316,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
                                      self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
-        self.dependencies_mock.return_value = ['foo']
+        self.dependencies_mock.return_value = {'apt': {'foo'}}
 
         mock_instance = self.ubuntu_mock.return_value
         mock_instance.get.side_effect = repo.errors.PackageNotFoundError('foo')
@@ -336,7 +336,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         # No system dependencies
-        self.dependencies_mock.return_value = set()
+        self.dependencies_mock.return_value = {}
 
         self.rosdep_mock.return_value.resolve_dependency.return_value = None
 
@@ -356,7 +356,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         # No system dependencies
-        self.dependencies_mock.return_value = set()
+        self.dependencies_mock.return_value = {}
 
         raised = self.assertRaises(
             errors.SnapcraftEnvironmentError, plugin.pull)
@@ -371,7 +371,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
                                      self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
-        self.dependencies_mock.return_value = {'foo', 'bar', 'baz'}
+        self.dependencies_mock.return_value = {'apt': {'foo', 'bar', 'baz'}}
 
         plugin.pull()
         os.makedirs(plugin._rosdep_path)
@@ -802,7 +802,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
                                      self.project_options)
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
-        self.dependencies_mock.return_value = {'foo', 'bar', 'baz'}
+        self.dependencies_mock.return_value = {'apt': {'foo', 'bar', 'baz'}}
 
         plugin.pull()
 
@@ -844,7 +844,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         # No system dependencies (only local)
-        self.dependencies_mock.return_value = set()
+        self.dependencies_mock.return_value = {}
 
         plugin.pull()
 
@@ -883,11 +883,11 @@ class PullTestCase(CatkinPluginBaseTestCase):
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         # No system dependencies
-        self.dependencies_mock.return_value = set()
+        self.dependencies_mock.return_value = {}
 
         def resolve(package_name):
             if package_name == 'ros_core':
-                return ['ros-core-dependency']
+                return {'apt': {'ros-core-dependency'}}
 
         self.rosdep_mock.return_value.resolve_dependency = resolve
 
@@ -923,7 +923,7 @@ class PullTestCase(CatkinPluginBaseTestCase):
         os.makedirs(os.path.join(plugin.sourcedir, 'src'))
 
         # No system dependencies
-        self.dependencies_mock.return_value = set()
+        self.dependencies_mock.return_value = {}
 
         plugin.pull()
 
@@ -1168,10 +1168,13 @@ class FindSystemDependenciesTestCase(tests.TestCase):
         self.catkin_mock.find.side_effect = exception
 
     def test_find_system_dependencies_system_only(self):
-        self.rosdep_mock.resolve_dependency.return_value = ['baz']
+        self.rosdep_mock.resolve_dependency.return_value = {
+            'apt': {'baz'},
+        }
 
         self.assertThat(catkin._find_system_dependencies(
-            {'foo'}, self.rosdep_mock, self.catkin_mock), Equals({'baz'}))
+            {'foo'}, self.rosdep_mock, self.catkin_mock), Equals(
+            {'apt': {'baz'}}))
 
         self.rosdep_mock.get_dependencies.assert_called_once_with('foo')
         self.rosdep_mock.resolve_dependency.assert_called_once_with('bar')
@@ -1200,7 +1203,9 @@ class FindSystemDependenciesTestCase(tests.TestCase):
 
     def test_find_system_dependencies_mixed(self):
         self.rosdep_mock.get_dependencies.return_value = ['bar', 'baz', 'qux']
-        self.rosdep_mock.resolve_dependency.return_value = ['quux']
+        self.rosdep_mock.resolve_dependency.return_value = {
+            'apt': {'quux'},
+        }
 
         def _fake_find(package_name):
             if package_name == 'qux':
@@ -1210,7 +1215,7 @@ class FindSystemDependenciesTestCase(tests.TestCase):
         self.catkin_mock.find.side_effect = _fake_find
         self.assertThat(catkin._find_system_dependencies(
             {'foo', 'bar'}, self.rosdep_mock, self.catkin_mock),
-            Equals({'quux'}))
+            Equals({'apt': {'quux'}}))
 
         self.rosdep_mock.get_dependencies.assert_has_calls(
             [mock.call('foo'), mock.call('bar')], any_order=True)
@@ -1225,16 +1230,30 @@ class FindSystemDependenciesTestCase(tests.TestCase):
         self.rosdep_mock.resolve_dependency.side_effect = exception
 
         raised = self.assertRaises(
-            RuntimeError,
+            catkin.CatkinInvalidSystemDependencyError,
             catkin._find_system_dependencies,
             {'foo'}, self.rosdep_mock, self.catkin_mock)
 
-        self.assertEqual(raised.args[0],
-                         "Package 'bar' isn't a valid system dependency. Did "
-                         "you forget to add it to catkin-packages? If not, "
-                         "add the Ubuntu package containing it to "
-                         "stage-packages until you can get it into the rosdep "
-                         "database.")
+        self.assertThat(str(raised), Equals(
+            "Package 'bar' isn't a valid system dependency. Did "
+            "you forget to add it to catkin-packages? If not, "
+            "add the Ubuntu package containing it to "
+            "stage-packages until you can get it into the rosdep "
+            "database."))
+
+    def test_find_system_dependencies_raises_if_unsupported_type(self):
+        self.rosdep_mock.resolve_dependency.return_value = {
+            'pip': {'baz'},
+        }
+
+        raised = self.assertRaises(
+            catkin.CatkinUnsupportedDependencyTypeError,
+            catkin._find_system_dependencies, {'foo'}, self.rosdep_mock,
+            self.catkin_mock)
+
+        self.assertThat(str(raised), Equals(
+            "Package 'bar' resolved to an unsupported type of dependency: "
+            "'pip'"))
 
 
 class HandleRosinstallFilesTestCase(tests.TestCase):

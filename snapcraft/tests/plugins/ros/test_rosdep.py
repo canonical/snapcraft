@@ -135,7 +135,8 @@ class RosdepTestCase(tests.TestCase):
     def test_resolve_dependency(self):
         self.check_output_mock.return_value = b'#apt\nmylib-dev'
 
-        self.assertEqual(self.rosdep.resolve_dependency('foo'), ['mylib-dev'])
+        self.assertThat(self.rosdep.resolve_dependency('foo'), Equals(
+            {'apt': {'mylib-dev'}}))
 
         self.check_output_mock.assert_called_with(
             ['rosdep', 'resolve', 'foo', '--rosdistro', 'kinetic', '--os',
@@ -154,16 +155,39 @@ class RosdepTestCase(tests.TestCase):
             str(raised),
             Equals("rosdep cannot resolve 'bar' into a valid dependency"))
 
+    def test_resolve_unexpected_dependency(self):
+        # Note the lack of dependency type here
+        self.check_output_mock.return_value = b'mylib-dev'
+
+        raised = self.assertRaises(
+            rosdep.RosdepUnexpectedResultError,
+            self.rosdep.resolve_dependency, 'bar')
+
+        self.assertThat(
+            str(raised),
+            Equals('Received unexpected result from rosdep when trying to '
+                   "resolve 'bar':\nmylib-dev"))
+
     def test_resolve_no_dependency(self):
         self.check_output_mock.return_value = b'#apt'
 
-        self.assertEqual(self.rosdep.resolve_dependency('bar'), [])
+        self.assertThat(self.rosdep.resolve_dependency('bar'), Equals(
+            {'apt': set()}))
 
     def test_resolve_multiple_dependencies(self):
         self.check_output_mock.return_value = b'#apt\nlib1 lib2'
 
-        self.assertEqual(self.rosdep.resolve_dependency('foo'),
-                         ['lib1', 'lib2'])
+        self.assertThat(self.rosdep.resolve_dependency('foo'), Equals(
+            {'apt': {'lib1', 'lib2'}}))
+
+    def test_resolve_multiple_dependency_types(self):
+        self.check_output_mock.return_value = b'#apt\nlib1\n\n#pip\nlib2'
+
+        self.assertThat(self.rosdep.resolve_dependency('foo'), Equals(
+            {
+                'apt': {'lib1'},
+                'pip': {'lib2'},
+            }))
 
     def test_run(self):
         rosdep = self.rosdep
