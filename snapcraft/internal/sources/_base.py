@@ -60,6 +60,10 @@ class FileBase(Base):
             # this file and we don't want that.
             shutil.copy2(self.source, source_file)
 
+        # Verify before provisioning
+        if self.source_checksum:
+            verify_checksum(self.source_checksum, source_file)
+
         # We finally provision
         self.provision(self.source_dir, src=source_file)
 
