@@ -96,7 +96,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(1))
         self.assertThat(result.output, Contains(
-            "bad-type' is not one of ['app', 'gadget', 'kernel', 'os']"))
+            "bad-type' is not one of ['app', 'base', 'gadget', "
+            "'kernel', 'os']"))
 
     def test_snap_is_the_default(self):
         self.make_snapcraft_yaml()
