@@ -48,6 +48,8 @@ class BuildState(PartState):
         self.schema_properties = property_names
         if plugin_assets:
             self.assets = plugin_assets
+        else:
+            self.assets = {}
 
         super().__init__(part_properties, project)
 
