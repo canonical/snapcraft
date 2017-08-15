@@ -317,7 +317,7 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'device', 'add', self._container_name,
                 destination, 'disk', 'source={}'.format(source),
-                'path=/{}'.format(destination)])
+                'path={}'.format(destination)])
 
     def _finish(self):
         # Nothing to do
