@@ -109,7 +109,8 @@ class KBuildPlugin(BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['kdefconfig', 'kconfigfile', 'kconfigs', 'kconfigflavour']
+        return ['kdefconfig', 'kconfigfile', 'kconfigs', 'kconfigflavour',
+                'build-attributes']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -121,6 +122,19 @@ class KBuildPlugin(BasePlugin):
             'make', '-j{}'.format(self.parallel_build_count)]
         if logger.isEnabledFor(logging.DEBUG):
             self.make_cmd.append('V=1')
+
+    def enable_cross_compilation(self):
+        self.make_cmd.append('ARCH={}'.format(
+            self.project.kernel_arch))
+        if 'CROSS_COMPILE' in os.environ:
+            toolchain = os.environ['CROSS_COMPILE']
+        else:
+            toolchain = self.project.cross_compiler_prefix
+        self.make_cmd.append('CROSS_COMPILE={}'.format(toolchain))
+
+        env = os.environ.copy()
+        self.make_cmd.append('PATH={}:/usr/{}/bin'.format(
+            env.get('PATH', ''), self.project.arch_triplet))
 
     def assemble_ubuntu_config(self, config_path):
         try:
@@ -237,4 +251,5 @@ class KBuildPlugin(BasePlugin):
 
         self.do_configure()
         self.do_build()
-        self.do_install()
+        if 'no-install' not in self.options.build_attributes:
+            self.do_install()

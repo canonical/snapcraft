@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
+import snapcraft.internal.errors
 from testtools.matchers import Equals, FileContains
 
 from . import CommandBaseTestCase
@@ -77,7 +78,9 @@ class InitCommandExistingProjectTestCase(CommandBaseTestCase):
 
         open(self.yaml_path, 'w').close()
 
-        result = self.run_command(['init'])
+        raised = self.assertRaises(
+            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            self.run_command, ['init'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertEqual(result.output, self.message)
+        self.assertThat(str(raised), Equals(
+            '{} already exists!'.format(self.yaml_path)))

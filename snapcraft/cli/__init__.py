@@ -13,8 +13,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import functools
 import logging
 import os
+import sys
 
 import click
 
@@ -31,6 +33,7 @@ from .parts import partscli
 from .help import helpcli
 from .ci import cicli
 from ._options import add_build_options
+from ._errors import exception_handler
 
 
 command_groups = [
@@ -89,12 +92,17 @@ class SnapcraftGroup(click.Group):
 @click.option('--debug', '-d', is_flag=True)
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
+
     if debug:
         log_level = logging.DEBUG
         click.echo('Starting snapcraft {} from {}.'.format(
             snapcraft.__version__, os.path.dirname(__file__)))
     else:
         log_level = logging.INFO
+
+    # Setup global exception handler (to be called for unhandled exceptions)
+    sys.excepthook = functools.partial(exception_handler, debug=debug)
+
     # In an ideal world, this logger setup would be replaced
     log.configure(log_level=log_level)
     # The default command

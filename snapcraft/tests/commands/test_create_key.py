@@ -31,11 +31,13 @@ class CreateKeyTestCase(CommandBaseTestCase):
                                             mock_check_call):
         mock_installed.return_value = False
 
-        result = self.run_command(['create-key'])
+        raised = self.assertRaises(
+            storeapi.errors.MissingSnapdError,
+            self.run_command, ['create-key'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Contains(
             'The snapd package is not installed.'))
+
         mock_installed.assert_called_with('snapd')
         self.assertEqual(0, mock_check_output.call_count)
         self.assertEqual(0, mock_check_call.call_count)
@@ -48,12 +50,12 @@ class CreateKeyTestCase(CommandBaseTestCase):
         mock_installed.return_value = True
         mock_check_output.side_effect = mock_snap_output
 
-        result = self.run_command(['create-key'])
+        raised = self.assertRaises(
+            storeapi.errors.KeyAlreadyRegisteredError,
+            self.run_command, ['create-key'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'You already have a key named "default".'))
-        self.assertEqual(0, mock_check_call.call_count)
+        self.assertThat(str(raised), Equals(
+            "You have already registered a key named 'default'"))
 
     @mock.patch('subprocess.check_call')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
@@ -76,11 +78,12 @@ class CreateKeyTestCase(CommandBaseTestCase):
             ],
         }
 
-        result = self.run_command(['create-key', 'new-key'])
+        raised = self.assertRaises(
+            storeapi.errors.KeyAlreadyRegisteredError,
+            self.run_command, ['create-key', 'new-key'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'You have already registered a key named "new-key".'))
+        self.assertThat(str(raised), Equals(
+            "You have already registered a key named 'new-key'"))
         self.assertEqual(0, mock_check_call.call_count)
 
     @mock.patch('subprocess.check_call')

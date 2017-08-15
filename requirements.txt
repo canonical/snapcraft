@@ -8,6 +8,7 @@ progressbar33==2.4
 PyYAML==3.11
 pyxdg==0.25
 requests==2.9.1
+requests_unixsocket==0.1.5
 https://launchpad.net/ubuntu/+archive/primary/+files/python-apt_1.1.0~beta1build1.tar.xz; sys_platform == 'linux'
 https://launchpad.net/python-distutils-extra/trunk/2.39/+download/python-distutils-extra-2.39.tar.gz
 requests-toolbelt==0.6.0
@@ -21,3 +22,4 @@ simplejson==3.8.2
 tabulate==0.7.5
 python-debian==0.1.28
 chardet==2.3.0
+cx_Freeze>=5.0.2; sys_platform == 'win32'

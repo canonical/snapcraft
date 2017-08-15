@@ -437,11 +437,6 @@ def _try_copy_local(path, target):
         return False
 
 
-def check_for_command(command):
-    if not shutil.which(command):
-        raise errors.MissingCommandError([command])
-
-
 def _set_pkg_version(pkg, version):
     """Set cadidate version to a specific version if available"""
     if version in pkg.versions:

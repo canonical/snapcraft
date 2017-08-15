@@ -85,11 +85,11 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         mock_upload.assert_called_once_with('basic', self.snap_file)
 
     def test_push_without_login_must_raise_exception(self):
-        result = self.run_command(['push', self.snap_file])
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertIn(
-            'No valid credentials found. Have you run "snapcraft login"?\n',
-            self.fake_logger.output)
+        raised = self.assertRaises(
+            storeapi.errors.InvalidCredentialsError,
+            self.run_command, ['push', self.snap_file])
+
+        self.assertThat(str(raised), Contains('Invalid credentials'))
 
     def test_push_nonexisting_snap_must_raise_exception(self):
         result = self.run_command(['push', 'test-unexisting-snap'])
@@ -107,10 +107,11 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         mock_precheck.side_effect = StorePushError(
             'basic', MockResponse())
 
-        result = self.run_command(['push', self.snap_file])
+        raised = self.assertRaises(
+            storeapi.errors.StorePushError,
+            self.run_command, ['push', self.snap_file])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Contains(
             'You are not the publisher or allowed to push revisions for this '
             'snap. To become the publisher, run `snapcraft register '
             'basic` and try to push again.'))
@@ -127,8 +128,9 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.addCleanup(patcher.stop)
         mock_upload.side_effect = StoreUploadError(MockResponse())
 
-        result = self.run_command(['push', self.snap_file])
-        self.assertThat(result.exit_code, Equals(1))
+        self.assertRaises(
+            storeapi.errors.StoreUploadError,
+            self.run_command, ['push', self.snap_file])
 
     def test_upload_raises_deprecation_warning(self):
         mock_tracker = mock.Mock(storeapi.StatusTracker)
