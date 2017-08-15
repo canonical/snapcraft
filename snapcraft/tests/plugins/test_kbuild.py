@@ -286,7 +286,7 @@ class KBuildCrossCompilePluginTestCase(tests.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch.dict(os.environ, {})
+        patcher = mock.patch('os.environ', {})
         self.env_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -303,6 +303,44 @@ class KBuildCrossCompilePluginTestCase(tests.TestCase):
                            self.project_options.kernel_arch),
                        'CROSS_COMPILE={}'.format(
                            self.project_options.cross_compiler_prefix),
+                       'PATH={}:/usr/{}/bin'.format(
+                           os.environ.copy().get('PATH', ''),
+                           self.project_options.arch_triplet)]),
+        ])
+
+    @mock.patch('subprocess.check_call')
+    @mock.patch.object(kbuild.KBuildPlugin, 'run')
+    def test_cross_compile_arch_override(self, run_mock, check_call_mock):
+        self.env_mock['ARCH'] = 'fantasy-arch'
+        plugin = kbuild.KBuildPlugin('test-part', self.options,
+                                     self.project_options)
+        plugin.enable_cross_compilation()
+
+        plugin.build()
+        run_mock.assert_has_calls([
+            mock.call(['make', '-j1', 'ARCH={}'.format(
+                           self.env_mock['ARCH']),
+                       'CROSS_COMPILE={}'.format(
+                           self.project_options.cross_compiler_prefix),
+                       'PATH={}:/usr/{}/bin'.format(
+                           os.environ.copy().get('PATH', ''),
+                           self.project_options.arch_triplet)]),
+        ])
+
+    @mock.patch('subprocess.check_call')
+    @mock.patch.object(kbuild.KBuildPlugin, 'run')
+    def test_cross_compile_toolchain_override(self, run_mock, check_call_mock):
+        self.env_mock['CROSS_COMPILE'] = 'fantasy-linux-wildebeest-'
+        plugin = kbuild.KBuildPlugin('test-part', self.options,
+                                     self.project_options)
+        plugin.enable_cross_compilation()
+
+        plugin.build()
+        run_mock.assert_has_calls([
+            mock.call(['make', '-j1', 'ARCH={}'.format(
+                           self.project_options.kernel_arch),
+                       'CROSS_COMPILE={}'.format(
+                           self.env_mock['CROSS_COMPILE']),
                        'PATH={}:/usr/{}/bin'.format(
                            os.environ.copy().get('PATH', ''),
                            self.project_options.arch_triplet)]),
