@@ -105,6 +105,10 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
                 yield '-D{}.proxyHost={}'.format(scheme, parsed.hostname)
             if parsed.port is not None:
                 yield '-D{}.proxyPort={}'.format(scheme, parsed.port)
+            if parsed.username is not None:
+                yield '-D{}.proxyUser={}'.format(scheme, parsed.username)
+            if parsed.password is not None:
+                yield '-D{}.proxyPassword={}'.format(scheme, parsed.password)
 
     def env(self, root):
         env = super().env(root)

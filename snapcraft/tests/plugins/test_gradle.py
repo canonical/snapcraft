@@ -217,6 +217,12 @@ class GradleProxyTestCase(BaseGradlePluginTestCase):
             env_var=('http_proxy', 'http://test_proxy:3000'),
             expected_args=['-Dhttp.proxyHost=test_proxy',
                            '-Dhttp.proxyPort=3000'])),
+        ('authenticated http proxy url', dict(
+            env_var=('http_proxy', 'http://user:pass@test_proxy:3000'),
+            expected_args=['-Dhttp.proxyHost=test_proxy',
+                           '-Dhttp.proxyPort=3000',
+                           '-Dhttp.proxyUser=user',
+                           '-Dhttp.proxyPassword=pass'])),
         ('https proxy url', dict(
             env_var=('https_proxy', 'https://test_proxy'),
             expected_args=['-Dhttps.proxyHost=test_proxy'])),
@@ -224,6 +230,12 @@ class GradleProxyTestCase(BaseGradlePluginTestCase):
             env_var=('https_proxy', 'https://test_proxy:3000'),
             expected_args=['-Dhttps.proxyHost=test_proxy',
                            '-Dhttps.proxyPort=3000'])),
+        ('authenticated https proxy url', dict(
+            env_var=('https_proxy', 'http://user:pass@test_proxy:3000'),
+            expected_args=['-Dhttps.proxyHost=test_proxy',
+                           '-Dhttps.proxyPort=3000',
+                           '-Dhttps.proxyUser=user',
+                           '-Dhttps.proxyPassword=pass'])),
     ]
 
     @mock.patch.object(gradle.GradlePlugin, 'run')
@@ -234,8 +246,7 @@ class GradleProxyTestCase(BaseGradlePluginTestCase):
                                      self.project_options)
 
         def side(l):
-            os.makedirs(os.path.join(plugin.builddir,
-                        'build', 'libs'))
+            os.makedirs(os.path.join(plugin.builddir, 'build', 'libs'))
             open(os.path.join(plugin.builddir,
                  'build', 'libs', 'dummy.war'), 'w').close()
 
