@@ -16,7 +16,7 @@
 
 import re
 
-from .errors import StagePackageSyntaxError
+from .errors import GrammarSyntaxError
 
 _ON_CLAUSE_PATTERN = re.compile(r'\Aon\s+')
 _TRY_CLAUSE_PATTERN = re.compile(r'\Atry\Z')
@@ -56,7 +56,7 @@ def process_grammar(grammar, project_options, repo_instance):
                 section, statement, statements, project_options, repo_instance)
         else:
             # jsonschema should never let us get here.
-            raise StagePackageSyntaxError(
+            raise GrammarSyntaxError(
                 "expected grammar section to be either of type 'str' or "
                 "type 'dict', but got {!r}".format(type(section)))
 
@@ -108,14 +108,14 @@ def _handle_else(statement, else_body):
                       ignored.
     :param else_body: The body of the else clause to add.
 
-    :raises StagePackageSyntaxError: If there isn't a currently-active
+    :raises GrammarSyntaxError: If there isn't a currently-active
                                      statement.
     """
 
     try:
         statement.add_else(else_body)
     except AttributeError:
-        raise StagePackageSyntaxError(
+        raise GrammarSyntaxError(
             "'else' doesn't seem to correspond to an 'on' or "
             "'try'")
 
@@ -131,14 +131,14 @@ class _StatementCollection:
 
         :param statement: New statement.
 
-        :raises StagePackageSyntaxError: If statement is already in collection.
+        :raises GrammarSyntaxError: If statement is already in collection.
         """
 
         if not statement:
             return
 
         if statement in self._statements:
-            raise StagePackageSyntaxError(
+            raise GrammarSyntaxError(
                 "found duplicate {!r} statements. These should be "
                 'merged.'.format(statement))
 
