@@ -11,6 +11,9 @@ confinement: devmode
 apps:
   my-app:
       command: bash
+      # ensure we still have a valid desktop file even when no adapter
+      # (wrapper) is generated
+      adapter: none
 
 parts:
   my-app:

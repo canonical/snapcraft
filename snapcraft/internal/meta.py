@@ -371,11 +371,10 @@ class _SnapPackaging:
             if os.path.splitext(f)[1] == '.desktop':
                 os.remove(os.path.join(gui_dir, f))
         for app in apps:
-            wrapper = "legacy"
-            if "wrapper" in apps[app]:
-                wrapper = apps[app]["wrapper"]
-            if wrapper == "legacy":
+            adapter = apps[app].get("adapter", "")
+            if adapter != "none":
                 self._wrap_app(app, apps[app])
+            self._generate_desktop_file(app, apps[app])
         return apps
 
     def _wrap_app(self, name, app):
@@ -387,6 +386,8 @@ class _SnapPackaging:
                 raise EnvironmentError(
                     'The specified command {!r} defined in the app {!r} '
                     'does not exist or is not executable'.format(str(e), name))
+
+    def _generate_desktop_file(self, name, app):
         desktop_file_name = app.pop('desktop', '')
         if desktop_file_name:
             desktop_file = _DesktopFile(

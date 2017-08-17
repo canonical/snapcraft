@@ -190,12 +190,12 @@ properties:
                 - type: string
                   minLength: 1
                 - type: number
-          wrapper:
+          adapter:
             type: string
             description: What kind of wrapper to generate for the given command
-            default: legacy
+            default: ""
             enum:
-              - legacy
+              - ""
               - none
   hooks:
     type: object

@@ -12,7 +12,7 @@ apps:
     command: subdir/binary2
   binary-wrapper-none:
     command: subdir/binary3
-    wrapper: none
+    adapter: none
   assemble-service:
     command: service-start
     stop-command: service-stop with args
