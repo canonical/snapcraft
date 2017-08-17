@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from unittest import mock
 from testtools.matchers import Equals, DirExists, Not
+import snapcraft.internal.errors
 
 from . import LifecycleCommandsBaseTestCase
 
@@ -24,13 +25,13 @@ class PullCommandTestCase(LifecycleCommandsBaseTestCase):
     def test_pull_invalid_part(self):
         self.make_snapcraft_yaml('pull')
 
-        result = self.run_command(['pull', 'no-pull'])
+        raised = self.assertRaises(
+            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            self.run_command, ['pull', 'no-pull'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertEqual(
-            result.output,
+        self.assertThat(str(raised), Equals(
             "The part named 'no-pull' is not defined in "
-            "'snap/snapcraft.yaml'\n")
+            "'snap/snapcraft.yaml'"))
 
     def test_pull_defaults(self):
         parts = self.make_snapcraft_yaml('pull')

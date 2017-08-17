@@ -64,7 +64,7 @@ parts:
   my-part:
     # See 'snapcraft plugins'
     plugin: nil
-""" # noqa, lines too long.
+"""  # noqa, lines too long.
 
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 
@@ -261,7 +261,9 @@ class _Executor:
     def _create_meta(self, step, part_names):
         if step == 'prime' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
-            meta.create_snap_packaging(self.config.data, self.project_options)
+            meta.create_snap_packaging(
+                self.config.data, self.project_options,
+                self.config.snapcraft_yaml_path)
 
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
@@ -366,6 +368,9 @@ def _snap_data_from_dir(directory):
 
 
 def snap(project_options, directory=None, output=None):
+    # Check for our prerequesite external command early
+    repo.check_for_command('mksquashfs')
+
     if directory:
         prime_dir = os.path.abspath(directory)
         snap = _snap_data_from_dir(prime_dir)
@@ -454,6 +459,7 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
                                        config):
     # Get the name of the parts that depend upon this one
     dependents = config.parts.get_dependents(part_name)
+    additional_dependents = []
 
     # Verify that they're either already clean, or that they will be cleaned.
     if not dependents.issubset(clean_part_names):
@@ -461,12 +467,13 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
             if part.name in dependents and not part.is_clean(step):
                 humanized_parts = formatting_utils.humanize_list(
                     dependents, 'and')
+                additional_dependents.append(part_name)
 
-                raise errors.SnapcraftEnvironmentError(
-                    'Requested clean of {!r} but {} depend{} upon it. Please '
-                    "add each to the clean command if that's what you "
-                    'intended.'.format(part_name, humanized_parts,
-                                       's' if len(dependents) == 1 else ''))
+                logger.warning(
+                    'Requested clean of {!r} which requires also cleaning '
+                    'the part{} {}'.format(part_name,
+                                           '' if len(dependents) == 1 else 's',
+                                           humanized_parts))
 
 
 def _clean_parts(part_names, step, config, staged_state, primed_state):
@@ -474,7 +481,8 @@ def _clean_parts(part_names, step, config, staged_state, primed_state):
         step = 'pull'
 
     # Before doing anything, verify that we weren't asked to clean only the
-    # root of a dependency tree (the entire tree must be specified).
+    # root of a dependency tree and hint that more parts would be cleaned
+    # if not.
     for part_name in part_names:
         _verify_dependents_will_be_cleaned(part_name, part_names, step, config)
 

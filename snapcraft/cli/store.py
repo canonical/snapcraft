@@ -74,11 +74,7 @@ def register(snap_name, private):
     if private:
         click.echo(_MESSAGE_REGISTER_PRIVATE.format(snap_name))
     if click.confirm(_MESSAGE_REGISTER_CONFIRM.format(snap_name)):
-        try:
-            snapcraft.register(snap_name, private)
-        except storeapi.errors.StoreError as e:
-            echo.error(e)
-            sys.exit(1)
+        snapcraft.register(snap_name, private)
         click.echo(_MESSAGE_REGISTER_SUCCESS.format(snap_name))
     else:
         click.echo(_MESSAGE_REGISTER_NO.format(snap_name))
@@ -119,11 +115,7 @@ def push(snap_file, release):
             'After pushing, an attempt to release to {} '
             'will be made'.format(channel_list))
 
-    try:
-        snapcraft.push(snap_file, channel_list)
-    except storeapi.errors.StoreError as e:
-        echo.error(e)
-        sys.exit(1)
+    snapcraft.push(snap_file, channel_list)
 
 
 @storecli.command()
@@ -161,11 +153,7 @@ def release(snap_name, revision, channels):
         snapcraft release my-snap 9 lts-channel/stable
         snapcraft release my-snap 9 lts-channel/stable/my-branch
     """
-    try:
-        snapcraft.release(snap_name, revision, channels.split(','))
-    except storeapi.errors.StoreError as e:
-        echo.error(e)
-        sys.exit(1)
+    snapcraft.release(snap_name, revision, channels.split(','))
 
 
 @storecli.command()
@@ -184,14 +172,7 @@ def close(snap_name, channels):
         snapcraft close my-snap beta
         snapcraft close my-snap beta edge
     """
-    try:
-        snapcraft.close(snap_name, channels)
-    except storeapi.errors.StoreError as e:
-        echo.error(e)
-        sys.exit(1)
-    # This one is here until an assertions refactor
-    except KeyError:
-        sys.exit(1)
+    snapcraft.close(snap_name, channels)
 
 
 @storecli.command()
@@ -209,11 +190,7 @@ def status(snap_name, series, arch):
         snapcraft status my-snap
         snapcraft status my-snap --arch armhf
     """
-    try:
-        snapcraft.status(snap_name, series, arch)
-    except storeapi.errors.StoreError as e:
-        echo.error(e)
-        sys.exit(1)
+    snapcraft.status(snap_name, series, arch)
 
 
 @storecli.command('list-revisions')
@@ -234,11 +211,7 @@ def list_revisions(snap_name, series, arch):
         snapcraft list-revisions my-snap --arch armhf
         snapcraft revisions my-snap
     """
-    try:
-        snapcraft.revisions(snap_name, series, arch)
-    except storeapi.errors.StoreError as e:
-        echo.error(e)
-        sys.exit(1)
+    snapcraft.revisions(snap_name, series, arch)
 
 
 @storecli.command('list-registered')
@@ -252,11 +225,7 @@ def list_registered():
         snapcraft list-registered
         snapcraft registered
     """
-    try:
-        snapcraft.list_registered()
-    except storeapi.errors.StoreError as e:
-        echo.error(e)
-        sys.exit(1)
+    snapcraft.list_registered()
 
 
 @storecli.command()

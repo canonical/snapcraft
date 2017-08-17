@@ -31,11 +31,10 @@ class RegisterTestCase(CommandBaseTestCase):
         self.assertThat(result.output, Contains('Usage:'))
 
     def test_register_without_login_must_error(self):
-        result = self.run_command(['register', 'snap-test'], input='y\n')
-
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'No valid credentials found. Have you run "snapcraft login"?'))
+        raised = self.assertRaises(
+            storeapi.errors.InvalidCredentialsError,
+            self.run_command, ['register', 'snap-test'], input='y\n')
+        self.assertThat(str(raised), Contains('Invalid credentials'))
 
     def test_register_name_successfully(self):
         with mock.patch.object(
@@ -73,11 +72,11 @@ class RegisterTestCase(CommandBaseTestCase):
                 storeapi.SCAClient, 'register') as mock_register:
             mock_register.side_effect = storeapi.errors.StoreRegistrationError(
                 'test-snap', response)
-            result = self.run_command(['register', 'test-snap'], input='y\n')
+            raised = self.assertRaises(
+                storeapi.errors.StoreRegistrationError,
+                self.run_command, ['register', 'test-snap'], input='y\n')
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains('Registering test-snap'))
-        self.assertThat(result.output, Contains('Registration failed'))
+        self.assertThat(str(raised), Equals('Registration failed.'))
 
     def test_registration_cancelled(self):
         response = mock.Mock()

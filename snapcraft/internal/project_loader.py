@@ -92,8 +92,8 @@ class Config:
         self.build_tools = []
         self._project_options = project_options
 
-        self._snapcraft_yaml = get_snapcraft_yaml()
-        snapcraft_yaml = _snapcraft_yaml_load(self._snapcraft_yaml)
+        self.snapcraft_yaml_path = get_snapcraft_yaml()
+        snapcraft_yaml = _snapcraft_yaml_load(self.snapcraft_yaml_path)
 
         self._validator = Validator(snapcraft_yaml)
         self._validator.validate()
@@ -115,7 +115,7 @@ class Config:
                                        self._project_options,
                                        self._validator,
                                        self.build_tools,
-                                       self._snapcraft_yaml)
+                                       self.snapcraft_yaml_path)
 
         if 'architectures' not in self.data:
             self.data['architectures'] = [self._project_options.deb_arch]
@@ -304,7 +304,7 @@ def _build_env(root, snap_name, confinement, arch_triplet,
 
     if confinement == 'classic':
         if not core_dynamic_linker:
-            raise EnvironmentError(
+            raise errors.SnapcraftEnvironmentError(
                 'classic confinement requires the core snap to be installed. '
                 'Install it by running `snap install core`.')
 

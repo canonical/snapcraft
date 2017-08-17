@@ -18,10 +18,14 @@
 import json
 import logging
 import os
+import pipes
+import shutil
 import sys
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError
 from time import sleep
+import requests
+import requests_unixsocket
 
 import petname
 import yaml
@@ -36,6 +40,9 @@ _NETWORK_PROBE_COMMAND = \
     'import urllib.request; urllib.request.urlopen("{}", timeout=5)'.format(
         'http://start.ubuntu.com/connectivity-check.html')
 _PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
+# Canonical store account key
+_STORE_KEY = (
+    'BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul')
 
 
 class Containerbuild:
@@ -48,7 +55,7 @@ class Containerbuild:
         self._source = os.path.realpath(source)
         self._project_options = project_options
         self._metadata = metadata
-        self._project_folder = 'build_{}'.format(metadata['name'])
+        self._project_folder = '/root/build_{}'.format(metadata['name'])
 
         if not remote:
             remote = _get_default_remote()
@@ -74,16 +81,27 @@ class Containerbuild:
 
     def _push_file(self, src, dst):
         check_call(['lxc', 'file', 'push',
-                    src, '{}/{}'.format(self._container_name, dst)])
+                    src, '{}{}'.format(self._container_name, dst)])
 
     def _pull_file(self, src, dst):
         check_call(['lxc', 'file', 'pull',
-                    '{}/{}'.format(self._container_name, src), dst])
+                    '{}{}'.format(self._container_name, src), dst])
 
-    def _container_run(self, cmd):
-        # Set HOME here as 'lxc config set ... environment.HOME' doesn't work
-        check_call(['lxc', 'exec', self._container_name, '--env',
-                   'HOME=/{}'.format(self._project_folder), '--'] + cmd)
+    def _container_run(self, cmd, cwd=None):
+        sh = ''
+        # Automatically wait on lock files before running commands
+        if cmd[0] == 'apt-get':
+            lock_file = '/var/lib/dpkg/lock'
+            if cmd[1] == 'update':
+                lock_file = '/var/lib/apt/lists/lock'
+            sh += 'while fuser {} >/dev/null 2>&1; do sleep 1; done; '.format(
+                lock_file)
+        if cwd:
+            sh += 'cd {}; '.format(cwd)
+        if sh:
+            cmd = ['sh', '-c', '{}{}'.format(sh,
+                   ' '.join(pipes.quote(arg) for arg in cmd))]
+        check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
 
     def _ensure_container(self):
         check_call([
@@ -102,16 +120,24 @@ class Containerbuild:
             self._ensure_container()
             yield
         finally:
-            # Stopping takes a while and lxc doesn't print anything.
-            print('Stopping {}'.format(self._container_name))
-            check_call(['lxc', 'stop', '-f', self._container_name])
+            if self._get_container_status():
+                # Stopping takes a while and lxc doesn't print anything.
+                print('Stopping {}'.format(self._container_name))
+                check_call(['lxc', 'stop', '-f', self._container_name])
+
+    def _get_container_status(self):
+        containers = json.loads(check_output([
+            'lxc', 'list', '--format=json', self._container_name]).decode())
+        for container in containers:
+            if container['name'] == self._container_name.split(':')[-1]:
+                return container
 
     def execute(self, step='snap', args=None):
         with self._ensure_started():
             self._setup_project()
             self._wait_for_network()
             self._container_run(['apt-get', 'update'])
-            self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
+            self._inject_snapcraft()
             command = ['snapcraft', step]
             if step == 'snap':
                 command += ['--output', self._snap_output]
@@ -120,7 +146,7 @@ class Containerbuild:
             if args:
                 command += args
             try:
-                self._container_run(command)
+                self._container_run(command, cwd=self._project_folder)
             except CalledProcessError as e:
                 if self._project_options.debug:
                     logger.info('Debug mode enabled, dropping into a shell')
@@ -128,6 +154,9 @@ class Containerbuild:
                 else:
                     raise e
             else:
+                # Remove temporary folder if everything went well
+                if common.is_snap():
+                    shutil.rmtree(self._tmp)
                 self._finish()
 
     def _setup_project(self):
@@ -138,7 +167,89 @@ class Containerbuild:
                              os.path.basename(tar_filename))
         self._container_run(['mkdir', self._project_folder])
         self._push_file(tar_filename, dst)
-        self._container_run(['tar', 'xvf', os.path.basename(tar_filename)])
+        self._container_run(['tar', 'xvf', os.path.basename(tar_filename)],
+                            cwd=self._project_folder)
+
+    def _inject_snapcraft(self):
+        if common.is_snap():
+            # Because of https://bugs.launchpad.net/snappy/+bug/1628289
+            self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
+
+            # Use a temporary folder the 'lxd' snap can access
+            self._tmp = os.path.expanduser(
+                os.path.join('~', 'snap', 'lxd', 'common', 'snapcraft.tmp'))
+            os.makedirs(self._tmp, exist_ok=True)
+
+            # Push core snap into container
+            self._inject_snap('core')
+            self._inject_snap('snapcraft')
+        else:
+            self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
+
+    def _inject_snap(self, name):
+        session = requests_unixsocket.Session()
+        snapd_socket = '/run/snapd.socket'.replace('/', '%2F')
+        # Cf. https://github.com/snapcore/snapd/wiki/REST-API#get-v2snapsname
+        api = 'http+unix://{}/v2/snaps/{}'.format(snapd_socket, name)
+        try:
+            json = session.request('GET', api).json()
+        except requests.exceptions.ConnectionError as e:
+            raise SnapcraftEnvironmentError(
+                'Error connecting to {}'.format(api)) from e
+        if json['type'] == 'error':
+            raise SnapcraftEnvironmentError(
+                'Error querying {!r} snap: {}'.format(
+                    name, json['result']['message']))
+        id = json['result']['id']
+        # Lookup confinement to know if we need to --classic when installing
+        is_classic = json['result']['confinement'] == 'classic'
+        # Revisions are unique, so we don't need to know the channel
+        rev = json['result']['revision']
+
+        if not rev.startswith('x'):
+            self._inject_assertions('{}_{}.assert'.format(name, rev), [
+                ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
+                ['snap-declaration', 'snap-name={}'.format(name)],
+                ['snap-revision', 'snap-revision={}'.format(rev),
+                 'snap-id={}'.format(id)],
+            ])
+
+        # https://github.com/snapcore/snapd/blob/master/snap/info.go
+        # MountFile
+        filename = '{}_{}.snap'.format(name, rev)
+        # https://github.com/snapcore/snapd/blob/master/dirs/dirs.go
+        # CoreLibExecDir
+        installed = os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps',
+                                 filename)
+
+        filepath = os.path.join(self._tmp, filename)
+        if rev.startswith('x'):
+            logger.info('Making {} user-accessible'.format(filename))
+            check_call(['sudo', 'cp', installed, filepath])
+            check_call(['sudo', 'chown', str(os.getuid()), filepath])
+        else:
+            shutil.copyfile(installed, filepath)
+        container_filename = os.path.join(os.sep, 'run', filename)
+        self._push_file(filepath, container_filename)
+        logger.info('Installing {}'.format(container_filename))
+        cmd = ['snap', 'install', container_filename]
+        if rev.startswith('x'):
+            cmd.append('--dangerous')
+        if is_classic:
+            cmd.append('--classic')
+        self._container_run(cmd)
+
+    def _inject_assertions(self, filename, assertions):
+        filepath = os.path.join(self._tmp, filename)
+        with open(filepath, 'wb') as f:
+            for assertion in assertions:
+                logger.info('Looking up assertion {}'.format(assertion))
+                f.write(check_output(['snap', 'known', *assertion]))
+                f.write(b'\n')
+        container_filename = os.path.join(os.path.sep, 'run', filename)
+        self._push_file(filepath, container_filename)
+        logger.info('Adding assertion {}'.format(filename))
+        self._container_run(['snap', 'ack', container_filename])
 
     def _finish(self):
         # os.sep needs to be `/` and on Windows it will be set to `\`
@@ -181,17 +292,11 @@ class Project(Containerbuild):
                          metadata=metadata, container_name=metadata['name'],
                          remote=remote)
 
-    def _get_container_status(self):
-        containers = json.loads(check_output([
-            'lxc', 'list', '--format=json', self._container_name]).decode())
-        for container in containers:
-            if container['name'] == self._container_name.split(':')[-1]:
-                return container
-
     def _ensure_container(self):
         if not self._get_container_status():
             check_call([
                 'lxc', 'init', self._image, self._container_name])
+        if self._get_container_status()['status'] == 'Stopped':
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'environment.SNAPCRAFT_SETUP_CORE', '1'])
@@ -199,7 +304,6 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'raw.idmap', 'both {} 0'.format(os.getuid())])
-        if self._get_container_status()['status'] == 'Stopped':
             check_call([
                 'lxc', 'start', self._container_name])
 
@@ -213,18 +317,20 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'device', 'add', self._container_name,
                 destination, 'disk', 'source={}'.format(source),
-                'path=/{}'.format(destination)])
+                'path={}'.format(destination)])
 
     def _finish(self):
         # Nothing to do
         pass
 
     def execute(self, step='snap', args=None):
-        super().execute(step, args)
         # clean with no parts deletes the container
         if step == 'clean' and args == ['--step', 'pull']:
-            print('Deleting {}'.format(self._container_name))
-            check_call(['lxc', 'delete', '-f', self._container_name])
+            if self._get_container_status():
+                print('Deleting {}'.format(self._container_name))
+                check_call(['lxc', 'delete', '-f', self._container_name])
+        else:
+            super().execute(step, args)
 
 
 def _get_default_remote():

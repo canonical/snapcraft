@@ -30,11 +30,11 @@ class ListRegisteredTestCase(StoreCommandsBaseTestCase):
     ]
 
     def test_list_registered_without_login(self):
-        result = self.run_command([self.command_name])
+        raised = self.assertRaises(
+            storeapi.errors.InvalidCredentialsError,
+            self.run_command, [self.command_name])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'No valid credentials found. Have you run'))
+        self.assertThat(str(raised), Contains('Invalid credentials'))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     def test_list_registered_empty(self, mock_get_account_information):

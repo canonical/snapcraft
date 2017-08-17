@@ -37,10 +37,7 @@ from snapcraft.internal.meta import (
     _SnapPackaging
 )
 from snapcraft.internal import common
-from snapcraft.internal.errors import (
-    MissingGadgetError,
-    SnapcraftPathEntryError,
-)
+from snapcraft.internal import errors
 from snapcraft import ProjectOptions, tests
 
 
@@ -78,7 +75,7 @@ class CreateBaseTestCase(tests.TestCase):
         self.project_options = ProjectOptions()
 
     def generate_meta_yaml(self):
-        create_snap_packaging(self.config_data, self.project_options)
+        create_snap_packaging(self.config_data, self.project_options, 'dummy')
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
@@ -125,7 +122,7 @@ class CreateTestCase(CreateBaseTestCase):
         _create_file('gadget.yaml', content=gadget_yaml)
 
         self.config_data['type'] = 'gadget'
-        create_snap_packaging(self.config_data, self.project_options)
+        create_snap_packaging(self.config_data, self.project_options, 'dummy')
 
         expected_gadget = os.path.join(self.meta_dir, 'gadget.yaml')
         self.assertTrue(os.path.exists(expected_gadget))
@@ -136,10 +133,12 @@ class CreateTestCase(CreateBaseTestCase):
         self.config_data['type'] = 'gadget'
 
         self.assertRaises(
-            MissingGadgetError,
+            errors.MissingGadgetError,
             create_snap_packaging,
             self.config_data,
-            self.project_options)
+            self.project_options,
+            'dummy'
+        )
 
     def test_create_meta_with_declared_icon(self):
         _create_file(os.path.join(os.curdir, 'my-icon.png'))
@@ -222,10 +221,10 @@ class CreateTestCase(CreateBaseTestCase):
         _create_file('my-icon.png')
         self.config_data['icon'] = 'my-icon.png'
 
-        create_snap_packaging(self.config_data, self.project_options)
+        create_snap_packaging(self.config_data, self.project_options, 'dummy')
 
         # Running again should be good
-        create_snap_packaging(self.config_data, self.project_options)
+        create_snap_packaging(self.config_data, self.project_options, 'dummy')
 
     def test_create_meta_with_icon_in_setup(self):
         gui_path = os.path.join('setup', 'gui')
@@ -560,7 +559,8 @@ class EnsureFilePathsTestCaseFails(CreateBaseTestCase):
     def test_file_path_entry(self):
         self.config_data['apps'] = {'app': {self.key: self.filepath}}
 
-        self.assertRaises(SnapcraftPathEntryError, self.generate_meta_yaml)
+        self.assertRaises(
+            errors.SnapcraftPathEntryError, self.generate_meta_yaml)
 
 
 class CreateWithGradeTestCase(CreateBaseTestCase):
@@ -585,8 +585,11 @@ class WrapExeTestCase(tests.TestCase):
         super().setUp()
 
         # TODO move to use outer interface
-        self.packager = _SnapPackaging({'confinement': 'devmode'},
-                                       ProjectOptions())
+        self.packager = _SnapPackaging(
+            {'confinement': 'devmode'},
+            ProjectOptions(),
+            'dummy'
+        )
 
     @patch('snapcraft.internal.common.assemble_env')
     def test_wrap_exe_must_write_wrapper(self, mock_assemble_env):
@@ -728,7 +731,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         apps = {'app1': {'command': 'command-does-not-exist'}}
 
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.InvalidAppCommandError,
             self.packager._wrap_apps, apps)
         self.assertEqual(
             "The specified command 'command-does-not-exist' defined in the "
@@ -744,7 +747,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         _create_file(cmd_path)
 
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.InvalidAppCommandError,
             self.packager._wrap_apps, apps)
         self.assertEqual(
             "The specified command 'command-not-executable' defined in the "

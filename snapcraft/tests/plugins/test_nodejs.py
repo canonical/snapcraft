@@ -17,19 +17,15 @@
 import os
 
 from unittest import mock
-from testtools.matchers import HasLength
+from testtools.matchers import DirExists, HasLength
 
 import snapcraft
 from snapcraft.plugins import nodejs
+from snapcraft.internal import errors
 from snapcraft import tests
 
 
-class NodePluginTestCase(tests.TestCase):
-
-    scenarios = [
-        ('npm', dict(package_manager='npm')),
-        ('yarn', dict(package_manager='yarn')),
-    ]
+class NodePluginBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -50,6 +46,14 @@ class NodePluginTestCase(tests.TestCase):
 
         self.nodejs_url = nodejs.get_nodejs_release(
             nodejs._NODEJS_VERSION, self.project_options.deb_arch)
+
+
+class NodePluginTestCase(NodePluginBaseTestCase):
+
+    scenarios = [
+        ('npm', dict(package_manager='npm')),
+        ('yarn', dict(package_manager='yarn')),
+    ]
 
     def test_pull_local_sources(self):
         class Options:
@@ -237,7 +241,7 @@ class NodePluginTestCase(tests.TestCase):
             source = '.'
 
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.SnapcraftEnvironmentError,
             nodejs.NodePlugin,
             'test-part', Options(),
             self.project_options)
@@ -285,6 +289,38 @@ class NodePluginTestCase(tests.TestCase):
         plugin.clean_pull()
 
         self.assertFalse(os.path.exists(plugin._npm_dir))
+
+
+class NodePluginNpmWorkaroundsTestCase(NodePluginBaseTestCase):
+
+    def test_build_from_local_fixes_symlinks(self):
+        class Options:
+            source = '.'
+            node_packages = []
+            node_engine = '4'
+            npm_run = []
+            node_package_manager = 'npm'
+            source = '.'
+
+        plugin = nodejs.NodePlugin('test-part', Options(),
+                                   self.project_options)
+
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'package.json'), 'w').close()
+
+        # Setup stub project symlinks
+        modules_path = os.path.join('lib', 'node_modules')
+        project_path = os.path.join(plugin.installdir, modules_path, 'project')
+        dep_path = os.path.join(modules_path, 'dep')
+        os.makedirs(os.path.join(plugin.builddir, dep_path))
+        os.makedirs(os.path.join(plugin.installdir, modules_path))
+        os.symlink(os.path.join('..', '..', '..', 'build'), project_path)
+
+        plugin.build()
+
+        self.assertThat(project_path, DirExists())
+        self.assertThat(os.path.join(project_path, dep_path), DirExists())
+        self.assertFalse(os.path.islink(project_path))
 
 
 class NodeReleaseTestCase(tests.TestCase):

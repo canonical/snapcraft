@@ -1929,6 +1929,11 @@ class ValidationTestCase(ValidationBaseTestCase):
                 'post-stop-command': 'binary6 --post-stop',
                 'daemon': 'simple'
             },
+            'service7': {
+                'command': 'binary7',
+                'reload-command': 'binary7 --reload',
+                'daemon': 'simple'
+            },
         }
 
         project_loader.Validator(self.data).validate()
@@ -2058,7 +2063,7 @@ class InvalidTypesTestCase(ValidationBaseTestCase):
         expected_message = (
             "The 'type' property does not match the required "
             "schema: '{}' is not one of "
-            "['app', 'gadget', 'kernel', 'os']").format(self.type_)
+            "['app', 'base', 'gadget', 'kernel', 'os']").format(self.type_)
         self.assertEqual(raised.message, expected_message,
                          message=data)
 

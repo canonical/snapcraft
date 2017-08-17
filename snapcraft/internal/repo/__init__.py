@@ -30,7 +30,7 @@ Repo = _platform._get_repo_for_platform()
 
 def check_for_command(command):
     if not shutil.which(command):
-        raise MissingCommandError([command])
+        raise MissingCommandError(command)
 
 
 def get_pkg_name_parts(pkg_name):

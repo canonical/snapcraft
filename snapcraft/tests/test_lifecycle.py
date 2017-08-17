@@ -24,6 +24,7 @@ from unittest import mock
 
 import fixtures
 from testtools.matchers import (
+    Contains,
     DirExists,
     FileContains,
     FileExists,
@@ -34,7 +35,7 @@ from testtools.matchers import (
 import snapcraft
 from snapcraft import storeapi
 from snapcraft.file_utils import calculate_sha3_384
-from snapcraft.internal import pluginhandler, lifecycle
+from snapcraft.internal import errors, pluginhandler, lifecycle
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
 
@@ -649,9 +650,9 @@ class CleanTestCase(BaseLifecycleTestCase):
             Not(DirExists()))
 
 
-class RecordManifestTestCase(BaseLifecycleTestCase):
+class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
 
-    def test_prime_without_build_info_does_not_record_manifest(self):
+    def test_prime_without_build_info_does_not_record(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', None))
         self.make_snapcraft_yaml("""parts:
@@ -659,9 +660,40 @@ class RecordManifestTestCase(BaseLifecycleTestCase):
     plugin: nil
 """)
         lifecycle.execute('prime', self.project_options)
+        for file_name in ('snapcraft.yaml', 'manifest.yaml'):
+            self.assertThat(
+                os.path.join('prime', 'snap', file_name),
+                Not(FileExists()))
+
+    def test_prime_with_build_info_records_snapcraft_yaml(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""", snap_type='type: app')
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+type: app
+
+parts:
+  test-part:
+    plugin: nil
+
+""")
+
         self.assertThat(
-            os.path.join('prime', 'snap', 'manifest.yaml'),
-            Not(FileExists()))
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+
+class RecordManifestTestCase(BaseLifecycleTestCase):
 
     def test_prime_with_build_info_records_manifest(self):
         self.useFixture(fixtures.EnvironmentVariable(
@@ -1030,3 +1062,14 @@ class CoreSetupTestCase(tests.TestCase):
             print('description: description', file=f)
 
         return lifecycle.snap(self.project_options, directory=core_path)
+
+
+class SnapErrorsTestCase(BaseLifecycleTestCase):
+
+    def test_mksquashfs_missing(self):
+        with mock.patch('shutil.which') as which_mock:
+            which_mock.return_value = None
+            raised = self.assertRaises(
+                errors.MissingCommandError,
+                lifecycle.snap, self.project_options)
+        self.assertThat(str(raised), Contains('mksquashfs'))

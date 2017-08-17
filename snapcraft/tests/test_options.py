@@ -15,12 +15,14 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from unittest import mock
+import testtools
 
 import snapcraft
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft import tests
 
 
-class OptionsTestCase(tests.TestCase):
+class NativeOptionsTestCase(tests.TestCase):
 
     scenarios = [
         ('amd64', dict(
@@ -118,3 +120,14 @@ class OptionsTestCase(tests.TestCase):
                 platform_arch, userspace_conversions[self.machine])
         else:
             self.assertEqual(platform_arch, self.machine)
+
+
+class OptionsTestCase(tests.TestCase):
+
+    def test_cross_compiler_prefix_missing(self):
+        options = snapcraft.ProjectOptions(target_deb_arch='x86_64')
+
+        with testtools.ExpectedException(
+                SnapcraftEnvironmentError,
+                "Cross compilation not supported for target arch 'x86_64'"):
+            options.cross_compiler_prefix

@@ -80,6 +80,7 @@ properties:
     description: the snap type, the implicit type is 'app'
     enum:
       - app
+      - base
       - gadget
       - kernel
       - os
@@ -104,6 +105,9 @@ properties:
     enum:
       - stable
       - devel
+  base:
+    type: string
+    description: the base snap to use
   epoch:
     description: the snap epoch, used to specify upgrade paths
     format: epoch
@@ -127,6 +131,7 @@ properties:
         dependencies:
           stop-command: ["daemon"]
           post-stop-command: ["daemon"]
+          reload-command: ["daemon"]
         additionalProperties: false
         properties:
           desktop:
@@ -146,6 +151,8 @@ properties:
             description: command executed after stopping a service
           stop-timeout:
             description: timeout in seconds
+          reload-command:
+            description: command executed to reload a service
           daemon:
             type: string
             description: signals that the app is a service.
@@ -292,6 +299,10 @@ properties:
             uniqueItems: true
             items:
               type: string
+              enum:
+                - no-system-libraries
+                - no-install
+                - debug
             default: []
           organize:
             type: object

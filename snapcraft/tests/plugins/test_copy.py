@@ -26,6 +26,7 @@ from snapcraft.plugins.copy import (
     CopyPlugin,
     _recursively_link
 )
+from snapcraft.internal import errors
 from snapcraft import tests
 
 
@@ -63,7 +64,7 @@ class TestCopyPlugin(tests.TestCase):
         c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
 
-        raised = self.assertRaises(EnvironmentError, c.build)
+        raised = self.assertRaises(FileNotFoundError, c.build)
 
         self.assertEqual(
             str(raised),
@@ -79,7 +80,7 @@ class TestCopyPlugin(tests.TestCase):
         c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
 
-        raised = self.assertRaises(EnvironmentError, c.build)
+        raised = self.assertRaises(errors.SnapcraftEnvironmentError, c.build)
 
         self.assertEqual(raised.__str__(), "no matches for 'src*'")
 

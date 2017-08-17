@@ -230,12 +230,19 @@ def requires_path_exists(path, error_fmt=None):
 
 def calculate_sha3_384(path):
     """Calculate sha3 384 hash, reading the file in 1MB chunks."""
+    return calculate_hash(path, algorithm='sha3_384')
+
+
+def calculate_hash(path, *, algorithm):
+    """Calculate the hash for path with algorithm."""
+    # This will raise an AttributeError if algorithm is unsupported
+    hasher = getattr(hashlib, algorithm)()
+
     blocksize = 2**20
-    with open(path, 'rb') as snap_file:
-        hasher = hashlib.sha3_384()
+    with open(path, 'rb') as f:
         while True:
-            buf = snap_file.read(blocksize)
+            buf = f.read(blocksize)
             if not buf:
                 break
             hasher.update(buf)
-        return hasher.hexdigest()
+    return hasher.hexdigest()

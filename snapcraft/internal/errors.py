@@ -41,13 +41,27 @@ class SnapcraftError(Exception):
     def __str__(self):
         return self.fmt.format([], **self.__dict__)
 
+    @property
+    def exit_code(self):
+        """Exit code to use if this exception causes Snapcraft to exit."""
+        return 2
 
-class MissingState(Exception):
-    pass
+
+class MissingStateCleanError(SnapcraftError):
+    fmt = (
+        "Failed to clean step {step!r}: Missing necessary state. This won't "
+        "work until a complete clean has occurred."
+    )
+
+    def __init__(self, step):
+        super().__init__(step=step)
 
 
-class SnapcraftEnvironmentError(Exception):
-    pass
+class SnapcraftEnvironmentError(SnapcraftError):
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
 
 
 class PrimeFileConflictError(SnapcraftError):
@@ -69,12 +83,43 @@ class DuplicateAliasError(SnapcraftError):
         return super().__str__()
 
 
+class InvalidAppCommandError(SnapcraftError):
+
+    fmt = (
+        'The specified command {command!r} defined in the app {app!r} does '
+        'not exist or is not executable'
+    )
+
+    def __init__(self, command, app):
+        super().__init__(command=command, app=app)
+
+
+class InvalidDesktopFileError(SnapcraftError):
+
+    fmt = (
+        'Invalid desktop file {filename!r}: {message}'
+    )
+
+    def __init__(self, filename, message):
+        super().__init__(filename=filename, message=message)
+
+
 class SnapcraftPartMissingError(SnapcraftError):
 
     fmt = (
         'Cannot find the definition for part {part_name!r}.\n'
         'It may be a remote part, run `snapcraft update` '
         'to refresh the remote parts cache.'
+    )
+
+
+class PartNotInCacheError(SnapcraftError):
+
+    fmt = (
+        'Cannot find the part name {part_name!r} in the cache. Please '
+        'run `snapcraft update` and try again.\nIf it is indeed missing, '
+        'consider going to https://wiki.ubuntu.com/snapcraft/parts '
+        'to add it.'
     )
 
 
@@ -156,6 +201,14 @@ class MissingGadgetError(SnapcraftError):
         'in the root of your snapcraft project\n\n'
         'Read more about gadget snaps and the gadget.yaml on:\n'
         'https://github.com/snapcore/snapd/wiki/Gadget-snap')
+
+
+class PluginOutdatedError(SnapcraftError):
+
+    fmt = 'This plugin is outdated: {message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
 
 
 class RequiredCommandFailure(SnapcraftError):

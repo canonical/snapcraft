@@ -49,6 +49,7 @@ class KernelPluginTestCase(tests.TestCase):
             kernel_initrd_firmware = []
             kernel_device_trees = []
             kernel_initrd_compression = 'gz'
+            build_attributes = []
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -1005,7 +1006,9 @@ ACCEPT=n
 
         self.assertEqual(
             plugin.make_cmd,
-            ['make', '-j2', 'ARCH=arm64', 'CROSS_COMPILE=aarch64-linux-gnu-'])
+            ['make', '-j2', 'ARCH=arm64', 'CROSS_COMPILE=aarch64-linux-gnu-',
+             'PATH={}:/usr/{}/bin'.format(os.environ.copy().get('PATH', ''),
+                                          'aarch64-linux-gnu')])
 
     def test_override_cross_compile(self):
         project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
@@ -1017,7 +1020,9 @@ ACCEPT=n
 
         self.assertEqual(
             plugin.make_cmd,
-            ['make', '-j2', 'ARCH=arm64', 'CROSS_COMPILE=foo-bar-toolchain-'])
+            ['make', '-j2', 'ARCH=arm64', 'CROSS_COMPILE=foo-bar-toolchain-',
+             'PATH={}:/usr/{}/bin'.format(os.environ.copy().get('PATH', ''),
+                                          'aarch64-linux-gnu')])
 
     def test_kernel_image_target_as_map(self):
         self.options.kernel_image_target = {'arm64': 'Image'}
