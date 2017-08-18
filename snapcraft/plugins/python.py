@@ -352,12 +352,14 @@ class PythonPlugin(snapcraft.BasePlugin):
         setup_file = os.path.join(self.builddir, 'setup.py')
         with simple_env_bzr(os.path.join(self.installdir, 'bin')):
             installed_pipy_packages = self._run_pip(setup_file)
-        if self.options.requirements:
+        # We record the requirements and constraints files only if they are
+        # remote. If they are local, they are already tracked with the source.
+        if self.options.requirements and isurl(self.options.requirements):
             self._manifest['requirements-contents'] = (
-                self._get_file_contents(self.options.requirements))
-        if self.options.constraints:
+                self._get_remote_file_contents(self.options.requirements))
+        if self.options.constraints and isurl(self.options.constraints):
             self._manifest['constraints-contents'] = (
-                self._get_file_contents(self.options.constraints))
+                self._get_remote_file_contents(self.options.constraints))
         self._manifest['python-packages'] = [
             '{}={}'.format(name, installed_pipy_packages[name])
             for name in installed_pipy_packages
@@ -372,13 +374,8 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         self._setup_sitecustomize()
 
-    def _get_file_contents(self, path):
-        if isurl(path):
-            return requests.get(path).text
-        else:
-            file_path = os.path.join(self.sourcedir, path)
-            with open(file_path) as _file:
-                return _file.read()
+    def _get_remote_file_contents(self, path):
+        return requests.get(path).text
 
     def _setup_sitecustomize(self):
         # This avoids needing to leak PYTHONUSERBASE
