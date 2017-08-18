@@ -21,7 +21,7 @@ from glob import glob
 from unittest import mock
 
 import fixtures
-from testtools.matchers import FileContains, HasLength
+from testtools.matchers import Equals, FileContains, HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -534,10 +534,11 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
         plugin.build()
-        self.assertEqual(
-            plugin.get_manifest(),
-            collections.OrderedDict(
-                {'python-packages': ['testpackage1=1.0', 'testpackage2=1.2']}))
+        self.assertThat(
+            plugin.get_manifest(), Equals(
+                collections.OrderedDict(
+                    {'python-packages':
+                     ['testpackage1=1.0', 'testpackage2=1.2']})))
 
     @mock.patch.object(python.PythonPlugin, 'run_output')
     @mock.patch.object(python.PythonPlugin, 'run')
@@ -560,9 +561,9 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
 
         plugin.build()
 
-        self.assertEqual(
+        self.assertThat(
             plugin.get_manifest()['requirements-contents'],
-            'testpackage1==1.0\ntestpackage2==1.2')
+            Equals('testpackage1==1.0\ntestpackage2==1.2'))
 
     @mock.patch.object(python.PythonPlugin, 'run_output')
     @mock.patch.object(python.PythonPlugin, 'run')
@@ -585,9 +586,9 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
 
         plugin.build()
 
-        self.assertEqual(
+        self.assertThat(
             plugin.get_manifest()['constraints-contents'],
-            'testpackage1==1.0\ntestpackage2==1.2')
+            Equals('testpackage1==1.0\ntestpackage2==1.2'))
 
 
 class PythonPluginWithURLTestCase(
@@ -609,9 +610,9 @@ class PythonPluginWithURLTestCase(
 
         plugin.build()
 
-        self.assertEqual(
+        self.assertThat(
             plugin.get_manifest()['requirements-contents'],
-            'Test fake file')
+            Equals('Test fake file'))
 
     @mock.patch.object(
         python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)
@@ -624,6 +625,6 @@ class PythonPluginWithURLTestCase(
 
         plugin.build()
 
-        self.assertEqual(
+        self.assertThat(
             plugin.get_manifest()['constraints-contents'],
-            'Test fake file')
+            Equals('Test fake file'))
