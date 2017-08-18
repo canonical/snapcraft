@@ -34,14 +34,18 @@ from snapcraft.internal.errors import (
     ContainerConnectionError,
     SnapdError,
 )
+from snapcraft._options import _get_deb_arch
 
 
 class LXDTestCase(tests.TestCase):
 
     scenarios = [
-        ('local', dict(remote='local', target_arch=None)),
-        ('remote', dict(remote='my-remote', target_arch=None)),
-        ('cross', dict(remote='local', target_arch='armhf')),
+        ('local', dict(remote='local', target_arch=None, server='x86_64')),
+        ('remote', dict(remote='myremote', target_arch=None, server='x86_64')),
+        ('cross', dict(remote='local', target_arch='armhf', server='x86_64')),
+        ('arm remote', dict(remote='pi', target_arch=None, server='armv7l')),
+        ('arm same', dict(remote='pi', target_arch='armhf', server='armv7l')),
+        ('arm cross', dict(remote='pi', target_arch='arm64', server='armv7l')),
     ]
 
     def setUp(self):
@@ -68,9 +72,11 @@ class LXDTestCase(tests.TestCase):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
 
         mock_pet.return_value = 'my-pet'
+        self.fake_lxd.kernel_arch = self.server
+
         project_folder = '/root/build_project'
         self.make_cleanbuilder().execute()
-        expected_arch = 'amd64'
+        expected_arch = _get_deb_arch(self.server)
 
         self.assertIn('Setting up container with project assets\n'
                       'Waiting for a network connection...\n'
