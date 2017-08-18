@@ -71,7 +71,6 @@ class Containerbuild:
         if not deb_arch:
             raise SnapcraftEnvironmentError(
                 'Unrecognized server architecture {}'.format(kernel))
-        self._host_arch = deb_arch
         self._image = 'ubuntu:xenial/{}'.format(deb_arch)
 
     def _get_remote_info(self):
@@ -141,7 +140,7 @@ class Containerbuild:
             command = ['snapcraft', step]
             if step == 'snap':
                 command += ['--output', self._snap_output]
-            if self._host_arch != self._project_options.deb_arch:
+            if self._project_options.target_arch_specified:
                 command += ['--target-arch', self._project_options.deb_arch]
             if args:
                 command += args
