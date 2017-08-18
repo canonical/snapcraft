@@ -75,7 +75,6 @@ class Containerbuild:
         if not deb_arch:
             raise ContainerConnectionError(
                 'Unrecognized server architecture {}'.format(kernel))
-        self._host_arch = deb_arch
         self._image = 'ubuntu:xenial/{}'.format(deb_arch)
         # Use a temporary folder the 'lxd' snap can access
         lxd_common_dir = os.path.expanduser(
@@ -150,8 +149,10 @@ class Containerbuild:
             command = ['snapcraft', step]
             if step == 'snap':
                 command += ['--output', self._snap_output]
-            if self._host_arch != self._project_options.deb_arch:
-                command += ['--target-arch', self._project_options.deb_arch]
+            # Pass on target arch if specified
+            # If not specified it defaults to the LXD architecture
+            if self._project_options.target_arch:
+                command += ['--target-arch', self._project_options.target_arch]
             if args:
                 command += args
             try:
