@@ -132,22 +132,22 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         env_missing_path = plugin.env('/testpath')
         self.assertTrue('PYTHONPATH=/testpath' not in env_missing_path)
 
-    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(
+        python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)
     @mock.patch.object(python.PythonPlugin, 'run')
     @mock.patch.object(os.path, 'exists', return_value=False)
     def test_missing_setup_path(
             self, mock_path_exists, mock_run, mock_run_output):
-        mock_run_output.side_effect = fake_empty_pip_list
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
         plugin.pull()
         self.assertFalse(mock_run.called)
 
-    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(
+        python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)
     @mock.patch.object(python.PythonPlugin, 'run')
     def test_pull_with_nothing(self, mock_run, mock_run_output):
-        mock_run_output.side_effect = fake_empty_pip_list
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
@@ -155,10 +155,10 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         plugin.pull()
         mock_run.assert_has_calls([])
 
-    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(
+        python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)
     @mock.patch.object(python.PythonPlugin, 'run')
     def test_pull_with_requirements(self, mock_run, mock_run_output):
-        mock_run_output.side_effect = fake_empty_pip_list
         self.options.requirements = 'requirements.txt'
         self.options.constraints = 'constraints.txt'
         self.options.python_packages = ['test', 'packages']
@@ -188,10 +188,10 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         plugin.pull()
         mock_run.assert_has_calls(calls)
 
-    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(
+        python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)
     @mock.patch.object(python.PythonPlugin, 'run')
     def test_pull_without_requirements(self, mock_run, mock_run_output):
-        mock_run_output.side_effect = fake_empty_pip_list
         self.options.requirements = ''
         self.options.constraints = 'constraints.txt'
         self.options.python_packages = ['test', 'packages']
@@ -299,10 +299,10 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         plugin.build()
         mock_run.assert_has_calls(calls)
 
-    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(
+        python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)
     @mock.patch.object(python.PythonPlugin, 'run')
     def test_pip_with_url(self, mock_run, mock_run_output):
-        mock_run_output.side_effect = fake_empty_pip_list
         self.options.requirements = 'https://test.com/requirements.txt'
         self.options.constraints = 'http://test.com/constraints.txt'
 
@@ -342,10 +342,10 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         fileset = plugin.snap_fileset()
         self.assertListEqual(expected_fileset, fileset)
 
-    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(
+        python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)
     @mock.patch.object(python.PythonPlugin, 'run')
     def test_build_fixes_python_shebangs(self, run_mock, mock_run_output):
-        mock_run_output.side_effect = fake_empty_pip_list
         if self.options.python_version == 'python2':
             py_version_short = 'python2'
         elif self.options.python_version == 'python3':
@@ -393,10 +393,10 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
                                    file_info['path']), 'r') as f:
                 self.assertEqual(f.read(), file_info['expected'])
 
-    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(
+        python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)
     @mock.patch.object(python.PythonPlugin, 'run')
     def test_process_dependency_links(self, run_mock, mock_run_output):
-        mock_run_output.side_effect = fake_empty_pip_list
         self.options.process_dependency_links = True
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
@@ -411,12 +411,12 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         python._replicate_owner_mode('/nonexistant_path')
         self.assertFalse(mock_os_stat.called)
 
-    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(
+        python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)
     @mock.patch.object(python.PythonPlugin, 'run')
     @mock.patch.object(python.snapcraft.BasePlugin, 'build')
     def test_build_creates_correct_sitecustomize(
             self, mock_base_build, mock_run, mock_run_output):
-        mock_run_output.side_effect = fake_empty_pip_list
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
@@ -445,10 +445,10 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
             plugin.installdir, 'usr', 'lib', 'python*', 'sitecustomize.py'))[0]
         self.assertThat(site_path, FileContains(expected_sitecustomize))
 
-    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(
+        python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)
     @mock.patch.object(python.PythonPlugin, 'run')
     def test_use_staged_python(self, run_mock, run_output_mock):
-        run_output_mock.side_effect = fake_empty_pip_list
         self.useFixture(fixture_setup.CleanEnvironment())
 
         plugin = python.PythonPlugin('test-part', self.options,
@@ -480,10 +480,10 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         }
         run_mock.assert_called_once_with(pip_command, cwd=cwd, env=env)
 
-    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(
+        python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)
     @mock.patch.object(python.PythonPlugin, 'run')
     def test_use_staged_python_extra_cppflags(self, run_mock, run_output_mock):
-        run_output_mock.side_effect = fake_empty_pip_list
         self.useFixture(fixture_setup.CleanEnvironment())
         # Add some extra CPPFLAGS into the environment
         self.useFixture(fixtures.EnvironmentVariable(
@@ -598,11 +598,10 @@ class PythonPluginWithURLTestCase(
         self.source = 'http://{}:{}/{}'.format(
             *self.server.server_address, 'testfile.txt')
 
-    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(
+        python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)
     @mock.patch.object(python.PythonPlugin, 'run')
     def test_get_manifest_with_requirements_url(self, _, mock_run_output):
-        mock_run_output.side_effect = fake_empty_pip_list
-
         self.options.requirements = self.source
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
@@ -614,11 +613,10 @@ class PythonPluginWithURLTestCase(
             plugin.get_manifest()['requirements-contents'],
             'Test fake file')
 
-    @mock.patch.object(python.PythonPlugin, 'run_output')
+    @mock.patch.object(
+        python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)
     @mock.patch.object(python.PythonPlugin, 'run')
     def test_get_manifest_with_constraints_url(self, _, mock_run_output):
-        mock_run_output.side_effect = fake_empty_pip_list
-
         self.options.constraints = self.source
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
