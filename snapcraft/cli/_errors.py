@@ -45,6 +45,6 @@ def exception_handler(exception_type, exception, exception_traceback, *,
         else:
             traceback.print_exception(
                 exception_type, exception, exception_traceback)
-        sys.exit(exception.exit_code)
+        sys.exit(exception.get_exit_code())
     else:
         raise exception

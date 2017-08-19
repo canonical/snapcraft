@@ -36,6 +36,16 @@ class RosdepDependencyNotFoundError(errors.SnapcraftError):
         super().__init__(dependency=dependency)
 
 
+class RosdepUnexpectedResultError(errors.SnapcraftError):
+    fmt = (
+        'Received unexpected result from rosdep when trying to resolve '
+        '{dependency!r}:\n{output}'
+    )
+
+    def __init__(self, dependency, output):
+        super().__init__(dependency=dependency, output=output)
+
+
 class Rosdep:
     def __init__(self, *, ros_distro, ros_package_path, rosdep_path,
                  ubuntu_distro, ubuntu_sources, project):
@@ -114,11 +124,33 @@ class Rosdep:
         except subprocess.CalledProcessError:
             raise RosdepDependencyNotFoundError(dependency_name)
 
-        # Everything that isn't a package name is prepended with the pound
-        # sign, so we'll ignore everything with that.
+        # The output of rosdep follows the pattern:
+        #
+        #    #apt
+        #    package1
+        #    package2
+        #    #pip
+        #    pip-package1
+        #    pip-package2
+        #
+        # Split these out into a dict of dependency type -> dependencies.
         delimiters = re.compile(r'\n|\s')
         lines = delimiters.split(output)
-        return [line for line in lines if not line.startswith('#')]
+        dependencies = {}
+        dependency_set = None
+        for line in lines:
+            line = line.strip()
+            if line.startswith('#'):
+                key = line.strip('# ')
+                dependencies[key] = set()
+                dependency_set = dependencies[key]
+            elif line:
+                if dependency_set is None:
+                    raise RosdepUnexpectedResultError(dependency_name, output)
+                else:
+                    dependency_set.add(line)
+
+        return dependencies
 
     def _run(self, arguments):
         env = os.environ.copy()

@@ -100,7 +100,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             self.run_command, ['snap'])
 
         self.assertThat(str(raised), Contains(
-            "bad-type' is not one of ['app', 'gadget', 'kernel', 'os']"))
+            "bad-type' is not one of ['app', 'base', 'gadget', "
+            "'kernel', 'os']"))
 
     def test_snap_is_the_default(self):
         self.make_snapcraft_yaml()
@@ -155,7 +156,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'start', container_name]),
             call(['lxc', 'config', 'device', 'add', container_name,
                   project_folder, 'disk', 'source={}'.format(source),
-                  'path=/{}'.format(project_folder)]),
+                  'path={}'.format(project_folder)]),
             call(['lxc', 'stop', '-f', container_name]),
         ])
         mock_container_run.assert_has_calls([
