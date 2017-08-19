@@ -32,8 +32,7 @@ class TestSnapcraftError(snapcraft.internal.errors.SnapcraftError):
     def __init__(self, message):
         super().__init__(message=message)
 
-    @property
-    def exit_code(self):
+    def get_exit_code(self):
         return 123
 
 

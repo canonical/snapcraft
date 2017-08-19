@@ -30,7 +30,7 @@ These plugins implement a lifecycle over the following steps:
 
   - pull:   retrieve the source for the part from the specified location
   - build:  drive the build system determined by the choice of plugin
-  - stage:  consolidate desireable files from all the parts in one tree
+  - stage:  consolidate desirable files from all the parts in one tree
   - prime:  distill down to only the files which will go into the snap
   - snap:   compress the prime tree into the installable snap file
 
