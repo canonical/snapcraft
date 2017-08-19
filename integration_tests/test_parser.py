@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,6 +20,8 @@ import subprocess
 
 import integration_tests
 import testscenarios
+
+from testtools.matchers import Equals
 from snapcraft.tests import fixture_setup
 
 
@@ -41,7 +43,7 @@ class ParserTestCase(integration_tests.TestCase):
                 subprocess.CalledProcessError,
                 self.run_snapcraft_parser, args)
 
-        self.assertEqual(os.path.exists(part_file), expect_output)
+        self.assertThat(os.path.exists(part_file), Equals(expect_output))
 
 
 class TestParser(ParserTestCase):

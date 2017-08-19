@@ -30,6 +30,7 @@ import testtools
 from testtools import content
 from testtools.matchers import (
     Contains,
+    Equals,
     MatchesRegex
 )
 
@@ -228,7 +229,7 @@ class SnapsTestCase(testtools.TestCase):
             self, command, expected_output, cwd=None):
         if not config.get('skip-install', False):
             output = self.run_command_in_snappy_testbed(command, cwd)
-            self.assertEqual(expected_output, output)
+            self.assertThat(output, Equals(expected_output))
 
     def assert_command_in_snappy_testbed_with_regex(
             self, command, expected_regex, flags=0, cwd=None):

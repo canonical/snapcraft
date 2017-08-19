@@ -78,7 +78,7 @@ class AfterTestCase(integration_tests.TestCase):
             subprocess.CalledProcessError,
             self.run_snapcraft, 'build')
 
-        self.assertEqual(1, exception.returncode)
+        self.assertThat(exception.returncode, Equals(1))
 
     def test_pull_with_tree_of_dependencies(self):
         self.run_snapcraft(

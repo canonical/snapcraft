@@ -17,7 +17,7 @@
 import os
 import subprocess
 
-from testtools.matchers import FileExists
+from testtools.matchers import Equals, FileExists
 
 import integration_tests
 
@@ -41,7 +41,7 @@ class SubversionSourceTestCase(integration_tests.SubversionSourceBaseTestCase):
         self.run_snapcraft('pull')
         part_src_path = os.path.join(self.parts_dir, 'svn', 'src')
         revno = subprocess.check_output(['svnversion', part_src_path]).strip()
-        self.assertEqual(b'1', revno)
+        self.assertThat(revno, Equals(b'1'))
         self.assertThat(os.path.join(part_src_path, 'file'), FileExists())
 
     def test_pull_svn_update(self):
@@ -75,6 +75,6 @@ class SubversionSourceTestCase(integration_tests.SubversionSourceBaseTestCase):
 
         self.run_snapcraft('pull')
         revno = subprocess.check_output(['svnversion', part_src_path]).strip()
-        self.assertEqual(b'2', revno)
+        self.assertThat(revno, Equals(b'2'))
         self.assertThat(os.path.join(part_src_path, 'file'), FileExists())
         self.assertThat(os.path.join(part_src_path, 'filetwo'), FileExists())

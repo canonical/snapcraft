@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import json
 from simplejson.scanner import JSONDecodeError
 from textwrap import dedent
@@ -39,7 +40,7 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         self.assertThat(str(raised), Contains(
             'The snapd package is not installed.'))
         mock_installed.assert_called_with('snapd')
-        self.assertEqual(0, mock_check_output.call_count)
+        self.assertThat(mock_check_output.call_count, Equals(0))
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
@@ -75,7 +76,7 @@ class RegisterKeyTestCase(CommandBaseTestCase):
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=['modify_account_key'],
             packages=None, channels=None, save=False)
-        self.assertEqual(1, mock_register_key.call_count)
+        self.assertThat(mock_register_key.call_count, Equals(1))
         expected_assertion = dedent('''\
             type: account-key-request
             account-id: abcd
@@ -97,7 +98,7 @@ class RegisterKeyTestCase(CommandBaseTestCase):
             self.run_command, ['register-key'])
 
         self.assertThat(str(raised), Contains('You have no usable keys'))
-        self.assertEqual(0, mock_input.call_count)
+        self.assertThat(mock_input.call_count, Equals(0))
 
     @mock.patch('subprocess.check_output')
     @mock.patch('builtins.input')
@@ -114,7 +115,7 @@ class RegisterKeyTestCase(CommandBaseTestCase):
             self.run_command, ['register-key'])
 
         self.assertThat(str(raised), Contains('You have no usable keys'))
-        self.assertEqual(0, mock_input.call_count)
+        self.assertThat(mock_input.call_count, Equals(0))
 
     @mock.patch('subprocess.check_output')
     @mock.patch('builtins.input')
@@ -130,7 +131,7 @@ class RegisterKeyTestCase(CommandBaseTestCase):
 
         self.assertThat(str(raised), Contains(
             "You have no usable key named 'nonexistent'"))
-        self.assertEqual(0, mock_input.call_count)
+        self.assertThat(mock_input.call_count, Equals(0))
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
@@ -155,7 +156,7 @@ class RegisterKeyTestCase(CommandBaseTestCase):
 
         self.assertThat(str(raised), Equals(
             'Cannot continue without logging in successfully.'))
-        self.assertEqual(1, mock_input.call_count)
+        self.assertThat(mock_input.call_count, Equals(1))
 
     @mock.patch('snapcraft._store._login')
     @mock.patch.object(storeapi.SCAClient, 'register_key')
@@ -249,15 +250,16 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         mock_input.assert_has_calls(
             [mock.call('Key number: '), mock.call('Key number: ')])
 
-        self.assertEqual(
-            'We strongly recommend enabling multi-factor authentication: '
-            'https://help.ubuntu.com/community/SSO/FAQs/2FA\n'
-            'Registering key ...\n'
-            'Done. The key "another" ({}) may be used to sign your '
-            'assertions.\n'.format(get_sample_key('another')['sha3-384']),
-            self.fake_logger.output)
+        self.assertThat(
+            self.fake_logger.output,
+            Equals(
+                'We strongly recommend enabling multi-factor authentication: '
+                'https://help.ubuntu.com/community/SSO/FAQs/2FA\n'
+                'Registering key ...\n'
+                'Done. The key "another" ({}) may be used to sign your '
+                'assertions.\n'.format(get_sample_key('another')['sha3-384'])))
 
-        self.assertEqual(1, mock_register_key.call_count)
+        self.assertThat(mock_register_key.call_count, Equals(1))
         expected_assertion = dedent('''\
             type: account-key-request
             account-id: abcd

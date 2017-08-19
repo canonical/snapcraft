@@ -456,12 +456,13 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.assertThat(result.output, Contains(
             'Snapped snap-test_1.0_amd64.snap\n'))
 
-        self.assertEqual(
-            'Skipping pull part1 (already ran)\n'
-            'Skipping build part1 (already ran)\n'
-            'Skipping stage part1 (already ran)\n'
-            'Skipping prime part1 (already ran)\n',
-            fake_logger.output)
+        self.assertThat(
+            fake_logger.output,
+            Equals(
+                'Skipping pull part1 (already ran)\n'
+                'Skipping build part1 (already ran)\n'
+                'Skipping stage part1 (already ran)\n'
+                'Skipping prime part1 (already ran)\n'))
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
@@ -612,15 +613,18 @@ type: os
             'Snapped snap-test_1.0_amd64.snap\n'))
 
         snap_build_renamed = snap_build + '.1234'
-        self.assertEqual([
-            'Preparing to pull part1 ',
-            'Pulling part1 ',
-            'Preparing to build part1 ',
-            'Building part1 ',
-            'Staging part1 ',
-            'Priming part1 ',
-            'Renaming stale build assertion to {}'.format(snap_build_renamed),
-            ], fake_logger.output.splitlines())
+        self.assertThat(
+            fake_logger.output.splitlines(),
+            Equals([
+                'Preparing to pull part1 ',
+                'Pulling part1 ',
+                'Preparing to build part1 ',
+                'Building part1 ',
+                'Staging part1 ',
+                'Priming part1 ',
+                'Renaming stale build assertion to {}'.format(
+                    snap_build_renamed),
+            ]))
 
         self.assertThat('snap-test_1.0_amd64.snap', FileExists())
         self.assertThat(snap_build, Not(FileExists()))
