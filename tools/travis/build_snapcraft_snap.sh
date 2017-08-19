@@ -18,6 +18,8 @@
 
 set -ev
 
+PULL_REQUEST="$1"
+
 script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
 
@@ -30,5 +32,5 @@ $lxc file push --recursive $project_path snap-builder/root/
 $lxc exec snap-builder -- sh -c "apt install squashfuse && snap install snapcraft --candidate --classic"
 $lxc exec snap-builder -- sh -c "cd snapcraft && /snap/bin/snapcraft -o snapcraft-branch.snap"
 $lxc file pull snap-builder/root/snapcraft-branch.snap snapcraft-branch.snap
-
+[ "$PULL_REQUEST" != "false ] && $lxc exec snap-builder -- sh -c "cd snapcraft && /snap/bin/snapcraft push snapcraft-branch.snap --release edge/pr-$PULL_REQUEST"
 $lxc stop snap-builder
