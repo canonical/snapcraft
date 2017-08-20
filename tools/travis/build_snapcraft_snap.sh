@@ -30,6 +30,6 @@ lxc="/snap/bin/lxc"
 $lxc file push --recursive $project_path snap-builder/root/
 # TODO use the stable snap once it's published.
 $lxc exec snap-builder -- sh -c "apt install squashfuse && snap install snapcraft --candidate --classic"
-$lxc exec snap-builder -- sh -c "cd snapcraft && /snap/bin/snapcraft -o snapcraft-branch.snap"
+$lxc exec snap-builder -- sh -c "cd snapcraft && /snap/bin/snapcraft snap --output snapcraft-branch.snap"
 [ "$PULL_REQUEST" != "false" ] && $lxc exec snap-builder -- sh -c "cd snapcraft && /snap/bin/snapcraft push snapcraft-branch.snap --release edge/pr-$PULL_REQUEST"
 $lxc stop snap-builder
