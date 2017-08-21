@@ -171,17 +171,17 @@ class Ubuntu(BaseRepo):
     @classmethod
     def get_packages_for_source_type(cls, source_type):
         if source_type == 'bzr':
-            packages = 'bzr'
+            packages = {'bzr'}
         elif source_type == 'git':
-            packages = 'git'
+            packages = {'git'}
         elif source_type == 'tar':
-            packages = 'tar'
+            packages = {'tar'}
         elif source_type == 'hg' or source_type == 'mercurial':
-            packages = 'mercurial'
+            packages = {'mercurial'}
         elif source_type == 'subversion' or source_type == 'svn':
-            packages = 'subversion'
+            packages = {'subversion'}
         else:
-            packages = []
+            packages = set()
 
         return packages
 
@@ -250,6 +250,11 @@ class Ubuntu(BaseRepo):
             logger.warning(
                 'Impossible to mark packages as auto-installed: {}'
                 .format(e))
+
+    @classmethod
+    def build_package_is_valid(cls, package_name):
+        with apt.Cache() as apt_cache:
+            return package_name in apt_cache
 
     @classmethod
     def is_package_installed(cls, package_name):

@@ -310,8 +310,8 @@ parts:
         config = _config.Config(project_options)
 
         self.assertThat(config.parts.build_tools,
-                        Equals(['gcc-arm-linux-gnueabihf',
-                                'libc6-dev-armhf-cross']))
+                        Equals({'gcc-arm-linux-gnueabihf',
+                                'libc6-dev-armhf-cross'}))
 
     def test_config_has_no_extra_build_tools_when_not_cross_compiling(self):
         class ProjectOptionsFake(snapcraft.ProjectOptions):
@@ -333,7 +333,7 @@ parts:
         self.make_snapcraft_yaml(yaml)
         config = _config.Config(ProjectOptionsFake())
 
-        self.assertThat(config.parts.build_tools, Equals([]))
+        self.assertThat(config.parts.build_tools, Equals(set()))
 
     def test_invalid_yaml_missing_name(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)

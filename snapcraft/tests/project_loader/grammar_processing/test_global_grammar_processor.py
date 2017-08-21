@@ -14,5 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ._global_grammar_processor import GlobalGrammarProcessor  # noqa
-from ._part_grammar_processor import PartGrammarProcessor    # noqa
+from snapcraft.internal.project_loader.grammar_processing import (
+    _global_grammar_processor as processor
+)
+
+import doctest
+
+
+def load_tests(loader, tests, ignore):
+    tests.addTests(doctest.DocTestSuite(processor))
+    return tests
