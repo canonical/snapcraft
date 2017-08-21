@@ -140,6 +140,8 @@ class Containerbuild:
             command = ['snapcraft', step]
             if step == 'snap':
                 command += ['--output', self._snap_output]
+            # Pass on target arch if specified
+            # If not specified it defaults to the LXD architecture
             if self._project_options.target_arch:
                 command += ['--target-arch', self._project_options.target_arch]
             if args:
