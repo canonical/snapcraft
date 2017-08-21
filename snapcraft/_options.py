@@ -150,8 +150,8 @@ class ProjectOptions:
         return self.__target_machine != self.__platform_arch
 
     @property
-    def target_arch_specified(self):
-        return self.__target_arch_specified
+    def target_arch(self):
+        return self.__target_arch
 
     @property
     def cross_compiler_prefix(self):
@@ -252,7 +252,7 @@ class ProjectOptions:
 
     def _set_machine(self, target_deb_arch):
         self.__platform_arch = _get_platform_architecture()
-        self.__target_arch_specified = target_deb_arch is not None
+        self.__target_arch = target_deb_arch
         if not target_deb_arch:
             self.__target_machine = self.__platform_arch
         else:

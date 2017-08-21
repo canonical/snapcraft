@@ -140,8 +140,8 @@ class Containerbuild:
             command = ['snapcraft', step]
             if step == 'snap':
                 command += ['--output', self._snap_output]
-            if self._project_options.target_arch_specified:
-                command += ['--target-arch', self._project_options.deb_arch]
+            if self._project_options.target_arch:
+                command += ['--target-arch', self._project_options.target_arch]
             if args:
                 command += args
             try:
