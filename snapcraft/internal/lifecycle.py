@@ -338,7 +338,7 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
-def containerbuild(step, project_options, output=None, args=[]):
+def containerbuild(step, project_options, args, output=None):
     config = snapcraft.internal.load_config(project_options)
     lxd.Project(output=output, source=os.path.curdir,
                 project_options=project_options,

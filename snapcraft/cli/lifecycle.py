@@ -26,7 +26,8 @@ def _execute(command, parts, **kwargs):
     project_options = get_project_options(**kwargs)
 
     if env.is_containerbuild():
-        lifecycle.containerbuild(command, project_options, parts)
+        lifecycle.containerbuild(command, project_options,
+                                 project_options.args)
     else:
         lifecycle.execute(command, project_options, parts)
     return project_options
@@ -126,7 +127,7 @@ def snap(directory, output, **kwargs):
     """
     project_options = get_project_options(**kwargs)
     if env.is_containerbuild():
-        lifecycle.containerbuild('snap', project_options, output, directory)
+        lifecycle.containerbuild('snap', project_options, project_options.args)
     else:
         snap_name = lifecycle.snap(
             project_options, directory=directory, output=output)
@@ -150,9 +151,8 @@ def clean(parts, step, **kwargs):
     """
     project_options = get_project_options(**kwargs)
     if env.is_containerbuild():
-        step = step or 'pull'
         lifecycle.containerbuild('clean', project_options,
-                                 args=['--step', step, *parts])
+                                 project_options.args)
     else:
         if step == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '

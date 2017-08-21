@@ -49,9 +49,6 @@ class Containerbuild:
 
     def __init__(self, *, output, source, project_options,
                  metadata, container_name, remote=None):
-        if not output:
-            output = common.format_snap_name(metadata)
-        self._snap_output = output
         self._source = os.path.realpath(source)
         self._project_options = project_options
         self._metadata = metadata
@@ -72,6 +69,10 @@ class Containerbuild:
             raise SnapcraftEnvironmentError(
                 'Unrecognized server architecture {}'.format(kernel))
         self._image = 'ubuntu:xenial/{}'.format(deb_arch)
+        if not output:
+            output = common.format_snap_name(metadata).replace(
+                project_options.deb_arch, deb_arch)
+        self._snap_output = output
 
     def _get_remote_info(self):
         remote = self._container_name.split(':')[0]
@@ -131,21 +132,27 @@ class Containerbuild:
             if container['name'] == self._container_name.split(':')[-1]:
                 return container
 
-    def execute(self, step='snap', args=None):
+    def execute(self, step='snap', args=[]):
         with self._ensure_started():
             self._setup_project()
             self._wait_for_network()
             self._container_run(['apt-get', 'update'])
             self._inject_snapcraft()
-            command = ['snapcraft', step]
-            if step == 'snap':
+            # Pass arguments from original CLI invocation
+            pre_args = []
+            for arg in self._project_options.args:
+                value = self._project_options.args[arg]
+                if value:
+                    # Pass debug first for compatibility with old Snapcrafts
+                    if arg == 'debug':
+                        pre_args.append('--{}'.format(arg.replace('_', '-')))
+                    else:
+                        args.append('--{}'.format(arg.replace('_', '-')))
+                        if isinstance(value, str):
+                            args.append(value)
+            command = ['snapcraft', *pre_args, step, *args]
+            if 'output' not in args:
                 command += ['--output', self._snap_output]
-            # Pass on target arch if specified
-            # If not specified it defaults to the LXD architecture
-            if self._project_options.target_arch:
-                command += ['--target-arch', self._project_options.target_arch]
-            if args:
-                command += args
             try:
                 self._container_run(command, cwd=self._project_folder)
             except CalledProcessError as e:
@@ -324,7 +331,7 @@ class Project(Containerbuild):
         # Nothing to do
         pass
 
-    def execute(self, step='snap', args=None):
+    def execute(self, step='snap', args=[]):
         # clean with no parts deletes the container
         if step == 'clean' and args == ['--step', 'pull']:
             if self._get_container_status():
