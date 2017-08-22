@@ -31,7 +31,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
 """
 
 import os
-import shutil
 
 import snapcraft.plugins.make
 
@@ -64,22 +63,15 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
         self.build_packages.append('cmake')
 
     def build(self):
-        if os.path.exists(self.builddir):
-            shutil.rmtree(self.builddir)
-        os.mkdir(self.builddir)
-
-        source_subdir = getattr(self.options, 'source_subdir', None)
-        if source_subdir:
-            sourcedir = os.path.join(self.sourcedir, source_subdir)
-        else:
-            sourcedir = self.sourcedir
-
         env = self._build_environment()
+        # It's a good practice to call cmake from an empty directory, not part
+        # of the project source. Some projects even enforce this.
+        cmake_builddir = os.path.join(self.builddir, 'cmake_build')
+        os.mkdir(cmake_builddir)
+        self.run(['cmake', self.builddir, '-DCMAKE_INSTALL_PREFIX='] +
+                 self.options.configflags, env=env, cwd=cmake_builddir)
 
-        self.run(['cmake', sourcedir, '-DCMAKE_INSTALL_PREFIX='] +
-                 self.options.configflags, env=env)
-
-        self.make(env=env)
+        self.make(env=env, cwd=cmake_builddir)
 
     def _build_environment(self):
         env = os.environ.copy()

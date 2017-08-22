@@ -64,37 +64,59 @@ class CMakeTestCase(tests.TestCase):
         for property in expected_build_properties:
             self.assertIn(property, resulting_build_properties)
 
-    def test_build_referencing_sourcedir_if_no_subdir(self):
+    def test_build_cwd(self):
         plugin = cmake.CMakePlugin('test-part', self.options,
                                    self.project_options)
         os.makedirs(plugin.builddir)
         plugin.build()
 
+        cmake_builddir = os.path.join(plugin.builddir, 'cmake_build')
+
         self.run_mock.assert_has_calls([
-            mock.call(['cmake', plugin.sourcedir, '-DCMAKE_INSTALL_PREFIX='],
-                      cwd=plugin.builddir, env=mock.ANY),
-            mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
+            mock.call(
+                ['cmake', mock.ANY, '-DCMAKE_INSTALL_PREFIX='],
+                cwd=cmake_builddir, env=mock.ANY),
+            mock.call(['make', '-j2'], cwd=cmake_builddir, env=mock.ANY),
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)],
-                      cwd=plugin.builddir, env=mock.ANY)])
+                      cwd=cmake_builddir, env=mock.ANY)])
 
-    def test_build_referencing_sourcedir_with_subdir(self):
+    def test_build_referencing_builddir_if_no_subdir(self):
+        plugin = cmake.CMakePlugin('test-part', self.options,
+                                   self.project_options)
+        self.assertEqual(plugin.builddir, plugin.build_basedir)
+
+        os.makedirs(plugin.builddir)
+        plugin.build()
+
+        self.run_mock.assert_has_calls([
+            mock.call(
+                ['cmake', plugin.build_basedir, '-DCMAKE_INSTALL_PREFIX='],
+                cwd=mock.ANY, env=mock.ANY),
+            mock.call(['make', '-j2'], cwd=mock.ANY, env=mock.ANY),
+            mock.call(['make', 'install',
+                       'DESTDIR={}'.format(plugin.installdir)],
+                      cwd=mock.ANY, env=mock.ANY)])
+
+    def test_build_referencing_builddir_with_subdir(self):
         self.options.source_subdir = 'subdir'
 
         plugin = cmake.CMakePlugin('test-part', self.options,
                                    self.project_options)
+        build_subdir = os.path.join(
+            plugin.build_basedir, plugin.options.source_subdir)
+        self.assertEqual(plugin.builddir, build_subdir)
+
         os.makedirs(plugin.builddir)
         plugin.build()
 
-        sourcedir = os.path.join(
-            plugin.sourcedir, plugin.options.source_subdir)
         self.run_mock.assert_has_calls([
-            mock.call(['cmake', sourcedir, '-DCMAKE_INSTALL_PREFIX='],
-                      cwd=plugin.builddir, env=mock.ANY),
-            mock.call(['make', '-j2'], cwd=plugin.builddir, env=mock.ANY),
+            mock.call(['cmake', build_subdir, '-DCMAKE_INSTALL_PREFIX='],
+                      cwd=mock.ANY, env=mock.ANY),
+            mock.call(['make', '-j2'], cwd=mock.ANY, env=mock.ANY),
             mock.call(['make', 'install',
                        'DESTDIR={}'.format(plugin.installdir)],
-                      cwd=plugin.builddir, env=mock.ANY)])
+                      cwd=mock.ANY, env=mock.ANY)])
 
     def test_build_environment(self):
         plugin = cmake.CMakePlugin('test-part', self.options,

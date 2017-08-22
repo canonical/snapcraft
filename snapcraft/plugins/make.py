@@ -95,7 +95,7 @@ class MakePlugin(snapcraft.BasePlugin):
         super().__init__(name, options, project)
         self.build_packages.append('make')
 
-    def make(self, env=None):
+    def make(self, env=None, cwd=None):
         command = ['make']
 
         if self.options.makefile:
@@ -104,7 +104,9 @@ class MakePlugin(snapcraft.BasePlugin):
         if self.options.make_parameters:
             command.extend(self.options.make_parameters)
 
-        self.run(command + ['-j{}'.format(self.parallel_build_count)], env=env)
+        self.run(
+            command +
+            ['-j{}'.format(self.parallel_build_count)], env=env, cwd=cwd)
         if self.options.artifacts:
             for artifact in self.options.artifacts:
                 source_path = os.path.join(self.builddir, artifact)
@@ -121,7 +123,7 @@ class MakePlugin(snapcraft.BasePlugin):
                 command.append('{}={}'.format(
                     self.options.make_install_var, self.installdir))
 
-            self.run(command, env=env)
+            self.run(command, env=env, cwd=cwd)
 
     def build(self):
         super().build()

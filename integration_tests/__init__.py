@@ -103,6 +103,7 @@ class TestCase(testtools.TestCase):
         # they might be created after calling the snapcraft command on the
         # project dir.
         self.parts_dir = 'parts'
+        self.build_dir = 'build'
         self.stage_dir = 'stage'
         self.prime_dir = 'prime'
 
