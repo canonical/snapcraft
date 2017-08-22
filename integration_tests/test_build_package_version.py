@@ -57,7 +57,7 @@ class BuildPackageVersionErrorsTestCase(integration_tests.TestCase):
             subprocess.CalledProcessError,
             self.run_snapcraft, 'pull')
         self.assertIn(
-            "Could not find a required package in 'build-packages': The "
-            "package 'haskell-doc=invalid' was not found",
+            "Could not find a required package in 'build-packages': "
+            "haskell-doc=invalid",
             str(error.output)
         )
