@@ -152,17 +152,17 @@ class _SnapPackaging:
             os.makedirs(prime_snap_dir, exist_ok=True)
             shutil.copy2(
                 self._snapcraft_yaml_path, recorded_snapcraft_yaml_path)
+            annotated_snapcraft = self._annotate_snapcraft(
+                copy.deepcopy(self._config_data))
             with open(manifest_file_path, 'w') as manifest_file:
-                annotated_snapcraft = self._annotate_snapcraft(
-                    copy.deepcopy(self._config_data))
                 yaml.dump(annotated_snapcraft, manifest_file)
 
     def _annotate_snapcraft(self, data):
         data['build-packages'] = get_global_state().assets.get(
             'build-packages', [])
         for part in data['parts']:
-            pull_state = get_state(
-                os.path.join(self._parts_dir, part, 'state'), 'pull')
+            state_dir = os.path.join(self._parts_dir, part, 'state')
+            pull_state = get_state(state_dir, 'pull')
             data['parts'][part]['build-packages'] = (
                 pull_state.assets.get('build-packages', []))
             data['parts'][part]['stage-packages'] = (
@@ -170,6 +170,8 @@ class _SnapPackaging:
             source_details = pull_state.assets.get('source-details', {})
             if source_details:
                 data['parts'][part].update(source_details)
+            build_state = get_state(state_dir, 'build')
+            data['parts'][part].update(build_state.assets)
         return data
 
     def write_snap_directory(self):

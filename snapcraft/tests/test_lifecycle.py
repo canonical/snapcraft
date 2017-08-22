@@ -911,6 +911,39 @@ build-packages: [test-provider-package=test-version]
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
 
+    @mock.patch('snapcraft.plugins.nil.NilPlugin.get_manifest')
+    def test_prime_with_plugin_manifest(self, fake_plugin_manifest):
+        fake_plugin_manifest.return_value = {
+            'test-plugin-manifest': 'test-value'}
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: []
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+    test-plugin-manifest: test-value
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'manifest.yaml'),
+            FileContains(expected))
+
 
 class RecordManifestWithDeprecatedSnapKeywordTestCase(BaseLifecycleTestCase):
 

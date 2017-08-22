@@ -51,16 +51,16 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
         source_file = os.path.join(dest_dir, tar_file_name)
         mock_prov.assert_called_once_with(dest_dir, src=source_file)
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
-            self.assertEqual('Test fake compressed file', tar_file.read())
+            self.assertEqual('Test fake file', tar_file.read())
 
     @mock.patch('snapcraft.sources.Tar.provision')
     def test_pull_twice_downloads_once(self, mock_prov):
         """If a source checksum is defined, the cache should be tried first."""
         source = 'http://{}:{}/{file_name}'.format(
             *self.server.server_address, file_name='test.tar')
-        expected_checksum = ('sha384/1075c294bb52ea0f71c4349a60b00c110f187ccf1'
-                             'f249ae5d83ae41285f9c4eefbed57271f31e7c0293acca6f'
-                             '347f369')
+        expected_checksum = ('sha384/d9da1f5d54432edc8963cd817ceced83f7c6d61d3'
+                             '50ad76d1c2f50c4935d11d50211945ca0ecb980c04c98099'
+                             '085b0c3')
         tar_source = sources.Tar(source, self.path,
                                  source_checksum=expected_checksum)
 
