@@ -57,6 +57,10 @@ def get_project_options(**kwargs):
     for key, value in ctx.parent.params.items():
         if not kwargs.get(key):
             kwargs[key] = value
+    # Retain the original arguments
+    args = kwargs.copy()
+    for key, value in ctx.params.items():
+        args[key] = value
 
     project_args = dict(
         debug=kwargs.pop('debug'),
@@ -65,4 +69,4 @@ def get_project_options(**kwargs):
         target_deb_arch=kwargs.pop('target_arch'),
     )
 
-    return ProjectOptions(**project_args)
+    return ProjectOptions(**project_args, args=args)

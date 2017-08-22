@@ -428,6 +428,7 @@ class FakeLXD(fixtures.Fixture):
 
     def __init__(self, fail_on_snapcraft_run=False):
         self.status = None
+        self.kernel_arch = 'x86_64'
         self.fail_on_snapcraft_run = fail_on_snapcraft_run
 
     def _setUp(self):
@@ -461,8 +462,8 @@ class FakeLXD(fixtures.Fixture):
             elif args[0][:2] == ['lxc', 'info']:
                 return '''
                     environment:
-                      kernel_architecture: x86_64
-                    '''.encode('utf-8')
+                      kernel_architecture: {}
+                    '''.format(self.kernel_arch).encode('utf-8')
             elif args[0][:3] == ['lxc', 'list', '--format=json']:
                 if self.status and args[0][3] == self.name:
                     return string.Template('''

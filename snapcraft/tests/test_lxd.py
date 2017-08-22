@@ -29,14 +29,18 @@ from testtools.matchers import Contains
 from snapcraft import tests
 from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
+from snapcraft._options import _get_deb_arch
 
 
 class LXDTestCase(tests.TestCase):
 
     scenarios = [
-        ('local', dict(remote='local', target_arch=None)),
-        ('remote', dict(remote='my-remote', target_arch=None)),
-        ('cross', dict(remote='local', target_arch='armhf')),
+        ('local', dict(remote='local', target_arch=None, server='x86_64')),
+        ('remote', dict(remote='myremote', target_arch=None, server='x86_64')),
+        ('cross', dict(remote='local', target_arch='armhf', server='x86_64')),
+        ('arm remote', dict(remote='pi', target_arch=None, server='armv7l')),
+        ('arm same', dict(remote='pi', target_arch='armhf', server='armv7l')),
+        ('arm cross', dict(remote='pi', target_arch='arm64', server='armv7l')),
     ]
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
@@ -46,6 +50,7 @@ class LXDTestCase(tests.TestCase):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         fake_lxd = tests.fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
+        fake_lxd.kernel_arch = self.server
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
@@ -56,7 +61,7 @@ class LXDTestCase(tests.TestCase):
         lxd.Cleanbuilder(output='snap.snap', source='project.tar',
                          metadata=metadata, remote=self.remote,
                          project_options=project_options).execute()
-        expected_arch = 'amd64'
+        expected_arch = _get_deb_arch(self.server)
 
         self.assertIn('Setting up container with project assets\n'
                       'Waiting for a network connection...\n'

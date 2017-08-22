@@ -150,6 +150,10 @@ class ProjectOptions:
         return self.__target_machine != self.__platform_arch
 
     @property
+    def target_arch(self):
+        return self.__target_arch
+
+    @property
     def cross_compiler_prefix(self):
         try:
             return self.__machine_info['cross-compiler-prefix']
@@ -202,8 +206,12 @@ class ProjectOptions:
     def debug(self):
         return self.__debug
 
+    @property
+    def args(self):
+        return self.__args
+
     def __init__(self, use_geoip=False, parallel_builds=True,
-                 target_deb_arch=None, debug=False):
+                 target_deb_arch=None, debug=False, args=[]):
         # TODO: allow setting a different project dir and check for
         #       snapcraft.yaml
         self.__project_dir = os.getcwd()
@@ -211,6 +219,7 @@ class ProjectOptions:
         self.__parallel_builds = parallel_builds
         self._set_machine(target_deb_arch)
         self.__debug = debug
+        self.__args = args
 
     def get_core_dynamic_linker(self):
         """Returns the dynamic linker used for the targetted core.
@@ -248,6 +257,7 @@ class ProjectOptions:
 
     def _set_machine(self, target_deb_arch):
         self.__platform_arch = _get_platform_architecture()
+        self.__target_arch = target_deb_arch
         if not target_deb_arch:
             self.__target_machine = self.__platform_arch
         else:
