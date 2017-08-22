@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,9 +19,10 @@ import tarfile
 import fixtures
 from unittest import mock
 
-from snapcraft.internal import sources
+import requests
 
 from snapcraft import tests
+from snapcraft.internal import sources
 
 
 class TestTar(tests.FakeFileHTTPServerBasedTestCase):
@@ -65,8 +66,8 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
 
         tar_source.pull()
         with mock.patch(
-                'snapcraft.sources.Tar.download',
-                new=mock.Mock(wraps=sources.Tar.download)) as download_spy:
+            'requests.get',
+                new=mock.Mock(wraps=requests.get)) as download_spy:
             tar_source.pull()
             self.assertEqual(download_spy.call_count, 0)
 
