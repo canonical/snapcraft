@@ -57,12 +57,16 @@ def get_project_options(**kwargs):
     for key, value in ctx.parent.params.items():
         if not kwargs.get(key):
             kwargs[key] = value
+    # Retain the original arguments
+    args = kwargs.copy()
+    for key, value in ctx.params.items():
+        args[key] = value
 
     project_args = dict(
-        debug=kwargs.get('debug'),
-        use_geoip=kwargs.get('enable_geoip'),
-        parallel_builds=not kwargs.get('no_parallel_builds'),
-        target_deb_arch=kwargs.get('target_arch'),
+        debug=kwargs.pop('debug'),
+        use_geoip=kwargs.pop('enable_geoip'),
+        parallel_builds=not kwargs.pop('no_parallel_builds'),
+        target_deb_arch=kwargs.pop('target_arch'),
     )
 
-    return ProjectOptions(**project_args, args=kwargs)
+    return ProjectOptions(**project_args, args=args)

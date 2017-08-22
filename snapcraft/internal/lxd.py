@@ -70,8 +70,8 @@ class Containerbuild:
                 'Unrecognized server architecture {}'.format(kernel))
         self._image = 'ubuntu:xenial/{}'.format(deb_arch)
         if not output:
-            output = common.format_snap_name(metadata).replace(
-                project_options.deb_arch, deb_arch)
+            metadata['arch'] = [project_options.target_arch or deb_arch]
+            output = common.format_snap_name(metadata)
         self._snap_output = output
 
     def _get_remote_info(self):
@@ -151,7 +151,7 @@ class Containerbuild:
                         if isinstance(value, str):
                             args.append(value)
             command = ['snapcraft', *pre_args, step, *args]
-            if 'output' not in args:
+            if step == 'snap' and '--output' not in args:
                 command += ['--output', self._snap_output]
             try:
                 self._container_run(command, cwd=self._project_folder)
@@ -333,7 +333,7 @@ class Project(Containerbuild):
 
     def execute(self, step='snap', args=[]):
         # clean with no parts deletes the container
-        if step == 'clean' and args == ['--step', 'pull']:
+        if step == 'clean' and not self._project_options.args['step']:
             if self._get_container_status():
                 print('Deleting {}'.format(self._container_name))
                 check_call(['lxc', 'delete', '-f', self._container_name])
