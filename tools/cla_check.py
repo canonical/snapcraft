@@ -24,10 +24,11 @@ def get_commits_for_range(range):
 
 def get_emails_from_commits(commits):
     emails = set()
+    print('remotes', check_output(['git', 'remote', '-v']))
     for c in commits:
         output = check_output(['git', 'branch', '--contains', c.hash])
         if 'master' not in output.split('\n'):
-            print('TRACE: found "master" in {}'.format(output))
+            print('TRACE: "master" not in {}'.format(output))
             emails.add(c.email)
         else:  # just for debug
             print('Skipping {}, found in:\n{}'.format(c.hash, output))
