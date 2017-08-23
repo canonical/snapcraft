@@ -19,8 +19,10 @@ import os
 import os.path
 import subprocess
 from textwrap import dedent
+import requests
 from unittest import mock
 from unittest.mock import call
+import snapcraft.internal.errors
 
 import fixtures
 from testtools.matchers import (
@@ -32,6 +34,7 @@ from testtools.matchers import (
 )
 from . import CommandBaseTestCase
 from snapcraft.tests import fixture_setup
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 
 class SnapCommandBaseTestCase(CommandBaseTestCase):
@@ -92,11 +95,13 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
     def test_snap_fails_with_bad_type(self):
         self.make_snapcraft_yaml(snap_type='bad-type')
 
-        result = self.run_command(['snap'])
+        raised = self.assertRaises(
+            snapcraft.internal.errors.SnapcraftSchemaError,
+            self.run_command, ['snap'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            "bad-type' is not one of ['app', 'gadget', 'kernel', 'os']"))
+        self.assertThat(str(raised), Contains(
+            "bad-type' is not one of ['app', 'base', 'gadget', "
+            "'kernel', 'os']"))
 
     def test_snap_is_the_default(self):
         self.make_snapcraft_yaml()
@@ -112,11 +117,15 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
-    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('os.getuid')
-    def test_snap_containerized(self, mock_getuid, mock_container_run):
-        mock_getuid.return_value = 1234
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._inject_snapcraft')
+    def test_snap_containerized(self,
+                                mock_inject,
+                                mock_container_run,
+                                mock_getuid):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_getuid.return_value = 1234
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -131,26 +140,21 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         source = os.path.realpath(os.path.curdir)
         self.assertIn(
-            'Mounting {} into container\n'
-            'Waiting for a network connection...\n'
-            'Network connection established\n'.format(source),
+            'Mounting {} into container\n'.format(source),
             fake_logger.output)
 
-        container_name = 'local:snapcraft-snap-test'
         project_folder = '/root/build_snap-test'
         fake_lxd.check_call_mock.assert_has_calls([
-            call(['lxc', 'init', 'ubuntu:xenial/amd64', container_name]),
-            call(['lxc', 'config', 'set', container_name,
+            call(['lxc', 'init', 'ubuntu:xenial/amd64', fake_lxd.name]),
+            call(['lxc', 'config', 'set', fake_lxd.name,
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
-            call(['lxc', 'config', 'set', container_name,
+            call(['lxc', 'config', 'set', fake_lxd.name,
                   'raw.idmap', 'both {} 0'.format(mock_getuid.return_value)]),
-            call(['lxc', 'start', container_name]),
-            call(['lxc', 'exec', container_name, '--',
-                  'mkdir', '-p', project_folder]),
-            call(['lxc', 'config', 'device', 'add', container_name,
+            call(['lxc', 'start', fake_lxd.name]),
+            call(['lxc', 'config', 'device', 'add', fake_lxd.name,
                   project_folder, 'disk', 'source={}'.format(source),
-                  'path=/{}'.format(project_folder)]),
-            call(['lxc', 'stop', '-f', container_name]),
+                  'path={}'.format(project_folder)]),
+            call(['lxc', 'stop', '-f', fake_lxd.name]),
         ])
         mock_container_run.assert_has_calls([
             call(['python3', '-c', 'import urllib.request; ' +
@@ -158,17 +162,22 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                   '"http://start.ubuntu.com/connectivity-check.html"' +
                   ', timeout=5)']),
             call(['apt-get', 'update']),
-            call(['apt-get', 'install', 'snapcraft', '-y']),
             call(['snapcraft', 'snap', '--output',
                   'snap-test_1.0_amd64.snap'], cwd=project_folder),
         ])
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('shutil.rmtree')
     @mock.patch('os.makedirs')
     @mock.patch('snapcraft.internal.lxd.Popen')
     @mock.patch('snapcraft.internal.lxd.open')
-    def test_snap_containerized_remote(self, mock_open, mock_popen,
-                                       mock_makedirs, mock_container_run):
+    def test_snap_containerized_remote(self,
+                                       mock_open,
+                                       mock_popen,
+                                       mock_makedirs,
+                                       mock_rmtree,
+                                       mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         mock_open.return_value = mock.MagicMock(spec=open)
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
@@ -178,7 +187,6 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             'SNAPCRAFT_CONTAINER_BUILDS', 'myremote'))
         self.make_snapcraft_yaml()
 
-        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         result = self.run_command(['--debug', 'snap'])
 
         self.assertThat(result.exit_code, Equals(0))
@@ -186,26 +194,24 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         source = os.path.realpath(os.path.curdir)
         self.assertIn(
             'Mounting {} into container\n'
-            'Connecting via SSH to 127.0.0.1\n'
-            'Waiting for a network connection...\n'
-            'Network connection established\n'.format(source),
+            'Connecting to 127.0.0.1 via SSH\n'.format(source),
             fake_logger.output)
 
-        container_name = 'myremote:snapcraft-snap-test'
         project_folder = '/root/build_snap-test'
-        rundir = os.path.join(os.path.sep, 'run', 'user', str(os.getuid()),
-                              'snap.lxd')
-        mock_makedirs.assert_has_calls([
-            call(rundir, exist_ok=True),
-        ])
-        fake_lxd.check_call_mock.assert_has_calls([
-            call(['lxc', 'start', container_name]),
-            call(['lxc', 'exec', container_name, '--',
-                  'mkdir', '-p', project_folder]),
+        tmpdir = os.path.expanduser(
+            os.path.join('~', 'snap', 'lxd', 'common', 'snapcraft.tmp'))
+        fake_lxd.check_output_mock.assert_has_calls([
             call(['ssh-keygen', '-o', '-N', '', '-f',
-                 os.path.join(rundir, 'id_{}'.format(container_name))],
-                 stdout=os.devnull),
-            call(['lxc', 'stop', '-f', container_name]),
+                 os.path.join(tmpdir, 'id_{}'.format(fake_lxd.name))]),
+        ])
+        fake_lxd.check_output_mock.assert_has_calls([
+            call(['ssh', '-C', '-F', '/dev/null',
+                  '-o', 'IdentityFile={}/id_{}'.format(tmpdir, fake_lxd.name),
+                  '-o', 'StrictHostKeyChecking=no',
+                  '-o', 'UserKnownHostsFile=/dev/null',
+                  '-o', 'User=root',
+                  '-p', '22', '127.0.0.1',
+                  'ls']),
         ])
         mock_container_run.assert_has_calls([
             call(['mkdir', '-p', '/root/.ssh']),
@@ -219,15 +225,251 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['/usr/lib/sftp-server'],
                  stdin=4, stdout=7),
             call(['ssh', '-C', '-F', '/dev/null',
-                  '-o', 'IdentityFile=id_{}'.format(container_name),
+                  '-o', 'IdentityFile={}/id_{}'.format(tmpdir, fake_lxd.name),
                   '-o', 'StrictHostKeyChecking=no',
                   '-o', 'UserKnownHostsFile=/dev/null',
                   '-o', 'User=root',
                   '-p', '22', '127.0.0.1',
-                  'sshfs -o slave -o nonempty :{} /{}'.format(
+                  'sshfs -o slave -o nonempty :{} {}'.format(
                       source, project_folder)],
-                 stdin=6, stdout=5)
+                 stdin=6, stdout=5),
         ])
+
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('shutil.rmtree')
+    @mock.patch('os.makedirs')
+    @mock.patch('snapcraft.internal.lxd.Popen')
+    @mock.patch('snapcraft.internal.lxd.open')
+    def test_snap_containerized_remote_ssh_error(self,
+                                                 mock_open,
+                                                 mock_popen,
+                                                 mock_makedirs,
+                                                 mock_rmtree,
+                                                 mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_open.return_value = mock.MagicMock(spec=open)
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+
+        def call_effect(*args, **kwargs):
+            if args[0][:1] == ['ssh']:
+                raise subprocess.CalledProcessError(
+                    returncode=255, cmd=args[0])
+            return fake_lxd.check_output_side_effect()(*args, **kwargs)
+
+        fake_lxd.check_output_mock.side_effect = call_effect
+
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_CONTAINER_BUILDS', 'myremote'))
+        self.make_snapcraft_yaml()
+
+        self.assertIn('Failed to setup SSH',
+                      str(self.assertRaises(
+                          SnapcraftEnvironmentError,
+                          self.run_command, ['--debug', 'snap'])))
+
+        source = os.path.realpath(os.path.curdir)
+        self.assertIn(
+            'Mounting {} into container\n'
+            'Connecting to 127.0.0.1 via SSH\n'.format(source),
+            fake_logger.output)
+
+        tmpdir = os.path.expanduser(
+            os.path.join('~', 'snap', 'lxd', 'common', 'snapcraft.tmp'))
+        fake_lxd.check_output_mock.assert_has_calls([
+            call(['ssh-keygen', '-o', '-N', '', '-f',
+                 os.path.join(tmpdir, 'id_{}'.format(fake_lxd.name))]),
+        ])
+        fake_lxd.check_output_mock.assert_has_calls([
+            call(['ssh', '-C', '-F', '/dev/null',
+                  '-o', 'IdentityFile={}/id_{}'.format(tmpdir, fake_lxd.name),
+                  '-o', 'StrictHostKeyChecking=no',
+                  '-o', 'UserKnownHostsFile=/dev/null',
+                  '-o', 'User=root',
+                  '-p', '22', '127.0.0.1',
+                  'ls']),
+        ])
+
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('snapcraft.internal.common.is_snap')
+    def test_snap_containerized_inject_apt(self,
+                                           mock_is_snap, mock_container_run):
+        mock_is_snap.side_effect = lambda: False
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml()
+
+        self.run_command(['snap'])
+        mock_container_run.assert_has_calls([
+            call(['apt-get', 'install', 'snapcraft', '-y']),
+        ])
+
+    @mock.patch('snapcraft.internal.common.is_snap')
+    @mock.patch('shutil.rmtree')
+    @mock.patch('os.makedirs')
+    def test_snap_containerized_inject_snap_socket_error(self,
+                                                         mock_makedirs,
+                                                         mock_rmtree,
+                                                         mock_is_snap):
+        mock_is_snap.side_effect = lambda: True
+        fake_snapd = fixture_setup.FakeSnapd()
+        self.useFixture(fake_snapd)
+        fake_snapd.session_request_mock.side_effect = (
+            requests.exceptions.ConnectionError(
+                'Connection aborted.',
+                FileNotFoundError(2, 'No such file or directory')))
+        self.useFixture(fixture_setup.FakeLXD())
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml()
+
+        self.assertIn('Error connecting to ',
+                      str(self.assertRaises(SnapcraftEnvironmentError,
+                                            self.run_command, ['snap'])))
+        # Temporary folder should remain in case of failure
+        mock_rmtree.assert_not_called()
+
+    @mock.patch('snapcraft.internal.common.is_snap')
+    @mock.patch('shutil.rmtree')
+    @mock.patch('shutil.copyfile')
+    @mock.patch('os.makedirs')
+    def test_snap_containerized_inject_snap_api_error(self,
+                                                      mock_makedirs,
+                                                      mock_copyfile,
+                                                      mock_rmtree,
+                                                      mock_is_snap):
+        mock_is_snap.side_effect = lambda: True
+        fake_snapd = fixture_setup.FakeSnapd()
+        self.useFixture(fake_snapd)
+        fake_snapd.snaps = {}
+        self.useFixture(fixture_setup.FakeLXD())
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml()
+
+        self.assertIn('Error querying \'core\' snap: not found',
+                      str(self.assertRaises(SnapcraftEnvironmentError,
+                                            self.run_command, ['snap'])))
+        # Temporary folder should remain in case of failure
+        mock_rmtree.assert_not_called()
+
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('snapcraft.internal.common.is_snap')
+    @mock.patch('shutil.rmtree')
+    @mock.patch('shutil.copyfile')
+    @mock.patch('os.makedirs')
+    def test_snap_containerized_inject_snap(self,
+                                            mock_makedirs,
+                                            mock_copyfile,
+                                            mock_rmtree,
+                                            mock_is_snap,
+                                            mock_container_run):
+        # Create open mock here for context manager to work correctly
+        patcher = mock.patch('snapcraft.internal.lxd.open',
+                             mock.mock_open())
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        mock_is_snap.side_effect = lambda: True
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        self.useFixture(fixture_setup.FakeSnapd())
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml()
+
+        self.run_command(['snap'])
+        tmpdir = os.path.expanduser(
+            os.path.join('~', 'snap', 'lxd', 'common', 'snapcraft.tmp'))
+        fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'file', 'push',
+                  os.path.join(tmpdir, 'core_123.assert'),
+                  '{}/run/core_123.assert'.format(fake_lxd.name)]),
+            call(['lxc', 'file', 'push',
+                  os.path.join(tmpdir, 'core_123.snap'),
+                  '{}/run/core_123.snap'.format(fake_lxd.name)]),
+            call(['lxc', 'file', 'push',
+                  os.path.join(tmpdir, 'snapcraft_345.assert'),
+                  '{}/run/snapcraft_345.assert'.format(fake_lxd.name)]),
+            call(['lxc', 'file', 'push',
+                  os.path.join(tmpdir, 'snapcraft_345.snap'),
+                  '{}/run/snapcraft_345.snap'.format(fake_lxd.name)]),
+        ])
+        mock_container_run.assert_has_calls([
+            call(['apt-get', 'install', 'squashfuse', '-y']),
+            call(['snap', 'ack', '/run/core_123.assert']),
+            call(['snap', 'install', '/run/core_123.snap']),
+            call(['snap', 'ack', '/run/snapcraft_345.assert']),
+            call(['snap', 'install', '/run/snapcraft_345.snap', '--classic']),
+        ])
+        # Temporary folder should be removed in the end
+        mock_rmtree.assert_has_calls([call(tmpdir)])
+
+    @mock.patch('os.getuid')
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('snapcraft.internal.common.is_snap')
+    @mock.patch('shutil.rmtree')
+    @mock.patch('shutil.copyfile')
+    @mock.patch('os.makedirs')
+    def test_snap_containerized_inject_snap_dangerous(self,
+                                                      mock_makedirs,
+                                                      mock_copyfile,
+                                                      mock_rmtree,
+                                                      mock_is_snap,
+                                                      mock_container_run,
+                                                      mock_getuid):
+        # Create open mock here for context manager to work correctly
+        patcher = mock.patch('snapcraft.internal.lxd.open',
+                             mock.mock_open())
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        mock_is_snap.side_effect = lambda: True
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_getuid.return_value = 1234
+        fake_snapd = fixture_setup.FakeSnapd()
+        self.useFixture(fake_snapd)
+        fake_snapd.snaps['snapcraft']['revision'] = 'x1'
+        fake_snapd.snaps['snapcraft']['id'] = ''
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml()
+
+        self.run_command(['snap'])
+        tmpdir = os.path.expanduser(
+            os.path.join('~', 'snap', 'lxd', 'common', 'snapcraft.tmp'))
+        fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'file', 'push',
+                  os.path.join(tmpdir, 'core_123.assert'),
+                  '{}/run/core_123.assert'.format(fake_lxd.name)]),
+            call(['lxc', 'file', 'push',
+                  os.path.join(tmpdir, 'core_123.snap'),
+                  '{}/run/core_123.snap'.format(fake_lxd.name)]),
+            call(['sudo', 'cp', '/var/lib/snapd/snaps/snapcraft_x1.snap',
+                  os.path.join(tmpdir, 'snapcraft_x1.snap')]),
+            call(['sudo', 'chown', str(os.getuid()),
+                  os.path.join(tmpdir, 'snapcraft_x1.snap')]),
+            call(['lxc', 'file', 'push',
+                  os.path.join(tmpdir, 'snapcraft_x1.snap'),
+                  '{}/run/snapcraft_x1.snap'.format(fake_lxd.name)]),
+        ])
+        mock_container_run.assert_has_calls([
+            call(['apt-get', 'install', 'squashfuse', '-y']),
+            call(['snap', 'ack', '/run/core_123.assert']),
+            call(['snap', 'install', '/run/core_123.snap']),
+            call(['snap', 'install', '/run/snapcraft_x1.snap',
+                  '--dangerous', '--classic']),
+        ])
+        # Temporary folder should be removed in the end
+        mock_rmtree.assert_has_calls([call(tmpdir)])
 
     @mock.patch('snapcraft.internal.lifecycle.ProgressBar')
     def test_snap_defaults_on_a_tty(self, progress_mock):
@@ -411,11 +653,12 @@ type: os
                 plugin: does-not-exist
         """))
 
-        result = self.run_command(['snap'])
+        raised = self.assertRaises(
+            snapcraft.internal.errors.PluginError,
+            self.run_command, ['snap'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'Issue while loading part: unknown plugin: does-not-exist'))
+        self.assertThat(str(raised), Equals(
+            "Issue while loading part: unknown plugin: 'does-not-exist'"))
 
     @mock.patch('time.time')
     def test_snap_renames_stale_snap_build(self, mocked_time):

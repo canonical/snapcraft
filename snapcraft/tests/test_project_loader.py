@@ -2063,7 +2063,7 @@ class InvalidTypesTestCase(ValidationBaseTestCase):
         expected_message = (
             "The 'type' property does not match the required "
             "schema: '{}' is not one of "
-            "['app', 'gadget', 'kernel', 'os']").format(self.type_)
+            "['app', 'base', 'gadget', 'kernel', 'os']").format(self.type_)
         self.assertEqual(raised.message, expected_message,
                          message=data)
 

@@ -112,8 +112,6 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
                 snapcraft.file_utils.link_or_copy(src, dst, self.installdir))
 
     def _get_proxy_options(self):
-        # XXX This doesn't yet support username and password.
-        # -- elopio - 2016-11-17
         proxy_options = []
         for var in ('http', 'https'):
             proxy = os.environ.get('{}_proxy'.format(var), False)
@@ -124,4 +122,11 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
                 if parsed_url.port:
                     proxy_options.append(
                         '-D{}.proxyPort={}'.format(var, parsed_url.port))
+                if parsed_url.username:
+                    proxy_options.append(
+                        '-D{}.proxyUser={}'.format(var, parsed_url.username))
+                if parsed_url.password:
+                    proxy_options.append(
+                        '-D{}.proxyPassword={}'.format(
+                            var, parsed_url.password))
         return proxy_options

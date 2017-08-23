@@ -123,11 +123,11 @@ class AntPluginTestCase(tests.TestCase):
 
     def test_env_proxies(self):
         env_vars = (
-            ('http_proxy', 'http://localhost:3132'),
-            ('https_proxy', 'http://localhost2:3133'),
+            ('http_proxy', 'http://user:pass@localhost:3132'),
+            ('https_proxy', 'http://user2:pass2@localhost2:3133'),
         )
-        for v in env_vars:
-            self.useFixture(fixtures.EnvironmentVariable(v[0], v[1]))
+        for key, value in env_vars:
+            self.useFixture(fixtures.EnvironmentVariable(key, value))
         plugin = ant.AntPlugin('test-part', self.options,
                                self.project_options)
 
@@ -135,5 +135,7 @@ class AntPluginTestCase(tests.TestCase):
         self.assertIn(
             "ANT_OPTS='"
             "-Dhttp.proxyHost=localhost -Dhttp.proxyPort=3132 "
-            "-Dhttps.proxyHost=localhost2 -Dhttps.proxyPort=3133'",
+            "-Dhttp.proxyUser=user -Dhttp.proxyPassword=pass "
+            "-Dhttps.proxyHost=localhost2 -Dhttps.proxyPort=3133 "
+            "-Dhttps.proxyUser=user2 -Dhttps.proxyPassword=pass2'",
             env)

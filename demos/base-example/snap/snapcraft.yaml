@@ -1,0 +1,17 @@
+name: base-example
+version: 1.0
+summary: Example base snap
+description:
+  A base snap is a special kind of snap that can be used by
+  other snaps as an alternative base. This base will then
+  be used as the root filesystem instead of the traditional
+  core snap.
+
+  This example base snap only contains a basic libc6.
+type: base
+
+parts:
+  libc:
+    plugin: dump
+    source: .
+    stage-packages: [libc6]

@@ -109,7 +109,26 @@ class PluginTestCase(tests.TestCase):
             'fake-part', 'test_unexisting')
 
         self.assertThat(str(raised), Equals(
-            'Issue while loading part: unknown plugin: test_unexisting'))
+            "Issue while loading part: unknown plugin: 'test_unexisting'"))
+
+        # Make sure that nothing was added to sys.path.
+        self.assertEqual(path, sys.path)
+
+    def test_init_known_module_but_unknown_plugin_must_raise_exception(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        path = copy.copy(sys.path)
+
+        # "_ros" is a valid module within the plugin path, but contains no
+        # plugins.
+        raised = self.assertRaises(
+            errors.PluginError,
+            mocks.loadplugin,
+            'fake-part', '_ros')
+
+        self.assertThat(str(raised), Equals(
+            "Issue while loading part: no plugin found in module '_ros'"))
 
         # Make sure that nothing was added to sys.path.
         self.assertEqual(path, sys.path)
@@ -701,7 +720,7 @@ class OrganizeTestCase(tests.TestCase):
             setup_dirs=[],
             setup_files=['foo', 'bar'],
             organize_set={'foo': 'bar'},
-            expected=EnvironmentError,
+            expected=errors.SnapcraftEnvironmentError,
         )),
         ('*_for_files', dict(
             setup_dirs=[],
@@ -716,7 +735,7 @@ class OrganizeTestCase(tests.TestCase):
             setup_dirs=[],
             setup_files=['foo.conf', 'bar.conf'],
             organize_set={'*.conf': 'dir'},
-            expected=EnvironmentError,
+            expected=errors.SnapcraftEnvironmentError,
         )),
         ('*_for_directories', dict(
             setup_dirs=['dir1', 'dir2'],
@@ -1199,7 +1218,7 @@ class StateTestCase(StateBaseTestCase):
     def test_clean_stage_old_state(self):
         self.handler.mark_done('stage', None)
         raised = self.assertRaises(
-            errors.MissingState,
+            errors.MissingStateCleanError,
             self.handler.clean_stage, {})
 
         self.assertEqual(
@@ -1530,7 +1549,7 @@ class StateTestCase(StateBaseTestCase):
     def test_clean_prime_old_state(self):
         self.handler.mark_done('prime', None)
         raised = self.assertRaises(
-            errors.MissingState,
+            errors.MissingStateCleanError,
             self.handler.clean_prime, {})
 
         self.assertEqual(
@@ -1886,7 +1905,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler.mark_done('prime', None)
 
         raised = self.assertRaises(
-            errors.MissingState,
+            errors.MissingStateCleanError,
             handler.clean, step='prime')
 
         self.assertEqual(
@@ -2000,7 +2019,7 @@ class CleanTestCase(CleanBaseTestCase):
         handler.mark_done('stage', None)
 
         raised = self.assertRaises(
-            errors.MissingState,
+            errors.MissingStateCleanError,
             handler.clean, step='stage')
 
         self.assertEqual(

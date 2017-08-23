@@ -40,14 +40,14 @@ class LXDTestCase(tests.TestCase):
     ]
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
-    @patch('petname.Generate')
-    def test_cleanbuild(self, mock_pet, mock_container_run):
+    @patch('snapcraft.internal.lxd.Containerbuild._inject_snapcraft')
+    def test_cleanbuild(self, mock_inject, mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         fake_lxd = tests.fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
-        mock_pet.return_value = 'my-pet'
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         project_options = ProjectOptions(target_deb_arch=self.target_arch)
         metadata = {'name': 'project'}
@@ -55,29 +55,26 @@ class LXDTestCase(tests.TestCase):
         lxd.Cleanbuilder(output='snap.snap', source='project.tar',
                          metadata=metadata, remote=self.remote,
                          project_options=project_options).execute()
+        expected_arch = 'amd64'
 
-        self.assertIn('Setting up container with project assets\n'
-                      'Waiting for a network connection...\n'
+        self.assertIn('Waiting for a network connection...\n'
                       'Network connection established\n'
+                      'Setting up container with project assets\n'
                       'Retrieved snap.snap\n', fake_logger.output)
 
-        container_name = '{}:snapcraft-my-pet'.format(self.remote)
         fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'launch', '-e',
-                  'ubuntu:xenial/{}'.format('amd64'),
-                  container_name]),
-            call(['lxc', 'config', 'set', container_name,
+                  'ubuntu:xenial/{}'.format(expected_arch), fake_lxd.name]),
+            call(['lxc', 'config', 'set', fake_lxd.name,
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
-            call(['lxc', 'config', 'set', container_name,
+            call(['lxc', 'config', 'set', fake_lxd.name,
                   'environment.LC_ALL', 'C.UTF-8']),
-            call(['lxc', 'exec', container_name, '--',
-                  'mkdir', '-p', '{}'.format(project_folder)]),
             call(['lxc', 'file', 'push', os.path.realpath('project.tar'),
-                  '{}/root/build_project/project.tar'.format(container_name)]),
+                  '{}/root/build_project/project.tar'.format(fake_lxd.name)]),
             call(['lxc', 'file', 'pull',
-                  '{}{}/snap.snap'.format(container_name, project_folder),
+                  '{}{}/snap.snap'.format(fake_lxd.name, project_folder),
                   'snap.snap']),
-            call(['lxc', 'stop', '-f', container_name]),
+            call(['lxc', 'stop', '-f', fake_lxd.name]),
         ])
 
     def test_wait_for_network_loops(self):

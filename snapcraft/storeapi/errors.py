@@ -35,6 +35,11 @@ class InvalidCredentialsError(StoreError):
         super().__init__(message=message)
 
 
+class LoginRequiredError(StoreError):
+
+    fmt = 'Cannot continue without logging in successfully.'
+
+
 class StoreRetryError(StoreError):
 
     fmt = 'There seems to be a network error: {error}'
@@ -381,8 +386,12 @@ class StoreSnapRevisionsError(StoreError):
             series=series or 'any', error=error)
 
 
-class StoreDeltaApplicationError(Exception):
-    pass
+class StoreDeltaApplicationError(StoreError):
+
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
 
 
 class StoreSnapStatusError(StoreSnapRevisionsError):
@@ -407,6 +416,100 @@ class StoreChannelClosingError(StoreError):
         super().__init__(error=error)
 
 
+class StoreChannelClosingPermissionError(StoreError):
+
+    fmt = (
+        'Your account lacks permission to close channels for this snap. Make '
+        'sure the logged in account has upload permissions on {snap_name!r} '
+        'in series {snap_series!r}.'
+    )
+
+    def __init__(self, snap_name, snap_series):
+        super().__init__(snap_name=snap_name, snap_series=snap_series)
+
+
+class StoreBuildAssertionPermissionError(StoreError):
+
+    fmt = (
+        'Your account lacks permission to assert builds for this snap. Make '
+        'sure you are logged in as the publisher of {snap_name!r} '
+        'for series {snap_series!r}.'
+    )
+
+    def __init__(self, snap_name, snap_series):
+        super().__init__(snap_name=snap_name, snap_series=snap_series)
+
+
 class StoreAssertionError(StoreError):
 
     fmt = 'Error signing {endpoint} assertion for {snap_name}: {error!s}'
+
+
+class MissingSnapdError(StoreError):
+
+    fmt = (
+        'The snapd package is not installed. In order to use {command!r}, '
+        "you must run 'apt install snapd'."
+    )
+
+    def __init__(self, command):
+        super().__init__(command=command)
+
+
+class KeyAlreadyRegisteredError(StoreError):
+
+    fmt = 'You have already registered a key named {key_name!r}'
+
+    def __init__(self, key_name):
+        super().__init__(key_name=key_name)
+
+
+class NoKeysError(StoreError):
+
+    fmt = (
+        'You have no usable keys.\nPlease create at least one key with '
+        '`snapcraft create-key` for use with snap.'
+    )
+
+
+class NoSuchKeyError(StoreError):
+
+    fmt = (
+        'You have no usable key named {key_name!r}.\nSee the keys available '
+        'in your system with `snapcraft keys`.'
+    )
+
+    def __init__(self, key_name):
+        super().__init__(key_name=key_name)
+
+
+class KeyNotRegisteredError(StoreError):
+
+    fmt = (
+        'The key {key_name!r} is not registered in the Store.\nPlease '
+        'register it with `snapcraft register-key {key_name!r}` before '
+        'signing and pushing signatures to the Store.'
+    )
+
+    def __init__(self, key_name):
+        super().__init__(key_name=key_name)
+
+
+class InvalidValidationRequestsError(StoreError):
+
+    fmt = (
+        'Invalid validation requests (format must be name=revision): '
+        '{requests}'
+    )
+
+    def __init__(self, requests):
+        requests_str = ' '.join(requests)
+        super().__init__(requests=requests_str)
+
+
+class SignBuildAssertionError(StoreError):
+
+    fmt = 'Failed to sign build assertion for {snap_name!r}'
+
+    def __init__(self, snap_name):
+        super().__init__(snap_name=snap_name)
