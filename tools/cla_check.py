@@ -27,8 +27,8 @@ def get_emails_from_commits(commits):
     for c in commits:
         output = check_output(['git', 'branch', '--contains', c.hash])
         if '* master' not in output.split('\n'):
-            print('Commit {} not in "master", found in '
-                  '{}'.format(c.hash, output))
+            print('Commit {} from {} not in "master", found in '
+                  '{!r}'.format(c.hash, c.email, output))
             emails.add(c.email)
         else:  # just for debug
             print('Skipping {}, found in:\n{}'.format(c.hash, output))
@@ -38,8 +38,10 @@ def get_emails_from_commits(commits):
 def main():
     # This is just to have information in case things go wrong
     print('Remotes:')
+    sys.stdout.flush()
     check_call(['git', 'remote', '-v'])
     print('Branches:')
+    sys.stdout.flush()
     check_call(['git', 'branch', '-v'])
 
     travis_commit_range = os.getenv('TRAVIS_COMMIT_RANGE', '')
@@ -53,12 +55,12 @@ def main():
     lp = Launchpad.login_anonymously('check CLA', 'production')
     cla_folks = lp.people['contributor-agreement-canonical'].participants
 
+    print('Amount of emails to check the CLA for {}'.format(len(emails)))
     for email in emails:
+        print('Checking the CLA for {!r}'.format(email))
         if email.endswith('@canonical.com'):
             print('Skipping @canonical.com account {}'.format(email))
             continue
-        print('Checking for a Launchpad account associated with {}...'.format(
-            email))
         contributor = lp.people.getByEmail(email=email)
         if not contributor:
             sys.exit('The contributor does not have a Launchpad account.')
