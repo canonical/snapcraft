@@ -3,8 +3,9 @@
 # XXX copied from https://github.com/kyrofa/cla-check
 import collections
 import os
-import subprocess
 import sys
+from subprocess import check_output
+
 
 try:
     from launchpadlib.launchpad import Launchpad
@@ -15,7 +16,7 @@ Commit = collections.namedtuple('Commit', ['email', 'hash'])
 
 
 def get_commits_for_range(range):
-    output = subprocess.check_output(['git', 'log', range, '--pretty=%aE|%H'])
+    output = check_output(['git', 'log', range, '--pretty=%aE|%H'])
     split_output = (i.split('|') for i in output.split('\n') if i != '')
     commits = [Commit(email=i[0], hash=i[1]) for i in split_output]
     return commits
@@ -24,9 +25,9 @@ def get_commits_for_range(range):
 def get_emails_from_commits(commits):
     emails = set()
     for c in commits:
-        output = subprocess.check_output(['git', 'branch', '--contains',
-                                          c.hash, '--format="%(refname)"'])
-        if 'ref/heads/master' not in output:
+        output = check_output(['git', 'branch', '--contains', c.hash])
+        if 'master' not in output.split('\n'):
+            print('TRACE: found "master" in {}'.format(output))
             emails.add(c.email)
         else:  # just for debug
             print('Skipping {}, found in:\n{}'.format(c.hash, output))
