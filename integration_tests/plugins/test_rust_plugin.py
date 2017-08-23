@@ -21,7 +21,7 @@ import subprocess
 import fixtures
 import testscenarios
 import yaml
-from testtools.matchers import FileExists, MatchesRegex, Not
+from testtools.matchers import Equals, FileExists, MatchesRegex, Not
 
 import snapcraft
 import integration_tests
@@ -52,7 +52,7 @@ class RustPluginTestCase(RustPluginBaseTestCase):
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'rust-hello'))
-        self.assertEqual('There is rust on snaps!\n', binary_output)
+        self.assertThat(binary_output, Equals('There is rust on snaps!\n'))
 
     def test_stage_rust_with_revision(self):
         self.run_snapcraft('stage', 'rust-with-revision')
@@ -66,14 +66,16 @@ class RustPluginTestCase(RustPluginBaseTestCase):
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'simple-rust'))
-        self.assertEqual('Conditional features work!\n', binary_output)
+        self.assertThat(binary_output, Equals('Conditional features work!\n'))
 
     def test_stage_rust_with_source_subdir(self):
         self.run_snapcraft('stage', 'rust-subdir')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'rust-subdir'))
-        self.assertEqual('Rust in a subdirectory works\n', binary_output)
+        self.assertThat(
+            binary_output,
+            Equals('Rust in a subdirectory works\n'))
         # Test for bug https://bugs.launchpad.net/snapcraft/+bug/1654764
         self.assertThat('Cargo.lock', Not(FileExists()))
 

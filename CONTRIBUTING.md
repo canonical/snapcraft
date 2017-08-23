@@ -19,10 +19,13 @@ give us permission to use your contributions.
    Make a fork of Snapcraft, and create a branch named specifically for the
    feature on which you'd like to work. Make your changes there, adding new
    tests as needed, and make sure the existing tests continue to pass when your
-   changes are complete (for information about running the tests, see the
-   [HACKING][3] document).
+   changes are complete (for information see the [HACKING][3] and [TESTING][4]
+   documents).
 
-3. Squash commits into one, well-formatted commit. If you really feel like there
+3. We try to follow a consistent and readable code style. Read the
+   [CODE_STYLE][5] document and please make sure that your code complies.
+
+4. Squash commits into one, well-formatted commit. If you really feel like there
    should be more than one commit in your branch, then you're probably trying to
    introduce more than one feature and you should make another branch for
    it.
@@ -48,10 +51,12 @@ give us permission to use your contributions.
        If applied, this commit will <insert summary here>.
        ```
 
-4. Submit a pull request to get changes from your branch into master. Mention
+5. Submit a pull request to get changes from your branch into master. Mention
    which bug is being resolved in the description of the pull request (bonus
    points if it's a hyperlink to the bug itself).
 
 [1]: http://www.ubuntu.com/legal/contributors/
 [2]: https://bugs.launchpad.net/snapcraft
 [3]: HACKING.md
+[4]: TESTING.md
+[5]: CODE_STYLE.md

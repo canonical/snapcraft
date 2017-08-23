@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,7 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from unittest import mock
+
 import testtools
+from testtools.matchers import Equals
 
 import snapcraft
 from snapcraft.internal.errors import SnapcraftEnvironmentError
@@ -100,9 +102,12 @@ class NativeOptionsTestCase(tests.TestCase):
         mock_platform_machine.return_value = self.machine
         mock_platform_architecture.return_value = self.architecture
         options = snapcraft.ProjectOptions()
-        self.assertEqual(options.arch_triplet, self.expected_arch_triplet)
-        self.assertEqual(options.deb_arch, self.expected_deb_arch)
-        self.assertEqual(options.kernel_arch, self.expected_kernel_arch)
+        self.assertThat(
+            options.arch_triplet, Equals(self.expected_arch_triplet))
+        self.assertThat(
+            options.deb_arch, Equals(self.expected_deb_arch))
+        self.assertThat(
+            options.kernel_arch, Equals(self.expected_kernel_arch))
 
     @mock.patch('platform.architecture')
     @mock.patch('platform.machine')
@@ -116,10 +121,10 @@ class NativeOptionsTestCase(tests.TestCase):
 
         if self.architecture[0] == '32bit' and \
            self.machine in userspace_conversions:
-            self.assertEqual(
-                platform_arch, userspace_conversions[self.machine])
+            self.assertThat(
+                platform_arch, Equals(userspace_conversions[self.machine]))
         else:
-            self.assertEqual(platform_arch, self.machine)
+            self.assertThat(platform_arch, Equals(self.machine))
 
 
 class OptionsTestCase(tests.TestCase):

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016, 2017 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -62,10 +62,9 @@ class SnapCacheTestCase(SnapCacheBaseTestCase):
             file_utils.calculate_sha3_384(self.snap_path)
         )
 
-        self.assertEqual(
-            expected_snap_path,
-            cached_snap_path
-        )
+        self.assertThat(
+            cached_snap_path,
+            Equals(expected_snap_path))
         self.assertTrue(os.path.isfile(cached_snap_path))
 
     def test_snap_cache_get_latest(self):
@@ -121,7 +120,7 @@ parts:
             latest_hash
         )
 
-        self.assertEqual(expected_snap_path, latest_snap)
+        self.assertThat(latest_snap, Equals(expected_snap_path))
 
     def test_snap_cache_get_by_hash(self):
         self.useFixture(fixture_setup.FakeTerminal())
@@ -135,9 +134,9 @@ parts:
         # get snap by hash
         snap = snap_cache.get(deb_arch='amd64', snap_hash=snap_hash)
 
-        self.assertEqual(
-            os.path.join(snap_cache.snap_cache_root, 'amd64', snap_hash),
-            snap
+        self.assertThat(
+            snap, Equals(
+                os.path.join(snap_cache.snap_cache_root, 'amd64', snap_hash))
         )
 
 
@@ -195,13 +194,13 @@ parts:
         snap_file_2_dir, snap_file_2_hash = os.path.split(snap_file_2_path)
 
         # confirm expected snap cached
-        self.assertEqual(2, len(os.listdir(snap_file_2_dir)))
+        self.assertThat(len(os.listdir(snap_file_2_dir)), Equals(2))
 
         # prune
         pruned_files = snap_cache.prune(deb_arch=self.deb_arch,
                                         keep_hash=snap_file_2_hash)
 
-        self.assertEqual(1, len(pruned_files))
+        self.assertThat(len(pruned_files), Equals(1))
         self.assertIn(
             os.path.join(
                 snap_cache.snap_cache_root,

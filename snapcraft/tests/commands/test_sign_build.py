@@ -65,7 +65,7 @@ class SignBuildTestCase(CommandBaseTestCase):
         self.assertThat(str(raised), Contains(
             'The snapd package is not installed.'))
         mock_installed.assert_called_with('snapd')
-        self.assertEqual(0, mock_check_output.call_count)
+        self.assertThat(mock_check_output.call_count, Equals(0))
 
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -78,7 +78,7 @@ class SignBuildTestCase(CommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Contains(
             'Path "nonexisting.snap" does not exist'))
-        self.assertEqual(0, mock_check_output.call_count)
+        self.assertThat(mock_check_output.call_count, Equals(0))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
@@ -106,7 +106,7 @@ class SignBuildTestCase(CommandBaseTestCase):
             'Your account lacks permission to assert builds for this '
             'snap. Make sure you are logged in as the publisher of '
             "'test-snap' for series '16'."))
-        self.assertEqual(0, mock_check_output.call_count)
+        self.assertThat(mock_check_output.call_count, Equals(0))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')

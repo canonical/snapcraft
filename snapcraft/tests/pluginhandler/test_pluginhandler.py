@@ -61,9 +61,9 @@ class PluginTestCase(tests.TestCase):
         open(os.path.join(sourcedir, 'file1'), 'w').close()
         open(os.path.join(subdir, 'file2'), 'w').close()
 
-        self.assertEqual(
-            os.path.join(handler.code.build_basedir, source_subdir),
-            handler.code.builddir)
+        self.assertThat(
+            handler.code.builddir,
+            Equals(os.path.join(handler.code.build_basedir, source_subdir)))
 
         handler.build()
 
@@ -78,7 +78,8 @@ class PluginTestCase(tests.TestCase):
         os.makedirs(handler.sourcedir)
         open(os.path.join(handler.sourcedir, 'file'), 'w').close()
 
-        self.assertEqual(handler.code.build_basedir, handler.code.builddir)
+        self.assertThat(
+            handler.code.builddir, Equals(handler.code.build_basedir))
 
         handler.build()
 
@@ -112,7 +113,7 @@ class PluginTestCase(tests.TestCase):
             "Issue while loading part: unknown plugin: 'test_unexisting'"))
 
         # Make sure that nothing was added to sys.path.
-        self.assertEqual(path, sys.path)
+        self.assertThat(path, Equals(sys.path))
 
     def test_init_known_module_but_unknown_plugin_must_raise_exception(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -131,7 +132,7 @@ class PluginTestCase(tests.TestCase):
             "Issue while loading part: no plugin found in module '_ros'"))
 
         # Make sure that nothing was added to sys.path.
-        self.assertEqual(path, sys.path)
+        self.assertThat(path, Equals(sys.path))
 
     def test_fileset_include_excludes(self):
         stage_set = [
@@ -145,9 +146,10 @@ class PluginTestCase(tests.TestCase):
 
         include, exclude = pluginhandler._get_file_list(stage_set)
 
-        self.assertEqual(include, ['opt/something', 'usr/bin',
-                                   '-everything', r'\a'])
-        self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
+        self.assertThat(
+            include,
+            Equals(['opt/something', 'usr/bin', '-everything', r'\a']))
+        self.assertThat(exclude, Equals(['etc', 'usr/lib/*.a']))
 
     @patch.object(snapcraft.plugins.nil.NilPlugin, 'snap_fileset')
     def test_migratable_fileset_for_no_options_modification(
@@ -162,14 +164,16 @@ class PluginTestCase(tests.TestCase):
         expected_options = copy.deepcopy(handler.code.options)
 
         handler.migratable_fileset_for('stage')
-        self.assertEqual(vars(expected_options),
-                         vars(handler.code.options),
-                         'Expected options to be unmodified')
+        self.assertThat(
+            vars(handler.code.options),
+            Equals(vars(expected_options)),
+            'Expected options to be unmodified')
 
         handler.migratable_fileset_for('prime')
-        self.assertEqual(vars(expected_options),
-                         vars(handler.code.options),
-                         'Expected options to be unmodified')
+        self.assertThat(
+            vars(handler.code.options),
+            Equals(vars(expected_options)),
+            'Expected options to be unmodified')
 
     def test_fileset_only_includes(self):
         stage_set = [
@@ -179,8 +183,8 @@ class PluginTestCase(tests.TestCase):
 
         include, exclude = pluginhandler._get_file_list(stage_set)
 
-        self.assertEqual(include, ['opt/something', 'usr/bin'])
-        self.assertEqual(exclude, [])
+        self.assertThat(include, Equals(['opt/something', 'usr/bin']))
+        self.assertThat(exclude, Equals([]))
 
     def test_fileset_only_excludes(self):
         stage_set = [
@@ -190,8 +194,8 @@ class PluginTestCase(tests.TestCase):
 
         include, exclude = pluginhandler._get_file_list(stage_set)
 
-        self.assertEqual(include, ['*'])
-        self.assertEqual(exclude, ['etc', 'usr/lib/*.a'])
+        self.assertThat(include, Equals(['*']))
+        self.assertThat(exclude, Equals(['etc', 'usr/lib/*.a']))
 
     def test_migrate_snap_files_already_exists(self):
         os.makedirs('install')
@@ -210,9 +214,9 @@ class PluginTestCase(tests.TestCase):
 
         # Verify that the staged file is the one that was staged last
         with open('stage/foo', 'r') as f:
-            self.assertEqual(f.read(), 'installed',
-                             'Expected staging to allow overwriting of '
-                             'already-staged files')
+            self.assertThat(f.read(), Equals('installed'),
+                            'Expected staging to allow overwriting of '
+                            'already-staged files')
 
     def test_migrate_files_supports_no_follow_symlinks(self):
         os.makedirs('install')
@@ -230,8 +234,9 @@ class PluginTestCase(tests.TestCase):
         # Verify that the symlink was preserved
         self.assertTrue(os.path.islink(os.path.join('stage', 'bar')),
                         "Expected migrated 'bar' to still be a symlink.")
-        self.assertEqual('foo', os.readlink(os.path.join('stage', 'bar')),
-                         "Expected migrated 'bar' to point to 'foo'")
+        self.assertThat(os.readlink(os.path.join('stage', 'bar')),
+                        Equals('foo'),
+                        "Expected migrated 'bar' to point to 'foo'")
 
     def test_migrate_files_supports_follow_symlinks(self):
         os.makedirs('install')
@@ -250,8 +255,8 @@ class PluginTestCase(tests.TestCase):
         self.assertFalse(os.path.islink(os.path.join('stage', 'bar')),
                          "Expected migrated 'bar' to no longer be a symlink.")
         with open(os.path.join('stage', 'bar'), 'r') as f:
-            self.assertEqual(f.read(), 'installed',
-                             "Expected migrated 'bar' to be a copy of 'foo'")
+            self.assertThat(f.read(), Equals('installed'),
+                            "Expected migrated 'bar' to be a copy of 'foo'")
 
     @patch('os.chown')
     def test_migrate_files_preserves_ownership(self, chown_mock):
@@ -306,8 +311,10 @@ class PluginTestCase(tests.TestCase):
         pluginhandler._migrate_files(
             files, dirs, 'install', 'stage', follow_symlinks=True)
 
-        self.assertEqual(stat.S_IMODE(
-            os.stat(os.path.join('stage', 'foo')).st_mode), new_mode)
+        self.assertThat(
+            new_mode,
+            Equals(
+                stat.S_IMODE(os.stat(os.path.join('stage', 'foo')).st_mode)))
 
     @patch('os.chown')
     def test_migrate_files_preserves_file_mode_chown_permissions(self,
@@ -331,8 +338,10 @@ class PluginTestCase(tests.TestCase):
         pluginhandler._migrate_files(
             files, dirs, 'install', 'stage', follow_symlinks=True)
 
-        self.assertEqual(stat.S_IMODE(
-            os.stat(os.path.join('stage', 'foo')).st_mode), new_mode)
+        self.assertThat(
+            new_mode,
+            Equals(
+                stat.S_IMODE(os.stat(os.path.join('stage', 'foo')).st_mode)))
 
         self.assertTrue(chown_mock.called)
 
@@ -356,10 +365,14 @@ class PluginTestCase(tests.TestCase):
         pluginhandler._migrate_files(
             files, dirs, 'install', 'stage', follow_symlinks=True)
 
-        self.assertEqual(stat.S_IMODE(
-            os.stat(os.path.join('stage', 'foo')).st_mode), new_mode)
-        self.assertEqual(stat.S_IMODE(
-            os.stat(os.path.join('stage', 'foo', 'bar')).st_mode), new_mode)
+        self.assertThat(
+            new_mode,
+            Equals(
+                stat.S_IMODE(os.stat(os.path.join('stage', 'foo')).st_mode)))
+        self.assertThat(
+            new_mode,
+            Equals(stat.S_IMODE(
+                os.stat(os.path.join('stage', 'foo', 'bar')).st_mode)))
 
     @patch('importlib.import_module')
     @patch('snapcraft.internal.pluginhandler._load_local')
@@ -488,9 +501,10 @@ class PluginTestCase(tests.TestCase):
             mocks.loadplugin,
             'fake-part', 'plugin')
 
-        self.assertEqual(
-            "Invalid pull properties specified by 'plugin' plugin: ['bar']",
-            str(raised))
+        self.assertThat(
+            str(raised),
+            Equals("Invalid pull properties specified by 'plugin' plugin: "
+                   "['bar']"))
 
     def test_plugin_schema_invalid_build_hint(self):
         class Plugin(snapcraft.BasePlugin):
@@ -509,9 +523,10 @@ class PluginTestCase(tests.TestCase):
             ValueError,
             mocks.loadplugin, 'fake-part', 'plugin')
 
-        self.assertEqual(
-            "Invalid build properties specified by 'plugin' plugin: ['bar']",
-            str(raised))
+        self.assertThat(
+            str(raised),
+            Equals("Invalid build properties specified by 'plugin' plugin: "
+                   "['bar']"))
 
     def test_filesets_includes_without_relative_paths(self):
         raised = self.assertRaises(
@@ -630,7 +645,7 @@ class MigratePluginTestCase(tests.TestCase):
                 result.append(os.path.join(root, item))
         result.sort()
 
-        self.assertEqual(expected, result)
+        self.assertThat(result, Equals(expected))
 
 
 class MigratableFilesetsTestCase(tests.TestCase):
@@ -645,40 +660,44 @@ class MigratableFilesetsTestCase(tests.TestCase):
 
     def test_migratable_filesets_everything(self):
         files, dirs = pluginhandler._migratable_filesets(['*'], 'install')
-        self.assertEqual({'1', 'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}, files)
-        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+        self.assertThat(
+            files, Equals({'1', 'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}))
+        self.assertThat(
+            dirs, Equals({'foo', 'foo/bar', 'foo/bar/baz'}))
 
     def test_migratable_filesets_foo(self):
         files, dirs = pluginhandler._migratable_filesets(['foo'], 'install')
-        self.assertEqual({'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}, files)
-        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+        self.assertThat(
+            files, Equals({'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}))
+        self.assertThat(dirs, Equals({'foo', 'foo/bar', 'foo/bar/baz'}))
 
     def test_migratable_filesets_everything_in_foo(self):
         files, dirs = pluginhandler._migratable_filesets(['foo/*'], 'install')
-        self.assertEqual({'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}, files)
-        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+        self.assertThat(
+            files, Equals({'foo/2', 'foo/bar/3', 'foo/bar/baz/4'}))
+        self.assertThat(dirs, Equals({'foo', 'foo/bar', 'foo/bar/baz'}))
 
     def test_migratable_filesets_root_file(self):
         files, dirs = pluginhandler._migratable_filesets(['1'], 'install')
-        self.assertEqual({'1'}, files)
-        self.assertEqual(set(), dirs)
+        self.assertThat(files, Equals({'1'}))
+        self.assertThat(dirs, Equals(set()))
 
     def test_migratable_filesets_single_nested_file(self):
         files, dirs = pluginhandler._migratable_filesets(['foo/2'], 'install')
-        self.assertEqual({'foo/2'}, files)
-        self.assertEqual({'foo'}, dirs)
+        self.assertThat(files, Equals({'foo/2'}))
+        self.assertThat(dirs, Equals({'foo'}))
 
     def test_migratable_filesets_single_really_nested_file(self):
         files, dirs = pluginhandler._migratable_filesets(['foo/bar/2'],
                                                          'install')
-        self.assertEqual({'foo/bar/2'}, files)
-        self.assertEqual({'foo', 'foo/bar'}, dirs)
+        self.assertThat(files, Equals({'foo/bar/2'}))
+        self.assertThat(dirs, Equals({'foo', 'foo/bar'}))
 
     def test_migratable_filesets_single_really_really_nested_file(self):
         files, dirs = pluginhandler._migratable_filesets(['foo/bar/baz/3'],
                                                          'install')
-        self.assertEqual({'foo/bar/baz/3'}, files)
-        self.assertEqual({'foo', 'foo/bar', 'foo/bar/baz'}, dirs)
+        self.assertThat(files, Equals({'foo/bar/baz/3'}))
+        self.assertThat(dirs, Equals({'foo', 'foo/bar', 'foo/bar/baz'}))
 
 
 class OrganizeTestCase(tests.TestCase):
@@ -794,7 +813,7 @@ class OrganizeTestCase(tests.TestCase):
                 dir_path = os.path.join(base_dir, expect[1])
                 dir_contents = os.listdir(dir_path)
                 dir_contents.sort()
-                self.assertEqual(expect[0], dir_contents)
+                self.assertThat(dir_contents, Equals(expect[0]))
 
 
 class RealStageTestCase(tests.TestCase):
@@ -978,18 +997,18 @@ class StateTestCase(StateBaseTestCase):
 
     @patch('snapcraft.internal.repo.Repo')
     def test_pull_state(self, repo_mock):
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
         repo_mock.get_installed_build_packages.return_value = []
 
         self.handler.pull()
 
-        self.assertEqual('pull', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('pull'))
         state = states.get_state(self.handler.statedir, 'pull')
 
         self.assertTrue(state, 'Expected pull to save state YAML')
         self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertEqual(9, len(state.properties))
+        self.assertThat(len(state.properties), Equals(9))
         for expected in ['source', 'source-branch', 'source-commit',
                          'source-depth', 'source-subdir', 'source-tag',
                          'source-type', 'plugin', 'stage-packages']:
@@ -1006,24 +1025,24 @@ class StateTestCase(StateBaseTestCase):
         self.handler.code.options.foo = 'bar'
         self.handler._part_properties = {'foo': 'bar'}
 
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
 
         self.handler.pull()
 
-        self.assertEqual('pull', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('pull'))
         state = states.get_state(self.handler.statedir, 'pull')
 
         self.assertTrue(state, 'Expected pull to save state YAML')
         self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is OrderedDict)
         self.assertTrue('foo' in state.properties)
-        self.assertEqual(state.properties['foo'], 'bar')
+        self.assertThat(state.properties['foo'], Equals('bar'))
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
 
     @patch.object(nil.NilPlugin, 'clean_pull')
     def test_clean_pull_state(self, mock_clean_pull):
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
 
         self.handler.pull()
 
@@ -1032,20 +1051,20 @@ class StateTestCase(StateBaseTestCase):
         # Verify that the plugin had clean_pull() called
         mock_clean_pull.assert_called_once_with()
 
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
 
     def test_build_state(self):
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
 
         self.handler.build()
 
-        self.assertEqual('build', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('build'))
         state = states.get_state(self.handler.statedir, 'build')
 
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertEqual(5, len(state.properties))
+        self.assertThat(len(state.properties), Equals(5))
         for expected in ['after', 'build-attributes', 'build-packages',
                          'disable-parallel', 'organize']:
             self.assertTrue(expected in state.properties)
@@ -1061,24 +1080,24 @@ class StateTestCase(StateBaseTestCase):
         self.handler.code.options.foo = 'bar'
         self.handler._part_properties = {'foo': 'bar'}
 
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
 
         self.handler.build()
 
-        self.assertEqual('build', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('build'))
         state = states.get_state(self.handler.statedir, 'build')
 
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
         self.assertTrue('foo' in state.properties)
-        self.assertEqual(state.properties['foo'], 'bar')
+        self.assertThat(state.properties['foo'], Equals('bar'))
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
 
     @patch.object(nil.NilPlugin, 'clean_build')
     def test_clean_build_state(self, mock_clean_build):
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
 
         self.handler.mark_done('pull')
         self.handler.build()
@@ -1088,10 +1107,10 @@ class StateTestCase(StateBaseTestCase):
         # Verify that the plugin had clean_build() called
         mock_clean_build.assert_called_once_with()
 
-        self.assertEqual('pull', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('pull'))
 
     def test_stage_state(self):
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.code.installdir, 'bin')
         os.makedirs(bindir)
@@ -1101,7 +1120,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.mark_done('build')
         self.handler.stage()
 
-        self.assertEqual('stage', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('stage'))
         state = states.get_state(self.handler.statedir, 'stage')
 
         self.assertTrue(state, 'Expected stage to save state YAML')
@@ -1109,23 +1128,23 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertEqual(2, len(state.files))
+        self.assertThat(len(state.files), Equals(2))
         self.assertTrue('bin/1' in state.files)
         self.assertTrue('bin/2' in state.files)
-        self.assertEqual(1, len(state.directories))
+        self.assertThat(len(state.directories), Equals(1))
         self.assertTrue('bin' in state.directories)
         self.assertTrue('stage' in state.properties)
-        self.assertEqual(state.properties['stage'], ['*'])
+        self.assertThat(state.properties['stage'], Equals(['*']))
         self.assertTrue('filesets' in state.properties)
-        self.assertEqual(state.properties['filesets'], {})
+        self.assertThat(state.properties['filesets'], Equals({}))
         self.assertTrue(type(state.project_options) is OrderedDict)
-        self.assertEqual(0, len(state.project_options))
+        self.assertThat(len(state.project_options), Equals(0))
 
     def test_stage_state_with_stage_keyword(self):
         self.handler.code.options.stage = ['bin/1']
         self.handler._part_properties = {'stage': ['bin/1']}
 
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.code.installdir, 'bin')
         os.makedirs(bindir)
@@ -1135,7 +1154,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.mark_done('build')
         self.handler.stage()
 
-        self.assertEqual('stage', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('stage'))
         state = states.get_state(self.handler.statedir, 'stage')
 
         self.assertTrue(state, 'Expected stage to save state YAML')
@@ -1143,19 +1162,19 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertEqual(1, len(state.files))
+        self.assertThat(len(state.files), Equals(1))
         self.assertTrue('bin/1' in state.files)
-        self.assertEqual(1, len(state.directories))
+        self.assertThat(len(state.directories), Equals(1))
         self.assertTrue('bin' in state.directories)
         self.assertTrue('stage' in state.properties)
-        self.assertEqual(state.properties['stage'], ['bin/1'])
+        self.assertThat(state.properties['stage'], Equals(['bin/1']))
         self.assertTrue(type(state.project_options) is OrderedDict)
-        self.assertEqual(0, len(state.project_options))
+        self.assertThat(len(state.project_options), Equals(0))
 
-        self.assertEqual('stage', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('stage'))
 
     def test_clean_stage_state(self):
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
         bindir = os.path.join(self.stage_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
@@ -1168,11 +1187,11 @@ class StateTestCase(StateBaseTestCase):
 
         self.handler.clean_stage({})
 
-        self.assertEqual('build', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('build'))
         self.assertFalse(os.path.exists(bindir))
 
     def test_clean_stage_state_multiple_parts(self):
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
         bindir = os.path.join(self.stage_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
@@ -1186,7 +1205,7 @@ class StateTestCase(StateBaseTestCase):
 
         self.handler.clean_stage({})
 
-        self.assertEqual('build', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('build'))
         self.assertFalse(os.path.exists(os.path.join(bindir, '1')))
         self.assertFalse(os.path.exists(os.path.join(bindir, '2')))
         self.assertTrue(
@@ -1194,7 +1213,7 @@ class StateTestCase(StateBaseTestCase):
             "Expected 'bin/3' to remain as it wasn't staged by this part")
 
     def test_clean_stage_state_common_files(self):
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
         bindir = os.path.join(self.stage_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
@@ -1209,7 +1228,7 @@ class StateTestCase(StateBaseTestCase):
             'other_part': states.StageState({'bin/2'}, {'bin'})
         })
 
-        self.assertEqual('build', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('build'))
         self.assertFalse(os.path.exists(os.path.join(bindir, '1')))
         self.assertTrue(
             os.path.exists(os.path.join(bindir, '2')),
@@ -1221,17 +1240,17 @@ class StateTestCase(StateBaseTestCase):
             errors.MissingStateCleanError,
             self.handler.clean_stage, {})
 
-        self.assertEqual(
+        self.assertThat(
             str(raised),
-            "Failed to clean step 'stage': Missing necessary state. "
-            "This won't work until a complete clean has occurred.")
+            Equals("Failed to clean step 'stage': Missing necessary state. "
+                   "This won't work until a complete clean has occurred."))
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('shutil.copy')
     def test_prime_state(self, mock_copy, mock_find_dependencies):
         mock_find_dependencies.return_value = set()
 
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.code.installdir, 'bin')
         os.makedirs(bindir)
@@ -1242,7 +1261,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.stage()
         self.handler.prime()
 
-        self.assertEqual('prime', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('prime'))
         mock_find_dependencies.assert_called_once_with(self.handler.primedir,
                                                        {'bin/1', 'bin/2'})
         self.assertFalse(mock_copy.called)
@@ -1254,16 +1273,16 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertEqual(2, len(state.files))
+        self.assertThat(len(state.files), Equals(2))
         self.assertTrue('bin/1' in state.files)
         self.assertTrue('bin/2' in state.files)
-        self.assertEqual(1, len(state.directories))
+        self.assertThat(len(state.directories), Equals(1))
         self.assertTrue('bin' in state.directories)
-        self.assertEqual(0, len(state.dependency_paths))
+        self.assertThat(len(state.dependency_paths), Equals(0))
         self.assertTrue('prime' in state.properties)
-        self.assertEqual(state.properties['prime'], ['*'])
+        self.assertThat(state.properties['prime'], Equals(['*']))
         self.assertTrue(type(state.project_options) is OrderedDict)
-        self.assertEqual(0, len(state.project_options))
+        self.assertThat(len(state.project_options), Equals(0))
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('shutil.copy')
@@ -1271,7 +1290,7 @@ class StateTestCase(StateBaseTestCase):
                                                    mock_find_dependencies):
         mock_find_dependencies.return_value = set()
 
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.code.installdir, 'bin')
         os.makedirs(bindir)
@@ -1284,7 +1303,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.stage()
         self.handler.prime()
 
-        self.assertEqual('prime', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('prime'))
         # bin/2 shouldn't be in this list as it was already primed by another
         # part.
         mock_find_dependencies.assert_called_once_with(self.handler.primedir,
@@ -1298,15 +1317,15 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertEqual(1, len(state.files))
+        self.assertThat(len(state.files), Equals(1))
         self.assertTrue('bin/1' in state.files)
-        self.assertEqual(1, len(state.directories))
+        self.assertThat(len(state.directories), Equals(1))
         self.assertTrue('bin' in state.directories)
-        self.assertEqual(0, len(state.dependency_paths))
+        self.assertThat(len(state.dependency_paths), Equals(0))
         self.assertTrue('prime' in state.properties)
-        self.assertEqual(state.properties['prime'], ['*'])
+        self.assertThat(state.properties['prime'], Equals(['*']))
         self.assertTrue(type(state.project_options) is OrderedDict)
-        self.assertEqual(0, len(state.project_options))
+        self.assertThat(len(state.project_options), Equals(0))
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
@@ -1318,7 +1337,7 @@ class StateTestCase(StateBaseTestCase):
             '{}/lib2/staged'.format(self.handler.stagedir),
         }
 
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.code.installdir, 'bin')
         os.makedirs(bindir)
@@ -1329,7 +1348,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.stage()
         self.handler.prime()
 
-        self.assertEqual('prime', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('prime'))
         mock_find_dependencies.assert_called_once_with(
             self.handler.primedir, {'bin/1', 'bin/2'})
         mock_migrate_files.assert_has_calls([
@@ -1346,19 +1365,19 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertEqual(2, len(state.files))
+        self.assertThat(len(state.files), Equals(2))
         self.assertTrue('bin/1' in state.files)
         self.assertTrue('bin/2' in state.files)
-        self.assertEqual(1, len(state.directories))
+        self.assertThat(len(state.directories), Equals(1))
         self.assertTrue('bin' in state.directories)
-        self.assertEqual(3, len(state.dependency_paths))
+        self.assertThat(len(state.dependency_paths), Equals(3))
         self.assertTrue('foo/bar' in state.dependency_paths)
         self.assertTrue('lib1' in state.dependency_paths)
         self.assertTrue('lib2' in state.dependency_paths)
         self.assertTrue('prime' in state.properties)
-        self.assertEqual(state.properties['prime'], ['*'])
+        self.assertThat(state.properties['prime'], Equals(['*']))
         self.assertTrue(type(state.project_options) is OrderedDict)
-        self.assertEqual(0, len(state.project_options))
+        self.assertThat(len(state.project_options), Equals(0))
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
@@ -1377,7 +1396,7 @@ class StateTestCase(StateBaseTestCase):
             '{}/lib2/staged'.format(self.handler.stagedir),
         }
 
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.code.installdir, 'bin')
         os.makedirs(bindir)
@@ -1388,7 +1407,7 @@ class StateTestCase(StateBaseTestCase):
         mock_migrate_files.reset_mock()
         self.handler.prime()
 
-        self.assertEqual('prime', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('prime'))
         mock_find_dependencies.assert_called_once_with(
             self.handler.primedir, {'bin/file'})
         # Verify that only the part's files were migrated-- not the system
@@ -1402,7 +1421,7 @@ class StateTestCase(StateBaseTestCase):
         # Verify that only the part and staged libraries were saved into the
         # dependency paths, not the system dependency.
         self.assertTrue(type(state.dependency_paths) is set)
-        self.assertEqual(2, len(state.dependency_paths))
+        self.assertThat(len(state.dependency_paths), Equals(2))
         self.assertTrue('lib1' in state.dependency_paths)
         self.assertTrue('lib2' in state.dependency_paths)
 
@@ -1414,7 +1433,7 @@ class StateTestCase(StateBaseTestCase):
             '/foo/bar/baz'
         }
 
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.code.installdir, 'bin')
         foobardir = os.path.join(self.handler.code.installdir, 'foo', 'bar')
@@ -1431,7 +1450,7 @@ class StateTestCase(StateBaseTestCase):
         mock_migrate_files.reset_mock()
         self.handler.prime()
 
-        self.assertEqual('prime', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('prime'))
         mock_find_dependencies.assert_called_once_with(
             self.handler.primedir, {'bin/1', 'foo/bar/baz'})
         mock_migrate_files.assert_called_once_with(
@@ -1441,7 +1460,7 @@ class StateTestCase(StateBaseTestCase):
         state = states.get_state(self.handler.statedir, 'prime')
 
         self.assertTrue(type(state) is states.PrimeState)
-        self.assertEqual(1, len(state.dependency_paths))
+        self.assertThat(len(state.dependency_paths), Equals(1))
         self.assertTrue('foo/bar' in state.dependency_paths)
 
     @patch('snapcraft.internal.pluginhandler._find_dependencies')
@@ -1452,7 +1471,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler = mocks.loadplugin(
             'test_part', part_properties={'prime': ['bin/1']})
 
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.code.installdir, 'bin')
         os.makedirs(bindir)
@@ -1463,7 +1482,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.stage()
         self.handler.prime()
 
-        self.assertEqual('prime', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('prime'))
         mock_find_dependencies.assert_called_once_with(self.handler.primedir,
                                                        {'bin/1'})
         self.assertFalse(mock_copy.called)
@@ -1475,18 +1494,18 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertEqual(1, len(state.files))
+        self.assertThat(len(state.files), Equals(1))
         self.assertTrue('bin/1' in state.files)
-        self.assertEqual(1, len(state.directories))
+        self.assertThat(len(state.directories), Equals(1))
         self.assertTrue('bin' in state.directories)
-        self.assertEqual(0, len(state.dependency_paths))
+        self.assertThat(len(state.dependency_paths), Equals(0))
         self.assertTrue('prime' in state.properties)
-        self.assertEqual(state.properties['prime'], ['bin/1'])
+        self.assertThat(state.properties['prime'], Equals(['bin/1']))
         self.assertTrue(type(state.project_options) is OrderedDict)
-        self.assertEqual(0, len(state.project_options))
+        self.assertThat(len(state.project_options), Equals(0))
 
     def test_clean_prime_state(self):
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
         bindir = os.path.join(self.prime_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
@@ -1499,11 +1518,11 @@ class StateTestCase(StateBaseTestCase):
 
         self.handler.clean_prime({})
 
-        self.assertEqual('stage', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('stage'))
         self.assertFalse(os.path.exists(bindir))
 
     def test_clean_prime_state_multiple_parts(self):
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
         bindir = os.path.join(self.prime_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
@@ -1517,7 +1536,7 @@ class StateTestCase(StateBaseTestCase):
 
         self.handler.clean_prime({})
 
-        self.assertEqual('stage', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('stage'))
         self.assertFalse(os.path.exists(os.path.join(bindir, '1')))
         self.assertFalse(os.path.exists(os.path.join(bindir, '2')))
         self.assertTrue(
@@ -1525,7 +1544,7 @@ class StateTestCase(StateBaseTestCase):
             "Expected 'bin/3' to remain as it wasn't primed by this part")
 
     def test_clean_prime_state_common_files(self):
-        self.assertEqual(None, self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals(None))
         bindir = os.path.join(self.prime_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
@@ -1540,7 +1559,7 @@ class StateTestCase(StateBaseTestCase):
             'other_part': states.PrimeState({'bin/2'}, {'bin'})
         })
 
-        self.assertEqual('stage', self.handler.last_step())
+        self.assertThat(self.handler.last_step(), Equals('stage'))
         self.assertFalse(os.path.exists(os.path.join(bindir, '1')))
         self.assertTrue(
             os.path.exists(os.path.join(bindir, '2')),
@@ -1552,10 +1571,10 @@ class StateTestCase(StateBaseTestCase):
             errors.MissingStateCleanError,
             self.handler.clean_prime, {})
 
-        self.assertEqual(
+        self.assertThat(
             str(raised),
-            "Failed to clean step 'prime': Missing necessary state. "
-            "This won't work until a complete clean has occurred.")
+            Equals("Failed to clean step 'prime': Missing necessary state. "
+                   "This won't work until a complete clean has occurred."))
 
 
 class StateFileMigrationTestCase(StateBaseTestCase):
@@ -1572,7 +1591,7 @@ class StateFileMigrationTestCase(StateBaseTestCase):
             f.write(self.step)
 
         handler = mocks.loadplugin(part_name)
-        self.assertEqual(self.step, handler.last_step())
+        self.assertThat(handler.last_step(), Equals(self.step))
 
 
 class IsDirtyTestCase(tests.TestCase):
@@ -1908,10 +1927,10 @@ class CleanTestCase(CleanBaseTestCase):
             errors.MissingStateCleanError,
             handler.clean, step='prime')
 
-        self.assertEqual(
+        self.assertThat(
             str(raised),
-            "Failed to clean step 'prime': Missing necessary state. "
-            "This won't work until a complete clean has occurred.")
+            Equals("Failed to clean step 'prime': Missing necessary state. "
+                   "This won't work until a complete clean has occurred."))
 
         self.assertTrue(os.path.isfile(primed_file))
 
@@ -2022,10 +2041,10 @@ class CleanTestCase(CleanBaseTestCase):
             errors.MissingStateCleanError,
             handler.clean, step='stage')
 
-        self.assertEqual(
+        self.assertThat(
             str(raised),
-            "Failed to clean step 'stage': Missing necessary state. "
-            "This won't work until a complete clean has occurred.")
+            Equals("Failed to clean step 'stage': Missing necessary state. "
+                   "This won't work until a complete clean has occurred."))
 
         self.assertTrue(os.path.isfile(staged_file))
 
@@ -2142,7 +2161,7 @@ class PerStepCleanTestCase(tests.TestCase):
         self.handler.clean(step='pull', hint='foo')
 
         # Verify the step cleaning order
-        self.assertEqual(4, len(self.manager_mock.mock_calls))
+        self.assertThat(len(self.manager_mock.mock_calls), Equals(4))
         self.manager_mock.assert_has_calls([
             call.clean_prime({}, 'foo'),
             call.clean_stage({}, 'foo'),
@@ -2154,7 +2173,7 @@ class PerStepCleanTestCase(tests.TestCase):
         self.handler.clean(step='pull')
 
         # Verify the step cleaning order
-        self.assertEqual(4, len(self.manager_mock.mock_calls))
+        self.assertThat(len(self.manager_mock.mock_calls), Equals(4))
         self.manager_mock.assert_has_calls([
             call.clean_prime({}, ''),
             call.clean_stage({}, ''),
@@ -2166,7 +2185,7 @@ class PerStepCleanTestCase(tests.TestCase):
         self.handler.clean(step='build')
 
         # Verify the step cleaning order
-        self.assertEqual(3, len(self.manager_mock.mock_calls))
+        self.assertThat(len(self.manager_mock.mock_calls), Equals(3))
         self.manager_mock.assert_has_calls([
             call.clean_prime({}, ''),
             call.clean_stage({}, ''),
@@ -2177,7 +2196,7 @@ class PerStepCleanTestCase(tests.TestCase):
         self.handler.clean(step='stage')
 
         # Verify the step cleaning order
-        self.assertEqual(2, len(self.manager_mock.mock_calls))
+        self.assertThat(len(self.manager_mock.mock_calls), Equals(2))
         self.manager_mock.assert_has_calls([
             call.clean_prime({}, ''),
             call.clean_stage({}, ''),
@@ -2187,7 +2206,7 @@ class PerStepCleanTestCase(tests.TestCase):
         self.handler.clean(step='prime')
 
         # Verify the step cleaning order
-        self.assertEqual(1, len(self.manager_mock.mock_calls))
+        self.assertThat(len(self.manager_mock.mock_calls), Equals(1))
         self.manager_mock.assert_has_calls([
             call.clean_prime({}, ''),
         ])
@@ -2303,10 +2322,10 @@ class StagePackagesTestCase(tests.TestCase):
             RuntimeError,
             part.prepare_pull)
 
-        self.assertEqual(
+        self.assertThat(
             str(raised),
-            "Error downloading stage packages for part 'stage-test': "
-            "The package 'non-existing' was not found.")
+            Equals("Error downloading stage packages for part 'stage-test': "
+                   "The package 'non-existing' was not found."))
 
 
 class FindDependenciesTestCase(tests.TestCase):
@@ -2335,7 +2354,7 @@ class FindDependenciesTestCase(tests.TestCase):
         dependencies = pluginhandler._find_dependencies(workdir, {'linked'})
 
         mock_ms.file.assert_called_once_with(linked_elf_path_b)
-        self.assertEqual(dependencies, {'/usr/lib/libDepends.so'})
+        self.assertThat(dependencies, Equals({'/usr/lib/libDepends.so'}))
 
     @patch('magic.open')
     @patch('snapcraft.internal.libraries.get_dependencies')
@@ -2360,7 +2379,7 @@ class FindDependenciesTestCase(tests.TestCase):
 
         self.assertFalse(mock_ms.file.called,
                          'Expected object file to be skipped')
-        self.assertEqual(dependencies, set())
+        self.assertThat(dependencies, Equals(set()))
 
     @patch('magic.open')
     @patch('snapcraft.internal.libraries.get_dependencies')
@@ -2458,8 +2477,8 @@ class FindDependenciesTestCase(tests.TestCase):
             RuntimeError,
             pluginhandler._find_dependencies, '.', set())
 
-        self.assertEqual(
-            raised.__str__(), 'Cannot load magic header detection')
+        self.assertThat(
+            raised.__str__(), Equals('Cannot load magic header detection'))
 
     def test__combine_filesets_explicit_wildcard(self):
         fileset_1 = ['a', 'b']
@@ -2468,7 +2487,7 @@ class FindDependenciesTestCase(tests.TestCase):
         expected_fileset = ['a', 'b']
         combined_fileset = pluginhandler._combine_filesets(
             fileset_1, fileset_2)
-        self.assertEqual(set(expected_fileset), set(combined_fileset))
+        self.assertThat(set(combined_fileset), Equals(set(expected_fileset)))
 
     def test__combine_filesets_implicit_wildcard(self):
         fileset_1 = ['a', 'b']
@@ -2477,7 +2496,7 @@ class FindDependenciesTestCase(tests.TestCase):
         expected_fileset = ['a', '-c', 'b']
         combined_fileset = pluginhandler._combine_filesets(
             fileset_1, fileset_2)
-        self.assertEqual(set(expected_fileset), set(combined_fileset))
+        self.assertThat(set(combined_fileset), Equals(set(expected_fileset)))
 
     def test__combine_filesets_no_wildcard(self):
         fileset_1 = ['a', 'b']
@@ -2486,7 +2505,7 @@ class FindDependenciesTestCase(tests.TestCase):
         expected_fileset = ['a']
         combined_fileset = pluginhandler._combine_filesets(
             fileset_1, fileset_2)
-        self.assertEqual(set(expected_fileset), set(combined_fileset))
+        self.assertThat(set(combined_fileset), Equals(set(expected_fileset)))
 
     def test__combine_filesets_with_contradiciton(self):
         fileset_1 = ['-a']
@@ -2496,10 +2515,10 @@ class FindDependenciesTestCase(tests.TestCase):
             errors.PrimeFileConflictError,
             pluginhandler._combine_filesets, fileset_1, fileset_2
         )
-        self.assertEqual(
+        self.assertThat(
             raised.__str__(),
-            "The following files have been excluded by the `stage` keyword, "
-            "but included by the `prime` keyword: {'a'}"
+            Equals("The following files have been excluded by the `stage` "
+                   "keyword, but included by the `prime` keyword: {'a'}")
         )
 
     def test__get_includes(self):
@@ -2507,14 +2526,14 @@ class FindDependenciesTestCase(tests.TestCase):
         expected_includes = ['b']
 
         includes = pluginhandler._get_includes(fileset)
-        self.assertEqual(set(expected_includes), set(includes))
+        self.assertThat(set(includes), Equals(set(expected_includes)))
 
     def test__get_excludes(self):
         fileset = ['-a', 'b']
         expected_excludes = ['a']
 
         excludes = pluginhandler._get_excludes(fileset)
-        self.assertEqual(set(expected_excludes), set(excludes))
+        self.assertThat(set(excludes), Equals(set(expected_excludes)))
 
 
 class SourcesTestCase(tests.TestCase):
@@ -2579,9 +2598,9 @@ class SourcesTestCase(tests.TestCase):
             ValueError,
             mocks.loadplugin, 'test-part', part_properties=properties)
 
-        self.assertEqual(raised.__str__(),
-                         'no handler to manage source '
-                         '(unrecognized://test_source)')
+        self.assertThat(raised.__str__(),
+                        Equals('no handler to manage source '
+                               '(unrecognized://test_source)'))
 
 
 class CleanPullTestCase(tests.TestCase):

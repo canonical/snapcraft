@@ -19,7 +19,7 @@ import jsonschema
 
 from unittest.mock import Mock, patch
 import testtools
-from testtools.matchers import HasLength
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft.plugins.copy import (
@@ -66,10 +66,10 @@ class TestCopyPlugin(tests.TestCase):
 
         raised = self.assertRaises(FileNotFoundError, c.build)
 
-        self.assertEqual(
+        self.assertThat(
             str(raised),
-            "[Errno 2] No such file or directory: '{}/src'".format(
-                c.builddir))
+            Equals("[Errno 2] No such file or directory: '{}/src'".format(
+                c.builddir)))
 
     def test_copy_glob_does_not_match_anything(self):
         # ensure that a bad file causes a warning and fails the build even
@@ -82,7 +82,7 @@ class TestCopyPlugin(tests.TestCase):
 
         raised = self.assertRaises(errors.SnapcraftEnvironmentError, c.build)
 
-        self.assertEqual(raised.__str__(), "no matches for 'src*'")
+        self.assertThat(raised.__str__(), Equals("no matches for 'src*'"))
 
     def test_copy_plugin_copies(self):
         self.mock_options.files = {
@@ -259,7 +259,7 @@ class TestCopyPlugin(tests.TestCase):
         self.assertTrue(os.path.isdir(destination),
                         "Expected foo's contents to be copied into baz/")
         with open(os.path.join(destination, 'file'), 'r') as f:
-            self.assertEqual(f.read(), 'foo')
+            self.assertThat(f.read(), Equals('foo'))
 
         for symlink in symlinks:
             destination = symlink['destination']
@@ -267,14 +267,14 @@ class TestCopyPlugin(tests.TestCase):
                 os.path.islink(destination),
                 'Expected {!r} to be a symlink'.format(destination))
 
-            self.assertEqual(
+            self.assertThat(
                 os.path.realpath(destination),
-                symlink['expected_realpath'],
+                Equals(symlink['expected_realpath']),
                 'Expected {!r} to be a relative path to {!r}'.format(
                     destination, symlink['expected_realpath']))
 
             with open(destination, 'r') as f:
-                self.assertEqual(f.read(), symlink['expected_contents'])
+                self.assertThat(f.read(), Equals(symlink['expected_contents']))
 
     def test_copy_symlinks_that_should_be_followed(self):
         self.mock_options.files = {'foo/*': '.'}
@@ -315,7 +315,7 @@ class TestCopyPlugin(tests.TestCase):
         c.build()
 
         with open(os.path.join(c.installdir, 'file'), 'r') as f:
-            self.assertEqual(f.read(), 'foo')
+            self.assertThat(f.read(), Equals('foo'))
 
         for symlink in symlinks:
             destination = symlink['destination']
@@ -324,7 +324,7 @@ class TestCopyPlugin(tests.TestCase):
                              'symlink'.format(destination))
 
             with open(destination, 'r') as f:
-                self.assertEqual(f.read(), symlink['expected_contents'])
+                self.assertThat(f.read(), Equals(symlink['expected_contents']))
 
     def test_copy_symlinks_to_libc(self):
         self.mock_options.files = {'*': '.'}
@@ -414,9 +414,10 @@ class TestRecursivelyLink(tests.TestCase):
             NotADirectoryError,
             _recursively_link, 'foo', 'qux', os.getcwd())
 
-        self.assertEqual(
+        self.assertThat(
             str(raised),
-            "Cannot overwrite non-directory 'qux' with directory 'foo'")
+            Equals(
+                "Cannot overwrite non-directory 'qux' with directory 'foo'"))
 
     def test_recursively_link_subtree(self):
         _recursively_link('foo/bar', 'qux', os.getcwd())

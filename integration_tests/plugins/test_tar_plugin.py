@@ -18,6 +18,7 @@ import os
 
 from testtools.matchers import (
     DirExists,
+    Equals,
     FileExists
 )
 
@@ -59,7 +60,7 @@ class TarPluginTestCase(integration_tests.TestCase):
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'test'))
-        self.assertEqual('tarproject\n', binary_output)
+        self.assertThat(binary_output, Equals('tarproject\n'))
 
         # Regression test for
         # https://bugs.launchpad.net/snapcraft/+bug/1500728

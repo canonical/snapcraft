@@ -20,6 +20,8 @@ import subprocess
 from platform import linux_distribution
 from unittest import skipUnless
 
+from testtools.matchers import Equals
+
 import snapcraft
 import snaps_tests
 
@@ -51,7 +53,7 @@ class ROSTestCase(snaps_tests.SnapsTestCase):
         output = subprocess.check_output(
             "sed -n '/env/p;1q' prime/usr/bin/rosversion",
             cwd=os.path.join(self.path, self.snap_content_dir), shell=True)
-        self.assertEqual(output, expected)
+        self.assertThat(output, Equals(expected))
 
         # Regression test for LP: #1660852. Make sure --help actually gets
         # passed to rosaunch instead of being eaten by setup.sh.

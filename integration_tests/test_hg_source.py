@@ -17,7 +17,7 @@
 import os
 import subprocess
 
-from testtools.matchers import FileExists
+from testtools.matchers import Equals, FileExists
 
 import integration_tests
 
@@ -36,12 +36,12 @@ class HgSourceTestCase(integration_tests.HgSourceBaseTestCase):
         self.run_snapcraft('pull')
         revno = self.get_revno(
             os.path.join(self.parts_dir, 'mercurial', 'src'))
-        self.assertEqual('"2"', revno)
+        self.assertThat(revno, Equals('"2"'))
 
         self.run_snapcraft('pull')
         revno = self.get_revno(
             os.path.join(self.parts_dir, 'mercurial', 'src'))
-        self.assertEqual('"2"', revno)
+        self.assertThat(revno, Equals('"2"'))
 
     def test_pull_hg_tag(self):
         self.copy_project_to_cwd('hg-tag')
@@ -59,14 +59,14 @@ class HgSourceTestCase(integration_tests.HgSourceBaseTestCase):
             'ls -1 {} | wc -l '.format(
                 os.path.join(self.parts_dir, 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
-        self.assertEqual('1', revno)
+        self.assertThat(revno, Equals('1'))
 
         self.run_snapcraft('pull')
         revno = subprocess.check_output(
             'ls -1 {} | wc -l '.format(
                 os.path.join(self.parts_dir, 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
-        self.assertEqual('1', revno)
+        self.assertThat(revno, Equals('1'))
 
     def test_pull_hg_commit(self):
         self.copy_project_to_cwd('hg-commit')
@@ -82,14 +82,14 @@ class HgSourceTestCase(integration_tests.HgSourceBaseTestCase):
             'ls -1 {} | wc -l '.format(
                 os.path.join(self.parts_dir, 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
-        self.assertEqual('1', revno)
+        self.assertThat(revno, Equals('1'))
 
         self.run_snapcraft('pull')
         revno = subprocess.check_output(
             'ls -1 {} | wc -l '.format(
                 os.path.join(self.parts_dir, 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
-        self.assertEqual('1', revno)
+        self.assertThat(revno, Equals('1'))
 
     def test_pull_hg_branch(self):
         self.copy_project_to_cwd('hg-branch')

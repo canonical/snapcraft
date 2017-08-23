@@ -52,8 +52,8 @@ class ChannelClosingTestCase(integration_tests.StoreTestCase):
         snap_path = '{}_{}_{}.snap'.format(name, version, 'all')
         self.assertThat(snap_path, FileExists())
         self.register(name)
-        self.assertEqual(0, self.push(snap_path, release='edge,beta'))
+        self.assertThat(self.push(snap_path, release='edge,beta'), Equals(0))
 
         expected = 'The beta channel is now closed.'
         status = self.close(name, 'beta', expected=expected)
-        self.assertEqual(0, status)
+        self.assertThat(status, Equals(0))
