@@ -1,4 +1,4 @@
-# Snapcraft code style guidelines
+# Snapcraft coding style guidelines
 
 When writing code for snapcraft, we try to follow a set of rules that will lead
 to consistency and readability.
