@@ -24,17 +24,21 @@ import jsonschema
 import yaml
 
 import snapcraft
-from snapcraft import formatting_utils
 from snapcraft.internal import (
-    common,
-    errors,
-    libraries,
-    parts,
+    remote_parts,
     states,
 )
-from snapcraft._schema import Validator
-from snapcraft.internal.parts import get_remote_parts
-
+from ._schema import Validator
+from ._parts_config import PartsConfig
+from ._env import (
+    build_env_for_stage,
+    runtime_env,
+)
+from . import (
+    errors,
+    get_snapcraft_yaml,
+    replace_attr,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,17 +58,12 @@ def _validate_icon(instance):
     return True
 
 
-class InvalidEpochError(Exception):
-    pass
-
-
-@jsonschema.FormatChecker.cls_checks('epoch', raises=InvalidEpochError)
+@jsonschema.FormatChecker.cls_checks('epoch', raises=errors.InvalidEpochError)
 def _validate_epoch(instance):
     str_instance = str(instance)
     pattern = re.compile('^(?:0|[1-9][0-9]*[*]?)$')
     if not pattern.match(str_instance):
-        raise InvalidEpochError(
-            "epochs are positive integers followed by an optional asterisk")
+        raise errors.InvalidEpochError()
 
     return True
 
@@ -82,7 +81,7 @@ class Config:
     @property
     def _remote_parts(self):
         if getattr(self, '_remote_parts_attr', None) is None:
-            self._remote_parts_attr = get_remote_parts()
+            self._remote_parts_attr = remote_parts.get_remote_parts()
         return self._remote_parts_attr
 
     def __init__(self, project_options=None):
@@ -111,11 +110,12 @@ class Config:
         self.build_tools = self.data.get('build-packages', [])
         self.build_tools.extend(project_options.additional_build_packages)
 
-        self.parts = parts.PartsConfig(self.data,
-                                       self._project_options,
-                                       self._validator,
-                                       self.build_tools,
-                                       self.snapcraft_yaml_path)
+        self.parts = PartsConfig(
+            self.data,
+            self._project_options,
+            self._validator,
+            self.build_tools,
+            self.snapcraft_yaml_path)
 
         if 'architectures' not in self.data:
             self.data['architectures'] = [self._project_options.deb_arch]
@@ -154,8 +154,8 @@ class Config:
         core_dynamic_linker = self._project_options.get_core_dynamic_linker()
         env = []
 
-        env += _runtime_env(stage_dir, self._project_options.arch_triplet)
-        env += _build_env_for_stage(
+        env += runtime_env(stage_dir, self._project_options.arch_triplet)
+        env += build_env_for_stage(
             stage_dir,
             self.data['name'],
             self.data['confinement'],
@@ -170,7 +170,7 @@ class Config:
         prime_dir = self._project_options.prime_dir
         env = []
 
-        env += _runtime_env(prime_dir, self._project_options.arch_triplet)
+        env += runtime_env(prime_dir, self._project_options.arch_triplet)
         dependency_paths = set()
         for part in self.parts.all_parts:
             env += part.env(prime_dir)
@@ -245,131 +245,6 @@ class Config:
         return snapcraft_yaml
 
 
-def replace_attr(attr, replacements):
-    if isinstance(attr, str):
-        for replacement in replacements:
-            attr = attr.replace(replacement[0], str(replacement[1]))
-        return attr
-    elif isinstance(attr, list) or isinstance(attr, tuple):
-        return [replace_attr(i, replacements)
-                for i in attr]
-    elif isinstance(attr, dict):
-        return {k: replace_attr(attr[k], replacements)
-                for k in attr}
-
-    return attr
-
-
-def _runtime_env(root, arch_triplet):
-    """Set the environment variables required for running binaries."""
-    env = []
-
-    env.append('PATH="' + ':'.join([
-        '{0}/usr/sbin',
-        '{0}/usr/bin',
-        '{0}/sbin',
-        '{0}/bin',
-        '$PATH'
-    ]).format(root) + '"')
-
-    # Add the default LD_LIBRARY_PATH
-    paths = common.get_library_paths(root, arch_triplet)
-    if paths:
-        env.append(formatting_utils.format_path_variable(
-            'LD_LIBRARY_PATH', paths, prepend='', separator=':'))
-
-    # Add more specific LD_LIBRARY_PATH from staged packages if necessary
-    ld_library_paths = libraries.determine_ld_library_path(root)
-    if ld_library_paths:
-        env.append('LD_LIBRARY_PATH="' + ':'.join(ld_library_paths) +
-                   ':$LD_LIBRARY_PATH"')
-
-    return env
-
-
-def _build_env(root, snap_name, confinement, arch_triplet,
-               core_dynamic_linker=None):
-    """Set the environment variables required for building.
-
-    This is required for the current parts installdir due to stage-packages
-    and also to setup the stagedir.
-    """
-    env = []
-
-    paths = common.get_include_paths(root, arch_triplet)
-    if paths:
-        for envvar in ['CPPFLAGS', 'CFLAGS', 'CXXFLAGS']:
-            env.append(formatting_utils.format_path_variable(
-                envvar, paths, prepend='-I', separator=' '))
-
-    if confinement == 'classic':
-        if not core_dynamic_linker:
-            raise errors.SnapcraftEnvironmentError(
-                'classic confinement requires the core snap to be installed. '
-                'Install it by running `snap install core`.')
-
-        core_path = common.get_core_path()
-        core_rpaths = common.get_library_paths(core_path, arch_triplet,
-                                               existing_only=False)
-        snap_path = os.path.join('/snap', snap_name, 'current')
-        snap_rpaths = common.get_library_paths(snap_path, arch_triplet,
-                                               existing_only=False)
-
-        # snap_rpaths before core_rpaths to prefer libraries from the snap.
-        rpaths = formatting_utils.combine_paths(
-            snap_rpaths + core_rpaths, prepend='', separator=':')
-        env.append('LDFLAGS="$LDFLAGS '
-                   # Building tools to continue the build becomes problematic
-                   # with nodefaultlib.
-                   # '-Wl,-z,nodefaultlib '
-                   '-Wl,--dynamic-linker={0} '
-                   '-Wl,-rpath,{1}"'.format(core_dynamic_linker, rpaths))
-
-    paths = common.get_library_paths(root, arch_triplet)
-    if paths:
-        env.append(formatting_utils.format_path_variable(
-            'LDFLAGS', paths, prepend='-L', separator=' '))
-
-    paths = common.get_pkg_config_paths(root, arch_triplet)
-    if paths:
-        env.append(formatting_utils.format_path_variable(
-            'PKG_CONFIG_PATH', paths, prepend='', separator=':'))
-
-    return env
-
-
-def _build_env_for_stage(stagedir, snap_name, confinement,
-                         arch_triplet, core_dynamic_linker=None):
-    env = _build_env(stagedir, snap_name, confinement,
-                     arch_triplet, core_dynamic_linker)
-    env.append('PERL5LIB={0}/usr/share/perl5/'.format(stagedir))
-
-    return env
-
-
-def get_snapcraft_yaml(base_dir=None):
-    possible_yamls = [
-        os.path.join('snap', 'snapcraft.yaml'),
-        'snapcraft.yaml',
-        '.snapcraft.yaml',
-    ]
-
-    if base_dir:
-        possible_yamls = [os.path.join(base_dir, x) for x in possible_yamls]
-
-    snapcraft_yamls = [y for y in possible_yamls if os.path.exists(y)]
-
-    if not snapcraft_yamls:
-        raise errors.SnapcraftYamlFileError(
-            snapcraft_yaml='snap/snapcraft.yaml')
-    elif len(snapcraft_yamls) > 1:
-        raise errors.SnapcraftEnvironmentError(
-            'Found a {!r} and a {!r}, please remove one.'.format(
-                snapcraft_yamls[0], snapcraft_yamls[1]))
-
-    return snapcraft_yamls[0]
-
-
 def _snapcraft_yaml_load(yaml_file):
     with open(yaml_file, 'rb') as fp:
         bs = fp.read(2)
@@ -383,12 +258,8 @@ def _snapcraft_yaml_load(yaml_file):
         with open(yaml_file, encoding=encoding) as fp:
             return yaml.load(fp)
     except yaml.scanner.ScannerError as e:
-        raise errors.SnapcraftSchemaError('{} on line {} of {}'.format(
-            e.problem, e.problem_mark.line + 1, yaml_file))
-
-
-def load_config(project_options=None):
-    return Config(project_options)
+        raise errors.YamlValidationError('{} on line {} of {}'.format(
+            e.problem, e.problem_mark.line + 1, yaml_file)) from e
 
 
 def _ensure_confinement_default(yaml_data, schema):

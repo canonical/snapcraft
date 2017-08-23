@@ -37,6 +37,7 @@ from snapcraft.internal import (
     sources,
     states,
 )
+from snapcraft.internal.project_loader.errors import YamlValidationError
 from ._scriptlets import ScriptRunner
 from ._build_attributes import BuildAttributes
 from ._stage_package_handler import StagePackageHandler
@@ -108,7 +109,7 @@ class PluginHandler:
                 plugin_name, self._part_properties, part_schema,
                 definitions_schema)
         except jsonschema.ValidationError as e:
-            error = errors.SnapcraftSchemaError.from_validation_error(e)
+            error = YamlValidationError.from_validation_error(e)
             raise errors.PluginError(
                 'properties failed to load for {}: {}'.format(
                     part_name, error.message))
