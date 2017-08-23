@@ -26,8 +26,9 @@ def get_emails_from_commits(commits):
     emails = set()
     for c in commits:
         output = check_output(['git', 'branch', '--contains', c.hash])
-        if 'master' not in output.split('\n'):
-            print('TRACE: "master" not in {}'.format(output))
+        if '* master' not in output.split('\n'):
+            print('Commit {} not in "master", found in '
+                  '{}'.format(c.hash, output))
             emails.add(c.email)
         else:  # just for debug
             print('Skipping {}, found in:\n{}'.format(c.hash, output))
