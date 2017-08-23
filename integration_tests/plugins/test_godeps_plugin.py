@@ -19,7 +19,7 @@ import subprocess
 
 import fixtures
 import testscenarios
-from testtools.matchers import FileExists, Not
+from testtools.matchers import Equals, FileExists, Not
 
 import integration_tests
 
@@ -39,7 +39,7 @@ class GodepsPluginTestCase(testscenarios.WithScenarios,
         check_hash_command = [binary, 'check', output, 'password']
         output = subprocess.check_output(check_hash_command)
 
-        self.assertEqual('Equal', output.decode('UTF-8').strip(' \n'))
+        self.assertThat(output.decode('UTF-8').strip(' \n'), Equals('Equal'))
 
     def test_stage(self):
         if self.set_gobin:

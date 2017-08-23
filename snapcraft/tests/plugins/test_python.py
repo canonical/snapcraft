@@ -391,7 +391,7 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         for file_info in files:
             with open(os.path.join(plugin.installdir,
                                    file_info['path']), 'r') as f:
-                self.assertEqual(f.read(), file_info['expected'])
+                self.assertThat(f.read(), Equals(file_info['expected']))
 
     @mock.patch.object(
         python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)

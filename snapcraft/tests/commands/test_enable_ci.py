@@ -47,7 +47,7 @@ class EnableCITestCase(CommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
             '<module docstring>'))
-        self.assertEqual(1, mock_enable.call_count)
+        self.assertThat(mock_enable.call_count, Equals(1))
 
     @mock.patch.object(travis, 'refresh')
     def test_enable_ci_travis_refresh(self, mock_refresh):
@@ -55,4 +55,4 @@ class EnableCITestCase(CommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Equals(''))
-        self.assertEqual(1, mock_refresh.call_count)
+        self.assertThat(mock_refresh.call_count, Equals(1))

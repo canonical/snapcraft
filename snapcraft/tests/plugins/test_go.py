@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,7 +17,7 @@
 import os
 
 from unittest import mock
-from testtools.matchers import HasLength
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft.plugins import go
@@ -61,22 +61,22 @@ class GoPluginCrossCompileTestCase(tests.TestCase):
 
         plugin.pull()
 
-        self.assertEqual(1, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(1))
         for call_args in self.run_mock.call_args_list:
             env = call_args[1]['env']
             self.assertIn('CC', env)
-            self.assertEqual(env['CC'], '{}-gcc'.format(
-                self.project_options.arch_triplet))
+            self.assertThat(env['CC'], Equals('{}-gcc'.format(
+                self.project_options.arch_triplet)))
             self.assertIn('CXX', env)
-            self.assertEqual(env['CXX'], '{}-g++'.format(
-                self.project_options.arch_triplet))
+            self.assertThat(env['CXX'], Equals('{}-g++'.format(
+                self.project_options.arch_triplet)))
             self.assertIn('CGO_ENABLED', env)
-            self.assertEqual(env['CGO_ENABLED'], '1')
+            self.assertThat(env['CGO_ENABLED'], Equals('1'))
             self.assertIn('GOARCH', env)
-            self.assertEqual(env['GOARCH'], self.go_arch)
+            self.assertThat(env['GOARCH'], Equals(self.go_arch))
             if self.deb_arch == 'armhf':
                 self.assertIn('GOARM', env)
-                self.assertEqual(env['GOARM'], '7')
+                self.assertThat(env['GOARM'], Equals('7'))
 
 
 class GoPluginTestCase(tests.TestCase):
@@ -120,20 +120,20 @@ class GoPluginTestCase(tests.TestCase):
                     expected))
 
         go_packages_type = go_packages['type']
-        self.assertEqual(go_packages_type, 'array',
-                         'Expected "go-packages" "type" to be "array", but '
-                         'it was "{}"'.format(go_packages_type))
+        self.assertThat(go_packages_type, Equals('array'),
+                        'Expected "go-packages" "type" to be "array", but '
+                        'it was "{}"'.format(go_packages_type))
 
         go_packages_default = go_packages['default']
-        self.assertEqual(go_packages_default, [],
-                         'Expected "go-packages" "default" to be '
-                         '"d[]", but it was "{}"'.format(
-                             go_packages_default))
+        self.assertThat(go_packages_default, Equals([]),
+                        'Expected "go-packages" "default" to be '
+                        '"d[]", but it was "{}"'.format(
+                            go_packages_default))
 
         go_packages_minitems = go_packages['minitems']
-        self.assertEqual(go_packages_minitems, 1,
-                         'Expected "go-packages" "minitems" to be 1, but '
-                         'it was {}'.format(go_packages_minitems))
+        self.assertThat(go_packages_minitems, Equals(1),
+                        'Expected "go-packages" "minitems" to be 1, but '
+                        'it was {}'.format(go_packages_minitems))
 
         self.assertTrue(go_packages['uniqueItems'])
 
@@ -143,10 +143,10 @@ class GoPluginTestCase(tests.TestCase):
                         '"items"')
 
         go_packages_items_type = go_packages_items['type']
-        self.assertEqual(go_packages_items_type, 'string',
-                         'Expected "go-packages" "item" "type" to be '
-                         '"string", but it was "{}"'
-                         .format(go_packages_items_type))
+        self.assertThat(go_packages_items_type, Equals('string'),
+                        'Expected "go-packages" "item" "type" to be '
+                        '"string", but it was "{}"'
+                        .format(go_packages_items_type))
 
         # Check go-importpath
         go_importpath = properties['go-importpath']
@@ -157,14 +157,14 @@ class GoPluginTestCase(tests.TestCase):
                     expected))
 
         go_importpath_type = go_importpath['type']
-        self.assertEqual(go_importpath_type, 'string',
-                         'Expected "go-importpath" "type" to be "string", but '
-                         'it was "{}"'.format(go_importpath_type))
+        self.assertThat(go_importpath_type, Equals('string'),
+                        'Expected "go-importpath" "type" to be "string", but '
+                        'it was "{}"'.format(go_importpath_type))
 
         go_importpath_default = go_importpath['default']
-        self.assertEqual(go_importpath_default, '',
-                         'Expected "go-default" "default" to be "''", but '
-                         'it was "{}"'.format(go_importpath_default))
+        self.assertThat(go_importpath_default, Equals(''),
+                        'Expected "go-default" "default" to be "''", but '
+                        'it was "{}"'.format(go_importpath_default))
 
         # Check go-buildtags
         go_buildtags = properties['go-buildtags']
@@ -176,19 +176,19 @@ class GoPluginTestCase(tests.TestCase):
                     expected))
 
         go_buildtags_type = go_buildtags['type']
-        self.assertEqual(go_buildtags_type, 'array',
-                         'Expected "go-buildtags" "type" to be "array", but '
-                         'it was "{}"'.format(go_buildtags_type))
+        self.assertThat(go_buildtags_type, Equals('array'),
+                        'Expected "go-buildtags" "type" to be "array", but '
+                        'it was "{}"'.format(go_buildtags_type))
 
         go_buildtags_default = go_buildtags['default']
-        self.assertEqual(go_buildtags_default, [],
-                         'Expected "go-buildtags" "default" to be "[]", but '
-                         'it was "{}"'.format(go_buildtags_type))
+        self.assertThat(go_buildtags_default, Equals([]),
+                        'Expected "go-buildtags" "default" to be "[]", but '
+                        'it was "{}"'.format(go_buildtags_type))
 
         go_buildtags_minitems = go_buildtags['minitems']
-        self.assertEqual(go_buildtags_minitems, 1,
-                         'Expected "go-buildtags" "minitems" to be 1, but '
-                         'it was {}'.format(go_buildtags_minitems))
+        self.assertThat(go_buildtags_minitems, Equals(1),
+                        'Expected "go-buildtags" "minitems" to be 1, but '
+                        'it was {}'.format(go_buildtags_minitems))
 
         self.assertTrue(go_buildtags['uniqueItems'])
 
@@ -198,10 +198,10 @@ class GoPluginTestCase(tests.TestCase):
                         '"items"')
 
         go_buildtags_items_type = go_buildtags_items['type']
-        self.assertEqual(go_buildtags_items_type, 'string',
-                         'Expected "go-buildtags" "item" "type" to be '
-                         '"string", but it was "{}"'
-                         .format(go_packages_items_type))
+        self.assertThat(go_buildtags_items_type, Equals('string'),
+                        'Expected "go-buildtags" "item" "type" to be '
+                        '"string", but it was "{}"'
+                        .format(go_packages_items_type))
 
         # Check required properties
         self.assertNotIn('required', schema)
@@ -478,12 +478,12 @@ class GoPluginTestCase(tests.TestCase):
         os.makedirs(os.path.join(plugin.project.stage_dir, 'usr', 'lib'))
         plugin.pull()
 
-        self.assertEqual(1, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(1))
         for call_args in self.run_mock.call_args_list:
             env = call_args[1]['env']
             self.assertTrue(
                 'GOPATH' in env, 'Expected environment to include GOPATH')
-            self.assertEqual(env['GOPATH'], plugin._gopath)
+            self.assertThat(env['GOPATH'], Equals(plugin._gopath))
 
             self.assertTrue(
                 'CGO_LDFLAGS' in env,

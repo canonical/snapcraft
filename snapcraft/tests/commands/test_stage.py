@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import logging
 import snapcraft.internal.errors
 
@@ -69,13 +70,13 @@ class StageCommandTestCase(LifecycleCommandsBaseTestCase):
         result = self.run_command(['stage'])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertEqual(
-            'Preparing to pull stage0 \n'
-            'Pulling stage0 \n'
-            'Preparing to build stage0 \n'
-            'Building stage0 \n'
-            'Staging stage0 \n',
-            fake_logger.output)
+        self.assertThat(
+            fake_logger.output,
+            Equals('Preparing to pull stage0 \n'
+                   'Pulling stage0 \n'
+                   'Preparing to build stage0 \n'
+                   'Building stage0 \n'
+                   'Staging stage0 \n'))
 
         self.assertThat(self.stage_dir, DirExists())
         self.assertThat(self.parts_dir, DirExists())
@@ -89,8 +90,9 @@ class StageCommandTestCase(LifecycleCommandsBaseTestCase):
         result = self.run_command(['stage'])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertEqual(
-            'Skipping pull stage0 (already ran)\n'
-            'Skipping build stage0 (already ran)\n'
-            'Skipping stage stage0 (already ran)\n',
-            fake_logger.output)
+        self.assertThat(
+            fake_logger.output,
+            Equals(
+                'Skipping pull stage0 (already ran)\n'
+                'Skipping build stage0 (already ran)\n'
+                'Skipping stage stage0 (already ran)\n'))

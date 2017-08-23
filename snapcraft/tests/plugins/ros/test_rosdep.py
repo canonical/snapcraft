@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -57,9 +57,11 @@ class RosdepTestCase(tests.TestCase):
         self.rosdep.setup()
 
         # Verify that only rosdep was installed (no other .debs)
-        self.assertEqual(self.ubuntu_mock.call_count, 1)
-        self.assertEqual(self.ubuntu_mock.return_value.get.call_count, 1)
-        self.assertEqual(self.ubuntu_mock.return_value.unpack.call_count, 1)
+        self.assertThat(self.ubuntu_mock.call_count, Equals(1))
+        self.assertThat(
+            self.ubuntu_mock.return_value.get.call_count, Equals(1))
+        self.assertThat(
+            self.ubuntu_mock.return_value.unpack.call_count, Equals(1))
         self.ubuntu_mock.assert_has_calls([
             mock.call(self.rosdep._rosdep_path, sources='sources',
                       project_options=self.project),
@@ -67,7 +69,7 @@ class RosdepTestCase(tests.TestCase):
             mock.call().unpack(self.rosdep._rosdep_install_path)])
 
         # Verify that rosdep was initialized and updated
-        self.assertEqual(self.check_output_mock.call_count, 2)
+        self.assertThat(self.check_output_mock.call_count, Equals(2))
         self.check_output_mock.assert_has_calls([
             mock.call(['rosdep', 'init'], env=mock.ANY),
             mock.call(['rosdep', 'update'], env=mock.ANY)
@@ -90,8 +92,8 @@ class RosdepTestCase(tests.TestCase):
 
         raised = self.assertRaises(RuntimeError, self.rosdep.setup)
 
-        self.assertEqual(str(raised),
-                         'Error initializing rosdep database:\nbar')
+        self.assertThat(str(raised),
+                        Equals('Error initializing rosdep database:\nbar'))
 
     def test_setup_update_failure(self):
         def run(args, **kwargs):
@@ -104,14 +106,14 @@ class RosdepTestCase(tests.TestCase):
 
         raised = self.assertRaises(RuntimeError, self.rosdep.setup)
 
-        self.assertEqual(str(raised),
-                         'Error updating rosdep database:\nbar')
+        self.assertThat(str(raised),
+                        Equals('Error updating rosdep database:\nbar'))
 
     def test_get_dependencies(self):
         self.check_output_mock.return_value = b'foo\nbar\nbaz'
 
-        self.assertEqual(self.rosdep.get_dependencies('foo'),
-                         ['foo', 'bar', 'baz'])
+        self.assertThat(self.rosdep.get_dependencies('foo'),
+                        Equals(['foo', 'bar', 'baz']))
 
         self.check_output_mock.assert_called_with(['rosdep', 'keys', 'foo'],
                                                   env=mock.ANY)
@@ -119,7 +121,7 @@ class RosdepTestCase(tests.TestCase):
     def test_get_dependencies_no_dependencies(self):
         self.check_output_mock.return_value = b''
 
-        self.assertEqual(self.rosdep.get_dependencies('foo'), [])
+        self.assertThat(self.rosdep.get_dependencies('foo'), Equals([]))
 
     def test_get_dependencies_invalid_package(self):
         self.check_output_mock.side_effect = subprocess.CalledProcessError(
@@ -129,8 +131,8 @@ class RosdepTestCase(tests.TestCase):
             FileNotFoundError,
             self.rosdep.get_dependencies, 'bar')
 
-        self.assertEqual(str(raised),
-                         'Unable to find Catkin package "bar"')
+        self.assertThat(str(raised),
+                        Equals('Unable to find Catkin package "bar"'))
 
     def test_resolve_dependency(self):
         self.check_output_mock.return_value = b'#apt\nmylib-dev'

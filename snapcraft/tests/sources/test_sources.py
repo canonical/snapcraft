@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+
+from testtools.matchers import Equals
 
 from snapcraft.internal import sources
 from snapcraft import tests
@@ -42,8 +44,8 @@ class TestUri(tests.TestCase):
     ]
 
     def test_get_source_typefrom_uri(self):
-        self.assertEqual(sources._get_source_type_from_uri(self.source),
-                         self.result)
+        self.assertThat(sources._get_source_type_from_uri(self.source),
+                        Equals(self.result))
 
 
 class SourceWithBranchTestCase(tests.TestCase):
@@ -105,10 +107,10 @@ class SourceWithBranchTestCase(tests.TestCase):
             source_tag=self.source_tag,
             source_commit=self.source_commit)
 
-        self.assertEqual(
+        self.assertThat(
             str(raised),
-            'can\'t specify a {} for a {} source'.format(
-                self.error, self.source_type))
+            Equals('can\'t specify a {} for a {} source'.format(
+                self.error, self.source_type)))
 
 
 class SourceWithBranchAndTagTestCase(tests.TestCase):
@@ -137,10 +139,10 @@ class SourceWithBranchAndTagTestCase(tests.TestCase):
             source_branch=self.source_branch,
             source_tag=self.source_tag)
 
-        self.assertEqual(
+        self.assertThat(
             str(raised),
-            'can\'t specify both source-tag and source-branch for a {} '
-            'source'.format(self.source_type))
+            Equals('can\'t specify both source-tag and source-branch for a {} '
+                   'source'.format(self.source_type)))
 
 
 class GetSourceTestClass(tests.TestCase):

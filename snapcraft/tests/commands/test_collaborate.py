@@ -15,16 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-
 from unittest import mock
 
 import fixtures
+from testtools.matchers import Equals
 
 from snapcraft import (
     storeapi,
     tests
 )
-
 from snapcraft import _store
 
 
@@ -105,9 +104,10 @@ class CollaborateErrorsTestCase(CollaborateBaseTestCase):
             _store.collaborate,
             'badrequest', 'keyname')
 
-        self.assertEqual(
-                'Received error 400: "The given `snap-id` does not match '
-                'the assertion\'s."', str(err))
+        self.assertThat(
+            str(err),
+            Equals('Received error 400: "The given `snap-id` does not match '
+                   'the assertion\'s."'))
 
     def test_collaborate_unchanged_collaborators(self):
         self.edit_collaborators_mock.return_value = [{

@@ -322,7 +322,7 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         _, kwargs = self.mock_upload.call_args
-        self.assertEqual(kwargs.get('delta_format'), 'xdelta3')
+        self.assertThat(kwargs.get('delta_format'), Equals('xdelta3'))
 
     def test_push_with_upload_failure_falls_back(self):
         # Upload
@@ -432,4 +432,4 @@ class PushCommandDeltasWithPruneTestCase(PushCommandBaseTestCase):
             snap = snap.format(deb_arch)
             self.assertThat(os.path.join(snap_cache, snap),
                             Not(FileExists()))
-        self.assertEqual(1, len(os.listdir(snap_cache)))
+        self.assertThat(len(os.listdir(snap_cache)), Equals(1))

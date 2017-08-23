@@ -18,6 +18,7 @@ import os.path
 import shutil
 
 import fixtures
+from testtools.matchers import Equals
 
 import integration_tests
 
@@ -38,17 +39,17 @@ class RegisterKeyTestCase(integration_tests.StoreTestCase):
             self.skipTest(
                 'Cannot register test keys against staging/production until '
                 'we have a way to delete them again.')
-        self.assertEqual(0, self.register_key('default'))
+        self.assertThat(self.register_key('default'), Equals(0))
         self.addCleanup(self.logout)
         self.login()
-        self.assertEqual(0, self.list_keys([
+        self.assertThat(self.list_keys([
             (True, 'default',
              '2MEtiEuR7eCBUocloPokPhqPSTpkj7Kk'
              'TPQNZYOiZshFHdfzxlEhc8ITzpHq5azq'),
             (False, 'another',
              'OR59L-ompOW_CHbQ4pNDW5B-7BVY_V3Q'
              'kPu5-7uOFrZEEEAoI4h3yc_RQv3qmAFJ'),
-        ]))
+        ]), Equals(0))
 
     def test_failed_login_for_key_registration(self):
         status = self.register_key(

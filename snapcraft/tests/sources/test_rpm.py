@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,6 +18,8 @@ import os
 import libarchive
 import shutil
 import sys
+
+from testtools.matchers import Equals
 
 from snapcraft.internal import sources
 from snapcraft import tests
@@ -40,7 +42,7 @@ class TestRpm(tests.TestCase):
         rpm_source = sources.Rpm(rpm_file_path, dest_dir)
         rpm_source.pull()
 
-        self.assertEqual(os.listdir(dest_dir), ['test.txt'])
+        self.assertThat(os.listdir(dest_dir), Equals(['test.txt']))
 
     def test_extract_and_keep_rpmfile(self):
         rpm_file_name = 'test.rpm'
