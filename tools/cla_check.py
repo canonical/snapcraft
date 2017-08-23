@@ -4,7 +4,7 @@
 import collections
 import os
 import sys
-from subprocess import check_output
+from subprocess import check_call, check_output
 
 
 try:
@@ -24,7 +24,6 @@ def get_commits_for_range(range):
 
 def get_emails_from_commits(commits):
     emails = set()
-    print('remotes', check_output(['git', 'remote', '-v']))
     for c in commits:
         output = check_output(['git', 'branch', '--contains', c.hash])
         if 'master' not in output.split('\n'):
@@ -36,10 +35,17 @@ def get_emails_from_commits(commits):
 
 
 def main():
+    # This is just to have information in case things go wrong
+    print('Remotes:')
+    check_call(['git', 'remote', '-v'])
+    print('Branches:')
+    check_call(['git', 'branch', '-v'])
+
     travis_commit_range = os.getenv('TRAVIS_COMMIT_RANGE', '')
     commits = get_commits_for_range(travis_commit_range)
     emails = get_emails_from_commits(commits)
     if not emails:
+        print('No emails to verify')
         return
 
     print('Logging into Launchpad...')
