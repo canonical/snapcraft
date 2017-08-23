@@ -6,12 +6,12 @@ import os
 import subprocess
 import sys
 
-Commit = collections.namedtuple('Commit', ['email', 'hash'])
-
 try:
     from launchpadlib.launchpad import Launchpad
 except ImportError:
     sys.exit('Install launchpadlib: sudo apt install python-launchpadlib')
+
+Commit = collections.namedtuple('Commit', ['email', 'hash'])
 
 
 def get_commits_for_range(range):
