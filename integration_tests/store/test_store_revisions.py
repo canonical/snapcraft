@@ -19,7 +19,7 @@ import re
 import subprocess
 import unittest
 
-from testtools.matchers import Contains, FileExists, MatchesRegex
+from testtools.matchers import Contains, Equals, FileExists, MatchesRegex
 
 import integration_tests
 
@@ -125,7 +125,8 @@ class RevisionsTestCase(integration_tests.StoreTestCase):
         snap_path = '{}_{}_{}.snap'.format(name, version, 'all')
         self.assertThat(snap_path, FileExists())
         self.register(name)
-        self.assertEqual(0, self.push(snap_path, release='candidate,beta'))
+        self.assertThat(
+            self.push(snap_path, release='candidate,beta'), Equals(0))
 
         output = self.run_snapcraft(['revisions', name])
 

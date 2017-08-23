@@ -78,8 +78,8 @@ parts:
 
         self.assertTrue('aliases' in c.data['apps']['test'],
                         'Expected "aliases" property to be in snap.yaml')
-        self.assertEqual(
-            c.data['apps']['test']['aliases'], ['test-it', 'testing'])
+        self.assertThat(
+            c.data['apps']['test']['aliases'], Equals(['test-it', 'testing']))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_aliases_with_duplicates(self, mock_loadPlugin):
@@ -108,10 +108,11 @@ parts:
         raised = self.assertRaises(errors.DuplicateAliasError,
                                    project_loader.Config)
 
-        self.assertEqual(
-            'Multiple parts have the same alias defined: {!r}'.format(
-                'testing'),
-            str(raised))
+        self.assertThat(
+            str(raised),
+            Equals(
+                'Multiple parts have the same alias defined: {!r}'.format(
+                    'testing')))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_invalid_alias(self, mock_loadPlugin):
@@ -355,9 +356,9 @@ parts:
         self.make_snapcraft_yaml(yaml)
         config = project_loader.Config(project_options)
 
-        self.assertEqual(config.parts.build_tools,
-                         ['gcc-arm-linux-gnueabihf',
-                          'libc6-dev-armhf-cross'])
+        self.assertThat(config.parts.build_tools,
+                        Equals(['gcc-arm-linux-gnueabihf',
+                                'libc6-dev-armhf-cross']))
 
     def test_config_has_no_extra_build_tools_when_not_cross_compiling(self):
         class ProjectOptionsFake(snapcraft.ProjectOptions):
@@ -379,7 +380,7 @@ parts:
         self.make_snapcraft_yaml(yaml)
         config = project_loader.Config(ProjectOptionsFake())
 
-        self.assertEqual(config.parts.build_tools, [])
+        self.assertThat(config.parts.build_tools, Equals([]))
 
     def test_config_loop(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -406,9 +407,9 @@ parts:
             errors.SnapcraftLogicError,
             project_loader.Config)
 
-        self.assertEqual(
+        self.assertThat(
             raised.message,
-            'circular dependency chain found in parts definition')
+            Equals('circular dependency chain found in parts definition'))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_missing_name(self, mock_loadPlugin):
@@ -431,8 +432,8 @@ parts:
             errors.SnapcraftSchemaError,
             project_loader.Config)
 
-        self.assertEqual(raised.message,
-                         "'name' is a required property")
+        self.assertThat(raised.message,
+                        Equals("'name' is a required property"))
 
     def test_get_metadata(self):
         self.make_snapcraft_yaml("""name: test
@@ -450,9 +451,9 @@ parts:
 """)
         config = project_loader.load_config()
         metadata = config.get_metadata()
-        self.assertEqual(metadata['name'], 'test')
-        self.assertEqual(metadata['version'], '1')
-        self.assertEqual(metadata['arch'], ['amd64'])
+        self.assertThat(metadata['name'], Equals('test'))
+        self.assertThat(metadata['version'], Equals('1'))
+        self.assertThat(metadata['arch'], Equals(['amd64']))
 
     def test_version_script(self):
         self.make_snapcraft_yaml("""name: test
@@ -470,7 +471,8 @@ parts:
     stage-packages: [fswebcam]
 """)
         config = project_loader.load_config()
-        self.assertEqual(config.data['version-script'], 'echo 1.0-devel')
+        self.assertThat(
+            config.data['version-script'], Equals('echo 1.0-devel'))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_name_as_number(self, mock_loadPlugin):
@@ -493,9 +495,10 @@ parts:
             errors.SnapcraftSchemaError,
             project_loader.Config)
 
-        self.assertEqual(raised.message,
-                         "The 'name' property does not match the required "
-                         "schema: 1 is not of type 'string'")
+        self.assertThat(
+            raised.message,
+            Equals("The 'name' property does not match the required "
+                   "schema: 1 is not of type 'string'"))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_icon_extension(self, mock_loadPlugin):
@@ -519,8 +522,8 @@ parts:
             errors.SnapcraftSchemaError,
             project_loader.Config)
 
-        self.assertEqual(raised.message,
-                         "'icon' must be either a .png or a .svg")
+        self.assertThat(raised.message,
+                        Equals("'icon' must be either a .png or a .svg"))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_missing_icon(self, mock_loadPlugin):
@@ -544,8 +547,8 @@ parts:
             errors.SnapcraftSchemaError,
             project_loader.Config)
 
-        self.assertEqual(raised.message,
-                         "Specified icon 'icon.png' does not exist")
+        self.assertThat(raised.message,
+                        Equals("Specified icon 'icon.png' does not exist"))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_invalid_name_chars(self, mock_loadPlugin):
@@ -568,10 +571,10 @@ parts:
             errors.SnapcraftSchemaError,
             project_loader.Config)
 
-        self.assertEqual(
+        self.assertThat(
             raised.message,
-            "The 'name' property does not match the required schema: "
-            "'myapp@me_1.0' does not match '^[a-z0-9][a-z0-9+-]*$'")
+            Equals("The 'name' property does not match the required schema: "
+                   "'myapp@me_1.0' does not match '^[a-z0-9][a-z0-9+-]*$'"))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_invalid_yaml_missing_description(self, mock_loadPlugin):
@@ -593,9 +596,9 @@ parts:
             errors.SnapcraftSchemaError,
             project_loader.Config)
 
-        self.assertEqual(
+        self.assertThat(
             raised.message,
-            "'description' is a required property")
+            Equals("'description' is a required property"))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_missing_confinement_must_log(self, mock_loadPlugin):
@@ -617,7 +620,7 @@ parts:
         # Verify the default is "strict"
         self.assertTrue('confinement' in c.data,
                         'Expected "confinement" property to be in snap.yaml')
-        self.assertEqual(c.data['confinement'], 'strict')
+        self.assertThat(c.data['confinement'], Equals('strict'))
         self.assertTrue(
             '"confinement" property not specified: defaulting to "strict"'
             in fake_logger.output, 'Missing confinement hint in output')
@@ -643,7 +646,7 @@ parts:
         # Verify the default is "stable"
         self.assertTrue('grade' in c.data,
                         'Expected "grade" property to be in snap.yaml')
-        self.assertEqual(c.data['grade'], 'stable')
+        self.assertThat(c.data['grade'], Equals('stable'))
         self.assertTrue(
             '"grade" property not specified: defaulting to "stable"'
             in fake_logger.output, 'Missing grade hint in output')
@@ -670,10 +673,10 @@ parts:
             errors.SnapcraftSchemaError,
             project_loader.Config)
 
-        self.assertEqual(
+        self.assertThat(
             raised.message,
-            'found character \'\\t\' that cannot start any token '
-            'on line 5 of snap/snapcraft.yaml')
+            Equals('found character \'\\t\' that cannot start any token '
+                   'on line 5 of snap/snapcraft.yaml'))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_yaml_organize_value_none(self, mock_loadPlugin):
@@ -777,8 +780,9 @@ parts:
         config = project_loader.Config()
 
         self.assertFalse(config.parts.get_prereqs('main'))
-        self.assertEqual({'main'},
-                         config.parts.get_prereqs('dependent'))
+        self.assertThat(
+            config.parts.get_prereqs('dependent'),
+            Equals({'main'}))
 
     def test_get_dependents(self):
         self.make_snapcraft_yaml("""name: test
@@ -799,8 +803,9 @@ parts:
         config = project_loader.Config()
 
         self.assertFalse(config.parts.get_dependents('dependent'))
-        self.assertEqual({'dependent'},
-                         config.parts.get_dependents('main'))
+        self.assertThat(
+            config.parts.get_dependents('main'),
+            Equals({'dependent'}))
 
     @unittest.mock.patch('snapcraft.internal.parts.PartsConfig.load_plugin')
     def test_replace_snapcraft_variables(self, mock_load_plugin):
@@ -904,10 +909,10 @@ parts:
             errors.SnapcraftSchemaError,
             project_loader.Config)
 
-        self.assertEqual(
+        self.assertThat(
             raised.message,
-            "The 'version' property does not match the required "
-            "schema: '' does not match '^[a-zA-Z0-9.+~-]+$'")
+            Equals("The 'version' property does not match the required "
+                   "schema: '' does not match '^[a-zA-Z0-9.+~-]+$'"))
 
 
 class YamlEncodingsTestCase(YamlBaseTestCase):
@@ -1117,7 +1122,7 @@ parts:
     stage-packages: [fswebcam]
 """.format(self.confinement))
         c = project_loader.Config()
-        self.assertEqual(c.data['confinement'], self.confinement)
+        self.assertThat(c.data['confinement'], Equals(self.confinement))
 
 
 class InvalidConfinementTypesYamlTestCase(YamlBaseTestCase):
@@ -1146,11 +1151,11 @@ parts:
             errors.SnapcraftSchemaError,
             project_loader.Config)
 
-        self.assertEqual(
+        self.assertThat(
             raised.message,
-            "The 'confinement' property does not match the required "
-            "schema: '{}' is not one of ['classic', 'devmode', "
-            "'strict']".format(self.confinement))
+            Equals("The 'confinement' property does not match the required "
+                   "schema: '{}' is not one of ['classic', 'devmode', "
+                   "'strict']".format(self.confinement)))
 
 
 class ValidGradeTypesYamlTestCase(YamlBaseTestCase):
@@ -1176,7 +1181,7 @@ parts:
     stage-packages: [fswebcam]
 """.format(self.grade))
         c = project_loader.Config()
-        self.assertEqual(c.data['grade'], self.grade)
+        self.assertThat(c.data['grade'], Equals(self.grade))
 
 
 class InvalidGradeTypesYamlTestCase(YamlBaseTestCase):
@@ -1205,11 +1210,11 @@ parts:
             errors.SnapcraftSchemaError,
             project_loader.Config)
 
-        self.assertEqual(
+        self.assertThat(
             raised.message,
-            "The 'grade' property does not match the required "
-            "schema: '{}' is not one of ['stable', 'devel']".format(
-                self.grade))
+            Equals("The 'grade' property does not match the required "
+                   "schema: '{}' is not one of ['stable', 'devel']".format(
+                       self.grade)))
 
 
 class ValidEpochsYamlTestCase(YamlBaseTestCase):
@@ -1277,7 +1282,7 @@ parts:
     stage-packages: [fswebcam]
 """.format(self.yaml))
         c = project_loader.Config()
-        self.assertEqual(c.data['epoch'], self.expected)
+        self.assertThat(c.data['epoch'], Equals(self.expected))
 
 
 class InvalidEpochsYamlTestCase(YamlBaseTestCase):
@@ -1345,10 +1350,10 @@ class InitTestCase(tests.TestCase):
         raised = self.assertRaises(errors.SnapcraftEnvironmentError,
                                    project_loader.Config)
 
-        self.assertEqual(
-            "Found a 'snap/snapcraft.yaml' and a 'snapcraft.yaml', please "
-            "remove one.",
-            str(raised))
+        self.assertThat(
+            str(raised), Equals(
+                "Found a 'snap/snapcraft.yaml' and a 'snapcraft.yaml', please "
+                "remove one."))
 
     def test_both_new_and_hidden_yamls_cause_error(self):
         os.mkdir('snap')
@@ -1358,10 +1363,10 @@ class InitTestCase(tests.TestCase):
         raised = self.assertRaises(errors.SnapcraftEnvironmentError,
                                    project_loader.Config)
 
-        self.assertEqual(
-            "Found a 'snap/snapcraft.yaml' and a '.snapcraft.yaml', please "
-            "remove one.",
-            str(raised))
+        self.assertThat(
+            str(raised), Equals(
+                "Found a 'snap/snapcraft.yaml' and a '.snapcraft.yaml', "
+                "please remove one."))
 
     def test_both_visible_and_hidden_yamls_cause_error(self):
         open('snapcraft.yaml', 'w').close()
@@ -1370,10 +1375,10 @@ class InitTestCase(tests.TestCase):
         raised = self.assertRaises(errors.SnapcraftEnvironmentError,
                                    project_loader.Config)
 
-        self.assertEqual(
-            "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', please "
-            'remove one.',
-            str(raised))
+        self.assertThat(
+            str(raised), Equals(
+                "Found a 'snapcraft.yaml' and a '.snapcraft.yaml', please "
+                'remove one.'))
 
     def test_snapcraft_yaml_loads(self):
         self.make_snapcraft_yaml("""name: test
@@ -1767,35 +1772,35 @@ parts:
                 parts_dir=self.parts_dir,
                 stage_dir=self.stage_dir,
                 arch_triplet=self.arch_triplet))
-        self.assertEqual(get_envvar('CFLAGS'), expected_cflags)
-        self.assertEqual(get_envvar('CXXFLAGS'), expected_cflags)
-        self.assertEqual(get_envvar('CPPFLAGS'), expected_cflags)
+        self.assertThat(get_envvar('CFLAGS'), Equals(expected_cflags))
+        self.assertThat(get_envvar('CXXFLAGS'), Equals(expected_cflags))
+        self.assertThat(get_envvar('CPPFLAGS'), Equals(expected_cflags))
 
-        self.assertEqual(
-            get_envvar('LDFLAGS'),
-            '-L/user-provided '
-            '-L{parts_dir}/part2/install/lib -L{stage_dir}/lib '
-            '-L{stage_dir}/usr/lib -L{stage_dir}/lib/{arch_triplet} '
-            '-L{stage_dir}/usr/lib/{arch_triplet}'.format(
-                parts_dir=self.parts_dir,
-                stage_dir=self.stage_dir,
-                arch_triplet=self.arch_triplet))
+        self.assertThat(
+            get_envvar('LDFLAGS'), Equals(
+                '-L/user-provided '
+                '-L{parts_dir}/part2/install/lib -L{stage_dir}/lib '
+                '-L{stage_dir}/usr/lib -L{stage_dir}/lib/{arch_triplet} '
+                '-L{stage_dir}/usr/lib/{arch_triplet}'.format(
+                    parts_dir=self.parts_dir,
+                    stage_dir=self.stage_dir,
+                    arch_triplet=self.arch_triplet)))
 
-        self.assertEqual(
-            get_envvar('LD_LIBRARY_PATH'),
-            '/user-provided:'
-            '{parts_dir}/part2/install/lib:'
-            '{stage_dir}/lib:'
-            '{stage_dir}/usr/lib:'
-            '{stage_dir}/lib/{arch_triplet}:'
-            '{stage_dir}/usr/lib/{arch_triplet}:'
-            '{stage_dir}/lib:'
-            '{stage_dir}/usr/lib:'
-            '{stage_dir}/lib/{arch_triplet}:'
-            '{stage_dir}/usr/lib/{arch_triplet}'.format(
-                parts_dir=self.parts_dir,
-                stage_dir=self.stage_dir,
-                arch_triplet=self.arch_triplet))
+        self.assertThat(
+            get_envvar('LD_LIBRARY_PATH'), Equals(
+                '/user-provided:'
+                '{parts_dir}/part2/install/lib:'
+                '{stage_dir}/lib:'
+                '{stage_dir}/usr/lib:'
+                '{stage_dir}/lib/{arch_triplet}:'
+                '{stage_dir}/usr/lib/{arch_triplet}:'
+                '{stage_dir}/lib:'
+                '{stage_dir}/usr/lib:'
+                '{stage_dir}/lib/{arch_triplet}:'
+                '{stage_dir}/usr/lib/{arch_triplet}'.format(
+                    parts_dir=self.parts_dir,
+                    stage_dir=self.stage_dir,
+                    arch_triplet=self.arch_triplet)))
 
     def test_parts_build_env_contains_parallel_build_count(self):
         self.useFixture(fixture_setup.FakeProjectOptions(
@@ -1854,8 +1859,8 @@ class ValidationTestCase(ValidationBaseTestCase):
             "The 'summary' property does not match the required schema: "
             "'{}' is too long (maximum length is 78)").format(
                 self.data['summary'])
-        self.assertEqual(raised.message, expected_message,
-                         message=self.data)
+        self.assertThat(raised.message, Equals(expected_message),
+                        message=self.data)
 
     def test_apps_required_properties(self):
         self.data['apps'] = {'service1': {}}
@@ -1867,8 +1872,8 @@ class ValidationTestCase(ValidationBaseTestCase):
         expected_message = ("The 'apps/service1' property does not match the "
                             "required schema: 'command' is a required "
                             "property")
-        self.assertEqual(raised.message, expected_message,
-                         message=self.data)
+        self.assertThat(raised.message, Equals(expected_message),
+                        message=self.data)
 
     def test_schema_file_not_found(self):
         mock_the_open = unittest.mock.mock_open()
@@ -1883,7 +1888,7 @@ class ValidationTestCase(ValidationBaseTestCase):
 
         expected_message = ('snapcraft validation file is missing from '
                             'installation path')
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_icon_missing_is_valid_yaml(self):
         self.mock_path_exists.return_value = False
@@ -1900,8 +1905,8 @@ class ValidationTestCase(ValidationBaseTestCase):
         expected_message = ("The 'parts' property does not match the "
                             "required schema: Additional properties are not "
                             "allowed ('plugins' was unexpected)")
-        self.assertEqual(raised.message, expected_message,
-                         message=self.data)
+        self.assertThat(raised.message, Equals(expected_message),
+                        message=self.data)
 
     def test_valid_app_daemons(self):
         self.data['apps'] = {
@@ -2012,8 +2017,8 @@ class RequiredPropertiesTestCase(ValidationBaseTestCase):
             project_loader.Validator(data).validate)
 
         expected_message = '\'{}\' is a required property'.format(self.key)
-        self.assertEqual(raised.message, expected_message,
-                         message=data)
+        self.assertThat(raised.message, Equals(expected_message),
+                        message=data)
 
 
 class InvalidNamesTestCase(ValidationBaseTestCase):
@@ -2032,8 +2037,8 @@ class InvalidNamesTestCase(ValidationBaseTestCase):
         expected_message = ("The 'name' property does not match the "
                             "required schema: '{}' does not match "
                             "'^[a-z0-9][a-z0-9+-]*$'").format(self.name)
-        self.assertEqual(raised.message, expected_message,
-                         message=data)
+        self.assertThat(raised.message, Equals(expected_message),
+                        message=data)
 
 
 class ValidTypesTestCase(ValidationBaseTestCase):
@@ -2064,8 +2069,8 @@ class InvalidTypesTestCase(ValidationBaseTestCase):
             "The 'type' property does not match the required "
             "schema: '{}' is not one of "
             "['app', 'base', 'gadget', 'kernel', 'os']").format(self.type_)
-        self.assertEqual(raised.message, expected_message,
-                         message=data)
+        self.assertThat(raised.message, Equals(expected_message),
+                        message=data)
 
 
 class ValidRestartConditionsTestCase(ValidationBaseTestCase):
@@ -2102,8 +2107,8 @@ class InvalidAppNamesTestCase(ValidationBaseTestCase):
             "The 'apps' property does not match the required "
             "schema: Additional properties are not allowed ('{}' "
             "was unexpected)").format(self.name)
-        self.assertEqual(raised.message, expected_message,
-                         message=data)
+        self.assertThat(raised.message, Equals(expected_message),
+                        message=data)
 
 
 class TestPluginLoadingProperties(tests.TestCase):
@@ -2152,13 +2157,13 @@ class TestFilesets(tests.TestCase):
         self.properties['stage'] = ['$1']
 
         fs = project_loader._expand_filesets_for('stage', self.properties)
-        self.assertEqual(fs, ['1', '2', '3'])
+        self.assertThat(fs, Equals(['1', '2', '3']))
 
     def test_no_expansion(self):
         self.properties['stage'] = ['1']
 
         fs = project_loader._expand_filesets_for('stage', self.properties)
-        self.assertEqual(fs, ['1'])
+        self.assertThat(fs, Equals(['1']))
 
     def test_invalid_expansion(self):
         self.properties['stage'] = ['$3']
@@ -2200,10 +2205,11 @@ class SnapcraftEnvTestCase(tests.TestCase):
         )
 
         for test_name, subject, expected in replacements:
-            self.assertEqual(project_loader.replace_attr(
+            self.assertThat(project_loader.replace_attr(
                 subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
                           ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
-                          ('$SNAPCRAFT_STAGE', self.stage_dir)]), expected)
+                          ('$SNAPCRAFT_STAGE', self.stage_dir)]),
+                            Equals(expected))
 
     def test_lists_with_string_replacements(self):
         replacements = (
@@ -2243,10 +2249,11 @@ class SnapcraftEnvTestCase(tests.TestCase):
         )
 
         for test_name, subject, expected in replacements:
-            self.assertEqual(project_loader.replace_attr(
+            self.assertThat(project_loader.replace_attr(
                 subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
                           ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
-                          ('$SNAPCRAFT_STAGE', self.stage_dir)]), expected)
+                          ('$SNAPCRAFT_STAGE', self.stage_dir)]),
+                            Equals(expected))
 
     def test_tuples_with_string_replacements(self):
         replacements = (
@@ -2286,10 +2293,11 @@ class SnapcraftEnvTestCase(tests.TestCase):
         )
 
         for test_name, subject, expected in replacements:
-            self.assertEqual(project_loader.replace_attr(
+            self.assertThat(project_loader.replace_attr(
                 subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
                           ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
-                          ('$SNAPCRAFT_STAGE', self.stage_dir)]), expected)
+                          ('$SNAPCRAFT_STAGE', self.stage_dir)]),
+                            Equals(expected))
 
     def test_dict_with_string_replacements(self):
         replacements = (
@@ -2329,10 +2337,11 @@ class SnapcraftEnvTestCase(tests.TestCase):
         )
 
         for test_name, subject, expected in replacements:
-            self.assertEqual(project_loader.replace_attr(
+            self.assertThat(project_loader.replace_attr(
                 subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
                           ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
-                          ('$SNAPCRAFT_STAGE', self.stage_dir)]), expected)
+                          ('$SNAPCRAFT_STAGE', self.stage_dir)]),
+                            Equals(expected))
 
     def test_string_replacement_with_complex_data(self):
         subject = {
@@ -2363,7 +2372,8 @@ class SnapcraftEnvTestCase(tests.TestCase):
             ],
         }
 
-        self.assertEqual(project_loader.replace_attr(
+        self.assertThat(project_loader.replace_attr(
             subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
                       ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
-                      ('$SNAPCRAFT_STAGE', self.stage_dir)]), expected)
+                      ('$SNAPCRAFT_STAGE', self.stage_dir)]),
+                        Equals(expected))

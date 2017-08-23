@@ -13,8 +13,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import os
 import shutil
+
+from testtools.matchers import Equals
 
 from snapcraft.internal import sources
 from snapcraft import tests
@@ -39,7 +42,7 @@ class Test7z(tests.TestCase):
         seven_zip_source = sources.SevenZip(self.test_7z_file_path, dest_dir)
         seven_zip_source.pull()
 
-        self.assertEqual(set(os.listdir(dest_dir)), self._7z_test_files)
+        self.assertThat(set(os.listdir(dest_dir)), Equals(self._7z_test_files))
 
     def test_extract_and_keep_7zfile(self):
         dest_dir = 'src'

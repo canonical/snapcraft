@@ -126,7 +126,7 @@ parts:
             call(['lxc', 'delete', '-f', fake_lxd.name]),
         ])
         # no other commands should be run in the container
-        self.assertEquals(fake_lxd.check_call_mock.call_count, 1)
+        self.assertThat(fake_lxd.check_call_mock.call_count, Equals(1))
 
     def test_clean_containerized_with_part(self):
         fake_lxd = fixture_setup.FakeLXD()

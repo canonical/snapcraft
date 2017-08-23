@@ -70,14 +70,14 @@ class PrimeCommandTestCase(LifecycleCommandsBaseTestCase):
         result = self.run_command(['prime'])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertEqual(
-            'Preparing to pull prime0 \n'
-            'Pulling prime0 \n'
-            'Preparing to build prime0 \n'
-            'Building prime0 \n'
-            'Staging prime0 \n'
-            'Priming prime0 \n',
-            fake_logger.output)
+        self.assertThat(
+            fake_logger.output,
+            Equals('Preparing to pull prime0 \n'
+                   'Pulling prime0 \n'
+                   'Preparing to build prime0 \n'
+                   'Building prime0 \n'
+                   'Staging prime0 \n'
+                   'Priming prime0 \n'))
 
         self.assertThat(self.prime_dir, DirExists())
         self.assertThat(self.parts_dir, DirExists())
@@ -91,9 +91,9 @@ class PrimeCommandTestCase(LifecycleCommandsBaseTestCase):
         result = self.run_command(['prime'])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertEqual(
-            'Skipping pull prime0 (already ran)\n'
-            'Skipping build prime0 (already ran)\n'
-            'Skipping stage prime0 (already ran)\n'
-            'Skipping prime prime0 (already ran)\n',
-            fake_logger.output)
+        self.assertThat(
+            fake_logger.output,
+            Equals('Skipping pull prime0 (already ran)\n'
+                   'Skipping build prime0 (already ran)\n'
+                   'Skipping stage prime0 (already ran)\n'
+                   'Skipping prime prime0 (already ran)\n'))

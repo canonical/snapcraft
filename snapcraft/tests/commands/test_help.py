@@ -45,7 +45,7 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
 
         result = self.run_command(['help', 'does-not-exist'])
 
-        self.assertEqual(1, result.exit_code)
+        self.assertThat(result.exit_code, Equals(1))
         self.assertThat(
             'The plugin does not exist. Run `snapcraft '
             'list-plugins` to see the available plugins.\n',
@@ -54,16 +54,18 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
     def test_print_module_help_when_no_help_for_valid_plugin(self):
         result = self.run_command(['help', 'jdk'])
 
-        self.assertEqual('The plugin has no documentation\n', result.output)
+        self.assertThat(
+            result.output,
+            Equals('The plugin has no documentation\n'))
 
     def test_print_module_help_for_valid_plugin(self):
         result = self.run_command(['help', 'nil'])
 
         expected = 'The nil plugin is'
         output = result.output[:len(expected)]
-        self.assertEqual(output, expected,
-                         'The help message does not start with {!r} but with '
-                         '{!r} instead'.format(expected, output))
+        self.assertThat(output, Equals(expected),
+                        'The help message does not start with {!r} but with '
+                        '{!r} instead'.format(expected, output))
 
     def test_print_module_named_with_dashes_help_for_valid_plugin(self):
         result = self.run_command(['help', 'plainbox-provider'])
@@ -77,9 +79,9 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         expected = 'Help on module snapcraft.plugins.nil in snapcraft.plugins'
         output = result.output[:len(expected)]
 
-        self.assertEqual(output, expected,
-                         'The help message does not start with {!r} but with '
-                         '{!r} instead'.format(expected, output))
+        self.assertThat(output, Equals(expected),
+                        'The help message does not start with {!r} but with '
+                        '{!r} instead'.format(expected, output))
 
     def test_print_topics(self):
         result = self.run_command(['help', 'topics'])
@@ -94,9 +96,9 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
 
         expected = "Common 'source' options."
         output = result.output[:len(expected)]
-        self.assertEqual(output, expected,
-                         'The help message does not start with {!r} but with '
-                         '{!r} instead'.format(expected, output))
+        self.assertThat(output, Equals(expected),
+                        'The help message does not start with {!r} but with '
+                        '{!r} instead'.format(expected, output))
 
     def test_no_unicode_in_help_strings(self):
         helps = ['topics']
@@ -133,7 +135,7 @@ class TopicWithDevelTestCase(HelpCommandBaseTestCase):
 
         result = self.run_command(['help', self.topic, '--devel'])
         output = result.output[:len(expected[self.topic])]
-        self.assertEqual(
-            output, expected[self.topic],
+        self.assertThat(
+            output, Equals(expected[self.topic]),
             'The help message does not start with {!r} but with '
             '{!r} instead'.format(expected[self.topic], output))

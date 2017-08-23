@@ -39,8 +39,8 @@ class CreateKeyTestCase(CommandBaseTestCase):
             'The snapd package is not installed.'))
 
         mock_installed.assert_called_with('snapd')
-        self.assertEqual(0, mock_check_output.call_count)
-        self.assertEqual(0, mock_check_call.call_count)
+        self.assertThat(mock_check_output.call_count, Equals(0))
+        self.assertThat(mock_check_call.call_count, Equals(0))
 
     @mock.patch('subprocess.check_call')
     @mock.patch('subprocess.check_output')
@@ -84,7 +84,7 @@ class CreateKeyTestCase(CommandBaseTestCase):
 
         self.assertThat(str(raised), Equals(
             "You have already registered a key named 'new-key'"))
-        self.assertEqual(0, mock_check_call.call_count)
+        self.assertThat(mock_check_call.call_count, Equals(0))
 
     @mock.patch('subprocess.check_call')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')

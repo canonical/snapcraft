@@ -20,6 +20,7 @@ import fixtures
 from unittest import mock
 
 import requests
+from testtools.matchers import Equals
 
 from snapcraft import tests
 from snapcraft.internal import sources
@@ -51,7 +52,7 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
         source_file = os.path.join(dest_dir, tar_file_name)
         mock_prov.assert_called_once_with(dest_dir, src=source_file)
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
-            self.assertEqual('Test fake file', tar_file.read())
+            self.assertThat(tar_file.read(), Equals('Test fake file'))
 
     @mock.patch('snapcraft.sources.Tar.provision')
     def test_pull_twice_downloads_once(self, mock_prov):
@@ -69,7 +70,7 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
             'requests.get',
                 new=mock.Mock(wraps=requests.get)) as download_spy:
             tar_source.pull()
-            self.assertEqual(download_spy.call_count, 0)
+            self.assertThat(download_spy.call_count, Equals(0))
 
     def test_strip_common_prefix(self):
         # Create tar file for testing
@@ -99,10 +100,9 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
 
         def check_for_symlink(tarinfo):
             self.assertTrue(tarinfo.issym())
-            self.assertEqual(file_to_link, tarinfo.name)
-            self.assertEqual(file_to_tar, os.path.normpath(
-                os.path.join(
-                    os.path.dirname(file_to_tar), tarinfo.linkname)))
+            self.assertThat(file_to_link, Equals(tarinfo.name))
+            self.assertThat(file_to_tar, Equals(os.path.normpath(
+                os.path.join(os.path.dirname(file_to_tar), tarinfo.linkname))))
             return tarinfo
 
         tar = tarfile.open(os.path.join('src', 'test.tar'), 'w')
@@ -131,8 +131,8 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
         def check_for_hardlink(tarinfo):
             self.assertTrue(tarinfo.islnk())
             self.assertFalse(tarinfo.issym())
-            self.assertEqual(file_to_link, tarinfo.name)
-            self.assertEqual(file_to_tar, tarinfo.linkname)
+            self.assertThat(file_to_link, Equals(tarinfo.name))
+            self.assertThat(file_to_tar, Equals(tarinfo.linkname))
             return tarinfo
 
         tar = tarfile.open(os.path.join('src', 'test.tar'), 'w')

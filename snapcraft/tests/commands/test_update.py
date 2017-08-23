@@ -74,8 +74,8 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         with open(self.headers_yaml) as headers_file:
             headers = yaml.load(headers_file)
 
-        self.assertEqual(parts, expected_parts)
-        self.assertEqual(headers, expected_headers)
+        self.assertThat(parts, Equals(expected_parts))
+        self.assertThat(headers, Equals(expected_headers))
 
     def test_update_with_unchanged_date_does_not_download_again(self):
         result = self.run_command(['update'])

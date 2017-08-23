@@ -17,6 +17,8 @@
 import os
 import subprocess
 
+from testtools.matchers import Equals
+
 import integration_tests
 
 
@@ -26,7 +28,7 @@ class NilPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('snap', 'nil-basic')
 
         dirs = os.listdir(self.prime_dir)
-        self.assertEqual(['meta'], dirs)
+        self.assertThat(dirs, Equals(['meta']))
 
     def test_nil_no_additional_properties(self):
         exception = self.assertRaises(

@@ -17,7 +17,7 @@
 import os
 import subprocess
 
-from testtools.matchers import FileContains
+from testtools.matchers import Equals, FileContains
 
 import integration_tests
 
@@ -62,6 +62,6 @@ class EnvironmentTestCase(integration_tests.TestCase):
             os.path.join(self.stage_dir, 'bin', 'cmake-with-env-var')])
         path = os.path.join(
             self.path, self.parts_dir, 'cmake-project', 'install')
-        self.assertEqual(
-            "When I was built I was installed to {}\n".format(path),
-            binary_output.decode('utf-8'))
+        self.assertThat(
+            binary_output.decode('utf-8'),
+            Equals("When I was built I was installed to {}\n".format(path)))

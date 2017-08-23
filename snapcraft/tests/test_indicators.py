@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,10 +18,12 @@ import fixtures
 import os
 import progressbar
 import requests
+from unittest.mock import patch
+
+from testtools.matchers import Equals
 
 from snapcraft import tests
 from snapcraft.internal import indicators
-from unittest.mock import patch
 
 
 class DumbTerminalTests(tests.TestCase):
@@ -59,24 +61,24 @@ class ProgressBarInitializationTests(tests.TestCase):
     def test_init_progress_bar_with_length(self, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = self.dumb
         pb = indicators._init_progress_bar(10, "destination", "message")
-        self.assertEqual(pb.maxval, 10)
+        self.assertThat(pb.maxval, Equals(10))
         self.assertTrue("message" in pb.widgets)
         pb_widgets_types = [type(w) for w in pb.widgets]
         self.assertTrue(type(progressbar.Percentage()) in pb_widgets_types)
-        self.assertEqual(
-            type(progressbar.Bar()) in pb_widgets_types, not self.dumb)
+        self.assertThat(
+            type(progressbar.Bar()) in pb_widgets_types, Equals(not self.dumb))
 
     @patch('snapcraft.internal.indicators.is_dumb_terminal')
     def test_init_progress_bar_with_unknown_length(
             self, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = self.dumb
         pb = indicators._init_progress_bar(0, "destination", "message")
-        self.assertEqual(pb.maxval, progressbar.UnknownLength)
+        self.assertThat(pb.maxval, Equals(progressbar.UnknownLength))
         self.assertTrue("message" in pb.widgets)
         pb_widgets_types = [type(w) for w in pb.widgets]
-        self.assertEqual(
+        self.assertThat(
             type(progressbar.AnimatedMarker()) in pb_widgets_types,
-            not self.dumb)
+            Equals(not self.dumb))
 
 
 class IndicatorsDownloadTests(tests.FakeFileHTTPServerBasedTestCase):
