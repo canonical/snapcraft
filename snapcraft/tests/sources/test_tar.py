@@ -22,7 +22,6 @@ from unittest import mock
 import requests
 from testtools.matchers import Equals
 
-from snapcraft.internal import sources
 from snapcraft import tests
 from snapcraft.internal import sources
 
