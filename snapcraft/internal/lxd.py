@@ -345,12 +345,13 @@ class Project(Containerbuild):
         if not os.path.exists(keyfile_path):
             # Swallow output and allow exceptions to save stdout
             check_output(['ssh-keygen', '-o', '-N', '', '-f', keyfile_path])
-        # os.sep needs to be `/` and on Windows it will be set to `\`
+
+        # Don't use os.path.join because a Windows client would use \
         ssh_config = '/root/.ssh'
+        ssh_authorized_keys = ssh_config + '/authorized_keys'
+
         self._container_run(['mkdir', '-p', ssh_config])
         self._container_run(['chmod', '700', ssh_config])
-        # os.sep needs to be `/` and on Windows it will be set to `\`
-        ssh_authorized_keys = ssh_config + '/authorized_keys'
         self._container_run(['tee', '-a', ssh_authorized_keys],
                             stdin=open('{}.pub'.format(keyfile_path), 'r'))
         self._container_run(['chmod', '600', ssh_authorized_keys])
