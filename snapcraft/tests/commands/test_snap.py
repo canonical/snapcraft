@@ -169,16 +169,19 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('shutil.rmtree')
     @mock.patch('os.makedirs')
+    @mock.patch('os.pipe')
     @mock.patch('snapcraft.internal.lxd.Popen')
     @mock.patch('snapcraft.internal.lxd.open')
     def test_snap_containerized_remote(self,
                                        mock_open,
                                        mock_popen,
+                                       mock_pipe,
                                        mock_makedirs,
                                        mock_rmtree,
                                        mock_container_run):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         mock_open.return_value = mock.MagicMock(spec=open)
+        mock_pipe.return_value = (9, 9)
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -223,7 +226,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         ])
         mock_popen.assert_has_calls([
             call(['/usr/lib/sftp-server'],
-                 stdin=8, stdout=11),
+                 stdin=9, stdout=9),
             call(['ssh', '-C', '-F', '/dev/null',
                   '-o', 'IdentityFile={}/id_{}'.format(tmpdir, fake_lxd.name),
                   '-o', 'StrictHostKeyChecking=no',
@@ -232,7 +235,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                   '-p', '22', '127.0.0.1',
                   'sshfs -o slave -o nonempty :{} {}'.format(
                       source, project_folder)],
-                 stdin=10, stdout=9),
+                 stdin=9, stdout=9),
         ])
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
