@@ -90,8 +90,6 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertIn(
             'Setting up container with project assets\n'
-            'Waiting for a network connection...\n'
-            'Network connection established\n'
             'Retrieved snap-test_1.0_amd64.snap\n',
             self.fake_logger.output)
 
