@@ -19,7 +19,7 @@ from unittest import mock
 from testtools.matchers import Equals
 
 import snapcraft
-import snapcraft.internal.pluginhandler.stage_package_grammar._try as _try
+import snapcraft.internal.project_loader.grammar._try as _try
 
 from . import GrammarTestCase
 
