@@ -23,6 +23,7 @@ import requests
 from unittest import mock
 from unittest.mock import call
 import snapcraft.internal.errors
+import snapcraft.internal.project_loader.errors
 
 import fixtures
 from testtools.matchers import (
@@ -96,7 +97,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.make_snapcraft_yaml(snap_type='bad-type')
 
         raised = self.assertRaises(
-            snapcraft.internal.errors.SnapcraftSchemaError,
+            snapcraft.internal.project_loader.errors.YamlValidationError,
             self.run_command, ['snap'])
 
         self.assertThat(str(raised), Contains(
