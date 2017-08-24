@@ -140,7 +140,7 @@ class CleanBuildFailuresCommandTestCase(CleanBuildCommandBaseTestCase):
         fake_lxd.check_output_mock.side_effect = FileNotFoundError('lxc')
 
         raised = self.assertRaises(
-            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            snapcraft.internal.errors.ContainerError,
             self.run_command, ['cleanbuild'])
 
         self.assertThat(str(raised), Equals(

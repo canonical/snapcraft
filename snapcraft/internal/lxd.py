@@ -30,7 +30,7 @@ import requests_unixsocket
 import petname
 import yaml
 
-from snapcraft.internal.errors import SnapcraftEnvironmentError
+from snapcraft.internal.errors import ContainerError
 from snapcraft.internal import common
 from snapcraft._options import _get_deb_arch
 
@@ -69,7 +69,7 @@ class Containerbuild:
             kernel = server_environment['kernelarchitecture']
         deb_arch = _get_deb_arch(kernel)
         if not deb_arch:
-            raise SnapcraftEnvironmentError(
+            raise ContainerError(
                 'Unrecognized server architecture {}'.format(kernel))
         self._host_arch = deb_arch
         self._image = 'ubuntu:xenial/{}'.format(deb_arch)
@@ -194,10 +194,10 @@ class Containerbuild:
         try:
             json = session.request('GET', api).json()
         except requests.exceptions.ConnectionError as e:
-            raise SnapcraftEnvironmentError(
+            raise ContainerError(
                 'Error connecting to {}'.format(api)) from e
         if json['type'] == 'error':
-            raise SnapcraftEnvironmentError(
+            raise ContainerError(
                 'Error querying {!r} snap: {}'.format(
                     name, json['result']['message']))
         id = json['result']['id']
@@ -347,18 +347,18 @@ def _get_default_remote():
 
     :returns: default lxd remote.
     :rtype: string.
-    :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
+    :raises snapcraft.internal.errors.ContainerError:
         raised if the lxc call fails.
     """
     try:
         default_remote = check_output(['lxc', 'remote', 'get-default'])
     except FileNotFoundError:
-        raise SnapcraftEnvironmentError(
+        raise ContainerError(
             'You must have LXD installed in order to use cleanbuild.\n'
             'Refer to the documentation at '
             'https://linuxcontainers.org/lxd/getting-started-cli.')
     except CalledProcessError:
-        raise SnapcraftEnvironmentError(
+        raise ContainerError(
             'Something seems to be wrong with your installation of LXD.\n'
             'Refer to the documentation at '
             'https://linuxcontainers.org/lxd/getting-started-cli.')
@@ -369,7 +369,7 @@ def _verify_remote(remote):
     """Verify that the lxd remote exists.
 
     :param str remote: the lxd remote to verify.
-    :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
+    :raises snapcraft.internal.errors.ContainerError:
         raised if the lxc call listing the remote fails.
     """
     # There is no easy way to grep the results from `lxc remote list`
@@ -377,7 +377,7 @@ def _verify_remote(remote):
     try:
         check_output(['lxc', 'list', '{}:'.format(remote)])
     except CalledProcessError as e:
-        raise SnapcraftEnvironmentError(
+        raise ContainerError(
             'There are either no permissions or the remote {!r} '
             'does not exist.\n'
             'Verify the existing remotes by running `lxc remote list`\n'
