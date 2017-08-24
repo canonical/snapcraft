@@ -317,11 +317,13 @@ class Project(Containerbuild):
         self._ensure_mount(self._project_folder, self._source)
 
     def _get_container_address(self):
-        network = self._get_container_status()['state']['network']['eth0']
-        for address in network['addresses']:
-            if address['family'] == 'inet':
-                return address['address']
-        raise RuntimeError('No IP found for {}'.format(self._container_name))
+        network = self._get_container_status()['state']['network']
+        for interface in network:
+            for address in network[interface]['addresses']:
+                if address['family'] == 'inet':
+                    return address['address']
+        raise SnapcraftEnvironmentError('No IP found for {}'.format(
+            self._container_name))
 
     def _ensure_mount(self, destination, source):
         logger.info('Mounting {} into container'.format(source))

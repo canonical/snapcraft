@@ -428,6 +428,12 @@ class FakeLXD(fixtures.Fixture):
 
     def __init__(self, fail_on_snapcraft_run=False):
         self.status = None
+        self.network = '''{ "eth0": {
+                                "addresses": [{
+                                    "family": "inet",
+                                    "address": "127.0.0.1"
+                                }]
+                            }}'''
         self.devices = '{}'
         self.fail_on_snapcraft_run = fail_on_snapcraft_run
 
@@ -469,15 +475,13 @@ class FakeLXD(fixtures.Fixture):
                     return string.Template('''
                         [{"name": "$NAME",
                           "status": "$STATUS",
-                          "state": {"network":
-                                   {"eth0": {"addresses":
-                                             [{"family": "inet",
-                                               "address": "127.0.0.1"}]}}},
+                          "state": {"network": $NETWORK },
                           "devices": $DEVICES}]
                         ''').substitute({
                             # Container name without remote prefix
                             'NAME': self.name.split(':')[-1],
                             'STATUS': self.status,
+                            'NETWORK': self.network,
                             'DEVICES': self.devices,
                             }).encode('utf-8')
                 return '[]'.encode('utf-8')

@@ -223,7 +223,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         ])
         mock_popen.assert_has_calls([
             call(['/usr/lib/sftp-server'],
-                 stdin=4, stdout=7),
+                 stdin=8, stdout=11),
             call(['ssh', '-C', '-F', '/dev/null',
                   '-o', 'IdentityFile={}/id_{}'.format(tmpdir, fake_lxd.name),
                   '-o', 'StrictHostKeyChecking=no',
@@ -232,8 +232,34 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                   '-p', '22', '127.0.0.1',
                   'sshfs -o slave -o nonempty :{} {}'.format(
                       source, project_folder)],
-                 stdin=6, stdout=5),
+                 stdin=10, stdout=9),
         ])
+
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('shutil.rmtree')
+    @mock.patch('os.makedirs')
+    @mock.patch('snapcraft.internal.lxd.Popen')
+    @mock.patch('snapcraft.internal.lxd.open')
+    def test_snap_containerized_non_default_network(self,
+                                                    mock_open,
+                                                    mock_popen,
+                                                    mock_makedirs,
+                                                    mock_rmtree,
+                                                    mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_open.return_value = mock.MagicMock(spec=open)
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        fake_lxd.network = fake_lxd.network.replace('eth0', 'eth1')
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_CONTAINER_BUILDS', 'myremote'))
+        self.make_snapcraft_yaml()
+
+        result = self.run_command(['--debug', 'snap'])
+
+        self.assertThat(result.exit_code, Equals(0))
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('shutil.rmtree')
@@ -258,7 +284,6 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             return fake_lxd.check_output_side_effect()(*args, **kwargs)
 
         fake_lxd.check_output_mock.side_effect = call_effect
-
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.useFixture(fixtures.EnvironmentVariable(
@@ -270,27 +295,38 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                           SnapcraftEnvironmentError,
                           self.run_command, ['--debug', 'snap'])))
 
-        source = os.path.realpath(os.path.curdir)
-        self.assertIn(
-            'Mounting {} into container\n'
-            'Connecting to 127.0.0.1 via SSH\n'.format(source),
-            fake_logger.output)
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('shutil.rmtree')
+    @mock.patch('os.makedirs')
+    @mock.patch('snapcraft.internal.lxd.Popen')
+    @mock.patch('snapcraft.internal.lxd.open')
+    def test_snap_containerized_remote_ftp_error(self,
+                                                 mock_open,
+                                                 mock_popen,
+                                                 mock_makedirs,
+                                                 mock_rmtree,
+                                                 mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_open.return_value = mock.MagicMock(spec=open)
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
 
-        tmpdir = os.path.expanduser(
-            os.path.join('~', 'snap', 'lxd', 'common', 'snapcraft.tmp'))
-        fake_lxd.check_output_mock.assert_has_calls([
-            call(['ssh-keygen', '-o', '-N', '', '-f',
-                 os.path.join(tmpdir, 'id_{}'.format(fake_lxd.name))]),
-        ])
-        fake_lxd.check_output_mock.assert_has_calls([
-            call(['ssh', '-C', '-F', '/dev/null',
-                  '-o', 'IdentityFile={}/id_{}'.format(tmpdir, fake_lxd.name),
-                  '-o', 'StrictHostKeyChecking=no',
-                  '-o', 'UserKnownHostsFile=/dev/null',
-                  '-o', 'User=root',
-                  '-p', '22', '127.0.0.1',
-                  'ls']),
-        ])
+        def call_effect(*args, **kwargs):
+            if args[0][:1] == ['/usr/lib/sftp-server']:
+                raise subprocess.CalledProcessError(
+                    returncode=255, cmd=args[0])
+
+        mock_popen.side_effect = call_effect
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_CONTAINER_BUILDS', 'myremote'))
+        self.make_snapcraft_yaml()
+
+        self.assertIn('sftp-server could not be run.',
+                      str(self.assertRaises(
+                          SnapcraftEnvironmentError,
+                          self.run_command, ['--debug', 'snap'])))
 
     @mock.patch('os.getuid')
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
