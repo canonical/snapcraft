@@ -34,7 +34,7 @@ from testtools.matchers import (
 )
 from . import CommandBaseTestCase
 from snapcraft.tests import fixture_setup
-from snapcraft.internal.errors import ContainerError
+from snapcraft.internal.errors import SnapdError
 
 
 class SnapCommandBaseTestCase(CommandBaseTestCase):
@@ -262,7 +262,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.make_snapcraft_yaml()
 
         self.assertIn('Error connecting to ',
-                      str(self.assertRaises(ContainerError,
+                      str(self.assertRaises(SnapdError,
                                             self.run_command, ['snap'])))
         # Temporary folder should remain in case of failure
         mock_rmtree.assert_not_called()
@@ -286,7 +286,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.make_snapcraft_yaml()
 
         self.assertIn('Error querying \'core\' snap: not found',
-                      str(self.assertRaises(ContainerError,
+                      str(self.assertRaises(SnapdError,
                                             self.run_command, ['snap'])))
         # Temporary folder should remain in case of failure
         mock_rmtree.assert_not_called()

@@ -29,7 +29,10 @@ from testtools.matchers import Contains, Equals
 from snapcraft import tests
 from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
-from snapcraft.internal.errors import ContainerError
+from snapcraft.internal.errors import (
+    ContainerConnectionError,
+    SnapcraftEnvironmentError,
+)
 
 
 class LXDTestCase(tests.TestCase):
@@ -189,7 +192,7 @@ class LXDTestCase(tests.TestCase):
         project_options = ProjectOptions(debug=False)
         metadata = {'name': 'project'}
         with ExpectedException(
-                ContainerError,
+                SnapcraftEnvironmentError,
                 'You must have LXD installed in order to use cleanbuild.\n'
                 'Refer to the documentation at '
                 'https://linuxcontainers.org/lxd/getting-started-cli.'):
@@ -206,7 +209,7 @@ class LXDTestCase(tests.TestCase):
 
         project_options = ProjectOptions(debug=False)
         metadata = {'name': 'project'}
-        with ExpectedException(ContainerError,
+        with ExpectedException(ContainerConnectionError,
                                'There are either.*my-remote.*'):
             lxd.Cleanbuilder(output='snap.snap', source='project.tar',
                              metadata=metadata,

@@ -63,8 +63,22 @@ class SnapcraftEnvironmentError(SnapcraftError):
         super().__init__(message=message)
 
 
-class ContainerError(SnapcraftEnvironmentError):
+class ContainerError(SnapcraftError):
     fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
+class ContainerConnectionError(ContainerError):
+    fmt = '{message}'
+
+
+class SnapdError(SnapcraftError):
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
 
 
 class PrimeFileConflictError(SnapcraftError):
