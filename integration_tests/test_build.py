@@ -18,6 +18,7 @@ import subprocess
 
 from testtools.matchers import (
     Contains,
+    Equals,
     Not,
 )
 
@@ -32,7 +33,7 @@ class BuildTestCase(integration_tests.TestCase):
             self.run_snapcraft, ['build', 'invalid-part-name'],
             'go-hello', debug=debug)
 
-        self.assertEqual(2, exception.returncode)
+        self.assertThat(exception.returncode, Equals(2))
         self.assertThat(exception.output, Contains(
             "part named 'invalid-part-name' is not defined"))
 

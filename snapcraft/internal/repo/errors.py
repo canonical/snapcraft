@@ -16,19 +16,22 @@
 
 from platform import linux_distribution as _linux_distribution
 from ._platform import _is_deb_based
+from snapcraft.internal import errors
 
 
-class BuildPackageNotFoundError(Exception):
-
-    def __init__(self, package_name):
-        self.package_name = package_name
-
-    def __str__(self):
-        return ('Could not find a required package in '
-                '\'build-packages\': {}'.format(str(self.package_name)))
+class RepoError(errors.SnapcraftError):
+    pass
 
 
-class PackageNotFoundError(Exception):
+class BuildPackageNotFoundError(RepoError):
+
+    fmt = "Could not find a required package in 'build-packages': {package}"
+
+    def __init__(self, package):
+        super().__init__(package=package)
+
+
+class PackageNotFoundError(RepoError):
 
     @property
     def message(self):
@@ -47,12 +50,13 @@ class PackageNotFoundError(Exception):
     def __init__(self, package_name):
         self.package_name = package_name
 
+    def __str__(self):
+        return self.message
 
-class UnpackError(Exception):
 
-    @property
-    def message(self):
-        return 'Error while provisioning "{}"'.format(self.package_name)
+class UnpackError(RepoError):
 
-    def __init__(self, package_name):
-        self.package_name = package_name
+    fmt = 'Error while provisioning {package!r}'
+
+    def __init__(self, package):
+        super().__init__(package=package)

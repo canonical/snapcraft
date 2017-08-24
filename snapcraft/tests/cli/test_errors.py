@@ -19,7 +19,6 @@ import sys
 from snapcraft.cli._errors import exception_handler
 import snapcraft.internal.errors
 
-import testtools
 from unittest import mock
 
 from snapcraft import tests
@@ -59,16 +58,27 @@ class ErrorsTestCase(tests.TestCase):
         except Exception:
             exception_handler(*sys.exc_info(), debug=debug)
 
-    def test_handler_raises_non_snapcraft_exceptions(self):
-        with testtools.ExpectedException(RuntimeError, 'not a SnapcraftError'):
-            self.call_handler(RuntimeError('not a SnapcraftError'), False)
-
-        with testtools.ExpectedException(RuntimeError, 'not a SnapcraftError'):
-            self.call_handler(RuntimeError('not a SnapcraftError'), True)
-
+    def assert_exception_traceback_exit_1(self):
         self.error_mock.assert_not_called
-        self.exit_mock.assert_not_called
-        self.print_exception_mock.assert_not_called
+        self.exit_mock.assert_called_once_with(1)
+        self.print_exception_mock.assert_called_once_with(
+            RuntimeError, mock.ANY, mock.ANY)
+
+    def test_handler_traceback_non_snapcraft_exceptions_no_debug(self):
+        try:
+            self.call_handler(RuntimeError('not a SnapcraftError'), False)
+        except Exception:
+            self.fail('Exception unexpectedly raised')
+
+        self.assert_exception_traceback_exit_1()
+
+    def test_handler_traceback_non_snapcraft_exceptions_debug(self):
+        try:
+            self.call_handler(RuntimeError('not a SnapcraftError'), True)
+        except Exception:
+            self.fail('Exception unexpectedly raised')
+
+        self.assert_exception_traceback_exit_1()
 
     def test_handler_catches_snapcraft_exceptions_no_debug(self):
         try:

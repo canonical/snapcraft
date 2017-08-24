@@ -292,6 +292,53 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                   'ls']),
         ])
 
+    @mock.patch('os.getuid')
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._inject_snapcraft')
+    def test_snap_containerized_exists_stopped(self,
+                                               mock_inject,
+                                               mock_container_run,
+                                               mock_getuid):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_getuid.return_value = 1234
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        # Container was created before, and isn't running
+        fake_lxd.devices = '{"/root/build_snap-test":[]}'
+        fake_lxd.name = 'local:snapcraft-snap-test'
+        fake_lxd.status = 'Stopped'
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml()
+
+        result = self.run_command(['snap'])
+
+        self.assertThat(result.exit_code, Equals(0))
+
+        project_folder = '/root/build_snap-test'
+        fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'config', 'set', fake_lxd.name,
+                  'environment.SNAPCRAFT_SETUP_CORE', '1']),
+            call(['lxc', 'config', 'set', fake_lxd.name,
+                  'raw.idmap', 'both {} 0'.format(mock_getuid.return_value)]),
+            call(['lxc', 'config', 'device', 'remove', fake_lxd.name,
+                  project_folder]),
+            call(['lxc', 'start', fake_lxd.name]),
+            call(['lxc', 'stop', '-f', fake_lxd.name]),
+        ])
+        mock_container_run.assert_has_calls([
+              call(['python3', '-c', 'import urllib.request; ' +
+                    'urllib.request.urlopen(' +
+                    '"http://start.ubuntu.com/connectivity-check.html"' +
+                    ', timeout=5)']),
+              call(['apt-get', 'update']),
+              call(['snapcraft', 'snap', '--output',
+                    'snap-test_1.0_amd64.snap'],
+                   cwd=project_folder),
+        ])
+
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('snapcraft.internal.common.is_snap')
     def test_snap_containerized_inject_apt(self,
@@ -523,12 +570,13 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.assertThat(result.output, Contains(
             'Snapped snap-test_1.0_amd64.snap\n'))
 
-        self.assertEqual(
-            'Skipping pull part1 (already ran)\n'
-            'Skipping build part1 (already ran)\n'
-            'Skipping stage part1 (already ran)\n'
-            'Skipping prime part1 (already ran)\n',
-            fake_logger.output)
+        self.assertThat(
+            fake_logger.output,
+            Equals(
+                'Skipping pull part1 (already ran)\n'
+                'Skipping build part1 (already ran)\n'
+                'Skipping stage part1 (already ran)\n'
+                'Skipping prime part1 (already ran)\n'))
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
@@ -679,15 +727,18 @@ type: os
             'Snapped snap-test_1.0_amd64.snap\n'))
 
         snap_build_renamed = snap_build + '.1234'
-        self.assertEqual([
-            'Preparing to pull part1 ',
-            'Pulling part1 ',
-            'Preparing to build part1 ',
-            'Building part1 ',
-            'Staging part1 ',
-            'Priming part1 ',
-            'Renaming stale build assertion to {}'.format(snap_build_renamed),
-            ], fake_logger.output.splitlines())
+        self.assertThat(
+            fake_logger.output.splitlines(),
+            Equals([
+                'Preparing to pull part1 ',
+                'Pulling part1 ',
+                'Preparing to build part1 ',
+                'Building part1 ',
+                'Staging part1 ',
+                'Priming part1 ',
+                'Renaming stale build assertion to {}'.format(
+                    snap_build_renamed),
+            ]))
 
         self.assertThat('snap-test_1.0_amd64.snap', FileExists())
         self.assertThat(snap_build, Not(FileExists()))

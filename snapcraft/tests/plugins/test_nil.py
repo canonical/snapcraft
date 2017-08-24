@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from testtools.matchers import Equals
+
 from snapcraft.plugins.nil import NilPlugin
 from snapcraft.tests import TestCase
 
@@ -21,8 +23,9 @@ from snapcraft.tests import TestCase
 class TestNilPlugin(TestCase):
     def test_schema(self):
         schema = NilPlugin.schema()
-        self.assertEqual('http://json-schema.org/draft-04/schema#',
-                         schema['$schema'])
-        self.assertEqual('object', schema['type'])
+        self.assertThat(
+            schema['$schema'],
+            Equals('http://json-schema.org/draft-04/schema#'))
+        self.assertThat(schema['type'], Equals('object'))
         self.assertFalse(schema['additionalProperties'])
         self.assertFalse(schema['properties'])

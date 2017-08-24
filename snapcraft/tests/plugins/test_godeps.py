@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,7 +17,7 @@
 import os
 
 from unittest import mock
-from testtools.matchers import HasLength
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft.plugins import godeps
@@ -66,15 +66,17 @@ class GodepsPluginTestCase(tests.TestCase):
                     expected))
 
         godeps_file_type = godeps_file['type']
-        self.assertEqual(godeps_file_type, 'string',
-                         'Expected "godeps-file" "type" to be "string", but '
-                         'it was "{}"'.format(godeps_file_type))
+        self.assertThat(
+            godeps_file_type, Equals('string'),
+            'Expected "godeps-file" "type" to be "string", but '
+            'it was "{}"'.format(godeps_file_type))
 
         godeps_file_default = godeps_file['default']
-        self.assertEqual(godeps_file_default, 'dependencies.tsv',
-                         'Expected "godeps-file" "default" to be '
-                         '"dependencies.tsv", but it was "{}"'.format(
-                             godeps_file_default))
+        self.assertThat(
+            godeps_file_default, Equals('dependencies.tsv'),
+            'Expected "godeps-file" "default" to be '
+            '"dependencies.tsv", but it was "{}"'.format(
+                godeps_file_default))
 
         # Check go-importpath
         go_importpath = properties['go-importpath']
@@ -85,9 +87,10 @@ class GodepsPluginTestCase(tests.TestCase):
                     expected))
 
         go_importpath_type = go_importpath['type']
-        self.assertEqual(go_importpath_type, 'string',
-                         'Expected "go-importpath" "type" to be "string", but '
-                         'it was "{}"'.format(go_importpath_type))
+        self.assertThat(
+            go_importpath_type, Equals('string'),
+            'Expected "go-importpath" "type" to be "string", but '
+            'it was "{}"'.format(go_importpath_type))
 
         # go-importpath should be required
         self.assertTrue('go-importpath' in schema['required'],
@@ -102,14 +105,14 @@ class GodepsPluginTestCase(tests.TestCase):
                     expected))
 
         go_packages_type = go_packages['type']
-        self.assertEqual(go_packages_type, 'array',
-                         'Expected "go-packages" "type" to be "array", but '
-                         'it was "{}"'.format(go_packages_type))
+        self.assertThat(go_packages_type, Equals('array'),
+                        'Expected "go-packages" "type" to be "array", but '
+                        'it was "{}"'.format(go_packages_type))
 
         go_packages_default = go_packages['default']
-        self.assertEqual(go_packages_default, [],
-                         'Expected "go-packages" "default" to be "[]", but '
-                         'it was "{}"'.format(go_packages_default))
+        self.assertThat(go_packages_default, Equals([]),
+                        'Expected "go-packages" "default" to be "[]", but '
+                        'it was "{}"'.format(go_packages_default))
 
     def test_get_pull_properties(self):
         expected_pull_properties = ['godeps-file', 'go-importpath']
@@ -142,12 +145,12 @@ class GodepsPluginTestCase(tests.TestCase):
         os.makedirs(os.path.join(plugin.project.stage_dir, 'usr', 'lib'))
         plugin.pull()
 
-        self.assertEqual(2, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(2))
         for call_args in self.run_mock.call_args_list:
             env = call_args[1]['env']
             self.assertTrue(
                 'GOPATH' in env, 'Expected environment to include GOPATH')
-            self.assertEqual(env['GOPATH'], plugin._gopath)
+            self.assertThat(env['GOPATH'], Equals(plugin._gopath))
 
             self.assertTrue(
                 'PATH' in env, 'Expected environment to include PATH')
@@ -178,7 +181,7 @@ class GodepsPluginTestCase(tests.TestCase):
 
         plugin.pull()
 
-        self.assertEqual(2, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(2))
         self.run_mock.assert_has_calls([
             mock.call(['go', 'get', 'github.com/rogpeppe/godeps'],
                       cwd=plugin._gopath_src, env=mock.ANY),
@@ -195,7 +198,7 @@ class GodepsPluginTestCase(tests.TestCase):
         sourcedir = os.path.join(
             plugin._gopath_src, 'github.com', 'foo', 'bar')
         self.assertTrue(os.path.islink(sourcedir))
-        self.assertEqual(plugin.sourcedir, os.readlink(sourcedir))
+        self.assertThat(os.readlink(sourcedir), Equals(plugin.sourcedir))
 
     def test_clean_pull(self):
         plugin = godeps.GodepsPlugin(
@@ -228,7 +231,7 @@ class GodepsPluginTestCase(tests.TestCase):
         open(os.path.join(plugin._gopath_bin, 'godeps'), 'w').close()
         plugin.build()
 
-        self.assertEqual(1, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(1))
         self.run_mock.assert_has_calls([
             mock.call(
                 ['go', 'install', './github.com/foo/bar/...'],
@@ -264,7 +267,7 @@ class GodepsPluginTestCase(tests.TestCase):
         open(os.path.join(plugin._gopath_bin, 'godeps'), 'w').close()
         plugin.build()
 
-        self.assertEqual(1, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(1))
         self.run_mock.assert_has_calls([
             mock.call(
                 ['go', 'install', 'github.com/foo/bar/cmd/my-command'],

@@ -21,6 +21,7 @@ from textwrap import dedent
 
 from testtools.matchers import (
     DirExists,
+    Equals,
     FileContains,
     FileExists
 )
@@ -83,9 +84,9 @@ class PythonPluginTestCase(integration_tests.TestCase):
         with open(python_entry_point) as f:
             python_shebang = f.readline().strip()
 
-        self.assertEqual('#!/usr/bin/env python2', python2_shebang)
-        self.assertEqual('#!/usr/bin/env python3', python3_shebang)
-        self.assertEqual('#!/usr/bin/env python3', python_shebang)
+        self.assertThat(python2_shebang, Equals('#!/usr/bin/env python2'))
+        self.assertThat(python3_shebang, Equals('#!/usr/bin/env python3'))
+        self.assertThat(python_shebang, Equals('#!/usr/bin/env python3'))
 
     def test_pbr_console_scripts(self):
         """Verify that LP: #1670852 doesn't come back."""
@@ -145,8 +146,8 @@ class PythonPluginTestCase(integration_tests.TestCase):
             pyc_files.extend([f for f in files if f.endswith('pyc')])
             pth_files.extend([f for f in files if f.endswith('pth')])
 
-        self.assertEqual([], pyc_files)
-        self.assertEqual([], pth_files)
+        self.assertThat(pyc_files, Equals([]))
+        self.assertThat(pth_files, Equals([]))
 
     def test_build_doesnt_get_bad_install_directory_lp1586546(self):
         """Verify that LP: #1586546 doesn't come back."""
@@ -175,11 +176,11 @@ class PythonPluginTestCase(integration_tests.TestCase):
                 self.parts_dir, 'python2', 'install', 'usr', 'lib',
                 'python2*', 'dist-packages', 'yaml'))[0],
             DirExists())
-        self.assertEqual(
+        self.assertThat(
             glob(os.path.join(
                 self.parts_dir, 'python2', 'install', 'lib',
                 'python2*', 'site-packages', 'yaml')),
-            [])
+            Equals([]))
 
         self.assertThat(
             glob(os.path.join(
@@ -191,11 +192,11 @@ class PythonPluginTestCase(integration_tests.TestCase):
                 self.parts_dir, 'python3', 'install', 'usr', 'lib',
                 'python3*', 'dist-packages', 'yaml'))[0],
             DirExists())
-        self.assertEqual(
+        self.assertThat(
             glob(os.path.join(
                 self.parts_dir, 'python3', 'install', 'lib',
                 'python3*', 'site-packages', 'yaml')),
-            [])
+            Equals([]))
 
     def test_pull_a_package_from_bzr(self):
         self.run_snapcraft('pull', 'pip-bzr')

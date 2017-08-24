@@ -18,7 +18,7 @@ import os
 import stat
 from textwrap import dedent
 
-from testtools.matchers import FileContains
+from testtools.matchers import Equals, FileContains
 
 from snapcraft.internal import errors
 from snapcraft.internal.repo import check_for_command
@@ -165,7 +165,7 @@ class FixShebangTestCase(RepoBaseTestCase):
         BaseRepo('root').normalize('root')
 
         with open(self.file_path, 'r') as fd:
-            self.assertEqual(fd.read(), self.expected)
+            self.assertThat(fd.read(), Equals(self.expected))
 
 
 class FixPkgConfigTestCase(RepoBaseTestCase):
@@ -242,7 +242,7 @@ class FixSymlinksTestCase(RepoBaseTestCase):
 
         BaseRepo(self.tempdir).normalize(self.tempdir)
 
-        self.assertEqual(os.readlink(self.dst), self.src)
+        self.assertThat(os.readlink(self.dst), Equals(self.src))
 
 
 class FixSUIDTestCase(RepoBaseTestCase):
@@ -266,5 +266,5 @@ class FixSUIDTestCase(RepoBaseTestCase):
 
         BaseRepo(self.tempdir).normalize(self.tempdir)
 
-        self.assertEqual(
-            stat.S_IMODE(os.stat(file).st_mode), self.expected_mod)
+        self.assertThat(
+            stat.S_IMODE(os.stat(file).st_mode), Equals(self.expected_mod))

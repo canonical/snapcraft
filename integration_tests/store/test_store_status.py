@@ -18,7 +18,7 @@ import os
 import subprocess
 import unittest
 
-from testtools.matchers import Contains, FileExists
+from testtools.matchers import Equals, Contains, FileExists
 
 import integration_tests
 
@@ -95,7 +95,9 @@ class StatusTestCase(integration_tests.StoreTestCase):
         snap_path = '{}_{}_{}.snap'.format(name, version, 'all')
         self.assertThat(snap_path, FileExists())
         self.register(name)
-        self.assertEqual(0, self.push(snap_path, release='candidate,beta'))
+        self.assertThat(
+            self.push(snap_path, release='candidate,beta'),
+            Equals(0))
 
         output = self.run_snapcraft(['status', name])
         expected = '\n'.join((

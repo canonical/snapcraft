@@ -17,6 +17,8 @@
 import os
 import subprocess
 
+from testtools.matchers import Equals
+
 import integration_tests
 
 
@@ -27,4 +29,4 @@ class GulpPluginTestCase(integration_tests.TestCase):
 
         binary_output = subprocess.check_output(
             [os.path.join(self.stage_dir, 'hello-world')])
-        self.assertEqual(b'I was installed with gulp\n', binary_output)
+        self.assertThat(binary_output, Equals(b'I was installed with gulp\n'))

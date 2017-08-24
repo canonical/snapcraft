@@ -24,7 +24,7 @@ from unittest.mock import (
 
 import fixtures
 from testtools import ExpectedException
-from testtools.matchers import Contains
+from testtools.matchers import Contains, Equals
 
 from snapcraft import tests
 from snapcraft import ProjectOptions
@@ -111,7 +111,7 @@ class LXDTestCase(tests.TestCase):
             lxd.Cleanbuilder(output='snap.snap', source='project.tar',
                              metadata=metadata,
                              project_options=ProjectOptions()).execute)
-        self.assertEquals(fake_lxd.status, None)
+        self.assertThat(fake_lxd.status, Equals(None))
         # lxc launch should fail and no further commands should come after that
         self.assertThat(str(raised), Contains("Command '['lxc', 'launch'"))
 

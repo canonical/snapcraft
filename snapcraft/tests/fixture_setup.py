@@ -428,6 +428,7 @@ class FakeLXD(fixtures.Fixture):
 
     def __init__(self, fail_on_snapcraft_run=False):
         self.status = None
+        self.devices = '{}'
         self.fail_on_snapcraft_run = fail_on_snapcraft_run
 
     def _setUp(self):
@@ -472,11 +473,12 @@ class FakeLXD(fixtures.Fixture):
                                    {"eth0": {"addresses":
                                              [{"family": "inet",
                                                "address": "127.0.0.1"}]}}},
-                          "devices": {"build-snap-test":[]}}]
+                          "devices": $DEVICES}]
                         ''').substitute({
                             # Container name without remote prefix
                             'NAME': self.name.split(':')[-1],
                             'STATUS': self.status,
+                            'DEVICES': self.devices,
                             }).encode('utf-8')
                 return '[]'.encode('utf-8')
             elif args[0][:2] == ['lxc', 'init']:

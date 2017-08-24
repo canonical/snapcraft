@@ -404,10 +404,11 @@ class PluginHandler:
 
     def mark_build_done(self):
         build_properties = self.code.get_build_properties()
+        plugin_manifest = self.code.get_manifest()
 
         self.mark_done('build', states.BuildState(
             build_properties, self._part_properties,
-            self._project_options))
+            self._project_options, plugin_manifest))
 
     def clean_build(self, hint=''):
         if self.is_clean('build'):

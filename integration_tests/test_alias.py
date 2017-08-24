@@ -20,7 +20,7 @@ import stat
 import yaml
 
 import integration_tests
-from testtools.matchers import FileExists
+from testtools.matchers import Equals, FileExists
 
 
 # FIXME: Ideally this would be a snaps test so we can run the aliases, but that
@@ -43,5 +43,6 @@ class AliasTestCase(integration_tests.TestCase):
             data = yaml.load(fp)
 
         expected_aliases = ['hi.sh', 'howdy.sh']
-        self.assertEqual(set(expected_aliases),
-                         set(data['apps']['hello']['aliases']))
+        self.assertThat(
+            set(data['apps']['hello']['aliases']),
+            Equals(set(expected_aliases)))
