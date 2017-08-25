@@ -72,20 +72,20 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             def __init__(self):
                 self.source = '$SNAPCRAFT_PART_INSTALL'
 
-        class Code:
+        class Plugin:
             def __init__(self):
                 self.options = Options()
                 self.installdir = '/tmp'
 
         class Part:
             def __init__(self):
-                self.code = Code()
+                self.plugin = Plugin()
 
         part = Part()
         new_part = lifecycle._replace_in_part(part)
 
         self.assertThat(
-            new_part.code.options.source, Equals(part.code.installdir))
+            new_part.plugin.options.source, Equals(part.plugin.installdir))
 
     def test_exception_when_dependency_is_required(self):
         self.make_snapcraft_yaml("""parts:

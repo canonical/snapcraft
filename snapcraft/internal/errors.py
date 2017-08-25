@@ -191,3 +191,25 @@ class RequiredPathDoesNotExist(SnapcraftError):
 class SnapcraftPathEntryError(SnapcraftError):
 
     fmt = 'The path {value!r} set for {key!r} in {app!r} does not exist.'
+
+
+class InvalidPullPropertiesError(SnapcraftError):
+
+    fmt = (
+        'Invalid pull properties specified by {plugin_name!r} plugin: '
+        '{properties}'
+    )
+
+    def __init__(self, plugin_name, properties):
+        super().__init__(plugin_name=plugin_name, properties=properties)
+
+
+class InvalidBuildPropertiesError(SnapcraftError):
+
+    fmt = (
+        'Invalid build properties specified by {plugin_name!r} plugin: '
+        '{properties}'
+    )
+
+    def __init__(self, plugin_name, properties):
+        super().__init__(plugin_name=plugin_name, properties=properties)

@@ -52,19 +52,33 @@ parts:
         validator = project_loader.Validator()
         for i in range(n):
             part_name = 'clean{}'.format(i)
-            handler = pluginhandler.load_plugin(
-                part_name, plugin_name='nil',
-                part_properties={'plugin': 'nil'},
+
+            properties = {'plugin': 'nil'}
+            project_options = snapcraft.ProjectOptions()
+
+            plugin = pluginhandler.load_plugin(
+                part_name=part_name,
+                plugin_name='nil',
+                properties=properties,
+                project_options=project_options,
                 part_schema=validator.part_schema,
                 definitions_schema=validator.definitions_schema)
+
+            handler = pluginhandler.PluginHandler(
+                plugin=plugin,
+                part_properties=properties,
+                project_options=project_options,
+                part_schema=validator.part_schema,
+                definitions_schema=validator.definitions_schema)
+
             parts.append({
-                'part_dir': handler.code.partdir,
+                'part_dir': handler.plugin.partdir,
             })
 
             if create:
                 handler.makedirs()
                 open(os.path.join(
-                    handler.code.installdir, part_name), 'w').close()
+                    handler.plugin.installdir, part_name), 'w').close()
 
                 handler.mark_done('pull')
                 handler.mark_done('build')

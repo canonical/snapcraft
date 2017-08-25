@@ -78,7 +78,7 @@ class PartsConfig:
                     deprecations.handle_deprecation_notice('dn1')
                     properties['prime'] = snap
 
-            self.load_plugin(part_name, plugin_name, properties)
+            self.load_part(part_name, plugin_name, properties)
 
         self._compute_dependencies()
         self.all_parts = self._sort_parts()
@@ -149,16 +149,47 @@ class PartsConfig:
                     'The part named {!r} is not defined in '
                     '{!r}'.format(part_name, self._snapcraft_yaml))
 
-    def load_plugin(self, part_name, plugin_name, part_properties):
-        part = pluginhandler.load_plugin(
-            part_name,
+    def load_part(self, part_name, plugin_name, part_properties):
+        # Some legacy parts can have a '/' in them to separate the main project
+        # part with the subparts. This is rather unfortunate as it affects the
+        # the layout of parts inside the parts directory causing collisions
+        # between the main project part and its subparts.
+        part_name = part_name.replace('/', '\N{BIG SOLIDUS}')
+
+        plugin = pluginhandler.load_plugin(
             plugin_name=plugin_name,
-            part_properties=part_properties,
+            part_name=part_name,
+            properties=part_properties,
             project_options=self._project_options,
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema)
 
-        self.build_tools += part.code.build_packages
+        part_schema = {}
+        definitions_schema = {}
+        project_options = snapcraft.ProjectOptions()
+
+        if part_properties is None:
+            part_properties = {}
+        if self._validator.part_schema is not None:
+            part_schema = self._validator.part_schema
+        if self._validator.definitions_schema is not None:
+            definitions_schema = self._validator.definitions_schema
+        if self._project_options is not None:
+            project_options = self._project_options
+
+        logger.debug('Setting up part {!r} with plugin {!r} and '
+                     'properties {!r}.'.format(part_name,
+                                               plugin_name,
+                                               part_properties))
+
+        part = pluginhandler.PluginHandler(
+            plugin=plugin,
+            part_properties=part_properties,
+            project_options=project_options,
+            part_schema=part_schema,
+            definitions_schema=definitions_schema)
+
+        self.build_tools += plugin.build_packages
         if part.source_handler and part.source_handler.command:
             self.build_tools.append(
                 repo.Repo.get_packages_for_source_type(
