@@ -259,7 +259,6 @@ class Ubuntu(BaseRepo):
     def __init__(self, rootdir, sources=None, project_options=None):
         super().__init__(rootdir)
         self._downloaddir = os.path.join(rootdir, 'download')
-        os.makedirs(self._downloaddir, exist_ok=True)
 
         if not project_options:
             project_options = snapcraft.ProjectOptions()

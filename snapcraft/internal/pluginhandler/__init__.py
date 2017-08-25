@@ -37,7 +37,6 @@ from snapcraft.internal import (
 )
 from ._scriptlets import ScriptRunner
 from ._build_attributes import BuildAttributes
-from ._stage_package_handler import StagePackageHandler
 
 if sys.platform == 'linux':
     import magic
@@ -64,13 +63,16 @@ class PluginHandler:
         return self.plugin.installdir
 
     def __init__(self, *, plugin, part_properties, project_options,
-                 part_schema, definitions_schema):
+                 part_schema, definitions_schema, stage_packages_repo,
+                 grammar_processor):
         self.valid = False
         self.plugin = plugin
         self.config = {}
         self._part_properties = _expand_part_properties(
             part_properties, part_schema)
         self.stage_packages = []
+        self._stage_packages_repo = stage_packages_repo
+        self._grammar_processor = grammar_processor
 
         self._project_options = project_options
         self.deps = []
@@ -78,10 +80,9 @@ class PluginHandler:
         self.stagedir = project_options.stage_dir
         self.primedir = project_options.prime_dir
 
-        parts_dir = project_options.parts_dir
-        self.ubuntudir = os.path.join(parts_dir, self.name, 'ubuntu')
-        self.statedir = os.path.join(parts_dir, self.name, 'state')
-        self.sourcedir = os.path.join(parts_dir, self.name, 'src')
+        self.packagedir = plugin.packagedir
+        self.statedir = plugin.statedir
+        self.sourcedir = plugin.sourcedir
 
         # We don't need to set the source_handler on systems where we do not
         # build
@@ -95,12 +96,6 @@ class PluginHandler:
             self._part_properties['build-attributes'])
 
         self._migrate_state_file()
-
-        stage_packages = getattr(plugin, 'stage_packages', [])
-        sources = getattr(self.plugin, 'PLUGIN_STAGE_SOURCES', None)
-        self._stage_package_handler = StagePackageHandler(
-            stage_packages, self.ubuntudir,
-            sources=sources, project_options=self._project_options)
 
     def _get_source_handler(self, properties):
         """Returns a source_handler for the source in properties."""
@@ -227,14 +222,21 @@ class PluginHandler:
             os.rmdir(self.statedir)
 
     def _fetch_stage_packages(self):
-        try:
-            self.stage_packages = self._stage_package_handler.fetch()
-        except repo.errors.PackageNotFoundError as e:
-            raise RuntimeError("Error downloading stage packages for part "
-                               "{!r}: {}".format(self.name, e.message))
+        stage_packages = self._grammar_processor.get_stage_packages()
+        if stage_packages:
+            logger.debug('Fetching stage-packages {!r}'.format(stage_packages))
+            try:
+                self.stage_packages = self._stage_packages_repo.get(
+                    stage_packages)
+            except repo.errors.PackageNotFoundError as e:
+                raise errors.StagePackageDownloadError(self.name, e.message)
 
     def _unpack_stage_packages(self):
-        self._stage_package_handler.unpack(self.installdir)
+        stage_packages = self._grammar_processor.get_stage_packages()
+        if stage_packages:
+            logger.debug('Unpacking stage-packages to {!r}'.format(
+                self.installdir))
+            self._stage_packages_repo.unpack(self.installdir)
 
     def prepare_pull(self, force=False):
         self.makedirs()
@@ -273,8 +275,8 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning pulled source for', hint)
         # Remove ubuntu cache (where stage packages are fetched)
-        if os.path.exists(self.ubuntudir):
-            shutil.rmtree(self.ubuntudir)
+        if os.path.exists(self.packagedir):
+            shutil.rmtree(self.packagedir)
 
         if os.path.exists(self.sourcedir):
             if os.path.islink(self.sourcedir):

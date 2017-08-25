@@ -23,7 +23,6 @@ import fixtures
 from testtools.matchers import Equals
 
 import snapcraft
-from . import mocks
 from snapcraft.internal import errors
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
@@ -39,7 +38,7 @@ class PluginLoaderTestCase(tests.TestCase):
 
         raised = self.assertRaises(
             errors.PluginError,
-            mocks.load_part,
+            self.load_part,
             'fake-part', 'test_unexisting')
 
         self.assertThat(str(raised), Equals(
@@ -58,7 +57,7 @@ class PluginLoaderTestCase(tests.TestCase):
         # plugins.
         raised = self.assertRaises(
             errors.PluginError,
-            mocks.load_part,
+            self.load_part,
             'fake-part', '_ros')
 
         self.assertThat(str(raised), Equals(
@@ -79,7 +78,7 @@ class PluginLoaderTestCase(tests.TestCase):
 
         plugin_mock.return_value = TestPlugin
         local_load_mock.side_effect = ImportError()
-        mocks.load_part('mock-part', 'mock')
+        self.load_part('mock-part', 'mock')
         import_mock.assert_called_with('snapcraft.plugins.mock')
         local_load_mock.assert_called_with('x-mock', self.local_plugins_dir)
 
@@ -98,8 +97,8 @@ class PluginLoaderTestCase(tests.TestCase):
                 super().__init__(name, options)
 
         self.useFixture(fixture_setup.FakePlugin('oldplugin', OldPlugin))
-        handler = mocks.load_part('fake-part', 'oldplugin',
-                                  {'fake-property': '.'})
+        handler = self.load_part('fake-part', 'oldplugin',
+                                 {'fake-property': '.'})
 
         self.assertTrue(handler.plugin.project is not None)
 
@@ -124,11 +123,13 @@ class PluginLoaderTestCase(tests.TestCase):
 
             def __init__(self, name, options):
                 self.name = 'old_plugin'
-                pass
+                self.packagedir = 'packagedir'
+                self.statedir = 'statedir'
+                self.sourcedir = 'sourcedir'
 
         plugin_mock.return_value = NonBaseOldPlugin
         local_load_mock.side_effect = ImportError()
-        handler = mocks.load_part('fake-part', 'nonbaseoldplugin')
+        handler = self.load_part('fake-part', 'nonbaseoldplugin')
 
         self.assertTrue(handler.plugin.project is not None)
 
@@ -145,7 +146,7 @@ class PluginLoaderTestCase(tests.TestCase):
                 return schema
 
         self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
-        mocks.load_part('fake-part', 'plugin')
+        self.load_part('fake-part', 'plugin')
 
     def test_plugin_schema_step_hint_build(self):
         class Plugin(snapcraft.BasePlugin):
@@ -160,7 +161,7 @@ class PluginLoaderTestCase(tests.TestCase):
                 return schema
 
         self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
-        mocks.load_part('fake-part', 'plugin')
+        self.load_part('fake-part', 'plugin')
 
     def test_plugin_schema_step_hint_pull_and_build(self):
         class Plugin(snapcraft.BasePlugin):
@@ -176,7 +177,7 @@ class PluginLoaderTestCase(tests.TestCase):
                 return schema
 
         self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
-        mocks.load_part('fake-part', 'plugin')
+        self.load_part('fake-part', 'plugin')
 
     def test_plugin_schema_invalid_pull_hint(self):
         class Plugin(snapcraft.BasePlugin):
@@ -193,7 +194,7 @@ class PluginLoaderTestCase(tests.TestCase):
         self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
         raised = self.assertRaises(
             errors.InvalidPullPropertiesError,
-            mocks.load_part,
+            self.load_part,
             'fake-part', 'plugin')
 
         self.assertThat(
@@ -216,7 +217,7 @@ class PluginLoaderTestCase(tests.TestCase):
         self.useFixture(fixture_setup.FakePlugin('plugin', Plugin))
         raised = self.assertRaises(
             errors.InvalidBuildPropertiesError,
-            mocks.load_part, 'fake-part', 'plugin')
+            self.load_part, 'fake-part', 'plugin')
 
         self.assertThat(
             str(raised),

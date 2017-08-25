@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import doctest
-from unittest import mock
 import testtools
 from testtools.matchers import Equals
 
@@ -27,16 +26,7 @@ from . import GrammarTestCase
 
 
 def load_tests(loader, tests, ignore):
-    patcher = mock.patch('snapcraft.repo.Repo')
-
-    def _setup(test):
-        patcher.start()
-
-    def _teardown(test):
-        patcher.stop()
-
-    tests.addTests(doctest.DocTestSuite(
-        on, setUp=_setup, tearDown=_teardown))
+    tests.addTests(doctest.DocTestSuite(on))
     return tests
 
 
@@ -165,7 +155,7 @@ class OnStatementGrammarTestCase(GrammarTestCase):
         options = snapcraft.ProjectOptions(target_deb_arch=self.target_arch)
         statement = on.OnStatement(
             on=self.on, body=self.body, project_options=options,
-            repo_instance=snapcraft.repo.Repo())
+            checker=self.checker)
 
         for else_body in self.else_bodies:
             statement.add_else(else_body)
@@ -231,7 +221,7 @@ class OnStatementInvalidGrammarTestCase(GrammarTestCase):
                 target_deb_arch=self.target_arch)
             statement = on.OnStatement(
                 on=self.on, body=self.body, project_options=options,
-                repo_instance=snapcraft.repo.Repo())
+                checker=self.checker)
 
             for else_body in self.else_bodies:
                 statement.add_else(else_body)
@@ -246,7 +236,7 @@ class OnStatementElseFail(GrammarTestCase):
             target_deb_arch='amd64')
         statement = on.OnStatement(
             on='on i386', body=['foo'], project_options=options,
-            repo_instance=snapcraft.repo.Repo())
+            checker=self.checker)
 
         statement.add_else(None)
 

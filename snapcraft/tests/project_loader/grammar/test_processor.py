@@ -46,8 +46,7 @@ class GrammarOnDuplicatesTestCase(GrammarTestCase):
                 "Invalid grammar syntax: found duplicate 'on amd64,i386' "
                 'statements. These should be merged.'):
             grammar.process_grammar(
-                self.grammar, snapcraft.ProjectOptions(),
-                snapcraft.repo.Repo())
+                self.grammar, snapcraft.ProjectOptions(), self.checker)
 
 
 class BasicGrammarTestCase(GrammarTestCase):
@@ -197,8 +196,7 @@ class BasicGrammarTestCase(GrammarTestCase):
     def test_basic_grammar(self):
         options = snapcraft.ProjectOptions(target_deb_arch=self.target_arch)
         self.assertThat(
-            grammar.process_grammar(
-                self.grammar, options, snapcraft.repo.Repo()),
+            grammar.process_grammar(self.grammar, options, self.checker),
             Equals(self.expected_packages))
 
 
@@ -233,5 +231,4 @@ class InvalidGrammarTestCase(GrammarTestCase):
                 grammar.errors.GrammarSyntaxError,
                 self.expected_exception):
             grammar.process_grammar(
-                self.grammar, snapcraft.ProjectOptions(),
-                snapcraft.repo.Repo())
+                self.grammar, snapcraft.ProjectOptions(), self.checker)
