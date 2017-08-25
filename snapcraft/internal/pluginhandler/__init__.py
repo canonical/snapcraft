@@ -506,7 +506,7 @@ class PluginHandler:
 
     def get_primed_dependency_paths(self):
         dependency_paths = set()
-        state = states.get_state(self.plugin.statedir, 'prime')
+        state = states.get_state(self.statedir, 'prime')
         if state:
             for path in state.dependency_paths:
                 dependency_paths.add(
