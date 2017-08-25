@@ -164,19 +164,6 @@ class PartsConfig:
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema)
 
-        part_schema = {}
-        definitions_schema = {}
-        project_options = snapcraft.ProjectOptions()
-
-        if part_properties is None:
-            part_properties = {}
-        if self._validator.part_schema is not None:
-            part_schema = self._validator.part_schema
-        if self._validator.definitions_schema is not None:
-            definitions_schema = self._validator.definitions_schema
-        if self._project_options is not None:
-            project_options = self._project_options
-
         logger.debug('Setting up part {!r} with plugin {!r} and '
                      'properties {!r}.'.format(part_name,
                                                plugin_name,
@@ -185,9 +172,9 @@ class PartsConfig:
         part = pluginhandler.PluginHandler(
             plugin=plugin,
             part_properties=part_properties,
-            project_options=project_options,
-            part_schema=part_schema,
-            definitions_schema=definitions_schema)
+            project_options=self._project_options,
+            part_schema=self._validator.part_schema,
+            definitions_schema=self._validator.definitions_schema)
 
         self.build_tools += plugin.build_packages
         if part.source_handler and part.source_handler.command:
