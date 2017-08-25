@@ -822,6 +822,30 @@ parts:
             Equals("The 'version' property does not match the required "
                    "schema: '' does not match '^[a-zA-Z0-9.+~-]+$'"))
 
+    def test_invalid_yaml_version_too_long(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: 'abcdefghijklmnopqrstuvwxyz1234567' # Max is 32 in the store
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  part1:
+    plugin: nil
+""")
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            _config.Config)
+
+        self.assertThat(
+            raised.message,
+            Equals("The 'version' property does not match the required "
+                   "schema: 'abcdefghijklmnopqrstuvwxyz1234567' is too long "
+                   '(maximum length is 32)'))
+
     def test_config_uses_remote_part_from_after(self):
         self.useFixture(fixture_setup.FakeParts())
         self.make_snapcraft_yaml("""name: test
