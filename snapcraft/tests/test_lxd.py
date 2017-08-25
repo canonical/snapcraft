@@ -31,7 +31,6 @@ from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
 from snapcraft.internal.errors import (
     ContainerConnectionError,
-    SnapcraftEnvironmentError,
 )
 
 
@@ -192,7 +191,7 @@ class LXDTestCase(tests.TestCase):
         project_options = ProjectOptions(debug=False)
         metadata = {'name': 'project'}
         with ExpectedException(
-                SnapcraftEnvironmentError,
+                ContainerConnectionError,
                 'You must have LXD installed in order to use cleanbuild.\n'
                 'Refer to the documentation at '
                 'https://linuxcontainers.org/lxd/getting-started-cli.'):

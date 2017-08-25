@@ -71,7 +71,9 @@ class ContainerError(SnapcraftError):
 
 
 class ContainerConnectionError(ContainerError):
-    fmt = '{message}'
+    fmt = ('{message}\n'
+           'Refer to the documentation at '
+           'https://linuxcontainers.org/lxd/getting-started-cli.')
 
 
 class SnapdError(SnapcraftError):

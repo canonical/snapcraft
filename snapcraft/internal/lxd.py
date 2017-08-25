@@ -31,7 +31,6 @@ import petname
 import yaml
 
 from snapcraft.internal.errors import (
-        SnapcraftEnvironmentError,
         ContainerConnectionError,
         SnapdError,
 )
@@ -351,23 +350,17 @@ def _get_default_remote():
 
     :returns: default lxd remote.
     :rtype: string.
-    :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
-        raised if the lxc call fails.
     :raises snapcraft.internal.errors.ContainerConnectionError:
-        raised if the call to lxc returns an error.
+        raised if the lxc call fails.
     """
     try:
         default_remote = check_output(['lxc', 'remote', 'get-default'])
     except FileNotFoundError:
-        raise SnapcraftEnvironmentError(
-            'You must have LXD installed in order to use cleanbuild.\n'
-            'Refer to the documentation at '
-            'https://linuxcontainers.org/lxd/getting-started-cli.')
+        raise ContainerConnectionError(
+            'You must have LXD installed in order to use cleanbuild.')
     except CalledProcessError:
         raise ContainerConnectionError(
-            'Something seems to be wrong with your installation of LXD.\n'
-            'Refer to the documentation at '
-            'https://linuxcontainers.org/lxd/getting-started-cli.')
+            'Something seems to be wrong with your installation of LXD.')
     return default_remote.decode(sys.getfilesystemencoding()).strip()
 
 
@@ -387,6 +380,4 @@ def _verify_remote(remote):
             'There are either no permissions or the remote {!r} '
             'does not exist.\n'
             'Verify the existing remotes by running `lxc remote list`\n'
-            'To setup a new remote, follow the instructions at\n'
-            'https://linuxcontainers.org/lxd/getting-started-cli/'
-            '#multiple-hosts'.format(remote)) from e
+            .format(remote)) from e
