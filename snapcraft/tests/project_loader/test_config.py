@@ -64,8 +64,8 @@ class YamlTestCase(YamlBaseTestCase):
 
         patcher = unittest.mock.patch(
             'snapcraft.internal.project_loader._parts_config.PartsConfig'
-            '.load_plugin')
-        self.mock_load_plugin = patcher.start()
+            '.load_part')
+        self.mock_load_part = patcher.start()
         self.addCleanup(patcher.stop)
 
     def test_yaml_aliases(self,):
@@ -170,7 +170,7 @@ parts:
     stage-packages: [fswebcam]
 """)
         _config.Config()
-        self.mock_load_plugin.assert_called_with('part1', 'go', {
+        self.mock_load_part.assert_called_with('part1', 'go', {
             'stage-packages': ['fswebcam'],
             'plugin': 'go', 'stage': [], 'prime': [],
         })
@@ -192,7 +192,7 @@ parts:
         remote_parts.update()
         _config.Config()
 
-        self.mock_load_plugin.assert_called_with('part1', 'go', {
+        self.mock_load_part.assert_called_with('part1', 'go', {
             'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
             'plugin': 'go', 'stage': [], 'prime': []})
 
@@ -213,7 +213,7 @@ parts:
         remote_parts.update()
         _config.Config()
 
-        self.mock_load_plugin.assert_called_with('part1', 'go', {
+        self.mock_load_part.assert_called_with('part1', 'go', {
             'source': 'http://source.tar.gz', 'stage-packages': ['fswebcam'],
             'plugin': 'go', 'stage': [], 'prime': []})
 
@@ -666,7 +666,7 @@ parts:
 """)
         _config.Config()
 
-        self.mock_load_plugin.assert_called_with('part1', 'go', {
+        self.mock_load_part.assert_called_with('part1', 'go', {
             'prime': ['/usr/lib/wget.so', '/usr/bin/wget',
                       '/usr/share/my-icon.png'],
             'plugin': 'go', 'stage-packages': ['fswebcam'],
@@ -734,7 +734,7 @@ parts:
 """)
         _config.Config()
 
-        self.mock_load_plugin.assert_called_with('main', 'make', {
+        self.mock_load_part.assert_called_with('main', 'make', {
             'source': 'project-name-1',
             'plugin': 'make', 'stage': [], 'prime': [],
             'make-options': ['DEP={}'.format(self.stage_dir)],
@@ -822,6 +822,51 @@ parts:
             Equals("The 'version' property does not match the required "
                    "schema: '' does not match '^[a-zA-Z0-9.+~-]+$'"))
 
+    def test_config_uses_remote_part_from_after(self):
+        self.useFixture(fixture_setup.FakeParts())
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+grade: stable
+
+parts:
+  part1:
+    after:
+      - curl
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+
+        def load_effect(*args, **kwargs):
+            mock_part = unittest.mock.Mock()
+            mock_part.code.build_packages = []
+            mock_part.deps = []
+            mock_part.name = args[0]
+
+            return mock_part
+
+        self.mock_load_part.side_effect = load_effect
+
+        project_options = snapcraft.ProjectOptions()
+
+        remote_parts.update()
+        _config.Config(project_options)
+
+        call1 = unittest.mock.call(
+            'curl',
+            'autotools',
+            {'plugin': 'autotools', 'stage': [], 'prime': [],
+             'source': 'http://curl.org'})
+        call2 = unittest.mock.call(
+            'part1',
+            'go',
+            {'plugin': 'go', 'stage': [], 'prime': [],
+             'stage-packages': ['fswebcam']})
+
+        self.mock_load_part.assert_has_calls([call1, call2], any_order=True)
+
 
 class YamlEncodingsTestCase(YamlBaseTestCase):
 
@@ -835,8 +880,8 @@ class YamlEncodingsTestCase(YamlBaseTestCase):
 
         patcher = unittest.mock.patch(
             'snapcraft.internal.project_loader._parts_config.PartsConfig'
-            '.load_plugin')
-        self.mock_load_plugin = patcher.start()
+            '.load_part')
+        self.mock_load_part = patcher.start()
         self.addCleanup(patcher.stop)
 
     def test_config_loads_with_different_encodings(self):
@@ -856,7 +901,7 @@ parts:
         self.make_snapcraft_yaml(content, encoding=self.encoding)
         _config.Config()
 
-        self.mock_load_plugin.assert_called_with('part1', 'go', {
+        self.mock_load_part.assert_called_with('part1', 'go', {
             'plugin': 'go', 'stage-packages': ['fswebcam'],
             'stage': [], 'prime': [],
         })
@@ -892,60 +937,6 @@ parts:
         self.assertThat(
             raised.message,
             Equals('circular dependency chain found in parts definition'))
-
-    @unittest.mock.patch('snapcraft.internal.pluginhandler.load_plugin')
-    def test_config_uses_remote_part_from_after(self, mock_load):
-        self.useFixture(fixture_setup.FakeParts())
-        self.make_snapcraft_yaml("""name: test
-version: "1"
-summary: test
-description: test
-confinement: strict
-grade: stable
-
-parts:
-  part1:
-    after:
-      - curl
-    plugin: go
-    stage-packages: [fswebcam]
-""")
-
-        def load_effect(*args, **kwargs):
-            mock_part = unittest.mock.Mock()
-            mock_part.code.build_packages = []
-            mock_part.deps = []
-            mock_part.name = args[0]
-
-            return mock_part
-
-        mock_load.side_effect = load_effect
-
-        project_options = snapcraft.ProjectOptions()
-
-        remote_parts.update()
-        _config.Config(project_options)
-
-        call1 = unittest.mock.call(
-            'curl',
-            plugin_name='autotools',
-            part_properties={
-                'plugin': 'autotools', 'stage': [], 'prime': [],
-                'source': 'http://curl.org'},
-            project_options=project_options,
-            part_schema=self.part_schema,
-            definitions_schema=self.definitions_schema)
-        call2 = unittest.mock.call(
-            'part1',
-            plugin_name='go',
-            part_properties={
-                'plugin': 'go', 'stage': [], 'prime': [],
-                'stage-packages': ['fswebcam']},
-            project_options=project_options,
-            part_schema=self.part_schema,
-            definitions_schema=self.definitions_schema)
-
-        mock_load.assert_has_calls([call1, call2], any_order=True)
 
 
 class YamlVCSBuildPackagesTestCase(YamlBaseTestCase):

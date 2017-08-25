@@ -42,8 +42,8 @@ class TestPlugin(snapcraft.BasePlugin):
         return ['test-property']
 
 
-def loadplugin(part_name, plugin_name=None, part_properties=None,
-               project_options=None):
+def load_part(part_name, plugin_name=None, part_properties=None,
+              project_options=None):
     if not plugin_name:
         plugin_name = 'nil'
     properties = {'plugin': plugin_name}
@@ -55,9 +55,16 @@ def loadplugin(part_name, plugin_name=None, part_properties=None,
     validator = project_loader.Validator()
     schema = validator.part_schema
     definitions_schema = validator.definitions_schema
-    return pluginhandler.load_plugin(part_name=part_name,
-                                     plugin_name=plugin_name,
-                                     part_properties=properties,
-                                     project_options=project_options,
-                                     part_schema=schema,
-                                     definitions_schema=definitions_schema)
+    plugin = pluginhandler.load_plugin(part_name=part_name,
+                                       plugin_name=plugin_name,
+                                       properties=properties,
+                                       project_options=project_options,
+                                       part_schema=schema,
+                                       definitions_schema=definitions_schema)
+
+    return pluginhandler.PluginHandler(
+        plugin=plugin,
+        part_properties=properties,
+        project_options=project_options,
+        part_schema=schema,
+        definitions_schema=definitions_schema)

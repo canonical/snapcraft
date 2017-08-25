@@ -167,11 +167,11 @@ def _setup_core(deb_arch):
 
 
 def _replace_in_part(part):
-    for key, value in part.code.options.__dict__.items():
+    for key, value in part.plugin.options.__dict__.items():
         value = replace_attr(value, [
-            ('$SNAPCRAFT_PART_INSTALL', part.code.installdir),
+            ('$SNAPCRAFT_PART_INSTALL', part.plugin.installdir),
         ])
-        setattr(part.code.options, key, value)
+        setattr(part.plugin.options, key, value)
 
     return part
 
