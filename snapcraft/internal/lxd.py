@@ -309,6 +309,12 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'raw.idmap', 'both {} 0'.format(os.getuid())])
+            # Remove existing device (to ensure we update old containers)
+            devices = self._get_container_status()['devices']
+            if self._project_folder in devices:
+                check_call([
+                    'lxc', 'config', 'device', 'remove', self._container_name,
+                    self._project_folder])
             check_call([
                 'lxc', 'start', self._container_name])
         self._wait_for_network()
@@ -326,7 +332,7 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'device', 'add', self._container_name,
                 destination, 'disk', 'source={}'.format(source),
-                'path=/{}'.format(destination)])
+                'path={}'.format(destination)])
 
     def _finish(self):
         # Nothing to do

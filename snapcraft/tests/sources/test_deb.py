@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,8 +18,9 @@ import os
 import sys
 from unittest import mock
 
-from snapcraft.internal import sources
+from testtools.matchers import Equals
 
+from snapcraft.internal import sources
 from snapcraft import tests
 
 
@@ -60,7 +61,7 @@ class TestDeb(tests.FakeFileHTTPServerBasedTestCase):
             os.path.join(deb_source.source_dir, deb_file_name))
 
         with open(deb_download, 'r') as deb_file:
-            self.assertEqual('Test fake compressed file', deb_file.read())
+            self.assertThat(deb_file.read(), Equals('Test fake file'))
 
     def test_has_source_handler_entry_on_linux(self):
         if sys.platform == 'linux':

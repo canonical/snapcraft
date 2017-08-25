@@ -21,5 +21,5 @@ set -ev
 script_path="$(dirname "$0")"
 "$script_path/run_docker_container.sh" cla-check
 docker exec -i cla-check apt install -y git python-launchpadlib
-docker exec -i cla-check ./tools/cla_check_travis_commit_range.sh
+docker exec -i cla-check ./tools/cla_check.py
 docker rm -f cla-check

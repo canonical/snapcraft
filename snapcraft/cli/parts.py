@@ -13,12 +13,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import sys
 import click
 
-from snapcraft.internal import parts, lifecycle
+from snapcraft.internal import remote_parts, lifecycle
 from ._options import get_project_options
-from . import echo
 from . import env
 
 
@@ -36,7 +34,7 @@ def update(ctx, **kwargs):
         project_options = get_project_options(**kwargs)
         lifecycle.containerbuild('update', project_options)
     else:
-        parts.update()
+        remote_parts.update()
 
 
 @partscli.command()
@@ -50,11 +48,7 @@ def define(ctx, part):
         snapcraft define my-part1
 
     """
-    try:
-        parts.define(part)
-    except RuntimeError as e:
-        echo.error(e)
-        sys.exit(1)
+    remote_parts.define(part)
 
 
 @partscli.command()
@@ -68,4 +62,4 @@ def search(ctx, query):
         snapcraft search go
 
     """
-    parts.search(' '.join(query))
+    remote_parts.search(' '.join(query))

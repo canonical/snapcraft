@@ -197,7 +197,7 @@ class Ubuntu(BaseRepo):
             try:
                 cls._mark_install(apt_cache, package_names)
             except errors.PackageNotFoundError as e:
-                raise errors.BuildPackageNotFoundError(e)
+                raise errors.BuildPackageNotFoundError(e.package_name)
             for package in apt_cache.get_changes():
                 new_packages.append((package.name, package.candidate.version))
 
@@ -435,11 +435,6 @@ def _try_copy_local(path, target):
         logger.warning(
             '{} will be a dangling symlink'.format(path))
         return False
-
-
-def check_for_command(command):
-    if not shutil.which(command):
-        raise errors.MissingCommandError([command])
 
 
 def _set_pkg_version(pkg, version):

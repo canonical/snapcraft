@@ -21,6 +21,7 @@ from unittest.mock import call
 from testtools.matchers import Contains, Equals, DirExists, FileExists, Not
 from snapcraft.tests import fixture_setup
 
+import snapcraft.internal.errors
 from snapcraft.internal import pluginhandler
 from snapcraft.internal import project_loader
 from . import CommandBaseTestCase
@@ -76,12 +77,13 @@ parts:
     def test_part_to_remove_not_defined_exits_with_error(self):
         self.make_snapcraft_yaml(n=3)
 
-        result = self.run_command(['clean', 'no-clean'])
+        raised = self.assertRaises(
+            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            self.run_command, ['clean', 'no-clean'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Equals(
+        self.assertThat(str(raised), Equals(
             "The part named 'no-clean' is not defined in "
-            "'snap/snapcraft.yaml'\n"))
+            "'snap/snapcraft.yaml'"))
 
     def test_clean_all(self):
         self.make_snapcraft_yaml(n=3)
@@ -124,7 +126,7 @@ parts:
             call(['lxc', 'delete', '-f', fake_lxd.name]),
         ])
         # no other commands should be run in the container
-        self.assertEquals(fake_lxd.check_call_mock.call_count, 1)
+        self.assertThat(fake_lxd.check_call_mock.call_count, Equals(1))
 
     def test_clean_containerized_with_part(self):
         fake_lxd = fixture_setup.FakeLXD()

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,6 +20,7 @@ from unittest import mock
 
 import fixtures
 import yaml
+from testtools.matchers import Equals
 
 from snapcraft import (
     storeapi,
@@ -63,13 +64,15 @@ class TravisPreconditionsTestCase(tests.TestCase):
             RequiredCommandNotFound,
             self.run_command, self.entry_point)
 
-        self.assertEqual([
-            'Travis CLI (`travis`) is not available.',
-            'Please install it before trying this command again:',
-            '',
-            '    $ sudo apt install ruby-dev ruby-ffi libffi-dev',
-            '    $ sudo gem install travis'
-        ], str(raised).splitlines())
+        self.assertThat(
+            str(raised).splitlines(),
+            Equals([
+                'Travis CLI (`travis`) is not available.',
+                'Please install it before trying this command again:',
+                '',
+                '    $ sudo apt install ruby-dev ruby-ffi libffi-dev',
+                '    $ sudo gem install travis'
+            ]))
 
     @mock.patch('subprocess.check_call')
     def test_broken_travis_cli(self, mock_check_call):
@@ -81,12 +84,14 @@ class TravisPreconditionsTestCase(tests.TestCase):
             self.run_command,
             self.entry_point)
 
-        self.assertEqual([
-            'Travis CLI (`travis settings`) is not functional or you are '
-            'not allowed to access this repository settings.',
-            'Make sure it works correctly in your system before trying this '
-            'command again.',
-        ], str(raised).splitlines())
+        self.assertThat(
+            str(raised).splitlines(),
+            Equals([
+                'Travis CLI (`travis settings`) is not functional or you are '
+                'not allowed to access this repository settings.',
+                'Make sure it works correctly in your system before trying '
+                'this command again.',
+            ]))
 
     @mock.patch('subprocess.check_call')
     def test_missing_git(self, mock_check_call):
@@ -96,13 +101,15 @@ class TravisPreconditionsTestCase(tests.TestCase):
             RequiredCommandNotFound,
             self.run_command, self.entry_point)
 
-        self.assertEqual([
-            'Git (`git`) is not available, this tool cannot verify its '
-            'prerequisites.',
-            'Please install it before trying this command again:',
-            '',
-            '    $ sudo apt install git',
-        ], str(raised).splitlines())
+        self.assertThat(
+            str(raised).splitlines(),
+            Equals([
+                'Git (`git`) is not available, this tool cannot verify its '
+                'prerequisites.',
+                'Please install it before trying this command again:',
+                '',
+                '    $ sudo apt install git',
+            ]))
 
     @mock.patch('subprocess.check_call')
     def test_broken_git_repo(self, mock_check_call):
@@ -113,11 +120,13 @@ class TravisPreconditionsTestCase(tests.TestCase):
             RequiredCommandFailure,
             self.run_command, self.entry_point)
 
-        self.assertEqual([
-            'The current directory is not a Git repository.',
-            'Please switch to the desired project repository where '
-            'Travis should be enabled.',
-        ], str(raised).splitlines())
+        self.assertThat(
+            str(raised).splitlines(),
+            Equals([
+                'The current directory is not a Git repository.',
+                'Please switch to the desired project repository where '
+                'Travis should be enabled.',
+            ]))
 
     @mock.patch('subprocess.check_call')
     def test_missing_travis_setup(self, mock_check_call):
@@ -128,11 +137,13 @@ class TravisPreconditionsTestCase(tests.TestCase):
             self.run_command,
             self.entry_point)
 
-        self.assertEqual([
-            'Travis project is not initialized for the current directory.',
-            'Please initialize Travis project (e.g. `travis init`) with '
-            'appropriate parameters.',
-        ], str(raised).splitlines())
+        self.assertThat(
+            str(raised).splitlines(),
+            Equals([
+                'Travis project is not initialized for the current directory.',
+                'Please initialize Travis project (e.g. `travis init`) with '
+                'appropriate parameters.',
+            ]))
 
 
 class TravisSuccessfulTestCase(tests.TestCase):
@@ -187,38 +198,44 @@ class TravisSuccessfulTestCase(tests.TestCase):
         # '.travis.yml' updated for snap CI.
         with open('.travis.yml') as fd:
             travis_conf = yaml.load(fd)
-            self.assertEqual('required', travis_conf['sudo'])
-            self.assertEqual(['docker'], travis_conf['services'])
-            self.assertEqual([
-                '<travis-cli-decrypt>',
-            ], travis_conf['after_success'])
-            self.assertEqual({
-                'skip_cleanup': True,
-                'provider': 'script',
-                'script': (
-                    'docker run -v $(pwd):$(pwd) -t snapcore/snapcraft sh -c '
-                    '"apt update -qq && '
-                    'cd $(pwd) && '
-                    'snapcraft && snapcraft push *.snap --release edge"'),
-                'on': {
-                    'branch': 'master',
-                },
-            }, travis_conf['deploy'])
+            self.assertThat(travis_conf['sudo'], Equals('required'))
+            self.assertThat(travis_conf['services'], Equals(['docker']))
+            self.assertThat(
+                travis_conf['after_success'],
+                Equals([
+                    '<travis-cli-decrypt>',
+                ]))
+            self.assertThat(
+                travis_conf['deploy'],
+                Equals({
+                    'skip_cleanup': True,
+                    'provider': 'script',
+                    'script': (
+                        'docker run -v $(pwd):$(pwd) -t snapcore/snapcraft '
+                        'sh -c "apt update -qq && '
+                        'cd $(pwd) && '
+                        'snapcraft && snapcraft push *.snap --release edge"'),
+                    'on': {
+                        'branch': 'master',
+                    },
+                }))
 
         # Descriptive logging ...
-        self.assertEqual([
-            "Enabling Travis testbeds to push and release 'foo' snaps "
-            "to edge channel in series '16'",
-            'Acquiring specific authorization information ...',
-            'Encrypting authorization for Travis and adjusting project '
-            'to automatically decrypt and use it during "after_success".',
-            'Configuring "deploy" phase to build and release the snap in '
-            'the Store.',
-            'Done. Now you just have to review and commit changes in your '
-            'Travis project (`.travis.yml`).',
-            'Also make sure you add the new '
-            '`.snapcraft/travis_snapcraft.cfg` file.',
-        ], self.fake_logger.output.splitlines()[1:])
+        self.assertThat(
+            self.fake_logger.output.splitlines()[1:],
+            Equals([
+                "Enabling Travis testbeds to push and release 'foo' snaps "
+                "to edge channel in series '16'",
+                'Acquiring specific authorization information ...',
+                'Encrypting authorization for Travis and adjusting project '
+                'to automatically decrypt and use it during "after_success".',
+                'Configuring "deploy" phase to build and release the snap in '
+                'the Store.',
+                'Done. Now you just have to review and commit changes in your '
+                'Travis project (`.travis.yml`).',
+                'Also make sure you add the new '
+                '`.snapcraft/travis_snapcraft.cfg` file.',
+            ]))
 
     @mock.patch('subprocess.check_output')
     @mock.patch('subprocess.check_call')
@@ -259,17 +276,21 @@ class TravisSuccessfulTestCase(tests.TestCase):
         # '.travis.yml' updated only with the decrypt command.
         with open('.travis.yml') as fd:
             travis_conf = yaml.load(fd)
-            self.assertEqual([
-                '<travis-cli-decrypt>',
-            ], travis_conf['after_success'])
+            self.assertThat(
+                travis_conf['after_success'],
+                Equals([
+                    '<travis-cli-decrypt>',
+                ]))
 
         # Descriptive logging ...
-        self.assertEqual([
-            'Refreshing credentials to push and release "foo" snaps to '
-            'edge channel in series 16',
-            'Acquiring specific authorization information ...',
-            'Encrypting authorization for Travis and adjusting project '
-            'to automatically decrypt and use it during "after_success".',
-            'Done. Please commit the changes to '
-            '`.snapcraft/travis_snapcraft.cfg` file.',
-        ], self.fake_logger.output.splitlines()[1:])
+        self.assertThat(
+            self.fake_logger.output.splitlines()[1:],
+            Equals([
+                'Refreshing credentials to push and release "foo" snaps to '
+                'edge channel in series 16',
+                'Acquiring specific authorization information ...',
+                'Encrypting authorization for Travis and adjusting project '
+                'to automatically decrypt and use it during "after_success".',
+                'Done. Please commit the changes to '
+                '`.snapcraft/travis_snapcraft.cfg` file.',
+            ]))

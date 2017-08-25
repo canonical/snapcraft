@@ -18,7 +18,7 @@ import testtools
 from testtools.matchers import Equals
 
 import snapcraft
-import snapcraft.internal.pluginhandler.stage_package_grammar as grammar
+from snapcraft.internal.project_loader import grammar
 
 from . import GrammarTestCase
 
@@ -42,9 +42,9 @@ class GrammarOnDuplicatesTestCase(GrammarTestCase):
         """Test that multiple identical selector sets is an error."""
 
         with testtools.ExpectedException(
-                grammar.errors.StagePackageSyntaxError,
-                "Invalid syntax for stage packages: found duplicate 'on "
-                "amd64,i386' statements. These should be merged."):
+                grammar.errors.GrammarSyntaxError,
+                "Invalid grammar syntax: found duplicate 'on amd64,i386' "
+                'statements. These should be merged.'):
             grammar.process_grammar(
                 self.grammar, snapcraft.ProjectOptions(),
                 snapcraft.repo.Repo())
@@ -230,7 +230,7 @@ class InvalidGrammarTestCase(GrammarTestCase):
 
     def test_invalid_grammar(self):
         with testtools.ExpectedException(
-                grammar.errors.StagePackageSyntaxError,
+                grammar.errors.GrammarSyntaxError,
                 self.expected_exception):
             grammar.process_grammar(
                 self.grammar, snapcraft.ProjectOptions(),

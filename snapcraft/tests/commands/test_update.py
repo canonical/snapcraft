@@ -100,8 +100,8 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         with open(self.headers_yaml) as headers_file:
             headers = yaml.load(headers_file)
 
-        self.assertEqual(parts, expected_parts)
-        self.assertEqual(headers, expected_headers)
+        self.assertThat(parts, Equals(expected_parts))
+        self.assertThat(headers, Equals(expected_headers))
 
     def test_update_with_unchanged_date_does_not_download_again(self):
         result = self.run_command(['update'])
@@ -151,29 +151,10 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()
 
-        result = self.run_command(['update'])
-
-        self.assertThat(result.exit_code, Equals(0))
-
-        source = os.path.realpath(os.path.curdir)
-        self.assertIn(
-            'Waiting for a network connection...\n'
-            'Network connection established\n'
-            'Mounting {} into container\n'.format(source),
-            fake_logger.output)
+        self.run_command(['update'])
 
         project_folder = '/root/build_snap-test'
-        fake_lxd.check_call_mock.assert_has_calls([
-            call(['lxc', 'config', 'device', 'add', fake_lxd.name,
-                  project_folder, 'disk', 'source={}'.format(source),
-                  'path=/{}'.format(project_folder)]),
-            call(['lxc', 'stop', '-f', fake_lxd.name]),
-        ])
         mock_container_run.assert_has_calls([
-            call(['python3', '-c', 'import urllib.request; ' +
-                  'urllib.request.urlopen(' +
-                  '"http://start.ubuntu.com/connectivity-check.html"' +
-                  ', timeout=5)']),
             call(['snapcraft', 'update'], cwd=project_folder),
             call(['apt-get', 'update']),
             call(['apt-get', 'upgrade', '-y']),

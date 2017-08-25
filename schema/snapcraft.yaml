@@ -80,6 +80,7 @@ properties:
     description: the snap type, the implicit type is 'app'
     enum:
       - app
+      - base
       - gadget
       - kernel
       - os
@@ -104,6 +105,9 @@ properties:
     enum:
       - stable
       - devel
+  base:
+    type: string
+    description: the base snap to use
   epoch:
     description: the snap epoch, used to specify upgrade paths
     format: epoch
@@ -288,6 +292,10 @@ properties:
             uniqueItems: true
             items:
               type: string
+              enum:
+                - no-system-libraries
+                - no-install
+                - debug
             default: []
           organize:
             type: object

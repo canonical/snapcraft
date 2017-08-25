@@ -40,6 +40,7 @@ import shutil
 import snapcraft
 from snapcraft import sources
 from snapcraft import shell_utils
+from snapcraft.internal import errors
 
 _RUSTUP = 'https://static.rust-lang.org/rustup.sh'
 
@@ -182,7 +183,7 @@ class RustPlugin(snapcraft.BasePlugin):
                 options.append(
                     '--channel={}'.format(self.options.rust_channel))
             else:
-                raise EnvironmentError(
+                raise errors.SnapcraftEnvironmentError(
                     '{} is not a valid rust channel'.format(
                         self.options.rust_channel))
         os.makedirs(self._rustpath, exist_ok=True)

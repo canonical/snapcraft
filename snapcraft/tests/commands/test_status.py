@@ -70,40 +70,43 @@ class StatusCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.output, Contains('Usage:'))
 
     def test_status_with_no_permissions(self):
-        result = self.run_command(['status', 'snap-test'])
+        raised = self.assertRaises(
+            storeapi.errors.InvalidCredentialsError,
+            self.run_command, ['status', 'snap-test'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'No valid credentials found. Have you run "snapcraft login"?'))
+        self.assertThat(str(raised), Contains('Invalid credentials'))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_with_3rd_party_snap(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        result = self.run_command(['status', 'snap-test'])
+        raised = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            self.run_command, ['status', 'snap-test'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Equals(
             "Snap 'snap-test' was not found in '16' series."))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_with_3rd_party_snap_by_arch(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        result = self.run_command(['status', 'snap-test', '--arch=arm64'])
+        raised = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            self.run_command, ['status', 'snap-test', '--arch=arm64'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Equals(
             "Snap 'snap-test' for 'arm64' was not found in '16' series."))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_with_3rd_party_snap_by_series(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        result = self.run_command(['status', 'snap-test', '--series=18'])
+        raised = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            self.run_command, ['status', 'snap-test', '--series=18'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Equals(
             "Snap 'snap-test' was not found in '18' series."))
 
     @mock.patch.object(storeapi.SCAClient, 'snap_status')
@@ -111,10 +114,11 @@ class StatusCommandTestCase(CommandBaseTestCase):
     def test_status_by_unknown_arch(self, mock_account_api, mock_status):
         mock_status.return_value = {}
 
-        result = self.run_command(['status', 'snap-test', '--arch=some-arch'])
+        raised = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            self.run_command, ['status', 'snap-test', '--arch=some-arch'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Equals(
             "Snap 'snap-test' for 'some-arch' was not found in '16' series."))
 
     @mock.patch.object(storeapi.SCAClient, 'snap_status')
@@ -124,11 +128,11 @@ class StatusCommandTestCase(CommandBaseTestCase):
 
         mock_status.return_value = {}
 
-        result = self.run_command(['status', 'snap-test',
-                                   '--series=some-series'])
+        raised = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            self.run_command, ['status', 'snap-test', '--series=some-series'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Equals(
             "Snap 'snap-test' was not found in 'some-series' series."))
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
@@ -240,5 +244,5 @@ class StatusCommandTestCase(CommandBaseTestCase):
             latest   i386    stable         -          -
                              beta           -          -
                              stable/hotfix  1.0-i386   3           2017-05-21T18:52:14.578435
-            """))) # noqa
+            """)))  # noqa
         mock_status.assert_called_once_with('snap-test', '16', None)

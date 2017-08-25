@@ -20,8 +20,8 @@ import testtools
 from testtools.matchers import Equals
 
 import snapcraft
-import snapcraft.internal.pluginhandler.stage_package_grammar as grammar
-import snapcraft.internal.pluginhandler.stage_package_grammar._on as on
+from snapcraft.internal.project_loader import grammar
+import snapcraft.internal.project_loader.grammar._on as on
 
 from . import GrammarTestCase
 

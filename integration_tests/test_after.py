@@ -17,7 +17,10 @@
 import os
 import subprocess
 
-from testtools.matchers import Contains
+from testtools.matchers import (
+    Equals,
+    Contains,
+)
 
 import integration_tests
 
@@ -51,7 +54,7 @@ class AfterTestCase(integration_tests.TestCase):
             subprocess.CalledProcessError,
             self.run_snapcraft, 'build')
 
-        self.assertEqual(1, exception.returncode)
+        self.assertThat(exception.returncode, Equals(2))
         expected = (
             'Issue detected while analyzing snapcraft.yaml: '
             'circular dependency chain found in parts definition\n')
@@ -75,7 +78,7 @@ class AfterTestCase(integration_tests.TestCase):
             subprocess.CalledProcessError,
             self.run_snapcraft, 'build')
 
-        self.assertEqual(1, exception.returncode)
+        self.assertThat(exception.returncode, Equals(1))
 
     def test_pull_with_tree_of_dependencies(self):
         self.run_snapcraft(

@@ -37,6 +37,7 @@ from snapcraft.internal import (
     sources,
     states,
 )
+from snapcraft.internal.project_loader.errors import YamlValidationError
 from ._scriptlets import ScriptRunner
 from ._build_attributes import BuildAttributes
 from ._stage_package_handler import StagePackageHandler
@@ -108,7 +109,7 @@ class PluginHandler:
                 plugin_name, self._part_properties, part_schema,
                 definitions_schema)
         except jsonschema.ValidationError as e:
-            error = errors.SnapcraftSchemaError.from_validation_error(e)
+            error = YamlValidationError.from_validation_error(e)
             raise errors.PluginError(
                 'properties failed to load for {}: {}'.format(
                     part_name, error.message))
@@ -141,9 +142,12 @@ class PluginHandler:
                                      self._project_options.local_plugins_dir)
             if not module:
                 raise errors.PluginError(
-                    'unknown plugin: {}'.format(plugin_name))
+                    'unknown plugin: {!r}'.format(plugin_name))
 
         plugin = _get_plugin(module)
+        if not plugin:
+            raise errors.PluginError(
+                'no plugin found in module {!r}'.format(plugin_name))
         _validate_pull_and_build_properties(
             plugin_name, plugin, part_schema, definitions_schema)
         options = _make_options(
@@ -401,10 +405,11 @@ class PluginHandler:
 
     def mark_build_done(self):
         build_properties = self.code.get_build_properties()
+        plugin_manifest = self.code.get_manifest()
 
         self.mark_done('build', states.BuildState(
             build_properties, self._part_properties,
-            self._project_options))
+            self._project_options, plugin_manifest))
 
     def clean_build(self, hint=''):
         if self.is_clean('build'):
@@ -491,9 +496,7 @@ class PluginHandler:
             self._clean_shared_area(self.stagedir, state,
                                     project_staged_state)
         except AttributeError:
-            raise errors.MissingState(
-                "Failed to clean step 'stage': Missing necessary state. "
-                "This won't work until a complete clean has occurred.")
+            raise errors.MissingStateCleanError('stage')
 
         self.mark_cleaned('stage')
 
@@ -551,9 +554,7 @@ class PluginHandler:
             self._clean_shared_area(self.primedir, state,
                                     project_primed_state)
         except AttributeError:
-            raise errors.MissingState(
-                "Failed to clean step 'prime': Missing necessary state. "
-                "This won't work until a complete clean has occurred.")
+            raise errors.MissingStateCleanError('prime')
 
         self.mark_cleaned('prime')
 
@@ -599,7 +600,7 @@ class PluginHandler:
         try:
             self._clean_steps(project_staged_state, project_primed_state,
                               step, hint)
-        except errors.MissingState:
+        except errors.MissingStateCleanError:
             # If one of the step cleaning rules is missing state, it must be
             # running on the output of an old Snapcraft. In that case, if we
             # were specifically asked to clean that step we need to fail.
@@ -920,7 +921,7 @@ def _organize_filesets(fileset, base_dir):
                 # deletions.
                 shutil.rmtree(src)
             elif os.path.isfile(dst):
-                raise EnvironmentError(
+                raise errors.SnapcraftEnvironmentError(
                     'Trying to organize file {key!r} to {dst!r}, '
                     'but {dst!r} already exists'.format(
                         key=key, dst=os.path.relpath(dst, base_dir)))
@@ -1070,7 +1071,7 @@ def _file_collides(file_this, file_other):
 
 
 def check_for_collisions(parts):
-    """Raises an EnvironmentError if conflicts are found between two parts."""
+    """Raises a SnapcraftPartConflictError if conflicts are found."""
     parts_files = {}
     for part in parts:
         # Gather our own files up

@@ -17,15 +17,20 @@
 from snapcraft.internal import errors
 
 
-class StagePackageSyntaxError(errors.SnapcraftError):
+class GrammarError(errors.SnapcraftError):
+    """Base class for grammar-related errors."""
+    pass
 
-    fmt = 'Invalid syntax for stage packages: {message}'
+
+class GrammarSyntaxError(GrammarError):
+
+    fmt = 'Invalid grammar syntax: {message}'
 
     def __init__(self, message):
         super().__init__(message=message)
 
 
-class OnStatementSyntaxError(StagePackageSyntaxError):
+class OnStatementSyntaxError(GrammarSyntaxError):
 
     def __init__(self, on_statement, *, message=None):
         components = ["{!r} is not a valid 'on' clause".format(on_statement)]
@@ -34,7 +39,7 @@ class OnStatementSyntaxError(StagePackageSyntaxError):
         super().__init__(message=': '.join(components))
 
 
-class UnsatisfiedStatementError(errors.SnapcraftError):
+class UnsatisfiedStatementError(GrammarError):
 
     fmt = 'Unable to satisfy {statement!r}, failure forced'
 

@@ -15,8 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-
 from unittest import mock
+
+from testtools.matchers import Equals
 
 import snapcraft
 from snapcraft import tests
@@ -92,7 +93,7 @@ class PythonPluginTestCase(tests.TestCase):
         for file_info in files:
             with open(os.path.join(plugin.installdir,
                                    file_info['path']), 'r') as f:
-                self.assertEqual(f.read(), file_info['expected'])
+                self.assertThat(f.read(), Equals(file_info['expected']))
 
     def test_build_with_proivder_stage_dir(self):
         self.useFixture(tests.fixture_setup.CleanEnvironment())
@@ -152,7 +153,7 @@ class PythonPluginTestCase(tests.TestCase):
         for file_info in files:
             with open(os.path.join(plugin.installdir,
                                    file_info['path']), 'r') as f:
-                self.assertEqual(f.read(), file_info['expected'])
+                self.assertThat(f.read(), Equals(file_info['expected']))
 
     def test_fileset_ignores(self):
         plugin = plainbox_provider.PlainboxProviderPlugin(

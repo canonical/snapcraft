@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import yaml
+
+from testtools.matchers import Equals
 
 import snapcraft.internal
 from snapcraft import tests
@@ -42,7 +44,7 @@ class PrimeStateTestCase(PrimeStateBaseTestCase):
 
     def test_yaml_conversion(self):
         state_from_yaml = yaml.load(yaml.dump(self.state))
-        self.assertEqual(self.state, state_from_yaml)
+        self.assertThat(state_from_yaml, Equals(self.state))
 
     def test_comparison(self):
         other = snapcraft.internal.states.PrimeState(
@@ -53,8 +55,8 @@ class PrimeStateTestCase(PrimeStateBaseTestCase):
 
     def test_properties_of_interest(self):
         properties = self.state.properties_of_interest(self.part_properties)
-        self.assertEqual(1, len(properties))
-        self.assertEqual(['qux'], properties['prime'])
+        self.assertThat(len(properties), Equals(1))
+        self.assertThat(properties['prime'], Equals(['qux']))
 
     def test_project_options_of_interest(self):
         self.assertFalse(self.state.project_options_of_interest(self.project))
