@@ -257,6 +257,11 @@ class PluginOutdatedError(SnapcraftError):
         super().__init__(message=message)
 
 
+class PluginCommandFailure(SnapcraftError):
+
+    fmt = 'Build failed'
+
+
 class RequiredCommandFailure(SnapcraftError):
 
     fmt = '{command!r} failed.'

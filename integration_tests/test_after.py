@@ -23,6 +23,7 @@ from testtools.matchers import (
 )
 
 import integration_tests
+from snapcraft.internal import errors
 
 
 class AfterTestCase(integration_tests.TestCase):
@@ -74,11 +75,9 @@ class AfterTestCase(integration_tests.TestCase):
         with open('snapcraft.yaml', 'w') as snapcraft_yaml:
             snapcraft_yaml.write(wrong_contents)
 
-        exception = self.assertRaises(
-            subprocess.CalledProcessError,
+        self.assertRaises(
+            (errors.PluginCommandFailure, subprocess.CalledProcessError),
             self.run_snapcraft, 'build')
-
-        self.assertThat(exception.returncode, Equals(1))
 
     def test_pull_with_tree_of_dependencies(self):
         self.run_snapcraft(
