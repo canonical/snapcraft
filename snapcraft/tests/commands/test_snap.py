@@ -140,6 +140,10 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         source = os.path.realpath(os.path.curdir)
         self.assertIn(
+            'Using default LXD remote because '
+            'SNAPCRAFT_CONTAINER_BUILDS is set to 1\n'
+            'Waiting for a network connection...\n'
+            'Network connection established\n'
             'Mounting {} into container\n'.format(source),
             fake_logger.output)
 
@@ -196,6 +200,9 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         source = os.path.realpath(os.path.curdir)
         self.assertIn(
+            "Using LXD remote 'myremote' from SNAPCRAFT_CONTAINER_BUILDS\n"
+            'Waiting for a network connection...\n'
+            'Network connection established\n'
             'Mounting {} into container\n'
             'Connecting to 127.0.0.1 via SSH\n'.format(source),
             fake_logger.output)
@@ -237,6 +244,33 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                       source, project_folder)],
                  stdin=9, stdout=9),
         ])
+
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('shutil.rmtree')
+    @mock.patch('os.makedirs')
+    @mock.patch('snapcraft.internal.lxd.Popen')
+    @mock.patch('snapcraft.internal.lxd.open')
+    def test_snap_containerized_invalid_remote(self,
+                                               mock_open,
+                                               mock_popen,
+                                               mock_makedirs,
+                                               mock_rmtree,
+                                               mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_open.return_value = mock.MagicMock(spec=open)
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_CONTAINER_BUILDS', '&^%$#@'))
+        self.make_snapcraft_yaml()
+
+        self.assertIn("'&^%$#@' is not a valid LXD remote name",
+                      str(self.assertRaises(
+                          SnapcraftEnvironmentError,
+                          self.run_command, ['--debug', 'snap'])))
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('shutil.rmtree')

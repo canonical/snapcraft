@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
-from distutils import util
 import logging
 import os
 import shutil
@@ -339,18 +338,18 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
-def containerbuild(step, project_options, output=None, args=[]):
+def containerbuild(step, project_options, container_config,
+                   output=None, args=[]):
     config = snapcraft.internal.load_config(project_options)
-    remote = os.environ.get('SNAPCRAFT_CONTAINER_BUILDS')
-    # Default remote if it's a truthy value - otherwise it's a remote name
-    try:
-        util.strtobool(remote)
-        remote = None
-    except ValueError:
-        pass
+    if container_config.remote:
+        logger.info('Using LXD remote {!r} from SNAPCRAFT_CONTAINER_BUILDS'
+                    .format(container_config.remote))
+    else:
+        logger.info('Using default LXD remote because '
+                    'SNAPCRAFT_CONTAINER_BUILDS is set to 1')
     lxd.Project(output=output, source=os.path.curdir,
                 project_options=project_options,
-                remote=remote,
+                remote=container_config.remote,
                 metadata=config.get_metadata()).execute(step, args)
 
 
