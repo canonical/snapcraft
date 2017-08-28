@@ -54,6 +54,7 @@ properties:
     # type: string
     description: package version
     pattern: "^[a-zA-Z0-9.+~-]+$"
+    maxLength: 32
   version-script:
     type: string
     description: a script that echoes the version to set.
