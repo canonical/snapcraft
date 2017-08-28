@@ -57,7 +57,7 @@ class StepOutdatedError(SnapcraftError):
         'snapcraft clean {parts_names} -s {step}\n'
     )
 
-    def __init__(self, step, part,
+    def __init__(self, *, step, part,
                  dirty_properties=None, dirty_project_options=None,
                  dependents=None):
         messages = []

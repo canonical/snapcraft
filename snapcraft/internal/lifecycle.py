@@ -268,7 +268,7 @@ class _Executor:
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
             raise errors.StepOutdatedError(
-                step, part.name,
+                step=step, part=part.name,
                 dirty_properties=dirty_report.dirty_properties,
                 dirty_project_options=dirty_report.dirty_project_options)
 
@@ -285,7 +285,7 @@ class _Executor:
             for dependent in self.config.all_parts:
                 if (dependent.name in dependents and
                         not dependent.is_clean('build')):
-                    raise errors.StepOutdatedError(step, part.name,
+                    raise errors.StepOutdatedError(step=step, part=part.name,
                                                    dependents=dependents)
 
         part.clean(staged_state, primed_state, step, '(out of date)')
