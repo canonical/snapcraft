@@ -14,9 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
-import re
 from distutils import util
-from snapcraft.internal import errors
+from snapcraft.internal import errors, lxd
 
 
 class ContainerConfig:
@@ -34,10 +33,8 @@ class ContainerConfig:
         except ValueError:
             self._use_container = True
             # Verbatim name of a remote
-            if not re.compile('[a-zA-Z-]+').match(container_builds):
-                raise errors.SnapcraftEnvironmentError(
-                    '{!r} is not a valid LXD remote name'.format(
-                        container_builds))
+            if not lxd._remote_is_valid(container_builds):
+                raise errors.InvalidContainerRemoteError(container_builds)
             self._remote = container_builds
 
     @property

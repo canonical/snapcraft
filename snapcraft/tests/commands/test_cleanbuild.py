@@ -145,3 +145,13 @@ class CleanBuildFailuresCommandTestCase(CleanBuildCommandBaseTestCase):
             'You must have LXD installed in order to use cleanbuild.\n'
             'Refer to the documentation at '
             'https://linuxcontainers.org/lxd/getting-started-cli.'))
+
+    def test_invalid_remote(self):
+        fake_lxd = tests.fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+
+        self.assertIn(
+            "'foo/bar' is not a valid LXD remote name",
+            str(self.assertRaises(
+                snapcraft.internal.errors.InvalidContainerRemoteError,
+                self.run_command, ['cleanbuild', '--remote', 'foo/bar'])))

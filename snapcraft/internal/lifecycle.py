@@ -354,6 +354,9 @@ def containerbuild(step, project_options, container_config,
 
 
 def cleanbuild(project_options, remote=''):
+    if remote and not lxd._remote_is_valid(remote):
+        raise errors.InvalidContainerRemoteError(remote)
+
     config = snapcraft.internal.load_config(project_options)
     tar_filename = '{}_{}_source.tar.bz2'.format(
         config.data['name'], config.data['version'])

@@ -439,6 +439,19 @@ def _get_default_remote():
     return default_remote.decode(sys.getfilesystemencoding()).strip()
 
 
+def _remote_is_valid(remote):
+    """Verify that the given string is a valid remote name
+
+    :param str remote: the LXD remote to verify.
+    :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
+        raised if the name contains spaces, colons or slashes.
+    """
+    # No colon because it separates remote from container name
+    # No slash because it's used for images
+    # No spaces
+    return not (':' in remote or ' ' in remote or '/' in remote)
+
+
 def _verify_remote(remote):
     """Verify that the lxd remote exists.
 

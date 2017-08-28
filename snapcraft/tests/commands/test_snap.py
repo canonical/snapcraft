@@ -264,13 +264,14 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.useFixture(fixtures.EnvironmentVariable(
-            'SNAPCRAFT_CONTAINER_BUILDS', '&^%$#@'))
+            'SNAPCRAFT_CONTAINER_BUILDS', 'foo/bar'))
         self.make_snapcraft_yaml()
 
-        self.assertIn("'&^%$#@' is not a valid LXD remote name",
-                      str(self.assertRaises(
-                          SnapcraftEnvironmentError,
-                          self.run_command, ['--debug', 'snap'])))
+        self.assertIn(
+            "'foo/bar' is not a valid LXD remote name",
+            str(self.assertRaises(
+                snapcraft.internal.errors.InvalidContainerRemoteError,
+                self.run_command, ['--debug', 'snap'])))
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('shutil.rmtree')
