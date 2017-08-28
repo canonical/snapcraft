@@ -377,16 +377,19 @@ class Project(Containerbuild):
         # Pipes for sshfs and sftp-server to communicate
         stdin1, stdout1 = os.pipe()
         stdin2, stdout2 = os.pipe()
+        # XXX: This needs to be extended once we support other distros
         try:
             self._host_run(['/usr/lib/sftp-server'],
                            stdin=stdin1, stdout=stdout2)
-        except CalledProcessError as e:
-            # XXX: This needs to be extended once we support other distros
+        except FileNotFoundError:
             raise SnapcraftEnvironmentError(
-                'sftp-server could not be run.\n'
-                'On Debian, Ubuntu and derivatives, the package '
-                'openssh-sftp-server needs to be installed.'
-                ) from e
+                'You must have openssh-sftp-server installed to use a LXD '
+                'remote on a different host.\n'
+                )
+        except CalledProcessError:
+            raise SnapcraftEnvironmentError(
+                'sftp-server seems to be installed but could not be run.\n'
+                )
         self._host_run(ssh_cmd + ['sshfs -o slave -o nonempty :{} {}'.format(
                           source, destination)],
                        stdin=stdin2, stdout=stdout1)

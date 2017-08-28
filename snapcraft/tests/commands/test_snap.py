@@ -303,6 +303,41 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
     @mock.patch('os.makedirs')
     @mock.patch('snapcraft.internal.lxd.Popen')
     @mock.patch('snapcraft.internal.lxd.open')
+    def test_snap_containerized_remote_ftp_not_installed(self,
+                                                         mock_open,
+                                                         mock_popen,
+                                                         mock_makedirs,
+                                                         mock_rmtree,
+                                                         mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_open.return_value = mock.MagicMock(spec=open)
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+
+        def call_effect(*args, **kwargs):
+            if args[0][:1] == ['/usr/lib/sftp-server']:
+                raise FileNotFoundError(
+                    2, 'No such file or directory')
+
+        mock_popen.side_effect = call_effect
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_CONTAINER_BUILDS', 'myremote'))
+        self.make_snapcraft_yaml()
+
+        self.assertIn(
+            'You must have openssh-sftp-server installed to use a LXD '
+            'remote on a different host.\n',
+            str(self.assertRaises(
+                SnapcraftEnvironmentError,
+                self.run_command, ['--debug', 'snap'])))
+
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('shutil.rmtree')
+    @mock.patch('os.makedirs')
+    @mock.patch('snapcraft.internal.lxd.Popen')
+    @mock.patch('snapcraft.internal.lxd.open')
     def test_snap_containerized_remote_ftp_error(self,
                                                  mock_open,
                                                  mock_popen,
@@ -326,10 +361,11 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             'SNAPCRAFT_CONTAINER_BUILDS', 'myremote'))
         self.make_snapcraft_yaml()
 
-        self.assertIn('sftp-server could not be run.',
-                      str(self.assertRaises(
-                          SnapcraftEnvironmentError,
-                          self.run_command, ['--debug', 'snap'])))
+        self.assertIn(
+            'sftp-server seems to be installed but could not be run.\n',
+            str(self.assertRaises(
+                SnapcraftEnvironmentError,
+                self.run_command, ['--debug', 'snap'])))
 
     @mock.patch('os.getuid')
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
