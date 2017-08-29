@@ -105,6 +105,26 @@ class SnapcraftEnvironmentError(SnapcraftError):
         super().__init__(message=message)
 
 
+class ContainerError(SnapcraftError):
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
+class ContainerConnectionError(ContainerError):
+    fmt = ('{message}\n'
+           'Refer to the documentation at '
+           'https://linuxcontainers.org/lxd/getting-started-cli.')
+
+
+class SnapdError(SnapcraftError):
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
 class PrimeFileConflictError(SnapcraftError):
 
     fmt = (
