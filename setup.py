@@ -37,6 +37,7 @@ packages = [
 	'snapcraft.internal.pluginhandler',
 	'snapcraft.internal.project_loader',
 	'snapcraft.internal.project_loader.grammar',
+	'snapcraft.internal.project_loader.grammar_processing',
 	'snapcraft.internal.repo',
 	'snapcraft.internal.sources',
 	'snapcraft.internal.states',

@@ -27,7 +27,10 @@ from ._env import (
     build_env_for_stage,
     runtime_env,
 )
-from . import errors
+from . import (
+    errors,
+    grammar_processing,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -169,12 +172,25 @@ class PartsConfig:
                                                plugin_name,
                                                part_properties))
 
+        sources = getattr(plugin, 'PLUGIN_STAGE_SOURCES', None)
+        stage_packages_repo = repo.Repo(
+            plugin.osrepodir, sources=sources,
+            project_options=self._project_options)
+
+        grammar_processor = grammar_processing.PartGrammarProcessor(
+            plugin=plugin,
+            properties=part_properties,
+            project_options=self._project_options,
+            repo=stage_packages_repo)
+
         part = pluginhandler.PluginHandler(
             plugin=plugin,
             part_properties=part_properties,
             project_options=self._project_options,
             part_schema=self._validator.part_schema,
-            definitions_schema=self._validator.definitions_schema)
+            definitions_schema=self._validator.definitions_schema,
+            stage_packages_repo=stage_packages_repo,
+            grammar_processor=grammar_processor)
 
         self.build_tools += plugin.build_packages
         if part.source_handler and part.source_handler.command:

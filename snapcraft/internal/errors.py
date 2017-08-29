@@ -286,3 +286,11 @@ class InvalidBuildPropertiesError(SnapcraftError):
 
     def __init__(self, plugin_name, properties):
         super().__init__(plugin_name=plugin_name, properties=properties)
+
+
+class StagePackageDownloadError(SnapcraftError):
+
+    fmt = 'Error downloading stage packages for part {part_name!r}: {message}'
+
+    def __init__(self, part_name, message):
+        super().__init__(part_name=part_name, message=message)

@@ -18,14 +18,13 @@ import os
 
 from testtools.matchers import FileExists
 
-from . import mocks
 from snapcraft import tests
 
 
 class ScriptletTestCase(tests.TestCase):
 
     def test_run_prepare_scriptlet(self):
-        handler = mocks.load_part(
+        handler = self.load_part(
             'test-part', part_properties={'prepare': 'touch before-build'})
 
         handler.build()
@@ -35,7 +34,7 @@ class ScriptletTestCase(tests.TestCase):
         self.assertThat(before_build_file_path, FileExists())
 
     def test_run_install_scriptlet(self):
-        handler = mocks.load_part(
+        handler = self.load_part(
             'test-part', part_properties={'install': 'touch after-build'})
 
         handler.build()

@@ -145,7 +145,7 @@ class Config:
 
         state = {}
         for part in self.parts.all_parts:
-            state[part.name] = states.get_state(part.statedir, step)
+            state[part.name] = states.get_state(part.plugin.statedir, step)
 
         return state
 

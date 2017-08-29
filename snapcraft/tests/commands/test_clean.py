@@ -22,8 +22,6 @@ from testtools.matchers import Contains, Equals, DirExists, FileExists, Not
 from snapcraft.tests import fixture_setup
 
 import snapcraft.internal.errors
-from snapcraft.internal import pluginhandler
-from snapcraft.internal import project_loader
 from . import CommandBaseTestCase
 
 
@@ -49,27 +47,17 @@ parts:
         open('icon.png', 'w').close()
 
         parts = []
-        validator = project_loader.Validator()
         for i in range(n):
             part_name = 'clean{}'.format(i)
 
             properties = {'plugin': 'nil'}
             project_options = snapcraft.ProjectOptions()
 
-            plugin = pluginhandler.load_plugin(
+            handler = self.load_part(
                 part_name=part_name,
                 plugin_name='nil',
-                properties=properties,
-                project_options=project_options,
-                part_schema=validator.part_schema,
-                definitions_schema=validator.definitions_schema)
-
-            handler = pluginhandler.PluginHandler(
-                plugin=plugin,
                 part_properties=properties,
-                project_options=project_options,
-                part_schema=validator.part_schema,
-                definitions_schema=validator.definitions_schema)
+                project_options=project_options)
 
             parts.append({
                 'part_dir': handler.plugin.partdir,
