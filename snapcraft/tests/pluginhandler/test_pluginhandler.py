@@ -794,14 +794,14 @@ class StateTestCase(StateBaseTestCase):
 
             for later_step in common.COMMAND_ORDER[index+1:]:
                 open(states.get_step_state_file(
-                    handler.statedir, later_step), 'w').close()
+                    handler.plugin.statedir, later_step), 'w').close()
 
             handler.mark_done(step)
 
             for later_step in common.COMMAND_ORDER[index+1:]:
                 self.assertFalse(
                     os.path.exists(states.get_step_state_file(
-                        handler.statedir, later_step)),
+                        handler.plugin.statedir, later_step)),
                     'Expected later step states to be cleared')
 
     @patch('snapcraft.internal.repo.Repo')
@@ -812,7 +812,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.pull()
 
         self.assertThat(self.handler.last_step(), Equals('pull'))
-        state = states.get_state(self.handler.statedir, 'pull')
+        state = states.get_state(self.handler.plugin.statedir, 'pull')
 
         self.assertTrue(state, 'Expected pull to save state YAML')
         self.assertTrue(type(state) is states.PullState)
@@ -835,7 +835,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.pull()
 
         self.assertThat(self.handler.last_step(), Equals('pull'))
-        state = states.get_state(self.handler.statedir, 'pull')
+        state = states.get_state(self.handler.plugin.statedir, 'pull')
 
         self.assertTrue(state, 'Expected pull to save state YAML')
         self.assertTrue(type(state) is states.PullState)
@@ -864,7 +864,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.build()
 
         self.assertThat(self.handler.last_step(), Equals('build'))
-        state = states.get_state(self.handler.statedir, 'build')
+        state = states.get_state(self.handler.plugin.statedir, 'build')
 
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
@@ -886,7 +886,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.build()
 
         self.assertThat(self.handler.last_step(), Equals('build'))
-        state = states.get_state(self.handler.statedir, 'build')
+        state = states.get_state(self.handler.plugin.statedir, 'build')
 
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
@@ -922,7 +922,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.stage()
 
         self.assertThat(self.handler.last_step(), Equals('stage'))
-        state = states.get_state(self.handler.statedir, 'stage')
+        state = states.get_state(self.handler.plugin.statedir, 'stage')
 
         self.assertTrue(state, 'Expected stage to save state YAML')
         self.assertTrue(type(state) is states.StageState)
@@ -956,7 +956,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.stage()
 
         self.assertThat(self.handler.last_step(), Equals('stage'))
-        state = states.get_state(self.handler.statedir, 'stage')
+        state = states.get_state(self.handler.plugin.statedir, 'stage')
 
         self.assertTrue(state, 'Expected stage to save state YAML')
         self.assertTrue(type(state) is states.StageState)
@@ -1067,7 +1067,7 @@ class StateTestCase(StateBaseTestCase):
                                                        {'bin/1', 'bin/2'})
         self.assertFalse(mock_copy.called)
 
-        state = states.get_state(self.handler.statedir, 'prime')
+        state = states.get_state(self.handler.plugin.statedir, 'prime')
 
         self.assertTrue(type(state) is states.PrimeState)
         self.assertTrue(type(state.files) is set)
@@ -1111,7 +1111,7 @@ class StateTestCase(StateBaseTestCase):
                                                        {'bin/1'})
         self.assertFalse(mock_copy.called)
 
-        state = states.get_state(self.handler.statedir, 'prime')
+        state = states.get_state(self.handler.plugin.statedir, 'prime')
 
         self.assertTrue(type(state) is states.PrimeState)
         self.assertTrue(type(state.files) is set)
@@ -1159,7 +1159,7 @@ class StateTestCase(StateBaseTestCase):
                  follow_symlinks=True),
         ])
 
-        state = states.get_state(self.handler.statedir, 'prime')
+        state = states.get_state(self.handler.plugin.statedir, 'prime')
 
         self.assertTrue(type(state) is states.PrimeState)
         self.assertTrue(type(state.files) is set)
@@ -1217,7 +1217,7 @@ class StateTestCase(StateBaseTestCase):
             {'bin/file'}, {'bin'}, self.handler.stagedir,
             self.handler.primedir)
 
-        state = states.get_state(self.handler.statedir, 'prime')
+        state = states.get_state(self.handler.plugin.statedir, 'prime')
 
         # Verify that only the part and staged libraries were saved into the
         # dependency paths, not the system dependency.
@@ -1258,7 +1258,7 @@ class StateTestCase(StateBaseTestCase):
             {'bin/1', 'foo/bar/baz'}, {'bin', 'foo', 'foo/bar'},
             self.handler.stagedir, self.handler.primedir)
 
-        state = states.get_state(self.handler.statedir, 'prime')
+        state = states.get_state(self.handler.plugin.statedir, 'prime')
 
         self.assertTrue(type(state) is states.PrimeState)
         self.assertThat(len(state.dependency_paths), Equals(1))
@@ -1288,7 +1288,7 @@ class StateTestCase(StateBaseTestCase):
                                                        {'bin/1'})
         self.assertFalse(mock_copy.called)
 
-        state = states.get_state(self.handler.statedir, 'prime')
+        state = states.get_state(self.handler.plugin.statedir, 'prime')
 
         self.assertTrue(type(state) is states.PrimeState)
         self.assertTrue(type(state.files) is set)

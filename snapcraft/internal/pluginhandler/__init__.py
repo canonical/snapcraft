@@ -80,8 +80,6 @@ class PluginHandler:
         self.stagedir = project_options.stage_dir
         self.primedir = project_options.prime_dir
 
-        self.statedir = plugin.statedir
-
         # We don't need to set the source_handler on systems where we do not
         # build
         if sys.platform == 'linux':
@@ -118,7 +116,8 @@ class PluginHandler:
     def makedirs(self):
         dirs = [
             self.plugin.sourcedir, self.plugin.builddir,
-            self.plugin.installdir, self.stagedir, self.primedir, self.statedir
+            self.plugin.installdir, self.plugin.statedir,
+            self.stagedir, self.primedir,
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
@@ -127,13 +126,13 @@ class PluginHandler:
         # In previous versions of Snapcraft, the state directory was a file.
         # Rather than die if we're running on output from an old version,
         # migrate it for them.
-        if os.path.isfile(self.statedir):
-            with open(self.statedir, 'r') as f:
+        if os.path.isfile(self.plugin.statedir):
+            with open(self.plugin.statedir, 'r') as f:
                 step = f.read()
 
             if step:
-                os.remove(self.statedir)
-                os.makedirs(self.statedir)
+                os.remove(self.plugin.statedir)
+                os.makedirs(self.plugin.statedir)
                 self.mark_done(step)
 
     def notify_part_progress(self, progress, hint=''):
@@ -141,7 +140,8 @@ class PluginHandler:
 
     def last_step(self):
         for step in reversed(common.COMMAND_ORDER):
-            if os.path.exists(states.get_step_state_file(self.statedir, step)):
+            if os.path.exists(
+                    states.get_step_state_file(self.plugin.statedir, step)):
                 return step
 
         return None
@@ -168,7 +168,7 @@ class PluginHandler:
         """
 
         # Retrieve the stored state for this step (assuming it has already run)
-        state = states.get_state(self.statedir, step)
+        state = states.get_state(self.plugin.statedir, step)
         differing_properties = set()
         differing_options = set()
 
@@ -202,7 +202,8 @@ class PluginHandler:
 
         index = common.COMMAND_ORDER.index(step)
 
-        with open(states.get_step_state_file(self.statedir, step), 'w') as f:
+        with open(states.get_step_state_file(
+                self.plugin.statedir, step), 'w') as f:
             f.write(yaml.dump(state))
 
         # We know we've only just completed this step, so make sure any later
@@ -212,12 +213,13 @@ class PluginHandler:
                 self.mark_cleaned(command)
 
     def mark_cleaned(self, step):
-        state_file = states.get_step_state_file(self.statedir, step)
+        state_file = states.get_step_state_file(self.plugin.statedir, step)
         if os.path.exists(state_file):
             os.remove(state_file)
 
-        if os.path.isdir(self.statedir) and not os.listdir(self.statedir):
-            os.rmdir(self.statedir)
+        if (os.path.isdir(self.plugin.statedir) and
+                not os.listdir(self.plugin.statedir)):
+            os.rmdir(self.plugin.statedir)
 
     def _fetch_stage_packages(self):
         stage_packages = self._grammar_processor.get_stage_packages()
@@ -416,7 +418,7 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning staging area for', hint)
 
-        state = states.get_state(self.statedir, 'stage')
+        state = states.get_state(self.plugin.statedir, 'stage')
 
         try:
             self._clean_shared_area(self.stagedir, state,
@@ -474,7 +476,7 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning priming area for', hint)
 
-        state = states.get_state(self.statedir, 'prime')
+        state = states.get_state(self.plugin.statedir, 'prime')
 
         try:
             self._clean_shared_area(self.primedir, state,
@@ -504,7 +506,7 @@ class PluginHandler:
 
     def get_primed_dependency_paths(self):
         dependency_paths = set()
-        state = states.get_state(self.statedir, 'prime')
+        state = states.get_state(self.plugin.statedir, 'prime')
         if state:
             for path in state.dependency_paths:
                 dependency_paths.add(
