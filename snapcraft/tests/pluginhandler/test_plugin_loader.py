@@ -123,7 +123,7 @@ class PluginLoaderTestCase(tests.TestCase):
 
             def __init__(self, name, options):
                 self.name = 'old_plugin'
-                self.packagedir = 'packagedir'
+                self.osrepodir = 'osrepodir'
                 self.statedir = 'statedir'
                 self.sourcedir = 'sourcedir'
 

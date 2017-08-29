@@ -174,7 +174,7 @@ class PartsConfig:
 
         sources = getattr(plugin, 'PLUGIN_STAGE_SOURCES', None)
         stage_packages_repo = repo.Repo(
-            plugin.packagedir, sources=sources,
+            plugin.osrepodir, sources=sources,
             project_options=self._project_options)
 
         grammar_processor = grammar_processing.PartGrammarProcessor(

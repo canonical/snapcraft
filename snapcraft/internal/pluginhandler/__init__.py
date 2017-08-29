@@ -80,7 +80,7 @@ class PluginHandler:
         self.stagedir = project_options.stage_dir
         self.primedir = project_options.prime_dir
 
-        self.packagedir = plugin.packagedir
+        self.osrepodir = plugin.osrepodir
         self.statedir = plugin.statedir
         self.sourcedir = plugin.sourcedir
 
@@ -275,8 +275,8 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning pulled source for', hint)
         # Remove ubuntu cache (where stage packages are fetched)
-        if os.path.exists(self.packagedir):
-            shutil.rmtree(self.packagedir)
+        if os.path.exists(self.plugin.osrepodir):
+            shutil.rmtree(self.plugin.osrepodir)
 
         if os.path.exists(self.sourcedir):
             if os.path.islink(self.sourcedir):
