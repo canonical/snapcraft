@@ -41,6 +41,8 @@ class LXDTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
         self.project_options = ProjectOptions(target_deb_arch=self.target_arch)
         self.fake_lxd = tests.fixture_setup.FakeLXD()
         self.useFixture(self.fake_lxd)
@@ -56,8 +58,6 @@ class LXDTestCase(tests.TestCase):
     @patch('petname.Generate')
     def test_cleanbuild(self, mock_pet, mock_inject, mock_container_run):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
 
         mock_pet.return_value = 'my-pet'
         project_folder = '/root/build_project'
@@ -67,11 +67,11 @@ class LXDTestCase(tests.TestCase):
         self.assertIn('Setting up container with project assets\n'
                       'Waiting for a network connection...\n'
                       'Network connection established\n'
-                      'Retrieved snap.snap\n', fake_logger.output)
+                      'Retrieved snap.snap\n', self.fake_logger.output)
         args = []
         if self.target_arch:
             self.assertIn('Setting target machine to \'{}\'\n'.format(
-                          self.target_arch), fake_logger.output)
+                          self.target_arch), self.fake_logger.output)
             args += ['--target-arch', self.target_arch]
 
         container_name = '{}:snapcraft-my-pet'.format(self.remote)
