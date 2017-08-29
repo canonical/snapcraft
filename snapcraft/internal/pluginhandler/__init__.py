@@ -80,9 +80,7 @@ class PluginHandler:
         self.stagedir = project_options.stage_dir
         self.primedir = project_options.prime_dir
 
-        self.osrepodir = plugin.osrepodir
         self.statedir = plugin.statedir
-        self.sourcedir = plugin.sourcedir
 
         # We don't need to set the source_handler on systems where we do not
         # build
@@ -107,7 +105,7 @@ class PluginHandler:
                 properties['source'], source_type=properties['source-type'])
             source_handler = handler_class(
                 properties['source'],
-                self.sourcedir,
+                self.plugin.sourcedir,
                 source_checksum=properties['source-checksum'],
                 source_branch=properties['source-branch'],
                 source_tag=properties['source-tag'],
@@ -278,11 +276,11 @@ class PluginHandler:
         if os.path.exists(self.plugin.osrepodir):
             shutil.rmtree(self.plugin.osrepodir)
 
-        if os.path.exists(self.sourcedir):
-            if os.path.islink(self.sourcedir):
-                os.remove(self.sourcedir)
+        if os.path.exists(self.plugin.sourcedir):
+            if os.path.islink(self.plugin.sourcedir):
+                os.remove(self.plugin.sourcedir)
             else:
-                shutil.rmtree(self.sourcedir)
+                shutil.rmtree(self.plugin.sourcedir)
 
         self.plugin.clean_pull()
         self.mark_cleaned('pull')
@@ -305,7 +303,7 @@ class PluginHandler:
         # in the Local source. However, it's left here so that it continues to
         # work on old snapcraft trees that still have src symlinks.
         def ignore(directory, files):
-            if directory == self.sourcedir:
+            if directory == self.plugin.sourcedir:
                 snaps = glob(os.path.join(directory, '*.snap'))
                 if snaps:
                     snaps = [os.path.basename(s) for s in snaps]

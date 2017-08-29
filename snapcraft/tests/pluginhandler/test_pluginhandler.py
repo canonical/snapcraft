@@ -28,7 +28,7 @@ from unittest.mock import (
     patch,
 )
 
-from testtools.matchers import Equals
+from testtools.matchers import Equals, FileExists, Not
 
 import snapcraft
 from . import mocks
@@ -51,7 +51,7 @@ class PluginTestCase(tests.TestCase):
         handler = self.load_part(
             'test-part', part_properties={'source-subdir': 'src'})
 
-        sourcedir = handler.sourcedir
+        sourcedir = handler.plugin.sourcedir
         source_subdir = handler.plugin.options.source_subdir
 
         subdir = os.path.join(sourcedir, source_subdir)
@@ -74,8 +74,8 @@ class PluginTestCase(tests.TestCase):
     def test_build_without_subdir_copies_sourcedir(self):
         handler = self.load_part('test-part')
 
-        os.makedirs(handler.sourcedir)
-        open(os.path.join(handler.sourcedir, 'file'), 'w').close()
+        os.makedirs(handler.plugin.sourcedir)
+        open(os.path.join(handler.plugin.sourcedir, 'file'), 'w').close()
 
         self.assertThat(
             handler.plugin.builddir, Equals(handler.plugin.build_basedir))
@@ -2377,15 +2377,15 @@ class SourcesTestCase(tests.TestCase):
 
         for file_ in common.SNAPCRAFT_FILES:
             self.assertFalse(
-                os.path.exists(os.path.join(handler.sourcedir, file_)))
-        self.assertFalse(
-            os.path.exists(os.path.join(handler.sourcedir, 'my-snap.snap')),
-            os.listdir(handler.sourcedir))
+                os.path.exists(os.path.join(handler.plugin.sourcedir, file_)))
+        self.assertThat(
+            os.path.join(handler.plugin.sourcedir, 'my-snap.snap'),
+            Not(FileExists()))
 
         # Make sure we don't filter things out incorrectly
-        self.assertTrue(
-            os.path.exists(os.path.join(handler.sourcedir, 'my-snap')),
-            os.listdir(handler.sourcedir))
+        self.assertThat(
+            os.path.join(handler.plugin.sourcedir, 'my-snap'),
+            FileExists())
 
     def test_source_with_unrecognized_source_must_raise_exception(self):
         properties = dict(source='unrecognized://test_source')
@@ -2405,13 +2405,13 @@ class CleanPullTestCase(tests.TestCase):
         handler = self.load_part('test-part')
 
         handler.pull()
-        source_file = os.path.join(handler.sourcedir, 'source')
+        source_file = os.path.join(handler.plugin.sourcedir, 'source')
         open(source_file, 'w').close()
 
         handler.clean_pull()
 
         # The source directory should now be gone
-        self.assertFalse(os.path.exists(handler.sourcedir))
+        self.assertFalse(os.path.exists(handler.plugin.sourcedir))
 
     def test_clean_pull_symlink(self):
         real_source_directory = os.path.join(os.getcwd(), 'src')
@@ -2421,14 +2421,14 @@ class CleanPullTestCase(tests.TestCase):
             'test-part', part_properties={'source': 'src'})
 
         handler.pull()
-        os.rmdir(handler.sourcedir)
-        os.symlink(real_source_directory, handler.sourcedir)
+        os.rmdir(handler.plugin.sourcedir)
+        os.symlink(real_source_directory, handler.plugin.sourcedir)
 
         handler.clean_pull()
 
         # The source symlink should now be gone, but the real source should
         # still be there.
-        self.assertFalse(os.path.exists(handler.sourcedir))
+        self.assertFalse(os.path.exists(handler.plugin.sourcedir))
         self.assertTrue(os.path.isdir(real_source_directory))
 
 
@@ -2439,7 +2439,7 @@ class CleanBuildTestCase(tests.TestCase):
 
         handler.build()
 
-        source_file = os.path.join(handler.sourcedir, 'source')
+        source_file = os.path.join(handler.plugin.sourcedir, 'source')
         open(source_file, 'w').close()
         open(os.path.join(handler.plugin.build_basedir, 'built'), 'w').close()
         open(os.path.join(handler.plugin.installdir, 'installed'), 'w').close()
