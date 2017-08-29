@@ -149,7 +149,7 @@ class FakePip(fixtures.Fixture):
                 self.download['constraints'] = constraint.read().splitlines()
             args.remove(args[index])
             args.remove(args[index])
-        if args[0] == '--requirement':
+        if '--requirement' in args:
             index = args.index('--requirement')
             with open(args[index + 1]) as requirement:
                 self.download['requirements'] = requirement.read().splitlines()
