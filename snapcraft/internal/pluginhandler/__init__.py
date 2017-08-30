@@ -37,7 +37,6 @@ from snapcraft.internal import (
 )
 from ._scriptlets import ScriptRunner
 from ._build_attributes import BuildAttributes
-from ._stage_package_handler import StagePackageHandler
 
 if sys.platform == 'linux':
     import magic
@@ -64,24 +63,22 @@ class PluginHandler:
         return self.plugin.installdir
 
     def __init__(self, *, plugin, part_properties, project_options,
-                 part_schema, definitions_schema):
+                 part_schema, definitions_schema, stage_packages_repo,
+                 grammar_processor):
         self.valid = False
         self.plugin = plugin
         self.config = {}
         self._part_properties = _expand_part_properties(
             part_properties, part_schema)
         self.stage_packages = []
+        self._stage_packages_repo = stage_packages_repo
+        self._grammar_processor = grammar_processor
 
         self._project_options = project_options
         self.deps = []
 
         self.stagedir = project_options.stage_dir
         self.primedir = project_options.prime_dir
-
-        parts_dir = project_options.parts_dir
-        self.ubuntudir = os.path.join(parts_dir, self.name, 'ubuntu')
-        self.statedir = os.path.join(parts_dir, self.name, 'state')
-        self.sourcedir = os.path.join(parts_dir, self.name, 'src')
 
         # We don't need to set the source_handler on systems where we do not
         # build
@@ -96,12 +93,6 @@ class PluginHandler:
 
         self._migrate_state_file()
 
-        stage_packages = getattr(plugin, 'stage_packages', [])
-        sources = getattr(self.plugin, 'PLUGIN_STAGE_SOURCES', None)
-        self._stage_package_handler = StagePackageHandler(
-            stage_packages, self.ubuntudir,
-            sources=sources, project_options=self._project_options)
-
     def _get_source_handler(self, properties):
         """Returns a source_handler for the source in properties."""
         # TODO: we cannot pop source as it is used by plugins. We also make
@@ -112,7 +103,7 @@ class PluginHandler:
                 properties['source'], source_type=properties['source-type'])
             source_handler = handler_class(
                 properties['source'],
-                self.sourcedir,
+                self.plugin.sourcedir,
                 source_checksum=properties['source-checksum'],
                 source_branch=properties['source-branch'],
                 source_tag=properties['source-tag'],
@@ -125,7 +116,8 @@ class PluginHandler:
     def makedirs(self):
         dirs = [
             self.plugin.sourcedir, self.plugin.builddir,
-            self.plugin.installdir, self.stagedir, self.primedir, self.statedir
+            self.plugin.installdir, self.plugin.statedir,
+            self.stagedir, self.primedir,
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
@@ -134,13 +126,13 @@ class PluginHandler:
         # In previous versions of Snapcraft, the state directory was a file.
         # Rather than die if we're running on output from an old version,
         # migrate it for them.
-        if os.path.isfile(self.statedir):
-            with open(self.statedir, 'r') as f:
+        if os.path.isfile(self.plugin.statedir):
+            with open(self.plugin.statedir, 'r') as f:
                 step = f.read()
 
             if step:
-                os.remove(self.statedir)
-                os.makedirs(self.statedir)
+                os.remove(self.plugin.statedir)
+                os.makedirs(self.plugin.statedir)
                 self.mark_done(step)
 
     def notify_part_progress(self, progress, hint=''):
@@ -148,7 +140,8 @@ class PluginHandler:
 
     def last_step(self):
         for step in reversed(common.COMMAND_ORDER):
-            if os.path.exists(states.get_step_state_file(self.statedir, step)):
+            if os.path.exists(
+                    states.get_step_state_file(self.plugin.statedir, step)):
                 return step
 
         return None
@@ -175,7 +168,7 @@ class PluginHandler:
         """
 
         # Retrieve the stored state for this step (assuming it has already run)
-        state = states.get_state(self.statedir, step)
+        state = states.get_state(self.plugin.statedir, step)
         differing_properties = set()
         differing_options = set()
 
@@ -209,7 +202,8 @@ class PluginHandler:
 
         index = common.COMMAND_ORDER.index(step)
 
-        with open(states.get_step_state_file(self.statedir, step), 'w') as f:
+        with open(states.get_step_state_file(
+                self.plugin.statedir, step), 'w') as f:
             f.write(yaml.dump(state))
 
         # We know we've only just completed this step, so make sure any later
@@ -219,22 +213,30 @@ class PluginHandler:
                 self.mark_cleaned(command)
 
     def mark_cleaned(self, step):
-        state_file = states.get_step_state_file(self.statedir, step)
+        state_file = states.get_step_state_file(self.plugin.statedir, step)
         if os.path.exists(state_file):
             os.remove(state_file)
 
-        if os.path.isdir(self.statedir) and not os.listdir(self.statedir):
-            os.rmdir(self.statedir)
+        if (os.path.isdir(self.plugin.statedir) and
+                not os.listdir(self.plugin.statedir)):
+            os.rmdir(self.plugin.statedir)
 
     def _fetch_stage_packages(self):
-        try:
-            self.stage_packages = self._stage_package_handler.fetch()
-        except repo.errors.PackageNotFoundError as e:
-            raise RuntimeError("Error downloading stage packages for part "
-                               "{!r}: {}".format(self.name, e.message))
+        stage_packages = self._grammar_processor.get_stage_packages()
+        if stage_packages:
+            logger.debug('Fetching stage-packages {!r}'.format(stage_packages))
+            try:
+                self.stage_packages = self._stage_packages_repo.get(
+                    stage_packages)
+            except repo.errors.PackageNotFoundError as e:
+                raise errors.StagePackageDownloadError(self.name, e.message)
 
     def _unpack_stage_packages(self):
-        self._stage_package_handler.unpack(self.installdir)
+        stage_packages = self._grammar_processor.get_stage_packages()
+        if stage_packages:
+            logger.debug('Unpacking stage-packages to {!r}'.format(
+                self.installdir))
+            self._stage_packages_repo.unpack(self.installdir)
 
     def prepare_pull(self, force=False):
         self.makedirs()
@@ -273,14 +275,14 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning pulled source for', hint)
         # Remove ubuntu cache (where stage packages are fetched)
-        if os.path.exists(self.ubuntudir):
-            shutil.rmtree(self.ubuntudir)
+        if os.path.exists(self.plugin.osrepodir):
+            shutil.rmtree(self.plugin.osrepodir)
 
-        if os.path.exists(self.sourcedir):
-            if os.path.islink(self.sourcedir):
-                os.remove(self.sourcedir)
+        if os.path.exists(self.plugin.sourcedir):
+            if os.path.islink(self.plugin.sourcedir):
+                os.remove(self.plugin.sourcedir)
             else:
-                shutil.rmtree(self.sourcedir)
+                shutil.rmtree(self.plugin.sourcedir)
 
         self.plugin.clean_pull()
         self.mark_cleaned('pull')
@@ -303,7 +305,7 @@ class PluginHandler:
         # in the Local source. However, it's left here so that it continues to
         # work on old snapcraft trees that still have src symlinks.
         def ignore(directory, files):
-            if directory == self.sourcedir:
+            if directory == self.plugin.sourcedir:
                 snaps = glob(os.path.join(directory, '*.snap'))
                 if snaps:
                     snaps = [os.path.basename(s) for s in snaps]
@@ -416,7 +418,7 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning staging area for', hint)
 
-        state = states.get_state(self.statedir, 'stage')
+        state = states.get_state(self.plugin.statedir, 'stage')
 
         try:
             self._clean_shared_area(self.stagedir, state,
@@ -474,7 +476,7 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning priming area for', hint)
 
-        state = states.get_state(self.statedir, 'prime')
+        state = states.get_state(self.plugin.statedir, 'prime')
 
         try:
             self._clean_shared_area(self.primedir, state,
@@ -504,7 +506,7 @@ class PluginHandler:
 
     def get_primed_dependency_paths(self):
         dependency_paths = set()
-        state = states.get_state(self.statedir, 'prime')
+        state = states.get_state(self.plugin.statedir, 'prime')
         if state:
             for path in state.dependency_paths:
                 dependency_paths.add(

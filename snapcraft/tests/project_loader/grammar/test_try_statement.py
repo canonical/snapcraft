@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import doctest
-from unittest import mock
 from testtools.matchers import Equals
 
 import snapcraft
@@ -25,21 +24,7 @@ from . import GrammarTestCase
 
 
 def load_tests(loader, tests, ignore):
-    patcher = mock.patch('snapcraft.repo.Repo')
-
-    def _setup(test):
-        repo_mock = patcher.start()
-
-        def _is_valid(package_name):
-            return 'invalid' not in package_name
-
-        repo_mock.return_value.is_valid.side_effect = _is_valid
-
-    def _teardown(test):
-        patcher.stop()
-
-    tests.addTests(doctest.DocTestSuite(
-        _try, setUp=_setup, tearDown=_teardown))
+    tests.addTests(doctest.DocTestSuite(_try))
     return tests
 
 
@@ -132,7 +117,7 @@ class TryStatementGrammarTestCase(GrammarTestCase):
     def test_try_statement_grammar(self):
         statement = _try.TryStatement(
             body=self.body, project_options=snapcraft.ProjectOptions(),
-            repo_instance=snapcraft.repo.Repo())
+            checker=self.checker)
 
         for else_body in self.else_bodies:
             statement.add_else(else_body)

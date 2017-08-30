@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,28 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
+from snapcraft.internal.project_loader.grammar_processing import (
+    _global_grammar_processor as processor
+)
+
+import doctest
 
 
-class TestPlugin(snapcraft.BasePlugin):
-
-    @classmethod
-    def schema(cls):
-        return {
-            '$schema': 'http://json-schema.org/draft-04/schema#',
-            'type': 'object',
-            'additionalProperties': False,
-            'properties': {
-                'test-property': {
-                    'type': 'string'
-                }
-            },
-        }
-
-    @classmethod
-    def get_pull_properties(cls):
-        return ['test-property']
-
-    @classmethod
-    def get_build_properties(cls):
-        return ['test-property']
+def load_tests(loader, tests, ignore):
+    tests.addTests(doctest.DocTestSuite(processor))
+    return tests

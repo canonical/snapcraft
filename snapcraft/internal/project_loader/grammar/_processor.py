@@ -24,36 +24,36 @@ _ELSE_CLAUSE_PATTERN = re.compile(r'\Aelse\Z')
 _ELSE_FAIL_PATTERN = re.compile(r'\Aelse\s+fail\Z')
 
 
-def process_grammar(grammar, project_options, repo_instance):
-    """Process stage packages grammar and extract packages to actually stage.
+def process_grammar(grammar, project_options, checker):
+    """Process grammar and extract desired primitives.
 
-    :param list grammar: Unprocessed stage-packages grammar.
+    :param list grammar: Unprocessed grammar.
     :param project_options: Instance of ProjectOptions to use to determine
-                            stage packages.
+                            appropriate primitives.
     :type project_options: snapcraft.ProjectOptions
-    :param repo_instance: repo.Repo instance used for checking package
-                          validity.
-    :type repo_instance: repo.Repo
+    :param checker: callable accepting a single primitive, returning
+                    true if it is valid
+    :type checker: callable
 
-    :return: Packages to stage
+    :return: Primitives selected
     :rtype: set
     """
 
-    packages = set()
+    primitives = set()
     statements = _StatementCollection()
     statement = None
 
     for section in grammar:
         if isinstance(section, str):
             # If the secion is just a string, it's either "else fail" or a
-            # package name.
+            # primitive name.
             if _ELSE_FAIL_PATTERN.match(section):
                 _handle_else(statement, None)
             else:
-                packages.add(section)
+                primitives.add(section)
         elif isinstance(section, dict):
             statement = _parse_dict(
-                section, statement, statements, project_options, repo_instance)
+                section, statement, statements, project_options, checker)
         else:
             # jsonschema should never let us get here.
             raise GrammarSyntaxError(
@@ -62,13 +62,13 @@ def process_grammar(grammar, project_options, repo_instance):
 
     # We've parsed the entire grammar, time to process it.
     statements.add(statement)
-    packages |= statements.process_all()
+    primitives |= statements.process_all()
 
-    return packages
+    return primitives
 
 
 def _parse_dict(section, statement, statements, project_options,
-                repo_instance):
+                checker):
     from ._on import OnStatement
     from ._try import TryStatement
 
@@ -82,7 +82,7 @@ def _parse_dict(section, statement, statements, project_options,
 
             statement = OnStatement(
                 on=key, body=value, project_options=project_options,
-                repo_instance=repo_instance)
+                checker=checker)
 
         if _TRY_CLAUSE_PATTERN.match(key):
             # We've come across the begining of a 'try' statement.
@@ -93,7 +93,7 @@ def _parse_dict(section, statement, statements, project_options,
 
             statement = TryStatement(
                 body=value, project_options=project_options,
-                repo_instance=repo_instance)
+                checker=checker)
 
         if _ELSE_CLAUSE_PATTERN.match(key):
             _handle_else(statement, value)
@@ -147,11 +147,11 @@ class _StatementCollection:
     def process_all(self):
         """Process all statements in collection.
 
-        :return: Packages to stage as judged by all statements in collection.
+        :return: Selected primitives as judged by all statements in collection.
         :rtype: set
         """
-        packages = set()
+        primitives = set()
         for statement in self._statements:
-            packages |= statement.process()
+            primitives |= statement.process()
 
-        return packages
+        return primitives

@@ -171,17 +171,17 @@ class Ubuntu(BaseRepo):
     @classmethod
     def get_packages_for_source_type(cls, source_type):
         if source_type == 'bzr':
-            packages = 'bzr'
+            packages = {'bzr'}
         elif source_type == 'git':
-            packages = 'git'
+            packages = {'git'}
         elif source_type == 'tar':
-            packages = 'tar'
+            packages = {'tar'}
         elif source_type == 'hg' or source_type == 'mercurial':
-            packages = 'mercurial'
+            packages = {'mercurial'}
         elif source_type == 'subversion' or source_type == 'svn':
-            packages = 'subversion'
+            packages = {'subversion'}
         else:
-            packages = []
+            packages = set()
 
         return packages
 
@@ -252,6 +252,11 @@ class Ubuntu(BaseRepo):
                 .format(e))
 
     @classmethod
+    def build_package_is_valid(cls, package_name):
+        with apt.Cache() as apt_cache:
+            return package_name in apt_cache
+
+    @classmethod
     def is_package_installed(cls, package_name):
         with apt.Cache() as apt_cache:
             return apt_cache[package_name].installed
@@ -259,7 +264,6 @@ class Ubuntu(BaseRepo):
     def __init__(self, rootdir, sources=None, project_options=None):
         super().__init__(rootdir)
         self._downloaddir = os.path.join(rootdir, 'download')
-        os.makedirs(self._downloaddir, exist_ok=True)
 
         if not project_options:
             project_options = snapcraft.ProjectOptions()

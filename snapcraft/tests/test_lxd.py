@@ -29,6 +29,9 @@ from testtools.matchers import Contains, Equals
 from snapcraft import tests
 from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
+from snapcraft.internal.errors import (
+    ContainerConnectionError,
+)
 
 
 class LXDTestCase(tests.TestCase):
@@ -169,7 +172,7 @@ class LXDTestCase(tests.TestCase):
         self.fake_lxd.check_output_mock.side_effect = FileNotFoundError('lxc')
 
         with ExpectedException(
-                lxd.SnapcraftEnvironmentError,
+                ContainerConnectionError,
                 'You must have LXD installed in order to use cleanbuild.\n'
                 'Refer to the documentation at '
                 'https://linuxcontainers.org/lxd/getting-started-cli.'):
@@ -180,6 +183,6 @@ class LXDTestCase(tests.TestCase):
         self.fake_lxd.check_output_mock.side_effect = CalledProcessError(
             255, ['lxd', 'list', self.remote])
 
-        with ExpectedException(lxd.SnapcraftEnvironmentError,
+        with ExpectedException(ContainerConnectionError,
                                'There are either.*{}.*'.format(self.remote)):
             self.make_cleanbuilder()
