@@ -41,11 +41,11 @@ class LXDTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
+        self.fake_lxd = tests.fixture_setup.FakeLXD()
+        self.useFixture(self.fake_lxd)
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
         self.project_options = ProjectOptions(target_deb_arch=self.target_arch)
-        self.fake_lxd = tests.fixture_setup.FakeLXD()
-        self.useFixture(self.fake_lxd)
 
     def make_cleanbuilder(self):
         return lxd.Cleanbuilder(output='snap.snap', source='project.tar',
