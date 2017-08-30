@@ -21,6 +21,7 @@ import os
 import pipes
 import shutil
 import sys
+import tempfile
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError
 from time import sleep
@@ -76,6 +77,11 @@ class Containerbuild:
                 'Unrecognized server architecture {}'.format(kernel))
         self._host_arch = deb_arch
         self._image = 'ubuntu:xenial/{}'.format(deb_arch)
+        # Use a temporary folder the 'lxd' snap can access
+        lxd_common = os.path.expanduser(
+            os.path.join('~', 'snap', 'lxd', 'common'))
+        os.makedirs(lxd_common, exist_ok=True)
+        self._tmp = tempfile.mkdtemp(prefix='snapcraft', dir=lxd_common)
 
     def _get_remote_info(self):
         remote = self._container_name.split(':')[0]
@@ -158,8 +164,7 @@ class Containerbuild:
                     raise e
             else:
                 # Remove temporary folder if everything went well
-                if common.is_snap():
-                    shutil.rmtree(self._tmp)
+                shutil.rmtree(self._tmp)
                 self._finish()
 
     def _setup_project(self):
@@ -177,11 +182,6 @@ class Containerbuild:
         if common.is_snap():
             # Because of https://bugs.launchpad.net/snappy/+bug/1628289
             self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
-
-            # Use a temporary folder the 'lxd' snap can access
-            self._tmp = os.path.expanduser(
-                os.path.join('~', 'snap', 'lxd', 'common', 'snapcraft.tmp'))
-            os.makedirs(self._tmp, exist_ok=True)
 
             # Push core snap into container
             self._inject_snap('core')

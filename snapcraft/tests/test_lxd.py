@@ -46,6 +46,9 @@ class LXDTestCase(tests.TestCase):
         super().setUp()
         self.fake_lxd = tests.fixture_setup.FakeLXD()
         self.useFixture(self.fake_lxd)
+        fake_filesystem = tests.fixture_setup.FakeFilesystem()
+        self.useFixture(fake_filesystem)
+
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
         self.project_options = ProjectOptions(target_deb_arch=self.target_arch)
@@ -186,3 +189,19 @@ class LXDTestCase(tests.TestCase):
         with ExpectedException(ContainerConnectionError,
                                'There are either.*{}.*'.format(self.remote)):
             self.make_cleanbuilder()
+
+    def test_parallel_invocation(self):
+        builder1 = self.make_cleanbuilder()
+        builder2 = self.make_cleanbuilder()
+        builder1.execute()
+        builder2.execute()
+
+    @patch('snapcraft.internal.common.is_snap')
+    def test_parallel_invocation_inject_snap(self, mock_is_snap):
+        fake_filesystem = tests.fixture_setup.FakeFilesystem()
+        self.useFixture(fake_filesystem)
+
+        builder1 = self.make_cleanbuilder()
+        builder2 = self.make_cleanbuilder()
+        builder1.execute()
+        builder2.execute()
