@@ -375,6 +375,11 @@ def _verify_remote(remote):
     # so we try and execute a simple operation against the remote.
     try:
         check_output(['lxc', 'list', '{}:'.format(remote)])
+    except FileNotFoundError:
+        raise ContainerConnectionError(
+            'You must have LXD installed in order to use cleanbuild.\n'
+            'Refer to the documentation at '
+            'https://linuxcontainers.org/lxd/getting-started-cli.')
     except CalledProcessError as e:
         raise ContainerConnectionError(
             'There are either no permissions or the remote {!r} '
