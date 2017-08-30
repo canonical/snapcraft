@@ -37,6 +37,7 @@ from ._env import (
 from . import (
     errors,
     get_snapcraft_yaml,
+    grammar_processing,
     replace_attr,
 )
 
@@ -107,15 +108,18 @@ class Config:
         self.data = self._expand_env(snapcraft_yaml)
         self._ensure_no_duplicate_app_aliases()
 
-        self.build_tools = self.data.get('build-packages', [])
-        self.build_tools.extend(project_options.additional_build_packages)
+        grammar_processor = grammar_processing.GlobalGrammarProcessor(
+            properties=self.data,
+            project_options=project_options)
 
-        self.parts = PartsConfig(
-            self.data,
-            self._project_options,
-            self._validator,
-            self.build_tools,
-            self.snapcraft_yaml_path)
+        self.build_tools = grammar_processor.get_build_packages()
+        self.build_tools |= set(project_options.additional_build_packages)
+
+        self.parts = PartsConfig(self.data,
+                                 self._project_options,
+                                 self._validator,
+                                 self.build_tools,
+                                 self.snapcraft_yaml_path)
 
         if 'architectures' not in self.data:
             self.data['architectures'] = [self._project_options.deb_arch]

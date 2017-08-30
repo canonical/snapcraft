@@ -35,14 +35,41 @@ class PartGrammarProcessor:
     ...    repo=repo)
     >>> processor.get_stage_packages()
     {'foo'}
+
+    Build packages example:
+    >>> from unittest import mock
+    >>> import snapcraft
+    >>> # Pretend that all packages are valid
+    >>> repo = mock.Mock()
+    >>> repo.is_valid.return_value = True
+    >>> plugin = mock.Mock()
+    >>> plugin.build_packages = [{'try': ['foo']}]
+    >>> processor = PartGrammarProcessor(
+    ...    plugin=plugin,
+    ...    properties={},
+    ...    project_options=snapcraft.ProjectOptions(),
+    ...    repo=repo)
+    >>> processor.get_build_packages()
+    {'foo'}
     """
 
     def __init__(self, *, plugin, properties, project_options, repo):
         self._project_options = project_options
         self._repo = repo
 
+        self._build_package_grammar = getattr(plugin, 'build_packages', [])
+        self.__build_packages = set()
+
         self._stage_package_grammar = getattr(plugin, 'stage_packages', [])
         self.__stage_packages = set()
+
+    def get_build_packages(self):
+        if not self.__build_packages:
+            self.__build_packages = grammar.process_grammar(
+                self._build_package_grammar, self._project_options,
+                self._repo.build_package_is_valid)
+
+        return self.__build_packages
 
     def get_stage_packages(self):
         if not self.__stage_packages:

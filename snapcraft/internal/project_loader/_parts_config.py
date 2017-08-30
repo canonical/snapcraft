@@ -192,11 +192,11 @@ class PartsConfig:
             stage_packages_repo=stage_packages_repo,
             grammar_processor=grammar_processor)
 
-        self.build_tools += plugin.build_packages
+        self.build_tools |= grammar_processor.get_build_packages()
+
         if part.source_handler and part.source_handler.command:
-            self.build_tools.append(
-                repo.Repo.get_packages_for_source_type(
-                    part.source_handler.command))
+            self.build_tools |= repo.Repo.get_packages_for_source_type(
+                part.source_handler.command)
         self.all_parts.append(part)
 
         return part
