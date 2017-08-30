@@ -60,3 +60,21 @@ class UnpackError(RepoError):
 
     def __init__(self, package):
         super().__init__(package=package)
+
+
+class SnapInstallError(RepoError):
+
+    fmt = ('Error while installing snap {snap_name!r} from channel '
+           '{snap_channel!r}')
+
+    def __init__(self, *, snap_name, snap_channel):
+        super().__init__(snap_name=snap_name, snap_channel=snap_channel)
+
+
+class SnapRefreshError(RepoError):
+
+    fmt = ('Error while refreshing snap {snap_name!r} to channel '
+           '{snap_channel!r}')
+
+    def __init__(self, *, snap_name, snap_channel):
+        super().__init__(snap_name=snap_name, snap_channel=snap_channel)

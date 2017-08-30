@@ -37,13 +37,14 @@ logger = logging.getLogger(__name__)
 
 class PartsConfig:
 
-    def __init__(self, parts, project_options, validator, build_tools,
-                 snapcraft_yaml):
+    def __init__(self, parts, project_options, validator,
+                 build_snaps, build_tools, snapcraft_yaml):
         self._snap_name = parts['name']
         self._confinement = parts['confinement']
         self._parts_data = parts.get('parts', {})
         self._project_options = project_options
         self._validator = validator
+        self.build_snaps = build_snaps
         self.build_tools = build_tools
         self._snapcraft_yaml = snapcraft_yaml
 
@@ -192,6 +193,7 @@ class PartsConfig:
             stage_packages_repo=stage_packages_repo,
             grammar_processor=grammar_processor)
 
+        self.build_snaps |= grammar_processor.get_build_snaps()
         self.build_tools |= grammar_processor.get_build_packages()
 
         if part.source_handler and part.source_handler.command:

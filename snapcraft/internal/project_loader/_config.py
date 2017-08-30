@@ -89,6 +89,7 @@ class Config:
         if project_options is None:
             project_options = snapcraft.ProjectOptions()
 
+        self.build_snaps = set()
         self.build_tools = []
         self._project_options = project_options
 
@@ -118,6 +119,7 @@ class Config:
         self.parts = PartsConfig(self.data,
                                  self._project_options,
                                  self._validator,
+                                 self.build_snaps,
                                  self.build_tools,
                                  self.snapcraft_yaml_path)
 
