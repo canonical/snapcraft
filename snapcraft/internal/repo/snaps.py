@@ -133,6 +133,7 @@ class SnapPackage:
         if self._original_channel:
             snap_install_cmd.extend(['--channel', self._original_channel])
         if self.is_classic:
+            # TODO make this a user explicit choice
             snap_install_cmd.extend(['--classic'])
         try:
             check_call(snap_install_cmd)
@@ -147,6 +148,9 @@ class SnapPackage:
             snap_refresh_cmd = ['sudo']
         snap_refresh_cmd.extend(['snap', 'refresh', self.name,
                                  '--channel', self.channel])
+        if self.is_classic:
+            # TODO make this a user explicit choice
+            snap_refresh_cmd.extend(['--classic'])
         try:
             check_call(snap_refresh_cmd)
         except CalledProcessError as install_error:
