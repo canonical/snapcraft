@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 class PartsConfig:
 
-    def __init__(self, parts, project_options, validator,
+    def __init__(self, *, parts, project_options, validator,
                  build_snaps, build_tools, snapcraft_yaml):
         self._snap_name = parts['name']
         self._confinement = parts['confinement']
