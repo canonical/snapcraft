@@ -201,6 +201,10 @@ class LXDTestCase(tests.TestCase):
     @patch('snapcraft.internal.common.is_snap')
     def test_parallel_invocation_inject_snap(self, mock_is_snap):
         mock_is_snap.side_effect = lambda: True
+
+        fake_snapd = tests.fixture_setup.FakeSnapd()
+        self.useFixture(fake_snapd)
+
         builder1 = self.make_cleanbuilder()
         builder2 = self.make_cleanbuilder()
         builder1.execute()
