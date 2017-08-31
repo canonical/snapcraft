@@ -58,8 +58,8 @@ class BuildSnapGrammarTestCase(testscenarios.WithScenarios,
         if self._hello_is_installed():
             self.fail(
                 'This integration test cannot run if you already have the '
-                "'hello' package installed. Please uninstall it before "
-                'running this test.')
+                "'hello' snap installed. Please uninstall it "
+                "by running 'sudo snap remove hello'.")
 
     def tearDown(self):
         super().tearDown()
