@@ -548,23 +548,36 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
+        requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
+        with open(requirements_path, 'w') as requirements_file:
+            requirements_file.write('testpackage1==1.0\n')
+            requirements_file.write('testpackage2==1.2')
 
         plugin.build()
 
-        self.assertNotIn('requirements-contents', plugin.get_manifest())
+        self.assertThat(
+            plugin.get_manifest()['requirements-contents'],
+            Equals('testpackage1==1.0\ntestpackage2==1.2'))
 
     @mock.patch.object(
         python.PythonPlugin, 'run_output', side_effect=fake_empty_pip_list)
     @mock.patch.object(python.PythonPlugin, 'run')
     def test_get_manifest_with_local_constraints(self, _, mock_run_output):
         self.options.constraints = 'constraints.txt'
+
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
+        constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
+        with open(constraints_path, 'w') as constraints_file:
+            constraints_file.write('testpackage1==1.0\n')
+            constraints_file.write('testpackage2==1.2')
 
         plugin.build()
 
-        self.assertNotIn('constraints-contents', plugin.get_manifest())
+        self.assertThat(
+            plugin.get_manifest()['constraints-contents'],
+            Equals('testpackage1==1.0\ntestpackage2==1.2'))
 
 
 class PythonPluginWithURLTestCase(
