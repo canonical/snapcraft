@@ -81,7 +81,7 @@ class Containerbuild:
         lxd_common = os.path.expanduser(
             os.path.join('~', 'snap', 'lxd', 'common'))
         os.makedirs(lxd_common, exist_ok=True)
-        self._tmp = tempfile.mkdtemp(prefix='snapcraft', dir=lxd_common)
+        self.tmp = tempfile.mkdtemp(prefix='snapcraft', dir=lxd_common)
 
     def _get_remote_info(self):
         remote = self._container_name.split(':')[0]
@@ -164,7 +164,7 @@ class Containerbuild:
                     raise e
             else:
                 # Remove temporary folder if everything went well
-                shutil.rmtree(self._tmp)
+                shutil.rmtree(self.tmp)
                 self._finish()
 
     def _setup_project(self):
@@ -225,7 +225,7 @@ class Containerbuild:
         installed = os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps',
                                  filename)
 
-        filepath = os.path.join(self._tmp, filename)
+        filepath = os.path.join(self.tmp, filename)
         if rev.startswith('x'):
             logger.info('Making {} user-accessible'.format(filename))
             check_call(['sudo', 'cp', installed, filepath])
@@ -243,7 +243,7 @@ class Containerbuild:
         self._container_run(cmd)
 
     def _inject_assertions(self, filename, assertions):
-        filepath = os.path.join(self._tmp, filename)
+        filepath = os.path.join(self.tmp, filename)
         with open(filepath, 'wb') as f:
             for assertion in assertions:
                 logger.info('Looking up assertion {}'.format(assertion))
