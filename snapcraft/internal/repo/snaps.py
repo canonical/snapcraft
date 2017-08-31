@@ -186,8 +186,9 @@ def _snap_command_requires_sudo():
 
 def _get_parsed_snap(snap):
     if '/' in snap:
-        snap_name = snap[:snap.find('/')]
-        snap_channel = snap[snap.find('/')+1:]
+        sep_index = snap.find('/')
+        snap_name = snap[:sep_index]
+        snap_channel = snap[sep_index+1:]
     else:
         snap_name = snap
         snap_channel = ''
