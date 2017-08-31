@@ -36,7 +36,7 @@ class SnapPackage:
     and remote stores to obtain information about the snap, such as its
     confinment value and channel availability.
 
-    This information can also be used determine if a snap should be
+    This information can also be used to determine if a snap should be
     installed or refreshed.
 
     There are risks of the data falling out of date between the query and the
@@ -65,7 +65,7 @@ class SnapPackage:
         self._store_snap_info = None
 
         self._is_installed = None
-        self._is_on_store = None
+        self._is_in_store = None
 
     @property
     def installed(self):
@@ -74,10 +74,10 @@ class SnapPackage:
         return self._is_installed
 
     @property
-    def on_store(self):
-        if self._is_on_store is None:
-            self._is_on_store = self.get_store_snap_info() is not None
-        return self._is_on_store
+    def in_store(self):
+        if self._is_in_store is None:
+            self._is_in_store = self.get_store_snap_info() is not None
+        return self._is_in_store
 
     def get_local_snap_info(self):
         """Returns a local payload for the snap.
@@ -92,14 +92,14 @@ class SnapPackage:
         """Returns a store payload for the snap.
 
         Validity of the results are determined by checking self.remote."""
-        if self._is_on_store is None:
+        if self._is_in_store is None:
             with contextlib.suppress(exceptions.HTTPError):
                 self._store_snap_info = _get_store_snap_info(self.name)
         return self._store_snap_info
 
     def _get_store_channels(self):
         snap_store_info = self.get_store_snap_info()
-        if not self.on_store:
+        if not self.in_store:
             return dict()
 
         return snap_store_info['channels']
@@ -119,7 +119,7 @@ class SnapPackage:
 
     def is_valid(self):
         """Check if the snap is valid."""
-        if not self.on_store:
+        if not self.in_store:
             return False
         store_channels = self._get_store_channels()
         return self.channel in store_channels.keys()
@@ -162,7 +162,7 @@ def install_snaps(snaps_list):
     """Install snaps of the format <snap-name>/<channel>."""
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
-        if not snap_pkg.installed and snap_pkg.on_store:
+        if not snap_pkg.installed and snap_pkg.in_store:
             snap_pkg.install()
         elif snap_pkg.get_current_channel() != snap_pkg.channel:
             snap_pkg.refresh()
