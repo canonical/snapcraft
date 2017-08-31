@@ -40,8 +40,6 @@ _schemadir = _DEFAULT_SCHEMADIR
 _DEFAULT_LIBRARIESDIR = os.path.join(sys.prefix, 'share', 'snapcraft',
                                      'libraries')
 _librariesdir = _DEFAULT_LIBRARIESDIR
-_DEFAULT_TOURDIR = os.path.join(sys.prefix, 'share', 'snapcraft', 'tour')
-_tourdir = _DEFAULT_TOURDIR
 
 MAX_CHARACTERS_WRAP = 120
 
@@ -141,15 +139,6 @@ def set_librariesdir(librariesdir):
 
 def get_librariesdir():
     return _librariesdir
-
-
-def set_tourdir(tourdir):
-    global _tourdir
-    _tourdir = tourdir
-
-
-def get_tourdir():
-    return _tourdir
 
 
 def get_python2_path(root):
