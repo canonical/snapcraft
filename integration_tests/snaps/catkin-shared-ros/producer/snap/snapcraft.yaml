@@ -1,0 +1,27 @@
+name: catkin-shared-ros-producer
+version: '0.1'
+summary: Producer for sharing ROS
+description: |
+  Of particular note, the shared bits do not include Catkin
+
+grade: devel
+confinement: strict
+
+parts:
+  # Create the underlay, the stuff shared from the producer.
+  underlay:
+    plugin: catkin
+    rosdistro: kinetic
+    include-roscore: false
+    catkin-packages: [underlay_package]
+
+    # Strip out everything except that single dependency. Of particular
+    # importance: the underlay does not include Catkin.
+    stage:
+      - opt/ros/kinetic/.catkin
+      - opt/ros/kinetic/env.sh
+      - opt/ros/kinetic/setup.bash
+      - opt/ros/kinetic/setup.sh
+      - opt/ros/kinetic/_setup_util.py
+      - opt/ros/kinetic/lib/pkgconfig/underlay_package.pc
+      - opt/ros/kinetic/share/underlay_package/

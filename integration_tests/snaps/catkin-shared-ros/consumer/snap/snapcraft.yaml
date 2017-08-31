@@ -1,0 +1,27 @@
+name: catkin-shared-ros-consumer
+version: '0.1'
+summary: Test building a consumer for a shared part.
+description: |
+  The shared part doesn't contain Catkin, so this makes sure the Catkin
+  used within the Catkin plugin is properly isolated.
+
+grade: devel
+confinement: strict
+
+parts:
+  underlay:
+    plugin: dump
+    source: underlay.tar.bz2
+    prime: [-*]
+
+  # Create the overlay, the consumer that uses the stuff shared from the
+  # producer.
+  overlay:
+    plugin: catkin
+    rosdistro: kinetic
+    include-roscore: false
+    catkin-packages: [overlay_package]
+    underlay:
+      build-path: $SNAPCRAFT_STAGE/opt/ros/kinetic
+      run-path: $SNAP/opt/ros/kinetic
+    after: [underlay]

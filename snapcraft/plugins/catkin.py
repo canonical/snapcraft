@@ -914,9 +914,14 @@ class _Catkin:
                 formatting_utils.format_path_variable(
                     'PATH', bin_paths, prepend='', separator=':')))
 
-            lines.append('export _CATKIN_SETUP_DIR={}'.format(self._workspace))
-            lines.append('source {}'.format(os.path.join(
-                self._workspace, 'setup.sh')))
+            # Source our own workspace so we have all of Catkin's dependencies,
+            # then source the workspace we're actually supposed to be crawling.
+            lines.append('_CATKIN_SETUP_DIR={} source {}'.format(
+                ros_path, os.path.join(ros_path, 'setup.sh')))
+            lines.append('_CATKIN_SETUP_DIR={} source {} --extend'.format(
+                self._workspace,
+                os.path.join(self._workspace, 'setup.sh')))
+
             lines.append('exec "$@"')
             f.write('\n'.join(lines))
             f.flush()
