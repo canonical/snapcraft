@@ -49,6 +49,9 @@ lxc="/snap/bin/lxc"
 "$script_path/run_lxd_container.sh" test-runner
 $lxc file push --recursive $project_path test-runner/root/
 $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
+# Workaround for
+# - Setup snap "core" (2462) security profiles (cannot reload udev rules: exit status 2
+[ "$test" = "integration" ] && $lxc exec test-runner -- sh -c "snap install core" || echo "ignored error"
 $lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test $pattern"
 
 if [ "$test" = "unit" ]; then
