@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015, 2016, 2017 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,18 +20,16 @@ import os
 from unittest import mock
 
 import fixtures
+from testtools.matchers import Equals
 
-from snapcraft import (
-    file_utils,
-    tests,
-)
 import snapcraft
+from snapcraft import file_utils
 from snapcraft.internal import cache
-from snapcraft.main import main
 from snapcraft.tests import fixture_setup
+from snapcraft.tests.commands import CommandBaseTestCase
 
 
-class SnapCacheTestCase(tests.TestCase):
+class SnapCacheBaseTestCase(CommandBaseTestCase):
 
     def setUp(self):
         super().setUp()
@@ -44,29 +42,29 @@ class SnapCacheTestCase(tests.TestCase):
 
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
+        self.snap_path = os.path.join(
+            os.path.dirname(snapcraft.tests.__file__), 'data',
+            'test-snap.snap')
+
+
+class SnapCacheTestCase(SnapCacheBaseTestCase):
+
     def test_snap_cache(self):
         self.useFixture(fixture_setup.FakeTerminal())
 
-        # Create a snap
-        main(['init'])
-        main(['snap'])
-        snap_file = glob.glob('*.snap')[0]
-        snap_path = os.path.join(self.path, snap_file)
-
         # cache snap
         snap_cache = cache.SnapCache(project_name='cache-test')
-        cached_snap_path = snap_cache.cache(snap_filename=snap_file)
+        cached_snap_path = snap_cache.cache(snap_filename=self.snap_path)
 
         expected_snap_path = os.path.join(
             snap_cache.snap_cache_root,
-            self.deb_arch,
-            file_utils.calculate_sha3_384(snap_path)
+            'amd64',
+            file_utils.calculate_sha3_384(self.snap_path)
         )
 
-        self.assertEqual(
-            expected_snap_path,
-            cached_snap_path
-        )
+        self.assertThat(
+            cached_snap_path,
+            Equals(expected_snap_path))
         self.assertTrue(os.path.isfile(cached_snap_path))
 
     def test_snap_cache_get_latest(self):
@@ -86,8 +84,8 @@ parts:
     my-part:
       plugin: nil
 """.format(self.deb_arch))
-        main(['snap'])
-
+        result = self.run_command(['snap'])
+        self.assertThat(result.exit_code, Equals(0))
         snap_file = glob.glob('*0.1*.snap')[0]
 
         snap_cache = cache.SnapCache(project_name='my-snap-name')
@@ -106,8 +104,8 @@ parts:
     my-part:
       plugin: nil
 """.format(self.deb_arch))
-        main(['snap'])
-
+        result = self.run_command(['snap'])
+        self.assertThat(result.exit_code, Equals(0))
         snap_file_latest = glob.glob('*0.2*.snap')[0]
 
         snap_cache.cache(snap_filename=snap_file_latest)
@@ -122,33 +120,27 @@ parts:
             latest_hash
         )
 
-        self.assertEqual(expected_snap_path, latest_snap)
+        self.assertThat(latest_snap, Equals(expected_snap_path))
 
     def test_snap_cache_get_by_hash(self):
         self.useFixture(fixture_setup.FakeTerminal())
 
-        # Create snap
-        main(['init'])
-        main(['snap'])
-
-        snap_file = glob.glob('*.snap')[0]
-
         snap_cache = cache.SnapCache(project_name='my-snap-name')
-        snap_cache.cache(snap_filename=snap_file)
+        snap_cache.cache(snap_filename=self.snap_path)
 
         # get hash of snap
-        snap_hash = file_utils.calculate_sha3_384(snap_file)
+        snap_hash = file_utils.calculate_sha3_384(self.snap_path)
 
         # get snap by hash
-        snap = snap_cache.get(deb_arch=self.deb_arch, snap_hash=snap_hash)
+        snap = snap_cache.get(deb_arch='amd64', snap_hash=snap_hash)
 
-        self.assertEqual(
-            os.path.join(snap_cache.snap_cache_root, self.deb_arch, snap_hash),
-            snap
+        self.assertThat(
+            snap, Equals(
+                os.path.join(snap_cache.snap_cache_root, 'amd64', snap_hash))
         )
 
 
-class SnapCachePruneTestCase(tests.TestCase):
+class SnapCachePruneTestCase(SnapCacheBaseTestCase):
 
     def setUp(self):
         super().setUp()
@@ -174,8 +166,8 @@ parts:
     my-part:
       plugin: nil
 """.format(self.deb_arch))
-        main(['snap'])
-
+        result = self.run_command(['snap'])
+        self.assertThat(result.exit_code, Equals(0))
         snap_file = glob.glob('*0.1_*.snap')[0]
 
         snap_cache = cache.SnapCache(project_name='my-snap-name')
@@ -195,20 +187,20 @@ parts:
     my-part:
       plugin: nil
 """.format(self.deb_arch))
-
-        main(['snap'])
+        result = self.run_command(['snap'])
+        self.assertThat(result.exit_code, Equals(0))
         snap_file_2 = glob.glob('*0.2*.snap')[0]
         snap_file_2_path = snap_cache.cache(snap_filename=snap_file_2)
         snap_file_2_dir, snap_file_2_hash = os.path.split(snap_file_2_path)
 
         # confirm expected snap cached
-        self.assertEqual(2, len(os.listdir(snap_file_2_dir)))
+        self.assertThat(len(os.listdir(snap_file_2_dir)), Equals(2))
 
         # prune
         pruned_files = snap_cache.prune(deb_arch=self.deb_arch,
                                         keep_hash=snap_file_2_hash)
 
-        self.assertEqual(1, len(pruned_files))
+        self.assertThat(len(pruned_files), Equals(1))
         self.assertIn(
             os.path.join(
                 snap_cache.snap_cache_root,

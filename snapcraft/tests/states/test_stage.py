@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import yaml
+
+from testtools.matchers import Equals
 
 import snapcraft.internal
 from snapcraft import tests
@@ -40,7 +42,7 @@ class StateStageTestCase(StageStateBaseTestCase):
 
     def test_yaml_conversion(self):
         state_from_yaml = yaml.load(yaml.dump(self.state))
-        self.assertEqual(self.state, state_from_yaml)
+        self.assertThat(state_from_yaml, Equals(self.state))
 
     def test_comparison(self):
         other = snapcraft.internal.states.StageState(
@@ -50,9 +52,9 @@ class StateStageTestCase(StageStateBaseTestCase):
 
     def test_properties_of_interest(self):
         properties = self.state.properties_of_interest(self.part_properties)
-        self.assertEqual(2, len(properties))
-        self.assertEqual(['baz'], properties['stage'])
-        self.assertEqual({'qux': 'quux'}, properties['filesets'])
+        self.assertThat(len(properties), Equals(2))
+        self.assertThat(properties['stage'], Equals(['baz']))
+        self.assertThat(properties['filesets'], Equals({'qux': 'quux'}))
 
     def test_project_options_of_interest(self):
         self.assertFalse(self.state.project_options_of_interest(self.project))

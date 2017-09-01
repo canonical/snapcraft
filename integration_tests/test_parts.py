@@ -16,8 +16,8 @@
 
 import os
 
-from testtools.matchers import Contains
 import yaml
+from testtools.matchers import Contains, Equals
 
 import integration_tests
 
@@ -70,7 +70,7 @@ class PartsTestCase(integration_tests.TestCase):
                 ],
             },
         }
-        self.assertEqual(expected_part, part)
+        self.assertThat(part, Equals(expected_part))
 
 
 class PartsWithFilesetsTestCase(integration_tests.TestCase):
@@ -113,6 +113,6 @@ class PartsWithFilesetsTestCase(integration_tests.TestCase):
                 "source": "https://github.com/jocave/simple-make-filesets.git",
             },
         }
-        self.assertEqual(expected_part, part)
+        self.assertThat(part, Equals(expected_part))
 
         self.run_snapcraft('snap', 'wiki-filesets')

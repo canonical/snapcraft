@@ -1,0 +1,13 @@
+name: build-package
+version: '0.1'
+summary: install a build-package
+description: |
+  Install a build-package.
+
+grade: stable
+confinement: strict
+
+parts:
+  hello:
+    plugin: nil
+    build-packages: ['hello']

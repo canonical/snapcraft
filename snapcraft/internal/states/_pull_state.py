@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-buildnil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,7 +16,7 @@
 
 import yaml
 
-from snapcraft.internal.states._state import State
+from snapcraft.internal.states._state import PartState
 
 
 def _pull_state_constructor(loader, node):
@@ -40,17 +40,20 @@ def _schema_properties():
     }
 
 
-class PullState(State):
+class PullState(PartState):
     yaml_tag = u'!PullState'
 
     def __init__(self, property_names, part_properties=None, project=None,
-                 stage_packages=None):
+                 stage_packages=None, build_packages=None,
+                 source_details=None):
         # Save this off before calling super() since we'll need it
         # FIXME: for 3.x the name `schema_properties` is leaking
         #        implementation details from a higher layer.
         self.schema_properties = property_names
         self.assets = {
             'stage-packages': stage_packages,
+            'build-packages': build_packages,
+            'source-details': source_details,
         }
 
         super().__init__(part_properties, project)

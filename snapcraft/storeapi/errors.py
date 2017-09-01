@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,7 +19,15 @@ from simplejson.scanner import JSONDecodeError
 from snapcraft.internal.errors import SnapcraftError
 
 
-class InvalidCredentialsError(SnapcraftError):
+class StoreError(SnapcraftError):
+    """Base class for all storeapi exceptions.
+
+    :cvar fmt: A format string that daughter classes override
+
+    """
+
+
+class InvalidCredentialsError(StoreError):
 
     fmt = 'Invalid credentials: {message}.'
 
@@ -27,12 +35,17 @@ class InvalidCredentialsError(SnapcraftError):
         super().__init__(message=message)
 
 
-class StoreError(SnapcraftError):
-    """Base class for all storeapi exceptions.
+class LoginRequiredError(StoreError):
 
-    :cvar fmt: A format string that daughter classes override
+    fmt = 'Cannot continue without logging in successfully.'
 
-    """
+
+class StoreRetryError(StoreError):
+
+    fmt = 'There seems to be a network error: {error}'
+
+    def __init__(self, exception):
+        super().__init__(error=str(exception))
 
 
 class SnapNotFoundError(StoreError):
@@ -145,7 +158,13 @@ class StoreKeyRegistrationError(StoreError):
 
 
 class StoreRegistrationError(StoreError):
+    """Captures store name registration errors.
 
+    Overrides `SnapcraftError` setup and string representation to
+    support new-style (multiple) Store error responses.
+
+    See https://myapps.developer.ubuntu.com/docs/api/snap.html#errors
+    """
     __FMT_ALREADY_REGISTERED = (
         'The name {snap_name!r} is already taken.\n\n'
         'We can if needed rename snaps to ensure they match the expectations '
@@ -163,6 +182,8 @@ class StoreRegistrationError(StoreError):
         'You must wait {retry_after} seconds before trying to register '
         'your next snap.')
 
+    __FMT_INVALID = '{message}'
+
     fmt = 'Registration failed.'
 
     __error_messages = {
@@ -170,20 +191,43 @@ class StoreRegistrationError(StoreError):
         'already_owned': __FMT_ALREADY_OWNED,
         'reserved_name': __FMT_RESERVED,
         'register_window': __FMT_RETRY_WAIT,
+        'invalid': __FMT_INVALID,
     }
 
     def __init__(self, snap_name, response):
+        self._errors = []
+
         try:
             response_json = response.json()
         except JSONDecodeError:
             response_json = {}
 
-        error_code = response_json.get('code')
-        if error_code:
-            # we default to self.fmt in case error_code is not mapped yet.
-            self.fmt = self.__error_messages.get(error_code, self.fmt)
+        # Annotate 'snap_name' to be used when formatting errors.
+        response_json['snap_name'] = snap_name
 
-        super().__init__(snap_name=snap_name, **response_json)
+        # Extract the new-format error structure.
+        error_list = response_json.pop('error_list', None)
+
+        # Cope with legacy errors (missing 'error_list', single error and
+        # top-level 'code').
+        if error_list is None:
+            error_code = response_json.get('code')
+            # we default to self.fmt in case error_code is not mapped yet.
+            fmt = self.__error_messages.get(error_code, self.fmt)
+            self._errors.append(fmt.format(**response_json))
+            return
+
+        # Support new style formatted errors.
+        for error in error_list:
+            fmt = self.__error_messages.get(error['code'], self.fmt)
+            # Augment 'error' with remaining top-level keys. Should be a
+            # no-op once they are moved to their specific error record.
+            error.update(response_json)
+            self._errors.append(fmt.format(**error))
+
+    def __str__(self):
+        """Simply join formatted error as lines."""
+        return '\n'.join(self._errors)
 
 
 class StoreUploadError(StoreError):
@@ -227,10 +271,14 @@ class StorePushError(StoreError):
 class StoreReviewError(StoreError):
 
     __FMT_NEED_MANUAL_REVIEW = (
-        'Publishing checks failed.\n'
-        'To release this to stable channel please request a review on '
-        'the snapcraft list.\n'
-        'Use devmode in the edge or beta channels to disable confinement.')
+        "The Store automatic review failed.\n"
+        "A human will soon review your snap, but if you can't wait please "
+        "write in the snapcraft forum asking for the manual review "
+        "explicitly.\n"
+        "If you need to disable confinement, please consider using devmode, "
+        "but note that devmode revision will only be allowed to be released "
+        "in edge and beta channels.\n"
+        "Please check the errors and some hints below:")
 
     __FMT_PROCESSING_ERROR = (
         'The store was unable to accept this snap.')
@@ -338,8 +386,12 @@ class StoreSnapRevisionsError(StoreError):
             series=series or 'any', error=error)
 
 
-class StoreDeltaApplicationError(Exception):
-    pass
+class StoreDeltaApplicationError(StoreError):
+
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
 
 
 class StoreSnapStatusError(StoreSnapRevisionsError):
@@ -362,3 +414,102 @@ class StoreChannelClosingError(StoreError):
                 response.status_code, response.reason)
 
         super().__init__(error=error)
+
+
+class StoreChannelClosingPermissionError(StoreError):
+
+    fmt = (
+        'Your account lacks permission to close channels for this snap. Make '
+        'sure the logged in account has upload permissions on {snap_name!r} '
+        'in series {snap_series!r}.'
+    )
+
+    def __init__(self, snap_name, snap_series):
+        super().__init__(snap_name=snap_name, snap_series=snap_series)
+
+
+class StoreBuildAssertionPermissionError(StoreError):
+
+    fmt = (
+        'Your account lacks permission to assert builds for this snap. Make '
+        'sure you are logged in as the publisher of {snap_name!r} '
+        'for series {snap_series!r}.'
+    )
+
+    def __init__(self, snap_name, snap_series):
+        super().__init__(snap_name=snap_name, snap_series=snap_series)
+
+
+class StoreAssertionError(StoreError):
+
+    fmt = 'Error signing {endpoint} assertion for {snap_name}: {error!s}'
+
+
+class MissingSnapdError(StoreError):
+
+    fmt = (
+        'The snapd package is not installed. In order to use {command!r}, '
+        "you must run 'apt install snapd'."
+    )
+
+    def __init__(self, command):
+        super().__init__(command=command)
+
+
+class KeyAlreadyRegisteredError(StoreError):
+
+    fmt = 'You have already registered a key named {key_name!r}'
+
+    def __init__(self, key_name):
+        super().__init__(key_name=key_name)
+
+
+class NoKeysError(StoreError):
+
+    fmt = (
+        'You have no usable keys.\nPlease create at least one key with '
+        '`snapcraft create-key` for use with snap.'
+    )
+
+
+class NoSuchKeyError(StoreError):
+
+    fmt = (
+        'You have no usable key named {key_name!r}.\nSee the keys available '
+        'in your system with `snapcraft keys`.'
+    )
+
+    def __init__(self, key_name):
+        super().__init__(key_name=key_name)
+
+
+class KeyNotRegisteredError(StoreError):
+
+    fmt = (
+        'The key {key_name!r} is not registered in the Store.\nPlease '
+        'register it with `snapcraft register-key {key_name!r}` before '
+        'signing and pushing signatures to the Store.'
+    )
+
+    def __init__(self, key_name):
+        super().__init__(key_name=key_name)
+
+
+class InvalidValidationRequestsError(StoreError):
+
+    fmt = (
+        'Invalid validation requests (format must be name=revision): '
+        '{requests}'
+    )
+
+    def __init__(self, requests):
+        requests_str = ' '.join(requests)
+        super().__init__(requests=requests_str)
+
+
+class SignBuildAssertionError(StoreError):
+
+    fmt = 'Failed to sign build assertion for {snap_name!r}'
+
+    def __init__(self, snap_name):
+        super().__init__(snap_name=snap_name)

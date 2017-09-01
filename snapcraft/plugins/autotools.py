@@ -53,7 +53,6 @@ class AutotoolsPlugin(make.MakePlugin):
         schema['properties']['configflags'] = {
             'type': 'array',
             'minitems': 1,
-            'uniqueItems': True,
             'items': {
                 'type': 'string',
             },
@@ -90,6 +89,18 @@ class AutotoolsPlugin(make.MakePlugin):
             raise RuntimeError('Unsupported installation method: "{}"'.format(
                 options.install_via))
 
+    def env(self, root):
+        env = super().env(root)
+        if self.project.is_cross_compiling:
+            env.extend([
+                'CC={}-gcc'.format(self.project.arch_triplet),
+                'CXX={}-g++'.format(self.project.arch_triplet),
+            ])
+        return env
+
+    def enable_cross_compilation(self):
+        pass
+
     def build(self):
         if not os.path.exists(os.path.join(self.builddir, 'configure')):
             generated = False
@@ -117,6 +128,8 @@ class AutotoolsPlugin(make.MakePlugin):
             configure_command.append('--prefix=')
         else:
             configure_command.append('--prefix=' + self.installdir)
+        if self.project.is_cross_compiling:
+            configure_command.append('--host={}'.format(self.project.deb_arch))
 
         self.run(configure_command + self.options.configflags)
         self.make()

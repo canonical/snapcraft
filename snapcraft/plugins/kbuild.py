@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,7 +28,12 @@ explained above:
     - kconfigfile:
       (filepath)
       path to file to use as base configuration. If provided this option wins
-      over kdefconfig. default: None
+      over everything else. default: None
+
+    - kconfigflavour
+      (string)
+      Ubuntu config flavour to use as base configuration. If provided this
+      option wins over kdefconfig. default: None
 
     - kconfigs
       (list of strings)
@@ -57,12 +62,12 @@ be used.
 
 import logging
 import os
-import shutil
 import subprocess
 import re
 
 from snapcraft import BasePlugin
 
+import snapcraft
 
 logger = logging.getLogger(__name__)
 
@@ -93,13 +98,19 @@ class KBuildPlugin(BasePlugin):
             'default': [],
         }
 
+        schema['properties']['kconfigflavour'] = {
+            'type': 'string',
+            'default': None,
+        }
+
         return schema
 
     @classmethod
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['kdefconfig', 'kconfigfile', 'kconfigs']
+        return ['kdefconfig', 'kconfigfile', 'kconfigs', 'kconfigflavour',
+                'build-attributes']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -112,16 +123,78 @@ class KBuildPlugin(BasePlugin):
         if logger.isEnabledFor(logging.DEBUG):
             self.make_cmd.append('V=1')
 
+    def enable_cross_compilation(self):
+        self.make_cmd.append('ARCH={}'.format(
+            self.project.kernel_arch))
+        if 'CROSS_COMPILE' in os.environ:
+            toolchain = os.environ['CROSS_COMPILE']
+        else:
+            toolchain = self.project.cross_compiler_prefix
+        self.make_cmd.append('CROSS_COMPILE={}'.format(toolchain))
+
+        env = os.environ.copy()
+        self.make_cmd.append('PATH={}:/usr/{}/bin'.format(
+            env.get('PATH', ''), self.project.arch_triplet))
+
+    def assemble_ubuntu_config(self, config_path):
+        try:
+            with open(os.path.join('debian', 'debian.env'), 'r') as f:
+                env = f.read()
+        except OSError as e:
+            raise RuntimeError('Unable to access {}: {}'.format(e.filename,
+                                                                e.strerror))
+        arch = self.project.deb_arch
+        try:
+            branch = env.split('.')[1].strip()
+        except IndexError:
+            raise RuntimeError('Malformed debian.env, cannot extract'
+                               ' branch name')
+        flavour = self.options.kconfigflavour
+
+        configfiles = []
+        baseconfigdir = os.path.join('debian.{}'.format(branch), 'config')
+        archconfigdir = os.path.join('debian.{}'.format(branch),
+                                     'config', arch)
+        commonconfig = os.path.join(baseconfigdir,
+                                    'config.common.ports')
+        ubuntuconfig = os.path.join(baseconfigdir,
+                                    'config.common.ubuntu')
+        archconfig = os.path.join(archconfigdir,
+                                  'config.common.{}'.format(arch))
+        flavourconfig = os.path.join(archconfigdir,
+                                     'config.flavour.{}'.format(flavour))
+        configfiles.append(commonconfig)
+        configfiles.append(ubuntuconfig)
+        configfiles.append(archconfig)
+        configfiles.append(flavourconfig)
+        # assemble .config
+        try:
+            with open(config_path, 'w') as config_file:
+                for config_part_path in (commonconfig, ubuntuconfig,
+                                         archconfig, flavourconfig):
+                    with open(config_part_path) as config_part:
+                        config_file.write(config_part.read())
+        except OSError as e:
+            raise RuntimeError('Unable to access {!r}: '
+                               '{}'.format(e.filename, e.strerror))
+
+    def get_config_path(self):
+        return os.path.join(self.builddir, '.config')
+
     def do_base_config(self, config_path):
         # if kconfigfile is provided use that
+        # elif kconfigflavour is provided, assemble the ubuntu.flavour config
         # otherwise use defconfig to seed the base config
-        if self.options.kconfigfile is None:
+        if self.options.kconfigfile:
+            snapcraft.file_utils.link_or_copy(self.options.kconfigfile,
+                                              config_path)
+        elif self.options.kconfigflavour:
+            self.assemble_ubuntu_config(config_path)
+        else:
             # we need to run this with -j1, unit tests are a good defense here.
             make_cmd = self.make_cmd.copy()
             make_cmd[1] = '-j1'
             self.run(make_cmd + self.options.kdefconfig)
-        else:
-            shutil.copy(self.options.kconfigfile, config_path)
 
     def do_patch_config(self, config_path):
         # prepend the generated file with provided kconfigs
@@ -149,6 +222,13 @@ class KBuildPlugin(BasePlugin):
         cmd = 'yes "" | {} oldconfig'.format(' '.join(self.make_cmd))
         subprocess.check_call(cmd, shell=True, cwd=self.builddir)
 
+    def do_configure(self):
+        config_path = self.get_config_path()
+
+        self.do_base_config(config_path)
+        self.do_patch_config(config_path)
+        self.do_remake_config()
+
     def do_build(self):
         # Linux's kernel Makefile gets confused if it is invoked with the
         # environment setup by another Linux's Makefile:
@@ -169,10 +249,7 @@ class KBuildPlugin(BasePlugin):
     def build(self):
         super().build()
 
-        config_path = os.path.join(self.builddir, '.config')
-
-        self.do_base_config(config_path)
-        self.do_patch_config(config_path)
-        self.do_remake_config()
+        self.do_configure()
         self.do_build()
-        self.do_install()
+        if 'no-install' not in self.options.build_attributes:
+            self.do_install()

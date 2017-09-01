@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,15 +19,14 @@ import pydoc
 from unittest import mock
 
 import fixtures
+from testtools.matchers import Equals, StartsWith
 
-from snapcraft._help import _TOPICS
-from snapcraft.main import main
+from snapcraft.cli.help import _TOPICS
 
-from snapcraft import tests
-from snapcraft.tests import fixture_setup
+from . import CommandBaseTestCase
 
 
-class HelpCommandBaseTestCase(tests.TestCase):
+class HelpCommandBaseTestCase(CommandBaseTestCase):
 
     def setUp(self):
         super().setUp()
@@ -44,57 +43,62 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['help', 'does-not-exist'])
+        result = self.run_command(['help', 'does-not-exist'])
 
-        self.assertEqual(1, raised.code)
-        self.assertEqual(
-            fake_logger.output,
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(
             'The plugin does not exist. Run `snapcraft '
-            'list-plugins` to see the available plugins.\n')
+            'list-plugins` to see the available plugins.\n',
+            Equals(result.output))
 
     def test_print_module_help_when_no_help_for_valid_plugin(self):
-        main(['help', 'jdk'])
+        result = self.run_command(['help', 'jdk'])
 
-        self.assertEqual('The plugin has no documentation\n',
-                         self.fake_terminal.getvalue())
+        self.assertThat(
+            result.output,
+            Equals('The plugin has no documentation\n'))
 
     def test_print_module_help_for_valid_plugin(self):
-        main(['help', 'nil'])
+        result = self.run_command(['help', 'nil'])
 
         expected = 'The nil plugin is'
-        output = self.fake_terminal.getvalue()[:len(expected)]
-        self.assertEqual(output, expected,
-                         'The help message does not start with {!r} but with '
-                         '{!r} instead'.format(expected, output))
+        output = result.output[:len(expected)]
+        self.assertThat(output, Equals(expected),
+                        'The help message does not start with {!r} but with '
+                        '{!r} instead'.format(expected, output))
+
+    def test_print_module_named_with_dashes_help_for_valid_plugin(self):
+        result = self.run_command(['help', 'plainbox-provider'])
+
+        expected = ' Create parts'
+        self.assertThat(result.output, StartsWith(expected))
 
     def test_show_module_help_with_devel_for_valid_plugin(self):
-        main(['help', 'nil', '--devel'])
+        result = self.run_command(['help', 'nil', '--devel'])
 
         expected = 'Help on module snapcraft.plugins.nil in snapcraft.plugins'
-        output = self.fake_terminal.getvalue()[:len(expected)]
+        output = result.output[:len(expected)]
 
-        self.assertEqual(output, expected,
-                         'The help message does not start with {!r} but with '
-                         '{!r} instead'.format(expected, output))
+        self.assertThat(output, Equals(expected),
+                        'The help message does not start with {!r} but with '
+                        '{!r} instead'.format(expected, output))
 
     def test_print_topics(self):
-        main(['help', 'topics'])
+        result = self.run_command(['help', 'topics'])
 
-        output = self.fake_terminal.getvalue().strip().split('\n')
+        output = result.output.strip().split('\n')
         for t in _TOPICS:
             self.assertTrue(
                 t in output, 'Missing topic: {!r} in {!r}'.format(t, output))
 
     def test_print_topic_help_for_valid_topic(self):
-        main(['help', 'sources'])
+        result = self.run_command(['help', 'sources'])
 
         expected = "Common 'source' options."
-        output = self.fake_terminal.getvalue()[:len(expected)]
-        self.assertEqual(output, expected,
-                         'The help message does not start with {!r} but with '
-                         '{!r} instead'.format(expected, output))
+        output = result.output[:len(expected)]
+        self.assertThat(output, Equals(expected),
+                        'The help message does not start with {!r} but with '
+                        '{!r} instead'.format(expected, output))
 
     def test_no_unicode_in_help_strings(self):
         helps = ['topics']
@@ -112,12 +116,10 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
                 helps.append(os.path.basename(str(plugin)[:-3]))
 
         for key in helps:
-            fake_terminal = fixture_setup.FakeTerminal()
-            self.useFixture(fake_terminal)
-            main(['help', key])
+            result = self.run_command(['help', key])
             # An UnicodeEncodeError will be raised if the help text has
             # non-ASCII characters.
-            fake_terminal.getvalue().encode('ascii')
+            result.output.encode('ascii')
 
 
 class TopicWithDevelTestCase(HelpCommandBaseTestCase):
@@ -131,11 +133,9 @@ class TopicWithDevelTestCase(HelpCommandBaseTestCase):
             'plugins': 'Help on package snapcraft',
         }
 
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
-        main(['help', self.topic, '--devel'])
-        output = fake_terminal.getvalue()[:len(expected[self.topic])]
-        self.assertEqual(
-            output, expected[self.topic],
+        result = self.run_command(['help', self.topic, '--devel'])
+        output = result.output[:len(expected[self.topic])]
+        self.assertThat(
+            output, Equals(expected[self.topic]),
             'The help message does not start with {!r} but with '
             '{!r} instead'.format(expected[self.topic], output))

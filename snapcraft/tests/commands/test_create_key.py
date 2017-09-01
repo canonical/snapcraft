@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,29 +13,15 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import logging
 from unittest import mock
 
-import fixtures
+from testtools.matchers import Contains, Equals
 
-from snapcraft.main import main
-from snapcraft import (
-    storeapi,
-    tests,
-)
-from . import (
-    get_sample_key,
-    mock_snap_output
-)
+from snapcraft import storeapi
+from . import CommandBaseTestCase, get_sample_key, mock_snap_output
 
 
-class CreateKeyTestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
+class CreateKeyTestCase(CommandBaseTestCase):
 
     @mock.patch('subprocess.check_call')
     @mock.patch('subprocess.check_output')
@@ -46,15 +32,15 @@ class CreateKeyTestCase(tests.TestCase):
         mock_installed.return_value = False
 
         raised = self.assertRaises(
-            SystemExit,
-            main, ['create-key'])
+            storeapi.errors.MissingSnapdError,
+            self.run_command, ['create-key'])
+
+        self.assertThat(str(raised), Contains(
+            'The snapd package is not installed.'))
 
         mock_installed.assert_called_with('snapd')
-        self.assertEqual(0, mock_check_output.call_count)
-        self.assertEqual(0, mock_check_call.call_count)
-        self.assertEqual(1, raised.code)
-        self.assertIn(
-            'The snapd package is not installed.', self.fake_logger.output)
+        self.assertThat(mock_check_output.call_count, Equals(0))
+        self.assertThat(mock_check_call.call_count, Equals(0))
 
     @mock.patch('subprocess.check_call')
     @mock.patch('subprocess.check_output')
@@ -65,13 +51,11 @@ class CreateKeyTestCase(tests.TestCase):
         mock_check_output.side_effect = mock_snap_output
 
         raised = self.assertRaises(
-            SystemExit,
-            main, ['create-key'])
+            storeapi.errors.KeyAlreadyRegisteredError,
+            self.run_command, ['create-key'])
 
-        self.assertEqual(0, mock_check_call.call_count)
-        self.assertEqual(1, raised.code)
-        self.assertIn(
-            'You already have a key named "default".', self.fake_logger.output)
+        self.assertThat(str(raised), Equals(
+            "You have already registered a key named 'default'"))
 
     @mock.patch('subprocess.check_call')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
@@ -95,14 +79,12 @@ class CreateKeyTestCase(tests.TestCase):
         }
 
         raised = self.assertRaises(
-            SystemExit,
-            main, ['create-key', 'new-key'])
+            storeapi.errors.KeyAlreadyRegisteredError,
+            self.run_command, ['create-key', 'new-key'])
 
-        self.assertEqual(0, mock_check_call.call_count)
-        self.assertEqual(1, raised.code)
-        self.assertIn(
-            'You have already registered a key named "new-key".',
-            self.fake_logger.output)
+        self.assertThat(str(raised), Equals(
+            "You have already registered a key named 'new-key'"))
+        self.assertThat(mock_check_call.call_count, Equals(0))
 
     @mock.patch('subprocess.check_call')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
@@ -124,11 +106,11 @@ class CreateKeyTestCase(tests.TestCase):
             ],
         }
 
-        main(['create-key', 'new-key'])
+        result = self.run_command(['create-key', 'new-key'])
 
+        self.assertThat(result.exit_code, Equals(0))
         mock_check_call.assert_called_once_with(
             ['snap', 'create-key', 'new-key'])
-        self.assertEqual('', self.fake_logger.output)
 
     @mock.patch('subprocess.check_call')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
@@ -142,8 +124,9 @@ class CreateKeyTestCase(tests.TestCase):
         mock_get_account_information.side_effect = (
             storeapi.errors.InvalidCredentialsError('Test'))
 
-        main(['create-key', 'new-key'])
+        result = self.run_command(['create-key', 'new-key'])
+
+        self.assertThat(result.exit_code, Equals(0))
 
         mock_check_call.assert_called_once_with(
             ['snap', 'create-key', 'new-key'])
-        self.assertEqual('', self.fake_logger.output)

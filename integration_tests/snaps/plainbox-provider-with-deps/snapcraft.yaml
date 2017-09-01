@@ -19,9 +19,9 @@ parts:
             - build-essential
     parent-plainbox-provider:
         plugin: plainbox-provider
-        source: ./2017.com.example:parent
+        source: ./2017.com.example_parent
         after: [plainbox-local]
     child-plainbox-provider:
         plugin: plainbox-provider
-        source: ./2017.com.example:child
+        source: ./2017.com.example_child
         after: [parent-plainbox-provider]

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,36 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import logging
 from textwrap import dedent
 from unittest import mock
 
-import fixtures
+from testtools.matchers import Contains, Equals
 
-from snapcraft.main import main
-from snapcraft import (
-    storeapi,
-    tests,
-)
-from . import (
-    get_sample_key,
-    mock_snap_output
-)
+from snapcraft import storeapi
+from . import CommandBaseTestCase, get_sample_key, mock_snap_output
 
 
-class ListKeysTestCase(tests.TestCase):
+class ListKeysCommandTestCase(CommandBaseTestCase):
 
     scenarios = [
         ('list-keys', {'command_name': 'list-keys'}),
         ('keys alias', {'command_name': 'keys'}),
     ]
-
-    def setUp(self):
-        super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
-        self.fake_terminal = tests.fixture_setup.FakeTerminal()
-        self.useFixture(self.fake_terminal)
 
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -52,14 +37,13 @@ class ListKeysTestCase(tests.TestCase):
         mock_installed.return_value = False
 
         raised = self.assertRaises(
-            SystemExit,
-            main, [self.command_name])
+            storeapi.errors.MissingSnapdError,
+            self.run_command, [self.command_name])
 
+        self.assertThat(str(raised), Contains(
+            'The snapd package is not installed.'))
         mock_installed.assert_called_with('snapd')
-        self.assertEqual(0, mock_check_output.call_count)
-        self.assertEqual(1, raised.code)
-        self.assertIn(
-            'The snapd package is not installed.', self.fake_logger.output)
+        self.assertThat(mock_check_output.call_count, Equals(0))
 
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -68,14 +52,10 @@ class ListKeysTestCase(tests.TestCase):
         mock_check_output.side_effect = mock_snap_output
 
         raised = self.assertRaises(
-            SystemExit,
-            main,
-            [self.command_name])
+            storeapi.errors.InvalidCredentialsError,
+            self.run_command, [self.command_name])
 
-        self.assertEqual(1, raised.code)
-        self.assertIn(
-            'No valid credentials found. Have you run "snapcraft login"?\n',
-            self.fake_logger.output)
+        self.assertThat(str(raised), Contains('Invalid credentials'))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
@@ -95,13 +75,13 @@ class ListKeysTestCase(tests.TestCase):
             ],
         }
 
-        main([self.command_name])
+        result = self.run_command([self.command_name])
 
-        expected_output = dedent('''\
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
                 Name     SHA3-384 fingerprint
             *   default  {default_sha3_384}
             -   another  {another_sha3_384}  (not registered)
-            ''').format(
+            """).format(
                 default_sha3_384=get_sample_key('default')['sha3-384'],
-                another_sha3_384=get_sample_key('another')['sha3-384'])
-        self.assertIn(expected_output, self.fake_terminal.getvalue())
+                another_sha3_384=get_sample_key('another')['sha3-384'])))

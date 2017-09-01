@@ -14,24 +14,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import contextlib
-import os
 import configparser
 import logging
+import os
 import re
 import shlex
 import shutil
 import stat
 import subprocess
-import tempfile
 
 import yaml
 
 from snapcraft import file_utils
 from snapcraft import shell_utils
-from snapcraft.internal import common, project_loader
-from snapcraft.internal.errors import MissingGadgetError
+from snapcraft.internal import (
+    common,
+    errors
+)
 from snapcraft.internal.deprecations import handle_deprecation_notice
+from snapcraft.internal.sources import get_source_handler_from_type
+from snapcraft.internal.states import (
+    get_global_state,
+    get_state
+)
 
 
 logger = logging.getLogger(__name__)
@@ -39,7 +46,6 @@ logger = logging.getLogger(__name__)
 
 _MANDATORY_PACKAGE_KEYS = [
     'name',
-    'version',
     'description',
     'summary',
 ]
@@ -47,6 +53,7 @@ _MANDATORY_PACKAGE_KEYS = [
 _OPTIONAL_PACKAGE_KEYS = [
     'architectures',
     'assumes',
+    'base',
     'environment',
     'type',
     'plugs',
@@ -62,7 +69,7 @@ class CommandError(Exception):
     pass
 
 
-def create_snap_packaging(config_data, project_options):
+def create_snap_packaging(config_data, project_options, snapcraft_yaml_path):
     """Create snap.yaml and related assets in meta.
 
     Create the meta directory and provision it with snap.yaml in the snap dir
@@ -72,7 +79,8 @@ def create_snap_packaging(config_data, project_options):
     :param dict config_data: project values defined in snapcraft.yaml.
     :return: meta_dir.
     """
-    packaging = _SnapPackaging(config_data, project_options)
+    packaging = _SnapPackaging(
+        config_data, project_options, snapcraft_yaml_path)
     packaging.write_snap_yaml()
     packaging.setup_assets()
     packaging.generate_hook_wrappers()
@@ -87,12 +95,13 @@ class _SnapPackaging:
     def meta_dir(self):
         return self._meta_dir
 
-    def __init__(self, config_data, project_options):
-        self._snap_dir = project_options.snap_dir
+    def __init__(self, config_data, project_options, snapcraft_yaml_path):
+        self._snapcraft_yaml_path = snapcraft_yaml_path
+        self._prime_dir = project_options.prime_dir
         self._parts_dir = project_options.parts_dir
         self._arch_triplet = project_options.arch_triplet
 
-        self._meta_dir = os.path.join(self._snap_dir, 'meta')
+        self._meta_dir = os.path.join(self._prime_dir, 'meta')
         self._config_data = config_data.copy()
 
         os.makedirs(self._meta_dir, exist_ok=True)
@@ -124,43 +133,61 @@ class _SnapPackaging:
 
         if self._config_data.get('type', '') == 'gadget':
             if not os.path.exists('gadget.yaml'):
-                raise MissingGadgetError()
+                raise errors.MissingGadgetError()
             file_utils.link_or_copy(
                 'gadget.yaml', os.path.join(self.meta_dir, 'gadget.yaml'))
 
-    def _ensure_snapcraft_yaml(self):
-        source = project_loader.get_snapcraft_yaml()
-        destination = os.path.join(self._snap_dir, 'snap', 'snapcraft.yaml')
+    def _record_manifest_and_source_snapcraft_yaml(self):
+        prime_snap_dir = os.path.join(self._prime_dir, 'snap')
+        recorded_snapcraft_yaml_path = os.path.join(
+            prime_snap_dir, 'snapcraft.yaml')
+        if os.path.isfile(recorded_snapcraft_yaml_path):
+            os.unlink(recorded_snapcraft_yaml_path)
+        manifest_file_path = os.path.join(prime_snap_dir, 'manifest.yaml')
+        if os.path.isfile(manifest_file_path):
+            os.unlink(manifest_file_path)
 
-        with contextlib.suppress(FileNotFoundError):
-            os.remove(destination)
+        # FIXME hide this functionality behind a feature flag for now
+        if os.environ.get('SNAPCRAFT_BUILD_INFO'):
+            os.makedirs(prime_snap_dir, exist_ok=True)
+            shutil.copy2(
+                self._snapcraft_yaml_path, recorded_snapcraft_yaml_path)
+            annotated_snapcraft = self._annotate_snapcraft(
+                copy.deepcopy(self._config_data))
+            with open(manifest_file_path, 'w') as manifest_file:
+                yaml.dump(annotated_snapcraft, manifest_file)
 
-        os.makedirs(os.path.dirname(destination), exist_ok=True)
-        file_utils.link_or_copy(source, destination)
-
-    def _ensure_no_build_artifacts(self):
-        # TODO: rename _snap_dir to _prime_dir
-        snap_dir = os.path.join(self._snap_dir, 'snap')
-
-        artifacts = ['snapcraft.yaml']
-
-        for artifact in artifacts:
-            artifact_path = os.path.join(snap_dir, artifact)
-            if os.path.isfile(artifact_path):
-                os.unlink(artifact_path)
+    def _annotate_snapcraft(self, data):
+        data['build-packages'] = get_global_state().assets.get(
+            'build-packages', [])
+        for part in data['parts']:
+            state_dir = os.path.join(self._parts_dir, part, 'state')
+            pull_state = get_state(state_dir, 'pull')
+            data['parts'][part]['build-packages'] = (
+                pull_state.assets.get('build-packages', []))
+            data['parts'][part]['stage-packages'] = (
+                pull_state.assets.get('stage-packages', []))
+            source_details = pull_state.assets.get('source-details', {})
+            if source_details:
+                data['parts'][part].update(source_details)
+            build_state = get_state(state_dir, 'build')
+            data['parts'][part].update(build_state.assets)
+        return data
 
     def write_snap_directory(self):
         # First migrate the snap directory. It will overwrite any conflicting
         # files.
         for root, directories, files in os.walk('snap'):
+            if '.snapcraft' in directories:
+                directories.remove('.snapcraft')
             for directory in directories:
                 source = os.path.join(root, directory)
-                destination = os.path.join(self._snap_dir, source)
+                destination = os.path.join(self._prime_dir, source)
                 file_utils.create_similar_directory(source, destination)
 
             for file_path in files:
                 source = os.path.join(root, file_path)
-                destination = os.path.join(self._snap_dir, source)
+                destination = os.path.join(self._prime_dir, source)
                 with contextlib.suppress(FileNotFoundError):
                     os.remove(destination)
                 file_utils.link_or_copy(source, destination)
@@ -185,15 +212,11 @@ class _SnapPackaging:
 
                     file_utils.link_or_copy(source, destination)
 
-        # FIXME hide this functionality behind a feature flag for now
-        if os.environ.get('SNAPCRAFT_BUILD_INFO'):
-            self._ensure_snapcraft_yaml()
-        else:
-            self._ensure_no_build_artifacts()
+        self._record_manifest_and_source_snapcraft_yaml()
 
     def generate_hook_wrappers(self):
-        snap_hooks_dir = os.path.join(self._snap_dir, 'snap', 'hooks')
-        hooks_dir = os.path.join(self._snap_dir, 'meta', 'hooks')
+        snap_hooks_dir = os.path.join(self._prime_dir, 'snap', 'hooks')
+        hooks_dir = os.path.join(self._prime_dir, 'meta', 'hooks')
         if os.path.isdir(snap_hooks_dir):
             os.makedirs(hooks_dir, exist_ok=True)
             for hook_name in os.listdir(snap_hooks_dir):
@@ -240,14 +263,43 @@ class _SnapPackaging:
         for key_name in _MANDATORY_PACKAGE_KEYS:
             snap_yaml[key_name] = self._config_data[key_name]
 
+        snap_yaml['version'] = self._get_version(
+            self._config_data['version'],
+            self._config_data.get('version-script'))
+
         for key_name in _OPTIONAL_PACKAGE_KEYS:
             if key_name in self._config_data:
                 snap_yaml[key_name] = self._config_data[key_name]
 
         if 'apps' in self._config_data:
+            _verify_app_paths(basedir='prime', apps=self._config_data['apps'])
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
 
         return snap_yaml
+
+    def _get_version(self, version, version_script=None):
+        new_version = version
+        if version_script:
+            logger.info('Determining the version from the project '
+                        'repo (version-script).')
+            try:
+                new_version = shell_utils.run_script(version_script).strip()
+                if not new_version:
+                    raise CommandError('The version-script produced no output')
+            except subprocess.CalledProcessError as e:
+                raise CommandError(
+                    'The version-script failed to run (exit code {})'.format(
+                        e.returncode))
+        # we want to whitelist what we support here.
+        elif version == 'git':
+            logger.info('Determining the version from the project '
+                        'repo (version: git).')
+            vcs_handler = get_source_handler_from_type('git')
+            new_version = vcs_handler.generate_version()
+
+        if new_version != version:
+            logger.info('The version has been set to {!r}'.format(new_version))
+        return new_version
 
     def _write_wrap_exe(self, wrapexec, wrappath,
                         shebang=None, args=None, cwd=None):
@@ -265,7 +317,7 @@ class _SnapPackaging:
             assembled_env = None
         else:
             assembled_env = common.assemble_env()
-            assembled_env = assembled_env.replace(self._snap_dir, '$SNAP')
+            assembled_env = assembled_env.replace(self._prime_dir, '$SNAP')
             assembled_env = replace_path.sub('$SNAP', assembled_env)
 
         executable = '"{}"'.format(wrapexec)
@@ -274,7 +326,7 @@ class _SnapPackaging:
             if shebang.startswith('/usr/bin/env '):
                 shebang = shell_utils.which(shebang.split()[1])
             new_shebang = replace_path.sub('$SNAP', shebang)
-            new_shebang = re.sub(self._snap_dir, '$SNAP', new_shebang)
+            new_shebang = re.sub(self._prime_dir, '$SNAP', new_shebang)
             if new_shebang != shebang:
                 # If the shebang was pointing to and executable within the
                 # local 'parts' dir, have the wrapper script execute it
@@ -295,9 +347,9 @@ class _SnapPackaging:
 
     def _wrap_exe(self, command, basename=None):
         execparts = shlex.split(command)
-        exepath = os.path.join(self._snap_dir, execparts[0])
+        exepath = os.path.join(self._prime_dir, execparts[0])
         if basename:
-            wrappath = os.path.join(self._snap_dir, basename) + '.wrapper'
+            wrappath = os.path.join(self._prime_dir, basename) + '.wrapper'
         else:
             wrappath = exepath + '.wrapper'
         shebang = None
@@ -307,7 +359,7 @@ class _SnapPackaging:
 
         wrapexec = '$SNAP/{}'.format(execparts[0])
         if not os.path.exists(exepath) and '/' not in execparts[0]:
-            _find_bin(execparts[0], self._snap_dir)
+            _find_bin(execparts[0], self._prime_dir)
             wrapexec = execparts[0]
         else:
             with open(exepath, 'rb') as exefile:
@@ -320,7 +372,7 @@ class _SnapPackaging:
         self._write_wrap_exe(wrapexec, wrappath,
                              shebang=shebang, args=execparts[1:])
 
-        return os.path.relpath(wrappath, self._snap_dir)
+        return os.path.relpath(wrappath, self._prime_dir)
 
     def _wrap_apps(self, apps):
         gui_dir = os.path.join(self.meta_dir, 'gui')
@@ -339,14 +391,12 @@ class _SnapPackaging:
             try:
                 app[k] = self._wrap_exe(app[k], '{}-{}'.format(k, name))
             except CommandError as e:
-                raise EnvironmentError(
-                    'The specified command {!r} defined in the app {!r} '
-                    'does not exist or is not executable'.format(str(e), name))
+                raise errors.InvalidAppCommandError(str(e), name)
         desktop_file_name = app.pop('desktop', '')
         if desktop_file_name:
             desktop_file = _DesktopFile(
                 name=name, filename=desktop_file_name,
-                snap_name=self._config_data['name'], prime_dir=self._snap_dir)
+                snap_name=self._config_data['name'], prime_dir=self._prime_dir)
             desktop_file.parse_and_reformat()
             desktop_file.write(gui_dir=os.path.join(self.meta_dir, 'gui'))
 
@@ -360,23 +410,21 @@ class _DesktopFile:
         self._prime_dir = prime_dir
         self._path = os.path.join(prime_dir, filename)
         if not os.path.exists(self._path):
-            raise EnvironmentError(
-                'The specified desktop file {!r} defined in the app '
-                '{!r} does not exist'.format(filename, name))
+            raise errors.InvalidDesktopFileError(
+                filename, 'does not exist (defined in the app {!r})'.format(
+                    name))
 
     def parse_and_reformat(self):
         self._parser = configparser.ConfigParser(interpolation=None)
         self._parser.optionxform = str
-        self._parser.read(self._path)
+        self._parser.read(self._path, encoding='utf-8')
         section = 'Desktop Entry'
         if section not in self._parser.sections():
-            raise EnvironmentError(
-                'The specified desktop file {!r} is not a valid '
-                'desktop file'.format(self._filename))
+            raise errors.InvalidDesktopFileError(
+                self._filename, "missing 'Desktop Entry' section")
         if 'Exec' not in self._parser[section]:
-            raise EnvironmentError(
-                'The specified desktop file {!r} is missing the '
-                '"Exec" key'.format(self._filename))
+            raise errors.InvalidDesktopFileError(
+                self._filename, "missing 'Exec' key")
         # XXX: do we want to allow more parameters for Exec?
         if self._name == self._snap_name:
             exec_value = '{} %U'.format(self._name)
@@ -403,27 +451,31 @@ class _DesktopFile:
             # Unlikely. A desktop file in setup/gui/ already existed for
             # this app. Let's pretend it wasn't there and overwrite it.
             os.remove(target)
-        with open(target, 'w') as f:
+        with open(target, 'w', encoding='utf-8') as f:
             self._parser.write(f, space_around_delimiters=False)
 
 
 def _find_bin(binary, basedir):
     # If it doesn't exist it might be in the path
     logger.debug('Checking that {!r} is in the $PATH'.format(binary))
-    script = ('#!/bin/sh\n' +
-              '{}\n'.format(common.assemble_env()) +
-              'which "{}"\n'.format(binary))
-    with tempfile.NamedTemporaryFile('w+') as tempf:
-        tempf.write(script)
-        tempf.flush()
-        try:
-            common.run(['/bin/sh', tempf.name], cwd=basedir,
-                       stdout=subprocess.DEVNULL)
-        except subprocess.CalledProcessError:
-            raise CommandError(binary)
+    try:
+        shell_utils.which(binary, cwd=basedir)
+    except subprocess.CalledProcessError:
+        raise CommandError(binary)
 
 
 def _validate_hook(hook_path):
     if not os.stat(hook_path).st_mode & stat.S_IEXEC:
         asset = os.path.basename(hook_path)
         raise CommandError('hook {!r} is not executable'.format(asset))
+
+
+def _verify_app_paths(basedir, apps):
+    for app in apps:
+        path_entries = [i for i in ('desktop', 'completer')
+                        if i in apps[app]]
+        for path_entry in path_entries:
+            file_path = os.path.join(basedir, apps[app][path_entry])
+            if not os.path.exists(file_path):
+                raise errors.SnapcraftPathEntryError(
+                    app=app, key=path_entry, value=file_path)

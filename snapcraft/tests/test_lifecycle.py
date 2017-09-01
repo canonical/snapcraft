@@ -24,6 +24,9 @@ from unittest import mock
 
 import fixtures
 from testtools.matchers import (
+    Contains,
+    DirExists,
+    Equals,
     FileContains,
     FileExists,
     MatchesRegex,
@@ -33,11 +36,12 @@ from testtools.matchers import (
 import snapcraft
 from snapcraft import storeapi
 from snapcraft.file_utils import calculate_sha3_384
-from snapcraft.internal import pluginhandler, lifecycle
+from snapcraft.internal import errors, pluginhandler, lifecycle
 from snapcraft import tests
+from snapcraft.tests import fixture_setup
 
 
-class ExecutionTestCases(tests.TestCase):
+class BaseLifecycleTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -60,24 +64,28 @@ grade: stable
 
         super().make_snapcraft_yaml(yaml.format(parts=parts, type=snap_type))
 
+
+class ExecutionTestCase(BaseLifecycleTestCase):
+
     def test__replace_in_parts(self):
         class Options:
             def __init__(self):
                 self.source = '$SNAPCRAFT_PART_INSTALL'
 
-        class Code:
+        class Plugin:
             def __init__(self):
                 self.options = Options()
                 self.installdir = '/tmp'
 
         class Part:
             def __init__(self):
-                self.code = Code()
+                self.plugin = Plugin()
 
         part = Part()
         new_part = lifecycle._replace_in_part(part)
 
-        self.assertEqual(part.code.installdir, new_part.code.options.source)
+        self.assertThat(
+            new_part.plugin.options.source, Equals(part.plugin.installdir))
 
     def test_exception_when_dependency_is_required(self):
         self.make_snapcraft_yaml("""parts:
@@ -95,10 +103,10 @@ grade: stable
             'pull', self.project_options,
             part_names=['part2'])
 
-        self.assertEqual(
+        self.assertThat(
             raised.__str__(),
-            "Requested 'pull' of 'part2' but there are unsatisfied "
-            "prerequisites: 'part1'")
+            Equals("Requested 'pull' of 'part2' but there are unsatisfied "
+                   "prerequisites: 'part1'"))
 
     def test_no_exception_when_dependency_is_required_but_already_staged(self):
         self.make_snapcraft_yaml("""parts:
@@ -119,14 +127,14 @@ grade: stable
             lifecycle.execute('pull', self.project_options,
                               part_names=['part2'])
 
-        self.assertEqual(
-            'Skipping pull part1 (already ran)\n'
-            'Skipping build part1 (already ran)\n'
-            'Skipping stage part1 (already ran)\n'
-            'Skipping prime part1 (already ran)\n'
-            'Preparing to pull part2 \n'
-            'Pulling part2 \n',
-            self.fake_logger.output)
+        self.assertThat(
+            self.fake_logger.output,
+            Equals('Skipping pull part1 (already ran)\n'
+                   'Skipping build part1 (already ran)\n'
+                   'Skipping stage part1 (already ran)\n'
+                   'Skipping prime part1 (already ran)\n'
+                   'Preparing to pull part2 \n'
+                   'Pulling part2 \n'))
 
     def test_dependency_recursed_correctly(self):
         self.make_snapcraft_yaml("""parts:
@@ -150,24 +158,25 @@ grade: stable
             'arch': [self.project_options.deb_arch],
             'type': ''
         }
-        self.assertEqual(snap_info, expected_snap_info)
+        self.assertThat(snap_info, Equals(expected_snap_info))
 
-        self.assertEqual(
-            'Preparing to pull part1 \n'
-            'Pulling part1 \n'
-            '\'part2\' has prerequisites that need to be staged: part1\n'
-            'Preparing to build part1 \n'
-            'Building part1 \n'
-            'Staging part1 \n'
-            'Preparing to pull part2 \n'
-            'Pulling part2 \n'
-            '\'part3\' has prerequisites that need to be staged: part2\n'
-            'Preparing to build part2 \n'
-            'Building part2 \n'
-            'Staging part2 \n'
-            'Preparing to pull part3 \n'
-            'Pulling part3 \n',
-            self.fake_logger.output)
+        self.assertThat(
+            self.fake_logger.output, Equals(
+                'Preparing to pull part1 \n'
+                'Pulling part1 \n'
+                '\'part2\' has prerequisites that need to be staged: part1\n'
+                'Preparing to build part1 \n'
+                'Building part1 \n'
+                'Staging part1 \n'
+                'Preparing to pull part2 \n'
+                'Pulling part2 \n'
+                '\'part3\' has prerequisites that need to be staged: part2\n'
+                'Preparing to build part2 \n'
+                'Building part2 \n'
+                'Staging part2 \n'
+                'Preparing to pull part3 \n'
+                'Pulling part3 \n',
+            ))
 
     def test_os_type_returned_by_lifecycle(self):
         self.make_snapcraft_yaml("""parts:
@@ -187,7 +196,7 @@ grade: stable
             'arch': [self.project_options.deb_arch],
             'type': 'os'
         }
-        self.assertEqual(snap_info, expected_snap_info)
+        self.assertThat(snap_info, Equals(expected_snap_info))
 
     def test_dirty_prime_reprimes_single_part(self):
         self.make_snapcraft_yaml("""parts:
@@ -219,24 +228,24 @@ grade: stable
         part1_output = [line.strip() for line in output if 'part1' in line]
         part2_output = [line.strip() for line in output if 'part2' in line]
 
-        self.assertEqual(
-            [
+        self.assertThat(
+            part2_output,
+            Equals([
                 'Skipping pull part2 (already ran)',
                 'Skipping build part2 (already ran)',
                 'Skipping stage part2 (already ran)',
                 'Skipping prime part2 (already ran)',
-            ],
-            part2_output)
+            ]))
 
-        self.assertEqual(
-            [
+        self.assertThat(
+            part1_output,
+            Equals([
                 'Skipping pull part1 (already ran)',
                 'Skipping build part1 (already ran)',
                 'Skipping stage part1 (already ran)',
                 'Cleaning priming area for part1 (out of date)',
                 'Priming part1',
-            ],
-            part1_output)
+            ]))
 
     def test_dirty_prime_reprimes_multiple_part(self):
         self.make_snapcraft_yaml("""parts:
@@ -268,25 +277,25 @@ grade: stable
         part1_output = [line.strip() for line in output if 'part1' in line]
         part2_output = [line.strip() for line in output if 'part2' in line]
 
-        self.assertEqual(
-            [
+        self.assertThat(
+            part2_output,
+            Equals([
                 'Skipping pull part2 (already ran)',
                 'Skipping build part2 (already ran)',
                 'Skipping stage part2 (already ran)',
                 'Cleaning priming area for part2 (out of date)',
                 'Priming part2',
-            ],
-            part2_output)
+            ]))
 
-        self.assertEqual(
-            [
+        self.assertThat(
+            part1_output,
+            Equals([
                 'Skipping pull part1 (already ran)',
                 'Skipping build part1 (already ran)',
                 'Skipping stage part1 (already ran)',
                 'Cleaning priming area for part1 (out of date)',
                 'Priming part1',
-            ],
-            part1_output)
+            ]))
 
     def test_dirty_stage_restages_single_part(self):
         self.make_snapcraft_yaml("""parts:
@@ -318,24 +327,24 @@ grade: stable
         part1_output = [line.strip() for line in output if 'part1' in line]
         part2_output = [line.strip() for line in output if 'part2' in line]
 
-        self.assertEqual(
-            [
+        self.assertThat(
+            part2_output,
+            Equals([
                 'Skipping pull part2 (already ran)',
                 'Skipping build part2 (already ran)',
                 'Skipping stage part2 (already ran)',
-            ],
-            part2_output)
+            ]))
 
-        self.assertEqual(
-            [
+        self.assertThat(
+            part1_output,
+            Equals([
                 'Skipping pull part1 (already ran)',
                 'Skipping build part1 (already ran)',
                 'Skipping cleaning priming area for part1 (out of date) '
                 '(already clean)',
                 'Cleaning staging area for part1 (out of date)',
                 'Staging part1',
-            ],
-            part1_output)
+            ]))
 
     def test_dirty_stage_restages_multiple_parts(self):
         self.make_snapcraft_yaml("""parts:
@@ -367,27 +376,27 @@ grade: stable
         part1_output = [line.strip() for line in output if 'part1' in line]
         part2_output = [line.strip() for line in output if 'part2' in line]
 
-        self.assertEqual(
-            [
+        self.assertThat(
+            part2_output,
+            Equals([
                 'Skipping pull part2 (already ran)',
                 'Skipping build part2 (already ran)',
                 'Skipping cleaning priming area for part2 (out of date) '
                 '(already clean)',
                 'Cleaning staging area for part2 (out of date)',
                 'Staging part2',
-            ],
-            part2_output)
+            ]))
 
-        self.assertEqual(
-            [
+        self.assertThat(
+            part1_output,
+            Equals([
                 'Skipping pull part1 (already ran)',
                 'Skipping build part1 (already ran)',
                 'Skipping cleaning priming area for part1 (out of date) '
                 '(already clean)',
                 'Cleaning staging area for part1 (out of date)',
                 'Staging part1',
-            ],
-            part1_output)
+            ]))
 
     def test_dirty_stage_part_with_built_dependent_raises(self):
         self.make_snapcraft_yaml("""parts:
@@ -417,24 +426,27 @@ grade: stable
         with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
                                _fake_dirty_report):
             raised = self.assertRaises(
-                RuntimeError,
+                errors.StepOutdatedError,
                 lifecycle.execute,
                 'stage', self.project_options,
                 part_names=['part1'])
 
         output = self.fake_logger.output.split('\n')
         part1_output = [line.strip() for line in output if 'part1' in line]
-        self.assertEqual(
-            [
+        self.assertThat(
+            part1_output,
+            Equals([
                 'Skipping pull part1 (already ran)',
                 'Skipping build part1 (already ran)',
-            ],
-            part1_output)
+            ]))
 
-        self.assertEqual(
-            "The 'stage' step for 'part1' needs to be run again, but 'part2' "
-            "depends upon it. Please clean the build step of 'part2' first.",
-            str(raised))
+        self.assertThat(
+            str(raised), Equals(
+                "The 'stage' step of 'part1' is out of date:\n"
+                "The 'stage' step for 'part1' needs to be run again, but "
+                "'part2' depends on it.\n"
+                "In order to continue, please clean that part's 'stage' step "
+                "by running:\nsnapcraft clean part2 -s stage\n"))
 
     def test_dirty_stage_part_with_unbuilt_dependent(self):
         self.make_snapcraft_yaml("""parts:
@@ -464,18 +476,18 @@ grade: stable
             lifecycle.execute('stage', self.project_options,
                               part_names=['part1'])
 
-        self.assertEqual(
-            'Skipping pull part1 (already ran)\n'
-            'Skipping build part1 (already ran)\n'
-            'Skipping cleaning priming area for part1 (out of date) '
-            '(already clean)\n'
-            'Cleaning staging area for part1 (out of date)\n'
-            'Skipping cleaning priming area for part2 (out of date) '
-            '(already clean)\n'
-            'Skipping cleaning staging area for part2 (out of date) '
-            '(already clean)\n'
-            'Staging part1 \n',
-            self.fake_logger.output)
+        self.assertThat(
+            self.fake_logger.output, Equals(
+                'Skipping pull part1 (already ran)\n'
+                'Skipping build part1 (already ran)\n'
+                'Skipping cleaning priming area for part1 (out of date) '
+                '(already clean)\n'
+                'Cleaning staging area for part1 (out of date)\n'
+                'Skipping cleaning priming area for part2 (out of date) '
+                '(already clean)\n'
+                'Skipping cleaning staging area for part2 (out of date) '
+                '(already clean)\n'
+                'Staging part1 \n'))
 
     def test_dirty_stage_reprimes(self):
         self.make_snapcraft_yaml("""parts:
@@ -501,14 +513,14 @@ grade: stable
                                _fake_dirty_report):
             lifecycle.execute('prime', self.project_options)
 
-        self.assertEqual(
-            'Skipping pull part1 (already ran)\n'
-            'Skipping build part1 (already ran)\n'
-            'Cleaning priming area for part1 (out of date)\n'
-            'Cleaning staging area for part1 (out of date)\n'
-            'Staging part1 \n'
-            'Priming part1 \n',
-            self.fake_logger.output)
+        self.assertThat(
+            self.fake_logger.output, Equals(
+                'Skipping pull part1 (already ran)\n'
+                'Skipping build part1 (already ran)\n'
+                'Cleaning priming area for part1 (out of date)\n'
+                'Cleaning staging area for part1 (out of date)\n'
+                'Staging part1 \n'
+                'Priming part1 \n'))
 
     def test_dirty_build_raises(self):
         self.make_snapcraft_yaml("""parts:
@@ -532,20 +544,20 @@ grade: stable
         with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
                                _fake_dirty_report):
             raised = self.assertRaises(
-                RuntimeError,
+                errors.StepOutdatedError,
                 lifecycle.execute,
                 'build', self.project_options)
 
-        self.assertEqual(
-            'Skipping pull part1 (already ran)\n',
-            self.fake_logger.output)
+        self.assertThat(
+            self.fake_logger.output,
+            Equals('Skipping pull part1 (already ran)\n'))
 
-        self.assertEqual(
-            "The 'build' step of 'part1' is out of date:\n\n"
-            "The 'bar' and 'foo' part properties appear to have changed.\n\n"
-            "In order to continue, please clean that part's 'build' step "
-            "by running: snapcraft clean part1 -s build\n",
-            str(raised))
+        self.assertThat(
+            str(raised), Equals(
+                "The 'build' step of 'part1' is out of date:\n"
+                "The 'bar' and 'foo' part properties appear to have changed.\n"
+                "In order to continue, please clean that part's 'build' step "
+                "by running:\nsnapcraft clean part1 -s build\n"))
 
     def test_dirty_pull_raises(self):
         self.make_snapcraft_yaml("""parts:
@@ -569,23 +581,24 @@ grade: stable
         with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
                                _fake_dirty_report):
             raised = self.assertRaises(
-                RuntimeError,
+                errors.StepOutdatedError,
                 lifecycle.execute,
                 'pull', self.project_options)
 
-        self.assertEqual('', self.fake_logger.output)
+        self.assertThat(self.fake_logger.output, Equals(''))
 
-        self.assertEqual(
-            "The 'pull' step of 'part1' is out of date:\n\n"
-            "The 'bar' and 'foo' project options appear to have changed.\n\n"
-            "In order to continue, please clean that part's 'pull' step "
-            "by running: snapcraft clean part1 -s pull\n",
-            str(raised))
+        self.assertThat(
+            str(raised), Equals(
+                "The 'pull' step of 'part1' is out of date:\n"
+                "The 'bar' and 'foo' project options appear to have changed.\n"
+                "In order to continue, please clean that part's 'pull' step "
+                "by running:\nsnapcraft clean part1 -s pull\n"))
 
     @mock.patch.object(snapcraft.BasePlugin, 'enable_cross_compilation')
     @mock.patch('snapcraft.repo.Repo.install_build_packages')
     def test_pull_is_dirty_if_target_arch_changes(
             self, mock_install_build_packages, mock_enable_cross_compilation):
+        mock_install_build_packages.return_value = []
         self.make_snapcraft_yaml("""parts:
   part1:
     plugin: nil
@@ -603,20 +616,379 @@ grade: stable
         # re-pulled due to the change in target architecture and raise an
         # error.
         raised = self.assertRaises(
-            RuntimeError,
+            errors.StepOutdatedError,
             lifecycle.execute,
             'pull', snapcraft.ProjectOptions(
                 target_deb_arch='armhf'))
 
-        self.assertEqual("Setting target machine to 'armhf'\n",
-                         self.fake_logger.output)
+        self.assertThat(
+            self.fake_logger.output,
+            Equals("Setting target machine to 'armhf'\n"))
 
-        self.assertEqual(
-            "The 'pull' step of 'part1' is out of date:\n\n"
-            "The 'deb_arch' project option appears to have changed.\n\n"
-            "In order to continue, please clean that part's 'pull' step "
-            "by running: snapcraft clean part1 -s pull\n",
-            str(raised))
+        self.assertThat(
+            str(raised), Equals(
+                "The 'pull' step of 'part1' is out of date:\n"
+                "The 'deb_arch' project option appears to have changed.\n"
+                "In order to continue, please clean that part's 'pull' step "
+                "by running:\nsnapcraft clean part1 -s pull\n"))
+
+    def test_prime_excludes_internal_snapcraft_dir(self):
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+        self.assertThat(
+            os.path.join('prime', 'snap', '.snapcraft'),
+            Not(DirExists()))
+
+
+class CleanTestCase(BaseLifecycleTestCase):
+
+    def test_clean_removes_global_state(self):
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('pull', self.project_options)
+        lifecycle.clean(self.project_options, parts=None)
+        self.assertThat(
+            os.path.join('snap', '.snapcraft'),
+            Not(DirExists()))
+
+
+class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
+
+    def test_prime_without_build_info_does_not_record(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', None))
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+        for file_name in ('snapcraft.yaml', 'manifest.yaml'):
+            self.assertThat(
+                os.path.join('prime', 'snap', file_name),
+                Not(FileExists()))
+
+    def test_prime_with_build_info_records_snapcraft_yaml(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""", snap_type='type: app')
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+type: app
+
+parts:
+  test-part:
+    plugin: nil
+
+""")
+
+        self.assertThat(
+            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            FileContains(expected))
+
+
+class RecordManifestTestCase(BaseLifecycleTestCase):
+
+    def test_prime_with_build_info_records_manifest(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: []
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'manifest.yaml'),
+            FileContains(expected))
+
+    def test_prime_with_stage_packages(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.useFixture(fixture_setup.FakeAptCache([
+            ('test-package1', 'test-version1'),
+            ('test-package2', 'test-version2')]))
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+    stage-packages: [test-package1=test-version1, test-package2]
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: []
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: [test-package1=test-version1, test-package2=test-version2]
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'manifest.yaml'),
+            FileContains(expected))
+
+    @mock.patch('subprocess.check_call')
+    def test_prime_with_global_build_packages(self, _):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.useFixture(fixture_setup.FakeAptCache([
+            ('test-package1', 'test-version1'),
+            ('test-package2', 'test-version2')]))
+
+        self.make_snapcraft_yaml("""build-packages: [test-package1=test-version1, test-package2]
+parts:
+  test-part:
+    plugin: nil
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+build-packages: [test-package1=test-version1, test-package2=test-version2]
+parts:
+  test-part:
+    build-packages: []
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+architectures: [{}]
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'manifest.yaml'),
+            FileContains(expected))
+
+    @mock.patch('subprocess.check_call')
+    def test_prime_with_source_details(self, _):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+    source: test-source
+    source-type: git
+    source-commit: test-commit
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: []
+    plugin: nil
+    prime: []
+    source: test-source
+    source-branch: ''
+    source-checksum: ''
+    source-commit: test-commit
+    source-tag: ''
+    source-type: git
+    stage: []
+    stage-packages: []
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'manifest.yaml'),
+            FileContains(expected))
+
+    @mock.patch('subprocess.check_call')
+    def test_prime_with_build_package_with_any_architecture(self, _):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.useFixture(fixture_setup.FakeAptCache([
+            ('test-package', 'test-version')]))
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+    build-packages: ['test-package:any']
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: ['test-package:any']
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+architectures: [{}]
+build-packages: [test-package=test-version]
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'manifest.yaml'),
+            FileContains(expected))
+
+    @mock.patch('subprocess.check_call')
+    def test_prime_with_virtual_build_package(self, _):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        fake_apt_cache = fixture_setup.FakeAptCache()
+        self.useFixture(fake_apt_cache)
+        fake_apt_cache.cache['test-provider-package'] = (
+            fixture_setup.FakeAptCachePackage(
+                fake_apt_cache.path,
+                'test-provider-package', 'test-version',
+                provides=['test-virtual-package']))
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+    build-packages: ['test-virtual-package']
+""")
+
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: [test-virtual-package]
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+architectures: [{}]
+build-packages: [test-provider-package=test-version]
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'manifest.yaml'),
+            FileContains(expected))
+
+    @mock.patch('snapcraft.plugins.nil.NilPlugin.get_manifest')
+    def test_prime_with_plugin_manifest(self, fake_plugin_manifest):
+        fake_plugin_manifest.return_value = {
+            'test-plugin-manifest': 'test-value'}
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: []
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+    test-plugin-manifest: test-value
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'manifest.yaml'),
+            FileContains(expected))
+
+
+class RecordManifestWithDeprecatedSnapKeywordTestCase(BaseLifecycleTestCase):
+
+    scenarios = (
+        ('using snap keyword', {'keyword': 'snap'}),
+        ('using prime keyword', {'keyword': 'prime'})
+    )
+
+    def test_prime_step_records_prime_keyword(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        parts = ("""parts:
+  test-part:
+    plugin: nil
+    {}: [-*]
+""")
+        self.make_snapcraft_yaml(parts.format(self.keyword))
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: []
+    plugin: nil
+    prime: [-*]
+    stage: []
+    stage-packages: []
+architectures: [{}]
+build-packages: []
+""".format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'manifest.yaml'),
+            FileContains(expected))
 
 
 class CoreSetupTestCase(tests.TestCase):
@@ -730,3 +1102,14 @@ class CoreSetupTestCase(tests.TestCase):
             print('description: description', file=f)
 
         return lifecycle.snap(self.project_options, directory=core_path)
+
+
+class SnapErrorsTestCase(BaseLifecycleTestCase):
+
+    def test_mksquashfs_missing(self):
+        with mock.patch('shutil.which') as which_mock:
+            which_mock.return_value = None
+            raised = self.assertRaises(
+                errors.MissingCommandError,
+                lifecycle.snap, self.project_options)
+        self.assertThat(str(raised), Contains('mksquashfs'))

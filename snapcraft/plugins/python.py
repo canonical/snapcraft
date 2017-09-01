@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -36,10 +36,11 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Path to a constraints file
     - process-dependency-links:
       (bool; default: false)
-      Enable the processing of dependency links.
+      Enable the processing of dependency links in pip, which allow one
+      project to provide places to look for another project
     - python-packages:
       (list)
-      A list of dependencies to get from PyPi
+      A list of dependencies to get from PyPI
     - python-version:
       (string; default: python3)
       The python version to use. Valid options are: python2 and python3
@@ -51,6 +52,8 @@ be preferred instead and no interpreter would be brought in through
 `stage-packages` mechanisms.
 """
 
+import collections
+import json
 import os
 import re
 import shutil
@@ -61,6 +64,8 @@ from contextlib import contextmanager, suppress
 from glob import glob
 from shutil import which
 from textwrap import dedent
+
+import requests
 
 import snapcraft
 from snapcraft import file_utils
@@ -163,6 +168,7 @@ class PythonPlugin(snapcraft.BasePlugin):
         super().__init__(name, options, project)
         self.build_packages.extend(self.plugin_build_packages)
         self._python_package_dir = os.path.join(self.partdir, 'packages')
+        self._manifest = collections.OrderedDict()
 
     def pull(self):
         super().pull()
@@ -331,6 +337,7 @@ class PythonPlugin(snapcraft.BasePlugin):
                 #  this.
                 with suppress(subprocess.CalledProcessError):
                     self._setup_tools_install(setup)
+        return pip.list(self.run_output)
 
     def _fix_permissions(self):
         for root, dirs, files in os.walk(self.installdir):
@@ -344,7 +351,19 @@ class PythonPlugin(snapcraft.BasePlugin):
 
         setup_file = os.path.join(self.builddir, 'setup.py')
         with simple_env_bzr(os.path.join(self.installdir, 'bin')):
-            self._run_pip(setup_file)
+            installed_pipy_packages = self._run_pip(setup_file)
+        # We record the requirements and constraints files only if they are
+        # remote. If they are local, they are already tracked with the source.
+        if self.options.requirements:
+            self._manifest['requirements-contents'] = (
+                self._get_file_contents(self.options.requirements))
+        if self.options.constraints:
+            self._manifest['constraints-contents'] = (
+                self._get_file_contents(self.options.constraints))
+        self._manifest['python-packages'] = [
+            '{}={}'.format(name, installed_pipy_packages[name])
+            for name in installed_pipy_packages
+        ]
 
         self._fix_permissions()
 
@@ -354,6 +373,14 @@ class PythonPlugin(snapcraft.BasePlugin):
                                    r'#!/usr/bin/env python')
 
         self._setup_sitecustomize()
+
+    def _get_file_contents(self, path):
+        if isurl(path):
+            return requests.get(path).text
+        else:
+            file_path = os.path.join(self.sourcedir, path)
+            with open(file_path) as _file:
+                return _file.read()
 
     def _setup_sitecustomize(self):
         # This avoids needing to leak PYTHONUSERBASE
@@ -395,6 +422,9 @@ class PythonPlugin(snapcraft.BasePlugin):
         return os.path.join(self.installdir,
                             python_site_dir[len(base_dir)+1:],
                             'sitecustomize.py')
+
+    def get_manifest(self):
+        return self._manifest
 
     def snap_fileset(self):
         fileset = super().snap_fileset()
@@ -438,17 +468,14 @@ class _Pip:
         """Return a dict of installed python packages with versions."""
         if not exec_func:
             exec_func = self._exec_func
-        cmd = [*self._runnable, 'list']
+        cmd = [*self._runnable, 'list', '--format=json']
 
         output = exec_func(cmd, env=self._env)
-        package_listing = {}
-        version_regex = re.compile('\((.+)\)')
-        for line in output.splitlines():
-            line = line.split()
-            m = version_regex.search(line[1])
-            package_listing[line[0]] = m.group(1)
-
-        return package_listing
+        packages = collections.OrderedDict()
+        for package in json.loads(
+                output, object_pairs_hook=collections.OrderedDict):
+            packages[package['name']] = package['version']
+        return packages
 
     def wheel(self, args, **kwargs):
         cmd = [

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -79,7 +79,31 @@ default_kernel_image_target = {
     'i386': 'bzImage',
     'armhf': 'zImage',
     'arm64': 'Image.gz',
+    'powerpc': 'uImage',
+    'ppc64el': 'vmlinux.strip',
+    's390x': 'bzImage',
 }
+
+required_generic = ['DEVTMPFS', 'DEVTMPFS_MOUNT', 'TMPFS_POSIX_ACL', 'IPV6',
+                    'SYSVIPC', 'SYSVIPC_SYSCTL', 'VFAT_FS', 'NLS_CODEPAGE_437',
+                    'NLS_ISO8859_1']
+
+required_security = ['SECURITY', 'SECURITY_APPARMOR', 'SYN_COOKIES',
+                     'STRICT_DEVMEM', 'DEFAULT_SECURITY_APPARMOR', 'SECCOMP',
+                     'SECCOMP_FILTER', 'CC_STACKPROTECTOR',
+                     'CC_STACKPROTECTOR_STRONG', 'DEBUG_RODATA',
+                     'DEBUG_SET_MODULE_RONX']
+
+required_snappy = ['RD_LZMA', 'KEYS', 'ENCRYPTED_KEYS', 'SQUASHFS',
+                   'SQUASHFS_XATTR', 'SQUASHFS_XZ',
+                   'DEVPTS_MULTIPLE_INSTANCES']
+
+required_systemd = ['DEVTMPFS', 'CGROUPS', 'INOTIFY_USER', 'SIGNALFD',
+                    'TIMERFD', 'EPOLL', 'NET', 'SYSFS', 'PROC_FS', 'FHANDLE',
+                    'BLK_DEV_BSG', 'NET_NS', 'IPV6', 'AUTOFS4_FS',
+                    'TMPFS_POSIX_ACL', 'TMPFS_XATTR', 'SECCOMP']
+
+required_boot = ['squashfs']
 
 
 class KernelPlugin(kbuild.KBuildPlugin):
@@ -162,11 +186,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def enable_cross_compilation(self):
         logger.info('Cross compiling kernel target {!r}'.format(
-            self.project.kernel_arch))
-        self.make_cmd.append('ARCH={}'.format(
-            self.project.kernel_arch))
-        self.make_cmd.append('CROSS_COMPILE={}'.format(
-            self.project.cross_compiler_prefix))
+                    self.project.kernel_arch))
+        super().enable_cross_compilation()
         # by enabling cross compilation, the kernel_arch and deb_arch
         # from the project options have effectively changed so we reset
         # kernel targets.
@@ -355,10 +376,91 @@ class KernelPlugin(kbuild.KBuildPlugin):
             for f in found_dtbs:
                 os.link(f, os.path.join(dtb_dir, os.path.basename(f)))
 
+    def _do_parse_config(self, config_path):
+        builtin = []
+        modules = []
+        # tokenize .config and store options in builtin[] or modules[]
+        with open(config_path) as f:
+            for line in f:
+                tok = line.strip().split('=')
+                items = len(tok)
+                if items == 2:
+                    opt = tok[0].upper()
+                    val = tok[1].upper()
+                    if val == 'Y':
+                        builtin.append(opt)
+                    elif val == 'M':
+                        modules.append(opt)
+        return builtin, modules
+
+    def _do_check_config(self, builtin, modules):
+        # check the resulting .config has all the necessary options
+        msg = ('**** WARNING **** WARNING **** WARNING **** WARNING ****\n'
+               'Your kernel config is missing some features that Ubuntu Core '
+               'recommends or requires.\n'
+               'While we will not prevent you from building this kernel snap, '
+               'we suggest you take a look at these:\n')
+        required_opts = (required_generic + required_security +
+                         required_snappy + required_systemd)
+        missing = []
+
+        for code in required_opts:
+            opt = 'CONFIG_{}'.format(code)
+            if opt in builtin:
+                continue
+            elif opt in modules:
+                continue
+            else:
+                missing.append(opt)
+
+        if missing:
+            warn = '\n{}\n'.format(msg)
+            for opt in missing:
+                note = ''
+                if opt == 'CONFIG_CC_STACKPROTECTOR_STRONG':
+                    note = '(4.1.x and later versions only)'
+                elif opt == 'CONFIG_DEVPTS_MULTIPLE_INSTANCES':
+                    note = '(4.8.x and earlier versions only)'
+                warn += '{} {}\n'.format(opt, note)
+            logger.warn(warn)
+
+    def _do_check_initrd(self, builtin, modules):
+        # check all required_boot[] items are either builtin or part of initrd
+        msg = ("**** WARNING **** WARNING **** WARNING **** WARNING ****\n"
+               "The following features are deemed boot essential for\n"
+               "ubuntu core, consider making them static[=Y] or adding\n"
+               "the corresponding module to initrd:\n")
+        missing = []
+
+        for code in required_boot:
+            opt = 'CONFIG_{}'.format(code.upper())
+            if opt in builtin:
+                continue
+            elif opt in modules:
+                if code in self.options.kernel_initrd_modules:
+                    continue
+                else:
+                    missing.append(opt)
+            else:
+                missing.append(opt)
+
+        if missing:
+            warn = '\n{}\n'.format(msg)
+            for opt in missing:
+                warn += '{}\n'.format(opt)
+            logger.warn(warn)
+
     def pull(self):
         super().pull()
         snapcraft.download(
             'ubuntu-core', 'edge', self.os_snap, self.project.deb_arch)
+
+    def do_configure(self):
+        super().do_configure()
+
+        builtin, modules = self._do_parse_config(self.get_config_path())
+        self._do_check_config(builtin, modules)
+        self._do_check_initrd(builtin, modules)
 
     def do_install(self):
         super().do_install()

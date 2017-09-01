@@ -73,30 +73,42 @@ cases you want to refer to the help text for the specific plugin.
   snapcraft help <plugin>
 
 """
-
 import logging
 import os
 import os.path
 import re
-import hashlib
 import sys
 
 from snapcraft.internal import common
-from ._bazaar import Bazaar          # noqa
-from ._deb import Deb                # noqa
-from ._git import Git                # noqa
-from ._local import Local            # noqa
-from ._mercurial import Mercurial    # noqa
-from ._rpm import Rpm                # noqa
-from ._script import Script          # noqa
-from ._subversion import Subversion  # noqa
-from ._tar import Tar                # noqa
-from ._zip import Zip                # noqa
-from . import errors
 
-# In python >= 3.6 sha3 support is upstreamed in hashlib
-if sys.version_info < (3, 6):
-    import sha3  # noqa
+if sys.platform == 'linux':
+    from ._bazaar import Bazaar          # noqa
+    from ._git import Git                # noqa
+    from ._local import Local            # noqa
+    from ._mercurial import Mercurial    # noqa
+    from ._script import Script          # noqa
+    from ._subversion import Subversion  # noqa
+    from ._tar import Tar                # noqa
+    from ._zip import Zip                # noqa
+    from ._7z import SevenZip            # noqa
+    from ._deb import Deb                # noqa
+    from ._rpm import Rpm                # noqa
+
+    _source_handler = {
+        'bzr': Bazaar,
+        'git': Git,
+        'hg': Mercurial,
+        'mercurial': Mercurial,
+        'subversion': Subversion,
+        'svn': Subversion,
+        'tar': Tar,
+        'zip': Zip,
+        '7z': SevenZip,
+        'local': Local,
+        'deb': Deb,
+        'rpm': Rpm,
+        '': Local,
+    }
 
 
 logging.getLogger('urllib3').setLevel(logging.CRITICAL)
@@ -139,25 +151,16 @@ def get(sourcedir, builddir, options):
     handler.pull()
 
 
-_source_handler = {
-    'bzr': Bazaar,
-    'deb': Deb,
-    'rpm': Rpm,
-    'git': Git,
-    'hg': Mercurial,
-    'mercurial': Mercurial,
-    'subversion': Subversion,
-    'svn': Subversion,
-    'tar': Tar,
-    'zip': Zip,
-}
+def get_source_handler_from_type(source_type):
+    """Return the source handler for source_type."""
+    return _source_handler.get(source_type)
 
 
 def get_source_handler(source, *, source_type=''):
     if not source_type:
         source_type = _get_source_type_from_uri(source)
 
-    return _source_handler.get(source_type, Local)
+    return _source_handler[source_type]
 
 
 _tar_type_regex = re.compile(r'.*\.((tar(\.(xz|gz|bz2))?)|tgz)$')
@@ -180,27 +183,11 @@ def _get_source_type_from_uri(source, ignore_errors=False):  # noqa: C901
         source_type = 'deb'
     elif source.endswith('rpm'):
         source_type = 'rpm'
+    elif source.endswith('7z'):
+        source_type = '7z'
     elif common.isurl(source) and not ignore_errors:
         raise ValueError('no handler to manage source ({})'.format(source))
     elif not os.path.isdir(source) and not ignore_errors:
         raise ValueError('local source ({}) is not a directory'.format(source))
 
     return source_type
-
-
-def verify_checksum(source_checksum, checkfile):
-    try:
-        algorithm, digest = source_checksum.split('/', 1)
-
-    except ValueError:
-        raise ValueError('invalid checksum format: {!r}'
-                         .format(source_checksum))
-
-    with open(checkfile, 'rb') as f:
-        # This will raise an AttributeError if algorithm is unsupported
-        hashlib_algorithm = getattr(hashlib, algorithm)
-        calculated_digest = hashlib_algorithm(f.read())
-
-    calculated_digest = calculated_digest.hexdigest()
-    if digest != calculated_digest:
-        raise errors.DigestDoesNotMatchError(digest, calculated_digest)

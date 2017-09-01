@@ -84,8 +84,8 @@ class BaseRepo:
         - zip
 
         :param str source_type: a VCS source type to handle.
-        :returns: a list of packages that need to be installed on the host.
-        :rtype: list of strings.
+        :returns: a set of packages that need to be installed on the host.
+        :rtype: set of strings.
         """
         raise NotImplementedError()
 
@@ -97,6 +97,15 @@ class BaseRepo:
         :type package_names: a list of strings.
         :raises snapcraft.repo.errors.BuildPackageNotFoundError:
             if one of the package_names cannot be installed.
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def build_package_is_valid(cls, package_name):
+        """Check that a given package is valid on the host.
+
+        :param package_name: a package name to check.
+        :type package_name: str
         """
         raise NotImplementedError()
 
@@ -223,6 +232,12 @@ class BaseRepo:
             file_utils.replace_in_file(p, re.compile(r''),
                                        re.compile(r'#!.*python\n'),
                                        r'#!/usr/bin/env python\n')
+
+
+class DummyRepo(BaseRepo):
+
+    def get_packages_for_source_type(*args, **kwargs):
+        pass
 
 
 def _try_copy_local(path, target):

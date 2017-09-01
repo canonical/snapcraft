@@ -7,9 +7,9 @@ description: |
 confinement: strict
 
 parts:
-  nodejs-with-run:
-    plugin: nodejs
+  nodejs-part:
     source: .
+    plugin: nodejs
     npm-run:
         - run-command-one
         - run-command-two

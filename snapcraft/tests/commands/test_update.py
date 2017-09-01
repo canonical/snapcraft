@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,20 +13,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
-from collections import OrderedDict
-import logging
 import os
+from collections import OrderedDict
 
 import fixtures
 import yaml
+from testtools.matchers import Contains, Equals, FileExists
 from xdg import BaseDirectory
 
-from snapcraft import main, tests
+from snapcraft.tests import TestWithFakeRemoteParts
+from . import CommandBaseTestCase
 
 
-class UpdateCommandTestCase(tests.TestWithFakeRemoteParts):
+class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
 
     def setUp(self):
         super().setUp()
@@ -35,10 +34,11 @@ class UpdateCommandTestCase(tests.TestWithFakeRemoteParts):
         self.headers_yaml = os.path.join(self.parts_dir, 'headers.yaml')
 
     def test_update(self):
-        main.main(['update'])
+        result = self.run_command(['update'])
 
-        self.assertTrue(os.path.exists(self.parts_yaml))
-        self.assertTrue(os.path.exists(self.headers_yaml))
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(self.parts_yaml, FileExists())
+        self.assertThat(self.headers_yaml, FileExists())
 
         expected_parts = OrderedDict()
         expected_parts['curl'] = p = OrderedDict()
@@ -74,33 +74,35 @@ class UpdateCommandTestCase(tests.TestWithFakeRemoteParts):
         with open(self.headers_yaml) as headers_file:
             headers = yaml.load(headers_file)
 
-        self.assertEqual(parts, expected_parts)
-        self.assertEqual(headers, expected_headers)
+        self.assertThat(parts, Equals(expected_parts))
+        self.assertThat(headers, Equals(expected_headers))
 
     def test_update_with_unchanged_date_does_not_download_again(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
+        result = self.run_command(['update'])
+        self.assertThat(result.exit_code, Equals(0))
 
-        main.main(['update'])
-        main.main(['update'])
+        result = self.run_command(['update'])
+        self.assertThat(result.exit_code, Equals(0))
 
-        self.assertEqual(
-            'The parts cache is already up to date.\n',
-            fake_logger.output)
+        self.assertThat(result.output, Contains(
+            'The parts cache is already up to date.'))
 
     def test_update_with_changed_date_downloads_again(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-
         os.makedirs(self.parts_dir)
         with open(self.headers_yaml, 'w') as headers_file:
             yaml.dump(
                 {'If-Modified-Since': 'Fri, 01 Jan 2016 12:00:00 GMT'},
                 headers_file)
-        main.main(['update'])
 
-        self.assertEqual('', fake_logger.output)
+        result = self.run_command(['update'])
+        self.assertThat(result.exit_code, Equals(0))
+
+        self.assertThat(result.output, Equals(''))
 
     def test_update_with_no_content_length_is_supported(self):
         self.useFixture(fixtures.EnvironmentVariable('NO_CONTENT_LENGTH', '1'))
-        main.main(['update'])
+        result = self.run_command(['update'])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(self.parts_yaml, FileExists())
+        self.assertThat(self.headers_yaml, FileExists())

@@ -14,12 +14,28 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+import shutil
+from unittest import mock
+
+from testtools.matchers import Equals
+
 from snapcraft.internal import sources
+from snapcraft import tests
+from snapcraft.tests.subprocess_utils import (
+    call,
+    call_with_output,
+)
 
-from snapcraft.tests.sources import SourceTestCase
 
+class TestMercurial(tests.sources.SourceTestCase):
 
-class TestMercurial(SourceTestCase):
+    def setUp(self):
+        super().setUp()
+        patcher = mock.patch('snapcraft.sources.Mercurial._get_source_details')
+        self.mock_get_source_details = patcher.start()
+        self.mock_get_source_details.return_value = ""
+        self.addCleanup(patcher.stop)
 
     def test_pull(self):
         hg = sources.Mercurial('hg://my-source', 'source_dir')
@@ -104,7 +120,7 @@ class TestMercurial(SourceTestCase):
         expected_message = (
             'can\'t specify both source-tag and source-branch for a mercurial '
             'source')
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_commit_and_tag_raises_exception(self):
         raised = self.assertRaises(
@@ -116,7 +132,7 @@ class TestMercurial(SourceTestCase):
         expected_message = (
             'can\'t specify both source-tag and source-commit for a mercurial '
             'source')
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_commit_and_branch_raises_exception(self):
         raised = self.assertRaises(
@@ -128,7 +144,7 @@ class TestMercurial(SourceTestCase):
         expected_message = (
             'can\'t specify both source-branch and source-commit for '
             'a mercurial source')
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_depth_raises_exception(self):
         raised = self.assertRaises(
@@ -138,7 +154,7 @@ class TestMercurial(SourceTestCase):
 
         expected_message = (
             'can\'t specify source-depth for a mercurial source')
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_source_checksum_raises_exception(self):
         raised = self.assertRaises(
@@ -149,4 +165,91 @@ class TestMercurial(SourceTestCase):
 
         expected_message = (
             "can't specify a source-checksum for a mercurial source")
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
+
+    def test_has_source_handler_entry(self):
+        self.assertTrue(sources._source_handler['mercurial'] is
+                        sources.Mercurial)
+
+
+class MercurialBaseTestCase(tests.TestCase):
+
+    def rm_dir(self, dir):
+        if os.path.exists(dir):
+            shutil.rmtree(dir)
+
+    def clean_dir(self, dir):
+        self.rm_dir(dir)
+        os.mkdir(dir)
+        self.addCleanup(self.rm_dir, dir)
+
+    def clone_repo(self, repo, tree):
+        self.clean_dir(tree)
+        call(['hg', 'clone', repo, tree])
+        os.chdir(tree)
+
+    def add_file(self, filename, body, message):
+        with open(filename, 'w') as fp:
+            fp.write(body)
+
+        call(['hg', 'add', filename])
+        call(['hg', 'commit', '-am', message])
+
+    def check_file_contents(self, path, expected):
+        body = None
+        with open(path) as fp:
+            body = fp.read()
+        self.assertThat(body, Equals(expected))
+
+
+class MercurialDetailsTestCase(MercurialBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.working_tree = 'hg-test'
+        self.source_dir = 'hg-checkout'
+        self.clean_dir(self.working_tree)
+        self.clean_dir(self.source_dir)
+        os.chdir(self.working_tree)
+        call(['hg', 'init'])
+        with open('testing', 'w') as fp:
+            fp.write('testing')
+        call(['hg', 'add', 'testing'])
+        call(['hg', 'commit', '-m', 'testing', '-u',
+              'Test User <t@example.com>'])
+        call(['hg', 'tag', '-u', 'test', 'test-tag'])
+        self.expected_commit = call_with_output(['hg', 'id']).split()[0]
+        self.expected_branch = call_with_output(['hg', 'branch'])
+        self.expected_tag = 'test-tag'
+
+        os.chdir('..')
+
+        self.hg = sources.Mercurial(self.working_tree, self.source_dir,
+                                    silent=True)
+        self.hg.pull()
+
+        self.source_details = self.hg._get_source_details()
+
+    def test_hg_details_commit(self):
+        self.assertThat(
+            self.source_details['source-commit'], Equals(self.expected_commit))
+
+    def test_hg_details_branch(self):
+        self.clean_dir(self.source_dir)
+        self.hg = sources.Mercurial(self.working_tree, self.source_dir,
+                                    silent=True, source_branch='default')
+        self.hg.pull()
+
+        self.source_details = self.hg._get_source_details()
+        self.assertThat(
+            self.source_details['source-branch'], Equals(self.expected_branch))
+
+    def test_hg_details_tag(self):
+        self.clean_dir(self.source_dir)
+        self.hg = sources.Mercurial(self.working_tree, self.source_dir,
+                                    silent=True, source_tag='test-tag')
+        self.hg.pull()
+
+        self.source_details = self.hg._get_source_details()
+        self.assertThat(
+            self.source_details['source-tag'], Equals(self.expected_tag))

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,11 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal.states._state import State
+from testtools.matchers import Equals
+
+from snapcraft.internal.states._state import PartState
 from snapcraft import tests
 
 
-class _TestState(State):
+class _TestState(PartState):
     def properties_of_interest(self, part_properties):
         return {
             'foo': part_properties.get('foo'),
@@ -60,9 +62,9 @@ class StateTestCase(tests.TestCase):
     def test_diff_properties_of_interest(self):
         differing_properties = self.state.diff_properties_of_interest(
             self.new)
-        self.assertEqual(differing_properties, {'foo'})
+        self.assertThat(differing_properties, Equals({'foo'}))
 
     def test_diff_project_options_of_interest(self):
         differing_properties = self.state.diff_project_options_of_interest(
             _TestProject(self.new))
-        self.assertEqual(differing_properties, {'foo'})
+        self.assertThat(differing_properties, Equals({'foo'}))

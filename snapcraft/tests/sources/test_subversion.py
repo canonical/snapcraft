@@ -15,13 +15,26 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import shutil
+from unittest import mock
+
+from testtools.matchers import Equals
 
 from snapcraft.internal import sources
+from snapcraft import tests
+from snapcraft.tests.subprocess_utils import call
 
-from snapcraft.tests.sources import SourceTestCase
 
+class TestSubversion(tests.sources.SourceTestCase):
 
-class TestSubversion(SourceTestCase):
+    def setUp(self):
+
+        super().setUp()
+        patcher = mock.patch(
+            'snapcraft.sources.Subversion._get_source_details')
+        self.mock_get_source_details = patcher.start()
+        self.mock_get_source_details.return_value = ""
+        self.addCleanup(patcher.stop)
 
     def test_pull_remote(self):
         svn = sources.Subversion('svn://my-source', 'source_dir')
@@ -65,7 +78,7 @@ class TestSubversion(SourceTestCase):
             'svn://mysource', 'source_dir', source_tag='tag')
         expected_message = (
             "Can't specify source-tag for a Subversion source")
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_branch_raises_exception(self):
         raised = self.assertRaises(
@@ -74,7 +87,7 @@ class TestSubversion(SourceTestCase):
             'svn://mysource', 'source_dir', source_branch='branch')
         expected_message = (
             "Can't specify source-branch for a Subversion source")
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
         raised = self.assertRaises(
@@ -86,7 +99,7 @@ class TestSubversion(SourceTestCase):
         expected_message = (
             "Can't specify source-tag OR source-branch for a Subversion "
             "source")
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_depth_raises_exception(self):
         raised = self.assertRaises(
@@ -96,7 +109,7 @@ class TestSubversion(SourceTestCase):
 
         expected_message = (
             'can\'t specify source-depth for a Subversion source')
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_source_checksum_raises_exception(self):
         raised = self.assertRaises(
@@ -107,4 +120,60 @@ class TestSubversion(SourceTestCase):
 
         expected_message = (
             "can't specify a source-checksum for a Subversion source")
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
+
+    def test_has_source_handler_entry(self):
+        self.assertTrue(sources._source_handler['subversion'] is
+                        sources.Subversion)
+
+
+class SubversionBaseTestCase(tests.TestCase):
+
+    def rm_dir(self, dir):
+        if os.path.exists(dir):
+            shutil.rmtree(dir)
+
+    def clean_dir(self, dir):
+        self.rm_dir(dir)
+        os.mkdir(dir)
+        self.addCleanup(self.rm_dir, dir)
+
+    def clone_repo(self, repo, tree):
+        self.clean_dir(tree)
+        call(['svn', 'checkout', 'file://{}/{}'.format(
+            os.getcwd(), repo), tree])
+
+    def add_file(self, filename, body, message):
+        with open(filename, 'w') as fp:
+            fp.write(body)
+
+        call(['svn', 'add', filename])
+        call(['svn', 'commit', '-m', message])
+
+
+class SubversionDetailsTestCase(SubversionBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.repo_tree = 'svn-repo'
+        self.working_tree = 'svn-test'
+        self.source_dir = 'svn-checkout'
+        self.clean_dir(self.repo_tree)
+        self.clean_dir(self.working_tree)
+        call(['svnadmin', 'create', self.repo_tree])
+        self.clone_repo(self.repo_tree, self.working_tree)
+        os.chdir(self.working_tree)
+        self.add_file('testing', 'test body', 'test message')
+        self.expected_commit = '1'
+
+        os.chdir('..')
+
+        self.svn = sources.Subversion(
+            self.repo_tree, self.source_dir, silent=True)
+        self.svn.pull()
+
+        self.source_details = self.svn._get_source_details()
+
+    def test_svn_details_commit(self):
+        self.assertThat(
+            self.source_details['source-commit'], Equals(self.expected_commit))

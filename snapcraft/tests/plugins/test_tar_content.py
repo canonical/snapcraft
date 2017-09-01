@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os.path
+
+from testtools.matchers import Equals
 
 import snapcraft
 from snapcraft.plugins.tar_content import TarContentPlugin
@@ -47,8 +49,8 @@ class TestTarContentPlugin(TestCase):
             'tar_content', Options(),
             self.project_options)
 
-        self.assertEqual(raised.__str__(),
-                         "path '/destdir1' must be relative")
+        self.assertThat(raised.__str__(),
+                        Equals("path '/destdir1' must be relative"))
 
     def test_install_destination_dir_exists(self):
         class Options:

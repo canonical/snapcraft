@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,52 +13,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import logging
 import os
 
-import fixtures
+import snapcraft.internal.errors
+from testtools.matchers import Equals, FileContains
 
-from snapcraft.main import main
-from snapcraft import tests
+from . import CommandBaseTestCase
 
 
-class InitCommandTestCase(tests.TestCase):
-
-    def test_init_with_existing_snapcraft_yaml_must_fail(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        open('snapcraft.yaml', 'w').close()
-
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['init'])
-
-        self.assertEqual(1, raised.code)
-        self.assertEqual(
-            fake_logger.output,
-            'snapcraft.yaml already exists!\n')
-
-    def test_init_with_existing_dot_snapcraft_yaml_must_fail(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        open('.snapcraft.yaml', 'w').close()
-
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['init'])
-
-        self.assertEqual(1, raised.code)
-        self.assertEqual(
-            fake_logger.output,
-            '.snapcraft.yaml already exists!\n')
+class InitCommandTestCase(CommandBaseTestCase):
 
     def test_init_must_write_snapcraft_yaml(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-
         expected_yaml = """name: my-snap-name # you probably want to 'snapcraft register <name>'
 version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
 summary: Single-line elevator pitch for your amazing snap # 79 char long summary
@@ -74,20 +39,20 @@ confinement: devmode # use 'strict' once you have the right plugs and slots
 parts:
   my-part:
     # See 'snapcraft plugins'
-    plugin: nil"""  # noqa, lines too long
+    plugin: nil\n"""  # noqa, lines too long
 
-        main(['init'])
+        result = self.run_command(['init'])
 
-        self.assertEqual(
+        self.assertThat(result.output, Equals(
             'Created snap/snapcraft.yaml.\nEdit the file to your liking or '
-            'run `snapcraft` to get started\n', fake_logger.output)
+            'run `snapcraft` to get started\n'))
 
         # Verify the generated yaml
-        with open(os.path.join('snap', 'snapcraft.yaml'), 'r') as f:
-            self.assertEqual(f.read(), expected_yaml)
+        self.assertThat(os.path.join('snap', 'snapcraft.yaml'),
+                        FileContains(expected_yaml))
 
 
-class InitCommandExistingProjectTestCase(tests.TestCase):
+class InitCommandExistingProjectTestCase(CommandBaseTestCase):
 
     scenarios = [
         ('snap/snapcraft.yaml', {
@@ -107,17 +72,15 @@ class InitCommandExistingProjectTestCase(tests.TestCase):
 
     def test_init_with_existing_yaml(self):
         """Test that init bails if project yaml already exists"""
-
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
         dirname = os.path.dirname(self.yaml_path)
         if dirname:
             os.mkdir(dirname)
 
         open(self.yaml_path, 'w').close()
 
-        raised = self.assertRaises(SystemExit, main, ['init'])
+        raised = self.assertRaises(
+            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            self.run_command, ['init'])
 
-        self.assertEqual(1, raised.code)
-        self.assertEqual(fake_logger.output, self.message)
+        self.assertThat(str(raised), Equals(
+            '{} already exists!'.format(self.yaml_path)))

@@ -1,3 +1,4 @@
+click>=6.2
 configparser==3.5.0
 docopt==0.6.2
 file-magic==0.3.0
@@ -7,15 +8,18 @@ progressbar33==2.4
 PyYAML==3.11
 pyxdg==0.25
 requests==2.9.1
-https://launchpad.net/ubuntu/+archive/primary/+files/python-apt_1.1.0~beta1build1.tar.xz
+requests_unixsocket==0.1.5
+https://launchpad.net/ubuntu/+archive/primary/+files/python-apt_1.1.0~beta1build1.tar.xz; sys_platform == 'linux'
 https://launchpad.net/python-distutils-extra/trunk/2.39/+download/python-distutils-extra-2.39.tar.gz
 requests-toolbelt==0.6.0
 responses==0.5.1
 petname==1.12
-pymacaroons==0.9.2
+pymacaroons==0.9.2; sys_platform != 'win32'
+pymacaroons==0.10.0; sys_platform == 'win32'
 pymacaroons-pynacl==0.9.3
 pysha3==1.0b1; python_version < '3.6'
 simplejson==3.8.2
 tabulate==0.7.5
 python-debian==0.1.28
 chardet==2.3.0
+cx_Freeze>=5.0.2; sys_platform == 'win32'

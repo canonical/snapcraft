@@ -17,68 +17,61 @@
 import logging
 import os
 import tarfile
-from testtools.matchers import Contains
-from unittest import mock
+from textwrap import dedent
+import snapcraft.internal.errors
 
 import fixtures
+from testtools.matchers import Contains, Equals
 
-from snapcraft.main import main
 from snapcraft import tests
-from snapcraft.tests.test_lxd import check_output_side_effect
+from . import CommandBaseTestCase
 
 
-class CleanBuildCommandTestCase(tests.TestCase):
-
-    yaml_template = """name: snap-test
-version: 1.0
-summary: test cleanbuild
-description: if snap is succesful a snap package will be available
-architectures: ['amd64']
-confinement: strict
-grade: stable
-
-parts:
-    part1:
-      plugin: nil
-"""
+class CleanBuildCommandBaseTestCase(CommandBaseTestCase):
 
     def setUp(self):
         super().setUp()
-        patcher = mock.patch('snapcraft.internal.lxd.check_call')
-        self.check_call_mock = patcher.start()
-        self.addCleanup(patcher.stop)
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
 
-        patcher = mock.patch('snapcraft.internal.lxd.check_output')
-        self.check_output_mock = patcher.start()
-        self.check_output_mock.side_effect = check_output_side_effect()
-        self.addCleanup(patcher.stop)
+        self.make_snapcraft_yaml(dedent("""\
+            name: snap-test
+            version: 1.0
+            summary: test cleanbuild
+            description: if snap is succesful a snap package will be available
+            architectures: ['amd64']
+            confinement: strict
+            grade: stable
 
-        patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def make_snapcraft_yaml(self, n=1):
-        super().make_snapcraft_yaml(self.yaml_template)
+            parts:
+                part1:
+                  plugin: nil
+        """))
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
     def test_cleanbuild(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
+        self.useFixture(tests.fixture_setup.FakeLXD())
 
-        self.make_snapcraft_yaml()
+
+class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+
         # simulate build artifacts
-
         dirs = [
             os.path.join(self.parts_dir, 'part1', 'src'),
             self.stage_dir,
             self.prime_dir,
             os.path.join(self.parts_dir, 'plugins'),
         ]
-        files_tar = [
+        self.files_tar = [
             os.path.join(self.parts_dir, 'plugins', 'x-plugin.py'),
             'main.c',
         ]
-        files_no_tar = [
+        self.files_no_tar = [
             os.path.join(self.stage_dir, 'binary'),
             os.path.join(self.prime_dir, 'binary'),
             'snap-test.snap',
@@ -86,26 +79,30 @@ parts:
         ]
         for d in dirs:
             os.makedirs(d)
-        for f in files_tar + files_no_tar:
+        for f in self.files_tar + self.files_no_tar:
             open(f, 'w').close()
 
-        main(['cleanbuild', '--debug'])
+    def test_cleanbuild(self):
+        self.useFixture(tests.fixture_setup.FakeLXD())
 
+        result = self.run_command(['cleanbuild'])
+
+        self.assertThat(result.exit_code, Equals(0))
         self.assertIn(
             'Setting up container with project assets\n'
             'Waiting for a network connection...\n'
             'Network connection established\n'
             'Retrieved snap-test_1.0_amd64.snap\n',
-            fake_logger.output)
+            self.fake_logger.output)
 
         with tarfile.open('snap-test_1.0_source.tar.bz2') as tar:
             tar_members = tar.getnames()
 
-        for f in files_no_tar:
+        for f in self.files_no_tar:
             f = os.path.relpath(f)
             self.assertFalse('./{}'.format(f) in tar_members,
                              '{} should not be in {}'.format(f, tar_members))
-        for f in files_tar:
+        for f in self.files_tar:
             f = os.path.relpath(f)
             self.assertTrue('./{}'.format(f) in tar_members,
                             '{} should be in {}'.format(f, tar_members))
@@ -116,25 +113,37 @@ parts:
             Contains(os.path.join('.', 'snap', 'snapcraft.yaml')),
             'snap/snapcraft unexpectedly excluded from tarball')
 
+    def test_cleanbuild_debug_appended_goes_to_shell_on_errors(self):
+        fake_lxd = tests.fixture_setup.FakeLXD(fail_on_snapcraft_run=True)
+        self.useFixture(fake_lxd)
+
+        result = self.run_command(['cleanbuild', '--debug'])
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(self.fake_logger.output, Contains(
+            'Debug mode enabled, dropping into a shell'))
+
+    def test_cleanbuild_debug_prepended_goes_to_shell_on_errors(self):
+        fake_lxd = tests.fixture_setup.FakeLXD(fail_on_snapcraft_run=True)
+        self.useFixture(fake_lxd)
+
+        result = self.run_command(['--debug', 'cleanbuild'])
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(self.fake_logger.output, Contains(
+            'Debug mode enabled, dropping into a shell'))
+
+
+class CleanBuildFailuresCommandTestCase(CleanBuildCommandBaseTestCase):
+
     def test_no_lxd(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        self.make_snapcraft_yaml()
-
-        self.check_output_mock.side_effect = check_output_side_effect(
-            fail_on_default=True)
+        fake_lxd = tests.fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        fake_lxd.check_output_mock.side_effect = FileNotFoundError('lxc')
 
         raised = self.assertRaises(
-            SystemExit,
-            main, ['cleanbuild'])
+            snapcraft.internal.errors.ContainerConnectionError,
+            self.run_command, ['cleanbuild'])
 
-        self.maxDiff = None
-        self.assertEqual(1, raised.code)
-        self.assertEqual(
-            fake_logger.output,
-            'You must have LXD installed in order to use cleanbuild. '
-            'However, it is either not installed or not configured '
-            'properly.\n'
+        self.assertThat(str(raised), Equals(
+            'You must have LXD installed in order to use cleanbuild.\n'
             'Refer to the documentation at '
-            'https://linuxcontainers.org/lxd/getting-started-cli.\n')
+            'https://linuxcontainers.org/lxd/getting-started-cli.'))

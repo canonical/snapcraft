@@ -8,22 +8,24 @@ here.
 **Prerequisite:** Sign the [contributor license agreement][1]. This is how you
 give us permission to use your contributions.
 
-1. Make sure a [Snapcraft bug][2] is filed for the bug you're about to fix, or
-   feature you're about to add. This is not just paperwork required in order to
-   land something: this is where you state what's happening, and why it's a
-   shortcoming. Doing this before you start working on a fix also gives the
-   Snapcraft team a chance to give you feedback and advice, which saves time
-   for everyone!
+1. If there is a [Snapcraft bug][2] you are trying to fix, please refer to
+   it here. If it is a feature that has not been discussed, please raise
+   awareness on https://forum.snapcraft.io under the *snapcraft* topic. This
+   will ensure that we're all on the same page, and your work is not in vain
+   or duplicating what someone else is already doing. This actually saves time!
 
 2. We use a forking, feature-based workflow.
 
    Make a fork of Snapcraft, and create a branch named specifically for the
    feature on which you'd like to work. Make your changes there, adding new
    tests as needed, and make sure the existing tests continue to pass when your
-   changes are complete (for information about running the tests, see the
-   [HACKING][3] document).
+   changes are complete (for information see the [HACKING][3] and [TESTING][4]
+   documents).
 
-3. Squash commits into one, well-formatted commit. If you really feel like there
+3. We try to follow a consistent and readable code style. Read the
+   [CODE_STYLE][5] document and please make sure that your code complies.
+
+4. Squash commits into one, well-formatted commit. If you really feel like there
    should be more than one commit in your branch, then you're probably trying to
    introduce more than one feature and you should make another branch for
    it.
@@ -38,10 +40,7 @@ give us permission to use your contributions.
 
        More detailed explanatory text, if necessary. Wrap it to 72 characters.
        Think of this like an email, where you have a subject line and a body.
-       Make sure you mention the bug being fixed on a line all by itself at the
-       end, like so:
 
-       LP: #<bug number>
        ```
 
    Try to keep the summary to around 50 characters, and use the imperative mood.
@@ -52,10 +51,12 @@ give us permission to use your contributions.
        If applied, this commit will <insert summary here>.
        ```
 
-4. Submit a pull request to get changes from your branch into master. Mention
+5. Submit a pull request to get changes from your branch into master. Mention
    which bug is being resolved in the description of the pull request (bonus
    points if it's a hyperlink to the bug itself).
 
 [1]: http://www.ubuntu.com/legal/contributors/
 [2]: https://bugs.launchpad.net/snapcraft
 [3]: HACKING.md
+[4]: TESTING.md
+[5]: CODE_STYLE.md

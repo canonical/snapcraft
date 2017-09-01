@@ -14,38 +14,50 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import subprocess
 
 import apt
+import testscenarios
+from testtools.matchers import Equals
 
 import integration_tests
 
 
-class BuildPackageVersionTestCase(integration_tests.TestCase):
+class BuildPackageVersionTestCase(testscenarios.WithScenarios,
+                                  integration_tests.TestCase):
+
+    scenarios = (
+        ('global', dict(
+            project='build-package', package='hello', part='hello')),
+        ('local', dict(
+            project='build-package-global', package='haskell-doc', part=None)),
+    )
 
     def test_build_package_gets_version(self):
-        self.run_snapcraft('pull', 'build-package-version')
-        pkg = 'hello'
-        expected_version = '2.10-1'
-        with apt.Cache() as apt_cache:
-            installed_version = apt_cache[pkg].candidate.version
-            self.assertEqual(expected_version,
-                             installed_version)
+        self.copy_project_to_cwd(self.project)
+        version = self.set_build_package_version(
+            os.path.join('snap', 'snapcraft.yaml'), self.part,
+            package=self.package)
+        self.run_snapcraft('pull')
 
-    def test_global_build_package_gets_version(self):
-        self.run_snapcraft('pull', 'build-package-version-global')
-        pkg = 'hello'
-        expected_version = '2.10-1'
         with apt.Cache() as apt_cache:
-            installed_version = apt_cache[pkg].candidate.version
-            self.assertEqual(expected_version,
-                             installed_version)
+            installed_version = apt_cache[self.package].candidate.version
+        self.assertThat(installed_version, Equals(version))
 
-    def test_build_package_bad_version(self):
+
+class BuildPackageVersionErrorsTestCase(integration_tests.TestCase):
+
+    def test_build_package_with_invalid_version_must_fail(self):
+        self.copy_project_to_cwd('build-package-global')
+        self.set_build_package_version(
+            os.path.join('snap', 'snapcraft.yaml'),
+            part=None, package='haskell-doc', version='invalid')
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, 'pull', 'build-package-version-bad')
+            self.run_snapcraft, 'pull')
         self.assertIn(
-            "Version 'x.y-z' for 'hello' was not found",
+            "Could not find a required package in 'build-packages': "
+            "haskell-doc=invalid",
             str(error.output)
         )

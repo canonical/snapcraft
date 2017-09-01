@@ -14,27 +14,32 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from platform import linux_distribution as _linux_distribution
 from ._platform import _is_deb_based
+from snapcraft.internal import errors
 
 
-class BuildPackageNotFoundError(Exception):
-
-    def __init__(self, package_name):
-        self.package_name = package_name
-
-    def __str__(self):
-        return ('Could not find a required package in '
-                '\'build-packages\': {}'.format(str(self.package_name)))
+class RepoError(errors.SnapcraftError):
+    pass
 
 
-class PackageNotFoundError(Exception):
+class BuildPackageNotFoundError(RepoError):
+
+    fmt = "Could not find a required package in 'build-packages': {package}"
+
+    def __init__(self, package):
+        super().__init__(package=package)
+
+
+class PackageNotFoundError(RepoError):
 
     @property
     def message(self):
         message = 'The package {!r} was not found.'.format(
             self.package_name)
         # If the package was multiarch, try to help.
-        if _is_deb_based() and ':' in self.package_name:
+        distro = _linux_distribution()[0]
+        if _is_deb_based(distro) and ':' in self.package_name:
             (name, arch) = self.package_name.split(':', 2)
             if arch:
                 message += (
@@ -45,12 +50,13 @@ class PackageNotFoundError(Exception):
     def __init__(self, package_name):
         self.package_name = package_name
 
+    def __str__(self):
+        return self.message
 
-class UnpackError(Exception):
 
-    @property
-    def message(self):
-        return 'Error while provisioning "{}"'.format(self.package_name)
+class UnpackError(RepoError):
 
-    def __init__(self, package_name):
-        self.package_name = package_name
+    fmt = 'Error while provisioning {package!r}'
+
+    def __init__(self, package):
+        super().__init__(package=package)

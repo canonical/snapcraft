@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,26 +13,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import logging
 from unittest import mock
 
-import fixtures
 from simplejson.scanner import JSONDecodeError
+from testtools.matchers import Contains, Equals, Not
 
-from snapcraft.main import main
-from snapcraft import (
-    storeapi,
-    tests
-)
+from snapcraft import storeapi
+from . import CommandBaseTestCase
 
 
-class LoginCommandTestCase(tests.TestCase):
+class LoginCommandTestCase(CommandBaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
 
         patcher = mock.patch('builtins.input')
         self.mock_input = patcher.start()
@@ -53,16 +46,17 @@ class LoginCommandTestCase(tests.TestCase):
         self.mock_input.return_value = 'user@example.com'
 
         # no exception raised.
-        main(['login'])
+        result = self.run_command(['login'])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.TWO_FACTOR_WARNING))
+        self.assertThat(result.output, Contains('Login successful.'))
 
         self.mock_input.assert_called_once_with('Email: ')
         mock_login.assert_called_once_with(
             'user@example.com', mock.ANY, acls=None, packages=None,
             channels=None, save=True)
-        self.assertEqual(
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
-            'Login successful.\n',
-            self.fake_logger.output)
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
@@ -74,12 +68,17 @@ class LoginCommandTestCase(tests.TestCase):
             None]
 
         # no exception raised.
-        main(['login'])
+        result = self.run_command(['login'])
 
-        self.assertEqual(2, self.mock_input.call_count)
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Not(Contains(
+            storeapi.constants.TWO_FACTOR_WARNING)))
+        self.assertThat(result.output, Contains('Login successful.'))
+
+        self.assertThat(self.mock_input.call_count, Equals(2))
         self.mock_input.assert_has_calls([
             mock.call('Email: '), mock.call('Second-factor auth: ')])
-        self.assertEqual(2, mock_login.call_count)
+        self.assertThat(mock_login.call_count, Equals(2))
         mock_login.assert_has_calls([
             mock.call(
                 'user@example.com', mock.ANY, acls=None, packages=None,
@@ -87,31 +86,28 @@ class LoginCommandTestCase(tests.TestCase):
             mock.call(
                 'user@example.com', mock.ANY, one_time_password='123456',
                 acls=None, packages=None, channels=None, save=True)])
-        self.assertEqual('Login successful.\n', self.fake_logger.output)
 
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_failed_login_with_invalid_credentials(self, mock_login):
         mock_login.side_effect = storeapi.errors.InvalidCredentialsError(
             'error')
 
-        main(['login'])
+        result = self.run_command(['login'])
 
-        self.assertEqual(
-            storeapi.constants.INVALID_CREDENTIALS +
-            '\nLogin failed.\n',
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.INVALID_CREDENTIALS))
+        self.assertThat(result.output, Contains('Login failed.'))
 
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_failed_login_with_store_authentication_error(self, mock_login):
         mock_login.side_effect = storeapi.errors.StoreAuthenticationError(
             'error')
 
-        main(['login'])
+        result = self.run_command(['login'])
 
-        self.assertEqual(
-            storeapi.constants.AUTHENTICATION_ERROR +
-            '\nLogin failed.\n',
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains('Login failed.'))
 
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_failed_login_with_store_account_info_error(self, mock_login):
@@ -122,12 +118,12 @@ class LoginCommandTestCase(tests.TestCase):
         mock_login.side_effect = storeapi.errors.StoreAccountInformationError(
             response)
 
-        main(['login'])
+        result = self.run_command(['login'])
 
-        self.assertEqual(
-            storeapi.constants.ACCOUNT_INFORMATION_ERROR +
-            '\nLogin failed.\n',
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.ACCOUNT_INFORMATION_ERROR))
+        self.assertThat(result.output, Contains('Login failed.'))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
@@ -146,13 +142,14 @@ class LoginCommandTestCase(tests.TestCase):
             response)
         mock_acc_info.side_effect = account_info_exception
 
-        main(['login'])
+        result = self.run_command(['login'])
 
-        self.assertEqual((
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
-            storeapi.constants.AGREEMENT_ERROR +
-            '\nLogin failed.\n'),
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.TWO_FACTOR_WARNING))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.AGREEMENT_ERROR))
+        self.assertThat(result.output, Contains('Login failed.'))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
@@ -171,13 +168,14 @@ class LoginCommandTestCase(tests.TestCase):
             response)
         mock_acc_info.side_effect = account_info_exception
 
-        main(['login'])
+        result = self.run_command(['login'])
 
-        self.assertEqual((
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
-            storeapi.constants.NAMESPACE_ERROR.format('http://fake-url.com') +
-            '\nLogin failed.\n'),
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.TWO_FACTOR_WARNING))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.NAMESPACE_ERROR.format('http://fake-url.com')))
+        self.assertThat(result.output, Contains('Login failed.'))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
@@ -196,13 +194,14 @@ class LoginCommandTestCase(tests.TestCase):
         side_effect = storeapi.errors.StoreAccountInformationError(response)
         mock_acc_info.side_effect = side_effect
 
-        main(['login'])
+        result = self.run_command(['login'])
 
-        self.assertEqual(
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
-            storeapi.constants.ACCOUNT_INFORMATION_ERROR +
-            '\nLogin failed.\n',
-            self.fake_logger.output)
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.TWO_FACTOR_WARNING))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.ACCOUNT_INFORMATION_ERROR))
+        self.assertThat(result.output, Contains('Login failed.'))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
@@ -221,16 +220,17 @@ class LoginCommandTestCase(tests.TestCase):
             response)
         mock_acc_info.side_effect = account_info_exception
 
-        main(['login'])
+        result = self.run_command(['login'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.TWO_FACTOR_WARNING))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.AGREEMENT_ERROR))
+        self.assertThat(result.output, Contains('Login failed.'))
         self.mock_input.assert_called_with(
             storeapi.constants.AGREEMENT_INPUT_MSG.format(
                 'http://fake-url.com'))
-
-        self.assertEqual((
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
-            storeapi.constants.AGREEMENT_ERROR +
-            '\nLogin failed.\n'),
-            self.fake_logger.output)
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
@@ -250,13 +250,15 @@ class LoginCommandTestCase(tests.TestCase):
         mock_acc_info.side_effect = account_info_exception
 
         self.mock_input.return_value = 'n'
-        main(['login'])
 
-        self.assertEqual((
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
-            storeapi.constants.AGREEMENT_ERROR +
-            '\nLogin failed.\n'),
-            self.fake_logger.output)
+        result = self.run_command(['login'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.TWO_FACTOR_WARNING))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.AGREEMENT_ERROR))
+        self.assertThat(result.output, Contains('Login failed.'))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
@@ -276,14 +278,16 @@ class LoginCommandTestCase(tests.TestCase):
         mock_acc_info.side_effect = account_info_exception
 
         self.mock_input.return_value = 'y'
-        main(['login'])
 
-        self.assertEqual((
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
+        result = self.run_command(['login'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.TWO_FACTOR_WARNING))
+        self.assertThat(result.output, Contains(
             storeapi.constants.AGREEMENT_SIGN_ERROR.format(
-                'http://fake-url.com') +
-            '\nLogin failed.\n'),
-            self.fake_logger.output)
+                'http://fake-url.com')))
+        self.assertThat(result.output, Contains('Login failed.'))
 
     @mock.patch.object(storeapi.StoreClient, 'sign_developer_agreement')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
@@ -304,10 +308,11 @@ class LoginCommandTestCase(tests.TestCase):
         mock_acc_info.side_effect = account_info_exception
 
         self.mock_input.return_value = 'y'
-        main(['login'])
 
-        self.assertEqual((
-            storeapi.constants.TWO_FACTOR_WARNING + '\n' +
-            storeapi.constants.ACCOUNT_INFORMATION_ERROR +
-            '\nLogin failed.\n'),
-            self.fake_logger.output)
+        result = self.run_command(['login'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.TWO_FACTOR_WARNING))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.ACCOUNT_INFORMATION_ERROR))

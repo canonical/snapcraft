@@ -1,0 +1,12 @@
+name: asset-tracking-svn
+version: 0.1
+summary: Svn asset tracking
+description: Svn asset tracking
+architectures: [all]
+confinement: strict
+
+parts:
+  svn-part:
+    plugin: nil
+    source: svn-source
+    source-type: subversion

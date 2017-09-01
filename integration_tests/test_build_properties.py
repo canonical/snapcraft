@@ -17,7 +17,7 @@
 import os
 import yaml
 
-from testtools.matchers import FileExists
+from testtools.matchers import Equals, FileExists
 
 import integration_tests
 
@@ -47,5 +47,25 @@ class BuildPropertiesTestCase(integration_tests.TestCase):
         # Verify that the contents of the dependencies made it in as well.
         self.assertTrue('foo' in state.properties)
         self.assertTrue('stage-packages' in state.properties)
-        self.assertEqual('bar', state.properties['foo'])
-        self.assertEqual(['curl'], state.properties['stage-packages'])
+        self.assertThat(state.properties['foo'], Equals('bar'))
+        self.assertThat(state.properties['stage-packages'], Equals(['curl']))
+
+    def test_build_with_arch(self):
+        self.run_snapcraft(['build', '--target-arch=i386', 'go-hello'],
+                           'go-hello')
+        state_file = os.path.join(self.parts_dir,
+                                  'go-hello', 'state', 'build')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+        self.assertThat(state.project_options['deb_arch'], Equals('i386'))
+
+    def test_arch_with_build(self):
+        self.run_snapcraft(['--target-arch=i386', 'build', 'go-hello'],
+                           'go-hello')
+        state_file = os.path.join(self.parts_dir,
+                                  'go-hello', 'state', 'build')
+        self.assertThat(state_file, FileExists())
+        with open(state_file) as f:
+            state = yaml.load(f)
+        self.assertThat(state.project_options['deb_arch'], Equals('i386'))

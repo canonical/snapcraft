@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,7 +17,7 @@
 import os
 
 from unittest import mock
-from testtools.matchers import HasLength
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft.plugins import qmake
@@ -64,21 +64,24 @@ class QMakeTestCase(tests.TestCase):
                             .format(item))
 
         options_type = options['type']
-        self.assertEqual(options_type, 'array',
-                         'Expected "options" "type" to be "array", but it '
-                         'was "{}"'.format(options_type))
+        self.assertThat(
+            options_type, Equals('array'),
+            'Expected "options" "type" to be "array", but it '
+            'was "{}"'.format(options_type))
 
         options_minitems = options['minitems']
-        self.assertEqual(options_minitems, 1,
-                         'Expected "options" "minitems" to be 1, but '
-                         'it was {}'.format(options_minitems))
+        self.assertThat(
+            options_minitems, Equals(1),
+            'Expected "options" "minitems" to be 1, but '
+            'it was {}'.format(options_minitems))
 
         self.assertTrue(options['uniqueItems'])
 
         options_default = options['default']
-        self.assertEqual(options_default, [],
-                         'Expected "options" "default" to be [], but '
-                         'it was {}'.format(options_default))
+        self.assertThat(
+            options_default, Equals([]),
+            'Expected "options" "default" to be [], but '
+            'it was {}'.format(options_default))
 
         options_items = options['items']
         self.assertTrue('type' in options_items,
@@ -86,21 +89,26 @@ class QMakeTestCase(tests.TestCase):
                         '"items"')
 
         options_items_type = options_items['type']
-        self.assertEqual(options_items_type, 'string',
-                         'Expected "options" "items" "type" to be '
-                         '"string", but it was "{}"'
-                         .format(options_items_type))
+        self.assertThat(
+            options_items_type, Equals('string'),
+            'Expected "options" "items" "type" to be '
+            '"string", but it was "{}"'
+            .format(options_items_type))
 
         # Check qt-version property
         qt_version = properties['qt-version']
         self.assertTrue('enum' in qt_version,
                         'Expected "enum" to be included in "qt_version"')
-        self.assertFalse('default' in qt_version,
-                         '"default" was unexpectedly included in "qt_version"')
 
         qt_version_enum = qt_version['enum']
         # Using sets for order independence in the comparison
-        self.assertEqual(set(['qt4', 'qt5']), set(qt_version_enum))
+        self.assertThat(set(qt_version_enum), Equals(set(['qt4', 'qt5'])))
+
+        qt_version_default = qt_version['default']
+        self.assertThat(
+            qt_version_default, Equals('qt5'),
+            'Expected "qt_version" "default" to be "qt5", but '
+            'it was {}'.format(qt_version_default))
 
         self.assertTrue('build-properties' in schema,
                         'Expected schema to include "build-properties"')
@@ -116,21 +124,24 @@ class QMakeTestCase(tests.TestCase):
                             .format(item))
 
         project_files_type = project_files['type']
-        self.assertEqual(project_files_type, 'array',
-                         'Expected "project_files" "type" to be "array", but '
-                         'it was "{}"'.format(project_files_type))
+        self.assertThat(
+            project_files_type, Equals('array'),
+            'Expected "project_files" "type" to be "array", but '
+            'it was "{}"'.format(project_files_type))
 
         project_files_minitems = project_files['minitems']
-        self.assertEqual(project_files_minitems, 1,
-                         'Expected "project_files" "minitems" to be 1, but '
-                         'it was {}'.format(project_files_minitems))
+        self.assertThat(
+            project_files_minitems, Equals(1),
+            'Expected "project_files" "minitems" to be 1, but '
+            'it was {}'.format(project_files_minitems))
 
         self.assertTrue(project_files['uniqueItems'])
 
         project_files_default = project_files['default']
-        self.assertEqual(project_files_default, [],
-                         'Expected "project_files" "default" to be [], but '
-                         'it was {}'.format(project_files_default))
+        self.assertThat(
+            project_files_default, Equals([]),
+            'Expected "project_files" "default" to be [], but '
+            'it was {}'.format(project_files_default))
 
         project_files_items = project_files['items']
         self.assertTrue('type' in project_files_items,
@@ -138,15 +149,11 @@ class QMakeTestCase(tests.TestCase):
                         '"items"')
 
         project_files_items_type = project_files_items['type']
-        self.assertEqual(project_files_items_type, 'string',
-                         'Expected "project_files" "items" "type" to be '
-                         '"string", but it was "{}"'
-                         .format(project_files_items_type))
-
-        # Finally, verify that qt-version is required
-        required = schema['required']
-        self.assertTrue('qt-version' in required,
-                        'Expected "qt-version" to be required')
+        self.assertThat(
+            project_files_items_type, Equals('string'),
+            'Expected "project_files" "items" "type" to be '
+            '"string", but it was "{}"'
+            .format(project_files_items_type))
 
     def test_get_build_properties(self):
         expected_build_properties = ['options', 'project-files']
@@ -175,8 +182,8 @@ class QMakeTestCase(tests.TestCase):
             qmake.QmakePlugin,
             'test-part', self.options, self.project_options)
 
-        self.assertEqual(str(raised),
-                         "Unsupported Qt version: 'qt3'")
+        self.assertThat(str(raised),
+                        Equals("Unsupported Qt version: 'qt3'"))
 
     def test_build_referencing_sourcedir_if_no_subdir(self):
         plugin = qmake.QmakePlugin('test-part', self.options,
@@ -314,7 +321,7 @@ class QMakeTestCase(tests.TestCase):
         self.assert_expected_environment({'QT_SELECT': 'qt5'})
 
     def assert_expected_environment(self, expected):
-        self.assertEqual(3, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(3))
         for call_args in self.run_mock.call_args_list:
             environment = call_args[1]['env']
             for variable, value in expected.items():
@@ -323,6 +330,6 @@ class QMakeTestCase(tests.TestCase):
                     'Expected variable {!r} to be in environment'.format(
                         variable))
 
-                self.assertEqual(environment[variable], value,
-                                 'Expected ${}={}, but it was {}'.format(
-                                     variable, value, environment[variable]))
+                self.assertThat(environment[variable], Equals(value),
+                                'Expected ${}={}, but it was {}'.format(
+                                    variable, value, environment[variable]))

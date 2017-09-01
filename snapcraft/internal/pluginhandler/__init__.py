@@ -17,28 +17,19 @@
 import contextlib
 import copy
 import filecmp
-import importlib
 import logging
 import os
 import shutil
 import sys
 from glob import glob, iglob
 
-import jsonschema
-import magic
 import yaml
 
 import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal.errors import (
-    PrimeFileConflictError,
-    PluginError,
-    MissingState,
-    SnapcraftPartConflictError,
-    SnapcraftSchemaError
-)
 from snapcraft.internal import (
     common,
+    errors,
     libraries,
     repo,
     sources,
@@ -46,7 +37,11 @@ from snapcraft.internal import (
 )
 from ._scriptlets import ScriptRunner
 from ._build_attributes import BuildAttributes
-from ._stage_package_handler import StagePackageHandler
+
+if sys.platform == 'linux':
+    import magic
+
+from ._plugin_loader import load_plugin  # noqa
 
 logger = logging.getLogger(__name__)
 
@@ -61,113 +56,42 @@ class PluginHandler:
 
     @property
     def name(self):
-        return self._name
+        return self.plugin.name
 
     @property
     def installdir(self):
-        return self.code.installdir
+        return self.plugin.installdir
 
-    def __init__(self, *, plugin_name, part_name,
-                 part_properties, project_options, part_schema,
-                 definitions_schema):
+    def __init__(self, *, plugin, part_properties, project_options,
+                 part_schema, definitions_schema, stage_packages_repo,
+                 grammar_processor):
         self.valid = False
-        self.code = None
+        self.plugin = plugin
         self.config = {}
-        self._name = part_name
         self._part_properties = _expand_part_properties(
             part_properties, part_schema)
         self.stage_packages = []
+        self._stage_packages_repo = stage_packages_repo
+        self._grammar_processor = grammar_processor
 
-        # Some legacy parts can have a '/' in them to separate the main project
-        # part with the subparts. This is rather unfortunate as it affects the
-        # the layout of parts inside the parts directory causing collisions
-        # between the main project part and its subparts.
-        part_name = part_name.replace('/', '\N{BIG SOLIDUS}')
         self._project_options = project_options
         self.deps = []
 
         self.stagedir = project_options.stage_dir
-        self.snapdir = project_options.snap_dir
+        self.primedir = project_options.prime_dir
 
-        parts_dir = project_options.parts_dir
-        self.ubuntudir = os.path.join(parts_dir, part_name, 'ubuntu')
-        self.statedir = os.path.join(parts_dir, part_name, 'state')
-        self.sourcedir = os.path.join(parts_dir, part_name, 'src')
-
-        self.source_handler = self._get_source_handler(self._part_properties)
+        # We don't need to set the source_handler on systems where we do not
+        # build
+        if sys.platform == 'linux':
+            self.source_handler = self._get_source_handler(
+                self._part_properties)
+        else:
+            self.source_handler = None
 
         self._build_attributes = BuildAttributes(
             self._part_properties['build-attributes'])
 
         self._migrate_state_file()
-
-        try:
-            self._load_code(
-                plugin_name, self._part_properties, part_schema,
-                definitions_schema)
-        except jsonschema.ValidationError as e:
-            error = SnapcraftSchemaError.from_validation_error(e)
-            raise PluginError('properties failed to load for {}: {}'.format(
-                part_name, error.message))
-
-        stage_packages = getattr(self.code, 'stage_packages', [])
-        sources = getattr(self.code, 'PLUGIN_STAGE_SOURCES', None)
-        self._stage_package_handler = StagePackageHandler(
-            stage_packages, self.ubuntudir,
-            sources=sources, project_options=self._project_options)
-
-    def _load_code(self, plugin_name, properties, part_schema,
-                   definitions_schema):
-        module_name = plugin_name.replace('-', '_')
-        module = None
-
-        with contextlib.suppress(ImportError):
-            module = _load_local('x-{}'.format(plugin_name),
-                                 self._project_options.local_plugins_dir)
-            logger.info('Loaded local plugin for %s', plugin_name)
-
-        if not module:
-            with contextlib.suppress(ImportError):
-                module = importlib.import_module(
-                    'snapcraft.plugins.{}'.format(module_name))
-
-        if not module:
-            logger.info('Searching for local plugin for %s', plugin_name)
-            with contextlib.suppress(ImportError):
-                module = _load_local(module_name,
-                                     self._project_options.local_plugins_dir)
-            if not module:
-                raise PluginError('unknown plugin: {}'.format(plugin_name))
-
-        plugin = _get_plugin(module)
-        _validate_pull_and_build_properties(
-            plugin_name, plugin, part_schema, definitions_schema)
-        options = _make_options(
-            part_schema, definitions_schema, properties, plugin.schema())
-        # For backwards compatibility we add the project to the plugin
-        try:
-            self.code = plugin(self.name, options, self._project_options)
-        except TypeError:
-            logger.warning(
-                'DEPRECATED: the plugin used by part {!r} needs to be updated '
-                'to accept project options in its initializer. See '
-                'https://github.com/snapcore/snapcraft/blob/master/docs/'
-                'plugins.md#initializing-a-plugin for more information'.format(
-                    self.name))
-            self.code = plugin(self.name, options)
-            # This is for plugins that don't inherit from BasePlugin
-            if not hasattr(self.code, 'project'):
-                setattr(self.code, 'project', self._project_options)
-            # This is for plugins that inherit from BasePlugin but don't have
-            # project in init.
-            if not self.code.project:
-                self.code.project = self._project_options
-
-        if self._project_options.is_cross_compiling:
-            logger.debug(
-                'Setting {!r} as the compilation target for {!r}'.format(
-                    self._project_options.deb_arch, plugin_name))
-            self.code.enable_cross_compilation()
 
     def _get_source_handler(self, properties):
         """Returns a source_handler for the source in properties."""
@@ -179,7 +103,7 @@ class PluginHandler:
                 properties['source'], source_type=properties['source-type'])
             source_handler = handler_class(
                 properties['source'],
-                self.sourcedir,
+                self.plugin.sourcedir,
                 source_checksum=properties['source-checksum'],
                 source_branch=properties['source-branch'],
                 source_tag=properties['source-tag'],
@@ -191,8 +115,9 @@ class PluginHandler:
 
     def makedirs(self):
         dirs = [
-            self.code.sourcedir, self.code.builddir, self.code.installdir,
-            self.stagedir, self.snapdir, self.statedir
+            self.plugin.sourcedir, self.plugin.builddir,
+            self.plugin.installdir, self.plugin.statedir,
+            self.stagedir, self.primedir,
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
@@ -201,13 +126,13 @@ class PluginHandler:
         # In previous versions of Snapcraft, the state directory was a file.
         # Rather than die if we're running on output from an old version,
         # migrate it for them.
-        if os.path.isfile(self.statedir):
-            with open(self.statedir, 'r') as f:
+        if os.path.isfile(self.plugin.statedir):
+            with open(self.plugin.statedir, 'r') as f:
                 step = f.read()
 
             if step:
-                os.remove(self.statedir)
-                os.makedirs(self.statedir)
+                os.remove(self.plugin.statedir)
+                os.makedirs(self.plugin.statedir)
                 self.mark_done(step)
 
     def notify_part_progress(self, progress, hint=''):
@@ -215,7 +140,8 @@ class PluginHandler:
 
     def last_step(self):
         for step in reversed(common.COMMAND_ORDER):
-            if os.path.exists(self._step_state_file(step)):
+            if os.path.exists(
+                    states.get_step_state_file(self.plugin.statedir, step)):
                 return step
 
         return None
@@ -242,7 +168,7 @@ class PluginHandler:
         """
 
         # Retrieve the stored state for this step (assuming it has already run)
-        state = self.get_state(step)
+        state = states.get_state(self.plugin.statedir, step)
         differing_properties = set()
         differing_options = set()
 
@@ -276,7 +202,8 @@ class PluginHandler:
 
         index = common.COMMAND_ORDER.index(step)
 
-        with open(self._step_state_file(step), 'w') as f:
+        with open(states.get_step_state_file(
+                self.plugin.statedir, step), 'w') as f:
             f.write(yaml.dump(state))
 
         # We know we've only just completed this step, so make sure any later
@@ -286,34 +213,30 @@ class PluginHandler:
                 self.mark_cleaned(command)
 
     def mark_cleaned(self, step):
-        state_file = self._step_state_file(step)
+        state_file = states.get_step_state_file(self.plugin.statedir, step)
         if os.path.exists(state_file):
             os.remove(state_file)
 
-        if os.path.isdir(self.statedir) and not os.listdir(self.statedir):
-            os.rmdir(self.statedir)
-
-    def get_state(self, step):
-        state = None
-        state_file = self._step_state_file(step)
-        if os.path.isfile(state_file):
-            with open(state_file, 'r') as f:
-                state = yaml.load(f.read())
-
-        return state
-
-    def _step_state_file(self, step):
-        return os.path.join(self.statedir, step)
+        if (os.path.isdir(self.plugin.statedir) and
+                not os.listdir(self.plugin.statedir)):
+            os.rmdir(self.plugin.statedir)
 
     def _fetch_stage_packages(self):
-        try:
-            self.stage_packages = self._stage_package_handler.fetch()
-        except repo.errors.PackageNotFoundError as e:
-            raise RuntimeError("Error downloading stage packages for part "
-                               "{!r}: {}".format(self.name, e.message))
+        stage_packages = self._grammar_processor.get_stage_packages()
+        if stage_packages:
+            logger.debug('Fetching stage-packages {!r}'.format(stage_packages))
+            try:
+                self.stage_packages = self._stage_packages_repo.get(
+                    stage_packages)
+            except repo.errors.PackageNotFoundError as e:
+                raise errors.StagePackageDownloadError(self.name, e.message)
 
     def _unpack_stage_packages(self):
-        self._stage_package_handler.unpack(self.installdir)
+        stage_packages = self._grammar_processor.get_stage_packages()
+        if stage_packages:
+            logger.debug('Unpacking stage-packages to {!r}'.format(
+                self.installdir))
+            self._stage_packages_repo.unpack(self.installdir)
 
     def prepare_pull(self, force=False):
         self.makedirs()
@@ -326,16 +249,22 @@ class PluginHandler:
         self.notify_part_progress('Pulling')
         if self.source_handler:
             self.source_handler.pull()
-        self.code.pull()
+        self.plugin.pull()
 
         self.mark_pull_done()
 
     def mark_pull_done(self):
-        pull_properties = self.code.get_pull_properties()
+        pull_properties = self.plugin.get_pull_properties()
+
+        # Add the annotated list of build packages
+        part_build_packages = self._part_properties.get('build-packages', [])
 
         self.mark_done('pull', states.PullState(
             pull_properties, part_properties=self._part_properties,
-            project=self._project_options, stage_packages=self.stage_packages))
+            project=self._project_options, stage_packages=self.stage_packages,
+            build_packages=part_build_packages,
+            source_details=self.source_handler.source_details
+        ))
 
     def clean_pull(self, hint=''):
         if self.is_clean('pull'):
@@ -346,16 +275,16 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning pulled source for', hint)
         # Remove ubuntu cache (where stage packages are fetched)
-        if os.path.exists(self.ubuntudir):
-            shutil.rmtree(self.ubuntudir)
+        if os.path.exists(self.plugin.osrepodir):
+            shutil.rmtree(self.plugin.osrepodir)
 
-        if os.path.exists(self.sourcedir):
-            if os.path.islink(self.sourcedir):
-                os.remove(self.sourcedir)
+        if os.path.exists(self.plugin.sourcedir):
+            if os.path.islink(self.plugin.sourcedir):
+                os.remove(self.plugin.sourcedir)
             else:
-                shutil.rmtree(self.sourcedir)
+                shutil.rmtree(self.plugin.sourcedir)
 
-        self.code.clean_pull()
+        self.plugin.clean_pull()
         self.mark_cleaned('pull')
 
     def prepare_build(self, force=False):
@@ -369,14 +298,14 @@ class PluginHandler:
         self.makedirs()
         self.notify_part_progress('Building')
 
-        if os.path.exists(self.code.build_basedir):
-            shutil.rmtree(self.code.build_basedir)
+        if os.path.exists(self.plugin.build_basedir):
+            shutil.rmtree(self.plugin.build_basedir)
 
         # FIXME: It's not necessary to ignore here anymore since it's now done
         # in the Local source. However, it's left here so that it continues to
         # work on old snapcraft trees that still have src symlinks.
         def ignore(directory, files):
-            if directory == self.sourcedir:
+            if directory == self.plugin.sourcedir:
                 snaps = glob(os.path.join(directory, '*.snap'))
                 if snaps:
                     snaps = [os.path.basename(s) for s in snaps]
@@ -386,27 +315,28 @@ class PluginHandler:
             else:
                 return []
 
-        shutil.copytree(self.code.sourcedir, self.code.build_basedir,
+        shutil.copytree(self.plugin.sourcedir, self.plugin.build_basedir,
                         symlinks=True, ignore=ignore)
 
-        script_runner = ScriptRunner(builddir=self.code.build_basedir)
+        script_runner = ScriptRunner(builddir=self.plugin.build_basedir)
 
         script_runner.run(scriptlet=self._part_properties.get('prepare'))
         build_scriptlet = self._part_properties.get('build')
         if build_scriptlet:
             script_runner.run(scriptlet=build_scriptlet)
         else:
-            self.code.build()
+            self.plugin.build()
         script_runner.run(scriptlet=self._part_properties.get('install'))
 
         self.mark_build_done()
 
     def mark_build_done(self):
-        build_properties = self.code.get_build_properties()
+        build_properties = self.plugin.get_build_properties()
+        plugin_manifest = self.plugin.get_manifest()
 
         self.mark_done('build', states.BuildState(
             build_properties, self._part_properties,
-            self._project_options))
+            self._project_options, plugin_manifest))
 
     def clean_build(self, hint=''):
         if self.is_clean('build'):
@@ -417,17 +347,17 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning build for', hint)
 
-        if os.path.exists(self.code.build_basedir):
-            shutil.rmtree(self.code.build_basedir)
+        if os.path.exists(self.plugin.build_basedir):
+            shutil.rmtree(self.plugin.build_basedir)
 
         if os.path.exists(self.installdir):
             shutil.rmtree(self.installdir)
 
-        self.code.clean_build()
+        self.plugin.clean_build()
         self.mark_cleaned('build')
 
     def migratable_fileset_for(self, step):
-        plugin_fileset = self.code.snap_fileset()
+        plugin_fileset = self.plugin.snap_fileset()
         fileset = self._get_fileset(step).copy()
         includes = _get_includes(fileset)
         # If we're priming and we don't have an explicit set of files to prime
@@ -439,19 +369,19 @@ class PluginHandler:
 
         fileset.extend(plugin_fileset)
 
-        return _migratable_filesets(fileset, self.code.installdir)
+        return _migratable_filesets(fileset, self.plugin.installdir)
 
     def _get_fileset(self, option, default=None):
         if default is None:
             default = ['*']
 
-        fileset = getattr(self.code.options, option, default)
+        fileset = getattr(self.plugin.options, option, default)
         return fileset if fileset else default
 
     def _organize(self):
         fileset = self._get_fileset('organize', {})
 
-        _organize_filesets(fileset.copy(), self.code.installdir)
+        _organize_filesets(fileset.copy(), self.plugin.installdir)
 
     def stage(self, force=False):
         self.makedirs()
@@ -464,9 +394,10 @@ class PluginHandler:
                 return
             if not file_path.endswith('.pc'):
                 return
-            repo.fix_pkg_config(self.stagedir, file_path, self.code.installdir)
+            repo.fix_pkg_config(
+                self.stagedir, file_path, self.plugin.installdir)
 
-        _migrate_files(snap_files, snap_dirs, self.code.installdir,
+        _migrate_files(snap_files, snap_dirs, self.plugin.installdir,
                        self.stagedir, fixup_func=fixup_func)
         # TODO once `snappy try` is in place we will need to copy
         # dependencies here too
@@ -487,15 +418,13 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning staging area for', hint)
 
-        state = self.get_state('stage')
+        state = states.get_state(self.plugin.statedir, 'stage')
 
         try:
             self._clean_shared_area(self.stagedir, state,
                                     project_staged_state)
         except AttributeError:
-            raise MissingState(
-                "Failed to clean step 'stage': Missing necessary state. "
-                "This won't work until a complete clean has occurred.")
+            raise errors.MissingStateCleanError('stage')
 
         self.mark_cleaned('stage')
 
@@ -503,9 +432,9 @@ class PluginHandler:
         self.makedirs()
         self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
-        _migrate_files(snap_files, snap_dirs, self.stagedir, self.snapdir)
+        _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 
-        dependencies = _find_dependencies(self.snapdir, snap_files)
+        dependencies = _find_dependencies(self.primedir, snap_files)
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
@@ -513,7 +442,7 @@ class PluginHandler:
         # already been primed by other means, and migrating them again could
         # potentially override the `stage` or `snap` filtering.
         (in_part, staged, primed, system) = _split_dependencies(
-            dependencies, self.installdir, self.stagedir, self.snapdir)
+            dependencies, self.installdir, self.stagedir, self.primedir)
 
         part_dependency_paths = {os.path.dirname(d) for d in in_part}
         staged_dependency_paths = {os.path.dirname(d) for d in staged}
@@ -529,7 +458,7 @@ class PluginHandler:
                 # make sure we follow those symlinks when we migrate the
                 # dependencies.
                 _migrate_files(system, system_dependency_paths, '/',
-                               self.snapdir, follow_symlinks=True)
+                               self.primedir, follow_symlinks=True)
 
         self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
 
@@ -547,15 +476,13 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning priming area for', hint)
 
-        state = self.get_state('prime')
+        state = states.get_state(self.plugin.statedir, 'prime')
 
         try:
-            self._clean_shared_area(self.snapdir, state,
+            self._clean_shared_area(self.primedir, state,
                                     project_primed_state)
         except AttributeError:
-            raise MissingState(
-                "Failed to clean step 'prime': Missing necessary state. "
-                "This won't work until a complete clean has occurred.")
+            raise errors.MissingStateCleanError('prime')
 
         self.mark_cleaned('prime')
 
@@ -579,16 +506,16 @@ class PluginHandler:
 
     def get_primed_dependency_paths(self):
         dependency_paths = set()
-        state = self.get_state('prime')
+        state = states.get_state(self.plugin.statedir, 'prime')
         if state:
             for path in state.dependency_paths:
                 dependency_paths.add(
-                    os.path.join(self.snapdir, path.lstrip('/')))
+                    os.path.join(self.primedir, path.lstrip('/')))
 
         return dependency_paths
 
     def env(self, root):
-        return self.code.env(root)
+        return self.plugin.env(root)
 
     def clean(self, project_staged_state=None, project_primed_state=None,
               step=None, hint=''):
@@ -601,7 +528,7 @@ class PluginHandler:
         try:
             self._clean_steps(project_staged_state, project_primed_state,
                               step, hint)
-        except MissingState:
+        except errors.MissingStateCleanError:
             # If one of the step cleaning rules is missing state, it must be
             # running on the output of an old Snapcraft. In that case, if we
             # were specifically asked to clean that step we need to fail.
@@ -611,14 +538,14 @@ class PluginHandler:
                 raise
 
             logger.info('Cleaning up for part {!r}'.format(self.name))
-            if os.path.exists(self.code.partdir):
-                shutil.rmtree(self.code.partdir)
+            if os.path.exists(self.plugin.partdir):
+                shutil.rmtree(self.plugin.partdir)
 
         # Remove the part directory if it's completely empty (i.e. all steps
         # have been cleaned).
-        if (os.path.exists(self.code.partdir) and
-                not os.listdir(self.code.partdir)):
-            os.rmdir(self.code.partdir)
+        if (os.path.exists(self.plugin.partdir) and
+                not os.listdir(self.plugin.partdir)):
+            os.rmdir(self.plugin.partdir)
 
     def _clean_steps(self, project_staged_state, project_primed_state,
                      step=None, hint=None):
@@ -644,7 +571,7 @@ class PluginHandler:
             self.clean_pull(hint)
 
 
-def _split_dependencies(dependencies, installdir, stagedir, snapdir):
+def _split_dependencies(dependencies, installdir, stagedir, primedir):
     """Split dependencies into their corresponding location.
 
     Return a tuple of sets for each location.
@@ -660,8 +587,8 @@ def _split_dependencies(dependencies, installdir, stagedir, snapdir):
             part_dependencies.add(os.path.relpath(file_path, installdir))
         elif file_path.startswith(stagedir):
             staged_dependencies.add(os.path.relpath(file_path, stagedir))
-        elif file_path.startswith(snapdir):
-            primed_dependencies.add(os.path.relpath(file_path, snapdir))
+        elif file_path.startswith(primedir):
+            primed_dependencies.add(os.path.relpath(file_path, primedir))
         else:
             file_path = file_path.lstrip('/')
 
@@ -674,7 +601,7 @@ def _split_dependencies(dependencies, installdir, stagedir, snapdir):
                 part_dependencies.add(file_path)
             elif os.path.exists(os.path.join(stagedir, file_path)):
                 staged_dependencies.add(file_path)
-            elif os.path.exists(os.path.join(snapdir, file_path)):
+            elif os.path.exists(os.path.join(primedir, file_path)):
                 primed_dependencies.add(file_path)
             else:
                 system_dependencies.add(file_path)
@@ -705,142 +632,6 @@ def _expand_part_properties(part_properties, part_schema):
     properties.update(part_properties)
 
     return properties
-
-
-def _merged_part_and_plugin_schemas(part_schema, definitions_schema,
-                                    plugin_schema):
-    plugin_schema = plugin_schema.copy()
-    if 'properties' not in plugin_schema:
-        plugin_schema['properties'] = {}
-
-    if 'definitions' not in plugin_schema:
-        plugin_schema['definitions'] = {}
-
-    # The part schema takes precedence over the plugin's schema.
-    plugin_schema['properties'].update(part_schema)
-    plugin_schema['definitions'].update(definitions_schema)
-
-    return plugin_schema
-
-
-def _validate_pull_and_build_properties(plugin_name, plugin, part_schema,
-                                        definitions_schema):
-    merged_schema = _merged_part_and_plugin_schemas(
-        part_schema, definitions_schema, plugin.schema())
-    merged_properties = merged_schema['properties']
-
-    # First, validate pull properties
-    invalid_properties = _validate_step_properties(
-        plugin.get_pull_properties(), merged_properties)
-
-    if invalid_properties:
-        raise ValueError(
-            "Invalid pull properties specified by {!r} plugin: {}".format(
-                plugin_name, list(invalid_properties)))
-
-    # Now, validate build properties
-    invalid_properties = _validate_step_properties(
-        plugin.get_build_properties(), merged_properties)
-
-    if invalid_properties:
-        raise ValueError(
-            "Invalid build properties specified by {!r} plugin: {}".format(
-                plugin_name, list(invalid_properties)))
-
-
-def _validate_step_properties(step_properties, schema_properties):
-    invalid_properties = set()
-    for step_property in step_properties:
-        if step_property not in schema_properties:
-            invalid_properties.add(step_property)
-
-    return invalid_properties
-
-
-def _make_options(part_schema, definitions_schema, properties, plugin_schema):
-    # Make copies as these dictionaries are tampered with
-    part_schema = part_schema.copy()
-    properties = properties.copy()
-
-    plugin_schema = _merged_part_and_plugin_schemas(
-        part_schema, definitions_schema, plugin_schema)
-
-    # This is for backwards compatibility for when most of the
-    # schema was overridable by the plugins.
-    if 'required' in plugin_schema and not plugin_schema['required']:
-            del plugin_schema['required']
-    # With the same backwards compatibility in mind we need to remove
-    # the source entry before validation. To those concerned, it has
-    # already been validated.
-    validated_properties = properties.copy()
-    remove_set = [k for k in sources.get_source_defaults().keys()
-                  if k in validated_properties]
-    for key in remove_set:
-        del validated_properties[key]
-
-    jsonschema.validate(validated_properties, plugin_schema)
-
-    options = _populate_options(properties, plugin_schema)
-
-    return options
-
-
-def _populate_options(properties, schema):
-    class Options():
-        pass
-
-    options = Options()
-
-    schema_properties = schema.get('properties', {})
-    for key in schema_properties:
-        attr_name = key.replace('-', '_')
-        default_value = schema_properties[key].get('default')
-        attr_value = properties.get(key, default_value)
-        setattr(options, attr_name, attr_value)
-
-    return options
-
-
-def _get_plugin(module):
-    for attr in vars(module).values():
-        if not isinstance(attr, type):
-            continue
-        if not issubclass(attr, snapcraft.BasePlugin):
-            continue
-        if attr == snapcraft.BasePlugin:
-            continue
-        return attr
-
-
-def _load_local(module_name, local_plugin_dir):
-    sys.path = [local_plugin_dir] + sys.path
-    module = importlib.import_module(module_name)
-    sys.path.pop(0)
-
-    return module
-
-
-def load_plugin(part_name, *, plugin_name, part_properties=None,
-                project_options=None, part_schema=None,
-                definitions_schema=None):
-    if part_properties is None:
-        part_properties = {}
-    if part_schema is None:
-        part_schema = {}
-    if definitions_schema is None:
-        definitions_schema = {}
-    if project_options is None:
-        project_options = snapcraft.ProjectOptions()
-    logger.debug('Setting up part {!r} with plugin {!r} and '
-                 'properties {!r}.'.format(part_name,
-                                           plugin_name,
-                                           part_properties))
-    return PluginHandler(plugin_name=plugin_name,
-                         part_name=part_name,
-                         part_properties=part_properties,
-                         project_options=project_options,
-                         part_schema=part_schema,
-                         definitions_schema=definitions_schema)
 
 
 def _migratable_filesets(fileset, srcdir):
@@ -920,7 +711,7 @@ def _organize_filesets(fileset, base_dir):
                 # deletions.
                 shutil.rmtree(src)
             elif os.path.isfile(dst):
-                raise EnvironmentError(
+                raise errors.SnapcraftEnvironmentError(
                     'Trying to organize file {key!r} to {dst!r}, '
                     'but {dst!r} already exists'.format(
                         key=key, dst=os.path.relpath(dst, base_dir)))
@@ -1044,7 +835,7 @@ def _generate_exclude_set(directory, excludes):
 def _validate_relative_paths(files):
     for d in files:
         if os.path.isabs(d):
-            raise PluginError('path "{}" must be relative'.format(d))
+            raise errors.PluginError('path "{}" must be relative'.format(d))
 
 
 def _file_collides(file_this, file_other):
@@ -1070,7 +861,7 @@ def _file_collides(file_this, file_other):
 
 
 def check_for_collisions(parts):
-    """Raises an EnvironmentError if conflicts are found between two parts."""
+    """Raises a SnapcraftPartConflictError if conflicts are found."""
     parts_files = {}
     for part in parts:
         # Gather our own files up
@@ -1085,13 +876,14 @@ def check_for_collisions(parts):
                 other = os.path.join(
                     parts_files[other_part_name]['installdir'],
                     f)
-                if os.path.islink(this) and os.path.islink(other):
-                    continue
-                if _file_collides(this, other):
-                    conflict_files.append(f)
+                if os.path.exists(this) and os.path.exists(other):
+                    if os.path.islink(this) and os.path.islink(other):
+                        continue
+                    if _file_collides(this, other):
+                        conflict_files.append(f)
 
             if conflict_files:
-                raise SnapcraftPartConflictError(
+                raise errors.SnapcraftPartConflictError(
                     other_part_name=other_part_name,
                     part_name=part.name,
                     conflict_files=conflict_files)
@@ -1122,7 +914,7 @@ def _combine_filesets(starting_fileset, modifying_fileset):
                                              modifying_includes)
 
     if contradicting_fileset:
-        raise PrimeFileConflictError(fileset=contradicting_fileset)
+        raise errors.PrimeFileConflictError(fileset=contradicting_fileset)
 
     to_combine = False
     # combine if starting_fileset has a wildcard

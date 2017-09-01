@@ -1,0 +1,17 @@
+name: build-packages-without-dependencies
+version: '0.1'
+summary: install build packages
+description: |
+  Install build packages.
+  These packages don't require any additional dependency.
+
+grade: stable
+confinement: strict
+
+parts:
+  part-with-build-packages:
+    plugin: nil
+    build-packages:
+      - haskell-doc
+      - haskell98-report
+      - haskell98-tutorial

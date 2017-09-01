@@ -16,16 +16,29 @@
 
 import os
 import shutil
-import subprocess
+from subprocess import CalledProcessError
 from unittest import mock
 
-from snapcraft.internal import sources
+from testtools.matchers import Equals
 
+from snapcraft.internal import sources
 from snapcraft.tests.sources import SourceTestCase
+from snapcraft.tests.subprocess_utils import (
+    call,
+    call_with_output,
+)
 from snapcraft import tests
 
 
 class TestGit(SourceTestCase):
+
+    def setUp(self):
+
+        super().setUp()
+        patcher = mock.patch('snapcraft.sources.Git._get_source_details')
+        self.mock_get_source_details = patcher.start()
+        self.mock_get_source_details.return_value = ""
+        self.addCleanup(patcher.stop)
 
     def test_pull(self):
         git = sources.Git('git://my-source', 'source_dir')
@@ -87,7 +100,7 @@ class TestGit(SourceTestCase):
             mock.call(['git', '-C', 'source_dir', 'reset', '--hard',
                        'origin/master']),
             mock.call(['git', '-C', 'source_dir', 'submodule', 'update',
-                       '--recursive', '--remote'])
+                       '--recursive', '--force'])
         ])
 
     def test_pull_existing_with_tag(self):
@@ -102,7 +115,7 @@ class TestGit(SourceTestCase):
             mock.call(['git', '-C', 'source_dir', 'reset', '--hard',
                        'refs/tags/tag']),
             mock.call(['git', '-C', 'source_dir', 'submodule', 'update',
-                       '--recursive', '--remote'])
+                       '--recursive', '--force'])
         ])
 
     def test_pull_existing_with_commit(self):
@@ -119,7 +132,7 @@ class TestGit(SourceTestCase):
             mock.call(['git', '-C', 'source_dir', 'reset', '--hard',
                        '2514f9533ec9b45d07883e10a561b248497a8e3c']),
             mock.call(['git', '-C', 'source_dir', 'submodule', 'update',
-                       '--recursive', '--remote'])
+                       '--recursive', '--force'])
         ])
 
     def test_pull_existing_with_branch(self):
@@ -135,7 +148,7 @@ class TestGit(SourceTestCase):
             mock.call(['git', '-C', 'source_dir', 'reset', '--hard',
                        'refs/heads/my-branch']),
             mock.call(['git', '-C', 'source_dir', 'submodule', 'update',
-                       '--recursive', '--remote'])
+                       '--recursive', '--force'])
         ])
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
@@ -147,7 +160,7 @@ class TestGit(SourceTestCase):
 
         expected_message = \
             'can\'t specify both source-tag and source-branch for a git source'
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_branch_and_commit_raises_exception(self):
         raised = self.assertRaises(
@@ -160,7 +173,7 @@ class TestGit(SourceTestCase):
         expected_message = \
             'can\'t specify both source-branch and source-commit for ' \
             'a git source'
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_tag_and_commit_raises_exception(self):
         raised = self.assertRaises(
@@ -173,7 +186,7 @@ class TestGit(SourceTestCase):
         expected_message = \
             'can\'t specify both source-tag and source-commit for ' \
             'a git source'
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_source_checksum_raises_exception(self):
         raised = self.assertRaises(
@@ -184,15 +197,13 @@ class TestGit(SourceTestCase):
 
         expected_message = (
             "can't specify a source-checksum for a git source")
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
+
+    def test_has_source_handler_entry(self):
+        self.assertTrue(sources._source_handler['git'] is sources.Git)
 
 
-class TestGitConflicts(tests.TestCase):
-    """Test that git pull errors don't kill the parser"""
-
-    def call(self, cmd):
-        subprocess.check_call(
-            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+class GitBaseTestCase(tests.TestCase):
 
     def rm_dir(self, dir):
         if os.path.exists(dir):
@@ -205,25 +216,29 @@ class TestGitConflicts(tests.TestCase):
 
     def clone_repo(self, repo, tree):
         self.clean_dir(tree)
-        self.call(['git', 'clone', repo, tree])
+        call(['git', 'clone', repo, tree])
         os.chdir(tree)
-        self.call(['git', 'config', '--local', 'user.name',
-                   '"Example Dev"'])
-        self.call(['git', 'config', '--local', 'user.email',
-                   'dev@example.com'])
+        call(['git', 'config', '--local', 'user.name',
+              '"Example Dev"'])
+        call(['git', 'config', '--local', 'user.email',
+              'dev@example.com'])
 
     def add_file(self, filename, body, message):
         with open(filename, 'w') as fp:
             fp.write(body)
 
-        self.call(['git', 'add', filename])
-        self.call(['git', 'commit', '-am', message])
+        call(['git', 'add', filename])
+        call(['git', 'commit', '-am', message])
 
     def check_file_contents(self, path, expected):
         body = None
         with open(path) as fp:
             body = fp.read()
-        self.assertEqual(body, expected)
+        self.assertThat(body, Equals(expected))
+
+
+class TestGitConflicts(GitBaseTestCase):
+    """Test that git pull errors don't kill the parser"""
 
     def test_git_conflicts(self):
 
@@ -237,7 +252,7 @@ class TestGitConflicts(tests.TestCase):
         self.clean_dir(conflicting_tree)
 
         os.chdir(repo)
-        self.call(['git', 'init', '--bare'])
+        call(['git', 'init', '--bare'])
 
         self.clone_repo(repo, working_tree)
 
@@ -247,13 +262,13 @@ class TestGitConflicts(tests.TestCase):
         # add a file to the repo
         os.chdir(working_tree)
         self.add_file('fake', 'fake 1', 'fake 1')
-        self.call(['git', 'push', repo])
+        call(['git', 'push', repo])
 
         git.pull()
 
         os.chdir(conflicting_tree)
         self.add_file('fake', 'fake 2', 'fake 2')
-        self.call(['git', 'push', '-f', repo])
+        call(['git', 'push', '-f', repo])
 
         os.chdir(working_tree)
         git.pull()
@@ -262,35 +277,37 @@ class TestGitConflicts(tests.TestCase):
         with open(os.path.join(working_tree, 'fake')) as fp:
             body = fp.read()
 
-        self.assertEqual(body, 'fake 2')
+        self.assertThat(body, Equals('fake 2'))
 
     def test_git_submodules(self):
         """Test that updates to submodules are pulled"""
         repo = '/tmp/submodules.git'
         sub_repo = '/tmp/subrepo'
         working_tree = '/tmp/git-submodules'
+        working_tree_two = '{}-two'.format(working_tree)
         sub_working_tree = '/tmp/git-submodules-sub'
         git = sources.Git(repo, working_tree, silent=True)
 
         self.clean_dir(repo)
         self.clean_dir(sub_repo)
         self.clean_dir(working_tree)
+        self.clean_dir(working_tree_two)
         self.clean_dir(sub_working_tree)
 
         os.chdir(sub_repo)
-        self.call(['git', 'init', '--bare'])
+        call(['git', 'init', '--bare'])
 
         self.clone_repo(sub_repo, sub_working_tree)
         self.add_file('sub-file', 'sub-file', 'sub-file')
-        self.call(['git', 'push', sub_repo])
+        call(['git', 'push', sub_repo])
 
         os.chdir(repo)
-        self.call(['git', 'init', '--bare'])
+        call(['git', 'init', '--bare'])
 
         self.clone_repo(repo, working_tree)
-        self.call(['git', 'submodule', 'add', sub_repo])
-        self.call(['git', 'commit', '-am', 'added submodule'])
-        self.call(['git', 'push', repo])
+        call(['git', 'submodule', 'add', sub_repo])
+        call(['git', 'commit', '-am', 'added submodule'])
+        call(['git', 'push', repo])
 
         git.pull()
 
@@ -301,10 +318,157 @@ class TestGitConflicts(tests.TestCase):
         # add a file to the repo
         os.chdir(sub_working_tree)
         self.add_file('fake', 'fake 1', 'fake 1')
-        self.call(['git', 'push', sub_repo])
+        call(['git', 'push', sub_repo])
 
         os.chdir(working_tree)
         git.pull()
 
-        self.check_file_contents(os.path.join(working_tree, 'subrepo', 'fake'),
+        # this shouldn't cause any change
+        self.check_file_contents(os.path.join(working_tree,
+                                              'subrepo', 'sub-file'),
+                                 'sub-file')
+        self.assertFalse(os.path.exists(os.path.join(working_tree,
+                                                     'subrepo', 'fake')))
+
+        # update the submodule
+        self.clone_repo(repo, working_tree_two)
+        call(['git', 'submodule', 'update', '--init', '--recursive',
+              '--remote'])
+        call(['git', 'add', 'subrepo'])
+        call(['git', 'commit', '-am', 'updated submodule'])
+        call(['git', 'push'])
+
+        os.chdir(working_tree)
+        git.pull()
+
+        # new file should be there now
+        self.check_file_contents(os.path.join(working_tree,
+                                              'subrepo', 'sub-file'),
+                                 'sub-file')
+        self.check_file_contents(os.path.join(working_tree,
+                                              'subrepo', 'fake'),
                                  'fake 1')
+
+
+class GitDetailsTestCase(GitBaseTestCase):
+
+    def setUp(self):
+        def _add_and_commit_file(filename, content=None, message=None):
+            if not content:
+                content = filename
+            if not message:
+                message = filename
+
+            with open(filename, 'w') as fp:
+                fp.write(content)
+            call(['git', 'add', filename])
+            call(['git', 'commit', '-am', message])
+
+        super().setUp()
+        self.working_tree = 'git-test'
+        self.source_dir = 'git-checkout'
+        self.clean_dir(self.working_tree)
+        os.chdir(self.working_tree)
+        call(['git', 'init'])
+        call(['git', 'config', 'user.name',
+              '"Example Dev"'])
+        call(['git', 'config', 'user.email',
+              'dev@example.com'])
+        _add_and_commit_file('testing')
+        self.expected_commit = call_with_output(
+            ['git', 'rev-parse', 'HEAD'])
+
+        _add_and_commit_file('testing-2')
+        call(['git', 'tag', 'test-tag'])
+        self.expected_tag = 'test-tag'
+
+        _add_and_commit_file('testing-3')
+        self.expected_branch = 'test-branch'
+        call(['git', 'branch', self.expected_branch])
+
+        os.chdir('..')
+
+        self.git = sources.Git(self.working_tree, self.source_dir, silent=True,
+                               source_commit=self.expected_commit)
+        self.git.pull()
+
+        self.source_details = self.git._get_source_details()
+
+    def test_git_details_commit(self):
+        self.assertThat(
+            self.source_details['source-commit'], Equals(self.expected_commit))
+
+    def test_git_details_branch(self):
+        shutil.rmtree(self.source_dir)
+        self.git = sources.Git(self.working_tree, self.source_dir, silent=True,
+                               source_branch=self.expected_branch)
+        self.git.pull()
+
+        self.source_details = self.git._get_source_details()
+        self.assertThat(
+            self.source_details['source-branch'], Equals(self.expected_branch))
+
+    def test_git_details_tag(self):
+        self.git = sources.Git(self.working_tree, self.source_dir, silent=True,
+                               source_tag='test-tag')
+        self.git.pull()
+
+        self.source_details = self.git._get_source_details()
+        self.assertThat(
+            self.source_details['source-tag'], Equals(self.expected_tag))
+
+
+class GitGenerateVersionBaseTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('subprocess.check_output')
+        self.output_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('subprocess.Popen')
+        self.popen_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+
+class GitGenerateVersionTestCase(GitGenerateVersionBaseTestCase):
+
+    scenarios = (
+        ('only_tag', dict(return_value='2.28',
+                          expected='2.28')),
+        ('tag+commits', dict(return_value='2.28-28-gabcdef1',
+                             expected='2.28+git28.abcdef1')),
+        ('tag+dirty', dict(return_value='2.28-29-gabcdef1-dirty',
+                           expected='2.28+git29.abcdef1-dirty')),
+    )
+
+    def test_version(self):
+        self.output_mock.return_value = self.return_value.encode('utf-8')
+        self.assertThat(sources.Git.generate_version(), Equals(self.expected))
+
+
+class GitGenerateVersionNoTagTestCase(GitGenerateVersionBaseTestCase):
+
+    def test_version(self):
+        self.output_mock.side_effect = CalledProcessError(1, [])
+        proc_mock = mock.Mock()
+        proc_mock.returncode = 0
+        proc_mock.communicate.return_value = (b'abcdef1', b'')
+        self.popen_mock.return_value = proc_mock
+
+        expected = '0+git.abcdef1'
+        self.assertThat(sources.Git.generate_version(), Equals(expected))
+
+
+class GitGenerateVersionNoGitTestCase(GitGenerateVersionBaseTestCase):
+
+    def test_version(self):
+        self.output_mock.side_effect = CalledProcessError(1, [])
+        proc_mock = mock.Mock()
+        proc_mock.returncode = 2
+        proc_mock.communicate.return_value = (b'', b'No .git')
+        self.popen_mock.return_value = proc_mock
+
+        self.assertRaises(sources.errors.VCSError,
+                          sources.Git.generate_version)

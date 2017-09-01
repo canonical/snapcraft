@@ -35,7 +35,9 @@ from snapcraft.internal import (
     meta,
     pluginhandler,
     repo,
+    states
 )
+from snapcraft.internal import errors
 from snapcraft.internal.cache import SnapCache
 from snapcraft.internal.indicators import is_dumb_terminal
 from snapcraft.internal.project_loader import replace_attr
@@ -43,6 +45,8 @@ from snapcraft.internal.project_loader import replace_attr
 
 logger = logging.getLogger(__name__)
 
+
+_SNAPCRAFT_INTERNAL_DIR = os.path.join('snap', '.snapcraft')
 
 _TEMPLATE_YAML = """name: my-snap-name # you probably want to 'snapcraft register <name>'
 version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
@@ -70,20 +74,19 @@ def init():
     snapcraft_yaml_path = os.path.join('snap', 'snapcraft.yaml')
 
     if os.path.exists(snapcraft_yaml_path):
-        raise EnvironmentError(
+        raise errors.SnapcraftEnvironmentError(
             '{} already exists!'.format(snapcraft_yaml_path))
     elif os.path.exists('snapcraft.yaml'):
-        raise EnvironmentError('snapcraft.yaml already exists!')
+        raise errors.SnapcraftEnvironmentError(
+            'snapcraft.yaml already exists!')
     elif os.path.exists('.snapcraft.yaml'):
-        raise EnvironmentError('.snapcraft.yaml already exists!')
-    yaml = _TEMPLATE_YAML.strip()
+        raise errors.SnapcraftEnvironmentError(
+            '.snapcraft.yaml already exists!')
+    yaml = _TEMPLATE_YAML
     with contextlib.suppress(FileExistsError):
         os.mkdir(os.path.dirname(snapcraft_yaml_path))
     with open(snapcraft_yaml_path, mode='w') as f:
         f.write(yaml)
-    logger.info('Created {}.'.format(snapcraft_yaml_path))
-    logger.info(
-        'Edit the file to your liking or run `snapcraft` to get started')
 
     return snapcraft_yaml_path
 
@@ -108,7 +111,14 @@ def execute(step, project_options, part_names=None):
     :returns: A dict with the snap name, version, type and architectures.
     """
     config = snapcraft.internal.load_config(project_options)
-    repo.Repo.install_build_packages(config.build_tools)
+    installed_packages = repo.Repo.install_build_packages(
+        config.build_tools)
+    if installed_packages is None:
+        raise ValueError(
+            'The repo backend is not returning the list of installed packages')
+    os.makedirs(_SNAPCRAFT_INTERNAL_DIR, exist_ok=True)
+    with open(os.path.join(_SNAPCRAFT_INTERNAL_DIR, 'state'), 'w') as f:
+        f.write(yaml.dump(states.GlobalState(installed_packages)))
 
     if (os.environ.get('SNAPCRAFT_SETUP_CORE') and
             config.data['confinement'] == 'classic'):
@@ -157,11 +167,11 @@ def _setup_core(deb_arch):
 
 
 def _replace_in_part(part):
-    for key, value in part.code.options.__dict__.items():
+    for key, value in part.plugin.options.__dict__.items():
         value = replace_attr(value, [
-            ('$SNAPCRAFT_PART_INSTALL', part.code.installdir),
+            ('$SNAPCRAFT_PART_INSTALL', part.plugin.installdir),
         ])
-        setattr(part.code.options, key, value)
+        setattr(part.plugin.options, key, value)
 
     return part
 
@@ -204,6 +214,8 @@ class _Executor:
 
         for step in common.COMMAND_ORDER[0:step_index]:
             if step == 'stage':
+                # XXX check only for collisions on the parts that have already
+                # been built --elopio - 20170713
                 pluginhandler.check_for_collisions(self.config.all_parts)
             for part in parts:
                 if step not in self._steps_run[part.name]:
@@ -243,45 +255,22 @@ class _Executor:
         common.env.extend(self.config.project_env())
 
         part = _replace_in_part(part)
+
         getattr(part, step)()
 
     def _create_meta(self, step, part_names):
         if step == 'prime' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
-            meta.create_snap_packaging(self.config.data,
-                                       self.project_options)
+            meta.create_snap_packaging(
+                self.config.data, self.project_options,
+                self.config.snapcraft_yaml_path)
 
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
-            message_components = [
-                'The {!r} step of {!r} is out of date:\n\n'.format(
-                    step, part.name)]
-
-            if dirty_report.dirty_properties:
-                humanized_properties = formatting_utils.humanize_list(
-                    dirty_report.dirty_properties, 'and')
-                pluralized_connection = formatting_utils.pluralize(
-                    dirty_report.dirty_properties, 'property appears',
-                    'properties appear')
-                message_components.append(
-                    'The {} part {} to have changed.\n'.format(
-                        humanized_properties, pluralized_connection))
-
-            if dirty_report.dirty_project_options:
-                humanized_options = formatting_utils.humanize_list(
-                    dirty_report.dirty_project_options, 'and')
-                pluralized_connection = formatting_utils.pluralize(
-                    dirty_report.dirty_project_options, 'option appears',
-                    'options appear')
-                message_components.append(
-                    'The {} project {} to have changed.\n'.format(
-                        humanized_options, pluralized_connection))
-
-            message_components.append(
-                "\nIn order to continue, please clean that part's {0!r} step "
-                "by running: snapcraft clean {1} -s {0}\n".format(
-                    step, part.name))
-            raise RuntimeError(''.join(message_components))
+            raise errors.StepOutdatedError(
+                step=step, part=part.name,
+                dirty_properties=dirty_report.dirty_properties,
+                dirty_project_options=dirty_report.dirty_project_options)
 
         staged_state = self.config.get_project_state('stage')
         primed_state = self.config.get_project_state('prime')
@@ -296,17 +285,8 @@ class _Executor:
             for dependent in self.config.all_parts:
                 if (dependent.name in dependents and
                         not dependent.is_clean('build')):
-                    humanized_parts = formatting_utils.humanize_list(
-                        dependents, 'and')
-                    pluralized_depends = formatting_utils.pluralize(
-                        dependents, "depends", "depend")
-
-                    raise RuntimeError(
-                        'The {0!r} step for {1!r} needs to be run again, but '
-                        '{2} {3} upon it. Please clean the build '
-                        'step of {2} first.'.format(
-                            step, part.name, humanized_parts,
-                            pluralized_depends))
+                    raise errors.StepOutdatedError(step=step, part=part.name,
+                                                   dependents=dependents)
 
         part.clean(staged_state, primed_state, step, '(out of date)')
 
@@ -324,6 +304,13 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
+def containerbuild(step, project_options, output=None, args=[]):
+    config = snapcraft.internal.load_config(project_options)
+    lxd.Project(output=output, source=os.path.curdir,
+                project_options=project_options,
+                metadata=config.get_metadata()).execute(step, args)
+
+
 def cleanbuild(project_options, remote=''):
     config = snapcraft.internal.load_config(project_options)
     tar_filename = '{}_{}_source.tar.bz2'.format(
@@ -331,10 +318,9 @@ def cleanbuild(project_options, remote=''):
 
     with tarfile.open(tar_filename, 'w:bz2') as t:
         t.add(os.path.curdir, filter=_create_tar_filter(tar_filename))
-
-    snap_filename = common.format_snap_name(config.data)
-    lxd.Cleanbuilder(snap_filename, tar_filename, project_options,
-                     remote=remote).execute()
+    lxd.Cleanbuilder(source=tar_filename,
+                     project_options=project_options,
+                     metadata=config.get_metadata(), remote=remote).execute()
 
 
 def _snap_data_from_dir(directory):
@@ -348,13 +334,17 @@ def _snap_data_from_dir(directory):
 
 
 def snap(project_options, directory=None, output=None):
+    # Check for our prerequesite external command early
+    repo.check_for_command('mksquashfs')
+
     if directory:
-        snap_dir = os.path.abspath(directory)
-        snap = _snap_data_from_dir(snap_dir)
+        prime_dir = os.path.abspath(directory)
+        snap = _snap_data_from_dir(prime_dir)
     else:
         # make sure the full lifecycle is executed
-        snap_dir = project_options.snap_dir
-        snap = execute('prime', project_options)
+        prime_dir = project_options.prime_dir
+        execute('prime', project_options)
+        snap = _snap_data_from_dir(prime_dir)
 
     snap_name = output or common.format_snap_name(snap)
 
@@ -373,7 +363,7 @@ def snap(project_options, directory=None, output=None):
     if snap['type'] != 'os':
         mksquashfs_args.append('-all-root')
 
-    with Popen(['mksquashfs', snap_dir, snap_name] + mksquashfs_args,
+    with Popen(['mksquashfs', prime_dir, snap_name] + mksquashfs_args,
                stdout=PIPE, stderr=STDOUT) as proc:
         ret = None
         if is_dumb_terminal():
@@ -404,7 +394,6 @@ def snap(project_options, directory=None, output=None):
 
         logger.debug(proc.stdout.read().decode('utf-8'))
 
-    logger.info('Snapped {}'.format(snap_name))
     return snap_name
 
 
@@ -436,6 +425,7 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
                                        config):
     # Get the name of the parts that depend upon this one
     dependents = config.parts.get_dependents(part_name)
+    additional_dependents = []
 
     # Verify that they're either already clean, or that they will be cleaned.
     if not dependents.issubset(clean_part_names):
@@ -443,12 +433,13 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
             if part.name in dependents and not part.is_clean(step):
                 humanized_parts = formatting_utils.humanize_list(
                     dependents, 'and')
+                additional_dependents.append(part_name)
 
-                raise RuntimeError(
-                    'Requested clean of {!r} but {} depend{} upon it. Please '
-                    "add each to the clean command if that's what you "
-                    'intended.'.format(part_name, humanized_parts,
-                                       's' if len(dependents) == 1 else ''))
+                logger.warning(
+                    'Requested clean of {!r} which requires also cleaning '
+                    'the part{} {}'.format(part_name,
+                                           '' if len(dependents) == 1 else 's',
+                                           humanized_parts))
 
 
 def _clean_parts(part_names, step, config, staged_state, primed_state):
@@ -456,7 +447,8 @@ def _clean_parts(part_names, step, config, staged_state, primed_state):
         step = 'pull'
 
     # Before doing anything, verify that we weren't asked to clean only the
-    # root of a dependency tree (the entire tree must be specified).
+    # root of a dependency tree and hint that more parts would be cleaned
+    # if not.
     for part_name in part_names:
         _verify_dependents_will_be_cleaned(part_name, part_names, step, config)
 
@@ -494,7 +486,7 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
     if index <= common.COMMAND_ORDER.index('prime'):
         # Remove the priming area.
         _cleanup_common(
-            project_options.snap_dir, 'prime', 'Cleaning up priming area',
+            project_options.prime_dir, 'prime', 'Cleaning up priming area',
             parts)
 
     if index <= common.COMMAND_ORDER.index('stage'):
@@ -508,8 +500,9 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
         _cleanup_parts_dir(
             project_options.parts_dir, project_options.local_plugins_dir,
             parts)
+        _cleanup_internal_snapcraft_dir()
 
-    _remove_directory_if_empty(project_options.snap_dir)
+    _remove_directory_if_empty(project_options.prime_dir)
     _remove_directory_if_empty(project_options.stage_dir)
     _remove_directory_if_empty(project_options.parts_dir)
 
@@ -535,6 +528,11 @@ def _cleanup_parts_dir(parts_dir, local_plugins_dir, parts):
     for part in parts:
         part.mark_cleaned('build')
         part.mark_cleaned('pull')
+
+
+def _cleanup_internal_snapcraft_dir():
+    if os.path.exists(_SNAPCRAFT_INTERNAL_DIR):
+        shutil.rmtree(_SNAPCRAFT_INTERNAL_DIR)
 
 
 def clean(project_options, parts, step=None):

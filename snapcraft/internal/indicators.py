@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import os
 import sys
 
@@ -51,7 +50,8 @@ def _init_progress_bar(total_length, destination, message=None):
     return ProgressBar(widgets=widgets, maxval=maxval)
 
 
-def download_requests_stream(request_stream, destination, message=None):
+def download_requests_stream(request_stream, destination, message=None,
+                             total_read=0):
     """This is a facility to download a request with nice progress bars."""
 
     # Doing len(request_stream.content) may defeat the purpose of a
@@ -59,11 +59,20 @@ def download_requests_stream(request_stream, destination, message=None):
     total_length = 0
     if not request_stream.headers.get('Content-Encoding', ''):
         total_length = int(request_stream.headers.get('Content-Length', '0'))
+        # Content-Length in the case of resuming will be
+        # Content-Length - total_read so we add back up to have the feel of
+        # resuming
+        if os.path.exists(destination):
+            total_length += total_read
 
-    total_read = 0
     progress_bar = _init_progress_bar(total_length, destination, message)
     progress_bar.start()
-    with open(destination, 'wb') as destination_file:
+
+    if os.path.exists(destination):
+        mode = 'ab'
+    else:
+        mode = 'wb'
+    with open(destination, mode) as destination_file:
         for buf in request_stream.iter_content(1024):
             destination_file.write(buf)
             total_read += len(buf)
@@ -103,6 +112,7 @@ def download_urllib_source(uri, destination, message=None):
 
 def is_dumb_terminal():
     """Return True if on a dumb terminal."""
-    is_stdout_tty = os.isatty(sys.stdout.fileno())
+    is_stdout_tty = os.isatty(1)
     is_term_dumb = os.environ.get('TERM', '') == 'dumb'
-    return not is_stdout_tty or is_term_dumb
+    is_windows = sys.platform == 'win32'
+    return not is_stdout_tty or is_term_dumb or is_windows

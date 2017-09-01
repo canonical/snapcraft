@@ -38,6 +38,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import glob
 import logging
 import os
+from urllib.parse import urlsplit
 
 import snapcraft
 import snapcraft.common
@@ -96,12 +97,35 @@ class AntPlugin(snapcraft.plugins.jdk.JdkPlugin):
                 base = os.path.basename(f)
                 os.link(f, os.path.join(jardir, base))
 
+    def get_proxy_options(self, scheme):
+        proxy = os.environ.get('{}_proxy'.format(scheme))
+        if proxy:
+            parsed = urlsplit(proxy)
+            if parsed.hostname is not None:
+                yield '-D{}.proxyHost={}'.format(scheme, parsed.hostname)
+            if parsed.port is not None:
+                yield '-D{}.proxyPort={}'.format(scheme, parsed.port)
+            if parsed.username is not None:
+                yield '-D{}.proxyUser={}'.format(scheme, parsed.username)
+            if parsed.password is not None:
+                yield '-D{}.proxyPassword={}'.format(scheme, parsed.password)
+
     def env(self, root):
         env = super().env(root)
         jars = glob.glob(os.path.join(self.installdir, 'jar', '*.jar'))
         if jars:
             jars = [os.path.join(root, 'jar',
-                    os.path.basename(x)) for x in jars]
+                    os.path.basename(x)) for x in sorted(jars)]
             env.extend(
                 ['CLASSPATH={}:$CLASSPATH'.format(':'.join(jars))])
+        # Getting ant to use a proxy requires a little work; the JRE doesn't
+        # help as much as it should.  (java.net.useSystemProxies=true ought
+        # to do the trick, but it relies on desktop configuration rather
+        # than using the standard environment variables.)
+        ant_opts = []
+        ant_opts.extend(self.get_proxy_options('http'))
+        ant_opts.extend(self.get_proxy_options('https'))
+        if ant_opts:
+            env.append("ANT_OPTS='{}'".format(
+                ' '.join(opt.replace("'", "'\\''") for opt in ant_opts)))
         return env

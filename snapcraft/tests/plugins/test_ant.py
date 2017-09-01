@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,7 +17,9 @@
 import os
 import copy
 from unittest import mock
-from testtools.matchers import HasLength
+
+import fixtures
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -46,13 +48,13 @@ class AntPluginTestCase(tests.TestCase):
                 'Expected {!r} to be included in properties'.format(expected))
 
         properties_type = schema['properties']['ant-properties']['type']
-        self.assertEqual(properties_type, 'object',
-                         'Expected "ant-properties" "type" to be "object", '
-                         'but it was "{}"'.format(properties_type))
+        self.assertThat(properties_type, Equals('object'),
+                        'Expected "ant-properties" "type" to be "object", '
+                        'but it was "{}"'.format(properties_type))
         build_targets_type = schema['properties']['ant-build-targets']['type']
-        self.assertEqual(build_targets_type, 'array',
-                         'Expected "ant-build-targets" "type" to be "object", '
-                         'but it was "{}"'.format(build_targets_type))
+        self.assertThat(build_targets_type, Equals('array'),
+                        'Expected "ant-build-targets" "type" to be "object", '
+                        'but it was "{}"'.format(build_targets_type))
 
     def test_get_build_properties(self):
         expected_build_properties = ['ant-build-targets', 'ant-properties']
@@ -98,9 +100,9 @@ class AntPluginTestCase(tests.TestCase):
         destination = '-Ddist.dir={}'.format(plugin.installdir)
         basedir = '-Dbasedir=.'
         args = run_mock.call_args[0][0]
-        self.assertEqual(args[0], 'ant')
-        self.assertEqual(args[1], 'artifacts')
-        self.assertEqual(args[2], 'jar')
+        self.assertThat(args[0], Equals('ant'))
+        self.assertThat(args[1], Equals('artifacts'))
+        self.assertThat(args[2], Equals('jar'))
         self.assertIn(destination, args)
         self.assertIn(basedir, args)
 
@@ -113,4 +115,27 @@ class AntPluginTestCase(tests.TestCase):
              'jar', 'lib1.jar'), 'w').close()
         open(os.path.join(plugin.installdir,
              'jar', 'lib2.jar'), 'w').close()
-        plugin.env(plugin.partdir)
+        env = plugin.env(plugin.partdir)
+        self.assertIn(
+            'CLASSPATH={}/jar/lib1.jar:{}/jar/lib2.jar:$CLASSPATH'.format(
+                plugin.partdir, plugin.partdir),
+            env)
+
+    def test_env_proxies(self):
+        env_vars = (
+            ('http_proxy', 'http://user:pass@localhost:3132'),
+            ('https_proxy', 'http://user2:pass2@localhost2:3133'),
+        )
+        for key, value in env_vars:
+            self.useFixture(fixtures.EnvironmentVariable(key, value))
+        plugin = ant.AntPlugin('test-part', self.options,
+                               self.project_options)
+
+        env = plugin.env(plugin.partdir)
+        self.assertIn(
+            "ANT_OPTS='"
+            "-Dhttp.proxyHost=localhost -Dhttp.proxyPort=3132 "
+            "-Dhttp.proxyUser=user -Dhttp.proxyPassword=pass "
+            "-Dhttps.proxyHost=localhost2 -Dhttps.proxyPort=3133 "
+            "-Dhttps.proxyUser=user2 -Dhttps.proxyPassword=pass2'",
+            env)

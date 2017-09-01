@@ -1,8 +1,32 @@
 # Snapcraft
 
+## Installing from pip
+
+First install a few dependencies:
+
+    sudo apt install gcc g++ make python3-dev python3-venv libffi-dev libsodium-dev libapt-pkg-dev libarchive13 squashfs-tools
+
+Create and activate a new virtual environment:
+
+    mkdir -p ~/venv/snapcraft
+    python3 -m venv ~/venv/snapcraft
+    source ~/venv/snapcraft/bin/activate
+
+
+Make sure pip is up-to-date:
+
+    (snapcraft) $ pip install --upgrade pip
+
+
+Install snapcraft (and its dependencies):
+
+    (snapcraft) $ pip install -r requirements.txt .
+
+
 ## Running
 
 To see all the commands and options, run `snapcraft --help`.
+
 
 ## Hacking
 
@@ -14,18 +38,16 @@ We'd love the help!
 - We can also be found on the #snappy IRC channel on Freenode
 
 
-### Staging server
+### Installing for development
 
-Snapcraft has the ability to upload snaps for publication in the Snappy Store.
-If you're working on a feature that requires you to interact with the store, you
-might want to use the staging server instead of the production store. To do
-that, make sure you have an account on the
-[staging server](https://login.staging.ubuntu.com), then run:
+You'll need to install the development dependencies, and you'll also probably want to install it in `editable` mode so any changes you make take affect:
 
-    source tools/staging_env.sh
+    (snapcraft) $ pip install -r requirements.txt -r requirements-devel.txt --editable .
 
-You will see a prompt indicating that you are going to be talking to the staging
-server. Once you are done working with the staging servers you can run `deactivate`.
+
+### Testing
+
+See the [Testing guide](TESTING.md).
 
 ### Project Layout
 
@@ -39,6 +61,7 @@ server. Once you are done working with the staging servers you can run `deactiva
 
 - **snapcraft:** The Python module that houses the core snapcraft logic. The `plugins` subdirectory holds the code for each plugin.
 
+
 ### Updating library filter
 
 To update the list of libraries that get excluded from inclusion into a
@@ -49,31 +72,3 @@ snap run:
 e.g.; to update the list for 16.04,
 
     ./libraries/generate_lib_list.py libraries/16.04
-
-### Installing using pip
-
-If you don't have python3 installed, you can use the one from the archives:
-
-    sudo apt install python3-pip python3-setuptools python3-pkg-resources
-
-Install the needed dependencies.
-
-    sudo apt install build-essential python3-dev python3-debian libapt-pkg-dev libsodium-dev gcc libffi-dev libarchive13 squashfs-tools xdelta3
-
-If installing to `PYTHONHOME` run:
-
-    pip3 install --user -r requirements.txt -r requirements-devel.txt
-
-If your prefer installing in a virtualenv, then in an activated environment run:
-
-    pip3 install -r requirements.txt -r requirements-devel.txt
-
-### Testing
-
-We assume you have run through the installation instructions, to run all the tests execute:
-
-    ./runtests.sh
-
-You can selectively run a selective group of tests like:
-
-    ./runtests.sh [static|unit|integration|snaps]

@@ -1,5 +1,5 @@
 name: snapcraft
-version: '2.28'
+version: git
 summary: easily create snaps
 description: |
     Snapcraft aims to make upstream developers' lives easier and as such is not
@@ -7,14 +7,24 @@ description: |
     natural workflow of an upstream to be extended with a simple release step
     into Snappy.
 
-grade: devel
+grade: stable
 confinement: classic
 
 apps:
   snapcraft:
-    command: bin/snapcraft
+    command: bin/snapcraft-classic
 
 parts:
+  snapcraft-bin:
+    source: bin
+    plugin: dump
+    organize:
+        snapcraft-classic: bin/snapcraft-classic
+  bash-completion:
+    source: debian
+    plugin: dump
+    stage:
+      - snapcraft-completion
   snapcraft:
     source: .
     plugin: python
@@ -28,18 +38,20 @@ parts:
     stage-packages:
         - libarchive13
         - libffi6
+        - libmagic1
         - libsodium18
         - squashfs-tools
         - xdelta3
     prime:
         - '*'
         - '**/*.pyc'
+    install: |
+        TRIPLET_PATH=$(ls -d $SNAPCRAFT_PART_INSTALL/usr/lib/$(uname -p)-*)
+        LIBARCHIVE=$(readlink -n $TRIPLET_PATH/libarchive.so.13)
+        ln -s $LIBARCHIVE $TRIPLET_PATH/libarchive.so
+        LIBSODIUM=$(readlink -n $TRIPLET_PATH/libsodium.so.18)
+        ln -s $LIBSODIUM $TRIPLET_PATH/libsodium.so
     after: [python, apt]
-  tour:
-    source: tour
-    plugin: dump
-    organize:
-      "*": tour/
   python:
     source: https://www.python.org/ftp/python/3.6.0/Python-3.6.0.tar.xz
     plugin: autotools
@@ -96,9 +108,7 @@ parts:
         - zlib1g-dev
     after: [python]
   gpg:
-      source: git://git.gnupg.org/gnupg.git
-      source-tag: gnupg-1.4.20
-      source-depth: 1
+      source: https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.21.tar.bz2
       plugin: autotools
       configflags:
         - --enable-minimal

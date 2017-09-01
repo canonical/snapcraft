@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,64 +13,46 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import logging
 from unittest import mock
 
-import fixtures
+from testtools.matchers import Contains, Equals
 
-from snapcraft import tests
 from snapcraft.integrations import travis
-from snapcraft.main import main
+from . import CommandBaseTestCase
 
 
-class EnableCITestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
-        self.useFixture(self.fake_logger)
-        self.fake_terminal = tests.fixture_setup.FakeTerminal()
-        self.useFixture(self.fake_terminal)
+class EnableCITestCase(CommandBaseTestCase):
 
     def test_enable_ci_empty(self):
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['enable-ci'])
+        result = self.run_command(['enable-ci'])
 
-        self.assertEqual(1, raised.code)
-        self.assertEqual([
-            'Please select one of the supported integration systems: travis.'
-        ], self.fake_logger.output.splitlines())
+        self.assertThat(result.exit_code, Equals(2))
+        self.assertThat(result.output, Contains(
+            'Missing argument "ci-system".  Choose from travis.'))
 
     def test_enable_ci_unknown(self):
-        raised = self.assertRaises(
-            SystemExit,
-            main, ['enable-ci', 'bazinga'])
+        result = self.run_command(['enable-ci', 'bazinga'])
 
-        self.assertEqual(1, raised.code)
-        self.assertEqual([
-            '"bazinga" integration is not supported by snapcraft.',
-            'Please select one of the supported integration systems: travis.'
-        ], self.fake_logger.output.splitlines())
+        self.assertThat(result.exit_code, Equals(2))
+        self.assertThat(result.output, Contains(
+            'invalid choice: bazinga. (choose from travis)'))
 
     @mock.patch.object(travis, '__doc__')
     @mock.patch.object(travis, 'enable')
-    @mock.patch('builtins.input')
-    def test_enable_ci_travis(self, mock_input, mock_enable, mock_doc):
-        mock_input.side_effect = ['y']
+    def test_enable_ci_travis(self, mock_enable, mock_doc):
         mock_doc.__str__.return_value = '<module docstring>'
 
-        main(['enable-ci', 'travis'])
+        result = self.run_command(['enable-ci', 'travis'], input='y\n')
 
-        self.assertEqual(1, mock_enable.call_count)
-        self.assertEqual(
-            '<module docstring>\n', self.fake_terminal.getvalue())
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            '<module docstring>'))
+        self.assertThat(mock_enable.call_count, Equals(1))
 
     @mock.patch.object(travis, 'refresh')
     def test_enable_ci_travis_refresh(self, mock_refresh):
+        result = self.run_command(['enable-ci', 'travis', '--refresh'])
 
-        main(['enable-ci', 'travis', '--refresh'])
-
-        self.assertEqual(1, mock_refresh.call_count)
-        self.assertEqual('', self.fake_terminal.getvalue())
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Equals(''))
+        self.assertThat(mock_refresh.call_count, Equals(1))

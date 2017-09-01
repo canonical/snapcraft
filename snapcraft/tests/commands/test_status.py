@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,27 +13,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import logging
+from textwrap import dedent
 from unittest import mock
 
-import docopt
-import fixtures
+from testtools.matchers import Contains, Equals
 
-from snapcraft import (
-    storeapi,
-    tests
-)
-from snapcraft.main import main
-from snapcraft.tests import fixture_setup
+from snapcraft import storeapi
+from . import CommandBaseTestCase
 
 
-class StatusCommandTestCase(tests.TestCase):
+class StatusCommandTestCase(CommandBaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
         self.expected = {
             'i386': [
                 {
@@ -72,89 +64,80 @@ class StatusCommandTestCase(tests.TestCase):
         }
 
     def test_status_without_snap_raises_exception(self):
-        raised = self.assertRaises(
-            docopt.DocoptExit,
-            main, ['status'])
+        result = self.run_command(['status'])
 
-        self.assertIn('Usage:', str(raised))
+        self.assertThat(result.exit_code, Equals(2))
+        self.assertThat(result.output, Contains('Usage:'))
 
     def test_status_with_no_permissions(self):
-        self.assertRaises(
-            SystemExit,
-            main, ['status', 'snap-test'])
+        raised = self.assertRaises(
+            storeapi.errors.InvalidCredentialsError,
+            self.run_command, ['status', 'snap-test'])
 
-        self.assertIn(
-            'No valid credentials found. Have you run "snapcraft login"?',
-            self.fake_logger.output)
+        self.assertThat(str(raised), Contains('Invalid credentials'))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_with_3rd_party_snap(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, ['status', 'snap-test'])
+        raised = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            self.run_command, ['status', 'snap-test'])
 
-        self.assertIn(
-            "Snap 'snap-test' was not found in '16' series.",
-            self.fake_logger.output)
+        self.assertThat(str(raised), Equals(
+            "Snap 'snap-test' was not found in '16' series."))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_with_3rd_party_snap_by_arch(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, ['status', 'snap-test', '--arch=arm64'])
+        raised = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            self.run_command, ['status', 'snap-test', '--arch=arm64'])
 
-        self.assertIn(
-            "Snap 'snap-test' for 'arm64' was not found in '16' series.",
-            self.fake_logger.output)
+        self.assertThat(str(raised), Equals(
+            "Snap 'snap-test' for 'arm64' was not found in '16' series."))
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_with_3rd_party_snap_by_series(self, mock_account_api):
         mock_account_api.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, ['status', 'snap-test', '--series=15'])
+        raised = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            self.run_command, ['status', 'snap-test', '--series=18'])
 
-        self.assertIn(
-            "Snap 'snap-test' was not found in '15' series.",
-            self.fake_logger.output)
+        self.assertThat(str(raised), Equals(
+            "Snap 'snap-test' was not found in '18' series."))
 
     @mock.patch.object(storeapi.SCAClient, 'snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_by_unknown_arch(self, mock_account_api, mock_status):
         mock_status.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, ['status', 'snap-test', '--arch=some-arch'])
+        raised = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            self.run_command, ['status', 'snap-test', '--arch=some-arch'])
 
-        self.assertIn(
-            "Snap 'snap-test' for 'some-arch' was not found in '16' series.",
-            self.fake_logger.output)
+        self.assertThat(str(raised), Equals(
+            "Snap 'snap-test' for 'some-arch' was not found in '16' series."))
 
     @mock.patch.object(storeapi.SCAClient, 'snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_by_unknown_series(self, mock_account_api, mock_status):
         mock_status.return_value = {}
 
-        self.assertRaises(
-            SystemExit,
-            main, ['status', 'snap-test', '--series=some-series'])
+        mock_status.return_value = {}
 
-        self.assertIn(
-            "Snap 'snap-test' was not found in 'some-series' series.",
-            self.fake_logger.output)
+        raised = self.assertRaises(
+            storeapi.errors.SnapNotFoundError,
+            self.run_command, ['status', 'snap-test', '--series=some-series'])
+
+        self.assertThat(str(raised), Equals(
+            "Snap 'snap-test' was not found in 'some-series' series."))
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status(self, mock_account_api, mock_status):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
-
         mock_status.return_value = {
             'channel_map_tree': {
                 'latest': {
@@ -163,26 +146,22 @@ class StatusCommandTestCase(tests.TestCase):
             }
         }
 
-        main(['status', 'snap-test'])
+        result = self.run_command(['status', 'snap-test'])
 
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Track    Arch    Channel    Version    Revision
+            latest   amd64   stable     1.0-amd64  2
+                             beta       1.1-amd64  4
+                             edge       ^          ^
+                     i386    stable     -          -
+                             beta       -          -
+                             edge       1.0-i386   3""")))
         mock_status.assert_called_once_with('snap-test', '16', None)
-
-        terminal_output = fake_terminal.getvalue()
-        expected_output = [
-            'Track    Arch    Channel    Version    Revision',
-            'latest   amd64   stable     1.0-amd64  2',
-            '                 beta       1.1-amd64  4',
-            '                 edge       ^          ^',
-            '         i386    stable     -          -',
-            '                 beta       -          -',
-            '                 edge       1.0-i386   3']
-        self.assertEqual(expected_output, terminal_output.splitlines())
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_by_arch(self, mock_account_api, mock_status):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
         mock_status.return_value = {
             'channel_map_tree': {
                 'latest': {
@@ -193,23 +172,19 @@ class StatusCommandTestCase(tests.TestCase):
             }
         }
 
-        main(['status', 'snap-test', '--arch=i386'])
+        result = self.run_command(['status', 'snap-test', '--arch=i386'])
 
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Track    Arch    Channel    Version    Revision
+            latest   i386    stable     -          -
+                             beta       -          -
+                             edge       1.0-i386   3""")))
         mock_status.assert_called_once_with('snap-test', '16', 'i386')
-
-        terminal_output = fake_terminal.getvalue()
-        expected_output = [
-            'Track    Arch    Channel    Version    Revision',
-            'latest   i386    stable     -          -',
-            '                 beta       -          -',
-            '                 edge       1.0-i386   3']
-        self.assertEqual(expected_output, terminal_output.splitlines())
 
     @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_by_series(self, mock_account_api, mock_status):
-        fake_terminal = fixture_setup.FakeTerminal()
-        self.useFixture(fake_terminal)
         mock_status.return_value = {
             'channel_map_tree': {
                 'latest': {
@@ -218,17 +193,56 @@ class StatusCommandTestCase(tests.TestCase):
             }
         }
 
-        main(['status', 'snap-test', '--series=16'])
+        result = self.run_command(['status', 'snap-test', '--series=16'])
 
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Track    Arch    Channel    Version    Revision
+            latest   amd64   stable     1.0-amd64  2
+                             beta       1.1-amd64  4
+                             edge       ^          ^
+                     i386    stable     -          -
+                             beta       -          -
+                             edge       1.0-i386   3""")))
         mock_status.assert_called_once_with('snap-test', '16', None)
 
-        terminal_output = fake_terminal.getvalue()
-        expected_output = [
-            'Track    Arch    Channel    Version    Revision',
-            'latest   amd64   stable     1.0-amd64  2',
-            '                 beta       1.1-amd64  4',
-            '                 edge       ^          ^',
-            '         i386    stable     -          -',
-            '                 beta       -          -',
-            '                 edge       1.0-i386   3']
-        self.assertEqual(expected_output, terminal_output.splitlines())
+    @mock.patch.object(storeapi.StoreClient, 'get_snap_status')
+    @mock.patch.object(storeapi.StoreClient, 'get_account_information')
+    def test_status_including_branch(self, mock_account_api, mock_status):
+        expected = {
+            'i386': [
+                {
+                    'info': 'none',
+                    'channel': 'stable'
+                },
+                {
+                    'info': 'none',
+                    'channel': 'beta'
+                },
+                {
+                    'info': 'branch',
+                    'version': '1.0-i386',
+                    'channel': 'stable/hotfix',
+                    'revision': 3,
+                    'expires_at': '2017-05-21T18:52:14.578435',
+                },
+            ],
+        }
+        mock_status.return_value = {
+            'channel_map_tree': {
+                'latest': {
+                    '16': expected
+                }
+            }
+        }
+
+        result = self.run_command(['status', 'snap-test'])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
+            Track    Arch    Channel        Version    Revision    Expires at
+            latest   i386    stable         -          -
+                             beta           -          -
+                             stable/hotfix  1.0-i386   3           2017-05-21T18:52:14.578435
+            """)))  # noqa
+        mock_status.assert_called_once_with('snap-test', '16', None)

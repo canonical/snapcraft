@@ -39,10 +39,11 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Path to a constraints file
     - process-dependency-links:
       (bool; default: false)
-      Enable the processing of dependency links.
+      Enable the processing of dependency links in pip, which allow one
+      project to provide places to look for another project
     - python-packages:
       (list)
-      A list of dependencies to get from PyPi
+      A list of dependencies to get from PyPI
 """
 
 import logging

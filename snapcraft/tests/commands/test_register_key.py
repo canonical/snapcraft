@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,32 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
-import logging
+from simplejson.scanner import JSONDecodeError
 from textwrap import dedent
 from unittest import mock
 
-import fixtures
-from simplejson.scanner import JSONDecodeError
+from testtools.matchers import Contains, Equals
 
-from snapcraft.main import main
-from snapcraft import (
-    storeapi,
-    tests,
-)
-from . import (
-    get_sample_key,
-    mock_snap_output
-)
+from snapcraft import storeapi
+from . import CommandBaseTestCase, get_sample_key, mock_snap_output
 
 
-class RegisterKeyTestCase(tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
-        self.fake_terminal = tests.fixture_setup.FakeTerminal()
-        self.useFixture(self.fake_terminal)
+class RegisterKeyTestCase(CommandBaseTestCase):
 
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -49,14 +34,13 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_installed.return_value = False
 
         raised = self.assertRaises(
-            SystemExit,
-            main, ['register-key'])
+            storeapi.errors.MissingSnapdError,
+            self.run_command, ['register-key'])
 
+        self.assertThat(str(raised), Contains(
+            'The snapd package is not installed.'))
         mock_installed.assert_called_with('snapd')
-        self.assertEqual(0, mock_check_output.call_count)
-        self.assertEqual(1, raised.code)
-        self.assertIn(
-            'The snapd package is not installed.', self.fake_logger.output)
+        self.assertThat(mock_check_output.call_count, Equals(0))
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
@@ -78,20 +62,21 @@ class RegisterKeyTestCase(tests.TestCase):
             storeapi.errors.StoreTwoFactorAuthenticationRequired(), None]
         mock_get_account_information.return_value = {'account_id': 'abcd'}
 
-        main(['register-key', 'default'])
+        result = self.run_command(['register-key', 'default'])
 
-        self.assertEqual(
-            'Login successful.\n'
-            'Registering key ...\n'
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            'Login successful.'))
+        self.assertThat(result.output, Contains(
+            'Registering key ...'))
+        self.assertThat(result.output, Contains(
             'Done. The key "default" ({}) may be used to sign your '
-            'assertions.\n'.format(get_sample_key('default')['sha3-384']),
-            self.fake_logger.output)
-
+            'assertions.'.format(get_sample_key('default')['sha3-384'])))
         mock_login.assert_called_with(
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=['modify_account_key'],
             packages=None, channels=None, save=False)
-        self.assertEqual(1, mock_register_key.call_count)
+        self.assertThat(mock_register_key.call_count, Equals(1))
         expected_assertion = dedent('''\
             type: account-key-request
             account-id: abcd
@@ -109,12 +94,11 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_check_output.return_value = json.dumps([])
 
         raised = self.assertRaises(
-            SystemExit,
-            main, ['register-key'])
+            storeapi.errors.NoKeysError,
+            self.run_command, ['register-key'])
 
-        self.assertEqual(0, mock_input.call_count)
-        self.assertEqual(1, raised.code)
-        self.assertIn('You have no usable keys.\n', self.fake_logger.output)
+        self.assertThat(str(raised), Contains('You have no usable keys'))
+        self.assertThat(mock_input.call_count, Equals(0))
 
     @mock.patch('subprocess.check_output')
     @mock.patch('builtins.input')
@@ -127,12 +111,11 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_check_output.return_value = json.dumps(None)
 
         raised = self.assertRaises(
-            SystemExit,
-            main, ['register-key'])
+            storeapi.errors.NoKeysError,
+            self.run_command, ['register-key'])
 
-        self.assertEqual(0, mock_input.call_count)
-        self.assertEqual(1, raised.code)
-        self.assertIn('You have no usable keys.\n', self.fake_logger.output)
+        self.assertThat(str(raised), Contains('You have no usable keys'))
+        self.assertThat(mock_input.call_count, Equals(0))
 
     @mock.patch('subprocess.check_output')
     @mock.patch('builtins.input')
@@ -143,14 +126,12 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_check_output.side_effect = mock_snap_output
 
         raised = self.assertRaises(
-            SystemExit,
-            main, ['register-key', 'nonexistent'])
+            storeapi.errors.NoSuchKeyError,
+            self.run_command, ['register-key', 'nonexistent'])
 
-        self.assertEqual(0, mock_input.call_count)
-        self.assertEqual(1, raised.code)
-        self.assertIn(
-            'You have no usable key named "nonexistent".\n',
-            self.fake_logger.output)
+        self.assertThat(str(raised), Contains(
+            "You have no usable key named 'nonexistent'"))
+        self.assertThat(mock_input.call_count, Equals(0))
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
@@ -170,15 +151,12 @@ class RegisterKeyTestCase(tests.TestCase):
             'test')
 
         raised = self.assertRaises(
-            SystemExit,
-            main, ['register-key', 'default'])
+            storeapi.errors.LoginRequiredError,
+            self.run_command, ['register-key', 'default'])
 
-        self.assertEqual(0, mock_get_account_information.call_count)
-        self.assertEqual(0, mock_register_key.call_count)
-        self.assertEqual(1, raised.code)
-        self.assertIn(
-            'Cannot continue without logging in successfully.\n',
-            self.fake_logger.output)
+        self.assertThat(str(raised), Equals(
+            'Cannot continue without logging in successfully.'))
+        self.assertThat(mock_input.call_count, Equals(1))
 
     @mock.patch('snapcraft._store._login')
     @mock.patch.object(storeapi.SCAClient, 'register_key')
@@ -205,14 +183,12 @@ class RegisterKeyTestCase(tests.TestCase):
             storeapi.errors.StoreAccountInformationError(response))
 
         raised = self.assertRaises(
-            SystemExit,
-            main, ['register-key', 'default'])
+            storeapi.errors.StoreAccountInformationError,
+            self.run_command, ['register-key', 'default'])
 
-        self.assertEqual(1, raised.code)
-        self.assertIn(
+        self.assertThat(str(raised), Equals(
             'Error fetching account information from store: '
-            '500 Internal Server Error\n',
-            self.fake_logger.output)
+            '500 Internal Server Error'))
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
@@ -236,13 +212,11 @@ class RegisterKeyTestCase(tests.TestCase):
             storeapi.errors.StoreKeyRegistrationError(response))
 
         raised = self.assertRaises(
-            SystemExit,
-            main, ['register-key', 'default'])
+            storeapi.errors.StoreKeyRegistrationError,
+            self.run_command, ['register-key', 'default'])
 
-        self.assertEqual(1, raised.code)
-        self.assertIn(
-            'Key registration failed: 500 Internal Server Error\n',
-            self.fake_logger.output)
+        self.assertThat(str(raised), Equals(
+            'Key registration failed: 500 Internal Server Error'))
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
@@ -261,32 +235,31 @@ class RegisterKeyTestCase(tests.TestCase):
         mock_check_output.side_effect = mock_snap_output
         mock_get_account_information.return_value = {'account_id': 'abcd'}
 
-        main(['register-key'])
+        result = self.run_command(['register-key'])
 
-        expected_output = dedent('''\
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(dedent("""\
             Select a key:
 
               Number  Name     SHA3-384 fingerprint
                    1  default  {default_sha3_384}
                    2  another  {another_sha3_384}
-
-            ''').format(
+            """).format(
                 default_sha3_384=get_sample_key('default')['sha3-384'],
-                another_sha3_384=get_sample_key('another')['sha3-384'])
-        self.assertIn(expected_output, self.fake_terminal.getvalue())
+                another_sha3_384=get_sample_key('another')['sha3-384'])))
         mock_input.assert_has_calls(
             [mock.call('Key number: '), mock.call('Key number: ')])
 
-        self.assertEqual(
-            'We strongly recommend enabling multi-factor authentication: '
-            'https://help.ubuntu.com/community/SSO/FAQs/2FA\n'
-            'Login successful.\n'
-            'Registering key ...\n'
-            'Done. The key "another" ({}) may be used to sign your '
-            'assertions.\n'.format(get_sample_key('another')['sha3-384']),
-            self.fake_logger.output)
+        self.assertThat(
+            self.fake_logger.output,
+            Equals(
+                'We strongly recommend enabling multi-factor authentication: '
+                'https://help.ubuntu.com/community/SSO/FAQs/2FA\n'
+                'Registering key ...\n'
+                'Done. The key "another" ({}) may be used to sign your '
+                'assertions.\n'.format(get_sample_key('another')['sha3-384'])))
 
-        self.assertEqual(1, mock_register_key.call_count)
+        self.assertThat(mock_register_key.call_count, Equals(1))
         expected_assertion = dedent('''\
             type: account-key-request
             account-id: abcd

@@ -13,19 +13,32 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import contextlib
 import shutil
 
 from snapcraft.internal.errors import MissingCommandError
 from . import errors               # noqa
+from . import _platform
 from ._base import BaseRepo        # noqa
 from ._base import fix_pkg_config  # noqa
-from ._platform import _get_repo_for_platform
 # Imported for backwards compatibility with plugins
-from ._deb import Ubuntu           # noqa
+if _platform._is_deb_based():
+    from ._deb import Ubuntu       # noqa
 
-Repo = _get_repo_for_platform()
+Repo = _platform._get_repo_for_platform()
 
 
 def check_for_command(command):
     if not shutil.which(command):
-        raise MissingCommandError([command])
+        raise MissingCommandError(command)
+
+
+def get_pkg_name_parts(pkg_name):
+    """Break package name into base parts"""
+
+    name = pkg_name
+    version = None
+    with contextlib.suppress(ValueError):
+        name, version = pkg_name.split('=')
+
+    return name, version

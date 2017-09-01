@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,11 +16,15 @@
 
 from unittest import mock
 
+import testtools
+from testtools.matchers import Equals
+
 import snapcraft
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft import tests
 
 
-class OptionsTestCase(tests.TestCase):
+class NativeOptionsTestCase(tests.TestCase):
 
     scenarios = [
         ('amd64', dict(
@@ -88,7 +92,7 @@ class OptionsTestCase(tests.TestCase):
             architecture=('64bit', 'ELF'),
             expected_arch_triplet='s390x-linux-gnu',
             expected_deb_arch='s390x',
-            expected_kernel_arch='s390x'))
+            expected_kernel_arch='s390'))
     ]
 
     @mock.patch('platform.architecture')
@@ -98,9 +102,12 @@ class OptionsTestCase(tests.TestCase):
         mock_platform_machine.return_value = self.machine
         mock_platform_architecture.return_value = self.architecture
         options = snapcraft.ProjectOptions()
-        self.assertEqual(options.arch_triplet, self.expected_arch_triplet)
-        self.assertEqual(options.deb_arch, self.expected_deb_arch)
-        self.assertEqual(options.kernel_arch, self.expected_kernel_arch)
+        self.assertThat(
+            options.arch_triplet, Equals(self.expected_arch_triplet))
+        self.assertThat(
+            options.deb_arch, Equals(self.expected_deb_arch))
+        self.assertThat(
+            options.kernel_arch, Equals(self.expected_kernel_arch))
 
     @mock.patch('platform.architecture')
     @mock.patch('platform.machine')
@@ -114,7 +121,18 @@ class OptionsTestCase(tests.TestCase):
 
         if self.architecture[0] == '32bit' and \
            self.machine in userspace_conversions:
-            self.assertEqual(
-                platform_arch, userspace_conversions[self.machine])
+            self.assertThat(
+                platform_arch, Equals(userspace_conversions[self.machine]))
         else:
-            self.assertEqual(platform_arch, self.machine)
+            self.assertThat(platform_arch, Equals(self.machine))
+
+
+class OptionsTestCase(tests.TestCase):
+
+    def test_cross_compiler_prefix_missing(self):
+        options = snapcraft.ProjectOptions(target_deb_arch='x86_64')
+
+        with testtools.ExpectedException(
+                SnapcraftEnvironmentError,
+                "Cross compilation not supported for target arch 'x86_64'"):
+            options.cross_compiler_prefix

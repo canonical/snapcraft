@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -30,7 +30,7 @@ These plugins implement a lifecycle over the following steps:
 
   - pull:   retrieve the source for the part from the specified location
   - build:  drive the build system determined by the choice of plugin
-  - stage:  consolidate desireable files from all the parts in one tree
+  - stage:  consolidate desirable files from all the parts in one tree
   - prime:  distill down to only the files which will go into the snap
   - snap:   compress the prime tree into the installable snap file
 
@@ -350,15 +350,59 @@ of the choice of plugin.
         the dependencies of this part. This might be useful if one knows these
         dependencies will be satisfied in other manner, e.g. via content
         sharing from other snaps.
+
+      - no-install:
+        Do not run the install target provided by the plugin's build system.
+
+        Supported by: kbuild
+
+      - debug:
+        Plugins that support the concept of build types build in Release mode
+        by default. Setting the 'debug' attribute requests that they instead
+        build in Debug mode.
 """
 
 from collections import OrderedDict                 # noqa
 import pkg_resources                                # noqa
 import yaml                                         # noqa
 
+import os as _os
+if _os.environ.get('SNAP_NAME') == 'snapcraft':
+    # The current implementation as of 3.6 in for find_library in
+    # ctypes.util makes use of `ldconfig -p` which depends on the
+    # current ld cache which in effect has no knowledge of any library
+    # in $SNAP. What makes matters worse is that it will provide
+    # results for on host libraries we do NOT want.
+    import re as _re
+
+    def find_library(name):
+        regex = r'lib{name}\.[^\s]+'.format(name=_re.escape(name))
+        snap_root = _os.environ.get('SNAP')
+        for root, directories, files in _os.walk(snap_root):
+            for filename in files:
+                res = _re.search(regex, filename)
+                if res:
+                    return res.group(0)
+
+    import ctypes.util
+    ctypes.util.find_library = find_library
+
+
+def _get_version():
+    if _os.environ.get('SNAP_NAME') == 'snapcraft':
+        return _os.environ['SNAP_VERSION']
+    try:
+        return pkg_resources.require('snapcraft')[0].version
+    except pkg_resources.DistributionNotFound:
+        return 'devel'
+
+
+# Set this early so that the circular imports aren't too painful
+__version__ = _get_version()
+
+
 from snapcraft._baseplugin import BasePlugin        # noqa
 from snapcraft._options import ProjectOptions       # noqa
-from snapcraft._help import topic_help              # noqa
 # FIXME LP: #1662658
 from snapcraft._store import (                      # noqa
     create_key,
@@ -369,7 +413,6 @@ from snapcraft._store import (                      # noqa
     list_keys,
     list_registered,
     login,
-    logout,
     push,
     register,
     register_key,
@@ -377,6 +420,7 @@ from snapcraft._store import (                      # noqa
     sign_build,
     status,
     validate,
+    collaborate,
 )
 from snapcraft import common                        # noqa
 from snapcraft import plugins                       # noqa
@@ -384,16 +428,6 @@ from snapcraft import sources                       # noqa
 from snapcraft import file_utils                    # noqa
 from snapcraft import shell_utils                   # noqa
 from snapcraft.internal import repo                 # noqa
-
-
-def _get_version():
-    try:
-        return pkg_resources.require('snapcraft')[0].version
-    except pkg_resources.DistributionNotFound:
-        return 'devel'
-
-
-__version__ = _get_version()
 
 
 # Setup yaml module globally
@@ -407,6 +441,8 @@ def dict_representer(dumper, data):
 
 
 def dict_constructor(loader, node):
+    # Necessary in order to make yaml merge tags work
+    loader.flatten_mapping(node)
     return OrderedDict(loader.construct_pairs(node))
 
 
@@ -420,3 +456,8 @@ def str_presenter(dumper, data):
 yaml.add_representer(str, str_presenter)
 yaml.add_representer(OrderedDict, dict_representer)
 yaml.add_constructor(_mapping_tag, dict_constructor)
+
+from snapcraft.internal import common as _common # noqa
+if _common.is_snap():
+    snap = _os.environ.get('SNAP')
+    _common.set_schemadir(_os.path.join(snap, 'share', 'snapcraft', 'schema'))

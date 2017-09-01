@@ -16,115 +16,93 @@
 
 import os
 import subprocess
-import shutil
 
-from testtools.matchers import FileExists
+from testtools.matchers import Equals, FileExists
 
 import integration_tests
 
 
-class HgSourceTestCase(integration_tests.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        if shutil.which('hg') is None:
-            self.skipTest('mercurial is not installed')
-
-    def _get_hg_revno(self, path):
-        return subprocess.check_output(
-            ['hg', 'log', '--cwd', path, '--template',
-             '"{desc}"', '-r', '-1'],
-            universal_newlines=True).strip()
+class HgSourceTestCase(integration_tests.HgSourceBaseTestCase):
 
     def test_pull_hg_head(self):
         self.copy_project_to_cwd('hg-head')
 
-        subprocess.check_call(['hg', 'init', '.'])
+        self.init_source_control()
         open('1', 'w').close()
-        subprocess.check_call(
-            ['hg', 'commit', '-m', '1', '--user', '"Example Dev"', '-A', '1'])
+        self.commit('1', '1')
         open('2', 'w').close()
-        subprocess.check_call(
-            ['hg', 'commit', '-m', '2', '--user', '"Example Dev"', '-A', '2'])
+        self.commit('2', '2')
 
         self.run_snapcraft('pull')
-        revno = self._get_hg_revno(
+        revno = self.get_revno(
             os.path.join(self.parts_dir, 'mercurial', 'src'))
-        self.assertEqual('"2"', revno)
+        self.assertThat(revno, Equals('"2"'))
 
         self.run_snapcraft('pull')
-        revno = self._get_hg_revno(
+        revno = self.get_revno(
             os.path.join(self.parts_dir, 'mercurial', 'src'))
-        self.assertEqual('"2"', revno)
+        self.assertThat(revno, Equals('"2"'))
 
     def test_pull_hg_tag(self):
         self.copy_project_to_cwd('hg-tag')
 
-        subprocess.check_call(['hg', 'init', '.'])
+        self.init_source_control()
         open('1', 'w').close()
-        subprocess.check_call(
-            ['hg', 'commit', '-m', '1', '--user', '"Example Dev"', '-A', '1'])
+        self.commit('1', '1')
         subprocess.check_call(
             ['hg', 'tag', 'initial', '--user', '"Example Dev"'])
         open('2', 'w').close()
-        subprocess.check_call(
-            ['hg', 'commit', '-m', '2', '--user', '"Example Dev"', '-A', '2'])
+        self.commit('2', '2')
 
         self.run_snapcraft('pull')
         revno = subprocess.check_output(
             'ls -1 {} | wc -l '.format(
                 os.path.join(self.parts_dir, 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
-        self.assertEqual('1', revno)
+        self.assertThat(revno, Equals('1'))
 
         self.run_snapcraft('pull')
         revno = subprocess.check_output(
             'ls -1 {} | wc -l '.format(
                 os.path.join(self.parts_dir, 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
-        self.assertEqual('1', revno)
+        self.assertThat(revno, Equals('1'))
 
     def test_pull_hg_commit(self):
         self.copy_project_to_cwd('hg-commit')
 
-        subprocess.check_call(['hg', 'init', '.'])
+        self.init_source_control()
         open('1', 'w').close()
-        subprocess.check_call(
-            ['hg', 'commit', '-m', '1', '--user', '"Example Dev"', '-A', '1'])
+        self.commit('1', '1')
         open('2', 'w').close()
-        subprocess.check_call(
-            ['hg', 'commit', '-m', '2', '--user', '"Example Dev"', '-A', '2'])
+        self.commit('2', '2')
 
         self.run_snapcraft('pull')
         revno = subprocess.check_output(
             'ls -1 {} | wc -l '.format(
                 os.path.join(self.parts_dir, 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
-        self.assertEqual('1', revno)
+        self.assertThat(revno, Equals('1'))
 
         self.run_snapcraft('pull')
         revno = subprocess.check_output(
             'ls -1 {} | wc -l '.format(
                 os.path.join(self.parts_dir, 'mercurial', 'src')),
             shell=True, universal_newlines=True).strip()
-        self.assertEqual('1', revno)
+        self.assertThat(revno, Equals('1'))
 
     def test_pull_hg_branch(self):
         self.copy_project_to_cwd('hg-branch')
 
-        subprocess.check_call(['hg', 'init', '.'])
+        self.init_source_control()
         subprocess.check_call(
             ['hg', 'branch', 'second'], stdout=subprocess.DEVNULL)
         open('second', 'w').close()
-        subprocess.check_call(
-            ['hg', 'commit', '-m', 'second', '--user',
-             '"Example Dev"', '-A', 'second'])
+        self.commit('second', 'second')
         subprocess.check_call(
             ['hg', 'branch', 'default'], stdout=subprocess.DEVNULL)
         open('default', 'w').close()
-        subprocess.check_call(
-            ['hg', 'commit', '-m', 'default', '--user',
-             '"Example Dev"', '-A', 'default'])
+        self.commit('default', 'default')
 
         self.run_snapcraft('pull')
         self.assertThat(

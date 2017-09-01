@@ -1,0 +1,10 @@
+summary: plugins integration tests
+
+kill-timeout: 2h
+execute: |
+  echo "Check that we are using the snapcraft snap"
+  snapcraft_path="$(which snapcraft)"
+  [ "$snapcraft_path" = "/snap/bin/snapcraft" ]
+  source /snapcraft/venv/bin/activate
+  cd /snapcraft
+  ./runtests.sh plugins

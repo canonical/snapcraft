@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,13 +20,15 @@ from unittest.mock import ANY, call, patch, MagicMock
 
 from testtools.matchers import (
     Contains,
+    Equals,
     FileExists,
 )
 
 import snapcraft
-from snapcraft.internal.repo import _deb
+from snapcraft.internal import repo
 from snapcraft.internal.repo import errors
 from snapcraft import tests
+from snapcraft.tests import fixture_setup
 from . import RepoBaseTestCase
 
 
@@ -49,25 +51,27 @@ class UbuntuTestCase(RepoBaseTestCase):
             self.mock_package]
 
     def test_get_pkg_name_parts_name_only(self):
-        name, version = _deb._get_pkg_name_parts('hello')
-        self.assertEqual('hello', name)
-        self.assertEqual(None, version)
+        name, version = repo.get_pkg_name_parts('hello')
+        self.assertThat(name, Equals('hello'))
+        self.assertThat(version, Equals(None))
 
     def test_get_pkg_name_parts_all(self):
-        name, version = _deb._get_pkg_name_parts('hello:i386=2.10-1')
-        self.assertEqual('hello:i386', name)
-        self.assertEqual('2.10-1', version)
+        name, version = repo.get_pkg_name_parts('hello:i386=2.10-1')
+        self.assertThat(name, Equals('hello:i386'))
+        self.assertThat(version, Equals('2.10-1'))
 
     def test_get_pkg_name_parts_no_arch(self):
-        name, version = _deb._get_pkg_name_parts('hello=2.10-1')
-        self.assertEqual('hello', name)
-        self.assertEqual('2.10-1', version)
+        name, version = repo.get_pkg_name_parts('hello=2.10-1')
+        self.assertThat(name, Equals('hello'))
+        self.assertThat(version, Equals('2.10-1'))
 
     @patch('snapcraft.internal.repo._deb.apt.apt_pkg')
     def test_get_package(self, mock_apt_pkg):
+        self.mock_cache().is_virtual_package.return_value = False
+
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
-        ubuntu = _deb.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
         ubuntu.get(['fake-package'])
 
         mock_apt_pkg.assert_has_calls([
@@ -102,9 +106,11 @@ class UbuntuTestCase(RepoBaseTestCase):
 
     @patch('snapcraft.repo._deb.apt.apt_pkg')
     def test_get_multiarch_package(self, mock_apt_pkg):
+        self.mock_cache().is_virtual_package.return_value = False
+
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
-        ubuntu = _deb.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
         ubuntu.get(['fake-package:arch'])
 
         mock_apt_pkg.assert_has_calls([
@@ -141,7 +147,7 @@ class UbuntuTestCase(RepoBaseTestCase):
         mock_cc.return_value = 'ar'
 
         self.maxDiff = None
-        sources_list = _deb._format_sources_list(
+        sources_list = repo._deb._format_sources_list(
             '', use_geoip=True, deb_arch='amd64')
 
         expected_sources_list = \
@@ -155,11 +161,11 @@ deb http://security.ubuntu.com/ubuntu xenial-security main restricted
 deb http://security.ubuntu.com/ubuntu xenial-security universe
 deb http://security.ubuntu.com/ubuntu xenial-security multiverse
 '''
-        self.assertEqual(sources_list, expected_sources_list)
+        self.assertThat(sources_list, Equals(expected_sources_list))
 
     def test_no_geoip_uses_default_archive(self):
-        sources_list = _deb._format_sources_list(
-            _deb._DEFAULT_SOURCES, deb_arch='amd64', use_geoip=False)
+        sources_list = repo._deb._format_sources_list(
+            repo._deb._DEFAULT_SOURCES, deb_arch='amd64', use_geoip=False)
 
         expected_sources_list = \
             '''deb http://archive.ubuntu.com/ubuntu/ xenial main restricted
@@ -173,15 +179,15 @@ deb http://security.ubuntu.com/ubuntu xenial-security universe
 deb http://security.ubuntu.com/ubuntu xenial-security multiverse
 '''
 
-        self.assertEqual(sources_list, expected_sources_list)
+        self.assertThat(sources_list, Equals(expected_sources_list))
 
     @patch('snapcraft.internal.repo._deb._get_geoip_country_code_prefix')
     def test_sources_amd64_vivid(self, mock_cc):
         self.maxDiff = None
         mock_cc.return_value = 'ar'
 
-        sources_list = _deb._format_sources_list(
-            _deb._DEFAULT_SOURCES, deb_arch='amd64',
+        sources_list = repo._deb._format_sources_list(
+            repo._deb._DEFAULT_SOURCES, deb_arch='amd64',
             use_geoip=True, release='vivid')
 
         expected_sources_list = \
@@ -195,12 +201,12 @@ deb http://security.ubuntu.com/ubuntu vivid-security main restricted
 deb http://security.ubuntu.com/ubuntu vivid-security universe
 deb http://security.ubuntu.com/ubuntu vivid-security multiverse
 '''
-        self.assertEqual(sources_list, expected_sources_list)
+        self.assertThat(sources_list, Equals(expected_sources_list))
 
     @patch('snapcraft.repo._deb._get_geoip_country_code_prefix')
     def test_sources_armhf_trusty(self, mock_cc):
-        sources_list = _deb._format_sources_list(
-            _deb._DEFAULT_SOURCES, deb_arch='armhf', release='trusty')
+        sources_list = repo._deb._format_sources_list(
+            repo._deb._DEFAULT_SOURCES, deb_arch='armhf', release='trusty')
 
         expected_sources_list = \
             '''deb http://ports.ubuntu.com/ubuntu-ports/ trusty main restricted
@@ -213,34 +219,33 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security main restricted
 deb http://ports.ubuntu.com/ubuntu-ports trusty-security universe
 deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
 '''
-        self.assertEqual(sources_list, expected_sources_list)
+        self.assertThat(sources_list, Equals(expected_sources_list))
         self.assertFalse(mock_cc.called)
 
 
 class BuildPackagesTestCase(tests.TestCase):
 
-    test_packages = {'package-not-installed': MagicMock(installed=False),
-                     'package-installed': MagicMock(installed=True),
-                     'another-uninstalled': MagicMock(installed=False),
-                     'another-installed': MagicMock(installed=True),
-                     'repeated-package': MagicMock(installed=False),
-                     'repeated-package': MagicMock(installed=False),
-                     'versioned-package=0.2': MagicMock(installed=False),
-                     'versioned-package': MagicMock(installed=True,
-                                                    version='0.1')}
+    def setUp(self):
+        super().setUp()
+        self.fake_apt_cache = fixture_setup.FakeAptCache()
+        self.useFixture(self.fake_apt_cache)
+        self.test_packages = (
+            'package-not-installed', 'package-installed',
+            'another-uninstalled', 'another-installed', 'repeated-package',
+            'repeated-package', 'versioned-package=0.2', 'versioned-package')
+        self.fake_apt_cache.add_packages(self.test_packages)
+        self.fake_apt_cache.cache['package-installed'].installed = True
+        self.fake_apt_cache.cache['another-installed'].installed = True
+        self.fake_apt_cache.cache['versioned-package'].version = '0.1'
 
-    def get_installable_packages(self, pkgs):
-        return [p for p in pkgs if not pkgs[p].installed]
+    def get_installable_packages(self, packages):
+        return ['package-not-installed', 'another-uninstalled',
+                'repeated-package', 'versioned-package=0.2']
 
     @patch('os.environ')
-    @patch('snapcraft.repo._deb.apt')
-    def install_test_packages(self, test_pkgs, mock_apt, mock_env):
+    def install_test_packages(self, test_pkgs, mock_env):
         mock_env.copy.return_value = {}
-        mock_apt_cache = mock_apt.Cache.return_value
-        mock_apt_cache_with = mock_apt_cache.__enter__.return_value
-        mock_apt_cache_with.__getitem__.side_effect = lambda p: test_pkgs[p]
-
-        _deb.Ubuntu.install_build_packages(test_pkgs.keys())
+        repo.Ubuntu.install_build_packages(test_pkgs)
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
     @patch('subprocess.check_call')
@@ -290,15 +295,10 @@ class BuildPackagesTestCase(tests.TestCase):
         error = CalledProcessError(101, 'bad-cmd')
         mock_check_call.side_effect = \
             lambda c, env: error if 'apt-mark' in c else None
-        self.install_test_packages(self.test_packages)
+        self.install_test_packages(['package-not-installed'])
 
     def test_invalid_package_requested(self):
-        raised = self.assertRaises(
+        self.assertRaises(
             errors.BuildPackageNotFoundError,
-            _deb.Ubuntu.install_build_packages,
+            repo.Ubuntu.install_build_packages,
             ['package-does-not-exist'])
-
-        self.assertEqual(
-            "Could not find a required package in 'build-packages': "
-            '"The cache has no package named \'package-does-not-exist\'"',
-            str(raised))

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -95,7 +95,7 @@ class XDelta3TestCase(TestCase):
                                       source_path=self.source_file,
                                       target_path=self.target_file)
         expected = 'delta_tool_path must be set in subclass!'
-        self.assertEqual(str(exception), expected)
+        self.assertThat(str(exception), m.Equals(expected))
 
     def test_xdelta3(self):
         self.generate_snap_pair()
@@ -106,7 +106,7 @@ class XDelta3TestCase(TestCase):
         self.assertThat(path, m.FileExists())
         expect_path = '{}.{}'.format(base_delta.target_path,
                                      base_delta.delta_file_extname)
-        self.assertEqual(expect_path, path)
+        self.assertThat(path, m.Equals(expect_path))
 
     def test_xdelta3_with_progress_indicator(self):
         self.generate_snap_pair()
@@ -128,7 +128,7 @@ class XDelta3TestCase(TestCase):
         self.assertThat(path, m.FileExists())
         expect_path = '{}.{}'.format(base_delta.target_path,
                                      base_delta.delta_file_extname)
-        self.assertEqual(expect_path, path)
+        self.assertThat(path, m.Equals(expect_path))
 
     def test_xdelta3_with_custom_output_dir(self):
         self.generate_snap_pair()
@@ -143,7 +143,7 @@ class XDelta3TestCase(TestCase):
 
         expect_path = os.path.join(existed_output_dir, delta_filename)
         self.assertThat(path, m.FileExists())
-        self.assertEqual(expect_path, path)
+        self.assertThat(path, m.Equals(expect_path))
 
         none_existed_output_dir = self.useFixture(
             fixtures.TempDir()).path + '/whatever/'
@@ -151,7 +151,7 @@ class XDelta3TestCase(TestCase):
 
         expect_path = os.path.join(none_existed_output_dir, delta_filename)
         self.assertThat(path, m.FileExists())
-        self.assertEqual(expect_path, path)
+        self.assertThat(path, m.Equals(expect_path))
 
     def test_xdelta3_logs(self):
         self.generate_snap_pair()

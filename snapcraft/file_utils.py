@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager
+from contextlib import contextmanager, suppress
 import hashlib
 import logging
 import os
@@ -110,6 +110,11 @@ def link_or_copy(source, destination, follow_symlinks=False):
         # symlinks.
         os.link(source_path, destination, follow_symlinks=False)
     except OSError:
+        # If os.link raised an I/O error, it may have left a file behind.
+        # Skip on OSError in case it doesn't exist or is a directory.
+        with suppress(OSError):
+            os.unlink(destination)
+
         shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
         uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid
         gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid
@@ -225,12 +230,19 @@ def requires_path_exists(path, error_fmt=None):
 
 def calculate_sha3_384(path):
     """Calculate sha3 384 hash, reading the file in 1MB chunks."""
+    return calculate_hash(path, algorithm='sha3_384')
+
+
+def calculate_hash(path, *, algorithm):
+    """Calculate the hash for path with algorithm."""
+    # This will raise an AttributeError if algorithm is unsupported
+    hasher = getattr(hashlib, algorithm)()
+
     blocksize = 2**20
-    with open(path, 'rb') as snap_file:
-        hasher = hashlib.sha3_384()
+    with open(path, 'rb') as f:
         while True:
-            buf = snap_file.read(blocksize)
+            buf = f.read(blocksize)
             if not buf:
                 break
             hasher.update(buf)
-        return hasher.hexdigest()
+    return hasher.hexdigest()

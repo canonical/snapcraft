@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -35,19 +35,25 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (list)
       A list of targets to `npm run`.
       These targets will be run in order, after `npm install`
+    - node-package-manager
+      (string; default: npm)
+      The language package manager to use to drive installation
+      of node packages. Can be either `npm` (default) or `yarn`.
 """
-
+import contextlib
 import logging
 import os
 import shutil
 
 import snapcraft
 from snapcraft import sources
+from snapcraft.file_utils import link_or_copy_tree
+from snapcraft.internal import errors
 
 logger = logging.getLogger(__name__)
 
 _NODEJS_BASE = 'node-v{version}-linux-{arch}'
-_NODEJS_VERSION = '4.4.4'
+_NODEJS_VERSION = '6.10.2'
 _NODEJS_TMPL = 'https://nodejs.org/dist/v{version}/{base}.tar.gz'
 _NODEJS_ARCHES = {
     'i386': 'x86',
@@ -55,6 +61,7 @@ _NODEJS_ARCHES = {
     'armhf': 'armv7l',
     'arm64': 'arm64',
 }
+_YARN_URL = 'https://yarnpkg.com/latest.tar.gz'
 
 
 class NodePlugin(snapcraft.BasePlugin):
@@ -75,6 +82,11 @@ class NodePlugin(snapcraft.BasePlugin):
         schema['properties']['node-engine'] = {
             'type': 'string',
             'default': _NODEJS_VERSION
+        }
+        schema['properties']['node-package-manager'] = {
+            'type': 'string',
+            'default': 'npm',
+            'enum': ['npm', 'yarn'],
         }
         schema['properties']['npm-run'] = {
             'type': 'array',
@@ -101,20 +113,31 @@ class NodePlugin(snapcraft.BasePlugin):
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['node-engine']
+        return ['node-engine', 'node-package-manager']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+        self._source_package_json = os.path.join(
+            os.path.abspath(self.options.source), 'package.json')
         self._npm_dir = os.path.join(self.partdir, 'npm')
         self._nodejs_tar = sources.Tar(get_nodejs_release(
             self.options.node_engine, self.project.deb_arch), self._npm_dir)
+        if self.options.node_package_manager == 'yarn':
+            logger.warning(
+                'EXPERIMENTAL: use of yarn to manage packages is experimental')
+            self._yarn_tar = sources.Tar(_YARN_URL, self._npm_dir)
 
     def pull(self):
         super().pull()
         os.makedirs(self._npm_dir, exist_ok=True)
         self._nodejs_tar.download()
+        if hasattr(self, '_yarn_tar'):
+            self._yarn_tar.download()
         # do the install in the pull phase to download all dependencies.
-        self._npm_install(rootdir=self.sourcedir)
+        if self.options.node_package_manager == 'npm':
+            self._npm_install(rootdir=self.sourcedir)
+        else:
+            self._yarn_install(rootdir=self.sourcedir)
 
     def clean_pull(self):
         super().clean_pull()
@@ -125,7 +148,14 @@ class NodePlugin(snapcraft.BasePlugin):
 
     def build(self):
         super().build()
-        self._npm_install(rootdir=self.builddir)
+        if self.options.node_package_manager == 'npm':
+            self._npm_install(rootdir=self.builddir)
+            # Copy the content of the symlink to the build directory
+            # LP: #1702661
+            modules_dir = os.path.join(self.installdir, 'lib', 'node_modules')
+            _copy_symlinked_content(modules_dir)
+        else:
+            self._yarn_install(rootdir=self.builddir)
 
     def _npm_install(self, rootdir):
         self._nodejs_tar.provision(
@@ -139,11 +169,48 @@ class NodePlugin(snapcraft.BasePlugin):
         for target in self.options.npm_run:
             self.run(['npm', 'run', target], cwd=rootdir)
 
+    def _yarn_install(self, rootdir):
+        self._nodejs_tar.provision(
+            self.installdir, clean_target=False, keep_tarball=True)
+        self._yarn_tar.provision(
+            self._npm_dir, clean_target=False, keep_tarball=True)
+        yarn_cmd = [os.path.join(self._npm_dir, 'bin', 'yarn')]
+        flags = []
+        if rootdir == self.builddir:
+            yarn_add = yarn_cmd + ['global', 'add']
+            flags.extend([
+                '--offline', '--prod',
+                '--global-folder', self.installdir,
+            ])
+        else:
+            yarn_add = yarn_cmd + ['add']
+        for pkg in self.options.node_packages:
+            self.run(yarn_add + [pkg] + flags, cwd=rootdir)
+
+        # local packages need to be added as if they were remote, we
+        # remove the local package.json so `yarn add` doesn't pollute it.
+        if os.path.exists(self._source_package_json):
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(os.path.join(rootdir, 'package.json'))
+            package_dir = os.path.dirname(self._source_package_json)
+            self.run(yarn_add + ['file:{}'.format(package_dir)] + flags,
+                     cwd=rootdir)
+
+        # npm run would require to bring back package.json
+        if self.options.npm_run and os.path.exists(self._source_package_json):
+            # The current package.json is the yarn prefilled one.
+            with contextlib.suppress(FileNotFoundError):
+                os.unlink(os.path.join(rootdir, 'package.json'))
+            os.link(self._source_package_json,
+                    os.path.join(rootdir, 'package.json'))
+        for target in self.options.npm_run:
+            self.run(yarn_cmd + ['run', target], cwd=rootdir)
+
 
 def _get_nodejs_base(node_engine, machine):
     if machine not in _NODEJS_ARCHES:
-        raise EnvironmentError('architecture not supported ({})'.format(
-            machine))
+        raise errors.SnapcraftEnvironmentError(
+            'architecture not supported ({})'.format(machine))
     return _NODEJS_BASE.format(version=node_engine,
                                arch=_NODEJS_ARCHES[machine])
 
@@ -151,3 +218,25 @@ def _get_nodejs_base(node_engine, machine):
 def get_nodejs_release(node_engine, arch):
     return _NODEJS_TMPL.format(version=node_engine,
                                base=_get_nodejs_base(node_engine, arch))
+
+
+def _copy_symlinked_content(modules_dir):
+    """Copy symlinked content.
+
+    When running newer versions of npm, symlinks to the local tree are
+    created from the part's installdir to the root of the builddir of the
+    part (this only affects some build configurations in some projects)
+    which is valid when running from the context of the part but invalid
+    as soon as the artifacts migrate across the steps,
+    i.e.; stage and prime.
+
+    If modules_dir does not exist we simply return.
+    """
+    if not os.path.exists(modules_dir):
+        return
+    modules = [os.path.join(modules_dir, d) for d in os.listdir(modules_dir)]
+    symlinks = [l for l in modules if os.path.islink(l)]
+    for link_path in symlinks:
+        link_target = os.path.realpath(link_path)
+        os.unlink(link_path)
+        link_or_copy_tree(link_target, link_path)
