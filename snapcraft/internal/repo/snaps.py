@@ -26,7 +26,6 @@ from . import errors
 
 
 logger = logging.getLogger(__name__)
-_SNAPD_URI_ROOT_TEMPLATE = 'http+unix://%2Frun%2Fsnapd.socket/v2/{}'
 
 
 class SnapPackage:
@@ -109,8 +108,8 @@ class SnapPackage:
         if self.installed:
             local_snap_info = self.get_local_snap_info()
             current_channel = local_snap_info['channel']
-            if current_channel == 'stable':
-                current_channel = 'latest/stable'
+            if current_channel in ('stable', 'candidate', 'beta', 'edge'):
+                current_channel = 'latest/{}'.format(current_channel)
         return current_channel
 
     def is_classic(self):
@@ -132,7 +131,7 @@ class SnapPackage:
         snap_install_cmd.extend(['snap', 'install', self.name])
         if self._original_channel:
             snap_install_cmd.extend(['--channel', self._original_channel])
-        if self.is_classic:
+        if self.is_classic():
             # TODO make this a user explicit choice
             snap_install_cmd.extend(['--classic'])
         try:
@@ -148,7 +147,7 @@ class SnapPackage:
             snap_refresh_cmd = ['sudo']
         snap_refresh_cmd.extend(['snap', 'refresh', self.name,
                                  '--channel', self.channel])
-        if self.is_classic:
+        if self.is_classic():
             # TODO make this a user explicit choice
             snap_refresh_cmd.extend(['--classic'])
         try:
@@ -195,9 +194,13 @@ def _get_parsed_snap(snap):
     return snap_name, snap_channel
 
 
+def get_snapd_socket_path_template():
+    return 'http+unix://%2Frun%2Fsnapd.socket/v2/{}'
+
+
 def _get_local_snap_info(snap_name):
     slug = 'snaps/{}'.format(urllib.parse.quote(snap_name, safe=''))
-    url = _SNAPD_URI_ROOT_TEMPLATE.format(slug)
+    url = get_snapd_socket_path_template().format(slug)
     with requests_unixsocket.Session() as session:
         snap_info = session.get(url)
     snap_info.raise_for_status()
@@ -208,7 +211,7 @@ def _get_store_snap_info(snap_name):
     # This logic uses /v2/find returns an array of results, given that
     # we do a strict search either 1 result or a 404 will be returned.
     slug = '{}{}'.format('find?name=', urllib.parse.quote(snap_name, safe=''))
-    url = _SNAPD_URI_ROOT_TEMPLATE.format(slug)
+    url = get_snapd_socket_path_template().format(slug)
     with requests_unixsocket.Session() as session:
         snap_info = session.get(url)
     snap_info.raise_for_status()
