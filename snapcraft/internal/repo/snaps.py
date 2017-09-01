@@ -25,6 +25,7 @@ from requests import exceptions
 from . import errors
 
 
+_CHANNEL_RISKS = ['stable', 'candidate', 'beta', 'edge']
 logger = logging.getLogger(__name__)
 
 
@@ -108,7 +109,8 @@ class SnapPackage:
         if self.installed:
             local_snap_info = self.get_local_snap_info()
             current_channel = local_snap_info['channel']
-            if current_channel in ('stable', 'candidate', 'beta', 'edge'):
+            if any([current_channel.startswith(risk)
+                    for risk in _CHANNEL_RISKS]):
                 current_channel = 'latest/{}'.format(current_channel)
         return current_channel
 

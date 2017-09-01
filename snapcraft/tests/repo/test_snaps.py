@@ -111,9 +111,15 @@ class FakeSnapdServer(BaseHTTPRequestHandler):
         elif parsed_url.path.endswith('/fake-snap-stable'):
             status_code = 200
             params = {'channel': 'stable'}
+        elif parsed_url.path.endswith('/fake-snap-branch'):
+            status_code = 200
+            params = {'channel': 'candidate/branch'}
         elif parsed_url.path.endswith('/fake-snap-track-stable'):
             status_code = 200
             params = {'channel': 'track/stable'}
+        elif parsed_url.path.endswith('/fake-snap-track-stable-branch'):
+            status_code = 200
+            params = {'channel': 'track/stable/branch'}
         elif parsed_url.path.endswith('/fake-snap-edge'):
             status_code = 200
             params = {'channel': 'edge'}
@@ -205,6 +211,12 @@ class SnapPackageCurrentChannelTest(SnapPackageBaseTestCase):
         ('latest/stable',
          dict(snap='fake-snap-stable/latest/stable',
               expected='latest/stable')),
+        ('candidate/branch',
+         dict(snap='fake-snap-branch/candidate/branch',
+              expected='latest/candidate/branch')),
+        ('track/stable/branch',
+         dict(snap='fake-snap-track-stable-branch/trakc/stable/branch',
+              expected='track/stable/branch')),
         ('edge',
          dict(snap='fake-snap-edge/stable',
               expected='latest/edge')),
