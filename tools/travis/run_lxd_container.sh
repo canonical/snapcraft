@@ -53,3 +53,6 @@ $lxc config set "$name" environment.CODECOV_TOKEN "$CODECOV_TOKEN"
 $lxc config set "$name" environment.LC_ALL "C.UTF-8"
 
 $lxc exec "$name" -- apt update
+
+# We install squashfuse here as it is only relevant when running the tests in a container
+$lxc exec "$name" -- apt install squashfuse
