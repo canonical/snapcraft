@@ -162,6 +162,11 @@ class NodePlugin(snapcraft.BasePlugin):
             _copy_symlinked_content(modules_dir)
         else:
             installed_node_packages = self._yarn_install(rootdir=self.builddir)
+            lock_file_path = os.path.join(self.sourcedir, 'yarn.lock')
+            if os.path.isfile(lock_file_path):
+                with open(lock_file_path) as lock_file:
+                    self._manifest['yarn-lock-contents'] = lock_file.read()
+
         self._manifest['node-packages'] = [
             '{}={}'.format(name, installed_node_packages[name])
             for name in installed_node_packages

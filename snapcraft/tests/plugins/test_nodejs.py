@@ -397,6 +397,32 @@ class NodePluginManifestTestCase(NodePluginBaseTestCase):
                      ['testpackage1=1.0', 'testpackage2=1.2']})))
 
 
+class NodePluginYarnLockManifestTestCase(NodePluginBaseTestCase):
+
+    def test_get_manifest_with_yarn_lock_file(self):
+        class Options:
+            source = '.'
+            node_packages = []
+            node_engine = '4'
+            npm_run = []
+            node_package_manager = 'yarn'
+        plugin = nodejs.NodePlugin('test-part', Options(),
+                                   self.project_options)
+        os.makedirs(plugin.sourcedir)
+        with open(os.path.join(
+                plugin.sourcedir,
+                'yarn.lock'), 'w') as yarn_lock_file:
+            yarn_lock_file.write('test yarn lock contents')
+
+        plugin.build()
+
+        expected_manifest = collections.OrderedDict()
+        expected_manifest['yarn-lock-contents'] = 'test yarn lock contents'
+        expected_manifest['node-packages'] = []
+
+        self.assertThat(plugin.get_manifest(), Equals(expected_manifest))
+
+
 class NodePluginNpmWorkaroundsTestCase(NodePluginBaseTestCase):
 
     def test_build_from_local_fixes_symlinks(self):
