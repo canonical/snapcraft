@@ -133,7 +133,7 @@ class SnapPackage:
             snap_install_cmd.extend(['--channel', self._original_channel])
         if self.is_classic():
             # TODO make this a user explicit choice
-            snap_install_cmd.extend(['--classic'])
+            snap_install_cmd.append('--classic')
         try:
             check_call(snap_install_cmd)
         except CalledProcessError as install_error:
@@ -149,7 +149,7 @@ class SnapPackage:
                                  '--channel', self.channel])
         if self.is_classic():
             # TODO make this a user explicit choice
-            snap_refresh_cmd.extend(['--classic'])
+            snap_refresh_cmd.append('--classic')
         try:
             check_call(snap_refresh_cmd)
         except CalledProcessError as install_error:
@@ -210,7 +210,7 @@ def _get_local_snap_info(snap_name):
 def _get_store_snap_info(snap_name):
     # This logic uses /v2/find returns an array of results, given that
     # we do a strict search either 1 result or a 404 will be returned.
-    slug = '{}{}'.format('find?name=', urllib.parse.quote(snap_name, safe=''))
+    slug = 'find?name={}'.format(urllib.parse.quote(snap_name, safe=''))
     url = get_snapd_socket_path_template().format(slug)
     with requests_unixsocket.Session() as session:
         snap_info = session.get(url)
