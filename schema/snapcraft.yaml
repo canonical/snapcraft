@@ -1,7 +1,7 @@
 $schema: http://json-schema.org/draft-04/schema#
 
 definitions:
-  stage-packages:
+  grammar-array:
     type: array
     minitems: 1
     uniqueItems: true
@@ -14,30 +14,26 @@ definitions:
           additionalProperties: false
           patternProperties:
             ^on\s+.+$:
-              $ref: "#/definitions/stage-packages"
+              $ref: "#/definitions/grammar-array"
         - type: object
           usage: "try:"
           additionalProperties: false
           patternProperties:
             ^try$:
-              $ref: "#/definitions/stage-packages"
+              $ref: "#/definitions/grammar-array"
         - type: object
           usage: "else:"
           additionalProperties: false
           patternProperties:
             ^else$:
-              $ref: "#/definitions/stage-packages"
+              $ref: "#/definitions/grammar-array"
 
 title: snapcraft schema
 type: object
 properties:
   build-packages:
-    type: array
+    $ref: "#/definitions/grammar-array"
     description: top level build packages.
-    minItems: 1
-    uniqueItems: true
-    items:
-      - type: string
   name:
     type: string
     description: name of the snap package
@@ -54,6 +50,7 @@ properties:
     # type: string
     description: package version
     pattern: "^[a-zA-Z0-9.+~-]+$"
+    maxLength: 32
   version-script:
     type: string
     description: a script that echoes the version to set.
@@ -277,15 +274,11 @@ properties:
               type: string
             default: []
           stage-packages:
-            $ref: "#/definitions/stage-packages"
+            $ref: "#/definitions/grammar-array"
             default: [] # For some reason this doesn't work if in the ref
           build-packages:
-            type: array
-            minitems: 1
-            uniqueItems: true
-            items:
-              type: string
-            default: []
+            $ref: "#/definitions/grammar-array"
+            default: [] # For some reason this doesn't work if in the ref
           build-attributes:
             type: array
             minitems: 1

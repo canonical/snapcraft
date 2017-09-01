@@ -1,0 +1,16 @@
+name: build-package-grammar-global
+version: '0.1'
+summary: Test global build package grammar on statement else
+description: Verify that the on statement moves to else on other architectures
+grade: devel
+confinement: strict
+
+build-packages:
+  - on other-arch:
+    - foo
+  - else:
+    - hello
+
+parts:
+  my-part:
+    plugin: nil

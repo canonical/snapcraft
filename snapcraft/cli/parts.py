@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import click
-from snapcraft.internal import parts
+from snapcraft.internal import remote_parts
 
 
 @click.group(context_settings={})
@@ -27,7 +27,7 @@ def partscli(ctx):
 @click.pass_context
 def update(ctx):
     """Updates the parts listing from the cloud."""
-    parts.update()
+    remote_parts.update()
 
 
 @partscli.command()
@@ -41,7 +41,7 @@ def define(ctx, part):
         snapcraft define my-part1
 
     """
-    parts.define(part)
+    remote_parts.define(part)
 
 
 @partscli.command()
@@ -55,4 +55,4 @@ def search(ctx, query):
         snapcraft search go
 
     """
-    parts.search(' '.join(query))
+    remote_parts.search(' '.join(query))

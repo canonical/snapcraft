@@ -434,6 +434,7 @@ class FakeLXD(fixtures.Fixture):
                                     "address": "127.0.0.1"
                                 }]
                             }}'''
+        self.files = []
         self.devices = '{}'
         self.fail_on_snapcraft_run = fail_on_snapcraft_run
 
@@ -446,6 +447,11 @@ class FakeLXD(fixtures.Fixture):
         patcher = mock.patch('snapcraft.internal.lxd.check_output')
         self.check_output_mock = patcher.start()
         self.check_output_mock.side_effect = self.check_output_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.lxd.Popen')
+        self.popen_mock = patcher.start()
+        self.popen_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
@@ -485,6 +491,28 @@ class FakeLXD(fixtures.Fixture):
                             'DEVICES': self.devices,
                             }).encode('utf-8')
                 return '[]'.encode('utf-8')
+            elif args[0][:2] == ['lxc', 'exec']:
+                if self.status and args[0][2] == self.name:
+                    if 'sshfs' in args[0]:
+                        self.files = ['foo', 'bar']
+
+                        class Popen:
+                            def __init__(self, args):
+                                self.args = args
+
+                            def terminate(self):
+                                pass
+                        return Popen(args[0])
+                    elif 'ls' in args[0]:
+                        return ' '.join(self.files).encode('utf-8')
+            elif '/usr/lib/sftp-server' in args[0]:
+                class Popen:
+                    def __init__(self, args):
+                        self.args = args
+
+                    def terminate(self):
+                        pass
+                return Popen(args[0])
             elif args[0][:2] == ['lxc', 'init']:
                 self.name = args[0][3]
                 self.status = 'Stopped'
@@ -499,8 +527,6 @@ class FakeLXD(fixtures.Fixture):
             elif ('snapcraft snap' in ' '.join(args[0])
                   and self.fail_on_snapcraft_run):
                 raise CalledProcessError(returncode=255, cmd=args[0])
-            else:
-                return ''.encode('utf-8')
         return call_effect
 
 
