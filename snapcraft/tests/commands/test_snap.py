@@ -35,7 +35,11 @@ from testtools.matchers import (
 )
 from . import CommandBaseTestCase
 from snapcraft.tests import fixture_setup
-from snapcraft.internal.errors import SnapdError, SnapcraftEnvironmentError
+from snapcraft.internal.errors import (
+    SnapdError,
+    SnapcraftEnvironmentError,
+    ContainerConnectionError,
+)
 
 
 class SnapCommandBaseTestCase(CommandBaseTestCase):
@@ -336,6 +340,37 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             'sftp-server seems to be installed but could not be run.\n',
             str(self.assertRaises(
                 SnapcraftEnvironmentError,
+                self.run_command, ['--debug', 'snap'])))
+
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('shutil.rmtree')
+    @mock.patch('os.makedirs')
+    @mock.patch('snapcraft.internal.lxd.open')
+    def test_snap_containerized_sshfs_failed(self,
+                                             mock_open,
+                                             mock_makedirs,
+                                             mock_rmtree,
+                                             mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_open.return_value = mock.MagicMock(spec=open)
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+
+        def call_effect(*args, **kwargs):
+            if args[0][:1] == ['lxc'] and 'ls' in args[0]:
+                return ''.encode('utf-8')
+
+        fake_lxd.popen_mock.side_effect = call_effect
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_CONTAINER_BUILDS', 'myremote'))
+        self.make_snapcraft_yaml()
+
+        self.assertIn(
+            'The project folder could not be mounted.\n',
+            str(self.assertRaises(
+                ContainerConnectionError,
                 self.run_command, ['--debug', 'snap'])))
 
     @mock.patch('os.getuid')
