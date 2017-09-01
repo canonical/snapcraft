@@ -300,16 +300,26 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'environment.SNAPCRAFT_SETUP_CORE', '1'])
-            # Map host user to root inside container
+            # Necessary to read asset files with non-ascii characters.
             check_call([
                 'lxc', 'config', 'set', self._container_name,
-                'raw.idmap', 'both {} 0'.format(os.getuid())])
+                'environment.LC_ALL', 'C.UTF-8'])
+            if self._container_name.startswith('local:'):
+                # Map host user to root inside container
+                check_call([
+                    'lxc', 'config', 'set', self._container_name,
+                    'raw.idmap', 'both {} 0'.format(os.getuid())])
             # Remove existing device (to ensure we update old containers)
             devices = self._get_container_status()['devices']
             if self._project_folder in devices:
                 check_call([
                     'lxc', 'config', 'device', 'remove', self._container_name,
                     self._project_folder])
+            if 'fuse' not in devices:
+                check_call([
+                    'lxc', 'config', 'device', 'add', self._container_name,
+                    'fuse', 'unix-char', 'path=/dev/fuse'
+                    ])
             check_call([
                 'lxc', 'start', self._container_name])
 
@@ -327,8 +337,7 @@ class Project(Containerbuild):
 
     def _ensure_mount(self, destination, source):
         logger.info('Mounting {} into container'.format(source))
-        remote, container_name = self._container_name.split(':')
-        if remote != 'local':
+        if not self._container_name.startswith('local:'):
             return self._remote_mount(destination, source)
 
         devices = self._get_container_status()['devices']
@@ -339,41 +348,6 @@ class Project(Containerbuild):
                 'path={}'.format(destination)])
 
     def _remote_mount(self, destination, source):
-        # Generate an SSH key and add it to the container's known keys
-        keyfile = 'id_{}'.format(self._container_name)
-        keyfile_path = os.path.join(self._tmp, keyfile)
-        if not os.path.exists(keyfile_path):
-            # Swallow output and allow exceptions to save stdout
-            check_output(['ssh-keygen', '-o', '-N', '', '-f', keyfile_path])
-
-        # Don't use os.path.join because a Windows client would use \
-        ssh_config = '/root/.ssh'
-        ssh_authorized_keys = ssh_config + '/authorized_keys'
-
-        self._container_run(['mkdir', '-p', ssh_config])
-        self._container_run(['chmod', '700', ssh_config])
-        self._container_run(['tee', '-a', ssh_authorized_keys],
-                            stdin=open('{}.pub'.format(keyfile_path), 'r'))
-        self._container_run(['chmod', '600', ssh_authorized_keys])
-
-        ssh_address = self._get_container_address()
-        logger.info('Connecting to {} via SSH'.format(ssh_address))
-        ssh_cmd = ['ssh', '-C', '-F', '/dev/null',
-                   '-o', 'IdentityFile={}'.format(keyfile_path),
-                   '-o', 'StrictHostKeyChecking=no',
-                   '-o', 'UserKnownHostsFile=/dev/null',
-                   '-o', 'User=root',
-                   '-p', '22', ssh_address]
-
-        # One-off command to verify the connection
-        try:
-            check_output(ssh_cmd + ['ls'])
-        except CalledProcessError as e:
-            raise SnapcraftEnvironmentError('Failed to setup SSH') from e
-
-        # Use sshfs in slave mode inside SSH to reverse mount destination
-        self._container_run(['apt-get', 'install', '-y', 'sshfs'])
-        self._container_run(['mkdir', '-p', destination])
         # Pipes for sshfs and sftp-server to communicate
         stdin1, stdout1 = os.pipe()
         stdin2, stdout2 = os.pipe()
@@ -390,10 +364,29 @@ class Project(Containerbuild):
             raise SnapcraftEnvironmentError(
                 'sftp-server seems to be installed but could not be run.\n'
                 )
-        self._background_process_run(
-            ssh_cmd + ['sshfs -o slave -o nonempty :{} {}'.format(
-                       source, destination)],
+
+        # Use sshfs in slave mode to reverse mount the destination
+        self._container_run(['apt-get', 'install', '-y', 'sshfs'])
+        self._container_run(['mkdir', '-p', destination])
+        self._background_process_run([
+            'lxc', 'exec', self._container_name, '--',
+            'sshfs', '-o', 'slave', '-o', 'nonempty',
+            ':{}'.format(source), destination],
             stdin=stdin2, stdout=stdout1)
+
+        # It may take a second or two for sshfs to come up
+        retry_count = 5
+        while retry_count:
+            sleep(1)
+            if check_output(['lxc', 'exec', self._container_name, '--',
+                             'ls', self._project_folder]):
+                return
+            retry_count -= 1
+        raise SnapcraftEnvironmentError(
+            'The project folder could not be mounted.\n'
+            'Fuse must be enabled on the LXD host.\n'
+            'You can run the following command to enable it:\n'
+            'echo Y | sudo tee /sys/module/fuse/parameters/userns_mounts\n')
 
     def _background_process_run(self, cmd, **kwargs):
         self._processes += [Popen(cmd, **kwargs)]
