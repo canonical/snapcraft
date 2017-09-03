@@ -33,7 +33,7 @@ if [ "$test" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
 elif [ "$test" = "unit" ]; then
     dependencies="apt install -y git bzr subversion mercurial libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov && apt install -y python3-coverage"
-elif [ "$test" = "integration" ] || [ "$test" = "plugins" ] || [ "$test" = "store" ]; then
+elif [ "$test" = "integration" ] || [ "$test" = "plugins" ] || [ "$test" = "store" ] || [ "$test" = "containers" ]; then
     dependencies="apt install -y bzr curl git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev mercurial python3-pip subversion squashfs-tools sudo snapd xdelta3 squashfuse && python3 -m pip install -r requirements-devel.txt -r requirements.txt && ./tools/travis/setup_lxd.sh"
 else
     echo "Unknown test suite: $test"
