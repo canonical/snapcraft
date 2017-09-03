@@ -41,6 +41,7 @@ else
 fi
 if [ "$test" = "containers" ]; then
     # Workaround for https://bugs.launchpad.net/snapd/+bug/1709536
+    mkdir -p /systemd/system/snapd.service.d/
     echo "[Service]" > /systemd/system/snapd.service.d/override.conf
     echo "Nice=0" >> /systemd/system/snapd.service.d/override.conf
     systemctl daemon-reload
