@@ -17,6 +17,7 @@ jobs:
       script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh integration; fi
     - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh plugins; fi
     - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh store; fi
+    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh containers; fi
     # CLA check, only in pull requests.
     - script: if [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ]; then ./tools/travis/run_cla_check.sh; fi
     - stage: snap
