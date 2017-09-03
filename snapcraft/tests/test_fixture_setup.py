@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,6 +18,8 @@ import http.client
 import http.server
 import json
 import urllib.parse
+
+from testtools.matchers import Equals
 
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
@@ -70,4 +72,4 @@ class FakeServerRunningTestCase(tests.TestCase):
         self.addCleanup(self.assert_server_not_running)
         self.start_fake_server()
         status = self.do_request('GET', '/')
-        self.assertEqual(status, 200)
+        self.assertThat(status, Equals(200))

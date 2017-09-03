@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,6 +19,7 @@ import os
 from unittest import mock
 from testtools.matchers import (
     DirExists,
+    Equals,
     FileExists
 )
 
@@ -41,8 +42,8 @@ class TestLocal(tests.TestCase):
         local = sources.Local('.', 'destination')
         local.pull()
 
-        self.assertEqual(
-            snapcraft_files_before_pull, common.SNAPCRAFT_FILES)
+        self.assertThat(
+            snapcraft_files_before_pull, Equals(common.SNAPCRAFT_FILES))
 
     def test_pull_with_existing_empty_source_dir_creates_hardlinks(self):
         os.makedirs(os.path.join('src', 'dir'))

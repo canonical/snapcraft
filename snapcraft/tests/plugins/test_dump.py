@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+
+from testtools.matchers import Equals
 
 import snapcraft
 from snapcraft.plugins.dump import DumpPlugin
@@ -37,7 +39,7 @@ class DumpPluginTestCase(tests.TestCase):
         os.makedirs(plugin.builddir)
         plugin.build()
 
-        self.assertEqual(os.listdir(plugin.installdir), [])
+        self.assertThat(os.listdir(plugin.installdir), Equals([]))
 
     def test_dumping_with_contents(self):
         plugin = DumpPlugin('dump', self.options, self.project_options)
@@ -52,9 +54,9 @@ class DumpPluginTestCase(tests.TestCase):
 
         contents = os.listdir(plugin.installdir)
         contents.sort()
-        self.assertEqual(contents, ['dir1', 'file1', 'file2'])
-        self.assertEqual(os.listdir(os.path.join(plugin.installdir, 'dir1')),
-                         ['subfile1'])
+        self.assertThat(contents, Equals(['dir1', 'file1', 'file2']))
+        self.assertThat(os.listdir(os.path.join(plugin.installdir, 'dir1')),
+                        Equals(['subfile1']))
 
     def test_dump_symlinks(self):
         plugin = DumpPlugin('dump', self.options, self.project_options)
@@ -97,7 +99,7 @@ class DumpPluginTestCase(tests.TestCase):
         plugin.build()
 
         with open(os.path.join(plugin.installdir, 'file'), 'r') as f:
-            self.assertEqual(f.read(), 'foo')
+            self.assertThat(f.read(), Equals('foo'))
 
         for symlink in symlinks:
             destination = symlink['destination']
@@ -105,14 +107,14 @@ class DumpPluginTestCase(tests.TestCase):
                 os.path.islink(destination),
                 'Expected {!r} to be a symlink'.format(destination))
 
-            self.assertEqual(
+            self.assertThat(
                 os.path.realpath(destination),
-                symlink['expected_realpath'],
+                Equals(symlink['expected_realpath']),
                 'Expected {!r} to be a relative path to {!r}'.format(
                     destination, symlink['expected_realpath']))
 
             with open(destination, 'r') as f:
-                self.assertEqual(f.read(), symlink['expected_contents'])
+                self.assertThat(f.read(), Equals(symlink['expected_contents']))
 
     def test_dump_symlinks_that_should_be_followed(self):
         # TODO: Move to an integration test
@@ -153,7 +155,7 @@ class DumpPluginTestCase(tests.TestCase):
         plugin.build()
 
         with open(os.path.join(plugin.installdir, 'src', 'file'), 'r') as f:
-            self.assertEqual(f.read(), 'foo')
+            self.assertThat(f.read(), Equals('foo'))
 
         for symlink in symlinks:
             destination = symlink['destination']
@@ -162,7 +164,7 @@ class DumpPluginTestCase(tests.TestCase):
                              'symlink'.format(destination))
 
             with open(destination, 'r') as f:
-                self.assertEqual(f.read(), symlink['expected_contents'])
+                self.assertThat(f.read(), Equals(symlink['expected_contents']))
 
     def test_dump_symlinks_to_libc(self):
         plugin = DumpPlugin('dump', self.options, self.project_options)
@@ -213,10 +215,10 @@ class DumpPluginTestCase(tests.TestCase):
 
         raised = self.assertRaises(FileNotFoundError, plugin.build)
 
-        self.assertEqual(
+        self.assertThat(
             str(raised),
-            '{!r} is a broken symlink pointing outside the snap'.format(
-                os.path.join(plugin.builddir, 'src', 'bad_relative')))
+            Equals('{!r} is a broken symlink pointing outside the snap'.format(
+                os.path.join(plugin.builddir, 'src', 'bad_relative'))))
 
     def test_dump_enable_cross_compilation(self):
         plugin = DumpPlugin('dump', self.options, self.project_options)

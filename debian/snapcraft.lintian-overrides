@@ -1,8 +1,2 @@
 # LP: #1506764
 snapcraft: binary-without-manpage
-# Part of the snapcraft tour
-snapcraft: script-not-executable usr/share/snapcraft/tour/*
-# Part of the snapcraft tour
-snapcraft: unusual-interpreter usr/share/snapcraft/tour/*
-# Part of the snapcraft tour
-snapcraft: package-contains-vcs-control-file usr/share/snapcraft/tour/*

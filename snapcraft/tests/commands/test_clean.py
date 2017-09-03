@@ -21,8 +21,7 @@ from unittest.mock import call
 from testtools.matchers import Contains, Equals, DirExists, FileExists, Not
 from snapcraft.tests import fixture_setup
 
-from snapcraft.internal import pluginhandler
-from snapcraft.internal import project_loader
+import snapcraft.internal.errors
 from . import CommandBaseTestCase
 
 
@@ -48,22 +47,26 @@ parts:
         open('icon.png', 'w').close()
 
         parts = []
-        validator = project_loader.Validator()
         for i in range(n):
             part_name = 'clean{}'.format(i)
-            handler = pluginhandler.load_plugin(
-                part_name, plugin_name='nil',
-                part_properties={'plugin': 'nil'},
-                part_schema=validator.part_schema,
-                definitions_schema=validator.definitions_schema)
+
+            properties = {'plugin': 'nil'}
+            project_options = snapcraft.ProjectOptions()
+
+            handler = self.load_part(
+                part_name=part_name,
+                plugin_name='nil',
+                part_properties=properties,
+                project_options=project_options)
+
             parts.append({
-                'part_dir': handler.code.partdir,
+                'part_dir': handler.plugin.partdir,
             })
 
             if create:
                 handler.makedirs()
                 open(os.path.join(
-                    handler.code.installdir, part_name), 'w').close()
+                    handler.plugin.installdir, part_name), 'w').close()
 
                 handler.mark_done('pull')
                 handler.mark_done('build')
@@ -76,12 +79,13 @@ parts:
     def test_part_to_remove_not_defined_exits_with_error(self):
         self.make_snapcraft_yaml(n=3)
 
-        result = self.run_command(['clean', 'no-clean'])
+        raised = self.assertRaises(
+            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            self.run_command, ['clean', 'no-clean'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Equals(
+        self.assertThat(str(raised), Equals(
             "The part named 'no-clean' is not defined in "
-            "'snap/snapcraft.yaml'\n"))
+            "'snap/snapcraft.yaml'"))
 
     def test_clean_all(self):
         self.make_snapcraft_yaml(n=3)
@@ -93,7 +97,7 @@ parts:
         self.assertThat(self.stage_dir, Not(DirExists()))
         self.assertThat(self.prime_dir, Not(DirExists()))
 
-    def test_clean_containerized(self):
+    def test_clean_containerized_noop(self):
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         self.useFixture(fixtures.EnvironmentVariable(
@@ -103,11 +107,28 @@ parts:
         result = self.run_command(['clean'])
 
         self.assertThat(result.exit_code, Equals(0))
-        container_name = 'local:snapcraft-clean-test'
+        # clean should be a noop if no container exists yet/ anymore
+        fake_lxd.check_call_mock.assert_not_called()
+
+    def test_clean_containerized_exists_stopped(self):
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        # Container was created before, and isn't running
+        fake_lxd.name = 'local:snapcraft-clean-test'
+        fake_lxd.status = 'Stopped'
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml(n=3)
+
+        result = self.run_command(['clean'])
+
+        self.assertThat(result.exit_code, Equals(0))
         # clean with no parts should delete the container
         fake_lxd.check_call_mock.assert_has_calls([
-            call(['lxc', 'delete', '-f', container_name]),
+            call(['lxc', 'delete', '-f', fake_lxd.name]),
         ])
+        # no other commands should be run in the container
+        self.assertThat(fake_lxd.check_call_mock.call_count, Equals(1))
 
     def test_clean_containerized_with_part(self):
         fake_lxd = fixture_setup.FakeLXD()
@@ -119,10 +140,9 @@ parts:
         result = self.run_command(['clean', 'clean1'])
 
         self.assertThat(result.exit_code, Equals(0))
-        container_name = 'local:snapcraft-clean-test'
         # clean with parts should NOT delete the container
         self.assertNotEqual(fake_lxd.check_call_mock.call_args,
-                            call(['lxc', 'delete', '-f', container_name]))
+                            call(['lxc', 'delete', '-f', fake_lxd.name]))
 
     def test_local_plugin_not_removed(self):
         self.make_snapcraft_yaml(n=3)

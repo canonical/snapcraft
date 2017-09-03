@@ -16,6 +16,8 @@
 
 import subprocess
 
+from testtools.matchers import Equals
+
 import integration_tests
 
 
@@ -32,13 +34,13 @@ class BzrSourceTestCase(integration_tests.BzrSourceBaseTestCase):
         revno = subprocess.check_output(
             ['bzr', 'revno', '-r', '-1', 'parts/bzr/src'],
             universal_newlines=True).strip()
-        self.assertEqual('2', revno)
+        self.assertThat(revno, Equals('2'))
         # test pull doesn't fail
         self.run_snapcraft('pull')
         revno = subprocess.check_output(
             ['bzr', 'revno', '-r', '-1', 'parts/bzr/src'],
             universal_newlines=True).strip()
-        self.assertEqual('2', revno)
+        self.assertThat(revno, Equals('2'))
 
     def test_pull_bzr_tag(self):
         self.copy_project_to_cwd('bzr-tag')
@@ -52,11 +54,11 @@ class BzrSourceTestCase(integration_tests.BzrSourceBaseTestCase):
         # test initial branch
         self.run_snapcraft('pull')
         revno = self.get_revno('parts/bzr/src')
-        self.assertEqual('1', revno)
+        self.assertThat(revno, Equals('1'))
         # test pull doesn't fail
         self.run_snapcraft('pull')
         revno = self.get_revno('parts/bzr/src')
-        self.assertEqual('1', revno)
+        self.assertThat(revno, Equals('1'))
 
     def test_pull_bzr_commit(self):
         self.copy_project_to_cwd('bzr-commit')
@@ -67,8 +69,8 @@ class BzrSourceTestCase(integration_tests.BzrSourceBaseTestCase):
         # test initial branch
         self.run_snapcraft('pull')
         revno = self.get_revno('parts/bzr/src')
-        self.assertEqual('1', revno)
+        self.assertThat(revno, Equals('1'))
         # test pull doesn't fail
         self.run_snapcraft('pull')
         revno = self.get_revno('parts/bzr/src')
-        self.assertEqual('1', revno)
+        self.assertThat(revno, Equals('1'))

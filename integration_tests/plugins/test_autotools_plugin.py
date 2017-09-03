@@ -16,6 +16,8 @@
 
 import os
 
+from testtools.matchers import Equals
+
 import snapcraft
 import integration_tests
 from snapcraft.tests.matchers import HasArchitecture
@@ -28,7 +30,7 @@ class AutotoolsPluginTestCase(integration_tests.TestCase):
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'test'))
-        self.assertEqual('Hello world\n', binary_output)
+        self.assertThat(binary_output, Equals('Hello world\n'))
 
     def test_cross_compiling(self):
         if snapcraft.ProjectOptions().deb_arch != 'amd64':

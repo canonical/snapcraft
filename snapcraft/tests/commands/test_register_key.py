@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 import json
 from simplejson.scanner import JSONDecodeError
 from textwrap import dedent
@@ -32,13 +33,14 @@ class RegisterKeyTestCase(CommandBaseTestCase):
                                               mock_check_output):
         mock_installed.return_value = False
 
-        result = self.run_command(['register-key'])
+        raised = self.assertRaises(
+            storeapi.errors.MissingSnapdError,
+            self.run_command, ['register-key'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Contains(
             'The snapd package is not installed.'))
         mock_installed.assert_called_with('snapd')
-        self.assertEqual(0, mock_check_output.call_count)
+        self.assertThat(mock_check_output.call_count, Equals(0))
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
@@ -74,7 +76,7 @@ class RegisterKeyTestCase(CommandBaseTestCase):
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=['modify_account_key'],
             packages=None, channels=None, save=False)
-        self.assertEqual(1, mock_register_key.call_count)
+        self.assertThat(mock_register_key.call_count, Equals(1))
         expected_assertion = dedent('''\
             type: account-key-request
             account-id: abcd
@@ -91,11 +93,12 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         mock_installed.return_value = True
         mock_check_output.return_value = json.dumps([])
 
-        result = self.run_command(['register-key'])
+        raised = self.assertRaises(
+            storeapi.errors.NoKeysError,
+            self.run_command, ['register-key'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains('You have no usable keys'))
-        self.assertEqual(0, mock_input.call_count)
+        self.assertThat(str(raised), Contains('You have no usable keys'))
+        self.assertThat(mock_input.call_count, Equals(0))
 
     @mock.patch('subprocess.check_output')
     @mock.patch('builtins.input')
@@ -107,11 +110,12 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         mock_installed.return_value = True
         mock_check_output.return_value = json.dumps(None)
 
-        result = self.run_command(['register-key'])
+        raised = self.assertRaises(
+            storeapi.errors.NoKeysError,
+            self.run_command, ['register-key'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains('You have no usable keys.'))
-        self.assertEqual(0, mock_input.call_count)
+        self.assertThat(str(raised), Contains('You have no usable keys'))
+        self.assertThat(mock_input.call_count, Equals(0))
 
     @mock.patch('subprocess.check_output')
     @mock.patch('builtins.input')
@@ -121,12 +125,13 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         mock_installed.return_value = True
         mock_check_output.side_effect = mock_snap_output
 
-        result = self.run_command(['register-key', 'nonexistent'])
+        raised = self.assertRaises(
+            storeapi.errors.NoSuchKeyError,
+            self.run_command, ['register-key', 'nonexistent'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'You have no usable key named "nonexistent"'))
-        self.assertEqual(0, mock_input.call_count)
+        self.assertThat(str(raised), Contains(
+            "You have no usable key named 'nonexistent'"))
+        self.assertThat(mock_input.call_count, Equals(0))
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
@@ -145,12 +150,13 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         mock_login.side_effect = storeapi.errors.StoreAuthenticationError(
             'test')
 
-        result = self.run_command(['register-key', 'default'])
+        raised = self.assertRaises(
+            storeapi.errors.LoginRequiredError,
+            self.run_command, ['register-key', 'default'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'Cannot continue without logging in successfully.\n'))
-        self.assertEqual(1, mock_input.call_count)
+        self.assertThat(str(raised), Equals(
+            'Cannot continue without logging in successfully.'))
+        self.assertThat(mock_input.call_count, Equals(1))
 
     @mock.patch('snapcraft._store._login')
     @mock.patch.object(storeapi.SCAClient, 'register_key')
@@ -176,10 +182,11 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         mock_get_account_information.side_effect = (
             storeapi.errors.StoreAccountInformationError(response))
 
-        result = self.run_command(['register-key', 'default'])
+        raised = self.assertRaises(
+            storeapi.errors.StoreAccountInformationError,
+            self.run_command, ['register-key', 'default'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Equals(
             'Error fetching account information from store: '
             '500 Internal Server Error'))
 
@@ -204,10 +211,11 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         mock_register_key.side_effect = (
             storeapi.errors.StoreKeyRegistrationError(response))
 
-        result = self.run_command(['register-key', 'default'])
+        raised = self.assertRaises(
+            storeapi.errors.StoreKeyRegistrationError,
+            self.run_command, ['register-key', 'default'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Equals(
             'Key registration failed: 500 Internal Server Error'))
 
     @mock.patch.object(storeapi.SCAClient, 'register_key')
@@ -242,15 +250,16 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         mock_input.assert_has_calls(
             [mock.call('Key number: '), mock.call('Key number: ')])
 
-        self.assertEqual(
-            'We strongly recommend enabling multi-factor authentication: '
-            'https://help.ubuntu.com/community/SSO/FAQs/2FA\n'
-            'Registering key ...\n'
-            'Done. The key "another" ({}) may be used to sign your '
-            'assertions.\n'.format(get_sample_key('another')['sha3-384']),
-            self.fake_logger.output)
+        self.assertThat(
+            self.fake_logger.output,
+            Equals(
+                'We strongly recommend enabling multi-factor authentication: '
+                'https://help.ubuntu.com/community/SSO/FAQs/2FA\n'
+                'Registering key ...\n'
+                'Done. The key "another" ({}) may be used to sign your '
+                'assertions.\n'.format(get_sample_key('another')['sha3-384'])))
 
-        self.assertEqual(1, mock_register_key.call_count)
+        self.assertThat(mock_register_key.call_count, Equals(1))
         expected_assertion = dedent('''\
             type: account-key-request
             account-id: abcd

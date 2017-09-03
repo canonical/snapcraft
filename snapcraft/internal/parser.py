@@ -53,17 +53,7 @@ from collections import OrderedDict
 import snapcraft
 from snapcraft.internal import errors, log, project_loader, repo, sources
 
-
-class BadSnapcraftYAMLError(Exception):
-    pass
-
-
-class MissingSnapcraftYAMLError(Exception):
-    pass
-
-
 logger = logging.getLogger(__name__)
-
 
 # TODO: make this a temporary directory that get's removed when finished
 BASE_DIR = os.path.join(BaseDirectory.xdg_cache_home, 'snapcraft-parser')
@@ -100,7 +90,7 @@ def _get_origin_data(origin_dir):
         with open(yaml_file) as fp:
             origin_data = yaml.load(fp)
     except ScannerError as e:
-        raise errors.InvalidWikiEntryError(e)
+        raise errors.InvalidWikiEntryError(e) from e
 
     return origin_data
 
@@ -199,13 +189,13 @@ def _process_entry(data):
 
     try:
         origin_data = _get_origin_data(origin_dir)
-    except MissingSnapcraftYAMLError:
+    except project_loader.errors.MissingSnapcraftYamlError as e:
         raise errors.InvalidWikiEntryError(
             'Origin {origin!r} is missing a snapcraft.yaml file.'.format(
-                origin=origin))
-    except BadSnapcraftYAMLError as e:
+                origin=origin)) from e
+    except errors.SnapcraftEnvironmentError as e:
         raise errors.InvalidWikiEntryError(
-            'snapcraft.yaml error: {}'.format(e))
+            'snapcraft.yaml error: {}'.format(e)) from e
 
     origin_parts = origin_data.get('parts', {})
     origin_name = origin_data.get('name')
@@ -267,8 +257,7 @@ def _try_process_entry(
         _process_wiki_entry(
             entry, master_parts_list, missing_parts,
             pending_validation_entries)
-    except (errors.SnapcraftError, errors.SnapcraftYamlFileError,
-            errors.SnapcraftEnvironmentError) as e:
+    except errors.SnapcraftError as e:
         logger.warning(e)
         wiki_errors += 1
 

@@ -57,14 +57,15 @@ class SignBuildTestCase(CommandBaseTestCase):
                                             mock_check_output):
         mock_installed.return_value = False
 
-        result = self.run_command(['sign-build', self.snap_test.snap_path,
-                                   '--local'])
+        raised = self.assertRaises(
+            storeapi.errors.MissingSnapdError,
+            self.run_command,
+            ['sign-build', self.snap_test.snap_path, '--local'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Contains(
             'The snapd package is not installed.'))
         mock_installed.assert_called_with('snapd')
-        self.assertEqual(0, mock_check_output.call_count)
+        self.assertThat(mock_check_output.call_count, Equals(0))
 
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -77,7 +78,7 @@ class SignBuildTestCase(CommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(2))
         self.assertThat(result.output, Contains(
             'Path "nonexisting.snap" does not exist'))
-        self.assertEqual(0, mock_check_output.call_count)
+        self.assertThat(mock_check_output.call_count, Equals(0))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
@@ -97,14 +98,15 @@ class SignBuildTestCase(CommandBaseTestCase):
             'grade': 'stable',
         }
 
-        result = self.run_command(['sign-build', self.snap_test.snap_path])
+        raised = self.assertRaises(
+            storeapi.errors.StoreBuildAssertionPermissionError,
+            self.run_command, ['sign-build', self.snap_test.snap_path])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Equals(
             'Your account lacks permission to assert builds for this '
             'snap. Make sure you are logged in as the publisher of '
-            "'test-snap' for series '16'"))
-        self.assertEqual(0, mock_check_output.call_count)
+            "'test-snap' for series '16'."))
+        self.assertThat(mock_check_output.call_count, Equals(0))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')
@@ -130,14 +132,14 @@ class SignBuildTestCase(CommandBaseTestCase):
             '[]',
         ]
 
-        result = self.run_command(['sign-build', self.snap_test.snap_path])
+        raised = self.assertRaises(
+            storeapi.errors.NoKeysError,
+            self.run_command, ['sign-build', self.snap_test.snap_path])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains('You have no usable keys.'))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Contains('You have no usable keys.'))
+        self.assertThat(str(raised), Contains(
             'Please create at least one key with `snapcraft create-key` '
             'for use with snap.'))
-
         snap_build_path = self.snap_test.snap_path + '-build'
         self.assertThat(snap_build_path, Not(FileExists()))
 
@@ -165,13 +167,14 @@ class SignBuildTestCase(CommandBaseTestCase):
             '[{"name": "default"}]',
         ]
 
-        result = self.run_command(['sign-build', '--key-name', 'zoing',
-                                   self.snap_test.snap_path])
+        raised = self.assertRaises(
+            storeapi.errors.NoSuchKeyError,
+            self.run_command,
+            ['sign-build', '--key-name', 'zoing', self.snap_test.snap_path])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'You have no usable key named "zoing".'))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Contains(
+            "You have no usable key named 'zoing'."))
+        self.assertThat(str(raised), Contains(
             'See the keys available in your system with `snapcraft keys`.'))
 
         snap_build_path = self.snap_test.snap_path + '-build'
@@ -202,12 +205,13 @@ class SignBuildTestCase(CommandBaseTestCase):
             '[{"name": "default", "sha3-384": "a_hash"}]',
         ]
 
-        result = self.run_command(['sign-build', self.snap_test.snap_path])
+        raised = self.assertRaises(
+            storeapi.errors.KeyNotRegisteredError,
+            self.run_command, ['sign-build', self.snap_test.snap_path])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Contains(
             'The key \'default\' is not registered in the Store.'))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Contains(
             'Please register it with `snapcraft register-key \'default\'` '
             'before signing and pushing signatures to the Store.'))
         snap_build_path = self.snap_test.snap_path + '-build'
@@ -239,11 +243,12 @@ class SignBuildTestCase(CommandBaseTestCase):
             subprocess.CalledProcessError(1, ['a', 'b'])
         ]
 
-        result = self.run_command(['sign-build', self.snap_test.snap_path])
+        raised = self.assertRaises(
+            storeapi.errors.SignBuildAssertionError,
+            self.run_command, ['sign-build', self.snap_test.snap_path])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'Failed to sign build assertion for {}.'.format(
+        self.assertThat(str(raised), Contains(
+            'Failed to sign build assertion for {!r}'.format(
                 self.snap_test.snap_path)))
         snap_build_path = self.snap_test.snap_path + '-build'
         self.assertThat(snap_build_path, Not(FileExists()))

@@ -39,6 +39,7 @@ import os
 import glob
 
 import snapcraft
+from snapcraft.internal import errors
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +91,8 @@ class CopyPlugin(snapcraft.BasePlugin):
         for src in globs:
             paths = glob.glob(os.path.join(self.builddir, src))
             if not paths:
-                raise EnvironmentError('no matches for {!r}'.format(src))
+                raise errors.SnapcraftEnvironmentError(
+                    'no matches for {!r}'.format(src))
             for path in paths:
                 filepaths.update(
                     {os.path.join(self.builddir, path): globs[src]})

@@ -18,6 +18,7 @@ import os
 
 from testtools.matchers import (
     DirExists,
+    Equals,
     Not
 )
 
@@ -31,7 +32,7 @@ class MakePluginTestCase(integration_tests.TestCase):
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'test'))
-        self.assertEqual('Hello world\n', binary_output)
+        self.assertThat(binary_output, Equals('Hello world\n'))
 
     def test_clean_make_plugin(self):
         self.run_snapcraft('snap', 'make-hello')
@@ -49,11 +50,11 @@ class MakePluginTestCase(integration_tests.TestCase):
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'test'))
-        self.assertEqual('Hello world\n', binary_output)
+        self.assertThat(binary_output, Equals('Hello world\n'))
 
     def test_stage_make_with_artifacts(self):
         self.run_snapcraft('stage', 'make-with-artifacts')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'test'))
-        self.assertEqual('Hello World!\n', binary_output)
+        self.assertThat(binary_output, Equals('Hello World!\n'))

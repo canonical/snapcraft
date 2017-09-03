@@ -1,0 +1,15 @@
+name: build-package-grammar-on-else
+version: '0.1'
+summary: Test build package grammar on statement else
+description: Verify that the on statement moves to else on other architectures
+grade: devel
+confinement: strict
+
+parts:
+  my-part:
+    plugin: nil
+    build-packages:
+      - on other-arch:
+        - foo
+      - else:
+        - hello

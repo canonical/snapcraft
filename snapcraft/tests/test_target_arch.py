@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from testtools.matchers import Equals
+
 import snapcraft
 from snapcraft import tests
 
@@ -58,4 +60,4 @@ class OptionsTestCase(tests.TestCase):
 
     def test_find_machine(self):
         machine = snapcraft._options._find_machine(self.machine)
-        self.assertEqual(machine, self.expected_machine)
+        self.assertThat(machine, Equals(self.expected_machine))

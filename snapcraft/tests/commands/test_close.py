@@ -18,6 +18,7 @@ from unittest import mock
 
 from testtools.matchers import Contains, Equals
 
+import snapcraft.storeapi.errors
 from snapcraft import storeapi
 from . import CommandBaseTestCase
 
@@ -32,10 +33,11 @@ class CloseCommandTestCase(CommandBaseTestCase):
             }
         }
 
-        result = self.run_command(['close', 'foo', 'beta'])
+        raised = self.assertRaises(
+            snapcraft.storeapi.errors.StoreChannelClosingPermissionError,
+            self.run_command, ['close', 'foo', 'beta'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Equals(
             'Your account lacks permission to close channels for this snap. '
             'Make sure the logged in account has upload permissions on '
             "'foo' in series '16'."))
@@ -208,4 +210,4 @@ class CloseCommandTestCase(CommandBaseTestCase):
                              edge             ^          ^
                              stable/hotfix-2  1.3        49          2017-05-21T18:52:14.578435
 
-            \x1b[0;32mThe stable/hotfix-1 channel is now closed.\x1b[0m"""))) # noqa
+            \x1b[0;32mThe stable/hotfix-1 channel is now closed.\x1b[0m""")))  # noqa

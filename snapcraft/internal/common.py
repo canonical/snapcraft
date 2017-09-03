@@ -27,6 +27,8 @@ import sys
 import tempfile
 import urllib
 
+from snapcraft.internal import errors
+
 
 SNAPCRAFT_FILES = ['snapcraft.yaml', '.snapcraft.yaml', 'parts', 'stage',
                    'prime', 'snap']
@@ -38,8 +40,6 @@ _schemadir = _DEFAULT_SCHEMADIR
 _DEFAULT_LIBRARIESDIR = os.path.join(sys.prefix, 'share', 'snapcraft',
                                      'libraries')
 _librariesdir = _DEFAULT_LIBRARIESDIR
-_DEFAULT_TOURDIR = os.path.join(sys.prefix, 'share', 'snapcraft', 'tour')
-_tourdir = _DEFAULT_TOURDIR
 
 MAX_CHARACTERS_WRAP = 120
 
@@ -117,25 +117,19 @@ def set_schemadir(schemadir):
 
 
 def get_schemadir():
-    if is_snap():
-        snap = os.environ.get('SNAP')
-        return os.path.join(snap, 'share', 'snapcraft', 'schema')
     return _schemadir
 
 
 def get_arch_triplet():
-    raise EnvironmentError(
-        "This plugin is outdated, use 'project.arch_triplet'")
+    raise errors.PluginOutdatedError("use 'project.arch_triplet'")
 
 
 def get_arch():
-    raise EnvironmentError(
-        "This plugin is outdated, use 'project.deb_arch'")
+    raise errors.PluginOutdatedError("use 'project.deb_arch'")
 
 
 def get_parallel_build_count():
-    raise EnvironmentError(
-        "This plugin is outdated, use 'parallel_build_count'")
+    raise errors.PluginOutdatedError("use 'parallel_build_count'")
 
 
 def set_librariesdir(librariesdir):
@@ -147,18 +141,6 @@ def get_librariesdir():
     return _librariesdir
 
 
-def set_tourdir(tourdir):
-    global _tourdir
-    _tourdir = tourdir
-
-
-def get_tourdir():
-    if is_snap():
-        snap = os.environ.get('SNAP')
-        return os.path.join(snap, 'tour')
-    return _tourdir
-
-
 def get_python2_path(root):
     """Return a valid PYTHONPATH or raise an exception."""
     python_paths = glob.glob(os.path.join(
@@ -166,7 +148,7 @@ def get_python2_path(root):
     try:
         return python_paths[0]
     except IndexError:
-        raise EnvironmentError(
+        raise errors.SnapcraftEnvironmentError(
             'PYTHONPATH cannot be set for {!r}'.format(root))
 
 

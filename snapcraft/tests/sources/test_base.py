@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,6 +17,8 @@
 import os
 from unittest import mock
 
+from testtools.matchers import Equals
+
 from snapcraft.internal.sources import _base
 from snapcraft import tests
 
@@ -30,21 +32,25 @@ class TestFileBase(tests.TestCase):
 
     @mock.patch('snapcraft.internal.sources._base.FileBase.download')
     def test_pull_url(self, mock_download):
+        mock_download.return_value = 'dir'
         file_src = self.get_mock_file_base(
             'http://snapcraft.io/snapcraft.yaml', 'dir')
         file_src.pull()
 
         mock_download.assert_called_once_with()
-        file_src.provision.assert_called_once_with(file_src.source_dir)
+        file_src.provision.assert_called_once_with(
+            file_src.source_dir, src='dir')
 
     @mock.patch('shutil.copy2')
     def test_pull_copy(self, mock_shutil_copy2):
         file_src = self.get_mock_file_base('snapcraft.yaml', 'dir')
         file_src.pull()
 
+        expected = os.path.join(file_src.source_dir, 'snapcraft.yaml')
         mock_shutil_copy2.assert_called_once_with(
-            file_src.source, file_src.source_dir)
-        file_src.provision.assert_called_once_with(file_src.source_dir)
+            file_src.source, expected)
+        file_src.provision.assert_called_once_with(
+            file_src.source_dir, src=expected)
 
     @mock.patch('snapcraft.internal.sources._base.requests')
     @mock.patch(
@@ -58,8 +64,8 @@ class TestFileBase(tests.TestCase):
 
         file_src.pull()
 
-        self.assertEqual(file_src.file, os.path.join(
-                file_src.source_dir, os.path.basename(file_src.source)))
+        self.assertThat(file_src.file, Equals(os.path.join(
+                file_src.source_dir, os.path.basename(file_src.source))))
 
     @mock.patch(
         'snapcraft.internal.sources._base.download_requests_stream')
@@ -95,6 +101,8 @@ class TestFileBase(tests.TestCase):
 
         file_src.pull()
 
-        self.assertEqual(mock_urlretrieve.call_count, 1)
-        self.assertEqual(mock_urlretrieve.call_args[0][0], file_src.source)
-        self.assertEqual(mock_urlretrieve.call_args[0][1], file_src.file)
+        self.assertThat(mock_urlretrieve.call_count, Equals(1))
+        self.assertThat(
+            mock_urlretrieve.call_args[0][0], Equals(file_src.source))
+        self.assertThat(
+            mock_urlretrieve.call_args[0][1], Equals(file_src.file))

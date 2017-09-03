@@ -16,6 +16,10 @@
 
 from testtools.matchers import FileExists
 
+from testtools.matchers import (
+    Equals,
+)
+
 import integration_tests
 
 
@@ -24,7 +28,7 @@ class ChannelClosingTestCase(integration_tests.StoreTestCase):
     def test_missing_login(self):
         expected = 'run "snapcraft login"'
         status = self.close('basic', 'beta', expected=expected)
-        self.assertEqual(1, status)
+        self.assertThat(status, Equals(2))
 
     def test_missing_permission(self):
         self.addCleanup(self.logout)
@@ -33,7 +37,7 @@ class ChannelClosingTestCase(integration_tests.StoreTestCase):
             'Make sure the logged in account has upload permissions on '
             "'missing' in series '16'.")
         status = self.close('missing', 'beta', expected=expected)
-        self.assertEqual(1, status)
+        self.assertThat(status, Equals(2))
 
     def test_close_channel(self):
         self.addCleanup(self.logout)
@@ -48,8 +52,8 @@ class ChannelClosingTestCase(integration_tests.StoreTestCase):
         snap_path = '{}_{}_{}.snap'.format(name, version, 'all')
         self.assertThat(snap_path, FileExists())
         self.register(name)
-        self.assertEqual(0, self.push(snap_path, release='edge,beta'))
+        self.assertThat(self.push(snap_path, release='edge,beta'), Equals(0))
 
         expected = 'The beta channel is now closed.'
         status = self.close(name, 'beta', expected=expected)
-        self.assertEqual(0, status)
+        self.assertThat(status, Equals(0))

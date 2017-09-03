@@ -17,6 +17,8 @@
 import os
 from unittest import mock
 
+from testtools.matchers import Equals
+
 from snapcraft.internal import sources
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
@@ -90,7 +92,7 @@ class TestBazaar(tests.sources.SourceTestCase):
             'lp:mysource', 'source_dir', source_branch='branch')
 
         expected_message = 'can\'t specify a source-branch for a bzr source'
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_depth_raises_exception(self):
         raised = self.assertRaises(
@@ -100,7 +102,7 @@ class TestBazaar(tests.sources.SourceTestCase):
 
         expected_message = (
             'can\'t specify source-depth for a bzr source')
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_tag_and_commit_raises_exception(self):
         raised = self.assertRaises(
@@ -112,7 +114,7 @@ class TestBazaar(tests.sources.SourceTestCase):
         expected_message = (
             'can\'t specify both source-tag and source-commit for '
             'a bzr source')
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_source_checksum_raises_exception(self):
         raised = self.assertRaises(
@@ -123,7 +125,7 @@ class TestBazaar(tests.sources.SourceTestCase):
 
         expected_message = (
             "can't specify a source-checksum for a bzr source")
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_has_source_handler_entry(self):
         self.assertTrue(sources._source_handler['bzr'] is sources.Bazaar)
@@ -146,8 +148,8 @@ class BazaarDetailsTestCase(tests.TestCase):
         self.source_details = self.bzr._get_source_details()
 
     def test_bzr_details_commit(self):
-        self.assertEqual(
-            self.bzr_repo.commit, self.source_details['source-commit'])
+        self.assertThat(
+            self.source_details['source-commit'], Equals(self.bzr_repo.commit))
 
     def test_bzr_details_tag(self):
         self.bzr = sources.Bazaar(self.working_tree, self.source_dir,
@@ -155,4 +157,5 @@ class BazaarDetailsTestCase(tests.TestCase):
         self.bzr.pull()
 
         self.source_details = self.bzr._get_source_details()
-        self.assertEqual('feature-tag', self.source_details['source-tag'])
+        self.assertThat(
+            self.source_details['source-tag'], Equals('feature-tag'))

@@ -18,8 +18,8 @@ jobs:
     - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh plugins; fi
     - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh store; fi
     - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh containers; fi
-    # CLA check, only in pull requests.
-    - script: if [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ]; then ./tools/travis/run_cla_check.sh; fi
+    # CLA check, only in pull requests, not comming from the bot.
+    - script: if [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ] && [ "TRAVIS_PULL_REQUEST_SLUG" != 'snappy-m-o/snapcraft' ]; then ./tools/travis/run_cla_check.sh; fi
     - stage: snap
       script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/build_snapcraft_snap.sh; fi
     # Trigger edge tests, only in the daily cron.
@@ -28,6 +28,3 @@ jobs:
     # Trigger beta tests, only in the daily cron.
     - stage: beta
       script: if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then ./tools/travis/make_beta_pr.sh; fi
-    # Generate docs, only in pushes to master.
-    - stage: deploy
-      script: if [ "$TRAVIS_EVENT_TYPE" = "push" ] && [ "$TRAVIS_BRANCH" = "master" ]; then ./tools/travis/deploy_docs.sh; fi

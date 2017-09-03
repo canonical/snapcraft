@@ -20,6 +20,7 @@ import subprocess
 import fixtures
 import testtools
 from testtools.matchers import (
+    Equals,
     EndsWith,
     FileContains,
     FileExists,
@@ -62,7 +63,7 @@ class SnapTestCase(integration_tests.TestCase):
         for binary, expected_output in binary_scenarios:
             output = subprocess.check_output(
                 os.path.join(self.prime_dir, binary), universal_newlines=True)
-            self.assertEqual(expected_output, output)
+            self.assertThat(output, Equals(expected_output))
 
         with testtools.ExpectedException(subprocess.CalledProcessError):
             subprocess.check_output(

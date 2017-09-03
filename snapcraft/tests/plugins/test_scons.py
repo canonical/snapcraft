@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,7 +17,7 @@
 import os
 
 from unittest import mock
-from testtools.matchers import HasLength
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -52,16 +52,16 @@ class SconsPluginTestCase(tests.TestCase):
         self.assertTrue(
             'type' in scons_options,
             'Expected "type" to be included in "scons-options"')
-        self.assertEqual(scons_options['type'], 'array',
-                         'Expected "scons-options" "type" to be "array", but '
-                         'it was "{}"'.format(scons_options['type']))
+        self.assertThat(scons_options['type'], Equals('array'),
+                        'Expected "scons-options" "type" to be "array", but '
+                        'it was "{}"'.format(scons_options['type']))
 
         self.assertTrue(
             'minitems' in scons_options,
             'Expected "minitems" to be included in "scons-options"')
-        self.assertEqual(scons_options['minitems'], 1,
-                         'Expected "scons-options" "minitems" to be 1, but '
-                         'it was "{}"'.format(scons_options['minitems']))
+        self.assertThat(scons_options['minitems'], Equals(1),
+                        'Expected "scons-options" "minitems" to be 1, but '
+                        'it was "{}"'.format(scons_options['minitems']))
 
         self.assertTrue(
             'uniqueItems' in scons_options,
@@ -95,7 +95,7 @@ class SconsPluginTestCase(tests.TestCase):
         env = os.environ.copy()
         env['DESTDIR'] = plugin.installdir
 
-        self.assertEqual(2, run_mock.call_count)
+        self.assertThat(run_mock.call_count, Equals(2))
         run_mock.assert_has_calls([
             mock.call(['scons', '--debug=explain']),
             mock.call(['scons', 'install', '--debug=explain'], env=env)

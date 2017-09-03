@@ -35,10 +35,6 @@ from tabulate import tabulate
 
 from snapcraft.file_utils import calculate_sha3_384
 from snapcraft import storeapi
-from snapcraft.storeapi.errors import (
-    StoreDeltaApplicationError,
-    StoreAssertionError,
-)
 from snapcraft.internal import (
     cache,
     deltas,
@@ -236,9 +232,7 @@ def _export_key(name, account_id):
 
 def list_keys():
     if not repo.Repo.is_package_installed('snapd'):
-        raise EnvironmentError(
-            'The snapd package is not installed. In order to use `list-keys`, '
-            'you must run `apt install snapd`.')
+        raise storeapi.errors.MissingSnapdError('list-keys')
     keys = list(_get_usable_keys())
     store = storeapi.StoreClient()
     with _requires_login():
@@ -258,9 +252,7 @@ def list_keys():
 
 def create_key(name):
     if not repo.Repo.is_package_installed('snapd'):
-        raise EnvironmentError(
-            'The snapd package is not installed. In order to use '
-            '`create-key`, you must run `apt install snapd`.')
+        raise storeapi.errors.MissingSnapdError('create-key')
     if not name:
         name = 'default'
     keys = list(_get_usable_keys(name=name))
@@ -268,7 +260,7 @@ def create_key(name):
         # `snap create-key` would eventually fail, but we can save the user
         # some time in this obvious error case by not bothering to talk to
         # the store first.
-        raise RuntimeError('You already have a key named "{}".'.format(name))
+        raise storeapi.errors.KeyAlreadyRegisteredError(name)
     store = storeapi.StoreClient()
     try:
         account_info = store.get_account_information()
@@ -281,8 +273,7 @@ def create_key(name):
         # yet.
         enabled_names = set()
     if name in enabled_names:
-        raise RuntimeError(
-            'You have already registered a key named "{}".'.format(name))
+        raise storeapi.errors.KeyAlreadyRegisteredError(name)
     subprocess.check_call(['snap', 'create-key', name])
 
 
@@ -290,25 +281,19 @@ def _maybe_prompt_for_key(name):
     keys = list(_get_usable_keys(name=name))
     if not keys:
         if name is not None:
-            raise RuntimeError(
-                'You have no usable key named "{}".\nSee the keys available '
-                'in your system with `snapcraft keys`.'.format(name))
+            raise storeapi.errors.NoSuchKeyError(name)
         else:
-            raise RuntimeError(
-                'You have no usable keys.\nPlease create at least one key '
-                'with `snapcraft create-key` for use with snap.')
+            raise storeapi.errors.NoKeysError
     return _select_key(keys)
 
 
 def register_key(name):
     if not repo.Repo.is_package_installed('snapd'):
-        raise EnvironmentError(
-            'The snapd package is not installed. In order to use '
-            '`register-key`, you must run `apt install snapd`.')
+        raise storeapi.errors.MissingSnapdError('register-key')
     key = _maybe_prompt_for_key(name)
     store = storeapi.StoreClient()
     if not _login(store, acls=['modify_account_key'], save=False):
-        raise RuntimeError('Cannot continue without logging in successfully.')
+        raise storeapi.errors.LoginRequiredError()
     logger.info('Registering key ...')
     account_info = store.get_account_information()
     account_key_request = _export_key(key['name'], account_info['account_id'])
@@ -339,16 +324,13 @@ def _generate_snap_build(authority_id, snap_id, grade, key_name,
     cmd.append(snap_filename)
     try:
         return subprocess.check_output(cmd)
-    except subprocess.CalledProcessError:
-        raise RuntimeError(
-            'Failed to sign build assertion for {}.'.format(snap_filename))
+    except subprocess.CalledProcessError as e:
+        raise storeapi.errors.SignBuildAssertionError(snap_filename) from e
 
 
 def sign_build(snap_filename, key_name=None, local=False):
     if not repo.Repo.is_package_installed('snapd'):
-        raise EnvironmentError(
-            'The snapd package is not installed. In order to use '
-            '`sign-build`, you must run `apt install snapd`.')
+        raise storeapi.errors.MissingSnapdError('sign-build')
 
     if not os.path.exists(snap_filename):
         raise FileNotFoundError(
@@ -366,11 +348,9 @@ def sign_build(snap_filename, key_name=None, local=False):
     try:
         authority_id = account_info['account_id']
         snap_id = account_info['snaps'][snap_series][snap_name]['snap-id']
-    except KeyError:
-        raise RuntimeError(
-            'Your account lacks permission to assert builds for this '
-            'snap. Make sure you are logged in as the publisher of '
-            '\'{}\' for series \'{}\'.'.format(snap_name, snap_series))
+    except KeyError as e:
+        raise storeapi.errors.StoreBuildAssertionPermissionError(
+            snap_name, snap_series) from e
 
     snap_build_path = snap_filename + '-build'
     if os.path.isfile(snap_build_path):
@@ -386,11 +366,7 @@ def sign_build(snap_filename, key_name=None, local=False):
                 if a['public-key-sha3-384'] == key['sha3-384']
             ]
             if not is_registered:
-                raise RuntimeError(
-                    'The key {!r} is not registered in the Store.\n'
-                    'Please register it with `snapcraft register-key {!r}` '
-                    'before signing and pushing signatures to the '
-                    'Store.'.format(key['name'], key['name']))
+                raise storeapi.errors.KeyNotRegisteredError(key['name'])
         snap_build_content = _generate_snap_build(
             authority_id, snap_id, grade, key['name'], snap_filename)
         with open(snap_build_path, 'w+') as fd:
@@ -432,7 +408,7 @@ def push(snap_filename, release_channels=None):
     if sha3_384_available and source_snap:
         try:
             result = _push_delta(snap_name, snap_filename, source_snap)
-        except StoreDeltaApplicationError as e:
+        except storeapi.errors.StoreDeltaApplicationError as e:
             logger.warning(
                 'Error generating delta: {}\n'
                 'Falling back to pushing full snap...'.format(str(e)))
@@ -482,7 +458,7 @@ def _push_delta(snap_name, snap_filename, source_snap):
         delta_filename = xdelta_generator.make_delta()
     except (DeltaGenerationError, DeltaGenerationTooBigError,
             DeltaToolError) as e:
-        raise StoreDeltaApplicationError(str(e))
+        raise storeapi.errors.StoreDeltaApplicationError(str(e))
 
     snap_hashes = {'source_hash': calculate_sha3_384(source_snap),
                    'target_hash': calculate_sha3_384(target_snap),
@@ -502,7 +478,7 @@ def _push_delta(snap_name, snap_filename, source_snap):
         delta_tracker.raise_for_code()
     except storeapi.errors.StoreReviewError as e:
         if e.code == 'processing_upload_delta_error':
-            raise StoreDeltaApplicationError
+            raise storeapi.errors.StoreDeltaApplicationError
         else:
             raise
     finally:
@@ -622,12 +598,9 @@ def close(snap_name, channel_names):
 
     try:
         snap_id = info['snaps'][snap_series][snap_name]['snap-id']
-    except KeyError:
-        echo.error(
-            'Your account lacks permission to close channels for this snap. '
-            'Make sure the logged in account has upload permissions on '
-            '\'{}\' in series \'{}\'.'.format(snap_name, snap_series))
-        raise
+    except KeyError as e:
+        raise storeapi.errors.StoreChannelClosingPermissionError(
+            snap_name, snap_series) from e
 
     closed_channels, c_m_tree = store.close_channels(snap_id, channel_names)
 
@@ -657,13 +630,7 @@ def download(snap_name, channel, download_path, arch, except_hash=''):
     :returns: A sha3_384 of the file that was or would have been downloaded.
     """
     store = storeapi.StoreClient()
-    try:
-        return store.download(snap_name, channel, download_path,
-                              arch, except_hash)
-    except storeapi.errors.SHAMismatchError:
-        raise RuntimeError(
-            'Failed to download {} at {} (mismatched SHA)'.format(
-                snap_name, download_path))
+    return store.download(snap_name, channel, download_path, arch, except_hash)
 
 
 def status(snap_name, series, arch):
@@ -847,7 +814,7 @@ _COLLABORATION_HEADER = dedent("""\
     #
     # All timestamps are UTC, and the "now" special string will be replaced by
     # the current time. Do not remove entries or use an until time in the past
-    # unless you want existing snaps provided by the developer to stop working.""") # noqa
+    # unless you want existing snaps provided by the developer to stop working.""")  # noqa
 
 
 def _edit_collaborators(developers):
@@ -929,10 +896,7 @@ def _get_developers(snap_id, publisher_id):
 def _check_validations(validations):
     invalids = [v for v in validations if not validation_re.match(v)]
     if invalids:
-        for v in invalids:
-            echo.error('Invalid validation request "{}", format must be'
-                       ' name=revision'.format(v))
-        raise RuntimeError()
+        raise storeapi.errors.InvalidValidationRequestsError(invalids)
 
 
 def _sign_assertion(snap_name, assertion, key, endpoint):
@@ -947,7 +911,7 @@ def _sign_assertion(snap_name, assertion, key, endpoint):
     assertion, err = snap_sign.communicate(input=data)
     if snap_sign.returncode != 0:
         err = err.decode('ascii', errors='replace')
-        raise StoreAssertionError(
+        raise storeapi.errors.StoreAssertionError(
             endpoint=endpoint, snap_name=snap_name, error=err)
 
     return assertion
