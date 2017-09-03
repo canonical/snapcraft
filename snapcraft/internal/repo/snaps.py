@@ -16,8 +16,8 @@
 import contextlib
 import logging
 import sys
-import urllib
 from subprocess import check_call, check_output, CalledProcessError
+from urllib import parse
 
 import requests_unixsocket
 from requests import exceptions
@@ -201,7 +201,7 @@ def get_snapd_socket_path_template():
 
 
 def _get_local_snap_info(snap_name):
-    slug = 'snaps/{}'.format(urllib.parse.quote(snap_name, safe=''))
+    slug = 'snaps/{}'.format(parse.quote(snap_name, safe=''))
     url = get_snapd_socket_path_template().format(slug)
     with requests_unixsocket.Session() as session:
         snap_info = session.get(url)
@@ -212,7 +212,7 @@ def _get_local_snap_info(snap_name):
 def _get_store_snap_info(snap_name):
     # This logic uses /v2/find returns an array of results, given that
     # we do a strict search either 1 result or a 404 will be returned.
-    slug = 'find?name={}'.format(urllib.parse.quote(snap_name, safe=''))
+    slug = 'find?{}'.format(parse.urlencode(dict(name=snap_name)))
     url = get_snapd_socket_path_template().format(slug)
     with requests_unixsocket.Session() as session:
         snap_info = session.get(url)
