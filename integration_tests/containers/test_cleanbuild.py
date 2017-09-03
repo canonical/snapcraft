@@ -27,7 +27,7 @@ class CleanbuildTestCase(integration_tests.TestCase):
         if project_dir:
             self.copy_project_to_cwd(project_dir)
 
-        command = [sudo, self.snapcraft_command, '-d', 'cleanbuild']
+        command = ['sudo', self.snapcraft_command, '-d', 'cleanbuild']
         popen = subprocess.Popen(
             command, stdout=subprocess.PIPE, universal_newlines=True)
         for line in iter(popen.stdout.readline, ''):
@@ -38,7 +38,7 @@ class CleanbuildTestCase(integration_tests.TestCase):
             raise subprocess.CalledProcessError(return_code, command)
 
     def test_cleanbuild(self):
-        self.run_snapcraft_cleanbuild('assemble'):
+        self.run_snapcraft_cleanbuild('assemble')
 
         snap_source_path = 'assemble_1.0_source.tar.bz2'
         self.assertThat(snap_source_path, FileExists())
