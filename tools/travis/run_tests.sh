@@ -50,8 +50,6 @@ lxc="/snap/bin/lxc"
 $lxc file push --recursive $project_path test-runner/root/
 $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
 if [ "$test" = "containers" ]; then
-    # Workaround for https://bugs.launchpad.net/snapd/+bug/1709536
-    $lxc exec test-runner -- sh -c "printf '[Service]\nNice=0' > /systemd/system/snapd.service.d/override.conf && systemctl daemon-reload && systemctl start snapd"
     $lxc exec test-runner -- sh -c "cd snapcraft && ./tools/travis/setup_lxd.sh"
 fi
 $lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test $pattern"

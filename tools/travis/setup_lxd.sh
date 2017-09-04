@@ -26,6 +26,12 @@ while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do
     sleep 1
 done
 apt-get install --yes snapd
+if which systemd > /dev/null; then
+    # Workaround for https://bugs.launchpad.net/snapd/+bug/1709536
+    printf '[Service]\nNice=0' > /systemd/system/snapd.service.d/override.conf
+    systemctl daemon-reload && systemctl start snapd
+fi
+
 # Use edge because the feature to copy links to the container has not yet been
 # released to stable:
 # https://github.com/lxc/lxd/commit/004e7c361e1d914795d3ba7582654622e32ff193
