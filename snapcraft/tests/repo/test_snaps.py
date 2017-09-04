@@ -364,7 +364,7 @@ class SnapPackageLifecycleTest(SnapPackageBaseTestCase):
         self.fake_snap_command.refresh_success = False
         self.assertRaises(errors.SnapRefreshError, snap_pkg.refresh)
 
-    def test_bundle_install(self):
+    def test_install_multiple_snaps(self):
         snaps.install_snaps([
             'fake-snap/classic/stable',
             'new-fake-snap'
