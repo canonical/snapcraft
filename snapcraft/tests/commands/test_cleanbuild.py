@@ -16,6 +16,7 @@
 
 import logging
 import os
+import subprocess
 import tarfile
 from textwrap import dedent
 import snapcraft.internal.errors
@@ -112,8 +113,17 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
             'snap/snapcraft unexpectedly excluded from tarball')
 
     def test_cleanbuild_debug_appended_goes_to_shell_on_errors(self):
-        fake_lxd = tests.fixture_setup.FakeLXD(fail_on_snapcraft_run=True)
+        fake_lxd = tests.fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
+
+        def call_effect(*args, **kwargs):
+            # Fail on an actual snapcraft command and not the command
+            # for the installation of it.
+            if 'snapcraft snap' in ' '.join(args[0]):
+                raise subprocess.CalledProcessError(
+                    returncode=255, cmd=args[0])
+
+        fake_lxd.check_call_mock.side_effect = call_effect
 
         result = self.run_command(['cleanbuild', '--debug'])
         self.assertThat(result.exit_code, Equals(0))
@@ -121,8 +131,17 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
             'Debug mode enabled, dropping into a shell'))
 
     def test_cleanbuild_debug_prepended_goes_to_shell_on_errors(self):
-        fake_lxd = tests.fixture_setup.FakeLXD(fail_on_snapcraft_run=True)
+        fake_lxd = tests.fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
+
+        def call_effect(*args, **kwargs):
+            # Fail on an actual snapcraft command and not the command
+            # for the installation of it.
+            if 'snapcraft snap' in ' '.join(args[0]):
+                raise subprocess.CalledProcessError(
+                    returncode=255, cmd=args[0])
+
+        fake_lxd.check_call_mock.side_effect = call_effect
 
         result = self.run_command(['--debug', 'cleanbuild'])
         self.assertThat(result.exit_code, Equals(0))

@@ -357,10 +357,11 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.useFixture(fake_lxd)
 
         def call_effect(*args, **kwargs):
-            if args[0][:1] == ['lxc'] and 'ls' in args[0]:
+            if args[0][:2] == ['lxc', 'exec'] and args[0][4] == 'ls':
                 return ''.encode('utf-8')
+            return fake_lxd.check_output_side_effect()(*args, **kwargs)
 
-        fake_lxd.popen_mock.side_effect = call_effect
+        fake_lxd.check_output_mock.side_effect = call_effect
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.useFixture(fixtures.EnvironmentVariable(

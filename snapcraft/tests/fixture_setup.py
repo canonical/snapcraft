@@ -426,7 +426,7 @@ class FakePlugin(fixtures.Fixture):
 class FakeLXD(fixtures.Fixture):
     '''...'''
 
-    def __init__(self, fail_on_snapcraft_run=False):
+    def __init__(self):
         self.status = None
         self.network = '''{ "eth0": {
                                 "addresses": [{
@@ -436,7 +436,6 @@ class FakeLXD(fixtures.Fixture):
                             }}'''
         self.files = []
         self.devices = '{}'
-        self.fail_on_snapcraft_run = fail_on_snapcraft_run
 
     def _setUp(self):
         patcher = mock.patch('snapcraft.internal.lxd.check_call')
@@ -491,45 +490,47 @@ class FakeLXD(fixtures.Fixture):
                             'DEVICES': self.devices,
                             }).encode('utf-8')
                 return '[]'.encode('utf-8')
-            elif args[0][:2] == ['lxc', 'init']:
-                self.name = args[0][3]
-                self.status = 'Stopped'
-            elif args[0][:2] == ['lxc', 'launch']:
-                self.name = args[0][4]
-                self.status = 'Running'
-            elif args[0][:2] == ['lxc', 'stop'] and not self.status:
-                # error: not found
-                raise CalledProcessError(returncode=1, cmd=args[0])
-            # Fail on an actual snapcraft command and not the command
-            # for the installation of it.
-            elif ('snapcraft snap' in ' '.join(args[0])
-                  and self.fail_on_snapcraft_run):
-                raise CalledProcessError(returncode=255, cmd=args[0])
+            elif (args[0][0] == 'lxc' and
+                  args[0][1] in ['init', 'start', 'launch', 'stop']):
+                return self._lxc_create_start_stop(args)
             elif args[0][:2] == ['lxc', 'exec']:
-                if self.status and args[0][2] == self.name:
-                    if 'sshfs' in args[0]:
-                        self.files = ['foo', 'bar']
-
-                        class Popen:
-                            def __init__(self, args):
-                                self.args = args
-
-                            def terminate(self):
-                                pass
-                        return Popen(args[0])
-                    elif 'ls' in args[0]:
-                        return ' '.join(self.files).encode('utf-8')
+                return self._lxc_exec(args)
             elif '/usr/lib/sftp-server' in args[0]:
-                class Popen:
-                    def __init__(self, args):
-                        self.args = args
-
-                    def terminate(self):
-                        pass
-                return Popen(args[0])
+                return self._popen(args[0])
             else:
                 return ''.encode('utf-8')
         return call_effect
+
+    def _lxc_create_start_stop(self, args):
+        if args[0][1] == 'init':
+            self.name = args[0][3]
+            self.status = 'Stopped'
+        elif args[0][1] == 'launch':
+            self.name = args[0][4]
+            self.status = 'Running'
+        elif args[0][1] == 'start' and self.name == args[0][2]:
+            self.status = 'Running'
+        elif args[0][1] == 'stop' and not self.status:
+            # error: not found
+            raise CalledProcessError(returncode=1, cmd=args[0])
+
+    def _lxc_exec(self, args):
+        if self.status and args[0][2] == self.name:
+            cmd = args[0][4]
+            if cmd == 'ls':
+                return ' '.join(self.files).encode('utf-8')
+            elif cmd == 'sshfs':
+                self.files = ['foo', 'bar']
+                return self._popen(args[0])
+
+    def _popen(self, args):
+        class Popen:
+            def __init__(self, args):
+                self.args = args
+
+            def terminate(self):
+                pass
+        return Popen(args)
 
 
 class FakeSnapd(fixtures.Fixture):
