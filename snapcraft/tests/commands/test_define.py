@@ -17,6 +17,7 @@ from textwrap import dedent
 
 from testtools.matchers import Contains, Equals
 
+import snapcraft.internal.errors
 from snapcraft.tests import TestWithFakeRemoteParts
 from . import CommandBaseTestCase
 
@@ -36,13 +37,15 @@ class DefineCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
               source: http://curl.org""")))
 
     def test_defining_a_part_that_doesnt_exist_helps_out(self):
-        result = self.run_command(['define', 'curler'])
+        raised = self.assertRaises(
+            snapcraft.internal.errors.PartNotInCacheError,
+            self.run_command, ['define', 'curler'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(dedent("""\
-            Cannot find the part name 'curler' in the cache. Please run `snapcraft update` and try again.
-            If it is indeed missing, consider going to https://wiki.ubuntu.com/snapcraft/parts to add it.
-            """))) # noqa
+        self.assertThat(str(raised), Equals(
+            "Cannot find the part name 'curler' in the cache. Please run "
+            '`snapcraft update` and try again.\nIf it is indeed missing, '
+            'consider going to https://wiki.ubuntu.com/snapcraft/parts to add '
+            'it.'))
 
     def test_defining_a_part_with_multiline_description(self):
         result = self.run_command(['define', 'multiline-part'])

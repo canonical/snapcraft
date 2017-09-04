@@ -15,11 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 from textwrap import dedent
 
 import testscenarios
 from testtools.matchers import (
     Contains,
+    Equals,
     FileContains,
     FileExists,
     Not,
@@ -71,6 +73,26 @@ class PrimeTestCase(integration_tests.TestCase):
 
         self.expectThat(
             desktop_path, FileContains(matcher=Contains('non ascíí')))
+
+    def _prime_invalid_part(self, debug):
+        exception = self.assertRaises(
+            subprocess.CalledProcessError,
+            self.run_snapcraft, ['prime', 'invalid-part-name'],
+            'prime-from-stage', debug=debug)
+
+        self.assertThat(exception.returncode, Equals(2))
+        self.assertThat(exception.output, Contains(
+            "part named 'invalid-part-name' is not defined"))
+
+        return exception.output
+
+    def test_prime_invalid_part_no_traceback_without_debug(self):
+        self.assertThat(
+            self._prime_invalid_part(False), Not(Contains("Traceback")))
+
+    def test_prime_invalid_part_does_traceback_with_debug(self):
+        self.assertThat(
+            self._prime_invalid_part(True), Contains("Traceback"))
 
 
 class PrimedAssetsTestCase(testscenarios.WithScenarios,

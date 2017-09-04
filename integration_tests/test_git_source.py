@@ -19,7 +19,7 @@ import subprocess
 import shutil
 from textwrap import dedent
 
-from testtools.matchers import Contains, FileExists
+from testtools.matchers import Contains, Equals, FileExists
 import integration_tests
 
 
@@ -40,11 +40,11 @@ class GitSourceTestCase(integration_tests.GitSourceBaseTestCase):
 
         self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src')
-        self.assertEqual('"2"', revno)
+        self.assertThat(revno, Equals('"2"'))
 
         self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src')
-        self.assertEqual('"2"', revno)
+        self.assertThat(revno, Equals('"2"'))
 
     def test_pull_git_tag(self):
         self.copy_project_to_cwd('git-tag')
@@ -58,11 +58,11 @@ class GitSourceTestCase(integration_tests.GitSourceBaseTestCase):
 
         self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src')
-        self.assertEqual('"1"', revno)
+        self.assertThat(revno, Equals('"1"'))
 
         self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src')
-        self.assertEqual('"1"', revno)
+        self.assertThat(revno, Equals('"1"'))
 
     def test_pull_git_commit(self):
         self.copy_project_to_cwd('git-commit')
@@ -74,7 +74,7 @@ class GitSourceTestCase(integration_tests.GitSourceBaseTestCase):
         # The test uses "HEAD^" so we can only test it once
         self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src')
-        self.assertEqual('"1"', revno)
+        self.assertThat(revno, Equals('"1"'))
 
     def test_pull_git_branch(self):
         self.copy_project_to_cwd('git-branch')
@@ -95,11 +95,11 @@ class GitSourceTestCase(integration_tests.GitSourceBaseTestCase):
 
         self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src', revrange='-2')
-        self.assertEqual('"3"\n"1"', revno)
+        self.assertThat(revno, Equals('"3"\n"1"'))
 
         self.run_snapcraft('pull')
         revno = self._get_git_revno('parts/git/src', revrange='-2')
-        self.assertEqual('"3"\n"1"', revno)
+        self.assertThat(revno, Equals('"3"\n"1"'))
 
     def test_pull_git_with_depth(self):
         """Regression test for LP: #1627772."""

@@ -52,11 +52,6 @@ parts:
         LIBSODIUM=$(readlink -n $TRIPLET_PATH/libsodium.so.18)
         ln -s $LIBSODIUM $TRIPLET_PATH/libsodium.so
     after: [python, apt]
-  tour:
-    source: tour
-    plugin: dump
-    organize:
-      "*": tour/
   python:
     source: https://www.python.org/ftp/python/3.6.0/Python-3.6.0.tar.xz
     plugin: autotools

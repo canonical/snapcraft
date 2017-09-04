@@ -37,10 +37,7 @@ from snapcraft.internal.meta import (
     _SnapPackaging
 )
 from snapcraft.internal import common
-from snapcraft.internal.errors import (
-    MissingGadgetError,
-    SnapcraftPathEntryError,
-)
+from snapcraft.internal import errors
 from snapcraft import ProjectOptions, tests
 
 
@@ -100,7 +97,7 @@ class CreateTestCase(CreateBaseTestCase):
                     'name': 'my-package',
                     'version': '1.0'}
 
-        self.assertEqual(y, expected, expected)
+        self.assertThat(y, Equals(expected))
 
     def test_create_meta_with_epoch(self):
         self.config_data['epoch'] = '1*'
@@ -109,7 +106,7 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertTrue(
             'epoch' in y,
             'Expected "epoch" property to be copied into snap.yaml')
-        self.assertEqual(y['epoch'], '1*')
+        self.assertThat(y['epoch'], Equals('1*'))
 
     def test_create_meta_with_assumes(self):
         self.config_data['assumes'] = ['feature1', 'feature2']
@@ -118,7 +115,7 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertTrue(
             'assumes' in y,
             'Expected "assumes" property to be copied into snap.yaml')
-        self.assertEqual(y['assumes'], ['feature1', 'feature2'])
+        self.assertThat(y['assumes'], Equals(['feature1', 'feature2']))
 
     def test_create_gadget_meta_with_gadget_yaml(self):
         gadget_yaml = 'stub entry: stub value'
@@ -136,7 +133,7 @@ class CreateTestCase(CreateBaseTestCase):
         self.config_data['type'] = 'gadget'
 
         self.assertRaises(
-            MissingGadgetError,
+            errors.MissingGadgetError,
             create_snap_packaging,
             self.config_data,
             self.project_options,
@@ -349,8 +346,9 @@ class CreateTestCase(CreateBaseTestCase):
         contents.read(desktop_file)
         section = 'Desktop Entry'
         self.assertTrue(section in contents)
-        self.assertEqual(contents[section].get('Exec'), 'my-package.app1 %U')
-        self.assertEqual(contents[section].get('Icon'), 'app1.png')
+        self.assertThat(
+            contents[section].get('Exec'), Equals('my-package.app1 %U'))
+        self.assertThat(contents[section].get('Icon'), Equals('app1.png'))
 
         desktop_file = os.path.join(self.meta_dir, 'gui', 'app2.desktop')
         self.assertThat(desktop_file, FileExists())
@@ -358,9 +356,10 @@ class CreateTestCase(CreateBaseTestCase):
         contents.read(desktop_file)
         section = 'Desktop Entry'
         self.assertTrue(section in contents)
-        self.assertEqual(contents[section].get('Exec'), 'my-package.app2 %U')
-        self.assertEqual(contents[section].get('Icon'),
-                         '${SNAP}/usr/share/app2.png')
+        self.assertThat(
+            contents[section].get('Exec'), Equals('my-package.app2 %U'))
+        self.assertThat(contents[section].get('Icon'),
+                        Equals('${SNAP}/usr/share/app2.png'))
 
         desktop_file = os.path.join(self.meta_dir, 'gui', 'my-package.desktop')
         self.assertThat(desktop_file, FileExists())
@@ -368,7 +367,7 @@ class CreateTestCase(CreateBaseTestCase):
         contents.read(desktop_file)
         section = 'Desktop Entry'
         self.assertTrue(section in contents)
-        self.assertEqual(contents[section].get('Exec'), 'my-package %U')
+        self.assertThat(contents[section].get('Exec'), Equals('my-package %U'))
 
         snap_yaml = os.path.join('prime', 'meta', 'snap.yaml')
         self.assertThat(snap_yaml, Not(FileContains('desktop: app1.desktop')))
@@ -523,7 +522,7 @@ class CreateWithConfinementTestCase(CreateBaseTestCase):
         self.assertTrue(
             'confinement' in y,
             'Expected "confinement" property to be in snap.yaml')
-        self.assertEqual(y['confinement'], self.confinement)
+        self.assertThat(y['confinement'], Equals(self.confinement))
 
 
 class EnsureFilePathsTestCase(CreateBaseTestCase):
@@ -562,7 +561,8 @@ class EnsureFilePathsTestCaseFails(CreateBaseTestCase):
     def test_file_path_entry(self):
         self.config_data['apps'] = {'app': {self.key: self.filepath}}
 
-        self.assertRaises(SnapcraftPathEntryError, self.generate_meta_yaml)
+        self.assertRaises(
+            errors.SnapcraftPathEntryError, self.generate_meta_yaml)
 
 
 class CreateWithGradeTestCase(CreateBaseTestCase):
@@ -577,7 +577,7 @@ class CreateWithGradeTestCase(CreateBaseTestCase):
         self.assertTrue(
             'grade' in y,
             'Expected "grade" property to be in snap.yaml')
-        self.assertEqual(y['grade'], self.grade)
+        self.assertThat(y['grade'], Equals(self.grade))
 
 
 # TODO this needs more tests.
@@ -630,7 +630,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
             relative_exe_path, basename='new-name')
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
-        self.assertEqual(relative_wrapper_path, 'new-name.wrapper')
+        self.assertThat(relative_wrapper_path, Equals('new-name.wrapper'))
 
         expected = ('#!/bin/sh\n'
                     'PATH=$SNAP/usr/bin:$SNAP/bin\n\n'
@@ -713,7 +713,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         self.assertThat(wrapper_path, FileContains(expected))
 
         with open(path, 'rb') as exe:
-            self.assertEqual(exe_contents, exe.read())
+            self.assertThat(exe.read(), Equals(exe_contents))
 
     @patch('snapcraft.internal.common.run_output')
     def test_exe_is_in_path(self, run_mock):
@@ -733,12 +733,13 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         apps = {'app1': {'command': 'command-does-not-exist'}}
 
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.InvalidAppCommandError,
             self.packager._wrap_apps, apps)
-        self.assertEqual(
-            "The specified command 'command-does-not-exist' defined in the "
-            "app 'app1' does not exist or is not executable",
-            str(raised))
+        self.assertThat(
+            str(raised),
+            Equals(
+                "The specified command 'command-does-not-exist' defined in "
+                "the app 'app1' does not exist or is not executable"))
 
     def test_command_is_not_executable(self):
         common.env = ['PATH={}/bin:$PATH'.format(self.prime_dir)]
@@ -749,12 +750,12 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         _create_file(cmd_path)
 
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.InvalidAppCommandError,
             self.packager._wrap_apps, apps)
-        self.assertEqual(
-            "The specified command 'command-not-executable' defined in the "
-            "app 'app1' does not exist or is not executable",
-            str(raised))
+        self.assertThat(
+            str(raised),
+            Equals("The specified command 'command-not-executable' defined in "
+                   "the app 'app1' does not exist or is not executable"))
 
     def test_command_found(self):
         common.env = ['PATH={}/bin:$PATH'.format(self.prime_dir)]
@@ -766,8 +767,8 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         wrapped_apps = self.packager._wrap_apps(apps)
 
-        self.assertEqual(wrapped_apps,
-                         {'app1': {'command': 'command-app1.wrapper'}})
+        self.assertThat(wrapped_apps,
+                        Equals({'app1': {'command': 'command-app1.wrapper'}}))
 
 
 def _create_file(path, *, content='', executable=False):

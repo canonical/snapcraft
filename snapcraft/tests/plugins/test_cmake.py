@@ -1,7 +1,6 @@
-
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,7 +17,7 @@
 import os
 
 from unittest import mock
-from testtools.matchers import HasLength
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft.plugins import cmake
@@ -117,7 +116,7 @@ class CMakeTestCase(tests.TestCase):
                  self.stage_dir,
                  plugin.project.arch_triplet)
 
-        self.assertEqual(3, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(3))
         for call_args in self.run_mock.call_args_list:
             environment = call_args[1]['env']
             for variable, value in expected.items():
@@ -126,6 +125,6 @@ class CMakeTestCase(tests.TestCase):
                     'Expected variable "{}" to be in environment'.format(
                         variable))
 
-                self.assertEqual(environment[variable], value,
-                                 'Expected ${}={}, but it was {}'.format(
-                                 variable, value, environment[variable]))
+                self.assertThat(environment[variable], Equals(value),
+                                'Expected ${}={}, but it was {}'.format(
+                                    variable, value, environment[variable]))

@@ -75,10 +75,10 @@ class LoginCommandTestCase(CommandBaseTestCase):
             storeapi.constants.TWO_FACTOR_WARNING)))
         self.assertThat(result.output, Contains('Login successful.'))
 
-        self.assertEqual(2, self.mock_input.call_count)
+        self.assertThat(self.mock_input.call_count, Equals(2))
         self.mock_input.assert_has_calls([
             mock.call('Email: '), mock.call('Second-factor auth: ')])
-        self.assertEqual(2, mock_login.call_count)
+        self.assertThat(mock_login.call_count, Equals(2))
         mock_login.assert_has_calls([
             mock.call(
                 'user@example.com', mock.ANY, acls=None, packages=None,

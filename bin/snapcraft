@@ -19,7 +19,11 @@ import os
 import sys
 
 # make running from bzr snapshot easy
-topdir = os.path.abspath(os.path.join(__file__, '..', '..'))
+if getattr(sys, 'frozen', False):
+	topdir = os.path.dirname(sys.executable)
+else:
+	topdir = os.path.abspath(os.path.join(__file__, '..', '..'))
+	
 if os.path.exists(os.path.join(topdir, 'setup.py')):
     sys.path = [topdir] + sys.path
 

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import yaml
+
+from testtools.matchers import Equals
 
 import snapcraft.internal
 from snapcraft import tests
@@ -40,7 +42,7 @@ class PullStateTestCase(PullStateBaseTestCase):
 
     def test_yaml_conversion(self):
         state_from_yaml = yaml.load(yaml.dump(self.state))
-        self.assertEqual(self.state, state_from_yaml)
+        self.assertThat(state_from_yaml, Equals(self.state))
 
     def test_comparison(self):
         other = snapcraft.internal.states.PullState(
@@ -62,23 +64,28 @@ class PullStateTestCase(PullStateBaseTestCase):
         })
 
         properties = self.state.properties_of_interest(self.part_properties)
-        self.assertEqual(10, len(properties))
-        self.assertEqual('bar', properties['foo'])
-        self.assertEqual('test-plugin', properties['plugin'])
-        self.assertEqual(['test-stage-package'], properties['stage-packages'])
-        self.assertEqual('test-source', properties['source'])
-        self.assertEqual('test-source-commit', properties['source-commit'])
-        self.assertEqual('test-source-depth', properties['source-depth'])
-        self.assertEqual('test-source-tag', properties['source-tag'])
-        self.assertEqual('test-source-type', properties['source-type'])
-        self.assertEqual('test-source-branch', properties['source-branch'])
-        self.assertEqual('test-source-subdir', properties['source-subdir'])
+        self.assertThat(len(properties), Equals(10))
+        self.assertThat(properties['foo'], Equals('bar'))
+        self.assertThat(properties['plugin'], Equals('test-plugin'))
+        self.assertThat(
+            properties['stage-packages'], Equals(['test-stage-package']))
+        self.assertThat(properties['source'], Equals('test-source'))
+        self.assertThat(
+            properties['source-commit'], Equals('test-source-commit'))
+        self.assertThat(
+            properties['source-depth'], Equals('test-source-depth'))
+        self.assertThat(properties['source-tag'], Equals('test-source-tag'))
+        self.assertThat(properties['source-type'], Equals('test-source-type'))
+        self.assertThat(
+            properties['source-branch'], Equals('test-source-branch'))
+        self.assertThat(
+            properties['source-subdir'], Equals('test-source-subdir'))
 
     def test_project_options_of_interest(self):
         options = self.state.project_options_of_interest(self.project)
 
-        self.assertEqual(1, len(options))
-        self.assertEqual('amd64', options['deb_arch'])
+        self.assertThat(len(options), Equals(1))
+        self.assertThat(options['deb_arch'], Equals('amd64'))
 
 
 class PullStateNotEqualTestCase(PullStateBaseTestCase):

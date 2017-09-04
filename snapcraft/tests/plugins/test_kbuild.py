@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,7 +19,7 @@ import os
 from unittest import mock
 
 import fixtures
-from testtools.matchers import HasLength
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -46,19 +46,21 @@ class KBuildPluginTestCase(tests.TestCase):
         schema = kbuild.KBuildPlugin.schema()
 
         properties = schema['properties']
-        self.assertEqual(properties['kdefconfig']['type'], 'array')
-        self.assertEqual(properties['kdefconfig']['default'], ['defconfig'])
+        self.assertThat(properties['kdefconfig']['type'], Equals('array'))
+        self.assertThat(
+            properties['kdefconfig']['default'], Equals(['defconfig']))
 
-        self.assertEqual(properties['kconfigfile']['type'], 'string')
-        self.assertEqual(properties['kconfigfile']['default'], None)
+        self.assertThat(properties['kconfigfile']['type'], Equals('string'))
+        self.assertThat(properties['kconfigfile']['default'], Equals(None))
 
-        self.assertEqual(properties['kconfigflavour']['type'], 'string')
-        self.assertEqual(properties['kconfigflavour']['default'], None)
+        self.assertThat(properties['kconfigflavour']['type'], Equals('string'))
+        self.assertThat(properties['kconfigflavour']['default'], Equals(None))
 
-        self.assertEqual(properties['kconfigs']['type'], 'array')
-        self.assertEqual(properties['kconfigs']['default'], [])
-        self.assertEqual(properties['kconfigs']['minitems'], 1)
-        self.assertEqual(properties['kconfigs']['items']['type'], 'string')
+        self.assertThat(properties['kconfigs']['type'], Equals('array'))
+        self.assertThat(properties['kconfigs']['default'], Equals([]))
+        self.assertThat(properties['kconfigs']['minitems'], Equals(1))
+        self.assertThat(
+            properties['kconfigs']['items']['type'], Equals('string'))
         self.assertTrue(properties['kconfigs']['uniqueItems'])
 
     def test_get_build_properties(self):
@@ -87,13 +89,13 @@ class KBuildPluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.assertEqual(1, check_call_mock.call_count)
+        self.assertThat(check_call_mock.call_count, Equals(1))
         check_call_mock.assert_has_calls([
             mock.call('yes "" | make -j2 oldconfig', shell=True,
                       cwd=plugin.builddir),
         ])
 
-        self.assertEqual(2, run_mock.call_count)
+        self.assertThat(run_mock.call_count, Equals(2))
         run_mock.assert_has_calls([
             mock.call(['make', '-j2']),
             mock.call(['make', '-j2',
@@ -107,7 +109,7 @@ class KBuildPluginTestCase(tests.TestCase):
         with open(config_file) as f:
             config_contents = f.read()
 
-        self.assertEqual(config_contents, 'ACCEPT=y\n')
+        self.assertThat(config_contents, Equals('ACCEPT=y\n'))
 
     @mock.patch('subprocess.check_call')
     @mock.patch.object(kbuild.KBuildPlugin, 'run')
@@ -126,13 +128,13 @@ class KBuildPluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.assertEqual(1, check_call_mock.call_count)
+        self.assertThat(check_call_mock.call_count, Equals(1))
         check_call_mock.assert_has_calls([
             mock.call('yes "" | make -j2 V=1 oldconfig', shell=True,
                       cwd=plugin.builddir),
         ])
 
-        self.assertEqual(2, run_mock.call_count)
+        self.assertThat(run_mock.call_count, Equals(2))
         run_mock.assert_has_calls([
             mock.call(['make', '-j2', 'V=1']),
             mock.call(['make', '-j2', 'V=1',
@@ -146,7 +148,7 @@ class KBuildPluginTestCase(tests.TestCase):
         with open(config_file) as f:
             config_contents = f.read()
 
-        self.assertEqual(config_contents, 'ACCEPT=y\n')
+        self.assertThat(config_contents, Equals('ACCEPT=y\n'))
 
     @mock.patch('subprocess.check_call')
     @mock.patch.object(kbuild.KBuildPlugin, 'run')
@@ -168,13 +170,13 @@ class KBuildPluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.assertEqual(1, check_call_mock.call_count)
+        self.assertThat(check_call_mock.call_count, Equals(1))
         check_call_mock.assert_has_calls([
             mock.call('yes "" | make -j2 oldconfig', shell=True,
                       cwd=plugin.builddir),
         ])
 
-        self.assertEqual(2, run_mock.call_count)
+        self.assertThat(run_mock.call_count, Equals(2))
         run_mock.assert_has_calls([
             mock.call(['make', '-j2']),
             mock.call(['make', '-j2',
@@ -196,7 +198,7 @@ ACCEPT=y
 SOMETHING=y
 ACCEPT=n
 """
-        self.assertEqual(config_contents, expected_config)
+        self.assertThat(config_contents, Equals(expected_config))
 
     @mock.patch('subprocess.check_call')
     @mock.patch.object(kbuild.KBuildPlugin, 'run')
@@ -225,13 +227,13 @@ ACCEPT=n
 
         plugin.build()
 
-        self.assertEqual(1, check_call_mock.call_count)
+        self.assertThat(check_call_mock.call_count, Equals(1))
         check_call_mock.assert_has_calls([
             mock.call('yes "" | make -j2 oldconfig', shell=True,
                       cwd=plugin.builddir),
         ])
 
-        self.assertEqual(3, run_mock.call_count)
+        self.assertThat(run_mock.call_count, Equals(3))
         run_mock.assert_has_calls([
             mock.call(['make', '-j2']),
             mock.call(['make', '-j2',
@@ -252,30 +254,58 @@ ACCEPT=y
 SOMETHING=y
 ACCEPT=n
 """
-        self.assertEqual(config_contents, expected_config)
+        self.assertThat(config_contents, Equals(expected_config))
+
+
+class KBuildCrossCompilePluginTestCase(tests.TestCase):
+
+    scenarios = [
+        ('armv7l', dict(deb_arch='armhf')),
+        ('aarch64', dict(deb_arch='arm64')),
+        ('ppc64le', dict(deb_arch='ppc64el')),
+    ]
+
+    def setUp(self):
+        super().setUp()
+
+        class Options:
+            build_parameters = []
+            kconfigfile = None
+            kconfigflavour = None
+            kdefconfig = []
+            kconfigs = []
+            build_attributes = []
+
+        self.options = Options()
+        self.project_options = snapcraft.ProjectOptions(
+            target_deb_arch=self.deb_arch)
+
+        patcher = mock.patch('snapcraft.internal.common.run')
+        self.run_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.ProjectOptions.is_cross_compiling')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch.dict(os.environ, {})
+        self.env_mock = patcher.start()
+        self.addCleanup(patcher.stop)
 
     @mock.patch('subprocess.check_call')
     @mock.patch.object(kbuild.KBuildPlugin, 'run')
-    def test_build_without_install_target(self, run_mock, check_call_mock):
-        self.options.kconfigfile = 'config'
-        self.options.build_attributes = ['no-install']
-        with open(self.options.kconfigfile, 'w') as f:
-            f.write('ACCEPT=y\n')
-
+    def test_cross_compile(self, run_mock, check_call_mock):
         plugin = kbuild.KBuildPlugin('test-part', self.options,
                                      self.project_options)
-
-        os.makedirs(plugin.builddir)
+        plugin.enable_cross_compilation()
 
         plugin.build()
-
-        self.assertEqual(1, check_call_mock.call_count)
-        check_call_mock.assert_has_calls([
-            mock.call('yes "" | make -j2 oldconfig', shell=True,
-                      cwd=plugin.builddir),
-        ])
-
-        self.assertEqual(1, run_mock.call_count)
         run_mock.assert_has_calls([
-            mock.call(['make', '-j2']),
+            mock.call(['make', '-j1', 'ARCH={}'.format(
+                           self.project_options.kernel_arch),
+                       'CROSS_COMPILE={}'.format(
+                           self.project_options.cross_compiler_prefix),
+                       'PATH={}:/usr/{}/bin'.format(
+                           os.environ.copy().get('PATH', ''),
+                           self.project_options.arch_triplet)]),
         ])

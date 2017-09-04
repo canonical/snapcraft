@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -106,6 +106,8 @@ class BasePlugin:
 
         self.sourcedir = os.path.join(self.partdir, 'src')
         self.installdir = os.path.join(self.partdir, 'install')
+        self.statedir = os.path.join(self.partdir, 'state')
+        self.osrepodir = os.path.join(self.partdir, 'ubuntu')
 
         self.build_basedir = os.path.join(self.partdir, 'build')
         source_subdir = getattr(self.options, 'source_subdir', None)
@@ -129,6 +131,13 @@ class BasePlugin:
 
     def clean_build(self):
         """Clean the artifacts that resulted from building this part."""
+        pass
+
+    def get_manifest(self):
+        """Return the information to record after the build of this part.
+
+        :rtype: dict
+        """
         pass
 
     def snap_fileset(self):

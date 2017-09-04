@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,10 +17,11 @@
 import os
 
 from unittest import mock
-from testtools.matchers import DirExists, HasLength
+from testtools.matchers import DirExists, Equals, HasLength
 
 import snapcraft
 from snapcraft.plugins import nodejs
+from snapcraft.internal import errors
 from snapcraft import tests
 
 
@@ -240,13 +241,13 @@ class NodePluginTestCase(NodePluginBaseTestCase):
             source = '.'
 
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.SnapcraftEnvironmentError,
             nodejs.NodePlugin,
             'test-part', Options(),
             self.project_options)
 
-        self.assertEqual(raised.__str__(),
-                         'architecture not supported (fantasy-arch)')
+        self.assertThat(raised.__str__(),
+                        Equals('architecture not supported (fantasy-arch)'))
 
     def test_get_build_properties(self):
         expected_build_properties = ['node-packages', 'npm-run']
@@ -376,7 +377,7 @@ class NodeReleaseTestCase(tests.TestCase):
         architecture_mock.return_value = self.architecture
         project = snapcraft.ProjectOptions()
         node_url = nodejs.get_nodejs_release(self.engine, project.deb_arch)
-        self.assertEqual(node_url, self.expected_url)
+        self.assertThat(node_url, Equals(self.expected_url))
 
 
 class NodePluginSchemaTestCase(tests.TestCase):
@@ -392,16 +393,16 @@ class NodePluginSchemaTestCase(tests.TestCase):
         self.assertTrue(
             'type' in node_packages,
             'Expected "type" to be included in "node-packages"')
-        self.assertEqual(node_packages['type'], 'array',
-                         'Expected "node-packages" "type" to be "array", but '
-                         'it was "{}"'.format(node_packages['type']))
+        self.assertThat(node_packages['type'], Equals('array'),
+                        'Expected "node-packages" "type" to be "array", but '
+                        'it was "{}"'.format(node_packages['type']))
 
         self.assertTrue(
             'minitems' in node_packages,
             'Expected "minitems" to be included in "node-packages"')
-        self.assertEqual(node_packages['minitems'], 1,
-                         'Expected "node-packages" "minitems" to be 1, but '
-                         'it was "{}"'.format(node_packages['minitems']))
+        self.assertThat(node_packages['minitems'], Equals(1),
+                        'Expected "node-packages" "minitems" to be 1, but '
+                        'it was "{}"'.format(node_packages['minitems']))
 
         self.assertTrue('node-package-manager' in properties,
                         'Expected "node-package-manager" to be included in '
@@ -411,17 +412,17 @@ class NodePluginSchemaTestCase(tests.TestCase):
         self.assertTrue(
             'type' in node_package_manager,
             'Expected "type" to be included in "node-package-manager"')
-        self.assertEqual(node_package_manager['type'], 'string',
-                         'Expected "node-package-manager" "type" to be '
-                         '"string", but it was '
-                         '"{}"'.format(node_package_manager['type']))
+        self.assertThat(node_package_manager['type'], Equals('string'),
+                        'Expected "node-package-manager" "type" to be '
+                        '"string", but it was '
+                        '"{}"'.format(node_package_manager['type']))
         self.assertTrue(
             'default' in node_package_manager,
             'Expected "default" to be included in "node-package-manager"')
-        self.assertEqual(node_package_manager['default'], 'npm',
-                         'Expected "node-package-manager" "default" to be '
-                         '"npm", but it was '
-                         '"{}"'.format(node_package_manager['type']))
+        self.assertThat(node_package_manager['default'], Equals('npm'),
+                        'Expected "node-package-manager" "default" to be '
+                        '"npm", but it was '
+                        '"{}"'.format(node_package_manager['type']))
 
         self.assertTrue(
             'uniqueItems' in node_packages,
@@ -439,16 +440,16 @@ class NodePluginSchemaTestCase(tests.TestCase):
         self.assertTrue(
             'type' in npm_run,
             'Expected "type" to be included in "npm-run"')
-        self.assertEqual(npm_run['type'], 'array',
-                         'Expected "npm-run" "type" to be "array", but '
-                         'it was "{}"'.format(npm_run['type']))
+        self.assertThat(npm_run['type'], Equals('array'),
+                        'Expected "npm-run" "type" to be "array", but '
+                        'it was "{}"'.format(npm_run['type']))
 
         self.assertTrue(
             'minitems' in npm_run,
             'Expected "minitems" to be included in "npm-run"')
-        self.assertEqual(npm_run['minitems'], 1,
-                         'Expected "npm-run" "minitems" to be 1, but '
-                         'it was "{}"'.format(npm_run['minitems']))
+        self.assertThat(npm_run['minitems'], Equals(1),
+                        'Expected "npm-run" "minitems" to be 1, but '
+                        'it was "{}"'.format(npm_run['minitems']))
 
         self.assertTrue(
             'uniqueItems' in npm_run,
@@ -461,7 +462,7 @@ class NodePluginSchemaTestCase(tests.TestCase):
                         'Expected "node-engine" to be included in '
                         'properties')
         node_engine_type = properties['node-engine']['type']
-        self.assertEqual(node_engine_type, 'string',
-                         'Expected "node_engine" "type" to be '
-                         '"string", but it was "{}"'
-                         .format(node_engine_type))
+        self.assertThat(node_engine_type, Equals('string'),
+                        'Expected "node_engine" "type" to be '
+                        '"string", but it was "{}"'
+                        .format(node_engine_type))

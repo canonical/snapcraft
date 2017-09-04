@@ -18,19 +18,56 @@ import os
 import subprocess
 
 import fixtures
-from testtools.matchers import Contains, FileExists
+from testtools.matchers import (
+    Contains,
+    Equals,
+    FileExists,
+    Not
+)
 
 import integration_tests
 
 
 class StageTestCase(integration_tests.TestCase):
 
+    def _stage_conflicts(self, debug):
+        exception = self.assertRaises(
+            subprocess.CalledProcessError,
+            self.run_snapcraft, 'stage', 'conflicts', debug=debug)
+
+        self.assertThat(exception.returncode, Equals(2))
+        expected_conflicts = (
+            "Parts 'p1' and 'p2' have the following file paths in common "
+            "which have different contents:\n    bin/test\n")
+        self.assertThat(exception.output, Contains(expected_conflicts))
+
+        expected_help = (
+            'Snapcraft offers some capabilities to solve this by use '
+            'of the following keywords:\n'
+            '    - `filesets`\n'
+            '    - `stage`\n'
+            '    - `snap`\n'
+            '    - `organize`\n\n'
+            'Learn more about these part keywords by running '
+            '`snapcraft help plugins`'
+        )
+        self.assertThat(exception.output, Contains(expected_help))
+        return exception.output
+
+    def test_conflicts_no_traceback_without_debug(self):
+        self.assertThat(
+            self._stage_conflicts(False), Not(Contains("Traceback")))
+
+    def test_conflicts_traceback_with_debug(self):
+        self.assertThat(
+            self._stage_conflicts(True), Contains("Traceback"))
+
     def test_conflicts(self):
         exception = self.assertRaises(
             subprocess.CalledProcessError,
             self.run_snapcraft, 'stage', 'conflicts')
 
-        self.assertEqual(1, exception.returncode)
+        self.assertThat(exception.returncode, Equals(2))
         expected_conflicts = (
             "Parts 'p1' and 'p2' have the following file paths in common "
             "which have different contents:\n    bin/test\n")

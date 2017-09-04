@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,7 +17,7 @@
 import os
 
 from unittest import mock
-from testtools.matchers import HasLength
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -58,17 +58,17 @@ class MakePluginTestCase(tests.TestCase):
                         'Expected "type" to be included in "makefile"')
 
         makefile_type = makefile['type']
-        self.assertEqual(makefile_type, 'string',
-                         'Expected "makefile" "type" to be "string", but it '
-                         'was "{}"'.format(makefile_type))
+        self.assertThat(makefile_type, Equals('string'),
+                        'Expected "makefile" "type" to be "string", but it '
+                        'was "{}"'.format(makefile_type))
 
         make_parameters = properties['make-parameters']
         self.assertTrue('type' in make_parameters,
                         'Expected "type" to be included in "make-parameters"')
 
         make_parameters_type = make_parameters['type']
-        self.assertEqual(
-            make_parameters_type, 'array',
+        self.assertThat(
+            make_parameters_type, Equals('array'),
             'Expected "make-parameters" "type" to be "array", but it '
             'was "{}"'.format(make_parameters_type))
 
@@ -77,14 +77,14 @@ class MakePluginTestCase(tests.TestCase):
                         'Expected "type" to be included in "make-install-var"')
 
         make_install_var_type = make_install_var['type']
-        self.assertEqual(
-            make_install_var_type, 'string',
+        self.assertThat(
+            make_install_var_type, Equals('string'),
             'Expected "make-install-var" "type" to be "string", but it '
             'was "{}"'.format(make_install_var_type))
 
         make_install_var_default = make_install_var['default']
-        self.assertEqual(
-            make_install_var_default, 'DESTDIR',
+        self.assertThat(
+            make_install_var_default, Equals('DESTDIR'),
             'Expected "make-install-var" "default" to be "DESTDIR", but it '
             'was "{}"'.format(make_install_var_default))
 
@@ -107,7 +107,7 @@ class MakePluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.assertEqual(2, run_mock.call_count)
+        self.assertThat(run_mock.call_count, Equals(2))
         run_mock.assert_has_calls([
             mock.call(['make', '-j2'], env=None),
             mock.call(['make', 'install',
@@ -123,7 +123,7 @@ class MakePluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.assertEqual(2, run_mock.call_count)
+        self.assertThat(run_mock.call_count, Equals(2))
         run_mock.assert_has_calls([
             mock.call(['make', '-j1'], env=None),
             mock.call(['make', 'install',
@@ -139,7 +139,7 @@ class MakePluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.assertEqual(2, run_mock.call_count)
+        self.assertThat(run_mock.call_count, Equals(2))
         run_mock.assert_has_calls([
             mock.call(['make', '-f', 'makefile.linux', '-j2'], env=None),
             mock.call(['make', '-f', 'makefile.linux', 'install',
@@ -155,7 +155,7 @@ class MakePluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.assertEqual(2, run_mock.call_count)
+        self.assertThat(run_mock.call_count, Equals(2))
         run_mock.assert_has_calls([
             mock.call(['make', '-j2'], env=None),
             mock.call(['make', 'install',
@@ -171,7 +171,7 @@ class MakePluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.assertEqual(2, run_mock.call_count)
+        self.assertThat(run_mock.call_count, Equals(2))
         run_mock.assert_has_calls([
             mock.call(['make', '-j2'], env=None),
             mock.call(['make', 'install'], env=None)
@@ -190,17 +190,17 @@ class MakePluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.assertEqual(1, run_mock.call_count)
+        self.assertThat(run_mock.call_count, Equals(1))
         run_mock.assert_has_calls([
             mock.call(['make', '-j2'], env=None),
         ])
-        self.assertEqual(1, link_or_copy_mock.call_count)
+        self.assertThat(link_or_copy_mock.call_count, Equals(1))
         link_or_copy_mock.assert_has_calls([
             mock.call(
                 os.path.join(plugin.builddir, 'file_artifact'),
                 os.path.join(plugin.installdir, 'file_artifact'),
             )])
-        self.assertEqual(1, link_or_copy_tree_mock.call_count)
+        self.assertThat(link_or_copy_tree_mock.call_count, Equals(1))
         link_or_copy_tree_mock.assert_has_calls([
             mock.call(
                 os.path.join(plugin.builddir, 'dir_artifact'),
@@ -216,7 +216,7 @@ class MakePluginTestCase(tests.TestCase):
         env = {'foo': 'bar'}
         plugin.make(env=env)
 
-        self.assertEqual(2, run_mock.call_count)
+        self.assertThat(run_mock.call_count, Equals(2))
         run_mock.assert_has_calls([
             mock.call(['make', '-j2'], env=env),
             mock.call(['make', 'install',

@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from unittest import mock
 
+import snapcraft.storeapi.errors
+
 import fixtures
 from testtools.matchers import Contains, Equals
 
@@ -79,27 +81,27 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
     def test_validate_unknown_snap(self):
         self.client.login('dummy', 'test correct password')
 
-        result = self.run_command(
+        raised = self.assertRaises(
+            snapcraft.storeapi.errors.SnapNotFoundError,
+            self.run_command,
             ['validate', 'notfound', 'ubuntu-core=3', 'test-snap=4'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            "Snap 'notfound' was not found"))
+        self.assertThat(str(raised), Equals("Snap 'notfound' was not found."))
 
     def test_validate_bad_argument(self):
         self.client.login('dummy', 'test correct password')
 
-        result = self.run_command(
+        raised = self.assertRaises(
+            snapcraft.storeapi.errors.InvalidValidationRequestsError,
+            self.run_command,
             ['validate', 'ubuntu-core', 'ubuntu-core=foo'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'format must be name=revision'))
+        self.assertThat(str(raised), Contains('format must be name=revision'))
 
     def test_no_login(self):
-        result = self.run_command(
+        raised = self.assertRaises(
+            snapcraft.storeapi.errors.InvalidCredentialsError,
+            self.run_command,
             ['validate', 'ubuntu-core', 'ubuntu-core=3', 'test-snap=4'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'No valid credentials found. Have you run'))
+        self.assertThat(str(raised), Contains('Invalid credentials'))

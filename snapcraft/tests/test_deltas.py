@@ -1,6 +1,6 @@
 # -*- mode:python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -50,15 +50,15 @@ class BaseDeltaGenerationTestCase(TestCase):
 
         unique_file_name = tmp_delta.find_unique_file_name(
             tmp_delta.source_path)
-        self.assertEqual(
-            unique_file_name, tmp_delta.source_path + '-0'
+        self.assertThat(
+            unique_file_name, m.Equals(tmp_delta.source_path + '-0')
         )
         with open(unique_file_name, 'wb') as f:
             f.write(b'tmp file.')
 
-        self.assertEqual(
+        self.assertThat(
             tmp_delta.find_unique_file_name(tmp_delta.source_path),
-            tmp_delta.source_path + '-1'
+            m.Equals(tmp_delta.source_path + '-1')
         )
 
     def test_not_set_delta_property_correctly(self):
@@ -75,7 +75,7 @@ class BaseDeltaGenerationTestCase(TestCase):
                                       delta_format=None,
                                       delta_tool_path='/usr/bin/xdelta3')
         expected = 'delta_format must be set in subclass!'
-        self.assertEqual(str(exception), expected)
+        self.assertThat(str(exception), m.Equals(expected))
 
         self.assertThat(
             lambda: deltas.BaseDeltasGenerator(
@@ -91,7 +91,7 @@ class BaseDeltaGenerationTestCase(TestCase):
                                       delta_format='xdelta3',
                                       delta_tool_path=None)
         expected = 'delta_tool_path must be set in subclass!'
-        self.assertEqual(str(exception), expected)
+        self.assertThat(str(exception), m.Equals(expected))
 
         self.assertThat(
             lambda: deltas.BaseDeltasGenerator(
@@ -109,7 +109,7 @@ class BaseDeltaGenerationTestCase(TestCase):
                                       delta_tool_path=self.delta_tool_path)
         expected = """delta_format must be a option in ['xdelta3'].
 for now delta_format='invalid-delta-format'"""
-        self.assertEqual(str(exception), expected)
+        self.assertThat(str(exception), m.Equals(expected))
 
     def test_file_existence_failed(self):
         class Tmpdelta(deltas.BaseDeltasGenerator):

@@ -30,7 +30,7 @@ These plugins implement a lifecycle over the following steps:
 
   - pull:   retrieve the source for the part from the specified location
   - build:  drive the build system determined by the choice of plugin
-  - stage:  consolidate desireable files from all the parts in one tree
+  - stage:  consolidate desirable files from all the parts in one tree
   - prime:  distill down to only the files which will go into the snap
   - snap:   compress the prime tree into the installable snap file
 
@@ -355,6 +355,11 @@ of the choice of plugin.
         Do not run the install target provided by the plugin's build system.
 
         Supported by: kbuild
+
+      - debug:
+        Plugins that support the concept of build types build in Release mode
+        by default. Setting the 'debug' attribute requests that they instead
+        build in Debug mode.
 """
 
 from collections import OrderedDict                 # noqa
@@ -456,4 +461,3 @@ from snapcraft.internal import common as _common # noqa
 if _common.is_snap():
     snap = _os.environ.get('SNAP')
     _common.set_schemadir(_os.path.join(snap, 'share', 'snapcraft', 'schema'))
-    _common.set_tourdir(_os.path.join(snap, 'tour'))

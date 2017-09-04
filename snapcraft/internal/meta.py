@@ -29,10 +29,10 @@ import yaml
 
 from snapcraft import file_utils
 from snapcraft import shell_utils
-from snapcraft.internal import common
-from snapcraft.internal.errors import (
-    MissingGadgetError,
-    SnapcraftPathEntryError)
+from snapcraft.internal import (
+    common,
+    errors
+)
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.sources import get_source_handler_from_type
 from snapcraft.internal.states import (
@@ -53,6 +53,7 @@ _MANDATORY_PACKAGE_KEYS = [
 _OPTIONAL_PACKAGE_KEYS = [
     'architectures',
     'assumes',
+    'base',
     'environment',
     'type',
     'plugs',
@@ -132,7 +133,7 @@ class _SnapPackaging:
 
         if self._config_data.get('type', '') == 'gadget':
             if not os.path.exists('gadget.yaml'):
-                raise MissingGadgetError()
+                raise errors.MissingGadgetError()
             file_utils.link_or_copy(
                 'gadget.yaml', os.path.join(self.meta_dir, 'gadget.yaml'))
 
@@ -151,17 +152,17 @@ class _SnapPackaging:
             os.makedirs(prime_snap_dir, exist_ok=True)
             shutil.copy2(
                 self._snapcraft_yaml_path, recorded_snapcraft_yaml_path)
+            annotated_snapcraft = self._annotate_snapcraft(
+                copy.deepcopy(self._config_data))
             with open(manifest_file_path, 'w') as manifest_file:
-                annotated_snapcraft = self._annotate_snapcraft(
-                    copy.deepcopy(self._config_data))
                 yaml.dump(annotated_snapcraft, manifest_file)
 
     def _annotate_snapcraft(self, data):
         data['build-packages'] = get_global_state().assets.get(
             'build-packages', [])
         for part in data['parts']:
-            pull_state = get_state(
-                os.path.join(self._parts_dir, part, 'state'), 'pull')
+            state_dir = os.path.join(self._parts_dir, part, 'state')
+            pull_state = get_state(state_dir, 'pull')
             data['parts'][part]['build-packages'] = (
                 pull_state.assets.get('build-packages', []))
             data['parts'][part]['stage-packages'] = (
@@ -169,6 +170,8 @@ class _SnapPackaging:
             source_details = pull_state.assets.get('source-details', {})
             if source_details:
                 data['parts'][part].update(source_details)
+            build_state = get_state(state_dir, 'build')
+            data['parts'][part].update(build_state.assets)
         return data
 
     def write_snap_directory(self):
@@ -388,9 +391,7 @@ class _SnapPackaging:
             try:
                 app[k] = self._wrap_exe(app[k], '{}-{}'.format(k, name))
             except CommandError as e:
-                raise EnvironmentError(
-                    'The specified command {!r} defined in the app {!r} '
-                    'does not exist or is not executable'.format(str(e), name))
+                raise errors.InvalidAppCommandError(str(e), name)
         desktop_file_name = app.pop('desktop', '')
         if desktop_file_name:
             desktop_file = _DesktopFile(
@@ -409,9 +410,9 @@ class _DesktopFile:
         self._prime_dir = prime_dir
         self._path = os.path.join(prime_dir, filename)
         if not os.path.exists(self._path):
-            raise EnvironmentError(
-                'The specified desktop file {!r} defined in the app '
-                '{!r} does not exist'.format(filename, name))
+            raise errors.InvalidDesktopFileError(
+                filename, 'does not exist (defined in the app {!r})'.format(
+                    name))
 
     def parse_and_reformat(self):
         self._parser = configparser.ConfigParser(interpolation=None)
@@ -419,13 +420,11 @@ class _DesktopFile:
         self._parser.read(self._path, encoding='utf-8')
         section = 'Desktop Entry'
         if section not in self._parser.sections():
-            raise EnvironmentError(
-                'The specified desktop file {!r} is not a valid '
-                'desktop file'.format(self._filename))
+            raise errors.InvalidDesktopFileError(
+                self._filename, "missing 'Desktop Entry' section")
         if 'Exec' not in self._parser[section]:
-            raise EnvironmentError(
-                'The specified desktop file {!r} is missing the '
-                '"Exec" key'.format(self._filename))
+            raise errors.InvalidDesktopFileError(
+                self._filename, "missing 'Exec' key")
         # XXX: do we want to allow more parameters for Exec?
         if self._name == self._snap_name:
             exec_value = '{} %U'.format(self._name)
@@ -478,5 +477,5 @@ def _verify_app_paths(basedir, apps):
         for path_entry in path_entries:
             file_path = os.path.join(basedir, apps[app][path_entry])
             if not os.path.exists(file_path):
-                raise SnapcraftPathEntryError(
+                raise errors.SnapcraftPathEntryError(
                     app=app, key=path_entry, value=file_path)

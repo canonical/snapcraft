@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,7 +20,7 @@ from unittest import mock
 from xml.etree import ElementTree
 
 import fixtures
-from testtools.matchers import HasLength
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -67,9 +67,9 @@ class MavenPluginTestCase(tests.TestCase):
     def assertSettingsEqual(self, expected, observed):
         print(repr(self._canonicalize_settings(expected)))
         print(repr(self._canonicalize_settings(observed)))
-        self.assertEqual(
-            self._canonicalize_settings(expected),
-            self._canonicalize_settings(observed))
+        self.assertThat(
+            self._canonicalize_settings(observed),
+            Equals(self._canonicalize_settings(expected)))
 
     def test_schema(self):
         schema = maven.MavenPlugin.schema()
@@ -84,16 +84,16 @@ class MavenPluginTestCase(tests.TestCase):
         self.assertTrue(
             'type' in maven_options,
             'Expected "type" to be included in "maven-options"')
-        self.assertEqual(maven_options['type'], 'array',
-                         'Expected "maven-options" "type" to be "array", but '
-                         'it was "{}"'.format(maven_options['type']))
+        self.assertThat(maven_options['type'], Equals('array'),
+                        'Expected "maven-options" "type" to be "array", but '
+                        'it was "{}"'.format(maven_options['type']))
 
         self.assertTrue(
             'minitems' in maven_options,
             'Expected "minitems" to be included in "maven-options"')
-        self.assertEqual(maven_options['minitems'], 1,
-                         'Expected "maven-options" "minitems" to be 1, but '
-                         'it was "{}"'.format(maven_options['minitems']))
+        self.assertThat(maven_options['minitems'], Equals(1),
+                        'Expected "maven-options" "minitems" to be 1, but '
+                        'it was "{}"'.format(maven_options['minitems']))
 
         self.assertTrue(
             'uniqueItems' in maven_options,
@@ -107,16 +107,16 @@ class MavenPluginTestCase(tests.TestCase):
         self.assertTrue(
             'type' in maven_targets,
             'Expected "type" to be included in "maven-targets"')
-        self.assertEqual(maven_targets['type'], 'array',
-                         'Expected "maven-targets" "type" to be "array", but '
-                         'it was "{}"'.format(maven_targets['type']))
+        self.assertThat(maven_targets['type'], Equals('array'),
+                        'Expected "maven-targets" "type" to be "array", but '
+                        'it was "{}"'.format(maven_targets['type']))
 
         self.assertTrue(
             'minitems' in maven_targets,
             'Expected "minitems" to be included in "maven-targets"')
-        self.assertEqual(maven_targets['minitems'], 1,
-                         'Expected "maven-targets" "minitems" to be 1, but '
-                         'it was "{}"'.format(maven_targets['minitems']))
+        self.assertThat(maven_targets['minitems'], Equals(1),
+                        'Expected "maven-targets" "minitems" to be 1, but '
+                        'it was "{}"'.format(maven_targets['minitems']))
 
         self.assertTrue(
             'uniqueItems' in maven_targets,
