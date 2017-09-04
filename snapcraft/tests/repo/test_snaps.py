@@ -219,7 +219,7 @@ class SnapPackageCurrentChannelTest(SnapPackageBaseTestCase):
          dict(snap='fake-snap-branch/candidate/branch',
               expected='latest/candidate/branch')),
         ('track/stable/branch',
-         dict(snap='fake-snap-track-stable-branch/trakc/stable/branch',
+         dict(snap='fake-snap-track-stable-branch/track/stable/branch',
               expected='track/stable/branch')),
         ('edge',
          dict(snap='fake-snap-edge/stable',
