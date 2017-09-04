@@ -36,6 +36,7 @@ class FakeSnapCommand(fixtures.Fixture):
         self.calls = []
         self.install_success = True
         self.refresh_success = True
+        self._email = '-'
 
     def _setUp(self):
         original_check_call = snaps.check_call
@@ -66,6 +67,9 @@ class FakeSnapCommand(fixtures.Fixture):
         self.mock_call = check_output_patcher.start()
         self.addCleanup(check_output_patcher.stop)
 
+    def login(self, email):
+        self._email = email
+
     def _get_snap_cmd(self, snap_cmd):
         try:
             snap_cmd_index = snap_cmd.index('snap')
@@ -84,10 +88,10 @@ class FakeSnapCommand(fixtures.Fixture):
         cmd = self._get_snap_cmd(cmd)
         if cmd == 'install' and not self.install_success:
             raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
-        if cmd == 'refresh' and not self.refresh_success:
+        elif cmd == 'refresh' and not self.refresh_success:
             raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
-        if cmd == 'whoami':
-            return 'email: -'.encode()
+        elif cmd == 'whoami':
+            return 'email: {}'.format(self._email).encode()
 
 
 class FakeSnapdServer(BaseHTTPRequestHandler):
@@ -338,6 +342,15 @@ class SnapPackageLifecycleTest(SnapPackageBaseTestCase):
             ['sudo', 'snap', 'install', 'fake-snap',
              '--channel', 'strict/stable']]))
 
+    def test_install_logged_in(self):
+        self.fake_snap_command.login('user@email.com')
+        snap_pkg = snaps.SnapPackage('fake-snap/strict/stable')
+        snap_pkg.install()
+        self.assertThat(self.fake_snap_command.calls, Equals([
+            ['snap', 'whoami'],
+            ['snap', 'install', 'fake-snap',
+             '--channel', 'strict/stable']]))
+
     def test_install_fails(self):
         self.fake_snap_command.install_success = False
         snap_pkg = snaps.SnapPackage('fake-snap/strict/stable')
@@ -358,6 +371,15 @@ class SnapPackageLifecycleTest(SnapPackageBaseTestCase):
             ['snap', 'whoami'],
             ['sudo', 'snap', 'refresh', 'fake-snap',
              '--channel', 'classic/stable', '--classic']]))
+
+    def test_refresh_logged_in(self):
+        self.fake_snap_command.login('user@email.com')
+        snap_pkg = snaps.SnapPackage('fake-snap/strict/stable')
+        snap_pkg.refresh()
+        self.assertThat(self.fake_snap_command.calls, Equals([
+            ['snap', 'whoami'],
+            ['snap', 'refresh', 'fake-snap',
+             '--channel', 'strict/stable']]))
 
     def test_refresh_fails(self):
         snap_pkg = snaps.SnapPackage('fake-snap/strict/stable')
