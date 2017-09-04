@@ -34,7 +34,7 @@ class SnapPackage:
 
     It uses information provided by snapd implicitly referring to the local
     and remote stores to obtain information about the snap, such as its
-    confinment value and channel availability.
+    confinement value and channel availability.
 
     This information can also be used to determine if a snap should be
     installed or refreshed.
