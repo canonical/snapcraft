@@ -20,9 +20,10 @@ import subprocess
 import sys
 import yaml
 
+import apt
 import fixtures
 import testscenarios
-from testtools.matchers import Equals
+from testtools.matchers import Contains, Equals
 
 import snapcraft
 import integration_tests
@@ -69,6 +70,21 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
         self.assertThat(
             recorded_yaml['parts']['dummy-part']['uname'],
             Equals(expected_uname))
+
+    def test_prime_records_installed_packages(self):
+        self.run_snapcraft('prime', project_dir='basic')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'manifest.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        with apt.Cache() as apt_cache:
+            expected_package = 'python3={}'.format(
+                apt_cache['python3'].installed.version)
+        self.assertThat(
+            recorded_yaml['parts']['dummy-part']['installed-packages'],
+            Contains(expected_package))
 
     def test_prime_with_architectures(self):
         """Test the recorded manifest for a basic snap

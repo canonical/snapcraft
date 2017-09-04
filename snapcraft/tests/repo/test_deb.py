@@ -223,6 +223,27 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
         self.assertFalse(mock_cc.called)
 
 
+class UbuntuTestCaseWithFakeAptCache(RepoBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_apt_cache = fixture_setup.FakeAptCache()
+        self.useFixture(self.fake_apt_cache)
+
+    def test_get_installed_packages(self):
+        for name, version, installed in (
+                ('test-installed-package', 'test-installed-package-version',
+                 True),
+                ('test-not-installed-package', 'dummy', False)):
+            self.fake_apt_cache.add_package(
+                fixture_setup.FakeAptCachePackage(
+                    name, version, installed=installed))
+
+        self.assertThat(
+            repo.Repo.get_installed_packages(),
+            Equals(['test-installed-package=test-installed-package-version']))
+
+
 class BuildPackagesTestCase(tests.TestCase):
 
     def setUp(self):

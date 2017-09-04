@@ -843,8 +843,7 @@ class FakeAptCache(fixtures.Fixture):
         self.cache = self.Cache()
         self.mock_apt_cache.return_value = self.cache
         for package, version in self.packages:
-            self.cache[package] = FakeAptCachePackage(
-                self.path, package, version)
+            self.add_package(FakeAptCachePackage(package, version))
 
         # Add all the packages in the manifest.
         with open(os.path.abspath(
@@ -853,16 +852,20 @@ class FakeAptCache(fixtures.Fixture):
                     'internal', 'repo', 'manifest.txt'))) as manifest_file:
             self.add_packages([line.strip() for line in manifest_file])
 
+    def add_package(self, package):
+        package.temp_dir = self.path
+        self.cache[package.name] = package
+
     def add_packages(self, package_names):
         for name in package_names:
-            self.cache[name] = FakeAptCachePackage(self.path, name)
+            self.cache[name] = FakeAptCachePackage(name)
 
 
 class FakeAptCachePackage():
 
     def __init__(
-            self, temp_dir, name, version=None,
-            provides=None, installed=False,
+            self, name, version=None, installed=None,
+            temp_dir=None, provides=None,
             priority='non-essential'):
         super().__init__()
         self.temp_dir = temp_dir
@@ -871,9 +874,14 @@ class FakeAptCachePackage():
         self.versions = {}
         self.version = version
         self.candidate = self
-        self.installed = version
         self.provides = provides if provides else []
-        self.installed = installed
+        if installed:
+            # XXX The installed attribute requires some values that the fake
+            # package also requires. The shortest path to do it that I found
+            # was to get installed to return the same fake package.
+            self.installed = self
+        else:
+            self.installed = None
         self.priority = priority
         self.marked_install = False
 

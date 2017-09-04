@@ -119,6 +119,14 @@ class BaseRepo:
         """
         raise NotImplementedError()
 
+    @classmethod
+    def get_installed_packages(cls):
+        """Return a list of the installed packages and their versions
+
+        :rtype: list of strings with the form package=version.
+        """
+        raise NotImplementedError()
+
     def __init__(self, rootdir, *args, **kwargs):
         """Initialize a repository handler.
 
