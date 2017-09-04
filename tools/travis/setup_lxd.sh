@@ -29,9 +29,11 @@ apt-get install --yes snapd
 if which systemctl > /dev/null; then
     # Workaround for https://bugs.launchpad.net/snapd/+bug/1709536
     mkdir -p /systemd/system/snapd.service.d
-    printf '[Service]\nNice=0' > /systemd/system/snapd.service.d/override.conf
+    printf '[Service]\nNice=0\n' > /systemd/system/snapd.service.d/override.conf
     systemctl daemon-reload
     systemctl start snapd
+    echo hola
+    cat /systemd/system/snapd.service.d/override.conf
 fi
 
 # Use edge because the feature to copy links to the container has not yet been
