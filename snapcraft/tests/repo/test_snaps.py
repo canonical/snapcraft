@@ -279,7 +279,7 @@ class SnapPackageIsInStoreTest(SnapPackageBaseTestCase):
         self.assertThat(snap_pkg.in_store, Is(self.expected))
 
 
-class SnapPackageIsClasicTest(SnapPackageBaseTestCase):
+class SnapPackageIsClassicTest(SnapPackageBaseTestCase):
 
     scenarios = [
         ('classic', dict(snap='fake-snap/classic/stable', expected=True)),
