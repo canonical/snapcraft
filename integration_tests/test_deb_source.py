@@ -15,8 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import shutil
+import subprocess
+from textwrap import dedent
 
 from testtools.matchers import (
+    Contains,
     Equals,
     FileExists
 )
@@ -48,3 +52,77 @@ class DebSourceTestCase(integration_tests.TestCase):
         self.assertThat(symlink, FileExists())
         self.assertTrue(os.path.islink(symlink))
         self.assertThat(os.readlink(symlink), Equals('target'))
+
+
+class DebGenerateVersionTestCase(integration_tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        if shutil.which('dch') is None:
+            self.skipTest('dch is not installed')
+        os.mkdir('snap')
+
+        with open(os.path.join('snap', 'snapcraft.yaml'), 'w') as f:
+            print(dedent("""\
+                name: deb-test
+                version: deb
+                summary: test deb generated version
+                description: test deb generated version
+                architectures: [amd64]
+                parts:
+                    nil:
+                        plugin: nil
+                """), file=f)
+
+    def mkchangelog(self):
+        os.mkdir('debian')
+        subprocess.check_call(
+            ['dch', '--create', '--package', 'foobar', '-v', '2.0', '--empty'],
+            subprocess.DEVNULL)
+        # fake debian/rules to keep fdr clean happy
+        fname = 'debian/rules'
+        fhandle = open(fname, 'a')
+        try:
+            os.utime(fname, None)
+            os.chmod(fname, 0o777)
+        finally:
+            fhandle.close()
+
+    def test_version(self):
+        self.mkchangelog()
+        self.run_snapcraft('snap')
+        self.assertThat('deb-test_2.0_amd64.snap', FileExists())
+
+    # this is a catch-all test for all the catastrofic situations that could
+    # happen if the debian dir (or its content) was missing or unusable, and
+    # as such 'fdr clean' would fail
+    def test_fdrclean_failure(self):
+        exception = self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft, ['snap'])
+        self.assertThat(
+            exception.output,
+            Contains('fakeroot debian/rules clean\' returned non-zero')
+        )
+
+    def test_no_changelog(self):
+        self.mkchangelog()
+        path = os.path.join('debian', 'changelog')
+        os.remove(path)
+        exception = self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft, ['snap'])
+        self.assertThat(
+            exception.output,
+            Contains('No such file or directory: ')
+        )
+
+    def test_malformed_changelog(self):
+        self.mkchangelog()
+        path = os.path.join('debian', 'changelog')
+        with open(path, 'w+') as f:
+            f.write(str(os.urandom(512)))
+        exception = self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft, ['snap'])
+        self.assertThat(
+            exception.output,
+            Contains('{} wasn\'t properly closed'.format(path))
+        )

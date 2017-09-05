@@ -16,7 +16,9 @@
 
 import debian.debfile
 import os
+import re
 import shutil
+import subprocess
 import tempfile
 
 from . import errors
@@ -24,6 +26,42 @@ from ._base import FileBase
 
 
 class Deb(FileBase):
+
+    @classmethod
+    def generate_version(cls, *, source_dir=None, deb_arch=None):
+
+        if not source_dir:
+            source_dir = os.getcwd()
+
+        cmd = 'fakeroot debian/rules clean'
+        if deb_arch:
+            prep = 'export $(dpkg-architecture -a{}); '.format(deb_arch)
+            cmd = prep + cmd
+
+        subprocess.check_call(cmd, shell=True, cwd=source_dir)
+        # read a line
+        path = os.path.join(source_dir, 'debian/changelog')
+        try:
+            changelog = open(path)
+        except OSError as e:
+            raise RuntimeError('Unable to access {}: {}'.format(e.filename,
+                                                                e.strerror))
+
+        output = changelog.readline()
+        # parse the string between (..)
+        m = re.search(
+            r'^(?P<pkg>[a-zA-Z0-9\s.+-]+\({1})'
+            r'(?P<version>[a-zA-Z0-9.-]+[~a-zA-Z0-9]*)'
+            r'(?P<leftover>\){1}.+)$',
+            output)
+        if not m:
+            # the debian/changelog history wasn't properly 'closed'
+            raise errors.VCSError(message='{} wasn\'t properly'
+                                  ' closed'.format(path))
+
+        version = m.group('version')
+        # return version
+        return '{}'.format(version)
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
                  source_branch=None, source_depth=None, source_checksum=None):

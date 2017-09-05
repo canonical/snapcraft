@@ -296,6 +296,12 @@ class _SnapPackaging:
                         'repo (version: git).')
             vcs_handler = get_source_handler_from_type('git')
             new_version = vcs_handler.generate_version()
+        elif version == 'deb':
+            logger.info('Determining the version from the debian/'
+                        'changelog file (version: deb).')
+            vcs_handler = get_source_handler_from_type('deb')
+            new_version = vcs_handler.generate_version(
+                deb_arch=self._config_data['architectures'][0])
 
         if new_version != version:
             logger.info('The version has been set to {!r}'.format(new_version))
