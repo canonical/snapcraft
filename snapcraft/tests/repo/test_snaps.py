@@ -13,21 +13,19 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import json
 import os
 import socketserver
 import subprocess
 import tempfile
-from http.server import BaseHTTPRequestHandler
 from threading import Thread
 from unittest import mock
-from urllib import parse
 
 import fixtures
 from testtools.matchers import Equals, Is
 
 from snapcraft import tests
 from snapcraft.internal.repo import errors, snaps
+from snapcraft.tests.fake_servers.snapd import FakeSnapdServer
 
 
 class FakeSnapCommand(fixtures.Fixture):
@@ -92,72 +90,6 @@ class FakeSnapCommand(fixtures.Fixture):
             raise subprocess.CalledProcessError(returncode=1, cmd=cmd)
         elif cmd == 'whoami':
             return 'email: {}'.format(self._email).encode()
-
-
-class FakeSnapdServer(BaseHTTPRequestHandler):
-
-    def do_GET(self):
-        parsed_url = parse.urlparse(self.path)
-        if parsed_url.path.startswith('/v2/snaps/'):
-            self._handle_snaps(parsed_url)
-        elif parsed_url.path == '/v2/find':
-            self._handle_find(parsed_url)
-        else:
-            self.wfile.write(parsed_url.path.encode())
-
-    def _handle_snaps(self, parsed_url):
-        status_code = 404
-        params = {}
-
-        if parsed_url.path.endswith('/fake-snap'):
-            status_code = 200
-            params = {'channel': 'stable'}
-        elif parsed_url.path.endswith('/fake-snap-stable'):
-            status_code = 200
-            params = {'channel': 'stable'}
-        elif parsed_url.path.endswith('/fake-snap-branch'):
-            status_code = 200
-            params = {'channel': 'candidate/branch'}
-        elif parsed_url.path.endswith('/fake-snap-track-stable'):
-            status_code = 200
-            params = {'channel': 'track/stable'}
-        elif parsed_url.path.endswith('/fake-snap-track-stable-branch'):
-            status_code = 200
-            params = {'channel': 'track/stable/branch'}
-        elif parsed_url.path.endswith('/fake-snap-edge'):
-            status_code = 200
-            params = {'channel': 'edge'}
-
-        self.send_response(status_code)
-        self.send_header('Content-Type', 'text/application+json')
-        self.end_headers()
-        response = json.dumps({'result': params}).encode()
-        self.wfile.write(response)
-
-    def _handle_find(self, parsed_url):
-        query = parse.parse_qs(parsed_url.query)
-        status_code = 404
-        params = {}
-
-        if query['name'][0] == 'fake-snap':
-            status_code = 200
-            params = {'channels': {
-                'latest/stable': {'confinement': 'strict'},
-                'classic/stable': {'confinement': 'classic'},
-                'strict/stable': {'confinement': 'strict'},
-                'devmode/stable': {'confinement': 'devmode'},
-            }}
-        if query['name'][0] == 'new-fake-snap':
-            status_code = 200
-            params = {'channels': {
-                'latest/stable': {'confinement': 'strict'},
-            }}
-
-        self.send_response(status_code)
-        self.send_header('Content-Type', 'text/application+json')
-        self.end_headers()
-        response = json.dumps({'result': [params]}).encode()
-        self.wfile.write(response)
 
 
 class UnixHTTPServer(socketserver.UnixStreamServer):
