@@ -1,0 +1,13 @@
+name: build-snap-grammar-try
+version: '0.1'
+summary: Test build snap grammar try statement
+description: Verify that the try statement results in an optional build snap
+grade: devel
+confinement: strict
+
+parts:
+  my-part:
+    plugin: nil
+    build-snaps:
+      - try:
+        - hello

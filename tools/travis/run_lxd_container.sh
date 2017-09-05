@@ -32,7 +32,8 @@ name="$1"
 lxc="/snap/bin/lxc"
 
 echo "Starting the LXD container."
-$lxc launch --ephemeral ubuntu:xenial "$name"
+# FIXME switch back to unprovileged once LP: #1709536 is fixed
+$lxc launch --ephemeral --config security.privileged=true ubuntu:xenial "$name"
 # This is likely needed to wait for systemd in the container to start and get
 # an IP, configure DNS. First boot is always a bit slow because cloud-init
 # needs to run too.
@@ -53,3 +54,6 @@ $lxc config set "$name" environment.CODECOV_TOKEN "$CODECOV_TOKEN"
 $lxc config set "$name" environment.LC_ALL "C.UTF-8"
 
 $lxc exec "$name" -- apt update
+
+# We install squashfuse here as it is only relevant when running the tests in a container
+$lxc exec "$name" -- apt install squashfuse

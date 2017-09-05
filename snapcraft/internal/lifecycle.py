@@ -116,6 +116,9 @@ def execute(step, project_options, part_names=None):
     if installed_packages is None:
         raise ValueError(
             'The repo backend is not returning the list of installed packages')
+
+    repo.snaps.install_snaps(config.build_snaps)
+
     os.makedirs(_SNAPCRAFT_INTERNAL_DIR, exist_ok=True)
     with open(os.path.join(_SNAPCRAFT_INTERNAL_DIR, 'state'), 'w') as f:
         f.write(yaml.dump(states.GlobalState(installed_packages)))
