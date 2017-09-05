@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from snapcraft.internal.project_loader import grammar
+from snapcraft.internal import repo
 
 
 class PartGrammarProcessor:
@@ -57,11 +58,22 @@ class PartGrammarProcessor:
         self._project_options = project_options
         self._repo = repo
 
+        self._build_snap_grammar = getattr(plugin, 'build_snaps', [])
+        self.__build_snaps = set()
+
         self._build_package_grammar = getattr(plugin, 'build_packages', [])
         self.__build_packages = set()
 
         self._stage_package_grammar = getattr(plugin, 'stage_packages', [])
         self.__stage_packages = set()
+
+    def get_build_snaps(self):
+        if not self.__build_snaps:
+            self.__build_snaps = grammar.process_grammar(
+                self._build_snap_grammar, self._project_options,
+                repo.snaps.SnapPackage.is_valid_snap)
+
+        return self.__build_snaps
 
     def get_build_packages(self):
         if not self.__build_packages:

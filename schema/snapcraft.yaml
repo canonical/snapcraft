@@ -276,6 +276,9 @@ properties:
           stage-packages:
             $ref: "#/definitions/grammar-array"
             default: [] # For some reason this doesn't work if in the ref
+          build-snaps:
+            $ref: "#/definitions/grammar-array"
+            default: [] # For some reason this doesn't work if in the ref
           build-packages:
             $ref: "#/definitions/grammar-array"
             default: [] # For some reason this doesn't work if in the ref
