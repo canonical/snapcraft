@@ -284,11 +284,10 @@ class JHBuildPlugin(snapcraft.BasePlugin):
 
         if jhbuild_user != os.getuid():
             chmod_path = os.path.dirname(os.path.dirname(self.partdir))
-
-        for filename in glob.iglob('%s/**' % chmod_path, recursive=True):
-            if not os.path.exists(filename):
-                continue
-            os.chown(filename, jhbuild_user, jhbuild_group)
+            for filename in glob.iglob('%s/**' % chmod_path, recursive=True):
+                if not os.path.exists(filename):
+                    continue
+                os.chown(filename, jhbuild_user, jhbuild_group)
 
         if not os.path.exists(self.jhbuild_program):
             logger.info('Building JHBuild')
