@@ -78,10 +78,10 @@ class Containerbuild:
         self._host_arch = deb_arch
         self._image = 'ubuntu:xenial/{}'.format(deb_arch)
         # Use a temporary folder the 'lxd' snap can access
-        lxd_common = os.path.expanduser(
+        lxd_common_dir = os.path.expanduser(
             os.path.join('~', 'snap', 'lxd', 'common'))
-        os.makedirs(lxd_common, exist_ok=True)
-        self.tmp = tempfile.mkdtemp(prefix='snapcraft', dir=lxd_common)
+        os.makedirs(lxd_common_dir, exist_ok=True)
+        self.tmp_dir = tempfile.mkdtemp(prefix='snapcraft', dir=lxd_common_dir)
 
     def _get_remote_info(self):
         remote = self._container_name.split(':')[0]
@@ -164,7 +164,7 @@ class Containerbuild:
                     raise e
             else:
                 # Remove temporary folder if everything went well
-                shutil.rmtree(self.tmp)
+                shutil.rmtree(self.tmp_dir)
                 self._finish()
 
     def _setup_project(self):
@@ -225,7 +225,7 @@ class Containerbuild:
         installed = os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps',
                                  filename)
 
-        filepath = os.path.join(self.tmp, filename)
+        filepath = os.path.join(self.tmp_dir, filename)
         if rev.startswith('x'):
             logger.info('Making {} user-accessible'.format(filename))
             check_call(['sudo', 'cp', installed, filepath])
@@ -243,7 +243,7 @@ class Containerbuild:
         self._container_run(cmd)
 
     def _inject_assertions(self, filename, assertions):
-        filepath = os.path.join(self.tmp, filename)
+        filepath = os.path.join(self.tmp_dir, filename)
         with open(filepath, 'wb') as f:
             for assertion in assertions:
                 logger.info('Looking up assertion {}'.format(assertion))

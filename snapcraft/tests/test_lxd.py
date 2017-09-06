@@ -228,7 +228,8 @@ class LXDTestCase(tests.TestCase):
         ])
 
         # Temporary folder should be removed in the end
-        self.fake_filesystem.rmtree_mock.assert_has_calls([call(builder.tmp)])
+        self.fake_filesystem.rmtree_mock.assert_has_calls([
+            call(builder.tmp_dir)])
 
     @patch('snapcraft.internal.common.is_snap')
     def test_inject_socket_error(self,
@@ -281,16 +282,16 @@ class LXDTestCase(tests.TestCase):
         builder.execute()
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'file', 'push',
-                  os.path.join(builder.tmp, 'core_123.assert'),
+                  os.path.join(builder.tmp_dir, 'core_123.assert'),
                   '{}/run/core_123.assert'.format(self.fake_lxd.name)]),
             call(['lxc', 'file', 'push',
-                  os.path.join(builder.tmp, 'core_123.snap'),
+                  os.path.join(builder.tmp_dir, 'core_123.snap'),
                   '{}/run/core_123.snap'.format(self.fake_lxd.name)]),
             call(['lxc', 'file', 'push',
-                  os.path.join(builder.tmp, 'snapcraft_345.assert'),
+                  os.path.join(builder.tmp_dir, 'snapcraft_345.assert'),
                   '{}/run/snapcraft_345.assert'.format(self.fake_lxd.name)]),
             call(['lxc', 'file', 'push',
-                  os.path.join(builder.tmp, 'snapcraft_345.snap'),
+                  os.path.join(builder.tmp_dir, 'snapcraft_345.snap'),
                   '{}/run/snapcraft_345.snap'.format(self.fake_lxd.name)]),
         ])
         mock_container_run.assert_has_calls([
@@ -302,7 +303,8 @@ class LXDTestCase(tests.TestCase):
         ])
 
         # Temporary folder should be removed in the end
-        self.fake_filesystem.rmtree_mock.assert_has_calls([call(builder.tmp)])
+        self.fake_filesystem.rmtree_mock.assert_has_calls([
+            call(builder.tmp_dir)])
 
     @patch('os.getuid')
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
@@ -325,11 +327,11 @@ class LXDTestCase(tests.TestCase):
         builder.execute()
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['sudo', 'cp', '/var/lib/snapd/snaps/snapcraft_x1.snap',
-                  os.path.join(builder.tmp, 'snapcraft_x1.snap')]),
+                  os.path.join(builder.tmp_dir, 'snapcraft_x1.snap')]),
             call(['sudo', 'chown', str(os.getuid()),
-                  os.path.join(builder.tmp, 'snapcraft_x1.snap')]),
+                  os.path.join(builder.tmp_dir, 'snapcraft_x1.snap')]),
             call(['lxc', 'file', 'push',
-                  os.path.join(builder.tmp, 'snapcraft_x1.snap'),
+                  os.path.join(builder.tmp_dir, 'snapcraft_x1.snap'),
                   '{}/run/snapcraft_x1.snap'.format(self.fake_lxd.name)]),
         ])
         mock_container_run.assert_has_calls([
