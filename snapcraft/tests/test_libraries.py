@@ -118,9 +118,19 @@ class TestSystemLibsOnNewRelease(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('platform.linux_distribution')
+        patcher = mock.patch('snapcraft.internal.common.get_os_release_info')
         distro_mock = patcher.start()
-        distro_mock.return_value = ('Ubuntu', '16.05', 'xenial')
+        distro_mock.return_value = {'VERSION_CODENAME': 'xenial',
+                                    'HOME_URL': 'http://www.ubuntu.com/',
+                                    'BUG_REPORT_URL':
+                                        'http://bugs.launchpad.net/ubuntu/',
+                                    'VERSION_ID': '16.04',
+                                    'UBUNTU_CODENAME': 'xenial',
+                                    'ID': 'ubuntu', 'NAME': 'Ubuntu',
+                                    'ID_LIKE': 'debian',
+                                    'PRETTY_NAME': 'Ubuntu 16.04.3 LTS',
+                                    'VERSION': '16.04.3 LTS (Xenial Xerus)',
+                                    'SUPPORT_URL': 'http://help.ubuntu.com/'}
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.internal.common.run_output')

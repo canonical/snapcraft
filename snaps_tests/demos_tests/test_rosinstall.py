@@ -15,8 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from platform import linux_distribution
 from unittest import skipUnless
+
+from snapcraft.internal.common import get_os_release_info
 
 import snaps_tests
 
@@ -25,7 +26,7 @@ class RosinstallTestCase(snaps_tests.SnapsTestCase):
 
     snap_content_dir = 'rosinstall'
 
-    @skipUnless(linux_distribution()[2] == 'xenial',
+    @skipUnless(get_os_release_info()['VERSION_CODENAME'] == 'xenial',
                 'This test fails on yakkety LP: #1614476')
     def test_rosinstall(self):
         snap_path = self.build_snap(self.snap_content_dir, timeout=1800)

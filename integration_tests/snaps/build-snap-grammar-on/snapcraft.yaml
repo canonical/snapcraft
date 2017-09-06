@@ -1,0 +1,13 @@
+name: build-snap-grammar-on
+version: '0.1'
+summary: Test build snap grammar on statement
+description: Verify that the on statement skips other architecture branches
+grade: devel
+confinement: strict
+
+parts:
+  my-part:
+    plugin: nil
+    build-snaps:
+      - on other-arch:
+        - hello

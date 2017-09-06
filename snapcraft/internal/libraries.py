@@ -18,7 +18,6 @@ import re
 import glob
 import logging
 import os
-import platform
 import subprocess
 
 from snapcraft.internal import common
@@ -67,7 +66,7 @@ def _get_system_libs():
     if _libraries:
         return _libraries
 
-    release = platform.linux_distribution()[1]
+    release = common.get_os_release_info()['VERSION_ID']
     lib_path = os.path.join(common.get_librariesdir(), release)
 
     if not os.path.exists(lib_path):

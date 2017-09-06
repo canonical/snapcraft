@@ -89,6 +89,7 @@ class Config:
         if project_options is None:
             project_options = snapcraft.ProjectOptions()
 
+        self.build_snaps = set()
         self.build_tools = []
         self._project_options = project_options
 
@@ -115,11 +116,12 @@ class Config:
         self.build_tools = grammar_processor.get_build_packages()
         self.build_tools |= set(project_options.additional_build_packages)
 
-        self.parts = PartsConfig(self.data,
-                                 self._project_options,
-                                 self._validator,
-                                 self.build_tools,
-                                 self.snapcraft_yaml_path)
+        self.parts = PartsConfig(parts=self.data,
+                                 project_options=self._project_options,
+                                 validator=self._validator,
+                                 build_snaps=self.build_snaps,
+                                 build_tools=self.build_tools,
+                                 snapcraft_yaml=self.snapcraft_yaml_path)
 
         if 'architectures' not in self.data:
             self.data['architectures'] = [self._project_options.deb_arch]
