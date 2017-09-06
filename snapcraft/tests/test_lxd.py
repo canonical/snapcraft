@@ -192,11 +192,19 @@ class LXDTestCase(tests.TestCase):
                                'There are either.*{}.*'.format(self.remote)):
             self.make_cleanbuilder()
 
-    def test_parallel_invocation(self):
+    @patch('snapcraft.internal.common.is_snap')
+    def test_parallel_invocation(self, mock_is_snap):
+        mock_is_snap.side_effect = lambda: False
+
         builder1 = self.make_cleanbuilder()
         builder2 = self.make_cleanbuilder()
         builder1.execute()
+        # Temporary folder should be removed in the end
+        self.fake_filesystem.rmtree_mock.assert_has_calls([
+            call(builder1.tmp_dir)])
         builder2.execute()
+        self.fake_filesystem.rmtree_mock.assert_has_calls([
+            call(builder2.tmp_dir)])
 
     @patch('snapcraft.internal.common.is_snap')
     def test_parallel_invocation_inject_snap(self, mock_is_snap):
@@ -208,7 +216,12 @@ class LXDTestCase(tests.TestCase):
         builder1 = self.make_cleanbuilder()
         builder2 = self.make_cleanbuilder()
         builder1.execute()
+        # Temporary folder should be removed in the end
+        self.fake_filesystem.rmtree_mock.assert_has_calls([
+            call(builder1.tmp_dir)])
         builder2.execute()
+        self.fake_filesystem.rmtree_mock.assert_has_calls([
+            call(builder2.tmp_dir)])
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @patch('snapcraft.internal.common.is_snap')
@@ -226,10 +239,6 @@ class LXDTestCase(tests.TestCase):
         mock_container_run.assert_has_calls([
             call(['apt-get', 'install', 'snapcraft', '-y']),
         ])
-
-        # Temporary folder should be removed in the end
-        self.fake_filesystem.rmtree_mock.assert_has_calls([
-            call(builder.tmp_dir)])
 
     @patch('snapcraft.internal.common.is_snap')
     def test_inject_socket_error(self,
@@ -301,10 +310,6 @@ class LXDTestCase(tests.TestCase):
             call(['snap', 'ack', '/run/snapcraft_345.assert']),
             call(['snap', 'install', '/run/snapcraft_345.snap', '--classic']),
         ])
-
-        # Temporary folder should be removed in the end
-        self.fake_filesystem.rmtree_mock.assert_has_calls([
-            call(builder.tmp_dir)])
 
     @patch('os.getuid')
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
