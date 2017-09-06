@@ -38,10 +38,7 @@ class CleanbuildTestCase(integration_tests.TestCase):
             raise subprocess.CalledProcessError(return_code, command)
 
     def test_cleanbuild(self):
-        self.run_snapcraft_cleanbuild('assemble')
+        self.run_snapcraft_cleanbuild('basic')
 
-        snap_source_path = 'assemble_1.0_source.tar.bz2'
-        self.assertThat(snap_source_path, FileExists())
-
-        snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
+        snap_file_path = 'basic_0.1_{}.snap'.format(self.deb_arch)
         self.assertThat(snap_file_path, FileExists())
