@@ -54,7 +54,7 @@ $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
 [ "$test" = "integration" -o "$test" = "containers" ] && $lxc exec test-runner -- sh -c "snap install core" || echo "ignored error"
 
 if [ "$test" = "containers" ]; then
-    $lxc exec test-runner -- sh -c "cd snapcraft && ./tools/travis/setup_lxd.sh"
+    $lxc exec test-runner -- sh -c "cd snapcraft && apt remove lxd lxd-client --yes && ./tools/travis/setup_lxd.sh"
 fi
 
 $lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test $pattern"
