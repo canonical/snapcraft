@@ -28,4 +28,4 @@ parts:
     organize:
       subscribe.py: bin/subscribe
       publish.py: bin/publish
-    after: [mqtt-paho/python3]
+    after: [mqtt-paho-python3]
