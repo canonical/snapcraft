@@ -208,6 +208,8 @@ class TestParserWikis(testscenarios.WithScenarios, ParserTestCase):
     ]
 
     def test_local_wiki(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'XDG_CACHE_HOME', os.path.join(self.path, '.cache')))
         repo_dir = 'repo'
         base_dir = os.path.join(os.path.dirname(__file__), 'wiki')
         wiki_file = os.path.join(base_dir, self.wiki_file)
