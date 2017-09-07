@@ -88,7 +88,6 @@ BUILD_PACKAGES = {
     'make',
     'ninja-build',
     'pkg-config',
-    'pkgconf',
     'python-dev',
     'python3-dev',
     'subversion',
