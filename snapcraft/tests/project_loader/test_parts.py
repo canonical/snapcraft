@@ -46,7 +46,7 @@ class TestParts(tests.TestCase):
 
         patcher = unittest.mock.patch(
             'snapcraft.internal.project_loader._parts_config.PartsConfig'
-            '.load_plugin')
+            '.load_part')
         self.mock_plugin_loader = patcher.start()
         self.addCleanup(patcher.stop)
 

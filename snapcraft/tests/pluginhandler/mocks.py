@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import snapcraft
-from snapcraft.internal import pluginhandler, project_loader
 
 
 class TestPlugin(snapcraft.BasePlugin):
@@ -40,24 +39,3 @@ class TestPlugin(snapcraft.BasePlugin):
     @classmethod
     def get_build_properties(cls):
         return ['test-property']
-
-
-def loadplugin(part_name, plugin_name=None, part_properties=None,
-               project_options=None):
-    if not plugin_name:
-        plugin_name = 'nil'
-    properties = {'plugin': plugin_name}
-    if part_properties:
-        properties.update(part_properties)
-    if not project_options:
-        project_options = snapcraft.ProjectOptions()
-
-    validator = project_loader.Validator()
-    schema = validator.part_schema
-    definitions_schema = validator.definitions_schema
-    return pluginhandler.load_plugin(part_name=part_name,
-                                     plugin_name=plugin_name,
-                                     part_properties=properties,
-                                     project_options=project_options,
-                                     part_schema=schema,
-                                     definitions_schema=definitions_schema)

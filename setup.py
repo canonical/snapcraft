@@ -37,6 +37,7 @@ packages = [
 	'snapcraft.internal.pluginhandler',
 	'snapcraft.internal.project_loader',
 	'snapcraft.internal.project_loader.grammar',
+	'snapcraft.internal.project_loader.grammar_processing',
 	'snapcraft.internal.repo',
 	'snapcraft.internal.sources',
 	'snapcraft.internal.states',
@@ -85,9 +86,8 @@ if sys.platform == 'win32':
 			'docopt',
 			'cffi',
 		],
-		# Explicit inclusion of tour and other data, which is then clobbered.
+		# Explicit inclusion data, which is then clobbered.
 		'include_files' : [
-			('tour', os.path.join('share', 'snapcraft', 'tour')),
 			('libraries', os.path.join('share', 'snapcraft', 'libraries')),
 			('schema', os.path.join('share', 'snapcraft', 'schema')),
 		],

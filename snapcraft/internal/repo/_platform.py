@@ -15,28 +15,27 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import logging
-from platform import linux_distribution as _linux_distribution
+
+from snapcraft.internal.common import get_os_release_info
 
 logger = logging.getLogger(__name__)
+
 _DEB_BASED_PLATFORM = [
-    'Ubuntu',
-    'Debian',
-    'elementary',
-    # Not sure what was going on when this was added.
-    '"elementary"',
+    'ubuntu',
     'debian',
+    'elementary OS',
     'neon',
 ]
 
 
 def _is_deb_based(distro=None):
     if not distro:
-        distro = _linux_distribution()[0]
+        distro = get_os_release_info()['ID']
     return distro in _DEB_BASED_PLATFORM
 
 
 def _get_repo_for_platform():
-    distro = _linux_distribution()[0]
+    distro = get_os_release_info()['ID']
     if _is_deb_based(distro):
         from ._deb import Ubuntu
         return Ubuntu

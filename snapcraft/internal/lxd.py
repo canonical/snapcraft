@@ -21,6 +21,7 @@ import os
 import pipes
 import shutil
 import sys
+import tempfile
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError
 from time import sleep
@@ -30,7 +31,10 @@ import requests_unixsocket
 import petname
 import yaml
 
-from snapcraft.internal.errors import SnapcraftEnvironmentError
+from snapcraft.internal.errors import (
+        ContainerConnectionError,
+        SnapdError,
+)
 from snapcraft.internal import common
 from snapcraft._options import _get_deb_arch
 
@@ -69,10 +73,15 @@ class Containerbuild:
             kernel = server_environment['kernelarchitecture']
         deb_arch = _get_deb_arch(kernel)
         if not deb_arch:
-            raise SnapcraftEnvironmentError(
+            raise ContainerConnectionError(
                 'Unrecognized server architecture {}'.format(kernel))
         self._host_arch = deb_arch
         self._image = 'ubuntu:xenial/{}'.format(deb_arch)
+        # Use a temporary folder the 'lxd' snap can access
+        lxd_common_dir = os.path.expanduser(
+            os.path.join('~', 'snap', 'lxd', 'common'))
+        os.makedirs(lxd_common_dir, exist_ok=True)
+        self.tmp_dir = tempfile.mkdtemp(prefix='snapcraft', dir=lxd_common_dir)
 
     def _get_remote_info(self):
         remote = self._container_name.split(':')[0]
@@ -159,8 +168,7 @@ class Containerbuild:
                     raise e
             else:
                 # Remove temporary folder if everything went well
-                if common.is_snap():
-                    shutil.rmtree(self._tmp)
+                shutil.rmtree(self.tmp_dir)
                 self._finish()
 
     def _setup_project(self):
@@ -179,11 +187,6 @@ class Containerbuild:
             # Because of https://bugs.launchpad.net/snappy/+bug/1628289
             self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
 
-            # Use a temporary folder the 'lxd' snap can access
-            self._tmp = os.path.expanduser(
-                os.path.join('~', 'snap', 'lxd', 'common', 'snapcraft.tmp'))
-            os.makedirs(self._tmp, exist_ok=True)
-
             # Push core snap into container
             self._inject_snap('core')
             self._inject_snap('snapcraft')
@@ -198,10 +201,10 @@ class Containerbuild:
         try:
             json = session.request('GET', api).json()
         except requests.exceptions.ConnectionError as e:
-            raise SnapcraftEnvironmentError(
+            raise SnapdError(
                 'Error connecting to {}'.format(api)) from e
         if json['type'] == 'error':
-            raise SnapcraftEnvironmentError(
+            raise SnapdError(
                 'Error querying {!r} snap: {}'.format(
                     name, json['result']['message']))
         id = json['result']['id']
@@ -226,7 +229,7 @@ class Containerbuild:
         installed = os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps',
                                  filename)
 
-        filepath = os.path.join(self._tmp, filename)
+        filepath = os.path.join(self.tmp_dir, filename)
         if rev.startswith('x'):
             logger.info('Making {} user-accessible'.format(filename))
             check_call(['sudo', 'cp', installed, filepath])
@@ -244,7 +247,7 @@ class Containerbuild:
         self._container_run(cmd)
 
     def _inject_assertions(self, filename, assertions):
-        filepath = os.path.join(self._tmp, filename)
+        filepath = os.path.join(self.tmp_dir, filename)
         with open(filepath, 'wb') as f:
             for assertion in assertions:
                 logger.info('Looking up assertion {}'.format(assertion))
@@ -356,21 +359,17 @@ def _get_default_remote():
 
     :returns: default lxd remote.
     :rtype: string.
-    :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
+    :raises snapcraft.internal.errors.ContainerConnectionError:
         raised if the lxc call fails.
     """
     try:
         default_remote = check_output(['lxc', 'remote', 'get-default'])
     except FileNotFoundError:
-        raise SnapcraftEnvironmentError(
-            'You must have LXD installed in order to use cleanbuild.\n'
-            'Refer to the documentation at '
-            'https://linuxcontainers.org/lxd/getting-started-cli.')
+        raise ContainerConnectionError(
+            'You must have LXD installed in order to use cleanbuild.')
     except CalledProcessError:
-        raise SnapcraftEnvironmentError(
-            'Something seems to be wrong with your installation of LXD.\n'
-            'Refer to the documentation at '
-            'https://linuxcontainers.org/lxd/getting-started-cli.')
+        raise ContainerConnectionError(
+            'Something seems to be wrong with your installation of LXD.')
     return default_remote.decode(sys.getfilesystemencoding()).strip()
 
 
@@ -378,18 +377,21 @@ def _verify_remote(remote):
     """Verify that the lxd remote exists.
 
     :param str remote: the lxd remote to verify.
-    :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
+    :raises snapcraft.internal.errors.ContainerConnectionError:
         raised if the lxc call listing the remote fails.
     """
     # There is no easy way to grep the results from `lxc remote list`
     # so we try and execute a simple operation against the remote.
     try:
         check_output(['lxc', 'list', '{}:'.format(remote)])
+    except FileNotFoundError:
+        raise ContainerConnectionError(
+            'You must have LXD installed in order to use cleanbuild.\n'
+            'Refer to the documentation at '
+            'https://linuxcontainers.org/lxd/getting-started-cli.')
     except CalledProcessError as e:
-        raise SnapcraftEnvironmentError(
+        raise ContainerConnectionError(
             'There are either no permissions or the remote {!r} '
             'does not exist.\n'
             'Verify the existing remotes by running `lxc remote list`\n'
-            'To setup a new remote, follow the instructions at\n'
-            'https://linuxcontainers.org/lxd/getting-started-cli/'
-            '#multiple-hosts'.format(remote)) from e
+            .format(remote)) from e

@@ -27,6 +27,3 @@ jobs:
     # Trigger beta tests, only in the daily cron.
     - stage: beta
       script: if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then ./tools/travis/make_beta_pr.sh; fi
-    # Generate docs, only in pushes to master.
-    - stage: deploy
-      script: if [ "$TRAVIS_EVENT_TYPE" = "push" ] && [ "$TRAVIS_BRANCH" = "master" ]; then ./tools/travis/deploy_docs.sh; fi

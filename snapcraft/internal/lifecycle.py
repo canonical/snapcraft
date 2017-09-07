@@ -116,6 +116,9 @@ def execute(step, project_options, part_names=None):
     if installed_packages is None:
         raise ValueError(
             'The repo backend is not returning the list of installed packages')
+
+    repo.snaps.install_snaps(config.build_snaps)
+
     os.makedirs(_SNAPCRAFT_INTERNAL_DIR, exist_ok=True)
     with open(os.path.join(_SNAPCRAFT_INTERNAL_DIR, 'state'), 'w') as f:
         f.write(yaml.dump(states.GlobalState(installed_packages)))
@@ -167,11 +170,11 @@ def _setup_core(deb_arch):
 
 
 def _replace_in_part(part):
-    for key, value in part.code.options.__dict__.items():
+    for key, value in part.plugin.options.__dict__.items():
         value = replace_attr(value, [
-            ('$SNAPCRAFT_PART_INSTALL', part.code.installdir),
+            ('$SNAPCRAFT_PART_INSTALL', part.plugin.installdir),
         ])
-        setattr(part.code.options, key, value)
+        setattr(part.plugin.options, key, value)
 
     return part
 
@@ -267,35 +270,10 @@ class _Executor:
 
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
-            message_components = [
-                'The {!r} step of {!r} is out of date:\n'.format(
-                    step, part.name)]
-
-            if dirty_report.dirty_properties:
-                humanized_properties = formatting_utils.humanize_list(
-                    dirty_report.dirty_properties, 'and')
-                pluralized_connection = formatting_utils.pluralize(
-                    dirty_report.dirty_properties, 'property appears',
-                    'properties appear')
-                message_components.append(
-                    'The {} part {} to have changed.\n'.format(
-                        humanized_properties, pluralized_connection))
-
-            if dirty_report.dirty_project_options:
-                humanized_options = formatting_utils.humanize_list(
-                    dirty_report.dirty_project_options, 'and')
-                pluralized_connection = formatting_utils.pluralize(
-                    dirty_report.dirty_project_options, 'option appears',
-                    'options appear')
-                message_components.append(
-                    'The {} project {} to have changed.\n'.format(
-                        humanized_options, pluralized_connection))
-
-            message_components.append(
-                "In order to continue, please clean that part's {0!r} step "
-                "by running: snapcraft clean {1} -s {0}\n".format(
-                    step, part.name))
-            raise RuntimeError(''.join(message_components))
+            raise errors.StepOutdatedError(
+                step=step, part=part.name,
+                dirty_properties=dirty_report.dirty_properties,
+                dirty_project_options=dirty_report.dirty_project_options)
 
         staged_state = self.config.get_project_state('stage')
         primed_state = self.config.get_project_state('prime')
@@ -310,17 +288,8 @@ class _Executor:
             for dependent in self.config.all_parts:
                 if (dependent.name in dependents and
                         not dependent.is_clean('build')):
-                    humanized_parts = formatting_utils.humanize_list(
-                        dependents, 'and')
-                    pluralized_depends = formatting_utils.pluralize(
-                        dependents, "depends", "depend")
-
-                    raise RuntimeError(
-                        'The {0!r} step for {1!r} needs to be run again, but '
-                        '{2} {3} upon it. Please clean the build '
-                        'step of {2} first.'.format(
-                            step, part.name, humanized_parts,
-                            pluralized_depends))
+                    raise errors.StepOutdatedError(step=step, part=part.name,
+                                                   dependents=dependents)
 
         part.clean(staged_state, primed_state, step, '(out of date)')
 

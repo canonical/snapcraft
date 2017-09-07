@@ -32,11 +32,6 @@ class CommonTestCase(tests.TestCase):
         common.set_plugindir(plugindir)
         self.assertThat(plugindir, Equals(common.get_plugindir()))
 
-    def test_set_tourdir(self):
-        tourdir = os.path.join(self.path, 'testtour')
-        common.set_tourdir(tourdir)
-        self.assertThat(tourdir, Equals(common.get_tourdir()))
-
     def test_isurl(self):
         self.assertTrue(common.isurl('git://'))
         self.assertTrue(common.isurl('bzr://'))

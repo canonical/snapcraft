@@ -461,4 +461,3 @@ from snapcraft.internal import common as _common # noqa
 if _common.is_snap():
     snap = _os.environ.get('SNAP')
     _common.set_schemadir(_os.path.join(snap, 'share', 'snapcraft', 'schema'))
-    _common.set_tourdir(_os.path.join(snap, 'tour'))

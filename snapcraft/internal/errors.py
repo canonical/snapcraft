@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from snapcraft import formatting_utils
+
 
 class SnapcraftError(Exception):
     """Base class for all snapcraft exceptions.
@@ -45,7 +47,78 @@ class MissingStateCleanError(SnapcraftError):
         super().__init__(step=step)
 
 
+class StepOutdatedError(SnapcraftError):
+
+    fmt = (
+        'The {step!r} step of {part!r} is out of date:\n'
+        '{report}'
+        'In order to continue, please clean that part\'s {step!r} step '
+        'by running:\n'
+        'snapcraft clean {parts_names} -s {step}\n'
+    )
+
+    def __init__(self, *, step, part,
+                 dirty_properties=None, dirty_project_options=None,
+                 dependents=None):
+        messages = []
+        if dirty_properties:
+            humanized_properties = formatting_utils.humanize_list(
+                dirty_properties, 'and')
+            pluralized_connection = formatting_utils.pluralize(
+                dirty_properties, 'property appears',
+                'properties appear')
+            messages.append(
+                'The {} part {} to have changed.\n'.format(
+                    humanized_properties, pluralized_connection))
+        if dirty_project_options:
+            humanized_options = formatting_utils.humanize_list(
+                dirty_project_options, 'and')
+            pluralized_connection = formatting_utils.pluralize(
+                dirty_project_options, 'option appears',
+                'options appear')
+            messages.append(
+                'The {} project {} to have changed.\n'.format(
+                    humanized_options, pluralized_connection))
+        if dependents:
+            humanized_dependents = formatting_utils.humanize_list(
+                dependents, 'and')
+            pluralized_dependents = formatting_utils.pluralize(
+                dependents, "depends", "depend")
+            messages.append('The {0!r} step for {1!r} needs to be run again, '
+                            'but {2} {3} on it.\n'.format(
+                                step,
+                                part,
+                                humanized_dependents,
+                                pluralized_dependents))
+            parts_names = ['{!s}'.format(d) for d in sorted(dependents)]
+        else:
+            parts_names = [part]
+        super().__init__(step=step, part=part,
+                         report=''.join(messages),
+                         parts_names=' '.join(parts_names))
+
+
 class SnapcraftEnvironmentError(SnapcraftError):
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
+class ContainerError(SnapcraftError):
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
+class ContainerConnectionError(ContainerError):
+    fmt = ('{message}\n'
+           'Refer to the documentation at '
+           'https://linuxcontainers.org/lxd/getting-started-cli.')
+
+
+class SnapdError(SnapcraftError):
     fmt = '{message}'
 
     def __init__(self, message):
@@ -191,3 +264,33 @@ class RequiredPathDoesNotExist(SnapcraftError):
 class SnapcraftPathEntryError(SnapcraftError):
 
     fmt = 'The path {value!r} set for {key!r} in {app!r} does not exist.'
+
+
+class InvalidPullPropertiesError(SnapcraftError):
+
+    fmt = (
+        'Invalid pull properties specified by {plugin_name!r} plugin: '
+        '{properties}'
+    )
+
+    def __init__(self, plugin_name, properties):
+        super().__init__(plugin_name=plugin_name, properties=properties)
+
+
+class InvalidBuildPropertiesError(SnapcraftError):
+
+    fmt = (
+        'Invalid build properties specified by {plugin_name!r} plugin: '
+        '{properties}'
+    )
+
+    def __init__(self, plugin_name, properties):
+        super().__init__(plugin_name=plugin_name, properties=properties)
+
+
+class StagePackageDownloadError(SnapcraftError):
+
+    fmt = 'Error downloading stage packages for part {part_name!r}: {message}'
+
+    def __init__(self, part_name, message):
+        super().__init__(part_name=part_name, message=message)
