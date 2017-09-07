@@ -156,7 +156,4 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         project_folder = '/root/build_snap-test'
         mock_container_run.assert_has_calls([
             call(['snapcraft', 'update'], cwd=project_folder),
-            call(['apt-get', 'update']),
-            call(['apt-get', 'upgrade', '-y']),
-            call(['snap', 'refresh']),
         ])

@@ -147,19 +147,21 @@ class Containerbuild:
     def execute(self, step='snap', args=None):
         with self._ensure_started():
             self._setup_project()
-            command = ['snapcraft', step]
-            if step == 'snap':
-                command += ['--output', self._snap_output]
-            if self._host_arch != self._project_options.deb_arch:
-                command += ['--target-arch', self._project_options.deb_arch]
-            if args:
-                command += args
             try:
-                self._container_run(command, cwd=self._project_folder)
-                if step == 'update':
+                if step == 'refresh':
                     self._container_run(['apt-get', 'update'])
                     self._container_run(['apt-get', 'upgrade', '-y'])
                     self._container_run(['snap', 'refresh'])
+                else:
+                    command = ['snapcraft', step]
+                    if step == 'snap':
+                        command += ['--output', self._snap_output]
+                    if self._host_arch != self._project_options.deb_arch:
+                        command += ['--target-arch',
+                                    self._project_options.deb_arch]
+                    if args:
+                        command += args
+                    self._container_run(command, cwd=self._project_folder)
             except CalledProcessError as e:
                 if self._project_options.debug:
                     logger.info('Debug mode enabled, dropping into a shell')
