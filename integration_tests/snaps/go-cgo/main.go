@@ -20,16 +20,27 @@
 package main
 
 /*
+#cgo pkg-config: glib-2.0
 #cgo LDFLAGS: -lm
 #include <math.h>
+#include <glib.h>
 
 */
 import "C"
 
 import (
 	"fmt"
+	"os/user"
 )
 
 func main() {
 	fmt.Println("more or less 1:", C.sin(3.14/2))
+
+	u, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("user according to go:", u.Username)
+
+	fmt.Println("user according to glib:", C.GoString((*C.char)(C.g_get_user_name())))
 }

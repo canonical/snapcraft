@@ -266,7 +266,7 @@ class BuildPackagesTestCase(tests.TestCase):
     @patch('os.environ')
     def install_test_packages(self, test_pkgs, mock_env):
         mock_env.copy.return_value = {}
-        repo.Ubuntu.install_build_packages(test_pkgs)
+        repo.Ubuntu.install_build_packages(test_pkgs, 'amd64')
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
     @patch('subprocess.check_call')
@@ -282,6 +282,24 @@ class BuildPackagesTestCase(tests.TestCase):
                  sorted(set(installable)),
                  env={'DEBIAN_FRONTEND': 'noninteractive',
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
+        ])
+
+    @patch('snapcraft.repo._deb.is_dumb_terminal')
+    @patch('subprocess.check_call')
+    def test_install_build_package_for_target(
+            self, mock_check_call, mock_is_dumb_terminal):
+        mock_is_dumb_terminal.return_value = False
+        self.fake_apt_cache.add_packages(
+            ('some-package:amd64', 'some-package:armhf'))
+        repo.Ubuntu.install_build_packages(
+            ('package-installed', 'some-package:target'), 'armhf')
+
+        installable = (('some-package:armhf', ))
+        mock_check_call.assert_has_calls([
+            call('sudo apt-get --no-install-recommends -y '
+                 '-o Dpkg::Progress-Fancy=1 install'.split() +
+                 sorted(set(installable)),
+                 env=ANY)
         ])
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
@@ -322,4 +340,4 @@ class BuildPackagesTestCase(tests.TestCase):
         self.assertRaises(
             errors.BuildPackageNotFoundError,
             repo.Ubuntu.install_build_packages,
-            ['package-does-not-exist'])
+            ['package-does-not-exist'], 'amd64')

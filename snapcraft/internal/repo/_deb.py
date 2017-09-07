@@ -185,7 +185,7 @@ class Ubuntu(BaseRepo):
         return packages
 
     @classmethod
-    def install_build_packages(cls, package_names):
+    def install_build_packages(cls, package_names, target_arch):
         """Install build packages on the building machine.
 
         :return: a list with the packages installed and their versions.
@@ -194,7 +194,7 @@ class Ubuntu(BaseRepo):
         new_packages = []
         with apt.Cache() as apt_cache:
             try:
-                cls._mark_install(apt_cache, package_names)
+                cls._mark_install(apt_cache, package_names, target_arch)
             except errors.PackageNotFoundError as e:
                 raise errors.BuildPackageNotFoundError(e.package_name)
             for package in apt_cache.get_changes():
@@ -207,10 +207,12 @@ class Ubuntu(BaseRepo):
                 for package in new_packages]
 
     @classmethod
-    def _mark_install(cls, apt_cache, package_names):
+    def _mark_install(cls, apt_cache, package_names, target_arch=None):
         for name in package_names:
             if name.endswith(':any'):
                 name = name[:-4]
+            if name.endswith(':target') and target_arch:
+                name = name.replace(':target', ':{}'.format(target_arch))
             if apt_cache.is_virtual_package(name):
                 name = apt_cache.get_providing_packages(name)[0].name
             logger.debug('Marking {!r} (and its dependencies) to be '
