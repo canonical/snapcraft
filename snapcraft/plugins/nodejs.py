@@ -181,6 +181,7 @@ class NodePlugin(snapcraft.BasePlugin):
             flags.extend([
                 '--offline', '--prod',
                 '--global-folder', self.installdir,
+                '--prefix', self.installdir,
             ])
         else:
             yarn_add = yarn_cmd + ['add']
@@ -192,8 +193,9 @@ class NodePlugin(snapcraft.BasePlugin):
         if os.path.exists(self._source_package_json):
             with contextlib.suppress(FileNotFoundError):
                 os.unlink(os.path.join(rootdir, 'package.json'))
-            package_dir = os.path.dirname(self._source_package_json)
-            self.run(yarn_add + ['file:{}'.format(package_dir)] + flags,
+            shutil.copy(self._source_package_json,
+                        os.path.join(rootdir, 'package.json'))
+            self.run(yarn_add + ['file:{}'.format(rootdir)] + flags,
                      cwd=rootdir)
 
         # npm run would require to bring back package.json
@@ -204,7 +206,19 @@ class NodePlugin(snapcraft.BasePlugin):
             os.link(self._source_package_json,
                     os.path.join(rootdir, 'package.json'))
         for target in self.options.npm_run:
-            self.run(yarn_cmd + ['run', target], cwd=rootdir)
+            self.run(yarn_cmd + ['run', target], cwd=rootdir,
+                     env=self._build_environment(rootdir))
+
+    def _build_environment(self, rootdir):
+        env = os.environ.copy()
+        if rootdir.endswith('src'):
+            hidden_path = os.path.join(rootdir, 'node_modules', '.bin')
+            if env.get('PATH'):
+                new_path = '{}:{}'.format(hidden_path, env.get('PATH'))
+            else:
+                new_path = hidden_path
+            env['PATH'] = new_path
+        return env
 
 
 def _get_nodejs_base(node_engine, machine):

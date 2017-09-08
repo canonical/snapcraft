@@ -32,6 +32,8 @@ class NodePluginBaseTestCase(tests.TestCase):
 
         self.project_options = snapcraft.ProjectOptions()
 
+        self.useFixture(tests.fixture_setup.CleanEnvironment())
+
         patcher = mock.patch('snapcraft.internal.common.run')
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
@@ -127,9 +129,12 @@ class NodePluginTestCase(NodePluginBaseTestCase):
         else:
             cmd = os.path.join(plugin.partdir, 'npm', 'bin', 'yarn')
             expected_run_calls = [
-                mock.call([cmd, 'global', 'add', 'file:{}'.format(self.path),
-                           '--offline', '--prod', '--global-folder',
-                           plugin.installdir], cwd=plugin.builddir)
+                mock.call([cmd, 'global', 'add',
+                           'file:{}'.format(plugin.builddir),
+                           '--offline', '--prod',
+                           '--global-folder', plugin.installdir,
+                           '--prefix', plugin.installdir],
+                          cwd=plugin.builddir)
             ]
             expected_tar_calls = [
                 mock.call(self.nodejs_url, plugin._npm_dir),
@@ -180,8 +185,10 @@ class NodePluginTestCase(NodePluginBaseTestCase):
                 mock.call([cmd, 'add', 'my-pkg'],
                           cwd=plugin.sourcedir),
                 mock.call([cmd, 'global', 'add', 'my-pkg',
-                           '--offline', '--prod', '--global-folder',
-                           plugin.installdir], cwd=plugin.builddir)
+                           '--offline', '--prod',
+                           '--global-folder', plugin.installdir,
+                           '--prefix', plugin.installdir],
+                          cwd=plugin.builddir)
             ]
             expected_tar_calls = [
                 mock.call(self.nodejs_url, plugin._npm_dir),
@@ -202,6 +209,46 @@ class NodePluginTestCase(NodePluginBaseTestCase):
         self.run_mock.assert_has_calls(expected_run_calls)
         self.tar_mock.assert_has_calls(expected_tar_calls)
 
+    def test_pull_executes_npm_run_commands(self):
+        class Options:
+            source = '.'
+            node_packages = []
+            node_engine = '4'
+            npm_run = ['command_one', 'avocado']
+            node_package_manager = self.package_manager
+            source = '.'
+
+        plugin = nodejs.NodePlugin('test-part', Options(),
+                                   self.project_options)
+
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'package.json'), 'w').close()
+
+        plugin.pull()
+
+        if self.package_manager == 'npm':
+            cmd = ['npm', 'run']
+            expected_run_calls = [
+                mock.call(cmd + ['command_one'],
+                          cwd=plugin.sourcedir),
+                mock.call(cmd + ['avocado'],
+                          cwd=plugin.sourcedir),
+            ]
+        else:
+            cmd = [os.path.join(plugin.partdir, 'npm', 'bin', 'yarn'), 'run']
+            hidden_bin_path = os.path.join(
+                plugin.sourcedir, 'node_modules', '.bin')
+            expected_run_calls = [
+                mock.call(cmd + ['command_one'],
+                          cwd=plugin.sourcedir,
+                          env=dict(PATH=hidden_bin_path)),
+                mock.call(cmd + ['avocado'],
+                          cwd=plugin.sourcedir,
+                          env=dict(PATH=hidden_bin_path)),
+            ]
+
+        self.run_mock.assert_has_calls(expected_run_calls)
+
     def test_build_executes_npm_run_commands(self):
         class Options:
             source = '.'
@@ -221,13 +268,21 @@ class NodePluginTestCase(NodePluginBaseTestCase):
 
         if self.package_manager == 'npm':
             cmd = ['npm', 'run']
+            expected_run_calls = [
+                mock.call(cmd + ['command_one'],
+                          cwd=plugin.builddir),
+                mock.call(cmd + ['avocado'],
+                          cwd=plugin.builddir),
+            ]
         else:
             cmd = [os.path.join(plugin.partdir, 'npm', 'bin', 'yarn'), 'run']
+            expected_run_calls = [
+                mock.call(cmd + ['command_one'],
+                          cwd=plugin.builddir, env=dict()),
+                mock.call(cmd + ['avocado'],
+                          cwd=plugin.builddir, env=dict()),
+            ]
 
-        expected_run_calls = [
-            mock.call(cmd + ['command_one'], cwd=plugin.builddir),
-            mock.call(cmd + ['avocado'], cwd=plugin.builddir),
-        ]
         self.run_mock.assert_has_calls(expected_run_calls)
 
     @mock.patch('snapcraft.ProjectOptions.deb_arch', 'fantasy-arch')
