@@ -18,8 +18,12 @@ import magic
 import testtools
 
 
-class HasMagic:
+class HasBinaryFileHeader:
     def __init__(self, expected_magic):
+        """Determines the magic of a file, or in other words matches a file
+        against known patterns to determine attributes like its MIME type
+        or architecture.
+        """
         self._expected_magic = expected_magic
         self._ms = magic.open(magic.NONE)
         self._ms.load()
@@ -28,8 +32,8 @@ class HasMagic:
         return '{}()'.format(self.__name__)
 
 
-class HasLinkage(HasMagic):
-    """Match if the file was built for the expected architecture"""
+class HasLinkage(HasBinaryFileHeader):
+    """Match if the file has static or dynamic linkage"""
 
     def match(self, file_path):
         magic = self._ms.file(file_path)
@@ -45,7 +49,7 @@ class HasLinkage(HasMagic):
                     self._expected_magic, linkage))
 
 
-class HasArchitecture(HasMagic):
+class HasArchitecture(HasBinaryFileHeader):
     """Match if the file was built for the expected architecture"""
 
     def match(self, file_path):
