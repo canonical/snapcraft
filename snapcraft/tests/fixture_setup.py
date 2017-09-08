@@ -20,6 +20,7 @@ import copy
 import io
 import os
 import string
+import subprocess
 import sys
 import threading
 import urllib.parse
@@ -31,6 +32,7 @@ from subprocess import CalledProcessError
 
 import fixtures
 import xdg
+import yaml
 
 import snapcraft
 from snapcraft.tests import fake_servers
@@ -905,3 +907,60 @@ class FakeAptCachePackage():
 
     def get_dependencies(self, _):
         return []
+
+
+class WithoutSnapInstalled(fixtures.Fixture):
+    """Assert that a snap is not installed and remove it on clean up.
+
+    :raises: AssertionError: if the snap is installed when this fixture is
+        set up.
+    """
+
+    def __init__(self, snap_name):
+        super().__init__()
+        self.snap_name = snap_name.split('/')[0]
+
+    def setUp(self):
+        super().setUp()
+        if snapcraft.repo.snaps.SnapPackage.is_snap_installed(self.snap_name):
+            raise AssertionError(
+                "This test cannot run if you already have the {snap!r} snap "
+                "installed. Please uninstall it by running "
+                "'sudo snap remove {snap}'.".format(snap=self.snap_name))
+
+        self.addCleanup(self._remove_snap)
+
+    def _remove_snap(self):
+        try:
+            subprocess.check_output(
+                ['sudo', 'snap', 'remove', self.snap_name],
+                stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            RuntimeError("unable to remove {!r}: {}".format(
+                self.snap_name, e.output))
+
+
+class SnapcraftYaml(fixtures.Fixture):
+
+    def __init__(
+            self, path, name='test-snap', version='test-version',
+            summary='test-summary', description='test-description'):
+        super().__init__()
+        self.path = path
+        self.data = {
+            'name': name,
+            'version': version,
+            'summary': summary,
+            'description': description,
+            'parts': {}
+        }
+
+    def update_part(self, name, data):
+        part = {name: data}
+        self.data['parts'].update(part)
+
+    def setUp(self):
+        super().setUp()
+        with open(os.path.join(self.path, 'snapcraft.yaml'),
+                  'w') as snapcraft_yaml_file:
+            yaml.dump(self.data, snapcraft_yaml_file)
