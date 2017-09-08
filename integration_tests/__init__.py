@@ -366,6 +366,12 @@ class StoreTestCase(TestCase):
         self.test_store = fixture_setup.TestStore()
         self.useFixture(self.test_store)
 
+    def is_store_fake(self):
+        return (os.getenv('TEST_STORE') or 'fake') == 'fake'
+
+    def is_store_staging(self):
+        return os.getenv('TEST_STORE') == 'staging'
+
     def login(self, email=None, password=None, expect_success=True):
         email = email or self.test_store.user_email
         password = password or self.test_store.user_password
