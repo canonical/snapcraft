@@ -14,9 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import subprocess
-import unittest
 
 from testtools.matchers import Equals, Contains, FileExists
 
@@ -63,9 +61,10 @@ class StatusTestCase(integration_tests.StoreTestCase):
             "Snap 'mysnap' for 'i386' was not found in '16' series.",
             str(error.output))
 
-    @unittest.skipUnless(
-        os.getenv('TEST_STORE', 'fake') == 'fake', 'Skip fake store.')
     def test_status_fake_store(self):
+        if not self.is_store_fake():
+            self.skipTest('This test only works in the fake store')
+
         self.addCleanup(self.logout)
         self.login()
 
@@ -80,9 +79,10 @@ class StatusTestCase(integration_tests.StoreTestCase):
             '                 edge       1.0-i386   3'))
         self.assertThat(output, Contains(expected))
 
-    @unittest.skipUnless(
-        os.getenv('TEST_STORE', 'fake') == 'staging', 'Skip staging store.')
     def test_status_staging_store(self):
+        if not self.is_store_staging():
+            self.skipTest('This test only works in the staging store')
+
         self.addCleanup(self.logout)
         self.login()
 
