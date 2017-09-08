@@ -259,7 +259,7 @@ class PluginOutdatedError(SnapcraftError):
 
 class PluginCommandFailure(SnapcraftError):
 
-    fmt = 'Build failed'
+    fmt = 'Build failed: {command!r} exited with {exit_code}'
 
 
 class RequiredCommandFailure(SnapcraftError):

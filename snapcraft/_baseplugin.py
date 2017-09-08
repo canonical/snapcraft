@@ -203,7 +203,8 @@ class BasePlugin:
         try:
             return common.run(cmd, cwd=cwd, **kwargs)
         except subprocess.CalledProcessError as e:
-            raise errors.PluginCommandFailure() from e
+            raise errors.PluginCommandFailure(command=cmd,
+                                              exit_code=e.returncode)
 
     def run_output(self, cmd, cwd=None, **kwargs):
         if not cwd:
@@ -212,4 +213,5 @@ class BasePlugin:
         try:
             return common.run_output(cmd, cwd=cwd, **kwargs)
         except subprocess.CalledProcessError as e:
-            raise errors.PluginCommandFailure() from e
+            raise errors.PluginCommandFailure(command=cmd,
+                                              exit_code=e.returncode)
