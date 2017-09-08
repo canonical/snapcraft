@@ -261,6 +261,9 @@ class PluginCommandFailure(SnapcraftError):
 
     fmt = 'Build failed: {command!r} exited with {exit_code}'
 
+    def __init__(self, *, command, exit_code):
+        super().__init__(command=' '.join(command), exit_code=exit_code)
+
 
 class RequiredCommandFailure(SnapcraftError):
 
