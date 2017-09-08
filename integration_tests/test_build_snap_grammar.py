@@ -22,6 +22,7 @@ from testtools.matchers import Contains, Equals
 
 import integration_tests
 import snapcraft
+from snapcraft.tests import fixture_setup
 
 
 def _construct_scenarios():
@@ -62,26 +63,7 @@ class BuildSnapGrammarTestCase(testscenarios.WithScenarios,
         if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
             self.skipTest('snap installation not working well with '
                           'adt on armhf')
-        if self._hello_is_installed():
-            self.fail(
-                'This integration test cannot run if you already have the '
-                "'hello' snap installed. Please uninstall it "
-                "by running 'sudo snap remove hello'.")
-
-    def tearDown(self):
-        super().tearDown()
-
-        # Remove hello. This is safe since the test fails if hello was already
-        # installed.
-        try:
-            subprocess.check_output(
-                ['sudo', 'snap', 'remove', 'hello'],
-                stderr=subprocess.STDOUT)
-        except subprocess.CalledProcessError as e:
-            self.fail("unable to remove 'hello': {}".format(e.output))
-
-    def _hello_is_installed(self):
-        return snapcraft.repo.snaps.SnapPackage.is_snap_installed('hello')
+        self.useFixture(fixture_setup.WithoutSnapInstalled('hello'))
 
     def _add_channel_information_to_hello(self):
         replacement = '- hello{}'.format(self.channel)
@@ -95,8 +77,9 @@ class BuildSnapGrammarTestCase(testscenarios.WithScenarios,
 
         self.run_snapcraft('pull')
 
-        self.assertThat(self._hello_is_installed(),
-                        Equals(self.hello_installed))
+        self.assertThat(
+            snapcraft.repo.snaps.SnapPackage.is_snap_installed('hello'),
+            Equals(self.hello_installed))
 
 
 class BuildSnapGrammarErrorsTestCase(integration_tests.TestCase):
