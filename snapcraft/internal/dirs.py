@@ -29,4 +29,3 @@ def setup_dirs():
         common.set_plugindir(os.path.join(topdir, 'snapcraft', 'plugins'))
         common.set_schemadir(os.path.join(topdir, 'schema'))
         common.set_librariesdir(os.path.join(topdir, 'libraries'))
-        common.set_tourdir(os.path.join(topdir, 'tour'))

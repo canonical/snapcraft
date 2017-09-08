@@ -1,0 +1,23 @@
+<?xml version="1.0"?><!--*- mode: nxml; indent-tabs-mode: nil -*-->
+<!DOCTYPE moduleset SYSTEM "moduleset.dtd">
+<?xml-stylesheet type="text/xsl" href="moduleset.xsl"?>
+<!-- vim:set ts=2 expandtab: -->
+<moduleset>
+  <repository name="system" type="system"/>
+  <repository name="simple-jhbuild" type="tarball" href="__TESTFIXTURE__" default="yes"/>
+  <systemmodule id="libtool">
+    <branch repo="system"/>
+    <systemdependencies>
+      <dep type="path" name="libtoolize"/>
+    </systemdependencies>
+  </systemmodule>
+  <autotools id="dep-module" autogen-sh="autoreconf">
+    <branch version="1.0.0" module="dep-module.tar.bz2" checkoutdir="dep-module"/>
+  </autotools>
+  <autotools id="main-module" autogen-sh="autoreconf">
+    <dependencies>
+      <dep package="dep-module"/>
+    </dependencies>
+    <branch version="1.0.0" module="main-module.tar.bz2" checkoutdir="main-module"/>
+  </autotools>
+</moduleset>

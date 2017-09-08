@@ -21,6 +21,7 @@ import os
 import pipes
 import shutil
 import sys
+import tempfile
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError, Popen
 from time import sleep
@@ -78,9 +79,10 @@ class Containerbuild:
         self._host_arch = deb_arch
         self._image = 'ubuntu:xenial/{}'.format(deb_arch)
         # Use a temporary folder the 'lxd' snap can access
-        self._tmp = os.path.expanduser(
-            os.path.join('~', 'snap', 'lxd', 'common', 'snapcraft.tmp'))
-        os.makedirs(self._tmp, exist_ok=True)
+        lxd_common_dir = os.path.expanduser(
+            os.path.join('~', 'snap', 'lxd', 'common'))
+        os.makedirs(lxd_common_dir, exist_ok=True)
+        self.tmp_dir = tempfile.mkdtemp(prefix='snapcraft', dir=lxd_common_dir)
 
     def _get_remote_info(self):
         remote = self._container_name.split(':')[0]
@@ -164,7 +166,7 @@ class Containerbuild:
                     raise e
             else:
                 # Remove temporary folder if everything went well
-                shutil.rmtree(self._tmp)
+                shutil.rmtree(self.tmp_dir)
                 self._finish()
 
     def _setup_project(self):
@@ -225,7 +227,7 @@ class Containerbuild:
         installed = os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps',
                                  filename)
 
-        filepath = os.path.join(self._tmp, filename)
+        filepath = os.path.join(self.tmp_dir, filename)
         if rev.startswith('x'):
             logger.info('Making {} user-accessible'.format(filename))
             check_call(['sudo', 'cp', installed, filepath])
@@ -243,7 +245,7 @@ class Containerbuild:
         self._container_run(cmd)
 
     def _inject_assertions(self, filename, assertions):
-        filepath = os.path.join(self._tmp, filename)
+        filepath = os.path.join(self.tmp_dir, filename)
         with open(filepath, 'wb') as f:
             for assertion in assertions:
                 logger.info('Looking up assertion {}'.format(assertion))

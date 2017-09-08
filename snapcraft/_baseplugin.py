@@ -83,6 +83,7 @@ class BasePlugin:
 
     def __init__(self, name, options, project=None):
         self.name = name
+        self.build_snaps = []
         self.build_packages = []
         self._stage_packages = []
 
@@ -90,6 +91,8 @@ class BasePlugin:
             self._stage_packages = options.stage_packages.copy()
         with contextlib.suppress(AttributeError):
             self.build_packages = options.build_packages.copy()
+        with contextlib.suppress(AttributeError):
+            self.build_snaps = options.build_snaps.copy()
 
         self.project = project
         self.options = options
