@@ -39,8 +39,6 @@ import sys
 
 import docopt
 
-import snapcraft
-
 import snaps_tests
 
 
@@ -48,12 +46,7 @@ def main():
     logging.basicConfig(level=logging.INFO)
 
     arguments = docopt.docopt(__doc__)
-
-    if snapcraft.ProjectOptions().deb_arch == 'armhf':
-        # snaps can't yet be installed in a lxc container.
-        snaps_tests.config['skip-install'] = True
-    else:
-        snaps_tests.config['skip-install'] = arguments['--skip-install']
+    snaps_tests.config['skip-install'] = arguments['--skip-install']
     snaps_tests.config['ip'] = arguments['--ip']
     snaps_tests.config['port'] = arguments['--port']
     snaps_tests.config['filter'] = arguments['--filter']

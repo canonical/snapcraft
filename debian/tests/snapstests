@@ -9,4 +9,7 @@ mkdir -p $snapd_config_dir
 echo "[Service]\nEnvironment='http_proxy=$http_proxy'\nEnvironment='https_proxy=$https_proxy'\nEnvironment='ftp_proxy=$http_proxy'\nEnvironment='no_proxy=$no_proxy'\n" | tee $snapd_config_dir/snapd.env.conf > /dev/null
 systemctl daemon-reload
 
+# Install squashfuse so snaps can be installed in lxc.
+apt install --yes squashfuse
+
 su ubuntu -c "SNAPCRAFT_FROM_INSTALLED=1 python3 -m snaps_tests --ip localhost"
