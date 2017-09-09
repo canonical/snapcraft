@@ -60,3 +60,9 @@ class NodeJSPluginTestCase(testscenarios.WithScenarios,
                         FileExists())
         self.assertThat(os.path.join(part_builddir, 'command-two-run'),
                         FileExists())
+
+        # Ensure the bin entry makes it to bin in the part's install directory
+        part_installdir = os.path.join(
+            self.parts_dir, 'nodejs-part', 'install')
+        print_binary_path = os.path.join(part_installdir, 'bin', 'node-print')
+        self.assertThat(print_binary_path, FileExists())

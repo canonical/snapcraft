@@ -23,6 +23,7 @@ import string
 import sys
 import threading
 import urllib.parse
+import uuid
 from functools import partial
 from types import ModuleType
 from unittest import mock
@@ -421,6 +422,72 @@ class FakePlugin(fixtures.Fixture):
 
     def _remove_module(self):
         del sys.modules[self._import_name]
+
+
+class FakeFilesystem(fixtures.Fixture):
+    '''Keep track of created and removed directories'''
+
+    def __init__(self):
+        self.dirs = []
+
+    def _setUp(self):
+        patcher = mock.patch('os.makedirs')
+        self.makedirs_mock = patcher.start()
+        self.makedirs_mock.side_effect = self.makedirs_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('tempfile.mkdtemp')
+        self.mkdtemp_mock = patcher.start()
+        self.mkdtemp_mock.side_effect = self.mkdtemp_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.lxd.open', mock.mock_open())
+        self.open_mock = patcher.start()
+        self.open_mock_default_side_effect = self.open_mock.side_effect
+        self.open_mock.side_effect = self.open_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('shutil.copyfile')
+        self.copyfile_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('shutil.rmtree')
+        self.rmtree_mock = patcher.start()
+        self.rmtree_mock.side_effect = self.rmtree_side_effect()
+        self.addCleanup(patcher.stop)
+
+    def makedirs_side_effect(self):
+        def call_effect(*args, **kwargs):
+            if args[0] not in self.dirs:
+                self.dirs.append(args[0])
+        return call_effect
+
+    def mkdtemp_side_effect(self):
+        def call_effect(*args, **kwargs):
+            dir = os.path.join(kwargs['dir'], '{}{}{}'.format(
+                kwargs.get('prefix', ''),
+                uuid.uuid4(),
+                kwargs.get('suffix', '')))
+            self.dirs.append(dir)
+            return dir
+        return call_effect
+
+    def open_side_effect(self):
+        def call_effect(*args, **kwargs):
+            for dir in self.dirs:
+                if args[0].startswith(dir):
+                    return self.open_mock_default_side_effect()
+            raise FileNotFoundError(
+                '[Errno 2] No such file or directory: {}'.format(args[0]))
+        return call_effect
+
+    def rmtree_side_effect(self):
+        def call_effect(*args, **kwargs):
+            if args[0] not in self.dirs:
+                raise FileNotFoundError(
+                    '[Errno 2] No such file or directory: {}'.format(args[0]))
+            self.dirs.remove(args[0])
+        return call_effect
 
 
 class FakeLXD(fixtures.Fixture):
