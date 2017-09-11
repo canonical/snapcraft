@@ -21,7 +21,7 @@ from glob import glob
 from unittest import mock
 
 import fixtures
-from testtools.matchers import Contains, Equals, FileContains, HasLength, Not
+from testtools.matchers import Equals, FileContains, HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -102,11 +102,8 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
             plugin, self.options.python_version, setup_file=False)
         with fixture_setup.FakePip() as fake_pip:
             plugin.pull()
-            # XXX Just a safeguard to make sure that the mock doesn't get out
-            # of sync.
-            self.assertThat(
-                fake_pip.mock_call.mock_calls[2][1][0],
-                Not(Contains('.')))
+
+        self.assertFalse(fake_pip.local_setup_file)
 
     def test_with_setup_file(self):
         self.options.python_packages = ['dummy']
@@ -115,11 +112,8 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
         setup_directories(plugin, self.options.python_version, setup_file=True)
         with fixture_setup.FakePip() as fake_pip:
             plugin.pull()
-            # XXX Just a safeguard to make sure that the mock doesn't get out
-            # of sync.
-            self.assertThat(
-                fake_pip.mock_call.mock_calls[2][1][0][-2],
-                Equals('.'))
+
+        self.assertTrue(fake_pip.local_setup_file)
 
     def test_pull_with_nothing(self):
         plugin = python.PythonPlugin('test-part', self.options,
