@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import fileinput
+import os
 import subprocess
 
 import testscenarios
@@ -55,6 +56,12 @@ class BuildSnapGrammarTestCase(testscenarios.WithScenarios,
 
     def setUp(self):
         super().setUp()
+        # We cannot install snaps on the adt test bed at this time.
+        # - Mount snap "core" (2775) ([start snap-core-2775.mount] \
+        # failed with exit status 1: Job for snap-core-2775.mount failed.
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+            self.skipTest('snap installation not working well with '
+                          'adt on armhf')
         if self._hello_is_installed():
             self.fail(
                 'This integration test cannot run if you already have the '
