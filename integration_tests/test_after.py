@@ -23,6 +23,7 @@ from testtools.matchers import (
 )
 
 import integration_tests
+import snapcraft
 
 
 class AfterTestCase(integration_tests.TestCase):
@@ -77,8 +78,9 @@ class AfterTestCase(integration_tests.TestCase):
         exception = self.assertRaises(
             subprocess.CalledProcessError,
             self.run_snapcraft, 'build')
-        self.assertThat(exception.output,
-                        Contains("Build failed: 'make -j4' exited with 2"))
+        self.assertThat(exception.output, Contains(
+            "Build failed: 'make -j{}' exited with 2".format(
+                snapcraft.ProjectOptions().parallel_build_count)))
 
     def test_pull_with_tree_of_dependencies(self):
         self.run_snapcraft(
