@@ -122,9 +122,8 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
 
         with fixture_setup.FakePip() as fake_pip:
             plugin.pull()
-            self.assertThat(fake_pip.download['constraints'], Equals([]))
-            self.assertThat(fake_pip.download['requirements'], Equals([]))
-            self.assertThat(fake_pip.download['downloaded'], Equals([]))
+
+        self.assertThat(fake_pip.get_downloaded(), Equals([]))
 
     def test_pull_with_constraints(self):
         self.options.constraints = 'constraints.txt'
@@ -138,9 +137,10 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
 
         with fixture_setup.FakePip() as fake_pip:
             plugin.pull()
-            self.assertThat(
-                fake_pip.download['constraints'],
-                Equals(['testpackage1', 'testpackage2']))
+
+        self.assertThat(
+            fake_pip.get_downloaded(),
+            Equals(['testpackage1', 'testpackage2']))
 
     def test_pull_with_requirements(self):
         self.options.requirements = 'requirements.txt'
@@ -154,9 +154,10 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
 
         with fixture_setup.FakePip() as fake_pip:
             plugin.pull()
-            self.assertThat(
-                fake_pip.download['requirements'],
-                Equals(['testpackage1', 'testpackage2']))
+
+        self.assertThat(
+            fake_pip.get_downloaded(),
+            Equals(['testpackage1', 'testpackage2']))
 
     def test_pull_with_python_packages(self):
         self.options.python_packages = ['testpackage1', 'testpackage2']
@@ -167,9 +168,10 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
 
         with fixture_setup.FakePip() as fake_pip:
             plugin.pull()
-            self.assertThat(
-                fake_pip.download['downloaded'],
-                Equals(['testpackage1', 'testpackage2']))
+
+        self.assertThat(
+            fake_pip.get_downloaded(),
+            Equals(['testpackage1', 'testpackage2']))
 
 
 class PythonPluginTestCase(BasePythonPluginWithMockTestCase):
