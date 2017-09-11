@@ -39,6 +39,7 @@ from snapcraft.tests.fake_servers import (
     search,
     upload
 )
+from snapcraft.tests.fixture_setup.fake_pip import FakePip  # NOQA
 from snapcraft.tests.subprocess_utils import (
     call,
     call_with_output,

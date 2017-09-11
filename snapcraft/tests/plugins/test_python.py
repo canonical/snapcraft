@@ -15,9 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import collections
-import json
 import os
-import subprocess
 import tempfile
 from glob import glob
 from unittest import mock
@@ -64,123 +62,6 @@ def fake_empty_pip_list(*args, **kwargs):
         return ''
 
 
-class FakePip(fixtures.Fixture):
-
-    def __init__(self):
-        super().__init__()
-        self.download = {
-            'disable_pip_version_check': False,
-            'dest': None,
-            'requirements': [],
-            'constraints': [],
-            'downloaded': []
-        }
-        self.install = {
-            'disable_pip_version_check': False,
-            'user': False,
-            'no_compile': False,
-            'no_index': False,
-            'find_links': False,
-            'ignore_installed': False,
-            'installed': []
-        }
-
-    def setUp(self):
-        super().setUp()
-
-        original_call = subprocess.call
-        original_check_output = subprocess.check_output
-
-        def side_effect_call(cmd, *args, **kwargs):
-            return side_effect(original_call, cmd, *args, **kwargs)
-
-        def side_effect_check_output(cmd, *args, **kwargs):
-            return side_effect(original_check_output, cmd, *args, **kwargs)
-
-        def side_effect(original, cmd, *args, **kwargs):
-            if self._is_pip_command(cmd):
-                return self._fake_pip_command(cmd, *args, **kwargs)
-            else:
-                return original(cmd, *args, **kwargs)
-
-        call_patcher = mock.patch(
-            'subprocess.call', side_effect=side_effect_call)
-        self.mock_call = call_patcher.start()
-        self.addCleanup(call_patcher.stop)
-
-        check_output_patcher = mock.patch(
-            'subprocess.check_output', side_effect=side_effect_check_output)
-        check_output_patcher.start()
-        self.addCleanup(check_output_patcher.stop)
-
-    def _is_pip_command(self, cmd):
-        for index, arg in enumerate(cmd):
-            if arg.endswith('/usr/bin/python3'):
-                if cmd[index + 1] == '-m' and cmd[index + 2] == 'pip':
-                    return True
-
-        return False
-
-    def _fake_pip_command(self, cmd, *args, **kwargs):
-        if 'download' in cmd:
-            return self._download(
-                *cmd[cmd.index('download') + 1:], **kwargs)
-        elif 'install' in cmd:
-            return self._install(
-                *cmd[cmd.index('install') + 1:], **kwargs)
-        elif 'list' in cmd:
-            return json.dumps([
-                {'version': 'dummy', 'name': package}
-                for package in self._list()]).encode('utf-8')
-
-    def _download(self, *args, **kwargs):
-        args = list(args)
-        if '--disable-pip-version-check' in args:
-            self.download['disable_pip_version_check'] = True
-            args.remove('--disable-pip-version-check')
-        if '--dest' in args:
-            index = args.index('--dest')
-            self.download['dest'] = args[index + 1]
-            args.remove(args[index])
-            args.remove(args[index])
-        if '--constraint' in args:
-            index = args.index('--constraint')
-            with open(args[index + 1]) as constraint:
-                self.download['constraints'] = constraint.read().splitlines()
-            args.remove(args[index])
-            args.remove(args[index])
-        if '--requirement' in args:
-            index = args.index('--requirement')
-            with open(args[index + 1]) as requirement:
-                self.download['requirements'] = requirement.read().splitlines()
-            args.remove(args[index])
-            args.remove(args[index])
-        if args[0] == '.':
-            if not os.path.exists(os.path.join(kwargs['cwd'], 'setup.py')):
-                raise subprocess.CalledProcessError(returncode=1, cmd='dummy')
-            args.remove('.')
-        self.download['downloaded'] = args
-
-    def _install(self, *args, **kwargs):
-        args = list(args)
-        for flag in [
-                '--user', '--no-compile', '--disable-pip-version-check',
-                '--no-index', '--ignore-installed']:
-            if flag in args:
-                self.install[flag.lstrip('-').replace('-', '_')] = True
-                args.remove(flag)
-        if '--find-links' in args:
-            index = args.index('--find-links')
-            # TODO test find-links
-            args.remove(args[index])
-            args.remove(args[index])
-        self.install['installed'] = args
-
-    def _list(self):
-        # TODO
-        return []
-
-
 class BasePythonPluginTestCase(tests.TestCase):
 
     def setUp(self):
@@ -219,7 +100,7 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
                                      self.project_options)
         setup_directories(
             plugin, self.options.python_version, setup_file=False)
-        with FakePip() as fake_pip:
+        with fixture_setup.FakePip() as fake_pip:
             plugin.pull()
             # XXX Just a safeguard to make sure that the mock doesn't get out
             # of sync.
@@ -232,7 +113,7 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
         setup_directories(plugin, self.options.python_version, setup_file=True)
-        with FakePip() as fake_pip:
+        with fixture_setup.FakePip() as fake_pip:
             plugin.pull()
             # XXX Just a safeguard to make sure that the mock doesn't get out
             # of sync.
@@ -245,7 +126,7 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
 
-        with FakePip() as fake_pip:
+        with fixture_setup.FakePip() as fake_pip:
             plugin.pull()
             self.assertThat(fake_pip.download['constraints'], Equals([]))
             self.assertThat(fake_pip.download['requirements'], Equals([]))
@@ -261,7 +142,7 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
             constraints_file.write('testpackage1\n')
             constraints_file.write('testpackage2\n')
 
-        with FakePip() as fake_pip:
+        with fixture_setup.FakePip() as fake_pip:
             plugin.pull()
             self.assertThat(
                 fake_pip.download['constraints'],
@@ -277,7 +158,7 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
             requirements_file.write('testpackage1\n')
             requirements_file.write('testpackage2\n')
 
-        with FakePip() as fake_pip:
+        with fixture_setup.FakePip() as fake_pip:
             plugin.pull()
             self.assertThat(
                 fake_pip.download['requirements'],
@@ -290,7 +171,7 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
 
-        with FakePip() as fake_pip:
+        with fixture_setup.FakePip() as fake_pip:
             plugin.pull()
             self.assertThat(
                 fake_pip.download['downloaded'],
