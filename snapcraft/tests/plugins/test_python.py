@@ -123,7 +123,7 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
         with fixture_setup.FakePip() as fake_pip:
             plugin.pull()
 
-        self.assertThat(fake_pip.get_downloaded(), Equals([]))
+        self.assertThat(fake_pip.get_downloaded_packages(), Equals([]))
 
     def test_pull_with_constraints(self):
         self.options.constraints = 'constraints.txt'
@@ -139,7 +139,7 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
             plugin.pull()
 
         self.assertThat(
-            fake_pip.get_downloaded(),
+            fake_pip.get_downloaded_packages(),
             Equals(['testpackage1', 'testpackage2']))
 
     def test_pull_with_requirements(self):
@@ -156,7 +156,7 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
             plugin.pull()
 
         self.assertThat(
-            fake_pip.get_downloaded(),
+            fake_pip.get_downloaded_packages(),
             Equals(['testpackage1', 'testpackage2']))
 
     def test_pull_with_python_packages(self):
@@ -170,7 +170,7 @@ class PythonPluginPullTestCase(BasePythonPluginTestCase):
             plugin.pull()
 
         self.assertThat(
-            fake_pip.get_downloaded(),
+            fake_pip.get_downloaded_packages(),
             Equals(['testpackage1', 'testpackage2']))
 
 

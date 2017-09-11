@@ -72,7 +72,7 @@ class FakePip(fixtures.Fixture):
         check_output_patcher.start()
         self.addCleanup(check_output_patcher.stop)
 
-    def get_downloaded(self):
+    def get_downloaded_packages(self):
         return (self.download['constraints'] +
                 self.download['requirements'] +
                 self.download['packages'])
