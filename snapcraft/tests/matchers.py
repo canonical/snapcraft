@@ -31,36 +31,32 @@ class HasBinaryFileHeader:
     def __str__(self):
         return '{}()'.format(self.__name__)
 
+    def parse_file_header(self, header):
+        return header
+
+    def match(self, file_path):
+        header = self._ms.file(file_path)
+        # Catch exceptions on splitting the string to provide context
+        # This includes "cannot open `...' (No such file or directory)"
+        try:
+            parsed_header = self.parse_file_header(header)
+        except IndexError:
+            raise ValueError('Failed to parse file header {!r}'.format(header))
+        if self._expected_magic not in parsed_header:
+            return testtools.matchers.Mismatch(
+                'Expected {!r} to be in {!r}'.format(
+                    self._expected_magic, parsed_header))
+
 
 class HasLinkage(HasBinaryFileHeader):
     """Match if the file has static or dynamic linkage"""
 
-    def match(self, file_path):
-        magic = self._ms.file(file_path)
-        # Catch exceptions on splitting the string to provide context
-        # This includes "cannot open `...' (No such file or directory)"
-        try:
-            linkage = magic.split(',')[3]
-        except IndexError as e:
-            raise ValueError('Failed to parse magic {!r}'.format(magic)) from e
-        if self._expected_magic not in linkage:
-            return testtools.matchers.Mismatch(
-                'Expected {!r} to be in {!r}'.format(
-                    self._expected_magic, linkage))
+    def parse_file_header(self, header):
+        return super().parse_file_header(header).split(',')[3]
 
 
 class HasArchitecture(HasBinaryFileHeader):
     """Match if the file was built for the expected architecture"""
 
-    def match(self, file_path):
-        magic = self._ms.file(file_path)
-        # Catch exceptions on splitting the string to provide context
-        # This includes "cannot open `...' (No such file or directory)"
-        try:
-            arch = magic.split(',')[1]
-        except IndexError as e:
-            raise ValueError('Failed to parse magic {!r}'.format(magic)) from e
-        if self._expected_magic not in arch:
-            return testtools.matchers.Mismatch(
-                'Expected {!r} to be in {!r}'.format(
-                    self._expected_arch, arch))
+    def parse_file_header(self, header):
+        return super().parse_file_header(header).split(',')[1]
