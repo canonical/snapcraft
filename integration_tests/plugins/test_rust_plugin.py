@@ -54,6 +54,10 @@ class RustPluginTestCase(RustPluginBaseTestCase):
             os.path.join(self.stage_dir, 'bin', 'rust-hello'))
         self.assertThat(binary_output, Equals('There is rust on snaps!\n'))
 
+        binary = os.path.join(self.parts_dir, 'rust-hello', 'install', 'bin',
+                              'rust-hello')
+        self.assertThat(binary, HasLinkage('dynamically linked'))
+
     def test_stage_rust_with_revision(self):
         self.run_snapcraft('stage', 'rust-with-revision')
 
