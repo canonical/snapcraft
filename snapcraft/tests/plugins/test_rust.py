@@ -50,7 +50,7 @@ class RustPluginCrossCompileTestCase(tests.TestCase):
             rust_features = []
             rust_revision = ''
             rust_channel = ''
-            libc = self.libc if hasattr(self, 'libc') else 'gnu'
+            libc = getattr(self, 'libc', 'gnu')
             source_subdir = ''
 
         self.options = Options()
