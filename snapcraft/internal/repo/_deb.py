@@ -19,7 +19,6 @@ import glob
 import hashlib
 import logging
 import os
-import platform
 import shutil
 import stat
 import string
