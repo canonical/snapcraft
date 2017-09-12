@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import logging
 import os
 
 import fixtures
@@ -57,19 +56,10 @@ class RefreshCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
-    @mock.patch('os.getuid')
-    def test_update_containerized_exists_running(self,
-                                                 mock_getuid,
-                                                 mock_container_run):
+    def test_refresh(self, mock_container_run):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
-        mock_getuid.return_value = 1234
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
-        # Container was created before and is running
-        fake_lxd.name = 'local:snapcraft-snap-test'
-        fake_lxd.status = 'Running'
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
         self.useFixture(fixtures.EnvironmentVariable(
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()
