@@ -26,6 +26,7 @@ from snapcraft.internal import deprecations
 from snapcraft.internal import log
 from . import echo
 from .assertions import assertionscli
+from .containers import containerscli
 from .discovery import discoverycli
 from .lifecycle import lifecyclecli
 from .store import storecli
@@ -40,6 +41,7 @@ command_groups = [
     storecli,
     cicli,
     assertionscli,
+    containerscli,
     discoverycli,
     helpcli,
     lifecyclecli,

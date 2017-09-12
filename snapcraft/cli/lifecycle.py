@@ -17,7 +17,6 @@
 import click
 
 from snapcraft.internal import lifecycle
-from snapcraft.internal import errors
 from ._options import add_build_options, get_project_options
 from . import echo
 from . import env
@@ -187,32 +186,6 @@ def cleanbuild(remote, debug, **kwargs):
     """
     project_options = get_project_options(**kwargs, debug=debug)
     lifecycle.cleanbuild(project_options, remote)
-
-
-@lifecyclecli.command()
-@click.option('--debug', is_flag=True,
-              help='Shells into the environment if the build fails.')
-def refresh(debug, **kwargs):
-    """Refresh an existing LXD container.
-
-    \b
-    Examples:
-        SNAPCRAFT_CONTAINER_BUILDS=1 snapcraft refresh
-
-    This will take care of updating the apt package cache, upgrading packages
-    as needed as well as refreshing snaps.
-    """
-
-    if not env.is_containerbuild():
-        raise errors.SnapcraftEnvironmentError(
-            "The 'refresh' command only applies to LXD containers but "
-            "SNAPCRAFT_CONTAINER_BUILDS is not set or 0.\n"
-            "Maybe you meant to update the parts cache instead? "
-            "You can do that with the following command:\n\n"
-            "snapcraft update")
-
-    project_options = get_project_options(**kwargs, debug=debug)
-    lifecycle.containerbuild('refresh', project_options)
 
 
 if __name__ == '__main__':
