@@ -24,9 +24,10 @@ from . import env
 
 def _execute(command, parts, **kwargs):
     project_options = get_project_options(**kwargs)
-
-    if env.is_containerbuild():
-        lifecycle.containerbuild(command, project_options, parts)
+    container_config = env.get_container_config()
+    if container_config.use_container:
+        lifecycle.containerbuild(command, project_options,
+                                 container_config, parts)
     else:
         lifecycle.execute(command, project_options, parts)
     return project_options
@@ -125,8 +126,10 @@ def snap(directory, output, **kwargs):
     instead.
     """
     project_options = get_project_options(**kwargs)
-    if env.is_containerbuild():
-        lifecycle.containerbuild('snap', project_options, output, directory)
+    container_config = env.get_container_config()
+    if container_config.use_container:
+        lifecycle.containerbuild('snap', project_options,
+                                 container_config, output, directory)
     else:
         snap_name = lifecycle.snap(
             project_options, directory=directory, output=output)
@@ -149,10 +152,12 @@ def clean(parts, step, **kwargs):
         snapcraft clean my-part --step build
     """
     project_options = get_project_options(**kwargs)
-    if env.is_containerbuild():
+    container_config = env.get_container_config()
+    if container_config.use_container:
         step = step or 'pull'
-        lifecycle.containerbuild('clean', project_options,
-                                 args=['--step', step, *parts])
+        lifecycle.containerbuild(
+            'clean', project_options,
+            container_config, args=['--step', step, *parts])
     else:
         if step == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '

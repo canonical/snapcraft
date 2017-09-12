@@ -307,14 +307,25 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
-def containerbuild(step, project_options, output=None, args=[]):
+def containerbuild(step, project_options, container_config,
+                   output=None, args=[]):
     config = snapcraft.internal.load_config(project_options)
+    if container_config.remote:
+        logger.info('Using LXD remote {!r} from SNAPCRAFT_CONTAINER_BUILDS'
+                    .format(container_config.remote))
+    else:
+        logger.info('Using default LXD remote because '
+                    'SNAPCRAFT_CONTAINER_BUILDS is set to 1')
     lxd.Project(output=output, source=os.path.curdir,
                 project_options=project_options,
+                remote=container_config.remote,
                 metadata=config.get_metadata()).execute(step, args)
 
 
 def cleanbuild(project_options, remote=''):
+    if remote and not lxd._remote_is_valid(remote):
+        raise errors.InvalidContainerRemoteError(remote)
+
     config = snapcraft.internal.load_config(project_options)
     tar_filename = '{}_{}_source.tar.bz2'.format(
         config.data['name'], config.data['version'])
