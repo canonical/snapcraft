@@ -64,7 +64,7 @@ parts:
   my-part:
     # See 'snapcraft plugins'
     plugin: nil
-""" # noqa, lines too long.
+"""  # noqa, lines too long.
 
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 
@@ -112,11 +112,13 @@ def execute(step, project_options, part_names=None):
     """
     config = snapcraft.internal.load_config(project_options)
     installed_packages = repo.Repo.install_build_packages(
-        config.build_tools,
-        project_options.deb_arch)
+        config.build_tools)
     if installed_packages is None:
         raise ValueError(
             'The repo backend is not returning the list of installed packages')
+
+    repo.snaps.install_snaps(config.build_snaps)
+
     os.makedirs(_SNAPCRAFT_INTERNAL_DIR, exist_ok=True)
     with open(os.path.join(_SNAPCRAFT_INTERNAL_DIR, 'state'), 'w') as f:
         f.write(yaml.dump(states.GlobalState(installed_packages)))
@@ -168,11 +170,11 @@ def _setup_core(deb_arch):
 
 
 def _replace_in_part(part):
-    for key, value in part.code.options.__dict__.items():
+    for key, value in part.plugin.options.__dict__.items():
         value = replace_attr(value, [
-            ('$SNAPCRAFT_PART_INSTALL', part.code.installdir),
+            ('$SNAPCRAFT_PART_INSTALL', part.plugin.installdir),
         ])
-        setattr(part.code.options, key, value)
+        setattr(part.plugin.options, key, value)
 
     return part
 
@@ -215,6 +217,8 @@ class _Executor:
 
         for step in common.COMMAND_ORDER[0:step_index]:
             if step == 'stage':
+                # XXX check only for collisions on the parts that have already
+                # been built --elopio - 20170713
                 pluginhandler.check_for_collisions(self.config.all_parts)
             for part in parts:
                 if step not in self._steps_run[part.name]:
@@ -260,39 +264,16 @@ class _Executor:
     def _create_meta(self, step, part_names):
         if step == 'prime' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
-            meta.create_snap_packaging(self.config.data, self.project_options)
+            meta.create_snap_packaging(
+                self.config.data, self.project_options,
+                self.config.snapcraft_yaml_path)
 
     def _handle_dirty(self, part, step, dirty_report):
         if step not in _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
-            message_components = [
-                'The {!r} step of {!r} is out of date:\n'.format(
-                    step, part.name)]
-
-            if dirty_report.dirty_properties:
-                humanized_properties = formatting_utils.humanize_list(
-                    dirty_report.dirty_properties, 'and')
-                pluralized_connection = formatting_utils.pluralize(
-                    dirty_report.dirty_properties, 'property appears',
-                    'properties appear')
-                message_components.append(
-                    'The {} part {} to have changed.\n'.format(
-                        humanized_properties, pluralized_connection))
-
-            if dirty_report.dirty_project_options:
-                humanized_options = formatting_utils.humanize_list(
-                    dirty_report.dirty_project_options, 'and')
-                pluralized_connection = formatting_utils.pluralize(
-                    dirty_report.dirty_project_options, 'option appears',
-                    'options appear')
-                message_components.append(
-                    'The {} project {} to have changed.\n'.format(
-                        humanized_options, pluralized_connection))
-
-            message_components.append(
-                "In order to continue, please clean that part's {0!r} step "
-                "by running: snapcraft clean {1} -s {0}\n".format(
-                    step, part.name))
-            raise RuntimeError(''.join(message_components))
+            raise errors.StepOutdatedError(
+                step=step, part=part.name,
+                dirty_properties=dirty_report.dirty_properties,
+                dirty_project_options=dirty_report.dirty_project_options)
 
         staged_state = self.config.get_project_state('stage')
         primed_state = self.config.get_project_state('prime')
@@ -307,17 +288,8 @@ class _Executor:
             for dependent in self.config.all_parts:
                 if (dependent.name in dependents and
                         not dependent.is_clean('build')):
-                    humanized_parts = formatting_utils.humanize_list(
-                        dependents, 'and')
-                    pluralized_depends = formatting_utils.pluralize(
-                        dependents, "depends", "depend")
-
-                    raise RuntimeError(
-                        'The {0!r} step for {1!r} needs to be run again, but '
-                        '{2} {3} upon it. Please clean the build '
-                        'step of {2} first.'.format(
-                            step, part.name, humanized_parts,
-                            pluralized_depends))
+                    raise errors.StepOutdatedError(step=step, part=part.name,
+                                                   dependents=dependents)
 
         part.clean(staged_state, primed_state, step, '(out of date)')
 
@@ -365,6 +337,9 @@ def _snap_data_from_dir(directory):
 
 
 def snap(project_options, directory=None, output=None):
+    # Check for our prerequesite external command early
+    repo.check_for_command('mksquashfs')
+
     if directory:
         prime_dir = os.path.abspath(directory)
         snap = _snap_data_from_dir(prime_dir)
@@ -453,6 +428,7 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
                                        config):
     # Get the name of the parts that depend upon this one
     dependents = config.parts.get_dependents(part_name)
+    additional_dependents = []
 
     # Verify that they're either already clean, or that they will be cleaned.
     if not dependents.issubset(clean_part_names):
@@ -460,12 +436,13 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
             if part.name in dependents and not part.is_clean(step):
                 humanized_parts = formatting_utils.humanize_list(
                     dependents, 'and')
+                additional_dependents.append(part_name)
 
-                raise errors.SnapcraftEnvironmentError(
-                    'Requested clean of {!r} but {} depend{} upon it. Please '
-                    "add each to the clean command if that's what you "
-                    'intended.'.format(part_name, humanized_parts,
-                                       's' if len(dependents) == 1 else ''))
+                logger.warning(
+                    'Requested clean of {!r} which requires also cleaning '
+                    'the part{} {}'.format(part_name,
+                                           '' if len(dependents) == 1 else 's',
+                                           humanized_parts))
 
 
 def _clean_parts(part_names, step, config, staged_state, primed_state):
@@ -473,7 +450,8 @@ def _clean_parts(part_names, step, config, staged_state, primed_state):
         step = 'pull'
 
     # Before doing anything, verify that we weren't asked to clean only the
-    # root of a dependency tree (the entire tree must be specified).
+    # root of a dependency tree and hint that more parts would be cleaned
+    # if not.
     for part_name in part_names:
         _verify_dependents_will_be_cleaned(part_name, part_names, step, config)
 

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,24 +17,22 @@
 import os
 
 from unittest import mock
-from testtools.matchers import HasLength
+from testtools.matchers import DirExists, Equals, HasLength
 
 import snapcraft
 from snapcraft.plugins import nodejs
+from snapcraft.internal import errors
 from snapcraft import tests
 
 
-class NodePluginTestCase(tests.TestCase):
-
-    scenarios = [
-        ('npm', dict(package_manager='npm')),
-        ('yarn', dict(package_manager='yarn')),
-    ]
+class NodePluginBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
 
         self.project_options = snapcraft.ProjectOptions()
+
+        self.useFixture(tests.fixture_setup.CleanEnvironment())
 
         patcher = mock.patch('snapcraft.internal.common.run')
         self.run_mock = patcher.start()
@@ -50,6 +48,14 @@ class NodePluginTestCase(tests.TestCase):
 
         self.nodejs_url = nodejs.get_nodejs_release(
             nodejs._NODEJS_VERSION, self.project_options.deb_arch)
+
+
+class NodePluginTestCase(NodePluginBaseTestCase):
+
+    scenarios = [
+        ('npm', dict(package_manager='npm')),
+        ('yarn', dict(package_manager='yarn')),
+    ]
 
     def test_pull_local_sources(self):
         class Options:
@@ -123,9 +129,12 @@ class NodePluginTestCase(tests.TestCase):
         else:
             cmd = os.path.join(plugin.partdir, 'npm', 'bin', 'yarn')
             expected_run_calls = [
-                mock.call([cmd, 'global', 'add', 'file:{}'.format(self.path),
-                           '--offline', '--prod', '--global-folder',
-                           plugin.installdir], cwd=plugin.builddir)
+                mock.call([cmd, 'global', 'add',
+                           'file:{}'.format(plugin.builddir),
+                           '--offline', '--prod',
+                           '--global-folder', plugin.installdir,
+                           '--prefix', plugin.installdir],
+                          cwd=plugin.builddir)
             ]
             expected_tar_calls = [
                 mock.call(self.nodejs_url, plugin._npm_dir),
@@ -176,8 +185,10 @@ class NodePluginTestCase(tests.TestCase):
                 mock.call([cmd, 'add', 'my-pkg'],
                           cwd=plugin.sourcedir),
                 mock.call([cmd, 'global', 'add', 'my-pkg',
-                           '--offline', '--prod', '--global-folder',
-                           plugin.installdir], cwd=plugin.builddir)
+                           '--offline', '--prod',
+                           '--global-folder', plugin.installdir,
+                           '--prefix', plugin.installdir],
+                          cwd=plugin.builddir)
             ]
             expected_tar_calls = [
                 mock.call(self.nodejs_url, plugin._npm_dir),
@@ -198,6 +209,46 @@ class NodePluginTestCase(tests.TestCase):
         self.run_mock.assert_has_calls(expected_run_calls)
         self.tar_mock.assert_has_calls(expected_tar_calls)
 
+    def test_pull_executes_npm_run_commands(self):
+        class Options:
+            source = '.'
+            node_packages = []
+            node_engine = '4'
+            npm_run = ['command_one', 'avocado']
+            node_package_manager = self.package_manager
+            source = '.'
+
+        plugin = nodejs.NodePlugin('test-part', Options(),
+                                   self.project_options)
+
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'package.json'), 'w').close()
+
+        plugin.pull()
+
+        if self.package_manager == 'npm':
+            cmd = ['npm', 'run']
+            expected_run_calls = [
+                mock.call(cmd + ['command_one'],
+                          cwd=plugin.sourcedir),
+                mock.call(cmd + ['avocado'],
+                          cwd=plugin.sourcedir),
+            ]
+        else:
+            cmd = [os.path.join(plugin.partdir, 'npm', 'bin', 'yarn'), 'run']
+            hidden_bin_path = os.path.join(
+                plugin.sourcedir, 'node_modules', '.bin')
+            expected_run_calls = [
+                mock.call(cmd + ['command_one'],
+                          cwd=plugin.sourcedir,
+                          env=dict(PATH=hidden_bin_path)),
+                mock.call(cmd + ['avocado'],
+                          cwd=plugin.sourcedir,
+                          env=dict(PATH=hidden_bin_path)),
+            ]
+
+        self.run_mock.assert_has_calls(expected_run_calls)
+
     def test_build_executes_npm_run_commands(self):
         class Options:
             source = '.'
@@ -217,13 +268,21 @@ class NodePluginTestCase(tests.TestCase):
 
         if self.package_manager == 'npm':
             cmd = ['npm', 'run']
+            expected_run_calls = [
+                mock.call(cmd + ['command_one'],
+                          cwd=plugin.builddir),
+                mock.call(cmd + ['avocado'],
+                          cwd=plugin.builddir),
+            ]
         else:
             cmd = [os.path.join(plugin.partdir, 'npm', 'bin', 'yarn'), 'run']
+            expected_run_calls = [
+                mock.call(cmd + ['command_one'],
+                          cwd=plugin.builddir, env=dict()),
+                mock.call(cmd + ['avocado'],
+                          cwd=plugin.builddir, env=dict()),
+            ]
 
-        expected_run_calls = [
-            mock.call(cmd + ['command_one'], cwd=plugin.builddir),
-            mock.call(cmd + ['avocado'], cwd=plugin.builddir),
-        ]
         self.run_mock.assert_has_calls(expected_run_calls)
 
     @mock.patch('snapcraft.ProjectOptions.deb_arch', 'fantasy-arch')
@@ -237,13 +296,13 @@ class NodePluginTestCase(tests.TestCase):
             source = '.'
 
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.SnapcraftEnvironmentError,
             nodejs.NodePlugin,
             'test-part', Options(),
             self.project_options)
 
-        self.assertEqual(raised.__str__(),
-                         'architecture not supported (fantasy-arch)')
+        self.assertThat(raised.__str__(),
+                        Equals('architecture not supported (fantasy-arch)'))
 
     def test_get_build_properties(self):
         expected_build_properties = ['node-packages', 'npm-run']
@@ -285,6 +344,38 @@ class NodePluginTestCase(tests.TestCase):
         plugin.clean_pull()
 
         self.assertFalse(os.path.exists(plugin._npm_dir))
+
+
+class NodePluginNpmWorkaroundsTestCase(NodePluginBaseTestCase):
+
+    def test_build_from_local_fixes_symlinks(self):
+        class Options:
+            source = '.'
+            node_packages = []
+            node_engine = '4'
+            npm_run = []
+            node_package_manager = 'npm'
+            source = '.'
+
+        plugin = nodejs.NodePlugin('test-part', Options(),
+                                   self.project_options)
+
+        os.makedirs(plugin.sourcedir)
+        open(os.path.join(plugin.sourcedir, 'package.json'), 'w').close()
+
+        # Setup stub project symlinks
+        modules_path = os.path.join('lib', 'node_modules')
+        project_path = os.path.join(plugin.installdir, modules_path, 'project')
+        dep_path = os.path.join(modules_path, 'dep')
+        os.makedirs(os.path.join(plugin.builddir, dep_path))
+        os.makedirs(os.path.join(plugin.installdir, modules_path))
+        os.symlink(os.path.join('..', '..', '..', 'build'), project_path)
+
+        plugin.build()
+
+        self.assertThat(project_path, DirExists())
+        self.assertThat(os.path.join(project_path, dep_path), DirExists())
+        self.assertFalse(os.path.islink(project_path))
 
 
 class NodeReleaseTestCase(tests.TestCase):
@@ -341,7 +432,7 @@ class NodeReleaseTestCase(tests.TestCase):
         architecture_mock.return_value = self.architecture
         project = snapcraft.ProjectOptions()
         node_url = nodejs.get_nodejs_release(self.engine, project.deb_arch)
-        self.assertEqual(node_url, self.expected_url)
+        self.assertThat(node_url, Equals(self.expected_url))
 
 
 class NodePluginSchemaTestCase(tests.TestCase):
@@ -357,16 +448,16 @@ class NodePluginSchemaTestCase(tests.TestCase):
         self.assertTrue(
             'type' in node_packages,
             'Expected "type" to be included in "node-packages"')
-        self.assertEqual(node_packages['type'], 'array',
-                         'Expected "node-packages" "type" to be "array", but '
-                         'it was "{}"'.format(node_packages['type']))
+        self.assertThat(node_packages['type'], Equals('array'),
+                        'Expected "node-packages" "type" to be "array", but '
+                        'it was "{}"'.format(node_packages['type']))
 
         self.assertTrue(
             'minitems' in node_packages,
             'Expected "minitems" to be included in "node-packages"')
-        self.assertEqual(node_packages['minitems'], 1,
-                         'Expected "node-packages" "minitems" to be 1, but '
-                         'it was "{}"'.format(node_packages['minitems']))
+        self.assertThat(node_packages['minitems'], Equals(1),
+                        'Expected "node-packages" "minitems" to be 1, but '
+                        'it was "{}"'.format(node_packages['minitems']))
 
         self.assertTrue('node-package-manager' in properties,
                         'Expected "node-package-manager" to be included in '
@@ -376,17 +467,17 @@ class NodePluginSchemaTestCase(tests.TestCase):
         self.assertTrue(
             'type' in node_package_manager,
             'Expected "type" to be included in "node-package-manager"')
-        self.assertEqual(node_package_manager['type'], 'string',
-                         'Expected "node-package-manager" "type" to be '
-                         '"string", but it was '
-                         '"{}"'.format(node_package_manager['type']))
+        self.assertThat(node_package_manager['type'], Equals('string'),
+                        'Expected "node-package-manager" "type" to be '
+                        '"string", but it was '
+                        '"{}"'.format(node_package_manager['type']))
         self.assertTrue(
             'default' in node_package_manager,
             'Expected "default" to be included in "node-package-manager"')
-        self.assertEqual(node_package_manager['default'], 'npm',
-                         'Expected "node-package-manager" "default" to be '
-                         '"npm", but it was '
-                         '"{}"'.format(node_package_manager['type']))
+        self.assertThat(node_package_manager['default'], Equals('npm'),
+                        'Expected "node-package-manager" "default" to be '
+                        '"npm", but it was '
+                        '"{}"'.format(node_package_manager['type']))
 
         self.assertTrue(
             'uniqueItems' in node_packages,
@@ -404,16 +495,16 @@ class NodePluginSchemaTestCase(tests.TestCase):
         self.assertTrue(
             'type' in npm_run,
             'Expected "type" to be included in "npm-run"')
-        self.assertEqual(npm_run['type'], 'array',
-                         'Expected "npm-run" "type" to be "array", but '
-                         'it was "{}"'.format(npm_run['type']))
+        self.assertThat(npm_run['type'], Equals('array'),
+                        'Expected "npm-run" "type" to be "array", but '
+                        'it was "{}"'.format(npm_run['type']))
 
         self.assertTrue(
             'minitems' in npm_run,
             'Expected "minitems" to be included in "npm-run"')
-        self.assertEqual(npm_run['minitems'], 1,
-                         'Expected "npm-run" "minitems" to be 1, but '
-                         'it was "{}"'.format(npm_run['minitems']))
+        self.assertThat(npm_run['minitems'], Equals(1),
+                        'Expected "npm-run" "minitems" to be 1, but '
+                        'it was "{}"'.format(npm_run['minitems']))
 
         self.assertTrue(
             'uniqueItems' in npm_run,
@@ -426,7 +517,7 @@ class NodePluginSchemaTestCase(tests.TestCase):
                         'Expected "node-engine" to be included in '
                         'properties')
         node_engine_type = properties['node-engine']['type']
-        self.assertEqual(node_engine_type, 'string',
-                         'Expected "node_engine" "type" to be '
-                         '"string", but it was "{}"'
-                         .format(node_engine_type))
+        self.assertThat(node_engine_type, Equals('string'),
+                        'Expected "node_engine" "type" to be '
+                        '"string", but it was "{}"'
+                        .format(node_engine_type))

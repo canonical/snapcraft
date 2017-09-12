@@ -16,13 +16,15 @@
 
 import collections
 import contextlib
+import copy
 import io
 import os
+import string
 import sys
-import tempfile
 import threading
-from textwrap import dedent, fill
+from textwrap import dedent
 import urllib.parse
+import uuid
 from functools import partial
 from types import ModuleType
 from unittest import mock
@@ -31,7 +33,13 @@ from subprocess import CalledProcessError
 import fixtures
 import xdg
 
+import snapcraft
 from snapcraft.tests import fake_servers
+from snapcraft.tests.fake_servers import (
+    api,
+    search,
+    upload
+)
 from snapcraft.tests.subprocess_utils import (
     call,
     call_with_output,
@@ -86,6 +94,34 @@ class TempXDG(fixtures.Fixture):
         self.addCleanup(patcher_dirs.stop)
 
 
+class FakeProjectOptions(fixtures.Fixture):
+
+    def __init__(self, **kwargs):
+        self._kwargs = dict(
+            arch_triplet=kwargs.pop('arch_triplet', 'x86_64-gnu-linux'),
+            parts_dir=kwargs.pop('parts_dir', 'parts'),
+            stage_dir=kwargs.pop('stage_dir', 'stage'),
+            prime_dir=kwargs.pop('prime_dir', 'prime'),
+            parallel_build_count=kwargs.pop('parallel_build_count', '1'),
+        )
+        if kwargs:
+            raise NotImplementedError(
+                'Handling of {!r} is not implemented'.format(kwargs.keys()))
+
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('snapcraft.ProjectOptions')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        # Special handling is required as ProjectOptions attributes are
+        # handled with the @property decorator.
+        project_options_t = type(snapcraft.ProjectOptions.return_value)
+        for key in self._kwargs:
+            setattr(project_options_t, key, self._kwargs[key])
+
+
 class SilentSnapProgress(fixtures.Fixture):
 
     def setUp(self):
@@ -101,8 +137,8 @@ class CleanEnvironment(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
-        current_environment = os.environ.copy()
-        os.environ = {}
+        current_environment = copy.deepcopy(os.environ)
+        os.environ.clear()
 
         self.addCleanup(os.environ.update, current_environment)
 
@@ -304,19 +340,19 @@ class FakeSSOServerRunning(_FakeServerRunning):
 
 class FakeStoreUploadServerRunning(_FakeServerRunning):
 
-    fake_server = fake_servers.FakeStoreUploadServer
+    fake_server = upload.FakeStoreUploadServer
 
 
 class FakeStoreAPIServerRunning(_FakeServerRunning):
 
     def __init__(self, fake_store):
         super().__init__()
-        self.fake_server = partial(fake_servers.FakeStoreAPIServer, fake_store)
+        self.fake_server = partial(api.FakeStoreAPIServer, fake_store)
 
 
 class FakeStoreSearchServerRunning(_FakeServerRunning):
 
-    fake_server = fake_servers.FakeStoreSearchServer
+    fake_server = search.FakeStoreSearchServer
 
 
 class StagingStore(fixtures.Fixture):
@@ -359,8 +395,9 @@ class TestStore(fixtures.Fixture):
             raise ValueError(
                 'Unknown test store option: {}'.format(test_store))
 
-        self.user_email = os.getenv(
-            'TEST_USER_EMAIL', 'u1test+snapcraft@canonical.com')
+        self.user_email = (
+            os.getenv('TEST_USER_EMAIL') or
+            'u1test+snapcraft@canonical.com')
         self.test_track_snap = os.getenv(
             'TEST_SNAP_WITH_TRACKS', 'test-snapcraft-tracks')
         if test_store == 'fake':
@@ -388,96 +425,82 @@ class FakePlugin(fixtures.Fixture):
         del sys.modules[self._import_name]
 
 
-def check_output_side_effect(fail_on_remote=False, fail_on_default=False):
-    def call_effect(*args, **kwargs):
-        if args[0] == ['lxc', 'remote', 'get-default']:
-            if fail_on_default:
-                raise CalledProcessError(returncode=255, cmd=args[0])
-            else:
-                return 'local'.encode('utf-8')
-        elif args[0] == ['lxc', 'list', 'my-remote:'] and fail_on_remote:
-            raise CalledProcessError(returncode=255, cmd=args[0])
-        elif args[0][:2] == ['lxc', 'info']:
-            return '''
-                environment:
-                  kernel_architecture: x86_64
-                '''.encode('utf-8')
-        elif args[0][:3] == ['lxc', 'list', '--format=json']:
-            return '''
-                [{"name": "snapcraft-snap-test",
-                  "status": "Stopped",
-                  "devices": {"build-snap-test":[]}}]
-                '''.encode('utf-8')
-        else:
-            return ''.encode('utf-8')
-    return call_effect
+class FakeFilesystem(fixtures.Fixture):
+    '''Keep track of created and removed directories'''
+
+    def __init__(self):
+        self.dirs = []
+
+    def _setUp(self):
+        patcher = mock.patch('os.makedirs')
+        self.makedirs_mock = patcher.start()
+        self.makedirs_mock.side_effect = self.makedirs_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('tempfile.mkdtemp')
+        self.mkdtemp_mock = patcher.start()
+        self.mkdtemp_mock.side_effect = self.mkdtemp_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.lxd.open', mock.mock_open())
+        self.open_mock = patcher.start()
+        self.open_mock_default_side_effect = self.open_mock.side_effect
+        self.open_mock.side_effect = self.open_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('shutil.copyfile')
+        self.copyfile_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('shutil.rmtree')
+        self.rmtree_mock = patcher.start()
+        self.rmtree_mock.side_effect = self.rmtree_side_effect()
+        self.addCleanup(patcher.stop)
+
+    def makedirs_side_effect(self):
+        def call_effect(*args, **kwargs):
+            if args[0] not in self.dirs:
+                self.dirs.append(args[0])
+        return call_effect
+
+    def mkdtemp_side_effect(self):
+        def call_effect(*args, **kwargs):
+            dir = os.path.join(kwargs['dir'], '{}{}{}'.format(
+                kwargs.get('prefix', ''),
+                uuid.uuid4(),
+                kwargs.get('suffix', '')))
+            self.dirs.append(dir)
+            return dir
+        return call_effect
+
+    def open_side_effect(self):
+        def call_effect(*args, **kwargs):
+            for dir in self.dirs:
+                if args[0].startswith(dir):
+                    return self.open_mock_default_side_effect()
+            raise FileNotFoundError(
+                '[Errno 2] No such file or directory: {}'.format(args[0]))
+        return call_effect
+
+    def rmtree_side_effect(self):
+        def call_effect(*args, **kwargs):
+            if args[0] not in self.dirs:
+                raise FileNotFoundError(
+                    '[Errno 2] No such file or directory: {}'.format(args[0]))
+            self.dirs.remove(args[0])
+        return call_effect
 
 
-class FakeAptGetBuildDep(fixtures.Fixture):
-    '''Mock apt-get build-dep output'''
-
-    _PROLOG = dedent('''
-        NOTE: This is only a simulation!
-              apt-get needs root privileges for real execution.
-              Keep also in mind that locking is deactivated,
-              so don't depend on the relevance to the real current situation!
-              ''')
-    _READING = dedent('''
-        {}
-        Note, using file '{}' to get the build dependencies
-        Reading package lists...
-        Building dependency tree...
-        Reading state information...''')
-    _PROBLEMS = dedent('''
-        Some packages could not be installed. This may mean that you have
-        requested an impossible situation or if you are using the unstable
-        distribution that some required packages have not yet been created
-        or been moved out of Incoming.
-        The following information may help to resolve the situation:
-
-        The following packages have unmet dependencies:
-         builddeps:{}{} : {}
-        E: Unable to correct problems, you have held broken packages.''')
-    _NEW = dedent('''
-        The following NEW packages will be installed:
-          {}
-        3 upgraded, {} newly installed, 0 to remove and 5 not upgraded.''')
-    _NONE = dedent('''
-        0 upgraded, 0 newly installed, 0 to remove and 6 not upgraded.''')
+class FakeDpkgArchitecture(fixtures.Fixture):
+    '''Mock dpkg concerning architecture handling'''
 
     def __init__(self, packages, arch='', update_error=False,
                  not_cached=False, not_available=False):
-        self.filename = '{}/{}abcdef.dsc'.format(tempfile.gettempdir(),
-                                                 tempfile.gettempprefix())
         self.arch = 'amd64'
         self.archs = [self.arch]
         if arch:
             self.arch = arch
             arch = ':{}'.format(arch)
-        if not_cached:
-            note = 'Depends: {}{} but it is not going to be installed'
-        elif not_available:
-            note = 'Depends: {}{} but it is not installable'
-        else:
-            note = '{}{}'
-        errors = []
-        for package in packages:
-            errors.append(note.format(package, arch))
-        self.exception = False
-        if not_cached or not_available:
-            self.exception = True
-            details = self._PROBLEMS.format(
-                self.filename, arch, '\n'.join(errors))
-        elif not packages:
-            details = self._NONE
-        else:
-            details = self._NEW.format(fill(' '.join(errors),
-                                            subsequent_indent='  ',
-                                            break_on_hyphens=False),
-                                       len(errors))
-        self.output = '{}{}'.format(self._READING.format(
-            self._PROLOG, self.filename), details).encode(
-                  sys.getfilesystemencoding())
         self.update_error = update_error
 
     def _setUp(self):
@@ -503,20 +526,7 @@ class FakeAptGetBuildDep(fixtures.Fixture):
 
     def check_output_side_effect(self):
         def call_effect(*args, **kwargs):
-            if args[0][:2] == ['apt-get', 'build-dep']:
-                if self.arch not in self.archs:
-                    output = '{}\n{} {}. {}\n'.format(
-                        self._PROLOG,
-                        'E: No architecture information available for',
-                        self.arch,
-                        'See apt.conf(5) APT::Architectures for setup').encode(
-                            sys.getfilesystemencoding())
-                    raise CalledProcessError(100, args[0], output)
-                elif self.exception:
-                    raise CalledProcessError(100, args[0], self.output)
-                else:
-                    return self.output
-            elif args[0][:3] == ['sudo', 'apt-get', 'update']:
+            if args[0][:3] == ['sudo', 'apt-get', 'update']:
                 server = 'http://archive.ubuntu.com/ubuntu'
                 template = '{}:{} {} xenial InRelease\n'
                 output = template.format('Get', '9', server)
@@ -541,19 +551,21 @@ class FakeAptGetBuildDep(fixtures.Fixture):
 class FakeLXD(fixtures.Fixture):
     '''...'''
 
-    def __init__(self, fail_on_remote=False, fail_on_default=False):
-        self.fail_on_remote = fail_on_remote
-        self.fail_on_default = fail_on_default
+    def __init__(self, fail_on_snapcraft_run=False):
+        self.status = None
+        self.kernel_arch = 'x86_64'
+        self.devices = '{}'
+        self.fail_on_snapcraft_run = fail_on_snapcraft_run
 
     def _setUp(self):
         patcher = mock.patch('snapcraft.internal.lxd.check_call')
         self.check_call_mock = patcher.start()
+        self.check_call_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.internal.lxd.check_output')
         self.check_output_mock = patcher.start()
-        self.check_output_mock.side_effect = check_output_side_effect(
-            self.fail_on_remote, self.fail_on_default)
+        self.check_output_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
@@ -568,6 +580,87 @@ class FakeLXD(fixtures.Fixture):
         self.architecture_mock = patcher.start()
         self.architecture_mock.return_value = ('64bit', 'ELF')
         self.addCleanup(patcher.stop)
+
+    def check_output_side_effect(self):
+        def call_effect(*args, **kwargs):
+            if args[0] == ['lxc', 'remote', 'get-default']:
+                return 'local'.encode('utf-8')
+            elif args[0][:2] == ['lxc', 'info']:
+                return '''
+                    environment:
+                      kernel_architecture: {}
+                    '''.format(self.kernel_arch).encode('utf-8')
+            elif args[0][:3] == ['lxc', 'list', '--format=json']:
+                if self.status and args[0][3] == self.name:
+                    return string.Template('''
+                        [{"name": "$NAME",
+                          "status": "$STATUS",
+                          "devices": $DEVICES}]
+                        ''').substitute({
+                            # Container name without remote prefix
+                            'NAME': self.name.split(':')[-1],
+                            'STATUS': self.status,
+                            'DEVICES': self.devices,
+                            }).encode('utf-8')
+                return '[]'.encode('utf-8')
+            elif args[0][:2] == ['lxc', 'init']:
+                self.name = args[0][3]
+                self.status = 'Stopped'
+            elif args[0][:2] == ['lxc', 'launch']:
+                self.name = args[0][4]
+                self.status = 'Running'
+            elif args[0][:2] == ['lxc', 'stop'] and not self.status:
+                # error: not found
+                raise CalledProcessError(returncode=1, cmd=args[0])
+            # Fail on an actual snapcraft command and not the command
+            # for the installation of it.
+            elif ('snapcraft snap' in ' '.join(args[0])
+                  and self.fail_on_snapcraft_run):
+                raise CalledProcessError(returncode=255, cmd=args[0])
+            else:
+                return ''.encode('utf-8')
+        return call_effect
+
+
+class FakeSnapd(fixtures.Fixture):
+    '''...'''
+
+    def __init__(self):
+        self.snaps = {
+            'core': {'confinement': 'strict',
+                     'id': '2kkitQurgOkL3foImG4wDwn9CIANuHlt',
+                     'revision': '123'},
+            'snapcraft': {'confinement': 'classic',
+                          'id': '3lljuRvshPlM4gpJnH5xExo0DJBOvImu',
+                          'revision': '345'},
+        }
+
+    def _setUp(self):
+        patcher = mock.patch('requests_unixsocket.Session.request')
+        self.session_request_mock = patcher.start()
+        self.session_request_mock.side_effect = self.request_side_effect()
+        self.addCleanup(patcher.stop)
+
+    def request_side_effect(self):
+        def request_effect(*args, **kwargs):
+            if args[0] == 'GET' and '/v2/snaps/' in args[1]:
+                class Session:
+                    def __init__(self, name, snaps):
+                        self._name = name
+                        self._snaps = snaps
+
+                    def json(self):
+                        if self._name not in self._snaps:
+                            return {'status': 'Not Found',
+                                    'result': {'message': 'not found'},
+                                    'status-code': 404,
+                                    'type': 'error'}
+                        return {'status': 'OK',
+                                'type': 'sync',
+                                'result': self._snaps[self._name]}
+                name = args[1].split('/')[-1]
+                return Session(name, self.snaps)
+        return request_effect
 
 
 class GitRepo(fixtures.Fixture):
@@ -625,11 +718,15 @@ class BzrRepo(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
+        bzr_home = self.useFixture(fixtures.TempDir()).path
+        self.useFixture(fixtures.EnvironmentVariable('BZR_HOME', bzr_home))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'BZR_EMAIL',  'Test User <test.user@example.com>'))
+
         with return_to_cwd():
             os.makedirs(self.name)
             os.chdir(self.name)
             call(['bzr', 'init'])
-            call(['bzr', 'whoami', 'Test User <test.user@example.com>'])
             with open('testing', 'w') as fp:
                 fp.write('testing')
 

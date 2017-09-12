@@ -160,7 +160,7 @@ class TestGit(SourceTestCase):
 
         expected_message = \
             'can\'t specify both source-tag and source-branch for a git source'
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_branch_and_commit_raises_exception(self):
         raised = self.assertRaises(
@@ -173,7 +173,7 @@ class TestGit(SourceTestCase):
         expected_message = \
             'can\'t specify both source-branch and source-commit for ' \
             'a git source'
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_tag_and_commit_raises_exception(self):
         raised = self.assertRaises(
@@ -186,7 +186,7 @@ class TestGit(SourceTestCase):
         expected_message = \
             'can\'t specify both source-tag and source-commit for ' \
             'a git source'
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_source_checksum_raises_exception(self):
         raised = self.assertRaises(
@@ -197,7 +197,10 @@ class TestGit(SourceTestCase):
 
         expected_message = (
             "can't specify a source-checksum for a git source")
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
+
+    def test_has_source_handler_entry(self):
+        self.assertTrue(sources._source_handler['git'] is sources.Git)
 
 
 class GitBaseTestCase(tests.TestCase):
@@ -231,7 +234,7 @@ class GitBaseTestCase(tests.TestCase):
         body = None
         with open(path) as fp:
             body = fp.read()
-        self.assertEqual(body, expected)
+        self.assertThat(body, Equals(expected))
 
 
 class TestGitConflicts(GitBaseTestCase):
@@ -274,7 +277,7 @@ class TestGitConflicts(GitBaseTestCase):
         with open(os.path.join(working_tree, 'fake')) as fp:
             body = fp.read()
 
-        self.assertEqual(body, 'fake 2')
+        self.assertThat(body, Equals('fake 2'))
 
     def test_git_submodules(self):
         """Test that updates to submodules are pulled"""
@@ -392,8 +395,8 @@ class GitDetailsTestCase(GitBaseTestCase):
         self.source_details = self.git._get_source_details()
 
     def test_git_details_commit(self):
-        self.assertEqual(
-            self.expected_commit, self.source_details['source-commit'])
+        self.assertThat(
+            self.source_details['source-commit'], Equals(self.expected_commit))
 
     def test_git_details_branch(self):
         shutil.rmtree(self.source_dir)
@@ -402,8 +405,8 @@ class GitDetailsTestCase(GitBaseTestCase):
         self.git.pull()
 
         self.source_details = self.git._get_source_details()
-        self.assertEqual(
-            self.expected_branch, self.source_details['source-branch'])
+        self.assertThat(
+            self.source_details['source-branch'], Equals(self.expected_branch))
 
     def test_git_details_tag(self):
         self.git = sources.Git(self.working_tree, self.source_dir, silent=True,
@@ -411,7 +414,8 @@ class GitDetailsTestCase(GitBaseTestCase):
         self.git.pull()
 
         self.source_details = self.git._get_source_details()
-        self.assertEqual(self.expected_tag, self.source_details['source-tag'])
+        self.assertThat(
+            self.source_details['source-tag'], Equals(self.expected_tag))
 
 
 class GitGenerateVersionBaseTestCase(tests.TestCase):

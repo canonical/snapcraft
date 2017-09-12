@@ -18,6 +18,7 @@ import logging
 import multiprocessing
 import os
 import platform
+import sys
 
 from snapcraft.internal import common
 from snapcraft.internal.deprecations import handle_deprecation_notice
@@ -81,7 +82,7 @@ _ARCH_TRANSLATIONS = {
         'core-dynamic-linker': 'lib64/ld-linux-x86-64.so.2',
     },
     's390x': {
-        'kernel': 's390x',
+        'kernel': 's390',
         'deb': 's390x',
         'uts_machine': 's390x',
         'cross-compiler-prefix': 's390x-linux-gnu-',
@@ -101,8 +102,19 @@ _32BIT_USERSPACE_ARCHITECTURE = {
 }
 
 
+_WINDOWS_TRANSLATIONS = {
+    'AMD64': 'x86_64'
+}
+
+
 def _get_platform_architecture():
     architecture = platform.machine()
+
+    # Translate the windows architectures we know of to architectures
+    # we can work with.
+    if sys.platform == 'win32':
+        architecture = _WINDOWS_TRANSLATIONS.get(architecture)
+
     if platform.architecture()[0] == '32bit':
         userspace = _32BIT_USERSPACE_ARCHITECTURE.get(architecture)
         if userspace:
@@ -138,20 +150,24 @@ class ProjectOptions:
         return self.__target_machine != self.__platform_arch
 
     @property
+    def target_arch(self):
+        return self.__target_arch
+
+    @property
     def cross_compiler_prefix(self):
         try:
             return self.__machine_info['cross-compiler-prefix']
         except KeyError:
-            raise EnvironmentError(
-                'Cross compilation not support for target arch {!}'.format(
-                    self.__machine_target))
+            raise SnapcraftEnvironmentError(
+                'Cross compilation not supported for target arch {!r}'.format(
+                    self.__target_machine))
 
     @property
     def additional_build_packages(self):
         packages = []
         if self.is_cross_compiling:
-            for package in self.__machine_info.get('cross-build-packages', []):
-                packages.append('{}:native'.format(package))
+            packages.extend(self.__machine_info.get(
+                'cross-build-packages', []))
         return packages
 
     @property
@@ -236,6 +252,7 @@ class ProjectOptions:
 
     def _set_machine(self, target_deb_arch):
         self.__platform_arch = _get_platform_architecture()
+        self.__target_arch = target_deb_arch
         if not target_deb_arch:
             self.__target_machine = self.__platform_arch
         else:
@@ -256,5 +273,5 @@ def _find_machine(deb_arch):
         elif _ARCH_TRANSLATIONS[machine].get('uts_machine', '') == deb_arch:
             return machine
 
-    raise EnvironmentError(
+    raise SnapcraftEnvironmentError(
         'Cannot set machine from deb_arch {!r}'.format(deb_arch))

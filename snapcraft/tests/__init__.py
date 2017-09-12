@@ -26,8 +26,11 @@ import threading
 import testscenarios
 import testtools
 
+import snapcraft
 from snapcraft.internal import common
 from snapcraft.tests import fake_servers, fixture_setup
+from snapcraft.internal.project_loader import grammar_processing
+
 from unittest import mock
 
 
@@ -114,7 +117,6 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.addCleanup(common.set_plugindir, common.get_plugindir())
         self.addCleanup(common.set_schemadir, common.get_schemadir())
         self.addCleanup(common.set_librariesdir, common.get_librariesdir())
-        self.addCleanup(common.set_tourdir, common.get_tourdir())
         self.addCleanup(common.reset_env)
         common.set_schemadir(os.path.join(__file__,
                              '..', '..', '..', 'schema'))
@@ -139,6 +141,13 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.parts_dir = os.path.join(os.getcwd(), 'parts')
         self.local_plugins_dir = os.path.join(self.snap_dir, 'plugins')
 
+        machine = os.environ.get('SNAPCRAFT_TEST_MOCK_MACHINE', None)
+        if machine:
+            patcher = mock.patch('platform.machine')
+            self.mock_machine = patcher.start()
+            self.mock_machine.return_value = machine
+            self.addCleanup(patcher.stop)
+
     def make_snapcraft_yaml(self, content, encoding='utf-8'):
         with contextlib.suppress(FileExistsError):
             os.mkdir('snap')
@@ -156,6 +165,44 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             self.assertTrue(os.path.exists(os.path.join(state_dir, step)),
                             'Expected {!r} to be run for {}'.format(
                                 step, part_name))
+
+    def load_part(self, part_name, plugin_name=None, part_properties=None,
+                  project_options=None, stage_packages_repo=None):
+        if not plugin_name:
+            plugin_name = 'nil'
+        properties = {'plugin': plugin_name}
+        if part_properties:
+            properties.update(part_properties)
+        if not project_options:
+            project_options = snapcraft.ProjectOptions()
+
+        validator = snapcraft.internal.project_loader.Validator()
+        schema = validator.part_schema
+        definitions_schema = validator.definitions_schema
+        plugin = snapcraft.internal.pluginhandler.load_plugin(
+            part_name=part_name,
+            plugin_name=plugin_name,
+            properties=properties,
+            project_options=project_options,
+            part_schema=schema,
+            definitions_schema=definitions_schema)
+
+        if not stage_packages_repo:
+            stage_packages_repo = mock.Mock()
+        grammar_processor = grammar_processing.PartGrammarProcessor(
+            plugin=plugin,
+            properties=properties,
+            project_options=project_options,
+            repo=stage_packages_repo)
+
+        return snapcraft.internal.pluginhandler.PluginHandler(
+            plugin=plugin,
+            part_properties=properties,
+            project_options=project_options,
+            part_schema=schema,
+            definitions_schema=definitions_schema,
+            grammar_processor=grammar_processor,
+            stage_packages_repo=stage_packages_repo)
 
 
 class TestWithFakeRemoteParts(TestCase):

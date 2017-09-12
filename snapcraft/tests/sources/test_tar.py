@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,11 +17,13 @@
 import os
 import tarfile
 import fixtures
-import unittest
+from unittest import mock
 
-from snapcraft.internal import sources
+import requests
+from testtools.matchers import Equals
 
 from snapcraft import tests
+from snapcraft.internal import sources
 
 
 class TestTar(tests.FakeFileHTTPServerBasedTestCase):
@@ -35,7 +37,7 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
         self.useFixture(fixtures.EnvironmentVariable('TERM', self.term))
         super().setUp()
 
-    @unittest.mock.patch('snapcraft.sources.Tar.provision')
+    @mock.patch('snapcraft.sources.Tar.provision')
     def test_pull_tarball_must_download_to_sourcedir(self, mock_prov):
         plugin_name = 'test_plugin'
         dest_dir = os.path.join('parts', plugin_name, 'src')
@@ -47,9 +49,28 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
 
         tar_source.pull()
 
-        mock_prov.assert_called_once_with(dest_dir)
+        source_file = os.path.join(dest_dir, tar_file_name)
+        mock_prov.assert_called_once_with(dest_dir, src=source_file)
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
-            self.assertEqual('Test fake compressed file', tar_file.read())
+            self.assertThat(tar_file.read(), Equals('Test fake file'))
+
+    @mock.patch('snapcraft.sources.Tar.provision')
+    def test_pull_twice_downloads_once(self, mock_prov):
+        """If a source checksum is defined, the cache should be tried first."""
+        source = 'http://{}:{}/{file_name}'.format(
+            *self.server.server_address, file_name='test.tar')
+        expected_checksum = ('sha384/d9da1f5d54432edc8963cd817ceced83f7c6d61d3'
+                             '50ad76d1c2f50c4935d11d50211945ca0ecb980c04c98099'
+                             '085b0c3')
+        tar_source = sources.Tar(source, self.path,
+                                 source_checksum=expected_checksum)
+
+        tar_source.pull()
+        with mock.patch(
+            'requests.get',
+                new=mock.Mock(wraps=requests.get)) as download_spy:
+            tar_source.pull()
+            self.assertThat(download_spy.call_count, Equals(0))
 
     def test_strip_common_prefix(self):
         # Create tar file for testing
@@ -79,10 +100,9 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
 
         def check_for_symlink(tarinfo):
             self.assertTrue(tarinfo.issym())
-            self.assertEqual(file_to_link, tarinfo.name)
-            self.assertEqual(file_to_tar, os.path.normpath(
-                os.path.join(
-                    os.path.dirname(file_to_tar), tarinfo.linkname)))
+            self.assertThat(file_to_link, Equals(tarinfo.name))
+            self.assertThat(file_to_tar, Equals(os.path.normpath(
+                os.path.join(os.path.dirname(file_to_tar), tarinfo.linkname))))
             return tarinfo
 
         tar = tarfile.open(os.path.join('src', 'test.tar'), 'w')
@@ -111,8 +131,8 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
         def check_for_hardlink(tarinfo):
             self.assertTrue(tarinfo.islnk())
             self.assertFalse(tarinfo.issym())
-            self.assertEqual(file_to_link, tarinfo.name)
-            self.assertEqual(file_to_tar, tarinfo.linkname)
+            self.assertThat(file_to_link, Equals(tarinfo.name))
+            self.assertThat(file_to_tar, Equals(tarinfo.linkname))
             return tarinfo
 
         tar = tarfile.open(os.path.join('src', 'test.tar'), 'w')
@@ -127,3 +147,6 @@ class TestTar(tests.FakeFileHTTPServerBasedTestCase):
         # The 'test_prefix' part of the path should have been removed
         self.assertTrue(os.path.exists(os.path.join('dst', 'test.txt')))
         self.assertTrue(os.path.exists(os.path.join('dst', 'link.txt')))
+
+    def test_has_source_handler_entry(self):
+        self.assertTrue(sources._source_handler['tar'] is sources.Tar)

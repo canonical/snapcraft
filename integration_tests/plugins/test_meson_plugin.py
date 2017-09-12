@@ -16,6 +16,8 @@
 
 import os
 
+from testtools.matchers import Equals
+
 import integration_tests
 
 
@@ -25,5 +27,5 @@ class MesonPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage', 'meson-hello')
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join(self.stage_dir, 'opt', 'bin', 'meson-hello'))
-        self.assertEqual('Hello world\n', binary_output)
+            os.path.join(self.stage_dir, 'opt', 'bin', 'hello-meson'))
+        self.assertThat(binary_output, Equals('Hello world\n'))

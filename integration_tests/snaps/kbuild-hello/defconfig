@@ -1,0 +1,6 @@
+#
+# Compile-time checks and compiler options
+#
+CONFIG_CROSS_COMPILE=""
+CONFIG_CC_OPTIMIZE_FOR_PERFORMANCE=y
+CONFIG_BAR=y

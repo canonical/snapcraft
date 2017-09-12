@@ -20,7 +20,6 @@ import hashlib
 import logging
 import os
 import platform
-import re
 import shutil
 import stat
 import string
@@ -140,7 +139,7 @@ class _AptCache:
             finally:
                 apt_cache.close()
         except Exception as e:
-            logger.debug('Exception occured: {!r}'.format(e))
+            logger.debug('Exception occurred: {!r}'.format(e))
             raise e
 
     def sources_digest(self):
@@ -149,7 +148,7 @@ class _AptCache:
 
     def _collected_sources_list(self):
         if self._use_geoip or self._sources_list:
-            release = platform.linux_distribution()[2]
+            release = common.get_os_release_info()['VERSION_CODENAME']
             return _format_sources_list(
                 self._sources_list, deb_arch=self._deb_arch,
                 use_geoip=self._use_geoip, release=release)
@@ -173,47 +172,54 @@ class Ubuntu(BaseRepo):
     @classmethod
     def get_packages_for_source_type(cls, source_type):
         if source_type == 'bzr':
-            packages = 'bzr'
+            packages = {'bzr'}
         elif source_type == 'git':
-            packages = 'git'
+            packages = {'git'}
         elif source_type == 'tar':
-            packages = 'tar'
+            packages = {'tar'}
         elif source_type == 'hg' or source_type == 'mercurial':
-            packages = 'mercurial'
+            packages = {'mercurial'}
         elif source_type == 'subversion' or source_type == 'svn':
-            packages = 'subversion'
+            packages = {'subversion'}
         else:
-            packages = []
+            packages = set()
 
         return packages
 
     @classmethod
-    def _setup_foreign_arch(cls, arch):
-        native_arch = subprocess.check_output(
-            ['dpkg', '--print-architecture']).decode(
-                sys.getfilesystemencoding())
-        if arch in native_arch:
-            return
-        foreign_archs = subprocess.check_output(
-            ['dpkg', '--print-foreign-architectures']).decode(
-                sys.getfilesystemencoding())
-        if arch in foreign_archs:
-            return
-        logger.info('Adding foreign architecture {}'.format(arch))
-        subprocess.check_output(
-            ['sudo', 'dpkg', '--add-architecture', arch])
+    def install_build_packages(cls, package_names):
+        """Install build packages on the building machine.
+
+        :return: a list with the packages installed and their versions.
+
+        """
+        new_packages = []
+        with apt.Cache() as apt_cache:
+            try:
+                cls._mark_install(apt_cache, package_names)
+            except errors.PackageNotFoundError as e:
+                raise errors.BuildPackageNotFoundError(e.package_name)
+            for package in apt_cache.get_changes():
+                new_packages.append((package.name, package.candidate.version))
+
+        if new_packages:
+            cls._install_new_build_packages(
+               [package[0] for package in new_packages])
+        return ['{}={}'.format(package[0], package[1])
+                for package in new_packages]
 
     @classmethod
-    def _setup_multi_arch_sources(cls, apt_cache, package_name):
+    def _setup_multi_arch_sources(cls, apt_cache, name, arch, version):
         """If the given package has an arch suffix:
         Generate arch-specific sources list
         Update the package cache to pull in the new packages
         Verify that the package is in the cache
         """
-        name, arch, version = repo.get_pkg_name_parts(package_name)
         if not arch or arch == ':native':
             return False
         arch = arch[1:]
+
+        cls._setup_foreign_arch(arch)
 
         sources = _get_local_sources_list()
         if '[arch={}]'.format(arch) not in sources:
@@ -238,32 +244,23 @@ class Ubuntu(BaseRepo):
         if 'Err:' in update_output:
             raise subprocess.CalledProcessError(
                 100, ['sudo', 'apt-get', 'update'], update_output)
-        return package_name in apt_cache
+        return (name + arch) in apt_cache
 
     @classmethod
-    def install_build_packages(cls, package_names, arch):
-        """Install build packages on the building machine.
-
-        :return: a list with the packages installed and their versions.
-
-        """
-        new_packages = set(cls._get_build_deps(package_names, arch))
-        with apt.Cache() as apt_cache:
-            try:
-                cls._mark_install(apt_cache, package_names)
-            except errors.PackageNotFoundError as e:
-                if cls._setup_multi_arch_sources(apt_cache, e.package):
-                    pass  # FIXME?
-                else:
-                    raise errors.BuildPackageNotFoundError(e)
-            for package in apt_cache.get_changes():
-                new_packages.append((package.name, package.candidate.version))
-
-        if new_packages:
-            cls._install_new_build_packages(
-               [package[0] for package in new_packages])
-        return ['{}={}'.format(package[0], package[1])
-                for package in new_packages]
+    def _setup_foreign_arch(cls, arch):
+        native_arch = subprocess.check_output(
+            ['dpkg', '--print-architecture']).decode(
+                sys.getfilesystemencoding())
+        if arch in native_arch:
+            return
+        foreign_archs = subprocess.check_output(
+            ['dpkg', '--print-foreign-architectures']).decode(
+                sys.getfilesystemencoding())
+        if arch in foreign_archs:
+            return
+        logger.info('Adding foreign architecture {}'.format(arch))
+        subprocess.check_output(
+            ['sudo', 'dpkg', '--add-architecture', arch])
 
     @classmethod
     def _mark_install(cls, apt_cache, package_names):
@@ -278,70 +275,9 @@ class Ubuntu(BaseRepo):
                     _set_pkg_version(apt_cache[name + arch], version)
                 apt_cache[name + arch].mark_install()
             except KeyError as e:
-                raise errors.PackageNotFoundError(pkg) from e
-
-    @classmethod
-    def _get_build_deps(cls, package_names, arch):
-        """Use apt-get build-dep with a fake source package file to find
-           all dependencies and correct architectures.
-        """
-        build_deps = []
-        if not package_names:
-            return build_deps
-
-        cls._setup_foreign_arch(arch)
-
-        with tempfile.NamedTemporaryFile(suffix='.dsc') as fake_source:
-            depends = 'Build-Depends: {}\n'.format(', '.join(package_names))
-            fake_source.write(depends.encode())
-            fake_source.flush()
-            try:
-                actions = subprocess.check_output(
-                    ['apt-get', 'build-dep', '-q', '-s',
-                     '-a{}'.format(arch), fake_source.name],
-                    stderr=subprocess.STDOUT, env={}).decode(
-                        sys.getfilesystemencoding())
-                msg = 'The following NEW packages will be installed:\n  '
-                msg_begin = actions.find(msg)
-                if msg_begin > -1:
-                    msg_end = msg_begin + len(msg)
-                    packages_end = re.search('\d+ upgraded', actions).start()
-                    build_deps = actions[msg_end:packages_end].split()
-            except subprocess.CalledProcessError as e:
-                actions = e.output.decode(sys.getfilesystemencoding())
-
-                # Bail out if it's not a package problems error
-                if 'E: Unable to correct problems' not in actions:
-                    raise e
-
-                rx = re.compile(
-                    '(.+Depends: (.+) but it is not .+|.+)')
-                for line in actions.split('\n'):
-                    build_deps.append(rx.sub('\\2', line))
-        return cls._ensure_package_format(build_deps)
-
-    @classmethod
-    def _ensure_package_format(cls, package_names):
-        """A list of packages output by apt-get build-dep may end up with
-           the format name=version:arch instead of name:arch=version - take
-           that list and enforce the correct format.
-        """
-        pkgs = []
-        for pkg in package_names:
-            if not pkg:
-                continue
-            name, arch, version_with_arch = repo.get_pkg_name_parts(pkg)
-            fixed_pkg = name
-            if version_with_arch:
-                version = version_with_arch
-                with contextlib.suppress(ValueError):
-                    version, arch = list(filter(None, re.split(
-                        '(.+)(:[a-z]+)', version_with_arch)))
-                fixed_pkg += '{}={}'.format(arch, version)
-            else:
-                fixed_pkg += arch
-            pkgs.append(fixed_pkg)
-        return pkgs
+                if not cls._setup_multi_arch_sources(apt_cache,
+                                                     name, arch, version):
+                    raise errors.PackageNotFoundError(pkg) from e
 
     @classmethod
     def _install_new_build_packages(cls, package_names):
@@ -371,6 +307,11 @@ class Ubuntu(BaseRepo):
                 .format(e))
 
     @classmethod
+    def build_package_is_valid(cls, package_name):
+        with apt.Cache() as apt_cache:
+            return package_name in apt_cache
+
+    @classmethod
     def is_package_installed(cls, package_name):
         with apt.Cache() as apt_cache:
             return apt_cache[package_name].installed
@@ -378,7 +319,6 @@ class Ubuntu(BaseRepo):
     def __init__(self, rootdir, sources=None, project_options=None):
         super().__init__(rootdir)
         self._downloaddir = os.path.join(rootdir, 'download')
-        os.makedirs(self._downloaddir, exist_ok=True)
 
         if not project_options:
             project_options = snapcraft.ProjectOptions()
@@ -555,11 +495,6 @@ def _try_copy_local(path, target):
         logger.warning(
             '{} will be a dangling symlink'.format(path))
         return False
-
-
-def check_for_command(command):
-    if not shutil.which(command):
-        raise errors.MissingCommandError([command])
 
 
 def _set_pkg_version(pkg, version):

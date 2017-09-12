@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,10 +20,11 @@ from os import path
 from unittest import mock
 
 import fixtures
-from testtools.matchers import HasLength
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft.plugins import gulp, nodejs
+from snapcraft.internal import errors
 from snapcraft import tests
 
 
@@ -117,11 +118,11 @@ class GulpPluginTestCase(tests.TestCase):
             node_engine = '4'
 
         raised = self.assertRaises(
-            EnvironmentError,
+            errors.SnapcraftEnvironmentError,
             gulp.GulpPlugin, 'test-part', Options(), self.project_options)
 
-        self.assertEqual(raised.__str__(),
-                         'architecture not supported (fantasy-arch)')
+        self.assertThat(raised.__str__(),
+                        Equals('architecture not supported (fantasy-arch)'))
 
     def test_schema(self):
         schema = gulp.GulpPlugin.schema()
@@ -135,16 +136,16 @@ class GulpPluginTestCase(tests.TestCase):
         self.assertTrue(
             'type' in gulp_tasks,
             'Expected "type" to be included in "gulp-tasks"')
-        self.assertEqual(gulp_tasks['type'], 'array',
-                         'Expected "gulp-tasks" "type" to be "array", but '
-                         'it was "{}"'.format(gulp_tasks['type']))
+        self.assertThat(gulp_tasks['type'], Equals('array'),
+                        'Expected "gulp-tasks" "type" to be "array", but '
+                        'it was "{}"'.format(gulp_tasks['type']))
 
         self.assertTrue(
             'minitems' in gulp_tasks,
             'Expected "minitems" to be included in "gulp-tasks"')
-        self.assertEqual(gulp_tasks['minitems'], 1,
-                         'Expected "gulp-tasks" "minitems" to be 1, but '
-                         'it was "{}"'.format(gulp_tasks['minitems']))
+        self.assertThat(gulp_tasks['minitems'], Equals(1),
+                        'Expected "gulp-tasks" "minitems" to be 1, but '
+                        'it was "{}"'.format(gulp_tasks['minitems']))
 
         self.assertTrue(
             'uniqueItems' in gulp_tasks,
@@ -157,10 +158,10 @@ class GulpPluginTestCase(tests.TestCase):
                         'Expected "node-engine" to be included in '
                         'properties')
         node_engine_type = properties['node-engine']['type']
-        self.assertEqual(node_engine_type, 'string',
-                         'Expected "node_engine" "type" to be '
-                         '"string", but it was "{}"'
-                         .format(node_engine_type))
+        self.assertThat(node_engine_type, Equals('string'),
+                        'Expected "node_engine" "type" to be '
+                        '"string", but it was "{}"'
+                        .format(node_engine_type))
 
     def test_get_build_properties(self):
         expected_build_properties = ['gulp-tasks']

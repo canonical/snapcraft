@@ -17,7 +17,7 @@
 import os
 
 from unittest import mock
-from testtools.matchers import HasLength
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -52,16 +52,16 @@ class MesonPluginTestCase(tests.TestCase):
         self.assertTrue(
             'type' in meson_parameters,
             'Expected "type" to be included in "meson-parameters"')
-        self.assertEqual(meson_parameters['type'], 'array',
-                         'Expected "meson-parameters" "type" to be "array", '
-                         'but it was "{}"'.format(meson_parameters['type']))
+        self.assertThat(meson_parameters['type'], Equals('array'),
+                        'Expected "meson-parameters" "type" to be "array", '
+                        'but it was "{}"'.format(meson_parameters['type']))
 
         self.assertTrue(
             'minitems' in meson_parameters,
             'Expected "minitems" to be included in "meson-parameters"')
-        self.assertEqual(meson_parameters['minitems'], 1,
-                         'Expected "meson-parameters" "minitems" to be 1, but '
-                         'it was "{}"'.format(meson_parameters['minitems']))
+        self.assertThat(meson_parameters['minitems'], Equals(1),
+                        'Expected "meson-parameters" "minitems" to be 1, but '
+                        'it was "{}"'.format(meson_parameters['minitems']))
 
         self.assertTrue(
             'uniqueItems' in meson_parameters,
@@ -91,7 +91,7 @@ class MesonPluginTestCase(tests.TestCase):
         env = os.environ.copy()
         env['DESTDIR'] = plugin.installdir
 
-        self.assertEqual(3, run_mock.call_count)
+        self.assertThat(run_mock.call_count, Equals(3))
         run_mock.assert_has_calls([
             mock.call(['meson', plugin.snapbuildname]),
             mock.call(['ninja'], cwd=plugin.mesonbuilddir),
@@ -110,7 +110,7 @@ class MesonPluginTestCase(tests.TestCase):
         env = os.environ.copy()
         env['DESTDIR'] = plugin.installdir
 
-        self.assertEqual(3, run_mock.call_count)
+        self.assertThat(run_mock.call_count, Equals(3))
         run_mock.assert_has_calls([
             mock.call(['meson', '--strip', plugin.snapbuildname]),
             mock.call(['ninja'], cwd=plugin.mesonbuilddir),

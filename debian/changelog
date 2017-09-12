@@ -1,3 +1,188 @@
+snapcraft (2.34) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * core: cache FileBase entries when a checksum is provided (#1433)
+  * cli: better error message for missing mksquashfs (#1481)
+  * core: improve source caching logic (#1486)
+  * ci: speedup the CLA check (#1503)
+  * ci: disable the travis deploy stage for docs (#1510)
+  * vcs: ignore .vscode project settings (#1517)
+  * docs: add github processed templates (#1514)
+  * tour: remove the tour assets (#1520)
+  * project: introduce build-snaps (#1518)
+  * tests: update the meson test to latest meson requirements (#1532)
+  * jhbuild plugin: remove dependency on pkgconf (#1535)
+  * nodejs plugin: add prefix --prefix to global pkg add (#1539)
+  * New upstream release (LP: #1715399)
+
+  [ Christian Dywan ]
+  * lxd: clean with no parts should only delete (#1434)
+  * lxd: inject snapcraft and core snaps into the container (#1364)
+  * lxd: wait on lock files before running apt commands (#1435)
+  * kbuild plugin: support Makefiles without an install target (#1432)
+  * kbuild plugin: move over the cross-compiling logic from the kernel plugin (#1417)
+  * lxd: path cannot have extra forward slashes (#1483)
+  * lxd: always remove existing device for project folder (#1488)
+  * lifecycle: outdated step should raise SnapcraftError (#1513)
+  * errors: introduce ContainerError (#1505)
+  * lxd: LXD not installed when using remote (#1516)
+  * lxd: use a unique temporary folder (#1519)
+
+  [ Leo Arias ]
+  * recording: record the original snapcraft.yaml (#1407)
+  * ci: skip the CLA check for pull requests from the bot (#1482)
+  * docs: fix typo in plugin help (#1496)
+  * python plugin: record manifest (#1487)
+  * tests: use assertThat instead of assertEqual (#1501)
+  * python plugin: always record constraints and requirements contents (#1521)
+  * demos: update the name of the remote mqtt part (#1533)
+
+  [ Kyle Fazzari ]
+  * options: properly handle missing compiler prefix (#1425)
+  * catkin plugin: include-roscore is a boolean (#1472)
+  * catkin plugin: default to release build (#1470)
+  * catkin plugin: rosinstall-files is a pull property (#1473)
+  * catkin plugin: support passing args to cmake (#1471)
+  * catkin plugin: extract rosdep into new package (#1392)
+  * cli: add global exception handler
+  * cli: stop handling exceptions in lifecycle
+  * plugins: use exceptions based on SnapcraftError
+  * cli: stop handling exceptions in parts
+  * cli: stop handling exceptions in assertions
+  * cli: stop handling exceptions in store
+  * many: use exceptions based on SnapcraftError
+  * rosdep: add support for multiple dependency types (#1479)
+  * errors: use function for exit code (#1491)
+  * cli: don't raise from excepthook (#1495)
+  * repo: make errors based on SnapcraftError (#1499)
+  * project loader: refactor into package (#1504)
+  * grammar: move into project_loader (#1500)
+  * many: simplify plugin loading (#1507)
+  * schema: version should have a max length of 32 (#1508)
+  * project_loader: process stage package grammar (#1509)
+  * project_loader: support grammar on build-packages (#1511)
+
+  [ Alex T Newman ]
+  * windows: add cx_Freeze options targeting bin/snapcraft (#1478)
+
+  [ Michael Vogt ]
+  * meta: add `base` as a type and top level property (#1419)
+
+  [ Adam Collard ]
+  * ant plugin, gradle plugin: add support for authenticated proxies (#1490)
+
+  [ fmanea ]
+  * demos: remove the unnecessary wrapper from the java demo (#1494)
+
+  [ Neal Gompa (ニール・ゴンパ) ]
+  * repo: use os-release(5) to detect supported Linux distributions (#1527)
+
+  [ Daniel Llewellyn ]
+  * jhbuild plugin: new plugin (#1298)
+  * jhbuild plugin: fix UnboundLocalError for chmod_path (#1534)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 06 Sep 2017 14:04:53 +0000
+
+snapcraft (2.33) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * tests: reduce the amount of test code in test_meta (#1391)
+  * meta: bash completion support (#1390)
+  * tests: fix issues with python 3.6 (#1398)
+  * cleanbuild: ensure we enter a shell on failures on --debug (#1404)
+  * tests: do not break a systems `bzr whoami` (#1357)
+  * snap: remove completer entry (#1409)
+  * core: minimal cross OS support. (#1413)
+  * core: a clean command should clean. (#1416)
+  * nodejs plugin: copy the content of out of tree symlinks (#1418)
+  * tests: adapt opencv's test expectations (#1426)
+  * New upstream release (LP: #1707060)
+
+  [ Zygmunt Krynicki ]
+  * pluginhandler: don't clobber path on local import failure (#1361)
+
+  [ Paolo Pisati ]
+  * core: use the correct kernel arch for s390 (#1376)
+
+  [ Tim Süberkrüb ]
+  * core: support yaml merge tags (#1384)
+
+  [ roxd ]
+  * schema: blank version should not be allowed in snapcraft.yaml (#1379)
+
+  [ Paolo Pisati ]
+  * kernel plugin: add a default target per powerpc, ppc64el and s390x (#1377)
+
+  [ Rex Tsai ]
+  * tests: mock download for rustup in the x-compile test. (#1396)
+
+  [ Evan Dandrea ]
+  * file_utils: handle I/O errors in os.link (#1369)
+  * python plugin: correct capitalisation for PyPI. (#1401)
+  * python plugin: better explain dependency link processing (#1402)
+
+  [ Leo Arias ]
+  * python plugin: output json in pip list (#1393)
+  * tests: allow to filter tests in docker (#1375)
+  * tests: document the test suites in the snapcraft repo (#1394)
+  * recording: rename the file to manifest.yaml (#1406)
+  * pluginhandler: check for collisions only in existing files (#1405)
+  * tests: run the tests in travis using LXD containers (#1415)
+  * tests: build the snapcraft snap in travis tests (#1411)
+  * ci: remove the old script to run with lxc (#1422)
+
+  [ Christian Dywan ]
+  * cli: proper parsing of hidden options (#1378)
+  * core: clean the container on a full clean (#1372)
+  * lxd: do not assume user ID of 1000 for raw.idmap (#1385)
+  * autotools plugin: Enable cross-compilation support (#1383)
+  * lxd: distingish FileNotFoundError for when not installed (#1400)
+  * waf plugin: enable cross-compilation support  (#1397)
+  * ci: wait for apt/dpkg lock when setting lxd up (#1421)
+  * lxd: stop setting `$HOME` in containers (#1408)
+  * lxd: only remove container if one exists (#1403)
+
+  [ Simon Davy ]
+  * meta: add support for `reload-command` (#1373)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 27 Jul 2017 20:19:01 +0000
+
+snapcraft (2.32) xenial; urgency=medium
+
+  [ Michał Sawicz ]
+  * autotools plugin: don't force uniqueness on configflags (#1337)
+
+  [ filibtester ]
+  * integrations: use the snapcore/snapcraft docker image in travis (#1331)
+
+  [ Jonathan Cave ]
+  * sources: allow source-type to specify local (#1352)
+
+  [ Christian Dywan ]
+  * tests: run unit tests on Travis with mock armhf (#1316)
+  * rust plugin: add support for cross-compilation (#1350)
+
+  [ Gustavo Silva ]
+  * deltas: improved message returned when delta is too big (#1345)
+
+  [ Adam Collard ]
+  * cli: add --version command (#1366)
+
+  [ Sergio Schvezov ]
+  * cli: provide a whoami command (#1332)
+
+  [ Kyle Fazzari ]
+  * cli: stop leaking green text (#1360)
+  * catkin plugin: add support for ROS Lunar (#1367)
+
+  [ Leo Arias ]
+  * tests: use pyramid as a router for the fake servers (#1363)
+  * tests: set up the spread execution in linode (#1374)
+  * integrations: add the snapcraft Dockerfile (#1370)
+  * tests: refactor the travis jobs using stages (#1318)
+
+ -- Kyle Fazzari <kyle@canonical.com>  Fri, 23 Jun 2017 10:00:19 -0700
+
 snapcraft (2.31) xenial; urgency=medium
 
   [ Sergio Schvezov ]

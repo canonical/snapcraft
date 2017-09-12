@@ -13,16 +13,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import os
 import requests
 import shutil
 
 import snapcraft.internal.common
+from snapcraft.internal.cache import FileCache
 from snapcraft.internal.indicators import (
     download_requests_stream,
     download_urllib_source
 )
+from ._checksum import split_checksum, verify_checksum
 
 
 class Base:
@@ -45,14 +46,42 @@ class Base:
 class FileBase(Base):
 
     def pull(self):
-        if snapcraft.internal.common.isurl(self.source):
-            self.download()
-        else:
-            shutil.copy2(self.source, self.source_dir)
+        source_file = None
+        is_source_url = snapcraft.internal.common.isurl(self.source)
 
-        self.provision(self.source_dir)
+        # If not, first check if it is a url and download and if not
+        # it is probably locally referenced.
+        if not source_file and is_source_url:
+            source_file = self.download()
+        elif not source_file:
+            basename = os.path.basename(self.source)
+            source_file = os.path.join(self.source_dir, basename)
+            # We make this copy as the provisioning logic can delete
+            # this file and we don't want that.
+            shutil.copy2(self.source, source_file)
+
+        # Verify before provisioning
+        if self.source_checksum:
+            verify_checksum(self.source_checksum, source_file)
+
+        # We finally provision
+        self.provision(self.source_dir, src=source_file)
 
     def download(self):
+        # First check if we already have the source file cached.
+        file_cache = FileCache()
+        if self.source_checksum:
+            algorithm, hash = split_checksum(self.source_checksum)
+            cache_file = file_cache.get(algorithm=algorithm, hash=hash)
+            if cache_file:
+                self.file = os.path.join(self.source_dir,
+                                         os.path.basename(cache_file))
+                # We make this copy as the provisioning logic can delete
+                # this file and we don't want that.
+                shutil.copy2(cache_file, self.file)
+                return self.file
+
+        # If not we download and store
         self.file = os.path.join(
                 self.source_dir, os.path.basename(self.source))
 
@@ -64,3 +93,13 @@ class FileBase(Base):
             request.raise_for_status()
 
             download_requests_stream(request, self.file)
+
+        # We verify the file if source_checksum is defined
+        # and we cache the file for future reuse.
+        if self.source_checksum:
+            algorithm, digest = verify_checksum(
+                self.source_checksum, self.file)
+            file_cache.cache(filename=self.file,
+                             algorithm=algorithm,
+                             hash=hash)
+        return self.file

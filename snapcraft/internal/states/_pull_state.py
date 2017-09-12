@@ -44,7 +44,7 @@ class PullState(PartState):
     yaml_tag = u'!PullState'
 
     def __init__(self, property_names, part_properties=None, project=None,
-                 stage_packages=None, build_packages=None,
+                 stage_packages=None, build_snaps=None, build_packages=None,
                  source_details=None):
         # Save this off before calling super() since we'll need it
         # FIXME: for 3.x the name `schema_properties` is leaking
@@ -52,6 +52,7 @@ class PullState(PartState):
         self.schema_properties = property_names
         self.assets = {
             'stage-packages': stage_packages,
+            'build-snaps': build_snaps,
             'build-packages': build_packages,
             'source-details': source_details,
         }

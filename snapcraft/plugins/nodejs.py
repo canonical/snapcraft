@@ -47,6 +47,8 @@ import shutil
 
 import snapcraft
 from snapcraft import sources
+from snapcraft.file_utils import link_or_copy_tree
+from snapcraft.internal import errors
 
 logger = logging.getLogger(__name__)
 
@@ -148,6 +150,10 @@ class NodePlugin(snapcraft.BasePlugin):
         super().build()
         if self.options.node_package_manager == 'npm':
             self._npm_install(rootdir=self.builddir)
+            # Copy the content of the symlink to the build directory
+            # LP: #1702661
+            modules_dir = os.path.join(self.installdir, 'lib', 'node_modules')
+            _copy_symlinked_content(modules_dir)
         else:
             self._yarn_install(rootdir=self.builddir)
 
@@ -175,6 +181,7 @@ class NodePlugin(snapcraft.BasePlugin):
             flags.extend([
                 '--offline', '--prod',
                 '--global-folder', self.installdir,
+                '--prefix', self.installdir,
             ])
         else:
             yarn_add = yarn_cmd + ['add']
@@ -186,8 +193,9 @@ class NodePlugin(snapcraft.BasePlugin):
         if os.path.exists(self._source_package_json):
             with contextlib.suppress(FileNotFoundError):
                 os.unlink(os.path.join(rootdir, 'package.json'))
-            package_dir = os.path.dirname(self._source_package_json)
-            self.run(yarn_add + ['file:{}'.format(package_dir)] + flags,
+            shutil.copy(self._source_package_json,
+                        os.path.join(rootdir, 'package.json'))
+            self.run(yarn_add + ['file:{}'.format(rootdir)] + flags,
                      cwd=rootdir)
 
         # npm run would require to bring back package.json
@@ -198,13 +206,25 @@ class NodePlugin(snapcraft.BasePlugin):
             os.link(self._source_package_json,
                     os.path.join(rootdir, 'package.json'))
         for target in self.options.npm_run:
-            self.run(yarn_cmd + ['run', target], cwd=rootdir)
+            self.run(yarn_cmd + ['run', target], cwd=rootdir,
+                     env=self._build_environment(rootdir))
+
+    def _build_environment(self, rootdir):
+        env = os.environ.copy()
+        if rootdir.endswith('src'):
+            hidden_path = os.path.join(rootdir, 'node_modules', '.bin')
+            if env.get('PATH'):
+                new_path = '{}:{}'.format(hidden_path, env.get('PATH'))
+            else:
+                new_path = hidden_path
+            env['PATH'] = new_path
+        return env
 
 
 def _get_nodejs_base(node_engine, machine):
     if machine not in _NODEJS_ARCHES:
-        raise EnvironmentError('architecture not supported ({})'.format(
-            machine))
+        raise errors.SnapcraftEnvironmentError(
+            'architecture not supported ({})'.format(machine))
     return _NODEJS_BASE.format(version=node_engine,
                                arch=_NODEJS_ARCHES[machine])
 
@@ -212,3 +232,25 @@ def _get_nodejs_base(node_engine, machine):
 def get_nodejs_release(node_engine, arch):
     return _NODEJS_TMPL.format(version=node_engine,
                                base=_get_nodejs_base(node_engine, arch))
+
+
+def _copy_symlinked_content(modules_dir):
+    """Copy symlinked content.
+
+    When running newer versions of npm, symlinks to the local tree are
+    created from the part's installdir to the root of the builddir of the
+    part (this only affects some build configurations in some projects)
+    which is valid when running from the context of the part but invalid
+    as soon as the artifacts migrate across the steps,
+    i.e.; stage and prime.
+
+    If modules_dir does not exist we simply return.
+    """
+    if not os.path.exists(modules_dir):
+        return
+    modules = [os.path.join(modules_dir, d) for d in os.listdir(modules_dir)]
+    symlinks = [l for l in modules if os.path.islink(l)]
+    for link_path in symlinks:
+        link_target = os.path.realpath(link_path)
+        os.unlink(link_path)
+        link_or_copy_tree(link_target, link_path)

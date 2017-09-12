@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 from textwrap import dedent
 from unittest import mock
 
@@ -35,13 +36,14 @@ class ListKeysCommandTestCase(CommandBaseTestCase):
                                            mock_check_output):
         mock_installed.return_value = False
 
-        result = self.run_command([self.command_name])
+        raised = self.assertRaises(
+            storeapi.errors.MissingSnapdError,
+            self.run_command, [self.command_name])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
+        self.assertThat(str(raised), Contains(
             'The snapd package is not installed.'))
         mock_installed.assert_called_with('snapd')
-        self.assertEqual(0, mock_check_output.call_count)
+        self.assertThat(mock_check_output.call_count, Equals(0))
 
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -49,11 +51,11 @@ class ListKeysCommandTestCase(CommandBaseTestCase):
         mock_installed.return_value = True
         mock_check_output.side_effect = mock_snap_output
 
-        result = self.run_command([self.command_name])
+        raised = self.assertRaises(
+            storeapi.errors.InvalidCredentialsError,
+            self.run_command, [self.command_name])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains(
-            'No valid credentials found. Have you run "snapcraft login"?'))
+        self.assertThat(str(raised), Contains('Invalid credentials'))
 
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch('subprocess.check_output')

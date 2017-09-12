@@ -14,8 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import snapcraft
-
 from . import run
 
-run(prog_name='snapcraft', obj=dict(project=snapcraft.ProjectOptions()))
+run(prog_name='snapcraft')

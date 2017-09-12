@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,6 +20,7 @@ import subprocess
 from unittest import mock
 
 import fixtures
+from testtools.matchers import Equals
 
 from snapcraft import file_utils
 from snapcraft import tests
@@ -62,7 +63,7 @@ class ReplaceInFileTestCase(tests.TestCase):
                                    r'#!/usr/bin/env python')
 
         with open(self.file_path, 'r') as f:
-            self.assertEqual(f.read(), self.expected)
+            self.assertThat(f.read(), Equals(self.expected))
 
     def test_replace_in_file_with_permission_error(self):
         os.makedirs('bin')
@@ -83,7 +84,7 @@ class ReplaceInFileTestCase(tests.TestCase):
                                        r'#!/usr/bin/env python')
 
         with open(file_info['path'], 'r') as f:
-            self.assertEqual(f.read(), file_info['expected'])
+            self.assertThat(f.read(), Equals(file_info['expected']))
 
 
 class TestLinkOrCopyTree(tests.TestCase):
@@ -102,7 +103,7 @@ class TestLinkOrCopyTree(tests.TestCase):
             NotADirectoryError,
             file_utils.link_or_copy_tree, '1', 'qux')
 
-        self.assertEqual(str(raised), "'1' is not a directory")
+        self.assertThat(str(raised), Equals("'1' is not a directory"))
 
     def test_link_file_into_directory(self):
         os.mkdir('qux')
@@ -110,7 +111,7 @@ class TestLinkOrCopyTree(tests.TestCase):
             NotADirectoryError,
             file_utils.link_or_copy_tree, '1', 'qux')
 
-        self.assertEqual(str(raised), "'1' is not a directory")
+        self.assertThat(str(raised), Equals("'1' is not a directory"))
 
     def test_link_directory_to_directory(self):
         file_utils.link_or_copy_tree('foo', 'qux')
@@ -124,9 +125,10 @@ class TestLinkOrCopyTree(tests.TestCase):
             NotADirectoryError,
             file_utils.link_or_copy_tree, 'foo', 'qux')
 
-        self.assertEqual(
+        self.assertThat(
             str(raised),
-            "Cannot overwrite non-directory 'qux' with directory 'foo'")
+            Equals(
+                "Cannot overwrite non-directory 'qux' with directory 'foo'"))
 
     def test_link_subtree(self):
         file_utils.link_or_copy_tree('foo/bar', 'qux')
@@ -160,6 +162,16 @@ class TestLinkOrCopy(tests.TestCase):
         open(os.path.join('foo', '2'), 'w').close()
         open(os.path.join('foo', 'bar', '3'), 'w').close()
         open(os.path.join('foo', 'bar', 'baz', '4'), 'w').close()
+
+    def test_link_file_ioerror(self):
+        orig_link = os.link
+
+        def link_and_ioerror(a, b, **kwargs):
+            orig_link(a, b)
+            raise IOError()
+        with mock.patch('os.link') as mock_link:
+            mock_link.side_effect = link_and_ioerror
+            file_utils.link_or_copy('1', 'foo/1')
 
     def test_copy_nested_file(self):
         file_utils.link_or_copy('foo/bar/baz/4', 'foo2/bar/baz/4')
@@ -230,7 +242,7 @@ class RequiresCommandSuccessTestCase(tests.TestCase):
             file_utils.requires_command_success('foo').__enter__)
 
         self.assertIsInstance(raised, SnapcraftError)
-        self.assertEqual("'foo' not found.", str(raised))
+        self.assertThat(str(raised), Equals("'foo' not found."))
 
     @mock.patch('subprocess.check_call')
     def test_requires_command_success_error(self, mock_check_call):
@@ -242,14 +254,15 @@ class RequiresCommandSuccessTestCase(tests.TestCase):
             file_utils.requires_command_success('foo').__enter__)
 
         self.assertIsInstance(raised, SnapcraftError)
-        self.assertEqual("'foo' failed.", str(raised))
+        self.assertThat(str(raised), Equals("'foo' failed."))
 
     def test_requires_command_success_broken(self):
         raised = self.assertRaises(
             TypeError,
             file_utils.requires_command_success(1).__enter__)
 
-        self.assertEqual('command must be a string.', str(raised))
+        self.assertThat(
+            str(raised), Equals('command must be a string.'))
 
     @mock.patch('subprocess.check_call')
     def test_requires_command_success_custom_error(self, mock_check_call):
@@ -264,7 +277,7 @@ class RequiresCommandSuccessTestCase(tests.TestCase):
                 'foo', not_found_fmt='uhm? {cmd_list!r} -> {command}'
             ).__enter__)
 
-        self.assertEqual("uhm? ['foo'] -> foo", str(raised))
+        self.assertThat(str(raised), Equals("uhm? ['foo'] -> foo"))
 
         raised = self.assertRaises(
             RequiredCommandFailure,
@@ -272,7 +285,7 @@ class RequiresCommandSuccessTestCase(tests.TestCase):
                 'foo', failure_fmt='failed {cmd_list!r} -> {command}'
             ).__enter__)
 
-        self.assertEqual("failed ['foo'] -> foo", str(raised))
+        self.assertThat(str(raised), Equals("failed ['foo'] -> foo"))
 
 
 class RequiresPathExistsTestCase(tests.TestCase):
@@ -291,8 +304,8 @@ class RequiresPathExistsTestCase(tests.TestCase):
             file_utils.requires_path_exists('foo').__enter__)
 
         self.assertIsInstance(raised, SnapcraftError)
-        self.assertEqual(
-            "Required path does not exist: 'foo'", str(raised))
+        self.assertThat(
+            str(raised), Equals("Required path does not exist: 'foo'"))
 
     def test_requires_path_exists_custom_error(self):
         raised = self.assertRaises(
@@ -301,4 +314,4 @@ class RequiresPathExistsTestCase(tests.TestCase):
                 'foo', error_fmt='what? {path!r}'
             ).__enter__)
 
-        self.assertEqual("what? 'foo'", str(raised))
+        self.assertThat(str(raised), Equals("what? 'foo'"))

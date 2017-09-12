@@ -18,7 +18,7 @@
 set -e
 
 export PATH=$(pwd)/bin:$PATH
-export PYTHONPATH=$(pwd):$PYTHONPATH
+export PYTHONPATH=$(pwd)${PYTHONPATH:+:$PYTHONPATH}
 
 parseargs(){
     if [[ "$#" -eq 0 ]] || [[ "$1" == "all" ]]; then
@@ -28,6 +28,7 @@ parseargs(){
         export RUN_STORE="true"
         export RUN_PLUGINS="true"
         export RUN_SNAPS="true"
+        export RUN_SPREAD="true"
     else
         if [ "$1" == "static" ] ; then
             export RUN_STATIC="true"
@@ -44,8 +45,10 @@ parseargs(){
         # Temporary: backward compatibility until CI run the "snaps" target
         elif [ "$1" == "examples" ] ; then
             export RUN_SNAPS="true"
+        elif [ "$1" == "spread" ] ; then
+            export RUN_SPREAD="true"
         else
-            echo "Not recognized option, should be one of all, static, unit, integration, store or snaps"
+            echo "Not recognized option, should be one of all, static, unit, integration, store, snaps or spread"
             exit 1
         fi
     fi
@@ -104,6 +107,15 @@ run_snaps(){
     python3 -m snaps_tests "$@"
 }
 
+run_spread(){
+    TMP_SPREAD="$(mktemp -d)"
+
+    export PATH=$TMP_SPREAD:$PATH
+    ( cd "$TMP_SPREAD" && curl -s -O https://niemeyer.s3.amazonaws.com/spread-amd64.tar.gz && tar xzvf spread-amd64.tar.gz )
+
+    spread -v linode:
+}
+
 parseargs "$@"
 
 if [ ! -z "$RUN_STATIC" ] ; then
@@ -140,6 +152,10 @@ if [ ! -z "$RUN_SNAPS" ]; then
     fi
     ##
     run_snaps "$@"
+fi
+
+if [ ! -z "$RUN_SPREAD" ]; then
+    run_spread
 fi
 
 if [ ! -z "$RUN_UNIT" ]; then

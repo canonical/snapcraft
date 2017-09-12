@@ -22,7 +22,6 @@ import tempfile
 
 from . import errors
 from ._base import FileBase
-from snapcraft.internal import sources
 
 
 class Tar(FileBase):
@@ -44,12 +43,13 @@ class Tar(FileBase):
             raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-depth for a tar source')
 
-    def provision(self, dst, clean_target=True, keep_tarball=False):
+    def provision(self, dst, clean_target=True, keep_tarball=False, src=None):
         # TODO add unit tests.
-        tarball = os.path.join(self.source_dir, os.path.basename(self.source))
-
-        if self.source_checksum:
-            sources.verify_checksum(self.source_checksum, tarball)
+        if src:
+            tarball = src
+        else:
+            tarball = os.path.join(
+                self.source_dir, os.path.basename(self.source))
 
         if clean_target:
             tmp_tarball = tempfile.NamedTemporaryFile().name

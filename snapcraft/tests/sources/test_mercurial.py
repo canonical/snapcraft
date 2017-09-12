@@ -18,8 +18,9 @@ import os
 import shutil
 from unittest import mock
 
-from snapcraft.internal import sources
+from testtools.matchers import Equals
 
+from snapcraft.internal import sources
 from snapcraft import tests
 from snapcraft.tests.subprocess_utils import (
     call,
@@ -119,7 +120,7 @@ class TestMercurial(tests.sources.SourceTestCase):
         expected_message = (
             'can\'t specify both source-tag and source-branch for a mercurial '
             'source')
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_commit_and_tag_raises_exception(self):
         raised = self.assertRaises(
@@ -131,7 +132,7 @@ class TestMercurial(tests.sources.SourceTestCase):
         expected_message = (
             'can\'t specify both source-tag and source-commit for a mercurial '
             'source')
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_commit_and_branch_raises_exception(self):
         raised = self.assertRaises(
@@ -143,7 +144,7 @@ class TestMercurial(tests.sources.SourceTestCase):
         expected_message = (
             'can\'t specify both source-branch and source-commit for '
             'a mercurial source')
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_init_with_source_depth_raises_exception(self):
         raised = self.assertRaises(
@@ -153,7 +154,7 @@ class TestMercurial(tests.sources.SourceTestCase):
 
         expected_message = (
             'can\'t specify source-depth for a mercurial source')
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
 
     def test_source_checksum_raises_exception(self):
         raised = self.assertRaises(
@@ -164,7 +165,11 @@ class TestMercurial(tests.sources.SourceTestCase):
 
         expected_message = (
             "can't specify a source-checksum for a mercurial source")
-        self.assertEqual(raised.message, expected_message)
+        self.assertThat(raised.message, Equals(expected_message))
+
+    def test_has_source_handler_entry(self):
+        self.assertTrue(sources._source_handler['mercurial'] is
+                        sources.Mercurial)
 
 
 class MercurialBaseTestCase(tests.TestCase):
@@ -194,7 +199,7 @@ class MercurialBaseTestCase(tests.TestCase):
         body = None
         with open(path) as fp:
             body = fp.read()
-        self.assertEqual(body, expected)
+        self.assertThat(body, Equals(expected))
 
 
 class MercurialDetailsTestCase(MercurialBaseTestCase):
@@ -226,8 +231,8 @@ class MercurialDetailsTestCase(MercurialBaseTestCase):
         self.source_details = self.hg._get_source_details()
 
     def test_hg_details_commit(self):
-        self.assertEqual(
-            self.expected_commit, self.source_details['source-commit'])
+        self.assertThat(
+            self.source_details['source-commit'], Equals(self.expected_commit))
 
     def test_hg_details_branch(self):
         self.clean_dir(self.source_dir)
@@ -236,8 +241,8 @@ class MercurialDetailsTestCase(MercurialBaseTestCase):
         self.hg.pull()
 
         self.source_details = self.hg._get_source_details()
-        self.assertEqual(
-            self.expected_branch, self.source_details['source-branch'])
+        self.assertThat(
+            self.source_details['source-branch'], Equals(self.expected_branch))
 
     def test_hg_details_tag(self):
         self.clean_dir(self.source_dir)
@@ -246,4 +251,5 @@ class MercurialDetailsTestCase(MercurialBaseTestCase):
         self.hg.pull()
 
         self.source_details = self.hg._get_source_details()
-        self.assertEqual(self.expected_tag, self.source_details['source-tag'])
+        self.assertThat(
+            self.source_details['source-tag'], Equals(self.expected_tag))

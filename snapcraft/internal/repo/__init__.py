@@ -18,6 +18,7 @@ import shutil
 
 from snapcraft.internal.errors import MissingCommandError
 from . import errors               # noqa
+from . import snaps                # noqa
 from . import _platform
 from ._base import BaseRepo        # noqa
 from ._base import fix_pkg_config  # noqa
@@ -30,7 +31,7 @@ Repo = _platform._get_repo_for_platform()
 
 def check_for_command(command):
     if not shutil.which(command):
-        raise MissingCommandError([command])
+        raise MissingCommandError(command)
 
 
 def get_pkg_name_parts(pkg_name):

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,6 +23,7 @@ import fixtures
 import tempfile
 import yaml
 from collections import OrderedDict
+from testtools.matchers import Equals
 
 import snapcraft                           # noqa, initialize yaml
 from snapcraft.internal import errors
@@ -59,7 +60,7 @@ def _get_part_list_count(path=PARTS_FILE):
 
 class TestParserBaseDir(TestCase):
     def test__get_base_dir(self):
-        self.assertEqual(parser.BASE_DIR, parser._get_base_dir())
+        self.assertThat(parser._get_base_dir(), Equals(parser.BASE_DIR))
 
 
 class TestParser(TestCase):
@@ -101,6 +102,18 @@ class TestParser(TestCase):
 
         self.assertTrue(isinstance(yaml.load(output), OrderedDict))
 
+    def test_merge_tag_yaml(self):
+        test_yaml = """
+base: &base
+    property: value
+test:
+    <<: *base
+"""
+        doc = yaml.load(test_yaml)
+
+        self.assertTrue(isinstance(doc, OrderedDict))
+        self.assertThat(doc['test']['property'], Equals('value'))
+
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_main_nested_parts_valid(self, mock_get_origin_data):
         """Ensure that we fail if there are dependent parts that
@@ -135,7 +148,7 @@ description: example
 parts: [main, part1, part2]
 """)
         main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(3, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(3))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_main_nested_parts_invalid(self, mock_get_origin_data):
@@ -171,7 +184,7 @@ description: example
 parts: [main, part1]
 """)
         main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(0, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(0))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_wiki_code_tags(self, mock_get_origin_data):
@@ -194,7 +207,7 @@ parts: [main]
             }
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(1, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(1))
 
     @mock.patch('snapcraft.internal.parser._get_base_dir')
     @mock.patch('snapcraft.internal.parser._get_origin_data')
@@ -238,9 +251,9 @@ parts: [main]
         ])
 
         mock_handler = mock_source_handler.return_value
-        self.assertEqual(mock_handler.source_branch, 'stable-branch')
-        self.assertEqual(mock_handler.source_commit, 123)
-        self.assertEqual(mock_handler.source_tag, 'source-tag')
+        self.assertThat(mock_handler.source_branch, Equals('stable-branch'))
+        self.assertThat(mock_handler.source_commit, Equals(123))
+        self.assertThat(mock_handler.source_tag, Equals('source-tag'))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_main_valid_variable_substition(self, mock_get_origin_data):
@@ -265,11 +278,11 @@ parts: [main]
             }
         }
         retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(1, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(1))
         part = _get_part('main')
-        self.assertEqual(part['source'], 'lp:something/r0.1')
+        self.assertThat(part['source'], Equals('lp:something/r0.1'))
         self.assertIn('something/file1', part['files'])
-        self.assertEqual(0, retval)
+        self.assertThat(retval, Equals(0))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_main_valid(self, mock_get_origin_data):
@@ -290,20 +303,20 @@ parts: [main]
             }
         }
         retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(1, _get_part_list_count())
-        self.assertEqual(0, retval)
+        self.assertThat(_get_part_list_count(), Equals(1))
+        self.assertThat(retval, Equals(0))
 
     def test_404_index(self):
         retval = main(['--debug', '--index', 'https://fake.example.com'])
         self.assertIn('Unable to access index: ', self.fake_logger.output)
-        self.assertEqual(1, retval)
+        self.assertThat(retval, Equals(1))
 
     def test_invalid_yaml(self):
         _create_example_output(':')
         retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
         self.assertIn('Bad wiki entry, possibly malformed YAML for entry: ',
                       self.fake_logger.output)
-        self.assertEqual(1, retval)
+        self.assertThat(retval, Equals(1))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_main_slash_warning(self, mock_get_origin_data):
@@ -327,7 +340,7 @@ parts: [main/a]
             }
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(1, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(1))
 
         m = 'DEPRECATED: Found a "/" in the name of the {!r} part'.format(
             'main/a')
@@ -337,7 +350,7 @@ parts: [main/a]
     def test_main_valid_with_empty_index(self):
         _create_example_output('')
         main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(0, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(0))
 
     @mock.patch('urllib.request.urlopen')
     def test_main_valid_with_default_index(self, mock_urlopen):
@@ -346,7 +359,7 @@ parts: [main/a]
                 return b''
         mock_urlopen.return_value = FakeResponse()
         main(['--debug'])
-        self.assertEqual(0, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(0))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_main_invalid(self, mock_get_origin_data):
@@ -368,7 +381,7 @@ parts: [main, part1]
             }
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(0, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(0))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_single_part_origin(self, mock_get_origin_data):
@@ -391,7 +404,7 @@ parts: [main]
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
 
-        self.assertEqual(1, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(1))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_multiple_part_origin(self, mock_get_origin_data):
@@ -420,7 +433,7 @@ parts: ['main', 'subpart']
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
 
-        self.assertEqual(2, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(2))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_output_parameter(self, mock_get_origin_data):
@@ -446,7 +459,7 @@ parts: [main]
 
         main(['--debug', '--index', TEST_OUTPUT_PATH, '--output', filename])
 
-        self.assertEqual(1, _get_part_list_count(filename))
+        self.assertThat(_get_part_list_count(filename), Equals(1))
         self.assertTrue(os.path.exists(filename))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
@@ -470,10 +483,10 @@ parts: [main]
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
 
-        self.assertEqual(1, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(1))
         part = _get_part('main')
         self.assertNotEqual('.', part['source'])
-        self.assertEqual(5, len(part.keys()))
+        self.assertThat(len(part.keys()), Equals(5))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_source_with_local_subdir_part_origin(self, mock_get_origin_data):
@@ -496,11 +509,11 @@ parts: [main]
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
 
-        self.assertEqual(1, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(1))
         part = _get_part('main')
         self.assertNotEqual('local', part['source'])
-        self.assertEqual('local', part['source-subdir'])
-        self.assertEqual(6, len(part.keys()))
+        self.assertThat(part['source-subdir'], Equals('local'))
+        self.assertThat(len(part.keys()), Equals(6))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_source_with_local_source_subdir_part_origin(
@@ -525,11 +538,11 @@ parts: [main]
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
 
-        self.assertEqual(1, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(1))
         part = _get_part('main')
         self.assertNotEqual('.', part['source'])
-        self.assertEqual('local', part['source-subdir'])
-        self.assertEqual(6, len(part.keys()))
+        self.assertThat(part['source-subdir'], Equals('local'))
+        self.assertThat(len(part.keys()), Equals(6))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_n_documents(self, mock_get_origin_data):
@@ -562,7 +575,7 @@ parts: [main2]
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
 
-        self.assertEqual(2, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(2))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_maintaner_is_included(self, mock_get_origin_data):
@@ -596,12 +609,14 @@ parts: [main2]
         main(['--debug', '--index', TEST_OUTPUT_PATH])
 
         part = _get_part('main')
-        self.assertEqual('John Doe <john.doe@example.com>', part['maintainer'])
+        self.assertThat(
+            part['maintainer'], Equals('John Doe <john.doe@example.com>'))
 
         part = _get_part('main2')
-        self.assertEqual('Jim Doe <jim.doe@example.com>', part['maintainer'])
+        self.assertThat(
+            part['maintainer'], Equals('Jim Doe <jim.doe@example.com>'))
 
-        self.assertEqual(2, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(2))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_description_is_included(self, mock_get_origin_data):
@@ -635,12 +650,12 @@ parts: [main2]
         main(['--debug', '--index', TEST_OUTPUT_PATH])
 
         part = _get_part('main')
-        self.assertEqual('example main', part['description'])
+        self.assertThat(part['description'], Equals('example main'))
 
         part = _get_part('main2')
-        self.assertEqual('example main2', part['description'])
+        self.assertThat(part['description'], Equals('example main2'))
 
-        self.assertEqual(2, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(2))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_origin_part_without_source(self, mock_get_origin_data):
@@ -660,8 +675,8 @@ parts: [main]
             }
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(1, _get_part_list_count())
-        self.assertEqual(4, len(_get_part('main').keys()))
+        self.assertThat(_get_part_list_count(), Equals(1))
+        self.assertThat(len(_get_part('main').keys()), Equals(4))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_missing_fields(self, mock_get_origin_data):
@@ -686,8 +701,8 @@ parts: [main]
         }
 
         retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(0, _get_part_list_count())
-        self.assertEqual(2, retval)
+        self.assertThat(_get_part_list_count(), Equals(0))
+        self.assertThat(retval, Equals(2))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_partial_processing_for_malformed_yaml(self, mock_get_origin_data):
@@ -726,7 +741,7 @@ parts: [main2]
             }
         }
         main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(1, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(1))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_descriptions_get_block_quotes(self, mock_get_origin_data):
@@ -756,7 +771,7 @@ parts: [main]
             data = fp.read()
             self.assertNotIn('description: "', data)
             self.assertIn('description: |', data)
-        self.assertEqual(1, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(1))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_wiki_interactions_with_fake(self, mock_get_origin_data):
@@ -774,7 +789,7 @@ parts: [main]
             }
         }
         main(['--debug', '--index', fixture.fake_parts_wiki_fixture.url])
-        self.assertEqual(1, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(1))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_wiki_interactions_with_fake_with_slashes(
@@ -799,7 +814,7 @@ parts: [main]
         }
         main(['--debug', '--index',
               fixture.fake_parts_wiki_with_slashes_fixture.url])
-        self.assertEqual(2, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(2))
 
         part1 = _get_part('curl/a')
         self.assertTrue(part1)
@@ -825,7 +840,7 @@ parts: [somepart]
 """.format(origin_url=origin_url))
 
         main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(0, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(0))
 
         self.assertTrue(
             '1 wiki errors found'
@@ -846,7 +861,7 @@ parts: [somepart]
 """.format(origin_url=origin_url))
 
         main(['--index', TEST_OUTPUT_PATH])
-        self.assertEqual(0, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(0))
 
     def test_wiki_with_fake_origin_with_bad_snapcraft_yaml(self):
 
@@ -875,7 +890,7 @@ parts: [somepart]
             fp.write("bad yaml is : bad :yaml:::")
 
         main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(0, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(0))
 
         self.assertTrue(
             'Invalid wiki entry'
@@ -906,7 +921,7 @@ parts: [somepart]
             fp.write(text)
 
         main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(1, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(1))
         part = _get_part('somepart')
         self.assertTrue(part)
 
@@ -941,9 +956,9 @@ parts: [main]
         main(['--debug', '--index', TEST_OUTPUT_PATH])
 
         part = _get_part('main')
-        self.assertEqual('example main', part['description'])
+        self.assertThat(part['description'], Equals('example main'))
 
-        self.assertEqual(1, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(1))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_duplicate_entries(self, mock_get_origin_data):
@@ -976,9 +991,9 @@ parts: [main]
         main(['--debug', '--index', TEST_OUTPUT_PATH])
 
         part = _get_part('main')
-        self.assertEqual('example main', part['description'])
+        self.assertThat(part['description'], Equals('example main'))
 
-        self.assertEqual(1, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(1))
 
         self.assertTrue(
             'Duplicate part found in the wiki: main'
@@ -1033,10 +1048,9 @@ parts: [app1]
             'parts': parts,
         }
         main(['--index', TEST_OUTPUT_PATH])
-        self.assertEqual(3, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(3))
 
-        self.assertEqual(parts,
-                         _get_part_list())
+        self.assertThat(parts, Equals(_get_part_list()))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_remote_after_parts(self, mock_get_origin_data):
@@ -1073,7 +1087,7 @@ parts: [parent]
             'parts': parts,
         }
         main(['--index', TEST_OUTPUT_PATH])
-        self.assertEqual(2, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(2))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_part_missing_in_origin(self, mock_get_origin_data):
@@ -1094,8 +1108,8 @@ parts: [not-there]
             }
         }
         retcode = main(['--index', TEST_OUTPUT_PATH])
-        self.assertEqual(0, _get_part_list_count())
-        self.assertEqual(1, retcode)
+        self.assertThat(_get_part_list_count(), Equals(0))
+        self.assertThat(retcode, Equals(1))
 
     @mock.patch('snapcraft.internal.parser._get_origin_data')
     def test_remote_after_parts_unordered(self, mock_get_origin_data):
@@ -1132,7 +1146,7 @@ parts: [child]
             'parts': parts,
         }
         main(['--index', TEST_OUTPUT_PATH])
-        self.assertEqual(2, _get_part_list_count())
+        self.assertThat(_get_part_list_count(), Equals(2))
 
     def test__get_origin_data_both(self):
         with open(os.path.join(self.tempdir_path,
@@ -1164,13 +1178,15 @@ parts: [child]
         origin = 'git@github.com:testuser/testproject.git'
         origin_dir = _encode_origin(origin)
 
-        self.assertEqual('gitgithub.comtestusertestproject.git', origin_dir)
+        self.assertThat(
+            origin_dir, Equals('gitgithub.comtestusertestproject.git'))
 
     def test__encode_origin_lp(self):
         origin = 'lp:~testuser/testproject/testbranch'
         origin_dir = _encode_origin(origin)
 
-        self.assertEqual('lptestusertestprojecttestbranch', origin_dir)
+        self.assertThat(
+            origin_dir, Equals('lptestusertestprojecttestbranch'))
 
 
 class MissingAssetsTestCase(TestCase):
@@ -1219,7 +1235,7 @@ description: example main
 parts: [main2]
 """)
         retval = main(['--debug', '--index', TEST_OUTPUT_PATH])
-        self.assertEqual(2, retval)
+        self.assertThat(retval, Equals(2))
 
         self.assertTrue(
             'One or more required commands are missing, please install'

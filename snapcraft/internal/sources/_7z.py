@@ -21,7 +21,6 @@ import tempfile
 
 from . import errors
 from ._base import FileBase
-from snapcraft.internal import sources
 
 
 class SevenZip(FileBase):
@@ -40,14 +39,12 @@ class SevenZip(FileBase):
             raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-branch for a 7z source')
 
-    def provision(self, dst, clean_target=True, keep_7z=False):
-        seven_zip_file = os.path.join(
-            self.source_dir,
-            os.path.basename(self.source)
-        )
-
-        if self.source_checksum:
-            sources.verify_checksum(self.source_checksum, seven_zip_file)
+    def provision(self, dst, clean_target=True, keep_7z=False, src=None):
+        if src:
+            seven_zip_file = src
+        else:
+            seven_zip_file = os.path.join(
+                self.source_dir, os.path.basename(self.source))
 
         if clean_target:
             tmp_7z = tempfile.NamedTemporaryFile().name

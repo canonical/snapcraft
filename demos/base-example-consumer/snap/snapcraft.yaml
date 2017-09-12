@@ -1,0 +1,18 @@
+name: base-example-consumer
+version: 1.0
+summary: Example snap that consumes a different base snap
+description:
+  This example snap uses the base-example base snap instead of
+  the regular "core" snap.
+confinement: strict
+base: base-example
+
+apps:
+  hello:
+    command: usr/bin/hello
+  
+parts:
+  libc:
+    plugin: dump
+    source: .
+    stage-packages: [hello]

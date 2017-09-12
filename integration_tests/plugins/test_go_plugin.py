@@ -18,7 +18,7 @@ import os
 import subprocess
 
 import yaml
-from testtools.matchers import FileContains, FileExists, Not
+from testtools.matchers import Equals, FileContains, FileExists, Not
 
 import integration_tests
 import snapcraft
@@ -34,7 +34,7 @@ class GoPluginTestCase(integration_tests.TestCase):
         binary_output = subprocess.check_output(
             os.path.join(self.stage_dir, 'bin', os.path.basename(self.path)),
             universal_newlines=True)
-        self.assertEqual('Hello snapcrafter\n', binary_output)
+        self.assertThat(binary_output, Equals('Hello snapcrafter\n'))
 
     def test_building_multiple_main_packages(self):
         self.run_snapcraft('stage', 'go-with-multiple-main-packages')

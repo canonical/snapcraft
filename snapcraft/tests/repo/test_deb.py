@@ -20,6 +20,7 @@ from unittest.mock import ANY, call, patch, MagicMock
 
 from testtools.matchers import (
     Contains,
+    Equals,
     FileExists,
 )
 
@@ -176,7 +177,7 @@ deb http://security.ubuntu.com/ubuntu xenial-security main restricted
 deb http://security.ubuntu.com/ubuntu xenial-security universe
 deb http://security.ubuntu.com/ubuntu xenial-security multiverse
 '''
-        self.assertEqual(sources_list, expected_sources_list)
+        self.assertThat(sources_list, Equals(expected_sources_list))
 
     def test_no_geoip_uses_default_archive(self):
         sources_list = repo._deb._format_sources_list(
@@ -194,7 +195,7 @@ deb http://security.ubuntu.com/ubuntu xenial-security universe
 deb http://security.ubuntu.com/ubuntu xenial-security multiverse
 '''
 
-        self.assertEqual(sources_list, expected_sources_list)
+        self.assertThat(sources_list, Equals(expected_sources_list))
 
     @patch('snapcraft.internal.repo._deb._get_geoip_country_code_prefix')
     def test_sources_amd64_vivid(self, mock_cc):
@@ -216,7 +217,7 @@ deb http://security.ubuntu.com/ubuntu vivid-security main restricted
 deb http://security.ubuntu.com/ubuntu vivid-security universe
 deb http://security.ubuntu.com/ubuntu vivid-security multiverse
 '''
-        self.assertEqual(sources_list, expected_sources_list)
+        self.assertThat(sources_list, Equals(expected_sources_list))
 
     @patch('snapcraft.repo._deb._get_geoip_country_code_prefix')
     def test_sources_armhf_trusty(self, mock_cc):
@@ -234,26 +235,18 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security main restricted
 deb http://ports.ubuntu.com/ubuntu-ports trusty-security universe
 deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
 '''
-        self.assertEqual(sources_list, expected_sources_list)
+        self.assertThat(sources_list, Equals(expected_sources_list))
         self.assertFalse(mock_cc.called)
 
-    def test_ensure_package_format(self):
-        fake_apt = tests.fixture_setup.FakeAptGetBuildDep([])
-        self.useFixture(fake_apt)
-        self.assertEqual(
-            ['libfoo1:armhf=1:0.2-0ubu3', 'libpkg2:armhf=3:0.4-0ubu5'],
-            repo._deb.Ubuntu._ensure_package_format(
-                ['libfoo1:armhf=1:0.2-0ubu3', 'libpkg2=3:0.4-0ubu5:armhf']))
-
     def test_setup_multi_arch_sources_skipped(self):
-        fake_apt = tests.fixture_setup.FakeAptGetBuildDep([])
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture([])
         self.useFixture(fake_apt)
         repo._deb.Ubuntu._setup_multi_arch_sources(self.mock_cache,
                                                    'libpkg2=3:0.4-0ubu5')
         fake_apt.open_mock.assert_not_called()
 
     def test_setup_multi_arch_sources(self):
-        fake_apt = tests.fixture_setup.FakeAptGetBuildDep([])
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture([])
         self.useFixture(fake_apt)
         repo._deb.Ubuntu._setup_multi_arch_sources(self.mock_cache,
                                                    'libpkg2:armhf=3:0.4-0ubu5')
@@ -309,7 +302,7 @@ class BuildPackagesTestCase(tests.TestCase):
     @patch('snapcraft.repo._deb.is_dumb_terminal')
     def test_install_build_package(
             self, mock_is_dumb_terminal):
-        fake_apt = tests.fixture_setup.FakeAptGetBuildDep(
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(
             self.test_packages.keys())
         self.useFixture(fake_apt)
         mock_is_dumb_terminal.return_value = False
@@ -325,16 +318,13 @@ class BuildPackagesTestCase(tests.TestCase):
         ])
         fake_apt.check_output_mock.assert_has_calls([
             call(['dpkg', '--print-architecture']),
-            call(['apt-get', 'build-dep', '-q', '-s',
-                  '-aamd64', fake_apt.filename],
-                 env={}, stderr=-2),
         ])
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
     def test_install_buid_package_in_dumb_terminal(
             self, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = True
-        fake_apt = tests.fixture_setup.FakeAptGetBuildDep(self.test_packages)
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(self.test_packages)
         self.useFixture(fake_apt)
         self.install_test_packages(self.test_packages)
 
@@ -352,7 +342,7 @@ class BuildPackagesTestCase(tests.TestCase):
     def test_install_build_package_with_arch(
             self, mock_env, mock_apt, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = True
-        fake_apt = tests.fixture_setup.FakeAptGetBuildDep(
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(
             self.test_packages, 'armhf')
         self.useFixture(fake_apt)
         mock_env.copy.return_value = {}
@@ -365,11 +355,6 @@ class BuildPackagesTestCase(tests.TestCase):
         repo.Ubuntu.install_build_packages(self.test_packages.keys(), 'armhf')
 
         self.assertEqual(['amd64', 'armhf'], fake_apt.archs)
-        fake_apt.check_output_mock.assert_has_calls([
-            call(['apt-get', 'build-dep', '-q', '-s',
-                  '-aarmhf', fake_apt.filename],
-                 env={}, stderr=-2),
-        ])
 
         installable = self.get_installable_packages(self.test_packages,
                                                     ':armhf')
@@ -386,16 +371,10 @@ class BuildPackagesTestCase(tests.TestCase):
     def test_install_build_package_already_installed(
             self, mock_apt, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = True
-        fake_apt = tests.fixture_setup.FakeAptGetBuildDep([])
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture([])
         self.useFixture(fake_apt)
         self.install_test_packages(
             {'package-installed': MagicMock(installed=True)})
-
-        fake_apt.check_output_mock.assert_has_calls([
-            call(['apt-get', 'build-dep', '-q', '-s',
-                  '-aamd64', fake_apt.filename],
-                 env={}, stderr=-2),
-        ])
 
         fake_apt.check_call_mock.assert_has_calls([])
 
@@ -403,7 +382,7 @@ class BuildPackagesTestCase(tests.TestCase):
     def test_install_build_package_with_arch_update_failed(
             self, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = True
-        fake_apt = tests.fixture_setup.FakeAptGetBuildDep(
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(
             self.test_packages, 'armhf', update_error=True)
         self.useFixture(fake_apt)
         self.assertEqual(['amd64'], fake_apt.archs)
@@ -417,9 +396,6 @@ class BuildPackagesTestCase(tests.TestCase):
         fake_apt.check_output_mock.assert_has_calls([
             call(['dpkg', '--print-foreign-architectures']),
             call(['sudo', 'dpkg', '--add-architecture', 'armhf']),
-            call(['apt-get', 'build-dep', '-q', '-s',
-                  '-aarmhf', fake_apt.filename],
-                 env={}, stderr=-2),
             call(['sudo', 'apt-get', 'update'],
                  stderr=-2),
         ])
@@ -435,7 +411,7 @@ class BuildPackagesTestCase(tests.TestCase):
         ])
 
     def test_install_buid_package_marks_auto_installed(self):
-        fake_apt = tests.fixture_setup.FakeAptGetBuildDep(self.test_packages)
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(self.test_packages)
         self.useFixture(fake_apt)
         self.install_test_packages(self.test_packages)
 
@@ -449,7 +425,7 @@ class BuildPackagesTestCase(tests.TestCase):
 
     @patch('subprocess.check_call')
     def test_mark_installed_auto_error_is_not_fatal(self, mock_check_call):
-        fake_apt = tests.fixture_setup.FakeAptGetBuildDep(self.test_packages)
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(self.test_packages)
         self.useFixture(fake_apt)
         error = CalledProcessError(101, 'bad-cmd')
         mock_check_call.side_effect = \
@@ -457,7 +433,7 @@ class BuildPackagesTestCase(tests.TestCase):
         self.install_test_packages(['package-not-installed'])
 
     def test_invalid_package_requested(self):
-        fake_apt = tests.fixture_setup.FakeAptGetBuildDep(
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(
             ['package-does-not-exist'], not_available=True)
         self.useFixture(fake_apt)
         project_options = snapcraft.ProjectOptions()
@@ -470,8 +446,3 @@ class BuildPackagesTestCase(tests.TestCase):
             "Could not find a required package in 'build-packages': "
             "package-does-not-exist",
             str(raised))
-        fake_apt.check_output_mock.assert_has_calls([
-            call(['apt-get', 'build-dep', '-q', '-s',
-                  '-a{}'.format(project_options.deb_arch),
-                  fake_apt.filename], env={}, stderr=-2)
-        ])

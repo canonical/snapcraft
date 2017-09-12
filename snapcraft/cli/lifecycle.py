@@ -13,11 +13,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import sys
 
 import click
 
-from snapcraft.internal import errors, lifecycle
+from snapcraft.internal import lifecycle
 from ._options import add_build_options, get_project_options
 from . import echo
 from . import env
@@ -29,11 +28,7 @@ def _execute(command, parts, **kwargs):
     if env.is_containerbuild():
         lifecycle.containerbuild(command, project_options, parts)
     else:
-        try:
-            lifecycle.execute(command, project_options, parts)
-        except Exception as e:
-            echo.error(e)
-            sys.exit(1)
+        lifecycle.execute(command, project_options, parts)
     return project_options
 
 
@@ -47,11 +42,7 @@ def lifecyclecli(ctx, **kwargs):
 @lifecyclecli.command()
 def init():
     """Initialize a snapcraft project."""
-    try:
-        snapcraft_yaml_path = lifecycle.init()
-    except errors.SnapcraftEnvironmentError as e:
-        echo.error(e)
-        sys.exit(1)
+    snapcraft_yaml_path = lifecycle.init()
     echo.info('Created {}.'.format(snapcraft_yaml_path))
     echo.info(
         'Edit the file to your liking or run `snapcraft` to get started')
@@ -137,12 +128,8 @@ def snap(directory, output, **kwargs):
     if env.is_containerbuild():
         lifecycle.containerbuild('snap', project_options, output, directory)
     else:
-        try:
-            snap_name = lifecycle.snap(
-                project_options, directory=directory, output=output)
-        except Exception as e:
-            echo.error(e)
-            sys.exit(1)
+        snap_name = lifecycle.snap(
+            project_options, directory=directory, output=output)
         echo.info('Snapped {}'.format(snap_name))
 
 
@@ -165,17 +152,13 @@ def clean(parts, step, **kwargs):
     if env.is_containerbuild():
         step = step or 'pull'
         lifecycle.containerbuild('clean', project_options,
-                                 args=['--step', step + parts])
+                                 args=['--step', step, *parts])
     else:
         if step == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '
                          'as the step to clean')
             step = 'prime'
-        try:
-            lifecycle.clean(project_options, parts, step)
-        except errors.SnapcraftEnvironmentError as e:
-            echo.error(e)
-            sys.exit(1)
+        lifecycle.clean(project_options, parts, step)
 
 
 @lifecyclecli.command()
@@ -202,11 +185,7 @@ def cleanbuild(remote, debug, **kwargs):
     https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
     """
     project_options = get_project_options(**kwargs, debug=debug)
-    try:
-        lifecycle.cleanbuild(project_options, remote)
-    except errors.SnapcraftEnvironmentError as e:
-        echo.error(e)
-        sys.exit(1)
+    lifecycle.cleanbuild(project_options, remote)
 
 
 if __name__ == '__main__':

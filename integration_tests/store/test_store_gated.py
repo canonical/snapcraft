@@ -16,6 +16,8 @@
 
 import os
 
+from testtools.matchers import Equals
+
 import integration_tests
 
 
@@ -31,23 +33,32 @@ class GatedTestCase(integration_tests.StoreTestCase):
         self.addCleanup(self.logout)
         self.login()
         validations = [('snap-1', '3'), ('snap-2', '5')]
-        self.assertEqual(0, self.gated('ubuntu-core', validations))
+        self.assertThat(self.gated('ubuntu-core', validations), Equals(0))
 
     def test_gated_no_login_failure(self):
-        self.assertEqual(1, self.gated(
-            'ubuntu-core', expected_output='Have you run "snapcraft login'))
+        self.assertThat(
+            self.gated(
+                'ubuntu-core',
+                expected_output='Have you run "snapcraft login'),
+            Equals(2))
 
     def test_gated_unknown_snap_failure(self):
         self.addCleanup(self.logout)
         self.login()
-        self.assertEqual(1, self.gated(
-            'unknown', expected_output="Snap 'unknown' was not found"))
+        self.assertThat(
+            self.gated(
+                'unknown',
+                expected_output="Snap 'unknown' was not found"),
+            Equals(2))
 
     def test_gated_no_validations(self):
         self.addCleanup(self.logout)
         self.login()
         snap_name = 'test-snap-with-no-validations'
-        self.assertEqual(0, self.gated(
-            snap_name,
-            expected_output="There are no validations for snap '{}'".format(
-                snap_name)))
+        self.assertThat(
+            self.gated(
+                snap_name,
+                expected_output=(
+                    "There are no validations for snap '{}'".format(
+                        snap_name))),
+            Equals(0))

@@ -7,6 +7,10 @@ description: |
   Make a new one.
 confinement: strict
 
+apps:
+  autottools-hello:
+    command: test
+
 build-packages: [gcc]
 
 parts:

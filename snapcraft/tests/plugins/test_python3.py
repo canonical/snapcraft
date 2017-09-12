@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from unittest import mock
+
+from testtools.matchers import Equals
 
 import snapcraft
 from snapcraft import tests
@@ -43,4 +45,4 @@ class Python3PluginTestCase(tests.TestCase):
     def test_check_version(self):
         plugin = python3.Python3Plugin('test-part', self.options,
                                        self.project_options)
-        self.assertEqual(plugin.options.python_version, 'python3')
+        self.assertThat(plugin.options.python_version, Equals('python3'))

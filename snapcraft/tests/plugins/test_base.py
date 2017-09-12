@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,6 +17,8 @@
 import os
 import unittest.mock
 
+from testtools.matchers import Equals
+
 import snapcraft
 from snapcraft import tests
 
@@ -31,7 +33,7 @@ class TestBasePlugin(tests.TestCase):
         options = tests.MockOptions(disable_parallel=True)
         plugin = snapcraft.BasePlugin('test_plugin', options,
                                       self.project_options)
-        self.assertEqual(plugin.parallel_build_count, 1)
+        self.assertThat(plugin.parallel_build_count, Equals(1))
 
     def test_parallel_build_count_returns_build_count_from_project(self):
         options = tests.MockOptions(disable_parallel=False)
@@ -39,7 +41,7 @@ class TestBasePlugin(tests.TestCase):
                                       self.project_options)
         unittest.mock.patch.object(
             self.project_options, 'parallel_build_count', 2)
-        self.assertEqual(plugin.parallel_build_count, 2)
+        self.assertThat(plugin.parallel_build_count, Equals(2))
 
     def test_part_name_with_forward_slash_is_one_directory(self):
         plugin = snapcraft.BasePlugin('test/part', options=None)
