@@ -333,15 +333,6 @@ class Project(Containerbuild):
     def _setup_project(self):
         self._ensure_mount(self._project_folder, self._source)
 
-    def _get_container_address(self):
-        network = self._get_container_status()['state']['network']
-        for interface in network:
-            for address in network[interface]['addresses']:
-                if address['family'] == 'inet':
-                    return address['address']
-        raise ContainerConnectionError('No IP found for {}'.format(
-            self._container_name))
-
     def _ensure_mount(self, destination, source):
         logger.info('Mounting {} into container'.format(source))
         if not self._container_name.startswith('local:'):

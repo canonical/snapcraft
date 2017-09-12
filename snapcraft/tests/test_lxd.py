@@ -366,12 +366,6 @@ class ProjectTestCase(LXDTestCase):
                            remote=self.remote)
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
-    def test_non_default_network(self, mock_container_run):
-        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
-        self.fake_lxd.network = self.fake_lxd.network.replace('eth0', 'eth1')
-        self.make_project()
-
-    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_ftp_not_installed(self, mock_container_run):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
 

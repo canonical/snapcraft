@@ -495,12 +495,6 @@ class FakeLXD(fixtures.Fixture):
 
     def __init__(self):
         self.status = None
-        self.network = '''{ "eth0": {
-                                "addresses": [{
-                                    "family": "inet",
-                                    "address": "127.0.0.1"
-                                }]
-                            }}'''
         self.files = []
         self.kernel_arch = 'x86_64'
         self.devices = '{}'
@@ -548,13 +542,11 @@ class FakeLXD(fixtures.Fixture):
                     return string.Template('''
                         [{"name": "$NAME",
                           "status": "$STATUS",
-                          "state": {"network": $NETWORK },
                           "devices": $DEVICES}]
                         ''').substitute({
                             # Container name without remote prefix
                             'NAME': self.name.split(':')[-1],
                             'STATUS': self.status,
-                            'NETWORK': self.network,
                             'DEVICES': self.devices,
                             }).encode('utf-8')
                 return '[]'.encode('utf-8')
