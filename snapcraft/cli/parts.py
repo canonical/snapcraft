@@ -14,10 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import click
-
-from snapcraft.internal import remote_parts, lifecycle
-from ._options import get_project_options
-from . import env
+from snapcraft.internal import remote_parts
 
 
 @click.group(context_settings={})
@@ -28,13 +25,9 @@ def partscli(ctx):
 
 @partscli.command()
 @click.pass_context
-def update(ctx, **kwargs):
+def update(ctx):
     """Updates the parts listing from the cloud."""
-    if env.is_containerbuild():
-        project_options = get_project_options(**kwargs)
-        lifecycle.containerbuild('update', project_options)
-    else:
-        remote_parts.update()
+    remote_parts.update()
 
 
 @partscli.command()
