@@ -59,7 +59,10 @@ class Containerbuild:
         self._source = os.path.realpath(source)
         self._project_options = project_options
         self._metadata = metadata
-        self._project_folder = '/root/build_{}'.format(metadata['name'])
+        self._user = os.getlogin() if os.geteuid() > 0 else 'root'
+        # os.sep needs to be `/` and on Windows it will be set to `\`
+        self._project_folder = '/home/{}/build_{}'.format(
+            self._user, metadata['name'])
 
         if not remote:
             remote = _get_default_remote()
@@ -95,7 +98,7 @@ class Containerbuild:
         check_call(['lxc', 'file', 'pull',
                     '{}{}'.format(self._container_name, src), dst])
 
-    def _container_run(self, cmd, cwd=None):
+    def _container_run(self, cmd, cwd=None, **kwargs):
         sh = ''
         # Automatically wait on lock files before running commands
         if cmd[0] == 'apt-get':
@@ -109,11 +112,18 @@ class Containerbuild:
         if sh:
             cmd = ['sh', '-c', '{}{}'.format(sh,
                    ' '.join(pipes.quote(arg) for arg in cmd))]
-        check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
+        # Run commands where file ownership matters as user
+        if os.geteuid() > 0 and (cwd or cmd[0] == 'mkdir'):
+            cmd = ['sudo', '-H', '-u', self._user] + cmd
+        check_call(['lxc', 'exec', self._container_name, '--'] + cmd, **kwargs)
 
     def _ensure_container(self):
         check_call([
             'lxc', 'launch', '-e', self._image, self._container_name])
+        self._configure_container()
+        self._setup_user()
+
+    def _configure_container(self):
         check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.SNAPCRAFT_SETUP_CORE', '1'])
@@ -121,6 +131,22 @@ class Containerbuild:
         check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.LC_ALL', 'C.UTF-8'])
+
+    def _setup_user(self):
+        # Setup user mirroring host user with sudo access
+        try:
+            self._container_run([
+                'useradd', self._user, '--create-home'])
+        except CalledProcessError as e:
+            # username already in use
+            if e.returncode != 9:
+                raise e
+        self._container_run([
+            'usermod', self._user, '-o',
+            '-u', str(os.getuid()), '-G', 'sudo'])
+        self._container_run([
+            'chown', '{}:0'.format(os.getuid()),
+            '/home/{}'.format(self._user)])
 
     @contextmanager
     def _ensure_started(self):
@@ -142,8 +168,8 @@ class Containerbuild:
 
     def execute(self, step='snap', args=None):
         with self._ensure_started():
-            self._setup_project()
             self._wait_for_network()
+            self._setup_project()
             self._container_run(['apt-get', 'update'])
             self._inject_snapcraft()
             command = ['snapcraft', step]
@@ -301,10 +327,7 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'init', self._image, self._container_name])
         if self._get_container_status()['status'] == 'Stopped':
-            check_call([
-                'lxc', 'config', 'set', self._container_name,
-                'environment.SNAPCRAFT_SETUP_CORE', '1'])
-            # Map host user to root inside container
+            self._configure_container()
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'raw.idmap', 'both {} 0'.format(os.getuid())])
@@ -316,6 +339,7 @@ class Project(Containerbuild):
                     self._project_folder])
             check_call([
                 'lxc', 'start', self._container_name])
+            self._setup_user()
 
     def _setup_project(self):
         self._ensure_mount(self._project_folder, self._source)
