@@ -127,6 +127,22 @@ class Containerbuild:
         self._inject_snapcraft()
 
     @contextmanager
+    def _container_running(self):
+        with self._ensure_started():
+            try:
+                yield
+            except CalledProcessError as e:
+                if self._project_options.debug:
+                    logger.info('Debug mode enabled, dropping into a shell')
+                    self._container_run(['bash', '-i'])
+                else:
+                    raise e
+            else:
+                # Remove temporary folder if everything went well
+                shutil.rmtree(self.tmp_dir)
+                self._finish()
+
+    @contextmanager
     def _ensure_started(self):
         try:
             self._ensure_container()
@@ -145,33 +161,23 @@ class Containerbuild:
                 return container
 
     def execute(self, step='snap', args=None):
-        with self._ensure_started():
+        with self._container_running():
             self._setup_project()
-            try:
-                if step == 'refresh':
-                    self._container_run(['apt-get', 'update'])
-                    self._container_run(['apt-get', 'upgrade', '-y'])
-                    self._container_run(['snap', 'refresh'])
-                else:
-                    command = ['snapcraft', step]
-                    if step == 'snap':
-                        command += ['--output', self._snap_output]
-                    if self._host_arch != self._project_options.deb_arch:
-                        command += ['--target-arch',
-                                    self._project_options.deb_arch]
-                    if args:
-                        command += args
-                    self._container_run(command, cwd=self._project_folder)
-            except CalledProcessError as e:
-                if self._project_options.debug:
-                    logger.info('Debug mode enabled, dropping into a shell')
-                    self._container_run(['bash', '-i'])
-                else:
-                    raise e
-            else:
-                # Remove temporary folder if everything went well
-                shutil.rmtree(self.tmp_dir)
-                self._finish()
+            command = ['snapcraft', step]
+            if step == 'snap':
+                command += ['--output', self._snap_output]
+            if self._host_arch != self._project_options.deb_arch:
+                command += ['--target-arch',
+                            self._project_options.deb_arch]
+            if args:
+                command += args
+            self._container_run(command, cwd=self._project_folder)
+
+    def refresh(self):
+        with self._container_running():
+            self._container_run(['apt-get', 'update'])
+            self._container_run(['apt-get', 'upgrade', '-y'])
+            self._container_run(['snap', 'refresh'])
 
     def _setup_project(self):
         logger.info('Setting up container with project assets')
@@ -294,7 +300,7 @@ class Cleanbuilder(Containerbuild):
 
 class Project(Containerbuild):
 
-    def __init__(self, *, output, source, project_options,
+    def __init__(self, *, output=None, source, project_options,
                  metadata, remote=None):
         super().__init__(output=output, source=source,
                          project_options=project_options,

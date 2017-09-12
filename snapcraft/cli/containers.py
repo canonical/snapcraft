@@ -15,8 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import click
+import os
 
-from snapcraft.internal import errors, lifecycle
+import snapcraft
+from snapcraft.internal import errors, lxd
 from ._options import get_project_options
 from . import env
 
@@ -49,4 +51,7 @@ def refresh(debug, **kwargs):
             "snapcraft update")
 
     project_options = get_project_options(**kwargs, debug=debug)
-    lifecycle.containerbuild('refresh', project_options)
+    config = snapcraft.internal.load_config(project_options)
+    lxd.Project(project_options=project_options,
+                source=os.path.curdir,
+                metadata=config.get_metadata()).refresh()
