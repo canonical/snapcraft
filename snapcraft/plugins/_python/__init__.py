@@ -15,3 +15,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ._python_finder import get_python_command  # noqa
+from ._sitecustomize import generate_sitecustomize  # noqa
