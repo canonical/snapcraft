@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package>
+  <name>overlay_package</name>
+  <version>0.0.0</version>
+  <description>A description</description>
+  <maintainer email="me@example.com">me</maintainer>
+  <license>GPLv3</license>
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>underlay_package</build_depend>
+  <run_depend>underlay_package</run_depend>
+</package>

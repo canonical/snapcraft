@@ -502,6 +502,7 @@ class FakeLXD(fixtures.Fixture):
                                 }]
                             }}'''
         self.files = []
+        self.kernel_arch = 'x86_64'
         self.devices = '{}'
 
     def _setUp(self):
@@ -540,8 +541,8 @@ class FakeLXD(fixtures.Fixture):
             elif args[0][:2] == ['lxc', 'info']:
                 return '''
                     environment:
-                      kernel_architecture: x86_64
-                    '''.encode('utf-8')
+                      kernel_architecture: {}
+                    '''.format(self.kernel_arch).encode('utf-8')
             elif args[0][:3] == ['lxc', 'list', '--format=json']:
                 if self.status and args[0][3] == self.name:
                     return string.Template('''

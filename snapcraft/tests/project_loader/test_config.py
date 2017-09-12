@@ -69,6 +69,8 @@ class YamlTestCase(YamlBaseTestCase):
         self.addCleanup(patcher.stop)
 
     def test_yaml_aliases(self,):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
 
         self.make_snapcraft_yaml("""name: test
 version: "1"
@@ -93,6 +95,13 @@ parts:
                         'Expected "aliases" property to be in snap.yaml')
         self.assertThat(
             c.data['apps']['test']['aliases'], Equals(['test-it', 'testing']))
+
+        # Verify that aliases are properly deprecated
+        self.assertThat(fake_logger.output, Contains(
+            "Aliases are now handled by the store, and shouldn't be declared "
+            'in the snap.'))
+        self.assertThat(fake_logger.output, Contains(
+            "See http://snapcraft.io/docs/deprecation-notices/dn5"))
 
     def test_yaml_aliases_with_duplicates(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)

@@ -14,12 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import ast
 import builtins
 import os
 import os.path
 import re
 import subprocess
 import shutil
+import sys
+import tempfile
+import textwrap
 
 from unittest import mock
 import testtools
@@ -584,7 +588,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         environment = '\n'.join(plugin.env(plugin.installdir)).split('\n')
 
         self.assertThat(environment, Contains(
-            'PYTHONPATH={}:$PYTHONPATH'.format(python_path)))
+            'PYTHONPATH={}${{PYTHONPATH:+:$PYTHONPATH}}'.format(python_path)))
 
         self.assertThat(environment, Contains(
             'ROS_MASTER_URI=http://localhost:11311'))
@@ -628,6 +632,67 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
         self.assertThat(environment, Contains('. {}'.format(
             os.path.join(plugin.rosdir, 'snapcraft-setup.sh'))))
+
+    def _evaluate_environment(self, predefinition=''):
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+
+        python_path = os.path.join(
+            plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')
+        os.makedirs(python_path)
+
+        # Save plugin environment off into a file and read the evaluated
+        # version back in, thus obtaining the real environment
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            f.write(predefinition)
+            f.write('\n'.join(['export ' + e for e in plugin.env(
+                plugin.installdir)]))
+            f.write('python3 -c "import os; print(dict(os.environ))"')
+            f.flush()
+            return ast.literal_eval(subprocess.check_output(
+                ['/bin/sh', f.name]).decode(
+                    sys.getfilesystemencoding()).strip())
+
+    def _pythonpath_segments(self, environment):
+        # Verify that the environment contains PYTHONPATH, and return its
+        # segments as a list.
+        self.assertThat(environment, Contains('PYTHONPATH'))
+        return environment['PYTHONPATH'].split(':')
+
+    def _list_contains_empty_items(self, item_list):
+        empty_items = [i for i in item_list if not i.strip()]
+        return len(empty_items) > 0
+
+    def test_pythonpath_if_not_defined(self):
+        environment = self._evaluate_environment()
+        segments = self._pythonpath_segments(environment)
+        self.assertFalse(
+            self._list_contains_empty_items(segments),
+            'PYTHONPATH unexpectedly contains empty segments: {}'.format(
+                environment['PYTHONPATH']))
+
+    def test_pythonpath_if_null(self):
+        environment = self._evaluate_environment(textwrap.dedent("""
+            export PYTHONPATH=
+        """))
+
+        segments = self._pythonpath_segments(environment)
+        self.assertFalse(
+            self._list_contains_empty_items(segments),
+            'PYTHONPATH unexpectedly contains empty segments: {}'.format(
+                environment['PYTHONPATH']))
+
+    def test_pythonpath_if_not_empty(self):
+        environment = self._evaluate_environment(textwrap.dedent("""
+            export PYTHONPATH=foo
+        """))
+
+        segments = self._pythonpath_segments(environment)
+        self.assertFalse(
+            self._list_contains_empty_items(segments),
+            'PYTHONPATH unexpectedly contains empty segments: {}'.format(
+                environment['PYTHONPATH']))
+        self.assertThat(segments, Contains('foo'))
 
     @mock.patch.object(catkin.CatkinPlugin, '_source_setup_sh',
                        return_value='test-source-setup')

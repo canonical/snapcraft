@@ -1,3 +1,88 @@
+snapcraft (2.34) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * core: cache FileBase entries when a checksum is provided (#1433)
+  * cli: better error message for missing mksquashfs (#1481)
+  * core: improve source caching logic (#1486)
+  * ci: speedup the CLA check (#1503)
+  * ci: disable the travis deploy stage for docs (#1510)
+  * vcs: ignore .vscode project settings (#1517)
+  * docs: add github processed templates (#1514)
+  * tour: remove the tour assets (#1520)
+  * project: introduce build-snaps (#1518)
+  * tests: update the meson test to latest meson requirements (#1532)
+  * jhbuild plugin: remove dependency on pkgconf (#1535)
+  * nodejs plugin: add prefix --prefix to global pkg add (#1539)
+  * New upstream release (LP: #1715399)
+
+  [ Christian Dywan ]
+  * lxd: clean with no parts should only delete (#1434)
+  * lxd: inject snapcraft and core snaps into the container (#1364)
+  * lxd: wait on lock files before running apt commands (#1435)
+  * kbuild plugin: support Makefiles without an install target (#1432)
+  * kbuild plugin: move over the cross-compiling logic from the kernel plugin (#1417)
+  * lxd: path cannot have extra forward slashes (#1483)
+  * lxd: always remove existing device for project folder (#1488)
+  * lifecycle: outdated step should raise SnapcraftError (#1513)
+  * errors: introduce ContainerError (#1505)
+  * lxd: LXD not installed when using remote (#1516)
+  * lxd: use a unique temporary folder (#1519)
+
+  [ Leo Arias ]
+  * recording: record the original snapcraft.yaml (#1407)
+  * ci: skip the CLA check for pull requests from the bot (#1482)
+  * docs: fix typo in plugin help (#1496)
+  * python plugin: record manifest (#1487)
+  * tests: use assertThat instead of assertEqual (#1501)
+  * python plugin: always record constraints and requirements contents (#1521)
+  * demos: update the name of the remote mqtt part (#1533)
+
+  [ Kyle Fazzari ]
+  * options: properly handle missing compiler prefix (#1425)
+  * catkin plugin: include-roscore is a boolean (#1472)
+  * catkin plugin: default to release build (#1470)
+  * catkin plugin: rosinstall-files is a pull property (#1473)
+  * catkin plugin: support passing args to cmake (#1471)
+  * catkin plugin: extract rosdep into new package (#1392)
+  * cli: add global exception handler
+  * cli: stop handling exceptions in lifecycle
+  * plugins: use exceptions based on SnapcraftError
+  * cli: stop handling exceptions in parts
+  * cli: stop handling exceptions in assertions
+  * cli: stop handling exceptions in store
+  * many: use exceptions based on SnapcraftError
+  * rosdep: add support for multiple dependency types (#1479)
+  * errors: use function for exit code (#1491)
+  * cli: don't raise from excepthook (#1495)
+  * repo: make errors based on SnapcraftError (#1499)
+  * project loader: refactor into package (#1504)
+  * grammar: move into project_loader (#1500)
+  * many: simplify plugin loading (#1507)
+  * schema: version should have a max length of 32 (#1508)
+  * project_loader: process stage package grammar (#1509)
+  * project_loader: support grammar on build-packages (#1511)
+
+  [ Alex T Newman ]
+  * windows: add cx_Freeze options targeting bin/snapcraft (#1478)
+
+  [ Michael Vogt ]
+  * meta: add `base` as a type and top level property (#1419)
+
+  [ Adam Collard ]
+  * ant plugin, gradle plugin: add support for authenticated proxies (#1490)
+
+  [ fmanea ]
+  * demos: remove the unnecessary wrapper from the java demo (#1494)
+
+  [ Neal Gompa (ニール・ゴンパ) ]
+  * repo: use os-release(5) to detect supported Linux distributions (#1527)
+
+  [ Daniel Llewellyn ]
+  * jhbuild plugin: new plugin (#1298)
+  * jhbuild plugin: fix UnboundLocalError for chmod_path (#1534)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Wed, 06 Sep 2017 14:04:53 +0000
+
 snapcraft (2.33) xenial; urgency=medium
 
   [ Sergio Schvezov ]
