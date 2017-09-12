@@ -31,3 +31,19 @@ class MissingPythonCommandError(PythonPluginError):
             python_version=python_version,
             search_paths=snapcraft.formatting_utils.combine_paths(
                 search_paths, '', ':'))
+
+
+class MissingUserSitePackagesError(PythonPluginError):
+
+    fmt = 'Unable to find user site packages: {site_dir_glob}'
+
+    def __init__(self, site_dir_glob):
+        super().__init__(site_dir_glob=site_dir_glob)
+
+
+class MissingSitePyError(PythonPluginError):
+
+    fmt = 'Unable to find site.py: {site_py_glob}'
+
+    def __init__(self, site_py_glob):
+        super().__init__(site_py_glob=site_py_glob)
