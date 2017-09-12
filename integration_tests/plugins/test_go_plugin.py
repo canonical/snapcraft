@@ -16,6 +16,7 @@
 
 import os
 import subprocess
+import tempfile
 
 import yaml
 from testtools.matchers import Equals, FileContains, FileExists, Not
@@ -77,5 +78,39 @@ class GoPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
                            'go-cgo')
         binary = os.path.join(self.parts_dir, 'go-cgo', 'install', 'bin',
+                              os.path.basename(self.path))
+        self.assertThat(binary, HasArchitecture('aarch64'))
+
+    sources_arm64 = '''
+    deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial main restricted
+    deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main restricted
+    deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial universe
+    deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates universe
+    deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial multiverse
+    deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates multiverse
+    deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports xenial-security main restricted
+    deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports xenial-security universe
+    deb [arch=arm64] http://ports.ubuntu.com/ubuntu-ports xenial-security multiverse'''  # noqa
+
+    def test_cross_compiling_with_cgo_and_target_suffix(self):
+        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+            self.skipTest('The test only handles amd64 to arm64')
+
+        # Setup the host for cross-compiling to arm64
+        subprocess.check_call(['sudo', 'dpkg', '--add-architecture', 'arm64'])
+        with tempfile.NamedTemporaryFile() as sources_arch_file:
+            sources_arch_file.write(self.sources_arm64.encode())
+            sources_arch_file.flush()
+            sources_lists = os.path.join('/etc/apt/sources.list.d/',
+                                         'ubuntu-{}.list'.format('arm64'))
+            subprocess.check_call(['sudo', 'cp',
+                                   sources_arch_file.name, sources_lists])
+            subprocess.check_call(['sudo', 'chmod', '644', sources_lists])
+            subprocess.check_call(['sudo', 'apt-get', 'update'])
+
+        target_arch = 'arm64'
+        self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
+                           'go-cgo-glib')
+        binary = os.path.join(self.parts_dir, 'go-cgo-glib', 'install', 'bin',
                               os.path.basename(self.path))
         self.assertThat(binary, HasArchitecture('aarch64'))
