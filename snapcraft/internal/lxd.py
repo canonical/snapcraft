@@ -23,7 +23,7 @@ import shutil
 import sys
 import tempfile
 from contextlib import contextmanager
-from subprocess import check_call, check_output, CalledProcessError
+from subprocess import check_call, check_output, CalledProcessError, Popen
 from time import sleep
 import requests
 import requests_unixsocket
@@ -33,6 +33,7 @@ import yaml
 
 from snapcraft.internal.errors import (
         ContainerConnectionError,
+        SnapcraftEnvironmentError,
         SnapdError,
 )
 from snapcraft.internal import common
@@ -75,7 +76,6 @@ class Containerbuild:
         if not deb_arch:
             raise ContainerConnectionError(
                 'Unrecognized server architecture {}'.format(kernel))
-        self._host_arch = deb_arch
         self._image = 'ubuntu:xenial/{}'.format(deb_arch)
         # Use a temporary folder the 'lxd' snap can access
         lxd_common_dir = os.path.expanduser(
@@ -96,7 +96,7 @@ class Containerbuild:
         check_call(['lxc', 'file', 'pull',
                     '{}{}'.format(self._container_name, src), dst])
 
-    def _container_run(self, cmd, cwd=None):
+    def _container_run(self, cmd, cwd=None, **kwargs):
         sh = ''
         # Automatically wait on lock files before running commands
         if cmd[0] == 'apt-get':
@@ -110,7 +110,8 @@ class Containerbuild:
         if sh:
             cmd = ['sh', '-c', '{}{}'.format(sh,
                    ' '.join(pipes.quote(arg) for arg in cmd))]
-        check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
+        check_call(['lxc', 'exec', self._container_name, '--'] + cmd,
+                   **kwargs)
 
     def _ensure_container(self):
         check_call([
@@ -166,9 +167,10 @@ class Containerbuild:
             command = ['snapcraft', step]
             if step == 'snap':
                 command += ['--output', self._snap_output]
-            if self._host_arch != self._project_options.deb_arch:
-                command += ['--target-arch',
-                            self._project_options.deb_arch]
+            # Pass on target arch if specified
+            # If not specified it defaults to the LXD architecture
+            if self._project_options.target_arch:
+                command += ['--target-arch', self._project_options.target_arch]
             if args:
                 command += args
             self._container_run(command, cwd=self._project_folder)
@@ -306,6 +308,7 @@ class Project(Containerbuild):
                          project_options=project_options,
                          metadata=metadata, container_name=metadata['name'],
                          remote=remote)
+        self._processes = []
 
     def _ensure_container(self):
         new_container = not self._get_container_status()
@@ -316,16 +319,26 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'environment.SNAPCRAFT_SETUP_CORE', '1'])
-            # Map host user to root inside container
+            # Necessary to read asset files with non-ascii characters.
             check_call([
                 'lxc', 'config', 'set', self._container_name,
-                'raw.idmap', 'both {} 0'.format(os.getuid())])
+                'environment.LC_ALL', 'C.UTF-8'])
+            if self._container_name.startswith('local:'):
+                # Map host user to root inside container
+                check_call([
+                    'lxc', 'config', 'set', self._container_name,
+                    'raw.idmap', 'both {} 0'.format(os.getuid())])
             # Remove existing device (to ensure we update old containers)
             devices = self._get_container_status()['devices']
             if self._project_folder in devices:
                 check_call([
                     'lxc', 'config', 'device', 'remove', self._container_name,
                     self._project_folder])
+            if 'fuse' not in devices:
+                check_call([
+                    'lxc', 'config', 'device', 'add', self._container_name,
+                    'fuse', 'unix-char', 'path=/dev/fuse'
+                    ])
             check_call([
                 'lxc', 'start', self._container_name])
         self._wait_for_network()
@@ -338,6 +351,9 @@ class Project(Containerbuild):
 
     def _ensure_mount(self, destination, source):
         logger.info('Mounting {} into container'.format(source))
+        if not self._container_name.startswith('local:'):
+            return self._remote_mount(destination, source)
+
         devices = self._get_container_status()['devices']
         if destination not in devices:
             check_call([
@@ -345,9 +361,54 @@ class Project(Containerbuild):
                 destination, 'disk', 'source={}'.format(source),
                 'path={}'.format(destination)])
 
+    def _remote_mount(self, destination, source):
+        # Pipes for sshfs and sftp-server to communicate
+        stdin1, stdout1 = os.pipe()
+        stdin2, stdout2 = os.pipe()
+        # XXX: This needs to be extended once we support other distros
+        try:
+            self._background_process_run(['/usr/lib/sftp-server'],
+                                         stdin=stdin1, stdout=stdout2)
+        except FileNotFoundError:
+            raise SnapcraftEnvironmentError(
+                'You must have openssh-sftp-server installed to use a LXD '
+                'remote on a different host.\n'
+                )
+        except CalledProcessError:
+            raise SnapcraftEnvironmentError(
+                'sftp-server seems to be installed but could not be run.\n'
+                )
+
+        # Use sshfs in slave mode to reverse mount the destination
+        self._container_run(['apt-get', 'install', '-y', 'sshfs'])
+        self._container_run(['mkdir', '-p', destination])
+        self._background_process_run([
+            'lxc', 'exec', self._container_name, '--',
+            'sshfs', '-o', 'slave', '-o', 'nonempty',
+            ':{}'.format(source), destination],
+            stdin=stdin2, stdout=stdout1)
+
+        # It may take a second or two for sshfs to come up
+        retry_count = 5
+        while retry_count:
+            sleep(1)
+            if check_output(['lxc', 'exec', self._container_name, '--',
+                             'ls', self._project_folder]):
+                return
+            retry_count -= 1
+        raise ContainerConnectionError(
+            'The project folder could not be mounted.\n'
+            'Fuse must be enabled on the LXD host.\n'
+            'You can run the following command to enable it:\n'
+            'echo Y | sudo tee /sys/module/fuse/parameters/userns_mounts')
+
+    def _background_process_run(self, cmd, **kwargs):
+        self._processes += [Popen(cmd, **kwargs)]
+
     def _finish(self):
-        # Nothing to do
-        pass
+        for process in self._processes:
+            logger.info('Terminating {}'.format(process.args))
+            process.terminate()
 
     def execute(self, step='snap', args=None):
         # clean with no parts deletes the container
@@ -381,6 +442,17 @@ def _get_default_remote():
     return default_remote.decode(sys.getfilesystemencoding()).strip()
 
 
+def _remote_is_valid(remote):
+    """Verify that the given string is a valid remote name
+
+    :param str remote: the LXD remote to verify.
+    """
+    # No colon because it separates remote from container name
+    # No slash because it's used for images
+    # No spaces
+    return not (':' in remote or ' ' in remote or '/' in remote)
+
+
 def _verify_remote(remote):
     """Verify that the lxd remote exists.
 
@@ -394,9 +466,7 @@ def _verify_remote(remote):
         check_output(['lxc', 'list', '{}:'.format(remote)])
     except FileNotFoundError:
         raise ContainerConnectionError(
-            'You must have LXD installed in order to use cleanbuild.\n'
-            'Refer to the documentation at '
-            'https://linuxcontainers.org/lxd/getting-started-cli.')
+            'You must have LXD installed in order to use cleanbuild.')
     except CalledProcessError as e:
         raise ContainerConnectionError(
             'There are either no permissions or the remote {!r} '

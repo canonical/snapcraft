@@ -33,21 +33,27 @@ from snapcraft.internal import lxd
 from snapcraft.internal.errors import (
     ContainerConnectionError,
     SnapdError,
+    SnapcraftEnvironmentError,
 )
+from snapcraft._options import _get_deb_arch
 
 
 class LXDTestCase(tests.TestCase):
 
     scenarios = [
-        ('local', dict(remote='local', target_arch=None)),
-        ('remote', dict(remote='my-remote', target_arch=None)),
-        ('cross', dict(remote='local', target_arch='armhf')),
+        ('local', dict(remote='local', target_arch=None, server='x86_64')),
+        ('remote', dict(remote='myremote', target_arch=None, server='x86_64')),
+        ('cross', dict(remote='local', target_arch='armhf', server='x86_64')),
+        ('arm remote', dict(remote='pi', target_arch=None, server='armv7l')),
+        ('arm same', dict(remote='pi', target_arch='armhf', server='armv7l')),
+        ('arm cross', dict(remote='pi', target_arch='arm64', server='armv7l')),
     ]
 
     def setUp(self):
         super().setUp()
         self.fake_lxd = tests.fixture_setup.FakeLXD()
         self.useFixture(self.fake_lxd)
+        self.fake_lxd.kernel_arch = self.server
         self.fake_filesystem = tests.fixture_setup.FakeFilesystem()
         self.useFixture(self.fake_filesystem)
 
@@ -68,14 +74,16 @@ class LXDTestCase(tests.TestCase):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
 
         mock_pet.return_value = 'my-pet'
+
         project_folder = '/root/build_project'
         self.make_cleanbuilder().execute()
-        expected_arch = 'amd64'
+        expected_arch = _get_deb_arch(self.server)
 
         self.assertIn('Waiting for a network connection...\n'
                       'Network connection established\n'
                       'Setting up container with project assets\n'
                       'Retrieved snap.snap\n', self.fake_logger.output)
+
         args = []
         if self.target_arch:
             self.assertIn('Setting target machine to \'{}\'\n'.format(
@@ -343,3 +351,68 @@ class LXDTestCase(tests.TestCase):
             call(['snap', 'install', '/run/snapcraft_x1.snap',
                   '--dangerous', '--classic']),
         ])
+
+
+class ProjectTestCase(LXDTestCase):
+
+    scenarios = [
+        ('remote', dict(remote='myremote', target_arch=None, server='x86_64')),
+    ]
+
+    def make_project(self):
+        return lxd.Project(output='snap.snap', source='project.tar',
+                           metadata={'name': 'project'},
+                           project_options=self.project_options,
+                           remote=self.remote)
+
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    def test_ftp_not_installed(self, mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+
+        def call_effect(*args, **kwargs):
+            if args[0][:1] == ['/usr/lib/sftp-server']:
+                raise FileNotFoundError(
+                    2, 'No such file or directory')
+
+        self.fake_lxd.popen_mock.side_effect = call_effect
+
+        self.assertIn(
+            'You must have openssh-sftp-server installed to use a LXD '
+            'remote on a different host.\n',
+            str(self.assertRaises(
+                SnapcraftEnvironmentError,
+                self.make_project().execute)))
+
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    def test_ftp_error(self, mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+
+        def call_effect(*args, **kwargs):
+            if args[0][:1] == ['/usr/lib/sftp-server']:
+                raise CalledProcessError(
+                    returncode=255, cmd=args[0])
+
+        self.fake_lxd.popen_mock.side_effect = call_effect
+
+        self.assertIn(
+            'sftp-server seems to be installed but could not be run.\n',
+            str(self.assertRaises(
+                SnapcraftEnvironmentError,
+                self.make_project().execute)))
+
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    def test_sshfs_failed(self, mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['lxc', 'exec'] and args[0][4] == 'ls':
+                return ''.encode('utf-8')
+            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
+
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.assertIn(
+            'The project folder could not be mounted.\n',
+            str(self.assertRaises(
+                ContainerConnectionError,
+                self.make_project().execute)))

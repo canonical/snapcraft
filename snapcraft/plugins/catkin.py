@@ -286,7 +286,12 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
             # The ROS packaging system tools (e.g. rospkg, etc.) don't go
             # into the ROS install path (/opt/ros/$distro), so we need the
             # PYTHONPATH to include the dist-packages in /usr/lib as well.
-            env.append('PYTHONPATH={0}:$PYTHONPATH'.format(
+            #
+            # Note: Empty segments in PYTHONPATH are interpreted as `.`, thus
+            # adding the current working directory to the PYTHONPATH. That is
+            # not desired in this situation, so take proper precautions when
+            # expanding PYTHONPATH: only add it if it's not empty.
+            env.append('PYTHONPATH={}${{PYTHONPATH:+:$PYTHONPATH}}'.format(
                 common.get_python2_path(root)))
         except errors.SnapcraftEnvironmentError as e:
             logger.debug(e)
@@ -909,9 +914,14 @@ class _Catkin:
                 formatting_utils.format_path_variable(
                     'PATH', bin_paths, prepend='', separator=':')))
 
-            lines.append('export _CATKIN_SETUP_DIR={}'.format(self._workspace))
-            lines.append('source {}'.format(os.path.join(
-                self._workspace, 'setup.sh')))
+            # Source our own workspace so we have all of Catkin's dependencies,
+            # then source the workspace we're actually supposed to be crawling.
+            lines.append('_CATKIN_SETUP_DIR={} source {}'.format(
+                ros_path, os.path.join(ros_path, 'setup.sh')))
+            lines.append('_CATKIN_SETUP_DIR={} source {} --extend'.format(
+                self._workspace,
+                os.path.join(self._workspace, 'setup.sh')))
+
             lines.append('exec "$@"')
             f.write('\n'.join(lines))
             f.flush()

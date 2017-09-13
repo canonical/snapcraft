@@ -137,7 +137,7 @@ class _AptCache:
             finally:
                 apt_cache.close()
         except Exception as e:
-            logger.debug('Exception occured: {!r}'.format(e))
+            logger.debug('Exception occurred: {!r}'.format(e))
             raise e
 
     def sources_digest(self):
