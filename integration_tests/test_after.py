@@ -81,6 +81,7 @@ class AfterTestCase(integration_tests.TestCase):
         self.assertThat(exception.output, Contains(
             "Build failed: 'make -j{}' exited with 2".format(
                 snapcraft.ProjectOptions().parallel_build_count)))
+        self.assertThat(exception.returncode, Equals(2))
 
     def test_pull_with_tree_of_dependencies(self):
         self.run_snapcraft(
