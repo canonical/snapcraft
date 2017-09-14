@@ -3,6 +3,7 @@ demos/*/parts/
 demos/*/prime/
 demos/*/stage/
 demos/**/*.snap
+snap/.snapcraft/
 tests/unit/parts/
 tests/unit/snap/
 tests/unit/stage/
