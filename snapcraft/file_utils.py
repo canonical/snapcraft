@@ -127,13 +127,13 @@ def link_or_copy(source, destination, follow_symlinks=False):
 
 def link_or_copy_tree(source_tree, destination_tree,
                       copy_function=link_or_copy):
-    """Copy a source tree into a destination, hard-linking if possile.
+    """Copy a source tree into a destination, hard-linking if possible.
 
     :param str source_tree: Source directory to be copied.
     :param str destination_tree: Destination directory. If this directory
                                  already exists, the files in `source_tree`
                                  will take precedence.
-    :param str boundary: Filesystem boundary no symlinks are allowed to cross.
+    :param callable copy_function: Callable that actually copies.
     """
 
     if not os.path.isdir(source_tree):

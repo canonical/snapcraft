@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# The launch file doesn't properly interleave output like we need here. So
+# script it instead.
+
+ros2 run talker_cpp talker &
+ros2 run listener_py listener
