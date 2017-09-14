@@ -47,3 +47,19 @@ class MissingSitePyError(PythonPluginError):
 
     def __init__(self, site_py_glob):
         super().__init__(site_py_glob=site_py_glob)
+
+
+class PipListInvalidJsonError(PythonPluginError):
+
+    fmt = "Pip packages output isn't valid json: {json!r}"
+
+    def __init__(self, json):
+        super().__init__(json=json)
+
+
+class PipListMissingFieldError(PythonPluginError):
+
+    fmt = 'Pip packages json missing {field!r} field: {json!r}'
+
+    def __init__(self, field, json):
+        super().__init__(field=field, json=json)

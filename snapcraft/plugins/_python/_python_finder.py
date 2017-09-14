@@ -76,3 +76,28 @@ def get_python_headers(python_major_version, *, stage_dir):
         return host_python[0]
     else:
         return ''
+
+
+def get_python_home(python_major_version, *, stage_dir, install_dir):
+    """Find the correct PYTHONHOME, preferring staged over the part.
+
+    We prefer the staged python as opposed to the in-part python in order to
+    support one part that supplies python, with another part built `after` it
+    wanting to use its python.
+
+    :param str python_major_version: The python major version to find (2 or 3)
+    :param str stage_dir: Path to the staging area
+    :param str install_dir: Path to the part's install area
+
+    :return: Path to the PYTHONHOME that was found
+    :rtype: str
+
+    :raises MissingPythonCommandError: If no python could be found in the
+                                       staging or part's install area.
+    """
+    python_command = get_python_command(
+        python_major_version, stage_dir=stage_dir, install_dir=install_dir)
+    if python_command.startswith(stage_dir):
+        return os.path.join(stage_dir, 'usr')
+    else:
+        return os.path.join(install_dir, 'usr')
