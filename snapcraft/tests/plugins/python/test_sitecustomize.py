@@ -23,16 +23,7 @@ from testtools.matchers import (
 
 from snapcraft.plugins import _python
 
-from snapcraft import (
-    tests
-)
-
-
-def _create_python_binary(base_dir):
-    python_command_path = os.path.join(
-        base_dir, 'usr', 'bin', 'pythontest')
-    os.makedirs(os.path.dirname(python_command_path))
-    open(python_command_path, 'w').close()
+from . import PythonBaseTestCase
 
 
 def _create_site_py(base_dir):
@@ -48,14 +39,14 @@ def _create_user_site_packages(base_dir):
     os.makedirs(user_site_dir)
 
 
-class SiteCustomizeTestCase(tests.TestCase):
+class SiteCustomizeTestCase(PythonBaseTestCase):
 
     def test_generate_sitecustomize_staged(self):
         stage_dir = 'stage_dir'
         install_dir = 'install_dir'
 
         # Create the python binary in the staging area
-        _create_python_binary(stage_dir)
+        self._create_python_binary(stage_dir)
 
         # Create a site.py in both staging and install areas
         _create_site_py(stage_dir)
@@ -94,7 +85,7 @@ class SiteCustomizeTestCase(tests.TestCase):
         install_dir = 'install_dir'
 
         # Create the python binary in the installed area
-        _create_python_binary(install_dir)
+        self._create_python_binary(install_dir)
 
         # Create a site.py in both staging and install areas
         _create_site_py(stage_dir)
@@ -133,7 +124,7 @@ class SiteCustomizeTestCase(tests.TestCase):
         install_dir = 'install_dir'
 
         # Create the python binary in the installed area
-        _create_python_binary(install_dir)
+        self._create_python_binary(install_dir)
 
         # Create a site.py in both staging and install areas
         _create_site_py(stage_dir)
@@ -152,7 +143,7 @@ class SiteCustomizeTestCase(tests.TestCase):
         install_dir = 'install_dir'
 
         # Create the python binary in the staging area
-        _create_python_binary(stage_dir)
+        self._create_python_binary(stage_dir)
 
         # Create a site.py, but only in install area (not staging area)
         _create_site_py(install_dir)

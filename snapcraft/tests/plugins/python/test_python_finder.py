@@ -28,19 +28,10 @@ from snapcraft.plugins._python import (
     _python_finder,
 )
 
-from snapcraft import (
-    tests
-)
+from . import PythonBaseTestCase
 
 
-def _create_python_binary(base_dir):
-    python_command_path = os.path.join(
-        base_dir, 'usr', 'bin', 'pythontest')
-    os.makedirs(os.path.dirname(python_command_path))
-    open(python_command_path, 'w').close()
-
-
-class GetPythonCommandTestCase(tests.TestCase):
+class GetPythonCommandTestCase(PythonBaseTestCase):
 
     def test_staged(self):
         """get_python_command should support staged python"""
@@ -49,7 +40,7 @@ class GetPythonCommandTestCase(tests.TestCase):
         install_dir = 'install_dir'
 
         # Create staged binary
-        _create_python_binary(stage_dir)
+        self._create_python_binary(stage_dir)
 
         python_command = _python_finder.get_python_command(
             'test', stage_dir=stage_dir, install_dir=install_dir)
@@ -64,7 +55,7 @@ class GetPythonCommandTestCase(tests.TestCase):
         install_dir = 'install_dir'
 
         # Create installed binary
-        _create_python_binary(install_dir)
+        self._create_python_binary(install_dir)
 
         python_command = _python_finder.get_python_command(
             'test', stage_dir=stage_dir, install_dir=install_dir)
@@ -79,8 +70,8 @@ class GetPythonCommandTestCase(tests.TestCase):
         install_dir = 'install_dir'
 
         # Create both staged and installed binaries
-        _create_python_binary(stage_dir)
-        _create_python_binary(install_dir)
+        self._create_python_binary(stage_dir)
+        self._create_python_binary(install_dir)
 
         python_command = _python_finder.get_python_command(
             'test', stage_dir=stage_dir, install_dir=install_dir)
@@ -102,7 +93,7 @@ class GetPythonCommandTestCase(tests.TestCase):
             'Unable to find pythontest, searched: stage_dir:install_dir'))
 
 
-class GetPythonHeadersTestCase(tests.TestCase):
+class GetPythonHeadersTestCase(PythonBaseTestCase):
 
     def setUp(self):
         super().setUp()
@@ -179,3 +170,59 @@ class GetPythonHeadersTestCase(tests.TestCase):
 
         self.assertFalse(
             _python_finder.get_python_headers('test', stage_dir=stage_dir))
+
+
+class GetPythonHomeTestCase(PythonBaseTestCase):
+
+    def test_staged(self):
+        """get_python_home should support staged python"""
+
+        stage_dir = 'stage_dir'
+        install_dir = 'install_dir'
+
+        # Create staged binary
+        self._create_python_binary(stage_dir)
+
+        python_home = _python_finder.get_python_home(
+            'test', stage_dir=stage_dir, install_dir=install_dir)
+        self.assertThat(python_home, Equals(os.path.join(stage_dir, 'usr')))
+
+    def test_in_part(self):
+        """get_python_home should support in-part python"""
+
+        stage_dir = 'stage_dir'
+        install_dir = 'install_dir'
+
+        # Create installed binary
+        self._create_python_binary(install_dir)
+
+        python_home = _python_finder.get_python_home(
+            'test', stage_dir=stage_dir, install_dir=install_dir)
+        self.assertThat(python_home, Equals(os.path.join(install_dir, 'usr')))
+
+    def test_staged_and_in_part(self):
+        """get_python_home should prefer staged python over in-part"""
+
+        stage_dir = 'stage_dir'
+        install_dir = 'install_dir'
+
+        # Create both staged and installed binaries
+        self._create_python_binary(stage_dir)
+        self._create_python_binary(install_dir)
+
+        python_home = _python_finder.get_python_home(
+            'test', stage_dir=stage_dir, install_dir=install_dir)
+        self.assertThat(python_home, Equals(os.path.join(stage_dir, 'usr')))
+
+    def test_missing_raises(self):
+        """get_python_home should raise if no python can be found"""
+
+        stage_dir = 'stage_dir'
+        install_dir = 'install_dir'
+
+        raised = self.assertRaises(
+            errors.MissingPythonCommandError,
+            _python_finder.get_python_home, 'test', stage_dir=stage_dir,
+            install_dir=install_dir)
+        self.assertThat(str(raised), Equals(
+            'Unable to find pythontest, searched: stage_dir:install_dir'))
