@@ -20,6 +20,7 @@ import copy
 import io
 import os
 import string
+import subprocess
 import sys
 import threading
 from textwrap import dedent
@@ -32,6 +33,7 @@ from subprocess import CalledProcessError
 
 import fixtures
 import xdg
+import yaml
 
 import snapcraft
 from snapcraft.tests import fake_servers
@@ -551,11 +553,11 @@ class FakeDpkgArchitecture(fixtures.Fixture):
 class FakeLXD(fixtures.Fixture):
     '''...'''
 
-    def __init__(self, fail_on_snapcraft_run=False):
+    def __init__(self):
         self.status = None
+        self.files = []
         self.kernel_arch = 'x86_64'
         self.devices = '{}'
-        self.fail_on_snapcraft_run = fail_on_snapcraft_run
 
     def _setUp(self):
         patcher = mock.patch('snapcraft.internal.lxd.check_call')
@@ -566,6 +568,11 @@ class FakeLXD(fixtures.Fixture):
         patcher = mock.patch('snapcraft.internal.lxd.check_output')
         self.check_output_mock = patcher.start()
         self.check_output_mock.side_effect = self.check_output_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.lxd.Popen')
+        self.popen_mock = patcher.start()
+        self.popen_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
@@ -603,23 +610,47 @@ class FakeLXD(fixtures.Fixture):
                             'DEVICES': self.devices,
                             }).encode('utf-8')
                 return '[]'.encode('utf-8')
-            elif args[0][:2] == ['lxc', 'init']:
-                self.name = args[0][3]
-                self.status = 'Stopped'
-            elif args[0][:2] == ['lxc', 'launch']:
-                self.name = args[0][4]
-                self.status = 'Running'
-            elif args[0][:2] == ['lxc', 'stop'] and not self.status:
-                # error: not found
-                raise CalledProcessError(returncode=1, cmd=args[0])
-            # Fail on an actual snapcraft command and not the command
-            # for the installation of it.
-            elif ('snapcraft snap' in ' '.join(args[0])
-                  and self.fail_on_snapcraft_run):
-                raise CalledProcessError(returncode=255, cmd=args[0])
+            elif (args[0][0] == 'lxc' and
+                  args[0][1] in ['init', 'start', 'launch', 'stop']):
+                return self._lxc_create_start_stop(args)
+            elif args[0][:2] == ['lxc', 'exec']:
+                return self._lxc_exec(args)
+            elif '/usr/lib/sftp-server' in args[0]:
+                return self._popen(args[0])
             else:
                 return ''.encode('utf-8')
         return call_effect
+
+    def _lxc_create_start_stop(self, args):
+        if args[0][1] == 'init':
+            self.name = args[0][3]
+            self.status = 'Stopped'
+        elif args[0][1] == 'launch':
+            self.name = args[0][4]
+            self.status = 'Running'
+        elif args[0][1] == 'start' and self.name == args[0][2]:
+            self.status = 'Running'
+        elif args[0][1] == 'stop' and not self.status:
+            # error: not found
+            raise CalledProcessError(returncode=1, cmd=args[0])
+
+    def _lxc_exec(self, args):
+        if self.status and args[0][2] == self.name:
+            cmd = args[0][4]
+            if cmd == 'ls':
+                return ' '.join(self.files).encode('utf-8')
+            elif cmd == 'sshfs':
+                self.files = ['foo', 'bar']
+                return self._popen(args[0])
+
+    def _popen(self, args):
+        class Popen:
+            def __init__(self, args):
+                self.args = args
+
+            def terminate(self):
+                pass
+        return Popen(args)
 
 
 class FakeSnapd(fixtures.Fixture):
@@ -934,3 +965,60 @@ class FakeAptCachePackage():
 
     def get_dependencies(self, _):
         return []
+
+
+class WithoutSnapInstalled(fixtures.Fixture):
+    """Assert that a snap is not installed and remove it on clean up.
+
+    :raises: AssertionError: if the snap is installed when this fixture is
+        set up.
+    """
+
+    def __init__(self, snap_name):
+        super().__init__()
+        self.snap_name = snap_name.split('/')[0]
+
+    def setUp(self):
+        super().setUp()
+        if snapcraft.repo.snaps.SnapPackage.is_snap_installed(self.snap_name):
+            raise AssertionError(
+                "This test cannot run if you already have the {snap!r} snap "
+                "installed. Please uninstall it by running "
+                "'sudo snap remove {snap}'.".format(snap=self.snap_name))
+
+        self.addCleanup(self._remove_snap)
+
+    def _remove_snap(self):
+        try:
+            subprocess.check_output(
+                ['sudo', 'snap', 'remove', self.snap_name],
+                stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            RuntimeError("unable to remove {!r}: {}".format(
+                self.snap_name, e.output))
+
+
+class SnapcraftYaml(fixtures.Fixture):
+
+    def __init__(
+            self, path, name='test-snap', version='test-version',
+            summary='test-summary', description='test-description'):
+        super().__init__()
+        self.path = path
+        self.data = {
+            'name': name,
+            'version': version,
+            'summary': summary,
+            'description': description,
+            'parts': {}
+        }
+
+    def update_part(self, name, data):
+        part = {name: data}
+        self.data['parts'].update(part)
+
+    def setUp(self):
+        super().setUp()
+        with open(os.path.join(self.path, 'snapcraft.yaml'),
+                  'w') as snapcraft_yaml_file:
+            yaml.dump(self.data, snapcraft_yaml_file)

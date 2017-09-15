@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import os
 
 from unittest import mock
+from testscenarios.scenarios import multiply_scenarios
 from testtools.matchers import DirExists, Equals, HasLength
 
 import snapcraft
@@ -37,6 +39,11 @@ class NodePluginBaseTestCase(tests.TestCase):
         patcher = mock.patch('snapcraft.internal.common.run')
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.common.run_output')
+        self.run_output_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+        self.run_output_mock.return_value = '{"dependencies": []}'
 
         patcher = mock.patch('snapcraft.sources.Tar')
         self.tar_mock = patcher.start()
@@ -344,6 +351,76 @@ class NodePluginTestCase(NodePluginBaseTestCase):
         plugin.clean_pull()
 
         self.assertFalse(os.path.exists(plugin._npm_dir))
+
+
+class NodePluginManifestTestCase(NodePluginBaseTestCase):
+
+    scenarios = multiply_scenarios(
+        [
+            ('simple', dict(ls_output=(
+                '{"dependencies": {'
+                '   "testpackage1": {"version": "1.0"},'
+                '   "testpackage2": {"version": "1.2"}}}'))),
+            ('nested', dict(ls_output=(
+                '{"dependencies": {'
+                '   "testpackage1": {'
+                '      "version": "1.0",'
+                '      "dependencies": {'
+                '        "testpackage2": {"version": "1.2"}}}}}'))),
+            ('missing', dict(ls_output=(
+                '{"dependencies": {'
+                '   "testpackage1": {"version": "1.0"},'
+                '   "testpackage2": {"version": "1.2"},'
+                '   "missing": {"noversion": "dummy"}}}')))],
+        [('npm', dict(package_manager='npm')),
+         ('yarn', dict(package_manager='yarn'))])
+
+    def test_get_manifest_with_node_packages(self):
+        self.run_output_mock.return_value = self.ls_output
+
+        class Options:
+            source = '.'
+            node_packages = []
+            node_engine = '4'
+            npm_run = []
+            node_package_manager = self.package_manager
+        plugin = nodejs.NodePlugin('test-part', Options(),
+                                   self.project_options)
+        os.makedirs(plugin.sourcedir)
+
+        plugin.build()
+
+        self.assertThat(
+            plugin.get_manifest(), Equals(
+                collections.OrderedDict(
+                    {'node-packages':
+                     ['testpackage1=1.0', 'testpackage2=1.2']})))
+
+
+class NodePluginYarnLockManifestTestCase(NodePluginBaseTestCase):
+
+    def test_get_manifest_with_yarn_lock_file(self):
+        class Options:
+            source = '.'
+            node_packages = []
+            node_engine = '4'
+            npm_run = []
+            node_package_manager = 'yarn'
+        plugin = nodejs.NodePlugin('test-part', Options(),
+                                   self.project_options)
+        os.makedirs(plugin.sourcedir)
+        with open(os.path.join(
+                plugin.sourcedir,
+                'yarn.lock'), 'w') as yarn_lock_file:
+            yarn_lock_file.write('test yarn lock contents')
+
+        plugin.build()
+
+        expected_manifest = collections.OrderedDict()
+        expected_manifest['yarn-lock-contents'] = 'test yarn lock contents'
+        expected_manifest['node-packages'] = []
+
+        self.assertThat(plugin.get_manifest(), Equals(expected_manifest))
 
 
 class NodePluginNpmWorkaroundsTestCase(NodePluginBaseTestCase):

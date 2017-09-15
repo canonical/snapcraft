@@ -26,10 +26,11 @@ import integration_tests
 class ValidateTestCase(integration_tests.StoreTestCase):
 
     def setUp(self):
-        if os.getenv('TEST_STORE', 'fake') != 'fake':
+        super().setUp()
+        if not self.is_store_fake():
             self.skipTest('Right combination of snaps and IDs is not '
                           'available in real stores.')
-        super().setUp()
+
         keys_dir = os.path.join(os.path.dirname(__file__), 'keys')
         temp_keys_dir = os.path.join(self.path, '.snap', 'gnupg')
         shutil.copytree(keys_dir, temp_keys_dir)

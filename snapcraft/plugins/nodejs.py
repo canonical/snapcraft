@@ -40,10 +40,15 @@ Additionally, this plugin uses the following plugin-specific keywords:
       The language package manager to use to drive installation
       of node packages. Can be either `npm` (default) or `yarn`.
 """
+
+import collections
 import contextlib
+import json
 import logging
 import os
 import shutil
+import subprocess
+import sys
 
 import snapcraft
 from snapcraft import sources
@@ -126,6 +131,7 @@ class NodePlugin(snapcraft.BasePlugin):
             logger.warning(
                 'EXPERIMENTAL: use of yarn to manage packages is experimental')
             self._yarn_tar = sources.Tar(_YARN_URL, self._npm_dir)
+        self._manifest = collections.OrderedDict()
 
     def pull(self):
         super().pull()
@@ -149,13 +155,22 @@ class NodePlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
         if self.options.node_package_manager == 'npm':
-            self._npm_install(rootdir=self.builddir)
+            installed_node_packages = self._npm_install(rootdir=self.builddir)
             # Copy the content of the symlink to the build directory
             # LP: #1702661
             modules_dir = os.path.join(self.installdir, 'lib', 'node_modules')
             _copy_symlinked_content(modules_dir)
         else:
-            self._yarn_install(rootdir=self.builddir)
+            installed_node_packages = self._yarn_install(rootdir=self.builddir)
+            lock_file_path = os.path.join(self.sourcedir, 'yarn.lock')
+            if os.path.isfile(lock_file_path):
+                with open(lock_file_path) as lock_file:
+                    self._manifest['yarn-lock-contents'] = lock_file.read()
+
+        self._manifest['node-packages'] = [
+            '{}={}'.format(name, installed_node_packages[name])
+            for name in installed_node_packages
+        ]
 
     def _npm_install(self, rootdir):
         self._nodejs_tar.provision(
@@ -168,6 +183,7 @@ class NodePlugin(snapcraft.BasePlugin):
             self.run(npm_install + ['--global'], cwd=rootdir)
         for target in self.options.npm_run:
             self.run(['npm', 'run', target], cwd=rootdir)
+        return self._get_installed_node_packages('npm', self.installdir)
 
     def _yarn_install(self, rootdir):
         self._nodejs_tar.provision(
@@ -208,6 +224,33 @@ class NodePlugin(snapcraft.BasePlugin):
         for target in self.options.npm_run:
             self.run(yarn_cmd + ['run', target], cwd=rootdir,
                      env=self._build_environment(rootdir))
+        return self._get_installed_node_packages('npm', self.installdir)
+
+    def _get_installed_node_packages(self, package_manager, cwd):
+        try:
+            output = self.run_output(
+                [package_manager, 'ls', '--global', '--json'], cwd=cwd)
+        except subprocess.CalledProcessError as error:
+            # XXX When dependencies have missing dependencies, an error like
+            # this is printed to stderr:
+            # npm ERR! peer dep missing: glob@*, required by glob-promise@3.1.0
+            # retcode is not 0, which raises an exception.
+            output = error.output.decode(sys.getfilesystemencoding()).strip()
+        packages = collections.OrderedDict()
+        dependencies = json.loads(
+            output, object_pairs_hook=collections.OrderedDict)['dependencies']
+        while dependencies:
+            key, value = dependencies.popitem(last=False)
+            # XXX Just as above, dependencies without version are the ones
+            # missing.
+            if 'version' in value:
+                packages[key] = value['version']
+            if 'dependencies' in value:
+                dependencies.update(value['dependencies'])
+        return packages
+
+    def get_manifest(self):
+        return self._manifest
 
     def _build_environment(self, rootdir):
         env = os.environ.copy()
