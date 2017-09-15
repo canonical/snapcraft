@@ -57,6 +57,7 @@ _CMD_ALIASES = {
     'keys': 'list-keys',
     'revisions': 'list-revisions',
     'plugins': 'list-plugins',
+    'collaborators': 'edit-collaborators',
 }
 
 _CMD_DEPRECATION_NOTICES = {
