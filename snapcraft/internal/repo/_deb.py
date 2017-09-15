@@ -24,7 +24,6 @@ import stat
 import string
 import subprocess
 import sys
-import tempfile
 import urllib
 import urllib.request
 
@@ -34,6 +33,7 @@ from xml.etree import ElementTree
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import cache, repo, common
+from snapcraft.internal.common import get_os_release_info
 from snapcraft.internal.indicators import is_dumb_terminal
 from ._base import BaseRepo
 from . import errors
@@ -155,6 +155,51 @@ class _AptCache:
         return _get_local_sources_list()
 
 
+class PackageNotFoundError(errors.PackageNotFoundError):
+
+    @property
+    def message(self):
+        message = super().message
+        # If the package was multiarch, try to help.
+        if ':' in self.package_name:
+            (name, arch) = self.package_name.split(':', 2)
+            if arch:
+                valid_archs = subprocess.check_output(
+                    ['dpkg-architecture', '-L']).decode(
+                        sys.getfilesystemencoding())
+                if arch not in valid_archs:
+                    message += (
+                        ' {!r} is not a valid architecture name.'.format(arch))
+                    return message
+                native_arch = subprocess.check_output(
+                    ['dpkg', '--print-architecture']).decode(
+                        sys.getfilesystemencoding())
+                if arch in native_arch:
+                    return message
+                foreign_archs = subprocess.check_output(
+                    ['dpkg', '--print-foreign-architectures']).decode(
+                        sys.getfilesystemencoding())
+                if arch not in foreign_archs:
+                    message += (
+                        '\nThe target architecture needs to be registered on '
+                        'the host. Run the following command to do that:'
+                        '\n    sudo dpkg --add--architecture {}'.format(arch))
+
+                sources = _get_local_sources_list()
+                if '[arch={}]'.format(arch) not in sources:
+                    release = get_os_release_info()['VERSION_CODENAME']
+                    sources = _format_sources_list(None, deb_arch=arch,
+                                                   release=release,
+                                                   foreign=True)
+                    message += (
+                        '\nSources for {!r} need to be added to '
+                        '/etc/apt/sources.list.d. The following is suggested:'
+                        '\n\n{}'
+                        '\n\nAfterwards update the package cache:'
+                        '\n    sudo apt update'.format(arch, sources))
+        return message
+
+
 class Ubuntu(BaseRepo):
 
     @classmethod
@@ -208,60 +253,6 @@ class Ubuntu(BaseRepo):
                 for package in new_packages]
 
     @classmethod
-    def _setup_multi_arch_sources(cls, apt_cache, name, arch, version):
-        """If the given package has an arch suffix:
-        Generate arch-specific sources list
-        Update the package cache to pull in the new packages
-        Verify that the package is in the cache
-        """
-        if not arch or arch == ':native':
-            return False
-        arch = arch[1:]
-
-        cls._setup_foreign_arch(arch)
-
-        sources = _get_local_sources_list()
-        if '[arch={}]'.format(arch) not in sources:
-            logger.info('Adding sources for {}'.format(arch))
-            release = platform.linux_distribution()[2]
-            sources = _format_sources_list(None, deb_arch=arch,
-                                           release=release, foreign=True)
-            with tempfile.NamedTemporaryFile() as sources_arch_file:
-                sources_arch_file.write(sources.encode())
-                sources_arch_file.flush()
-                sources_lists = os.path.join('/etc/apt/sources.list.d/',
-                                             'ubuntu-{}.list'.format(arch))
-                subprocess.check_call(['sudo', 'cp',
-                                       sources_arch_file.name, sources_lists])
-                subprocess.check_call(['sudo', 'chmod',
-                                       '644', sources_lists])
-
-        update_output = subprocess.check_output(
-            ['sudo', 'apt-get', 'update'],
-            stderr=subprocess.STDOUT).decode(sys.getfilesystemencoding())
-        # Failure to download doesn't return an error code
-        if 'Err:' in update_output:
-            raise subprocess.CalledProcessError(
-                100, ['sudo', 'apt-get', 'update'], update_output)
-        return (name + arch) in apt_cache
-
-    @classmethod
-    def _setup_foreign_arch(cls, arch):
-        native_arch = subprocess.check_output(
-            ['dpkg', '--print-architecture']).decode(
-                sys.getfilesystemencoding())
-        if arch in native_arch:
-            return
-        foreign_archs = subprocess.check_output(
-            ['dpkg', '--print-foreign-architectures']).decode(
-                sys.getfilesystemencoding())
-        if arch in foreign_archs:
-            return
-        logger.info('Adding foreign architecture {}'.format(arch))
-        subprocess.check_output(
-            ['sudo', 'dpkg', '--add-architecture', arch])
-
-    @classmethod
     def _mark_install(cls, apt_cache, package_names):
         for pkg in package_names:
             logger.debug('Marking {!r} (and its dependencies) to be '
@@ -274,9 +265,7 @@ class Ubuntu(BaseRepo):
                     _set_pkg_version(apt_cache[name + arch], version)
                 apt_cache[name + arch].mark_install()
             except KeyError as e:
-                if not cls._setup_multi_arch_sources(apt_cache,
-                                                     name, arch, version):
-                    raise errors.PackageNotFoundError(pkg) from e
+                raise PackageNotFoundError(pkg)
 
     @classmethod
     def _install_new_build_packages(cls, package_names):

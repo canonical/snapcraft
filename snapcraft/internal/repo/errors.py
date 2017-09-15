@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal.common import get_os_release_info
-from ._platform import _is_deb_based
 from snapcraft.internal import errors
 
 
@@ -37,14 +35,6 @@ class PackageNotFoundError(RepoError):
     def message(self):
         message = 'The package {!r} was not found.'.format(
             self.package_name)
-        # If the package was multiarch, try to help.
-        distro = get_os_release_info()['ID']
-        if _is_deb_based(distro) and ':' in self.package_name:
-            (name, arch) = self.package_name.split(':', 2)
-            if arch:
-                message += (
-                    '\nYou may need to add support for this architecture with '
-                    "'dpkg --add-architecture {}'.".format(arch))
         return message
 
     def __init__(self, package_name):
