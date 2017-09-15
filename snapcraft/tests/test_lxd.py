@@ -366,6 +366,25 @@ class ProjectTestCase(LXDTestCase):
                            remote=self.remote)
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    def test_start_failed(self, mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['lxc', 'start']:
+                raise CalledProcessError(
+                    returncode=255, cmd=args[0])
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_call_mock.side_effect
+        self.fake_lxd.check_call_mock.side_effect = call_effect
+
+        self.assertIn(
+            'The container could not be started.\n',
+            str(self.assertRaises(
+                ContainerConnectionError,
+                self.make_project().execute)))
+
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_ftp_not_installed(self, mock_container_run):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
 
@@ -413,6 +432,39 @@ class ProjectTestCase(LXDTestCase):
 
         self.assertIn(
             'The project folder could not be mounted.\n',
+            str(self.assertRaises(
+                ContainerConnectionError,
+                self.make_project().execute)))
+
+
+class LocalProjectTestCase(LXDTestCase):
+
+    scenarios = [
+        ('local', dict(remote='local', target_arch=None, server='x86_64')),
+    ]
+
+    def make_project(self):
+        return lxd.Project(output='snap.snap', source='project.tar',
+                           metadata={'name': 'project'},
+                           project_options=self.project_options,
+                           remote=self.remote)
+
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    def test_start_failed(self, mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['lxc', 'start']:
+                raise CalledProcessError(
+                    returncode=255, cmd=args[0])
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_call_mock.side_effect
+        self.fake_lxd.check_call_mock.side_effect = call_effect
+
+        self.assertIn(
+            'The container could not be started.\n'
+            'The files /etc/subuid and /etc/subgid need to contain this line ',
             str(self.assertRaises(
                 ContainerConnectionError,
                 self.make_project().execute)))
