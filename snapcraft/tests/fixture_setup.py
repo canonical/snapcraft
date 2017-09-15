@@ -23,7 +23,6 @@ import string
 import subprocess
 import sys
 import threading
-from textwrap import dedent
 import urllib.parse
 import uuid
 from functools import partial
@@ -506,11 +505,6 @@ class FakeDpkgArchitecture(fixtures.Fixture):
         self.update_error = update_error
 
     def _setUp(self):
-        patcher = mock.patch('tempfile.NamedTemporaryFile')
-        tempfile_mock = patcher.start()
-        tempfile_mock.return_value.__enter__.return_value.name = self.filename
-        self.addCleanup(patcher.stop)
-
         patcher = mock.patch('subprocess.check_output')
         self.check_output_mock = patcher.start()
         self.check_output_mock.side_effect = self.check_output_side_effect()
@@ -528,25 +522,15 @@ class FakeDpkgArchitecture(fixtures.Fixture):
 
     def check_output_side_effect(self):
         def call_effect(*args, **kwargs):
-            if args[0][:3] == ['sudo', 'apt-get', 'update']:
-                server = 'http://archive.ubuntu.com/ubuntu'
-                template = '{}:{} {} xenial InRelease\n'
-                output = template.format('Get', '9', server)
-                if self.update_error:
-                    output += template.format('Err', '9', server)
-                return output.encode(sys.getfilesystemencoding())
-            elif args[0][:2] == ['dpkg', '--print-architecture']:
+            if args[0][:2] == ['dpkg', '--print-architecture']:
                 return '\n'.join(self.archs[:1]).encode(
                     sys.getfilesystemencoding())
             elif args[0][:2] == ['dpkg', '--print-foreign-architectures']:
                 return '\n'.join(self.archs).encode(
                     sys.getfilesystemencoding())
-            elif args[0][:3] == ['sudo', 'dpkg', '--add-architecture']:
-                self.archs.append(args[0][3])
-                return dedent('''
-                    Odd number of elements in hash assignment at
-                     /usr/share/pkg-config-dpkghook line 30
-                    ''').encode(sys.getfilesystemencoding())
+            elif args[0][:3] == ['dpkg-architectures', '-L']:
+                return '\n'.join(['armhf', 'amd64']).encode(
+                    sys.getfilesystemencoding())
         return call_effect
 
 
