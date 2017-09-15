@@ -254,18 +254,20 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def _mark_install(cls, apt_cache, package_names):
-        for pkg in package_names:
-            logger.debug('Marking {!r} (and its dependencies) to be '
-                         'fetched'.format(pkg))
-            name, arch, version = repo.get_pkg_name_parts(pkg)
+        for name in package_names:
+            if name.endswith(':any'):
+                name = name[:-4]
             if apt_cache.is_virtual_package(name):
                 name = apt_cache.get_providing_packages(name)[0].name
+            logger.debug('Marking {!r} (and its dependencies) to be '
+                         'fetched'.format(name))
+            name_arch, version = repo.get_pkg_name_parts(name)
             try:
                 if version:
-                    _set_pkg_version(apt_cache[name + arch], version)
-                apt_cache[name + arch].mark_install()
-            except KeyError as e:
-                raise PackageNotFoundError(pkg)
+                    _set_pkg_version(apt_cache[name_arch], version)
+                apt_cache[name_arch].mark_install()
+            except KeyError:
+                raise PackageNotFoundError(name)
 
     @classmethod
     def _install_new_build_packages(cls, package_names):
