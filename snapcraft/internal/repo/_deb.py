@@ -42,16 +42,16 @@ from . import errors
 logger = logging.getLogger(__name__)
 
 _DEFAULT_SOURCES = \
-    '''deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
-deb http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
-deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
-deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
-'''
+    '''deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
+deb${arch} http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
+deb${arch} http://${security}.ubuntu.com/${suffix} ${release}-security universe
+deb${arch} http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
+''' # noqa
 _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 _library_list = dict()
 
@@ -458,12 +458,17 @@ def _format_sources_list(sources_list, *,
         suffix = 'ubuntu-ports'
         security = 'ports'
 
-    return string.Template(sources_list).substitute({
-        'prefix': prefix,
-        'release': release,
-        'suffix': suffix,
-        'security': security,
-    }).replace('deb', 'deb [arch={}]'.format(deb_arch) if foreign else 'deb')
+    try:
+        return string.Template(sources_list).substitute({
+            'prefix': prefix,
+            'release': release,
+            'suffix': suffix,
+            'security': security,
+            'arch': ' [arch={}]'.format(deb_arch) if foreign else '',
+        })
+    except KeyError as e:
+        raise errors.SnapcraftError(
+            'Sources list is missing the variable ${' + str(e) + '}')
 
 
 def _fix_filemode(path):
