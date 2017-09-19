@@ -11,8 +11,8 @@ deactivate() {
     unset deactivate
 }
 
-export UBUNTU_STORE_API_ROOT_URL="https://myapps.developer.staging.ubuntu.com/dev/api/"
-export UBUNTU_STORE_SEARCH_ROOT_URL="https://search.apps.staging.ubuntu.com/"
+export UBUNTU_STORE_API_ROOT_URL="https://dashboard.staging.snapcraft.io/dev/api/"
+export UBUNTU_STORE_SEARCH_ROOT_URL="https://api.staging.snapcraft.io/"
 export UBUNTU_STORE_UPLOAD_ROOT_URL="https://upload.apps.staging.ubuntu.com/"
 export UBUNTU_SSO_API_ROOT_URL="https://login.staging.ubuntu.com/api/v2/"
 export TEST_STORE="staging"
