@@ -20,6 +20,8 @@ import logging
 import os
 import re
 import shutil
+import subprocess
+import sys
 from unittest import mock
 
 import fixtures
@@ -700,7 +702,25 @@ parts:
             FileContains(expected))
 
 
-class RecordManifestTestCase(BaseLifecycleTestCase):
+class RecordManifestBaseTestCase(BaseLifecycleTestCase):
+
+    def setUp(self):
+        super().setUp()
+        original_check_output = subprocess.check_output
+
+        def fake_uname(cmd, *args, **kwargs):
+            if 'uname' in cmd:
+                return 'Linux test uname 4.10 x86_64'.encode(
+                    sys.getfilesystemencoding())
+            else:
+                return original_check_output(cmd, *args, **kwargs)
+        check_output_patcher = mock.patch(
+            'subprocess.check_output', side_effect=fake_uname)
+        check_output_patcher.start()
+        self.addCleanup(check_output_patcher.stop)
+
+
+class RecordManifestTestCase(RecordManifestBaseTestCase):
 
     def test_prime_with_build_info_records_manifest(self):
         self.useFixture(fixtures.EnvironmentVariable(
@@ -724,6 +744,7 @@ parts:
     prime: []
     stage: []
     stage-packages: []
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: []
 """.format(self.project_options.deb_arch))
@@ -759,6 +780,7 @@ parts:
     prime: []
     stage: []
     stage-packages: [test-package1=test-version1, test-package2=test-version2]
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: []
 """.format(self.project_options.deb_arch))
@@ -796,6 +818,7 @@ parts:
     prime: []
     stage: []
     stage-packages: []
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 """.format(self.project_options.deb_arch))
         self.assertThat(
@@ -836,6 +859,7 @@ parts:
     source-type: git
     stage: []
     stage-packages: []
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: []
 """.format(self.project_options.deb_arch))
@@ -871,6 +895,7 @@ parts:
     prime: []
     stage: []
     stage-packages: []
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: [test-package=test-version]
 """.format(self.project_options.deb_arch))
@@ -911,6 +936,7 @@ parts:
     prime: []
     stage: []
     stage-packages: []
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: [test-provider-package=test-version]
 """.format(self.project_options.deb_arch))
@@ -944,6 +970,7 @@ parts:
     stage: []
     stage-packages: []
     test-plugin-manifest: test-value
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: []
 """.format(self.project_options.deb_arch))
@@ -952,7 +979,8 @@ build-packages: []
             FileContains(expected))
 
 
-class RecordManifestWithDeprecatedSnapKeywordTestCase(BaseLifecycleTestCase):
+class RecordManifestWithDeprecatedSnapKeywordTestCase(
+        RecordManifestBaseTestCase):
 
     scenarios = (
         ('using snap keyword', {'keyword': 'snap'}),
@@ -983,6 +1011,7 @@ parts:
     prime: [-*]
     stage: []
     stage-packages: []
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: []
 """.format(self.project_options.deb_arch))

@@ -18,7 +18,7 @@
 set -e
 
 export PATH=$(pwd)/bin:$PATH
-export PYTHONPATH=$(pwd):$PYTHONPATH
+export PYTHONPATH=$(pwd)${PYTHONPATH:+:$PYTHONPATH}
 
 parseargs(){
     if [[ "$#" -eq 0 ]] || [[ "$1" == "all" ]]; then

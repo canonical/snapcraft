@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
+import collections
 import contextlib
 import configparser
 import logging
@@ -46,22 +47,23 @@ logger = logging.getLogger(__name__)
 
 _MANDATORY_PACKAGE_KEYS = [
     'name',
-    'description',
+    'version',
     'summary',
+    'description',
 ]
 
 _OPTIONAL_PACKAGE_KEYS = [
-    'architectures',
-    'assumes',
-    'base',
-    'environment',
     'type',
+    'base',
+    'architectures',
+    'confinement',
+    'grade',
+    'assumes',
     'plugs',
     'slots',
-    'confinement',
     'epoch',
-    'grade',
     'hooks',
+    'environment',
 ]
 
 
@@ -258,11 +260,12 @@ class _SnapPackaging:
 
         Keys that are in _OPTIONAL_PACKAGE_KEYS are ignored if not there.
         """
-        snap_yaml = {}
+        snap_yaml = collections.OrderedDict()
 
         for key_name in _MANDATORY_PACKAGE_KEYS:
             snap_yaml[key_name] = self._config_data[key_name]
 
+        # Reparse the version, the order should stick.
         snap_yaml['version'] = self._get_version(
             self._config_data['version'],
             self._config_data.get('version-script'))

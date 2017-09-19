@@ -28,12 +28,12 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
 
     # plugin list when wrapper at MAX_CHARACTERS_WRAP
     default_plugin_output = (
-            'ant        cmake  go      gulp     kbuild  maven  '
-            'nodejs             python2  rust         waf\n'
-            'autotools  copy   godeps  jdk      kernel  meson  '
-            'plainbox-provider  python3  scons      \n'
-            'catkin     dump   gradle  jhbuild  make    nil    '
-            'python             qmake    tar-content\n'
+        'ant        cmake  go      gulp     kbuild  maven  '
+        'nodejs             python2  ruby   tar-content\n'
+        'autotools  copy   godeps  jdk      kernel  meson  '
+        'plainbox-provider  python3  rust   waf        \n'
+        'catkin     dump   gradle  jhbuild  make    nil    '
+        'python             qmake    scons\n'
     )
 
     def test_list_plugins_non_tty(self):
@@ -62,11 +62,11 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         self.useFixture(fake_terminal)
 
         expected_output = (
-            'ant        go       kbuild  nodejs             rust       \n'
-            'autotools  godeps   kernel  plainbox-provider  scons      \n'
-            'catkin     gradle   make    python             tar-content\n'
-            'cmake      gulp     maven   python2            waf        \n'
-            'copy       jdk      meson   python3          \n'
+            'ant        go       kbuild  nodejs             ruby       \n'
+            'autotools  godeps   kernel  plainbox-provider  rust       \n'
+            'catkin     gradle   make    python             scons      \n'
+            'cmake      gulp     maven   python2            tar-content\n'
+            'copy       jdk      meson   python3            waf        \n'
             'dump       jhbuild  nil     qmake            \n'
         )
 
