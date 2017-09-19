@@ -53,7 +53,7 @@ _STORE_KEY = (
 class Containerbuild:
 
     def __init__(self, *, output, source, project_options,
-                 metadata, container_name, remote=None):
+                 metadata, container_name, remote=None, image=None):
         if not output:
             output = common.format_snap_name(metadata)
         self._snap_output = output
@@ -72,11 +72,14 @@ class Containerbuild:
             kernel = server_environment['kernel_architecture']
         except KeyError:
             kernel = server_environment['kernelarchitecture']
-        deb_arch = _get_deb_arch(kernel)
-        if not deb_arch:
-            raise ContainerConnectionError(
-                'Unrecognized server architecture {}'.format(kernel))
-        self._image = 'ubuntu:xenial/{}'.format(deb_arch)
+        if image is None:
+            deb_arch = _get_deb_arch(kernel)
+            if not deb_arch:
+                raise ContainerConnectionError(
+                    'Unrecognized server architecture {}'.format(kernel))
+            self._image = 'ubuntu:xenial/{}'.format(deb_arch)
+        else:
+            self._image = image
         # Use a temporary folder the 'lxd' snap can access
         lxd_common_dir = os.path.expanduser(
             os.path.join('~', 'snap', 'lxd', 'common'))
@@ -282,11 +285,11 @@ class Containerbuild:
 class Cleanbuilder(Containerbuild):
 
     def __init__(self, *, output=None, source, project_options,
-                 metadata=None, remote=None):
+                 metadata=None, remote=None, image=None):
         container_name = petname.Generate(3, '-')
         super().__init__(output=output, source=source,
                          project_options=project_options, metadata=metadata,
-                         container_name=container_name, remote=remote)
+                         container_name=container_name, remote=remote, image=image)
 
 
 class Project(Containerbuild):
