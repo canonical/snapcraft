@@ -362,7 +362,7 @@ class StagingStore(fixtures.Fixture):
         super().setUp()
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_API_ROOT_URL',
-            'https://myapps.developer.staging.ubuntu.com/dev/api/'))
+            'https://dashboard.staging.snapcraft.io/dev/api/'))
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_UPLOAD_ROOT_URL',
             'https://upload.apps.staging.ubuntu.com/'))
@@ -371,7 +371,7 @@ class StagingStore(fixtures.Fixture):
             'https://login.staging.ubuntu.com/api/v2/'))
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_SEARCH_ROOT_URL',
-            'https://search.apps.staging.ubuntu.com/'))
+            'https://api.staging.snapcraft.io/'))
 
 
 class TestStore(fixtures.Fixture):
