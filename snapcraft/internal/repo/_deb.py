@@ -467,8 +467,9 @@ def _format_sources_list(sources_list, *,
             'arch': ' [arch={}]'.format(deb_arch) if foreign else '',
         })
     except KeyError as e:
-        raise errors.SnapcraftError(
-            'Sources list is missing the variable ${' + str(e) + '}')
+        raise ValueError(
+            'Cannot complete substitution in sources list: '
+            'unknown variable ${' + str(e.args[0]) + '} in template')
 
 
 def _fix_filemode(path):

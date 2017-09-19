@@ -203,6 +203,44 @@ deb http://security.ubuntu.com/ubuntu vivid-security multiverse
 '''
         self.assertThat(sources_list, Equals(expected_sources_list))
 
+    def test_custom_sources_invalid_variables(self):
+        custom_sources = \
+            '''deb http://mydomain.com/ubuntu/ ${release} ${foo} restricted
+''' # noqa
+        self.assertIn('unknown variable ${foo} in template',
+                      str(self.assertRaises(
+                          ValueError,
+                          repo._deb._format_sources_list,
+                          custom_sources, deb_arch='amd64')))
+
+    def test_custom_sources_missing_variables(self):
+        custom_sources = \
+            '''deb http://mydomain.com/ubuntu/ ${release} main restricted
+''' # noqa
+        sources_list = repo._deb._format_sources_list(
+            custom_sources, deb_arch='amd64')
+        expected_sources_list = \
+                '''deb http://mydomain.com/ubuntu/ xenial main restricted
+''' # noqa
+        self.assertThat(sources_list, Equals(expected_sources_list))
+
+    def test_sources_armhf_foreign(self):
+        sources_list = repo._deb._format_sources_list(
+            None, deb_arch='armhf', foreign=True)
+
+        expected_sources_list = \
+            '''deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial main restricted
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main restricted
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial universe
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates universe
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial multiverse
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates multiverse
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports xenial-security main restricted
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports xenial-security universe
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports xenial-security multiverse
+''' # noqa
+        self.assertThat(sources_list, Equals(expected_sources_list))
+
     @patch('snapcraft.repo._deb._get_geoip_country_code_prefix')
     def test_sources_armhf_trusty(self, mock_cc):
         sources_list = repo._deb._format_sources_list(
