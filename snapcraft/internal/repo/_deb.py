@@ -157,12 +157,11 @@ class _AptCache:
 
 class PackageNotFoundError(errors.PackageNotFoundError):
 
-    @property
-    def message(self):
-        message = super().message
+    def __str__(self):
+        message = super().__str__()
         # If the package was multiarch, try to help.
-        if ':' in self.package_name:
-            (name, arch) = self.package_name.split(':', 2)
+        if ':' in self.package:
+            (name, arch) = self.package.split(':', 2)
             if arch:
                 valid_archs = subprocess.check_output(
                     ['dpkg-architecture', '-L']).decode(
@@ -198,6 +197,11 @@ class PackageNotFoundError(errors.PackageNotFoundError):
                         '\n\nAfterwards update the package cache:'
                         '\n    sudo apt update'.format(arch, sources))
         return message
+
+
+class BuildPackageNotFoundError(PackageNotFoundError):
+
+    fmt = errors.BuildPackageNotFoundError.fmt
 
 
 class Ubuntu(BaseRepo):
@@ -242,7 +246,7 @@ class Ubuntu(BaseRepo):
             try:
                 cls._mark_install(apt_cache, package_names)
             except errors.PackageNotFoundError as e:
-                raise errors.BuildPackageNotFoundError(e.package_name)
+                raise BuildPackageNotFoundError(package=e.package)
             for package in apt_cache.get_changes():
                 new_packages.append((package.name, package.candidate.version))
 

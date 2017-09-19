@@ -21,27 +21,17 @@ class RepoError(errors.SnapcraftError):
     pass
 
 
-class BuildPackageNotFoundError(RepoError):
+class PackageNotFoundError(RepoError):
 
-    fmt = "Could not find a required package in 'build-packages': {package}"
+    fmt = 'The package {package} was not found.'
 
     def __init__(self, package):
         super().__init__(package=package)
 
 
-class PackageNotFoundError(RepoError):
+class BuildPackageNotFoundError(PackageNotFoundError):
 
-    @property
-    def message(self):
-        message = 'The package {!r} was not found.'.format(
-            self.package_name)
-        return message
-
-    def __init__(self, package_name):
-        self.package_name = package_name
-
-    def __str__(self):
-        return self.message
+    fmt = "Could not find a required package in 'build-packages': {package}"
 
 
 class UnpackError(RepoError):

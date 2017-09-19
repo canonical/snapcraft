@@ -495,14 +495,11 @@ class FakeFilesystem(fixtures.Fixture):
 class FakeDpkgArchitecture(fixtures.Fixture):
     '''Mock dpkg concerning architecture handling'''
 
-    def __init__(self, packages, arch='', update_error=False,
-                 not_cached=False, not_available=False):
+    def __init__(self, packages, arch=None):
         self.arch = 'amd64'
         self.archs = [self.arch]
         if arch:
             self.arch = arch
-            arch = ':{}'.format(arch)
-        self.update_error = update_error
 
     def _setUp(self):
         patcher = mock.patch('subprocess.check_output')
@@ -523,12 +520,12 @@ class FakeDpkgArchitecture(fixtures.Fixture):
     def check_output_side_effect(self):
         def call_effect(*args, **kwargs):
             if args[0][:2] == ['dpkg', '--print-architecture']:
-                return '\n'.join(self.archs[:1]).encode(
+                return '\n'.join(self.arch).encode(
                     sys.getfilesystemencoding())
             elif args[0][:2] == ['dpkg', '--print-foreign-architectures']:
                 return '\n'.join(self.archs).encode(
                     sys.getfilesystemencoding())
-            elif args[0][:3] == ['dpkg-architectures', '-L']:
+            elif args[0][:2] == ['dpkg-architecture', '-L']:
                 return '\n'.join(['armhf', 'amd64']).encode(
                     sys.getfilesystemencoding())
         return call_effect

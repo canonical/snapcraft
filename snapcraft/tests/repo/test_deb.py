@@ -26,7 +26,6 @@ from testtools.matchers import (
 
 import snapcraft
 from snapcraft.internal import repo
-from snapcraft.internal.repo import errors
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
 from . import RepoBaseTestCase
@@ -323,8 +322,63 @@ class BuildPackagesTestCase(tests.TestCase):
                  sorted(set(installable)),
                  env=ANY)
         ])
+
+    @patch('snapcraft.repo._deb.is_dumb_terminal')
+    def test_install_build_package_for_invalid_arch(
+            self, mock_is_dumb_terminal):
+        mock_is_dumb_terminal.return_value = False
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(
+            self.test_packages)
+        self.useFixture(fake_apt)
+        self.fake_apt_cache.add_packages(
+            ('some-package:amd64', 'some-package:armhf'))
+        self.assertIn("'invalid' is not a valid architecture name",
+                      str(self.assertRaises(
+                          repo._deb.BuildPackageNotFoundError,
+                          self.install_test_packages,
+                          ('package-installed', 'some-package:invalid'))))
         fake_apt.check_output_mock.assert_has_calls([
+            call(['dpkg-architecture', '-L']),
+        ])
+
+    @patch('snapcraft.repo._deb.is_dumb_terminal')
+    def test_install_build_package_for_unregistered_arch(
+            self, mock_is_dumb_terminal):
+        mock_is_dumb_terminal.return_value = False
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(
+            self.test_packages)
+        self.useFixture(fake_apt)
+        self.fake_apt_cache.add_packages(
+            ('some-package:amd64'))
+
+        self.assertIn('target architecture needs to be registered',
+                      str(self.assertRaises(
+                          repo._deb.BuildPackageNotFoundError,
+                          self.install_test_packages,
+                          ('package-installed', 'some-package:armhf'))))
+        fake_apt.check_output_mock.assert_has_calls([
+            call(['dpkg-architecture', '-L']),
             call(['dpkg', '--print-architecture']),
+            call(['dpkg', '--print-foreign-architectures']),
+        ])
+
+    @patch('snapcraft.repo._deb.is_dumb_terminal')
+    def test_install_build_package_sources_missing(
+            self, mock_is_dumb_terminal):
+        mock_is_dumb_terminal.return_value = False
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(
+            self.test_packages)
+        self.useFixture(fake_apt)
+        self.fake_apt_cache.add_packages(
+            ('some-package:amd64'))
+
+        self.assertIn("Sources for 'armhf' need to be added",
+                      str(self.assertRaises(
+                          repo._deb.BuildPackageNotFoundError,
+                          self.install_test_packages,
+                          ('package-installed', 'some-package:armhf'))))
+        fake_apt.open_mock.assert_has_calls([
+            call('/etc/apt/sources.list'),
         ])
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
@@ -367,10 +421,10 @@ class BuildPackagesTestCase(tests.TestCase):
 
     def test_invalid_package_requested(self):
         fake_apt = tests.fixture_setup.FakeDpkgArchitecture(
-            ['package-does-not-exist'], not_available=True)
+            ['package-does-not-exist'])
         self.useFixture(fake_apt)
         raised = self.assertRaises(
-            errors.BuildPackageNotFoundError,
+            repo._deb.BuildPackageNotFoundError,
             repo.Ubuntu.install_build_packages,
             ['package-does-not-exist'])
 
