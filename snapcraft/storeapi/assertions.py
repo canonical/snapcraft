@@ -116,6 +116,8 @@ class _BaseAssertion:
     def push(self, force=False):
         """Push the assertion to the store, signing if necessary.
 
+        :param bool force: if True, ignore any conflict with revoked developers
+                           and the snap revisions it would invalidate.
         :returns: None
         """
         if not self.signed_assertion:
