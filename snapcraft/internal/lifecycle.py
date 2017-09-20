@@ -334,7 +334,8 @@ def cleanbuild(project_options, remote='', image=None):
         t.add(os.path.curdir, filter=_create_tar_filter(tar_filename))
     lxd.Cleanbuilder(source=tar_filename,
                      project_options=project_options,
-                     metadata=config.get_metadata(), remote=remote, image=image).execute()
+                     metadata=config.get_metadata(), remote=remote,
+                     image=image).execute()
 
 
 def _snap_data_from_dir(directory):

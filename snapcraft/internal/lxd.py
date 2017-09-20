@@ -289,7 +289,8 @@ class Cleanbuilder(Containerbuild):
         container_name = petname.Generate(3, '-')
         super().__init__(output=output, source=source,
                          project_options=project_options, metadata=metadata,
-                         container_name=container_name, remote=remote, image=image)
+                         container_name=container_name, remote=remote,
+                         image=image)
 
 
 class Project(Containerbuild):

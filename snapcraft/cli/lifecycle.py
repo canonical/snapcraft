@@ -171,8 +171,9 @@ def clean(parts, step, **kwargs):
 @click.option('--remote', metavar='<remote>',
               help='Use a specific lxd remote instead of a local container.')
 @click.option('--image', metavar='<image>', default=None,
-              help=('Build in an instance of this image rather than ubuntu:xenial/$arch. '
-                    'Do not use this unless you know what you are doing.'))
+              help=('Build in an instance of this image rather than '
+                    'ubuntu:xenial/$arch. Do not use this unless you know '
+                    'what you are doing.'))
 @click.option('--debug', is_flag=True,
               help='Shells into the environment if the build fails.')
 def cleanbuild(remote, image, debug, **kwargs):
