@@ -186,9 +186,6 @@ class DeveloperAssertion(_BaseAssertion):
     def get(self):
         """Returns a dict containing the developer assertion for snap_name.
 
-        If time_format is 'human' the time will be reformatted into a human
-        friendly format.
-
         The data that comes from the store query looks as follows:
         {'snap_developer': {
              'type': 'snap-developer',
