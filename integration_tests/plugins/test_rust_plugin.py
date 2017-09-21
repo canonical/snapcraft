@@ -113,10 +113,16 @@ class RustPluginTestCase(RustPluginBaseTestCase):
         if snapcraft.ProjectOptions().deb_arch != 'amd64':
             self.skipTest('The test only handles amd64 to armhf')
 
-        self.run_snapcraft(['build', '--target-arch=armhf'],
-                           'rust-musl')
-        binary = os.path.join(self.parts_dir, 'rust-musl', 'install', 'bin',
-                              'rust-musl')
+        self.copy_project_to_cwd('rust-hello')
+        snapcraft_yaml_file = 'snapcraft.yaml'
+        with open(snapcraft_yaml_file) as f:
+            snapcraft_yaml = yaml.load(f)
+        snapcraft_yaml['parts']['rust-hello']['libc'] = 'musl'
+        with open(snapcraft_yaml_file, 'w') as f:
+            yaml.dump(snapcraft_yaml, f)
+        self.run_snapcraft(['build', '--target-arch=armhf'])
+        binary = os.path.join(self.parts_dir, 'rust-hello', 'install', 'bin',
+                              'rust-hello')
         self.assertThat(binary, HasArchitecture('ARM'))
         self.assertThat(binary, HasLinkage('statically linked'))
 
