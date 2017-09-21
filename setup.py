@@ -60,6 +60,32 @@ classifiers = (
     'Topic :: Software Development :: Build Tools',
     'Topic :: System :: Software Distribution',
 )
+install_requires = [
+    'click',
+    'configparser',
+    'file-magic',
+    'jsonschema',
+    'libarchive-c',
+    'progressbar33',
+    'PyYAML',
+    'pyxdg',
+    'requests',
+    'requests-toolbelt',
+    'responses',
+    'petname',
+    'pymacaroons',
+    'pymacaroons-pynacl',
+    'simplejson',
+    'tabulate',
+    'python-debian',
+    'chardet',
+]
+
+if sys.platform == 'linux':
+    install_requires.extend(['python-distutils-extra', 'python-apt'])
+
+if sys.version < '3.6':
+    install_requires.append('pysha3')
 
 # look/set what version we have
 changelog = 'debian/changelog'
@@ -140,11 +166,10 @@ else:
             ('share/snapcraft/libraries',
              ['libraries/' + x for x in os.listdir('libraries')]),
         ],
-        install_requires=[
-            'pysha3',
-            'pyxdg',
-            'requests',
-            'libarchive-c',
+        dependency_links=[
+            'https://launchpad.net/python-distutils-extra/trunk/2.39/+download/python-distutils-extra-2.39.tar.gz#egg=python-distutils-extra-2.39',  # noqa
+            'https://launchpad.net/ubuntu/+archive/primary/+files/python-apt_1.1.0~beta1build1.tar.xz#egg=python-apt-1.1.0~betabuild1',              # noqa
         ],
+        install_requires=install_requires,
         test_suite='snapcraft.tests',
     )
