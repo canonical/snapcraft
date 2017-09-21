@@ -130,7 +130,8 @@ class Containerbuild:
             self._ensure_container()
             yield
         finally:
-            if self._get_container_status():
+            status = self._get_container_status()
+            if status and status['status'] == 'Running':
                 # Stopping takes a while and lxc doesn't print anything.
                 print('Stopping {}'.format(self._container_name))
                 check_call(['lxc', 'stop', '-f', self._container_name])
