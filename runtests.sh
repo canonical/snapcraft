@@ -57,7 +57,7 @@ parseargs(){
 python3 -m coverage 1>/dev/null 2>&1 && coverage="true"
 
 run_static_tests(){
-    SRC_PATHS="bin snapcraft integration_tests snaps_tests external_snaps_tests"
+    SRC_PATHS="bin snapcraft integration_tests snaps_tests external_snaps_tests setup.py"
     python3 -m flake8 --max-complexity=10 $SRC_PATHS
 }
 
