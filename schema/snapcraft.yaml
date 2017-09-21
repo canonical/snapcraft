@@ -200,9 +200,7 @@ properties:
           adapter:
             type: string
             description: What kind of wrapper to generate for the given command
-            default: ""
             enum:
-              - ""
               - none
   hooks:
     type: object
