@@ -468,3 +468,6 @@ class LocalProjectTestCase(LXDTestCase):
             str(self.assertRaises(
                 ContainerConnectionError,
                 self.make_project().execute)))
+        # Should not attempt to stop a container that wasn't started
+        self.assertNotIn(call(['lxc', 'stop', '-f', self.fake_lxd.name]),
+                         self.fake_lxd.check_call_mock.call_args_list)
