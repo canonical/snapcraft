@@ -32,6 +32,15 @@ class NodePluginBaseTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
+        class Options:
+            source = '.'
+            node_packages = []
+            node_engine = nodejs._NODEJS_VERSION
+            npm_run = []
+            node_package_manager = 'npm'
+            source = '.'
+        self.options = Options()
+
         self.project_options = snapcraft.ProjectOptions()
 
         self.useFixture(tests.fixture_setup.CleanEnvironment())
@@ -65,15 +74,9 @@ class NodePluginTestCase(NodePluginBaseTestCase):
     ]
 
     def test_pull_local_sources(self):
-        class Options:
-            source = '.'
-            node_packages = []
-            node_engine = nodejs._NODEJS_VERSION
-            npm_run = []
-            node_package_manager = self.package_manager
-            source = '.'
+        self.options.node_package_manager = self.package_manager
 
-        plugin = nodejs.NodePlugin('test-part', Options(),
+        plugin = nodejs.NodePlugin('test-part', self.options,
                                    self.project_options)
 
         os.makedirs(plugin.sourcedir)
@@ -104,17 +107,11 @@ class NodePluginTestCase(NodePluginBaseTestCase):
         self.tar_mock.assert_has_calls(expected_tar_calls)
 
     def test_build_local_sources(self):
-        class Options:
-            source = '.'
-            node_packages = []
-            node_engine = nodejs._NODEJS_VERSION
-            npm_run = []
-            node_package_manager = self.package_manager
-            source = '.'
+        self.options.node_package_manager = self.package_manager
 
         open('package.json', 'w').close()
 
-        plugin = nodejs.NodePlugin('test-part', Options(),
+        plugin = nodejs.NodePlugin('test-part', self.options,
                                    self.project_options)
 
         os.makedirs(plugin.builddir)
@@ -157,15 +154,10 @@ class NodePluginTestCase(NodePluginBaseTestCase):
         self.tar_mock.assert_has_calls(expected_tar_calls)
 
     def test_pull_and_build_node_packages_sources(self):
-        class Options:
-            source = None
-            node_packages = ['my-pkg']
-            node_engine = nodejs._NODEJS_VERSION
-            npm_run = []
-            node_package_manager = self.package_manager
-            source = '.'
+        self.options.node_packages = ['my-pkg']
+        self.options.node_package_manager = self.package_manager
 
-        plugin = nodejs.NodePlugin('test-part', Options(),
+        plugin = nodejs.NodePlugin('test-part', self.options,
                                    self.project_options)
 
         os.makedirs(plugin.sourcedir)
@@ -217,15 +209,10 @@ class NodePluginTestCase(NodePluginBaseTestCase):
         self.tar_mock.assert_has_calls(expected_tar_calls)
 
     def test_pull_executes_npm_run_commands(self):
-        class Options:
-            source = '.'
-            node_packages = []
-            node_engine = '4'
-            npm_run = ['command_one', 'avocado']
-            node_package_manager = self.package_manager
-            source = '.'
+        self.options.npm_run = ['command_one', 'avocado']
+        self.options.node_package_manager = self.package_manager
 
-        plugin = nodejs.NodePlugin('test-part', Options(),
+        plugin = nodejs.NodePlugin('test-part', self.options,
                                    self.project_options)
 
         os.makedirs(plugin.sourcedir)
@@ -257,15 +244,10 @@ class NodePluginTestCase(NodePluginBaseTestCase):
         self.run_mock.assert_has_calls(expected_run_calls)
 
     def test_build_executes_npm_run_commands(self):
-        class Options:
-            source = '.'
-            node_packages = []
-            node_engine = '4'
-            npm_run = ['command_one', 'avocado']
-            node_package_manager = self.package_manager
-            source = '.'
+        self.options.npm_run = ['command_one', 'avocado']
+        self.options.node_package_manager = self.package_manager
 
-        plugin = nodejs.NodePlugin('test-part', Options(),
+        plugin = nodejs.NodePlugin('test-part', self.options,
                                    self.project_options)
 
         os.makedirs(plugin.sourcedir)
@@ -294,18 +276,12 @@ class NodePluginTestCase(NodePluginBaseTestCase):
 
     @mock.patch('snapcraft.ProjectOptions.deb_arch', 'fantasy-arch')
     def test_unsupported_arch_raises_exception(self):
-        class Options:
-            source = None
-            node_packages = []
-            node_engine = '4'
-            npm_run = []
-            node_package_manager = self.package_manager
-            source = '.'
+        self.options.node_package_manager = self.package_manager
 
         raised = self.assertRaises(
             errors.SnapcraftEnvironmentError,
             nodejs.NodePlugin,
-            'test-part', Options(),
+            'test-part', self.options,
             self.project_options)
 
         self.assertThat(raised.__str__(),
@@ -332,14 +308,9 @@ class NodePluginTestCase(NodePluginBaseTestCase):
             self.assertIn(property, resulting_pull_properties)
 
     def test_clean_pull_step(self):
-        class Options:
-            source = '.'
-            node_packages = []
-            node_engine = '4'
-            npm_run = []
-            node_package_manager = self.package_manager
+        self.options.node_package_manager = self.package_manager
 
-        plugin = nodejs.NodePlugin('test-part', Options(),
+        plugin = nodejs.NodePlugin('test-part', self.options,
                                    self.project_options)
 
         os.makedirs(plugin.sourcedir)
@@ -378,13 +349,8 @@ class NodePluginManifestTestCase(NodePluginBaseTestCase):
     def test_get_manifest_with_node_packages(self):
         self.run_output_mock.return_value = self.ls_output
 
-        class Options:
-            source = '.'
-            node_packages = []
-            node_engine = '4'
-            npm_run = []
-            node_package_manager = self.package_manager
-        plugin = nodejs.NodePlugin('test-part', Options(),
+        self.options.node_package_manager = self.package_manager
+        plugin = nodejs.NodePlugin('test-part', self.options,
                                    self.project_options)
         os.makedirs(plugin.sourcedir)
 
@@ -400,13 +366,8 @@ class NodePluginManifestTestCase(NodePluginBaseTestCase):
 class NodePluginYarnLockManifestTestCase(NodePluginBaseTestCase):
 
     def test_get_manifest_with_yarn_lock_file(self):
-        class Options:
-            source = '.'
-            node_packages = []
-            node_engine = '4'
-            npm_run = []
-            node_package_manager = 'yarn'
-        plugin = nodejs.NodePlugin('test-part', Options(),
+        self.options.node_package_manager = 'yarn'
+        plugin = nodejs.NodePlugin('test-part', self.options,
                                    self.project_options)
         os.makedirs(plugin.sourcedir)
         with open(os.path.join(
@@ -426,15 +387,7 @@ class NodePluginYarnLockManifestTestCase(NodePluginBaseTestCase):
 class NodePluginNpmWorkaroundsTestCase(NodePluginBaseTestCase):
 
     def test_build_from_local_fixes_symlinks(self):
-        class Options:
-            source = '.'
-            node_packages = []
-            node_engine = '4'
-            npm_run = []
-            node_package_manager = 'npm'
-            source = '.'
-
-        plugin = nodejs.NodePlugin('test-part', Options(),
+        plugin = nodejs.NodePlugin('test-part', self.options,
                                    self.project_options)
 
         os.makedirs(plugin.sourcedir)
