@@ -16,6 +16,7 @@
 
 import os
 import subprocess
+from textwrap import dedent
 
 import fixtures
 import testtools
@@ -184,3 +185,47 @@ class SnapTestCase(integration_tests.TestCase):
             os.path.join(self.stage_dir, 'test.txt'),
             FileExists()
         )
+
+    def test_ordered_snap_yaml(self):
+        with open('snapcraft.yaml', 'w') as s:
+            s.write(dedent("""\
+                apps:
+                    stub-app:
+                        command: sh
+                grade: stable
+                version: "2"
+                assumes: [snapd_227]
+                architectures: [all]
+                description: stub description
+                summary: stub summary
+                confinement: strict
+                name: stub-snap
+                environment:
+                    stub_key: stub-value
+                epoch: 1
+                parts:
+                    nothing:
+                        plugin: nil
+            """))
+        self.run_snapcraft('prime')
+
+        expected_snap_yaml = dedent("""\
+            name: stub-snap
+            version: '2'
+            summary: stub summary
+            description: stub description
+            architectures:
+            - all
+            confinement: strict
+            grade: stable
+            assumes:
+            - snapd_227
+            epoch: 1
+            environment:
+              stub_key: stub-value
+            apps:
+              stub-app:
+                command: command-stub-app.wrapper
+        """)
+        self.assertThat(os.path.join('prime', 'meta', 'snap.yaml'),
+                        FileContains(expected_snap_yaml))

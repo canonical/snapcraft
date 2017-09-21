@@ -20,6 +20,7 @@ import copy
 import io
 import os
 import string
+import subprocess
 import sys
 import threading
 import urllib.parse
@@ -31,6 +32,7 @@ from subprocess import CalledProcessError
 
 import fixtures
 import xdg
+import yaml
 
 import snapcraft
 from snapcraft.tests import fake_servers
@@ -360,7 +362,7 @@ class StagingStore(fixtures.Fixture):
         super().setUp()
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_API_ROOT_URL',
-            'https://myapps.developer.staging.ubuntu.com/dev/api/'))
+            'https://dashboard.staging.snapcraft.io/dev/api/'))
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_UPLOAD_ROOT_URL',
             'https://upload.apps.staging.ubuntu.com/'))
@@ -369,7 +371,7 @@ class StagingStore(fixtures.Fixture):
             'https://login.staging.ubuntu.com/api/v2/'))
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_SEARCH_ROOT_URL',
-            'https://search.apps.staging.ubuntu.com/'))
+            'https://api.staging.snapcraft.io/'))
 
 
 class TestStore(fixtures.Fixture):
@@ -841,8 +843,7 @@ class FakeAptCache(fixtures.Fixture):
         self.cache = self.Cache()
         self.mock_apt_cache.return_value = self.cache
         for package, version in self.packages:
-            self.cache[package] = FakeAptCachePackage(
-                self.path, package, version)
+            self.add_package(FakeAptCachePackage(package, version))
 
         # Add all the packages in the manifest.
         with open(os.path.abspath(
@@ -851,16 +852,20 @@ class FakeAptCache(fixtures.Fixture):
                     'internal', 'repo', 'manifest.txt'))) as manifest_file:
             self.add_packages([line.strip() for line in manifest_file])
 
+    def add_package(self, package):
+        package.temp_dir = self.path
+        self.cache[package.name] = package
+
     def add_packages(self, package_names):
         for name in package_names:
-            self.cache[name] = FakeAptCachePackage(self.path, name)
+            self.cache[name] = FakeAptCachePackage(name)
 
 
 class FakeAptCachePackage():
 
     def __init__(
-            self, temp_dir, name, version=None,
-            provides=None, installed=False,
+            self, name, version=None, installed=None,
+            temp_dir=None, provides=None,
             priority='non-essential'):
         super().__init__()
         self.temp_dir = temp_dir
@@ -869,9 +874,14 @@ class FakeAptCachePackage():
         self.versions = {}
         self.version = version
         self.candidate = self
-        self.installed = version
         self.provides = provides if provides else []
-        self.installed = installed
+        if installed:
+            # XXX The installed attribute requires some values that the fake
+            # package also requires. The shortest path to do it that I found
+            # was to get installed to return the same fake package.
+            self.installed = self
+        else:
+            self.installed = None
         self.priority = priority
         self.marked_install = False
 
@@ -905,3 +915,60 @@ class FakeAptCachePackage():
 
     def get_dependencies(self, _):
         return []
+
+
+class WithoutSnapInstalled(fixtures.Fixture):
+    """Assert that a snap is not installed and remove it on clean up.
+
+    :raises: AssertionError: if the snap is installed when this fixture is
+        set up.
+    """
+
+    def __init__(self, snap_name):
+        super().__init__()
+        self.snap_name = snap_name.split('/')[0]
+
+    def setUp(self):
+        super().setUp()
+        if snapcraft.repo.snaps.SnapPackage.is_snap_installed(self.snap_name):
+            raise AssertionError(
+                "This test cannot run if you already have the {snap!r} snap "
+                "installed. Please uninstall it by running "
+                "'sudo snap remove {snap}'.".format(snap=self.snap_name))
+
+        self.addCleanup(self._remove_snap)
+
+    def _remove_snap(self):
+        try:
+            subprocess.check_output(
+                ['sudo', 'snap', 'remove', self.snap_name],
+                stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            RuntimeError("unable to remove {!r}: {}".format(
+                self.snap_name, e.output))
+
+
+class SnapcraftYaml(fixtures.Fixture):
+
+    def __init__(
+            self, path, name='test-snap', version='test-version',
+            summary='test-summary', description='test-description'):
+        super().__init__()
+        self.path = path
+        self.data = {
+            'name': name,
+            'version': version,
+            'summary': summary,
+            'description': description,
+            'parts': {}
+        }
+
+    def update_part(self, name, data):
+        part = {name: data}
+        self.data['parts'].update(part)
+
+    def setUp(self):
+        super().setUp()
+        with open(os.path.join(self.path, 'snapcraft.yaml'),
+                  'w') as snapcraft_yaml_file:
+            yaml.dump(self.data, snapcraft_yaml_file)

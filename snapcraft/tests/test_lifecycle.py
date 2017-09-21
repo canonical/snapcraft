@@ -20,6 +20,8 @@ import logging
 import os
 import re
 import shutil
+import subprocess
+import sys
 from unittest import mock
 
 import fixtures
@@ -700,7 +702,28 @@ parts:
             FileContains(expected))
 
 
-class RecordManifestTestCase(BaseLifecycleTestCase):
+class RecordManifestBaseTestCase(BaseLifecycleTestCase):
+
+    def setUp(self):
+        super().setUp()
+        original_check_output = subprocess.check_output
+
+        def fake_uname(cmd, *args, **kwargs):
+            if 'uname' in cmd:
+                return 'Linux test uname 4.10 x86_64'.encode(
+                    sys.getfilesystemencoding())
+            else:
+                return original_check_output(cmd, *args, **kwargs)
+        check_output_patcher = mock.patch(
+            'subprocess.check_output', side_effect=fake_uname)
+        check_output_patcher.start()
+        self.addCleanup(check_output_patcher.stop)
+
+        self.fake_apt_cache = fixture_setup.FakeAptCache()
+        self.useFixture(self.fake_apt_cache)
+
+
+class RecordManifestTestCase(RecordManifestBaseTestCase):
 
     def test_prime_with_build_info_records_manifest(self):
         self.useFixture(fixtures.EnvironmentVariable(
@@ -720,10 +743,12 @@ grade: stable
 parts:
   test-part:
     build-packages: []
+    installed-packages: []
     plugin: nil
     prime: []
     stage: []
     stage-packages: []
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: []
 """.format(self.project_options.deb_arch))
@@ -731,12 +756,51 @@ build-packages: []
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
 
+    def test_prime_with_installed_packages(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        for name, version in [('test-package1', 'test-version1'),
+                              ('test-package2', 'test-version2')]:
+            self.fake_apt_cache.add_package(
+                fixture_setup.FakeAptCachePackage(
+                    name, version, installed=True))
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: []
+    installed-packages: {}
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+    uname: Linux test uname 4.10 x86_64
+architectures: [{}]
+build-packages: []
+""".format('[test-package1=test-version1, test-package2=test-version2]',
+           self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'manifest.yaml'),
+            FileContains(expected))
+
     def test_prime_with_stage_packages(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
-        self.useFixture(fixture_setup.FakeAptCache([
-            ('test-package1', 'test-version1'),
-            ('test-package2', 'test-version2')]))
+        for name, version in [('test-package1', 'test-version1'),
+                              ('test-package2', 'test-version2')]:
+            self.fake_apt_cache.add_package(
+                fixture_setup.FakeAptCachePackage(name, version))
 
         self.make_snapcraft_yaml("""parts:
   test-part:
@@ -755,10 +819,12 @@ grade: stable
 parts:
   test-part:
     build-packages: []
+    installed-packages: []
     plugin: nil
     prime: []
     stage: []
     stage-packages: [test-package1=test-version1, test-package2=test-version2]
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: []
 """.format(self.project_options.deb_arch))
@@ -770,9 +836,10 @@ build-packages: []
     def test_prime_with_global_build_packages(self, _):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
-        self.useFixture(fixture_setup.FakeAptCache([
-            ('test-package1', 'test-version1'),
-            ('test-package2', 'test-version2')]))
+        for name, version in [('test-package1', 'test-version1'),
+                              ('test-package2', 'test-version2')]:
+            self.fake_apt_cache.add_package(
+                fixture_setup.FakeAptCachePackage(name, version))
 
         self.make_snapcraft_yaml("""build-packages: [test-package1=test-version1, test-package2]
 parts:
@@ -792,10 +859,12 @@ build-packages: [test-package1=test-version1, test-package2=test-version2]
 parts:
   test-part:
     build-packages: []
+    installed-packages: []
     plugin: nil
     prime: []
     stage: []
     stage-packages: []
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 """.format(self.project_options.deb_arch))
         self.assertThat(
@@ -806,6 +875,8 @@ architectures: [{}]
     def test_prime_with_source_details(self, _):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
+        self.fake_apt_cache.add_package(
+            fixture_setup.FakeAptCachePackage('git', 'testversion'))
 
         self.make_snapcraft_yaml("""parts:
   test-part:
@@ -826,6 +897,7 @@ grade: stable
 parts:
   test-part:
     build-packages: []
+    installed-packages: []
     plugin: nil
     prime: []
     source: test-source
@@ -836,8 +908,9 @@ parts:
     source-type: git
     stage: []
     stage-packages: []
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
-build-packages: []
+build-packages: [git=testversion]
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
@@ -847,8 +920,8 @@ build-packages: []
     def test_prime_with_build_package_with_any_architecture(self, _):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
-        self.useFixture(fixture_setup.FakeAptCache([
-            ('test-package', 'test-version')]))
+        self.fake_apt_cache.add_package(fixture_setup.FakeAptCachePackage(
+            'test-package', 'test-version'))
 
         self.make_snapcraft_yaml("""parts:
   test-part:
@@ -867,10 +940,12 @@ grade: stable
 parts:
   test-part:
     build-packages: ['test-package:any']
+    installed-packages: []
     plugin: nil
     prime: []
     stage: []
     stage-packages: []
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: [test-package=test-version]
 """.format(self.project_options.deb_arch))
@@ -882,11 +957,8 @@ build-packages: [test-package=test-version]
     def test_prime_with_virtual_build_package(self, _):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
-        fake_apt_cache = fixture_setup.FakeAptCache()
-        self.useFixture(fake_apt_cache)
-        fake_apt_cache.cache['test-provider-package'] = (
+        self.fake_apt_cache.add_package(
             fixture_setup.FakeAptCachePackage(
-                fake_apt_cache.path,
                 'test-provider-package', 'test-version',
                 provides=['test-virtual-package']))
 
@@ -907,10 +979,12 @@ grade: stable
 parts:
   test-part:
     build-packages: [test-virtual-package]
+    installed-packages: []
     plugin: nil
     prime: []
     stage: []
     stage-packages: []
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: [test-provider-package=test-version]
 """.format(self.project_options.deb_arch))
@@ -939,11 +1013,13 @@ grade: stable
 parts:
   test-part:
     build-packages: []
+    installed-packages: []
     plugin: nil
     prime: []
     stage: []
     stage-packages: []
     test-plugin-manifest: test-value
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: []
 """.format(self.project_options.deb_arch))
@@ -952,7 +1028,8 @@ build-packages: []
             FileContains(expected))
 
 
-class RecordManifestWithDeprecatedSnapKeywordTestCase(BaseLifecycleTestCase):
+class RecordManifestWithDeprecatedSnapKeywordTestCase(
+        RecordManifestBaseTestCase):
 
     scenarios = (
         ('using snap keyword', {'keyword': 'snap'}),
@@ -979,10 +1056,12 @@ grade: stable
 parts:
   test-part:
     build-packages: []
+    installed-packages: []
     plugin: nil
     prime: [-*]
     stage: []
     stage-packages: []
+    uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: []
 """.format(self.project_options.deb_arch))

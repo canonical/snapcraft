@@ -335,10 +335,17 @@ class PluginHandler:
     def mark_build_done(self):
         build_properties = self.plugin.get_build_properties()
         plugin_manifest = self.plugin.get_manifest()
+        machine_manifest = self._get_machine_manifest()
 
         self.mark_done('build', states.BuildState(
-            build_properties, self._part_properties,
-            self._project_options, plugin_manifest))
+            build_properties, self._part_properties, self._project_options,
+            plugin_manifest, machine_manifest))
+
+    def _get_machine_manifest(self):
+        return {
+            'uname': common.run_output(['uname', '-srvmpio']),
+            'installed-packages': repo.Repo.get_installed_packages()
+        }
 
     def clean_build(self, hint=''):
         if self.is_clean('build'):
