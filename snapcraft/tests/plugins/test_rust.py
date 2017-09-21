@@ -1,6 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2016-2017 Marius Gripsgard (mariogrip@ubuntu.com)
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,10 +15,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import os
-
 from unittest import mock
-from testtools.matchers import DirExists, Equals, FileExists, Not
+
+from testtools.matchers import (
+    Contains,
+    DirExists,
+    Equals,
+    FileExists,
+    Not
+)
 
 import snapcraft
 from snapcraft import tests
@@ -164,24 +172,6 @@ class RustPluginTestCase(tests.TestCase):
                         'but it was "{}"'.format(rust_revision_type))
 
     @mock.patch.object(rust.RustPlugin, 'run')
-    def test_build(self, run_mock):
-        plugin = rust.RustPlugin('test-part', self.options,
-                                 self.project_options)
-        os.makedirs(plugin.sourcedir)
-
-        plugin.build()
-
-        self.assertThat(run_mock.call_count, Equals(1))
-        run_mock.assert_has_calls([
-            mock.call(
-                [plugin._cargo, 'install',
-                 '-j{}'.format(plugin.project.parallel_build_count),
-                 '--root', plugin.installdir,
-                 '--path', plugin.builddir],
-                env=plugin._build_env())
-        ])
-
-    @mock.patch.object(rust.RustPlugin, 'run')
     def test_build_with_conditional_compilation(self, run_mock):
         plugin = rust.RustPlugin('test-part', self.options,
                                  self.project_options)
@@ -292,3 +282,66 @@ class RustPluginTestCase(tests.TestCase):
         os.makedirs(plugin.sourcedir)
 
         self.assertRaises(NotImplementedError, plugin.enable_cross_compilation)
+
+    @mock.patch.object(rust.RustPlugin, 'run')
+    def test_build(self, run_mock):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+
+        plugin.build()
+
+        self.assertThat(run_mock.call_count, Equals(1))
+        run_mock.assert_has_calls([
+            mock.call(
+                [plugin._cargo, 'install',
+                 '-j{}'.format(plugin.project.parallel_build_count),
+                 '--root', plugin.installdir,
+                 '--path', plugin.builddir],
+                env=plugin._build_env())
+        ])
+
+    @mock.patch.object(rust.RustPlugin, 'run')
+    def test_get_manifest_with_cargo_lock_file(self, _):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+        os.makedirs(plugin.builddir)
+
+        with open(os.path.join(
+            plugin.builddir,
+                'Cargo.lock'), 'w') as cargo_lock_file:
+            cargo_lock_file.write('test cargo lock contents')
+
+        plugin.build()
+
+        expected_manifest = collections.OrderedDict()
+        expected_manifest['cargo-lock-contents'] = 'test cargo lock contents'
+
+        self.assertThat(plugin.get_manifest(), Equals(expected_manifest))
+
+    @mock.patch.object(rust.RustPlugin, 'run')
+    def test_get_manifest_with_unexisting_cargo_lock(self, _):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+        os.makedirs(plugin.builddir)
+
+        plugin.build()
+
+        self.assertThat(
+            plugin.get_manifest(), Not(Contains('cargo-lock-contents')))
+
+    @mock.patch.object(rust.RustPlugin, 'run')
+    def test_get_manifest_with_cargo_lock_dir(self, _):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+        os.makedirs(plugin.builddir)
+
+        os.mkdir(os.path.join(plugin.builddir, 'Cargo.lock'))
+
+        plugin.build()
+
+        self.assertThat(
+            plugin.get_manifest(), Not(Contains('cargo-lock-contents')))
