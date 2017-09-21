@@ -33,7 +33,7 @@ if [ "$test" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
 elif [ "$test" = "unit" ]; then
     dependencies="apt install -y git bzr subversion mercurial libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov && apt install -y python3-coverage"
-elif [ "$test" = "integration" ] || [ "$test" = "plugins" ] || [ "$test" = "store" ]; then
+elif [ "$test" = "integration" ] || [ "$test" = "plugins" ] || [ "$test" = "store" ] || [ "$test" = "containers" ]; then
     dependencies="apt install -y bzr curl git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev mercurial python3-pip subversion squashfs-tools sudo snapd xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt"
 else
     echo "Unknown test suite: $test"
@@ -51,7 +51,12 @@ $lxc file push --recursive $project_path test-runner/root/
 $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
 # Workaround for
 # - Setup snap "core" (2462) security profiles (cannot reload udev rules: exit status 2
-[ "$test" = "integration" ] && $lxc exec test-runner -- sh -c "snap install core" || echo "ignored error"
+[ "$test" = "integration" -o "$test" = "containers" ] && $lxc exec test-runner -- sh -c "snap install core" || echo "ignored error"
+
+if [ "$test" = "containers" ]; then
+    $lxc exec test-runner -- sh -c "cd snapcraft && apt remove lxd lxd-client --yes && ./tools/travis/setup_lxd.sh"
+fi
+
 $lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test $pattern"
 
 if [ "$test" = "unit" ]; then
