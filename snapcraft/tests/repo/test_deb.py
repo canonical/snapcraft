@@ -202,27 +202,27 @@ deb http://security.ubuntu.com/ubuntu vivid-security multiverse
 '''
         self.assertThat(sources_list, Equals(expected_sources_list))
 
-    def test_custom_sources_invalid_variable(self):
+    def test_custom_sources_invalid_placeholder(self):
         custom_sources = \
             '''deb http://mydomain.com/ubuntu/ $release $foo restricted
 ''' # noqa
-        self.assertIn('unknown variable $foo in template',
+        self.assertIn('unknown placeholder $foo in template',
                       str(self.assertRaises(
                           ValueError,
                           repo._deb._format_sources_list,
                           custom_sources, deb_arch='amd64')))
 
-    def test_custom_sources_invalid_variable_braces(self):
+    def test_custom_sources_invalid_placeholder_braces(self):
         custom_sources = \
             '''deb http://mydomain.com/ubuntu/ ${release} ${foo} restricted
 ''' # noqa
-        self.assertIn('unknown variable ${foo} in template',
+        self.assertIn('unknown placeholder ${foo} in template',
                       str(self.assertRaises(
                           ValueError,
                           repo._deb._format_sources_list,
                           custom_sources, deb_arch='amd64')))
 
-    def test_custom_sources_missing_variables(self):
+    def test_custom_sources_missing_placeholders(self):
         custom_sources = \
             '''deb http://mydomain.com/ubuntu/ ${release} main restricted
 ''' # noqa

@@ -477,7 +477,7 @@ def _format_sources_list(sources_list, *,
             placeholder = '$' + key
         raise ValueError(
             'Cannot complete substitution in sources list: '
-            'unknown variable {} in template'.format(placeholder))
+            'unknown placeholder {} in template'.format(placeholder))
 
 
 def _fix_filemode(path):
