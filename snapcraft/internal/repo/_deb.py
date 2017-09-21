@@ -471,9 +471,13 @@ def _format_sources_list(sources_list, *,
             'arch': ' [arch={}]'.format(deb_arch) if foreign else '',
         })
     except KeyError as e:
+        key = str(e.args[0])
+        placeholder = '${' + key + '}'
+        if placeholder not in sources_list:
+            placeholder = '$' + key
         raise ValueError(
             'Cannot complete substitution in sources list: '
-            'unknown variable ${' + str(e.args[0]) + '} in template')
+            'unknown variable {} in template'.format(placeholder))
 
 
 def _fix_filemode(path):
