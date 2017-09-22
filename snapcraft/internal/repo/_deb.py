@@ -246,7 +246,7 @@ class Ubuntu(BaseRepo):
             try:
                 cls._mark_install(apt_cache, package_names)
             except errors.PackageNotFoundError as e:
-                raise BuildPackageNotFoundError(package=e.package)
+                raise BuildPackageNotFoundError(e.package)
             for package in apt_cache.get_changes():
                 new_packages.append((package.name, package.candidate.version))
 

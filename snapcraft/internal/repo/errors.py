@@ -23,10 +23,20 @@ class RepoError(errors.SnapcraftError):
 
 class PackageNotFoundError(RepoError):
 
-    fmt = 'The package {package} was not found.'
+    fmt = 'The package {package!r} was not found.'
 
     def __init__(self, package):
         super().__init__(package=package)
+
+    # Aliases for the benefit of existing plugin code
+
+    @property
+    def message(self):
+        return str(self)
+
+    @property
+    def package_name(self):
+        return self.package
 
 
 class BuildPackageNotFoundError(PackageNotFoundError):
