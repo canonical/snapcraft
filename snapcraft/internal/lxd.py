@@ -228,17 +228,7 @@ class Containerbuild:
         else:
             shutil.copyfile(installed, filepath)
 
-        # Compare checksums: user-visible version may still match
-        checksum = check_output(['md5sum', filepath]).decode(
-            sys.getfilesystemencoding()).split()[0]
-        try:
-            checksum_container = check_output([
-                'lxc', 'exec', self._container_name, '--', 'md5sum', installed]
-                ).decode(sys.getfilesystemencoding()).split()[0]
-        except CalledProcessError:
-            # Snap not installed
-            checksum_container = None
-        if checksum == checksum_container:
+        if self._same_snap(filepath, installed):
             logger.debug('Not re-injecting same version of {!r}'.format(name))
             return
 
@@ -259,6 +249,19 @@ class Containerbuild:
         if is_classic:
             cmd.append('--classic')
         self._container_run(cmd)
+
+    def _same_snap(self, filepath, installed):
+        # Compare checksums: user-visible version may still match
+        checksum = check_output(['md5sum', filepath]).decode(
+            sys.getfilesystemencoding()).split()[0]
+        try:
+            checksum_container = check_output([
+                'lxc', 'exec', self._container_name, '--', 'md5sum', installed]
+                ).decode(sys.getfilesystemencoding()).split()[0]
+        except CalledProcessError:
+            # Snap not installed
+            checksum_container = None
+        return checksum == checksum_container
 
     def _inject_assertions(self, filename, assertions):
         filepath = os.path.join(self.tmp_dir, filename)
