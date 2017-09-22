@@ -106,11 +106,6 @@ class GoPluginTestCase(integration_tests.TestCase):
             subprocess.check_call(['sudo', 'cp',
                                    sources_arch_file.name, sources_lists])
             subprocess.check_call(['sudo', 'chmod', '644', sources_lists])
-            loop_and_update = '''
-                while sudo fuser /var/lib/apt/lists/lock >/dev/null 2>&1;
-                do sleep 1; done;
-                sudo apt-get update'''
-            subprocess.check_call(['sh', '-c', loop_and_update])
 
         target_arch = 'arm64'
         self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
