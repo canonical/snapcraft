@@ -20,6 +20,9 @@ from urllib import parse
 
 class FakeSnapdServer(BaseHTTPRequestHandler):
 
+    snaps_not_found = []
+    installed_snaps = []
+
     def do_GET(self):
         parsed_url = parse.urlparse(self.path)
         if parsed_url.path.startswith('/v2/snaps/'):
@@ -35,7 +38,10 @@ class FakeSnapdServer(BaseHTTPRequestHandler):
 
         if parsed_url.path.endswith('/fake-snap'):
             status_code = 200
-            params = {'channel': 'stable'}
+            params = {
+                'channel': 'stable',
+                'revision': 'test-fake-snap-revision'
+            }
         elif parsed_url.path.endswith('/fake-snap-stable'):
             status_code = 200
             params = {'channel': 'stable'}
@@ -51,6 +57,14 @@ class FakeSnapdServer(BaseHTTPRequestHandler):
         elif parsed_url.path.endswith('/fake-snap-edge'):
             status_code = 200
             params = {'channel': 'edge'}
+        elif (parsed_url.path in self.snaps_not_found and
+              parsed_url.path.split('/')[-1] in self.installed_snaps):
+            # XXX when the snaps end point fails, the snap is installed and
+            # it needs a revision the next time the same endpoint is called.
+            status_code = 200
+            params = {'channel': 'dummy', 'revision': 'dummy'}
+        else:
+            self.snaps_not_found.append(parsed_url.path)
 
         self.send_response(status_code)
         self.send_header('Content-Type', 'text/application+json')

@@ -27,6 +27,8 @@ from testtools.matchers import Contains, Equals
 
 import snapcraft
 import integration_tests
+from snapcraft.internal.repo import snaps
+from snapcraft.tests import fixture_setup
 
 
 class AssetRecordingBaseTestCase(integration_tests.TestCase):
@@ -118,6 +120,28 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
         self.assertThat(
             recorded_yaml['architectures'],
             Equals([snapcraft.ProjectOptions().deb_arch]))
+
+    def test_prime_records_build_snaps(self):
+        self.useFixture(fixture_setup.WithoutSnapInstalled('hello'))
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml.update_part('test-part', {
+            'plugin': 'nil',
+            'build-snaps': ['hello']
+        })
+        self.useFixture(snapcraft_yaml)
+
+        self.run_snapcraft('prime')
+
+        expected_revision = snaps.SnapPackage(
+            'hello').get_local_snap_info()['revision']
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'manifest.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        self.assertThat(
+            recorded_yaml['build-snaps'],
+            Equals(['hello={}'.format(expected_revision)]))
 
 
 class ManifestRecordingBuildPackagesTestCase(
