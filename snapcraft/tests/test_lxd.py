@@ -352,6 +352,43 @@ class LXDTestCase(tests.TestCase):
                   '--dangerous', '--classic']),
         ])
 
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @patch('snapcraft.internal.common.is_snap')
+    def test_inject_snap_already_installed(self,
+                                           mock_is_snap,
+                                           mock_container_run):
+        mock_is_snap.side_effect = lambda: True
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['lxc', 'exec'] and 'md5sum' in args[0]:
+                if args[0][5].endswith('core_123.snap'):
+                    return 'deadbeef {}'.format(args[0][1]).encode('utf-8')
+            return default_side_effect(*args, **kwargs)
+
+        default_side_effect = self.fake_lxd.check_output_mock.side_effect
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        fake_snapd = tests.fixture_setup.FakeSnapd()
+        self.useFixture(fake_snapd)
+
+        builder = self.make_cleanbuilder()
+
+        builder.execute()
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'file', 'push',
+                  os.path.join(builder.tmp_dir, 'snapcraft_345.assert'),
+                  '{}/run/snapcraft_345.assert'.format(self.fake_lxd.name)]),
+            call(['lxc', 'file', 'push',
+                  os.path.join(builder.tmp_dir, 'snapcraft_345.snap'),
+                  '{}/run/snapcraft_345.snap'.format(self.fake_lxd.name)]),
+        ])
+        mock_container_run.assert_has_calls([
+            call(['apt-get', 'install', 'squashfuse', '-y']),
+            call(['snap', 'ack', '/run/snapcraft_345.assert']),
+            call(['snap', 'install', '/run/snapcraft_345.snap', '--classic']),
+        ])
+
 
 class ProjectTestCase(LXDTestCase):
 
