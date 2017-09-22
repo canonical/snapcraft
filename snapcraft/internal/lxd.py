@@ -25,6 +25,7 @@ import tempfile
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError, Popen
 from time import sleep
+from urllib import parse
 import requests
 import requests_unixsocket
 
@@ -37,6 +38,7 @@ from snapcraft.internal.errors import (
         SnapdError,
 )
 from snapcraft.internal import common
+from snapcraft.internal.repo import snaps
 from snapcraft._options import _get_deb_arch
 
 logger = logging.getLogger(__name__)
@@ -194,9 +196,10 @@ class Containerbuild:
 
     def _inject_snap(self, name):
         session = requests_unixsocket.Session()
-        snapd_socket = '/run/snapd.socket'.replace('/', '%2F')
         # Cf. https://github.com/snapcore/snapd/wiki/REST-API#get-v2snapsname
-        api = 'http+unix://{}/v2/snaps/{}'.format(snapd_socket, name)
+        # TODO use get_local_snap info from the snaps module.
+        slug = 'snaps/{}'.format(parse.quote(name, safe=''))
+        api = snaps.get_snapd_socket_path_template().format(slug)
         try:
             json = session.request('GET', api).json()
         except requests.exceptions.ConnectionError as e:
