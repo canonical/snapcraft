@@ -42,7 +42,8 @@ def refresh(debug, **kwargs):
     as needed as well as refreshing snaps.
     """
 
-    if not env.is_containerbuild():
+    container_config = env.get_container_config()
+    if not container_config.use_container:
         raise errors.SnapcraftEnvironmentError(
             "The 'refresh' command only applies to LXD containers but "
             "SNAPCRAFT_CONTAINER_BUILDS is not set or 0.\n"
