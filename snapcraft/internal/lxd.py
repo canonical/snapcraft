@@ -212,14 +212,6 @@ class Containerbuild:
         # Revisions are unique, so we don't need to know the channel
         rev = json['result']['revision']
 
-        if not rev.startswith('x'):
-            self._inject_assertions('{}_{}.assert'.format(name, rev), [
-                ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
-                ['snap-declaration', 'snap-name={}'.format(name)],
-                ['snap-revision', 'snap-revision={}'.format(rev),
-                 'snap-id={}'.format(id)],
-            ])
-
         # https://github.com/snapcore/snapd/blob/master/snap/info.go
         # MountFile
         filename = '{}_{}.snap'.format(name, rev)
@@ -235,6 +227,29 @@ class Containerbuild:
             check_call(['sudo', 'chown', str(os.getuid()), filepath])
         else:
             shutil.copyfile(installed, filepath)
+
+        # Compare checksums: user-visible version may still match
+        checksum = check_output(['md5sum', filepath]).decode(
+            sys.getfilesystemencoding()).split()[0]
+        try:
+            checksum_container = check_output([
+                'lxc', 'exec', self._container_name, '--', 'md5sum', installed]
+                ).decode(sys.getfilesystemencoding()).split()[0]
+        except CalledProcessError:
+            # Snap not installed
+            checksum_container = None
+        if checksum == checksum_container:
+            logger.debug('Not re-injecting same version of {!r}'.format(name))
+            return
+
+        if not rev.startswith('x'):
+            self._inject_assertions('{}_{}.assert'.format(name, rev), [
+                ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
+                ['snap-declaration', 'snap-name={}'.format(name)],
+                ['snap-revision', 'snap-revision={}'.format(rev),
+                 'snap-id={}'.format(id)],
+            ])
+
         container_filename = os.path.join(os.sep, 'run', filename)
         self._push_file(filepath, container_filename)
         logger.info('Installing {}'.format(container_filename))

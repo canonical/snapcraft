@@ -557,6 +557,8 @@ class FakeLXD(fixtures.Fixture):
                 return self._lxc_create_start_stop(args)
             elif args[0][:2] == ['lxc', 'exec']:
                 return self._lxc_exec(args)
+            elif args[0][0] == 'md5sum':
+                return 'deadbeef {}'.format(args[0][1]).encode('utf-8')
             elif '/usr/lib/sftp-server' in args[0]:
                 return self._popen(args[0])
             else:
@@ -584,6 +586,8 @@ class FakeLXD(fixtures.Fixture):
             elif cmd == 'sshfs':
                 self.files = ['foo', 'bar']
                 return self._popen(args[0])
+            elif cmd == 'md5sum':
+                raise CalledProcessError(returncode=1, cmd=cmd)
 
     def _popen(self, args):
         class Popen:
