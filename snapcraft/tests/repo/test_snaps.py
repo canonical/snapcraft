@@ -135,7 +135,8 @@ class SnapPackageBaseTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        self.useFixture(FakeSnapd())
+        self.fake_snapd = FakeSnapd()
+        self.useFixture(self.fake_snapd)
 
 
 class SnapPackageCurrentChannelTest(SnapPackageBaseTestCase):
@@ -318,7 +319,15 @@ class SnapPackageLifecycleTest(SnapPackageBaseTestCase):
         self.fake_snap_command.refresh_success = False
         self.assertRaises(errors.SnapRefreshError, snap_pkg.refresh)
 
+    def test_install_snaps_returns_revision(self):
+        installed_snaps = snaps.install_snaps(['fake-snap'])
+        self.assertThat(
+            installed_snaps,
+            Equals(['fake-snap=test-fake-snap-revision']))
+
     def test_install_multiple_snaps(self):
+        self.fake_snapd.server.RequestHandlerClass.installed_snaps = [
+            'new-fake-snap']
         snaps.install_snaps([
             'fake-snap/classic/stable',
             'new-fake-snap'

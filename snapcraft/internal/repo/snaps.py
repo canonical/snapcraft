@@ -160,13 +160,21 @@ class SnapPackage:
 
 
 def install_snaps(snaps_list):
-    """Install snaps of the format <snap-name>/<channel>."""
+    """Install snaps of the format <snap-name>/<channel>.
+
+    :return: a list of "name=revision" for the snaps installed.
+    """
+    snaps_installed = []
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
         if not snap_pkg.installed and snap_pkg.in_store:
             snap_pkg.install()
         elif snap_pkg.get_current_channel() != snap_pkg.channel:
             snap_pkg.refresh()
+        snap_pkg = SnapPackage(snap)
+        snaps_installed.append('{}={}'.format(
+            snap_pkg.name, snap_pkg.get_local_snap_info()['revision']))
+    return snaps_installed
 
 
 def _snap_command_requires_sudo():

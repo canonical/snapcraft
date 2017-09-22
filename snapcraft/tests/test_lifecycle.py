@@ -751,6 +751,7 @@ parts:
     uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: []
+build-snaps: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
@@ -788,6 +789,7 @@ parts:
     uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: []
+build-snaps: []
 """.format('[test-package1=test-version1, test-package2=test-version2]',
            self.project_options.deb_arch))
         self.assertThat(
@@ -827,6 +829,7 @@ parts:
     uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: []
+build-snaps: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
@@ -866,6 +869,7 @@ parts:
     stage-packages: []
     uname: Linux test uname 4.10 x86_64
 architectures: [{}]
+build-snaps: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
@@ -911,6 +915,7 @@ parts:
     uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: [git=testversion]
+build-snaps: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
@@ -948,6 +953,7 @@ parts:
     uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: [test-package=test-version]
+build-snaps: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
@@ -987,6 +993,7 @@ parts:
     uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: [test-provider-package=test-version]
+build-snaps: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
@@ -1022,6 +1029,7 @@ parts:
     uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: []
+build-snaps: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
@@ -1064,6 +1072,7 @@ parts:
     uname: Linux test uname 4.10 x86_64
 architectures: [{}]
 build-packages: []
+build-snaps: []
 """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),

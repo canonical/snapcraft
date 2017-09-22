@@ -160,8 +160,8 @@ class _SnapPackaging:
                 yaml.dump(annotated_snapcraft, manifest_file)
 
     def _annotate_snapcraft(self, data):
-        data['build-packages'] = get_global_state().assets.get(
-            'build-packages', [])
+        for field in ('build-packages', 'build-snaps'):
+            data[field] = get_global_state().assets.get(field, [])
         for part in data['parts']:
             state_dir = os.path.join(self._parts_dir, part, 'state')
             pull_state = get_state(state_dir, 'pull')
