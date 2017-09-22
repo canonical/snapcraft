@@ -55,6 +55,20 @@ class HasLinkage(HasBinaryFileHeader):
         return super().parse_file_header(header).split(',')[3]
 
 
+class IsDynamicallyLinked(HasLinkage):
+    """Match if the file has dynamic linkage"""
+
+    def __init__(self):
+        super().__init__('dynamically linked')
+
+
+class IsStaticallyLinked(HasLinkage):
+    """Match if the file has static linkage"""
+
+    def __init__(self):
+        super().__init__('statically linked')
+
+
 class HasArchitecture(HasBinaryFileHeader):
     """Match if the file was built for the expected architecture"""
 
