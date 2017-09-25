@@ -54,6 +54,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
         (string)
         Run-time path of the underlay workspace (e.g. a subdirectory of the
         content interface's 'target' attribute.)
+    - catkin-ros-master-uri:
+      (string)
+      The URI to ros master setting the env variable ROS_MASTER_URI. Defaults
+      to https://localhost:11311.
 """
 
 import contextlib
@@ -178,6 +182,11 @@ class CatkinPlugin(snapcraft.BasePlugin):
             'default': [],
         }
 
+        schema['properties']['catkin-ros-master-uri'] = {
+            'type': 'string',
+            'default': 'http://localhost:11311'
+        }
+
         schema['required'].append('catkin-packages')
 
         return schema
@@ -260,8 +269,8 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         env = [
             # This environment variable tells ROS nodes where to find ROS
             # master. It does not affect ROS master, however-- this is just the
-            # default URI.
-            'ROS_MASTER_URI=http://localhost:11311',
+            # URI.
+            'ROS_MASTER_URI=' + self.options.catkin_ros_master_uri,
 
             # Various ROS tools (e.g. rospack, roscore) keep a cache or a log,
             # and use $ROS_HOME to determine where to put them.

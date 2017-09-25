@@ -80,6 +80,7 @@ class CatkinPluginBaseTestCase(tests.TestCase):
             underlay = None
             rosinstall_files = None
             build_attributes = []
+            ros_master_uri = 'http://localhost:11311'
 
         self.properties = props()
         self.project_options = snapcraft.ProjectOptions()
@@ -133,7 +134,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         properties = schema['properties']
         expected = ('rosdistro', 'catkin-packages', 'source-space',
                     'include-roscore', 'catkin-cmake-args', 'underlay',
-                    'rosinstall-files')
+                    'rosinstall-files', 'catkin-ros-master-uri')
         self.assertThat(properties, HasLength(len(expected)))
         for prop in expected:
             self.assertThat(properties, Contains(prop))
@@ -254,6 +255,19 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertTrue(rosinstall_files['uniqueItems'])
         self.assertThat(rosinstall_files['items'], Contains('type'))
         self.assertThat(rosinstall_files['items']['type'], Equals('string'))
+
+    def test_schema_catkin_ros_master_uri(self):
+        schema = catkin.CatkinPlugin.schema()
+
+        # Check ros-master-uri property
+        catkin_ros_master_uri = schema['properties']['catkin-ros-master-uri']
+        expected = ('type', 'default')
+        self.assertThat(catkin_ros_master_uri, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(catkin_ros_master_uri, Contains(prop))
+        self.assertThat(catkin_ros_master_uri['type'], Equals('string'))
+        self.assertThat(catkin_ros_master_uri['default'],
+                        Equals('http://localhost:11311'))
 
     def test_get_pull_properties(self):
         expected_pull_properties = ['rosdistro', 'catkin-packages',
@@ -591,7 +605,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             'PYTHONPATH={}${{PYTHONPATH:+:$PYTHONPATH}}'.format(python_path)))
 
         self.assertThat(environment, Contains(
-            'ROS_MASTER_URI=http://localhost:11311'))
+            'ROS_MASTER_URI=' + self.properties.ros_master_uri))
 
         self.assertThat(
             environment, Contains('ROS_HOME=${SNAP_USER_DATA:-/tmp}/ros'))
@@ -632,6 +646,20 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
         self.assertThat(environment, Contains('. {}'.format(
             os.path.join(plugin.rosdir, 'snapcraft-setup.sh'))))
+
+    @mock.patch.object(catkin.CatkinPlugin, '_source_setup_sh',
+                       return_value='test-source-setup.sh')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output',
+                       return_value='bar')
+    def test_run_environment_with_catkin_ros_master_uri(self, run_mock,
+                                                 source_setup_sh_mock):
+
+        self.properties.catkin_ros_master_uri = 'http://rosmaster:11311'
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+
+        self._verify_run_environment(plugin)
+
 
     def _evaluate_environment(self, predefinition=''):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
