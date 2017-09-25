@@ -245,7 +245,7 @@ class BaseRepo:
 class DummyRepo(BaseRepo):
 
     def get_packages_for_source_type(*args, **kwargs):
-        pass
+        return set()
 
 
 def _try_copy_local(path, target):
