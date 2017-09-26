@@ -270,7 +270,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
             # This environment variable tells ROS nodes where to find ROS
             # master. It does not affect ROS master, however-- this is just the
             # URI.
-            'ROS_MASTER_URI=' + self.options.catkin_ros_master_uri,
+            'ROS_MASTER_URI={}'.format(self.options.catkin_ros_master_uri),
 
             # Various ROS tools (e.g. rospack, roscore) keep a cache or a log,
             # and use $ROS_HOME to determine where to put them.
