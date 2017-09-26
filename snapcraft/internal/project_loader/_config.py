@@ -70,6 +70,16 @@ def _validate_epoch(instance):
     return True
 
 
+def load_metadata(project_options, snapcraft_yaml_path=None):
+    if not snapcraft_yaml_path:
+        snapcraft_yaml_path = get_snapcraft_yaml()
+    snapcraft_yaml = _snapcraft_yaml_load(snapcraft_yaml_path)
+
+    if 'architectures' not in snapcraft_yaml:
+        snapcraft_yaml['architectures'] = [project_options.deb_arch]
+    return snapcraft_yaml
+
+
 class Config:
 
     @property
@@ -95,7 +105,8 @@ class Config:
         self._project_options = project_options
 
         self.snapcraft_yaml_path = get_snapcraft_yaml()
-        snapcraft_yaml = _snapcraft_yaml_load(self.snapcraft_yaml_path)
+        snapcraft_yaml = load_metadata(project_options,
+                                       self.snapcraft_yaml_path)
 
         self._validator = Validator(snapcraft_yaml)
         self._validator.validate()
@@ -123,14 +134,6 @@ class Config:
                                  build_snaps=self.build_snaps,
                                  build_tools=self.build_tools,
                                  snapcraft_yaml=self.snapcraft_yaml_path)
-
-        if 'architectures' not in self.data:
-            self.data['architectures'] = [self._project_options.deb_arch]
-
-    def get_metadata(self):
-        return {'name': self.data['name'],
-                'version': self.data['version'],
-                'arch': self.data['architectures']}
 
     def _ensure_no_duplicate_app_aliases(self):
         # Prevent multiple apps within a snap from having duplicate alias names

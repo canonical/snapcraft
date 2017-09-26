@@ -18,3 +18,4 @@ from snapcraft.internal import cache             # noqa
 from snapcraft.internal import deltas            # noqa
 from snapcraft.internal import states            # noqa
 from snapcraft.internal.project_loader import load_config  # noqa
+from snapcraft.internal.project_loader import load_metadata  # noqa
