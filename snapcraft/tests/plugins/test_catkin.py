@@ -80,7 +80,7 @@ class CatkinPluginBaseTestCase(tests.TestCase):
             underlay = None
             rosinstall_files = None
             build_attributes = []
-            ros_master_uri = 'http://localhost:11311'
+            catkin_ros_master_uri = 'http://localhost:11311'
 
         self.properties = props()
         self.project_options = snapcraft.ProjectOptions()
@@ -605,7 +605,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             'PYTHONPATH={}${{PYTHONPATH:+:$PYTHONPATH}}'.format(python_path)))
 
         self.assertThat(environment, Contains(
-            'ROS_MASTER_URI=' + self.properties.ros_master_uri))
+            'ROS_MASTER_URI={}'.format(self.properties.catkin_ros_master_uri)))
 
         self.assertThat(
             environment, Contains('ROS_HOME=${SNAP_USER_DATA:-/tmp}/ros'))
