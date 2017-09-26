@@ -6,13 +6,16 @@ description: |
   If you want to add other functionalities to this snap, please don't.
   Make a new one.
 confinement: strict
+grade: devel
 
 apps:
   nodejs-hello:
     command: nodejs-hello
-    plugs: [network]
+    plugs:
+      - network
 
 parts:
   nodejs-part:
     source: .
     plugin: nodejs
+    nodejs-package-manager: npm
