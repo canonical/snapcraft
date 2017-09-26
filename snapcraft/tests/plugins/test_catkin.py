@@ -652,14 +652,13 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
     @mock.patch.object(catkin.CatkinPlugin, 'run_output',
                        return_value='bar')
     def test_run_environment_with_catkin_ros_master_uri(self, run_mock,
-                                                 source_setup_sh_mock):
+                                                        source_setup_sh_mock):
 
         self.properties.catkin_ros_master_uri = 'http://rosmaster:11311'
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
 
         self._verify_run_environment(plugin)
-
 
     def _evaluate_environment(self, predefinition=''):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
