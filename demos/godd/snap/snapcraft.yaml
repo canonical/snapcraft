@@ -5,6 +5,7 @@ description:
  Written in go with support for device auto-detection via libgudev,
  you would need to use hw-assign to access devices.
 confinement: strict
+contact: mailto:michaelvogt+godd@imap.cc
 
 apps:
   godd:
