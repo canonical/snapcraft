@@ -28,12 +28,12 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
 
     # plugin list when wrapper at MAX_CHARACTERS_WRAP
     default_plugin_output = (
-        'ant        cmake  go      gulp     kbuild  maven  '
+        'ant        cmake   dump    gradle  jhbuild  make   '
+        'nil                python   qmake  scons      \n'
+        'autotools  copy    go      gulp    kbuild   maven  '
         'nodejs             python2  ruby   tar-content\n'
-        'autotools  copy   godeps  jdk      kernel  meson  '
+        'catkin     dotnet  godeps  jdk     kernel   meson  '
         'plainbox-provider  python3  rust   waf        \n'
-        'catkin     dump   gradle  jhbuild  make    nil    '
-        'python             qmake    scons\n'
     )
 
     def test_list_plugins_non_tty(self):
@@ -54,7 +54,7 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         result = self.run_command([self.command_name])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains(self.default_plugin_output))
+        self.assertThat(result.output, Equals(self.default_plugin_output))
 
     def test_list_plugins_small_terminal(self):
         self.maxDiff = None
@@ -62,15 +62,15 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         self.useFixture(fake_terminal)
 
         expected_output = (
-            'ant        go       kbuild  nodejs             ruby       \n'
-            'autotools  godeps   kernel  plainbox-provider  rust       \n'
-            'catkin     gradle   make    python             scons      \n'
-            'cmake      gulp     maven   python2            tar-content\n'
-            'copy       jdk      meson   python3            waf        \n'
-            'dump       jhbuild  nil     qmake            \n'
+            'ant        dump    jhbuild  nil                qmake      \n'
+            'autotools  go      kbuild   nodejs             ruby       \n'
+            'catkin     godeps  kernel   plainbox-provider  rust       \n'
+            'cmake      gradle  make     python             scons      \n'
+            'copy       gulp    maven    python2            tar-content\n'
+            'dotnet     jdk     meson    python3            waf        \n'
         )
 
         result = self.run_command([self.command_name])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains(expected_output))
+        self.assertThat(result.output, Equals(expected_output))

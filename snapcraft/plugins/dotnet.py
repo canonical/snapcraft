@@ -134,13 +134,6 @@ class DotNetPlugin(snapcraft.BasePlugin):
         return sources.Tar(sdk_url, self._dotnet_sdk_dir,
                            source_checksum=sdk_version['checksum'])
 
-    # Determine the app name
-    def _get_appname(self):
-        for file in os.listdir(self.builddir):
-            if fnmatch.fnmatch(file, '*.??proj'):
-                return os.path.splitext(file)[0]
-                break
-
     def pull(self):
         super().pull()
 
@@ -180,6 +173,12 @@ class DotNetPlugin(snapcraft.BasePlugin):
             appname = os.path.join(self.installdir, self._get_appname())
             if os.path.exists(appname):
                 os.chmod(appname, 0o755)
+
+    def _get_appname(self):
+        for file in os.listdir(self.builddir):
+            if fnmatch.fnmatch(file, '*.??proj'):
+                return os.path.splitext(file)[0]
+                break
 
     def env(self, root):
         env = super().env(root)
