@@ -6,6 +6,7 @@ RUN sed -i 's/ universe/ universe multiverse/' /etc/apt/sources.list
 RUN apt-get update && \
   apt-get dist-upgrade --yes && \
   apt-get install --yes \
+  git \
   snapcraft \
   && \
   apt-get autoclean --yes && \
