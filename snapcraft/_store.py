@@ -555,7 +555,7 @@ def _push_delta(snap_name, snap_filename, source_snap):
         delta_tracker.raise_for_code()
     except storeapi.errors.StoreReviewError as e:
         if e.code == 'processing_upload_delta_error':
-            raise storeapi.errors.StoreDeltaApplicationError
+            raise storeapi.errors.StoreDeltaApplicationError(str(e))
         else:
             raise
     finally:
