@@ -216,6 +216,7 @@ class Containerbuild:
             cmd = ['snap', 'install', name]
             if is_classic:
                 cmd.append('--classic')
+            cmd.append('--channel={}'.format(json['result']['channel']))
             self._container_run(cmd)
             return
 
