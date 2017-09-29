@@ -72,11 +72,11 @@ class Containerbuild:
             kernel = server_environment['kernel_architecture']
         except KeyError:
             kernel = server_environment['kernelarchitecture']
-        deb_arch = _get_deb_arch(kernel)
-        if not deb_arch:
+        self._server_arch = _get_deb_arch(kernel)
+        if not self._server_arch:
             raise ContainerConnectionError(
                 'Unrecognized server architecture {}'.format(kernel))
-        self._image = 'ubuntu:xenial/{}'.format(deb_arch)
+        self._image = 'ubuntu:xenial/{}'.format(self._server_arch)
         # Use a temporary folder the 'lxd' snap can access
         lxd_common_dir = os.path.expanduser(
             os.path.join('~', 'snap', 'lxd', 'common'))
@@ -209,6 +209,16 @@ class Containerbuild:
         id = json['result']['id']
         # Lookup confinement to know if we need to --classic when installing
         is_classic = json['result']['confinement'] == 'classic'
+
+        # If the server has a different arch we can't inject local snaps
+        if self._project_options.target_arch != self._server_arch:
+            logger.info('Installing {}'.format(name))
+            cmd = ['snap', 'install', name]
+            if is_classic:
+                cmd.append('--classic')
+            self._container_run(cmd)
+            return
+
         # Revisions are unique, so we don't need to know the channel
         rev = json['result']['revision']
 
