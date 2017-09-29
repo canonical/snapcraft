@@ -1715,7 +1715,7 @@ parts:
                 stage_dir=self.stage_dir, arch_triplet=self.arch_triplet)
             in environment,
             'Current environment is {!r}'.format(environment))
-        self.assertTrue('PERL5LIB={}/usr/share/perl5/'.format(
+        self.assertTrue('PERL5LIB="{}/usr/share/perl5/"'.format(
             self.stage_dir) in environment)
 
     def test_parts_build_env_ordering_with_deps(self):
