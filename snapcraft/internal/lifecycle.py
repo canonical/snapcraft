@@ -66,6 +66,15 @@ parts:
     plugin: nil
 """  # noqa, lines too long.
 
+_TEMPLATE_GITIGNORE = """
+*.snap
+parts/*
+!parts/plugins/
+prime/
+stage/
+snap/.snapcraft/
+"""
+
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 
 
@@ -87,6 +96,15 @@ def init():
         os.mkdir(os.path.dirname(snapcraft_yaml_path))
     with open(snapcraft_yaml_path, mode='w') as f:
         f.write(yaml)
+
+    git_cache = os.path.join('.git')
+    if os.path.exists(git_cache):
+        if os.path.exists('.gitignore'):
+            pass
+        else:
+            gitignore = _TEMPLATE_GITIGNORE
+            with open('.gitignore', mode='w') as f:
+                f.write(gitignore)
 
     return snapcraft_yaml_path
 

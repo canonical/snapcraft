@@ -16,7 +16,7 @@
 import os
 
 import snapcraft.internal.errors
-from testtools.matchers import Equals, FileContains
+from testtools.matchers import Equals, FileContains, FileExists, Not
 
 from . import CommandBaseTestCase
 
@@ -84,3 +84,44 @@ class InitCommandExistingProjectTestCase(CommandBaseTestCase):
 
         self.assertThat(str(raised), Equals(
             '{} already exists!'.format(self.yaml_path)))
+
+
+class InitCommandGitTestCase(CommandBaseTestCase):
+
+    def test_init_must_not_write_gitignore_if_no_git_dir(self):
+        result = self.run_command(['init'])
+
+        # Verify the .gitignore was created
+        self.assertThat('.gitignore',
+                        Not(FileExists()))
+
+    def test_init_must_write_gitignore_if_git_dir(self):
+        expected_gitignore = """
+*.snap
+parts/*
+!parts/plugins/
+prime/
+stage/
+snap/.snapcraft/
+"""
+
+        os.mkdir('.git')
+
+        result = self.run_command(['init'])
+
+        # Verify the .gitignore was created
+        self.assertThat('.gitignore',
+                        FileContains(expected_gitignore))
+
+    def test_init_must_not_overwrite_gitignore(self):
+        expected_gitignore = """
+existing gitignore
+DO NOT MODIFY"""
+        with open('.gitignore', mode='w') as f:
+            f.write(expected_gitignore)
+
+        result = self.run_command(['init'])
+
+        # Verify the .gitignore was not modified
+        self.assertThat('.gitignore',
+                        FileContains(expected_gitignore))
