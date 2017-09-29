@@ -306,7 +306,10 @@ class _SnapPackaging:
 
     def _write_wrap_exe(self, wrapexec, wrappath,
                         shebang=None, args=None, cwd=None):
-        quoted_args = ['"{}"'.format(arg) for arg in args]
+        if args:
+            quoted_args = ['"{}"'.format(arg) for arg in args]
+        else:
+            quoted_args = []
         args = ' '.join(quoted_args) + ' "$@"' if args else '"$@"'
         cwd = 'cd {}'.format(cwd) if cwd else ''
 
