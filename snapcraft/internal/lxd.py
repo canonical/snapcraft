@@ -228,7 +228,7 @@ class Containerbuild:
         else:
             shutil.copyfile(installed, filepath)
 
-        if self._same_snap(filepath, installed):
+        if self._is_same_snap(filepath, installed):
             logger.debug('Not re-injecting same version of {!r}'.format(name))
             return
 
@@ -250,7 +250,7 @@ class Containerbuild:
             cmd.append('--classic')
         self._container_run(cmd)
 
-    def _same_snap(self, filepath, installed):
+    def _is_same_snap(self, filepath, installed):
         # Compare checksums: user-visible version may still match
         checksum = check_output(['md5sum', filepath]).decode(
             sys.getfilesystemencoding()).split()[0]
