@@ -213,10 +213,15 @@ class Containerbuild:
         # If the server has a different arch we can't inject local snaps
         if self._project_options.target_arch != self._server_arch:
             logger.info('Installing {}'.format(name))
+            # Install if needed
             cmd = ['snap', 'install', name]
             if is_classic:
                 cmd.append('--classic')
-            cmd.append('--channel={}'.format(json['result']['channel']))
+            cmd.append('--channel')
+            cmd.append(json['result']['channel'])
+            self._container_run(cmd)
+            # Switch channel if needed
+            cmd[1] = 'refresh'
             self._container_run(cmd)
             return
 
