@@ -89,7 +89,7 @@ class InitCommandExistingProjectTestCase(CommandBaseTestCase):
 class InitCommandGitTestCase(CommandBaseTestCase):
 
     def test_init_must_not_write_gitignore_if_no_git_dir(self):
-        result = self.run_command(['init'])
+        self.run_command(['init'])
 
         # Verify the .gitignore was created
         self.assertThat('.gitignore',
@@ -107,7 +107,7 @@ snap/.snapcraft/
 
         os.mkdir('.git')
 
-        result = self.run_command(['init'])
+        self.run_command(['init'])
 
         # Verify the .gitignore was created
         self.assertThat('.gitignore',
@@ -120,7 +120,7 @@ DO NOT MODIFY"""
         with open('.gitignore', mode='w') as f:
             f.write(expected_gitignore)
 
-        result = self.run_command(['init'])
+        self.run_command(['init'])
 
         # Verify the .gitignore was not modified
         self.assertThat('.gitignore',
