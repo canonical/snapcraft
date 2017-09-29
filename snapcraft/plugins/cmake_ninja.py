@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""The cmake plugin is useful for building cmake based parts.
+"""The cmakeninja plugin is useful for building cmake based parts using ninja.
 
 These are projects that have a CMakeLists.txt that drives the build.
 The plugin requires a CMakeLists.txt in the root of the source tree.
@@ -30,29 +30,24 @@ Additionally, this plugin uses the following plugin-specific keywords:
       configure flags to pass to the build using the common cmake semantics.
 """
 
-import snapcraft.plugins.make
+import snapcraft.plugins.ninja
 from ._cmake import cmakepluginbase
 
 
-class CMakePlugin(cmakepluginbase.CMakePluginBase):
-
-    @classmethod
-    def schema(cls):
-        schema = super().schema()
-        makeprops = snapcraft.plugins.make.MakePlugin.schema()['properties']
-        schema['properties'].update(makeprops)
-        return schema
-
-    @classmethod
-    def get_build_properties(cls):
-        # Inform Snapcraft of the properties associated with building. If these
-        # change in the YAML Snapcraft will consider the build step dirty.
-        return (super().get_build_properties() +
-                snapcraft.plugins.make.MakePlugin.get_build_properties())
+class CMakeNinjaPlugin(cmakepluginbase.CMakePluginBase):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.make = snapcraft.plugins.make.MakePlugin(name, options, project)
+        self.ninja = snapcraft.plugins.ninja.NinjaPlugin(name, options,
+                                                         project)
+        self.build_packages += self.ninja.build_packages
+
+    def configflags(self):
+        configs = super().configflags()
+        configs.append('-GNinja')
+        return configs
 
     def runCompilation(self):
-        self.make.make(env=self._build_environment())
+        env = self._build_environment()
+        env['DESTDIR'] = self.installdir
+        return self.ninja.ninja('install', env)
