@@ -14,3 +14,4 @@ RUN apt-get update && \
 
 # Required by click.
 ENV LC_ALL C.UTF-8
+ENV SNAPCRAFT_SETUP_CORE 1
