@@ -380,8 +380,8 @@ class _SnapPackaging:
             if os.path.splitext(f)[1] == '.desktop':
                 os.remove(os.path.join(gui_dir, f))
         for app in apps:
-            adapter = apps[app].get("adapter", "")
-            if adapter != "none":
+            adapter = apps[app].get('adapter', '')
+            if adapter != 'none':
                 self._wrap_app(app, apps[app])
             self._generate_desktop_file(app, apps[app])
         return apps
