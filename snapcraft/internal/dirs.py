@@ -24,9 +24,20 @@ def setup_dirs():
     """
     from snapcraft.internal import common
     topdir = os.path.abspath(os.path.join(__file__, '..', '..', '..'))
-    # only change the default if we are running from a checkout
+    # Only change the default if we are running from a checkout or from the
+    # snap.
     if os.path.exists(os.path.join(topdir, 'setup.py')):
         common.set_plugindir(os.path.join(topdir, 'snapcraft', 'plugins'))
         common.set_schemadir(os.path.join(topdir, 'schema'))
         common.set_librariesdir(os.path.join(topdir, 'libraries'))
-        common.set_tourdir(os.path.join(topdir, 'tour'))
+
+    # The default paths are relative to sys.prefix, which works well for
+    # Snapcraft as a deb or in a venv. However, the Python plugin installs
+    # packages into $SNAP/ as a prefix, while Python itself is contained in
+    # $SNAP/usr/. As a result, using sys.prefix (which is '/usr') to find these
+    # files won't work in the snap.
+    elif common.is_snap():
+        parent_dir = os.path.join(os.environ.get('SNAP'), 'share', 'snapcraft')
+        common.set_plugindir(os.path.join(parent_dir, 'plugins'))
+        common.set_schemadir(os.path.join(parent_dir, 'schema'))
+        common.set_librariesdir(os.path.join(parent_dir, 'libraries'))

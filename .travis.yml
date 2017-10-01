@@ -9,24 +9,33 @@ jobs:
   include:
     # Tests, only when not triggered by the daily cron.
     - stage: static
-      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh static; fi
+      if: type != cron
+      script: sudo ./tools/travis/run_tests.sh static
     - stage: unit
-      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh unit; fi
-    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh unit; fi
+      if: type != cron
+      script: sudo ./tools/travis/run_tests.sh unit
+    - if: type != cron
+      script: SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh unit
     - stage: integration
-      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh integration; fi
-    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh plugins; fi
-    - script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/run_tests.sh store; fi
+      if: type != cron
+      script: sudo ./tools/travis/run_tests.sh integration
+    - if: type != cron
+      script: sudo ./tools/travis/run_tests.sh plugins
+    - if: type != cron
+      script: sudo ./tools/travis/run_tests.sh store
+    - if: type != cron
+    - script: sudo ./tools/travis/run_tests.sh snapd
     # CLA check, only in pull requests, not comming from the bot.
-    - script: if [ "$TRAVIS_PULL_REQUEST" != "false" ] && [ "$TRAVIS_EVENT_TYPE" != 'cron' ] && [ "TRAVIS_PULL_REQUEST_SLUG" != 'snappy-m-o/snapcraft' ]; then ./tools/travis/run_cla_check.sh; fi
+    - if: type = pull_request AND sender != snappy-m-o
+      script: ./tools/travis/run_cla_check.sh
     - stage: snap
-      script: if [ "$TRAVIS_EVENT_TYPE" != "cron" ]; then sudo ./tools/travis/build_snapcraft_snap.sh; fi
+      if: type != cron
+      script: sudo ./tools/travis/build_snapcraft_snap.sh
     # Trigger edge tests, only in the daily cron.
     - stage: edge
-      script: if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then ./runtests.sh spread; fi
+      if: type = cron
+      script: ./runtests.sh spread
     # Trigger beta tests, only in the daily cron.
     - stage: beta
-      script: if [ "$TRAVIS_EVENT_TYPE" = "cron" ]; then ./tools/travis/make_beta_pr.sh; fi
-    # Generate docs, only in pushes to master.
-    - stage: deploy
-      script: if [ "$TRAVIS_EVENT_TYPE" = "push" ] && [ "$TRAVIS_BRANCH" = "master" ]; then ./tools/travis/deploy_docs.sh; fi
+      if: type = cron
+      script: ./tools/travis/make_beta_pr.sh

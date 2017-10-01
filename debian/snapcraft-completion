@@ -6,7 +6,7 @@ _snapcraft()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="help init list-plugins plugins login logout list-keys keys create-key register-key register registered list-registered tour push release clean cleanbuild pull build sign-build stage prime snap update define search gated validate history status close enable-ci"
+    opts="help init list-plugins plugins login logout list-keys keys create-key register-key register registered list-registered push release clean cleanbuild pull build sign-build stage prime snap update define search gated validate history status close enable-ci"
 
     case "$prev" in
     help)
@@ -14,7 +14,7 @@ _snapcraft()
         COMPREPLY=( $(compgen -W "$plugins" -- $cur))
         return 0
         ;;
-    snap | tour)
+    snap)
         _filedir -d
         return 0
         ;;

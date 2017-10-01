@@ -30,21 +30,26 @@ def exception_handler(exception_type, exception, exception_traceback, *,
 
     When debug=False:
         - If exception is a SnapcraftError, just display a nice error and exit
-          according to the exit_code in the exception.
-        - If exception is NOT a SnapcraftError, raise so traceback is shown.
+          according to the exit code in the exception.
+        - If exception is NOT a SnapcraftError, show traceback and exit 1
 
     When debug=True:
         - If exception is a SnapcraftError, show traceback and exit according
-          to the exit_code in the exception.
-        - If exception is NOT a SnapcraftError, raise so traceback is shown.
+          to the exit code in the exception.
+        - If exception is NOT a SnapcraftError, show traceback and exit 1
     """
 
-    if issubclass(exception_type, snapcraft.internal.errors.SnapcraftError):
+    exit_code = 1
+    is_snapcraft_error = issubclass(
+        exception_type, snapcraft.internal.errors.SnapcraftError)
+
+    if debug or not is_snapcraft_error:
+        traceback.print_exception(
+            exception_type, exception, exception_traceback)
+
+    if is_snapcraft_error:
+        exit_code = exception.get_exit_code()
         if not debug:
             echo.error(str(exception))
-        else:
-            traceback.print_exception(
-                exception_type, exception, exception_traceback)
-        sys.exit(exception.exit_code)
-    else:
-        raise exception
+
+    sys.exit(exit_code)

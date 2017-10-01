@@ -1,0 +1,15 @@
+name: build-package-grammar-try-else
+version: '0.1'
+summary: Test build package grammar try statement else
+description: Verify that the try statement moves to the else if invalid
+grade: devel
+confinement: strict
+
+parts:
+  my-part:
+    plugin: nil
+    build-packages:
+      - try:
+        - invalid-package
+      - else:
+        - hello

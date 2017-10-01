@@ -20,6 +20,7 @@ from unittest.mock import ANY, call, patch, MagicMock
 
 from testtools.matchers import (
     Contains,
+    Equals,
     FileExists,
 )
 
@@ -51,18 +52,18 @@ class UbuntuTestCase(RepoBaseTestCase):
 
     def test_get_pkg_name_parts_name_only(self):
         name, version = repo.get_pkg_name_parts('hello')
-        self.assertEqual('hello', name)
-        self.assertEqual(None, version)
+        self.assertThat(name, Equals('hello'))
+        self.assertThat(version, Equals(None))
 
     def test_get_pkg_name_parts_all(self):
         name, version = repo.get_pkg_name_parts('hello:i386=2.10-1')
-        self.assertEqual('hello:i386', name)
-        self.assertEqual('2.10-1', version)
+        self.assertThat(name, Equals('hello:i386'))
+        self.assertThat(version, Equals('2.10-1'))
 
     def test_get_pkg_name_parts_no_arch(self):
         name, version = repo.get_pkg_name_parts('hello=2.10-1')
-        self.assertEqual('hello', name)
-        self.assertEqual('2.10-1', version)
+        self.assertThat(name, Equals('hello'))
+        self.assertThat(version, Equals('2.10-1'))
 
     @patch('snapcraft.internal.repo._deb.apt.apt_pkg')
     def test_get_package(self, mock_apt_pkg):
@@ -160,7 +161,7 @@ deb http://security.ubuntu.com/ubuntu xenial-security main restricted
 deb http://security.ubuntu.com/ubuntu xenial-security universe
 deb http://security.ubuntu.com/ubuntu xenial-security multiverse
 '''
-        self.assertEqual(sources_list, expected_sources_list)
+        self.assertThat(sources_list, Equals(expected_sources_list))
 
     def test_no_geoip_uses_default_archive(self):
         sources_list = repo._deb._format_sources_list(
@@ -178,7 +179,7 @@ deb http://security.ubuntu.com/ubuntu xenial-security universe
 deb http://security.ubuntu.com/ubuntu xenial-security multiverse
 '''
 
-        self.assertEqual(sources_list, expected_sources_list)
+        self.assertThat(sources_list, Equals(expected_sources_list))
 
     @patch('snapcraft.internal.repo._deb._get_geoip_country_code_prefix')
     def test_sources_amd64_vivid(self, mock_cc):
@@ -200,7 +201,7 @@ deb http://security.ubuntu.com/ubuntu vivid-security main restricted
 deb http://security.ubuntu.com/ubuntu vivid-security universe
 deb http://security.ubuntu.com/ubuntu vivid-security multiverse
 '''
-        self.assertEqual(sources_list, expected_sources_list)
+        self.assertThat(sources_list, Equals(expected_sources_list))
 
     @patch('snapcraft.repo._deb._get_geoip_country_code_prefix')
     def test_sources_armhf_trusty(self, mock_cc):
@@ -218,8 +219,29 @@ deb http://ports.ubuntu.com/ubuntu-ports trusty-security main restricted
 deb http://ports.ubuntu.com/ubuntu-ports trusty-security universe
 deb http://ports.ubuntu.com/ubuntu-ports trusty-security multiverse
 '''
-        self.assertEqual(sources_list, expected_sources_list)
+        self.assertThat(sources_list, Equals(expected_sources_list))
         self.assertFalse(mock_cc.called)
+
+
+class UbuntuTestCaseWithFakeAptCache(RepoBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_apt_cache = fixture_setup.FakeAptCache()
+        self.useFixture(self.fake_apt_cache)
+
+    def test_get_installed_packages(self):
+        for name, version, installed in (
+                ('test-installed-package', 'test-installed-package-version',
+                 True),
+                ('test-not-installed-package', 'dummy', False)):
+            self.fake_apt_cache.add_package(
+                fixture_setup.FakeAptCachePackage(
+                    name, version, installed=installed))
+
+        self.assertThat(
+            repo.Repo.get_installed_packages(),
+            Equals(['test-installed-package=test-installed-package-version']))
 
 
 class BuildPackagesTestCase(tests.TestCase):

@@ -20,6 +20,7 @@ import subprocess
 import fixtures
 from testtools.matchers import (
     Contains,
+    Equals,
     FileExists,
     Not
 )
@@ -34,7 +35,7 @@ class StageTestCase(integration_tests.TestCase):
             subprocess.CalledProcessError,
             self.run_snapcraft, 'stage', 'conflicts', debug=debug)
 
-        self.assertEqual(2, exception.returncode)
+        self.assertThat(exception.returncode, Equals(2))
         expected_conflicts = (
             "Parts 'p1' and 'p2' have the following file paths in common "
             "which have different contents:\n    bin/test\n")
@@ -66,7 +67,7 @@ class StageTestCase(integration_tests.TestCase):
             subprocess.CalledProcessError,
             self.run_snapcraft, 'stage', 'conflicts')
 
-        self.assertEqual(2, exception.returncode)
+        self.assertThat(exception.returncode, Equals(2))
         expected_conflicts = (
             "Parts 'p1' and 'p2' have the following file paths in common "
             "which have different contents:\n    bin/test\n")

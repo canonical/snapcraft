@@ -21,6 +21,7 @@ from textwrap import dedent
 import testscenarios
 from testtools.matchers import (
     Contains,
+    Equals,
     FileContains,
     FileExists,
     Not,
@@ -79,7 +80,7 @@ class PrimeTestCase(integration_tests.TestCase):
             self.run_snapcraft, ['prime', 'invalid-part-name'],
             'prime-from-stage', debug=debug)
 
-        self.assertEqual(2, exception.returncode)
+        self.assertThat(exception.returncode, Equals(2))
         self.assertThat(exception.output, Contains(
             "part named 'invalid-part-name' is not defined"))
 

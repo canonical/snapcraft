@@ -17,13 +17,18 @@
 import filecmp
 import os
 import subprocess
+import sys
 import yaml
 
+import apt
 import fixtures
 import testscenarios
+from testtools.matchers import Contains, Equals
 
 import snapcraft
 import integration_tests
+from snapcraft.internal.repo import snaps
+from snapcraft.tests import fixture_setup
 
 
 class AssetRecordingBaseTestCase(integration_tests.TestCase):
@@ -54,6 +59,35 @@ class SnapcraftYamlRecordingTestCase(AssetRecordingBaseTestCase):
 
 class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
 
+    def test_prime_records_uname(self):
+        self.run_snapcraft('prime', project_dir='basic')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'manifest.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        expected_uname = subprocess.check_output(
+            ['uname', '-srvmpio']).decode(sys.getfilesystemencoding()).strip()
+        self.assertThat(
+            recorded_yaml['parts']['dummy-part']['uname'],
+            Equals(expected_uname))
+
+    def test_prime_records_installed_packages(self):
+        self.run_snapcraft('prime', project_dir='basic')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'manifest.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        with apt.Cache() as apt_cache:
+            expected_package = 'python3={}'.format(
+                apt_cache['python3'].installed.version)
+        self.assertThat(
+            recorded_yaml['parts']['dummy-part']['installed-packages'],
+            Contains(expected_package))
+
     def test_prime_with_architectures(self):
         """Test the recorded manifest for a basic snap
 
@@ -67,7 +101,7 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(recorded_yaml['architectures'], ['all'])
+        self.assertThat(recorded_yaml['architectures'], Equals(['all']))
 
     def test_prime_without_architectures_records_current_arch(self):
         """Test the recorded manifest for a basic snap
@@ -83,9 +117,31 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(
+        self.assertThat(
             recorded_yaml['architectures'],
-            [snapcraft.ProjectOptions().deb_arch])
+            Equals([snapcraft.ProjectOptions().deb_arch]))
+
+    def test_prime_records_build_snaps(self):
+        self.useFixture(fixture_setup.WithoutSnapInstalled('hello'))
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml.update_part('test-part', {
+            'plugin': 'nil',
+            'build-snaps': ['hello']
+        })
+        self.useFixture(snapcraft_yaml)
+
+        self.run_snapcraft('prime')
+
+        expected_revision = snaps.SnapPackage(
+            'hello').get_local_snap_info()['revision']
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'manifest.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        self.assertThat(
+            recorded_yaml['build-snaps'],
+            Equals(['hello={}'.format(expected_revision)]))
 
 
 class ManifestRecordingBuildPackagesTestCase(
@@ -125,8 +181,9 @@ class ManifestRecordingBuildPackagesTestCase(
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(
-            recorded_yaml['build-packages'], expected_packages_with_version)
+        self.assertThat(
+            recorded_yaml['build-packages'],
+            Equals(expected_packages_with_version))
 
 
 class ManifestRecordingStagePackagesTestCase(AssetRecordingBaseTestCase):
@@ -155,9 +212,9 @@ class ManifestRecordingStagePackagesTestCase(AssetRecordingBaseTestCase):
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(
+        self.assertThat(
             recorded_yaml['parts'][part_name]['stage-packages'],
-            source_yaml['parts'][part_name]['stage-packages'])
+            Equals(source_yaml['parts'][part_name]['stage-packages']))
 
     def test_prime_without_packages_version(self):
         """Test the recorded manifest for a snap with packages
@@ -184,9 +241,9 @@ class ManifestRecordingStagePackagesTestCase(AssetRecordingBaseTestCase):
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(
+        self.assertThat(
             recorded_yaml['parts'][part_name]['stage-packages'],
-            expected_packages)
+            Equals(expected_packages))
 
     def test_prime_with_packages_missing_dependency(self):
         """Test the recorded manifest for a snap with packages
@@ -214,9 +271,9 @@ class ManifestRecordingStagePackagesTestCase(AssetRecordingBaseTestCase):
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(
+        self.assertThat(
             recorded_yaml['parts'][part_name]['stage-packages'],
-            expected_packages)
+            Equals(expected_packages))
 
 
 class ManifestRecordingBzrSourceTestCase(
@@ -237,8 +294,8 @@ class ManifestRecordingBzrSourceTestCase(
             recorded_yaml = yaml.load(recorded_yaml_file)
 
         commit = self.get_revno()
-        self.assertEqual(
-            recorded_yaml['parts']['bzr']['source-commit'], commit)
+        self.assertThat(
+            recorded_yaml['parts']['bzr']['source-commit'], Equals(commit))
 
 
 class ManifestRecordingGitSourceTestCase(
@@ -259,8 +316,9 @@ class ManifestRecordingGitSourceTestCase(
             recorded_yaml = yaml.load(recorded_yaml_file)
 
         commit = self.get_revno()
-        self.assertEqual(
-            recorded_yaml['parts']['git']['source-commit'], commit)
+        self.assertThat(
+            recorded_yaml['parts']['git']['source-commit'],
+            Equals(commit))
 
 
 class ManifestRecordingHgSourceTestCase(
@@ -282,8 +340,9 @@ class ManifestRecordingHgSourceTestCase(
             recorded_yaml = yaml.load(recorded_yaml_file)
 
         commit = self.get_id()
-        self.assertEqual(
-            recorded_yaml['parts']['mercurial']['source-commit'], commit)
+        self.assertThat(
+            recorded_yaml['parts']['mercurial']['source-commit'],
+            Equals(commit))
 
 
 class ManifestRecordingSubversionSourceTestCase(
@@ -311,5 +370,5 @@ class ManifestRecordingSubversionSourceTestCase(
         with open(recorded_yaml_path) as recorded_yaml_file:
             recorded_yaml = yaml.load(recorded_yaml_file)
 
-        self.assertEqual(
-            recorded_yaml['parts']['svn']['source-commit'], '1')
+        self.assertThat(
+            recorded_yaml['parts']['svn']['source-commit'], Equals('1'))

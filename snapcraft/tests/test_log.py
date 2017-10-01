@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,9 +16,10 @@
 
 import logging
 
+from testtools.matchers import Equals
+
 from snapcraft.internal import log
 from snapcraft import tests
-
 from snapcraft.tests import fixture_setup
 
 
@@ -48,9 +49,8 @@ class LogTestCase(tests.TestCase):
                         '{}Test warning\033[0m\n').format(
             self.info_color, self.warning_color)
 
-        self.assertEqual(expected_out,
-                         self.fake_terminal.getvalue())
-        self.assertEqual('', self.fake_terminal.getvalue(stderr=True))
+        self.assertThat(self.fake_terminal.getvalue(), Equals(expected_out))
+        self.assertThat(self.fake_terminal.getvalue(stderr=True), Equals(''))
 
     def test_configure_must_send_errors_to_stderr(self):
         logger_name = self.id()
@@ -66,9 +66,10 @@ class LogTestCase(tests.TestCase):
                         '{}Test critical\033[0m\n').format(
             self.error_color, self.critical_color)
 
-        self.assertEqual(expected_err,
-                         self.fake_terminal.getvalue(stderr=True))
-        self.assertEqual('', self.fake_terminal.getvalue())
+        self.assertThat(
+            self.fake_terminal.getvalue(stderr=True),
+            Equals(expected_err))
+        self.assertThat(self.fake_terminal.getvalue(), Equals(''))
 
     def test_configure_must_log_info_and_higher(self):
         logger_name = self.id()
@@ -88,9 +89,9 @@ class LogTestCase(tests.TestCase):
                         '{}Test critical\033[0m\n').format(
             self.error_color, self.critical_color)
 
-        self.assertEqual(expected_out, self.fake_terminal.getvalue())
-        self.assertEqual(expected_err,
-                         self.fake_terminal.getvalue(stderr=True))
+        self.assertThat(self.fake_terminal.getvalue(), Equals(expected_out))
+        self.assertThat(
+            self.fake_terminal.getvalue(stderr=True), Equals(expected_err))
 
     def test_configure_must_support_debug(self):
         logger_name = self.id()
@@ -111,9 +112,9 @@ class LogTestCase(tests.TestCase):
                         '{}Test critical\033[0m\n').format(
             self.error_color, self.critical_color)
 
-        self.assertEqual(expected_out, self.fake_terminal.getvalue())
-        self.assertEqual(expected_err,
-                         self.fake_terminal.getvalue(stderr=True))
+        self.assertThat(self.fake_terminal.getvalue(), Equals(expected_out))
+        self.assertThat(
+            self.fake_terminal.getvalue(stderr=True), Equals(expected_err))
 
     def test_configure_must_support_no_tty(self):
         self.fake_terminal = fixture_setup.FakeTerminal(isatty=False)
@@ -134,6 +135,6 @@ class LogTestCase(tests.TestCase):
         expected_err = ('Test error\n'
                         'Test critical\n')
 
-        self.assertEqual(expected_out, self.fake_terminal.getvalue())
-        self.assertEqual(expected_err,
-                         self.fake_terminal.getvalue(stderr=True))
+        self.assertThat(self.fake_terminal.getvalue(), Equals(expected_out))
+        self.assertThat(
+            self.fake_terminal.getvalue(stderr=True), Equals(expected_err))

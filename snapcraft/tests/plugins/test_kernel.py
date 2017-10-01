@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -90,40 +90,42 @@ class KernelPluginTestCase(tests.TestCase):
         schema = kernel.KernelPlugin.schema()
 
         properties = schema['properties']
-        self.assertEqual(properties['kdefconfig']['type'], 'array')
-        self.assertEqual(properties['kdefconfig']['default'], ['defconfig'])
+        self.assertThat(properties['kdefconfig']['type'], Equals('array'))
+        self.assertThat(
+            properties['kdefconfig']['default'], Equals(['defconfig']))
 
-        self.assertEqual(properties['kconfigfile']['type'], 'string')
-        self.assertEqual(properties['kconfigfile']['default'], None)
+        self.assertThat(properties['kconfigfile']['type'], Equals('string'))
+        self.assertThat(properties['kconfigfile']['default'], Equals(None))
 
-        self.assertEqual(properties['kconfigflavour']['type'], 'string')
-        self.assertEqual(properties['kconfigflavour']['default'], None)
+        self.assertThat(properties['kconfigflavour']['type'], Equals('string'))
+        self.assertThat(properties['kconfigflavour']['default'], Equals(None))
 
         for prop in ['kconfigs', 'kernel-initrd-modules',
                      'kernel-initrd-firmware', 'kernel-device-trees']:
-            self.assertEqual(properties[prop]['type'], 'array')
-            self.assertEqual(properties[prop]['default'], [])
-            self.assertEqual(properties[prop]['minitems'], 1)
-            self.assertEqual(properties[prop]['items']['type'], 'string')
+            self.assertThat(properties[prop]['type'], Equals('array'))
+            self.assertThat(properties[prop]['default'], Equals([]))
+            self.assertThat(properties[prop]['minitems'], Equals(1))
+            self.assertThat(
+                properties[prop]['items']['type'], Equals('string'))
             self.assertTrue(properties[prop]['uniqueItems'])
 
-        self.assertEqual(
+        self.assertThat(
             properties['kernel-image-target']['oneOf'],
-            [{'type': 'string'}, {'type': 'object'}])
-        self.assertEqual(
-            properties['kernel-image-target']['default'], '')
+            Equals([{'type': 'string'}, {'type': 'object'}]))
+        self.assertThat(
+            properties['kernel-image-target']['default'], Equals(''))
 
-        self.assertEqual(
-            properties['kernel-with-firmware']['type'], 'boolean')
-        self.assertEqual(
-            properties['kernel-with-firmware']['default'], True)
+        self.assertThat(
+            properties['kernel-with-firmware']['type'], Equals('boolean'))
+        self.assertThat(
+            properties['kernel-with-firmware']['default'], Equals(True))
 
-        self.assertEqual(
-            properties['kernel-initrd-compression']['type'], 'string')
-        self.assertEqual(
-            properties['kernel-initrd-compression']['default'], 'gz')
-        self.assertEqual(
-            properties['kernel-initrd-compression']['enum'], ['gz'])
+        self.assertThat(
+            properties['kernel-initrd-compression']['type'], Equals('string'))
+        self.assertThat(
+            properties['kernel-initrd-compression']['default'], Equals('gz'))
+        self.assertThat(
+            properties['kernel-initrd-compression']['enum'], Equals(['gz']))
 
     def test_get_build_properties(self):
         expected_build_properties = [
@@ -141,7 +143,7 @@ class KernelPluginTestCase(tests.TestCase):
             self.assertIn(property, resulting_build_properties)
 
     def _assert_generic_check_call(self, builddir, installdir, os_snap_path):
-        self.assertEqual(4, self.check_call_mock.call_count)
+        self.assertThat(self.check_call_mock.call_count, Equals(4))
         self.check_call_mock.assert_has_calls([
             mock.call('yes "" | make -j2 oldconfig', shell=True,
                       cwd=builddir),
@@ -283,8 +285,9 @@ class KernelPluginTestCase(tests.TestCase):
             RuntimeError,
             plugin._unpack_generic_initrd)
 
-        self.assertEqual("initrd file type is unsupported: 'application/foo'",
-                         str(raised))
+        self.assertThat(
+            str(raised),
+            Equals("initrd file type is unsupported: 'application/foo'"))
 
     def test_pack_initrd_modules(self):
         self.options.kernel_initrd_modules = [
@@ -371,7 +374,7 @@ class KernelPluginTestCase(tests.TestCase):
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
-        self.assertEqual(2, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(2))
         self.run_mock.assert_has_calls([
             mock.call(['make', '-j2', 'bzImage', 'modules']),
             mock.call(['make', '-j2',
@@ -389,7 +392,7 @@ class KernelPluginTestCase(tests.TestCase):
         with open(config_file) as f:
             config_contents = f.read()
 
-        self.assertEqual(config_contents, 'ACCEPT=y\n')
+        self.assertThat(config_contents, Equals('ACCEPT=y\n'))
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
@@ -411,7 +414,7 @@ class KernelPluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        self.assertEqual(4, self.check_call_mock.call_count)
+        self.assertThat(self.check_call_mock.call_count, Equals(4))
         self.check_call_mock.assert_has_calls([
             mock.call('yes "" | make -j2 V=1 oldconfig', shell=True,
                       cwd=plugin.builddir),
@@ -430,7 +433,7 @@ class KernelPluginTestCase(tests.TestCase):
                       shell=True)
         ])
 
-        self.assertEqual(2, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(2))
         self.run_mock.assert_has_calls([
             mock.call(['make', '-j2', 'V=1', 'bzImage', 'modules']),
             mock.call(['make', '-j2', 'V=1',
@@ -448,7 +451,7 @@ class KernelPluginTestCase(tests.TestCase):
         with open(config_file) as f:
             config_contents = f.read()
 
-        self.assertEqual(config_contents, 'ACCEPT=y\n')
+        self.assertThat(config_contents, Equals('ACCEPT=y\n'))
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
@@ -525,7 +528,7 @@ class KernelPluginTestCase(tests.TestCase):
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
-        self.assertEqual(2, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(2))
         self.run_mock.assert_has_calls([
             mock.call(['make', '-j2', 'bzImage', 'modules']),
             mock.call(['make', '-j2',
@@ -551,7 +554,7 @@ ACCEPT=y
 SOMETHING=y
 ACCEPT=n
 """
-        self.assertEqual(config_contents, expected_config)
+        self.assertThat(config_contents, Equals(expected_config))
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
@@ -585,7 +588,7 @@ ACCEPT=n
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
-        self.assertEqual(3, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(3))
         self.run_mock.assert_has_calls([
             mock.call(['make', '-j1', 'defconfig']),
             mock.call(['make', '-j2', 'bzImage', 'modules']),
@@ -611,7 +614,7 @@ ACCEPT=y
 SOMETHING=y
 ACCEPT=n
 """
-        self.assertEqual(config_contents, expected_config)
+        self.assertThat(config_contents, Equals(expected_config))
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
@@ -641,7 +644,7 @@ ACCEPT=n
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
-        self.assertEqual(3, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(3))
         self.run_mock.assert_has_calls([
             mock.call(['make', '-j1', 'defconfig', 'defconfig2']),
             mock.call(['make', '-j2', 'bzImage', 'modules']),
@@ -677,7 +680,7 @@ ACCEPT=n
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
-        self.assertEqual(2, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(2))
         self.run_mock.assert_has_calls([
             mock.call([
                 'make', '-j2', 'bzImage', 'modules', 'fake-dtb.dtb']),
@@ -696,7 +699,7 @@ ACCEPT=n
         with open(config_file) as f:
             config_contents = f.read()
 
-        self.assertEqual(config_contents, 'ACCEPT=y\n')
+        self.assertThat(config_contents, Equals('ACCEPT=y\n'))
         self._assert_common_assets(plugin.installdir)
         self.assertTrue(os.path.exists(os.path.join(
             plugin.installdir, 'dtbs', 'fake-dtb.dtb')))
@@ -715,8 +718,9 @@ ACCEPT=n
 
         raised = self.assertRaises(RuntimeError, plugin.build)
 
-        self.assertEqual(
-            "No match for dtb 'fake-dtb.dtb' was found", str(raised))
+        self.assertThat(
+            str(raised),
+            Equals("No match for dtb 'fake-dtb.dtb' was found"))
 
     @mock.patch.object(
         snapcraft._options.ProjectOptions,
@@ -759,7 +763,7 @@ ACCEPT=n
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
-        self.assertEqual(2, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(2))
         self.run_mock.assert_has_calls([
             mock.call([
                 'make', '-j2', 'bzImage', 'modules']),
@@ -772,7 +776,7 @@ ACCEPT=n
                            plugin.installdir, 'lib', 'firmware'))])
         ])
 
-        self.assertEqual(1, self.run_output_mock.call_count)
+        self.assertThat(self.run_output_mock.call_count, Equals(1))
         self.run_output_mock.assert_has_calls([
             mock.call([
                 'modprobe', '-n', '--show-depends', '-d',
@@ -784,7 +788,7 @@ ACCEPT=n
         with open(config_file) as f:
             config_contents = f.read()
 
-        self.assertEqual(config_contents, 'ACCEPT=y\n')
+        self.assertThat(config_contents, Equals('ACCEPT=y\n'))
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
@@ -817,7 +821,7 @@ ACCEPT=n
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
-        self.assertEqual(2, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(2))
         self.run_mock.assert_has_calls([
             mock.call([
                 'make', '-j2', 'bzImage', 'modules']),
@@ -836,7 +840,7 @@ ACCEPT=n
         with open(config_file) as f:
             config_contents = f.read()
 
-        self.assertEqual(config_contents, 'ACCEPT=y\n')
+        self.assertThat(config_contents, Equals('ACCEPT=y\n'))
         self._assert_common_assets(plugin.installdir)
         self.assertTrue(os.path.exists(os.path.join(
             plugin.installdir, 'firmware', 'fake-fw-dir')))
@@ -861,7 +865,7 @@ ACCEPT=n
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
-        self.assertEqual(2, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(2))
         self.run_mock.assert_has_calls([
             mock.call([
                 'make', '-j2', 'bzImage', 'modules']),
@@ -915,7 +919,7 @@ ACCEPT=n
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
                                         plugin.os_snap)
 
-        self.assertEqual(2, self.run_mock.call_count)
+        self.assertThat(self.run_mock.call_count, Equals(2))
         self.run_mock.assert_has_calls([
             mock.call(['make', '-j2', 'bzImage', 'modules']),
             mock.call(['make', '-j2',
@@ -953,12 +957,13 @@ ACCEPT=n
 
         raised = self.assertRaises(ValueError, plugin.build)
 
-        self.assertEqual(
-            'kernel build did not output a vmlinux binary in top level dir, '
-            'expected {!r}'.format(os.path.join(
-                plugin.builddir, 'arch', self.project_options.kernel_arch,
-                'boot', 'bzImage')),
-            str(raised))
+        self.assertThat(
+            str(raised),
+            Equals('kernel build did not output a vmlinux binary in top level '
+                   'dir, expected {!r}'.format(os.path.join(
+                       plugin.builddir, 'arch',
+                       self.project_options.kernel_arch,
+                       'boot', 'bzImage'))))
 
     def test_build_with_missing_kernel_release_fails(self):
         self.options.kconfigfile = 'config'
@@ -975,10 +980,11 @@ ACCEPT=n
 
         raised = self.assertRaises(ValueError, plugin.build)
 
-        self.assertEqual(
-            'No kernel release version info found at {!r}'.format(os.path.join(
-                plugin.builddir, 'include', 'config', 'kernel.release')),
-            str(raised))
+        self.assertThat(
+            str(raised),
+            Equals('No kernel release version info found at {!r}'.format(
+                os.path.join(
+                    plugin.builddir, 'include', 'config', 'kernel.release'))))
 
     def test_build_with_missing_system_map_fails(self):
         self.options.kconfigfile = 'config'
@@ -994,9 +1000,10 @@ ACCEPT=n
 
         raised = self.assertRaises(ValueError, plugin.build)
 
-        self.assertEqual(
-            'kernel build did not output a System.map in top level dir',
-            str(raised))
+        self.assertThat(
+            str(raised),
+            Equals(
+                'kernel build did not output a System.map in top level dir'))
 
     def test_enable_cross_compilation(self):
         project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
@@ -1004,11 +1011,13 @@ ACCEPT=n
                                      project_options)
         plugin.enable_cross_compilation()
 
-        self.assertEqual(
+        self.assertThat(
             plugin.make_cmd,
-            ['make', '-j2', 'ARCH=arm64', 'CROSS_COMPILE=aarch64-linux-gnu-',
-             'PATH={}:/usr/{}/bin'.format(os.environ.copy().get('PATH', ''),
-                                          'aarch64-linux-gnu')])
+            Equals([
+                'make', '-j2', 'ARCH=arm64',
+                'CROSS_COMPILE=aarch64-linux-gnu-',
+                'PATH={}:/usr/{}/bin'.format(os.environ.copy().get('PATH', ''),
+                                             'aarch64-linux-gnu')]))
 
     def test_override_cross_compile(self):
         project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
@@ -1018,11 +1027,13 @@ ACCEPT=n
                                                      'foo-bar-toolchain-'))
         plugin.enable_cross_compilation()
 
-        self.assertEqual(
+        self.assertThat(
             plugin.make_cmd,
-            ['make', '-j2', 'ARCH=arm64', 'CROSS_COMPILE=foo-bar-toolchain-',
-             'PATH={}:/usr/{}/bin'.format(os.environ.copy().get('PATH', ''),
-                                          'aarch64-linux-gnu')])
+            Equals([
+                'make', '-j2', 'ARCH=arm64',
+                'CROSS_COMPILE=foo-bar-toolchain-',
+                'PATH={}:/usr/{}/bin'.format(os.environ.copy().get('PATH', ''),
+                                             'aarch64-linux-gnu')]))
 
     def test_kernel_image_target_as_map(self):
         self.options.kernel_image_target = {'arm64': 'Image'}
@@ -1030,7 +1041,8 @@ ACCEPT=n
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      project_options)
 
-        self.assertEqual(plugin.make_targets, ['Image', 'modules', 'dtbs'])
+        self.assertThat(
+            plugin.make_targets, Equals(['Image', 'modules', 'dtbs']))
 
     def test_kernel_image_target_as_string(self):
         self.options.kernel_image_target = 'Image'
@@ -1038,7 +1050,8 @@ ACCEPT=n
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      project_options)
 
-        self.assertEqual(plugin.make_targets, ['Image', 'modules', 'dtbs'])
+        self.assertThat(
+            plugin.make_targets, Equals(['Image', 'modules', 'dtbs']))
 
     def test_kernel_image_target_non_existent(self):
         class Options:
@@ -1055,7 +1068,8 @@ ACCEPT=n
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      project_options)
 
-        self.assertEqual(plugin.make_targets, ['bzImage', 'modules', 'dtbs'])
+        self.assertThat(
+            plugin.make_targets, Equals(['bzImage', 'modules', 'dtbs']))
 
     @mock.patch.object(storeapi.StoreClient, 'download')
     def test_pull(self, download_mock):

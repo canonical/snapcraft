@@ -14,12 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 import re
 import subprocess
-import unittest
 
-from testtools.matchers import Contains, FileExists, MatchesRegex
+from testtools.matchers import Contains, Equals, FileExists, MatchesRegex
 
 import integration_tests
 
@@ -64,9 +62,10 @@ class RevisionsTestCase(integration_tests.StoreTestCase):
             "Snap 'mysnap' for 'i386' was not found in '16' series.",
             str(error.output))
 
-    @unittest.skipUnless(
-        os.getenv('TEST_STORE', 'fake') == 'fake', 'Skip fake store.')
     def test_revisions_fake_store(self):
+        if not self.is_store_fake():
+            self.skipTest('This test only works in the fake store')
+
         self.addCleanup(self.logout)
         self.login()
 
@@ -78,9 +77,10 @@ class RevisionsTestCase(integration_tests.StoreTestCase):
         ))
         self.assertThat(output, Contains(expected))
 
-    @unittest.skipUnless(
-        os.getenv('TEST_STORE', 'fake') == 'fake', 'Skip fake store.')
     def test_list_revisions_fake_store(self):
+        if not self.is_store_fake():
+            self.skipTest('This test only works in the fake store')
+
         self.addCleanup(self.logout)
         self.login()
 
@@ -92,9 +92,10 @@ class RevisionsTestCase(integration_tests.StoreTestCase):
         ))
         self.assertThat(output, Contains(expected))
 
-    @unittest.skipUnless(
-        os.getenv('TEST_STORE', 'fake') == 'fake', 'Skip fake store.')
     def test_history_fake_store(self):
+        if not self.is_store_fake():
+            self.skipTest('This test only works in the fake store')
+
         self.addCleanup(self.logout)
         self.login()
 
@@ -110,9 +111,10 @@ class RevisionsTestCase(integration_tests.StoreTestCase):
             "DEPRECATED: The 'history' command has "
             "been replaced by 'list-revisions'."))
 
-    @unittest.skipUnless(
-        os.getenv('TEST_STORE', 'fake') == 'staging', 'Skip staging store.')
     def test_revisions_staging_store(self):
+        if not self.is_store_staging():
+            self.skipTest('This test only works in the staging store')
+
         self.addCleanup(self.logout)
         self.login()
 
@@ -125,7 +127,8 @@ class RevisionsTestCase(integration_tests.StoreTestCase):
         snap_path = '{}_{}_{}.snap'.format(name, version, 'all')
         self.assertThat(snap_path, FileExists())
         self.register(name)
-        self.assertEqual(0, self.push(snap_path, release='candidate,beta'))
+        self.assertThat(
+            self.push(snap_path, release='candidate,beta'), Equals(0))
 
         output = self.run_snapcraft(['revisions', name])
 

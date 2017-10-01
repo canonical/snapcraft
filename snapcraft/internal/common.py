@@ -40,8 +40,6 @@ _schemadir = _DEFAULT_SCHEMADIR
 _DEFAULT_LIBRARIESDIR = os.path.join(sys.prefix, 'share', 'snapcraft',
                                      'libraries')
 _librariesdir = _DEFAULT_LIBRARIESDIR
-_DEFAULT_TOURDIR = os.path.join(sys.prefix, 'share', 'snapcraft', 'tour')
-_tourdir = _DEFAULT_TOURDIR
 
 MAX_CHARACTERS_WRAP = 120
 
@@ -141,15 +139,6 @@ def set_librariesdir(librariesdir):
 
 def get_librariesdir():
     return _librariesdir
-
-
-def set_tourdir(tourdir):
-    global _tourdir
-    _tourdir = tourdir
-
-
-def get_tourdir():
-    return _tourdir
 
 
 def get_python2_path(root):
@@ -274,3 +263,13 @@ def get_pkg_config_paths(root, arch_triplet):
     ]
 
     return [p for p in paths if os.path.exists(p)]
+
+
+def get_os_release_info(os_release_file='/etc/os-release'):
+    with open(os_release_file) as os_release_file:
+        os_release_dict = {}
+        for line in os_release_file:
+            entry = line.rstrip().split('=')
+            if len(entry) == 2:
+                os_release_dict[entry[0]] = entry[1].strip('"')
+    return os_release_dict

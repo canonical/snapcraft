@@ -1,2 +1,2 @@
 project('meson-hello', 'c')
-executable('meson-hello', 'main.c', install : true)
+executable('hello-meson', 'main.c', install : true)

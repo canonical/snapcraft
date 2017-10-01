@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
+import collections
 import contextlib
 import configparser
 import logging
@@ -46,22 +47,23 @@ logger = logging.getLogger(__name__)
 
 _MANDATORY_PACKAGE_KEYS = [
     'name',
-    'description',
+    'version',
     'summary',
+    'description',
 ]
 
 _OPTIONAL_PACKAGE_KEYS = [
-    'architectures',
-    'assumes',
-    'base',
-    'environment',
     'type',
+    'base',
+    'architectures',
+    'confinement',
+    'grade',
+    'assumes',
     'plugs',
     'slots',
-    'confinement',
     'epoch',
-    'grade',
     'hooks',
+    'environment',
 ]
 
 
@@ -152,17 +154,17 @@ class _SnapPackaging:
             os.makedirs(prime_snap_dir, exist_ok=True)
             shutil.copy2(
                 self._snapcraft_yaml_path, recorded_snapcraft_yaml_path)
+            annotated_snapcraft = self._annotate_snapcraft(
+                copy.deepcopy(self._config_data))
             with open(manifest_file_path, 'w') as manifest_file:
-                annotated_snapcraft = self._annotate_snapcraft(
-                    copy.deepcopy(self._config_data))
                 yaml.dump(annotated_snapcraft, manifest_file)
 
     def _annotate_snapcraft(self, data):
-        data['build-packages'] = get_global_state().assets.get(
-            'build-packages', [])
+        for field in ('build-packages', 'build-snaps'):
+            data[field] = get_global_state().assets.get(field, [])
         for part in data['parts']:
-            pull_state = get_state(
-                os.path.join(self._parts_dir, part, 'state'), 'pull')
+            state_dir = os.path.join(self._parts_dir, part, 'state')
+            pull_state = get_state(state_dir, 'pull')
             data['parts'][part]['build-packages'] = (
                 pull_state.assets.get('build-packages', []))
             data['parts'][part]['stage-packages'] = (
@@ -170,6 +172,8 @@ class _SnapPackaging:
             source_details = pull_state.assets.get('source-details', {})
             if source_details:
                 data['parts'][part].update(source_details)
+            build_state = get_state(state_dir, 'build')
+            data['parts'][part].update(build_state.assets)
         return data
 
     def write_snap_directory(self):
@@ -256,11 +260,12 @@ class _SnapPackaging:
 
         Keys that are in _OPTIONAL_PACKAGE_KEYS are ignored if not there.
         """
-        snap_yaml = {}
+        snap_yaml = collections.OrderedDict()
 
         for key_name in _MANDATORY_PACKAGE_KEYS:
             snap_yaml[key_name] = self._config_data[key_name]
 
+        # Reparse the version, the order should stick.
         snap_yaml['version'] = self._get_version(
             self._config_data['version'],
             self._config_data.get('version-script'))

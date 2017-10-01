@@ -17,11 +17,9 @@
 from unittest import mock
 
 import fixtures
+from testtools.matchers import Equals
 
-from snapcraft import tests
-
-
-from snapcraft import _store
+from snapcraft import tests, _store
 
 
 class EditCollaboratorsTestCase(tests.TestCase):
@@ -62,8 +60,9 @@ class EditCollaboratorsTestCase(tests.TestCase):
         written = ''
         for call in mock_open().write.call_args_list:
             written += str(call.call_list()[0][0][0])
-        self.assertEqual(expected_written, written)
-        self.assertEqual(developers_for_assertion, developers_from_assertion)
+        self.assertThat(written, Equals(expected_written))
+        self.assertThat(
+            developers_for_assertion, Equals(developers_from_assertion))
 
     def test_edit_collaborators_must_return_new_developers(self):
         developers_from_assertion = [
@@ -90,7 +89,7 @@ class EditCollaboratorsTestCase(tests.TestCase):
             'since': '2016-02-10T08:35:00.000000Z',
             'until': '2019-02-10T08:35:00.000000Z',
         }]
-        self.assertEqual(developers_for_assertion, expected_developers)
+        self.assertThat(developers_for_assertion, Equals(expected_developers))
 
 
 class EditCollaboratorsOpenEditorTestCase(tests.TestCase):

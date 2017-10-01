@@ -20,9 +20,11 @@ import copy
 import io
 import os
 import string
+import subprocess
 import sys
 import threading
 import urllib.parse
+import uuid
 from functools import partial
 from types import ModuleType
 from unittest import mock
@@ -30,6 +32,7 @@ from subprocess import CalledProcessError
 
 import fixtures
 import xdg
+import yaml
 
 import snapcraft
 from snapcraft.tests import fake_servers
@@ -359,7 +362,7 @@ class StagingStore(fixtures.Fixture):
         super().setUp()
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_API_ROOT_URL',
-            'https://myapps.developer.staging.ubuntu.com/dev/api/'))
+            'https://dashboard.staging.snapcraft.io/dev/api/'))
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_UPLOAD_ROOT_URL',
             'https://upload.apps.staging.ubuntu.com/'))
@@ -368,7 +371,7 @@ class StagingStore(fixtures.Fixture):
             'https://login.staging.ubuntu.com/api/v2/'))
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_SEARCH_ROOT_URL',
-            'https://search.apps.staging.ubuntu.com/'))
+            'https://api.staging.snapcraft.io/'))
 
 
 class TestStore(fixtures.Fixture):
@@ -423,12 +426,80 @@ class FakePlugin(fixtures.Fixture):
         del sys.modules[self._import_name]
 
 
+class FakeFilesystem(fixtures.Fixture):
+    '''Keep track of created and removed directories'''
+
+    def __init__(self):
+        self.dirs = []
+
+    def _setUp(self):
+        patcher = mock.patch('os.makedirs')
+        self.makedirs_mock = patcher.start()
+        self.makedirs_mock.side_effect = self.makedirs_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('tempfile.mkdtemp')
+        self.mkdtemp_mock = patcher.start()
+        self.mkdtemp_mock.side_effect = self.mkdtemp_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.lxd.open', mock.mock_open())
+        self.open_mock = patcher.start()
+        self.open_mock_default_side_effect = self.open_mock.side_effect
+        self.open_mock.side_effect = self.open_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('shutil.copyfile')
+        self.copyfile_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('shutil.rmtree')
+        self.rmtree_mock = patcher.start()
+        self.rmtree_mock.side_effect = self.rmtree_side_effect()
+        self.addCleanup(patcher.stop)
+
+    def makedirs_side_effect(self):
+        def call_effect(*args, **kwargs):
+            if args[0] not in self.dirs:
+                self.dirs.append(args[0])
+        return call_effect
+
+    def mkdtemp_side_effect(self):
+        def call_effect(*args, **kwargs):
+            dir = os.path.join(kwargs['dir'], '{}{}{}'.format(
+                kwargs.get('prefix', ''),
+                uuid.uuid4(),
+                kwargs.get('suffix', '')))
+            self.dirs.append(dir)
+            return dir
+        return call_effect
+
+    def open_side_effect(self):
+        def call_effect(*args, **kwargs):
+            for dir in self.dirs:
+                if args[0].startswith(dir):
+                    return self.open_mock_default_side_effect()
+            raise FileNotFoundError(
+                '[Errno 2] No such file or directory: {}'.format(args[0]))
+        return call_effect
+
+    def rmtree_side_effect(self):
+        def call_effect(*args, **kwargs):
+            if args[0] not in self.dirs:
+                raise FileNotFoundError(
+                    '[Errno 2] No such file or directory: {}'.format(args[0]))
+            self.dirs.remove(args[0])
+        return call_effect
+
+
 class FakeLXD(fixtures.Fixture):
     '''...'''
 
-    def __init__(self, fail_on_snapcraft_run=False):
+    def __init__(self):
         self.status = None
-        self.fail_on_snapcraft_run = fail_on_snapcraft_run
+        self.files = []
+        self.kernel_arch = 'x86_64'
+        self.devices = '{}'
 
     def _setUp(self):
         patcher = mock.patch('snapcraft.internal.lxd.check_call')
@@ -439,6 +510,11 @@ class FakeLXD(fixtures.Fixture):
         patcher = mock.patch('snapcraft.internal.lxd.check_output')
         self.check_output_mock = patcher.start()
         self.check_output_mock.side_effect = self.check_output_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.lxd.Popen')
+        self.popen_mock = patcher.start()
+        self.popen_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
@@ -461,37 +537,62 @@ class FakeLXD(fixtures.Fixture):
             elif args[0][:2] == ['lxc', 'info']:
                 return '''
                     environment:
-                      kernel_architecture: x86_64
-                    '''.encode('utf-8')
+                      kernel_architecture: {}
+                    '''.format(self.kernel_arch).encode('utf-8')
             elif args[0][:3] == ['lxc', 'list', '--format=json']:
                 if self.status and args[0][3] == self.name:
                     return string.Template('''
                         [{"name": "$NAME",
                           "status": "$STATUS",
-                          "devices": {"build-snap-test":[]}}]
+                          "devices": $DEVICES}]
                         ''').substitute({
                             # Container name without remote prefix
                             'NAME': self.name.split(':')[-1],
                             'STATUS': self.status,
+                            'DEVICES': self.devices,
                             }).encode('utf-8')
                 return '[]'.encode('utf-8')
-            elif args[0][:2] == ['lxc', 'init']:
-                self.name = args[0][3]
-                self.status = 'Stopped'
-            elif args[0][:2] == ['lxc', 'launch']:
-                self.name = args[0][4]
-                self.status = 'Running'
-            elif args[0][:2] == ['lxc', 'stop'] and not self.status:
-                # error: not found
-                raise CalledProcessError(returncode=1, cmd=args[0])
-            # Fail on an actual snapcraft command and not the command
-            # for the installation of it.
-            elif ('snapcraft snap' in ' '.join(args[0])
-                  and self.fail_on_snapcraft_run):
-                raise CalledProcessError(returncode=255, cmd=args[0])
+            elif (args[0][0] == 'lxc' and
+                  args[0][1] in ['init', 'start', 'launch', 'stop']):
+                return self._lxc_create_start_stop(args)
+            elif args[0][:2] == ['lxc', 'exec']:
+                return self._lxc_exec(args)
+            elif '/usr/lib/sftp-server' in args[0]:
+                return self._popen(args[0])
             else:
                 return ''.encode('utf-8')
         return call_effect
+
+    def _lxc_create_start_stop(self, args):
+        if args[0][1] == 'init':
+            self.name = args[0][3]
+            self.status = 'Stopped'
+        elif args[0][1] == 'launch':
+            self.name = args[0][4]
+            self.status = 'Running'
+        elif args[0][1] == 'start' and self.name == args[0][2]:
+            self.status = 'Running'
+        elif args[0][1] == 'stop' and not self.status:
+            # error: not found
+            raise CalledProcessError(returncode=1, cmd=args[0])
+
+    def _lxc_exec(self, args):
+        if self.status and args[0][2] == self.name:
+            cmd = args[0][4]
+            if cmd == 'ls':
+                return ' '.join(self.files).encode('utf-8')
+            elif cmd == 'sshfs':
+                self.files = ['foo', 'bar']
+                return self._popen(args[0])
+
+    def _popen(self, args):
+        class Popen:
+            def __init__(self, args):
+                self.args = args
+
+            def terminate(self):
+                pass
+        return Popen(args)
 
 
 class FakeSnapd(fixtures.Fixture):
@@ -742,8 +843,7 @@ class FakeAptCache(fixtures.Fixture):
         self.cache = self.Cache()
         self.mock_apt_cache.return_value = self.cache
         for package, version in self.packages:
-            self.cache[package] = FakeAptCachePackage(
-                self.path, package, version)
+            self.add_package(FakeAptCachePackage(package, version))
 
         # Add all the packages in the manifest.
         with open(os.path.abspath(
@@ -752,16 +852,20 @@ class FakeAptCache(fixtures.Fixture):
                     'internal', 'repo', 'manifest.txt'))) as manifest_file:
             self.add_packages([line.strip() for line in manifest_file])
 
+    def add_package(self, package):
+        package.temp_dir = self.path
+        self.cache[package.name] = package
+
     def add_packages(self, package_names):
         for name in package_names:
-            self.cache[name] = FakeAptCachePackage(self.path, name)
+            self.cache[name] = FakeAptCachePackage(name)
 
 
 class FakeAptCachePackage():
 
     def __init__(
-            self, temp_dir, name, version=None,
-            provides=None, installed=False,
+            self, name, version=None, installed=None,
+            temp_dir=None, provides=None,
             priority='non-essential'):
         super().__init__()
         self.temp_dir = temp_dir
@@ -770,9 +874,14 @@ class FakeAptCachePackage():
         self.versions = {}
         self.version = version
         self.candidate = self
-        self.installed = version
         self.provides = provides if provides else []
-        self.installed = installed
+        if installed:
+            # XXX The installed attribute requires some values that the fake
+            # package also requires. The shortest path to do it that I found
+            # was to get installed to return the same fake package.
+            self.installed = self
+        else:
+            self.installed = None
         self.priority = priority
         self.marked_install = False
 
@@ -806,3 +915,60 @@ class FakeAptCachePackage():
 
     def get_dependencies(self, _):
         return []
+
+
+class WithoutSnapInstalled(fixtures.Fixture):
+    """Assert that a snap is not installed and remove it on clean up.
+
+    :raises: AssertionError: if the snap is installed when this fixture is
+        set up.
+    """
+
+    def __init__(self, snap_name):
+        super().__init__()
+        self.snap_name = snap_name.split('/')[0]
+
+    def setUp(self):
+        super().setUp()
+        if snapcraft.repo.snaps.SnapPackage.is_snap_installed(self.snap_name):
+            raise AssertionError(
+                "This test cannot run if you already have the {snap!r} snap "
+                "installed. Please uninstall it by running "
+                "'sudo snap remove {snap}'.".format(snap=self.snap_name))
+
+        self.addCleanup(self._remove_snap)
+
+    def _remove_snap(self):
+        try:
+            subprocess.check_output(
+                ['sudo', 'snap', 'remove', self.snap_name],
+                stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            RuntimeError("unable to remove {!r}: {}".format(
+                self.snap_name, e.output))
+
+
+class SnapcraftYaml(fixtures.Fixture):
+
+    def __init__(
+            self, path, name='test-snap', version='test-version',
+            summary='test-summary', description='test-description'):
+        super().__init__()
+        self.path = path
+        self.data = {
+            'name': name,
+            'version': version,
+            'summary': summary,
+            'description': description,
+            'parts': {}
+        }
+
+    def update_part(self, name, data):
+        part = {name: data}
+        self.data['parts'].update(part)
+
+    def setUp(self):
+        super().setUp()
+        with open(os.path.join(self.path, 'snapcraft.yaml'),
+                  'w') as snapcraft_yaml_file:
+            yaml.dump(self.data, snapcraft_yaml_file)

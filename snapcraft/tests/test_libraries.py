@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,6 +20,7 @@ import os
 import subprocess
 import tempfile
 
+from testtools.matchers import Equals
 from unittest import mock
 
 from snapcraft.internal import libraries
@@ -43,9 +44,10 @@ class TestLdLibraryPathParser(tests.TestCase):
 /colon:/separated,/comma\t/tab /space # This is another comment
 /baz""")
 
-        self.assertEqual(['/foo/bar', '/colon', '/separated', '/comma',
-                          '/tab', '/space', '/baz'],
-                         libraries._extract_ld_library_paths(file_path))
+        self.assertThat(
+            libraries._extract_ld_library_paths(file_path),
+            Equals(['/foo/bar', '/colon', '/separated', '/comma',
+                    '/tab', '/space', '/baz']))
 
 
 class TestGetLibraries(tests.TestCase):
@@ -81,7 +83,7 @@ class TestGetLibraries(tests.TestCase):
 
     def test_get_libraries(self):
         libs = libraries.get_dependencies('foo')
-        self.assertEqual(libs, ['/lib/foo.so.1', '/usr/lib/bar.so.2'])
+        self.assertThat(libs, Equals(['/lib/foo.so.1', '/usr/lib/bar.so.2']))
 
     def test_get_libraries_excludes_slash_snap(self):
         lines = [
@@ -93,22 +95,22 @@ class TestGetLibraries(tests.TestCase):
         self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
 
         libs = libraries.get_dependencies('foo')
-        self.assertEqual(libs, ['/lib/foo.so.1', '/usr/lib/bar.so.2'])
+        self.assertThat(libs, Equals(['/lib/foo.so.1', '/usr/lib/bar.so.2']))
 
     def test_get_libraries_filtered_by_system_libraries(self):
         self.get_system_libs_mock.return_value = frozenset(['foo.so.1'])
 
         libs = libraries.get_dependencies('foo')
-        self.assertEqual(libs, ['/usr/lib/bar.so.2'])
+        self.assertThat(libs, Equals(['/usr/lib/bar.so.2']))
 
     def test_get_libraries_ldd_failure_logs_warning(self):
         self.run_output_mock.side_effect = subprocess.CalledProcessError(
             1, 'foo', b'bar')
 
-        self.assertEqual(libraries.get_dependencies('foo'), [])
-        self.assertEqual(
-            "Unable to determine library dependencies for 'foo'\n",
-            self.fake_logger.output)
+        self.assertThat(libraries.get_dependencies('foo'), Equals([]))
+        self.assertThat(
+            self.fake_logger.output,
+            Equals("Unable to determine library dependencies for 'foo'\n"))
 
 
 class TestSystemLibsOnNewRelease(tests.TestCase):
@@ -116,9 +118,19 @@ class TestSystemLibsOnNewRelease(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('platform.linux_distribution')
+        patcher = mock.patch('snapcraft.internal.common.get_os_release_info')
         distro_mock = patcher.start()
-        distro_mock.return_value = ('Ubuntu', '16.05', 'xenial')
+        distro_mock.return_value = {'VERSION_CODENAME': 'xenial',
+                                    'HOME_URL': 'http://www.ubuntu.com/',
+                                    'BUG_REPORT_URL':
+                                        'http://bugs.launchpad.net/ubuntu/',
+                                    'VERSION_ID': '16.04',
+                                    'UBUNTU_CODENAME': 'xenial',
+                                    'ID': 'ubuntu', 'NAME': 'Ubuntu',
+                                    'ID_LIKE': 'debian',
+                                    'PRETTY_NAME': 'Ubuntu 16.04.3 LTS',
+                                    'VERSION': '16.04.3 LTS (Xenial Xerus)',
+                                    'SUPPORT_URL': 'http://help.ubuntu.com/'}
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.internal.common.run_output')
@@ -133,4 +145,4 @@ class TestSystemLibsOnNewRelease(tests.TestCase):
         self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
 
     def test_fail_gracefully_if_system_libs_not_found(self):
-        self.assertEqual(libraries.get_dependencies('foo'), [])
+        self.assertThat(libraries.get_dependencies('foo'), Equals([]))

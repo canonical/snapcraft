@@ -14,16 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
-
 from snapcraft import formatting_utils
-
-# dict of jsonschema validator -> cause pairs. Wish jsonschema just gave us
-# better messages.
-_VALIDATION_ERROR_CAUSES = {
-    'maxLength': 'maximum length is {validator_value}',
-    'minLength': 'minimum length is {validator_value}',
-}
 
 
 class SnapcraftError(Exception):
@@ -41,8 +32,7 @@ class SnapcraftError(Exception):
     def __str__(self):
         return self.fmt.format([], **self.__dict__)
 
-    @property
-    def exit_code(self):
+    def get_exit_code(self):
         """Exit code to use if this exception causes Snapcraft to exit."""
         return 2
 
@@ -57,7 +47,78 @@ class MissingStateCleanError(SnapcraftError):
         super().__init__(step=step)
 
 
+class StepOutdatedError(SnapcraftError):
+
+    fmt = (
+        'The {step!r} step of {part!r} is out of date:\n'
+        '{report}'
+        'In order to continue, please clean that part\'s {step!r} step '
+        'by running:\n'
+        'snapcraft clean {parts_names} -s {step}\n'
+    )
+
+    def __init__(self, *, step, part,
+                 dirty_properties=None, dirty_project_options=None,
+                 dependents=None):
+        messages = []
+        if dirty_properties:
+            humanized_properties = formatting_utils.humanize_list(
+                dirty_properties, 'and')
+            pluralized_connection = formatting_utils.pluralize(
+                dirty_properties, 'property appears',
+                'properties appear')
+            messages.append(
+                'The {} part {} to have changed.\n'.format(
+                    humanized_properties, pluralized_connection))
+        if dirty_project_options:
+            humanized_options = formatting_utils.humanize_list(
+                dirty_project_options, 'and')
+            pluralized_connection = formatting_utils.pluralize(
+                dirty_project_options, 'option appears',
+                'options appear')
+            messages.append(
+                'The {} project {} to have changed.\n'.format(
+                    humanized_options, pluralized_connection))
+        if dependents:
+            humanized_dependents = formatting_utils.humanize_list(
+                dependents, 'and')
+            pluralized_dependents = formatting_utils.pluralize(
+                dependents, "depends", "depend")
+            messages.append('The {0!r} step for {1!r} needs to be run again, '
+                            'but {2} {3} on it.\n'.format(
+                                step,
+                                part,
+                                humanized_dependents,
+                                pluralized_dependents))
+            parts_names = ['{!s}'.format(d) for d in sorted(dependents)]
+        else:
+            parts_names = [part]
+        super().__init__(step=step, part=part,
+                         report=''.join(messages),
+                         parts_names=' '.join(parts_names))
+
+
 class SnapcraftEnvironmentError(SnapcraftError):
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
+class ContainerError(SnapcraftError):
+    fmt = '{message}'
+
+    def __init__(self, message):
+        super().__init__(message=message)
+
+
+class ContainerConnectionError(ContainerError):
+    fmt = ('{message}\n'
+           'Refer to the documentation at '
+           'https://linuxcontainers.org/lxd/getting-started-cli.')
+
+
+class SnapdError(SnapcraftError):
     fmt = '{message}'
 
     def __init__(self, message):
@@ -72,17 +133,6 @@ class PrimeFileConflictError(SnapcraftError):
     )
 
 
-class DuplicateAliasError(SnapcraftError):
-
-    fmt = 'Multiple parts have the same alias defined: {aliases!r}'
-
-    def __str__(self):
-        if isinstance(self.aliases, (list, set)):
-            self.aliases = ','.join(self.aliases)
-
-        return super().__str__()
-
-
 class InvalidAppCommandError(SnapcraftError):
 
     fmt = (
@@ -92,6 +142,17 @@ class InvalidAppCommandError(SnapcraftError):
 
     def __init__(self, command, app):
         super().__init__(command=command, app=app)
+
+
+class InvalidContainerRemoteError(SnapcraftError):
+
+    fmt = (
+        '{remote!r} is not a valid LXD remote name.\n'
+        "Colons, spaces and slashes can't be used.\n"
+    )
+
+    def __init__(self, remote):
+        super().__init__(remote=remote)
 
 
 class InvalidDesktopFileError(SnapcraftError):
@@ -123,14 +184,6 @@ class PartNotInCacheError(SnapcraftError):
     )
 
 
-class SnapcraftLogicError(SnapcraftError):
-
-    fmt = 'Issue detected while analyzing snapcraft.yaml: {message}'
-
-    def __init__(self, message):
-        super().__init__(message=message)
-
-
 class PluginError(SnapcraftError):
 
     fmt = 'Issue while loading part: {message}'
@@ -143,13 +196,6 @@ class PluginNotDefinedError(SnapcraftError):
 
     fmt = ("Issues while validating snapcraft.yaml: the 'plugin' keyword is "
            "missing for the {part_name} part.")
-
-
-class SnapcraftYamlFileError(SnapcraftError):
-
-    fmt = ('Could not find {snapcraft_yaml}. Are you sure you are in the '
-           'right directory?\n'
-           'To start a new project, use `snapcraft init`')
 
 
 class SnapcraftPartConflictError(SnapcraftError):
@@ -231,81 +277,31 @@ class SnapcraftPathEntryError(SnapcraftError):
     fmt = 'The path {value!r} set for {key!r} in {app!r} does not exist.'
 
 
-class SnapcraftSchemaError(SnapcraftError):
+class InvalidPullPropertiesError(SnapcraftError):
 
-    fmt = 'Issues while validating {snapcraft_yaml}: {message}'
+    fmt = (
+        'Invalid pull properties specified by {plugin_name!r} plugin: '
+        '{properties}'
+    )
 
-    @classmethod
-    def from_validation_error(cls, error):
-        """Take a jsonschema.ValidationError and create a SnapcraftSchemaError.
-
-        The validation errors coming from jsonschema are a nightmare. This
-        class tries to make them a bit more understandable.
-        """
-
-        messages = []
-
-        # error.validator_value may contain a custom validation error message.
-        # If so, use it instead of the garbage message jsonschema gives us.
-        with contextlib.suppress(TypeError, KeyError):
-            messages.append(
-                error.validator_value['validation-failure'].format(error))
-
-        if not messages:
-            messages.append(error.message)
-
-        path = []
-        while error.absolute_path:
-            element = error.absolute_path.popleft()
-            # assume numbers are indices and use 'xxx[123]' notation.
-            if isinstance(element, int):
-                path[-1] = '{}[{}]'.format(path[-1], element)
-            else:
-                path.append(str(element))
-        if path:
-            messages.insert(0, "The '{}' property does not match the "
-                               "required schema:".format('/'.join(path)))
-        cause = error.cause or _determine_cause(error)
-        if cause:
-            messages.append('({})'.format(cause))
-
-        return cls(' '.join(messages))
-
-    def __init__(self, message, snapcraft_yaml='snapcraft.yaml'):
-        super().__init__(message=message, snapcraft_yaml=snapcraft_yaml)
+    def __init__(self, plugin_name, properties):
+        super().__init__(plugin_name=plugin_name, properties=properties)
 
 
-def _determine_cause(error):
-    """Attempt to determine a cause from validation error.
+class InvalidBuildPropertiesError(SnapcraftError):
 
-    :return: A string representing the cause of the error (it may be empty if
-             no cause can be determined).
-    :rtype: str
-    """
+    fmt = (
+        'Invalid build properties specified by {plugin_name!r} plugin: '
+        '{properties}'
+    )
 
-    message = _VALIDATION_ERROR_CAUSES.get(error.validator, '').format(
-        validator_value=error.validator_value)
-
-    if not message and error.validator == 'anyOf':
-        message = _interpret_anyOf(error)
-
-    return message
+    def __init__(self, plugin_name, properties):
+        super().__init__(plugin_name=plugin_name, properties=properties)
 
 
-def _interpret_anyOf(error):
-    """Interpret a validation error caused by the anyOf validator.
+class StagePackageDownloadError(SnapcraftError):
 
-    Returns:
-        A string containing a (hopefully) helpful validation error message. It
-        may be empty.
-    """
+    fmt = 'Error downloading stage packages for part {part_name!r}: {message}'
 
-    usages = []
-    try:
-        for validator in error.validator_value:
-            usages.append(validator['usage'])
-    except (TypeError, KeyError):
-        return ''
-
-    return 'must be one of {}'.format(formatting_utils.humanize_list(
-        usages, 'or'))
+    def __init__(self, part_name, message):
+        super().__init__(part_name=part_name, message=message)

@@ -84,8 +84,8 @@ class BaseRepo:
         - zip
 
         :param str source_type: a VCS source type to handle.
-        :returns: a list of packages that need to be installed on the host.
-        :rtype: list of strings.
+        :returns: a set of packages that need to be installed on the host.
+        :rtype: set of strings.
         """
         raise NotImplementedError()
 
@@ -101,12 +101,29 @@ class BaseRepo:
         raise NotImplementedError()
 
     @classmethod
+    def build_package_is_valid(cls, package_name):
+        """Check that a given package is valid on the host.
+
+        :param package_name: a package name to check.
+        :type package_name: str
+        """
+        raise NotImplementedError()
+
+    @classmethod
     def is_package_installed(cls, package_name):
         """Return a bool indicating if package_name is installed.
 
         :param str package_name: the package name to query.
         :returns: True if package_name is installed if not False.
         :rtype: boolean
+        """
+        raise NotImplementedError()
+
+    @classmethod
+    def get_installed_packages(cls):
+        """Return a list of the installed packages and their versions
+
+        :rtype: list of strings with the form package=version.
         """
         raise NotImplementedError()
 
@@ -228,7 +245,7 @@ class BaseRepo:
 class DummyRepo(BaseRepo):
 
     def get_packages_for_source_type(*args, **kwargs):
-        pass
+        return set()
 
 
 def _try_copy_local(path, target):

@@ -7,12 +7,9 @@ grade: stable
 
 apps:
  hello:
-   command: bin/wrapper
+   command: java oata.HelloWorld
 
 parts:
     local:
         plugin: ant
-        source: .
-    wrapper:
-        plugin: make
         source: .

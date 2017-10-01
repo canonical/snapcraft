@@ -66,7 +66,7 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
         self.register(name)
 
         status = self.sign_build(snap_path, local=True)
-        self.assertEqual(0, status)
+        self.assertThat(status, Equals(0))
 
         snap_build_path = '{}-build'.format(snap_path)
         self.assertThat(snap_build_path, FileExists())
@@ -82,7 +82,7 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
         self.assertThat(self.snap_build_path, Not(FileExists()))
 
     def test_successful_sign_build_push(self):
-        if os.getenv('TEST_STORE', 'fake') != 'fake':
+        if not self.is_store_fake():
             # https://bugs.launchpad.net/bugs/1621441
             self.skipTest(
                 'Cannot push signed assertion against staging/production '
@@ -91,12 +91,12 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
         self.run_snapcraft('snap', self.project)
         self.assertThat(self.snap_path, FileExists())
 
-        self.assertEqual(0, self.register_key('default'))
+        self.assertThat(self.register_key('default'), Equals(0))
         self.addCleanup(self.logout)
         self.login()
 
         status = self.sign_build(self.snap_path)
-        self.assertEqual(0, status)
+        self.assertThat(status, Equals(0))
         self.assertThat(self.snap_build_path, FileExists())
         self.assertThat(self.snap_build_path,
                         FileContains(matcher=Contains('type: snap-build')))

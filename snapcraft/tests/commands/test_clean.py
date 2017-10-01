@@ -22,8 +22,6 @@ from testtools.matchers import Contains, Equals, DirExists, FileExists, Not
 from snapcraft.tests import fixture_setup
 
 import snapcraft.internal.errors
-from snapcraft.internal import pluginhandler
-from snapcraft.internal import project_loader
 from . import CommandBaseTestCase
 
 
@@ -49,22 +47,26 @@ parts:
         open('icon.png', 'w').close()
 
         parts = []
-        validator = project_loader.Validator()
         for i in range(n):
             part_name = 'clean{}'.format(i)
-            handler = pluginhandler.load_plugin(
-                part_name, plugin_name='nil',
-                part_properties={'plugin': 'nil'},
-                part_schema=validator.part_schema,
-                definitions_schema=validator.definitions_schema)
+
+            properties = {'plugin': 'nil'}
+            project_options = snapcraft.ProjectOptions()
+
+            handler = self.load_part(
+                part_name=part_name,
+                plugin_name='nil',
+                part_properties=properties,
+                project_options=project_options)
+
             parts.append({
-                'part_dir': handler.code.partdir,
+                'part_dir': handler.plugin.partdir,
             })
 
             if create:
                 handler.makedirs()
                 open(os.path.join(
-                    handler.code.installdir, part_name), 'w').close()
+                    handler.plugin.installdir, part_name), 'w').close()
 
                 handler.mark_done('pull')
                 handler.mark_done('build')
@@ -126,7 +128,7 @@ parts:
             call(['lxc', 'delete', '-f', fake_lxd.name]),
         ])
         # no other commands should be run in the container
-        self.assertEquals(fake_lxd.check_call_mock.call_count, 1)
+        self.assertThat(fake_lxd.check_call_mock.call_count, Equals(1))
 
     def test_clean_containerized_with_part(self):
         fake_lxd = fixture_setup.FakeLXD()

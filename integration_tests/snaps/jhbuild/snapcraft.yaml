@@ -1,0 +1,24 @@
+name: test-jhbuild
+version: 1.0.0
+grade: stable
+confinement: strict
+summary: Simple JHBuild integration test
+description: |
+  This is a simple JHBuild integration test.
+
+  There are two modules 'main-module' and 'dep-module'.
+  main-module depends on dep-module.
+
+apps:
+  main:
+    command: cat $SNAP/share/doc/main-module/README
+  dep:
+    command: cat $SNAP/share/doc/dep-module/README
+
+parts:
+  jhbuild:
+    plugin: jhbuild
+    modules:
+      - main-module
+    module-set: simple-jhbuild
+    module-set-dir: .

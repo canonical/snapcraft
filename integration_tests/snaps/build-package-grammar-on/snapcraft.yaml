@@ -1,0 +1,13 @@
+name: build-package-grammar-on
+version: '0.1'
+summary: Test build package grammar on statement
+description: Verify that the on statement skips other architecture branches
+grade: devel
+confinement: strict
+
+parts:
+  my-part:
+    plugin: nil
+    build-packages:
+      - on other-arch:
+        - hello

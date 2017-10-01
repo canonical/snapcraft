@@ -15,6 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from textwrap import dedent
+
+from testtools.matchers import Equals
 
 from snapcraft.internal import (
     common,
@@ -28,12 +31,7 @@ class CommonTestCase(tests.TestCase):
     def test_set_plugindir(self):
         plugindir = os.path.join(self.path, 'testplugin')
         common.set_plugindir(plugindir)
-        self.assertEqual(plugindir, common.get_plugindir())
-
-    def test_set_tourdir(self):
-        tourdir = os.path.join(self.path, 'testtour')
-        common.set_tourdir(tourdir)
-        self.assertEqual(tourdir, common.get_tourdir())
+        self.assertThat(plugindir, Equals(common.get_plugindir()))
 
     def test_isurl(self):
         self.assertTrue(common.isurl('git://'))
@@ -50,27 +48,27 @@ class CommonMigratedTestCase(tests.TestCase):
             errors.PluginOutdatedError,
             common.get_parallel_build_count)
 
-        self.assertEqual(
+        self.assertThat(
             str(raised),
-            "This plugin is outdated: use 'parallel_build_count'")
+            Equals("This plugin is outdated: use 'parallel_build_count'"))
 
     def test_deb_arch_migration_message(self):
         raised = self.assertRaises(
             errors.PluginOutdatedError,
             common.get_arch)
 
-        self.assertEqual(
+        self.assertThat(
             str(raised),
-            "This plugin is outdated: use 'project.deb_arch'")
+            Equals("This plugin is outdated: use 'project.deb_arch'"))
 
     def test_arch_triplet_migration_message(self):
         raised = self.assertRaises(
             errors.PluginOutdatedError,
             common.get_arch_triplet)
 
-        self.assertEqual(
+        self.assertThat(
             str(raised),
-            "This plugin is outdated: use 'project.arch_triplet'")
+            Equals("This plugin is outdated: use 'project.arch_triplet'"))
 
 
 class FormatInColumnsTestCase(tests.TestCase):
@@ -85,33 +83,70 @@ class FormatInColumnsTestCase(tests.TestCase):
                     'nodejs   python3  tar-content',
                     'autotools  cmake   go    kbuild  make    nil    '
                     'python2  scons  ']
-        self.assertEquals(expected,
-                          common.format_output_in_columns(self.elements_list))
+        self.assertThat(
+            common.format_output_in_columns(self.elements_list),
+            Equals(expected))
 
     def test_format_output_in_columns_narrow(self):
         """Format output on 3 lines, with narrow max-width and space sep"""
         expected = ['ant        cmake  jdk     make   nodejs   scons      ',
                     'autotools  copy   kbuild  maven  python2  tar-content',
                     'catkin     go     kernel  nil    python3']
-        self.assertEquals(expected,
-                          common.format_output_in_columns(self.elements_list,
-                                                          max_width=60))
+        self.assertThat(
+            common.format_output_in_columns(self.elements_list,
+                                            max_width=60),
+            Equals(expected))
 
     def test_format_output_in_columns_large(self):
         """Format output on one big line, with default space sep"""
         expected = ['ant  autotools  catkin  cmake  copy  go  jdk  kbuild  '
                     'kernel  make  maven  nil  nodejs  python2  python3  '
                     'scons  tar-content']
-        self.assertEquals(expected,
-                          common.format_output_in_columns(self.elements_list,
-                                                          max_width=990))
+        self.assertThat(
+            common.format_output_in_columns(self.elements_list,
+                                            max_width=990),
+            Equals(expected))
 
     def test_format_output_in_columns_one_space(self):
         """Format output with one space sep"""
         expected = ['ant       cmake jdk    make  nodejs  scons      ',
                     'autotools copy  kbuild maven python2 tar-content',
                     'catkin    go    kernel nil   python3']
-        self.assertEquals(expected,
-                          common.format_output_in_columns(self.elements_list,
-                                                          max_width=60,
-                                                          num_col_spaces=1))
+        self.assertThat(
+            common.format_output_in_columns(self.elements_list,
+                                            max_width=60,
+                                            num_col_spaces=1),
+            Equals(expected))
+
+
+class OSReleaseTestCase(tests.TestCase):
+
+    def test_os_release_with_blank_lines(self):
+        with open('os-release', 'w') as release_file:
+            print(dedent("""\
+                NAME="Arch Linux"
+
+                PRETTY_NAME="Arch Linux"
+                ID=arch
+                ID_LIKE=archlinux
+                ANSI_COLOR="0;36"
+                HOME_URL="https://www.archlinux.org/"
+                SUPPORT_URL="https://bbs.archlinux.org/"
+                BUG_REPORT_URL="https://bugs.archlinux.org/"
+
+            """), file=release_file)
+
+        release_info = common.get_os_release_info(os_release_file='os-release')
+
+        expected_release_info = dict(
+            NAME='Arch Linux',
+            PRETTY_NAME='Arch Linux',
+            ID='arch',
+            ID_LIKE='archlinux',
+            ANSI_COLOR='0;36',
+            HOME_URL='https://www.archlinux.org/',
+            SUPPORT_URL='https://bbs.archlinux.org/',
+            BUG_REPORT_URL='https://bugs.archlinux.org/',
+        )
+
+        self.assertThat(release_info, Equals(expected_release_info))

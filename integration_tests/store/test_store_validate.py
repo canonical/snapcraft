@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,6 +18,7 @@ import os
 import shutil
 
 import fixtures
+from testtools.matchers import Equals
 
 import integration_tests
 
@@ -25,10 +26,11 @@ import integration_tests
 class ValidateTestCase(integration_tests.StoreTestCase):
 
     def setUp(self):
-        if os.getenv('TEST_STORE', 'fake') != 'fake':
+        super().setUp()
+        if not self.is_store_fake():
             self.skipTest('Right combination of snaps and IDs is not '
                           'available in real stores.')
-        super().setUp()
+
         keys_dir = os.path.join(os.path.dirname(__file__), 'keys')
         temp_keys_dir = os.path.join(self.path, '.snap', 'gnupg')
         shutil.copytree(keys_dir, temp_keys_dir)
@@ -38,24 +40,29 @@ class ValidateTestCase(integration_tests.StoreTestCase):
     def test_validate_success(self):
         self.addCleanup(self.logout)
         self.login()
-        self.assertEqual(0, self.validate('ubuntu-core', [
-            "ubuntu-core=3", "test-snap=4"]))
+        self.assertThat(
+            self.validate('ubuntu-core', [
+                "ubuntu-core=3", "test-snap=4"]),
+            Equals(0))
 
     def test_validate_unknown_snap_failure(self):
         self.addCleanup(self.logout)
         self.login()
-        self.assertEqual(1, self.validate('unknown', [
-            "ubuntu-core=3", "test-snap=4"],
-            expected_error="Snap 'unknown' was not found."))
+        self.assertThat(
+            self.validate('unknown', ["ubuntu-core=3", "test-snap=4"],
+                          expected_error="Snap 'unknown' was not found."),
+            Equals(2))
 
     def test_validate_bad_argument(self):
         self.addCleanup(self.logout)
         self.login()
-        self.assertEqual(1, self.validate('ubuntu-core', [
-            "ubuntu-core=foo"],
-            expected_error='format must be name=revision'))
+        self.assertThat(
+            self.validate('ubuntu-core', ["ubuntu-core=foo"],
+                          expected_error='format must be name=revision'),
+            Equals(2))
 
     def test_validate_no_login_failure(self):
-        self.assertEqual(1, self.validate('ubuntu-core', [
-            "ubuntu-core=3", "test-snap=4"],
-            expected_error='Have you run "snapcraft login"'))
+        self.assertThat(
+            self.validate('ubuntu-core', ["ubuntu-core=3", "test-snap=4"],
+                          expected_error='Have you run "snapcraft login"'),
+            Equals(2))

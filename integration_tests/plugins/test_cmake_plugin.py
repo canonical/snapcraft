@@ -16,6 +16,8 @@
 
 import os
 
+from testtools.matchers import Equals
+
 import integration_tests
 
 
@@ -26,4 +28,4 @@ class CmakePluginTestCase(integration_tests.TestCase):
 
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'cmake-hello'))
-        self.assertEqual("It's a CMake world\n", binary_output)
+        self.assertThat(binary_output, Equals("It's a CMake world\n"))

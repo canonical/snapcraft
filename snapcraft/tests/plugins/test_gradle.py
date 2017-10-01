@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,7 +18,7 @@ import os
 from unittest import mock
 
 import fixtures
-from testtools.matchers import HasLength
+from testtools.matchers import Equals, HasLength
 
 import snapcraft
 from snapcraft import tests
@@ -57,16 +57,16 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
         self.assertTrue(
             'type' in gradle_options,
             'Expected "type" to be included in "gradle-options"')
-        self.assertEqual(gradle_options['type'], 'array',
-                         'Expected "gradle-options" "type" to be "array", but '
-                         'it was "{}"'.format(gradle_options['type']))
+        self.assertThat(gradle_options['type'], Equals('array'),
+                        'Expected "gradle-options" "type" to be "array", but '
+                        'it was "{}"'.format(gradle_options['type']))
 
         self.assertTrue(
             'minitems' in gradle_options,
             'Expected "minitems" to be included in "gradle-options"')
-        self.assertEqual(gradle_options['minitems'], 1,
-                         'Expected "gradle-options" "minitems" to be 1, but '
-                         'it was "{}"'.format(gradle_options['minitems']))
+        self.assertThat(gradle_options['minitems'], Equals(1),
+                        'Expected "gradle-options" "minitems" to be 1, but '
+                        'it was "{}"'.format(gradle_options['minitems']))
 
         self.assertTrue(
             'uniqueItems' in gradle_options,
@@ -79,9 +79,9 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
         self.assertTrue(
             'type' in output_dir,
             'Expected "type" to be included in "gradle-options"')
-        self.assertEqual(output_dir['type'], 'string',
-                         'Expected "gradle-options" "type" to be "string", '
-                         'but it was "{}"'.format(output_dir['type']))
+        self.assertThat(output_dir['type'], Equals('string'),
+                        'Expected "gradle-options" "type" to be "string", '
+                        'but it was "{}"'.format(output_dir['type']))
 
     def test_get_build_properties(self):
         expected_build_properties = ['gradle-options', 'gradle-output-dir']
@@ -217,6 +217,12 @@ class GradleProxyTestCase(BaseGradlePluginTestCase):
             env_var=('http_proxy', 'http://test_proxy:3000'),
             expected_args=['-Dhttp.proxyHost=test_proxy',
                            '-Dhttp.proxyPort=3000'])),
+        ('authenticated http proxy url', dict(
+            env_var=('http_proxy', 'http://user:pass@test_proxy:3000'),
+            expected_args=['-Dhttp.proxyHost=test_proxy',
+                           '-Dhttp.proxyPort=3000',
+                           '-Dhttp.proxyUser=user',
+                           '-Dhttp.proxyPassword=pass'])),
         ('https proxy url', dict(
             env_var=('https_proxy', 'https://test_proxy'),
             expected_args=['-Dhttps.proxyHost=test_proxy'])),
@@ -224,6 +230,12 @@ class GradleProxyTestCase(BaseGradlePluginTestCase):
             env_var=('https_proxy', 'https://test_proxy:3000'),
             expected_args=['-Dhttps.proxyHost=test_proxy',
                            '-Dhttps.proxyPort=3000'])),
+        ('authenticated https proxy url', dict(
+            env_var=('https_proxy', 'http://user:pass@test_proxy:3000'),
+            expected_args=['-Dhttps.proxyHost=test_proxy',
+                           '-Dhttps.proxyPort=3000',
+                           '-Dhttps.proxyUser=user',
+                           '-Dhttps.proxyPassword=pass'])),
     ]
 
     @mock.patch.object(gradle.GradlePlugin, 'run')
@@ -234,8 +246,7 @@ class GradleProxyTestCase(BaseGradlePluginTestCase):
                                      self.project_options)
 
         def side(l):
-            os.makedirs(os.path.join(plugin.builddir,
-                        'build', 'libs'))
+            os.makedirs(os.path.join(plugin.builddir, 'build', 'libs'))
             open(os.path.join(plugin.builddir,
                  'build', 'libs', 'dummy.war'), 'w').close()
 

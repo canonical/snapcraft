@@ -18,6 +18,7 @@ import shutil
 
 from snapcraft.internal.errors import MissingCommandError
 from . import errors               # noqa
+from . import snaps                # noqa
 from . import _platform
 from ._base import BaseRepo        # noqa
 from ._base import fix_pkg_config  # noqa
