@@ -111,7 +111,7 @@ class CatkinPluginBaseTestCase(tests.TestCase):
         patcher = mock.patch('snapcraft.plugins._python.Pip')
         self.pip_mock = patcher.start()
         self.addCleanup(patcher.stop)
-        self.pip_mock.return_value.is_setup.return_value = False
+        self.pip_mock.return_value.list.return_value = {}
 
     def assert_rosdep_setup(self, rosdistro, package_path, rosdep_path,
                             ubuntu_distro, sources):
@@ -1301,7 +1301,7 @@ class FinishBuildTestCase(CatkinPluginBaseTestCase):
     def test_finish_build_python_sitecustomize(self, use_python_mock,
                                                run_output_mock, run_mock,
                                                generate_setup_mock):
-        self.pip_mock.return_value.is_setup.return_value = True
+        self.pip_mock.return_value.list.return_value = {'test-package'}
 
         # Create site.py, indicating that python2 was a stage-package
         site_py_path = os.path.join(

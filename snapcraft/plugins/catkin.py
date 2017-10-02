@@ -198,6 +198,17 @@ class CatkinPlugin(snapcraft.BasePlugin):
         return ['build-attributes', 'catkin-cmake-args']
 
     @property
+    def _pip(self):
+        if not self.__pip:
+            self.__pip = _python.Pip(
+                python_major_version='2',  # ROS1 only supports python2
+                part_dir=self.partdir,
+                install_dir=self.installdir,
+                stage_dir=self.project.stage_dir)
+
+        return self.__pip
+
+    @property
     def PLUGIN_STAGE_SOURCES(self):
         return """
 deb http://packages.ros.org/ros/ubuntu/ {0} main
@@ -210,6 +221,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.build_packages.extend(['libc6-dev', 'make', 'python-pip'])
+        self.__pip = None
 
         # roslib is the base requiremet to actually create a workspace with
         # setup.sh and the necessary hooks.
@@ -222,12 +234,6 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         self._compilers_path = os.path.join(self.partdir, 'compilers')
         self._catkin_path = os.path.join(self.partdir, 'catkin')
         self._wstool_path = os.path.join(self.partdir, 'wstool')
-
-        self._pip = _python.Pip(
-            python_major_version='2',  # ROS1 only supports python2
-            part_dir=self.partdir,
-            install_dir=self.installdir,
-            stage_dir=self.project.stage_dir)
 
         # The path created via the `source` key (or a combination of `source`
         # and `source-subdir` keys) needs to point to a valid Catkin workspace
@@ -634,9 +640,9 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
             underlay_run_path = self.options.underlay['run-path']
             self._generate_snapcraft_setup_sh('$SNAP', underlay_run_path)
 
-        # If pip dependencies were pulled, generate a sitecustomize that allows
-        # access to them.
-        if self._pip.is_setup():
+        # If pip dependencies were installed, generate a sitecustomize that
+        # allows access to them.
+        if self._pip.is_setup() and self._pip.list():
             _python.generate_sitecustomize(
                 '2', stage_dir=self.project.stage_dir,
                 install_dir=self.installdir)
