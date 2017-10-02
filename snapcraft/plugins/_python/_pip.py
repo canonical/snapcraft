@@ -71,8 +71,7 @@ class Pip:
                  stage_dir):
         """Initialize pip.
 
-        Check to see if pip has already been installed. If not, fetch pip,
-        setuptools, and wheel, and install them so they can be used.
+        You must call setup() before you can actually use pip.
 
         :param str python_major_version: The python major version to find (2 or
                                          3)
@@ -99,9 +98,12 @@ class Pip:
             self._python_major_version, stage_dir=self._stage_dir,
             install_dir=self._install_dir)
 
-        self._setup()
+    def setup(self):
+        """Install pip and dependencies.
 
-    def _setup(self):
+        Check to see if pip has already been installed. If not, fetch pip,
+        setuptools, and wheel, and install them so they can be used.
+        """
         # Check to see if we have our own pip, yet. If not, we need to use the
         # pip on the host (installed via build-packages) to grab our own.
         if not self._is_pip_installed():
@@ -123,6 +125,10 @@ class Pip:
             finally:
                 # Now that we have our own pip, reset the python home
                 self._python_home = real_python_home
+
+    def is_setup(self):
+        """Return true if pip has already been setup."""
+        return self._is_pip_installed()
 
     def _is_pip_installed(self):
         try:

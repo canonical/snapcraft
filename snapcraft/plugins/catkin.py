@@ -68,6 +68,7 @@ import textwrap
 
 import snapcraft
 from snapcraft.plugins import _ros
+from snapcraft.plugins import _python
 from snapcraft import (
     common,
     file_utils,
@@ -88,6 +89,7 @@ _ROS_RELEASE_MAP = {
 
 _SUPPORTED_DEPENDENCY_TYPES = {
     'apt',
+    'pip',
 }
 
 
@@ -207,7 +209,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.extend(['libc6-dev', 'make'])
+        self.build_packages.extend(['libc6-dev', 'make', 'python-pip'])
 
         # roslib is the base requiremet to actually create a workspace with
         # setup.sh and the necessary hooks.
@@ -220,6 +222,12 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         self._compilers_path = os.path.join(self.partdir, 'compilers')
         self._catkin_path = os.path.join(self.partdir, 'catkin')
         self._wstool_path = os.path.join(self.partdir, 'wstool')
+
+        self._pip = _python.Pip(
+            python_major_version='2',  # ROS1 only supports python2
+            part_dir=self.partdir,
+            install_dir=self.installdir,
+            stage_dir=self.project.stage_dir)
 
         # The path created via the `source` key (or a combination of `source`
         # and `source-subdir` keys) needs to point to a valid Catkin workspace
@@ -413,26 +421,41 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
                     'Unable to determine system dependency for roscore')
 
         # Pull down and install any apt dependencies that were discovered
-        apt_dependencies = system_dependencies.get('apt')
+        self._setup_apt_dependencies(system_dependencies.get('apt'))
+
+        # Pull down and install any pip dependencies that were discovered
+        self._setup_pip_dependencies(system_dependencies.get('pip'))
+
+    def _setup_apt_dependencies(self, apt_dependencies):
         if apt_dependencies:
             ubuntudir = os.path.join(self.partdir, 'ubuntu')
             os.makedirs(ubuntudir, exist_ok=True)
 
-            logger.info('Preparing to fetch package dependencies...')
+            logger.info('Preparing to fetch apt dependencies...')
             ubuntu = repo.Ubuntu(ubuntudir,
                                  sources=self.PLUGIN_STAGE_SOURCES,
                                  project_options=self.project)
 
-            logger.info('Fetching package dependencies...')
+            logger.info('Fetching apt dependencies...')
             try:
                 ubuntu.get(apt_dependencies)
             except repo.errors.PackageNotFoundError as e:
                 raise RuntimeError(
-                    'Failed to fetch system dependencies: {}'.format(
+                    'Failed to fetch apt dependencies: {}'.format(
                         e.message))
 
-            logger.info('Installing package dependencies...')
+            logger.info('Installing apt dependencies...')
             ubuntu.unpack(self.installdir)
+
+    def _setup_pip_dependencies(self, pip_dependencies):
+        if pip_dependencies:
+            self._pip.setup()
+
+            logger.info('Fetching pip dependencies...')
+            self._pip.download(pip_dependencies)
+
+            logger.info('Installing pip dependencies...')
+            self._pip.install(pip_dependencies)
 
     def clean_pull(self):
         super().clean_pull()
@@ -448,6 +471,9 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         # Remove the catkin path, if any
         with contextlib.suppress(FileNotFoundError):
             shutil.rmtree(self._catkin_path)
+
+        # Clean pip packages, if any
+        self._pip.clean_packages()
 
     def _source_setup_sh(self, root, underlay_path):
         rosdir = os.path.join(root, 'opt', 'ros', self.options.rosdistro)
@@ -607,6 +633,13 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         if self.options.underlay:
             underlay_run_path = self.options.underlay['run-path']
             self._generate_snapcraft_setup_sh('$SNAP', underlay_run_path)
+
+        # If pip dependencies were pulled, generate a sitecustomize that allows
+        # access to them.
+        if self._pip.is_setup():
+            _python.generate_sitecustomize(
+                '2', stage_dir=self.project.stage_dir,
+                install_dir=self.installdir)
 
     def _use_in_snap_python(self):
         # Fix all shebangs to use the in-snap python.
