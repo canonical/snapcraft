@@ -86,8 +86,8 @@ class Bootstrapper:
         """Download the ROS2 underlay.
 
         This first downloads the tools required to fetch the underlay, and then
-        uses those tools fetch the underlay. Both steps are run in a manner
-        such that they are only run once, even if subsequent steps fail.
+        uses those tools to fetch the underlay. Both steps are only run once,
+        even if subsequent steps fail.
         """
         self._run_step(
             self._install_tools,
