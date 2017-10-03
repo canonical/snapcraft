@@ -23,7 +23,7 @@ from testtools.matchers import Contains, Equals, FileExists
 from . import CommandBaseTestCase
 
 
-class AssembleCommandBaseTestCase(CommandBaseTestCase):
+class PackCommandBaseTestCase(CommandBaseTestCase):
 
     def setUp(self):
         super().setUp()
@@ -33,10 +33,10 @@ class AssembleCommandBaseTestCase(CommandBaseTestCase):
         self.addCleanup(patcher.stop)
 
 
-class AssembleCommandTestCase(AssembleCommandBaseTestCase):
+class PackCommandTestCase(PackCommandBaseTestCase):
 
     scenarios = (
-        ('assemble', dict(command='assemble')),
+        ('pack', dict(command='pack')),
         ('deprecated snap', dict(command='snap')),
     )
 

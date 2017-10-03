@@ -356,10 +356,10 @@ def snap(project_options, directory=None, output=None):
         directory = project_options.prime_dir
         execute('prime', project_options)
 
-    return assemble(directory, output)
+    return pack(directory, output)
 
 
-def assemble(directory, output=None):
+def pack(directory, output=None):
     # Check for our prerequesite external command early
     repo.check_for_command('mksquashfs')
 

@@ -122,7 +122,7 @@ def snap(directory, output, **kwargs):
         snapcraft snap
         snapcraft snap --output renamed-snap.snap
 
-    If you want to snap a directory, you should use the assemble command
+    If you want to snap a directory, you should use the pack command
     instead.
     """
     if directory:
@@ -142,18 +142,19 @@ def snap(directory, output, **kwargs):
 @lifecyclecli.command()
 @click.argument('directory')
 @click.option('--output', '-o', help='path to the resulting snap.')
-def assemble(directory, output, **kwargs):
-    """Assemble a snap from a directory layout.
+def pack(directory, output, **kwargs):
+    """Create a snap from a directory holding a valid snap.
 
-    The layout of <directory> should contain a valid meta/snap.yaml
+    The layout of <directory> should contain a valid meta/snap.yaml in
+    order to be a valid snap.
 
     \b
     Examples:
-        snapcraft assemble my-snap-directory
-        snapcraft assemble my-snap-directory --output renamed-snap.snap
+        snapcraft pack my-snap-directory
+        snapcraft pack my-snap-directory --output renamed-snap.snap
 
     """
-    snap_name = lifecycle.assemble(directory, output)
+    snap_name = lifecycle.pack(directory, output)
     echo.info('Snapped {}'.format(snap_name))
 
 
