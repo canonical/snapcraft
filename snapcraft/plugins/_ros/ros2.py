@@ -130,7 +130,7 @@ class Bootstrapper:
 
         subprocess.check_call(command, env=env)
 
-    def _step_done(self, step):
+    def _is_step_done(self, step):
         return os.path.isfile(os.path.join(self._state_dir, step))
 
     def _set_step_done(self, step):
@@ -138,7 +138,7 @@ class Bootstrapper:
         open(os.path.join(self._state_dir, step), 'w').close()
 
     def _run_step(self, callable, *, step, skip_message=None):
-        if self._step_done(step):
+        if self._is_step_done(step):
             if skip_message:
                 logger.debug(skip_message)
         else:
