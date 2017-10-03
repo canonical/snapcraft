@@ -97,11 +97,9 @@ def init():
     with open(snapcraft_yaml_path, mode='w') as f:
         f.write(yaml)
 
-    git_cache = os.path.join('.git')
-    if os.path.exists(git_cache):
-        if os.path.exists('.gitignore'):
-            pass
-        else:
+    if os.path.exists('.git'):
+        # Don't mess with an existing .gitignore
+        if not os.path.exists('.gitignore'):
             gitignore = _TEMPLATE_GITIGNORE
             with open('.gitignore', mode='w') as f:
                 f.write(gitignore)
