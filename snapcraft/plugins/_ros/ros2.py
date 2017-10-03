@@ -65,19 +65,16 @@ class Bootstrapper:
     def get_build_packages(self):
         """Return the packages required for building the underlay."""
 
-        packages = ['cmake']
+        return [
+            # Dependencies for FastRTPS
+            'libasio-dev', 'libtinyxml2-dev',
 
-        # Dependencies for FastRTPS
-        packages.extend(['libasio-dev', 'libtinyxml2-dev'])
-
-        # Dependencies for the rest of ros2
-        packages.extend([
-            'libopencv-dev', 'libpoco-dev', 'libpocofoundation9v5',
+            # Dependencies for the rest of ros2
+            'cmake', 'libopencv-dev', 'libpoco-dev', 'libpocofoundation9v5',
             'libpocofoundation9v5-dbg', 'python3-dev', 'python3-empy',
             'python3-nose', 'python3-pip', 'python3-setuptools',
-            'python3-yaml', 'libtinyxml-dev', 'libeigen3-dev'])
-
-        return packages
+            'python3-yaml', 'libtinyxml-dev', 'libeigen3-dev'
+        ]
 
     def get_stage_packages(self):
         """Return the packages required for running the underlay."""
