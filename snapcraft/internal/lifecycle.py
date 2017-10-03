@@ -349,9 +349,6 @@ def _snap_data_from_dir(directory):
 
 
 def snap(project_options, directory=None, output=None):
-    # Check for our prerequesite external command early
-    repo.check_for_command('mksquashfs')
-
     if not directory:
         directory = project_options.prime_dir
         execute('prime', project_options)
