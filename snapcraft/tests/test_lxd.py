@@ -38,6 +38,47 @@ from snapcraft.internal.errors import (
 from snapcraft._options import _get_deb_arch
 
 
+class FakeSnapd(fixtures.Fixture):
+    '''...'''
+
+    def __init__(self):
+        self.snaps = {
+            'core': {'confinement': 'strict',
+                     'id': '2kkitQurgOkL3foImG4wDwn9CIANuHlt',
+                     'revision': '123'},
+            'snapcraft': {'confinement': 'classic',
+                          'id': '3lljuRvshPlM4gpJnH5xExo0DJBOvImu',
+                          'revision': '345'},
+        }
+
+    def _setUp(self):
+        patcher = patch('requests_unixsocket.Session.request')
+        self.session_request_mock = patcher.start()
+        self.session_request_mock.side_effect = self.request_side_effect()
+        self.addCleanup(patcher.stop)
+
+    def request_side_effect(self):
+        def request_effect(*args, **kwargs):
+            if args[0] == 'GET' and '/v2/snaps/' in args[1]:
+                class Session:
+                    def __init__(self, name, snaps):
+                        self._name = name
+                        self._snaps = snaps
+
+                    def json(self):
+                        if self._name not in self._snaps:
+                            return {'status': 'Not Found',
+                                    'result': {'message': 'not found'},
+                                    'status-code': 404,
+                                    'type': 'error'}
+                        return {'status': 'OK',
+                                'type': 'sync',
+                                'result': self._snaps[self._name]}
+                name = args[1].split('/')[-1]
+                return Session(name, self.snaps)
+        return request_effect
+
+
 class LXDTestCase(tests.TestCase):
 
     scenarios = [
@@ -218,7 +259,7 @@ class LXDTestCase(tests.TestCase):
     def test_parallel_invocation_inject_snap(self, mock_is_snap):
         mock_is_snap.side_effect = lambda: True
 
-        fake_snapd = tests.fixture_setup.FakeSnapd()
+        fake_snapd = FakeSnapd()
         self.useFixture(fake_snapd)
 
         builder1 = self.make_cleanbuilder()
@@ -238,7 +279,7 @@ class LXDTestCase(tests.TestCase):
                         mock_container_run):
         mock_is_snap.side_effect = lambda: False
 
-        fake_snapd = tests.fixture_setup.FakeSnapd()
+        fake_snapd = FakeSnapd()
         self.useFixture(fake_snapd)
 
         builder = self.make_cleanbuilder()
@@ -253,7 +294,7 @@ class LXDTestCase(tests.TestCase):
                                  mock_is_snap):
         mock_is_snap.side_effect = lambda: True
 
-        fake_snapd = tests.fixture_setup.FakeSnapd()
+        fake_snapd = FakeSnapd()
         self.useFixture(fake_snapd)
         fake_snapd.session_request_mock.side_effect = (
             requests.exceptions.ConnectionError(
@@ -272,9 +313,9 @@ class LXDTestCase(tests.TestCase):
                                    mock_is_snap):
         mock_is_snap.side_effect = lambda: True
 
-        fake_snapd = tests.fixture_setup.FakeSnapd()
+        fake_snapd = FakeSnapd()
         self.useFixture(fake_snapd)
-        fake_snapd.snaps = {}
+        fake_snapd.snaps = []
 
         builder = self.make_cleanbuilder()
         self.assertIn('Error querying \'core\' snap: not found',
@@ -291,7 +332,7 @@ class LXDTestCase(tests.TestCase):
         mock_is_snap.side_effect = lambda: True
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
 
-        fake_snapd = tests.fixture_setup.FakeSnapd()
+        fake_snapd = FakeSnapd()
         self.useFixture(fake_snapd)
 
         builder = self.make_cleanbuilder()
@@ -330,7 +371,7 @@ class LXDTestCase(tests.TestCase):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         mock_getuid.return_value = 1234
 
-        fake_snapd = tests.fixture_setup.FakeSnapd()
+        fake_snapd = FakeSnapd()
         self.useFixture(fake_snapd)
         fake_snapd.snaps['snapcraft']['revision'] = 'x1'
         fake_snapd.snaps['snapcraft']['id'] = ''
