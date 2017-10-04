@@ -23,6 +23,15 @@ class RepoError(errors.SnapcraftError):
     pass
 
 
+class NoNativeBackendError(RepoError):
+
+    fmt = ("Native builds aren't supported on {distro}. "
+           "You can however use 'snapcraft cleanbuild' with a container.")
+
+    def __init__(self):
+        super().__init__(distro=get_os_release_info()['NAME'])
+
+
 class BuildPackageNotFoundError(RepoError):
 
     fmt = "Could not find a required package in 'build-packages': {package}"
