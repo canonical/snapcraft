@@ -48,7 +48,7 @@ class PipRunTestCase(PythonBaseTestCase):
             python_major_version='test',
             part_dir='part_dir',
             install_dir='install_dir',
-            stage_dir='stage_dir')
+            stage_dir='stage_dir').setup()
 
         class check_env():
             def __init__(self, test):
@@ -151,7 +151,7 @@ class PipRunTestCase(PythonBaseTestCase):
             python_major_version='test',
             part_dir='part_dir',
             install_dir='install_dir',
-            stage_dir='stage_dir')
+            stage_dir='stage_dir').setup()
 
         class check_env():
             def __init__(self, test):
@@ -169,14 +169,14 @@ class PipRunTestCase(PythonBaseTestCase):
                       stderr=subprocess.STDOUT)])
 
 
-class InitTestCase(PipRunTestCase):
+class SetupTestCase(PipRunTestCase):
 
     def setUp(self):
         super().setUp()
 
         self.command = [self._create_python_binary('install_dir'), '-m', 'pip']
 
-    def test_init_with_pip_installed(self):
+    def test_setup_with_pip_installed(self):
         """Test that no attempt is made to reinstall pip"""
 
         # Since _run doesn't raise an exception indicating pip isn't installed,
@@ -187,12 +187,12 @@ class InitTestCase(PipRunTestCase):
             python_major_version='test',
             part_dir='part_dir',
             install_dir='install_dir',
-            stage_dir='stage_dir')
+            stage_dir='stage_dir').setup()
 
         self.mock_run_output.assert_called_once_with(
             self.command, stderr=subprocess.STDOUT, env=mock.ANY)
 
-    def test_init_without_pip_installed(self):
+    def test_setup_without_pip_installed(self):
         """Test that the system pip is used to install our own pip"""
 
         # Raise an exception indicating that pip isn't installed
@@ -207,7 +207,7 @@ class InitTestCase(PipRunTestCase):
             python_major_version='test',
             part_dir='part_dir',
             install_dir='install_dir',
-            stage_dir='stage_dir')
+            stage_dir='stage_dir').setup()
 
         part_pythonhome = os.path.join('install_dir', 'usr')
         host_pythonhome = os.path.join(os.path.sep, 'usr')
@@ -232,18 +232,21 @@ class InitTestCase(PipRunTestCase):
                 env=_CheckPythonhomeEnv(self, host_pythonhome), cwd=None),
         ])
 
-    def test_init_unexpected_error(self):
+    def test_setup_unexpected_error(self):
         """Test that pip initialization doesn't eat legit errors"""
 
         # Raises an exception indicating something bad happened
         self.mock_run_output.side_effect = subprocess.CalledProcessError(
             1, 'foo', b'no good, very bad')
 
+        pip = _pip.Pip(
+            python_major_version='test',
+            part_dir='part_dir',
+            install_dir='install_dir',
+            stage_dir='stage_dir')
+
         # Verify that pip lets that exception through
-        self.assertRaises(
-            subprocess.CalledProcessError, _pip.Pip,
-            python_major_version='test', part_dir='part_dir',
-            install_dir='install_dir', stage_dir='stage_dir')
+        self.assertRaises(subprocess.CalledProcessError, pip.setup)
 
 
 class PipTestCase(PythonBaseTestCase):

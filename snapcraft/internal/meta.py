@@ -385,7 +385,10 @@ class _SnapPackaging:
             if os.path.splitext(f)[1] == '.desktop':
                 os.remove(os.path.join(gui_dir, f))
         for app in apps:
-            self._wrap_app(app, apps[app])
+            adapter = apps[app].get('adapter', '')
+            if adapter != 'none':
+                self._wrap_app(app, apps[app])
+            self._generate_desktop_file(app, apps[app])
         return apps
 
     def _wrap_app(self, name, app):
@@ -395,6 +398,8 @@ class _SnapPackaging:
                 app[k] = self._wrap_exe(app[k], '{}-{}'.format(k, name))
             except CommandError as e:
                 raise errors.InvalidAppCommandError(str(e), name)
+
+    def _generate_desktop_file(self, name, app):
         desktop_file_name = app.pop('desktop', '')
         if desktop_file_name:
             desktop_file = _DesktopFile(

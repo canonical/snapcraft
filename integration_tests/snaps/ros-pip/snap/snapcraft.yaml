@@ -1,0 +1,20 @@
+name: ros-pip-example
+version: 1.0
+summary: ROS Example using pip dependencies
+description: Contains a simple pip test and a .launch file.
+confinement: strict
+grade: devel
+
+apps:
+  launch-project:
+    command: roslaunch timezone_test test.launch
+    plugs: [network-bind]
+
+parts:
+  ros-project:
+    plugin: catkin
+    source: .
+    rosdistro: kinetic
+    catkin-packages:
+      - timezone_test
+    include-roscore: true

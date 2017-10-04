@@ -722,6 +722,10 @@ class RecordManifestBaseTestCase(BaseLifecycleTestCase):
         self.fake_apt_cache = fixture_setup.FakeAptCache()
         self.useFixture(self.fake_apt_cache)
 
+        self.fake_snapd = fixture_setup.FakeSnapd()
+        self.useFixture(self.fake_snapd)
+        self.fake_snapd.snaps = []
+
 
 class RecordManifestTestCase(RecordManifestBaseTestCase):
 
@@ -744,6 +748,7 @@ parts:
   test-part:
     build-packages: []
     installed-packages: []
+    installed-snaps: []
     plugin: nil
     prime: []
     stage: []
@@ -753,6 +758,48 @@ architectures: [{}]
 build-packages: []
 build-snaps: []
 """.format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'manifest.yaml'),
+            FileContains(expected))
+
+    def test_prime_with_installed_snaps(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.fake_snapd.snaps = [
+            {'name': 'test-snap-1',
+             'revision': 'test-snap-1-revision'},
+            {'name': 'test-snap-2',
+             'revision': 'test-snap-2-revision'},
+        ]
+
+        self.make_snapcraft_yaml("""parts:
+  test-part:
+    plugin: nil
+""")
+        lifecycle.execute('prime', self.project_options)
+
+        expected = ("""name: test
+version: 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  test-part:
+    build-packages: []
+    installed-packages: []
+    installed-snaps: {}
+    plugin: nil
+    prime: []
+    stage: []
+    stage-packages: []
+    uname: Linux test uname 4.10 x86_64
+architectures: [{}]
+build-packages: []
+build-snaps: []
+""".format('[test-snap-1=test-snap-1-revision, '
+           'test-snap-2=test-snap-2-revision]',
+           self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -782,6 +829,7 @@ parts:
   test-part:
     build-packages: []
     installed-packages: {}
+    installed-snaps: []
     plugin: nil
     prime: []
     stage: []
@@ -822,6 +870,7 @@ parts:
   test-part:
     build-packages: []
     installed-packages: []
+    installed-snaps: []
     plugin: nil
     prime: []
     stage: []
@@ -863,6 +912,7 @@ parts:
   test-part:
     build-packages: []
     installed-packages: []
+    installed-snaps: []
     plugin: nil
     prime: []
     stage: []
@@ -902,6 +952,7 @@ parts:
   test-part:
     build-packages: []
     installed-packages: []
+    installed-snaps: []
     plugin: nil
     prime: []
     source: test-source
@@ -946,6 +997,7 @@ parts:
   test-part:
     build-packages: ['test-package:any']
     installed-packages: []
+    installed-snaps: []
     plugin: nil
     prime: []
     stage: []
@@ -986,6 +1038,7 @@ parts:
   test-part:
     build-packages: [test-virtual-package]
     installed-packages: []
+    installed-snaps: []
     plugin: nil
     prime: []
     stage: []
@@ -1021,6 +1074,7 @@ parts:
   test-part:
     build-packages: []
     installed-packages: []
+    installed-snaps: []
     plugin: nil
     prime: []
     stage: []
@@ -1065,6 +1119,7 @@ parts:
   test-part:
     build-packages: []
     installed-packages: []
+    installed-snaps: []
     plugin: nil
     prime: [-*]
     stage: []
@@ -1199,5 +1254,5 @@ class SnapErrorsTestCase(BaseLifecycleTestCase):
             which_mock.return_value = None
             raised = self.assertRaises(
                 errors.MissingCommandError,
-                lifecycle.snap, self.project_options)
+                lifecycle.pack, self.project_options)
         self.assertThat(str(raised), Contains('mksquashfs'))
