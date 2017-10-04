@@ -124,20 +124,28 @@ class TestCase(testtools.TestCase):
         snapcraft_command = [self.snapcraft_command]
         if debug:
             snapcraft_command.append('-d')
+
+        def _handle_some_stdout(snippet):
+            print(snippet, end='', flush=True)
+
+        def _handle_some_stderr(snippet):
+            print(snippet, end='', flush=True, file=sys.stderr)
+
+        process = subprocess_utils.PopenAsyncOutput(
+            snapcraft_command + command, stdout_callback=_handle_some_stdout,
+            stderr_callback=_handle_some_stderr, env=env)
+
         try:
             pre_func()
-            snapcraft_output = subprocess.check_output(
-                snapcraft_command + command,
-                stderr=subprocess.STDOUT, universal_newlines=True,
-                env=env)
-        except subprocess.CalledProcessError as e:
-            self.addDetail('output', content.text_content(e.output))
+            process.run()
+        except subprocess.CalledProcessError:
+            self.addDetail('output', content.text_content(process.stderr))
             raise
 
         if not os.getenv('SNAPCRAFT_IGNORE_APT_AUTOREMOVE', False):
             self.addCleanup(self.run_apt_autoremove)
 
-        return snapcraft_output
+        return process.combined_output
 
     def run_snapcraft_parser(self, arguments):
         try:
