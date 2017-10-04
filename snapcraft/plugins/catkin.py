@@ -57,7 +57,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - catkin-ros-master-uri:
       (string)
       The URI to ros master setting the env variable ROS_MASTER_URI. Defaults
-      to https://localhost:11311.
+      to http://localhost:11311.
 """
 
 import contextlib
