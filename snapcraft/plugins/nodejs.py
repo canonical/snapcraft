@@ -58,7 +58,7 @@ from snapcraft.internal import errors
 logger = logging.getLogger(__name__)
 
 _NODEJS_BASE = 'node-v{version}-linux-{arch}'
-_NODEJS_VERSION = '6.10.2'
+_NODEJS_VERSION = '6.11.3'
 _NODEJS_TMPL = 'https://nodejs.org/dist/v{version}/{base}.tar.gz'
 _NODEJS_ARCHES = {
     'i386': 'x86',
