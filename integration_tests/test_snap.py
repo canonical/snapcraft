@@ -111,7 +111,7 @@ class SnapTestCase(integration_tests.TestCase):
         self.assertThat(snap_file_path, FileExists())
 
     def test_pack_directory(self):
-        self.copy_project_to_cwd('pack')
+        self.copy_project_to_cwd('assemble')
         self.run_snapcraft('snap')
 
         snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
