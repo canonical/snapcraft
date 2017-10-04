@@ -349,18 +349,18 @@ def _snap_data_from_dir(directory):
 
 
 def snap(project_options, directory=None, output=None):
+    if not directory:
+        directory = project_options.prime_dir
+        execute('prime', project_options)
+
+    return pack(directory, output)
+
+
+def pack(directory, output=None):
     # Check for our prerequesite external command early
     repo.check_for_command('mksquashfs')
 
-    if directory:
-        prime_dir = os.path.abspath(directory)
-        snap = _snap_data_from_dir(prime_dir)
-    else:
-        # make sure the full lifecycle is executed
-        prime_dir = project_options.prime_dir
-        execute('prime', project_options)
-        snap = _snap_data_from_dir(prime_dir)
-
+    snap = _snap_data_from_dir(directory)
     snap_name = output or common.format_snap_name(snap)
 
     # If a .snap-build exists at this point, when we are about to override
@@ -378,7 +378,7 @@ def snap(project_options, directory=None, output=None):
     if snap['type'] != 'os':
         mksquashfs_args.append('-all-root')
 
-    with Popen(['mksquashfs', prime_dir, snap_name] + mksquashfs_args,
+    with Popen(['mksquashfs', directory, snap_name] + mksquashfs_args,
                stdout=PIPE, stderr=STDOUT) as proc:
         ret = None
         if is_dumb_terminal():

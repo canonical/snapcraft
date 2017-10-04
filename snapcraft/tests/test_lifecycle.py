@@ -1254,5 +1254,5 @@ class SnapErrorsTestCase(BaseLifecycleTestCase):
             which_mock.return_value = None
             raised = self.assertRaises(
                 errors.MissingCommandError,
-                lifecycle.snap, self.project_options)
+                lifecycle.pack, self.project_options)
         self.assertThat(str(raised), Contains('mksquashfs'))

@@ -110,6 +110,19 @@ class SnapTestCase(integration_tests.TestCase):
         self.run_snapcraft(['snap', 'prime'])
         self.assertThat(snap_file_path, FileExists())
 
+    def test_pack_directory(self):
+        self.copy_project_to_cwd('assemble')
+        self.run_snapcraft('snap')
+
+        snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
+        os.remove(snap_file_path)
+
+        # Verify that Snapcraft can snap its own snap directory (this will make
+        # sure `snapcraft snap` and `snapcraft pack <directory>` are always
+        # in sync).
+        self.run_snapcraft(['pack', 'prime'])
+        self.assertThat(snap_file_path, FileExists())
+
     def test_snap_long_output_option(self):
         self.run_snapcraft(['snap', '--output', 'mysnap.snap'], 'assemble')
         self.assertThat('mysnap.snap', FileExists())
