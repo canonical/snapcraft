@@ -151,10 +151,12 @@ def clean(parts, step, **kwargs):
         snapcraft clean
         snapcraft clean my-part --step build
     """
+    if not step:
+        step = 'pull'
+
     project_options = get_project_options(**kwargs)
     container_config = env.get_container_config()
-    if container_config.use_container:
-        step = step or 'pull'
+    if container_config.use_container and step == 'pull' and not parts:
         lifecycle.containerbuild(
             'clean', project_options,
             container_config, args=['--step', step, *parts])
