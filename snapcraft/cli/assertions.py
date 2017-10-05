@@ -107,7 +107,10 @@ def gated(snap_name):
 @click.argument('snap-name', metavar='<snap-name>')
 @click.option('--key-name', metavar='<key-name>')
 def edit_collaborators(snap_name, key_name):
-    """Edit the list of collaborators for <snap-name>."""
+    """Edit the list of collaborators for <snap-name>.
+    
+    This command has an alias of `collaborators`.
+    """
     dev_assertion = assertions.DeveloperAssertion(
         snap_name=snap_name, signing_key=key_name)
     developers = dev_assertion.get_developers()
