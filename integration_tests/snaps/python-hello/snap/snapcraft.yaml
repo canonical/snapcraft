@@ -1,0 +1,17 @@
+name: python-hello
+version: '0.1'
+summary: A simple hello world in python
+description: |
+  This is a basic python snap. It just hosts a hello world.
+  If you want to add other functionalities to this snap, please don't.
+  Make a new one.
+confinement: strict
+
+apps:
+  python-hello:
+    command: hello
+
+parts:
+  python-part:
+    source: .
+    plugin: python

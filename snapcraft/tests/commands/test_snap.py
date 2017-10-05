@@ -294,8 +294,6 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         # Container was created before and is running
         fake_lxd.name = 'local:snapcraft-snap-test'
         fake_lxd.status = 'Running'
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
         self.useFixture(fixtures.EnvironmentVariable(
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()
@@ -311,13 +309,9 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'stop', '-f', fake_lxd.name]),
         ])
         mock_container_run.assert_has_calls([
-            call(['python3', '-c', 'import urllib.request; ' +
-                  'urllib.request.urlopen(' +
-                  '"http://start.ubuntu.com/connectivity-check.html"' +
-                  ', timeout=5)']),
-            call(['snapcraft', 'snap', '--output',
-                  'snap-test_1.0_amd64.snap'],
-                 cwd=project_folder),
+              call(['snapcraft', 'snap', '--output',
+                    'snap-test_1.0_amd64.snap'],
+                   cwd=project_folder),
         ])
 
     @mock.patch('snapcraft.internal.lifecycle.ProgressBar')
@@ -406,7 +400,7 @@ architectures: [amd64, armhf]
             'Snapped my_snap_99_multi.snap\n'))
 
         self.popen_spy.assert_called_once_with([
-            'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_multi.snap',
+            'mksquashfs', 'mysnap', 'my_snap_99_multi.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
@@ -430,7 +424,7 @@ version: 99
             'Snapped my_snap_99_all.snap\n'))
 
         self.popen_spy.assert_called_once_with([
-            'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_all.snap',
+            'mksquashfs', 'mysnap', 'my_snap_99_all.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
@@ -457,7 +451,7 @@ type: os
             'Snapped my_snap_99_multi.snap\n'))
 
         self.popen_spy.assert_called_once_with([
-            'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_multi.snap',
+            'mksquashfs', 'mysnap', 'my_snap_99_multi.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 

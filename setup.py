@@ -43,6 +43,7 @@ packages = [
     'snapcraft.internal.states',
     'snapcraft.plugins',
     'snapcraft.plugins._ros',
+    'snapcraft.plugins._python',
     'snapcraft.storeapi'
 ]
 package_data = {'snapcraft.internal.repo': ['manifest.txt']}

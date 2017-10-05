@@ -18,6 +18,7 @@ import logging
 import os
 import unittest
 import unittest.mock
+from textwrap import dedent
 
 import fixtures
 from testtools.matchers import Contains, Equals
@@ -111,3 +112,29 @@ parts:
 
         self.assertThat(fake_logger.output,
                         Contains(deprecations._deprecation_message('dn1')))
+
+
+class PartsWithDummyRepoTestCase(tests.TestCase):
+
+    @unittest.mock.patch(
+        'snapcraft.internal.project_loader._parts_config.repo.Repo',
+        wraps=snapcraft.internal.repo._base.DummyRepo)
+    def test_load_with_dummy_repo(self, os_release_mock):
+        self.make_snapcraft_yaml(dedent("""\
+            name: test
+            version: "1"
+            summary: test
+            description: test
+            confinement: strict
+
+            parts:
+              part1:
+                source: https://github.com/snapcore/snapcraft.git
+                plugin: python
+                stage-packages: [fswebcam]
+                snap: [foo]
+        """))
+
+        # Ensure the dummy repo returns an empty set for required
+        # build tools.
+        project_loader.load_config()
