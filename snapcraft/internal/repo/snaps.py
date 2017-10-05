@@ -193,6 +193,16 @@ def _snap_command_requires_sudo():
     return requires_root
 
 
+def get_installed_snaps():
+    """Return all the snaps installed in the system.
+
+    :return: a list of "name=revision" for the snaps installed.
+    """
+    local_snaps = _get_local_snaps()
+    return ['{}={}'.format(snap['name'], snap['revision']) for
+            snap in local_snaps]
+
+
 def _get_parsed_snap(snap):
     if '/' in snap:
         sep_index = snap.find('/')
@@ -226,3 +236,12 @@ def _get_store_snap_info(snap_name):
         snap_info = session.get(url)
     snap_info.raise_for_status()
     return snap_info.json()['result'][0]
+
+
+def _get_local_snaps():
+    slug = 'snaps'
+    url = get_snapd_socket_path_template().format(slug)
+    with requests_unixsocket.Session() as session:
+        snap_info = session.get(url)
+    snap_info.raise_for_status()
+    return snap_info.json()['result']

@@ -19,9 +19,11 @@ import contextlib
 import copy
 import io
 import os
+import socketserver
 import string
 import subprocess
 import sys
+import tempfile
 import threading
 import urllib.parse
 import uuid
@@ -39,6 +41,7 @@ from snapcraft.tests import fake_servers
 from snapcraft.tests.fake_servers import (
     api,
     search,
+    snapd,
     upload
 )
 from snapcraft.tests.subprocess_utils import (
@@ -595,47 +598,6 @@ class FakeLXD(fixtures.Fixture):
         return Popen(args)
 
 
-class FakeSnapd(fixtures.Fixture):
-    '''...'''
-
-    def __init__(self):
-        self.snaps = {
-            'core': {'confinement': 'strict',
-                     'id': '2kkitQurgOkL3foImG4wDwn9CIANuHlt',
-                     'revision': '123'},
-            'snapcraft': {'confinement': 'classic',
-                          'id': '3lljuRvshPlM4gpJnH5xExo0DJBOvImu',
-                          'revision': '345'},
-        }
-
-    def _setUp(self):
-        patcher = mock.patch('requests_unixsocket.Session.request')
-        self.session_request_mock = patcher.start()
-        self.session_request_mock.side_effect = self.request_side_effect()
-        self.addCleanup(patcher.stop)
-
-    def request_side_effect(self):
-        def request_effect(*args, **kwargs):
-            if args[0] == 'GET' and '/v2/snaps/' in args[1]:
-                class Session:
-                    def __init__(self, name, snaps):
-                        self._name = name
-                        self._snaps = snaps
-
-                    def json(self):
-                        if self._name not in self._snaps:
-                            return {'status': 'Not Found',
-                                    'result': {'message': 'not found'},
-                                    'status-code': 404,
-                                    'type': 'error'}
-                        return {'status': 'OK',
-                                'type': 'sync',
-                                'result': self._snaps[self._name]}
-                name = args[1].split('/')[-1]
-                return Session(name, self.snaps)
-        return request_effect
-
-
 class GitRepo(fixtures.Fixture):
     '''Create a git repo in the current directory'''
 
@@ -972,3 +934,49 @@ class SnapcraftYaml(fixtures.Fixture):
         with open(os.path.join(self.path, 'snapcraft.yaml'),
                   'w') as snapcraft_yaml_file:
             yaml.dump(self.data, snapcraft_yaml_file)
+
+
+class UnixHTTPServer(socketserver.UnixStreamServer):
+
+    def get_request(self):
+        request, client_address = self.socket.accept()
+        # BaseHTTPRequestHandler expects a tuple with the client address at
+        # index 0, so we fake one
+        if len(client_address) == 0:
+            client_address = (self.server_address,)
+        return (request, client_address)
+
+
+class FakeSnapd(fixtures.Fixture):
+
+    @property
+    def snaps(self):
+        self.server.RequestHandlerClass.snaps
+
+    @snaps.setter
+    def snaps(self, value):
+        self.server.RequestHandlerClass.snaps = value
+
+    def _setUp(self):
+        snapd_fake_socket_path = tempfile.mkstemp()[1]
+        os.unlink(snapd_fake_socket_path)
+
+        socket_path_patcher = mock.patch(
+            'snapcraft.internal.repo.snaps.get_snapd_socket_path_template')
+        mock_socket_path = socket_path_patcher.start()
+        mock_socket_path.return_value = 'http+unix://{}/v2/{{}}'.format(
+            snapd_fake_socket_path.replace('/', '%2F'))
+        self.addCleanup(socket_path_patcher.stop)
+
+        self._start_fake_server(snapd_fake_socket_path)
+
+    def _start_fake_server(self, socket):
+        self.server = UnixHTTPServer(socket, snapd.FakeSnapdServer)
+        server_thread = threading.Thread(target=self.server.serve_forever)
+        server_thread.start()
+        self.addCleanup(self._stop_fake_server, server_thread)
+
+    def _stop_fake_server(self, thread):
+        self.server.shutdown()
+        self.server.socket.close()
+        thread.join()

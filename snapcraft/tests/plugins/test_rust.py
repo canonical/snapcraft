@@ -17,6 +17,7 @@
 
 import collections
 import os
+import subprocess
 from unittest import mock
 
 from testtools.matchers import (
@@ -64,6 +65,10 @@ class RustPluginCrossCompileTestCase(tests.TestCase):
 
         patcher = mock.patch('snapcraft.internal.common.run')
         self.run_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.common.run_output')
+        patcher.start()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.ProjectOptions.is_cross_compiling')
@@ -172,7 +177,8 @@ class RustPluginTestCase(tests.TestCase):
                         'but it was "{}"'.format(rust_revision_type))
 
     @mock.patch.object(rust.RustPlugin, 'run')
-    def test_build_with_conditional_compilation(self, run_mock):
+    @mock.patch.object(rust.RustPlugin, 'run_output')
+    def test_build_with_conditional_compilation(self, _, run_mock):
         plugin = rust.RustPlugin('test-part', self.options,
                                  self.project_options)
         plugin.options.rust_features = ['conditional-compilation']
@@ -284,7 +290,8 @@ class RustPluginTestCase(tests.TestCase):
         self.assertRaises(NotImplementedError, plugin.enable_cross_compilation)
 
     @mock.patch.object(rust.RustPlugin, 'run')
-    def test_build(self, run_mock):
+    @mock.patch.object(rust.RustPlugin, 'run_output')
+    def test_build(self, _, run_mock):
         plugin = rust.RustPlugin('test-part', self.options,
                                  self.project_options)
         os.makedirs(plugin.sourcedir)
@@ -302,7 +309,8 @@ class RustPluginTestCase(tests.TestCase):
         ])
 
     @mock.patch.object(rust.RustPlugin, 'run')
-    def test_get_manifest_with_cargo_lock_file(self, _):
+    @mock.patch.object(rust.RustPlugin, 'run_output')
+    def test_get_manifest_with_cargo_lock_file(self, *_):
         plugin = rust.RustPlugin('test-part', self.options,
                                  self.project_options)
         os.makedirs(plugin.sourcedir)
@@ -315,13 +323,13 @@ class RustPluginTestCase(tests.TestCase):
 
         plugin.build()
 
-        expected_manifest = collections.OrderedDict()
-        expected_manifest['cargo-lock-contents'] = 'test cargo lock contents'
-
-        self.assertThat(plugin.get_manifest(), Equals(expected_manifest))
+        self.assertThat(
+            plugin.get_manifest()['cargo-lock-contents'],
+            Equals('test cargo lock contents'))
 
     @mock.patch.object(rust.RustPlugin, 'run')
-    def test_get_manifest_with_unexisting_cargo_lock(self, _):
+    @mock.patch.object(rust.RustPlugin, 'run_output')
+    def test_get_manifest_with_unexisting_cargo_lock(self, *_):
         plugin = rust.RustPlugin('test-part', self.options,
                                  self.project_options)
         os.makedirs(plugin.sourcedir)
@@ -333,7 +341,8 @@ class RustPluginTestCase(tests.TestCase):
             plugin.get_manifest(), Not(Contains('cargo-lock-contents')))
 
     @mock.patch.object(rust.RustPlugin, 'run')
-    def test_get_manifest_with_cargo_lock_dir(self, _):
+    @mock.patch.object(rust.RustPlugin, 'run_output')
+    def test_get_manifest_with_cargo_lock_dir(self, *_):
         plugin = rust.RustPlugin('test-part', self.options,
                                  self.project_options)
         os.makedirs(plugin.sourcedir)
@@ -345,3 +354,29 @@ class RustPluginTestCase(tests.TestCase):
 
         self.assertThat(
             plugin.get_manifest(), Not(Contains('cargo-lock-contents')))
+
+    @mock.patch.object(rust.RustPlugin, 'run')
+    def test_get_manifest_with_versions(self, _):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+
+        original_check_output = subprocess.check_output
+
+        def side_effect(cmd, *args, **kwargs):
+            if cmd[-1] == '--version':
+                binary = os.path.basename(cmd[-2])
+                return 'test {} version'.format(binary)
+            return original_check_output(cmd, *args, **kwargs)
+
+        with mock.patch.object(
+                rust.RustPlugin, 'run_output') as run_output_mock:
+            run_output_mock.side_effect = side_effect
+            plugin.build()
+
+        expected_manifest = collections.OrderedDict()
+        expected_manifest['rustup-version'] = 'test rustup.sh version'
+        expected_manifest['rustc-version'] = 'test rustc version'
+        expected_manifest['cargo-version'] = 'test cargo version'
+
+        self.assertThat(plugin.get_manifest(), Equals(expected_manifest))
