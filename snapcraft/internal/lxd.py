@@ -132,7 +132,8 @@ class Containerbuild:
             self._ensure_container()
             yield
         finally:
-            if self._get_container_status():
+            status = self._get_container_status()
+            if status and status['status'] == 'Running':
                 # Stopping takes a while and lxc doesn't print anything.
                 print('Stopping {}'.format(self._container_name))
                 check_call(['lxc', 'stop', '-f', self._container_name])
@@ -330,8 +331,19 @@ class Project(Containerbuild):
                     'lxc', 'config', 'device', 'add', self._container_name,
                     'fuse', 'unix-char', 'path=/dev/fuse'
                     ])
-            check_call([
-                'lxc', 'start', self._container_name])
+            try:
+                check_call([
+                    'lxc', 'start', self._container_name])
+            except CalledProcessError:
+                msg = 'The container could not be started.'
+                if self._container_name.startswith('local:'):
+                    msg += ('\nThe files /etc/subuid and /etc/subgid need to '
+                            'contain this line for mounting the local folder:'
+                            '\n    root:1000:1'
+                            '\nNote: Add the line to both files, do not '
+                            'remove any existing lines.'
+                            '\nRestart lxd after making this change.')
+                raise ContainerConnectionError(msg)
 
     def _setup_project(self):
         self._ensure_mount(self._project_folder, self._source)
