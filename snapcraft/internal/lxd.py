@@ -119,10 +119,11 @@ class Containerbuild:
         check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.SNAPCRAFT_SETUP_CORE', '1'])
-        check_call([
-            'lxc', 'config', 'set', self._container_name,
-            'environment.SNAPCRAFT_PARTS_URI',
-            os.getenv('SNAPCRAFT_PARTS_URI', '')])
+        if os.getenv('SNAPCRAFT_PARTS_URI'):
+            check_call([
+                'lxc', 'config', 'set', self._container_name,
+                'environment.SNAPCRAFT_PARTS_URI',
+                os.getenv('SNAPCRAFT_PARTS_URI')])
         # Necessary to read asset files with non-ascii characters.
         check_call([
             'lxc', 'config', 'set', self._container_name,
@@ -311,10 +312,11 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'environment.SNAPCRAFT_SETUP_CORE', '1'])
-            check_call([
-                'lxc', 'config', 'set', self._container_name,
-                'environment.SNAPCRAFT_PARTS_URI',
-                os.getenv('SNAPCRAFT_PARTS_URI', '')])
+            if os.getenv('SNAPCRAFT_PARTS_URI'):
+                check_call([
+                    'lxc', 'config', 'set', self._container_name,
+                    'environment.SNAPCRAFT_PARTS_URI',
+                    os.getenv('SNAPCRAFT_PARTS_URI')])
             # Necessary to read asset files with non-ascii characters.
             check_call([
                 'lxc', 'config', 'set', self._container_name,
