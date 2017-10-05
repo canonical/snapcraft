@@ -586,7 +586,7 @@ class FakeLXD(fixtures.Fixture):
             elif cmd == 'sshfs':
                 self.files = ['foo', 'bar']
                 return self._popen(args[0])
-            elif cmd == 'md5sum':
+            elif 'md5sum' in args[0][-1]:
                 raise CalledProcessError(returncode=1, cmd=cmd)
 
     def _popen(self, args):
