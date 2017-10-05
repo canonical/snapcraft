@@ -765,7 +765,7 @@ class RecordManifestBaseTestCase(BaseLifecycleTestCase):
 
         self.fake_snapd = fixture_setup.FakeSnapd()
         self.useFixture(self.fake_snapd)
-        self.fake_snapd.snaps = []
+        self.fake_snapd.snaps_result = []
 
 
 class RecordManifestTestCase(RecordManifestBaseTestCase):
@@ -809,7 +809,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
     def test_prime_with_installed_snaps(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
-        self.fake_snapd.snaps = [
+        self.fake_snapd.snaps_result = [
             {'name': 'test-snap-1',
              'revision': 'test-snap-1-revision'},
             {'name': 'test-snap-2',
