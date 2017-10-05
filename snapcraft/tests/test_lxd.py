@@ -86,10 +86,12 @@ class LXDTestCase(tests.TestCase):
     scenarios = [
         ('local', dict(remote='local', target_arch=None, server='x86_64')),
         ('remote', dict(remote='myremote', target_arch=None, server='x86_64')),
-        ('cross', dict(remote='local', target_arch='armhf', server='x86_64')),
+        ('cross', dict(remote='local', target_arch='armhf', server='x86_64',
+                       cross=True)),
         ('arm remote', dict(remote='pi', target_arch=None, server='armv7l')),
         ('arm same', dict(remote='pi', target_arch='armhf', server='armv7l')),
-        ('arm cross', dict(remote='pi', target_arch='arm64', server='armv7l')),
+        ('arm cross', dict(remote='pi', target_arch='arm64', server='armv7l',
+                           cross=True)),
     ]
 
     def setUp(self):
@@ -340,6 +342,9 @@ class LXDTestCase(tests.TestCase):
         builder = self.make_cleanbuilder()
 
         builder.execute()
+        if hasattr(self, 'cross') and self.cross:
+            return
+
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'file', 'push',
                   os.path.join(builder.tmp_dir, 'core_123.assert'),
@@ -381,6 +386,9 @@ class LXDTestCase(tests.TestCase):
         builder = self.make_cleanbuilder()
 
         builder.execute()
+        if hasattr(self, 'cross') and self.cross:
+            return
+
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['sudo', 'cp', '/var/lib/snapd/snaps/snapcraft_x1.snap',
                   os.path.join(builder.tmp_dir, 'snapcraft_x1.snap')]),

@@ -212,7 +212,10 @@ class Containerbuild:
         is_classic = json['result']['confinement'] == 'classic'
 
         # If the server has a different arch we can't inject local snaps
-        if self._project_options.target_arch != self._server_arch:
+        if (self._project_options.target_arch
+                and self._project_options.target_arch != self._server_arch):
+            logger.info('Different arch {} != {}'.format(
+                self._project_options.deb_arch, self._server_arch))
             logger.info('Installing {}'.format(name))
             # Install if needed
             cmd = ['snap', 'install', name]
