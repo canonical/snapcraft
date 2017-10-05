@@ -256,7 +256,8 @@ class Containerbuild:
             sys.getfilesystemencoding()).split()[0]
         try:
             checksum_container = check_output([
-                'lxc', 'exec', self._container_name, '--', 'md5sum', installed]
+                'lxc', 'exec', self._container_name, '--', 'sh', '-c',
+                'test -f {0} && md5sum {0}'.format(installed)]
                 ).decode(sys.getfilesystemencoding()).split()[0]
         except CalledProcessError:
             # Snap not installed
