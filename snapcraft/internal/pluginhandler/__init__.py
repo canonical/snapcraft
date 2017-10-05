@@ -344,7 +344,8 @@ class PluginHandler:
     def _get_machine_manifest(self):
         return {
             'uname': common.run_output(['uname', '-srvmpio']),
-            'installed-packages': repo.Repo.get_installed_packages()
+            'installed-packages': repo.Repo.get_installed_packages(),
+            'installed-snaps': repo.snaps.get_installed_snaps()
         }
 
     def clean_build(self, hint=''):
