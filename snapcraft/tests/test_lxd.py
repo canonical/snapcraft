@@ -45,9 +45,11 @@ class FakeSnapd(fixtures.Fixture):
         self.snaps = {
             'core': {'confinement': 'strict',
                      'id': '2kkitQurgOkL3foImG4wDwn9CIANuHlt',
+                     'channel': 'stable',
                      'revision': '123'},
             'snapcraft': {'confinement': 'classic',
                           'id': '3lljuRvshPlM4gpJnH5xExo0DJBOvImu',
+                          'channel': 'edge',
                           'revision': '345'},
         }
 
