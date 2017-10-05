@@ -191,7 +191,8 @@ class DeveloperAssertion(_BaseAssertion):
         The data that comes from the store query looks as follows:
         {'snap_developer': {
              'type': 'snap-developer',
-             'authority-id': <account_id of the publisher>,
+             'authority-id': <account_id of the publisher or
+                              store authority-id>,
              'publisher-id': <account_id of the publisher>,
              'snap-id': 'snap_id',
              'developers': [{
