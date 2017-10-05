@@ -20,22 +20,40 @@ from urllib import parse
 
 class FakeSnapdServer(BaseHTTPRequestHandler):
 
+    snaps = []
+    snap_details_not_found = []
+    snap_details_installed = []
+
     def do_GET(self):
         parsed_url = parse.urlparse(self.path)
-        if parsed_url.path.startswith('/v2/snaps/'):
-            self._handle_snaps(parsed_url)
+        if parsed_url.path == '/v2/snaps':
+            self._handle_snaps()
+        elif parsed_url.path.startswith('/v2/snaps/'):
+            self._handle_snap_details(parsed_url)
         elif parsed_url.path == '/v2/find':
             self._handle_find(parsed_url)
         else:
             self.wfile.write(parsed_url.path.encode())
 
-    def _handle_snaps(self, parsed_url):
+    def _handle_snaps(self):
+        status_code = 200
+        params = self.snaps
+        self.send_response(status_code)
+        self.send_header('Content-Type', 'text/application+json')
+        self.end_headers()
+        response = json.dumps({'result': params}).encode()
+        self.wfile.write(response)
+
+    def _handle_snap_details(self, parsed_url):
         status_code = 404
         params = {}
 
         if parsed_url.path.endswith('/fake-snap'):
             status_code = 200
-            params = {'channel': 'stable'}
+            params = {
+                'channel': 'stable',
+                'revision': 'test-fake-snap-revision'
+            }
         elif parsed_url.path.endswith('/fake-snap-stable'):
             status_code = 200
             params = {'channel': 'stable'}
@@ -51,6 +69,14 @@ class FakeSnapdServer(BaseHTTPRequestHandler):
         elif parsed_url.path.endswith('/fake-snap-edge'):
             status_code = 200
             params = {'channel': 'edge'}
+        elif (parsed_url.path in self.snap_details_not_found and
+              parsed_url.path.split('/')[-1] in self.snap_details_installed):
+            # XXX when the snaps end point fails, the snap is installed and
+            # it needs a revision the next time the same endpoint is called.
+            status_code = 200
+            params = {'channel': 'dummy', 'revision': 'dummy'}
+        else:
+            self.snap_details_not_found.append(parsed_url.path)
 
         self.send_response(status_code)
         self.send_header('Content-Type', 'text/application+json')
