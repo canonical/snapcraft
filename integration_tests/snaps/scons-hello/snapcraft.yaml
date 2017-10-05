@@ -10,6 +10,10 @@ confinement: strict
 
 build-packages: [gcc, libc6-dev]
 
+apps:
+  scons-hello:
+    command: opt/bin/main
+
 parts:
   scons-project:
     scons-options:

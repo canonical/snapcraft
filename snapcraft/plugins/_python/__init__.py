@@ -14,5 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from ._pip import Pip  # noqa
 from ._python_finder import get_python_command  # noqa
 from ._sitecustomize import generate_sitecustomize  # noqa

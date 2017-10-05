@@ -30,8 +30,9 @@ class GlobalState(State):
 
     yaml_tag = u'!GlobalState'
 
-    def __init__(self, build_packages):
+    def __init__(self, build_packages, build_snaps):
         super().__init__()
         self.assets = {
             'build-packages': build_packages,
+            'build-snaps': build_snaps,
         }

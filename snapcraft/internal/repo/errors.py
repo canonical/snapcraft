@@ -14,11 +14,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from snapcraft.internal.common import get_os_release_info
 from snapcraft.internal import errors
 
 
 class RepoError(errors.SnapcraftError):
     pass
+
+
+class NoNativeBackendError(RepoError):
+
+    fmt = ("Native builds aren't supported on {distro}. "
+           "You can however use 'snapcraft cleanbuild' with a container.")
+
+    def __init__(self):
+        super().__init__(distro=get_os_release_info()['NAME'])
 
 
 class PackageNotFoundError(RepoError):
