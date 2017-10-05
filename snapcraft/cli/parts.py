@@ -34,8 +34,8 @@ def update(ctx, **kwargs):
     if container_config.use_container:
         project_options = get_project_options(**kwargs)
         lifecycle.containerbuild('update', project_options, container_config)
-    else:
-        remote_parts.update()
+
+    remote_parts.update()
 
 
 @partscli.command()
