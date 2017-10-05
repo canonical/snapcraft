@@ -22,6 +22,7 @@ import re
 import shutil
 import subprocess
 import sys
+import textwrap
 from unittest import mock
 
 import fixtures
@@ -53,16 +54,17 @@ class BaseLifecycleTestCase(tests.TestCase):
         self.project_options = snapcraft.ProjectOptions()
 
     def make_snapcraft_yaml(self, parts, snap_type=''):
-        yaml = """name: test
-version: 0
-summary: test
-description: test
-confinement: strict
-grade: stable
-{type}
+        yaml = textwrap.dedent("""\
+            name: test
+            version: 0
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            {type}
 
-{parts}
-"""
+            {parts}
+            """)
 
         super().make_snapcraft_yaml(yaml.format(parts=parts, type=snap_type))
 
@@ -90,14 +92,16 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             new_part.plugin.options.source, Equals(part.plugin.installdir))
 
     def test_exception_when_dependency_is_required(self):
-        self.make_snapcraft_yaml("""parts:
-  part1:
-    plugin: nil
-  part2:
-    plugin: nil
-    after:
-      - part1
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                  part2:
+                    plugin: nil
+                    after:
+                      - part1
+                """))
 
         raised = self.assertRaises(
             RuntimeError,
@@ -111,14 +115,16 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                    "prerequisites: 'part1'"))
 
     def test_no_exception_when_dependency_is_required_but_already_staged(self):
-        self.make_snapcraft_yaml("""parts:
-  part1:
-    plugin: nil
-  part2:
-    plugin: nil
-    after:
-      - part1
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                  part2:
+                    plugin: nil
+                    after:
+                      - part1
+                """))
 
         def _fake_should_step_run(self, step, force=False):
             return self.name != 'part1'
@@ -139,18 +145,20 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                    'Pulling part2 \n'))
 
     def test_dependency_recursed_correctly(self):
-        self.make_snapcraft_yaml("""parts:
-  part1:
-    plugin: nil
-  part2:
-    plugin: nil
-    after:
-      - part1
-  part3:
-    plugin: nil
-    after:
-      - part2
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                  part2:
+                    plugin: nil
+                    after:
+                      - part1
+                  part3:
+                    plugin: nil
+                    after:
+                      - part2
+                """))
 
         snap_info = lifecycle.execute('pull', self.project_options)
 
@@ -181,14 +189,17 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             ))
 
     def test_os_type_returned_by_lifecycle(self):
-        self.make_snapcraft_yaml("""parts:
-  part1:
-    plugin: nil
-  part2:
-    plugin: nil
-    after:
-      - part1
-""", 'type: os')
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                  part2:
+                    plugin: nil
+                    after:
+                      - part1
+                """),
+            'type: os')
 
         snap_info = lifecycle.execute('pull', self.project_options)
 
@@ -201,12 +212,14 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         self.assertThat(snap_info, Equals(expected_snap_info))
 
     def test_dirty_prime_reprimes_single_part(self):
-        self.make_snapcraft_yaml("""parts:
-  part1:
-    plugin: nil
-  part2:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                  part2:
+                    plugin: nil
+                """))
 
         # Strip it.
         lifecycle.execute('prime', self.project_options)
@@ -250,12 +263,14 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             ]))
 
     def test_dirty_prime_reprimes_multiple_part(self):
-        self.make_snapcraft_yaml("""parts:
-  part1:
-    plugin: nil
-  part2:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                  part2:
+                    plugin: nil
+                """))
 
         # Strip it.
         lifecycle.execute('prime', self.project_options)
@@ -300,12 +315,14 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             ]))
 
     def test_dirty_stage_restages_single_part(self):
-        self.make_snapcraft_yaml("""parts:
-  part1:
-    plugin: nil
-  part2:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                  part2:
+                    plugin: nil
+                """))
 
         # Stage it.
         lifecycle.execute('stage', self.project_options)
@@ -349,12 +366,14 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             ]))
 
     def test_dirty_stage_restages_multiple_parts(self):
-        self.make_snapcraft_yaml("""parts:
-  part1:
-    plugin: nil
-  part2:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                  part2:
+                    plugin: nil
+                """))
 
         # Stage it.
         lifecycle.execute('stage', self.project_options)
@@ -401,13 +420,15 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             ]))
 
     def test_dirty_stage_part_with_built_dependent_raises(self):
-        self.make_snapcraft_yaml("""parts:
-  part1:
-    plugin: nil
-  part2:
-    plugin: nil
-    after: [part1]
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                  part2:
+                    plugin: nil
+                    after: [part1]
+                """))
 
         # Stage dependency
         lifecycle.execute('stage', self.project_options, part_names=['part1'])
@@ -451,13 +472,15 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 "by running:\nsnapcraft clean part2 -s stage\n"))
 
     def test_dirty_stage_part_with_unbuilt_dependent(self):
-        self.make_snapcraft_yaml("""parts:
-  part1:
-    plugin: nil
-  part2:
-    plugin: nil
-    after: [part1]
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                  part2:
+                    plugin: nil
+                    after: [part1]
+                """))
 
         # Stage dependency (dependent is unbuilt)
         lifecycle.execute('stage', self.project_options, part_names=['part1'])
@@ -492,10 +515,12 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 'Staging part1 \n'))
 
     def test_dirty_stage_reprimes(self):
-        self.make_snapcraft_yaml("""parts:
-  part1:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                """))
 
         # Strip it.
         lifecycle.execute('prime', self.project_options)
@@ -525,10 +550,12 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 'Priming part1 \n'))
 
     def test_dirty_build_raises(self):
-        self.make_snapcraft_yaml("""parts:
-  part1:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                """))
 
         # Build it.
         lifecycle.execute('build', self.project_options)
@@ -562,10 +589,12 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 "by running:\nsnapcraft clean part1 -s build\n"))
 
     def test_dirty_pull_raises(self):
-        self.make_snapcraft_yaml("""parts:
-  part1:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                """))
 
         # Pull it.
         lifecycle.execute('pull', self.project_options)
@@ -601,10 +630,12 @@ class ExecutionTestCase(BaseLifecycleTestCase):
     def test_pull_is_dirty_if_target_arch_changes(
             self, mock_install_build_packages, mock_enable_cross_compilation):
         mock_install_build_packages.return_value = []
-        self.make_snapcraft_yaml("""parts:
-  part1:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                """))
 
         # Pull it with amd64
         lifecycle.execute('pull', snapcraft.ProjectOptions(
@@ -635,10 +666,12 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 "by running:\nsnapcraft clean part1 -s pull\n"))
 
     def test_prime_excludes_internal_snapcraft_dir(self):
-        self.make_snapcraft_yaml("""parts:
-  test-part:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                """))
         lifecycle.execute('prime', self.project_options)
         self.assertThat(
             os.path.join('prime', 'snap', '.snapcraft'),
@@ -648,10 +681,12 @@ class ExecutionTestCase(BaseLifecycleTestCase):
 class CleanTestCase(BaseLifecycleTestCase):
 
     def test_clean_removes_global_state(self):
-        self.make_snapcraft_yaml("""parts:
-  test-part:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                """))
         lifecycle.execute('pull', self.project_options)
         lifecycle.clean(self.project_options, parts=None)
         self.assertThat(
@@ -664,10 +699,12 @@ class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
     def test_prime_without_build_info_does_not_record(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', None))
-        self.make_snapcraft_yaml("""parts:
-  test-part:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                """))
         lifecycle.execute('prime', self.project_options)
         for file_name in ('snapcraft.yaml', 'manifest.yaml'):
             self.assertThat(
@@ -677,25 +714,29 @@ class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
     def test_prime_with_build_info_records_snapcraft_yaml(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
-        self.make_snapcraft_yaml("""parts:
-  test-part:
-    plugin: nil
-""", snap_type='type: app')
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                """),
+            snap_type='type: app')
         lifecycle.execute('prime', self.project_options)
 
-        expected = ("""name: test
-version: 0
-summary: test
-description: test
-confinement: strict
-grade: stable
-type: app
+        expected = textwrap.dedent("""\
+            name: test
+            version: 0
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            type: app
 
-parts:
-  test-part:
-    plugin: nil
+            parts:
+              test-part:
+                plugin: nil
 
-""")
+            """)
 
         self.assertThat(
             os.path.join('prime', 'snap', 'snapcraft.yaml'),
@@ -732,32 +773,35 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
     def test_prime_with_build_info_records_manifest(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
-        self.make_snapcraft_yaml("""parts:
-  test-part:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                """))
         lifecycle.execute('prime', self.project_options)
 
-        expected = ("""name: test
-version: 0
-summary: test
-description: test
-confinement: strict
-grade: stable
-parts:
-  test-part:
-    build-packages: []
-    installed-packages: []
-    installed-snaps: []
-    plugin: nil
-    prime: []
-    stage: []
-    stage-packages: []
-    uname: Linux test uname 4.10 x86_64
-architectures: [{}]
-build-packages: []
-build-snaps: []
-""".format(self.project_options.deb_arch))
+        expected = textwrap.dedent("""\
+            name: test
+            version: 0
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              test-part:
+                build-packages: []
+                installed-packages: []
+                installed-snaps: []
+                plugin: nil
+                prime: []
+                stage: []
+                stage-packages: []
+                uname: Linux test uname 4.10 x86_64
+            architectures: [{}]
+            build-packages: []
+            build-snaps: []
+            """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -772,34 +816,37 @@ build-snaps: []
              'revision': 'test-snap-2-revision'},
         ]
 
-        self.make_snapcraft_yaml("""parts:
-  test-part:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                """))
         lifecycle.execute('prime', self.project_options)
 
-        expected = ("""name: test
-version: 0
-summary: test
-description: test
-confinement: strict
-grade: stable
-parts:
-  test-part:
-    build-packages: []
-    installed-packages: []
-    installed-snaps: {}
-    plugin: nil
-    prime: []
-    stage: []
-    stage-packages: []
-    uname: Linux test uname 4.10 x86_64
-architectures: [{}]
-build-packages: []
-build-snaps: []
-""".format('[test-snap-1=test-snap-1-revision, '
-           'test-snap-2=test-snap-2-revision]',
-           self.project_options.deb_arch))
+        expected = textwrap.dedent("""\
+            name: test
+            version: 0
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              test-part:
+                build-packages: []
+                installed-packages: []
+                installed-snaps: {}
+                plugin: nil
+                prime: []
+                stage: []
+                stage-packages: []
+                uname: Linux test uname 4.10 x86_64
+            architectures: [{}]
+            build-packages: []
+            build-snaps: []
+            """.format('[test-snap-1=test-snap-1-revision, '
+                       'test-snap-2=test-snap-2-revision]',
+                       self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -813,33 +860,37 @@ build-snaps: []
                 fixture_setup.FakeAptCachePackage(
                     name, version, installed=True))
 
-        self.make_snapcraft_yaml("""parts:
-  test-part:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                """))
         lifecycle.execute('prime', self.project_options)
 
-        expected = ("""name: test
-version: 0
-summary: test
-description: test
-confinement: strict
-grade: stable
-parts:
-  test-part:
-    build-packages: []
-    installed-packages: {}
-    installed-snaps: []
-    plugin: nil
-    prime: []
-    stage: []
-    stage-packages: []
-    uname: Linux test uname 4.10 x86_64
-architectures: [{}]
-build-packages: []
-build-snaps: []
-""".format('[test-package1=test-version1, test-package2=test-version2]',
-           self.project_options.deb_arch))
+        expected = textwrap.dedent("""\
+            name: test
+            version: 0
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              test-part:
+                build-packages: []
+                installed-packages: {}
+                installed-snaps: []
+                plugin: nil
+                prime: []
+                stage: []
+                stage-packages: []
+                uname: Linux test uname 4.10 x86_64
+            architectures: [{}]
+            build-packages: []
+            build-snaps: []
+            """.format('[test-package1=test-version1, '
+                       'test-package2=test-version2]',
+                       self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -852,34 +903,37 @@ build-snaps: []
             self.fake_apt_cache.add_package(
                 fixture_setup.FakeAptCachePackage(name, version))
 
-        self.make_snapcraft_yaml("""parts:
-  test-part:
-    plugin: nil
-    stage-packages: [test-package1=test-version1, test-package2]
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                    stage-packages: [test-package1=test-version1, test-package2]
+                """))  # NOQA
 
         lifecycle.execute('prime', self.project_options)
 
-        expected = ("""name: test
-version: 0
-summary: test
-description: test
-confinement: strict
-grade: stable
-parts:
-  test-part:
-    build-packages: []
-    installed-packages: []
-    installed-snaps: []
-    plugin: nil
-    prime: []
-    stage: []
-    stage-packages: [test-package1=test-version1, test-package2=test-version2]
-    uname: Linux test uname 4.10 x86_64
-architectures: [{}]
-build-packages: []
-build-snaps: []
-""".format(self.project_options.deb_arch))
+        expected = textwrap.dedent("""\
+            name: test
+            version: 0
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              test-part:
+                build-packages: []
+                installed-packages: []
+                installed-snaps: []
+                plugin: nil
+                prime: []
+                stage: []
+                stage-packages: [test-package1=test-version1, test-package2=test-version2]
+                uname: Linux test uname 4.10 x86_64
+            architectures: [{}]
+            build-packages: []
+            build-snaps: []
+            """.format(self.project_options.deb_arch))  # NOQA
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -893,34 +947,37 @@ build-snaps: []
             self.fake_apt_cache.add_package(
                 fixture_setup.FakeAptCachePackage(name, version))
 
-        self.make_snapcraft_yaml("""build-packages: [test-package1=test-version1, test-package2]
-parts:
-  test-part:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                build-packages: [test-package1=test-version1, test-package2]
+                parts:
+                  test-part:
+                    plugin: nil
+                """))
 
         lifecycle.execute('prime', self.project_options)
 
-        expected = ("""name: test
-version: 0
-summary: test
-description: test
-confinement: strict
-grade: stable
-build-packages: [test-package1=test-version1, test-package2=test-version2]
-parts:
-  test-part:
-    build-packages: []
-    installed-packages: []
-    installed-snaps: []
-    plugin: nil
-    prime: []
-    stage: []
-    stage-packages: []
-    uname: Linux test uname 4.10 x86_64
-architectures: [{}]
-build-snaps: []
-""".format(self.project_options.deb_arch))
+        expected = textwrap.dedent("""\
+            name: test
+            version: 0
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            build-packages: [test-package1=test-version1, test-package2=test-version2]
+            parts:
+              test-part:
+                build-packages: []
+                installed-packages: []
+                installed-snaps: []
+                plugin: nil
+                prime: []
+                stage: []
+                stage-packages: []
+                uname: Linux test uname 4.10 x86_64
+            architectures: [{}]
+            build-snaps: []
+            """.format(self.project_options.deb_arch))  # NOQA
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -932,42 +989,45 @@ build-snaps: []
         self.fake_apt_cache.add_package(
             fixture_setup.FakeAptCachePackage('git', 'testversion'))
 
-        self.make_snapcraft_yaml("""parts:
-  test-part:
-    plugin: nil
-    source: test-source
-    source-type: git
-    source-commit: test-commit
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                    source: test-source
+                    source-type: git
+                    source-commit: test-commit
+                """))
 
         lifecycle.execute('prime', self.project_options)
 
-        expected = ("""name: test
-version: 0
-summary: test
-description: test
-confinement: strict
-grade: stable
-parts:
-  test-part:
-    build-packages: []
-    installed-packages: []
-    installed-snaps: []
-    plugin: nil
-    prime: []
-    source: test-source
-    source-branch: ''
-    source-checksum: ''
-    source-commit: test-commit
-    source-tag: ''
-    source-type: git
-    stage: []
-    stage-packages: []
-    uname: Linux test uname 4.10 x86_64
-architectures: [{}]
-build-packages: [git=testversion]
-build-snaps: []
-""".format(self.project_options.deb_arch))
+        expected = textwrap.dedent("""\
+            name: test
+            version: 0
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              test-part:
+                build-packages: []
+                installed-packages: []
+                installed-snaps: []
+                plugin: nil
+                prime: []
+                source: test-source
+                source-branch: ''
+                source-checksum: ''
+                source-commit: test-commit
+                source-tag: ''
+                source-type: git
+                stage: []
+                stage-packages: []
+                uname: Linux test uname 4.10 x86_64
+            architectures: [{}]
+            build-packages: [git=testversion]
+            build-snaps: []
+            """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -979,34 +1039,37 @@ build-snaps: []
         self.fake_apt_cache.add_package(fixture_setup.FakeAptCachePackage(
             'test-package', 'test-version'))
 
-        self.make_snapcraft_yaml("""parts:
-  test-part:
-    plugin: nil
-    build-packages: ['test-package:any']
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                    build-packages: ['test-package:any']
+                """))
 
         lifecycle.execute('prime', self.project_options)
 
-        expected = ("""name: test
-version: 0
-summary: test
-description: test
-confinement: strict
-grade: stable
-parts:
-  test-part:
-    build-packages: ['test-package:any']
-    installed-packages: []
-    installed-snaps: []
-    plugin: nil
-    prime: []
-    stage: []
-    stage-packages: []
-    uname: Linux test uname 4.10 x86_64
-architectures: [{}]
-build-packages: [test-package=test-version]
-build-snaps: []
-""".format(self.project_options.deb_arch))
+        expected = textwrap.dedent("""\
+            name: test
+            version: 0
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              test-part:
+                build-packages: ['test-package:any']
+                installed-packages: []
+                installed-snaps: []
+                plugin: nil
+                prime: []
+                stage: []
+                stage-packages: []
+                uname: Linux test uname 4.10 x86_64
+            architectures: [{}]
+            build-packages: [test-package=test-version]
+            build-snaps: []
+            """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -1020,34 +1083,37 @@ build-snaps: []
                 'test-provider-package', 'test-version',
                 provides=['test-virtual-package']))
 
-        self.make_snapcraft_yaml("""parts:
-  test-part:
-    plugin: nil
-    build-packages: ['test-virtual-package']
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                    build-packages: ['test-virtual-package']
+                """))
 
         lifecycle.execute('prime', self.project_options)
 
-        expected = ("""name: test
-version: 0
-summary: test
-description: test
-confinement: strict
-grade: stable
-parts:
-  test-part:
-    build-packages: [test-virtual-package]
-    installed-packages: []
-    installed-snaps: []
-    plugin: nil
-    prime: []
-    stage: []
-    stage-packages: []
-    uname: Linux test uname 4.10 x86_64
-architectures: [{}]
-build-packages: [test-provider-package=test-version]
-build-snaps: []
-""".format(self.project_options.deb_arch))
+        expected = textwrap.dedent("""\
+            name: test
+            version: 0
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              test-part:
+                build-packages: [test-virtual-package]
+                installed-packages: []
+                installed-snaps: []
+                plugin: nil
+                prime: []
+                stage: []
+                stage-packages: []
+                uname: Linux test uname 4.10 x86_64
+            architectures: [{}]
+            build-packages: [test-provider-package=test-version]
+            build-snaps: []
+            """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -1058,33 +1124,36 @@ build-snaps: []
             'test-plugin-manifest': 'test-value'}
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
-        self.make_snapcraft_yaml("""parts:
-  test-part:
-    plugin: nil
-""")
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                """))
         lifecycle.execute('prime', self.project_options)
 
-        expected = ("""name: test
-version: 0
-summary: test
-description: test
-confinement: strict
-grade: stable
-parts:
-  test-part:
-    build-packages: []
-    installed-packages: []
-    installed-snaps: []
-    plugin: nil
-    prime: []
-    stage: []
-    stage-packages: []
-    test-plugin-manifest: test-value
-    uname: Linux test uname 4.10 x86_64
-architectures: [{}]
-build-packages: []
-build-snaps: []
-""".format(self.project_options.deb_arch))
+        expected = textwrap.dedent("""\
+            name: test
+            version: 0
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              test-part:
+                build-packages: []
+                installed-packages: []
+                installed-snaps: []
+                plugin: nil
+                prime: []
+                stage: []
+                stage-packages: []
+                test-plugin-manifest: test-value
+                uname: Linux test uname 4.10 x86_64
+            architectures: [{}]
+            build-packages: []
+            build-snaps: []
+            """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -1109,26 +1178,27 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(
         self.make_snapcraft_yaml(parts.format(self.keyword))
         lifecycle.execute('prime', self.project_options)
 
-        expected = ("""name: test
-version: 0
-summary: test
-description: test
-confinement: strict
-grade: stable
-parts:
-  test-part:
-    build-packages: []
-    installed-packages: []
-    installed-snaps: []
-    plugin: nil
-    prime: [-*]
-    stage: []
-    stage-packages: []
-    uname: Linux test uname 4.10 x86_64
-architectures: [{}]
-build-packages: []
-build-snaps: []
-""".format(self.project_options.deb_arch))
+        expected = textwrap.dedent("""\
+            name: test
+            version: 0
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              test-part:
+                build-packages: []
+                installed-packages: []
+                installed-snaps: []
+                plugin: nil
+                prime: [-*]
+                stage: []
+                stage-packages: []
+                uname: Linux test uname 4.10 x86_64
+            architectures: [{}]
+            build-packages: []
+            build-snaps: []
+            """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
