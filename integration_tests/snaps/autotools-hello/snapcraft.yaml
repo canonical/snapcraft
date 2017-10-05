@@ -8,7 +8,7 @@ description: |
 confinement: strict
 
 apps:
-  autottools-hello:
+  autotools-hello:
     command: test
 
 build-packages: [gcc]

@@ -20,6 +20,7 @@ import json
 import logging
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -56,6 +57,30 @@ def _process_common_args(*, packages, constraints,
     return args
 
 
+def _replicate_owner_mode(path):
+    # Don't bother with a path that doesn't exist or is a symlink. The target
+    # of the symlink will either be updated anyway, or we won't have permission
+    # to change it.
+    if not os.path.exists(path) or os.path.islink(path):
+        return
+
+    file_mode = os.stat(path).st_mode
+    new_mode = file_mode & stat.S_IWUSR
+    if file_mode & stat.S_IXUSR:
+        new_mode |= stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+    if file_mode & stat.S_IRUSR:
+        new_mode |= stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+    os.chmod(path, new_mode)
+
+
+def _fix_permissions(path):
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            _replicate_owner_mode(os.path.join(root, filename))
+        for dirname in dirs:
+            _replicate_owner_mode(os.path.join(root, dirname))
+
+
 class Pip:
     """Wrapper for pip abstracting the args necessary for use in a part.
 
@@ -71,8 +96,7 @@ class Pip:
                  stage_dir):
         """Initialize pip.
 
-        Check to see if pip has already been installed. If not, fetch pip,
-        setuptools, and wheel, and install them so they can be used.
+        You must call setup() before you can actually use pip.
 
         :param str python_major_version: The python major version to find (2 or
                                          3)
@@ -99,12 +123,15 @@ class Pip:
             self._python_major_version, stage_dir=self._stage_dir,
             install_dir=self._install_dir)
 
-        self._setup()
+    def setup(self):
+        """Install pip and dependencies.
 
-    def _setup(self):
+        Check to see if pip has already been installed. If not, fetch pip,
+        setuptools, and wheel, and install them so they can be used.
+        """
         # Check to see if we have our own pip, yet. If not, we need to use the
         # pip on the host (installed via build-packages) to grab our own.
-        if not self._is_pip_installed():
+        if not self.is_setup():
             logger.info('Fetching pip, setuptools, and wheel...')
 
             real_python_home = self._python_home
@@ -124,7 +151,9 @@ class Pip:
                 # Now that we have our own pip, reset the python home
                 self._python_home = real_python_home
 
-    def _is_pip_installed(self):
+    def is_setup(self):
+        """Return true if this class has already been setup."""
+
         try:
             # We're expecting an error here at least once complaining about
             # pip not being installed. In order to verify that the error is the
@@ -228,6 +257,10 @@ class Pip:
         #               have already been fetched
         self._run(['install', '--user', '--no-compile', '--no-index',
                    '--find-links', self._python_package_dir] + args, cwd=cwd)
+
+        # Installing with --user results in a directory with 700 permissions.
+        # We need it a bit more open than that, so open it up.
+        _fix_permissions(self._install_dir)
 
     def wheel(self, packages, *, setup_py_dir=None, constraints=None,
               requirements=None, process_dependency_links=False):
