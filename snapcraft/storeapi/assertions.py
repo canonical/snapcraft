@@ -129,13 +129,13 @@ class _BaseAssertion:
 
 class DeveloperAssertion(_BaseAssertion):
     """Implementation of a developer assertion.
-    The assertion is used to enable collaboration for a given snap_name by
-    means of operating agains the snap-id's developer assertion store endpoint.
+    The assertion is used to enable collaboration for a given snap_name
+    by updating a snap-id's developer assertion using the store endpoint.
 
     The assertion content has the following structure
     {
         'type': 'snap-developer',
-        'authority-id': '<account_id of the publisher>',
+        'authority-id': '<account_id of the publisher or store authority-id>',
         'publisher-id': '<account_id of the publisher>',
         'snap-id': '<snap-id>',
         'developers': [{
@@ -156,7 +156,7 @@ class DeveloperAssertion(_BaseAssertion):
         """Create a new assertion with developers based out of the current one.
 
         The new assertion has its assertion's authority-id normalized to the
-        assertion's publisher_id and the assertion's revision increaded by 1.
+        assertion's publisher_id and the assertion's revision increased by 1.
 
         :param list developers: a list of a dictionary developers holding the
                                 keys: developer_id (mandatory), since
@@ -171,7 +171,7 @@ class DeveloperAssertion(_BaseAssertion):
         # The revision should be incremented, to avoid `invalid-revision`
         # errors.
         new_assertion['revision'] = str(int(
-            self.assertion.get('revision', '0'))+1)
+            self.assertion.get('revision', '-1')))
 
         # There is a possibility that the `authority-id` to be `canonical`,
         # which should be changed to the `publisher_id` to match the signing
@@ -186,7 +186,7 @@ class DeveloperAssertion(_BaseAssertion):
         return new_instance
 
     def get(self):
-        """Returns a dict containing the developer assertion for snap_name.
+        """Return a dict containing the developer assertion for snap_name.
 
         The data that comes from the store query looks as follows:
         {'snap_developer': {
@@ -236,14 +236,12 @@ class DeveloperAssertion(_BaseAssertion):
         return self.get()['developers'].copy()
 
     def is_equal(self, other_assertion):
-        """Determines equality of developer lists in each assertion.
-
-        Returns True if the list of developers in this instances assertion list
-        is equal to the list from other_assertion.
+        """Determine equality of developer lists in each assertion.
 
         During the comparison, differences in milliseconds are not considered.
 
-        :returns: True if equal, else False.
+        :returns: Return True if the list of developers in this instances
+                  assertion list is equal to the list from other_assertion.
         :rtype: bool
         """
         this_devs = self._normalize_time(

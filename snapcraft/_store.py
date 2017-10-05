@@ -772,7 +772,7 @@ def _sign_assertion(snap_name, assertion, key, endpoint):
     echo.info('Signing {} assertion for {}'.format(endpoint, snap_name))
     assertion, err = snap_sign.communicate(input=data)
     if snap_sign.returncode != 0:
-        err = err.decode('ascii', errors='replace')
+        err = err.decode()
         raise storeapi.errors.StoreAssertionError(
             endpoint=endpoint, snap_name=snap_name, error=err)
 
