@@ -120,6 +120,15 @@ class LXDTestCase(tests.TestCase):
             call(['lxc', 'stop', '-f', container_name]),
         ])
 
+    def test_parts_uri_set(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable('SNAPCRAFT_PARTS_URI', 'foo'))
+        self.make_cleanbuilder().execute()
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'config', 'set', self.fake_lxd.name,
+                  'environment.SNAPCRAFT_PARTS_URI', 'foo']),
+        ])
+
     def test_wait_for_network_loops(self):
         self.fake_lxd.check_call_mock.side_effect = CalledProcessError(
             -1, ['my-cmd'])
