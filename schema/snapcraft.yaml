@@ -194,6 +194,11 @@ properties:
                 - type: string
                   minLength: 1
                 - type: number
+          adapter:
+            type: string
+            description: What kind of wrapper to generate for the given command
+            enum:
+              - none
   hooks:
     type: object
     additionalProperties: false

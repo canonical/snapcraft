@@ -13,11 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import os
-import socketserver
+
 import subprocess
-import tempfile
-from threading import Thread
 from unittest import mock
 
 import fixtures
@@ -25,7 +22,7 @@ from testtools.matchers import Equals, Is
 
 from snapcraft import tests
 from snapcraft.internal.repo import errors, snaps
-from snapcraft.tests.fake_servers.snapd import FakeSnapdServer
+from snapcraft.tests import fixture_setup
 
 
 class FakeSnapCommand(fixtures.Fixture):
@@ -92,50 +89,13 @@ class FakeSnapCommand(fixtures.Fixture):
             return 'email: {}'.format(self._email).encode()
 
 
-class UnixHTTPServer(socketserver.UnixStreamServer):
-
-    def get_request(self):
-        request, client_address = self.socket.accept()
-        # BaseHTTPRequestHandler expects a tuple with the client address at
-        # index 0, so we fake one
-        if len(client_address) == 0:
-            client_address = (self.server_address,)
-        return (request, client_address)
-
-
-class FakeSnapd(fixtures.Fixture):
-
-    def _setUp(self):
-        snapd_fake_socket_path = tempfile.mkstemp()[1]
-        os.unlink(snapd_fake_socket_path)
-
-        socket_path_patcher = mock.patch(
-            'snapcraft.internal.repo.snaps.get_snapd_socket_path_template')
-        mock_socket_path = socket_path_patcher.start()
-        mock_socket_path.return_value = 'http+unix://{}/v2/{{}}'.format(
-            snapd_fake_socket_path.replace('/', '%2F'))
-        self.addCleanup(socket_path_patcher.stop)
-
-        self._start_fake_server(snapd_fake_socket_path)
-
-    def _start_fake_server(self, socket):
-        self.server = UnixHTTPServer(socket, FakeSnapdServer)
-        server_thread = Thread(target=self.server.serve_forever)
-        server_thread.start()
-        self.addCleanup(self._stop_fake_server, server_thread)
-
-    def _stop_fake_server(self, thread):
-        self.server.shutdown()
-        self.server.socket.close()
-        thread.join()
-
-
 class SnapPackageBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
 
-        self.useFixture(FakeSnapd())
+        self.fake_snapd = fixture_setup.FakeSnapd()
+        self.useFixture(self.fake_snapd)
 
 
 class SnapPackageCurrentChannelTest(SnapPackageBaseTestCase):
@@ -318,7 +278,15 @@ class SnapPackageLifecycleTest(SnapPackageBaseTestCase):
         self.fake_snap_command.refresh_success = False
         self.assertRaises(errors.SnapRefreshError, snap_pkg.refresh)
 
+    def test_install_snaps_returns_revision(self):
+        installed_snaps = snaps.install_snaps(['fake-snap'])
+        self.assertThat(
+            installed_snaps,
+            Equals(['fake-snap=test-fake-snap-revision']))
+
     def test_install_multiple_snaps(self):
+        self.fake_snapd.server.RequestHandlerClass.snap_details_installed = [
+            'new-fake-snap']
         snaps.install_snaps([
             'fake-snap/classic/stable',
             'new-fake-snap'
@@ -329,3 +297,19 @@ class SnapPackageLifecycleTest(SnapPackageBaseTestCase):
              '--channel', 'classic/stable', '--classic'],
             ['snap', 'whoami'],
             ['sudo', 'snap', 'install', 'new-fake-snap']]))
+
+
+class InstalledSnapsTestCase(SnapPackageBaseTestCase):
+
+    def test_get_installed_snaps(self):
+        self.fake_snapd.snaps = [
+            {'name': 'test-snap-1',
+             'revision': 'test-snap-1-revision'},
+            {'name': 'test-snap-2',
+             'revision': 'test-snap-2-revision'},
+        ]
+        installed_snaps = snaps.get_installed_snaps()
+        self.assertThat(
+            installed_snaps,
+            Equals(['test-snap-1=test-snap-1-revision',
+                    'test-snap-2=test-snap-2-revision']))

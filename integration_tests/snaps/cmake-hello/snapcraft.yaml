@@ -10,6 +10,10 @@ confinement: strict
 
 build-packages: [gcc, libc6-dev]
 
+apps:
+  cmake-hello:
+    command: cmake-hello
+
 parts:
   cmake-project:
     plugin: cmake
