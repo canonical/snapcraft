@@ -85,6 +85,13 @@ class SnapcraftGroup(click.Group):
             cmd = click.Group.get_command(self, ctx, cmd_name)
         return cmd
 
+    def list_commands(self, ctx):
+        commands = super().list_commands(ctx)
+        # Let's keep edit-collaborators hidden until we get the green light
+        # from the store.
+        commands.pop(commands.index('edit-collaborators'))
+        return commands
+
 
 @click.group(cls=SnapcraftGroup, invoke_without_command=True)
 @click.version_option(version=snapcraft.__version__)
