@@ -13,7 +13,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import logging
 import os
 from collections import OrderedDict
 
@@ -145,13 +144,12 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         # Container was created before and is running
         fake_lxd.name = 'local:snapcraft-snap-test'
         fake_lxd.status = 'Running'
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
         self.useFixture(fixtures.EnvironmentVariable(
-                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+            'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()
 
-        self.run_command(['update'])
+        result = self.run_command(['update'])
+        self.assertThat(result.exit_code, Equals(0))
 
         project_folder = '/root/build_snap-test'
         mock_container_run.assert_has_calls([
