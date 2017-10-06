@@ -401,7 +401,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
         # Pull our own compilers so we use ones that match up with the version
         # of ROS we're using.
-        compilers = _Compilers(
+        compilers = Compilers(
             self._compilers_path, self.PLUGIN_STAGE_SOURCES, self.project)
         compilers.setup()
 
@@ -704,7 +704,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
         # Make sure we're using our own compilers (the one on the system may
         # be the wrong version).
-        compilers = _Compilers(
+        compilers = Compilers(
             self._compilers_path, self.PLUGIN_STAGE_SOURCES, self.project)
         build_type = 'Release'
         if 'debug' in self.options.build_attributes:
@@ -834,7 +834,7 @@ class CatkinPackageNotFoundError(errors.SnapcraftError):
         super().__init__(package_name=package_name)
 
 
-class _Compilers:
+class Compilers:
     def __init__(self, compilers_path, ubuntu_sources, project):
         self._compilers_path = compilers_path
         self._ubuntu_sources = ubuntu_sources

@@ -346,7 +346,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
                                      self.project_options)
         self.assertTrue('xenial' in plugin.PLUGIN_STAGE_SOURCES)
 
-    @mock.patch('snapcraft.plugins.catkin._Compilers')
+    @mock.patch('snapcraft.plugins.catkin.Compilers')
     def test_pull_invalid_dependency(self, compilers_mock):
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
@@ -482,7 +482,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             str(raised),
             Equals('source-space cannot be the root of the Catkin workspace'))
 
-    @mock.patch('snapcraft.plugins.catkin._Compilers')
+    @mock.patch('snapcraft.plugins.catkin.Compilers')
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, '_run_in_bash')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
@@ -519,7 +519,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
         finish_build_mock.assert_called_once_with()
 
-    @mock.patch('snapcraft.plugins.catkin._Compilers')
+    @mock.patch('snapcraft.plugins.catkin.Compilers')
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
     def test_build_runs_in_bash(self, run_output_mock, run_mock,
@@ -1139,7 +1139,7 @@ class BuildTestCase(CatkinPluginBaseTestCase):
         self.properties.build_attributes.extend(self.build_attributes)
         self.properties.catkin_cmake_args = self.catkin_cmake_args
 
-    @mock.patch('snapcraft.plugins.catkin._Compilers')
+    @mock.patch('snapcraft.plugins.catkin.Compilers')
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, '_run_in_bash')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
@@ -1479,7 +1479,7 @@ class CompilersTestCase(tests.TestCase):
     def setUp(self):
         super().setUp()
         self.project = snapcraft.ProjectOptions()
-        self.compilers = catkin._Compilers(
+        self.compilers = catkin.Compilers(
             'compilers_path', 'sources', self.project)
 
         patcher = mock.patch('snapcraft.repo.Ubuntu')
