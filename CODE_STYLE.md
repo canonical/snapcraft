@@ -19,14 +19,12 @@ We adhere to the Style Guide for Python Code documented in the [PEP 8][2].
 
 For multiline strings, we prefer to use `textwrap.dedent`:
 
-    ```
     # end first line with \ to avoid the empty line!
     s = textwrap.dedent("""\
         hello
           world
         """)
     print(repr(s))  # prints 'hello\n  world\n'
-    ```
 
 (from https://docs.python.org/3/library/textwrap.html#textwrap.dedent)
 
