@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
 import testscenarios
 
 import integration_tests
@@ -30,6 +32,8 @@ class BuildSnapsTestCase(
          {'snap': 'u1test-snap-with-tracks/test-track-1/beta'}))
 
     def test_build_snap(self):
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
         self.useFixture(fixture_setup.WithoutSnapInstalled(self.snap))
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
         snapcraft_yaml.update_part(
