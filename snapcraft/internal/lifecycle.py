@@ -22,6 +22,7 @@ import tarfile
 import time
 from subprocess import check_call, Popen, PIPE, STDOUT
 from tempfile import TemporaryDirectory
+from textwrap import dedent
 
 import yaml
 from progressbar import AnimatedMarker, ProgressBar
@@ -66,14 +67,14 @@ parts:
     plugin: nil
 """  # noqa, lines too long.
 
-_TEMPLATE_GITIGNORE = """
-*.snap
-parts/*
-!parts/plugins/
-prime/
-stage/
-snap/.snapcraft/
-"""
+_TEMPLATE_GITIGNORE = dedent("""\
+    *.snap
+    parts/*
+    !parts/plugins/
+    prime/
+    stage/
+    snap/.snapcraft/
+""")
 
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 
