@@ -46,23 +46,16 @@ class DotNetPluginTestCase(tests.TestCase):
 
     def test_schema(self):
         schema = dotnet.DotNetPlugin.schema()
-        expected_dotnet_runtime = {
-            'type': 'string',
-            'default': '2.0.0'
-        }
-        self.assertThat(
-            schema['properties'],
-            Equals({'dotnet-runtime': expected_dotnet_runtime}))
         self.assertThat(schema, Not(Contains('required')))
 
     def test_get_pull_properties(self):
-        expected_pull_properties = ['dotnet-runtime']
+        expected_pull_properties = []
         self.assertThat(
             dotnet.DotNetPlugin.get_pull_properties(),
             Equals(expected_pull_properties))
 
     def test_get_build_properties(self):
-        expected_build_properties = ['dotnet-runtime', 'build-attributes']
+        expected_build_properties = ['build-attributes']
         self.assertThat(
             dotnet.DotNetPlugin.get_build_properties(),
             Equals(expected_build_properties))
@@ -144,7 +137,7 @@ class DotNetProjectTestCase(DotNetProjectBaseTestCase):
         plugin.clean_pull()
         self.assertThat(dotnet_dir, Not(DirExists()))
 
-    def test_build_with_runtime_changes_executable_permissions(self):
+    def test_build_changes_executable_permissions(self):
         plugin = dotnet.DotNetPlugin(
             'test-part', self.options, self.project)
         _setup_dirs(plugin)
@@ -154,17 +147,6 @@ class DotNetProjectTestCase(DotNetProjectBaseTestCase):
             os.stat(os.path.join(
                 plugin.installdir, 'test-app')).st_mode & 0o777,
             Equals(0o755))
-
-    def test_build_with_no_runtime_creates_dir(self):
-        self.options.build_attributes = ['no-runtime']
-        plugin = dotnet.DotNetPlugin(
-            'test-part', self.options, self.project)
-        _setup_dirs(plugin)
-        plugin.build()
-
-        self.assertThat(
-            os.path.join(plugin.installdir, 'dotnet-runtime'),
-            DirExists())
 
 
 class DotNetProjectBuildCommandsTestCase(DotNetProjectBaseTestCase):
@@ -192,22 +174,3 @@ class DotNetProjectBuildCommandsTestCase(DotNetProjectBaseTestCase):
                     'publish', '-c', self.configuration,
                     '-o', plugin.installdir,
                     '--self-contained', '-r', 'linux-x64'], cwd=mock.ANY)]))
-
-    def test_build_commands_with_no_runtime(self):
-        self.options.build_attributes = self.build_attributes + ['no-runtime']
-        plugin = dotnet.DotNetPlugin(
-            'test-part', self.options, self.project)
-        _setup_dirs(plugin)
-        plugin.build()
-
-        part_dir = os.path.join(self.path, 'parts', 'test-part')
-        dotnet_command = os.path.join(part_dir, 'dotnet', 'sdk', 'dotnet')
-        self.assertThat(
-            self.mock_check_call.mock_calls, Equals([
-                mock.call([
-                    mock.ANY, mock.ANY, dotnet_command,
-                    'build', '-c', self.configuration], cwd=mock.ANY),
-                mock.call([
-                    mock.ANY, mock.ANY, dotnet_command,
-                    'publish', '-c', self.configuration,
-                    '-o', plugin.installdir], cwd=mock.ANY)]))

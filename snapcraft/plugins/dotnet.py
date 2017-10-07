@@ -26,17 +26,9 @@ For more information check the 'plugins' topic for the former and the
 The plugin will take into account the following build-attributes:
 
     - debug: builds using a Debug configuration.
-    - no-runtime: does not setup the runtime. This is of use when the
-                  runtime is provided in another snap and exposed through
-                  the content interface or the build creates a standalone
-                  executable.
 
-Additionally, this plugin uses the following plugin-specific keywords:
-
-    - dotnet-runtime:
-      (string)
-      The runtime to embed in the resulting snap.
 """
+
 import os
 import shutil
 import fnmatch
@@ -66,11 +58,6 @@ class DotNetPlugin(snapcraft.BasePlugin):
     def schema(cls):
         schema = super().schema()
 
-        schema['properties']['dotnet-runtime'] = {
-            'type': 'string',
-            'default': _RUNTIME_DEFAULT,
-        }
-
         if 'required' in schema:
             del schema['required']
 
@@ -80,13 +67,13 @@ class DotNetPlugin(snapcraft.BasePlugin):
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['dotnet-runtime']
+        return []
 
     @classmethod
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['dotnet-runtime', 'build-attributes']
+        return ['build-attributes']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -94,23 +81,19 @@ class DotNetPlugin(snapcraft.BasePlugin):
         self._dotnet_dir = os.path.join(self.partdir, 'dotnet')
         self._dotnet_sdk_dir = os.path.join(self._dotnet_dir, 'sdk')
 
-        # These are required for the runtime
-        if 'no-runtime' in options.build_attributes:
-            self._runtime = _DummyTar()
-        else:
-            self.stage_packages.extend([
-                'libcurl3',
-                'libcurl3-gnutls',
-                'libicu55',
-                'liblttng-ust0',
-                'libunwind8',
-                'lldb',
-                'libssl1.0.0',
-                'libgssapi-krb5-2',
-                'libc6',
-                'zlib1g',
-                'libgcc1'
-            ])
+        self.stage_packages.extend([
+            'libcurl3',
+            'libcurl3-gnutls',
+            'libicu55',
+            'liblttng-ust0',
+            'libunwind8',
+            'lldb',
+            'libssl1.0.0',
+            'libgssapi-krb5-2',
+            'libc6',
+            'zlib1g',
+            'libgcc1'
+        ])
 
         self._sdk = self._get_sdk()
         self._dotnet_cmd = os.path.join(self._dotnet_sdk_dir, 'dotnet')
@@ -122,13 +105,8 @@ class DotNetPlugin(snapcraft.BasePlugin):
             raise NotImplementedError(
                 'This plugin does not support architecture '
                 '{}'.format(missing_arch))
-        try:
-            # TODO support more SDK releases
-            sdk_version = sdk_arch['2.0.0']
-        except KeyError as missing_version:
-            raise EnvironmentError(
-                'The chosen sdk version cannot be used '
-                '{}'.format(missing_version))
+        # TODO support more SDK releases
+        sdk_version = sdk_arch['2.0.0']
 
         sdk_url = sdk_version['url_path']
         return sources.Tar(sdk_url, self._dotnet_sdk_dir,
@@ -160,40 +138,17 @@ class DotNetPlugin(snapcraft.BasePlugin):
 
         publish_cmd = [self._dotnet_cmd, 'publish', '-c', configuration,
                        '-o', self.installdir]
-        if 'no-runtime' not in self.options.build_attributes:
-            # Build command for self-contained application
-            publish_cmd += ['--self-contained', '-r', 'linux-x64']
+        # Build command for self-contained application
+        publish_cmd += ['--self-contained', '-r', 'linux-x64']
         self.run(publish_cmd)
 
-        if 'no-runtime' in self.options.build_attributes:
-            os.makedirs(os.path.join(self.installdir, 'dotnet-runtime'),
-                        exist_ok=True)
-        else:
-            # Workaround to set the right permission for the executable.
-            appname = os.path.join(self.installdir, self._get_appname())
-            if os.path.exists(appname):
-                os.chmod(appname, 0o755)
+        # Workaround to set the right permission for the executable.
+        appname = os.path.join(self.installdir, self._get_appname())
+        if os.path.exists(appname):
+            os.chmod(appname, 0o755)
 
     def _get_appname(self):
         for file in os.listdir(self.builddir):
             if fnmatch.fnmatch(file, '*.??proj'):
                 return os.path.splitext(file)[0]
                 break
-
-    def env(self, root):
-        env = super().env(root)
-        if 'no-runtime' in self.options.build_attributes:
-            # TODO Make Triplet to be configurable
-            env.append('LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$SNAP/dotnet-runtime'
-                       '/usr/lib/x86_64-linux-gnu')
-
-        return env
-
-
-class _DummyTar:
-
-    def download(self, *args, **kwargs):
-        pass
-
-    def provision(self, *args, **kwargs):
-        pass
