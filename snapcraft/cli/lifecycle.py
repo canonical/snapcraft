@@ -160,12 +160,12 @@ def clean(parts, step, **kwargs):
         lifecycle.containerbuild(
             'clean', project_options,
             container_config, args=['--step', step, *parts])
-    else:
-        if step == 'strip':
-            echo.warning('DEPRECATED: Use `prime` instead of `strip` '
-                         'as the step to clean')
-            step = 'prime'
-        lifecycle.clean(project_options, parts, step)
+
+    if step == 'strip':
+        echo.warning('DEPRECATED: Use `prime` instead of `strip` '
+                     'as the step to clean')
+        step = 'prime'
+    lifecycle.clean(project_options, parts, step)
 
 
 @lifecyclecli.command()
