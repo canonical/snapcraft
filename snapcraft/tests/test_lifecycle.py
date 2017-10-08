@@ -696,10 +696,6 @@ class CleanTestCase(BaseLifecycleTestCase):
 
 class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
 
-    def setUp(self):
-        super().setUp()
-        self.useFixture(tests.fixture_setup.FakeDpkgArchitecture([]))
-
     def test_prime_without_build_info_does_not_record(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', None))
