@@ -106,6 +106,8 @@ class GoPluginTestCase(integration_tests.TestCase):
             subprocess.check_call(['sudo', 'cp',
                                    sources_arch_file.name, sources_lists])
             subprocess.check_call(['sudo', 'chmod', '644', sources_lists])
+            subprocess.check_call([
+                'sh', '-c', 'until sudo apt-get update ; do true; done'])
 
         target_arch = 'arm64'
         self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
