@@ -224,18 +224,8 @@ class Containerbuild:
                 and self._project_options.target_arch != self._server_arch):
             logger.info('Different arch {} != {}'.format(
                 self._project_options.deb_arch, self._server_arch))
-            logger.info('Installing {}'.format(name))
-            # Install if needed
-            cmd = ['snap', 'install', name]
-            if is_classic:
-                cmd.append('--classic')
-            cmd.append('--channel')
-            cmd.append(json['result']['channel'])
-            self._container_run(cmd)
-            # Switch channel if needed
-            cmd[1] = 'refresh'
-            self._container_run(cmd)
-            return
+            channel = json['result']['channel']
+            return self._install_snap(name, channel, is_classic=is_classic)
 
         # Revisions are unique, so we don't need to know the channel
         rev = json['result']['revision']
@@ -265,13 +255,28 @@ class Containerbuild:
             shutil.copyfile(installed, filepath)
         container_filename = os.path.join(os.sep, 'run', filename)
         self._push_file(filepath, container_filename)
-        logger.info('Installing {}'.format(container_filename))
-        cmd = ['snap', 'install', container_filename]
-        if rev.startswith('x'):
+        self._install_snap(container_filename,
+                           is_dangerous=rev.startswith('x'),
+                           is_classic=is_classic)
+
+    def _install_snap(self, name, channel=None,
+                      is_dangerous=False,
+                      is_classic=False):
+        logger.info('Installing {}'.format(name))
+        # Install if needed
+        cmd = ['snap', 'install', name]
+        if channel:
+            cmd.append('--channel')
+            cmd.append(channel)
+        if is_dangerous:
             cmd.append('--dangerous')
         if is_classic:
             cmd.append('--classic')
         self._container_run(cmd)
+        if channel:
+            # Switch channel if needed
+            cmd[1] = 'refresh'
+            self._container_run(cmd)
 
     def _inject_assertions(self, filename, assertions):
         filepath = os.path.join(self.tmp_dir, filename)
