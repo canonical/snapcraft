@@ -132,6 +132,7 @@ parts:
 
     def test_clean_containerized_with_part(self):
         fake_lxd = fixture_setup.FakeLXD()
+        fake_lxd.name = 'local:snapcraft-clean-test'
         self.useFixture(fake_lxd)
         self.useFixture(fixtures.EnvironmentVariable(
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
