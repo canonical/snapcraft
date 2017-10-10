@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 import logging
 import os
 import requests
@@ -39,18 +40,7 @@ from snapcraft.internal.errors import (
 from snapcraft._options import _get_deb_arch
 
 
-class LXDTestCase(tests.TestCase):
-
-    scenarios = [
-        ('local', dict(remote='local', target_arch=None, server='x86_64')),
-        ('remote', dict(remote='myremote', target_arch=None, server='x86_64')),
-        ('cross', dict(remote='local', target_arch='armhf', server='x86_64',
-                       cross=True)),
-        ('arm remote', dict(remote='pi', target_arch=None, server='armv7l')),
-        ('arm same', dict(remote='pi', target_arch='armhf', server='armv7l')),
-        ('arm cross', dict(remote='pi', target_arch='arm64', server='armv7l',
-                           cross=True)),
-    ]
+class LXDBaseTestCase(tests.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -63,6 +53,20 @@ class LXDTestCase(tests.TestCase):
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
         self.project_options = ProjectOptions(target_deb_arch=self.target_arch)
+
+
+class LXDTestCase(LXDBaseTestCase):
+
+    scenarios = [
+        ('local', dict(remote='local', target_arch=None, server='x86_64')),
+        ('remote', dict(remote='myremote', target_arch=None, server='x86_64')),
+        ('cross', dict(remote='local', target_arch='armhf', server='x86_64',
+                       cross=True)),
+        ('arm remote', dict(remote='pi', target_arch=None, server='armv7l')),
+        ('arm same', dict(remote='pi', target_arch='armhf', server='armv7l')),
+        ('arm cross', dict(remote='pi', target_arch='arm64', server='armv7l',
+                           cross=True)),
+    ]
 
 
 class CleanbuilderTestCase(LXDTestCase):
@@ -104,6 +108,11 @@ class CleanbuilderTestCase(LXDTestCase):
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'config', 'set', container_name,
                   'environment.LC_ALL', 'C.UTF-8']),
+            call(['lxc', 'config', 'set', container_name,
+                  'environment.SNAPCRAFT_IMAGE_INFO',
+                  '{"fingerprint": "test-fingerprint", '
+                  '"architecture": "test-architecture", '
+                  '"created_at": "test-created-at"}']),
             call(['lxc', 'file', 'push', os.path.realpath('project.tar'),
                   '{}/root/build_project/project.tar'.format(container_name)]),
         ])
@@ -613,3 +622,48 @@ class LocalProjectTestCase(ContainerbuildTestCase):
         # Should not attempt to stop a container that wasn't started
         self.assertNotIn(call(['lxc', 'stop', '-f', self.fake_lxd.name]),
                          self.fake_lxd.check_call_mock.call_args_list)
+
+
+class FailedImageInfoTestCase(LXDBaseTestCase):
+
+    remote = 'local'
+    server = 'x86_64'
+    target_arch = None
+
+    scenarios = [
+        ('CalledProcessError', dict(
+            exception=CalledProcessError,
+            kwargs=dict(cmd='testcmd', returncode=1, output='test output'),
+            expected_warn=(
+                "Failed to get container image info: Command 'testcmd' "
+                "returned non-zero exit status 1, output: test output\n"
+                "It will not be recorded in manifest.\n"))),
+        ('JSONDecodeError', dict(
+            exception=json.decoder.JSONDecodeError,
+            kwargs=dict(msg='dummy', doc='dummy', pos=1),
+            expected_warn=(
+                "Failed to get container image info: Not in JSON format\n"
+                "It will not be recorded in manifest.\n"))),
+    ]
+
+    def make_containerbuild(self):
+        return lxd.Project(output='snap.snap', source='project.tar',
+                           metadata={'name': 'project'},
+                           project_options=self.project_options,
+                           remote=self.remote)
+
+    def test_failed_image_info_just_warns(self):
+        self.fake_logger = fixtures.FakeLogger(level=logging.WARN)
+        self.useFixture(self.fake_logger)
+
+        def call_effect(*args, **kwargs):
+            if args[0][:3] == ['lxc', 'image', 'list']:
+                raise self.exception(**self.kwargs)
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_output_mock.side_effect
+
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.make_containerbuild().execute()
+        self.assertEqual(self.fake_logger.output, self.expected_warn)

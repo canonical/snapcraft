@@ -1211,6 +1211,67 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
 
+    def test_prime_with_image_info_records_manifest(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        test_image_info = (
+            '{"architecture": "test-architecture", '
+            '"created_at": "test-created-at", '
+            '"fingerprint": "test-fingerprint"}')
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_IMAGE_INFO', test_image_info))
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                """))
+        lifecycle.execute('prime', self.project_options)
+
+        expected = textwrap.dedent("""\
+            name: test
+            version: 0
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              test-part:
+                build-packages: []
+                installed-packages: []
+                installed-snaps: []
+                plugin: nil
+                prime: []
+                stage: []
+                stage-packages: []
+                uname: Linux test uname 4.10 x86_64
+            architectures: [{}]
+            image-info: {}
+            build-packages: []
+            build-snaps: []
+            """.format(
+                self.project_options.deb_arch,
+                test_image_info.replace('"', '')))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'manifest.yaml'),
+            FileContains(expected))
+
+    def test_prime_with_invalid_image_info_raises_exception(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_IMAGE_INFO', 'not-json'))
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                """))
+        raised = self.assertRaises(
+                errors.InvalidContainerImageInfoError,
+                lifecycle.execute, 'prime', self.project_options)
+        self.assertThat(raised.image_info, Equals('not-json'))
+
 
 class RecordManifestWithDeprecatedSnapKeywordTestCase(
         RecordManifestBaseTestCase):

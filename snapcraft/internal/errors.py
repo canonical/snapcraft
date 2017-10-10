@@ -347,3 +347,11 @@ class OsReleaseVersionIdError(SnapcraftError):
 class OsReleaseCodenameError(SnapcraftError):
 
     fmt = 'Unable to determine host OS version codename'
+
+
+class InvalidContainerImageInfoError(SnapcraftError):
+
+    fmt = 'Error parsing the container image info: {image_info}'
+
+    def __init__(self, image_info):
+        super().__init__(image_info=image_info)

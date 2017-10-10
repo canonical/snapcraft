@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import json
 import logging
 import os
@@ -138,6 +139,33 @@ class Containerbuild:
         subprocess.check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.LC_ALL', 'C.UTF-8'])
+        self._set_image_info_env_var()
+
+    def _set_image_info_env_var(self):
+        FAILURE_WARNING_FORMAT = (
+            'Failed to get container image info: {}\n'
+            'It will not be recorded in manifest.')
+        try:
+            image_info = json.loads(subprocess.check_output(
+                ['lxc', 'image', 'list',
+                 '--format=json', self._image]).decode())
+        except subprocess.CalledProcessError as e:
+            message = '{}, output: {}'.format(str(e), e.output)
+            logger.warning(FAILURE_WARNING_FORMAT.format(message))
+            return
+        except json.decoder.JSONDecodeError as e:
+            logger.warning(FAILURE_WARNING_FORMAT.format('Not in JSON format'))
+            return
+        edited_image_info = collections.OrderedDict()
+        for field in ('fingerprint', 'architecture', 'created_at'):
+            if field in image_info[0]:
+                edited_image_info[field] = image_info[0][field]
+        # Pass the image info to the container so it can be used when recording
+        # information about the build environment.
+        subprocess.check_call([
+            'lxc', 'config', 'set', self._container_name,
+            'environment.SNAPCRAFT_IMAGE_INFO',
+            json.dumps(edited_image_info)])
 
     def execute(self, step='snap', args=None):
         with self._container_running():
