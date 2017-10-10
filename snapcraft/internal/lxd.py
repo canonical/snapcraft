@@ -222,8 +222,6 @@ class Containerbuild:
         # If the server has a different arch we can't inject local snaps
         if (self._project_options.target_arch
                 and self._project_options.target_arch != self._server_arch):
-            logger.info('Different arch {} != {}'.format(
-                self._project_options.deb_arch, self._server_arch))
             channel = json['result']['channel']
             return self._install_snap(name, channel, is_classic=is_classic)
 
@@ -264,19 +262,18 @@ class Containerbuild:
                       is_classic=False):
         logger.info('Installing {}'.format(name))
         # Install if needed
-        cmd = ['snap', 'install', name]
+        args = []
         if channel:
-            cmd.append('--channel')
-            cmd.append(channel)
+            args.append('--channel')
+            args.append(channel)
         if is_dangerous:
-            cmd.append('--dangerous')
+            args.append('--dangerous')
         if is_classic:
-            cmd.append('--classic')
-        self._container_run(cmd)
+            args.append('--classic')
+        self._container_run(['snap', 'install', name] + args)
         if channel:
             # Switch channel if needed
-            cmd[1] = 'refresh'
-            self._container_run(cmd)
+            self._container_run(['snap', 'refresh', name] + args)
 
     def _inject_assertions(self, filename, assertions):
         filepath = os.path.join(self.tmp_dir, filename)
