@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2016 Canonical Ltd
+# Copyright (C) 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -43,42 +43,42 @@ class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
     def _prepare_build(self):
         super()._prepare_build()
 
+        self._clean_catkin()
+
+        self._add_catkin_profile()
+
+        self._configure_catkin_profile()
+
+    def _clean_catkin(self):
         # Clean to prevent conflicts with externally built packages.
-        catkincmd = ['catkin']
-        catkincmd.extend(['clean', '-y'])
+        catkincmd = ['catkin', 'clean', '-y']
 
         self._run_in_bash(catkincmd)
 
+    def _add_catkin_profile(self):
         # Overwrite the default catkin profile to ensure builds
         # aren't affected by profile changes.
-        catkincmd = ['catkin']
-        catkincmd.extend(['profile', 'add', '-f', 'default'])
+        catkincmd = ['catkin', 'profile', 'add', '-f', 'default']
 
         self._run_in_bash(catkincmd)
 
+    def _configure_catkin_profile(self):
         # Use catkin config to set all configurations before running build.
-        catkincmd = ['catkin']
-
-        catkincmd.extend(['config'])
+        catkincmd = ['catkin', 'config']
 
         # Use the newly created default profile.
         catkincmd.extend(['--profile', 'default'])
 
-        # Install the packages
-        catkincmd.append('--install')
-
-        # Don't clutter the real ROS workspace-- use the Snapcraft build
-        # directory
+        # Configure catkin tools to use the snapcraft source, build, and
+        # install directories.
         catkincmd.extend(['--build-space', self.builddir])
 
-        # Account for a non-default source space by always specifying it
         catkincmd.extend(['--source-space', os.path.join(
             self.builddir, self.options.source_space)])
 
-        # Specify that the package should be installed along with the rest of
-        # the ROS distro.
-        catkincmd.extend(['--install-space', self.rosdir])
+        catkincmd.extend(['--install', '--install-space', self.rosdir])
 
+        # Add any cmake-args requested from the plugin options.
         compilers = Compilers(
             self._compilers_path, self.PLUGIN_STAGE_SOURCES, self.project)
 
@@ -86,6 +86,7 @@ class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
         build_type = 'Release'
         if 'debug' in self.options.build_attributes:
             build_type = 'Debug'
+
         catkincmd.extend([
             '-DCMAKE_C_FLAGS="$CFLAGS {}"'.format(compilers.cflags),
             '-DCMAKE_CXX_FLAGS="$CPPFLAGS {}"'.format(compilers.cxxflags),
@@ -95,7 +96,6 @@ class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
             '-DCMAKE_BUILD_TYPE={}'.format(build_type),
         ])
 
-        # Finally, add any cmake-args requested from the plugin options
         catkincmd.extend(self.options.catkin_cmake_args)
 
         self._run_in_bash(catkincmd)
