@@ -198,7 +198,10 @@ def get_installed_snaps():
 
     :return: a list of "name=revision" for the snaps installed.
     """
-    local_snaps = _get_local_snaps()
+    try:
+        local_snaps = _get_local_snaps()
+    except exceptions.ConnectionError as e:
+        local_snaps = []
     return ['{}={}'.format(snap['name'], snap['revision']) for
             snap in local_snaps]
 

@@ -426,3 +426,18 @@ class InstalledSnapsTestCase(SnapPackageBaseTestCase):
             installed_snaps,
             Equals(['test-snap-1=test-snap-1-revision',
                     'test-snap-2=test-snap-2-revision']))
+
+
+class SnapdNotInstalledTestCase(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        socket_path_patcher = mock.patch(
+            'snapcraft.internal.repo.snaps.get_snapd_socket_path_template')
+        mock_socket_path = socket_path_patcher.start()
+        mock_socket_path.return_value = 'http+unix://nonexisting'
+        self.addCleanup(socket_path_patcher.stop)
+
+    def test_get_installed_snaps(self):
+        installed_snaps = snaps.get_installed_snaps()
+        self.assertThat(installed_snaps, Equals([]))
