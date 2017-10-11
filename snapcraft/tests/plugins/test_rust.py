@@ -46,6 +46,8 @@ class RustPluginCrossCompileTestCase(tests.TestCase):
                         target='x86_64-unknown-linux-gnu')),
         ('ppc64le', dict(deb_arch='ppc64el',
                          target='powerpc64le-unknown-linux-gnu')),
+        ('armv7l', dict(deb_arch='armhf', libc='musl',
+                        target='armv7-unknown-linux-musleabihf')),
     ]
 
     def setUp(self):
@@ -57,6 +59,7 @@ class RustPluginCrossCompileTestCase(tests.TestCase):
             rust_features = []
             rust_revision = ''
             rust_channel = ''
+            libc = getattr(self, 'libc', 'gnu')
             source_subdir = ''
 
         self.options = Options()

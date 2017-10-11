@@ -18,26 +18,59 @@ import magic
 import testtools
 
 
-class HasArchitecture:
-    """Match if the file was built for the expected architecture"""
-
-    def __init__(self, expected_arch):
-        self._expected_arch = expected_arch
+class HasBinaryFileHeader:
+    def __init__(self, expected_magic):
+        """Determines the magic of a file, or in other words matches a file
+        against known patterns to determine attributes like its MIME type
+        or architecture.
+        """
+        self._expected_magic = expected_magic
         self._ms = magic.open(magic.NONE)
         self._ms.load()
 
     def __str__(self):
-        return 'HasArchitecture()'
+        return '{}()'.format(self.__name__)
+
+    def parse_file_header(self, header):
+        return header
 
     def match(self, file_path):
-        magic = self._ms.file(file_path)
+        header = self._ms.file(file_path)
         # Catch exceptions on splitting the string to provide context
         # This includes "cannot open `...' (No such file or directory)"
         try:
-            arch = magic.split(',')[1]
-        except IndexError as e:
-            raise ValueError('Failed to parse magic {!r}'.format(magic)) from e
-        if self._expected_arch not in arch:
+            parsed_header = self.parse_file_header(header)
+        except IndexError:
+            raise ValueError('Failed to parse file header {!r}'.format(header))
+        if self._expected_magic not in parsed_header:
             return testtools.matchers.Mismatch(
                 'Expected {!r} to be in {!r}'.format(
-                    self._expected_arch, arch))
+                    self._expected_magic, parsed_header))
+
+
+class HasLinkage(HasBinaryFileHeader):
+    """Match if the file has static or dynamic linkage"""
+
+    def parse_file_header(self, header):
+        return super().parse_file_header(header).split(',')[3]
+
+
+class IsDynamicallyLinked(HasLinkage):
+    """Match if the file has dynamic linkage"""
+
+    def __init__(self):
+        super().__init__('dynamically linked')
+
+
+class IsStaticallyLinked(HasLinkage):
+    """Match if the file has static linkage"""
+
+    def __init__(self):
+        super().__init__('statically linked')
+
+
+class HasArchitecture(HasBinaryFileHeader):
+    """Match if the file was built for the expected architecture"""
+
+    def parse_file_header(self, header):
+        return super().parse_file_header(header).split(',')[1]

@@ -25,7 +25,11 @@ from testtools.matchers import Equals, FileExists, MatchesRegex, Not
 
 import snapcraft
 import integration_tests
-from snapcraft.tests.matchers import HasArchitecture
+from snapcraft.tests.matchers import (
+    HasArchitecture,
+    IsDynamicallyLinked,
+    IsStaticallyLinked,
+)
 
 
 class RustPluginBaseTestCase(integration_tests.TestCase):
@@ -53,6 +57,10 @@ class RustPluginTestCase(RustPluginBaseTestCase):
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'bin', 'rust-hello'))
         self.assertThat(binary_output, Equals('There is rust on snaps!\n'))
+
+        binary = os.path.join(self.parts_dir, 'rust-hello', 'install', 'bin',
+                              'rust-hello')
+        self.assertThat(binary, IsDynamicallyLinked())
 
     def test_stage_rust_with_revision(self):
         self.run_snapcraft('stage', 'rust-with-revision')
@@ -103,6 +111,24 @@ class RustPluginTestCase(RustPluginBaseTestCase):
         binary = os.path.join(self.parts_dir, 'rust-hello', 'install', 'bin',
                               'rust-hello')
         self.assertThat(binary, HasArchitecture('aarch64'))
+        self.assertThat(binary, IsDynamicallyLinked())
+
+    def test_cross_compiling_musl(self):
+        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+            self.skipTest('The test only handles amd64 to armhf')
+
+        self.copy_project_to_cwd('rust-hello')
+        snapcraft_yaml_file = 'snapcraft.yaml'
+        with open(snapcraft_yaml_file) as f:
+            snapcraft_yaml = yaml.load(f)
+        snapcraft_yaml['parts']['rust-hello']['libc'] = 'musl'
+        with open(snapcraft_yaml_file, 'w') as f:
+            yaml.dump(snapcraft_yaml, f)
+        self.run_snapcraft(['build', '--target-arch=armhf'])
+        binary = os.path.join(self.parts_dir, 'rust-hello', 'install', 'bin',
+                              'rust-hello')
+        self.assertThat(binary, HasArchitecture('ARM'))
+        self.assertThat(binary, IsStaticallyLinked())
 
 
 class RustPluginConfinementTestCase(testscenarios.WithScenarios,
