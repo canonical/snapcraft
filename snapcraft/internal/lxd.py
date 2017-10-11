@@ -261,7 +261,7 @@ class Containerbuild:
                       is_dangerous=False,
                       is_classic=False):
         logger.info('Installing {}'.format(name))
-        # Install if needed
+        # Install: will do nothing if already installed
         args = []
         if channel:
             args.append('--channel')
@@ -272,7 +272,7 @@ class Containerbuild:
             args.append('--classic')
         self._container_run(['snap', 'install', name] + args)
         if channel:
-            # Switch channel if needed
+            # Switch channel if install was a no-op
             self._container_run(['snap', 'refresh', name] + args)
 
     def _inject_assertions(self, filename, assertions):
