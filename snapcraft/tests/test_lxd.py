@@ -397,6 +397,14 @@ class LXDTestCase(tests.TestCase):
 
         builder.execute()
         if hasattr(self, 'cross') and self.cross:
+            mock_container_run.assert_has_calls([
+                call(['snap', 'install', 'core', '--channel', 'stable']),
+                call(['snap', 'refresh', 'core', '--channel', 'stable']),
+                call(['snap', 'install', 'snapcraft', '--channel', 'edge',
+                      '--classic']),
+                call(['snap', 'refresh', 'snapcraft', '--channel', 'edge',
+                      '--classic']),
+            ])
             return
 
         self.fake_lxd.check_call_mock.assert_has_calls([
