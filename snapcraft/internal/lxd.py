@@ -395,9 +395,10 @@ class Project(Containerbuild):
             process.terminate()
 
     def execute(self, step='snap', args=None):
-        # clean with no parts deletes the container
-        if step == 'clean' and args == ['--step', 'pull']:
-            if self._get_container_status():
+        if step == 'clean':
+            # we don't execute clean here but rely on CLI to do it
+            # clean with no parts deletes the container
+            if self._get_container_status() and args == ['--step', 'pull']:
                 print('Deleting {}'.format(self._container_name))
                 check_call(['lxc', 'delete', '-f', self._container_name])
         else:
