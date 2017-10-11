@@ -243,12 +243,6 @@ class BaseRepo:
                                        r'#!/usr/bin/env python\n')
 
 
-class DummyRepo(BaseRepo):
-
-    def get_packages_for_source_type(*args, **kwargs):
-        return set()
-
-
 def _try_copy_local(path, target):
     real_path = os.path.realpath(path)
     if os.path.exists(real_path):

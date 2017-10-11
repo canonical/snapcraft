@@ -22,6 +22,7 @@ from textwrap import dedent
 
 import fixtures
 from testtools.matchers import Contains, Equals
+from unittest.mock import patch
 
 from snapcraft import tests
 from . import CommandBaseTestCase
@@ -158,3 +159,13 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
             str(self.assertRaises(
                 InvalidContainerRemoteError,
                 self.run_command, ['cleanbuild', '--remote', 'foo/bar'])))
+
+    @patch('snapcraft.internal.repo._platform._is_deb_based')
+    @patch('snapcraft.repo._deb.Ubuntu')
+    def test_unsupported_repo_backend(self, mock_ubuntu, mock_is_deb_based):
+        # FIXME: This is imported before the test is run
+        mock_is_deb_based.return_value = True
+        fake_lxd = tests.fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        self.run_command(['cleanbuild'])
+        mock_ubuntu.assert_not_called()

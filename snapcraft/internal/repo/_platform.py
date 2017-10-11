@@ -40,5 +40,5 @@ def _get_repo_for_platform():
         from ._deb import Ubuntu
         return Ubuntu
     else:
-        from ._base import DummyRepo
-        return DummyRepo
+        from ._base import BaseRepo
+        return BaseRepo

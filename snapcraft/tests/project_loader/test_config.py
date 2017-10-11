@@ -367,7 +367,7 @@ parts:
         self.assertThat(raised.message,
                         Equals("'name' is a required property"))
 
-    def test_get_metadata(self):
+    def test_load_metadata(self):
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -381,11 +381,10 @@ parts:
     plugin: go
     stage-packages: [fswebcam]
 """)
-        config = project_loader.load_config()
-        metadata = config.get_metadata()
+        metadata = project_loader.load_metadata()
         self.assertThat(metadata['name'], Equals('test'))
         self.assertThat(metadata['version'], Equals('1'))
-        self.assertThat(metadata['arch'], Equals(['amd64']))
+        self.assertThat(metadata['architectures'], Equals(['amd64']))
 
     def test_version_script(self):
         self.make_snapcraft_yaml("""name: test
@@ -1830,6 +1829,7 @@ parts:
 version: "1"
 summary: test
 description: test
+architectures: ['amd64']
 confinement: strict
 grade: stable
 

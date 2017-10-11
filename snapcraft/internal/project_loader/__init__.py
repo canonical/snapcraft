@@ -24,6 +24,11 @@ def load_config(project_options=None):
     return Config(project_options)
 
 
+def load_metadata(project_options=None):
+    from ._config import load_metadata
+    return load_metadata(project_options)
+
+
 def replace_attr(attr, replacements):
     if isinstance(attr, str):
         for replacement in replacements:
