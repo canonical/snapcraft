@@ -91,11 +91,12 @@ class BaseRepo:
         raise errors.NoNativeBackendError()
 
     @classmethod
-    def install_build_packages(cls, package_names):
+    def install_build_packages(cls, package_names, target_arch):
         """Install packages on the host required to build.
 
         :param package_names: a list of package names to install.
         :type package_names: a list of strings.
+        :param str target_arch: Target architecture used to evaluate :target.
         :raises snapcraft.repo.errors.BuildPackageNotFoundError:
             if one of the package_names cannot be installed.
         """
