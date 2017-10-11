@@ -113,12 +113,15 @@ class GoPluginTestCase(integration_tests.TestCase):
             while not_updated:
                 sleep(5)
                 try:
-                    subprocess.check_call(['sudo', 'apt-get', 'update'])
+                    # Capture output to make it visible in Travis CI
+                    subprocess.check_output(['sudo', 'apt-get', 'update'],
+                                            stderr=subprocess.STDOUT)
                     not_updated = False
                 except subprocess.CalledProcessError as e:
                     retry_count -= 1
                     if retry_count == 0:
-                        raise e
+                        raise Exception('{}: {}'.format(
+                            ' '.join(e.cmd), e.output.decode()))
 
         target_arch = 'arm64'
         self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
