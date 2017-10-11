@@ -17,6 +17,7 @@
 import os
 import subprocess
 import tempfile
+from time import sleep
 
 import yaml
 from testtools.matchers import Equals, FileContains, FileExists, Not
@@ -106,8 +107,18 @@ class GoPluginTestCase(integration_tests.TestCase):
             subprocess.check_call(['sudo', 'cp',
                                    sources_arch_file.name, sources_lists])
             subprocess.check_call(['sudo', 'chmod', '644', sources_lists])
-            subprocess.check_call([
-                'sh', '-c', 'until sudo apt-get update ; do true; done'])
+            # Re-try update in a loop in case the lock is already being held
+            not_updated = True
+            retry_count = 5
+            while not_updated:
+                sleep(5)
+                try:
+                    subprocess.check_call(['sudo', 'apt-get', 'update'])
+                    not_updated = False
+                except subprocess.CalledProcessError as e:
+                    retry_count -= 1
+                    if retry_count == 0:
+                        raise e
 
         target_arch = 'arm64'
         self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
