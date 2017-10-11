@@ -118,6 +118,9 @@ if sys.platform == 'win32':
 else:
     from setuptools import setup
 
+    debian_requires = []
+    if 'ID_LIKE=debian' in open('/etc/os-release').read():
+        debian_requires.append('python-apt==0.0.0')
     setup(
         name=name,
         version=version,
@@ -146,6 +149,11 @@ else:
             'pyxdg',
             'requests',
             'libarchive-c',
+            *debian_requires,
+        ],
+        dependency_links=[
+            ('https://launchpad.net/ubuntu/+archive/primary/+files/'
+             'python-apt_1.1.0~beta1build1.tar.xz')
         ],
         test_suite='snapcraft.tests',
     )
