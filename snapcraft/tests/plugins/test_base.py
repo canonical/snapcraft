@@ -15,11 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 import unittest.mock
 
 from testtools.matchers import Equals
 
 import snapcraft
+from snapcraft.internal import errors
 from snapcraft import tests
 
 
@@ -77,3 +79,17 @@ class TestBasePlugin(tests.TestCase):
         plugin.run_output(['ls'], cwd=plugin.sourcedir)
 
         mock_run.assert_called_once_with(['ls'], cwd=plugin.sourcedir)
+
+    @unittest.mock.patch('snapcraft.internal.common.run')
+    def test_run_raises_plugin_command_failure(self, mock_run):
+        mock_run.side_effect = subprocess.CalledProcessError(1, 'cmake')
+        plugin = snapcraft.BasePlugin('test/part', options=None)
+        self.assertRaises(errors.PluginCommandFailure,
+                          plugin.run, ['cmake'])
+
+    @unittest.mock.patch('snapcraft.internal.common.run_output')
+    def test_run_output_raises_plugin_command_failure(self, mock_run):
+        mock_run.side_effect = subprocess.CalledProcessError(1, 'cmake')
+        plugin = snapcraft.BasePlugin('test/part', options=None)
+        self.assertRaises(errors.PluginCommandFailure,
+                          plugin.run_output, ['cmake'])
