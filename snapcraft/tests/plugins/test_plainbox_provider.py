@@ -78,9 +78,10 @@ class PythonPluginTestCase(tests.TestCase):
 
         plugin.build()
 
+        env = os.environ.copy()
+        env['PROVIDERPATH'] = ''
         calls = [
-            mock.call(['python3', 'manage.py', 'validate'],
-                      env=os.environ.copy()),
+            mock.call(['python3', 'manage.py', 'validate'], env=env),
             mock.call(['python3', 'manage.py', 'build']),
             mock.call(['python3', 'manage.py', 'i18n']),
             mock.call(['python3', 'manage.py', 'install',
