@@ -329,7 +329,8 @@ class Project(Containerbuild):
                 # Map host user to root inside container
                 check_call([
                     'lxc', 'config', 'set', self._container_name,
-                    'raw.idmap', 'both {} 0'.format(os.getuid())])
+                    'raw.idmap',
+                    'both {} 0'.format(os.getenv('SUDO_UID', os.getuid()))])
             # Remove existing device (to ensure we update old containers)
             devices = self._get_container_status()['devices']
             if self._project_folder in devices:
