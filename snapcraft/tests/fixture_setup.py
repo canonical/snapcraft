@@ -950,14 +950,38 @@ class UnixHTTPServer(socketserver.UnixStreamServer):
 class FakeSnapd(fixtures.Fixture):
 
     @property
-    def snaps(self):
-        self.server.RequestHandlerClass.snaps
+    def snaps_result(self):
+        self.request_handler.snaps_result
 
-    @snaps.setter
-    def snaps(self, value):
-        self.server.RequestHandlerClass.snaps = value
+    @snaps_result.setter
+    def snaps_result(self, value):
+        self.request_handler.snaps_result = value
 
-    def _setUp(self):
+    @property
+    def snap_details_func(self):
+        self.request_handler.snap_details_func
+
+    @snap_details_func.setter
+    def snap_details_func(self, value):
+        self.request_handler.snap_details_func = value
+
+    @property
+    def find_result(self):
+        self.request_handler.find_result
+
+    @find_result.setter
+    def find_result(self, value):
+        self.request_handler.find_result = value
+
+    def __init__(self):
+        super().__init__()
+        self.request_handler = snapd.FakeSnapdRequestHandler
+        self.snaps_result = []
+        self.find_result = []
+        self.snap_details_func = None
+
+    def setUp(self):
+        super().setUp()
         snapd_fake_socket_path = tempfile.mkstemp()[1]
         os.unlink(snapd_fake_socket_path)
 
@@ -971,7 +995,7 @@ class FakeSnapd(fixtures.Fixture):
         self._start_fake_server(snapd_fake_socket_path)
 
     def _start_fake_server(self, socket):
-        self.server = UnixHTTPServer(socket, snapd.FakeSnapdServer)
+        self.server = UnixHTTPServer(socket, self.request_handler)
         server_thread = threading.Thread(target=self.server.serve_forever)
         server_thread.start()
         self.addCleanup(self._stop_fake_server, server_thread)

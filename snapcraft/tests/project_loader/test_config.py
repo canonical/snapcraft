@@ -1626,6 +1626,7 @@ parts:
             'snapcraft._options.ProjectOptions.get_core_dynamic_linker')
         mock_core_dynamic_linker = patcher.start()
         mock_core_dynamic_linker.return_value = dynamic_linker
+        self.addCleanup(patcher.stop)
 
         self.make_snapcraft_yaml("""name: test
 version: "1"
