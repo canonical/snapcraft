@@ -182,6 +182,10 @@ class KBuildPlugin(BasePlugin):
         return os.path.join(self.builddir, '.config')
 
     def do_base_config(self, config_path):
+        # if the parts build dir already contains a .config file,
+        # use it
+        if os.path.isfile(config_path):
+            return
         # if kconfigfile is provided use that
         # elif kconfigflavour is provided, assemble the ubuntu.flavour config
         # otherwise use defconfig to seed the base config
