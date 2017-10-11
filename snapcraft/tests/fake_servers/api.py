@@ -629,6 +629,12 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             'badrequest': {'snap-id': 'badrequest', 'status': 'Approved',
                            'private': False, 'price': None,
                            'since': '2016-12-12T01:01:01Z'},
+            'revoked': {'snap-id': 'revoked', 'status': 'Approved',
+                        'private': False, 'price': None,
+                        'since': '2016-12-12T01:01:01Z'},
+            'no-revoked': {'snap-id': 'no-revoked', 'status': 'Approved',
+                           'private': False, 'price': None,
+                           'since': '2016-12-12T01:01:01Z'},
             }
         snaps.update({
             name: {'snap-id': 'fake-snap-id', 'status': 'Approved',
@@ -817,13 +823,13 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         if snap_id == 'good':
             payload = json.dumps({'snap_developer': {}}).encode()
             response_code = 200
-        elif snap_id == 'test-snap-id-with-dev':
+        elif snap_id in ('test-snap-id-with-dev', 'revoked', 'no-revoked'):
             payload = json.dumps({
                 'snap_developer': {
                     'type': 'snap-developer',
                     'authority-id': 'dummy',
                     'publisher-id': 'dummy',
-                    'snap-id': 'test-snap-id-with-dev',
+                    'snap-id': snap_id,
                     'developers': [{
                         'developer-id': 'test-dev-id',
                         'since': '2017-02-10T08:35:00.390258Z',
@@ -866,7 +872,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
 
     def put_snap_developers(self, request):
         snap_id = request.matchdict['snap_id']
-        if snap_id == 'good':
+        if snap_id in ('good', 'test-snap-id-with-dev'):
             payload = request.body
             response_code = 200
         elif snap_id == 'no-dev':
@@ -874,10 +880,24 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             response_code = 200
         elif snap_id == 'badrequest':
             payload = json.dumps({'error_list': [
-                {'message': "The given `snap-id` does not match the "
-                            "assertion's.",
+                {'message': 'The given `snap-id` does not match the '
+                            'assertion.',
                  'code': 'invalid-request'}]}).encode()
             response_code = 400
+        elif snap_id == 'revoked':
+            payload = json.dumps({'error_list': [
+                {'message': "The assertion's `developers` would revoke "
+                            "existing uploads.",
+                 'code': 'revoked-uploads',
+                 'extra': ['this']}]}).encode()
+            response_code = 409
+        elif snap_id == 'no-revoked':
+            payload = json.dumps({'error_list': [
+                {'message': "The collaborators for this snap haven't been "
+                            "altered. Exiting... ",
+                 'code': 'revoked-uploads',
+                 'extra': ['this']}]}).encode()
+            response_code = 409
         content_type = 'application/json'
         return response.Response(
             payload, response_code, [('Content-Type', content_type)])
