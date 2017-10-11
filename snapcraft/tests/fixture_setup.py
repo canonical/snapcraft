@@ -495,6 +495,45 @@ class FakeFilesystem(fixtures.Fixture):
         return call_effect
 
 
+class FakeDpkgArchitecture(fixtures.Fixture):
+    '''Mock dpkg concerning architecture handling'''
+
+    def __init__(self, packages, arch=None):
+        self.arch = 'amd64'
+        self.archs = [self.arch]
+        if arch:
+            self.arch = arch
+
+    def _setUp(self):
+        patcher = mock.patch('subprocess.check_output')
+        self.check_output_mock = patcher.start()
+        self.check_output_mock.side_effect = self.check_output_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('subprocess.check_call')
+        self.check_call_mock = patcher.start()
+        self.check_call_mock.side_effect = self.check_output_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.repo._deb.open',
+                             mock.mock_open())
+        self.open_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def check_output_side_effect(self):
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['dpkg', '--print-architecture']:
+                return '\n'.join(self.arch).encode(
+                    sys.getfilesystemencoding())
+            elif args[0][:2] == ['dpkg', '--print-foreign-architectures']:
+                return '\n'.join(self.archs).encode(
+                    sys.getfilesystemencoding())
+            elif args[0][:2] == ['dpkg-architecture', '-L']:
+                return '\n'.join(['armhf', 'amd64']).encode(
+                    sys.getfilesystemencoding())
+        return call_effect
+
+
 class FakeLXD(fixtures.Fixture):
     '''...'''
 

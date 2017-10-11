@@ -26,7 +26,6 @@ from testtools.matchers import (
 
 import snapcraft
 from snapcraft.internal import repo
-from snapcraft.internal.repo import errors
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
 from . import RepoBaseTestCase
@@ -203,6 +202,54 @@ deb http://security.ubuntu.com/ubuntu vivid-security multiverse
 '''
         self.assertThat(sources_list, Equals(expected_sources_list))
 
+    def test_custom_sources_invalid_placeholder(self):
+        custom_sources = \
+            '''deb http://mydomain.com/ubuntu/ $release $foo restricted
+''' # noqa
+        self.assertIn('unknown placeholder $foo in template',
+                      str(self.assertRaises(
+                          ValueError,
+                          repo._deb._format_sources_list,
+                          custom_sources, deb_arch='amd64')))
+
+    def test_custom_sources_invalid_placeholder_braces(self):
+        custom_sources = \
+            '''deb http://mydomain.com/ubuntu/ ${release} ${foo} restricted
+''' # noqa
+        self.assertIn('unknown placeholder ${foo} in template',
+                      str(self.assertRaises(
+                          ValueError,
+                          repo._deb._format_sources_list,
+                          custom_sources, deb_arch='amd64')))
+
+    def test_custom_sources_missing_placeholders(self):
+        custom_sources = \
+            '''deb http://mydomain.com/ubuntu/ ${release} main restricted
+''' # noqa
+        sources_list = repo._deb._format_sources_list(
+            custom_sources, deb_arch='amd64')
+        expected_sources_list = \
+                '''deb http://mydomain.com/ubuntu/ xenial main restricted
+''' # noqa
+        self.assertThat(sources_list, Equals(expected_sources_list))
+
+    def test_sources_armhf_foreign(self):
+        sources_list = repo._deb._format_sources_list(
+            None, deb_arch='armhf', foreign=True)
+
+        expected_sources_list = \
+            '''deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial main restricted
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates main restricted
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial universe
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates universe
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial multiverse
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports/ xenial-updates multiverse
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports xenial-security main restricted
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports xenial-security universe
+deb [arch=armhf] http://ports.ubuntu.com/ubuntu-ports xenial-security multiverse
+''' # noqa
+        self.assertThat(sources_list, Equals(expected_sources_list))
+
     @patch('snapcraft.repo._deb._get_geoip_country_code_prefix')
     def test_sources_armhf_trusty(self, mock_cc):
         sources_list = repo._deb._format_sources_list(
@@ -266,17 +313,20 @@ class BuildPackagesTestCase(tests.TestCase):
     @patch('os.environ')
     def install_test_packages(self, test_pkgs, mock_env):
         mock_env.copy.return_value = {}
+
         repo.Ubuntu.install_build_packages(test_pkgs)
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
-    @patch('subprocess.check_call')
     def test_install_build_package(
-            self, mock_check_call, mock_is_dumb_terminal):
+            self, mock_is_dumb_terminal):
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(
+            self.test_packages)
+        self.useFixture(fake_apt)
         mock_is_dumb_terminal.return_value = False
         self.install_test_packages(self.test_packages)
 
         installable = self.get_installable_packages(self.test_packages)
-        mock_check_call.assert_has_calls([
+        fake_apt.check_call_mock.assert_has_calls([
             call('sudo apt-get --no-install-recommends -y '
                  '-o Dpkg::Progress-Fancy=1 install'.split() +
                  sorted(set(installable)),
@@ -285,26 +335,106 @@ class BuildPackagesTestCase(tests.TestCase):
         ])
 
     @patch('snapcraft.repo._deb.is_dumb_terminal')
-    @patch('subprocess.check_call')
+    def test_install_build_package_for_arch(
+            self, mock_is_dumb_terminal):
+        mock_is_dumb_terminal.return_value = False
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(
+            self.test_packages)
+        self.useFixture(fake_apt)
+        self.fake_apt_cache.add_packages(
+            ('some-package:amd64', 'some-package:armhf'))
+        self.install_test_packages(
+            ('package-installed', 'some-package:armhf'))
+
+        installable = (('some-package:armhf', ))
+        fake_apt.check_call_mock.assert_has_calls([
+            call('sudo apt-get --no-install-recommends -y '
+                 '-o Dpkg::Progress-Fancy=1 install'.split() +
+                 sorted(set(installable)),
+                 env=ANY)
+        ])
+
+    @patch('snapcraft.repo._deb.is_dumb_terminal')
+    def test_install_build_package_for_invalid_arch(
+            self, mock_is_dumb_terminal):
+        mock_is_dumb_terminal.return_value = False
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(
+            self.test_packages)
+        self.useFixture(fake_apt)
+        self.fake_apt_cache.add_packages(
+            ('some-package:amd64', 'some-package:armhf'))
+        self.assertIn("'invalid' is not a valid architecture name",
+                      str(self.assertRaises(
+                          repo._deb.BuildPackageNotFoundError,
+                          self.install_test_packages,
+                          ('package-installed', 'some-package:invalid'))))
+        fake_apt.check_output_mock.assert_has_calls([
+            call(['dpkg-architecture', '-L']),
+        ])
+
+    @patch('snapcraft.repo._deb.is_dumb_terminal')
+    def test_install_build_package_for_unregistered_arch(
+            self, mock_is_dumb_terminal):
+        mock_is_dumb_terminal.return_value = False
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(
+            self.test_packages)
+        self.useFixture(fake_apt)
+        self.fake_apt_cache.add_packages(
+            ('some-package:amd64'))
+
+        self.assertIn('target architecture needs to be registered',
+                      str(self.assertRaises(
+                          repo._deb.BuildPackageNotFoundError,
+                          self.install_test_packages,
+                          ('package-installed', 'some-package:armhf'))))
+        fake_apt.check_output_mock.assert_has_calls([
+            call(['dpkg-architecture', '-L']),
+            call(['dpkg', '--print-architecture']),
+            call(['dpkg', '--print-foreign-architectures']),
+        ])
+
+    @patch('snapcraft.repo._deb.is_dumb_terminal')
+    def test_install_build_package_sources_missing(
+            self, mock_is_dumb_terminal):
+        mock_is_dumb_terminal.return_value = False
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(
+            self.test_packages)
+        self.useFixture(fake_apt)
+        self.fake_apt_cache.add_packages(
+            ('some-package:amd64'))
+
+        self.assertIn("Sources for 'armhf' need to be added",
+                      str(self.assertRaises(
+                          repo._deb.BuildPackageNotFoundError,
+                          self.install_test_packages,
+                          ('package-installed', 'some-package:armhf'))))
+        fake_apt.open_mock.assert_has_calls([
+            call('/etc/apt/sources.list'),
+        ])
+
+    @patch('snapcraft.repo._deb.is_dumb_terminal')
     def test_install_buid_package_in_dumb_terminal(
-            self, mock_check_call, mock_is_dumb_terminal):
+            self, mock_is_dumb_terminal):
         mock_is_dumb_terminal.return_value = True
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(self.test_packages)
+        self.useFixture(fake_apt)
         self.install_test_packages(self.test_packages)
 
         installable = self.get_installable_packages(self.test_packages)
-        mock_check_call.assert_has_calls([
+        fake_apt.check_call_mock.assert_has_calls([
             call('sudo apt-get --no-install-recommends -y install'.split() +
                  sorted(set(installable)),
                  env={'DEBIAN_FRONTEND': 'noninteractive',
                       'DEBCONF_NONINTERACTIVE_SEEN': 'true'})
         ])
 
-    @patch('subprocess.check_call')
-    def test_install_buid_package_marks_auto_installed(self, mock_check_call):
+    def test_install_buid_package_marks_auto_installed(self):
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(self.test_packages)
+        self.useFixture(fake_apt)
         self.install_test_packages(self.test_packages)
 
         installable = self.get_installable_packages(self.test_packages)
-        mock_check_call.assert_has_calls([
+        fake_apt.check_call_mock.assert_has_calls([
             call('sudo apt-mark auto'.split() +
                  sorted(set(installable)),
                  env={'DEBIAN_FRONTEND': 'noninteractive',
@@ -313,13 +443,23 @@ class BuildPackagesTestCase(tests.TestCase):
 
     @patch('subprocess.check_call')
     def test_mark_installed_auto_error_is_not_fatal(self, mock_check_call):
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(self.test_packages)
+        self.useFixture(fake_apt)
         error = CalledProcessError(101, 'bad-cmd')
         mock_check_call.side_effect = \
             lambda c, env: error if 'apt-mark' in c else None
         self.install_test_packages(['package-not-installed'])
 
     def test_invalid_package_requested(self):
-        self.assertRaises(
-            errors.BuildPackageNotFoundError,
+        fake_apt = tests.fixture_setup.FakeDpkgArchitecture(
+            ['package-does-not-exist'])
+        self.useFixture(fake_apt)
+        raised = self.assertRaises(
+            repo._deb.BuildPackageNotFoundError,
             repo.Ubuntu.install_build_packages,
             ['package-does-not-exist'])
+
+        self.assertEqual(
+            "Could not find a required package in 'build-packages': "
+            "package-does-not-exist",
+            str(raised))

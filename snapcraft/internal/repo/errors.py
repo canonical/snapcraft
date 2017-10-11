@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from snapcraft.internal.common import get_os_release_info
-from ._platform import _is_deb_based
 from snapcraft.internal import errors
 
 
@@ -32,35 +31,27 @@ class NoNativeBackendError(RepoError):
         super().__init__(distro=get_os_release_info()['NAME'])
 
 
-class BuildPackageNotFoundError(RepoError):
+class PackageNotFoundError(RepoError):
 
-    fmt = "Could not find a required package in 'build-packages': {package}"
+    fmt = 'The package {package!r} was not found.'
 
     def __init__(self, package):
         super().__init__(package=package)
 
-
-class PackageNotFoundError(RepoError):
+    # Aliases for the benefit of existing plugin code
 
     @property
     def message(self):
-        message = 'The package {!r} was not found.'.format(
-            self.package_name)
-        # If the package was multiarch, try to help.
-        distro = get_os_release_info()['ID']
-        if _is_deb_based(distro) and ':' in self.package_name:
-            (name, arch) = self.package_name.split(':', 2)
-            if arch:
-                message += (
-                    '\nYou may need to add support for this architecture with '
-                    "'dpkg --add-architecture {}'.".format(arch))
-        return message
+        return str(self)
 
-    def __init__(self, package_name):
-        self.package_name = package_name
+    @property
+    def package_name(self):
+        return self.package
 
-    def __str__(self):
-        return self.message
+
+class BuildPackageNotFoundError(PackageNotFoundError):
+
+    fmt = "Could not find a required package in 'build-packages': {package}"
 
 
 class UnpackError(RepoError):

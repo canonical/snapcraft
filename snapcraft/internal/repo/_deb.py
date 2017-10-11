@@ -33,6 +33,7 @@ from xml.etree import ElementTree
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import cache, repo, common
+from snapcraft.internal.common import get_os_release_info
 from snapcraft.internal.indicators import is_dumb_terminal
 from ._base import BaseRepo
 from . import errors
@@ -41,16 +42,16 @@ from . import errors
 logger = logging.getLogger(__name__)
 
 _DEFAULT_SOURCES = \
-    '''deb http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
-deb http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
-deb http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
-deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
-deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
-'''
+    '''deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release} main restricted
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates main restricted
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release} universe
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates universe
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release} multiverse
+deb${arch} http://${prefix}.ubuntu.com/${suffix}/ ${release}-updates multiverse
+deb${arch} http://${security}.ubuntu.com/${suffix} ${release}-security main restricted
+deb${arch} http://${security}.ubuntu.com/${suffix} ${release}-security universe
+deb${arch} http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
+''' # noqa
 _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 _library_list = dict()
 
@@ -154,6 +155,55 @@ class _AptCache:
         return _get_local_sources_list()
 
 
+class PackageNotFoundError(errors.PackageNotFoundError):
+
+    def __str__(self):
+        message = super().__str__()
+        # If the package was multiarch, try to help.
+        if ':' in self.package:
+            (name, arch) = self.package.split(':', 2)
+            if arch:
+                valid_archs = subprocess.check_output(
+                    ['dpkg-architecture', '-L']).decode(
+                        sys.getfilesystemencoding())
+                if arch not in valid_archs:
+                    message += (
+                        ' {!r} is not a valid architecture name.'.format(arch))
+                    return message
+                native_arch = subprocess.check_output(
+                    ['dpkg', '--print-architecture']).decode(
+                        sys.getfilesystemencoding())
+                if arch in native_arch:
+                    return message
+                foreign_archs = subprocess.check_output(
+                    ['dpkg', '--print-foreign-architectures']).decode(
+                        sys.getfilesystemencoding())
+                if arch not in foreign_archs:
+                    message += (
+                        '\nThe target architecture needs to be registered on '
+                        'the host. Run the following command to do that:'
+                        '\n    sudo dpkg --add--architecture {}'.format(arch))
+
+                sources = _get_local_sources_list()
+                if '[arch={}]'.format(arch) not in sources:
+                    release = get_os_release_info()['VERSION_CODENAME']
+                    sources = _format_sources_list(None, deb_arch=arch,
+                                                   release=release,
+                                                   foreign=True)
+                    message += (
+                        '\nSources for {!r} need to be added to '
+                        '/etc/apt/sources.list.d. The following is suggested:'
+                        '\n\n{}'
+                        '\n\nAfterwards update the package cache:'
+                        '\n    sudo apt update'.format(arch, sources))
+        return message
+
+
+class BuildPackageNotFoundError(PackageNotFoundError):
+
+    fmt = errors.BuildPackageNotFoundError.fmt
+
+
 class Ubuntu(BaseRepo):
 
     @classmethod
@@ -196,7 +246,7 @@ class Ubuntu(BaseRepo):
             try:
                 cls._mark_install(apt_cache, package_names)
             except errors.PackageNotFoundError as e:
-                raise errors.BuildPackageNotFoundError(e.package_name)
+                raise BuildPackageNotFoundError(e.package)
             for package in apt_cache.get_changes():
                 new_packages.append((package.name, package.candidate.version))
 
@@ -221,7 +271,7 @@ class Ubuntu(BaseRepo):
                     _set_pkg_version(apt_cache[name_arch], version)
                 apt_cache[name_arch].mark_install()
             except KeyError:
-                raise errors.PackageNotFoundError(name)
+                raise PackageNotFoundError(name)
 
     @classmethod
     def _install_new_build_packages(cls, package_names):
@@ -405,7 +455,8 @@ def _get_geoip_country_code_prefix():
 
 
 def _format_sources_list(sources_list, *,
-                         deb_arch, use_geoip=False, release='xenial'):
+                         deb_arch, use_geoip=False, release='xenial',
+                         foreign=False):
     if not sources_list:
         sources_list = _DEFAULT_SOURCES
 
@@ -422,12 +473,22 @@ def _format_sources_list(sources_list, *,
         suffix = 'ubuntu-ports'
         security = 'ports'
 
-    return string.Template(sources_list).substitute({
-        'prefix': prefix,
-        'release': release,
-        'suffix': suffix,
-        'security': security,
-    })
+    try:
+        return string.Template(sources_list).substitute({
+            'prefix': prefix,
+            'release': release,
+            'suffix': suffix,
+            'security': security,
+            'arch': ' [arch={}]'.format(deb_arch) if foreign else '',
+        })
+    except KeyError as e:
+        key = str(e.args[0])
+        placeholder = '${' + key + '}'
+        if placeholder not in sources_list:
+            placeholder = '$' + key
+        raise ValueError(
+            'Cannot complete substitution in sources list: '
+            'unknown placeholder {} in template'.format(placeholder))
 
 
 def _fix_filemode(path):
