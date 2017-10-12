@@ -552,7 +552,7 @@ def _cleanup_internal_snapcraft_dir():
 
 def clean(project_options, parts, step=None):
     # step defaults to None because that's how it comes from docopt when it's
-    # not set
+    # not set.
     if not step:
         step = 'pull'
 
