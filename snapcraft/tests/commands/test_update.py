@@ -37,7 +37,7 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         summary: test snapping
         description: if snap is succesful a snap package will be available
         architectures: ['amd64']
-        type: {snap_type}
+        type: app
         confinement: strict
         grade: stable
 
@@ -51,12 +51,6 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         self.parts_dir = os.path.join(BaseDirectory.xdg_data_home, 'snapcraft')
         self.parts_yaml = os.path.join(self.parts_dir, 'parts.yaml')
         self.headers_yaml = os.path.join(self.parts_dir, 'headers.yaml')
-
-    def make_snapcraft_yaml(self, n=1, snap_type='app', snapcraft_yaml=None):
-        if not snapcraft_yaml:
-            snapcraft_yaml = self.yaml_template.format(snap_type=snap_type)
-        super().make_snapcraft_yaml(snapcraft_yaml)
-        self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
     def test_update(self):
         result = self.run_command(['update'])
@@ -146,7 +140,7 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         fake_lxd.status = 'Running'
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_CONTAINER_BUILDS', '1'))
-        self.make_snapcraft_yaml()
+        self.make_snapcraft_yaml(self.yaml_template)
 
         result = self.run_command(['update'])
         self.assertThat(result.exit_code, Equals(0))
