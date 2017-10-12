@@ -53,6 +53,7 @@ _ARCH_TRANSLATIONS = {
         'kernel': 'x86',
         'deb': 'i386',
         'uts_machine': 'i686',
+        'cross-compiler-prefix': '',
         'triplet': 'i386-linux-gnu',
     },
     'ppc64le': {
