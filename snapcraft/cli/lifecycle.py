@@ -192,9 +192,13 @@ def clean(parts, step, **kwargs):
 @add_build_options()
 @click.option('--remote', metavar='<remote>',
               help='Use a specific lxd remote instead of a local container.')
+@click.option('--image', metavar='<image>', default=None,
+              help=('Build in an instance of this image rather than '
+                    'ubuntu:xenial/$arch. Do not use this unless you know '
+                    'what you are doing.'))
 @click.option('--debug', is_flag=True,
               help='Shells into the environment if the build fails.')
-def cleanbuild(remote, debug, **kwargs):
+def cleanbuild(remote, image, debug, **kwargs):
     """Create a snap using a clean environment managed by lxd.
 
     \b
@@ -212,7 +216,7 @@ def cleanbuild(remote, debug, **kwargs):
     https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
     """
     project_options = get_project_options(**kwargs, debug=debug)
-    lifecycle.cleanbuild(project_options, remote)
+    lifecycle.cleanbuild(project_options, remote, image)
 
 
 if __name__ == '__main__':
