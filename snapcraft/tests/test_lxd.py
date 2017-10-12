@@ -402,7 +402,7 @@ class LXDTestCase(tests.TestCase):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
 
         def call_effect(*args, **kwargs):
-            if args[0][:2] == ['lxc', 'exec'] and 'md5sum' in args[0][-1]:
+            if args[0][:2] == ['lxc', 'exec'] and 'sha384sum' in args[0][-1]:
                 if args[0][-1].endswith('core_123.snap'):
                     return 'deadbeef {}'.format(args[0][1]).encode('utf-8')
             return default_side_effect(*args, **kwargs)

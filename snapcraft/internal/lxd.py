@@ -253,12 +253,12 @@ class Containerbuild:
 
     def _is_same_snap(self, filepath, installed):
         # Compare checksums: user-visible version may still match
-        checksum = check_output(['md5sum', filepath]).decode(
+        checksum = check_output(['sha384sum', filepath]).decode(
             sys.getfilesystemencoding()).split()[0]
         try:
             checksum_container = check_output([
                 'lxc', 'exec', self._container_name, '--', 'sh', '-c',
-                'test -f {0} && md5sum {0}'.format(installed)]
+                'test -f {0} && sha384sum {0}'.format(installed)]
                 ).decode(sys.getfilesystemencoding()).split()[0]
         except CalledProcessError:
             # Snap not installed
