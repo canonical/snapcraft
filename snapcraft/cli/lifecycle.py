@@ -18,7 +18,7 @@ import click
 import os
 
 import snapcraft
-from snapcraft.internal import lifecycle, lxd
+from snapcraft.internal import deprecations, lifecycle, lxd
 from ._options import add_build_options, get_project_options
 from . import echo
 from . import env
@@ -124,9 +124,12 @@ def snap(directory, output, **kwargs):
         snapcraft snap
         snapcraft snap --output renamed-snap.snap
 
-    If you want to snap a directory, you should use the snap-dir command
+    If you want to snap a directory, you should use the pack command
     instead.
     """
+    if directory:
+        deprecations.handle_deprecation_notice('dn6')
+
     project_options = get_project_options(**kwargs)
     container_config = env.get_container_config()
     if container_config.use_container:
@@ -136,6 +139,25 @@ def snap(directory, output, **kwargs):
         snap_name = lifecycle.snap(
             project_options, directory=directory, output=output)
         echo.info('Snapped {}'.format(snap_name))
+
+
+@lifecyclecli.command()
+@click.argument('directory')
+@click.option('--output', '-o', help='path to the resulting snap.')
+def pack(directory, output, **kwargs):
+    """Create a snap from a directory holding a valid snap.
+
+    The layout of <directory> should contain a valid meta/snap.yaml in
+    order to be a valid snap.
+
+    \b
+    Examples:
+        snapcraft pack my-snap-directory
+        snapcraft pack my-snap-directory --output renamed-snap.snap
+
+    """
+    snap_name = lifecycle.pack(directory, output)
+    echo.info('Snapped {}'.format(snap_name))
 
 
 @lifecyclecli.command()

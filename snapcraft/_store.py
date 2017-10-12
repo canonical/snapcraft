@@ -25,7 +25,6 @@ import re
 import subprocess
 import tempfile
 from datetime import datetime
-from textwrap import dedent
 from subprocess import Popen
 
 import yaml
@@ -756,143 +755,6 @@ def validate(snap_name, validations, revoke=False, key=None):
 validation_re = re.compile('^[^=]+=[0-9]+$')
 
 
-def collaborate(snap_name, key):
-    store = storeapi.StoreClient()
-
-    with _requires_login():
-        account_info = store.get_account_information()
-    publisher_id = account_info['account_id']
-
-    release = storeapi.constants.DEFAULT_SERIES
-    try:
-        snap_id = account_info['snaps'][release][snap_name]['snap-id']
-    except KeyError:
-        raise storeapi.errors.SnapNotFoundError(snap_name)
-    assertion = _get_developers(snap_id, publisher_id)
-    # The data will look like:
-    # {'snap_developer': {
-    #      'type': 'snap-developer',
-    #      'authority-id': <account_id of the publisher>,
-    #      'publisher-id': <account_id of the publisher>,
-    #      'snap-id': 'snap_id',
-    #      'developers': [{
-    #          'developer-id': 'account_id of dev-1',
-    #          'since': '2017-02-10T08:35:00.390258Z'
-    #         },{
-    #          'developer-id': 'account_id of dev-2',
-    #          'since': '2017-02-10T08:35:00.390258Z',
-    #          'until': '2018-02-10T08:35:00.390258Z'
-    #         }],
-    #      }
-    # }
-    developers = _edit_collaborators(assertion.get('developers', []))
-    if _are_developers_unchanged(developers, assertion.get('developers', [])):
-        logger.warning('Aborting due to unchanged collaborators list.')
-        return
-    assertion['developers'] = developers
-
-    # The revision should be incremented, to avoid `invalid-revision` errors.
-    assertion['revision'] = str(int(assertion.get('revision', '0'))+1)
-
-    # There is a possibility that the `authority-id` to be `canonical`,
-    # which should be changed to the `publisher_id` to match the signing key.
-    assertion['authority-id'] = publisher_id
-
-    signed_assertion = _sign_assertion(snap_name, assertion, key, 'developers')
-    store.push_assertion(snap_id, signed_assertion, 'developers')
-
-
-_COLLABORATION_HEADER = dedent("""\
-    # Change which developers may push or release snaps on the publisher's behalf.
-    #
-    # Sample entry:
-    #
-    # developers:
-    #   - developer-id: "dev-one"      # Which developer
-    #     since: "2017-02-10 08:35:00" # When contributions started
-    #     until: "2018-02-10 08:35:00" # When contributions ceased (optional)
-    #
-    # All timestamps are UTC, and the "now" special string will be replaced by
-    # the current time. Do not remove entries or use an until time in the past
-    # unless you want existing snaps provided by the developer to stop working.""")  # noqa
-
-
-def _edit_collaborators(developers):
-    """Spawn an editor to modify the snap-developer assertion for a snap."""
-    editor_cmd = os.getenv('EDITOR', 'vi')
-
-    developer_wrapper = {'developers': _reformat_time_from_assertion(
-        developers)}
-
-    with tempfile.NamedTemporaryFile() as ft:
-        ft.close()
-        with open(ft.name, 'w') as fw:
-            print(_COLLABORATION_HEADER, file=fw)
-            yaml.dump(developer_wrapper, stream=fw, default_flow_style=False)
-        subprocess.check_call([editor_cmd, ft.name])
-        with open(ft.name, 'r') as fr:
-            developers = yaml.load(fr).get('developers')
-    return _reformat_time_for_assertion(developers)
-
-
-def _reformat_time_from_assertion(developers):
-    reformatted_developers = []
-    for developer in developers:
-        developer_it = {'developer-id': developer['developer-id']}
-        for range in ['since', 'until']:
-            if range in developer:
-                date = datetime.strptime(developer[range],
-                                         '%Y-%m-%dT%H:%M:%S.%fZ')
-                developer_it[range] = datetime.strftime(date,
-                                                        '%Y-%m-%d %H:%M:%S')
-        reformatted_developers.append(developer_it)
-    return reformatted_developers
-
-
-def _reformat_time_for_assertion(developers):
-    reformatted_developers = []
-    for developer in developers:
-        developer_it = {'developer-id': developer['developer-id']}
-        for range_ in ['since', 'until']:
-            if range_ in developer:
-                if developer[range_] == 'now':
-                    date = datetime.now()
-                else:
-                    date = datetime.strptime(developer[range_],
-                                             '%Y-%m-%d %H:%M:%S')
-                # We don't care about microseconds because we cannot edit
-                # later so we set that to 0.
-                developer_it[range_] = date.strftime(
-                    '%Y-%m-%dT%H:%M:%S.000000Z')
-        reformatted_developers.append(developer_it)
-    return reformatted_developers
-
-
-def _are_developers_unchanged(edited_developers, developers_from_assertion):
-    # We need to compare without milliseconds, so drop them from the assertion.
-    for developer in developers_from_assertion:
-        for range_ in ['since', 'until']:
-            if range_ in developer:
-                date = datetime.strptime(
-                    developer[range_], '%Y-%m-%dT%H:%M:%S.%fZ')
-                developer[range_] = date.strftime('%Y-%m-%dT%H:%M:%S.000000Z')
-    return developers_from_assertion == edited_developers
-
-
-def _get_developers(snap_id, publisher_id):
-    store = storeapi.StoreClient()
-    try:
-        return store.get_assertion(snap_id, 'developers')['snap_developer']
-    except storeapi.errors.StoreValidationError as e:
-        if e.error_list[0]['code'] == 'snap-developer-not-found':
-            return {
-                'type': 'snap-developer',
-                'authority-id': publisher_id,
-                'publisher-id': publisher_id,
-                'snap-id': snap_id}
-        raise
-
-
 def _check_validations(validations):
     invalids = [v for v in validations if not validation_re.match(v)]
     if invalids:
@@ -910,7 +772,7 @@ def _sign_assertion(snap_name, assertion, key, endpoint):
     echo.info('Signing {} assertion for {}'.format(endpoint, snap_name))
     assertion, err = snap_sign.communicate(input=data)
     if snap_sign.returncode != 0:
-        err = err.decode('ascii', errors='replace')
+        err = err.decode()
         raise storeapi.errors.StoreAssertionError(
             endpoint=endpoint, snap_name=snap_name, error=err)
 

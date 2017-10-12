@@ -63,7 +63,7 @@ _ARCH_TRANSLATIONS = {
         'cross-build-packages': ['gcc-powerpc64le-linux-gnu',
                                  'libc6-dev-ppc64el-cross'],
         'triplet': 'powerpc64le-linux-gnu',
-        'core-dynamic-linker': '/lib64/ld64.so.2',
+        'core-dynamic-linker': 'lib64/ld64.so.2',
     },
     'ppc': {
         'kernel': 'powerpc',
@@ -89,7 +89,7 @@ _ARCH_TRANSLATIONS = {
         'cross-build-packages': ['gcc-s390x-linux-gnu',
                                  'libc6-dev-s390x-cross'],
         'triplet': 's390x-linux-gnu',
-        'core-dynamic-linker': '/lib/ld64.so.1',
+        'core-dynamic-linker': 'lib/ld64.so.1',
     }
 }
 

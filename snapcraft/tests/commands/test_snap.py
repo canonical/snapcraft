@@ -392,7 +392,7 @@ architectures: [amd64, armhf]
             'Snapped my_snap_99_multi.snap\n'))
 
         self.popen_spy.assert_called_once_with([
-            'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_multi.snap',
+            'mksquashfs', 'mysnap', 'my_snap_99_multi.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
@@ -416,7 +416,7 @@ version: 99
             'Snapped my_snap_99_all.snap\n'))
 
         self.popen_spy.assert_called_once_with([
-            'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_all.snap',
+            'mksquashfs', 'mysnap', 'my_snap_99_all.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
@@ -443,7 +443,7 @@ type: os
             'Snapped my_snap_99_multi.snap\n'))
 
         self.popen_spy.assert_called_once_with([
-            'mksquashfs', os.path.abspath('mysnap'), 'my_snap_99_multi.snap',
+            'mksquashfs', 'mysnap', 'my_snap_99_multi.snap',
             '-noappend', '-comp', 'xz', '-no-xattrs'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 

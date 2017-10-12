@@ -25,6 +25,7 @@ import tempfile
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError, Popen
 from time import sleep
+from urllib import parse
 import requests
 import requests_unixsocket
 
@@ -37,6 +38,7 @@ from snapcraft.internal.errors import (
         SnapdError,
 )
 from snapcraft.internal import common
+from snapcraft.internal.repo import snaps
 from snapcraft._options import _get_deb_arch
 
 logger = logging.getLogger(__name__)
@@ -119,6 +121,11 @@ class Containerbuild:
         check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.SNAPCRAFT_SETUP_CORE', '1'])
+        if os.getenv('SNAPCRAFT_PARTS_URI'):
+            check_call([
+                'lxc', 'config', 'set', self._container_name,
+                'environment.SNAPCRAFT_PARTS_URI',
+                os.getenv('SNAPCRAFT_PARTS_URI')])
         # Necessary to read asset files with non-ascii characters.
         check_call([
             'lxc', 'config', 'set', self._container_name,
@@ -130,7 +137,8 @@ class Containerbuild:
             self._ensure_container()
             yield
         finally:
-            if self._get_container_status():
+            status = self._get_container_status()
+            if status and status['status'] == 'Running':
                 # Stopping takes a while and lxc doesn't print anything.
                 print('Stopping {}'.format(self._container_name))
                 check_call(['lxc', 'stop', '-f', self._container_name])
@@ -194,9 +202,10 @@ class Containerbuild:
 
     def _inject_snap(self, name):
         session = requests_unixsocket.Session()
-        snapd_socket = '/run/snapd.socket'.replace('/', '%2F')
         # Cf. https://github.com/snapcore/snapd/wiki/REST-API#get-v2snapsname
-        api = 'http+unix://{}/v2/snaps/{}'.format(snapd_socket, name)
+        # TODO use get_local_snap info from the snaps module.
+        slug = 'snaps/{}'.format(parse.quote(name, safe=''))
+        api = snaps.get_snapd_socket_path_template().format(slug)
         try:
             json = session.request('GET', api).json()
         except requests.exceptions.ConnectionError as e:
@@ -307,6 +316,11 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'environment.SNAPCRAFT_SETUP_CORE', '1'])
+            if os.getenv('SNAPCRAFT_PARTS_URI'):
+                check_call([
+                    'lxc', 'config', 'set', self._container_name,
+                    'environment.SNAPCRAFT_PARTS_URI',
+                    os.getenv('SNAPCRAFT_PARTS_URI')])
             # Necessary to read asset files with non-ascii characters.
             check_call([
                 'lxc', 'config', 'set', self._container_name,
@@ -315,7 +329,8 @@ class Project(Containerbuild):
                 # Map host user to root inside container
                 check_call([
                     'lxc', 'config', 'set', self._container_name,
-                    'raw.idmap', 'both {} 0'.format(os.getuid())])
+                    'raw.idmap',
+                    'both {} 0'.format(os.getenv('SUDO_UID', os.getuid()))])
             # Remove existing device (to ensure we update old containers)
             devices = self._get_container_status()['devices']
             if self._project_folder in devices:
@@ -327,8 +342,19 @@ class Project(Containerbuild):
                     'lxc', 'config', 'device', 'add', self._container_name,
                     'fuse', 'unix-char', 'path=/dev/fuse'
                     ])
-            check_call([
-                'lxc', 'start', self._container_name])
+            try:
+                check_call([
+                    'lxc', 'start', self._container_name])
+            except CalledProcessError:
+                msg = 'The container could not be started.'
+                if self._container_name.startswith('local:'):
+                    msg += ('\nThe files /etc/subuid and /etc/subgid need to '
+                            'contain this line for mounting the local folder:'
+                            '\n    root:1000:1'
+                            '\nNote: Add the line to both files, do not '
+                            'remove any existing lines.'
+                            '\nRestart lxd after making this change.')
+                raise ContainerConnectionError(msg)
 
     def _setup_project(self):
         self._ensure_mount(self._project_folder, self._source)

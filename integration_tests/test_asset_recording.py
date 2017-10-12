@@ -88,6 +88,25 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
             recorded_yaml['parts']['dummy-part']['installed-packages'],
             Contains(expected_package))
 
+    def test_prime_records_installed_snaps(self):
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
+
+        subprocess.check_call(['sudo', 'snap', 'install', 'core'])
+        self.run_snapcraft('prime', project_dir='basic')
+
+        recorded_yaml_path = os.path.join(
+            self.prime_dir, 'snap', 'manifest.yaml')
+        with open(recorded_yaml_path) as recorded_yaml_file:
+            recorded_yaml = yaml.load(recorded_yaml_file)
+
+        expected_package = 'core={}'.format(
+            snaps.SnapPackage(
+                'core').get_local_snap_info()['revision'])
+        self.assertThat(
+            recorded_yaml['parts']['dummy-part']['installed-snaps'],
+            Contains(expected_package))
+
     def test_prime_with_architectures(self):
         """Test the recorded manifest for a basic snap
 
@@ -122,6 +141,9 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
             Equals([snapcraft.ProjectOptions().deb_arch]))
 
     def test_prime_records_build_snaps(self):
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
+
         self.useFixture(fixture_setup.WithoutSnapInstalled('hello'))
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
         snapcraft_yaml.update_part('test-part', {
