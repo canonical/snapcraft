@@ -312,26 +312,71 @@ class StoreReleaseError(StoreError):
         'Sorry, try `snapcraft register {snap_name}` before trying to '
         'release or choose an existing revision.')
 
-    fmt = 'Received {status_code!r}: {text!r}'
+    __FMT_BAD_REQUEST = (
+        '{code}: {message}\n')
+
+    __FMT_UNAUTHORIZED_OR_FORBIDDEN = (
+        'Received {status_code!r}: {text!r}')
 
     def __init__(self, snap_name, response):
+        self.fmt_errors = {
+            400: self.__fmt_error_400,
+            401: self.__fmt_error_401_or_403,
+            403: self.__fmt_error_401_or_403,
+            404: self.__fmt_error_404,
+        }
+
+        fmt_error = self.fmt_errors.get(
+            response.status_code, self.__fmt_error_unknown)
+
+        self.fmt = fmt_error(response)
+
+        super().__init__(snap_name=snap_name)
+
+    def __to_json(self, response):
         try:
             response_json = response.json()
         except (AttributeError, JSONDecodeError):
             response_json = {}
 
-        if response.status_code == 404:
-            self.fmt = self.__FMT_NOT_REGISTERED
-        elif response.status_code == 401 or response.status_code == 403:
-            try:
-                response_json['text'] = response.text
-            except AttributeError:
-                response_json['text'] = 'error while releasing'
-        elif 'errors' in response_json:
-            self.fmt = '{errors}'
+        return response_json
 
-        super().__init__(snap_name=snap_name, status_code=response.status_code,
-                         **response_json)
+    def __fmt_error_400(self, response):
+        response_json = self.__to_json(response)
+
+        try:
+            fmt = ''
+            for error in response_json['error_list']:
+                fmt += self.__FMT_BAD_REQUEST.format(**error)
+
+        except (AttributeError, KeyError):
+            fmt = self.__fmt_error_unknown(response)
+
+        return fmt
+
+    def __fmt_error_401_or_403(self, response):
+        try:
+            text = response.text
+
+        except AttributeError:
+            text = 'error while releasing'
+
+        return self.__FMT_UNAUTHORIZED_OR_FORBIDDEN.format(
+            status_code=response.status_code, text=text)
+
+    def __fmt_error_404(self, response):
+        return self.__FMT_NOT_REGISTERED
+
+    def __fmt_error_unknown(self, response):
+        response_json = self.__to_json(response)
+
+        try:
+            fmt = '{errors}'.format(**response_json)
+
+        except AttributeError:
+            fmt = '{}'.format(response)
+
+        return fmt
 
 
 class StoreValidationError(StoreError):
