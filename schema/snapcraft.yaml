@@ -120,6 +120,9 @@ properties:
   apps:
     type: object
     additionalProperties: false
+    validation-failure:
+            "{!r} is not a valid app name. App names consist of upper- and
+            lower-case alphanumeric characters and hyphens."
     patternProperties:
       "^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$":
         type: object
@@ -202,6 +205,9 @@ properties:
   hooks:
     type: object
     additionalProperties: false
+    validation-failure:
+        "{!r} is not a valid hook name. Hook names consist of upper- and
+        lower-case alphanumeric characters and hyphens."
     patternProperties:
       "^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$":
         type: object
@@ -217,6 +223,10 @@ properties:
     type: object
     minProperties: 1
     additionalProperties: false
+    validation-failure:
+        "{!r} is not a valid part name. Part names consist of lower-case
+        alphanumeric characters, hyphens, plus signs, and forward slashes. As a
+        special case, 'plugins' is also not a valid part name."
     patternProperties:
       ^(?!plugins$)[a-z0-9][a-z0-9+-\/]*$:
         # Make sure snap/prime are mutually exclusive
@@ -224,7 +234,8 @@ properties:
           - not:
               type: object
               required: [snap, prime]
-              validation-failure: "{.instance} cannot contain both 'snap' and 'prime' keywords."
+              validation-failure:
+                  "{.instance} cannot contain both 'snap' and 'prime' keywords."
         type: object
         minProperties: 1
         properties:

@@ -1118,8 +1118,50 @@ parts:
 
         self.assertRegex(
             raised.message,
-            "The 'apps' property does not match the required "
-            "schema.*")
+            "The 'apps' property does not match the required schema: .* is "
+            'not a valid app name. App names consist of upper- and lower-case '
+            'alphanumeric characters and hyphens')
+
+
+class InvalidHookNamesYamlTestCase(YamlBaseTestCase):
+
+    scenarios = [
+        (name, dict(name=name)) for
+        name in [
+            '', '-', '--', 'a--a', 'a-', 'a ', ' a', 'a a', '日本語', '한글',
+            'ру́сский язы́к', 'ໄຂ່​ອີ​ສ​ເຕີ້', ':a', 'a:', 'a:a', '_a', 'a_',
+            'a_a',
+        ]
+    ]
+
+    def test_invalid_yaml_invalid_hook_names(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+grade: stable
+
+hooks:
+  {!r}:
+    plugs: [network]
+
+parts:
+  part1:
+    plugin: nil
+""".format(self.name))
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            _config.Config)
+
+        self.assertRegex(
+            raised.message,
+            "The 'hooks' property does not match the required schema: .* is "
+            'not a valid hook name. Hook names consist of upper- and '
+            'lower-case alphanumeric characters and hyphens')
 
 
 class ValidConfinmentTypesYamlTestCase(YamlBaseTestCase):
@@ -1917,19 +1959,6 @@ class ValidationTestCase(ValidationBaseTestCase):
 
         project_loader.Validator(self.data).validate()
 
-    def test_invalid_part_name_plugin_raises_exception(self):
-        self.data['parts']['plugins'] = {'type': 'go'}
-
-        raised = self.assertRaises(
-            errors.YamlValidationError,
-            project_loader.Validator(self.data).validate)
-
-        expected_message = ("The 'parts' property does not match the "
-                            "required schema: Additional properties are not "
-                            "allowed ('plugins' was unexpected)")
-        self.assertThat(raised.message, Equals(expected_message),
-                        message=self.data)
-
     def test_valid_app_daemons(self):
         self.data['apps'] = {
             'service1': {'command': 'binary1 start', 'daemon': 'simple'},
@@ -2126,9 +2155,55 @@ class InvalidAppNamesTestCase(ValidationBaseTestCase):
             project_loader.Validator(data).validate)
 
         expected_message = (
-            "The 'apps' property does not match the required "
-            "schema: Additional properties are not allowed ('{}' "
-            "was unexpected)").format(self.name)
+            "The 'apps' property does not match the required schema: {!r} is "
+            "not a valid app name. App names consist of upper- and lower-case "
+            "alphanumeric characters and hyphens.").format(self.name)
+        self.assertThat(raised.message, Equals(expected_message),
+                        message=data)
+
+
+class InvalidHookNamesTestCase(ValidationBaseTestCase):
+
+    scenarios = [(name, dict(name=name)) for
+                 name in ['qwe#rty', 'qwe_rty', 'que rty', 'que  rty']]
+
+    def test_invalid_app_names(self):
+        data = self.data.copy()
+        data['hooks'] = {self.name: {'plugs': ['network']}}
+
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            project_loader.Validator(data).validate)
+
+        expected_message = (
+            "The 'hooks' property does not match the required schema: {!r} is "
+            "not a valid hook name. Hook names consist of upper- and "
+            "lower-case alphanumeric characters and hyphens.").format(
+                self.name)
+        self.assertThat(raised.message, Equals(expected_message),
+                        message=data)
+
+
+class InvalidPartNamesTestCase(ValidationBaseTestCase):
+
+    scenarios = [(name, dict(name=name)) for
+                 name in [
+                    'plugins', 'qwe#rty', 'qwe_rty', 'que rty', 'que  rty']]
+
+    def test_invalid_app_names(self):
+        data = self.data.copy()
+        data['parts'] = {self.name: {'plugin': 'nil'}}
+
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            project_loader.Validator(data).validate)
+
+        expected_message = (
+            "The 'parts' property does not match the required schema: {!r} is "
+            "not a valid part name. Part names consist of lower-case "
+            "alphanumeric characters, hyphens, plus signs, and forward "
+            "slashes. As a special case, 'plugins' is also not a valid part "
+            "name.").format(self.name)
         self.assertThat(raised.message, Equals(expected_message),
                         message=data)
 
