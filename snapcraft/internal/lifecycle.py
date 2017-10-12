@@ -550,7 +550,12 @@ def _cleanup_internal_snapcraft_dir():
         shutil.rmtree(_SNAPCRAFT_INTERNAL_DIR)
 
 
-def clean(project_options, parts, step):
+def clean(project_options, parts, step=None):
+    # step defaults to None because that's how it comes from docopt when it's
+    # not set
+    if not step:
+        step = 'pull'
+
     if not parts and step == 'pull':
         _cleanup_common_directories_for_step(step, project_options)
         return

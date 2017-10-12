@@ -653,7 +653,7 @@ class CleanTestCase(BaseLifecycleTestCase):
     plugin: nil
 """)
         lifecycle.execute('pull', self.project_options)
-        lifecycle.clean(self.project_options, parts=None, step='pull')
+        lifecycle.clean(self.project_options, parts=None)
         self.assertThat(
             os.path.join('snap', '.snapcraft'),
             Not(DirExists()))
