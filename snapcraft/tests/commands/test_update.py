@@ -37,7 +37,7 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         summary: test snapping
         description: if snap is succesful a snap package will be available
         architectures: ['amd64']
-        type: {}
+        type: {snap_type}
         confinement: strict
         grade: stable
 
@@ -54,7 +54,7 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
 
     def make_snapcraft_yaml(self, n=1, snap_type='app', snapcraft_yaml=None):
         if not snapcraft_yaml:
-            snapcraft_yaml = self.yaml_template.format(snap_type)
+            snapcraft_yaml = self.yaml_template.format(snap_type=snap_type)
         super().make_snapcraft_yaml(snapcraft_yaml)
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
