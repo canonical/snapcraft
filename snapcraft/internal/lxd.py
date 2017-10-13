@@ -229,7 +229,7 @@ class Containerbuild:
         else:
             shutil.copyfile(installed, filepath)
 
-        if self._is_same_snap(filepath, installed):
+        if self._is_same_snap(filepath, name):
             logger.debug('Not re-injecting same version of {!r}'.format(name))
             return
 
@@ -251,14 +251,22 @@ class Containerbuild:
             cmd.append('--classic')
         self._container_run(cmd)
 
-    def _is_same_snap(self, filepath, installed):
+    def _is_same_snap(self, filepath, name):
         # Compare checksums: user-visible version may still match
         checksum = check_output(['sha384sum', filepath]).decode(
             sys.getfilesystemencoding()).split()[0]
         try:
+            # Find the current version in use in the container
+            rev = check_output([
+                'lxc', 'exec', self._container_name, '--',
+                'ls', '-l', '/snap/{}/current'.format(name)]
+                ).decode(sys.getfilesystemencoding()).split()[-1]
+            filename = '{}_{}.snap'.format(name, rev)
+            installed = os.path.join(os.path.sep,
+                                     'var', 'lib', 'snapd', 'snaps', filename)
             checksum_container = check_output([
-                'lxc', 'exec', self._container_name, '--', 'sh', '-c',
-                'test -f {0} && sha384sum {0}'.format(installed)]
+                'lxc', 'exec', self._container_name, '--',
+                'sha384sum', installed]
                 ).decode(sys.getfilesystemencoding()).split()[0]
         except CalledProcessError:
             # Snap not installed
