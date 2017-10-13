@@ -299,7 +299,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             self.assertIn(property, actual_pull_properties)
 
     def test_get_build_properties(self):
-        expected_build_properties = ['build-attributes', 'catkin-cmake-args']
+        expected_build_properties = ['catkin-cmake-args']
         actual_build_properties = catkin.CatkinPlugin.get_build_properties()
 
         self.assertThat(actual_build_properties,

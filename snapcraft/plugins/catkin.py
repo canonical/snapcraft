@@ -204,7 +204,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['build-attributes', 'catkin-cmake-args']
+        return ['catkin-cmake-args']
 
     @property
     def _pip(self):
