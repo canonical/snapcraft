@@ -585,9 +585,10 @@ class FakeLXD(fixtures.Fixture):
         if self.status and args[0][2] == self.name:
             cmd = args[0][4]
             if cmd == 'ls':
+                return ' '.join(self.files).encode('utf-8')
+            elif cmd == 'readlink':
                 if args[0][-1].endswith('/current'):
                     raise CalledProcessError(returncode=1, cmd=cmd)
-                return ' '.join(self.files).encode('utf-8')
             elif cmd == 'sshfs':
                 self.files = ['foo', 'bar']
                 return self._popen(args[0])

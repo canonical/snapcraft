@@ -401,10 +401,9 @@ class LXDTestCase(tests.TestCase):
 
         def call_effect(*args, **kwargs):
             if args[0][:2] == ['lxc', 'exec']:
-                if 'ls -l' in ' '.join(args[0]):
+                if 'readlink' in args[0]:
                     if args[0][-1].endswith('/current'):
-                        return 'xyz {} -> 123'.format(
-                            args[0][-1]).encode('utf-8')
+                        return '123\n'.encode('utf-8')
                 if 'sha384sum' in args[0]:
                     if args[0][-1].endswith('core_123.snap'):
                         return 'deadbeef {}'.format(args[0][1]).encode('utf-8')

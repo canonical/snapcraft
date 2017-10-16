@@ -267,8 +267,8 @@ class Containerbuild:
             # Find the current version in use in the container
             rev = check_output([
                 'lxc', 'exec', self._container_name, '--',
-                'ls', '-l', '/snap/{}/current'.format(name)]
-                ).decode(sys.getfilesystemencoding()).split()[-1]
+                'readlink', '/snap/{}/current'.format(name)]
+                ).decode(sys.getfilesystemencoding()).strip()
             filename = '{}_{}.snap'.format(name, rev)
             installed = os.path.join(os.path.sep,
                                      'var', 'lib', 'snapd', 'snaps', filename)
