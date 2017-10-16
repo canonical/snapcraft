@@ -69,36 +69,20 @@ class YamlValidationError(ProjectLoaderError):
 
         messages = []
 
-        # error.validator_value may contain a custom validation error message.
-        # If so, use it instead of the garbage message jsonschema gives us.
-        with contextlib.suppress(TypeError, KeyError):
-            messages.append(
-                error.validator_value['validation-failure'].format(error))
+        preamble = _determine_preamble(error)
+        cause = _determine_cause(error)
+        supplement = _determine_supplemental_info(error)
 
-        # The schema itself may have a custom validation error message. If so,
-        # use it as well.
-        with contextlib.suppress(TypeError, KeyError):
-            key = error
-            if (error.schema['type'] == 'object' and
-                    error.validator == 'additionalProperties'):
-                key = list(error.instance.keys())[0]
+        if preamble:
+            messages.append(preamble)
 
-            messages.append(
-                error.schema['validation-failure'].format(key))
-
-        # If we still have nothing even after all that, fine. Use the terrible
-        # jsonschema error message.
-        if not messages:
+        if supplement:
             messages.append(error.message)
-
-        path = _determine_property_path(error)
-        if path:
-            messages.insert(0, "The '{}' property does not match the required "
-                               "schema:".format('/'.join(path)))
-
-        cause = error.cause or _determine_cause(error)
-        if cause:
-            messages.append('({})'.format(cause))
+            messages.append('({})'.format(supplement))
+        elif cause:
+            messages.append(cause)
+        else:
+            messages.append(error.message)
 
         return cls(' '.join(messages))
 
@@ -114,6 +98,52 @@ class SnapcraftLogicError(ProjectLoaderError):
         super().__init__(message=message)
 
 
+def _determine_preamble(error):
+    messages = []
+    path = _determine_property_path(error)
+    if path:
+        messages.append(
+            "The '{}' property does not match the required schema:".format(
+                '/'.join(path)))
+    return ' '.join(messages)
+
+
+def _determine_cause(error):
+    messages = []
+
+    # error.validator_value may contain a custom validation error message.
+    # If so, use it instead of the garbage message jsonschema gives us.
+    with contextlib.suppress(TypeError, KeyError):
+        messages.append(
+            error.validator_value['validation-failure'].format(error))
+
+    # The schema itself may have a custom validation error message. If so,
+    # use it as well.
+    with contextlib.suppress(AttributeError, TypeError, KeyError):
+        key = error
+        if (error.schema.get('type') == 'object' and
+                error.validator == 'additionalProperties'):
+            key = list(error.instance.keys())[0]
+
+        messages.append(
+            error.schema['validation-failure'].format(key))
+
+    return ' '.join(messages)
+
+
+def _determine_supplemental_info(error):
+    message = _VALIDATION_ERROR_CAUSES.get(error.validator, '').format(
+        validator_value=error.validator_value)
+
+    if not message and error.validator == 'anyOf':
+        message = _interpret_anyOf(error)
+
+    if not message and error.cause:
+        message = error.cause
+
+    return message
+
+
 def _determine_property_path(error):
     path = []
     while error.absolute_path:
@@ -125,23 +155,6 @@ def _determine_property_path(error):
             path.append(str(element))
 
     return path
-
-
-def _determine_cause(error):
-    """Attempt to determine a cause from validation error.
-
-    :return: A string representing the cause of the error (it may be empty if
-             no cause can be determined).
-    :rtype: str
-    """
-
-    message = _VALIDATION_ERROR_CAUSES.get(error.validator, '').format(
-        validator_value=error.validator_value)
-
-    if not message and error.validator == 'anyOf':
-        message = _interpret_anyOf(error)
-
-    return message
 
 
 def _interpret_anyOf(error):
