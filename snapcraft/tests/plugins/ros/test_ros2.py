@@ -46,8 +46,12 @@ class Ros2TestCase(tests.TestCase):
         self.check_call_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-    def test_pull(self):
+    @mock.patch('snapcraft.sources.Script')
+    def test_pull(self, mock_script):
         self.bootstrapper.pull()
+
+        # Assert that the ros2 repos file was pulled down
+        mock_script.return_value.download.assert_called_once_with()
 
         # Verify that python3-vcstool is installed
         self.ubuntu_mock.assert_has_calls([
