@@ -40,6 +40,7 @@ import snapcraft
 from snapcraft import storeapi
 from snapcraft.file_utils import calculate_sha3_384
 from snapcraft.internal import errors, pluginhandler, lifecycle
+from snapcraft.internal.lifecycle._runner import _replace_in_part
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
 
@@ -86,7 +87,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 self.plugin = Plugin()
 
         part = Part()
-        new_part = lifecycle._replace_in_part(part)
+        new_part = _replace_in_part(part)
 
         self.assertThat(
             new_part.plugin.options.source, Equals(part.plugin.installdir))
@@ -1274,7 +1275,8 @@ class CoreSetupTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
         self.tempdir = os.path.join(self.path, 'tmpdir')
-        patcher = mock.patch('snapcraft.internal.lifecycle.TemporaryDirectory')
+        patcher = mock.patch('snapcraft.internal.lifecycle._runner.'
+                             'TemporaryDirectory')
         self.tempdir_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

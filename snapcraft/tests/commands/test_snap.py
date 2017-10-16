@@ -63,7 +63,7 @@ class SnapCommandBaseTestCase(CommandBaseTestCase):
 
         self.useFixture(fixture_setup.FakeTerminal())
 
-        patcher = mock.patch('snapcraft.internal.lifecycle.Popen',
+        patcher = mock.patch('snapcraft.internal.lifecycle._packer.Popen',
                              new=mock.Mock(wraps=subprocess.Popen))
         self.popen_spy = patcher.start()
         self.addCleanup(patcher.stop)
@@ -306,8 +306,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                    cwd=project_folder),
         ])
 
-    @mock.patch('snapcraft.internal.lifecycle.ProgressBar')
-    def test_snap_defaults_on_a_tty(self, progress_mock):
+    def test_snap_defaults_on_a_tty(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.useFixture(fixture_setup.FakeTerminal())
