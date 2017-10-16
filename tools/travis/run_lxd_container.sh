@@ -33,7 +33,7 @@ lxc="/snap/bin/lxc"
 
 echo "Starting the LXD container."
 # FIXME switch back to unprovileged once LP: #1709536 is fixed
-$lxc launch --ephemeral --config security.privileged=true ubuntu:xenial "$name"
+$lxc launch --ephemeral --config security.privileged=true --config security.nesting=true ubuntu:xenial "$name"
 # This is likely needed to wait for systemd in the container to start and get
 # an IP, configure DNS. First boot is always a bit slow because cloud-init
 # needs to run too.
