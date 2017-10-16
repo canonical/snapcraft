@@ -76,6 +76,7 @@ class UbuntuTestCase(RepoBaseTestCase):
 
         mock_apt_pkg.assert_has_calls([
             call.config.set('Apt::Install-Recommends', 'False'),
+            call.config.set('Acquire::AllowInsecureRepositories', 'True'),
             call.config.find_file('Dir::Etc::Trusted'),
             call.config.set('Dir::Etc::Trusted', ANY),
             call.config.find_file('Dir::Etc::TrustedParts'),
@@ -115,6 +116,7 @@ class UbuntuTestCase(RepoBaseTestCase):
 
         mock_apt_pkg.assert_has_calls([
             call.config.set('Apt::Install-Recommends', 'False'),
+            call.config.set('Acquire::AllowInsecureRepositories', 'True'),
             call.config.find_file('Dir::Etc::Trusted'),
             call.config.set('Dir::Etc::Trusted', ANY),
             call.config.find_file('Dir::Etc::TrustedParts'),

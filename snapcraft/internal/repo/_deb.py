@@ -66,6 +66,13 @@ class _AptCache:
         # Do not install recommends
         apt.apt_pkg.config.set('Apt::Install-Recommends', 'False')
 
+        # Don't verify repository keys. FIXME: We should have a way to simply
+        # ack keys for extra repositories. We're only setting this here because
+        # in Xenial it defaulted to True, but in Zesty that has changed to
+        # False, and we want consistent behavior. This is, however, not a
+        # long-term solution.
+        apt.apt_pkg.config.set('Acquire::AllowInsecureRepositories', 'True')
+
         # Methods and solvers dir for when in the SNAP
         if common.is_snap():
             snap_dir = os.getenv('SNAP')
