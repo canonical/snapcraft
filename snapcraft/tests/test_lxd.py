@@ -43,10 +43,12 @@ class LXDTestCase(tests.TestCase):
     scenarios = [
         ('local', dict(remote='local', target_arch=None, server='x86_64')),
         ('remote', dict(remote='myremote', target_arch=None, server='x86_64')),
-        ('cross', dict(remote='local', target_arch='armhf', server='x86_64')),
+        ('cross', dict(remote='local', target_arch='armhf', server='x86_64',
+                       cross=True)),
         ('arm remote', dict(remote='pi', target_arch=None, server='armv7l')),
         ('arm same', dict(remote='pi', target_arch='armhf', server='armv7l')),
-        ('arm cross', dict(remote='pi', target_arch='arm64', server='armv7l')),
+        ('arm cross', dict(remote='pi', target_arch='arm64', server='armv7l',
+                           cross=True)),
     ]
 
     def setUp(self):
@@ -233,10 +235,12 @@ class LXDTestCase(tests.TestCase):
             {'name': 'core',
              'confinement': 'strict',
              'id': '2kkitQurgOkL3foImG4wDwn9CIANuHlt',
+             'channel': 'stable',
              'revision': '123'},
             {'name': 'snapcraft',
              'confinement': 'classic',
              'id': '3lljuRvshPlM4gpJnH5xExo0DJBOvImu',
+             'channel': 'edge',
              'revision': '345'},
         ]
 
@@ -318,16 +322,29 @@ class LXDTestCase(tests.TestCase):
             {'name': 'core',
              'confinement': 'strict',
              'id': '2kkitQurgOkL3foImG4wDwn9CIANuHlt',
+             'channel': 'stable',
              'revision': '123'},
             {'name': 'snapcraft',
              'confinement': 'classic',
              'id': '3lljuRvshPlM4gpJnH5xExo0DJBOvImu',
+             'channel': 'edge',
              'revision': '345'},
         ]
 
         builder = self.make_cleanbuilder()
 
         builder.execute()
+        if hasattr(self, 'cross') and self.cross:
+            mock_container_run.assert_has_calls([
+                call(['snap', 'install', 'core', '--channel', 'stable']),
+                call(['snap', 'refresh', 'core', '--channel', 'stable']),
+                call(['snap', 'install', 'snapcraft', '--channel', 'edge',
+                      '--classic']),
+                call(['snap', 'refresh', 'snapcraft', '--channel', 'edge',
+                      '--classic']),
+            ])
+            return
+
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'file', 'push',
                   os.path.join(builder.tmp_dir, 'core_123.assert'),
@@ -367,16 +384,29 @@ class LXDTestCase(tests.TestCase):
             {'name': 'core',
              'confinement': 'strict',
              'id': '2kkitQurgOkL3foImG4wDwn9CIANuHlt',
+             'channel': 'stable',
              'revision': '123'},
             {'name': 'snapcraft',
              'confinement': 'classic',
              'id': '',
+             'channel': 'edge',
              'revision': 'x1'},
         ]
 
         builder = self.make_cleanbuilder()
 
         builder.execute()
+        if hasattr(self, 'cross') and self.cross:
+            mock_container_run.assert_has_calls([
+                call(['snap', 'install', 'core', '--channel', 'stable']),
+                call(['snap', 'refresh', 'core', '--channel', 'stable']),
+                call(['snap', 'install', 'snapcraft', '--channel', 'edge',
+                      '--classic']),
+                call(['snap', 'refresh', 'snapcraft', '--channel', 'edge',
+                      '--classic']),
+            ])
+            return
+
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['sudo', 'cp', '/var/lib/snapd/snaps/snapcraft_x1.snap',
                   os.path.join(builder.tmp_dir, 'snapcraft_x1.snap')]),

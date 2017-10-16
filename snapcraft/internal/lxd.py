@@ -74,11 +74,11 @@ class Containerbuild:
             kernel = server_environment['kernel_architecture']
         except KeyError:
             kernel = server_environment['kernelarchitecture']
-        deb_arch = _get_deb_arch(kernel)
-        if not deb_arch:
+        self._server_arch = _get_deb_arch(kernel)
+        if not self._server_arch:
             raise ContainerConnectionError(
                 'Unrecognized server architecture {}'.format(kernel))
-        self._image = 'ubuntu:xenial/{}'.format(deb_arch)
+        self._image = 'ubuntu:xenial/{}'.format(self._server_arch)
         # Use a temporary folder the 'lxd' snap can access
         lxd_common_dir = os.path.expanduser(
             os.path.join('~', 'snap', 'lxd', 'common'))
@@ -218,6 +218,13 @@ class Containerbuild:
         id = json['result']['id']
         # Lookup confinement to know if we need to --classic when installing
         is_classic = json['result']['confinement'] == 'classic'
+
+        # If the server has a different arch we can't inject local snaps
+        if (self._project_options.target_arch
+                and self._project_options.target_arch != self._server_arch):
+            channel = json['result']['channel']
+            return self._install_snap(name, channel, is_classic=is_classic)
+
         # Revisions are unique, so we don't need to know the channel
         rev = json['result']['revision']
 
@@ -246,13 +253,27 @@ class Containerbuild:
             shutil.copyfile(installed, filepath)
         container_filename = os.path.join(os.sep, 'run', filename)
         self._push_file(filepath, container_filename)
-        logger.info('Installing {}'.format(container_filename))
-        cmd = ['snap', 'install', container_filename]
-        if rev.startswith('x'):
-            cmd.append('--dangerous')
+        self._install_snap(container_filename,
+                           is_dangerous=rev.startswith('x'),
+                           is_classic=is_classic)
+
+    def _install_snap(self, name, channel=None,
+                      is_dangerous=False,
+                      is_classic=False):
+        logger.info('Installing {}'.format(name))
+        # Install: will do nothing if already installed
+        args = []
+        if channel:
+            args.append('--channel')
+            args.append(channel)
+        if is_dangerous:
+            args.append('--dangerous')
         if is_classic:
-            cmd.append('--classic')
-        self._container_run(cmd)
+            args.append('--classic')
+        self._container_run(['snap', 'install', name] + args)
+        if channel:
+            # Switch channel if install was a no-op
+            self._container_run(['snap', 'refresh', name] + args)
 
     def _inject_assertions(self, filename, assertions):
         filepath = os.path.join(self.tmp_dir, filename)
