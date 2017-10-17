@@ -678,6 +678,58 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             Not(DirExists()))
 
 
+class DirtyBuildScriptletTestCase(BaseLifecycleTestCase):
+
+    scenarios = (
+        ('prepare scriptlet', {'scriptlet': 'prepare'}),
+        ('build scriptlet', {'scriptlet': 'build'}),
+        ('install scriptlet', {'scriptlet': 'install'}),
+    )
+
+    @mock.patch.object(snapcraft.BasePlugin, 'enable_cross_compilation')
+    @mock.patch('snapcraft.repo.Repo.install_build_packages')
+    def test_build_is_dirty_if_scriptlet_changes(
+            self, mock_install_build_packages, mock_enable_cross_compilation):
+        mock_install_build_packages.return_value = []
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                    {}: touch scriptlet
+                """).format(self.scriptlet))
+
+        # Build it
+        lifecycle.execute('build', snapcraft.ProjectOptions())
+
+        # Reset logging since we only care about the following
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        # Change prepare scriptlet
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                    {}: touch changed
+                """).format(self.scriptlet))
+
+        # Build it again. Should catch that the scriptlet changed and it needs
+        # to be rebuilt.
+        raised = self.assertRaises(
+            errors.StepOutdatedError,
+            lifecycle.execute, 'build', snapcraft.ProjectOptions())
+
+        self.assertThat(
+            str(raised), Equals(
+                "The 'build' step of 'part1' is out of date:\n"
+                "The {!r} part property appears to have changed.\n"
+                "In order to continue, please clean that part's 'build' step "
+                "by running:\nsnapcraft clean part1 -s build\n".format(
+                    self.scriptlet)))
+
+
 class CleanTestCase(BaseLifecycleTestCase):
 
     def test_clean_removes_global_state(self):
