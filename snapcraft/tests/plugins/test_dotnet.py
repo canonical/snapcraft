@@ -55,7 +55,7 @@ class DotNetPluginTestCase(tests.TestCase):
             Equals(expected_pull_properties))
 
     def test_get_build_properties(self):
-        expected_build_properties = ['build-attributes']
+        expected_build_properties = []
         self.assertThat(
             dotnet.DotNetPlugin.get_build_properties(),
             Equals(expected_build_properties))

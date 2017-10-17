@@ -15,15 +15,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
+from unittest import skipUnless
 
 from testtools.matchers import Contains
 
 import integration_tests
 from snapcraft.tests import fixture_setup
+from snapcraft.internal.common import get_os_release_info
 
 
 class CatkinTestCase(integration_tests.SnapdIntegrationTestCase):
 
+    @skipUnless(get_os_release_info().get('VERSION_CODENAME') == 'xenial',
+                'ROS Kinetic only targets Ubuntu Xenial')
     def test_catkin_pip_support(self):
         with fixture_setup.WithoutSnapInstalled('ros-pip-example'):
             self.run_snapcraft(project_dir='ros-pip')

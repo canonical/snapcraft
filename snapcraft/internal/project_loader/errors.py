@@ -75,20 +75,27 @@ class YamlValidationError(ProjectLoaderError):
             messages.append(
                 error.validator_value['validation-failure'].format(error))
 
+        # The schema itself may have a custom validation error message. If so,
+        # use it as well.
+        with contextlib.suppress(TypeError, KeyError):
+            key = error
+            if (error.schema['type'] == 'object' and
+                    error.validator == 'additionalProperties'):
+                key = list(error.instance.keys())[0]
+
+            messages.append(
+                error.schema['validation-failure'].format(key))
+
+        # If we still have nothing even after all that, fine. Use the terrible
+        # jsonschema error message.
         if not messages:
             messages.append(error.message)
 
-        path = []
-        while error.absolute_path:
-            element = error.absolute_path.popleft()
-            # assume numbers are indices and use 'xxx[123]' notation.
-            if isinstance(element, int):
-                path[-1] = '{}[{}]'.format(path[-1], element)
-            else:
-                path.append(str(element))
+        path = _determine_property_path(error)
         if path:
-            messages.insert(0, "The '{}' property does not match the "
-                               "required schema:".format('/'.join(path)))
+            messages.insert(0, "The '{}' property does not match the required "
+                               "schema:".format('/'.join(path)))
+
         cause = error.cause or _determine_cause(error)
         if cause:
             messages.append('({})'.format(cause))
@@ -105,6 +112,19 @@ class SnapcraftLogicError(ProjectLoaderError):
 
     def __init__(self, message):
         super().__init__(message=message)
+
+
+def _determine_property_path(error):
+    path = []
+    while error.absolute_path:
+        element = error.absolute_path.popleft()
+        # assume numbers are indices and use 'xxx[123]' notation.
+        if isinstance(element, int):
+            path[-1] = '{}[{}]'.format(path[-1], element)
+        else:
+            path.append(str(element))
+
+    return path
 
 
 def _determine_cause(error):

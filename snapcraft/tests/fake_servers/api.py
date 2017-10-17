@@ -442,6 +442,15 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                     }
                 }
             }).encode()
+        elif 'notanumber' in revision:
+            response_code = 400
+            payload = json.dumps({
+                'success': False,
+                'error_list': [{
+                    'code': 'invalid-field',
+                    'message': "The 'revision' field must be an integer"}],
+                'errors': {'revision': ['This field must be an integer.']}}
+            ).encode()
         else:
             raise NotImplementedError(
                 'Cannot handle release request for {!r}'.format(name))

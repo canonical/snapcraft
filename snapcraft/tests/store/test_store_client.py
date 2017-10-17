@@ -902,6 +902,18 @@ class ReleaseTestCase(StoreTestCase):
             errors.InvalidCredentialsError,
             self.client.release, 'test-snap', '10', ['beta'])
 
+    def test_release_with_invalid_revision(self):
+        self.client.login('dummy', 'test correct password')
+        raised = self.assertRaises(
+            errors.StoreReleaseError,
+            self.client.release,
+            'test-snap-invalid-data', 'notanumber', ['beta'])
+
+        self.assertThat(
+            str(raised),
+            Equals(
+                'invalid-field: The \'revision\' field must be an integer\n'))
+
 
 class CloseChannelsTestCase(StoreTestCase):
 
