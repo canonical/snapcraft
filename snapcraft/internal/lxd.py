@@ -228,14 +228,6 @@ class Containerbuild:
         # Revisions are unique, so we don't need to know the channel
         rev = json['result']['revision']
 
-        if not rev.startswith('x'):
-            self._inject_assertions('{}_{}.assert'.format(name, rev), [
-                ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
-                ['snap-declaration', 'snap-name={}'.format(name)],
-                ['snap-revision', 'snap-revision={}'.format(rev),
-                 'snap-id={}'.format(id)],
-            ])
-
         # https://github.com/snapcore/snapd/blob/master/snap/info.go
         # MountFile
         filename = '{}_{}.snap'.format(name, rev)
@@ -251,6 +243,19 @@ class Containerbuild:
             check_call(['sudo', 'chown', str(os.getuid()), filepath])
         else:
             shutil.copyfile(installed, filepath)
+
+        if self._is_same_snap(filepath, name):
+            logger.debug('Not re-injecting same version of {!r}'.format(name))
+            return
+
+        if not rev.startswith('x'):
+            self._inject_assertions('{}_{}.assert'.format(name, rev), [
+                ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
+                ['snap-declaration', 'snap-name={}'.format(name)],
+                ['snap-revision', 'snap-revision={}'.format(rev),
+                 'snap-id={}'.format(id)],
+            ])
+
         container_filename = os.path.join(os.sep, 'run', filename)
         self._push_file(filepath, container_filename)
         self._install_snap(container_filename,
@@ -274,6 +279,28 @@ class Containerbuild:
         if channel:
             # Switch channel if install was a no-op
             self._container_run(['snap', 'refresh', name] + args)
+
+    def _is_same_snap(self, filepath, name):
+        # Compare checksums: user-visible version may still match
+        checksum = check_output(['sha384sum', filepath]).decode(
+            sys.getfilesystemencoding()).split()[0]
+        try:
+            # Find the current version in use in the container
+            rev = check_output([
+                'lxc', 'exec', self._container_name, '--',
+                'readlink', '/snap/{}/current'.format(name)]
+                ).decode(sys.getfilesystemencoding()).strip()
+            filename = '{}_{}.snap'.format(name, rev)
+            installed = os.path.join(os.path.sep,
+                                     'var', 'lib', 'snapd', 'snaps', filename)
+            checksum_container = check_output([
+                'lxc', 'exec', self._container_name, '--',
+                'sha384sum', installed]
+                ).decode(sys.getfilesystemencoding()).split()[0]
+        except CalledProcessError:
+            # Snap not installed
+            checksum_container = None
+        return checksum == checksum_container
 
     def _inject_assertions(self, filename, assertions):
         filepath = os.path.join(self.tmp_dir, filename)
