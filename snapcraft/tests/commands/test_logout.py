@@ -30,6 +30,4 @@ class LogoutCommandTestCase(CommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, MatchesRegex(
-            'Clearing credentials for Ubuntu One SSO.\n'
-            '.*'
-            'Credentials cleared.\n', flags=re.DOTALL))
+            '.*Credentials cleared.\n', flags=re.DOTALL))

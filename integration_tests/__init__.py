@@ -383,7 +383,9 @@ class StoreTestCase(TestCase):
         process = pexpect.spawn(self.snapcraft_command, ['login'])
 
         process.expect_exact(
-            'Enter your Ubuntu One SSO credentials.\r\n'
+            'Enter your Ubuntu One e-mail address and password.\r\n'
+            'If you do not have an Ubuntu One account, you can create one at '
+            'https://dashboard.snapcraft.io/openid/login\r\n'
             'Email: ')
         process.sendline(email)
         process.expect_exact('Password: ')
@@ -396,8 +398,7 @@ class StoreTestCase(TestCase):
 
     def logout(self):
         output = self.run_snapcraft('logout')
-        expected = (r'.*Clearing credentials for Ubuntu One SSO.\n'
-                    r'Credentials cleared.\n.*')
+        expected = (r'.*Credentials cleared.\n.*')
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
     def register(self, snap_name, private=False, wait=True):
@@ -434,7 +435,9 @@ class StoreTestCase(TestCase):
             self.snapcraft_command, ['register-key', key_name])
 
         process.expect_exact(
-            'Enter your Ubuntu One SSO credentials.\r\n'
+            'Enter your Ubuntu One e-mail address and password.\r\n'
+            'If you do not have an Ubuntu One account, you can create one at '
+            'https://dashboard.snapcraft.io/openid/login\r\n'
             'Email: ')
         process.sendline(email)
         process.expect_exact('Password: ')
