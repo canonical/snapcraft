@@ -117,21 +117,16 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
-    @mock.patch('shutil.rmtree')
-    @mock.patch('os.makedirs')
     @mock.patch('os.pipe')
-    @mock.patch('snapcraft.internal.lxd.open')
     def test_snap_containerized_remote(self,
-                                       mock_open,
                                        mock_pipe,
-                                       mock_makedirs,
-                                       mock_rmtree,
                                        mock_container_run):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
-        mock_open.return_value = mock.MagicMock(spec=open)
         mock_pipe.return_value = (9, 9)
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
+        fake_filesystem = fixture_setup.FakeFilesystem()
+        self.useFixture(fake_filesystem)
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
         self.useFixture(fixtures.EnvironmentVariable(
