@@ -318,7 +318,7 @@ class GetAccountInformationTestCase(StoreTestCase):
                             'price': None,
                             'since': '2016-12-12T01:01:01Z',
                         },
-                        'ubuntu-core': {
+                        'core': {
                             'snap-id': 'good',
                             'status': 'Approved',
                             'private': False,
@@ -388,7 +388,7 @@ class GetAccountInformationTestCase(StoreTestCase):
                             'price': None,
                             'since': '2016-12-12T01:01:01Z',
                         },
-                        'ubuntu-core': {
+                        'core': {
                             'snap-id': 'good',
                             'status': 'Approved',
                             'private': False,

@@ -453,7 +453,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
     def pull(self):
         super().pull()
         snapcraft.download(
-            'ubuntu-core', 'edge', self.os_snap, self.project.deb_arch)
+            'core', 'stable', self.os_snap, self.project.deb_arch)
 
     def do_configure(self):
         super().do_configure()

@@ -66,7 +66,7 @@ class FakeStoreSearchServer(base.BaseFakeServer):
             payload, response_code, [('Content-Type', content_type)])
 
     def _get_details_payload(self, request):
-        # ubuntu-core is used in integration tests with fake servers.
+        # core snap is used in integration tests with fake servers.
         snap = request.matchdict['snap']
         # sha512sum snapcraft/tests/data/test-snap.snap
         test_sha512 = (
@@ -74,7 +74,7 @@ class FakeStoreSearchServer(base.BaseFakeServer):
             'd22a956457f14146f7f067b47bd976cf0292f2993ad864ccb498b'
             'fda4128234e4c201f28fe9')
 
-        if snap in ('test-snap', 'ubuntu-core'):
+        if snap in ('test-snap', 'core'):
             sha512 = test_sha512
         elif snap == 'test-snap-with-wrong-sha':
             sha512 = 'wrong sha'
