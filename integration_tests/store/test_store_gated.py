@@ -31,12 +31,12 @@ class GatedTestCase(integration_tests.StoreTestCase):
         self.addCleanup(self.logout)
         self.login()
         validations = [('snap-1', '3'), ('snap-2', '5')]
-        self.assertThat(self.gated('ubuntu-core', validations), Equals(0))
+        self.assertThat(self.gated('core', validations), Equals(0))
 
     def test_gated_no_login_failure(self):
         self.assertThat(
             self.gated(
-                'ubuntu-core',
+                'core',
                 expected_output='Have you run "snapcraft login'),
             Equals(2))
 

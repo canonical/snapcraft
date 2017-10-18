@@ -26,7 +26,7 @@ class DownloadTestCase(integration_tests.StoreTestCase):
     def setUp(self):
         if os.getenv('TEST_STORE') == 'staging':
             # TODO add the snap to the staging server.
-            self.skipTest('There is no ubuntu-core snap in the staging server')
+            self.skipTest('There is no core snap in the staging server')
         super().setUp()
 
     def test_download_os_snap(self):
