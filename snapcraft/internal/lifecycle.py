@@ -22,6 +22,7 @@ import tarfile
 import time
 from subprocess import check_call, Popen, PIPE, STDOUT
 from tempfile import TemporaryDirectory
+from textwrap import dedent
 
 import yaml
 from progressbar import AnimatedMarker, ProgressBar
@@ -66,6 +67,15 @@ parts:
     plugin: nil
 """  # noqa, lines too long.
 
+_TEMPLATE_GITIGNORE = dedent("""\
+    *.snap
+    parts/*
+    !parts/plugins/
+    prime/
+    stage/
+    snap/.snapcraft/
+""")
+
 _STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
 
 
@@ -87,6 +97,13 @@ def init():
         os.mkdir(os.path.dirname(snapcraft_yaml_path))
     with open(snapcraft_yaml_path, mode='w') as f:
         f.write(yaml)
+
+    if os.path.exists('.git'):
+        # Don't mess with an existing .gitignore
+        if not os.path.exists('.gitignore'):
+            gitignore = _TEMPLATE_GITIGNORE
+            with open('.gitignore', mode='w') as f:
+                f.write(gitignore)
 
     return snapcraft_yaml_path
 

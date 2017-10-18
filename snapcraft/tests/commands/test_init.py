@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+from textwrap import dedent
 
 import snapcraft.internal.errors
-from testtools.matchers import Equals, FileContains
+from testtools.matchers import Equals, FileContains, FileExists, Not
 
 from . import CommandBaseTestCase
 
@@ -84,3 +85,43 @@ class InitCommandExistingProjectTestCase(CommandBaseTestCase):
 
         self.assertThat(str(raised), Equals(
             '{} already exists!'.format(self.yaml_path)))
+
+
+class InitCommandGitTestCase(CommandBaseTestCase):
+
+    def test_init_must_not_write_gitignore_if_no_git_dir(self):
+        self.run_command(['init'])
+
+        self.assertThat('.gitignore',
+                        Not(FileExists()))
+
+    def test_init_must_write_gitignore_if_git_dir(self):
+        expected_gitignore = dedent("""\
+            *.snap
+            parts/*
+            !parts/plugins/
+            prime/
+            stage/
+            snap/.snapcraft/
+        """)
+
+        os.mkdir('.git')
+
+        self.run_command(['init'])
+
+        # Verify the .gitignore was created
+        self.assertThat('.gitignore',
+                        FileContains(expected_gitignore))
+
+    def test_init_must_not_overwrite_gitignore(self):
+        expected_gitignore = dedent("""\
+            existing gitignore
+            DO NOT MODIFY""")
+        with open('.gitignore', mode='w') as f:
+            f.write(expected_gitignore)
+
+        self.run_command(['init'])
+
+        # Verify the .gitignore was not modified
+        self.assertThat('.gitignore',
+                        FileContains(expected_gitignore))
