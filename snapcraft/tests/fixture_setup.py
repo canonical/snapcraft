@@ -131,7 +131,8 @@ class SilentSnapProgress(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft.internal.lifecycle.ProgressBar')
+        patcher = mock.patch(
+            'snapcraft.internal.lifecycle._packer.ProgressBar')
         patcher.start()
         self.addCleanup(patcher.stop)
 

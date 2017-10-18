@@ -66,7 +66,7 @@ class CollaboratorsCommandTestCase(CollaborateBaseTestCase):
                                            stderr=-1, stdin=-1, stdout=-1)
 
     def test_collaborators_add_developers(self):
-        result = self.run_command([self.command_name, 'ubuntu-core',
+        result = self.run_command([self.command_name, 'core',
                                    '--key-name', 'key-name'])
 
         self.assertThat(result.exit_code, Equals(0))
