@@ -124,7 +124,7 @@ run_snapd(){
     else
         pattern=$2
     fi
-    python3 -m unittest discover -b -v -s integration_tests/snapd -p $pattern
+    python3 -m unittest discover -v -s integration_tests/snapd -p $pattern
 }
 
 run_snaps(){
