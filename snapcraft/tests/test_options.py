@@ -171,4 +171,4 @@ class OptionsTestCase(tests.TestCase):
         mock_platform_machine.return_value = 'x86_64'
         mock_platform_architecture.return_value = ('64bit', 'ELF')
         options = snapcraft.ProjectOptions(target_deb_arch='i386')
-        self.assertThat(options.cross_compiler_prefix, Equals(None))
+        self.assertThat(options.cross_compiler_prefix, Equals(''))

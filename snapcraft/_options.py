@@ -162,7 +162,7 @@ class ProjectOptions:
             # to start the build
             if (self.__platform_arch == 'x86_64' and
                     self.__target_machine == 'i686'):
-                return
+                return ''
             return self.__machine_info['cross-compiler-prefix']
         except KeyError:
             raise SnapcraftEnvironmentError(
