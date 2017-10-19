@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -84,13 +84,18 @@ def register(snap_name, private):
 @click.option('--release', metavar='<channels>',
               help='Optional comma separated list of channels to release '
                    '<snap-file>')
+@click.option('--only-metadata', is_flag=True,
+              help="Only push snap's metadata to the server")
+@click.option('--force-metadata', is_flag=True,
+              help="Force metadata update to override any possible conflict")
 @click.argument('snap-file', metavar='<snap-file>',
                 type=click.Path(exists=True,
                                 readable=True,
                                 resolve_path=True,
                                 dir_okay=False))
-def push(snap_file, release):
+def push(snap_file, release, only_metadata, force_metadata):
     """Push <snap-file> to the store.
+
     By passing --release with a comma separated list of channels the snap would
     be released to the selected channels if the store review passes for this
     <snap-file>.
@@ -101,12 +106,21 @@ def push(snap_file, release):
     If --release is used, the channel map will be displayed after the
     operation takes place.
 
+    If --only-metadata is given, only the snap's metadata information will be
+    pushed to the server (not the whole .snap file). Because of this, --release
+    is not a compatible option to use with it.
+
     \b
     Examples:
         snapcraft push my-snap_0.1_amd64.snap
+        snapcraft push my-snap_0.1_amd64.snap --only-metadata
         snapcraft push my-snap_0.2_amd64.snap --release edge
         snapcraft push my-snap_0.3_amd64.snap --release candidate,beta
     """
+    if release and only_metadata:
+        raise click.UsageError(
+            "--only-metadata and --release are mutually exclusive")
+
     click.echo('Pushing {}'.format(os.path.basename(snap_file)))
     channel_list = []
     if release:
@@ -115,7 +129,7 @@ def push(snap_file, release):
             'After pushing, an attempt to release to {} '
             'will be made'.format(channel_list))
 
-    snapcraft.push(snap_file, channel_list)
+    snapcraft.push(snap_file, channel_list, only_metadata, force_metadata)
 
 
 @storecli.command()

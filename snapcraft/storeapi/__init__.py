@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -364,6 +364,18 @@ class StoreClient():
     def sign_developer_agreement(self, latest_tos_accepted=False):
         return self.sca.sign_developer_agreement(latest_tos_accepted)
 
+    def update_metadata(self, snap_name, metadata, arch, force):
+        """Update the metadata in the server."""
+        account_info = self.get_account_information()
+        series = constants.DEFAULT_SERIES
+        try:
+            snap_id = account_info['snaps'][series][snap_name]['snap-id']
+        except KeyError:
+            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        return self._refresh_if_necessary(
+            self.sca.update_metadata, snap_id, snap_name, metadata, force)
+
 
 class SSOClient(Client):
     """The Single Sign On server deals with authentication.
@@ -608,6 +620,21 @@ class SCAClient(Client):
             raise errors.StorePushError(data['name'], response)
 
         return StatusTracker(response.json()['status_details_url'])
+
+    def update_metadata(self, snap_id, snap_name, metadata, force):
+        """Update the metadata in SCA."""
+        url = 'snaps/' + snap_id + '/metadata'
+        headers = {
+            'Authorization': _macaroon_auth(self.conf),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        }
+        method = 'PUT' if force else 'POST'
+        response = self.request(
+            method, url, data=json.dumps(metadata), headers=headers)
+
+        if not response.ok:
+            raise errors.StoreMetadataError(snap_name, response, metadata)
 
     def snap_release(self, snap_name, revision, channels, delta_format=None):
         data = {

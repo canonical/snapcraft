@@ -1303,3 +1303,76 @@ class SignDeveloperAgreementTestCase(StoreTestCase):
             Equals('There was an error while signing developer agreement.\n'
                    'Reason: \'Internal Server Error\'\n'
                    'Text: \'Broken\''))
+
+
+class UpdateMetadataTestCase(StoreTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
+        self.useFixture(self.fake_logger)
+
+    def test_requires_login(self):
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.update_metadata, 'basic', {}, 'amd64', False)
+
+    def test_refreshes_macaroon(self):
+        self.client.login('dummy', 'test correct password')
+        self.fake_store.needs_refresh = True
+        metadata = {'field_ok': 'foo'}
+        self.client.update_metadata('basic', metadata, 'amd64', False)
+        self.assertFalse(self.fake_store.needs_refresh)
+
+    def test_invalid_data(self):
+        self.client.login('dummy', 'test correct password')
+        metadata = {'invalid': 'foo'}
+        raised = self.assertRaises(
+            errors.StoreMetadataError,
+            self.client.update_metadata, 'basic', metadata, 'amd64', False)
+        self.assertThat(str(raised), Equals(
+            "Received 400: 'Invalid field: invalid'"))
+
+    def test_all_ok(self):
+        self.client.login('dummy', 'test correct password')
+        metadata = {'field_ok': 'foo'}
+        result = self.client.update_metadata('basic', metadata, 'amd64', False)
+        self.assertIsNone(result)
+
+    def test_conflicting_simple_normal(self):
+        self.client.login('dummy', 'test correct password')
+        metadata = {'test-conflict': 'value'}
+        raised = self.assertRaises(
+            errors.StoreMetadataError,
+            self.client.update_metadata, 'basic', metadata, 'amd64', False)
+        should = """
+            Metadata not updated!
+            Conflict in 'test-conflict' field:
+                In snapcraft.yaml: 'value'
+                In the Store:      'value-changed'
+        """
+        self.assertThat(str(raised), Equals(dedent(should).strip()))
+
+    def test_conflicting_multiple_normal(self):
+        self.client.login('dummy', 'test correct password')
+        metadata = {'test-conflict-1': 'value-1', 'test-conflict-2': 'value-2'}
+        raised = self.assertRaises(
+            errors.StoreMetadataError,
+            self.client.update_metadata, 'basic', metadata, 'amd64', False)
+        should = """
+            Metadata not updated!
+            Conflict in 'test-conflict-1' field:
+                In snapcraft.yaml: 'value-1'
+                In the Store:      'value-1-changed'
+            Conflict in 'test-conflict-2' field:
+                In snapcraft.yaml: 'value-2'
+                In the Store:      'value-2-changed'
+        """
+        self.assertThat(str(raised), Equals(dedent(should).strip()))
+
+    def test_conflicting_force(self):
+        self.client.login('dummy', 'test correct password')
+        metadata = {'test-conflict': 'value'}
+        # force the update, even on conflicts!
+        result = self.client.update_metadata('basic', metadata, 'amd64', True)
+        self.assertIsNone(result)
