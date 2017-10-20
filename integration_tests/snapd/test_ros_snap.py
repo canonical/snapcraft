@@ -21,7 +21,7 @@ import subprocess
 from testtools.matchers import Equals, MatchesRegex
 
 import integration_tests
-from snapcraft.internal import common
+from snapcraft.internal import os_release
 from snapcraft.tests import fixture_setup
 
 
@@ -30,7 +30,7 @@ class ROSTestCase(integration_tests.SnapdIntegrationTestCase):
     slow_test = True
 
     def test_install_and_execution(self):
-        if common.get_os_release_info()['VERSION_CODENAME'] != 'xenial':
+        if os_release.OsRelease().version_codename() != 'xenial':
             self.skipTest('This test fails on yakkety LP: #1614476')
         self.useFixture(fixture_setup.WithoutSnapInstalled('ros-example'))
         try:

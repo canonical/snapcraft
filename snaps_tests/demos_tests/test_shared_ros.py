@@ -21,14 +21,14 @@ import re
 import subprocess
 from unittest import skipUnless
 
-from snapcraft.internal.common import get_os_release_info
+from snapcraft.internal.os_release import OsRelease
 
 
 class SharedROSTestCase(snaps_tests.SnapsTestCase):
 
     snap_content_dir = 'shared-ros'
 
-    @skipUnless(get_os_release_info()['VERSION_CODENAME'] == 'xenial',
+    @skipUnless(OsRelease().version_codename() == 'xenial',
                 'This test fails on yakkety LP: #1614476')
     def test_shared_ros(self):
         ros_base_path = os.path.join(self.snap_content_dir, 'ros-base')

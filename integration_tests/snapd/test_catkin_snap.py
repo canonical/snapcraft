@@ -21,12 +21,12 @@ from testtools.matchers import Contains
 
 import integration_tests
 from snapcraft.tests import fixture_setup
-from snapcraft.internal.common import get_os_release_info
+from snapcraft.internal.os_release import OsRelease
 
 
 class CatkinTestCase(integration_tests.SnapdIntegrationTestCase):
 
-    @skipUnless(get_os_release_info().get('VERSION_CODENAME') == 'xenial',
+    @skipUnless(OsRelease().version_codename() == 'xenial',
                 'ROS Kinetic only targets Ubuntu Xenial')
     def test_catkin_pip_support(self):
         with fixture_setup.WithoutSnapInstalled('ros-pip-example'):

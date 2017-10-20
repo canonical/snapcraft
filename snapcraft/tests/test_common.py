@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-from textwrap import dedent
 
 from testtools.matchers import Equals
 
@@ -117,36 +116,3 @@ class FormatInColumnsTestCase(tests.TestCase):
                                             max_width=60,
                                             num_col_spaces=1),
             Equals(expected))
-
-
-class OSReleaseTestCase(tests.TestCase):
-
-    def test_os_release_with_blank_lines(self):
-        with open('os-release', 'w') as release_file:
-            print(dedent("""\
-                NAME="Arch Linux"
-
-                PRETTY_NAME="Arch Linux"
-                ID=arch
-                ID_LIKE=archlinux
-                ANSI_COLOR="0;36"
-                HOME_URL="https://www.archlinux.org/"
-                SUPPORT_URL="https://bbs.archlinux.org/"
-                BUG_REPORT_URL="https://bugs.archlinux.org/"
-
-            """), file=release_file)
-
-        release_info = common.get_os_release_info(os_release_file='os-release')
-
-        expected_release_info = dict(
-            NAME='Arch Linux',
-            PRETTY_NAME='Arch Linux',
-            ID='arch',
-            ID_LIKE='archlinux',
-            ANSI_COLOR='0;36',
-            HOME_URL='https://www.archlinux.org/',
-            SUPPORT_URL='https://bbs.archlinux.org/',
-            BUG_REPORT_URL='https://bugs.archlinux.org/',
-        )
-
-        self.assertThat(release_info, Equals(expected_release_info))
