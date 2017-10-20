@@ -131,7 +131,8 @@ class SilentSnapProgress(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft.internal.lifecycle.ProgressBar')
+        patcher = mock.patch(
+            'snapcraft.internal.lifecycle._packer.ProgressBar')
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -560,6 +561,8 @@ class FakeLXD(fixtures.Fixture):
                 return self._lxc_create_start_stop(args)
             elif args[0][:2] == ['lxc', 'exec']:
                 return self._lxc_exec(args)
+            elif args[0][0] == 'sha384sum':
+                return 'deadbeef {}'.format(args[0][1]).encode('utf-8')
             elif '/usr/lib/sftp-server' in args[0]:
                 return self._popen(args[0])
             else:
@@ -584,9 +587,14 @@ class FakeLXD(fixtures.Fixture):
             cmd = args[0][4]
             if cmd == 'ls':
                 return ' '.join(self.files).encode('utf-8')
+            elif cmd == 'readlink':
+                if args[0][-1].endswith('/current'):
+                    raise CalledProcessError(returncode=1, cmd=cmd)
             elif cmd == 'sshfs':
                 self.files = ['foo', 'bar']
                 return self._popen(args[0])
+            elif 'sha384sum' in args[0][-1]:
+                raise CalledProcessError(returncode=1, cmd=cmd)
 
     def _popen(self, args):
         class Popen:
@@ -950,14 +958,38 @@ class UnixHTTPServer(socketserver.UnixStreamServer):
 class FakeSnapd(fixtures.Fixture):
 
     @property
-    def snaps(self):
-        self.server.RequestHandlerClass.snaps
+    def snaps_result(self):
+        self.request_handler.snaps_result
 
-    @snaps.setter
-    def snaps(self, value):
-        self.server.RequestHandlerClass.snaps = value
+    @snaps_result.setter
+    def snaps_result(self, value):
+        self.request_handler.snaps_result = value
 
-    def _setUp(self):
+    @property
+    def snap_details_func(self):
+        self.request_handler.snap_details_func
+
+    @snap_details_func.setter
+    def snap_details_func(self, value):
+        self.request_handler.snap_details_func = value
+
+    @property
+    def find_result(self):
+        self.request_handler.find_result
+
+    @find_result.setter
+    def find_result(self, value):
+        self.request_handler.find_result = value
+
+    def __init__(self):
+        super().__init__()
+        self.request_handler = snapd.FakeSnapdRequestHandler
+        self.snaps_result = []
+        self.find_result = []
+        self.snap_details_func = None
+
+    def setUp(self):
+        super().setUp()
         snapd_fake_socket_path = tempfile.mkstemp()[1]
         os.unlink(snapd_fake_socket_path)
 
@@ -971,7 +1003,7 @@ class FakeSnapd(fixtures.Fixture):
         self._start_fake_server(snapd_fake_socket_path)
 
     def _start_fake_server(self, socket):
-        self.server = UnixHTTPServer(socket, snapd.FakeSnapdServer)
+        self.server = UnixHTTPServer(socket, self.request_handler)
         server_thread = threading.Thread(target=self.server.serve_forever)
         server_thread.start()
         self.addCleanup(self._stop_fake_server, server_thread)

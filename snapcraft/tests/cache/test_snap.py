@@ -13,19 +13,14 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import glob
-import logging
 import os
-from unittest import mock
 
-import fixtures
 from testtools.matchers import Equals
 
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import cache
-from snapcraft.tests import fixture_setup
 from snapcraft.tests.commands import CommandBaseTestCase
 
 
@@ -33,15 +28,8 @@ class SnapCacheBaseTestCase(CommandBaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
-
-        patcher = mock.patch('snapcraft.internal.lifecycle.ProgressBar')
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
-
         self.snap_path = os.path.join(
             os.path.dirname(snapcraft.tests.__file__), 'data',
             'test-snap.snap')
@@ -50,8 +38,6 @@ class SnapCacheBaseTestCase(CommandBaseTestCase):
 class SnapCacheTestCase(SnapCacheBaseTestCase):
 
     def test_snap_cache(self):
-        self.useFixture(fixture_setup.FakeTerminal())
-
         # cache snap
         snap_cache = cache.SnapCache(project_name='cache-test')
         cached_snap_path = snap_cache.cache(snap_filename=self.snap_path)
@@ -68,8 +54,6 @@ class SnapCacheTestCase(SnapCacheBaseTestCase):
         self.assertTrue(os.path.isfile(cached_snap_path))
 
     def test_snap_cache_get_latest(self):
-        self.useFixture(fixture_setup.FakeTerminal())
-
         # Create snaps
         with open(os.path.join(self.path, 'snapcraft.yaml'), 'w') as f:
             f.write("""name: my-snap-name
@@ -123,8 +107,6 @@ parts:
         self.assertThat(latest_snap, Equals(expected_snap_path))
 
     def test_snap_cache_get_by_hash(self):
-        self.useFixture(fixture_setup.FakeTerminal())
-
         snap_cache = cache.SnapCache(project_name='my-snap-name')
         snap_cache.cache(snap_filename=self.snap_path)
 
@@ -142,16 +124,7 @@ parts:
 
 class SnapCachePruneTestCase(SnapCacheBaseTestCase):
 
-    def setUp(self):
-        super().setUp()
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
-
-        self.deb_arch = snapcraft.ProjectOptions().deb_arch
-
     def test_prune_snap_cache(self):
-        self.useFixture(fixture_setup.FakeTerminal())
-
         # Create snaps
         with open(os.path.join(self.path, 'snapcraft.yaml'), 'w') as f:
             f.write("""name: my-snap-name

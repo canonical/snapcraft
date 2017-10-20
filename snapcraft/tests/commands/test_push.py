@@ -37,10 +37,6 @@ class PushCommandBaseTestCase(CommandBaseTestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft.internal.lifecycle.ProgressBar')
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
         patcher = mock.patch('snapcraft.storeapi.StoreClient.push_precheck')
         patcher.start()
         self.addCleanup(patcher.stop)

@@ -40,6 +40,7 @@ import snapcraft
 from snapcraft import storeapi
 from snapcraft.file_utils import calculate_sha3_384
 from snapcraft.internal import errors, pluginhandler, lifecycle
+from snapcraft.internal.lifecycle._runner import _replace_in_part
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
 
@@ -86,7 +87,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 self.plugin = Plugin()
 
         part = Part()
-        new_part = lifecycle._replace_in_part(part)
+        new_part = _replace_in_part(part)
 
         self.assertThat(
             new_part.plugin.options.source, Equals(part.plugin.installdir))
@@ -678,6 +679,58 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             Not(DirExists()))
 
 
+class DirtyBuildScriptletTestCase(BaseLifecycleTestCase):
+
+    scenarios = (
+        ('prepare scriptlet', {'scriptlet': 'prepare'}),
+        ('build scriptlet', {'scriptlet': 'build'}),
+        ('install scriptlet', {'scriptlet': 'install'}),
+    )
+
+    @mock.patch.object(snapcraft.BasePlugin, 'enable_cross_compilation')
+    @mock.patch('snapcraft.repo.Repo.install_build_packages')
+    def test_build_is_dirty_if_scriptlet_changes(
+            self, mock_install_build_packages, mock_enable_cross_compilation):
+        mock_install_build_packages.return_value = []
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                    {}: touch scriptlet
+                """).format(self.scriptlet))
+
+        # Build it
+        lifecycle.execute('build', snapcraft.ProjectOptions())
+
+        # Reset logging since we only care about the following
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        # Change prepare scriptlet
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                    {}: touch changed
+                """).format(self.scriptlet))
+
+        # Build it again. Should catch that the scriptlet changed and it needs
+        # to be rebuilt.
+        raised = self.assertRaises(
+            errors.StepOutdatedError,
+            lifecycle.execute, 'build', snapcraft.ProjectOptions())
+
+        self.assertThat(
+            str(raised), Equals(
+                "The 'build' step of 'part1' is out of date:\n"
+                "The {!r} part property appears to have changed.\n"
+                "In order to continue, please clean that part's 'build' step "
+                "by running:\nsnapcraft clean part1 -s build\n".format(
+                    self.scriptlet)))
+
+
 class CleanTestCase(BaseLifecycleTestCase):
 
     def test_clean_removes_global_state(self):
@@ -765,7 +818,7 @@ class RecordManifestBaseTestCase(BaseLifecycleTestCase):
 
         self.fake_snapd = fixture_setup.FakeSnapd()
         self.useFixture(self.fake_snapd)
-        self.fake_snapd.snaps = []
+        self.fake_snapd.snaps_result = []
 
 
 class RecordManifestTestCase(RecordManifestBaseTestCase):
@@ -809,7 +862,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
     def test_prime_with_installed_snaps(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_BUILD_INFO', '1'))
-        self.fake_snapd.snaps = [
+        self.fake_snapd.snaps_result = [
             {'name': 'test-snap-1',
              'revision': 'test-snap-1-revision'},
             {'name': 'test-snap-2',
@@ -1222,7 +1275,8 @@ class CoreSetupTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
         self.tempdir = os.path.join(self.path, 'tmpdir')
-        patcher = mock.patch('snapcraft.internal.lifecycle.TemporaryDirectory')
+        patcher = mock.patch('snapcraft.internal.lifecycle._runner.'
+                             'TemporaryDirectory')
         self.tempdir_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

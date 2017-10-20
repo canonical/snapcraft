@@ -25,6 +25,7 @@ import tempfile
 from contextlib import contextmanager
 from subprocess import check_call, check_output, CalledProcessError, Popen
 from time import sleep
+from urllib import parse
 import requests
 import requests_unixsocket
 
@@ -37,6 +38,7 @@ from snapcraft.internal.errors import (
         SnapdError,
 )
 from snapcraft.internal import common
+from snapcraft.internal.repo import snaps
 from snapcraft._options import _get_deb_arch
 
 logger = logging.getLogger(__name__)
@@ -72,11 +74,11 @@ class Containerbuild:
             kernel = server_environment['kernel_architecture']
         except KeyError:
             kernel = server_environment['kernelarchitecture']
-        deb_arch = _get_deb_arch(kernel)
-        if not deb_arch:
+        self._server_arch = _get_deb_arch(kernel)
+        if not self._server_arch:
             raise ContainerConnectionError(
                 'Unrecognized server architecture {}'.format(kernel))
-        self._image = 'ubuntu:xenial/{}'.format(deb_arch)
+        self._image = 'ubuntu:xenial/{}'.format(self._server_arch)
         # Use a temporary folder the 'lxd' snap can access
         lxd_common_dir = os.path.expanduser(
             os.path.join('~', 'snap', 'lxd', 'common'))
@@ -119,6 +121,11 @@ class Containerbuild:
         check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.SNAPCRAFT_SETUP_CORE', '1'])
+        if os.getenv('SNAPCRAFT_PARTS_URI'):
+            check_call([
+                'lxc', 'config', 'set', self._container_name,
+                'environment.SNAPCRAFT_PARTS_URI',
+                os.getenv('SNAPCRAFT_PARTS_URI')])
         # Necessary to read asset files with non-ascii characters.
         check_call([
             'lxc', 'config', 'set', self._container_name,
@@ -206,9 +213,10 @@ class Containerbuild:
 
     def _inject_snap(self, name):
         session = requests_unixsocket.Session()
-        snapd_socket = '/run/snapd.socket'.replace('/', '%2F')
         # Cf. https://github.com/snapcore/snapd/wiki/REST-API#get-v2snapsname
-        api = 'http+unix://{}/v2/snaps/{}'.format(snapd_socket, name)
+        # TODO use get_local_snap info from the snaps module.
+        slug = 'snaps/{}'.format(parse.quote(name, safe=''))
+        api = snaps.get_snapd_socket_path_template().format(slug)
         try:
             json = session.request('GET', api).json()
         except requests.exceptions.ConnectionError as e:
@@ -221,16 +229,15 @@ class Containerbuild:
         id = json['result']['id']
         # Lookup confinement to know if we need to --classic when installing
         is_classic = json['result']['confinement'] == 'classic'
+
+        # If the server has a different arch we can't inject local snaps
+        if (self._project_options.target_arch
+                and self._project_options.target_arch != self._server_arch):
+            channel = json['result']['channel']
+            return self._install_snap(name, channel, is_classic=is_classic)
+
         # Revisions are unique, so we don't need to know the channel
         rev = json['result']['revision']
-
-        if not rev.startswith('x'):
-            self._inject_assertions('{}_{}.assert'.format(name, rev), [
-                ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
-                ['snap-declaration', 'snap-name={}'.format(name)],
-                ['snap-revision', 'snap-revision={}'.format(rev),
-                 'snap-id={}'.format(id)],
-            ])
 
         # https://github.com/snapcore/snapd/blob/master/snap/info.go
         # MountFile
@@ -247,15 +254,64 @@ class Containerbuild:
             check_call(['sudo', 'chown', str(os.getuid()), filepath])
         else:
             shutil.copyfile(installed, filepath)
+
+        if self._is_same_snap(filepath, name):
+            logger.debug('Not re-injecting same version of {!r}'.format(name))
+            return
+
+        if not rev.startswith('x'):
+            self._inject_assertions('{}_{}.assert'.format(name, rev), [
+                ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
+                ['snap-declaration', 'snap-name={}'.format(name)],
+                ['snap-revision', 'snap-revision={}'.format(rev),
+                 'snap-id={}'.format(id)],
+            ])
+
         container_filename = os.path.join(os.sep, 'run', filename)
         self._push_file(filepath, container_filename)
-        logger.info('Installing {}'.format(container_filename))
-        cmd = ['snap', 'install', container_filename]
-        if rev.startswith('x'):
-            cmd.append('--dangerous')
+        self._install_snap(container_filename,
+                           is_dangerous=rev.startswith('x'),
+                           is_classic=is_classic)
+
+    def _install_snap(self, name, channel=None,
+                      is_dangerous=False,
+                      is_classic=False):
+        logger.info('Installing {}'.format(name))
+        # Install: will do nothing if already installed
+        args = []
+        if channel:
+            args.append('--channel')
+            args.append(channel)
+        if is_dangerous:
+            args.append('--dangerous')
         if is_classic:
-            cmd.append('--classic')
-        self._container_run(cmd)
+            args.append('--classic')
+        self._container_run(['snap', 'install', name] + args)
+        if channel:
+            # Switch channel if install was a no-op
+            self._container_run(['snap', 'refresh', name] + args)
+
+    def _is_same_snap(self, filepath, name):
+        # Compare checksums: user-visible version may still match
+        checksum = check_output(['sha384sum', filepath]).decode(
+            sys.getfilesystemencoding()).split()[0]
+        try:
+            # Find the current version in use in the container
+            rev = check_output([
+                'lxc', 'exec', self._container_name, '--',
+                'readlink', '/snap/{}/current'.format(name)]
+                ).decode(sys.getfilesystemencoding()).strip()
+            filename = '{}_{}.snap'.format(name, rev)
+            installed = os.path.join(os.path.sep,
+                                     'var', 'lib', 'snapd', 'snaps', filename)
+            checksum_container = check_output([
+                'lxc', 'exec', self._container_name, '--',
+                'sha384sum', installed]
+                ).decode(sys.getfilesystemencoding()).split()[0]
+        except CalledProcessError:
+            # Snap not installed
+            checksum_container = None
+        return checksum == checksum_container
 
     def _inject_assertions(self, filename, assertions):
         filepath = os.path.join(self.tmp_dir, filename)
@@ -320,6 +376,11 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'environment.SNAPCRAFT_SETUP_CORE', '1'])
+            if os.getenv('SNAPCRAFT_PARTS_URI'):
+                check_call([
+                    'lxc', 'config', 'set', self._container_name,
+                    'environment.SNAPCRAFT_PARTS_URI',
+                    os.getenv('SNAPCRAFT_PARTS_URI')])
             # Necessary to read asset files with non-ascii characters.
             check_call([
                 'lxc', 'config', 'set', self._container_name,
@@ -328,7 +389,8 @@ class Project(Containerbuild):
                 # Map host user to root inside container
                 check_call([
                     'lxc', 'config', 'set', self._container_name,
-                    'raw.idmap', 'both {} 0'.format(os.getuid())])
+                    'raw.idmap',
+                    'both {} 0'.format(os.getenv('SUDO_UID', os.getuid()))])
             # Remove existing device (to ensure we update old containers)
             devices = self._get_container_status()['devices']
             if self._project_folder in devices:

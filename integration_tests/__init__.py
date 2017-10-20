@@ -598,10 +598,15 @@ class StoreTestCase(TestCase):
 
 class SnapdIntegrationTestCase(TestCase):
 
+    slow_test = False
+
     def setUp(self):
+        super().setUp()
+        if (self.slow_test and
+                not os.environ.get('SNAPCRAFT_SLOW_TESTS', False)):
+            self.skipTest('Not running slow tests')
         if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
             self.skipTest("The autopkgtest armhf runners can't install snaps")
-        super().setUp()
 
     def install_snap(self):
         try:

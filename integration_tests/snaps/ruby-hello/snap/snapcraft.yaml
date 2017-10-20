@@ -22,4 +22,4 @@ parts:
       - bin
       - lib
     install: |
-      cp ./ruby-hello.rb $SNAPCRAFT_PART_INSTALL/ruby-hello.rb
+      cp ./ruby-hello.rb $SNAPCRAFT_PART_INSTALL/bin/ruby-hello.rb

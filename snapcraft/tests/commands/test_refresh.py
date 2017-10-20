@@ -60,6 +60,8 @@ class RefreshCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
+        fake_filesystem = fixture_setup.FakeFilesystem()
+        self.useFixture(fake_filesystem)
         self.useFixture(fixtures.EnvironmentVariable(
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
         self.make_snapcraft_yaml()

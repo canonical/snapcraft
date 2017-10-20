@@ -41,15 +41,14 @@ class ValidateTestCase(integration_tests.StoreTestCase):
         self.addCleanup(self.logout)
         self.login()
         self.assertThat(
-            self.validate('ubuntu-core', [
-                "ubuntu-core=3", "test-snap=4"]),
+            self.validate('core', ["core=3", "test-snap=4"]),
             Equals(0))
 
     def test_validate_unknown_snap_failure(self):
         self.addCleanup(self.logout)
         self.login()
         self.assertThat(
-            self.validate('unknown', ["ubuntu-core=3", "test-snap=4"],
+            self.validate('unknown', ["core=3", "test-snap=4"],
                           expected_error="Snap 'unknown' was not found."),
             Equals(2))
 
@@ -57,12 +56,12 @@ class ValidateTestCase(integration_tests.StoreTestCase):
         self.addCleanup(self.logout)
         self.login()
         self.assertThat(
-            self.validate('ubuntu-core', ["ubuntu-core=foo"],
+            self.validate('core', ["core=foo"],
                           expected_error='format must be name=revision'),
             Equals(2))
 
     def test_validate_no_login_failure(self):
         self.assertThat(
-            self.validate('ubuntu-core', ["ubuntu-core=3", "test-snap=4"],
+            self.validate('core', ["core=3", "test-snap=4"],
                           expected_error='Have you run "snapcraft login"'),
             Equals(2))

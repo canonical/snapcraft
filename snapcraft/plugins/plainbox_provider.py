@@ -46,6 +46,10 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
         super().build()
 
         env = os.environ.copy()
+        # Ensure the first provider does not attempt to validate against
+        # providers installed on the build host by initialising PROVIDERPATH
+        # to empty
+        env['PROVIDERPATH'] = ''
         provider_stage_dir = os.path.join(self.project.stage_dir, 'providers')
         if os.path.exists(provider_stage_dir):
             provider_dirs = [os.path.join(provider_stage_dir, provider)
