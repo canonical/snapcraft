@@ -156,6 +156,13 @@ class ProjectOptions:
     @property
     def cross_compiler_prefix(self):
         try:
+            # cross-compilation of x86 32bit binaries on a x86_64 host is
+            # possible by reusing the native toolchain - let Kbuild figure
+            # it out by itself and pass down an empy cross-compiler-prefix
+            # to start the build
+            if (self.__platform_arch == 'x86_64' and
+                    self.__target_machine == 'i686'):
+                return ''
             return self.__machine_info['cross-compiler-prefix']
         except KeyError:
             raise SnapcraftEnvironmentError(
