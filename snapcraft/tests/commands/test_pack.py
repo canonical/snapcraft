@@ -27,7 +27,7 @@ class PackCommandBaseTestCase(CommandBaseTestCase):
 
     def setUp(self):
         super().setUp()
-        patcher = mock.patch('snapcraft.internal.lifecycle.Popen',
+        patcher = mock.patch('snapcraft.internal.lifecycle._packer.Popen',
                              new=mock.Mock(wraps=subprocess.Popen))
         self.popen_spy = patcher.start()
         self.addCleanup(patcher.stop)

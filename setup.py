@@ -34,6 +34,7 @@ packages = [
     'snapcraft.internal',
     'snapcraft.internal.cache',
     'snapcraft.internal.deltas',
+    'snapcraft.internal.lifecycle',
     'snapcraft.internal.pluginhandler',
     'snapcraft.internal.project_loader',
     'snapcraft.internal.project_loader.grammar',

@@ -33,9 +33,15 @@ These tests are in the `snapcraft/tests` directory.
 
 The integration tests are a group of suites that excercise snapcraft as a black box. They are only allowed to set up the environment where snapcraft runs and create files; but for the execution phase of the test they can only run the snapcraft command or one of its subcommands. To verify the results they can check the output printed to the command line, the return value of the snapcraft command, and any files created during the execution.
 
-This suite was split in three: plugins, store and other integration tests. This split is artificial, we made it just because the full suite takes more time than what Travis allows for a single job.
+This suite was split in four: plugins, store, snapd and other integration tests. This split is artificial, we made it just because the full suite takes more time than what Travis allows for a single job.
 
 These tests are in the `integration_tests` directory, with the `snapcraft.yamls` and other source files for the tests snaps in `integration_tests/snaps`.
+
+### Slow tests
+
+Some tests take too long. This affects the pull requests because we have to wait for a long time, and they will make Travis CI timeout because we have only 50 minutes per suite in there. The solution is to tag these tests as slow, and don't run them in all pull requests. These tests will only be run in autopkgtests.
+
+To mark a test case as slow, set the class attribute `slow_test = True`.
 
 ### Snaps tests
 

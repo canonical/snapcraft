@@ -869,9 +869,10 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(5))
+        self.assertThat(len(state.properties), Equals(8))
         for expected in ['after', 'build-attributes', 'build-packages',
-                         'disable-parallel', 'organize']:
+                         'disable-parallel', 'organize', 'prepare', 'build',
+                         'install']:
             self.assertTrue(expected in state.properties)
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)

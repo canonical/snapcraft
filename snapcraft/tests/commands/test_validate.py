@@ -40,11 +40,11 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
         self.client.login('dummy', 'test correct password')
 
         result = self.run_command([
-            'validate', 'ubuntu-core', 'ubuntu-core=3', 'test-snap=4'])
+            'validate', 'core', 'core=3', 'test-snap=4'])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
-            'Signing validations assertion for ubuntu-core=3'))
+            'Signing validations assertion for core=3'))
         self.assertThat(result.output, Contains(
             'Signing validations assertion for test-snap=4'))
 
@@ -52,12 +52,12 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
         self.client.login('dummy', 'test correct password')
 
         result = self.run_command([
-            'validate', 'ubuntu-core', 'ubuntu-core=3',
+            'validate', 'core', 'core=3',
             'test-snap=4', '--key-name=keyname'])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
-            'Signing validations assertion for ubuntu-core=3'))
+            'Signing validations assertion for core=3'))
         self.assertThat(result.output, Contains(
             'Signing validations assertion for test-snap=4'))
         self.popen_mock.assert_called_with(['snap', 'sign', '-k', 'keyname'],
@@ -72,7 +72,7 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
                 'SNAPCRAFT_UBUNTU_STORE', 'Test-Branded'))
 
         result = self.run_command(
-            ['validate', 'ubuntu-core', 'test-snap-branded-store=1'])
+            ['validate', 'core', 'test-snap-branded-store=1'])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
@@ -84,7 +84,7 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
         raised = self.assertRaises(
             snapcraft.storeapi.errors.SnapNotFoundError,
             self.run_command,
-            ['validate', 'notfound', 'ubuntu-core=3', 'test-snap=4'])
+            ['validate', 'notfound', 'core=3', 'test-snap=4'])
 
         self.assertThat(str(raised), Equals("Snap 'notfound' was not found."))
 
@@ -94,7 +94,7 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
         raised = self.assertRaises(
             snapcraft.storeapi.errors.InvalidValidationRequestsError,
             self.run_command,
-            ['validate', 'ubuntu-core', 'ubuntu-core=foo'])
+            ['validate', 'core', 'core=foo'])
 
         self.assertThat(str(raised), Contains('format must be name=revision'))
 
@@ -102,6 +102,6 @@ class ValidateCommandTestCase(StoreCommandsBaseTestCase):
         raised = self.assertRaises(
             snapcraft.storeapi.errors.InvalidCredentialsError,
             self.run_command,
-            ['validate', 'ubuntu-core', 'ubuntu-core=3', 'test-snap=4'])
+            ['validate', 'core', 'core=3', 'test-snap=4'])
 
         self.assertThat(str(raised), Contains('Invalid credentials'))

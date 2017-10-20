@@ -27,6 +27,7 @@ parseargs(){
         export RUN_INTEGRATION="true"
         export RUN_STORE="true"
         export RUN_PLUGINS="true"
+        export RUN_CONTAINERS="true"
         export RUN_SNAPD="true"
         export RUN_SNAPS="true"
         export RUN_SPREAD="true"
@@ -41,6 +42,8 @@ parseargs(){
             export RUN_STORE="true"
         elif [ "$1" == "plugins" ] ; then
             export RUN_PLUGINS="true"
+        elif [ "$1" == "containers" ] ; then
+            export RUN_CONTAINERS="true"
         elif [ "$1" == "snapd" ] ; then
             export RUN_SNAPD="true"
         elif [ "$1" == "snaps" ] ; then
@@ -51,7 +54,7 @@ parseargs(){
         elif [ "$1" == "spread" ] ; then
             export RUN_SPREAD="true"
         else
-            echo "Not recognized option, should be one of all, static, unit, integration, store, plugins, snapd, snaps or spread"
+            echo "Not recognized option, should be one of all, static, unit, integration, store, plugins, containers, snapd, snaps or spread"
             exit 1
         fi
     fi
@@ -106,6 +109,15 @@ run_plugins(){
     python3 -m unittest discover -b -v -s integration_tests/plugins -p $pattern
 }
 
+run_containers(){
+    if [[ "$#" -lt 2 ]]; then
+        pattern="test_*.py"
+    else
+        pattern=$2
+    fi
+    python3 -m unittest discover -b -v -s integration_tests/containers -p $pattern
+}
+
 run_snapd(){
     if [[ "$#" -lt 2 ]]; then
         pattern="test_*.py"
@@ -148,6 +160,10 @@ fi
 
 if [ ! -z "$RUN_PLUGINS" ]; then
     run_plugins "$@"
+fi
+
+if [ ! -z "$RUN_CONTAINERS" ]; then
+    run_containers "$@"
 fi
 
 if [ ! -z "$RUN_SNAPD" ]; then
