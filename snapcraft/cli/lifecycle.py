@@ -178,17 +178,17 @@ def clean(parts, step, **kwargs):
     project_options = get_project_options(**kwargs)
     container_config = env.get_container_config()
     step = step or 'pull'
-    if container_config.use_container and step == 'pull' and not parts:
+    if container_config.use_container:
         config = snapcraft.internal.load_config(project_options)
         lxd.Project(project_options=project_options,
                     output=None, source=os.path.curdir,
-                    metadata=config.get_metadata()).delete()
-
-    if step == 'strip':
-        echo.warning('DEPRECATED: Use `prime` instead of `strip` '
-                     'as the step to clean')
-        step = 'prime'
-    lifecycle.clean(project_options, parts, step)
+                    metadata=config.get_metadata()).clean(parts, step)
+    else:
+        if step == 'strip':
+            echo.warning('DEPRECATED: Use `prime` instead of `strip` '
+                         'as the step to clean')
+            step = 'prime'
+        lifecycle.clean(project_options, parts, step)
 
 
 @lifecyclecli.command()

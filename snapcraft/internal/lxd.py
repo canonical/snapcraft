@@ -38,8 +38,10 @@ from snapcraft.internal.errors import (
         SnapdError,
 )
 from snapcraft.internal import common
+from snapcraft.internal import lifecycle
 from snapcraft.internal.repo import snaps
 from snapcraft._options import _get_deb_arch
+from snapcraft.cli import echo
 
 logger = logging.getLogger(__name__)
 
@@ -468,10 +470,18 @@ class Project(Containerbuild):
             logger.info('Terminating {}'.format(process.args))
             process.terminate()
 
-    def delete(self):
-        if self._get_container_status():
-            print('Deleting {}'.format(self._container_name))
-            check_call(['lxc', 'delete', '-f', self._container_name])
+    def clean(self, parts, step):
+        # clean with no parts deletes the container
+        if step == 'pull':
+            if self._get_container_status():
+                print('Deleting {}'.format(self._container_name))
+                check_call(['lxc', 'delete', '-f', self._container_name])
+        # clean normally, without involving the container
+        if step == 'strip':
+            echo.warning('DEPRECATED: Use `prime` instead of `strip` '
+                         'as the step to clean')
+            step = 'prime'
+        lifecycle.clean(self._project_options, parts, step)
 
 
 def _get_default_remote():
