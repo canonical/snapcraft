@@ -592,11 +592,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             payload = json.dumps(err).encode('utf8')
             response_code = 400
             content_type = 'application/json'
-        elif 'field_ok' in request.json_body:
-            payload = b''
-            response_code = 200
-            content_type = 'text/plain'
-        else:
+        elif any('conflict' in field_name for field_name in request.json_body):
             # conflicts!
             if request.method == 'PUT':
                 # update anyway
@@ -615,6 +611,11 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                 payload = json.dumps({'error_list': error_list}).encode('utf8')
                 response_code = 409
                 content_type = 'application/json'
+        else:
+            # all fine by default
+            payload = b''
+            response_code = 200
+            content_type = 'text/plain'
 
         return response.Response(
             payload, response_code, [('Content-Type', content_type)])
