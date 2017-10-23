@@ -170,15 +170,12 @@ class TestSystemLibsOnReleasesWithNoVersionId(tests.TestCase):
 
         with open('os-release', 'w') as f:
             f.write(dedent("""\
-                NAME="Ubuntu"
-                VERSION="16.04.3 LTS (Xenial Xerus)"
-                ID=ubuntu
-                ID_LIKE=debian
-                PRETTY_NAME="Ubuntu 16.04.3 LTS"
-                HOME_URL="http://www.ubuntu.com/"
-                SUPPORT_URL="http://help.ubuntu.com/"
-                BUG_REPORT_URL="http://bugs.launchpad.net/ubuntu/"
-                UBUNTU_CODENAME=xenial
+                NAME="Gentoo"
+                ID=gentoo
+                PRETTY_NAME="Gentoo/Linux"
+                HOME_URL="http://www.gentoo.org/"
+                SUPPORT_URL="http://www.gentoo.org/main/en/support.xml"
+                BUG_REPORT_URL="https://bugs.gentoo.org/"
             """))
         release = os_release.OsRelease(os_release_file='os-release')
 
