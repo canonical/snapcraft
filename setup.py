@@ -149,5 +149,5 @@ else:
             'requests',
             'libarchive-c',
         ],
-        test_suite='snapcraft.tests',
+        test_suite='snapcraft.tests.unit',
     )
