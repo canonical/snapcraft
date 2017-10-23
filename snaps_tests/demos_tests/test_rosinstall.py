@@ -15,10 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from unittest import skipUnless
 
-from snapcraft.internal.os_release import OsRelease
-
+from snapcraft.tests import skip
 import snaps_tests
 
 
@@ -26,8 +24,7 @@ class RosinstallTestCase(snaps_tests.SnapsTestCase):
 
     snap_content_dir = 'rosinstall'
 
-    @skipUnless(OsRelease().version_codename() == 'xenial',
-                'This test fails on yakkety LP: #1614476')
+    @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
     def test_rosinstall(self):
         snap_path = self.build_snap(self.snap_content_dir, timeout=1800)
 
