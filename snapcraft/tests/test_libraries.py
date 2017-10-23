@@ -169,6 +169,8 @@ class TestSystemLibsOnReleasesWithNoVersionId(tests.TestCase):
                                         "https://bugs.gentoo.org/"}
         self.addCleanup(patcher.stop)
 
-    def test_fail_gracefully_if_no_version_id_found(self):
+    @mock.patch('snapcraft.internal.libraries.repo.Repo.get_package_libraries',
+                return_value=['/usr/lib/libc.so.6', '/lib/libpthreads.so.6'])
+    def test_fail_gracefully_if_no_version_id_found(self, mock_package_libs):
         self.assertThat(libraries._get_system_libs(),
-                        Equals(frozenset(['libc.so.6'])))
+                        Equals(frozenset(['libc.so.6', 'libpthreads.so.6'])))
