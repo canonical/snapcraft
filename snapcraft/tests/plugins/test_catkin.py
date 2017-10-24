@@ -14,21 +14,27 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import ast
 import builtins
 import os
 import os.path
 import re
 import subprocess
 import shutil
+import sys
+import tempfile
+import textwrap
 
 from unittest import mock
 import testtools
 from testtools.matchers import (
     Contains,
     Equals,
+    FileExists,
     HasLength,
     LessThan,
     MatchesRegex,
+    Not,
 )
 
 import snapcraft
@@ -76,6 +82,7 @@ class CatkinPluginBaseTestCase(tests.TestCase):
             underlay = None
             rosinstall_files = None
             build_attributes = []
+            catkin_ros_master_uri = 'http://localhost:11311'
 
         self.properties = props()
         self.project_options = snapcraft.ProjectOptions()
@@ -85,12 +92,12 @@ class CatkinPluginBaseTestCase(tests.TestCase):
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch(
-            'snapcraft.plugins.catkin._find_system_dependencies')
+            'snapcraft.plugins.catkin._find_system_dependencies',
+            return_value={})
         self.dependencies_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch(
-            'snapcraft.plugins._ros.rosdep.Rosdep')
+        patcher = mock.patch('snapcraft.plugins._ros.rosdep.Rosdep')
         self.rosdep_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -101,6 +108,11 @@ class CatkinPluginBaseTestCase(tests.TestCase):
         patcher = mock.patch('snapcraft.plugins.catkin._Wstool')
         self.wstool_mock = patcher.start()
         self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.plugins._python.Pip')
+        self.pip_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+        self.pip_mock.return_value.list.return_value = {}
 
     def assert_rosdep_setup(self, rosdistro, package_path, rosdep_path,
                             ubuntu_distro, sources):
@@ -120,6 +132,16 @@ class CatkinPluginBaseTestCase(tests.TestCase):
                       self.project_options),
             mock.call().setup()])
 
+    def assert_pip_setup(self, python_major_version, part_dir, install_dir,
+                         stage_dir):
+        self.pip_mock.assert_has_calls([
+            mock.call(
+                python_major_version=python_major_version,
+                part_dir=part_dir,
+                install_dir=install_dir,
+                stage_dir=stage_dir),
+            mock.call().setup()])
+
 
 class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
@@ -129,7 +151,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         properties = schema['properties']
         expected = ('rosdistro', 'catkin-packages', 'source-space',
                     'include-roscore', 'catkin-cmake-args', 'underlay',
-                    'rosinstall-files')
+                    'rosinstall-files', 'catkin-ros-master-uri')
         self.assertThat(properties, HasLength(len(expected)))
         for prop in expected:
             self.assertThat(properties, Contains(prop))
@@ -251,6 +273,19 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(rosinstall_files['items'], Contains('type'))
         self.assertThat(rosinstall_files['items']['type'], Equals('string'))
 
+    def test_schema_catkin_ros_master_uri(self):
+        schema = catkin.CatkinPlugin.schema()
+
+        # Check ros-master-uri property
+        catkin_ros_master_uri = schema['properties']['catkin-ros-master-uri']
+        expected = ('type', 'default')
+        self.assertThat(catkin_ros_master_uri, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(catkin_ros_master_uri, Contains(prop))
+        self.assertThat(catkin_ros_master_uri['type'], Equals('string'))
+        self.assertThat(catkin_ros_master_uri['default'],
+                        Equals('http://localhost:11311'))
+
     def test_get_pull_properties(self):
         expected_pull_properties = ['rosdistro', 'catkin-packages',
                                     'source-space', 'include-roscore',
@@ -264,7 +299,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             self.assertIn(property, actual_pull_properties)
 
     def test_get_build_properties(self):
-        expected_build_properties = ['build-attributes', 'catkin-cmake-args']
+        expected_build_properties = ['catkin-cmake-args']
         actual_build_properties = catkin.CatkinPlugin.get_build_properties()
 
         self.assertThat(actual_build_properties,
@@ -327,7 +362,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             plugin.pull)
 
         self.assertThat(str(raised),
-                        Equals('Failed to fetch system dependencies: The '
+                        Equals('Failed to fetch apt dependencies: The '
                                "package 'foo' was not found."))
 
     def test_pull_unable_to_resolve_roscore(self):
@@ -584,10 +619,10 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         environment = '\n'.join(plugin.env(plugin.installdir)).split('\n')
 
         self.assertThat(environment, Contains(
-            'PYTHONPATH={}:$PYTHONPATH'.format(python_path)))
+            'PYTHONPATH={}${{PYTHONPATH:+:$PYTHONPATH}}'.format(python_path)))
 
         self.assertThat(environment, Contains(
-            'ROS_MASTER_URI=http://localhost:11311'))
+            'ROS_MASTER_URI={}'.format(self.properties.catkin_ros_master_uri)))
 
         self.assertThat(
             environment, Contains('ROS_HOME=${SNAP_USER_DATA:-/tmp}/ros'))
@@ -628,6 +663,80 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
         self.assertThat(environment, Contains('. {}'.format(
             os.path.join(plugin.rosdir, 'snapcraft-setup.sh'))))
+
+    @mock.patch.object(catkin.CatkinPlugin, '_source_setup_sh',
+                       return_value='test-source-setup.sh')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output',
+                       return_value='bar')
+    def test_run_environment_with_catkin_ros_master_uri(self, run_mock,
+                                                        source_setup_sh_mock):
+
+        self.properties.catkin_ros_master_uri = 'http://rosmaster:11311'
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+
+        self._verify_run_environment(plugin)
+
+    def _evaluate_environment(self, predefinition=''):
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+
+        python_path = os.path.join(
+            plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')
+        os.makedirs(python_path)
+
+        # Save plugin environment off into a file and read the evaluated
+        # version back in, thus obtaining the real environment
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            f.write(predefinition)
+            f.write('\n'.join(['export ' + e for e in plugin.env(
+                plugin.installdir)]))
+            f.write('python3 -c "import os; print(dict(os.environ))"')
+            f.flush()
+            return ast.literal_eval(subprocess.check_output(
+                ['/bin/sh', f.name]).decode(
+                    sys.getfilesystemencoding()).strip())
+
+    def _pythonpath_segments(self, environment):
+        # Verify that the environment contains PYTHONPATH, and return its
+        # segments as a list.
+        self.assertThat(environment, Contains('PYTHONPATH'))
+        return environment['PYTHONPATH'].split(':')
+
+    def _list_contains_empty_items(self, item_list):
+        empty_items = [i for i in item_list if not i.strip()]
+        return len(empty_items) > 0
+
+    def test_pythonpath_if_not_defined(self):
+        environment = self._evaluate_environment()
+        segments = self._pythonpath_segments(environment)
+        self.assertFalse(
+            self._list_contains_empty_items(segments),
+            'PYTHONPATH unexpectedly contains empty segments: {}'.format(
+                environment['PYTHONPATH']))
+
+    def test_pythonpath_if_null(self):
+        environment = self._evaluate_environment(textwrap.dedent("""
+            export PYTHONPATH=
+        """))
+
+        segments = self._pythonpath_segments(environment)
+        self.assertFalse(
+            self._list_contains_empty_items(segments),
+            'PYTHONPATH unexpectedly contains empty segments: {}'.format(
+                environment['PYTHONPATH']))
+
+    def test_pythonpath_if_not_empty(self):
+        environment = self._evaluate_environment(textwrap.dedent("""
+            export PYTHONPATH=foo
+        """))
+
+        segments = self._pythonpath_segments(environment)
+        self.assertFalse(
+            self._list_contains_empty_items(segments),
+            'PYTHONPATH unexpectedly contains empty segments: {}'.format(
+                environment['PYTHONPATH']))
+        self.assertThat(segments, Contains('foo'))
 
     @mock.patch.object(catkin.CatkinPlugin, '_source_setup_sh',
                        return_value='test-source-setup')
@@ -960,6 +1069,49 @@ class PullTestCase(CatkinPluginBaseTestCase):
         self.assertTrue(mock.call().unpack(plugin.installdir) not in
                         self.ubuntu_mock.mock_calls)
 
+    @mock.patch.object(catkin.CatkinPlugin, '_generate_snapcraft_setup_sh')
+    def test_pull_pip_dependencies(self, generate_setup_mock):
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        self.dependencies_mock.return_value = {'pip': {'foo', 'bar', 'baz'}}
+
+        plugin.pull()
+
+        self.assert_rosdep_setup(
+            self.properties.rosdistro,
+            os.path.join(plugin.sourcedir, 'src'),
+            os.path.join(plugin.partdir, 'rosdep'),
+            self.properties.ubuntu_distro,
+            plugin.PLUGIN_STAGE_SOURCES)
+
+        self.wstool_mock.assert_not_called()
+
+        self.assert_pip_setup(
+            '2', plugin.partdir, plugin.installdir, plugin.project.stage_dir)
+
+        # This shouldn't be called unless there's an underlay
+        if self.properties.underlay:
+            generate_setup_mock.assert_called_once_with(
+                plugin.installdir, self.expected_underlay_path)
+        else:
+            generate_setup_mock.assert_not_called()
+
+        # Verify that dependencies were found as expected. TODO: Would really
+        # like to use ANY here instead of verifying explicit arguments, but
+        # Python issue #25195 won't let me.
+        self.assertThat(self.dependencies_mock.call_count, Equals(1))
+        self.assertThat(
+            self.dependencies_mock.call_args[0][0],
+            Equals({'my_package'}))
+
+        # Verify that the pip dependencies were installed
+        self.pip_mock.return_value.download.assert_called_once_with(
+            {'foo', 'bar', 'baz'})
+        self.pip_mock.return_value.install.assert_called_once_with(
+            {'foo', 'bar', 'baz'})
+
 
 class BuildTestCase(CatkinPluginBaseTestCase):
 
@@ -1126,6 +1278,11 @@ class FinishBuildTestCase(CatkinPluginBaseTestCase):
             with open(path, 'r') as f:
                 self.assertThat(f.read(), Equals(file_info['expected']))
 
+        # Verify that no sitecustomize.py was generated
+        self.assertThat(os.path.join(
+            self.plugin.installdir, 'usr', 'lib', 'python2.7',
+            'sitecustomize.py'), Not(FileExists()))
+
     @mock.patch.object(catkin.CatkinPlugin, '_generate_snapcraft_setup_sh')
     @mock.patch.object(catkin.CatkinPlugin, 'run')
     @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
@@ -1158,6 +1315,40 @@ class FinishBuildTestCase(CatkinPluginBaseTestCase):
                 f.read(), Equals(expected),
                 'The absolute path to python or the CMAKE_PREFIX_PATH '
                 'was not replaced as expected')
+
+        # Verify that no sitecustomize.py was generated
+        self.assertThat(os.path.join(
+            self.plugin.installdir, 'usr', 'lib', 'python2.7',
+            'sitecustomize.py'), Not(FileExists()))
+
+    @mock.patch.object(catkin.CatkinPlugin, '_generate_snapcraft_setup_sh')
+    @mock.patch.object(catkin.CatkinPlugin, 'run')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
+    @mock.patch.object(catkin.CatkinPlugin, '_use_in_snap_python')
+    def test_finish_build_python_sitecustomize(self, use_python_mock,
+                                               run_output_mock, run_mock,
+                                               generate_setup_mock):
+        self.pip_mock.return_value.list.return_value = {'test-package'}
+
+        # Create site.py, indicating that python2 was a stage-package
+        site_py_path = os.path.join(
+            self.plugin.installdir, 'usr', 'lib', 'python2.7', 'site.py')
+        os.makedirs(os.path.dirname(site_py_path), exist_ok=True)
+        open(site_py_path, 'w').close()
+
+        # Also create python2 site-packages, indicating that pip packages were
+        # installed.
+        os.makedirs(
+            os.path.join(
+                self.plugin.installdir, 'lib', 'python2.7', 'site-packages'),
+            exist_ok=True)
+
+        self.plugin._finish_build()
+
+        # Verify that sitecustomize.py was generated
+        self.assertThat(os.path.join(
+            self.plugin.installdir, 'usr', 'lib', 'python2.7',
+            'sitecustomize.py'), FileExists())
 
 
 class FindSystemDependenciesTestCase(tests.TestCase):
@@ -1247,7 +1438,7 @@ class FindSystemDependenciesTestCase(tests.TestCase):
 
     def test_find_system_dependencies_raises_if_unsupported_type(self):
         self.rosdep_mock.resolve_dependency.return_value = {
-            'pip': {'baz'},
+            'unsupported-type': {'baz'},
         }
 
         raised = self.assertRaises(
@@ -1257,7 +1448,7 @@ class FindSystemDependenciesTestCase(tests.TestCase):
 
         self.assertThat(str(raised), Equals(
             "Package 'bar' resolved to an unsupported type of dependency: "
-            "'pip'"))
+            "'unsupported-type'"))
 
 
 class HandleRosinstallFilesTestCase(tests.TestCase):

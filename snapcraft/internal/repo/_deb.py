@@ -137,7 +137,7 @@ class _AptCache:
             finally:
                 apt_cache.close()
         except Exception as e:
-            logger.debug('Exception occured: {!r}'.format(e))
+            logger.debug('Exception occurred: {!r}'.format(e))
             raise e
 
     def sources_digest(self):
@@ -259,6 +259,17 @@ class Ubuntu(BaseRepo):
     def is_package_installed(cls, package_name):
         with apt.Cache() as apt_cache:
             return apt_cache[package_name].installed
+
+    @classmethod
+    def get_installed_packages(cls):
+        installed_packages = []
+        with apt.Cache() as apt_cache:
+            for package in apt_cache:
+                if package.installed:
+                    installed_packages.append(
+                        '{}={}'.format(
+                            package.name, package.installed.version))
+        return installed_packages
 
     def __init__(self, rootdir, sources=None, project_options=None):
         super().__init__(rootdir)

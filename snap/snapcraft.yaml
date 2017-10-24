@@ -68,12 +68,12 @@ parts:
     prepare: |
         make startup
     build: |
-        mkdir build
-        cd build
+        mkdir apt-build
+        cd apt-build
         ../configure
         make
     install: |
-        cd build
+        cd apt-build
         install -d $SNAPCRAFT_PART_INSTALL/apt
         cp -r bin/methods/* $SNAPCRAFT_PART_INSTALL/apt/
         cp -r bin/methods/* $SNAPCRAFT_PART_INSTALL/apt/

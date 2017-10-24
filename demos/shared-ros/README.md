@@ -14,6 +14,8 @@ This demo is actually made up of two snaps:
 
 ## Build procedure
 
+See the Makefile for explicit steps, but the general idea is:
+
 1. Build ros-base snap.
 2. Tar ros-base staging area: `tar czf ros-base.tar.bz2 stage/`
 3. Copy that tarball into ros-app (as required by its `ros-base` part).

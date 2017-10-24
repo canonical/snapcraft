@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import copy
+import collections
 import contextlib
 import configparser
 import logging
@@ -46,22 +47,23 @@ logger = logging.getLogger(__name__)
 
 _MANDATORY_PACKAGE_KEYS = [
     'name',
-    'description',
+    'version',
     'summary',
+    'description',
 ]
 
 _OPTIONAL_PACKAGE_KEYS = [
-    'architectures',
-    'assumes',
-    'base',
-    'environment',
     'type',
+    'base',
+    'architectures',
+    'confinement',
+    'grade',
+    'assumes',
     'plugs',
     'slots',
-    'confinement',
     'epoch',
-    'grade',
     'hooks',
+    'environment',
 ]
 
 
@@ -158,8 +160,8 @@ class _SnapPackaging:
                 yaml.dump(annotated_snapcraft, manifest_file)
 
     def _annotate_snapcraft(self, data):
-        data['build-packages'] = get_global_state().assets.get(
-            'build-packages', [])
+        for field in ('build-packages', 'build-snaps'):
+            data[field] = get_global_state().assets.get(field, [])
         for part in data['parts']:
             state_dir = os.path.join(self._parts_dir, part, 'state')
             pull_state = get_state(state_dir, 'pull')
@@ -258,11 +260,12 @@ class _SnapPackaging:
 
         Keys that are in _OPTIONAL_PACKAGE_KEYS are ignored if not there.
         """
-        snap_yaml = {}
+        snap_yaml = collections.OrderedDict()
 
         for key_name in _MANDATORY_PACKAGE_KEYS:
             snap_yaml[key_name] = self._config_data[key_name]
 
+        # Reparse the version, the order should stick.
         snap_yaml['version'] = self._get_version(
             self._config_data['version'],
             self._config_data.get('version-script'))
@@ -382,7 +385,10 @@ class _SnapPackaging:
             if os.path.splitext(f)[1] == '.desktop':
                 os.remove(os.path.join(gui_dir, f))
         for app in apps:
-            self._wrap_app(app, apps[app])
+            adapter = apps[app].get('adapter', '')
+            if adapter != 'none':
+                self._wrap_app(app, apps[app])
+            self._generate_desktop_file(app, apps[app])
         return apps
 
     def _wrap_app(self, name, app):
@@ -392,6 +398,8 @@ class _SnapPackaging:
                 app[k] = self._wrap_exe(app[k], '{}-{}'.format(k, name))
             except CommandError as e:
                 raise errors.InvalidAppCommandError(str(e), name)
+
+    def _generate_desktop_file(self, name, app):
         desktop_file_name = app.pop('desktop', '')
         if desktop_file_name:
             desktop_file = _DesktopFile(

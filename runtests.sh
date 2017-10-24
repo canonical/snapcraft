@@ -18,7 +18,7 @@
 set -e
 
 export PATH=$(pwd)/bin:$PATH
-export PYTHONPATH=$(pwd):$PYTHONPATH
+export PYTHONPATH=$(pwd)${PYTHONPATH:+:$PYTHONPATH}
 
 parseargs(){
     if [[ "$#" -eq 0 ]] || [[ "$1" == "all" ]]; then
@@ -27,6 +27,8 @@ parseargs(){
         export RUN_INTEGRATION="true"
         export RUN_STORE="true"
         export RUN_PLUGINS="true"
+        export RUN_CONTAINERS="true"
+        export RUN_SNAPD="true"
         export RUN_SNAPS="true"
         export RUN_SPREAD="true"
     else
@@ -40,6 +42,10 @@ parseargs(){
             export RUN_STORE="true"
         elif [ "$1" == "plugins" ] ; then
             export RUN_PLUGINS="true"
+        elif [ "$1" == "containers" ] ; then
+            export RUN_CONTAINERS="true"
+        elif [ "$1" == "snapd" ] ; then
+            export RUN_SNAPD="true"
         elif [ "$1" == "snaps" ] ; then
             export RUN_SNAPS="true"
         # Temporary: backward compatibility until CI run the "snaps" target
@@ -48,7 +54,7 @@ parseargs(){
         elif [ "$1" == "spread" ] ; then
             export RUN_SPREAD="true"
         else
-            echo "Not recognized option, should be one of all, static, unit, integration, store, snaps or spread"
+            echo "Not recognized option, should be one of all, static, unit, integration, store, plugins, containers, snapd, snaps or spread"
             exit 1
         fi
     fi
@@ -57,7 +63,7 @@ parseargs(){
 python3 -m coverage 1>/dev/null 2>&1 && coverage="true"
 
 run_static_tests(){
-    SRC_PATHS="bin snapcraft integration_tests snaps_tests external_snaps_tests"
+    SRC_PATHS="bin snapcraft integration_tests snaps_tests external_snaps_tests setup.py"
     python3 -m flake8 --max-complexity=10 $SRC_PATHS
 }
 
@@ -103,6 +109,24 @@ run_plugins(){
     python3 -m unittest discover -b -v -s integration_tests/plugins -p $pattern
 }
 
+run_containers(){
+    if [[ "$#" -lt 2 ]]; then
+        pattern="test_*.py"
+    else
+        pattern=$2
+    fi
+    python3 -m unittest discover -b -v -s integration_tests/containers -p $pattern
+}
+
+run_snapd(){
+    if [[ "$#" -lt 2 ]]; then
+        pattern="test_*.py"
+    else
+        pattern=$2
+    fi
+    python3 -m unittest discover -b -v -s integration_tests/snapd -p $pattern
+}
+
 run_snaps(){
     python3 -m snaps_tests "$@"
 }
@@ -136,6 +160,14 @@ fi
 
 if [ ! -z "$RUN_PLUGINS" ]; then
     run_plugins "$@"
+fi
+
+if [ ! -z "$RUN_CONTAINERS" ]; then
+    run_containers "$@"
+fi
+
+if [ ! -z "$RUN_SNAPD" ]; then
+    run_snapd "$@"
 fi
 
 if [ ! -z "$RUN_SNAPS" ]; then

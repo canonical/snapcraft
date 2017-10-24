@@ -1,0 +1,13 @@
+name: ruby-bins-exist
+version: 0.1
+summary: Test ruby binary exists in stage
+description: |
+  Snap to run ruby-exists test against
+confinement: strict
+
+parts:
+  ruby-exists:
+    plugin: ruby
+    build-packages: [lsb-release]
+    stage:
+      - bin

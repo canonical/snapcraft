@@ -34,7 +34,7 @@ class ScriptRunner:
 
         try:
             with tempfile.NamedTemporaryFile(mode='w+', delete=False) as f:
-                f.write('#!/bin/sh\n')
+                f.write('#!/bin/sh -e\n')
                 f.write(scriptlet)
                 f.flush()
                 scriptlet_path = f.name

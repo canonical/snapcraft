@@ -23,8 +23,9 @@ import shutil
 import sys
 import tempfile
 from contextlib import contextmanager
-from subprocess import check_call, check_output, CalledProcessError
+from subprocess import check_call, check_output, CalledProcessError, Popen
 from time import sleep
+from urllib import parse
 import requests
 import requests_unixsocket
 
@@ -33,9 +34,11 @@ import yaml
 
 from snapcraft.internal.errors import (
         ContainerConnectionError,
+        SnapcraftEnvironmentError,
         SnapdError,
 )
 from snapcraft.internal import common
+from snapcraft.internal.repo import snaps
 from snapcraft._options import _get_deb_arch
 
 logger = logging.getLogger(__name__)
@@ -71,12 +74,11 @@ class Containerbuild:
             kernel = server_environment['kernel_architecture']
         except KeyError:
             kernel = server_environment['kernelarchitecture']
-        deb_arch = _get_deb_arch(kernel)
-        if not deb_arch:
+        self._server_arch = _get_deb_arch(kernel)
+        if not self._server_arch:
             raise ContainerConnectionError(
                 'Unrecognized server architecture {}'.format(kernel))
-        self._host_arch = deb_arch
-        self._image = 'ubuntu:xenial/{}'.format(deb_arch)
+        self._image = 'ubuntu:xenial/{}'.format(self._server_arch)
         # Use a temporary folder the 'lxd' snap can access
         lxd_common_dir = os.path.expanduser(
             os.path.join('~', 'snap', 'lxd', 'common'))
@@ -96,7 +98,7 @@ class Containerbuild:
         check_call(['lxc', 'file', 'pull',
                     '{}{}'.format(self._container_name, src), dst])
 
-    def _container_run(self, cmd, cwd=None):
+    def _container_run(self, cmd, cwd=None, **kwargs):
         sh = ''
         # Automatically wait on lock files before running commands
         if cmd[0] == 'apt-get':
@@ -110,7 +112,8 @@ class Containerbuild:
         if sh:
             cmd = ['sh', '-c', '{}{}'.format(sh,
                    ' '.join(pipes.quote(arg) for arg in cmd))]
-        check_call(['lxc', 'exec', self._container_name, '--'] + cmd)
+        check_call(['lxc', 'exec', self._container_name, '--'] + cmd,
+                   **kwargs)
 
     def _ensure_container(self):
         check_call([
@@ -118,6 +121,11 @@ class Containerbuild:
         check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.SNAPCRAFT_SETUP_CORE', '1'])
+        if os.getenv('SNAPCRAFT_PARTS_URI'):
+            check_call([
+                'lxc', 'config', 'set', self._container_name,
+                'environment.SNAPCRAFT_PARTS_URI',
+                os.getenv('SNAPCRAFT_PARTS_URI')])
         # Necessary to read asset files with non-ascii characters.
         check_call([
             'lxc', 'config', 'set', self._container_name,
@@ -129,7 +137,8 @@ class Containerbuild:
             self._ensure_container()
             yield
         finally:
-            if self._get_container_status():
+            status = self._get_container_status()
+            if status and status['status'] == 'Running':
                 # Stopping takes a while and lxc doesn't print anything.
                 print('Stopping {}'.format(self._container_name))
                 check_call(['lxc', 'stop', '-f', self._container_name])
@@ -143,15 +152,17 @@ class Containerbuild:
 
     def execute(self, step='snap', args=None):
         with self._ensure_started():
-            self._setup_project()
             self._wait_for_network()
             self._container_run(['apt-get', 'update'])
+            self._setup_project()
             self._inject_snapcraft()
             command = ['snapcraft', step]
             if step == 'snap':
                 command += ['--output', self._snap_output]
-            if self._host_arch != self._project_options.deb_arch:
-                command += ['--target-arch', self._project_options.deb_arch]
+            # Pass on target arch if specified
+            # If not specified it defaults to the LXD architecture
+            if self._project_options.target_arch:
+                command += ['--target-arch', self._project_options.target_arch]
             if args:
                 command += args
             try:
@@ -191,9 +202,10 @@ class Containerbuild:
 
     def _inject_snap(self, name):
         session = requests_unixsocket.Session()
-        snapd_socket = '/run/snapd.socket'.replace('/', '%2F')
         # Cf. https://github.com/snapcore/snapd/wiki/REST-API#get-v2snapsname
-        api = 'http+unix://{}/v2/snaps/{}'.format(snapd_socket, name)
+        # TODO use get_local_snap info from the snaps module.
+        slug = 'snaps/{}'.format(parse.quote(name, safe=''))
+        api = snaps.get_snapd_socket_path_template().format(slug)
         try:
             json = session.request('GET', api).json()
         except requests.exceptions.ConnectionError as e:
@@ -206,16 +218,15 @@ class Containerbuild:
         id = json['result']['id']
         # Lookup confinement to know if we need to --classic when installing
         is_classic = json['result']['confinement'] == 'classic'
+
+        # If the server has a different arch we can't inject local snaps
+        if (self._project_options.target_arch
+                and self._project_options.target_arch != self._server_arch):
+            channel = json['result']['channel']
+            return self._install_snap(name, channel, is_classic=is_classic)
+
         # Revisions are unique, so we don't need to know the channel
         rev = json['result']['revision']
-
-        if not rev.startswith('x'):
-            self._inject_assertions('{}_{}.assert'.format(name, rev), [
-                ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
-                ['snap-declaration', 'snap-name={}'.format(name)],
-                ['snap-revision', 'snap-revision={}'.format(rev),
-                 'snap-id={}'.format(id)],
-            ])
 
         # https://github.com/snapcore/snapd/blob/master/snap/info.go
         # MountFile
@@ -232,15 +243,64 @@ class Containerbuild:
             check_call(['sudo', 'chown', str(os.getuid()), filepath])
         else:
             shutil.copyfile(installed, filepath)
+
+        if self._is_same_snap(filepath, name):
+            logger.debug('Not re-injecting same version of {!r}'.format(name))
+            return
+
+        if not rev.startswith('x'):
+            self._inject_assertions('{}_{}.assert'.format(name, rev), [
+                ['account-key', 'public-key-sha3-384={}'.format(_STORE_KEY)],
+                ['snap-declaration', 'snap-name={}'.format(name)],
+                ['snap-revision', 'snap-revision={}'.format(rev),
+                 'snap-id={}'.format(id)],
+            ])
+
         container_filename = os.path.join(os.sep, 'run', filename)
         self._push_file(filepath, container_filename)
-        logger.info('Installing {}'.format(container_filename))
-        cmd = ['snap', 'install', container_filename]
-        if rev.startswith('x'):
-            cmd.append('--dangerous')
+        self._install_snap(container_filename,
+                           is_dangerous=rev.startswith('x'),
+                           is_classic=is_classic)
+
+    def _install_snap(self, name, channel=None,
+                      is_dangerous=False,
+                      is_classic=False):
+        logger.info('Installing {}'.format(name))
+        # Install: will do nothing if already installed
+        args = []
+        if channel:
+            args.append('--channel')
+            args.append(channel)
+        if is_dangerous:
+            args.append('--dangerous')
         if is_classic:
-            cmd.append('--classic')
-        self._container_run(cmd)
+            args.append('--classic')
+        self._container_run(['snap', 'install', name] + args)
+        if channel:
+            # Switch channel if install was a no-op
+            self._container_run(['snap', 'refresh', name] + args)
+
+    def _is_same_snap(self, filepath, name):
+        # Compare checksums: user-visible version may still match
+        checksum = check_output(['sha384sum', filepath]).decode(
+            sys.getfilesystemencoding()).split()[0]
+        try:
+            # Find the current version in use in the container
+            rev = check_output([
+                'lxc', 'exec', self._container_name, '--',
+                'readlink', '/snap/{}/current'.format(name)]
+                ).decode(sys.getfilesystemencoding()).strip()
+            filename = '{}_{}.snap'.format(name, rev)
+            installed = os.path.join(os.path.sep,
+                                     'var', 'lib', 'snapd', 'snaps', filename)
+            checksum_container = check_output([
+                'lxc', 'exec', self._container_name, '--',
+                'sha384sum', installed]
+                ).decode(sys.getfilesystemencoding()).split()[0]
+        except CalledProcessError:
+            # Snap not installed
+            checksum_container = None
+        return checksum == checksum_container
 
     def _inject_assertions(self, filename, assertions):
         filepath = os.path.join(self.tmp_dir, filename)
@@ -294,6 +354,7 @@ class Project(Containerbuild):
                          project_options=project_options,
                          metadata=metadata, container_name=metadata['name'],
                          remote=remote)
+        self._processes = []
 
     def _ensure_container(self):
         if not self._get_container_status():
@@ -303,24 +364,54 @@ class Project(Containerbuild):
             check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'environment.SNAPCRAFT_SETUP_CORE', '1'])
-            # Map host user to root inside container
+            if os.getenv('SNAPCRAFT_PARTS_URI'):
+                check_call([
+                    'lxc', 'config', 'set', self._container_name,
+                    'environment.SNAPCRAFT_PARTS_URI',
+                    os.getenv('SNAPCRAFT_PARTS_URI')])
+            # Necessary to read asset files with non-ascii characters.
             check_call([
                 'lxc', 'config', 'set', self._container_name,
-                'raw.idmap', 'both {} 0'.format(os.getuid())])
+                'environment.LC_ALL', 'C.UTF-8'])
+            if self._container_name.startswith('local:'):
+                # Map host user to root inside container
+                check_call([
+                    'lxc', 'config', 'set', self._container_name,
+                    'raw.idmap',
+                    'both {} 0'.format(os.getenv('SUDO_UID', os.getuid()))])
             # Remove existing device (to ensure we update old containers)
             devices = self._get_container_status()['devices']
             if self._project_folder in devices:
                 check_call([
                     'lxc', 'config', 'device', 'remove', self._container_name,
                     self._project_folder])
-            check_call([
-                'lxc', 'start', self._container_name])
+            if 'fuse' not in devices:
+                check_call([
+                    'lxc', 'config', 'device', 'add', self._container_name,
+                    'fuse', 'unix-char', 'path=/dev/fuse'
+                    ])
+            try:
+                check_call([
+                    'lxc', 'start', self._container_name])
+            except CalledProcessError:
+                msg = 'The container could not be started.'
+                if self._container_name.startswith('local:'):
+                    msg += ('\nThe files /etc/subuid and /etc/subgid need to '
+                            'contain this line for mounting the local folder:'
+                            '\n    root:1000:1'
+                            '\nNote: Add the line to both files, do not '
+                            'remove any existing lines.'
+                            '\nRestart lxd after making this change.')
+                raise ContainerConnectionError(msg)
 
     def _setup_project(self):
         self._ensure_mount(self._project_folder, self._source)
 
     def _ensure_mount(self, destination, source):
         logger.info('Mounting {} into container'.format(source))
+        if not self._container_name.startswith('local:'):
+            return self._remote_mount(destination, source)
+
         devices = self._get_container_status()['devices']
         if destination not in devices:
             check_call([
@@ -328,9 +419,54 @@ class Project(Containerbuild):
                 destination, 'disk', 'source={}'.format(source),
                 'path={}'.format(destination)])
 
+    def _remote_mount(self, destination, source):
+        # Pipes for sshfs and sftp-server to communicate
+        stdin1, stdout1 = os.pipe()
+        stdin2, stdout2 = os.pipe()
+        # XXX: This needs to be extended once we support other distros
+        try:
+            self._background_process_run(['/usr/lib/sftp-server'],
+                                         stdin=stdin1, stdout=stdout2)
+        except FileNotFoundError:
+            raise SnapcraftEnvironmentError(
+                'You must have openssh-sftp-server installed to use a LXD '
+                'remote on a different host.\n'
+                )
+        except CalledProcessError:
+            raise SnapcraftEnvironmentError(
+                'sftp-server seems to be installed but could not be run.\n'
+                )
+
+        # Use sshfs in slave mode to reverse mount the destination
+        self._container_run(['apt-get', 'install', '-y', 'sshfs'])
+        self._container_run(['mkdir', '-p', destination])
+        self._background_process_run([
+            'lxc', 'exec', self._container_name, '--',
+            'sshfs', '-o', 'slave', '-o', 'nonempty',
+            ':{}'.format(source), destination],
+            stdin=stdin2, stdout=stdout1)
+
+        # It may take a second or two for sshfs to come up
+        retry_count = 5
+        while retry_count:
+            sleep(1)
+            if check_output(['lxc', 'exec', self._container_name, '--',
+                             'ls', self._project_folder]):
+                return
+            retry_count -= 1
+        raise ContainerConnectionError(
+            'The project folder could not be mounted.\n'
+            'Fuse must be enabled on the LXD host.\n'
+            'You can run the following command to enable it:\n'
+            'echo Y | sudo tee /sys/module/fuse/parameters/userns_mounts')
+
+    def _background_process_run(self, cmd, **kwargs):
+        self._processes += [Popen(cmd, **kwargs)]
+
     def _finish(self):
-        # Nothing to do
-        pass
+        for process in self._processes:
+            logger.info('Terminating {}'.format(process.args))
+            process.terminate()
 
     def execute(self, step='snap', args=None):
         # clean with no parts deletes the container
@@ -364,6 +500,17 @@ def _get_default_remote():
     return default_remote.decode(sys.getfilesystemencoding()).strip()
 
 
+def _remote_is_valid(remote):
+    """Verify that the given string is a valid remote name
+
+    :param str remote: the LXD remote to verify.
+    """
+    # No colon because it separates remote from container name
+    # No slash because it's used for images
+    # No spaces
+    return not (':' in remote or ' ' in remote or '/' in remote)
+
+
 def _verify_remote(remote):
     """Verify that the lxd remote exists.
 
@@ -377,9 +524,7 @@ def _verify_remote(remote):
         check_output(['lxc', 'list', '{}:'.format(remote)])
     except FileNotFoundError:
         raise ContainerConnectionError(
-            'You must have LXD installed in order to use cleanbuild.\n'
-            'Refer to the documentation at '
-            'https://linuxcontainers.org/lxd/getting-started-cli.')
+            'You must have LXD installed in order to use cleanbuild.')
     except CalledProcessError as e:
         raise ContainerConnectionError(
             'There are either no permissions or the remote {!r} '

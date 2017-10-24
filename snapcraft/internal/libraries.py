@@ -66,10 +66,13 @@ def _get_system_libs():
     if _libraries:
         return _libraries
 
-    release = common.get_os_release_info()['VERSION_ID']
-    lib_path = os.path.join(common.get_librariesdir(), release)
+    try:
+        release = common.get_os_release_info()['VERSION_ID']
+        lib_path = os.path.join(common.get_librariesdir(), release)
+    except KeyError:
+        lib_path = None
 
-    if not os.path.exists(lib_path):
+    if not lib_path or not os.path.exists(lib_path):
         logger.debug('No libraries to exclude from this release')
         # Always exclude libc.so.6
         return frozenset(['libc.so.6'])

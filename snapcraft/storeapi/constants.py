@@ -22,11 +22,11 @@ DEFAULT_SERIES = '16'
 SCAN_STATUS_POLL_DELAY = 5
 SCAN_STATUS_POLL_RETRIES = 5
 UBUNTU_SSO_API_ROOT_URL = 'https://login.ubuntu.com/api/v2/'
-UBUNTU_STORE_API_ROOT_URL = 'https://myapps.developer.ubuntu.com/dev/api/'
-UBUNTU_STORE_SEARCH_ROOT_URL = 'https://search.apps.ubuntu.com/'
+UBUNTU_STORE_API_ROOT_URL = 'https://dashboard.snapcraft.io/dev/api/'
+UBUNTU_STORE_SEARCH_ROOT_URL = 'https://api.snapcraft.io/'
 UBUNTU_STORE_UPLOAD_ROOT_URL = 'https://upload.apps.ubuntu.com/'
-UBUNTU_STORE_TOS_URL = 'https://myapps.developer.ubuntu.com/dev/tos/'
-UBUNTU_STORE_ACCOUNT_URL = 'https://myapps.developer.ubuntu.com/dev/account/'
+UBUNTU_STORE_TOS_URL = 'https://dashboard.snapcraft.io/dev/tos/'
+UBUNTU_STORE_ACCOUNT_URL = 'https://dashboard.snapcraft.io/dev/account/'
 
 # Messages and warnings.
 MISSING_AGREEMENT = 'Developer has not signed agreement.'

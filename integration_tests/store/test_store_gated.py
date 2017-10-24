@@ -14,8 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-
 from testtools.matchers import Equals
 
 import integration_tests
@@ -24,21 +22,21 @@ import integration_tests
 class GatedTestCase(integration_tests.StoreTestCase):
 
     def setUp(self):
-        if os.getenv('TEST_STORE', 'fake') != 'fake':
+        super().setUp()
+        if not self.is_store_fake():
             self.skipTest('Right combination of snaps and IDs is not '
                           'available in real stores.')
-        super().setUp()
 
     def test_gated_success(self):
         self.addCleanup(self.logout)
         self.login()
         validations = [('snap-1', '3'), ('snap-2', '5')]
-        self.assertThat(self.gated('ubuntu-core', validations), Equals(0))
+        self.assertThat(self.gated('core', validations), Equals(0))
 
     def test_gated_no_login_failure(self):
         self.assertThat(
             self.gated(
-                'ubuntu-core',
+                'core',
                 expected_output='Have you run "snapcraft login'),
             Equals(2))
 

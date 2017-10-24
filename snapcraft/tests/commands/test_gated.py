@@ -24,7 +24,7 @@ from . import StoreCommandsBaseTestCase
 account_info_data = {
     'snaps': {
         '16': {
-            'ubuntu-core': {'snap-id': 'good'},
+            'core': {'snap-id': 'good'},
         }
     }
 }
@@ -44,7 +44,7 @@ class GatedCommandTestCase(StoreCommandsBaseTestCase):
     def test_gated_success(self):
         self.client.login('dummy', 'test correct password')
 
-        result = self.run_command(['gated', 'ubuntu-core'])
+        result = self.run_command(['gated', 'core'])
 
         self.assertThat(result.exit_code, Equals(0))
         expected_output = textwrap.dedent("""\
