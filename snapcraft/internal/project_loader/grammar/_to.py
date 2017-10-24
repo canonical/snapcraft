@@ -89,6 +89,15 @@ class ToStatement:
         if (len(self.selectors) == 1) and (target_arch in self.selectors):
             primitives = process_grammar(
                 self._body, self._project_options, self._checker)
+            # target arch is the default (not the host arch) in a to statement
+            new_primitives = set()
+            for primitive in primitives:
+                if ':' not in primitive:
+                    # deb_arch is target arch or host arch if both are the same
+                    primitive += ':{}'.format(
+                        self._project_options.deb_arch)
+                new_primitives.add(primitive)
+            primitives = new_primitives
         else:
             for else_body in self._else_bodies:
                 if not else_body:
