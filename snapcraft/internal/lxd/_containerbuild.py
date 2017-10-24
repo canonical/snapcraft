@@ -19,27 +19,24 @@ import json
 import logging
 import os
 import pipes
+import requests
+import requests_unixsocket
 import shutil
 import sys
 import tempfile
-from contextlib import contextmanager
-from subprocess import check_call, check_output, CalledProcessError, Popen
-from time import sleep
-from urllib import parse
-import requests
-import requests_unixsocket
-
-import petname
 import yaml
+from contextlib import contextmanager
+import subprocess
+import time
+from urllib import parse
 
+from snapcraft.internal import common
 from snapcraft.internal.errors import (
         ContainerConnectionError,
-        SnapcraftEnvironmentError,
         SnapdError,
 )
-from snapcraft.internal import common
-from snapcraft.internal.repo import snaps
 from snapcraft._options import _get_deb_arch
+from snapcraft.internal.repo import snaps
 
 logger = logging.getLogger(__name__)
 
@@ -87,49 +84,8 @@ class Containerbuild:
 
     def _get_remote_info(self):
         remote = self._container_name.split(':')[0]
-        return yaml.load(check_output([
+        return yaml.load(subprocess.check_output([
             'lxc', 'info', '{}:'.format(remote)]).decode())
-
-    def _push_file(self, src, dst):
-        check_call(['lxc', 'file', 'push',
-                    src, '{}{}'.format(self._container_name, dst)])
-
-    def _pull_file(self, src, dst):
-        check_call(['lxc', 'file', 'pull',
-                    '{}{}'.format(self._container_name, src), dst])
-
-    def _container_run(self, cmd, cwd=None, **kwargs):
-        sh = ''
-        # Automatically wait on lock files before running commands
-        if cmd[0] == 'apt-get':
-            lock_file = '/var/lib/dpkg/lock'
-            if cmd[1] == 'update':
-                lock_file = '/var/lib/apt/lists/lock'
-            sh += 'while fuser {} >/dev/null 2>&1; do sleep 1; done; '.format(
-                lock_file)
-        if cwd:
-            sh += 'cd {}; '.format(cwd)
-        if sh:
-            cmd = ['sh', '-c', '{}{}'.format(sh,
-                   ' '.join(pipes.quote(arg) for arg in cmd))]
-        check_call(['lxc', 'exec', self._container_name, '--'] + cmd,
-                   **kwargs)
-
-    def _ensure_container(self):
-        check_call([
-            'lxc', 'launch', '-e', self._image, self._container_name])
-        check_call([
-            'lxc', 'config', 'set', self._container_name,
-            'environment.SNAPCRAFT_SETUP_CORE', '1'])
-        if os.getenv('SNAPCRAFT_PARTS_URI'):
-            check_call([
-                'lxc', 'config', 'set', self._container_name,
-                'environment.SNAPCRAFT_PARTS_URI',
-                os.getenv('SNAPCRAFT_PARTS_URI')])
-        # Necessary to read asset files with non-ascii characters.
-        check_call([
-            'lxc', 'config', 'set', self._container_name,
-            'environment.LC_ALL', 'C.UTF-8'])
 
     @contextmanager
     def _ensure_started(self):
@@ -141,14 +97,29 @@ class Containerbuild:
             if status and status['status'] == 'Running':
                 # Stopping takes a while and lxc doesn't print anything.
                 print('Stopping {}'.format(self._container_name))
-                check_call(['lxc', 'stop', '-f', self._container_name])
+                subprocess.check_call([
+                    'lxc', 'stop', '-f', self._container_name])
 
     def _get_container_status(self):
-        containers = json.loads(check_output([
+        containers = json.loads(subprocess.check_output([
             'lxc', 'list', '--format=json', self._container_name]).decode())
         for container in containers:
             if container['name'] == self._container_name.split(':')[-1]:
                 return container
+
+    def _configure_container(self):
+        subprocess.check_call([
+            'lxc', 'config', 'set', self._container_name,
+            'environment.SNAPCRAFT_SETUP_CORE', '1'])
+        if os.getenv('SNAPCRAFT_PARTS_URI'):
+            subprocess.check_call([
+                'lxc', 'config', 'set', self._container_name,
+                'environment.SNAPCRAFT_PARTS_URI',
+                os.getenv('SNAPCRAFT_PARTS_URI')])
+        # Necessary to read asset files with non-ascii characters.
+        subprocess.check_call([
+            'lxc', 'config', 'set', self._container_name,
+            'environment.LC_ALL', 'C.UTF-8'])
 
     def execute(self, step='snap', args=None):
         with self._ensure_started():
@@ -167,7 +138,7 @@ class Containerbuild:
                 command += args
             try:
                 self._container_run(command, cwd=self._project_folder)
-            except CalledProcessError as e:
+            except subprocess.CalledProcessError as e:
                 if self._project_options.debug:
                     logger.info('Debug mode enabled, dropping into a shell')
                     self._container_run(['bash', '-i'])
@@ -178,16 +149,38 @@ class Containerbuild:
                 shutil.rmtree(self.tmp_dir)
                 self._finish()
 
-    def _setup_project(self):
-        logger.info('Setting up container with project assets')
-        tar_filename = self._source
-        # os.sep needs to be `/` and on Windows it will be set to `\`
-        dst = '{}/{}'.format(self._project_folder,
-                             os.path.basename(tar_filename))
-        self._container_run(['mkdir', self._project_folder])
-        self._push_file(tar_filename, dst)
-        self._container_run(['tar', 'xvf', os.path.basename(tar_filename)],
-                            cwd=self._project_folder)
+    def _container_run(self, cmd, cwd=None, **kwargs):
+        sh = ''
+        # Automatically wait on lock files before running commands
+        if cmd[0] == 'apt-get':
+            lock_file = '/var/lib/dpkg/lock'
+            if cmd[1] == 'update':
+                lock_file = '/var/lib/apt/lists/lock'
+            sh += 'while fuser {} >/dev/null 2>&1; do sleep 1; done; '.format(
+                lock_file)
+        if cwd:
+            sh += 'cd {}; '.format(cwd)
+        if sh:
+            cmd = ['sh', '-c', '{}{}'.format(sh,
+                   ' '.join(pipes.quote(arg) for arg in cmd))]
+        subprocess.check_call([
+            'lxc', 'exec', self._container_name, '--'] + cmd,
+            **kwargs)
+
+    def _wait_for_network(self):
+        logger.info('Waiting for a network connection...')
+        not_connected = True
+        retry_count = 5
+        while not_connected:
+            time.sleep(5)
+            try:
+                self._container_run(['python3', '-c', _NETWORK_PROBE_COMMAND])
+                not_connected = False
+            except subprocess.CalledProcessError as e:
+                retry_count -= 1
+                if retry_count == 0:
+                    raise e
+        logger.info('Network connection established')
 
     def _inject_snapcraft(self):
         if common.is_snap():
@@ -239,8 +232,9 @@ class Containerbuild:
         filepath = os.path.join(self.tmp_dir, filename)
         if rev.startswith('x'):
             logger.info('Making {} user-accessible'.format(filename))
-            check_call(['sudo', 'cp', installed, filepath])
-            check_call(['sudo', 'chown', str(os.getuid()), filepath])
+            subprocess.check_call(['sudo', 'cp', installed, filepath])
+            subprocess.check_call([
+                'sudo', 'chown', str(os.getuid()), filepath])
         else:
             shutil.copyfile(installed, filepath)
 
@@ -282,22 +276,22 @@ class Containerbuild:
 
     def _is_same_snap(self, filepath, name):
         # Compare checksums: user-visible version may still match
-        checksum = check_output(['sha384sum', filepath]).decode(
+        checksum = subprocess.check_output(['sha384sum', filepath]).decode(
             sys.getfilesystemencoding()).split()[0]
         try:
             # Find the current version in use in the container
-            rev = check_output([
+            rev = subprocess.check_output([
                 'lxc', 'exec', self._container_name, '--',
                 'readlink', '/snap/{}/current'.format(name)]
                 ).decode(sys.getfilesystemencoding()).strip()
             filename = '{}_{}.snap'.format(name, rev)
             installed = os.path.join(os.path.sep,
                                      'var', 'lib', 'snapd', 'snaps', filename)
-            checksum_container = check_output([
+            checksum_container = subprocess.check_output([
                 'lxc', 'exec', self._container_name, '--',
                 'sha384sum', installed]
                 ).decode(sys.getfilesystemencoding()).split()[0]
-        except CalledProcessError:
+        except subprocess.CalledProcessError:
             # Snap not installed
             checksum_container = None
         return checksum == checksum_container
@@ -307,175 +301,12 @@ class Containerbuild:
         with open(filepath, 'wb') as f:
             for assertion in assertions:
                 logger.info('Looking up assertion {}'.format(assertion))
-                f.write(check_output(['snap', 'known', *assertion]))
+                f.write(subprocess.check_output(['snap', 'known', *assertion]))
                 f.write(b'\n')
         container_filename = os.path.join(os.path.sep, 'run', filename)
         self._push_file(filepath, container_filename)
         logger.info('Adding assertion {}'.format(filename))
         self._container_run(['snap', 'ack', container_filename])
-
-    def _finish(self):
-        # os.sep needs to be `/` and on Windows it will be set to `\`
-        src = '{}/{}'.format(self._project_folder, self._snap_output)
-        self._pull_file(src, self._snap_output)
-        logger.info('Retrieved {}'.format(self._snap_output))
-
-    def _wait_for_network(self):
-        logger.info('Waiting for a network connection...')
-        not_connected = True
-        retry_count = 5
-        while not_connected:
-            sleep(5)
-            try:
-                self._container_run(['python3', '-c', _NETWORK_PROBE_COMMAND])
-                not_connected = False
-            except CalledProcessError as e:
-                retry_count -= 1
-                if retry_count == 0:
-                    raise e
-        logger.info('Network connection established')
-
-
-class Cleanbuilder(Containerbuild):
-
-    def __init__(self, *, output=None, source, project_options,
-                 metadata=None, remote=None):
-        container_name = petname.Generate(3, '-')
-        super().__init__(output=output, source=source,
-                         project_options=project_options, metadata=metadata,
-                         container_name=container_name, remote=remote)
-
-
-class Project(Containerbuild):
-
-    def __init__(self, *, output, source, project_options,
-                 metadata, remote=None):
-        super().__init__(output=output, source=source,
-                         project_options=project_options,
-                         metadata=metadata, container_name=metadata['name'],
-                         remote=remote)
-        self._processes = []
-
-    def _ensure_container(self):
-        if not self._get_container_status():
-            check_call([
-                'lxc', 'init', self._image, self._container_name])
-        if self._get_container_status()['status'] == 'Stopped':
-            check_call([
-                'lxc', 'config', 'set', self._container_name,
-                'environment.SNAPCRAFT_SETUP_CORE', '1'])
-            if os.getenv('SNAPCRAFT_PARTS_URI'):
-                check_call([
-                    'lxc', 'config', 'set', self._container_name,
-                    'environment.SNAPCRAFT_PARTS_URI',
-                    os.getenv('SNAPCRAFT_PARTS_URI')])
-            # Necessary to read asset files with non-ascii characters.
-            check_call([
-                'lxc', 'config', 'set', self._container_name,
-                'environment.LC_ALL', 'C.UTF-8'])
-            if self._container_name.startswith('local:'):
-                # Map host user to root inside container
-                check_call([
-                    'lxc', 'config', 'set', self._container_name,
-                    'raw.idmap',
-                    'both {} 0'.format(os.getenv('SUDO_UID', os.getuid()))])
-            # Remove existing device (to ensure we update old containers)
-            devices = self._get_container_status()['devices']
-            if self._project_folder in devices:
-                check_call([
-                    'lxc', 'config', 'device', 'remove', self._container_name,
-                    self._project_folder])
-            if 'fuse' not in devices:
-                check_call([
-                    'lxc', 'config', 'device', 'add', self._container_name,
-                    'fuse', 'unix-char', 'path=/dev/fuse'
-                    ])
-            try:
-                check_call([
-                    'lxc', 'start', self._container_name])
-            except CalledProcessError:
-                msg = 'The container could not be started.'
-                if self._container_name.startswith('local:'):
-                    msg += ('\nThe files /etc/subuid and /etc/subgid need to '
-                            'contain this line for mounting the local folder:'
-                            '\n    root:1000:1'
-                            '\nNote: Add the line to both files, do not '
-                            'remove any existing lines.'
-                            '\nRestart lxd after making this change.')
-                raise ContainerConnectionError(msg)
-
-    def _setup_project(self):
-        self._ensure_mount(self._project_folder, self._source)
-
-    def _ensure_mount(self, destination, source):
-        logger.info('Mounting {} into container'.format(source))
-        if not self._container_name.startswith('local:'):
-            return self._remote_mount(destination, source)
-
-        devices = self._get_container_status()['devices']
-        if destination not in devices:
-            check_call([
-                'lxc', 'config', 'device', 'add', self._container_name,
-                destination, 'disk', 'source={}'.format(source),
-                'path={}'.format(destination)])
-
-    def _remote_mount(self, destination, source):
-        # Pipes for sshfs and sftp-server to communicate
-        stdin1, stdout1 = os.pipe()
-        stdin2, stdout2 = os.pipe()
-        # XXX: This needs to be extended once we support other distros
-        try:
-            self._background_process_run(['/usr/lib/sftp-server'],
-                                         stdin=stdin1, stdout=stdout2)
-        except FileNotFoundError:
-            raise SnapcraftEnvironmentError(
-                'You must have openssh-sftp-server installed to use a LXD '
-                'remote on a different host.\n'
-                )
-        except CalledProcessError:
-            raise SnapcraftEnvironmentError(
-                'sftp-server seems to be installed but could not be run.\n'
-                )
-
-        # Use sshfs in slave mode to reverse mount the destination
-        self._container_run(['apt-get', 'install', '-y', 'sshfs'])
-        self._container_run(['mkdir', '-p', destination])
-        self._background_process_run([
-            'lxc', 'exec', self._container_name, '--',
-            'sshfs', '-o', 'slave', '-o', 'nonempty',
-            ':{}'.format(source), destination],
-            stdin=stdin2, stdout=stdout1)
-
-        # It may take a second or two for sshfs to come up
-        retry_count = 5
-        while retry_count:
-            sleep(1)
-            if check_output(['lxc', 'exec', self._container_name, '--',
-                             'ls', self._project_folder]):
-                return
-            retry_count -= 1
-        raise ContainerConnectionError(
-            'The project folder could not be mounted.\n'
-            'Fuse must be enabled on the LXD host.\n'
-            'You can run the following command to enable it:\n'
-            'echo Y | sudo tee /sys/module/fuse/parameters/userns_mounts')
-
-    def _background_process_run(self, cmd, **kwargs):
-        self._processes += [Popen(cmd, **kwargs)]
-
-    def _finish(self):
-        for process in self._processes:
-            logger.info('Terminating {}'.format(process.args))
-            process.terminate()
-
-    def execute(self, step='snap', args=None):
-        # clean with no parts deletes the container
-        if step == 'clean' and args == ['--step', 'pull']:
-            if self._get_container_status():
-                print('Deleting {}'.format(self._container_name))
-                check_call(['lxc', 'delete', '-f', self._container_name])
-        else:
-            super().execute(step, args)
 
 
 def _get_default_remote():
@@ -490,11 +321,12 @@ def _get_default_remote():
         raised if the lxc call fails.
     """
     try:
-        default_remote = check_output(['lxc', 'remote', 'get-default'])
+        default_remote = subprocess.check_output(
+            ['lxc', 'remote', 'get-default'])
     except FileNotFoundError:
         raise ContainerConnectionError(
             'You must have LXD installed in order to use cleanbuild.')
-    except CalledProcessError:
+    except subprocess.CalledProcessError:
         raise ContainerConnectionError(
             'Something seems to be wrong with your installation of LXD.')
     return default_remote.decode(sys.getfilesystemencoding()).strip()
@@ -521,11 +353,11 @@ def _verify_remote(remote):
     # There is no easy way to grep the results from `lxc remote list`
     # so we try and execute a simple operation against the remote.
     try:
-        check_output(['lxc', 'list', '{}:'.format(remote)])
+        subprocess.check_output(['lxc', 'list', '{}:'.format(remote)])
     except FileNotFoundError:
         raise ContainerConnectionError(
             'You must have LXD installed in order to use cleanbuild.')
-    except CalledProcessError as e:
+    except subprocess.CalledProcessError as e:
         raise ContainerConnectionError(
             'There are either no permissions or the remote {!r} '
             'does not exist.\n'
