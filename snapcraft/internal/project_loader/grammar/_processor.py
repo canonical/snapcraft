@@ -19,6 +19,7 @@ import re
 from .errors import GrammarSyntaxError
 
 _ON_CLAUSE_PATTERN = re.compile(r'\Aon\s+')
+_TO_CLAUSE_PATTERN = re.compile(r'\Ato\s+')
 _TRY_CLAUSE_PATTERN = re.compile(r'\Atry\Z')
 _ELSE_CLAUSE_PATTERN = re.compile(r'\Aelse\Z')
 _ELSE_FAIL_PATTERN = re.compile(r'\Aelse\s+fail\Z')
@@ -70,6 +71,7 @@ def process_grammar(grammar, project_options, checker):
 def _parse_dict(section, statement, statements, project_options,
                 checker):
     from ._on import OnStatement
+    from ._to import ToStatement
     from ._try import TryStatement
 
     for key, value in section.items():
@@ -82,6 +84,17 @@ def _parse_dict(section, statement, statements, project_options,
 
             statement = OnStatement(
                 on=key, body=value, project_options=project_options,
+                checker=checker)
+
+        if _TO_CLAUSE_PATTERN.match(key):
+            # We've come across the begining of a 'to' statement.
+            # That means any previous statement we found is complete.
+            # The first time through this may be None, but the
+            # collection will ignore it.
+            statements.add(statement)
+
+            statement = ToStatement(
+                to=key, body=value, project_options=project_options,
                 checker=checker)
 
         if _TRY_CLAUSE_PATTERN.match(key):

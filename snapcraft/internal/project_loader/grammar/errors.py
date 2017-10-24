@@ -39,6 +39,15 @@ class OnStatementSyntaxError(GrammarSyntaxError):
         super().__init__(message=': '.join(components))
 
 
+class ToStatementSyntaxError(GrammarSyntaxError):
+
+    def __init__(self, to_statement, *, message=None):
+        components = ["{!r} is not a valid 'to' clause".format(to_statement)]
+        if message:
+            components.append(message)
+        super().__init__(message=': '.join(components))
+
+
 class UnsatisfiedStatementError(GrammarError):
 
     fmt = 'Unable to satisfy {statement!r}, failure forced'
