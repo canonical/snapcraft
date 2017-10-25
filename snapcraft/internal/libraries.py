@@ -20,7 +20,7 @@ import logging
 import os
 import subprocess
 
-from snapcraft.internal import common
+from snapcraft.internal import common, repo
 
 
 logger = logging.getLogger(__name__)
@@ -73,9 +73,10 @@ def _get_system_libs():
         lib_path = None
 
     if not lib_path or not os.path.exists(lib_path):
-        logger.debug('No libraries to exclude from this release')
-        # Always exclude libc.so.6
-        return frozenset(['libc.so.6'])
+        logger.debug('Only excluding libc libraries from the release')
+        libc6_libs = [os.path.basename(l)
+                      for l in repo.Repo.get_package_libraries('libc6')]
+        return frozenset(libc6_libs)
 
     with open(lib_path) as fn:
         _libraries = frozenset(fn.read().split())
