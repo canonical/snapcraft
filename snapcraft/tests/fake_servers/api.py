@@ -458,6 +458,15 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                     }
                 }
             }).encode()
+        elif 'notanumber' in revision:
+            response_code = 400
+            payload = json.dumps({
+                'success': False,
+                'error_list': [{
+                    'code': 'invalid-field',
+                    'message': "The 'revision' field must be an integer"}],
+                'errors': {'revision': ['This field must be an integer.']}}
+            ).encode()
         else:
             raise NotImplementedError(
                 'Cannot handle release request for {!r}'.format(name))
@@ -674,9 +683,9 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                                    'status': 'Approved',
                                    'private': False, 'price': None,
                                    'since': '2016-12-12T01:01:01Z'},
-            'ubuntu-core': {'snap-id': 'good', 'status': 'Approved',
-                            'private': False, 'price': None,
-                            'since': '2016-12-12T01:01:01Z'},
+            'core': {'snap-id': 'good', 'status': 'Approved',
+                     'private': False, 'price': None,
+                     'since': '2016-12-12T01:01:01Z'},
             'core-no-dev': {'snap-id': 'no-dev', 'status': 'Approved',
                             'private': False, 'price': None,
                             'since': '2016-12-12T01:01:01Z'},

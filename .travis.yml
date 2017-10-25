@@ -24,6 +24,8 @@ jobs:
     - if: type != cron
       script: sudo ./tools/travis/run_tests.sh store
     - if: type != cron
+      script: sudo ./tools/travis/run_tests.sh containers
+    - if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapd
     # CLA check, only in pull requests, not comming from the bot.
     - if: type = pull_request AND sender != snappy-m-o

@@ -57,11 +57,14 @@ class BuildStateTestCase(BuildStateBaseTestCase):
             'build-attributes': ['test-build-attribute'],
             'build-packages': 'test-build-packages',
             'disable-parallel': 'test-disable-parallel',
-            'organize': {'baz': 'qux'}
+            'organize': {'baz': 'qux'},
+            'prepare': 'touch prepare',
+            'build': 'touch build',
+            'install': 'touch install',
         })
 
         properties = self.state.properties_of_interest(self.part_properties)
-        self.assertThat(len(properties), Equals(6))
+        self.assertThat(len(properties), Equals(9))
         self.assertThat(properties['foo'], Equals('bar'))
         self.assertThat(properties['after'], Equals('test-after'))
         self.assertThat(
@@ -71,6 +74,9 @@ class BuildStateTestCase(BuildStateBaseTestCase):
         self.assertThat(
             properties['disable-parallel'], Equals('test-disable-parallel'))
         self.assertThat(properties['organize'], Equals({'baz': 'qux'}))
+        self.assertThat(properties['prepare'], Equals('touch prepare'))
+        self.assertThat(properties['build'], Equals('touch build'))
+        self.assertThat(properties['install'], Equals('touch install'))
 
     def test_project_options_of_interest(self):
         options = self.state.project_options_of_interest(self.project)
