@@ -407,6 +407,9 @@ class StoreMetadataError(StoreError):
                     "    In snapcraft.yaml: {!r}".format(sent),
                     "    In the Store:      {!r}".format(error['message']),
                 ))
+            parts.extend((
+                "You can repeat the command with --force-metadata",
+                "to force the local values into the Store"))
             self.fmt = "\n".join(parts)
         elif 'error_list' in response_json:
             response_json['text'] = response_json['error_list'][0]['message']

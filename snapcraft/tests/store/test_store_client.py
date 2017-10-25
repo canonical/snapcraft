@@ -1327,13 +1327,13 @@ class UpdateMetadataTestCase(StoreTestCase):
     def test_requires_login(self):
         self.assertRaises(
             errors.InvalidCredentialsError,
-            self.client.update_metadata, 'basic', {}, 'amd64', False)
+            self.client.update_metadata, 'basic', {}, False)
 
     def test_refreshes_macaroon(self):
         self.client.login('dummy', 'test correct password')
         self.fake_store.needs_refresh = True
         metadata = {'field_ok': 'foo'}
-        self.client.update_metadata('basic', metadata, 'amd64', False)
+        self.client.update_metadata('basic', metadata, False)
         self.assertFalse(self.fake_store.needs_refresh)
 
     def test_invalid_data(self):
@@ -1341,14 +1341,14 @@ class UpdateMetadataTestCase(StoreTestCase):
         metadata = {'invalid': 'foo'}
         raised = self.assertRaises(
             errors.StoreMetadataError,
-            self.client.update_metadata, 'basic', metadata, 'amd64', False)
+            self.client.update_metadata, 'basic', metadata, False)
         self.assertThat(str(raised), Equals(
             "Received 400: 'Invalid field: invalid'"))
 
     def test_all_ok(self):
         self.client.login('dummy', 'test correct password')
         metadata = {'field_ok': 'foo'}
-        result = self.client.update_metadata('basic', metadata, 'amd64', False)
+        result = self.client.update_metadata('basic', metadata, False)
         self.assertIsNone(result)
 
     def test_conflicting_simple_normal(self):
@@ -1356,12 +1356,14 @@ class UpdateMetadataTestCase(StoreTestCase):
         metadata = {'test-conflict': 'value'}
         raised = self.assertRaises(
             errors.StoreMetadataError,
-            self.client.update_metadata, 'basic', metadata, 'amd64', False)
+            self.client.update_metadata, 'basic', metadata, False)
         should = """
             Metadata not updated!
             Conflict in 'test-conflict' field:
                 In snapcraft.yaml: 'value'
                 In the Store:      'value-changed'
+            You can repeat the command with --force-metadata
+            to force the local values into the Store
         """
         self.assertThat(str(raised), Equals(dedent(should).strip()))
 
@@ -1370,7 +1372,7 @@ class UpdateMetadataTestCase(StoreTestCase):
         metadata = {'test-conflict-1': 'value-1', 'test-conflict-2': 'value-2'}
         raised = self.assertRaises(
             errors.StoreMetadataError,
-            self.client.update_metadata, 'basic', metadata, 'amd64', False)
+            self.client.update_metadata, 'basic', metadata, False)
         should = """
             Metadata not updated!
             Conflict in 'test-conflict-1' field:
@@ -1379,6 +1381,8 @@ class UpdateMetadataTestCase(StoreTestCase):
             Conflict in 'test-conflict-2' field:
                 In snapcraft.yaml: 'value-2'
                 In the Store:      'value-2-changed'
+            You can repeat the command with --force-metadata
+            to force the local values into the Store
         """
         self.assertThat(str(raised), Equals(dedent(should).strip()))
 
@@ -1386,5 +1390,5 @@ class UpdateMetadataTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
         metadata = {'test-conflict': 'value'}
         # force the update, even on conflicts!
-        result = self.client.update_metadata('basic', metadata, 'amd64', True)
+        result = self.client.update_metadata('basic', metadata, True)
         self.assertIsNone(result)

@@ -364,14 +364,14 @@ class StoreClient():
     def sign_developer_agreement(self, latest_tos_accepted=False):
         return self.sca.sign_developer_agreement(latest_tos_accepted)
 
-    def update_metadata(self, snap_name, metadata, arch, force):
+    def update_metadata(self, snap_name, metadata, force):
         """Update the metadata in the server."""
         account_info = self.get_account_information()
         series = constants.DEFAULT_SERIES
         try:
             snap_id = account_info['snaps'][series][snap_name]['snap-id']
         except KeyError:
-            raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+            raise errors.SnapNotFoundError(snap_name, series=series)
 
         return self._refresh_if_necessary(
             self.sca.update_metadata, snap_id, snap_name, metadata, force)

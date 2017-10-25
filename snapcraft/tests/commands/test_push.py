@@ -209,8 +209,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             'description': 'Description of the most simple snap', 'summary':
             'Summary of the most simple snap',
         }
-        self.mock_metadata.assert_called_once_with(
-            'basic', metadata, 'amd64', False)
+        self.mock_metadata.assert_called_once_with('basic', metadata, False)
 
     def test_push_and_release_a_snap_to_N_channels(self):
         mock_tracker = mock.Mock(storeapi.StatusTracker)
@@ -281,8 +280,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             'description': 'Description of the most simple snap', 'summary':
             'Summary of the most simple snap',
         }
-        self.mock_metadata.assert_called_once_with(
-            'basic', metadata, 'amd64', False)
+        self.mock_metadata.assert_called_once_with('basic', metadata, False)
 
     def test_push_only_metadata_forced(self):
         patcher = mock.patch.object(storeapi.StoreClient, 'upload')
@@ -302,8 +300,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             'description': 'Description of the most simple snap', 'summary':
             'Summary of the most simple snap',
         }
-        self.mock_metadata.assert_called_once_with(
-            'basic', metadata, 'amd64', True)
+        self.mock_metadata.assert_called_once_with('basic', metadata, True)
 
     def test_metadata_release_mutually_excluded(self):
         result = self.run_command(

@@ -389,12 +389,11 @@ def update_metadata(snap_yaml, force):
 
     # other snap info
     snap_name = snap_yaml['name']
-    arch = snap_yaml['architectures'][0]
 
     # hit the server
     store = storeapi.StoreClient()
     with _requires_login():
-        store.update_metadata(snap_name, metadata, arch, force)
+        store.update_metadata(snap_name, metadata, force)
 
     logger.info("The metadata has been updated")
 
