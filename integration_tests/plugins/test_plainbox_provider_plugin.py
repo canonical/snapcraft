@@ -23,8 +23,8 @@ from testtools.matchers import FileExists
 import integration_tests
 
 
-class PlainboxProviderPluginTestCase(testscenarios.WithScenarios,
-                                     integration_tests.TestCase):
+class PlainboxProviderPluginStageTestCase(testscenarios.WithScenarios,
+                                          integration_tests.TestCase):
 
     scenarios = [
         ('basic', dict(project_directory='plainbox-provider')),
@@ -40,6 +40,9 @@ class PlainboxProviderPluginTestCase(testscenarios.WithScenarios,
                 self.stage_dir, 'providers', 'simple-plainbox-provider',
                 'plainbox-provider-simple.provider'),
             FileExists())
+
+
+class PlainboxProviderPluginTestCase(integration_tests.TestCase):
 
     def test_snap_provider_with_deps(self):
         project_dir = 'plainbox-provider-with-deps'

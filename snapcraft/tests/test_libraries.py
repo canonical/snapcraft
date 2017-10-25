@@ -146,3 +146,31 @@ class TestSystemLibsOnNewRelease(tests.TestCase):
 
     def test_fail_gracefully_if_system_libs_not_found(self):
         self.assertThat(libraries.get_dependencies('foo'), Equals([]))
+
+
+class TestSystemLibsOnReleasesWithNoVersionId(tests.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        libraries._libraries = None
+
+        patcher = mock.patch('snapcraft.internal.common.get_os_release_info')
+        distro_mock = patcher.start()
+        distro_mock.return_value = {'NAME': 'Gentoo',
+                                    'ID': 'gentoo',
+                                    'PRETTY_NAME': "Gentoo/Linux",
+                                    'ANSI_COLOR': "1;32",
+                                    'HOME_URL': "http://www.gentoo.org/",
+                                    'SUPPORT_URL':
+                                        "http://www.gentoo.org/main/en/support\
+                                        .xml",
+                                    'BUG_REPORT_URL':
+                                        "https://bugs.gentoo.org/"}
+        self.addCleanup(patcher.stop)
+
+    @mock.patch('snapcraft.internal.libraries.repo.Repo.get_package_libraries',
+                return_value=['/usr/lib/libc.so.6', '/lib/libpthreads.so.6'])
+    def test_fail_gracefully_if_no_version_id_found(self, mock_package_libs):
+        self.assertThat(libraries._get_system_libs(),
+                        Equals(frozenset(['libc.so.6', 'libpthreads.so.6'])))

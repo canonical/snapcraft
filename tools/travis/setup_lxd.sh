@@ -26,6 +26,7 @@ while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do
     sleep 1
 done
 apt-get install --yes snapd
+
 # Use edge because the feature to copy links to the container has not yet been
 # released to stable:
 # https://github.com/lxc/lxd/commit/004e7c361e1d914795d3ba7582654622e32ff193
@@ -36,7 +37,7 @@ snap install lxd --edge
 # From LXD's CI.
 # shellcheck disable=SC2034
 for i in $(seq 12); do
-    lxd waitready --timeout=10 >/dev/null 2>&1 && break
+    /snap/bin/lxd waitready --timeout=10 >/dev/null 2>&1 && break
 done
 
 /snap/bin/lxd init --auto

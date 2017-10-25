@@ -75,19 +75,14 @@ class SnapTestCase(integration_tests.TestCase):
             os.path.join(self.prime_dir, 'bin', 'not-wrapped.wrapper'),
             Not(FileExists()))
 
+        self.assertThat(
+            os.path.join(self.prime_dir, 'bin',
+                         'command-binary-wrapper-none.wrapper.wrapper'),
+            Not(FileExists()))
+
     def test_snap_default(self):
         self.copy_project_to_cwd('assemble')
         self.run_snapcraft([])
-
-        snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
-        self.assertThat(snap_file_path, FileExists())
-
-    def test_cleanbuild(self):
-        self.skipTest("Fails to run correctly on travis.")
-        self.run_snapcraft('cleanbuild', 'assemble')
-
-        snap_source_path = 'assemble_1.0_source.tar.bz2'
-        self.assertThat(snap_source_path, FileExists())
 
         snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
         self.assertThat(snap_file_path, FileExists())
@@ -103,6 +98,19 @@ class SnapTestCase(integration_tests.TestCase):
         # sure `snapcraft snap` and `snapcraft snap <directory>` are always in
         # sync).
         self.run_snapcraft(['snap', 'prime'])
+        self.assertThat(snap_file_path, FileExists())
+
+    def test_pack_directory(self):
+        self.copy_project_to_cwd('assemble')
+        self.run_snapcraft('snap')
+
+        snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
+        os.remove(snap_file_path)
+
+        # Verify that Snapcraft can snap its own snap directory (this will make
+        # sure `snapcraft snap` and `snapcraft pack <directory>` are always
+        # in sync).
+        self.run_snapcraft(['pack', 'prime'])
         self.assertThat(snap_file_path, FileExists())
 
     def test_snap_long_output_option(self):

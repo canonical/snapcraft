@@ -63,7 +63,7 @@ _ARCH_TRANSLATIONS = {
         'cross-build-packages': ['gcc-powerpc64le-linux-gnu',
                                  'libc6-dev-ppc64el-cross'],
         'triplet': 'powerpc64le-linux-gnu',
-        'core-dynamic-linker': '/lib64/ld64.so.2',
+        'core-dynamic-linker': 'lib64/ld64.so.2',
     },
     'ppc': {
         'kernel': 'powerpc',
@@ -89,7 +89,7 @@ _ARCH_TRANSLATIONS = {
         'cross-build-packages': ['gcc-s390x-linux-gnu',
                                  'libc6-dev-s390x-cross'],
         'triplet': 's390x-linux-gnu',
-        'core-dynamic-linker': '/lib/ld64.so.1',
+        'core-dynamic-linker': 'lib/ld64.so.1',
     }
 }
 
@@ -156,6 +156,13 @@ class ProjectOptions:
     @property
     def cross_compiler_prefix(self):
         try:
+            # cross-compilation of x86 32bit binaries on a x86_64 host is
+            # possible by reusing the native toolchain - let Kbuild figure
+            # it out by itself and pass down an empy cross-compiler-prefix
+            # to start the build
+            if (self.__platform_arch == 'x86_64' and
+                    self.__target_machine == 'i686'):
+                return ''
             return self.__machine_info['cross-compiler-prefix']
         except KeyError:
             raise SnapcraftEnvironmentError(

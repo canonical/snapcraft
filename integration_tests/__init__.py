@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import fileinput
+import glob
 import os
 import re
 import shutil
@@ -33,6 +34,7 @@ import yaml
 from unittest import mock
 from testtools import content
 from testtools.matchers import MatchesRegex
+
 from snapcraft import ProjectOptions as _ProjectOptions
 from snapcraft.internal.common import get_os_release_info
 from snapcraft.tests import (
@@ -110,11 +112,13 @@ class TestCase(testtools.TestCase):
         self.distro_series = get_os_release_info()['VERSION_CODENAME']
 
     def run_snapcraft(
-            self, command, project_dir=None, debug=True,
+            self, command=None, project_dir=None, debug=True,
             pre_func=lambda: None, env=None):
         if project_dir:
             self.copy_project_to_cwd(project_dir)
 
+        if command is None:
+            command = []
         if isinstance(command, str):
             command = [command]
         snapcraft_command = [self.snapcraft_command]
@@ -590,6 +594,30 @@ class StoreTestCase(TestCase):
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus
+
+
+class SnapdIntegrationTestCase(TestCase):
+
+    slow_test = False
+
+    def setUp(self):
+        super().setUp()
+        if (self.slow_test and
+                not os.environ.get('SNAPCRAFT_SLOW_TESTS', False)):
+            self.skipTest('Not running slow tests')
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
+
+    def install_snap(self):
+        try:
+            subprocess.check_output(
+                ['sudo', 'snap', 'install',
+                 glob.glob('*.snap')[0],
+                 '--dangerous'],
+                stderr=subprocess.STDOUT, universal_newlines=True)
+        except subprocess.CalledProcessError as e:
+            self.addDetail('output', content.text_content(e.output))
+            raise
 
 
 def get_package_version(package_name, series, deb_arch):
