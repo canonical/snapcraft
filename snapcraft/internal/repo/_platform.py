@@ -24,6 +24,7 @@ _DEB_BASED_PLATFORM = [
     'ubuntu',
     'debian',
     'elementary OS',
+    'elementary',
     'neon',
 ]
 
