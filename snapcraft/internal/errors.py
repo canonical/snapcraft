@@ -118,6 +118,17 @@ class ContainerConnectionError(ContainerError):
            'https://linuxcontainers.org/lxd/getting-started-cli.')
 
 
+class ContainerRunError(SnapcraftError):
+
+    fmt = (
+        'Command failed in the container: '
+        '{command!r} exited with {exit_code}\n'
+    )
+
+    def __init__(self, *, command, exit_code):
+        super().__init__(command=' '.join(command), exit_code=exit_code)
+
+
 class SnapdError(SnapcraftError):
     fmt = '{message}'
 

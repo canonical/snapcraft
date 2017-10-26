@@ -32,6 +32,7 @@ from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
 from snapcraft.internal.errors import (
     ContainerConnectionError,
+    ContainerRunError,
     SnapdError,
     SnapcraftEnvironmentError,
 )
@@ -138,10 +139,23 @@ class LXDTestCase(tests.TestCase):
         builder = self.make_cleanbuilder()
 
         raised = self.assertRaises(
-            CalledProcessError,
+            ContainerRunError,
             builder._wait_for_network)
 
-        self.assertThat(str(raised), Contains("Command '['my-cmd']'"))
+        self.assertThat(str(raised),
+                        Contains("Command failed in the container: 'python3"))
+
+    def test_generic_run_error(self):
+        def call_effect(*args, **kwargs):
+            if 'apt-get update' in ' '.join(args[0]):
+                raise CalledProcessError(returncode=255, cmd=args[0])
+            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
+
+        self.fake_lxd.check_call_mock.side_effect = call_effect
+
+        self.assertRaises(
+            ContainerRunError,
+            self.make_cleanbuilder().execute)
 
     def test_failed_container_never_created(self):
         def call_effect(*args, **kwargs):
@@ -158,21 +172,20 @@ class LXDTestCase(tests.TestCase):
         # lxc launch should fail and no further commands should come after that
         self.assertThat(str(raised), Contains("Command '['lxc', 'launch'"))
 
-    @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
-    def test_failed_build_with_debug(self, mock_run):
-        call_list = []
-
-        def run_effect(*args, **kwargs):
-            call_list.append(args[0])
-            if args[0][:4] == ['snapcraft', 'snap', '--output', 'snap.snap']:
+    def test_failed_build_with_debug(self):
+        def call_effect(*args, **kwargs):
+            if 'snapcraft snap --output snap.snap' in ' '.join(args[0]):
                 raise CalledProcessError(returncode=255, cmd=args[0])
+            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
 
-        mock_run.side_effect = run_effect
+        self.fake_lxd.check_call_mock.side_effect = call_effect
 
         self.project_options = ProjectOptions(debug=True)
         self.make_cleanbuilder().execute()
 
-        self.assertIn(['bash', '-i'], call_list)
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'exec', self.fake_lxd.name, '--', 'bash', '-i']),
+        ])
 
     @patch('snapcraft.internal.lxd.Cleanbuilder._container_run')
     def test_failed_build_without_debug(self, mock_run):
