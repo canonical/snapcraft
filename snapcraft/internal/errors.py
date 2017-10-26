@@ -39,8 +39,9 @@ class SnapcraftError(Exception):
 
 class MissingStateCleanError(SnapcraftError):
     fmt = (
-        "Failed to clean step {step!r}: Missing necessary state. This won't "
-        "work until a complete clean has occurred."
+        "Failed to clean step {step!r}: "
+        "Missing necessary state. "
+        "This won't work until a complete clean has occurred."
     )
 
     def __init__(self, step):
@@ -50,6 +51,7 @@ class MissingStateCleanError(SnapcraftError):
 class StepOutdatedError(SnapcraftError):
 
     fmt = (
+        'Failed to resume a snapcraft execution: '
         'The {step!r} step of {part!r} is out of date:\n'
         '{report}'
         'In order to continue, please clean that part\'s {step!r} step '
@@ -150,16 +152,23 @@ class SnapdError(SnapcraftError):
 class PrimeFileConflictError(SnapcraftError):
 
     fmt = (
+        'Failed to filter files: '
         'The following files have been excluded by the `stage` keyword, '
-        'but included by the `prime` keyword: {fileset!r}'
+        'but included by the `prime` keyword: {fileset!r}. '
+        'Edit the `snapcraft.yaml` to make sure that the files included in '
+        '`prime` are also included in `stage`.'
     )
 
 
 class InvalidAppCommandError(SnapcraftError):
 
     fmt = (
+        'Failed to generate snap metadata: '
         'The specified command {command!r} defined in the app {app!r} does '
         'not exist or is not executable'
+        # FIXME split the errors to include in the message how to fix them.
+        # https://bugs.launchpad.net/snapcraft/+bug/1727425
+        # --elopio - 2017-10-25
     )
 
     def __init__(self, command, app):
@@ -169,8 +178,9 @@ class InvalidAppCommandError(SnapcraftError):
 class InvalidContainerRemoteError(SnapcraftError):
 
     fmt = (
-        '{remote!r} is not a valid LXD remote name.\n'
-        "Colons, spaces and slashes can't be used.\n"
+        "Failed to use LXD remote: "
+        "{remote!r} is not a valid name.\n"
+        "Use a LXD remote without colons, spaces and slashes in the name.\n"
     )
 
     def __init__(self, remote):
@@ -180,7 +190,11 @@ class InvalidContainerRemoteError(SnapcraftError):
 class InvalidDesktopFileError(SnapcraftError):
 
     fmt = (
-        'Invalid desktop file {filename!r}: {message}'
+        'Failed to generate desktop file: '
+        'Invalid desktop file {filename!r}: {message}. '
+        # FIXME include how to fix each of the possible desktop file errors.
+        # https://bugs.launchpad.net/snapcraft/+bug/1727435
+        # --elopio - 2017-10-25
     )
 
     def __init__(self, filename, message):
@@ -190,39 +204,44 @@ class InvalidDesktopFileError(SnapcraftError):
 class SnapcraftPartMissingError(SnapcraftError):
 
     fmt = (
-        'Cannot find the definition for part {part_name!r}.\n'
-        'It may be a remote part, run `snapcraft update` '
-        'to refresh the remote parts cache.'
+        'Failed to get part information: '
+        'Cannot find the definition for part {part_name!r}. '
+        'If it is a remote part, run `snapcraft update` '
+        'to refresh the remote parts cache. '
+        'If it is a local part, make sure that it is defined in the '
+        '`snapcraft.yaml`.'
     )
 
 
 class PartNotInCacheError(SnapcraftError):
 
     fmt = (
-        'Cannot find the part name {part_name!r} in the cache. Please '
-        'run `snapcraft update` and try again.\nIf it is indeed missing, '
-        'consider going to https://wiki.ubuntu.com/snapcraft/parts '
-        'to add it.'
+        'Failed to get remote part information: '
+        'Cannot find the part name {part_name!r} in the cache. '
+        'If it is an existent remote part, run `snapcraft update` and try '
+        'again. If it has not been defined, consider going to '
+        'https://wiki.ubuntu.com/snapcraft/parts to add it.'
     )
 
 
 class PluginError(SnapcraftError):
 
-    fmt = 'Issue while loading part: {message}'
+    fmt = (
+        'Failed to load plugin: '
+        '{message}'
+        # FIXME include how to fix each of the possible plugin errors.
+        # https://bugs.launchpad.net/snapcraft/+bug/1727484
+        # --elopio - 2017-10-25
+    )
 
     def __init__(self, message):
         super().__init__(message=message)
 
 
-class PluginNotDefinedError(SnapcraftError):
-
-    fmt = ("Issues while validating snapcraft.yaml: the 'plugin' keyword is "
-           "missing for the {part_name} part.")
-
-
 class SnapcraftPartConflictError(SnapcraftError):
 
     fmt = (
+        'Failed to run the stage step: '
         'Parts {other_part_name!r} and {part_name!r} have the following file '
         'paths in common which have different contents:\n'
         '{file_paths}\n\n'
@@ -246,6 +265,7 @@ class SnapcraftPartConflictError(SnapcraftError):
 class MissingCommandError(SnapcraftError):
 
     fmt = (
+        'Failed to run command: '
         'One or more required commands are missing, please install:'
         ' {required_commands!r}'
     )
@@ -256,7 +276,13 @@ class MissingCommandError(SnapcraftError):
 
 class InvalidWikiEntryError(SnapcraftError):
 
-    fmt = 'Invalid wiki entry: {error!r}'
+    fmt = (
+        'Invalid wiki entry: '
+        '{error!r}'
+        # FIXME include how to fix each of the possible wiki errors.
+        # https://bugs.launchpad.net/snapcraft/+bug/1727490
+        # --elopio - 2017-10-25
+    )
 
     def __init__(self, error=None):
         super().__init__(error=error)
@@ -265,7 +291,10 @@ class InvalidWikiEntryError(SnapcraftError):
 class MissingGadgetError(SnapcraftError):
 
     fmt = (
-        'When creating gadget snaps you are required to provide a gadget.yaml file\n'  # noqa
+        'Failed to generate snap metadata: '
+        'Missing gadget.yaml file.\n'
+        'When creating gadget snaps you are required to provide a gadget.yaml '
+        'file\n'
         'in the root of your snapcraft project\n\n'
         'Read more about gadget snaps and the gadget.yaml on:\n'
         'https://github.com/snapcore/snapd/wiki/Gadget-snap')
@@ -296,14 +325,21 @@ class RequiredPathDoesNotExist(SnapcraftError):
 
 class SnapcraftPathEntryError(SnapcraftError):
 
-    fmt = 'The path {value!r} set for {key!r} in {app!r} does not exist.'
+    fmt = (
+        'Failed to generate snap metadata: '
+        'The path {value!r} set for {key!r} in {app!r} does not exist. '
+        'Make sure taht the files are in the `prime` directory.'
+    )
 
 
 class InvalidPullPropertiesError(SnapcraftError):
 
     fmt = (
+        'Failed to load plugin: '
         'Invalid pull properties specified by {plugin_name!r} plugin: '
         '{properties}'
+        # TODO add a link to some docs about pull properties?
+        # --elopio - 2017-10-25
     )
 
     def __init__(self, plugin_name, properties):
@@ -313,8 +349,11 @@ class InvalidPullPropertiesError(SnapcraftError):
 class InvalidBuildPropertiesError(SnapcraftError):
 
     fmt = (
+        'Failed to load plugin: '
         'Invalid build properties specified by {plugin_name!r} plugin: '
         '{properties}'
+        # TODO add a link to some docs about build properties?
+        # --elopio - 2017-10-25
     )
 
     def __init__(self, plugin_name, properties):
@@ -323,7 +362,10 @@ class InvalidBuildPropertiesError(SnapcraftError):
 
 class StagePackageDownloadError(SnapcraftError):
 
-    fmt = 'Error downloading stage packages for part {part_name!r}: {message}'
+    fmt = (
+        'Failed to fetch stage packages: '
+        'Error downloading stage packages for part {part_name!r}: {message}.'
+    )
 
     def __init__(self, part_name, message):
         super().__init__(part_name=part_name, message=message)

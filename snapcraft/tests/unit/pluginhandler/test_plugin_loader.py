@@ -43,8 +43,8 @@ class PluginLoaderTestCase(unit.TestCase):
             self.load_part,
             'fake-part', 'test_unexisting')
 
-        self.assertThat(str(raised), Equals(
-            "Issue while loading part: unknown plugin: 'test_unexisting'"))
+        self.assertThat(
+            raised.message, Equals("unknown plugin: 'test_unexisting'"))
 
         # Make sure that nothing was added to sys.path.
         self.assertThat(path, Equals(sys.path))
@@ -62,8 +62,8 @@ class PluginLoaderTestCase(unit.TestCase):
             self.load_part,
             'fake-part', '_ros')
 
-        self.assertThat(str(raised), Equals(
-            "Issue while loading part: no plugin found in module '_ros'"))
+        self.assertThat(
+            raised.message, Equals("no plugin found in module '_ros'"))
 
         # Make sure that nothing was added to sys.path.
         self.assertThat(path, Equals(sys.path))
@@ -199,10 +199,8 @@ class PluginLoaderTestCase(unit.TestCase):
             self.load_part,
             'fake-part', 'plugin')
 
-        self.assertThat(
-            str(raised),
-            Equals("Invalid pull properties specified by 'plugin' plugin: "
-                   "['bar']"))
+        self.assertThat(raised.plugin_name, Equals('plugin'))
+        self.assertThat(raised.properties, Equals(['bar']))
 
     def test_plugin_schema_invalid_build_hint(self):
         class Plugin(snapcraft.BasePlugin):
@@ -221,7 +219,5 @@ class PluginLoaderTestCase(unit.TestCase):
             errors.InvalidBuildPropertiesError,
             self.load_part, 'fake-part', 'plugin')
 
-        self.assertThat(
-            str(raised),
-            Equals("Invalid build properties specified by 'plugin' plugin: "
-                   "['bar']"))
+        self.assertThat(raised.plugin_name, Equals('plugin'))
+        self.assertThat(raised.properties, Equals(['bar']))

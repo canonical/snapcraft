@@ -343,17 +343,17 @@ class PluginTestCase(unit.TestCase):
             pluginhandler._get_file_list,
             ['rel', '/abs/include'])
 
-        self.assertThat(str(raised), Equals(
-            'Issue while loading part: path "/abs/include" must be relative'))
+        self.assertThat(
+            raised.message, Equals('path "/abs/include" must be relative'))
 
-    def test_filesets_exlcudes_without_relative_paths(self):
+    def test_filesets_excludes_without_relative_paths(self):
         raised = self.assertRaises(
             errors.PluginError,
             pluginhandler._get_file_list,
             ['rel', '-/abs/exclude'])
 
-        self.assertThat(str(raised), Equals(
-            'Issue while loading part: path "/abs/exclude" must be relative'))
+        self.assertThat(
+            raised.message, Equals('path "/abs/exclude" must be relative'))
 
 
 class MigratePluginTestCase(unit.TestCase):
@@ -2110,7 +2110,7 @@ class CollisionTestCase(unit.TestCase):
 
 class StagePackagesTestCase(unit.TestCase):
 
-    def test_missing_stage_package_displays_nice_error(self):
+    def test_missing_stage_package_raises_exception(self):
         fake_repo = Mock()
         fake_repo.get.side_effect = repo.errors.PackageNotFoundError(
             'non-existing')
@@ -2122,10 +2122,10 @@ class StagePackagesTestCase(unit.TestCase):
             errors.StagePackageDownloadError,
             part.prepare_pull)
 
+        self.assertThat(raised.part_name, Equals('stage-test'))
         self.assertThat(
-            str(raised),
-            Equals("Error downloading stage packages for part 'stage-test': "
-                   "The package 'non-existing' was not found."))
+            raised.message,
+            Equals("The package 'non-existing' was not found."))
 
 
 class FilesetsTestCase(unit.TestCase):
@@ -2165,11 +2165,7 @@ class FilesetsTestCase(unit.TestCase):
             errors.PrimeFileConflictError,
             pluginhandler._combine_filesets, fileset_1, fileset_2
         )
-        self.assertThat(
-            raised.__str__(),
-            Equals("The following files have been excluded by the `stage` "
-                   "keyword, but included by the `prime` keyword: {'a'}")
-        )
+        self.assertThat(raised.fileset, Equals({'a'}))
 
     def test_get_includes(self):
         fileset = ['-a', 'b']

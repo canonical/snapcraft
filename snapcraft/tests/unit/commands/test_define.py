@@ -36,16 +36,12 @@ class DefineCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
               plugin: autotools
               source: http://curl.org""")))
 
-    def test_defining_a_part_that_doesnt_exist_helps_out(self):
+    def test_defining_unexisting_part_raises_exception(self):
         raised = self.assertRaises(
             snapcraft.internal.errors.PartNotInCacheError,
             self.run_command, ['define', 'curler'])
 
-        self.assertThat(str(raised), Equals(
-            "Cannot find the part name 'curler' in the cache. Please run "
-            '`snapcraft update` and try again.\nIf it is indeed missing, '
-            'consider going to https://wiki.ubuntu.com/snapcraft/parts to add '
-            'it.'))
+        self.assertThat(raised.part_name, Equals('curler'))
 
     def test_defining_a_part_with_multiline_description(self):
         result = self.run_command(['define', 'multiline-part'])
