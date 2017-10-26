@@ -413,6 +413,10 @@ def push(snap_filename, release_channels=None,
     If only_metadata is True it will just send the metadata; otherwise the
     whole process is done (including sending the metadata after sending the
     snap binary).
+
+    force_metadata is passed to the update_metadata function directly; if True
+    it will force the local metadata into the Store, ignoring any possible
+    conflict.
     """
     snap_yaml = _get_data_from_snap_file(snap_filename)
     if only_metadata:
