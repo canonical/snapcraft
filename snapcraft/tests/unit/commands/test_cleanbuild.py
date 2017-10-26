@@ -153,8 +153,7 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
 
-        self.assertIn(
-            "'foo/bar' is not a valid LXD remote name",
-            str(self.assertRaises(
-                InvalidContainerRemoteError,
-                self.run_command, ['cleanbuild', '--remote', 'foo/bar'])))
+        exception = self.assertRaises(
+            InvalidContainerRemoteError,
+            self.run_command, ['cleanbuild', '--remote', 'foo/bar'])
+        self.assertThat(exception.remote, Equals('foo/bar'))

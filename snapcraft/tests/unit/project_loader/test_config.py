@@ -269,10 +269,7 @@ parts:
         raised = self.assertRaises(
             snapcraft.internal.errors.SnapcraftPartMissingError,
             _config.Config)
-        self.assertThat(str(raised), Contains(
-            'Cannot find the definition for part {!r}.\n'
-            'It may be a remote part, run `snapcraft update` to refresh '
-            'the remote parts cache.'.format('non-existing-part')))
+        self.assertThat(raised.part_name, Equals('non-existing-part'))
 
     def test_config_after_is_an_undefined_part(self):
         self.useFixture(fixture_setup.FakeParts())
@@ -294,10 +291,7 @@ parts:
         raised = self.assertRaises(
             snapcraft.internal.errors.SnapcraftPartMissingError,
             _config.Config)
-        self.assertThat(str(raised), Contains(
-            'Cannot find the definition for part {!r}.\n'
-            'It may be a remote part, run `snapcraft update` to refresh '
-            'the remote parts cache.'.format('non-existing-part')))
+        self.assertThat(raised.part_name, Equals('non-existing-part'))
 
     def test_config_adds_extra_build_tools_when_cross_compiling(self):
         with unittest.mock.patch('platform.machine') as machine_mock, \
@@ -2268,15 +2262,15 @@ class TestPluginLoadingProperties(unit.TestCase):
                     {property}: [{property}1]
             """).format(property=self.property))
 
-        expected_message = (
-            "Issue while loading part: properties failed to load for "
-            "part1: Additional properties are not allowed ('{}' was "
-            "unexpected)").format(self.property)
-
         raised = self.assertRaises(snapcraft.internal.errors.PluginError,
                                    project_loader.load_config)
 
-        self.assertThat(str(raised), Contains(expected_message))
+        self.assertThat(
+            raised.message,
+            Equals(
+                "properties failed to load for "
+                "part1: Additional properties are not allowed ('{}' was "
+                "unexpected)".format(self.property)))
 
 
 class TestFilesets(unit.TestCase):

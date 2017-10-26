@@ -28,6 +28,11 @@ For multiline strings, we prefer to use `textwrap.dedent`:
 
 (from https://docs.python.org/3/library/textwrap.html#textwrap.dedent)
 
+## Errors
+
+Error messages must say what happened, why it happened and what you can do to
+fix it.
+
 ## Tests
 
 * When asserting for equality, we prefer to use the `Equals` matcher from

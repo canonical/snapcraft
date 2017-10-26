@@ -467,13 +467,13 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 'Skipping build part1 (already ran)',
             ]))
 
+        self.assertThat(raised.step, Equals('stage'))
+        self.assertThat(raised.part, Equals('part1'))
         self.assertThat(
-            str(raised), Equals(
-                "The 'stage' step of 'part1' is out of date:\n"
+            raised.report,
+            Equals(
                 "The 'stage' step for 'part1' needs to be run again, but "
-                "'part2' depends on it.\n"
-                "In order to continue, please clean that part's 'stage' step "
-                "by running:\nsnapcraft clean part2 -s stage\n"))
+                "'part2' depends on it.\n"))
 
     def test_dirty_stage_part_with_unbuilt_dependent(self):
         self.make_snapcraft_yaml(
@@ -585,12 +585,13 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             self.fake_logger.output,
             Equals('Skipping pull part1 (already ran)\n'))
 
+        self.assertThat(raised.step, Equals('build'))
+        self.assertThat(raised.part, Equals('part1'))
         self.assertThat(
-            str(raised), Equals(
-                "The 'build' step of 'part1' is out of date:\n"
-                "The 'bar' and 'foo' part properties appear to have changed.\n"
-                "In order to continue, please clean that part's 'build' step "
-                "by running:\nsnapcraft clean part1 -s build\n"))
+            raised.report, Equals(
+                "The 'bar' and 'foo' part properties appear to have "
+                "changed.\n"))
+        self.assertThat(raised.parts_names, Equals('part1'))
 
     def test_dirty_pull_raises(self):
         self.make_snapcraft_yaml(
@@ -622,12 +623,13 @@ class ExecutionTestCase(BaseLifecycleTestCase):
 
         self.assertThat(self.fake_logger.output, Equals(''))
 
+        self.assertThat(raised.step, Equals('pull'))
+        self.assertThat(raised.part, Equals('part1'))
         self.assertThat(
-            str(raised), Equals(
-                "The 'pull' step of 'part1' is out of date:\n"
+            raised.report,
+            Equals(
                 "The 'bar' and 'foo' project options appear to have changed.\n"
-                "In order to continue, please clean that part's 'pull' step "
-                "by running:\nsnapcraft clean part1 -s pull\n"))
+            ))
 
     @mock.patch.object(snapcraft.BasePlugin, 'enable_cross_compilation')
     @mock.patch('snapcraft.repo.Repo.install_build_packages')
@@ -662,12 +664,12 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             self.fake_logger.output,
             Equals("Setting target machine to 'armhf'\n"))
 
+        self.assertThat(raised.step, Equals('pull'))
+        self.assertThat(raised.part, Equals('part1'))
         self.assertThat(
-            str(raised), Equals(
-                "The 'pull' step of 'part1' is out of date:\n"
-                "The 'deb_arch' project option appears to have changed.\n"
-                "In order to continue, please clean that part's 'pull' step "
-                "by running:\nsnapcraft clean part1 -s pull\n"))
+            raised.report,
+            Equals(
+                "The 'deb_arch' project option appears to have changed.\n"))
 
     def test_prime_excludes_internal_snapcraft_dir(self):
         self.make_snapcraft_yaml(
@@ -725,12 +727,12 @@ class DirtyBuildScriptletTestCase(BaseLifecycleTestCase):
             errors.StepOutdatedError,
             lifecycle.execute, 'build', snapcraft.ProjectOptions())
 
+        self.assertThat(raised.step, Equals('build'))
+        self.assertThat(raised.part, Equals('part1'))
         self.assertThat(
-            str(raised), Equals(
-                "The 'build' step of 'part1' is out of date:\n"
-                "The {!r} part property appears to have changed.\n"
-                "In order to continue, please clean that part's 'build' step "
-                "by running:\nsnapcraft clean part1 -s build\n".format(
+            raised.report,
+            Equals(
+                "The {!r} part property appears to have changed.\n".format(
                     self.scriptlet)))
 
 
