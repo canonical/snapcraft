@@ -41,7 +41,7 @@ class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
         self.build_packages.extend(['python-catkin-tools'])
 
         # Beta Warning
-        # Remove this comment and warning once ruby plugin is stable.
+        # Remove this comment and warning once catkin tools plugin is stable.
         logger.warn("The catkin tools plugin is currently in beta, "
                     "its API may break. Use at your own risk")
 
