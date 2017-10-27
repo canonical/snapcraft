@@ -121,7 +121,7 @@ class ToStatement:
 def _extract_to_clause_selectors(to):
     """Extract the list of selectors within a to clause.
 
-    :param str to: The 'to <selector' part of the 'to' clause.
+    :param str to: The 'to <selector>' part of the 'to' clause.
 
     :return: Selectors found within the 'to' clause.
     :rtype: set
