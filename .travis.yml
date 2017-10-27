@@ -5,6 +5,10 @@ services: [docker]
 
 language: bash
 
+cache:
+  directories:
+    - $TRAVIS_BUILD_DIR/snaps-cache
+
 jobs:
   include:
     # Tests, only when not triggered by the daily cron.
@@ -16,6 +20,9 @@ jobs:
       script: sudo ./tools/travis/run_tests.sh unit
     - if: type != cron
       script: SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh unit
+    - stage: snap
+      if: type != cron
+      script: sudo ./tools/travis/build_snapcraft_snap.sh
     - stage: integration
       if: type != cron
       script: sudo ./tools/travis/run_tests.sh integration
@@ -30,9 +37,6 @@ jobs:
     # CLA check, only in pull requests, not comming from the bot.
     - if: type = pull_request AND sender != snappy-m-o
       script: ./tools/travis/run_cla_check.sh
-    - stage: snap
-      if: type != cron
-      script: sudo ./tools/travis/build_snapcraft_snap.sh
     # Trigger edge tests, only in the daily cron.
     - stage: edge
       if: type = cron
