@@ -48,6 +48,13 @@ class ToStatementGrammarTestCase(GrammarTestCase):
             'target_arch': 'armhf',
             'expected_packages': {'foo:armhf'}
         }),
+        ('amd64 to armhf, arch specified', {
+            'to': 'to armhf',
+            'body': ['foo:amd64'],
+            'else_bodies': [],
+            'target_arch': 'armhf',
+            'expected_packages': {'foo:amd64'}
+        }),
         ('amd64 to i386', {
             'to': 'to armhf',
             'body': ['foo'],
@@ -72,6 +79,15 @@ class ToStatementGrammarTestCase(GrammarTestCase):
             ],
             'target_arch': 'i386',
             'expected_packages': {'bar'}
+        }),
+        ('used else, arch specified', {
+            'to': 'to armhf',
+            'body': ['foo'],
+            'else_bodies': [
+                ['bar:amd64']
+            ],
+            'target_arch': 'i386',
+            'expected_packages': {'bar:amd64'}
         }),
         ('third else ignored', {
             'to': 'to armhf',
