@@ -81,8 +81,11 @@ class Subversion(Base):
         commit = self.source_commit
 
         if not commit:  # retrieve the commit id
-            lines = subprocess.check_output(['svn', 'info', self.source_dir]
-                                            ).decode('utf-8').split('\n')
+            env = os.environ.copy()
+            env['LANG'] = 'C'
+            lines = subprocess.check_output(
+                ['svn', 'info', self.source_dir],
+                env=env).decode('utf-8').split('\n')
             prefix = 'Last Changed Rev: '
             for line in lines:
                 if line.startswith(prefix):
