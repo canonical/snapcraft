@@ -16,7 +16,7 @@
 import os
 import shutil
 import fixtures
-from unittest.mock import call
+from unittest.mock import call, patch, ANY
 
 from testtools.matchers import Contains, Equals, DirExists, FileExists, Not
 from snapcraft.tests import fixture_setup
@@ -110,7 +110,8 @@ parts:
         # clean should be a noop if no container exists yet/ anymore
         fake_lxd.check_call_mock.assert_not_called()
 
-    def test_clean_containerized_exists_stopped(self):
+    @patch('snapcraft.internal.lifecycle.clean')
+    def test_clean_containerized_exists_stopped(self, mock_lifecycle_clean):
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         # Container was created before, and isn't running
@@ -129,9 +130,13 @@ parts:
         ])
         # no other commands should be run in the container
         self.assertThat(fake_lxd.check_call_mock.call_count, Equals(1))
+        # clean should be called normally, outside of the container
+        mock_lifecycle_clean.assert_has_calls([
+            call(ANY, (), 'pull')])
 
     def test_clean_containerized_with_part(self):
         fake_lxd = fixture_setup.FakeLXD()
+        fake_lxd.name = 'local:snapcraft-clean-test'
         self.useFixture(fake_lxd)
         self.useFixture(fixtures.EnvironmentVariable(
                 'SNAPCRAFT_CONTAINER_BUILDS', '1'))
