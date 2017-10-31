@@ -33,6 +33,8 @@ from urllib import parse
 from snapcraft.internal import common
 from snapcraft.internal.errors import (
         ContainerConnectionError,
+        ContainerRunError,
+        ContainerSnapcraftCmdError,
         SnapdError,
 )
 from snapcraft._options import _get_deb_arch
@@ -138,7 +140,7 @@ class Containerbuild:
                 command += args
             try:
                 self._container_run(command, cwd=self._project_folder)
-            except subprocess.CalledProcessError as e:
+            except ContainerRunError as e:
                 if self._project_options.debug:
                     logger.info('Debug mode enabled, dropping into a shell')
                     self._container_run(['bash', '-i'])
@@ -151,6 +153,7 @@ class Containerbuild:
 
     def _container_run(self, cmd, cwd=None, **kwargs):
         sh = ''
+        original_cmd = cmd
         # Automatically wait on lock files before running commands
         if cmd[0] == 'apt-get':
             lock_file = '/var/lib/dpkg/lock'
@@ -163,9 +166,17 @@ class Containerbuild:
         if sh:
             cmd = ['sh', '-c', '{}{}'.format(sh,
                    ' '.join(pipes.quote(arg) for arg in cmd))]
-        subprocess.check_call([
-            'lxc', 'exec', self._container_name, '--'] + cmd,
-            **kwargs)
+        try:
+            subprocess.check_call([
+                'lxc', 'exec', self._container_name, '--'] + cmd,
+                **kwargs)
+        except subprocess.CalledProcessError as e:
+            if original_cmd[0] == 'snapcraft':
+                raise ContainerSnapcraftCmdError(command=original_cmd,
+                                                 exit_code=e.returncode)
+            else:
+                raise ContainerRunError(command=original_cmd,
+                                        exit_code=e.returncode)
 
     def _wait_for_network(self):
         logger.info('Waiting for a network connection...')
@@ -176,7 +187,7 @@ class Containerbuild:
             try:
                 self._container_run(['python3', '-c', _NETWORK_PROBE_COMMAND])
                 not_connected = False
-            except subprocess.CalledProcessError as e:
+            except ContainerRunError as e:
                 retry_count -= 1
                 if retry_count == 0:
                     raise e
