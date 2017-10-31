@@ -256,6 +256,14 @@ class Containerbuild:
                            is_dangerous=rev.startswith('x'),
                            is_classic=is_classic)
 
+    def _pull_file(self, src, dst):
+        subprocess.check_call(['lxc', 'file', 'pull',
+                               '{}{}'.format(self._container_name, src), dst])
+
+    def _push_file(self, src, dst):
+        subprocess.check_call(['lxc', 'file', 'push',
+                              src, '{}{}'.format(self._container_name, dst)])
+
     def _install_snap(self, name, channel=None,
                       is_dangerous=False,
                       is_classic=False):
