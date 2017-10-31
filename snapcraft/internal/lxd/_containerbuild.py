@@ -32,6 +32,7 @@ from urllib import parse
 
 from snapcraft.internal import common
 from snapcraft.internal.errors import (
+        ContainerRunError,
         ContainerConnectionError,
         SnapdError,
 )
@@ -138,7 +139,7 @@ class Containerbuild:
                 command += args
             try:
                 self._container_run(command, cwd=self._project_folder)
-            except subprocess.CalledProcessError as e:
+            except ContainerRunError as e:
                 if self._project_options.debug:
                     logger.info('Debug mode enabled, dropping into a shell')
                     self._container_run(['bash', '-i'])
@@ -163,9 +164,12 @@ class Containerbuild:
         if sh:
             cmd = ['sh', '-c', '{}{}'.format(sh,
                    ' '.join(pipes.quote(arg) for arg in cmd))]
-        subprocess.check_call([
-            'lxc', 'exec', self._container_name, '--'] + cmd,
-            **kwargs)
+        try:
+            subprocess.check_call([
+                'lxc', 'exec', self._container_name, '--'] + cmd,
+                **kwargs)
+        except subprocess.CalledProcessError as e:
+            raise ContainerRunError(command=cmd, exit_code=e.returncode)
 
     def _wait_for_network(self):
         logger.info('Waiting for a network connection...')
@@ -176,7 +180,7 @@ class Containerbuild:
             try:
                 self._container_run(['python3', '-c', _NETWORK_PROBE_COMMAND])
                 not_connected = False
-            except subprocess.CalledProcessError as e:
+            except ContainerRunError as e:
                 retry_count -= 1
                 if retry_count == 0:
                     raise e
