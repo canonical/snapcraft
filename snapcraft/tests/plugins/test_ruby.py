@@ -32,7 +32,7 @@ class RubyPluginTestCase(tests.TestCase):
 
         class Options(snapcraft.ProjectOptions):
             source = '.'
-            ruby_version = '2.4.0'
+            ruby_version = '2.4.2'
             gems = []
             use_bundler = False
 
