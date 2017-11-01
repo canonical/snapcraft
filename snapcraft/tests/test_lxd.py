@@ -32,6 +32,7 @@ from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
 from snapcraft.internal.errors import (
     ContainerConnectionError,
+    ContainerRunError,
     SnapdError,
     SnapcraftEnvironmentError,
 )
@@ -164,27 +165,23 @@ class ContainerbuildTestCase(LXDTestCase):
 
         builder = self.make_containerbuild()
 
-        raised = self.assertRaises(
-            CalledProcessError,
-            builder._wait_for_network)
+        self.assertRaises(ContainerRunError,
+                          builder._wait_for_network)
 
-        self.assertThat(str(raised), Contains("Command '['my-cmd']'"))
-
-    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
-    def test_failed_build_with_debug(self, mock_run):
-        call_list = []
-
-        def run_effect(*args, **kwargs):
-            call_list.append(args[0])
-            if args[0][:4] == ['snapcraft', 'snap', '--output', 'snap.snap']:
+    def test_failed_build_with_debug(self):
+        def call_effect(*args, **kwargs):
+            if 'snapcraft snap --output snap.snap' in ' '.join(args[0]):
                 raise CalledProcessError(returncode=255, cmd=args[0])
+            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
 
-        mock_run.side_effect = run_effect
+        self.fake_lxd.check_call_mock.side_effect = call_effect
 
         self.project_options = ProjectOptions(debug=True)
         self.make_containerbuild().execute()
 
-        self.assertIn(['bash', '-i'], call_list)
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'exec', self.fake_lxd.name, '--', 'bash', '-i']),
+        ])
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_failed_build_without_debug(self, mock_run):
@@ -524,11 +521,8 @@ class ProjectTestCase(ContainerbuildTestCase):
         d = self.fake_lxd.check_call_mock.side_effect
         self.fake_lxd.check_call_mock.side_effect = call_effect
 
-        self.assertIn(
-            'The container could not be started.\n',
-            str(self.assertRaises(
-                ContainerConnectionError,
-                self.make_containerbuild().execute)))
+        self.assertRaises(ContainerConnectionError,
+                          self.make_containerbuild().execute)
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_ftp_not_installed(self, mock_container_run):

@@ -18,7 +18,7 @@ import sys
 import traceback
 
 from . import echo
-import snapcraft.internal.errors
+from snapcraft.internal import errors
 
 
 def exception_handler(exception_type, exception, exception_traceback, *,
@@ -40,16 +40,18 @@ def exception_handler(exception_type, exception, exception_traceback, *,
     """
 
     exit_code = 1
-    is_snapcraft_error = issubclass(
-        exception_type, snapcraft.internal.errors.SnapcraftError)
+    is_snapcraft_error = issubclass(exception_type, errors.SnapcraftError)
 
     if debug or not is_snapcraft_error:
         traceback.print_exception(
             exception_type, exception, exception_traceback)
 
+    should_print_error = not debug and (
+        exception_type != errors.ContainerSnapcraftCmdError)
+
     if is_snapcraft_error:
         exit_code = exception.get_exit_code()
-        if not debug:
+        if should_print_error:
             echo.error(str(exception))
 
     sys.exit(exit_code)
