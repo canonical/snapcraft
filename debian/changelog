@@ -38,7 +38,7 @@ snapcraft (2.35) xenial; urgency=medium
 
   [ Leo Arias ]
   * typo: replace occured with occurred
-  * python node: record installed node packages in manifest
+  * node plugin: record installed node packages in manifest
   * node plugin: record the yarn.lock file
   * tests: fix the TEST_STORE environment variable
   * tests: add integration tests for build snaps
