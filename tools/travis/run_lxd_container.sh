@@ -52,6 +52,7 @@ $lxc config set "$name" environment.SNAPCRAFT_TEST_MOCK_MACHINE "$SNAPCRAFT_TEST
 $lxc config set "$name" environment.GH_TOKEN "$GH_TOKEN"
 $lxc config set "$name" environment.CODECOV_TOKEN "$CODECOV_TOKEN"
 $lxc config set "$name" environment.LC_ALL "C.UTF-8"
+$lxc config set "$name" environment.SNAPCRAFT_FROM_INSTALLED "1"
 
 $lxc exec "$name" -- apt update
 

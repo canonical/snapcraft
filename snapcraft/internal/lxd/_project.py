@@ -26,6 +26,8 @@ from snapcraft.internal.errors import (
         ContainerConnectionError,
         SnapcraftEnvironmentError,
 )
+from snapcraft.internal import lifecycle
+from snapcraft.cli import echo
 
 logger = logging.getLogger(__name__)
 
@@ -145,12 +147,16 @@ class Project(Containerbuild):
             logger.info('Terminating {}'.format(process.args))
             process.terminate()
 
-    def execute(self, step='snap', args=None):
+    def clean(self, parts, step):
         # clean with no parts deletes the container
-        if step == 'clean' and args == ['--step', 'pull']:
+        if step == 'pull':
             if self._get_container_status():
                 print('Deleting {}'.format(self._container_name))
                 subprocess.check_call([
                     'lxc', 'delete', '-f', self._container_name])
-        else:
-            super().execute(step, args)
+        # clean normally, without involving the container
+        if step == 'strip':
+            echo.warning('DEPRECATED: Use `prime` instead of `strip` '
+                         'as the step to clean')
+            step = 'prime'
+        lifecycle.clean(self._project_options, parts, step)
