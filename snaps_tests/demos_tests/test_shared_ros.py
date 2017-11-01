@@ -14,22 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snaps_tests
-
 import os
 import re
 import subprocess
-from unittest import skipUnless
 
-from snapcraft.internal.common import get_os_release_info
+from snapcraft.tests import skip
+import snaps_tests
 
 
 class SharedROSTestCase(snaps_tests.SnapsTestCase):
 
     snap_content_dir = 'shared-ros'
 
-    @skipUnless(get_os_release_info()['VERSION_CODENAME'] == 'xenial',
-                'This test fails on yakkety LP: #1614476')
+    @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
     def test_shared_ros(self):
         ros_base_path = os.path.join(self.snap_content_dir, 'ros-base')
         ros_app_path = os.path.join(self.snap_content_dir, 'ros-app')

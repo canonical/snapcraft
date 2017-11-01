@@ -327,3 +327,23 @@ class StagePackageDownloadError(SnapcraftError):
 
     def __init__(self, part_name, message):
         super().__init__(part_name=part_name, message=message)
+
+
+class OsReleaseIdError(SnapcraftError):
+
+    fmt = 'Unable to determine host OS ID'
+
+
+class OsReleaseNameError(SnapcraftError):
+
+    fmt = 'Unable to determine host OS name'
+
+
+class OsReleaseVersionIdError(SnapcraftError):
+
+    fmt = 'Unable to determine host OS version ID'
+
+
+class OsReleaseCodenameError(SnapcraftError):
+
+    fmt = 'Unable to determine host OS version codename'

@@ -36,7 +36,7 @@ from testtools import content
 from testtools.matchers import MatchesRegex
 
 from snapcraft import ProjectOptions as _ProjectOptions
-from snapcraft.internal.common import get_os_release_info
+from snapcraft.internal.os_release import OsRelease
 from snapcraft.tests import (
     fixture_setup,
     subprocess_utils
@@ -109,7 +109,8 @@ class TestCase(testtools.TestCase):
         self.prime_dir = 'prime'
 
         self.deb_arch = _ProjectOptions().deb_arch
-        self.distro_series = get_os_release_info()['VERSION_CODENAME']
+        release = OsRelease()
+        self.distro_series = release.version_codename()
 
     def run_snapcraft(
             self, command=None, project_dir=None, debug=True,
