@@ -94,7 +94,8 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
                  self.project.stage_dir, self.project.arch_triplet)
         env['CMAKE_LIBRARY_PATH'] = '$CMAKE_LIBRARY_PATH:' + ':'.join(
             ['{0}/lib', '{0}/usr/lib', '{0}/lib/{1}',
-             '{0}/usr/lib/{1}']).format(
+             '{0}/usr/lib/{1}', '{0}/usr/local/lib',
+             '{0}/usr/local/lib/{1}']).format(
                  self.project.stage_dir, self.project.arch_triplet)
 
         return env
