@@ -53,40 +53,24 @@ be preferred instead and no interpreter would be brought in through
 """
 
 import collections
-import json
+import contextlib
 import os
-import shutil
-import stat
-import subprocess
-import tempfile
-from contextlib import contextmanager, suppress
-from glob import glob
+import re
 from shutil import which
+import subprocess
 from textwrap import dedent
 
 import requests
 
 import snapcraft
-from snapcraft import file_utils
 from snapcraft.common import isurl
 from snapcraft.internal import mangling
+from snapcraft.plugins import _python
 
 
-_SITECUSTOMIZE_TEMPLATE = dedent("""\
-    import site
-    import os
+class UnsupportedPythonVersionError(snapcraft.internal.errors.SnapcraftError):
 
-    snap_dir = os.getenv("SNAP")
-    snapcraft_stage_dir = os.getenv("SNAPCRAFT_STAGE")
-    snapcraft_part_install = os.getenv("SNAPCRAFT_PART_INSTALL")
-
-    for d in (snap_dir, snapcraft_stage_dir, snapcraft_part_install):
-        if d:
-            site_dir = os.path.join(d, "{site_dir}")
-            site.addsitedir(site_dir)
-
-    if snap_dir:
-        site.ENABLE_USER_SITE = False""")
+    fmt = 'Unsupported python version: {python_version!r}'
 
 
 class PythonPlugin(snapcraft.BasePlugin):
@@ -159,199 +143,62 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     @property
     def stage_packages(self):
-        if not os.path.exists(self._get_python_command()):
+        try:
+            _python.get_python_command(
+                self._python_major_version, stage_dir=self.project.stage_dir,
+                install_dir=self.installdir)
+        except _python.errors.MissingPythonCommandError:
             return super().stage_packages + self.plugin_stage_packages
         else:
             return super().stage_packages
 
+    @property
+    def _pip(self):
+        if not self.__pip:
+            self.__pip = _python.Pip(
+                python_major_version=self._python_major_version,
+                part_dir=self.partdir,
+                install_dir=self.installdir,
+                stage_dir=self.project.stage_dir)
+        return self.__pip
+
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.build_packages.extend(self.plugin_build_packages)
-        self._python_package_dir = os.path.join(self.partdir, 'packages')
         self._manifest = collections.OrderedDict()
+
+        # Pip requires only the major version of python rather than the command
+        # name like our option requires.
+        match = re.match(
+            'python(?P<major_version>\d).*', self.options.python_version)
+        if not match:
+            raise UnsupportedPythonVersionError(
+                python_version=self.options.python_version)
+
+        self._python_major_version = match.group('major_version')
+        self.__pip = None
 
     def pull(self):
         super().pull()
 
-        setup = 'setup.py'
-        if os.listdir(self.sourcedir):
-            setup = os.path.join(self.sourcedir, 'setup.py')
+        self._pip.setup()
+
         with simple_env_bzr(os.path.join(self.installdir, 'bin')):
-            self._run_pip(setup, download=True)
+            # Download this project, using its setup.py if present. This will
+            # also download any python-packages requested.
+            self._download_project()
 
     def clean_pull(self):
         super().clean_pull()
-
-        if os.path.isdir(self._python_package_dir):
-            shutil.rmtree(self._python_package_dir)
-
-    def _get_python_command(self):
-        python_command = os.path.join(
-            'usr', 'bin', self.options.python_version)
-
-        # staged as in project.stage_dir, not from a stage-packages entry
-        # in this part.
-        staged_python = os.path.join(self.project.stage_dir, python_command)
-        unstaged_python = os.path.join(self.installdir, python_command)
-
-        if os.path.exists(staged_python):
-            return staged_python
-        else:
-            return unstaged_python
-
-    def _get_python_headers(self):
-        base_match = os.path.join('usr', 'include', '{}*'.format(
-            self.options.python_version))
-        unstaged_python = glob(os.path.join(os.path.sep, base_match))
-        staged_python = glob(os.path.join(self.project.stage_dir, base_match))
-
-        if staged_python:
-            return staged_python[0]
-        elif unstaged_python:
-            return unstaged_python[0]
-        else:
-            return ''
-
-    def _install_pip(self, download):
-        env = self._get_build_env()
-        # since we are using an independent env we need to export this too
-        # TODO: figure out if we can move back to common.run
-        env['SNAPCRAFT_STAGE'] = self.project.stage_dir
-        env['SNAPCRAFT_PART_INSTALL'] = self.installdir
-        # If python_command is not from stage we don't have pip, which means
-        # we are going to need to resort to the pip installed on the system
-        # that came from build-packages. This shouldn't be a problem as
-        # stage-packages and build-packages should match.
-        if not self._get_python_command().startswith(self.project.stage_dir):
-            env['PYTHONHOME'] = '/usr'
-
-        args = ['pip', 'setuptools', 'wheel']
-
-        pip_command = [self._get_python_command(), '-m', 'pip']
-
-        pip = _Pip(exec_func=subprocess.check_call,
-                   runnable=pip_command,
-                   package_dir=self._python_package_dir, env=env,
-                   extra_install_args=['--ignore-installed'])
-
-        if download:
-            pip.download(args)
-        pip.install(args)
-
-    def _get_build_env(self):
-        env = os.environ.copy()
-        env['PYTHONUSERBASE'] = self.installdir
-        if self._get_python_command().startswith(self.project.stage_dir):
-            env['PYTHONHOME'] = os.path.join(self.project.stage_dir, 'usr')
-        else:
-            env['PYTHONHOME'] = os.path.join(self.installdir, 'usr')
-
-        env['PATH'] = '{}:{}'.format(
-            os.path.join(self.installdir, 'usr', 'bin'),
-            os.path.expandvars('$PATH'))
-
-        headers = self._get_python_headers()
-        if headers:
-            current_cppflags = env.get('CPPFLAGS', '')
-            env['CPPFLAGS'] = '-I{}'.format(headers)
-            if current_cppflags:
-                env['CPPFLAGS'] = '{} {}'.format(
-                    env['CPPFLAGS'], current_cppflags)
-
-        return env
-
-    def _get_commands(self, setup):
-        args = []
-        cwd = None
-        if self.options.requirements:
-            requirements = self.options.requirements
-            if not isurl(requirements):
-                requirements = os.path.join(self.sourcedir,
-                                            self.options.requirements)
-
-            args.extend(['--requirement', requirements])
-        if os.path.exists(setup):
-            args.append('.')
-            cwd = os.path.dirname(setup)
-
-        if self.options.python_packages:
-            args.extend(self.options.python_packages)
-
-        if args:
-            return [dict(args=args, cwd=cwd)]
-        else:
-            return []
-
-    def _setup_tools_install(self, setup_file):
-        command = [
-            self._get_python_command(),
-            os.path.basename(setup_file), '--no-user-cfg', 'install',
-            '--single-version-externally-managed',
-            '--user', '--record', 'install.txt']
-        cwd = os.path.dirname(setup_file)
-        self.run(
-            command, env=self._get_build_env(),
-            cwd=cwd)
-
-    def _run_pip(self, setup, download=False):
-        self._install_pip(download)
-
-        env = self._get_build_env()
-
-        pip_command = [self._get_python_command(), '-m', 'pip']
-
-        constraints = []
-        if self.options.constraints:
-            if isurl(self.options.constraints):
-                constraints = self.options.constraints
-            else:
-                constraints = os.path.join(self.sourcedir,
-                                           self.options.constraints)
-
-        pip = _Pip(exec_func=self.run,
-                   runnable=pip_command,
-                   package_dir=self._python_package_dir, env=env,
-                   constraints=constraints,
-                   dependency_links=self.options.process_dependency_links)
-
-        commands = self._get_commands(setup)
-
-        if download:
-            for command in commands:
-                pip.download(**command)
-        else:
-            for command in commands:
-                wheels = pip.wheel(**command)
-                installed = pip.list(self.run_output)
-                wheel_names = [os.path.basename(w).split('-')[0]
-                               for w in wheels]
-                # we want to avoid installing what is already provided in
-                # stage-packages
-                need_install = [k for k in wheel_names if k not in installed]
-                pip.install(need_install + ['--no-deps', '--upgrade'])
-            if os.path.exists(setup):
-                # pbr and others don't work using `pip install .`
-                # LP: #1670852
-                # There is also a chance that this setup.py is distutils based
-                # in which case we will rely on the `pip install .` ran before
-                #  this.
-                with suppress(subprocess.CalledProcessError):
-                    self._setup_tools_install(setup)
-        return pip.list(self.run_output)
-
-    def _fix_permissions(self):
-        for root, dirs, files in os.walk(self.installdir):
-            for filename in files:
-                _replicate_owner_mode(os.path.join(root, filename))
-            for dirname in dirs:
-                _replicate_owner_mode(os.path.join(root, dirname))
+        self._pip.clean_packages()
 
     def build(self):
         super().build()
 
-        setup_file = os.path.join(self.builddir, 'setup.py')
         with simple_env_bzr(os.path.join(self.installdir, 'bin')):
-            installed_pipy_packages = self._run_pip(setup_file)
+            # Install the packages that have already been downloaded
+            installed_pipy_packages = self._install_project()
+
         # We record the requirements and constraints files only if they are
         # remote. If they are local, they are already tracked with the source.
         if self.options.requirements:
@@ -365,12 +212,103 @@ class PythonPlugin(snapcraft.BasePlugin):
             for name in installed_pipy_packages
         ]
 
-        self._fix_permissions()
+        _python.generate_sitecustomize(
+            self._python_major_version, stage_dir=self.project.stage_dir,
+            install_dir=self.installdir)
 
-        # Fix all shebangs to use the in-snap python.
+    def _get_setup_py_dir(self):
+        setup_py_dir = None
+        setup_py = 'setup.py'
+        if os.listdir(self.sourcedir):
+            setup_py = os.path.join(self.sourcedir, 'setup.py')
+        if os.path.exists(setup_py):
+            setup_py_dir = os.path.dirname(setup_py)
+
+        return setup_py_dir
+
+    def _get_constraints(self):
+        constraints = None
+        if self.options.constraints:
+            if isurl(self.options.constraints):
+                constraints = {self.options.constraints}
+            else:
+                constraints = {os.path.join(
+                    self.sourcedir, self.options.constraints)}
+        return constraints
+
+    def _get_requirements(self):
+        requirements = None
+        if self.options.requirements:
+            if isurl(self.options.requirements):
+                requirements = {self.options.requirements}
+            else:
+                requirements = {os.path.join(
+                    self.sourcedir, self.options.requirements)}
+
+        return requirements
+
+    def _install_wheels(self, wheels):
+        installed = self._pip.list()
+        wheel_names = [os.path.basename(w).split('-')[0]
+                       for w in wheels]
+
+        # we want to avoid installing what is already provided in
+        # stage-packages
+        need_install = [k for k in wheel_names if k not in installed]
+        self._pip.install(
+            need_install, upgrade=True, install_deps=False,
+            process_dependency_links=self.options.process_dependency_links)
+
+    def _download_project(self):
+        setup_py_dir = self._get_setup_py_dir()
+        constraints = self._get_constraints()
+        requirements = self._get_requirements()
+
+        self._pip.download(
+            self.options.python_packages, setup_py_dir=setup_py_dir,
+            constraints=constraints, requirements=requirements,
+            process_dependency_links=self.options.process_dependency_links)
+
+    def _install_project(self):
+        setup_py_dir = self._get_setup_py_dir()
+        constraints = self._get_constraints()
+        requirements = self._get_requirements()
+
+        wheels = self._pip.wheel(
+            self.options.python_packages, setup_py_dir=setup_py_dir,
+            constraints=constraints, requirements=requirements,
+            process_dependency_links=self.options.process_dependency_links)
+
+        self._install_wheels(wheels)
+
+        if setup_py_dir is not None:
+            setup_py_path = os.path.join(setup_py_dir, 'setup.py')
+            if os.path.exists(setup_py_path):
+                # pbr and others don't work using `pip install .`
+                # LP: #1670852
+                # There is also a chance that this setup.py is distutils based
+                # in which case we will rely on the `pip install .` ran before
+                #  this.
+                with contextlib.suppress(subprocess.CalledProcessError):
+                    self._setup_tools_install(setup_py_path)
+
+        return self._pip.list()
+
+    def _setup_tools_install(self, setup_file):
+        command = [
+            _python.get_python_command(
+                self._python_major_version, stage_dir=self.project.stage_dir,
+                install_dir=self.installdir),
+            os.path.basename(setup_file), '--no-user-cfg', 'install',
+            '--single-version-externally-managed',
+            '--user', '--record', 'install.txt']
+        self.run(
+            command, env=self._pip.env(),
+            cwd=os.path.dirname(setup_file))
+
+        # Fix all shebangs to use the in-snap python. The stuff installed from
+        # pip has already been fixed, but anything done in this step has not.
         mangling.rewrite_python_shebangs(self.installdir)
-
-        self._setup_sitecustomize()
 
     def _get_file_contents(self, path):
         if isurl(path):
@@ -379,47 +317,6 @@ class PythonPlugin(snapcraft.BasePlugin):
             file_path = os.path.join(self.sourcedir, path)
             with open(file_path) as _file:
                 return _file.read()
-
-    def _setup_sitecustomize(self):
-        # This avoids needing to leak PYTHONUSERBASE
-        # USER_SITE and USER_BASE default to base of SNAP for when used in
-        # runtime and to SNAPCRAFT_STAGE to support chaining dependencies
-        # when used with the `after` keyword.
-        site_dir = self._get_user_site_dir()
-        sitecustomize_path = self._get_sitecustomize_path()
-
-        # python from the archives has a sitecustomize symlinking to /etc which
-        # is distro specific and not needed for a snap.
-        if os.path.islink(sitecustomize_path):
-            os.unlink(sitecustomize_path)
-
-        # Now create our sitecustomize
-        os.makedirs(os.path.dirname(sitecustomize_path), exist_ok=True)
-        with open(sitecustomize_path, 'w') as f:
-            f.write(_SITECUSTOMIZE_TEMPLATE.format(site_dir=site_dir))
-
-    def _get_user_site_dir(self):
-        user_site_dir = glob(os.path.join(
-            self.installdir, 'lib', '{}*'.format(self.options.python_version),
-            'site-packages'))[0]
-
-        return user_site_dir[len(self.installdir)+1:]
-
-    def _get_sitecustomize_path(self):
-        if self._get_python_command().startswith(self.project.stage_dir):
-            base_dir = self.project.stage_dir
-        else:
-            base_dir = self.installdir
-
-        python_site = glob(os.path.join(
-            base_dir, 'usr', 'lib',
-            '{}*'.format(self.options.python_version),
-            'site.py'))[0]
-        python_site_dir = os.path.dirname(python_site)
-
-        return os.path.join(self.installdir,
-                            python_site_dir[len(base_dir)+1:],
-                            'sitecustomize.py')
 
     def get_manifest(self):
         return self._manifest
@@ -440,103 +337,7 @@ class PythonPlugin(snapcraft.BasePlugin):
         return fileset
 
 
-class _Pip:
-
-    def __init__(self, *, exec_func, runnable, package_dir, env,
-                 constraints=None, dependency_links=None,
-                 extra_install_args=None):
-        self._exec_func = exec_func
-        if isinstance(runnable, str):
-            self._runnable = [runnable]
-        else:
-            self._runnable = runnable
-        self._package_dir = package_dir
-        self._env = env
-
-        self._extra_install_args = extra_install_args or []
-
-        self._extra_pip_args = []
-        if constraints:
-            self._extra_pip_args.extend(['--constraint', constraints])
-
-        if dependency_links:
-            self._extra_pip_args.append('--process-dependency-links')
-
-    def list(self, exec_func=None):
-        """Return a dict of installed python packages with versions."""
-        if not exec_func:
-            exec_func = self._exec_func
-        cmd = [*self._runnable, 'list', '--format=json']
-
-        output = exec_func(cmd, env=self._env)
-        packages = collections.OrderedDict()
-        for package in json.loads(
-                output, object_pairs_hook=collections.OrderedDict):
-            packages[package['name']] = package['version']
-        return packages
-
-    def wheel(self, args, **kwargs):
-        cmd = [
-            *self._runnable, 'wheel',
-            '--disable-pip-version-check', '--no-index',
-            '--find-links', self._package_dir,
-        ]
-        cmd.extend(self._extra_pip_args)
-
-        os.makedirs(self._package_dir, exist_ok=True)
-
-        wheels = []
-        with tempfile.TemporaryDirectory() as temp_dir:
-            cmd.extend(['--wheel-dir', temp_dir])
-            cmd.extend(args)
-            self._exec_func(cmd, env=self._env, **kwargs)
-            wheels = os.listdir(temp_dir)
-            for wheel in wheels:
-                file_utils.link_or_copy(
-                    os.path.join(temp_dir, wheel),
-                    os.path.join(self._package_dir, wheel))
-
-        return [os.path.join(self._package_dir, wheel) for wheel in wheels]
-
-    def download(self, args, **kwargs):
-        cmd = [
-            *self._runnable, 'download',
-            '--disable-pip-version-check',
-            '--dest', self._package_dir,
-        ]
-        cmd.extend(self._extra_pip_args)
-        cmd.extend(args)
-
-        os.makedirs(self._package_dir, exist_ok=True)
-        self._exec_func(cmd, env=self._env, **kwargs)
-
-    def install(self, args, **kwargs):
-        cmd = [
-            *self._runnable, 'install', '--user', '--no-compile',
-            '--disable-pip-version-check', '--no-index',
-            '--find-links', self._package_dir,
-        ]
-        cmd.extend(self._extra_pip_args)
-        cmd.extend(self._extra_install_args)
-        cmd.extend(args)
-
-        self._exec_func(cmd, env=self._env, **kwargs)
-
-
-def _replicate_owner_mode(path):
-    if not os.path.exists(path):
-        return
-
-    file_mode = os.stat(path).st_mode
-    new_mode = file_mode & stat.S_IWUSR
-    if file_mode & stat.S_IXUSR:
-        new_mode |= stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
-    if file_mode & stat.S_IRUSR:
-        new_mode |= stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
-    os.chmod(path, new_mode)
-
-
-@contextmanager
+@contextlib.contextmanager
 def simple_env_bzr(bin_dir):
     """Create an appropriate environment to run bzr.
 

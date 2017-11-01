@@ -202,7 +202,7 @@ class PythonPluginTestCase(integration.TestCase):
         self.run_snapcraft('pull', 'pip-bzr')
         self.assertThat(
             glob(os.path.join(
-                self.parts_dir, 'pip-bzr', 'packages',
+                self.parts_dir, 'pip-bzr', 'python-packages',
                 'curtin-*.zip'))[0],
             FileExists())
 
