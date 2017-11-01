@@ -153,7 +153,7 @@ class Containerbuild:
 
     def _container_run(self, cmd, cwd=None, **kwargs):
         sh = ''
-        original_cmd = cmd
+        original_cmd = cmd.copy()
         # Automatically wait on lock files before running commands
         if cmd[0] == 'apt-get':
             lock_file = '/var/lib/dpkg/lock'
