@@ -18,11 +18,10 @@ import os
 import re
 import subprocess
 
-from snapcraft.tests import skip
-import snaps_tests
+from snaps_tests import SnapsTestCase, skip
 
 
-class SharedROSTestCase(snaps_tests.SnapsTestCase):
+class SharedROSTestCase(SnapsTestCase):
 
     snap_content_dir = 'shared-ros'
 

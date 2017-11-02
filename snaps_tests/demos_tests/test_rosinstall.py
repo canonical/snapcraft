@@ -16,11 +16,10 @@
 
 import re
 
-from snapcraft.tests import skip
-import snaps_tests
+from snaps_tests import SnapsTestCase, skip
 
 
-class RosinstallTestCase(snaps_tests.SnapsTestCase):
+class RosinstallTestCase(SnapsTestCase):
 
     snap_content_dir = 'rosinstall'
 
