@@ -17,6 +17,7 @@
 import os
 import re
 import subprocess
+from distutils import dir_util
 
 from testtools.matchers import (
     Contains,
@@ -90,3 +91,61 @@ class CatkinTestCase(integration_tests.SnapdIntegrationTestCase):
                     ['ros-pip-example.launch-project'],
                     universal_newlines=True, stderr=subprocess.STDOUT),
                 Contains("Local timezone:"))
+
+    @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
+    def test_rosinstall(self):
+        with fixture_setup.WithoutSnapInstalled('ros-rosinstall-file'):
+            self.run_snapcraft(project_dir='ros-rosinstall-file')
+            self.install_snap()
+
+            # Run the ROS system. By default this will never exit, but the demo
+            # supports an `exit-after-receive` parameter that, if true, will
+            # cause the system to shutdown after the listener has successfully
+            # received a message.
+            output = subprocess.check_output(
+                ['ros-rosinstall-file.run',
+                 'exit-after-receive:=true']).decode()
+            self.assertThat(
+                output,
+                MatchesRegex(r'.*I heard Hello world.*', flags=re.DOTALL))
+
+    @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
+    def test_shared_ros(self):
+        with fixture_setup.WithoutSnapInstalled('ros-base', 'ros-app'):
+            ros_base_path = os.path.join(self.path, 'ros-base')
+            dir_util.copy_tree(
+                os.path.join(self.snaps_dir, 'ros-shared', 'ros-base'),
+                ros_base_path)
+            ros_app_path = os.path.join(self.path, 'ros-app')
+            dir_util.copy_tree(
+                os.path.join(self.snaps_dir, 'ros-shared', 'ros-app'),
+                ros_app_path)
+
+            os.chdir(ros_base_path)
+            self.run_snapcraft()
+            self.install_snap()
+
+            # Now tar up its staging area to be used to build ros-app
+            subprocess.check_call([
+                'tar', 'czf', os.path.join(ros_app_path, 'ros-base.tar.bz2'),
+                '-C', ros_base_path, 'stage'])
+
+            os.chdir(ros_app_path)
+            self.run_snapcraft()
+            self.install_snap()
+
+            # Connect the content sharing interface
+            subprocess.check_call(
+                ['sudo', 'snap', 'connect', 'ros-app:ros-base',
+                 'ros-base:ros-base'])
+
+            # Run the ROS system. By default this will never exit, but the demo
+            # supports an `exit-after-receive` parameter that, if true, will
+            # cause the system to shutdown after the listener has successfully
+            # received a message.
+            output = subprocess.check_output(
+                ['ros-app.launch-project',
+                 'exit-after-receive:=true']).decode()
+            self.assertThat(
+                output,
+                MatchesRegex(r'.*I heard Hello world.*', flags=re.DOTALL))
