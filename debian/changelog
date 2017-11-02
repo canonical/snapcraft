@@ -35,6 +35,7 @@ snapcraft (2.35) xenial; urgency=medium
   * snap: remove leaking LD_LIBRARY_PATH (#1635)
   * store: guide to account creation upon login (#1616)
   * repo: add elementary to deb distros (#1637)
+  * internal: more gracefully determine host OS (#1636)
 
   [ Leo Arias ]
   * typo: replace occured with occurred
