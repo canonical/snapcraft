@@ -106,6 +106,6 @@ def build_env_for_stage(stagedir, snap_name, confinement,
                         arch_triplet, core_dynamic_linker=None):
     env = build_env(stagedir, snap_name, confinement,
                     arch_triplet, core_dynamic_linker)
-    env.append('PERL5LIB={0}/usr/share/perl5/'.format(stagedir))
+    env.append('PERL5LIB="{0}/usr/share/perl5/"'.format(stagedir))
 
     return env
