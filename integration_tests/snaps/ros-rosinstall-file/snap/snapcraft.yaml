@@ -1,4 +1,4 @@
-name: rosinstall-demo
+name: ros-rosinstall-file
 version: '1.0'
 summary: Demo using a rosinstall file.
 description: |

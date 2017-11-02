@@ -895,28 +895,36 @@ class WithoutSnapInstalled(fixtures.Fixture):
         set up.
     """
 
-    def __init__(self, snap_name):
+    def __init__(self, *snap_names):
         super().__init__()
-        self.snap_name = snap_name.split('/')[0]
+        self.snap_names = [
+            name.split('/')[0] for name in snap_names
+        ]
 
     def setUp(self):
         super().setUp()
-        if snapcraft.repo.snaps.SnapPackage.is_snap_installed(self.snap_name):
-            raise AssertionError(
-                "This test cannot run if you already have the {snap!r} snap "
-                "installed. Please uninstall it by running "
-                "'sudo snap remove {snap}'.".format(snap=self.snap_name))
+        for name in self.snap_names:
+            if snapcraft.repo.snaps.SnapPackage.is_snap_installed(name):
+                raise AssertionError(
+                    "This test cannot run if you already have the "
+                    "{snap_name!r} snap installed. Please uninstall it by "
+                    "running 'sudo snap remove {snap_name}'.".format(
+                        snap_name=name))
 
-        self.addCleanup(self._remove_snap)
+        self.addCleanup(self._remove_snaps)
 
-    def _remove_snap(self):
+    def _remove_snaps(self):
+        for name in self.snap_names:
+            self._remove_snap(name)
+
+    def _remove_snap(self, name):
         try:
             subprocess.check_output(
-                ['sudo', 'snap', 'remove', self.snap_name],
+                ['sudo', 'snap', 'remove', name],
                 stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             RuntimeError("unable to remove {!r}: {}".format(
-                self.snap_name, e.output))
+                name, e.output))
 
 
 class SnapcraftYaml(fixtures.Fixture):
