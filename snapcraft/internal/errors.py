@@ -118,6 +118,28 @@ class ContainerConnectionError(ContainerError):
            'https://linuxcontainers.org/lxd/getting-started-cli.')
 
 
+class ContainerRunError(SnapcraftError):
+
+    fmt = (
+        'The following command failed to run: '
+        '{command!r} exited with {exit_code}\n'
+    )
+
+    def __init__(self, *, command, exit_code):
+        super().__init__(command=' '.join(command), exit_code=exit_code)
+
+
+class ContainerSnapcraftCmdError(ContainerRunError):
+
+    fmt = (
+        'Snapcraft command failed in the container: '
+        '{command!r} exited with {exit_code}\n'
+    )
+
+    def __init__(self, *, command, exit_code):
+        super().__init__(command=' '.join(command), exit_code=exit_code)
+
+
 class SnapdError(SnapcraftError):
     fmt = '{message}'
 
@@ -305,3 +327,23 @@ class StagePackageDownloadError(SnapcraftError):
 
     def __init__(self, part_name, message):
         super().__init__(part_name=part_name, message=message)
+
+
+class OsReleaseIdError(SnapcraftError):
+
+    fmt = 'Unable to determine host OS ID'
+
+
+class OsReleaseNameError(SnapcraftError):
+
+    fmt = 'Unable to determine host OS name'
+
+
+class OsReleaseVersionIdError(SnapcraftError):
+
+    fmt = 'Unable to determine host OS version ID'
+
+
+class OsReleaseCodenameError(SnapcraftError):
+
+    fmt = 'Unable to determine host OS version codename'

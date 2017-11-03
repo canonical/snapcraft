@@ -20,12 +20,31 @@ import fixtures
 import yaml
 from testtools.matchers import Contains, Equals, FileExists
 from xdg import BaseDirectory
+from textwrap import dedent
+from unittest import mock
+from unittest.mock import call
 
 from snapcraft.tests import TestWithFakeRemoteParts
+from snapcraft.tests import fixture_setup
 from . import CommandBaseTestCase
 
 
 class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
+
+    yaml_template = dedent("""\
+        name: snap-test
+        version: 1.0
+        summary: test snapping
+        description: if snap is succesful a snap package will be available
+        architectures: ['amd64']
+        type: app
+        confinement: strict
+        grade: stable
+
+        parts:
+            part1:
+                plugin: nil
+        """)
 
     def setUp(self):
         super().setUp()
@@ -106,3 +125,27 @@ class UpdateCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(self.parts_yaml, FileExists())
         self.assertThat(self.headers_yaml, FileExists())
+
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('os.getuid')
+    def test_update_containerized_exists_running(self,
+                                                 mock_getuid,
+                                                 mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_getuid.return_value = 1234
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        # Container was created before and is running
+        fake_lxd.name = 'local:snapcraft-snap-test'
+        fake_lxd.status = 'Running'
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml(self.yaml_template)
+
+        result = self.run_command(['update'])
+        self.assertThat(result.exit_code, Equals(0))
+
+        project_folder = '/root/build_snap-test'
+        mock_container_run.assert_has_calls([
+            call(['snapcraft', 'update'], cwd=project_folder),
+        ])

@@ -447,7 +447,8 @@ class FakeFilesystem(fixtures.Fixture):
         self.mkdtemp_mock.side_effect = self.mkdtemp_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.open', mock.mock_open())
+        patcher = mock.patch(
+            'snapcraft.internal.lxd._containerbuild.open', mock.mock_open())
         self.open_mock = patcher.start()
         self.open_mock_default_side_effect = self.open_mock.side_effect
         self.open_mock.side_effect = self.open_side_effect()
@@ -506,22 +507,22 @@ class FakeLXD(fixtures.Fixture):
         self.devices = '{}'
 
     def _setUp(self):
-        patcher = mock.patch('snapcraft.internal.lxd.check_call')
+        patcher = mock.patch('subprocess.check_call')
         self.check_call_mock = patcher.start()
         self.check_call_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.check_output')
+        patcher = mock.patch('subprocess.check_output')
         self.check_output_mock = patcher.start()
         self.check_output_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.Popen')
+        patcher = mock.patch('subprocess.Popen')
         self.popen_mock = patcher.start()
         self.popen_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
+        patcher = mock.patch('time.sleep', lambda _: None)
         patcher.start()
         self.addCleanup(patcher.stop)
 

@@ -163,3 +163,12 @@ class OptionsTestCase(tests.TestCase):
                 SnapcraftEnvironmentError,
                 "Cross compilation not supported for target arch 'x86_64'"):
             options.cross_compiler_prefix
+
+    @mock.patch('platform.architecture')
+    @mock.patch('platform.machine')
+    def test_cross_compiler_prefix_empty(
+            self, mock_platform_machine, mock_platform_architecture):
+        mock_platform_machine.return_value = 'x86_64'
+        mock_platform_architecture.return_value = ('64bit', 'ELF')
+        options = snapcraft.ProjectOptions(target_deb_arch='i386')
+        self.assertThat(options.cross_compiler_prefix, Equals(''))

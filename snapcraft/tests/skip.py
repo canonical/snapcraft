@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,21 +13,28 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import re
-from unittest import mock
 
-from testtools.matchers import MatchesRegex, Equals
+import contextlib
+import functools
 
-from snapcraft import config
-from . import CommandBaseTestCase
+from unittest import skipUnless
+
+from snapcraft.internal import (
+    errors,
+    os_release,
+)
 
 
-class LogoutCommandTestCase(CommandBaseTestCase):
+def skip_unless_codename(codename, message):
+    def _wrap(func):
+        release = os_release.OsRelease()
+        actual_codename = None
+        with contextlib.suppress(errors.OsReleaseCodenameError):
+            actual_codename = release.version_codename()
 
-    @mock.patch.object(config.Config, 'clear')
-    def test_logout_clears_config(self, mock_clear):
-        result = self.run_command(['logout'])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, MatchesRegex(
-            '.*Credentials cleared.\n', flags=re.DOTALL))
+        @functools.wraps(func)
+        @skipUnless(actual_codename == codename, message)
+        def _skip_test(*args, **kwargs):
+            func(*args, **kwargs)
+        return _skip_test
+    return _wrap
