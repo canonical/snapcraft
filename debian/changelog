@@ -12,6 +12,7 @@ snapcraft (2.35) xenial; urgency=medium
   * lifecycle: split into its own package (#1626)
   * libraries: exclude the full set of libc6 (#1632)
   * lxd: better surfacing of errors (#1647)
+  * tests: fork skip into snaps_tests (#1652)
   * New upstream release (LP: #1729417)
 
   [ Kyle Fazzari ]
@@ -82,6 +83,9 @@ snapcraft (2.35) xenial; urgency=medium
   * lxd: split container classes into different files (#1627)
   * cli: update parts cache in the container (#1546)
   * lifecycle: clean after deleting container (#1587)
+
+  [ Mark Lee ]
+  * project_loader: quote more environment variable values (#1578)
 
   [ James Beedy ]
   * ruby plugin: new plugin
