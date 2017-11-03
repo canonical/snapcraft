@@ -138,7 +138,6 @@ class Containerbuild:
         subprocess.check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.LC_ALL', 'C.UTF-8'])
-        self._wait_for_network()
 
     def execute(self, step='snap', args=None):
         with self._container_running():

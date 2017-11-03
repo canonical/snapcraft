@@ -62,6 +62,7 @@ class Project(Containerbuild):
                             'remove any existing lines.'
                             '\nRestart lxd after making this change.')
                 raise ContainerConnectionError(msg)
+        self._wait_for_network()
         if new_container:
             self._container_run(['apt-get', 'update'])
             self._inject_snapcraft()

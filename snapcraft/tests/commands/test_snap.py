@@ -513,9 +513,13 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'stop', '-f', fake_lxd.name]),
         ])
         mock_container_run.assert_has_calls([
-              call(['snapcraft', 'snap', '--output',
-                    'snap-test_1.0_amd64.snap'],
-                   cwd=project_folder),
+            call(['python3', '-c', 'import urllib.request; ' +
+                  'urllib.request.urlopen(' +
+                  '"http://start.ubuntu.com/connectivity-check.html"' +
+                  ', timeout=5)']),
+            call(['snapcraft', 'snap', '--output',
+                  'snap-test_1.0_amd64.snap'],
+                 cwd=project_folder),
         ])
 
     @mock.patch('os.getuid')
@@ -578,6 +582,8 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                     'snap-test_1.0_amd64.snap'],
                    cwd=project_folder),
         ])
+        # Ensure there's no unexpected calls eg. two network checks
+        self.assertThat(mock_container_run.call_count, Equals(2))
 
 
 class SnapCommandAsDefaultTestCase(SnapCommandBaseTestCase):
