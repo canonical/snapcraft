@@ -107,12 +107,14 @@ class CMakeTestCase(unit.TestCase):
             self.stage_dir)
         expected['CMAKE_INCLUDE_PATH'] = '$CMAKE_INCLUDE_PATH:' + ':'.join(
             ['{0}/include', '{0}/usr/include', '{0}/include/{1}',
-             '{0}/usr/include/{1}']).format(
+             '{0}/usr/include/{1}', '{0}/usr/local/include',
+             '{0}/usr/local/include/{1}']).format(
                  self.stage_dir,
                  plugin.project.arch_triplet)
         expected['CMAKE_LIBRARY_PATH'] = '$CMAKE_LIBRARY_PATH:' + ':'.join(
             ['{0}/lib', '{0}/usr/lib', '{0}/lib/{1}',
-             '{0}/usr/lib/{1}']).format(
+             '{0}/usr/lib/{1}', '{0}/usr/local/lib',
+             '{0}/usr/local/lib/{1}']).format(
                  self.stage_dir,
                  plugin.project.arch_triplet)
 
