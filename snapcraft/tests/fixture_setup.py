@@ -52,6 +52,11 @@ from snapcraft.tests.subprocess_utils import (
 
 class TempCWD(fixtures.TempDir):
 
+    def __init__(self, rootdir=None):
+        if rootdir is None and 'TMPDIR' in os.environ:
+            rootdir = os.environ.get('TMPDIR')
+        super().__init__(rootdir)
+
     def setUp(self):
         """Create a temporary directory an cd into it for the test duration."""
         super().setUp()
