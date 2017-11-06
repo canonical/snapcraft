@@ -36,7 +36,6 @@ from snapcraft.internal.errors import (
     SnapdError,
     SnapcraftEnvironmentError,
 )
-from snapcraft._options import _get_deb_arch
 from snapcraft.tests import (
     fixture_setup,
     unit
@@ -90,7 +89,6 @@ class CleanbuilderTestCase(LXDTestCase):
 
         project_folder = '/root/build_project'
         self.make_containerbuild().execute()
-        expected_arch = _get_deb_arch(self.server)
 
         self.assertIn('Waiting for a network connection...\n'
                       'Network connection established\n'
@@ -106,7 +104,7 @@ class CleanbuilderTestCase(LXDTestCase):
         container_name = '{}:snapcraft-my-pet'.format(self.remote)
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'launch', '-e',
-                  'ubuntu:xenial/{}'.format(expected_arch), container_name]),
+                  'ubuntu:xenial', container_name]),
             call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'config', 'set', container_name,
@@ -118,6 +116,9 @@ class CleanbuilderTestCase(LXDTestCase):
                   '"created_at": "test-created-at"}']),
             call(['lxc', 'file', 'push', os.path.realpath('project.tar'),
                   '{}/root/build_project/project.tar'.format(container_name)]),
+        ])
+        self.fake_lxd.check_output_mock.assert_has_calls([
+            call(['lxc', 'info', container_name]),
         ])
         mock_container_run.assert_has_calls([
             call(['python3', '-c', 'import urllib.request; ' +
@@ -650,7 +651,7 @@ class FailedImageInfoTestCase(LXDBaseTestCase):
             kwargs=dict(cmd='testcmd', returncode=1, output='test output'),
             expected_warn=(
                 "Failed to get container image info: "
-                "`lxc image list --format=json ubuntu:xenial/amd64` "
+                "`lxc image list --format=json ubuntu:xenial` "
                 "returned with exit code 1, output: test output\n"
                 "It will not be recorded in manifest.\n"))),
         ('JSONDecodeError', dict(

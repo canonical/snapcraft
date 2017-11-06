@@ -25,7 +25,6 @@ import requests_unixsocket
 import shutil
 import sys
 import tempfile
-import yaml
 from contextlib import contextmanager
 import subprocess
 import time
@@ -34,6 +33,7 @@ from urllib import parse
 from snapcraft.internal import common
 from snapcraft.internal.errors import (
         ContainerConnectionError,
+        ContainerError,
         ContainerRunError,
         ContainerSnapcraftCmdError,
         SnapdError,
@@ -68,27 +68,12 @@ class Containerbuild:
             remote = _get_default_remote()
         _verify_remote(remote)
         self._container_name = '{}:snapcraft-{}'.format(remote, container_name)
-        server_environment = self._get_remote_info()['environment']
-        # Use the server architecture to avoid emulation overhead
-        try:
-            kernel = server_environment['kernel_architecture']
-        except KeyError:
-            kernel = server_environment['kernelarchitecture']
-        self._server_arch = _get_deb_arch(kernel)
-        if not self._server_arch:
-            raise ContainerConnectionError(
-                'Unrecognized server architecture {}'.format(kernel))
-        self._image = 'ubuntu:xenial/{}'.format(self._server_arch)
+        self._image = 'ubuntu:xenial'
         # Use a temporary folder the 'lxd' snap can access
         lxd_common_dir = os.path.expanduser(
             os.path.join('~', 'snap', 'lxd', 'common'))
         os.makedirs(lxd_common_dir, exist_ok=True)
         self.tmp_dir = tempfile.mkdtemp(prefix='snapcraft', dir=lxd_common_dir)
-
-    def _get_remote_info(self):
-        remote = self._container_name.split(':')[0]
-        return yaml.load(subprocess.check_output([
-            'lxc', 'info', '{}:'.format(remote)]).decode())
 
     @contextmanager
     def _container_running(self):
@@ -142,6 +127,15 @@ class Containerbuild:
             'lxc', 'config', 'set', self._container_name,
             'environment.LC_ALL', 'C.UTF-8'])
         self._set_image_info_env_var()
+        info = subprocess.check_output([
+            'lxc', 'info', self._container_name]).decode('utf-8')
+        for line in info.splitlines():
+            if line.startswith("Architecture:"):
+                self._container_arch = _get_deb_arch(
+                    line.split(None, 1)[1].strip())
+                break
+        else:
+            raise ContainerError("Could not find architecture for container")
 
     def _set_image_info_env_var(self):
         FAILURE_WARNING_FORMAT = (
@@ -262,7 +256,7 @@ class Containerbuild:
 
         # If the server has a different arch we can't inject local snaps
         if (self._project_options.target_arch
-                and self._project_options.target_arch != self._server_arch):
+                and self._project_options.target_arch != self._container_arch):
             channel = json['result']['channel']
             return self._install_snap(name, channel, is_classic=is_classic)
 
