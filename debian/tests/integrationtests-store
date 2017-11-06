@@ -1,0 +1,6 @@
+#!/bin/sh
+
+set -e
+
+script_path="$(dirname "$0")"
+SNAPCRAFT_AUTOPKGTEST_SUITES=integration_tests/store $script_path/integrationtests
