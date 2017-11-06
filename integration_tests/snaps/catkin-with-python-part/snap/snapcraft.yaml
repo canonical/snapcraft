@@ -26,11 +26,6 @@ parts:
     # the most problems.
     after: [python-part]
 
-
-    # FIXME: This filter should not be necessary, but the Catkin plugin isn't
-    # propery fixing shebangs. Remove this filter when it is.
     stage:
-    - -usr/bin/2to3-2.7
-    - -usr/bin/pydoc2.7
-    - -usr/lib/python2.7
-    - -usr/share/python
+      # The python part includes a sitecustomize that we don't want to clobber
+      - -usr/lib/python2.7/sitecustomize.py

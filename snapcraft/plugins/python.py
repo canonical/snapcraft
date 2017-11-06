@@ -55,7 +55,6 @@ be preferred instead and no interpreter would be brought in through
 import collections
 import json
 import os
-import re
 import shutil
 import stat
 import subprocess
@@ -70,6 +69,7 @@ import requests
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.common import isurl
+from snapcraft.internal import mangling
 
 
 _SITECUSTOMIZE_TEMPLATE = dedent("""\
@@ -368,9 +368,7 @@ class PythonPlugin(snapcraft.BasePlugin):
         self._fix_permissions()
 
         # Fix all shebangs to use the in-snap python.
-        file_utils.replace_in_file(self.installdir, re.compile(r''),
-                                   re.compile(r'^#!.*python'),
-                                   r'#!/usr/bin/env python')
+        mangling.rewrite_python_shebangs(self.installdir)
 
         self._setup_sitecustomize()
 
