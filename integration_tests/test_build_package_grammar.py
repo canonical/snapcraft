@@ -14,7 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
+import contextlib
 import subprocess
+import yaml
 
 import snapcraft
 
@@ -104,4 +107,60 @@ class BuildPackageGrammarTestCase(integration_tests.TestCase):
 
         self.run_snapcraft(['pull'], 'build-package-grammar-global')
 
+        self.assertTrue(self._hello_is_installed())
+
+    @contextlib.contextmanager
+    def modified_yaml(self,
+                      project='build-package-grammar',
+                      snapcraft_yaml_file='snapcraft.yaml'):
+        self.copy_project_to_cwd(project)
+        with open(snapcraft_yaml_file) as f:
+            snapcraft_yaml = yaml.load(f)
+            yield snapcraft_yaml
+            with open(snapcraft_yaml_file, 'w') as f:
+                yaml.dump(snapcraft_yaml, f)
+
+    def test_to_other_arch(self):
+        """Test that 'to' fetches nothing when building for another arch."""
+
+        with self.modified_yaml() as yaml:
+            yaml['parts']['my-part']['build-packages'] = [
+                OrderedDict({'to other-arch': ['hello']})
+            ]
+        self.run_snapcraft(['pull'])
+        self.assertFalse(self._hello_is_installed())
+
+    def test_to_other_arch_else(self):
+        """Test that 'to' moves to the 'else' branch if on other arch."""
+
+        with self.modified_yaml() as yaml:
+            yaml['parts']['my-part']['build-packages'] = [
+                OrderedDict({'to other-arch': ['foo']}),
+                OrderedDict({'else': ['hello']})
+            ]
+        self.run_snapcraft(['pull'])
+        self.assertTrue(self._hello_is_installed())
+
+    def test_to_other_arch_else_fail(self):
+        """Test that 'on' fails with an error if it hits an 'else fail'."""
+
+        with self.modified_yaml() as yaml:
+            yaml['parts']['my-part']['build-packages'] = [
+                OrderedDict({'to other-arch': ['foo']}),
+                'else fail'
+            ]
+        self.assertThat(self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft,
+            ['pull']).output, Contains(
+                "Unable to satisfy 'to other-arch', failure forced"))
+
+    def test_global_build_package_to_other_arch_else(self):
+        """Test that grammar works in global build packages as well."""
+
+        with self.modified_yaml('build-package-grammar-global') as yaml:
+            yaml['build-packages'] = [
+                OrderedDict({'to other-arch': ['foo']}),
+                OrderedDict({'else': ['hello']}),
+            ]
+        self.run_snapcraft(['pull'])
         self.assertTrue(self._hello_is_installed())
