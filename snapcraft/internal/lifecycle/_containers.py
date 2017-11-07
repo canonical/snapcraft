@@ -50,10 +50,11 @@ def containerbuild(step, project_options, container_config,
     lxd.Project(output=output, source=os.path.curdir,
                 project_options=project_options,
                 remote=container_config.remote,
+                image=container_config.image,
                 metadata=config.get_metadata()).execute(step, args)
 
 
-def cleanbuild(project_options, remote=''):
+def cleanbuild(project_options, image, remote):
     if remote and not lxd._remote_is_valid(remote):
         raise errors.InvalidContainerRemoteError(remote)
 
@@ -65,4 +66,6 @@ def cleanbuild(project_options, remote=''):
         t.add(os.path.curdir, filter=_create_tar_filter(tar_filename))
     lxd.Cleanbuilder(source=tar_filename,
                      project_options=project_options,
-                     metadata=config.get_metadata(), remote=remote).execute()
+                     metadata=config.get_metadata(),
+                     image=image,
+                     remote=remote).execute()

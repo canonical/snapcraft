@@ -77,6 +77,7 @@ class CleanbuilderTestCase(LXDTestCase):
         return lxd.Cleanbuilder(output='snap.snap', source='project.tar',
                                 metadata={'name': 'project'},
                                 project_options=self.project_options,
+                                image="image-name",
                                 remote=self.remote)
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
@@ -104,7 +105,7 @@ class CleanbuilderTestCase(LXDTestCase):
         container_name = '{}:snapcraft-my-pet'.format(self.remote)
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'launch', '-e',
-                  'ubuntu:xenial', container_name]),
+                  'image-name', container_name]),
             call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'config', 'set', container_name,
@@ -164,6 +165,7 @@ class ContainerbuildTestCase(LXDTestCase):
         return lxd.Cleanbuilder(output='snap.snap', source='project.tar',
                                 metadata={'name': 'project'},
                                 project_options=self.project_options,
+                                image="image-name",
                                 remote=self.remote)
 
     def test_parts_uri_set(self):
@@ -535,6 +537,7 @@ class ProjectTestCase(ContainerbuildTestCase):
         return lxd.Project(output='snap.snap', source='project.tar',
                            metadata={'name': 'project'},
                            project_options=self.project_options,
+                           image="image-name",
                            remote=self.remote)
 
     def test_command_with_sudo(self):
@@ -684,6 +687,7 @@ class LocalProjectTestCase(ContainerbuildTestCase):
         return lxd.Project(output='snap.snap', source='project.tar',
                            metadata={'name': 'project'},
                            project_options=self.project_options,
+                           image="image-name",
                            remote=self.remote)
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
@@ -722,7 +726,7 @@ class FailedImageInfoTestCase(LXDBaseTestCase):
             kwargs=dict(cmd='testcmd', returncode=1, output='test output'),
             expected_warn=(
                 "Failed to get container image info: "
-                "`lxc image list --format=json ubuntu:xenial` "
+                "`lxc image list --format=json image-name` "
                 "returned with exit code 1, output: test output\n"
                 "It will not be recorded in manifest.\n"))),
         ('JSONDecodeError', dict(
@@ -737,7 +741,7 @@ class FailedImageInfoTestCase(LXDBaseTestCase):
         return lxd.Project(output='snap.snap', source='project.tar',
                            metadata={'name': 'project'},
                            project_options=self.project_options,
-                           remote=self.remote)
+                           image="image-name", remote=self.remote)
 
     def test_failed_image_info_just_warns(self):
         self.fake_logger = fixtures.FakeLogger(level=logging.WARN)

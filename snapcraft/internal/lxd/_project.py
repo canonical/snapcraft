@@ -37,11 +37,11 @@ logger = logging.getLogger(__name__)
 class Project(Containerbuild):
 
     def __init__(self, *, output, source, project_options,
-                 metadata, remote=None):
+                 metadata, image, remote=None):
         super().__init__(output=output, source=source,
                          project_options=project_options,
                          metadata=metadata, container_name=metadata['name'],
-                         remote=remote)
+                         image=image, remote=remote)
         self._processes = []
 
     def _ensure_container(self):
