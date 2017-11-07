@@ -22,6 +22,10 @@ WARNING: this plugin's API is unstable. The cross compiling support is
 
 The following kernel specific options are provided by this plugin:
 
+    - kernel-channel:
+      (string)
+      from which channel core is downloaded (stable, beta, candidate or edge)
+
     - kernel-image-target:
       (yaml object, string or null for default target)
       the default target is bzImage and can be set to any specific
@@ -111,6 +115,10 @@ class KernelPlugin(kbuild.KBuildPlugin):
     def schema(cls):
         schema = super().schema()
 
+        schema['properties']['kernel-channel'] = {
+            'type': 'string',
+            'default': 'stable',
+        }
         schema['properties']['kernel-image-target'] = {
             'oneOf': [
                 {'type': 'string'},
@@ -438,9 +446,11 @@ class KernelPlugin(kbuild.KBuildPlugin):
             logger.warn(warn)
 
     def pull(self):
+        channel = self.options.kernel_channel
+        logger.info('Downloading core from the {!r} channel'.format(channel))
         super().pull()
         snapcraft.download(
-            'core', 'stable', self.os_snap, self.project.deb_arch)
+            'core', channel, self.os_snap, self.project.deb_arch)
 
     def do_configure(self):
         super().do_configure()

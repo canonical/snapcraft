@@ -49,6 +49,7 @@ class KernelPluginTestCase(unit.TestCase):
             kernel_device_trees = []
             kernel_initrd_compression = 'gz'
             build_attributes = []
+            kernel_channel = 'stable'
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
@@ -1061,7 +1062,7 @@ ACCEPT=n
         plugin.pull()
 
         download_mock.assert_called_once_with(
-            'core', 'stable', plugin.os_snap,
+            'core', self.options.kernel_channel, plugin.os_snap,
             self.project_options.deb_arch, '')
 
 
