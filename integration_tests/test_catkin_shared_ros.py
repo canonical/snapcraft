@@ -20,9 +20,12 @@ import tempfile
 
 import integration_tests
 
+from snapcraft.tests import skip
+
 
 class CatkinSharedRosTestCase(integration_tests.TestCase):
 
+    @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
     def test_shared_ros_builds_without_catkin_in_underlay(self):
         # Build the producer until we have a good staging area
         self.copy_project_to_cwd(os.path.join('catkin-shared-ros', 'producer'))

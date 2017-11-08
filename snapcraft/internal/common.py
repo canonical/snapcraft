@@ -263,13 +263,3 @@ def get_pkg_config_paths(root, arch_triplet):
     ]
 
     return [p for p in paths if os.path.exists(p)]
-
-
-def get_os_release_info(os_release_file='/etc/os-release'):
-    with open(os_release_file) as os_release_file:
-        os_release_dict = {}
-        for line in os_release_file:
-            entry = line.rstrip().split('=')
-            if len(entry) == 2:
-                os_release_dict[entry[0]] = entry[1].strip('"')
-    return os_release_dict

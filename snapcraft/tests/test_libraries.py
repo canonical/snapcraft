@@ -19,11 +19,15 @@ import logging
 import os
 import subprocess
 import tempfile
+from textwrap import dedent
 
 from testtools.matchers import Equals
 from unittest import mock
 
-from snapcraft.internal import libraries
+from snapcraft.internal import (
+    libraries,
+    os_release,
+)
 from snapcraft import tests
 
 
@@ -118,19 +122,28 @@ class TestSystemLibsOnNewRelease(tests.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft.internal.common.get_os_release_info')
-        distro_mock = patcher.start()
-        distro_mock.return_value = {'VERSION_CODENAME': 'xenial',
-                                    'HOME_URL': 'http://www.ubuntu.com/',
-                                    'BUG_REPORT_URL':
-                                        'http://bugs.launchpad.net/ubuntu/',
-                                    'VERSION_ID': '16.04',
-                                    'UBUNTU_CODENAME': 'xenial',
-                                    'ID': 'ubuntu', 'NAME': 'Ubuntu',
-                                    'ID_LIKE': 'debian',
-                                    'PRETTY_NAME': 'Ubuntu 16.04.3 LTS',
-                                    'VERSION': '16.04.3 LTS (Xenial Xerus)',
-                                    'SUPPORT_URL': 'http://help.ubuntu.com/'}
+        with open('os-release', 'w') as f:
+            f.write(dedent("""\
+                NAME="Ubuntu"
+                VERSION="16.04.3 LTS (Xenial Xerus)"
+                ID=ubuntu
+                ID_LIKE=debian
+                PRETTY_NAME="Ubuntu 16.04.3 LTS"
+                VERSION_ID="16.04"
+                HOME_URL="http://www.ubuntu.com/"
+                SUPPORT_URL="http://help.ubuntu.com/"
+                BUG_REPORT_URL="http://bugs.launchpad.net/ubuntu/"
+                UBUNTU_CODENAME=xenial
+            """))
+        release = os_release.OsRelease(os_release_file='os-release')
+
+        def _create_os_release(*args, **kwargs):
+            return release
+
+        patcher = mock.patch(
+            'snapcraft.internal.os_release.OsRelease',
+            wraps=_create_os_release)
+        self.os_release_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.internal.common.run_output')
@@ -155,18 +168,24 @@ class TestSystemLibsOnReleasesWithNoVersionId(tests.TestCase):
 
         libraries._libraries = None
 
-        patcher = mock.patch('snapcraft.internal.common.get_os_release_info')
-        distro_mock = patcher.start()
-        distro_mock.return_value = {'NAME': 'Gentoo',
-                                    'ID': 'gentoo',
-                                    'PRETTY_NAME': "Gentoo/Linux",
-                                    'ANSI_COLOR': "1;32",
-                                    'HOME_URL': "http://www.gentoo.org/",
-                                    'SUPPORT_URL':
-                                        "http://www.gentoo.org/main/en/support\
-                                        .xml",
-                                    'BUG_REPORT_URL':
-                                        "https://bugs.gentoo.org/"}
+        with open('os-release', 'w') as f:
+            f.write(dedent("""\
+                NAME="Gentoo"
+                ID=gentoo
+                PRETTY_NAME="Gentoo/Linux"
+                HOME_URL="http://www.gentoo.org/"
+                SUPPORT_URL="http://www.gentoo.org/main/en/support.xml"
+                BUG_REPORT_URL="https://bugs.gentoo.org/"
+            """))
+        release = os_release.OsRelease(os_release_file='os-release')
+
+        def _create_os_release(*args, **kwargs):
+            return release
+
+        patcher = mock.patch(
+            'snapcraft.internal.os_release.OsRelease',
+            wraps=_create_os_release)
+        self.os_release_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
     @mock.patch('snapcraft.internal.libraries.repo.Repo.get_package_libraries',

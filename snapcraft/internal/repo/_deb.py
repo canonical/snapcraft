@@ -32,7 +32,7 @@ from xml.etree import ElementTree
 
 import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal import cache, repo, common
+from snapcraft.internal import cache, repo, common, os_release
 from snapcraft.internal.indicators import is_dumb_terminal
 from ._base import BaseRepo
 from . import errors
@@ -146,10 +146,10 @@ class _AptCache:
 
     def _collected_sources_list(self):
         if self._use_geoip or self._sources_list:
-            release = common.get_os_release_info()['VERSION_CODENAME']
+            release = os_release.OsRelease()
             return _format_sources_list(
                 self._sources_list, deb_arch=self._deb_arch,
-                use_geoip=self._use_geoip, release=release)
+                use_geoip=self._use_geoip, release=release.version_codename())
 
         return _get_local_sources_list()
 

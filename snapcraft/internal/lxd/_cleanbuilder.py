@@ -34,14 +34,6 @@ class Cleanbuilder(Containerbuild):
                          project_options=project_options, metadata=metadata,
                          container_name=container_name, remote=remote)
 
-    def _push_file(self, src, dst):
-        subprocess.check_call(['lxc', 'file', 'push',
-                              src, '{}{}'.format(self._container_name, dst)])
-
-    def _pull_file(self, src, dst):
-        subprocess.check_call(['lxc', 'file', 'pull',
-                               '{}{}'.format(self._container_name, src), dst])
-
     def _ensure_container(self):
         subprocess.check_call([
             'lxc', 'launch', '-e', self._image, self._container_name])
