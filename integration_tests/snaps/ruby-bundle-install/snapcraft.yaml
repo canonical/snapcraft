@@ -9,6 +9,6 @@ parts:
   ruby-bundle-install:
     plugin: ruby
     use-bundler: true
-    ruby-version: "2.3.1"
+    ruby-version: '2.4.2'
     stage:
       - bin
