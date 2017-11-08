@@ -177,13 +177,13 @@ def clean(parts, step, **kwargs):
     """
     project_options = get_project_options(**kwargs)
     container_config = env.get_container_config()
-    step = step or 'pull'
     if container_config.use_container:
         config = snapcraft.internal.load_config(project_options)
         lxd.Project(project_options=project_options,
                     output=None, source=os.path.curdir,
                     metadata=config.get_metadata()).clean(parts, step)
     else:
+        step = step or 'pull'
         if step == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '
                          'as the step to clean')
