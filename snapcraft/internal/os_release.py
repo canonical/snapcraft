@@ -34,9 +34,9 @@ class OsRelease:
 
         :param str os_release_file: Path to os-release file to be parsed.
         """
-        with open(os_release_file) as os_release_file:
+        with open(os_release_file) as f:
             self._os_release = {}
-            for line in os_release_file:
+            for line in f:
                 entry = line.rstrip().split('=')
                 if len(entry) == 2:
                     self._os_release[entry[0]] = entry[1].strip('"')
