@@ -36,7 +36,7 @@ def refresh(debug, **kwargs):
 
     \b
     Examples:
-        SNAPCRAFT_CONTAINER_BUILDS=1 snapcraft refresh
+        snapcraft refresh
 
     This will take care of updating the apt package cache, upgrading packages
     as needed as well as refreshing snaps.

@@ -24,6 +24,7 @@ from unittest.mock import call
 from snapcraft.tests import TestWithFakeRemoteParts
 from snapcraft.tests import fixture_setup
 from . import CommandBaseTestCase
+from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 
 class RefreshCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
@@ -73,3 +74,17 @@ class RefreshCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
             call(['apt-get', 'upgrade', '-y']),
             call(['snap', 'refresh']),
         ])
+
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    def test_refresh_fails_without_env_var(self, mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        fake_filesystem = fixture_setup.FakeFilesystem()
+        self.useFixture(fake_filesystem)
+        self.make_snapcraft_yaml()
+
+        self.assertRaises(SnapcraftEnvironmentError,
+                          self.run_command,
+                          ['refresh'])
+        mock_container_run.assert_not_called()
