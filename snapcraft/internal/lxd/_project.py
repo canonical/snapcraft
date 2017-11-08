@@ -149,11 +149,12 @@ class Project(Containerbuild):
 
     def clean(self, parts, step):
         # clean with no parts deletes the container
-        if step == 'pull':
+        if not step:
             if self._get_container_status():
                 print('Deleting {}'.format(self._container_name))
                 subprocess.check_call([
                     'lxc', 'delete', '-f', self._container_name])
+            step = 'pull'
         # clean normally, without involving the container
         if step == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '
