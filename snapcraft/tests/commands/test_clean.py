@@ -134,6 +134,27 @@ parts:
         mock_lifecycle_clean.assert_has_calls([
             call(ANY, (), 'pull')])
 
+    @patch('snapcraft.internal.lifecycle.clean')
+    def test_clean_containerized_pull_retains_container(
+            self, mock_lifecycle_clean):
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        # Container was created before, and isn't running
+        fake_lxd.name = 'local:snapcraft-clean-test'
+        fake_lxd.status = 'Stopped'
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml(n=3)
+
+        result = self.run_command(['clean', '-s', 'pull'])
+
+        self.assertThat(result.exit_code, Equals(0))
+        # clean pull should NOT delete the container
+        fake_lxd.check_call_mock.assert_not_called()
+        # clean should be called normally, outside of the container
+        mock_lifecycle_clean.assert_has_calls([
+            call(ANY, (), 'pull')])
+
     def test_clean_containerized_with_part(self):
         fake_lxd = fixture_setup.FakeLXD()
         fake_lxd.name = 'local:snapcraft-clean-test'
