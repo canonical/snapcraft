@@ -17,7 +17,10 @@
 import os
 import re
 import subprocess
+import tempfile
+from unittest import mock
 
+import fixtures
 from testtools.matchers import (
     Contains,
     Equals,
@@ -34,6 +37,20 @@ from snapcraft.tests import (
 class CatkinTestCase(integration.SnapdIntegrationTestCase):
 
     slow_test = True
+
+    def setUp(self):
+        super().setUp()
+        # share the cache in all tests.
+        ros_cache_dir = os.path.join(
+            tempfile.gettempdir(), 'snapcraft_test_ros_cache')
+        os.makedirs(ros_cache_dir, exist_ok=True)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'XDG_CACHE_HOME', ros_cache_dir))
+        patcher = mock.patch(
+            'xdg.BaseDirectory.xdg_cache_home',
+            new=os.path.join(ros_cache_dir))
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
     @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
     def test_install_and_execution(self):
