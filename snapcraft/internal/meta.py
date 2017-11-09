@@ -158,7 +158,9 @@ class _SnapPackaging:
             annotated_snapcraft = self._annotate_snapcraft(
                 copy.deepcopy(self._config_data))
             with open(manifest_file_path, 'w') as manifest_file:
-                yaml.dump(annotated_snapcraft, manifest_file)
+                yaml.dump(
+                    annotated_snapcraft, manifest_file,
+                    default_flow_style=False)
 
     def _annotate_snapcraft(self, data):
         image_info = os.environ.get('SNAPCRAFT_IMAGE_INFO')

@@ -1,3 +1,4 @@
+
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2015-2017 Canonical Ltd
@@ -851,7 +852,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
-            architectures: [{}]
+            architectures:
+            - {}
             build-packages: []
             build-snaps: []
             """.format(self.project_options.deb_arch))
@@ -888,18 +890,19 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
               test-part:
                 build-packages: []
                 installed-packages: []
-                installed-snaps: {}
+                installed-snaps:
+                - test-snap-1=test-snap-1-revision
+                - test-snap-2=test-snap-2-revision
                 plugin: nil
                 prime: []
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
-            architectures: [{}]
+            architectures:
+            - {}
             build-packages: []
             build-snaps: []
-            """.format('[test-snap-1=test-snap-1-revision, '
-                       'test-snap-2=test-snap-2-revision]',
-                       self.project_options.deb_arch))
+            """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -931,19 +934,20 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             parts:
               test-part:
                 build-packages: []
-                installed-packages: {}
+                installed-packages:
+                - test-package1=test-version1
+                - test-package2=test-version2
                 installed-snaps: []
                 plugin: nil
                 prime: []
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
-            architectures: [{}]
+            architectures:
+            - {}
             build-packages: []
             build-snaps: []
-            """.format('[test-package1=test-version1, '
-                       'test-package2=test-version2]',
-                       self.project_options.deb_arch))
+            """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -981,12 +985,15 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 plugin: nil
                 prime: []
                 stage: []
-                stage-packages: [test-package1=test-version1, test-package2=test-version2]
+                stage-packages:
+                - test-package1=test-version1
+                - test-package2=test-version2
                 uname: Linux test uname 4.10 x86_64
-            architectures: [{}]
+            architectures:
+            - {}
             build-packages: []
             build-snaps: []
-            """.format(self.project_options.deb_arch))  # NOQA
+            """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -1017,7 +1024,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             description: test
             confinement: strict
             grade: stable
-            build-packages: [test-package1=test-version1, test-package2=test-version2]
+            build-packages:
+            - test-package1=test-version1
+            - test-package2=test-version2
             parts:
               test-part:
                 build-packages: []
@@ -1028,9 +1037,10 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
-            architectures: [{}]
+            architectures:
+            - {}
             build-snaps: []
-            """.format(self.project_options.deb_arch))  # NOQA
+            """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -1077,8 +1087,10 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
-            architectures: [{}]
-            build-packages: [git=testversion]
+            architectures:
+            - {}
+            build-packages:
+            - git=testversion
             build-snaps: []
             """.format(self.project_options.deb_arch))
         self.assertThat(
@@ -1111,7 +1123,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             grade: stable
             parts:
               test-part:
-                build-packages: ['test-package:any']
+                build-packages:
+                - test-package:any
                 installed-packages: []
                 installed-snaps: []
                 plugin: nil
@@ -1119,8 +1132,10 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
-            architectures: [{}]
-            build-packages: [test-package=test-version]
+            architectures:
+            - {}
+            build-packages:
+            - test-package=test-version
             build-snaps: []
             """.format(self.project_options.deb_arch))
         self.assertThat(
@@ -1155,7 +1170,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             grade: stable
             parts:
               test-part:
-                build-packages: [test-virtual-package]
+                build-packages:
+                - test-virtual-package
                 installed-packages: []
                 installed-snaps: []
                 plugin: nil
@@ -1163,8 +1179,10 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
-            architectures: [{}]
-            build-packages: [test-provider-package=test-version]
+            architectures:
+            - {}
+            build-packages:
+            - test-provider-package=test-version
             build-snaps: []
             """.format(self.project_options.deb_arch))
         self.assertThat(
@@ -1203,7 +1221,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 stage-packages: []
                 test-plugin-manifest: test-value
                 uname: Linux test uname 4.10 x86_64
-            architectures: [{}]
+            architectures:
+            - {}
             build-packages: []
             build-snaps: []
             """.format(self.project_options.deb_arch))
@@ -1245,11 +1264,15 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
-            architectures: [{}]
-            image-info: {{architecture: test-architecture, created_at: test-created-at, fingerprint: test-fingerprint}}
+            architectures:
+            - {}
+            image-info:
+              architecture: test-architecture
+              created_at: test-created-at
+              fingerprint: test-fingerprint
             build-packages: []
             build-snaps: []
-            """.format(self.project_options.deb_arch))  # NOQA
+            """.format(self.project_options.deb_arch))
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
