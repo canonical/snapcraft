@@ -38,6 +38,9 @@ class Cleanbuilder(Containerbuild):
         subprocess.check_call([
             'lxc', 'launch', '-e', self._image, self._container_name])
         self._configure_container()
+        self._wait_for_network()
+        self._container_run(['apt-get', 'update'])
+        self._inject_snapcraft()
 
     def _setup_project(self):
         logger.info('Setting up container with project assets')

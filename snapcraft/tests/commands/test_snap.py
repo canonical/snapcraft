@@ -485,6 +485,43 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   'snap-test_1.0_amd64.snap'], cwd=project_folder),
         ])
 
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('os.getuid')
+    def test_snap_containerized_exists_running(self,
+                                               mock_getuid,
+                                               mock_container_run):
+        self.useFixture(
+            fixtures.EnvironmentVariable('SUDO_UID', self.SUDO_UID))
+        mock_getuid.return_value = self.getuid
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        # Container was created before and is running
+        fake_lxd.name = 'local:snapcraft-snap-test'
+        fake_lxd.status = 'Running'
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+        self.make_snapcraft_yaml()
+
+        self.run_command(['snap'])
+
+        source = os.path.realpath(os.path.curdir)
+        project_folder = '/root/build_snap-test'
+        fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'config', 'device', 'add', fake_lxd.name,
+                  project_folder, 'disk', 'source={}'.format(source),
+                  'path={}'.format(project_folder)]),
+            call(['lxc', 'stop', '-f', fake_lxd.name]),
+        ])
+        mock_container_run.assert_has_calls([
+            call(['python3', '-c', 'import urllib.request; ' +
+                  'urllib.request.urlopen(' +
+                  '"http://start.ubuntu.com/connectivity-check.html"' +
+                  ', timeout=5)']),
+            call(['snapcraft', 'snap', '--output',
+                  'snap-test_1.0_amd64.snap'],
+                 cwd=project_folder),
+        ])
+
     @mock.patch('os.getuid')
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('snapcraft.internal.lxd.Containerbuild._inject_snapcraft')
@@ -541,11 +578,12 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                     'urllib.request.urlopen(' +
                     '"http://start.ubuntu.com/connectivity-check.html"' +
                     ', timeout=5)']),
-              call(['apt-get', 'update']),
               call(['snapcraft', 'snap', '--output',
                     'snap-test_1.0_amd64.snap'],
                    cwd=project_folder),
         ])
+        # Ensure there's no unexpected calls eg. two network checks
+        self.assertThat(mock_container_run.call_count, Equals(2))
 
 
 class SnapCommandAsDefaultTestCase(SnapCommandBaseTestCase):

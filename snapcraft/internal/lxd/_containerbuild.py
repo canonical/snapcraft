@@ -90,6 +90,22 @@ class Containerbuild:
             'lxc', 'info', '{}:'.format(remote)]).decode())
 
     @contextmanager
+    def _container_running(self):
+        with self._ensure_started():
+            try:
+                yield
+            except ContainerRunError as e:
+                if self._project_options.debug:
+                    logger.info('Debug mode enabled, dropping into a shell')
+                    self._container_run(['bash', '-i'])
+                else:
+                    raise e
+            else:
+                # Remove temporary folder if everything went well
+                shutil.rmtree(self.tmp_dir)
+                self._finish()
+
+    @contextmanager
     def _ensure_started(self):
         try:
             self._ensure_container()
@@ -124,11 +140,8 @@ class Containerbuild:
             'environment.LC_ALL', 'C.UTF-8'])
 
     def execute(self, step='snap', args=None):
-        with self._ensure_started():
-            self._wait_for_network()
-            self._container_run(['apt-get', 'update'])
+        with self._container_running():
             self._setup_project()
-            self._inject_snapcraft()
             command = ['snapcraft', step]
             if step == 'snap':
                 command += ['--output', self._snap_output]
@@ -138,18 +151,7 @@ class Containerbuild:
                 command += ['--target-arch', self._project_options.target_arch]
             if args:
                 command += args
-            try:
-                self._container_run(command, cwd=self._project_folder)
-            except ContainerRunError as e:
-                if self._project_options.debug:
-                    logger.info('Debug mode enabled, dropping into a shell')
-                    self._container_run(['bash', '-i'])
-                else:
-                    raise e
-            else:
-                # Remove temporary folder if everything went well
-                shutil.rmtree(self.tmp_dir)
-                self._finish()
+            self._container_run(command, cwd=self._project_folder)
 
     def _container_run(self, cmd, cwd=None, **kwargs):
         sh = ''

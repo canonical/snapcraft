@@ -119,6 +119,8 @@ class CleanbuilderTestCase(LXDTestCase):
             call(['snapcraft', 'snap', '--output', 'snap.snap', *args],
                  cwd=project_folder),
         ])
+        # Ensure there's no unexpected calls eg. two network checks
+        self.assertThat(mock_container_run.call_count, Equals(5))
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'file', 'pull',
                   '{}{}/snap.snap'.format(container_name, project_folder),

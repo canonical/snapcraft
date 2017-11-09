@@ -43,7 +43,8 @@ class Project(Containerbuild):
         self._processes = []
 
     def _ensure_container(self):
-        if not self._get_container_status():
+        new_container = not self._get_container_status()
+        if new_container:
             subprocess.check_call([
                 'lxc', 'init', self._image, self._container_name])
         if self._get_container_status()['status'] == 'Stopped':
@@ -61,6 +62,10 @@ class Project(Containerbuild):
                             'remove any existing lines.'
                             '\nRestart lxd after making this change.')
                 raise ContainerConnectionError(msg)
+        self._wait_for_network()
+        if new_container:
+            self._container_run(['apt-get', 'update'])
+            self._inject_snapcraft()
 
     def _configure_container(self):
         super()._configure_container()
@@ -146,6 +151,12 @@ class Project(Containerbuild):
         for process in self._processes:
             logger.info('Terminating {}'.format(process.args))
             process.terminate()
+
+    def refresh(self):
+        with self._container_running():
+            self._container_run(['apt-get', 'update'])
+            self._container_run(['apt-get', 'upgrade', '-y'])
+            self._container_run(['snap', 'refresh'])
 
     def clean(self, parts, step):
         # clean with no parts deletes the container
