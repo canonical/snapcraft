@@ -1326,11 +1326,13 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(
                 installed-packages: []
                 installed-snaps: []
                 plugin: nil
-                prime: [-*]
+                prime:
+                - -*
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
-            architectures: [{}]
+            architectures:
+            - {}
             build-packages: []
             build-snaps: []
             """.format(self.project_options.deb_arch))
