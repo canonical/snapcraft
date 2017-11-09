@@ -1246,12 +1246,10 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
             architectures: [{}]
-            image-info: {}
+            image-info: {{architecture: test-architecture, created_at: test-created-at, fingerprint: test-fingerprint}}
             build-packages: []
             build-snaps: []
-            """.format(
-                self.project_options.deb_arch,
-                test_image_info.replace('"', '')))
+            """.format(self.project_options.deb_arch))  # NOQA
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
