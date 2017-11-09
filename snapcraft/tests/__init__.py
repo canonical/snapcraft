@@ -27,7 +27,10 @@ import testscenarios
 import testtools
 
 import snapcraft
-from snapcraft.internal import common
+from snapcraft.internal import (
+    common,
+    log,
+)
 from snapcraft.tests import fake_servers, fixture_setup
 from snapcraft.internal.project_loader import grammar_processing
 
@@ -147,6 +150,9 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             self.mock_machine = patcher.start()
             self.mock_machine.return_value = machine
             self.addCleanup(patcher.stop)
+
+        # Ensure logging is set back to the default
+        self.addCleanup(log.configure)
 
     def make_snapcraft_yaml(self, content, encoding='utf-8'):
         with contextlib.suppress(FileExistsError):
