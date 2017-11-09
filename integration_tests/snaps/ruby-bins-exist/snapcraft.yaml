@@ -9,5 +9,6 @@ parts:
   ruby-exists:
     plugin: ruby
     build-packages: [lsb-release]
+    ruby-version: '2.4.2'
     stage:
       - bin

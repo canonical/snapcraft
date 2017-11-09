@@ -14,6 +14,7 @@ apps:
 parts:
   ruby-hello:
     plugin: ruby
+    ruby-version: '2.4.2'
     source: .
     stage:
       - bin

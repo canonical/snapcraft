@@ -8,7 +8,7 @@ confinement: strict
 parts:
   ruby-gem-install:
     plugin: ruby
-    ruby-version: "2.3.1"
+    ruby-version: '2.4.2'
     gems: ['rack']
     stage:
       - bin
