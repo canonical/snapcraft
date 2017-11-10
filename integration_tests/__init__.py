@@ -25,6 +25,7 @@ import time
 import uuid
 import xdg
 from distutils import dir_util
+from xdg import BaseDirectory
 
 import fixtures
 import pexpect
@@ -61,14 +62,17 @@ class TestCase(testtools.TestCase):
                 os.getcwd(), 'bin', 'snapcraft-parser')
 
         self.snaps_dir = os.path.join(os.path.dirname(__file__), 'snaps')
+
+        # share the cache in all tests.
+        self.useFixture(fixtures.EnvironmentVariable(
+            'XDG_CACHE_HOME', BaseDirectory.xdg_cache_home))
+
         temp_cwd_fixture = fixture_setup.TempCWD()
         self.useFixture(temp_cwd_fixture)
         self.path = temp_cwd_fixture.path
 
         self.useFixture(fixtures.EnvironmentVariable(
             'XDG_CONFIG_HOME', os.path.join(self.path, '.config')))
-        self.useFixture(fixtures.EnvironmentVariable(
-            'XDG_CACHE_HOME', os.path.join(self.path, '.cache')))
         self.useFixture(fixtures.EnvironmentVariable(
             'XDG_DATA_HOME', os.path.join(self.path, 'data')))
         self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
@@ -81,11 +85,6 @@ class TestCase(testtools.TestCase):
         patcher = mock.patch(
             'xdg.BaseDirectory.xdg_data_home',
             new=os.path.join(self.path, 'data'))
-        patcher.start()
-        self.addCleanup(patcher.stop)
-        patcher = mock.patch(
-            'xdg.BaseDirectory.xdg_cache_home',
-            new=os.path.join(self.path, '.cache'))
         patcher.start()
         self.addCleanup(patcher.stop)
 
