@@ -17,6 +17,7 @@
 import os
 
 from testtools.matchers import (
+    Equals,
     DirExists,
     FileExists
 )
@@ -31,6 +32,7 @@ class TarPluginTestCase(integration_tests.TestCase):
         self.run_snapcraft('stage')
 
         expected_files = [
+            'exec',
             'top-simple',
             os.path.join('dir-simple', 'sub')
         ]
@@ -38,6 +40,9 @@ class TarPluginTestCase(integration_tests.TestCase):
             self.assertThat(
                 os.path.join(self.stage_dir, expected_file),
                 FileExists())
+        self.assertThat(os.access(
+            os.path.join(self.stage_dir, 'exec'), os.X_OK),
+            Equals(True))
         expected_dirs = [
             'dir-simple',
         ]

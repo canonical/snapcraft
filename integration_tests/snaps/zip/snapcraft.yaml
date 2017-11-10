@@ -11,4 +11,4 @@ parts:
   zip-source-checksum:
     plugin: dump
     source: simple.zip
-    source-checksum: sha256/035ae7da4bd0ff39960466353e0810f51d17193a13e8b75e767391820aed484c
+    source-checksum: sha256/e8eae6f110b62687f21eddfca149d638f80d48e2bf4654771af46c7218f0d27e
