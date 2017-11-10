@@ -57,7 +57,7 @@ class RubyPlugin(BasePlugin):
         }
         schema['properties']['ruby-version'] = {
             'type': 'string',
-            'default': '2.4.0'
+            'default': '2.4.2'
         }
         schema['properties']['gems'] = {
             'type': 'array',

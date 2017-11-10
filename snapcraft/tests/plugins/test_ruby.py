@@ -32,7 +32,7 @@ class RubyPluginTestCase(tests.TestCase):
 
         class Options(snapcraft.ProjectOptions):
             source = '.'
-            ruby_version = '2.4.0'
+            ruby_version = '2.4.2'
             gems = []
             use_bundler = False
 
@@ -47,7 +47,7 @@ class RubyPluginTestCase(tests.TestCase):
         }
         expected_ruby_version = {
             'type': 'string',
-            'default': '2.4.0'
+            'default': '2.4.2'
         }
         expected_gems = {
             'type': 'array',
@@ -135,7 +135,7 @@ class RubyPluginTestCase(tests.TestCase):
 
         self.assertThat(
             plugin._ruby_tar.source,
-            Equals('https://cache.ruby-lang.org/pub/ruby/ruby-2.4.0.tar.gz'))
+            Equals('https://cache.ruby-lang.org/pub/ruby/ruby-2.4.2.tar.gz'))
         self.assertThat(
             plugin._ruby_tar.source_dir,
             Equals(os.path.join(self.path, 'parts', 'test-part', 'ruby')))
