@@ -254,7 +254,6 @@ properties:
             description: plugin name
           source:
             type: string
-            default: '.'
           source-checksum:
               type: string
               default: ''

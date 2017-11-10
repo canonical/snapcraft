@@ -15,6 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import copy
 import os
 
 import jsonschema
@@ -61,11 +62,19 @@ class Validator:
             raise errors.YamlValidationError(
                 'snapcraft validation file is missing from installation path')
 
-    def validate(self):
+    def validate(self, snapcraft_yaml=None, validate_sources=False):
+        if not snapcraft_yaml:
+            snapcraft_yaml = self._snapcraft
+
+        if validate_sources:
+            schema = copy.deepcopy(self._schema)
+            schema['properties']['parts']['patternProperties'][
+                '^(?!plugins$)[a-z0-9][a-z0-9+-\/]*$']['required'] = 'source'
+
         format_check = jsonschema.FormatChecker()
         try:
             jsonschema.validate(
-                self._snapcraft, self._schema, format_checker=format_check)
+                snapcraft_yaml, self._schema, format_checker=format_check)
         except jsonschema.ValidationError as e:
             from snapcraft.internal.project_loader import errors
             raise errors.YamlValidationError.from_validation_error(e)

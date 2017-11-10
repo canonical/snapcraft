@@ -36,8 +36,8 @@ from unittest import mock
 
 class ContainsList(list):
 
-        def __eq__(self, other):
-            return all([i[0] in i[1] for i in zip(self, other)])
+    def __eq__(self, other):
+        return all([i[0] in i[1] for i in zip(self, other)])
 
 
 class MockOptions:
@@ -119,7 +119,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.addCleanup(common.set_librariesdir, common.get_librariesdir())
         self.addCleanup(common.reset_env)
         common.set_schemadir(os.path.join(__file__,
-                             '..', '..', '..', 'schema'))
+                                          '..', '..', '..', 'schema'))
         self.fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(self.fake_logger)
 
@@ -161,7 +161,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
         # Expect every step up to and including the specified one to be run
         index = common.COMMAND_ORDER.index(expected_step)
-        for step in common.COMMAND_ORDER[:index+1]:
+        for step in common.COMMAND_ORDER[:index + 1]:
             self.assertTrue(os.path.exists(os.path.join(state_dir, step)),
                             'Expected {!r} to be run for {}'.format(
                                 step, part_name))
@@ -170,7 +170,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
                   project_options=None, stage_packages_repo=None):
         if not plugin_name:
             plugin_name = 'nil'
-        properties = {'plugin': plugin_name}
+        properties = {'plugin': plugin_name, 'source': '.'}
         if part_properties:
             properties.update(part_properties)
         if not project_options:
