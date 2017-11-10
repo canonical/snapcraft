@@ -31,4 +31,4 @@ class AutotoolsTestCase(integration_tests.SnapdIntegrationTestCase):
             self.assertThat(
                 subprocess.check_output(
                     ['autotools-hello'], universal_newlines=True),
-                Equals("Hello world\n"))
+                Equals('Hello, world!\n'))
