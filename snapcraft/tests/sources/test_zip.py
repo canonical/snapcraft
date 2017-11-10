@@ -37,7 +37,7 @@ class TestZip(tests.FakeFileHTTPServerBasedTestCase):
         zip_source.pull()
 
         mock_zip.assert_called_once_with(
-            os.path.join(zip_source.source_dir, zip_file_name))
+            os.path.join(zip_source.source_dir, zip_file_name), 'r')
 
     @mock.patch('zipfile.ZipFile')
     def test_extract_and_keep_zipfile(self, mock_zip):
@@ -51,7 +51,7 @@ class TestZip(tests.FakeFileHTTPServerBasedTestCase):
         zip_source.provision(dst=dest_dir, keep_zip=True)
 
         zip_download = os.path.join(zip_source.source_dir, zip_file_name)
-        mock_zip.assert_called_once_with(zip_download)
+        mock_zip.assert_called_once_with(zip_download, 'r')
 
         with open(zip_download, 'r') as zip_file:
             self.assertThat(zip_file.read(), Equals('Test fake file'))
