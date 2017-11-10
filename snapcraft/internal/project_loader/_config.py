@@ -96,11 +96,16 @@ class Config:
 
         self.snapcraft_yaml_path = get_snapcraft_yaml()
         snapcraft_yaml = _snapcraft_yaml_load(self.snapcraft_yaml_path)
+        snapcraft_yaml = _mangle_yaml(snapcraft_yaml)
 
         self._validator = Validator(snapcraft_yaml)
         self._validator.validate()
 
         snapcraft_yaml = self._process_remote_parts(snapcraft_yaml)
+
+        # Now that remote parts are loaded we can finally validate sources.
+        self._validator.validate(snapcraft_yaml, validate_sources=True)
+
         snapcraft_yaml = self._expand_filesets(snapcraft_yaml)
 
         # both confinement type and build quality are optionals
@@ -308,3 +313,15 @@ def _expand_filesets_for(step, properties):
             new_step_set.append(item)
 
     return new_step_set
+
+
+def _mangle_yaml(snapcraft_yaml):
+    """Return a yaml considering the bad choices made in the past."""
+    for part_name in snapcraft_yaml.get('parts'):
+        plugin_name = snapcraft_yaml['parts'][part_name].get('plugin')
+        is_sourceless_plugin = any([plugin_name == p for p in ['copy', 'nil']])
+        is_source_defined = snapcraft_yaml['parts'][part_name].get(
+            'source', False)
+        if is_sourceless_plugin and not is_source_defined:
+            snapcraft_yaml['parts'][part_name]['source'] = '.'
+    return snapcraft_yaml

@@ -848,6 +848,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 installed-snaps: []
                 plugin: nil
                 prime: []
+                source: .
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
@@ -891,6 +892,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 installed-snaps: {}
                 plugin: nil
                 prime: []
+                source: .
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
@@ -935,6 +937,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 installed-snaps: []
                 plugin: nil
                 prime: []
+                source: .
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
@@ -980,6 +983,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 installed-snaps: []
                 plugin: nil
                 prime: []
+                source: .
                 stage: []
                 stage-packages: [test-package1=test-version1, test-package2=test-version2]
                 uname: Linux test uname 4.10 x86_64
@@ -1025,6 +1029,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 installed-snaps: []
                 plugin: nil
                 prime: []
+                source: .
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
@@ -1116,6 +1121,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 installed-snaps: []
                 plugin: nil
                 prime: []
+                source: .
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
@@ -1160,6 +1166,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 installed-snaps: []
                 plugin: nil
                 prime: []
+                source: .
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
@@ -1199,6 +1206,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 installed-snaps: []
                 plugin: nil
                 prime: []
+                source: .
                 stage: []
                 stage-packages: []
                 test-plugin-manifest: test-value
@@ -1245,6 +1253,7 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(
                 installed-snaps: []
                 plugin: nil
                 prime: [-*]
+                source: .
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64

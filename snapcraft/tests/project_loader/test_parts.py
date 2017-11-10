@@ -81,6 +81,7 @@ confinement: strict
 
 parts:
   part/1:
+    source: .
     plugin: go
     stage-packages: [fswebcam]
 """)
@@ -104,6 +105,7 @@ confinement: strict
 
 parts:
   part1:
+    source: .
     plugin: go
     stage-packages: [fswebcam]
     snap: [foo]

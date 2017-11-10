@@ -85,7 +85,7 @@ apps:
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
         c = _config.Config()
@@ -123,7 +123,7 @@ apps:
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(errors.DuplicateAliasError,
@@ -152,7 +152,7 @@ apps:
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(
@@ -175,13 +175,13 @@ grade: stable
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
         _config.Config()
-        self.mock_load_part.assert_called_with('part1', 'go', {
+        self.mock_load_part.assert_called_with('part1', 'nil', {
             'stage-packages': ['fswebcam'],
-            'plugin': 'go', 'stage': [], 'prime': [],
+            'source': '.', 'plugin': 'nil', 'stage': [], 'prime': [],
         })
 
     def test_config_composes_with_remote_parts(self):
@@ -299,7 +299,7 @@ parts:
 
     def test_config_adds_extra_build_tools_when_cross_compiling(self):
         with unittest.mock.patch('platform.machine') as machine_mock, \
-             unittest.mock.patch('platform.architecture') as arch_mock:
+                unittest.mock.patch('platform.architecture') as arch_mock:
             arch_mock.return_value = ('64bit', 'ELF')
             machine_mock.return_value = 'x86_64'
             project_options = snapcraft.ProjectOptions(target_deb_arch='armhf')
@@ -357,7 +357,7 @@ grade: stable
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(
@@ -378,7 +378,7 @@ grade: stable
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
         config = project_loader.load_config()
@@ -399,7 +399,7 @@ grade: devel
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
         config = project_loader.load_config()
@@ -419,7 +419,7 @@ grade: stable
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(
@@ -448,7 +448,7 @@ grade: stable
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(
@@ -472,7 +472,7 @@ grade: stable
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(
@@ -495,7 +495,7 @@ grade: stable
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(
@@ -522,7 +522,7 @@ grade: stable
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
         raised = self.assertRaises(
@@ -544,7 +544,7 @@ description: nothing
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
         c = _config.Config()
@@ -569,7 +569,7 @@ confinement: strict
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
         c = _config.Config()
@@ -595,7 +595,7 @@ grade: stable
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
 
@@ -664,7 +664,7 @@ grade: stable
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
     filesets:
       wget:
@@ -681,10 +681,10 @@ parts:
 """)
         _config.Config()
 
-        self.mock_load_part.assert_called_with('part1', 'go', {
+        self.mock_load_part.assert_called_with('part1', 'nil', {
             'prime': ['/usr/lib/wget.so', '/usr/bin/wget',
                       '/usr/share/my-icon.png'],
-            'plugin': 'go', 'stage-packages': ['fswebcam'],
+            'source': '.', 'plugin': 'nil', 'stage-packages': ['fswebcam'],
             'stage': ['/usr/lib/wget.so', '/usr/bin/wget', '/usr/lib/wget.a'],
         })
 
@@ -902,7 +902,7 @@ parts:
   part1:
     after:
       - curl
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """)
 
@@ -928,8 +928,8 @@ parts:
              'source': 'http://curl.org'})
         call2 = unittest.mock.call(
             'part1',
-            'go',
-            {'plugin': 'go', 'stage': [], 'prime': [],
+            'nil',
+            {'source': '.', 'plugin': 'nil', 'stage': [], 'prime': [],
              'stage-packages': ['fswebcam']})
 
         self.mock_load_part.assert_has_calls([call1, call2], any_order=True)
@@ -961,15 +961,15 @@ grade: stable
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """
 
         self.make_snapcraft_yaml(content, encoding=self.encoding)
         _config.Config()
 
-        self.mock_load_part.assert_called_with('part1', 'go', {
-            'plugin': 'go', 'stage-packages': ['fswebcam'],
+        self.mock_load_part.assert_called_with('part1', 'nil', {
+            'source': '.', 'plugin': 'nil', 'stage-packages': ['fswebcam'],
             'stage': [], 'prime': [],
         })
 
@@ -1216,7 +1216,7 @@ grade: stable
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """.format(self.confinement))
         c = _config.Config()
@@ -1241,7 +1241,7 @@ grade: stable
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """.format(self.confinement))
         raised = self.assertRaises(
@@ -1273,7 +1273,7 @@ grade: {}
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """.format(self.grade))
         c = _config.Config()
@@ -1298,7 +1298,7 @@ grade: {}
 
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """.format(self.grade))
         raised = self.assertRaises(
@@ -1372,7 +1372,7 @@ description: nothing
 epoch: {}
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """.format(self.yaml))
         c = _config.Config()
@@ -1396,7 +1396,7 @@ class InvalidEpochsYamlTestCase(YamlBaseTestCase):
                      '1.2',
                      '"1.2"',
                      '[1]'
-                 ]]
+    ]]
 
     def test_invalid_yaml_invalid_epochs(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -1409,7 +1409,7 @@ description: nothing
 epoch: {}
 parts:
   part1:
-    plugin: go
+    plugin: nil
     stage-packages: [fswebcam]
 """.format(self.epoch))
         raised = self.assertRaises(
@@ -1938,6 +1938,7 @@ class ValidationBaseTestCase(tests.TestCase):
             'description': 'description which can be pretty long',
             'parts': {
                 'part1': {
+                    'source': '.',
                     'plugin': 'project',
                 },
             },
@@ -2110,8 +2111,8 @@ class InvalidNamesTestCase(ValidationBaseTestCase):
 
     scenarios = [(name, dict(name=name)) for
                  name in [
-                    'package@awesome', 'something.another', '_hideme', '-no',
-                    'a:a', '123'
+        'package@awesome', 'something.another', '_hideme', '-no',
+        'a:a', '123'
     ]]
 
     def test_invalid_names(self):
@@ -2229,7 +2230,7 @@ class InvalidPartNamesTestCase(ValidationBaseTestCase):
 
     scenarios = [(name, dict(name=name)) for
                  name in [
-                    'plugins', 'qwe#rty', 'qwe_rty', 'que rty', 'que  rty']]
+        'plugins', 'qwe#rty', 'qwe_rty', 'que rty', 'que  rty']]
 
     def test_invalid_part_names(self):
         data = self.data.copy()
@@ -2347,7 +2348,7 @@ class SnapcraftEnvTestCase(tests.TestCase):
                 subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
                           ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
                           ('$SNAPCRAFT_STAGE', self.stage_dir)]),
-                            Equals(expected))
+                Equals(expected))
 
     def test_lists_with_string_replacements(self):
         replacements = (
@@ -2391,7 +2392,7 @@ class SnapcraftEnvTestCase(tests.TestCase):
                 subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
                           ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
                           ('$SNAPCRAFT_STAGE', self.stage_dir)]),
-                            Equals(expected))
+                Equals(expected))
 
     def test_tuples_with_string_replacements(self):
         replacements = (
@@ -2435,7 +2436,7 @@ class SnapcraftEnvTestCase(tests.TestCase):
                 subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
                           ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
                           ('$SNAPCRAFT_STAGE', self.stage_dir)]),
-                            Equals(expected))
+                Equals(expected))
 
     def test_dict_with_string_replacements(self):
         replacements = (
@@ -2479,7 +2480,7 @@ class SnapcraftEnvTestCase(tests.TestCase):
                 subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
                           ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
                           ('$SNAPCRAFT_STAGE', self.stage_dir)]),
-                            Equals(expected))
+                Equals(expected))
 
     def test_string_replacement_with_complex_data(self):
         subject = {
@@ -2514,4 +2515,4 @@ class SnapcraftEnvTestCase(tests.TestCase):
             subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
                       ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
                       ('$SNAPCRAFT_STAGE', self.stage_dir)]),
-                        Equals(expected))
+            Equals(expected))
