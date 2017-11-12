@@ -17,12 +17,28 @@
 import http.client
 import http.server
 import json
+import os
+import tempfile
 import urllib.parse
 
+import fixtures
 from testtools.matchers import Equals
 
 from snapcraft import tests
 from snapcraft.tests import fixture_setup
+
+
+class TempCWDTestCase(tests.TestCase):
+
+    def test_with_TEMPDIR_env_var(self):
+        with tempfile.TemporaryDirectory() as test_tmp_dir:
+            with fixtures.EnvironmentVariable('TMPDIR', test_tmp_dir):
+                temp_cwd_fixture = fixture_setup.TempCWD()
+                self.useFixture(temp_cwd_fixture)
+
+        self.assertThat(
+            os.path.dirname(temp_cwd_fixture.path),
+            Equals(test_tmp_dir))
 
 
 class TestFakeServer(http.server.HTTPServer):
