@@ -1,6 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2016-2017 Marius Gripsgard (mariogrip@ubuntu.com)
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,10 +15,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import os
-
+import subprocess
 from unittest import mock
-from testtools.matchers import DirExists, Equals, FileExists, Not
+
+from testtools.matchers import (
+    Contains,
+    DirExists,
+    Equals,
+    FileExists,
+    Not
+)
 
 import snapcraft
 from snapcraft import tests
@@ -56,6 +65,10 @@ class RustPluginCrossCompileTestCase(tests.TestCase):
 
         patcher = mock.patch('snapcraft.internal.common.run')
         self.run_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.internal.common.run_output')
+        patcher.start()
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('snapcraft.ProjectOptions.is_cross_compiling')
@@ -164,25 +177,8 @@ class RustPluginTestCase(tests.TestCase):
                         'but it was "{}"'.format(rust_revision_type))
 
     @mock.patch.object(rust.RustPlugin, 'run')
-    def test_build(self, run_mock):
-        plugin = rust.RustPlugin('test-part', self.options,
-                                 self.project_options)
-        os.makedirs(plugin.sourcedir)
-
-        plugin.build()
-
-        self.assertThat(run_mock.call_count, Equals(1))
-        run_mock.assert_has_calls([
-            mock.call(
-                [plugin._cargo, 'install',
-                 '-j{}'.format(plugin.project.parallel_build_count),
-                 '--root', plugin.installdir,
-                 '--path', plugin.builddir],
-                env=plugin._build_env())
-        ])
-
-    @mock.patch.object(rust.RustPlugin, 'run')
-    def test_build_with_conditional_compilation(self, run_mock):
+    @mock.patch.object(rust.RustPlugin, 'run_output')
+    def test_build_with_conditional_compilation(self, _, run_mock):
         plugin = rust.RustPlugin('test-part', self.options,
                                  self.project_options)
         plugin.options.rust_features = ['conditional-compilation']
@@ -292,3 +288,95 @@ class RustPluginTestCase(tests.TestCase):
         os.makedirs(plugin.sourcedir)
 
         self.assertRaises(NotImplementedError, plugin.enable_cross_compilation)
+
+    @mock.patch.object(rust.RustPlugin, 'run')
+    @mock.patch.object(rust.RustPlugin, 'run_output')
+    def test_build(self, _, run_mock):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+
+        plugin.build()
+
+        self.assertThat(run_mock.call_count, Equals(1))
+        run_mock.assert_has_calls([
+            mock.call(
+                [plugin._cargo, 'install',
+                 '-j{}'.format(plugin.project.parallel_build_count),
+                 '--root', plugin.installdir,
+                 '--path', plugin.builddir],
+                env=plugin._build_env())
+        ])
+
+    @mock.patch.object(rust.RustPlugin, 'run')
+    @mock.patch.object(rust.RustPlugin, 'run_output')
+    def test_get_manifest_with_cargo_lock_file(self, *_):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+        os.makedirs(plugin.builddir)
+
+        with open(os.path.join(
+            plugin.builddir,
+                'Cargo.lock'), 'w') as cargo_lock_file:
+            cargo_lock_file.write('test cargo lock contents')
+
+        plugin.build()
+
+        self.assertThat(
+            plugin.get_manifest()['cargo-lock-contents'],
+            Equals('test cargo lock contents'))
+
+    @mock.patch.object(rust.RustPlugin, 'run')
+    @mock.patch.object(rust.RustPlugin, 'run_output')
+    def test_get_manifest_with_unexisting_cargo_lock(self, *_):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+        os.makedirs(plugin.builddir)
+
+        plugin.build()
+
+        self.assertThat(
+            plugin.get_manifest(), Not(Contains('cargo-lock-contents')))
+
+    @mock.patch.object(rust.RustPlugin, 'run')
+    @mock.patch.object(rust.RustPlugin, 'run_output')
+    def test_get_manifest_with_cargo_lock_dir(self, *_):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+        os.makedirs(plugin.builddir)
+
+        os.mkdir(os.path.join(plugin.builddir, 'Cargo.lock'))
+
+        plugin.build()
+
+        self.assertThat(
+            plugin.get_manifest(), Not(Contains('cargo-lock-contents')))
+
+    @mock.patch.object(rust.RustPlugin, 'run')
+    def test_get_manifest_with_versions(self, _):
+        plugin = rust.RustPlugin('test-part', self.options,
+                                 self.project_options)
+        os.makedirs(plugin.sourcedir)
+
+        original_check_output = subprocess.check_output
+
+        def side_effect(cmd, *args, **kwargs):
+            if cmd[-1] == '--version':
+                binary = os.path.basename(cmd[-2])
+                return 'test {} version'.format(binary)
+            return original_check_output(cmd, *args, **kwargs)
+
+        with mock.patch.object(
+                rust.RustPlugin, 'run_output') as run_output_mock:
+            run_output_mock.side_effect = side_effect
+            plugin.build()
+
+        expected_manifest = collections.OrderedDict()
+        expected_manifest['rustup-version'] = 'test rustup.sh version'
+        expected_manifest['rustc-version'] = 'test rustc version'
+        expected_manifest['cargo-version'] = 'test cargo version'
+
+        self.assertThat(plugin.get_manifest(), Equals(expected_manifest))

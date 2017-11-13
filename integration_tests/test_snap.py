@@ -16,6 +16,7 @@
 
 import os
 import subprocess
+from textwrap import dedent
 
 import fixtures
 import testtools
@@ -74,19 +75,14 @@ class SnapTestCase(integration_tests.TestCase):
             os.path.join(self.prime_dir, 'bin', 'not-wrapped.wrapper'),
             Not(FileExists()))
 
+        self.assertThat(
+            os.path.join(self.prime_dir, 'bin',
+                         'command-binary-wrapper-none.wrapper.wrapper'),
+            Not(FileExists()))
+
     def test_snap_default(self):
         self.copy_project_to_cwd('assemble')
         self.run_snapcraft([])
-
-        snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
-        self.assertThat(snap_file_path, FileExists())
-
-    def test_cleanbuild(self):
-        self.skipTest("Fails to run correctly on travis.")
-        self.run_snapcraft('cleanbuild', 'assemble')
-
-        snap_source_path = 'assemble_1.0_source.tar.bz2'
-        self.assertThat(snap_source_path, FileExists())
 
         snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
         self.assertThat(snap_file_path, FileExists())
@@ -102,6 +98,19 @@ class SnapTestCase(integration_tests.TestCase):
         # sure `snapcraft snap` and `snapcraft snap <directory>` are always in
         # sync).
         self.run_snapcraft(['snap', 'prime'])
+        self.assertThat(snap_file_path, FileExists())
+
+    def test_pack_directory(self):
+        self.copy_project_to_cwd('assemble')
+        self.run_snapcraft('snap')
+
+        snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
+        os.remove(snap_file_path)
+
+        # Verify that Snapcraft can snap its own snap directory (this will make
+        # sure `snapcraft snap` and `snapcraft pack <directory>` are always
+        # in sync).
+        self.run_snapcraft(['pack', 'prime'])
         self.assertThat(snap_file_path, FileExists())
 
     def test_snap_long_output_option(self):
@@ -184,3 +193,47 @@ class SnapTestCase(integration_tests.TestCase):
             os.path.join(self.stage_dir, 'test.txt'),
             FileExists()
         )
+
+    def test_ordered_snap_yaml(self):
+        with open('snapcraft.yaml', 'w') as s:
+            s.write(dedent("""\
+                apps:
+                    stub-app:
+                        command: sh
+                grade: stable
+                version: "2"
+                assumes: [snapd_227]
+                architectures: [all]
+                description: stub description
+                summary: stub summary
+                confinement: strict
+                name: stub-snap
+                environment:
+                    stub_key: stub-value
+                epoch: 1
+                parts:
+                    nothing:
+                        plugin: nil
+            """))
+        self.run_snapcraft('prime')
+
+        expected_snap_yaml = dedent("""\
+            name: stub-snap
+            version: '2'
+            summary: stub summary
+            description: stub description
+            architectures:
+            - all
+            confinement: strict
+            grade: stable
+            assumes:
+            - snapd_227
+            epoch: 1
+            environment:
+              stub_key: stub-value
+            apps:
+              stub-app:
+                command: command-stub-app.wrapper
+        """)
+        self.assertThat(os.path.join('prime', 'meta', 'snap.yaml'),
+                        FileContains(expected_snap_yaml))

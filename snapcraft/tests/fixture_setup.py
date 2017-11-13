@@ -19,8 +19,11 @@ import contextlib
 import copy
 import io
 import os
+import socketserver
 import string
+import subprocess
 import sys
+import tempfile
 import threading
 import urllib.parse
 import uuid
@@ -31,12 +34,14 @@ from subprocess import CalledProcessError
 
 import fixtures
 import xdg
+import yaml
 
 import snapcraft
 from snapcraft.tests import fake_servers
 from snapcraft.tests.fake_servers import (
     api,
     search,
+    snapd,
     upload
 )
 from snapcraft.tests.subprocess_utils import (
@@ -46,6 +51,11 @@ from snapcraft.tests.subprocess_utils import (
 
 
 class TempCWD(fixtures.TempDir):
+
+    def __init__(self, rootdir=None):
+        if rootdir is None and 'TMPDIR' in os.environ:
+            rootdir = os.environ.get('TMPDIR')
+        super().__init__(rootdir)
 
     def setUp(self):
         """Create a temporary directory an cd into it for the test duration."""
@@ -126,7 +136,8 @@ class SilentSnapProgress(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft.internal.lifecycle.ProgressBar')
+        patcher = mock.patch(
+            'snapcraft.internal.lifecycle._packer.ProgressBar')
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -360,7 +371,7 @@ class StagingStore(fixtures.Fixture):
         super().setUp()
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_API_ROOT_URL',
-            'https://myapps.developer.staging.ubuntu.com/dev/api/'))
+            'https://dashboard.staging.snapcraft.io/dev/api/'))
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_UPLOAD_ROOT_URL',
             'https://upload.apps.staging.ubuntu.com/'))
@@ -369,7 +380,7 @@ class StagingStore(fixtures.Fixture):
             'https://login.staging.ubuntu.com/api/v2/'))
         self.useFixture(fixtures.EnvironmentVariable(
             'UBUNTU_STORE_SEARCH_ROOT_URL',
-            'https://search.apps.staging.ubuntu.com/'))
+            'https://api.staging.snapcraft.io/'))
 
 
 class TestStore(fixtures.Fixture):
@@ -441,7 +452,8 @@ class FakeFilesystem(fixtures.Fixture):
         self.mkdtemp_mock.side_effect = self.mkdtemp_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.open', mock.mock_open())
+        patcher = mock.patch(
+            'snapcraft.internal.lxd._containerbuild.open', mock.mock_open())
         self.open_mock = patcher.start()
         self.open_mock_default_side_effect = self.open_mock.side_effect
         self.open_mock.side_effect = self.open_side_effect()
@@ -493,23 +505,29 @@ class FakeFilesystem(fixtures.Fixture):
 class FakeLXD(fixtures.Fixture):
     '''...'''
 
-    def __init__(self, fail_on_snapcraft_run=False):
+    def __init__(self):
         self.status = None
+        self.files = []
+        self.kernel_arch = 'x86_64'
         self.devices = '{}'
-        self.fail_on_snapcraft_run = fail_on_snapcraft_run
 
     def _setUp(self):
-        patcher = mock.patch('snapcraft.internal.lxd.check_call')
+        patcher = mock.patch('subprocess.check_call')
         self.check_call_mock = patcher.start()
         self.check_call_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.check_output')
+        patcher = mock.patch('subprocess.check_output')
         self.check_output_mock = patcher.start()
         self.check_output_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
+        patcher = mock.patch('subprocess.Popen')
+        self.popen_mock = patcher.start()
+        self.popen_mock.side_effect = self.check_output_side_effect()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('time.sleep', lambda _: None)
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -529,8 +547,8 @@ class FakeLXD(fixtures.Fixture):
             elif args[0][:2] == ['lxc', 'info']:
                 return '''
                     environment:
-                      kernel_architecture: x86_64
-                    '''.encode('utf-8')
+                      kernel_architecture: {}
+                    '''.format(self.kernel_arch).encode('utf-8')
             elif args[0][:3] == ['lxc', 'list', '--format=json']:
                 if self.status and args[0][3] == self.name:
                     return string.Template('''
@@ -544,64 +562,54 @@ class FakeLXD(fixtures.Fixture):
                             'DEVICES': self.devices,
                             }).encode('utf-8')
                 return '[]'.encode('utf-8')
-            elif args[0][:2] == ['lxc', 'init']:
-                self.name = args[0][3]
-                self.status = 'Stopped'
-            elif args[0][:2] == ['lxc', 'launch']:
-                self.name = args[0][4]
-                self.status = 'Running'
-            elif args[0][:2] == ['lxc', 'stop'] and not self.status:
-                # error: not found
-                raise CalledProcessError(returncode=1, cmd=args[0])
-            # Fail on an actual snapcraft command and not the command
-            # for the installation of it.
-            elif ('snapcraft snap' in ' '.join(args[0])
-                  and self.fail_on_snapcraft_run):
-                raise CalledProcessError(returncode=255, cmd=args[0])
+            elif (args[0][0] == 'lxc' and
+                  args[0][1] in ['init', 'start', 'launch', 'stop']):
+                return self._lxc_create_start_stop(args)
+            elif args[0][:2] == ['lxc', 'exec']:
+                return self._lxc_exec(args)
+            elif args[0][0] == 'sha384sum':
+                return 'deadbeef {}'.format(args[0][1]).encode('utf-8')
+            elif '/usr/lib/sftp-server' in args[0]:
+                return self._popen(args[0])
             else:
                 return ''.encode('utf-8')
         return call_effect
 
+    def _lxc_create_start_stop(self, args):
+        if args[0][1] == 'init':
+            self.name = args[0][3]
+            self.status = 'Stopped'
+        elif args[0][1] == 'launch':
+            self.name = args[0][4]
+            self.status = 'Running'
+        elif args[0][1] == 'start' and self.name == args[0][2]:
+            self.status = 'Running'
+        elif args[0][1] == 'stop' and not self.status:
+            # error: not found
+            raise CalledProcessError(returncode=1, cmd=args[0])
 
-class FakeSnapd(fixtures.Fixture):
-    '''...'''
+    def _lxc_exec(self, args):
+        if self.status and args[0][2] == self.name:
+            cmd = args[0][4]
+            if cmd == 'ls':
+                return ' '.join(self.files).encode('utf-8')
+            elif cmd == 'readlink':
+                if args[0][-1].endswith('/current'):
+                    raise CalledProcessError(returncode=1, cmd=cmd)
+            elif cmd == 'sshfs':
+                self.files = ['foo', 'bar']
+                return self._popen(args[0])
+            elif 'sha384sum' in args[0][-1]:
+                raise CalledProcessError(returncode=1, cmd=cmd)
 
-    def __init__(self):
-        self.snaps = {
-            'core': {'confinement': 'strict',
-                     'id': '2kkitQurgOkL3foImG4wDwn9CIANuHlt',
-                     'revision': '123'},
-            'snapcraft': {'confinement': 'classic',
-                          'id': '3lljuRvshPlM4gpJnH5xExo0DJBOvImu',
-                          'revision': '345'},
-        }
+    def _popen(self, args):
+        class Popen:
+            def __init__(self, args):
+                self.args = args
 
-    def _setUp(self):
-        patcher = mock.patch('requests_unixsocket.Session.request')
-        self.session_request_mock = patcher.start()
-        self.session_request_mock.side_effect = self.request_side_effect()
-        self.addCleanup(patcher.stop)
-
-    def request_side_effect(self):
-        def request_effect(*args, **kwargs):
-            if args[0] == 'GET' and '/v2/snaps/' in args[1]:
-                class Session:
-                    def __init__(self, name, snaps):
-                        self._name = name
-                        self._snaps = snaps
-
-                    def json(self):
-                        if self._name not in self._snaps:
-                            return {'status': 'Not Found',
-                                    'result': {'message': 'not found'},
-                                    'status-code': 404,
-                                    'type': 'error'}
-                        return {'status': 'OK',
-                                'type': 'sync',
-                                'result': self._snaps[self._name]}
-                name = args[1].split('/')[-1]
-                return Session(name, self.snaps)
-        return request_effect
+            def terminate(self):
+                pass
+        return Popen(args)
 
 
 class GitRepo(fixtures.Fixture):
@@ -811,8 +819,7 @@ class FakeAptCache(fixtures.Fixture):
         self.cache = self.Cache()
         self.mock_apt_cache.return_value = self.cache
         for package, version in self.packages:
-            self.cache[package] = FakeAptCachePackage(
-                self.path, package, version)
+            self.add_package(FakeAptCachePackage(package, version))
 
         # Add all the packages in the manifest.
         with open(os.path.abspath(
@@ -821,16 +828,20 @@ class FakeAptCache(fixtures.Fixture):
                     'internal', 'repo', 'manifest.txt'))) as manifest_file:
             self.add_packages([line.strip() for line in manifest_file])
 
+    def add_package(self, package):
+        package.temp_dir = self.path
+        self.cache[package.name] = package
+
     def add_packages(self, package_names):
         for name in package_names:
-            self.cache[name] = FakeAptCachePackage(self.path, name)
+            self.cache[name] = FakeAptCachePackage(name)
 
 
 class FakeAptCachePackage():
 
     def __init__(
-            self, temp_dir, name, version=None,
-            provides=None, installed=False,
+            self, name, version=None, installed=None,
+            temp_dir=None, provides=None,
             priority='non-essential'):
         super().__init__()
         self.temp_dir = temp_dir
@@ -839,9 +850,14 @@ class FakeAptCachePackage():
         self.versions = {}
         self.version = version
         self.candidate = self
-        self.installed = version
         self.provides = provides if provides else []
-        self.installed = installed
+        if installed:
+            # XXX The installed attribute requires some values that the fake
+            # package also requires. The shortest path to do it that I found
+            # was to get installed to return the same fake package.
+            self.installed = self
+        else:
+            self.installed = None
         self.priority = priority
         self.marked_install = False
 
@@ -875,3 +891,130 @@ class FakeAptCachePackage():
 
     def get_dependencies(self, _):
         return []
+
+
+class WithoutSnapInstalled(fixtures.Fixture):
+    """Assert that a snap is not installed and remove it on clean up.
+
+    :raises: AssertionError: if the snap is installed when this fixture is
+        set up.
+    """
+
+    def __init__(self, snap_name):
+        super().__init__()
+        self.snap_name = snap_name.split('/')[0]
+
+    def setUp(self):
+        super().setUp()
+        if snapcraft.repo.snaps.SnapPackage.is_snap_installed(self.snap_name):
+            raise AssertionError(
+                "This test cannot run if you already have the {snap!r} snap "
+                "installed. Please uninstall it by running "
+                "'sudo snap remove {snap}'.".format(snap=self.snap_name))
+
+        self.addCleanup(self._remove_snap)
+
+    def _remove_snap(self):
+        try:
+            subprocess.check_output(
+                ['sudo', 'snap', 'remove', self.snap_name],
+                stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            RuntimeError("unable to remove {!r}: {}".format(
+                self.snap_name, e.output))
+
+
+class SnapcraftYaml(fixtures.Fixture):
+
+    def __init__(
+            self, path, name='test-snap', version='test-version',
+            summary='test-summary', description='test-description'):
+        super().__init__()
+        self.path = path
+        self.data = {
+            'name': name,
+            'version': version,
+            'summary': summary,
+            'description': description,
+            'parts': {}
+        }
+
+    def update_part(self, name, data):
+        part = {name: data}
+        self.data['parts'].update(part)
+
+    def setUp(self):
+        super().setUp()
+        with open(os.path.join(self.path, 'snapcraft.yaml'),
+                  'w') as snapcraft_yaml_file:
+            yaml.dump(self.data, snapcraft_yaml_file)
+
+
+class UnixHTTPServer(socketserver.UnixStreamServer):
+
+    def get_request(self):
+        request, client_address = self.socket.accept()
+        # BaseHTTPRequestHandler expects a tuple with the client address at
+        # index 0, so we fake one
+        if len(client_address) == 0:
+            client_address = (self.server_address,)
+        return (request, client_address)
+
+
+class FakeSnapd(fixtures.Fixture):
+
+    @property
+    def snaps_result(self):
+        self.request_handler.snaps_result
+
+    @snaps_result.setter
+    def snaps_result(self, value):
+        self.request_handler.snaps_result = value
+
+    @property
+    def snap_details_func(self):
+        self.request_handler.snap_details_func
+
+    @snap_details_func.setter
+    def snap_details_func(self, value):
+        self.request_handler.snap_details_func = value
+
+    @property
+    def find_result(self):
+        self.request_handler.find_result
+
+    @find_result.setter
+    def find_result(self, value):
+        self.request_handler.find_result = value
+
+    def __init__(self):
+        super().__init__()
+        self.request_handler = snapd.FakeSnapdRequestHandler
+        self.snaps_result = []
+        self.find_result = []
+        self.snap_details_func = None
+
+    def setUp(self):
+        super().setUp()
+        snapd_fake_socket_path = tempfile.mkstemp()[1]
+        os.unlink(snapd_fake_socket_path)
+
+        socket_path_patcher = mock.patch(
+            'snapcraft.internal.repo.snaps.get_snapd_socket_path_template')
+        mock_socket_path = socket_path_patcher.start()
+        mock_socket_path.return_value = 'http+unix://{}/v2/{{}}'.format(
+            snapd_fake_socket_path.replace('/', '%2F'))
+        self.addCleanup(socket_path_patcher.stop)
+
+        self._start_fake_server(snapd_fake_socket_path)
+
+    def _start_fake_server(self, socket):
+        self.server = UnixHTTPServer(socket, self.request_handler)
+        server_thread = threading.Thread(target=self.server.serve_forever)
+        server_thread.start()
+        self.addCleanup(self._stop_fake_server, server_thread)
+
+    def _stop_fake_server(self, thread):
+        self.server.shutdown()
+        self.server.socket.close()
+        thread.join()

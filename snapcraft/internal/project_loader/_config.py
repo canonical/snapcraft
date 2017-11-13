@@ -25,6 +25,7 @@ import yaml
 
 import snapcraft
 from snapcraft.internal import (
+    deprecations,
     remote_parts,
     states,
 )
@@ -136,6 +137,10 @@ class Config:
         aliases = []
         for app_name, app in self.data.get('apps', {}).items():
             aliases.extend(app.get('aliases', []))
+
+        # The aliases property is actually deprecated:
+        if aliases:
+            deprecations.handle_deprecation_notice('dn5')
         seen = set()
         duplicates = set()
         for alias in aliases:
@@ -196,8 +201,8 @@ class Config:
 
     def project_env(self):
         return [
-            'SNAPCRAFT_STAGE={}'.format(self._project_options.stage_dir),
-            'SNAPCRAFT_PROJECT_NAME={}'.format(self.data['name']),
+            'SNAPCRAFT_STAGE="{}"'.format(self._project_options.stage_dir),
+            'SNAPCRAFT_PROJECT_NAME="{}"'.format(self.data['name']),
             'SNAPCRAFT_PROJECT_VERSION={}'.format(self.data['version']),
             'SNAPCRAFT_PROJECT_GRADE={}'.format(self.data['grade']),
         ]

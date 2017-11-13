@@ -34,7 +34,7 @@ class RegisterKeyTestCase(integration_tests.StoreTestCase):
             'SNAP_GNUPG_HOME', temp_keys_dir))
 
     def test_successful_key_registration(self):
-        if os.getenv('TEST_STORE', 'fake') != 'fake':
+        if not self.is_store_fake():
             # https://bugs.launchpad.net/bugs/1621441
             self.skipTest(
                 'Cannot register test keys against staging/production until '

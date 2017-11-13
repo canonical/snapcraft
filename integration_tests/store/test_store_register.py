@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import os
+
 import re
 
 from testtools.matchers import Contains, MatchesRegex
@@ -50,7 +50,7 @@ class RegisterTestCase(integration_tests.StoreTestCase):
     def test_registration_of_already_owned_name(self):
         self.login()
         self.addCleanup(self.logout)
-        if os.getenv('TEST_STORE', 'fake') != 'fake':
+        if not self.is_store_fake():
             snap_name = self.get_unique_name()
             self.register(snap_name)
         else:

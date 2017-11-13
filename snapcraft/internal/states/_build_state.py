@@ -32,7 +32,10 @@ def _schema_properties():
         'build-attributes',
         'build-packages',
         'disable-parallel',
-        'organize'
+        'organize',
+        'prepare',
+        'build',
+        'install',
     }
 
 
@@ -41,7 +44,7 @@ class BuildState(PartState):
 
     def __init__(
             self, property_names, part_properties=None, project=None,
-            plugin_assets=None):
+            plugin_assets=None, machine_assets=None):
         # Save this off before calling super() since we'll need it
         # FIXME: for 3.x the name `schema_properties` is leaking
         #        implementation details from a higher layer.
@@ -50,6 +53,8 @@ class BuildState(PartState):
             self.assets = plugin_assets
         else:
             self.assets = {}
+        if machine_assets:
+            self.assets.update(machine_assets)
 
         super().__init__(part_properties, project)
 

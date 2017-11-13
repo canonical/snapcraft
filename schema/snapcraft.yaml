@@ -37,7 +37,11 @@ properties:
   name:
     type: string
     description: name of the snap package
-    pattern: "^[a-z0-9][a-z0-9+-]*$"
+    validation-failure:
+      "{.instance!r} is not a valid snap name. Snap names consist of lower-case
+      alphanumeric characters and hyphens. They cannot be all numbers. They
+      also cannot start or end with a hyphen."
+    pattern: "^(?:[a-z0-9]+-?)*[a-z](?:-?[a-z0-9])*$"
   architectures:
     type: array
     description: architectures to override with
@@ -49,6 +53,10 @@ properties:
     # python's defaul yaml loading code loads 1.0 as an int
     # type: string
     description: package version
+    validation-failure:
+      "{.instance!r} is not a valid snap version. Snap versions consist of
+      upper- and lower-case alphanumeric characters, as well as periods, plus
+      signs, tildes, and hyphens."
     pattern: "^[a-zA-Z0-9.+~-]+$"
     maxLength: 32
   version-script:
@@ -120,6 +128,10 @@ properties:
   apps:
     type: object
     additionalProperties: false
+    validation-failure:
+            "{!r} is not a valid app name. App names consist of upper- and
+            lower-case alphanumeric characters and hyphens. They cannot start
+            or end with a hyphen."
     patternProperties:
       "^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$":
         type: object
@@ -194,11 +206,20 @@ properties:
                 - type: string
                   minLength: 1
                 - type: number
+          adapter:
+            type: string
+            description: What kind of wrapper to generate for the given command
+            enum:
+              - none
   hooks:
     type: object
     additionalProperties: false
+    validation-failure:
+        "{!r} is not a valid hook name. Hook names consist of lower-case
+        alphanumeric characters and hyphens. They cannot start or end with a
+        hyphen."
     patternProperties:
-      "^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$":
+      "^[a-z](?:-?[a-z0-9])*$":
         type: object
         additionalProperties: false
         properties:
@@ -212,6 +233,10 @@ properties:
     type: object
     minProperties: 1
     additionalProperties: false
+    validation-failure:
+        "{!r} is not a valid part name. Part names consist of lower-case
+        alphanumeric characters, hyphens, plus signs, and forward slashes. As a
+        special case, 'plugins' is also not a valid part name."
     patternProperties:
       ^(?!plugins$)[a-z0-9][a-z0-9+-\/]*$:
         # Make sure snap/prime are mutually exclusive
@@ -219,7 +244,8 @@ properties:
           - not:
               type: object
               required: [snap, prime]
-              validation-failure: "{.instance} cannot contain both 'snap' and 'prime' keywords."
+              validation-failure:
+                  "{.instance} cannot contain both 'snap' and 'prime' keywords."
         type: object
         minProperties: 1
         properties:

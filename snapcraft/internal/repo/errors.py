@@ -14,13 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal.common import get_os_release_info
+from snapcraft.internal.os_release import OsRelease
 from ._platform import _is_deb_based
 from snapcraft.internal import errors
 
 
 class RepoError(errors.SnapcraftError):
     pass
+
+
+class NoNativeBackendError(RepoError):
+
+    fmt = ("Native builds aren't supported on {distro}. "
+           "You can however use 'snapcraft cleanbuild' with a container.")
+
+    def __init__(self):
+        super().__init__(distro=OsRelease().name())
 
 
 class BuildPackageNotFoundError(RepoError):
@@ -38,7 +47,7 @@ class PackageNotFoundError(RepoError):
         message = 'The package {!r} was not found.'.format(
             self.package_name)
         # If the package was multiarch, try to help.
-        distro = get_os_release_info()['ID']
+        distro = OsRelease().id()
         if _is_deb_based(distro) and ':' in self.package_name:
             (name, arch) = self.package_name.split(':', 2)
             if arch:

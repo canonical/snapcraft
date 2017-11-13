@@ -29,6 +29,10 @@ _DEPRECATION_MESSAGES = {
     'dn2': "Custom plugins should now be placed in 'snap/plugins'.",
     'dn3': "Assets in 'setup/gui' should now be placed in 'snap/gui'.",
     'dn4': "The 'history' command has been replaced by 'list-revisions'.",
+    'dn5': "Aliases are now handled by the store, and shouldn't be declared "
+           "in the snap.",
+    'dn6': "Use of the 'snap' command with a directory has been deprecated "
+           "in favour of the 'pack' command.",
 }
 
 _DEPRECATION_URL_FMT = 'http://snapcraft.io/docs/deprecation-notices/{id}'

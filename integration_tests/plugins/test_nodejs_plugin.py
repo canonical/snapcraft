@@ -26,7 +26,6 @@ class NodeJSPluginTestCase(testscenarios.WithScenarios,
                            integration_tests.TestCase):
 
     scenarios = [
-        ('default', dict(package_manager='')),
         ('npm', dict(package_manager='npm')),
         ('yarn', dict(package_manager='yarn')),
     ]

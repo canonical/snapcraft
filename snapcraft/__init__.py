@@ -420,7 +420,6 @@ from snapcraft._store import (                      # noqa
     sign_build,
     status,
     validate,
-    collaborate,
 )
 from snapcraft import common                        # noqa
 from snapcraft import plugins                       # noqa
@@ -456,8 +455,3 @@ def str_presenter(dumper, data):
 yaml.add_representer(str, str_presenter)
 yaml.add_representer(OrderedDict, dict_representer)
 yaml.add_constructor(_mapping_tag, dict_constructor)
-
-from snapcraft.internal import common as _common # noqa
-if _common.is_snap():
-    snap = _os.environ.get('SNAP')
-    _common.set_schemadir(_os.path.join(snap, 'share', 'snapcraft', 'schema'))

@@ -230,7 +230,11 @@ def list_registered():
 
 @storecli.command()
 def login():
-    """Authenticate session against Ubuntu One SSO."""
+    """Login with your Ubuntu One e-mail address and password.
+
+    If you do not have an Ubuntu One account, you can create one at
+    https://dashboard.snapcraft.io/openid/login
+    """
     if not snapcraft.login():
         sys.exit(1)
 
@@ -238,7 +242,6 @@ def login():
 @storecli.command()
 def logout():
     """Clear session credentials."""
-    echo.info('Clearing credentials for Ubuntu One SSO.')
     store = storeapi.StoreClient()
     store.logout()
     echo.info('Credentials cleared.')

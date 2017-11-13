@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import fileinput
+import glob
 import os
 import re
 import shutil
@@ -33,8 +34,9 @@ import yaml
 from unittest import mock
 from testtools import content
 from testtools.matchers import MatchesRegex
+
 from snapcraft import ProjectOptions as _ProjectOptions
-from snapcraft.internal.common import get_os_release_info
+from snapcraft.internal.os_release import OsRelease
 from snapcraft.tests import (
     fixture_setup,
     subprocess_utils
@@ -107,14 +109,17 @@ class TestCase(testtools.TestCase):
         self.prime_dir = 'prime'
 
         self.deb_arch = _ProjectOptions().deb_arch
-        self.distro_series = get_os_release_info()['VERSION_CODENAME']
+        release = OsRelease()
+        self.distro_series = release.version_codename()
 
     def run_snapcraft(
-            self, command, project_dir=None, debug=True,
+            self, command=None, project_dir=None, debug=True,
             pre_func=lambda: None, env=None):
         if project_dir:
             self.copy_project_to_cwd(project_dir)
 
+        if command is None:
+            command = []
         if isinstance(command, str):
             command = [command]
         snapcraft_command = [self.snapcraft_command]
@@ -366,6 +371,12 @@ class StoreTestCase(TestCase):
         self.test_store = fixture_setup.TestStore()
         self.useFixture(self.test_store)
 
+    def is_store_fake(self):
+        return (os.getenv('TEST_STORE') or 'fake') == 'fake'
+
+    def is_store_staging(self):
+        return os.getenv('TEST_STORE') == 'staging'
+
     def login(self, email=None, password=None, expect_success=True):
         email = email or self.test_store.user_email
         password = password or self.test_store.user_password
@@ -373,7 +384,9 @@ class StoreTestCase(TestCase):
         process = pexpect.spawn(self.snapcraft_command, ['login'])
 
         process.expect_exact(
-            'Enter your Ubuntu One SSO credentials.\r\n'
+            'Enter your Ubuntu One e-mail address and password.\r\n'
+            'If you do not have an Ubuntu One account, you can create one at '
+            'https://dashboard.snapcraft.io/openid/login\r\n'
             'Email: ')
         process.sendline(email)
         process.expect_exact('Password: ')
@@ -386,8 +399,7 @@ class StoreTestCase(TestCase):
 
     def logout(self):
         output = self.run_snapcraft('logout')
-        expected = (r'.*Clearing credentials for Ubuntu One SSO.\n'
-                    r'Credentials cleared.\n.*')
+        expected = (r'.*Credentials cleared.\n.*')
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
     def register(self, snap_name, private=False, wait=True):
@@ -424,7 +436,9 @@ class StoreTestCase(TestCase):
             self.snapcraft_command, ['register-key', key_name])
 
         process.expect_exact(
-            'Enter your Ubuntu One SSO credentials.\r\n'
+            'Enter your Ubuntu One e-mail address and password.\r\n'
+            'If you do not have an Ubuntu One account, you can create one at '
+            'https://dashboard.snapcraft.io/openid/login\r\n'
             'Email: ')
         process.sendline(email)
         process.expect_exact('Password: ')
@@ -584,6 +598,30 @@ class StoreTestCase(TestCase):
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus
+
+
+class SnapdIntegrationTestCase(TestCase):
+
+    slow_test = False
+
+    def setUp(self):
+        super().setUp()
+        if (self.slow_test and
+                not os.environ.get('SNAPCRAFT_SLOW_TESTS', False)):
+            self.skipTest('Not running slow tests')
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
+
+    def install_snap(self):
+        try:
+            subprocess.check_output(
+                ['sudo', 'snap', 'install',
+                 glob.glob('*.snap')[0],
+                 '--dangerous'],
+                stderr=subprocess.STDOUT, universal_newlines=True)
+        except subprocess.CalledProcessError as e:
+            self.addDetail('output', content.text_content(e.output))
+            raise
 
 
 def get_package_version(package_name, series, deb_arch):

@@ -160,13 +160,21 @@ class SnapPackage:
 
 
 def install_snaps(snaps_list):
-    """Install snaps of the format <snap-name>/<channel>."""
+    """Install snaps of the format <snap-name>/<channel>.
+
+    :return: a list of "name=revision" for the snaps installed.
+    """
+    snaps_installed = []
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
         if not snap_pkg.installed and snap_pkg.in_store:
             snap_pkg.install()
         elif snap_pkg.get_current_channel() != snap_pkg.channel:
             snap_pkg.refresh()
+        snap_pkg = SnapPackage(snap)
+        snaps_installed.append('{}={}'.format(
+            snap_pkg.name, snap_pkg.get_local_snap_info()['revision']))
+    return snaps_installed
 
 
 def _snap_command_requires_sudo():
@@ -183,6 +191,19 @@ def _snap_command_requires_sudo():
         logger.warning('snapd is not logged in, snap install '
                        'commands will use sudo')
     return requires_root
+
+
+def get_installed_snaps():
+    """Return all the snaps installed in the system.
+
+    :return: a list of "name=revision" for the snaps installed.
+    """
+    try:
+        local_snaps = _get_local_snaps()
+    except exceptions.ConnectionError as e:
+        local_snaps = []
+    return ['{}={}'.format(snap['name'], snap['revision']) for
+            snap in local_snaps]
 
 
 def _get_parsed_snap(snap):
@@ -218,3 +239,12 @@ def _get_store_snap_info(snap_name):
         snap_info = session.get(url)
     snap_info.raise_for_status()
     return snap_info.json()['result'][0]
+
+
+def _get_local_snaps():
+    slug = 'snaps'
+    url = get_snapd_socket_path_template().format(slug)
+    with requests_unixsocket.Session() as session:
+        snap_info = session.get(url)
+    snap_info.raise_for_status()
+    return snap_info.json()['result']

@@ -82,7 +82,7 @@ class SignBuildTestCase(integration_tests.StoreTestCase):
         self.assertThat(self.snap_build_path, Not(FileExists()))
 
     def test_successful_sign_build_push(self):
-        if os.getenv('TEST_STORE', 'fake') != 'fake':
+        if not self.is_store_fake():
             # https://bugs.launchpad.net/bugs/1621441
             self.skipTest(
                 'Cannot push signed assertion against staging/production '

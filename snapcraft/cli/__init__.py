@@ -25,7 +25,9 @@ import snapcraft.internal.dirs
 from snapcraft.internal import deprecations
 from snapcraft.internal import log
 from . import echo
+from . import env
 from .assertions import assertionscli
+from .containers import containerscli
 from .discovery import discoverycli
 from .lifecycle import lifecyclecli
 from .store import storecli
@@ -40,6 +42,7 @@ command_groups = [
     storecli,
     cicli,
     assertionscli,
+    containerscli,
     discoverycli,
     helpcli,
     lifecyclecli,
@@ -57,6 +60,7 @@ _CMD_ALIASES = {
     'keys': 'list-keys',
     'revisions': 'list-revisions',
     'plugins': 'list-plugins',
+    'collaborators': 'edit-collaborators',
 }
 
 _CMD_DEPRECATION_NOTICES = {
@@ -83,6 +87,16 @@ class SnapcraftGroup(click.Group):
             cmd_name = _CMD_ALIASES.get(cmd_name, cmd_name)
             cmd = click.Group.get_command(self, ctx, cmd_name)
         return cmd
+
+    def list_commands(self, ctx):
+        commands = super().list_commands(ctx)
+        # Let's keep edit-collaborators hidden until we get the green light
+        # from the store.
+        commands.pop(commands.index('edit-collaborators'))
+        container_config = env.get_container_config()
+        if not container_config.use_container:
+            commands.pop(commands.index('refresh'))
+        return commands
 
 
 @click.group(cls=SnapcraftGroup, invoke_without_command=True)

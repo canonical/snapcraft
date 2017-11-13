@@ -14,13 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import re
 import glob
 import logging
 import os
 import subprocess
 
-from snapcraft.internal import common
+from snapcraft.internal import (
+    common,
+    errors,
+    os_release,
+    repo,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -66,13 +72,18 @@ def _get_system_libs():
     if _libraries:
         return _libraries
 
-    release = common.get_os_release_info()['VERSION_ID']
-    lib_path = os.path.join(common.get_librariesdir(), release)
+    lib_path = None
 
-    if not os.path.exists(lib_path):
-        logger.debug('No libraries to exclude from this release')
-        # Always exclude libc.so.6
-        return frozenset(['libc.so.6'])
+    release = os_release.OsRelease()
+    with contextlib.suppress(errors.OsReleaseVersionIdError):
+        lib_path = os.path.join(
+            common.get_librariesdir(), release.version_id())
+
+    if not lib_path or not os.path.exists(lib_path):
+        logger.debug('Only excluding libc libraries from the release')
+        libc6_libs = [os.path.basename(l)
+                      for l in repo.Repo.get_package_libraries('libc6')]
+        return frozenset(libc6_libs)
 
     with open(lib_path) as fn:
         _libraries = frozenset(fn.read().split())

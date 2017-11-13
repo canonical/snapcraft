@@ -16,6 +16,7 @@
 
 import logging
 import os
+import subprocess
 import tarfile
 from textwrap import dedent
 
@@ -24,6 +25,8 @@ from testtools.matchers import Contains, Equals
 
 from snapcraft import tests
 from . import CommandBaseTestCase
+
+from snapcraft.internal.errors import InvalidContainerRemoteError
 
 
 class CleanBuildCommandBaseTestCase(CommandBaseTestCase):
@@ -89,8 +92,6 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertIn(
             'Setting up container with project assets\n'
-            'Waiting for a network connection...\n'
-            'Network connection established\n'
             'Retrieved snap-test_1.0_amd64.snap\n',
             self.fake_logger.output)
 
@@ -113,8 +114,17 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
             'snap/snapcraft unexpectedly excluded from tarball')
 
     def test_cleanbuild_debug_appended_goes_to_shell_on_errors(self):
-        fake_lxd = tests.fixture_setup.FakeLXD(fail_on_snapcraft_run=True)
+        fake_lxd = tests.fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
+
+        def call_effect(*args, **kwargs):
+            # Fail on an actual snapcraft command and not the command
+            # for the installation of it.
+            if 'snapcraft snap' in ' '.join(args[0]):
+                raise subprocess.CalledProcessError(
+                    returncode=255, cmd=args[0])
+
+        fake_lxd.check_call_mock.side_effect = call_effect
 
         result = self.run_command(['cleanbuild', '--debug'])
         self.assertThat(result.exit_code, Equals(0))
@@ -122,10 +132,29 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
             'Debug mode enabled, dropping into a shell'))
 
     def test_cleanbuild_debug_prepended_goes_to_shell_on_errors(self):
-        fake_lxd = tests.fixture_setup.FakeLXD(fail_on_snapcraft_run=True)
+        fake_lxd = tests.fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
+
+        def call_effect(*args, **kwargs):
+            # Fail on an actual snapcraft command and not the command
+            # for the installation of it.
+            if 'snapcraft snap' in ' '.join(args[0]):
+                raise subprocess.CalledProcessError(
+                    returncode=255, cmd=args[0])
+
+        fake_lxd.check_call_mock.side_effect = call_effect
 
         result = self.run_command(['--debug', 'cleanbuild'])
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(self.fake_logger.output, Contains(
             'Debug mode enabled, dropping into a shell'))
+
+    def test_invalid_remote(self):
+        fake_lxd = tests.fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+
+        self.assertIn(
+            "'foo/bar' is not a valid LXD remote name",
+            str(self.assertRaises(
+                InvalidContainerRemoteError,
+                self.run_command, ['cleanbuild', '--remote', 'foo/bar'])))
