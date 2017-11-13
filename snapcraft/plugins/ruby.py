@@ -34,7 +34,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
 import glob
 import logging
 import os
-import platform
 import re
 
 from snapcraft import BasePlugin, file_utils
@@ -138,8 +137,18 @@ class RubyPlugin(BasePlugin):
             ruby_version = os.path.basename(versions[0])
 
             rubylib = os.path.join(rubydir, ruby_version)
-            env['RUBYLIB'] = '{}:{}'.format(rubylib, os.path.join(
-                rubylib, '{}-linux'.format(platform.machine())))
+
+            # Ruby uses some pretty convoluted rules for determining its
+            # arch-specific RUBYLIB. Rather than try and duplicate that logic
+            # here, let's just look for a file that we know is in there:
+            # rbconfig.rb. There should only be one.
+            paths = glob.glob(os.path.join(rubylib, '*', 'rbconfig.rb'))
+            if len(paths) != 1:
+                raise SnapcraftEnvironmentError(
+                    'Expected a single rbconfig.rb, but found {}'.format(
+                        len(paths)))
+
+            env['RUBYLIB'] = '{}:{}'.format(rubylib, os.path.dirname(paths[0]))
             env['GEM_HOME'] = os.path.join(rubydir, 'gems', ruby_version)
             env['GEM_PATH'] = os.path.join(rubydir, 'gems', ruby_version)
         elif len(versions) > 1:
