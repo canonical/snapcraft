@@ -1362,9 +1362,8 @@ class UpdateMetadataTestCase(StoreTestCase):
             Conflict in 'test-conflict' field:
                 In snapcraft.yaml: 'value'
                 In the Store:      'value-changed'
-            You can repeat the command with --force-metadata
-            to force the local values into the Store
-        """
+            You can repeat the push with --only-metadata and --force-metadata to force the local values into the Store
+        """  # NOQA
         self.assertThat(str(raised), Equals(dedent(should).strip()))
 
     def test_conflicting_multiple_normal(self):
@@ -1381,9 +1380,8 @@ class UpdateMetadataTestCase(StoreTestCase):
             Conflict in 'test-conflict-2' field:
                 In snapcraft.yaml: 'value-2'
                 In the Store:      'value-2-changed'
-            You can repeat the command with --force-metadata
-            to force the local values into the Store
-        """
+            You can repeat the push with --only-metadata and --force-metadata to force the local values into the Store
+        """  # NOQA
         self.assertThat(str(raised), Equals(dedent(should).strip()))
 
     def test_conflicting_force(self):

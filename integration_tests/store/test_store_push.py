@@ -19,6 +19,7 @@ import re
 import subprocess
 
 from testtools.matchers import (
+    Contains,
     FileExists,
     MatchesRegex,
 )
@@ -113,3 +114,32 @@ class PushTestCase(integration_tests.StoreTestCase):
         output = self.run_snapcraft(['upload', snap_file_path])
         expected = r'.*Ready to release!.*'.format(name)
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
+
+    def test_push_and_then_only_metadata(self):
+        # Make a snap
+        self.addCleanup(self.logout)
+        self.login()
+
+        # Change to a random name and version.
+        name = self.get_unique_name()
+        version = self.get_unique_version()
+        self.copy_project_to_cwd('basic')
+        self.update_name_and_version(name, version)
+
+        self.run_snapcraft('snap')
+
+        # Register the snap
+        self.register(name)
+
+        # Upload the snap
+        snap_file_path = '{}_{}_{}.snap'.format(name, version, 'all')
+        self.assertThat(
+            os.path.join(snap_file_path), FileExists())
+
+        # Send only metadata
+        output = self.run_snapcraft(
+            ['push', snap_file_path, '--only-metadata'])
+        expected = "Updating metadata in the Store (force=False)"
+        self.assertThat(output, Contains(expected))
+        expected = "The metadata has been updated"
+        self.assertThat(output, Contains(expected))

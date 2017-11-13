@@ -381,9 +381,11 @@ class StoreReleaseError(StoreError):
 
 class StoreMetadataError(StoreError):
 
-    __FMT_NOT_REGISTERED = (
-        'Sorry, try `snapcraft register {snap_name}` before trying to '
-        'update metadata.')
+    __FMT_NOT_FOUND = (
+        "Sorry, updating the information on the store has failed, first run "
+        "`snapcraft register {snap_name}` and then "
+        "`snapcraft push <snap-file>`."
+    )
 
     fmt = 'Received {status_code!r}: {text!r}'
 
@@ -394,7 +396,7 @@ class StoreMetadataError(StoreError):
             response_json = {}
 
         if response.status_code == 404:
-            self.fmt = self.__FMT_NOT_REGISTERED
+            self.fmt = self.__FMT_NOT_FOUND
         elif response.status_code == 409:
             conflicts = [(error['extra']['name'], error)
                          for error in response_json['error_list']
@@ -407,9 +409,9 @@ class StoreMetadataError(StoreError):
                     "    In snapcraft.yaml: {!r}".format(sent),
                     "    In the Store:      {!r}".format(error['message']),
                 ))
-            parts.extend((
-                "You can repeat the command with --force-metadata",
-                "to force the local values into the Store"))
+            parts.append(
+                "You can repeat the push with --only-metadata and "
+                "--force-metadata to force the local values into the Store")
             self.fmt = "\n".join(parts)
         elif 'error_list' in response_json:
             response_json['text'] = response_json['error_list'][0]['message']
