@@ -466,6 +466,11 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'config', 'set', container_name,
                   'environment.LC_ALL', 'C.UTF-8']),
             call(['lxc', 'config', 'set', container_name,
+                  'environment.SNAPCRAFT_IMAGE_INFO',
+                  '{"fingerprint": "test-fingerprint", '
+                  '"architecture": "test-architecture", '
+                  '"created_at": "test-created-at"}']),
+            call(['lxc', 'config', 'set', container_name,
                   'raw.idmap', 'both {} 0'.format(self.expected_idmap)]),
             call(['lxc', 'config', 'device', 'add', container_name,
                   'fuse', 'unix-char', 'path=/dev/fuse']),
@@ -564,6 +569,11 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'config', 'set', container_name,
                   'environment.LC_ALL', 'C.UTF-8']),
+            call(['lxc', 'config', 'set', container_name,
+                  'environment.SNAPCRAFT_IMAGE_INFO',
+                  '{"fingerprint": "test-fingerprint", '
+                  '"architecture": "test-architecture", '
+                  '"created_at": "test-created-at"}']),
             call(['lxc', 'config', 'set', container_name,
                   'raw.idmap', 'both {} 0'.format(self.expected_idmap)]),
             call(['lxc', 'config', 'device', 'remove', container_name,

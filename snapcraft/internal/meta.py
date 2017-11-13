@@ -18,6 +18,7 @@ import copy
 import collections
 import contextlib
 import configparser
+import json
 import logging
 import os
 import re
@@ -157,9 +158,19 @@ class _SnapPackaging:
             annotated_snapcraft = self._annotate_snapcraft(
                 copy.deepcopy(self._config_data))
             with open(manifest_file_path, 'w') as manifest_file:
-                yaml.dump(annotated_snapcraft, manifest_file)
+                yaml.dump(
+                    annotated_snapcraft, manifest_file,
+                    default_flow_style=False)
 
     def _annotate_snapcraft(self, data):
+        image_info = os.environ.get('SNAPCRAFT_IMAGE_INFO')
+        if image_info:
+            try:
+                image_info_dict = json.loads(image_info)
+            except json.decoder.JSONDecodeError as exception:
+                raise errors.InvalidContainerImageInfoError(
+                    image_info) from exception
+            data['image-info'] = image_info_dict
         for field in ('build-packages', 'build-snaps'):
             data[field] = get_global_state().assets.get(field, [])
         for part in data['parts']:

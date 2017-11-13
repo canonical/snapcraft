@@ -540,40 +540,46 @@ class FakeLXD(fixtures.Fixture):
         self.architecture_mock.return_value = ('64bit', 'ELF')
         self.addCleanup(patcher.stop)
 
+    def call_effect(self, *args, **kwargs):
+        if args[0] == ['lxc', 'remote', 'get-default']:
+            return 'local'.encode('utf-8')
+        elif args[0][:2] == ['lxc', 'info']:
+            return '''
+                environment:
+                  kernel_architecture: {}
+                '''.format(self.kernel_arch).encode('utf-8')
+        elif args[0][:3] == ['lxc', 'list', '--format=json']:
+            if self.status and args[0][3] == self.name:
+                return string.Template('''
+                    [{"name": "$NAME",
+                      "status": "$STATUS",
+                      "devices": $DEVICES}]
+                    ''').substitute({
+                        # Container name without remote prefix
+                        'NAME': self.name.split(':')[-1],
+                        'STATUS': self.status,
+                        'DEVICES': self.devices,
+                    }).encode('utf-8')
+            return '[]'.encode('utf-8')
+        elif (args[0][0] == 'lxc' and
+              args[0][1] in ['init', 'start', 'launch', 'stop']):
+            return self._lxc_create_start_stop(args)
+        elif args[0][:2] == ['lxc', 'exec']:
+            return self._lxc_exec(args)
+        elif args[0][:4] == ['lxc', 'image', 'list', '--format=json']:
+            return (
+                '[{"architecture":"test-architecture",'
+                '"fingerprint":"test-fingerprint",'
+                '"created_at":"test-created-at"}]').encode('utf-8')
+        elif args[0][0] == 'sha384sum':
+            return 'deadbeef {}'.format(args[0][1]).encode('utf-8')
+        elif '/usr/lib/sftp-server' in args[0]:
+            return self._popen(args[0])
+        else:
+            return ''.encode('utf-8')
+
     def check_output_side_effect(self):
-        def call_effect(*args, **kwargs):
-            if args[0] == ['lxc', 'remote', 'get-default']:
-                return 'local'.encode('utf-8')
-            elif args[0][:2] == ['lxc', 'info']:
-                return '''
-                    environment:
-                      kernel_architecture: {}
-                    '''.format(self.kernel_arch).encode('utf-8')
-            elif args[0][:3] == ['lxc', 'list', '--format=json']:
-                if self.status and args[0][3] == self.name:
-                    return string.Template('''
-                        [{"name": "$NAME",
-                          "status": "$STATUS",
-                          "devices": $DEVICES}]
-                        ''').substitute({
-                            # Container name without remote prefix
-                            'NAME': self.name.split(':')[-1],
-                            'STATUS': self.status,
-                            'DEVICES': self.devices,
-                            }).encode('utf-8')
-                return '[]'.encode('utf-8')
-            elif (args[0][0] == 'lxc' and
-                  args[0][1] in ['init', 'start', 'launch', 'stop']):
-                return self._lxc_create_start_stop(args)
-            elif args[0][:2] == ['lxc', 'exec']:
-                return self._lxc_exec(args)
-            elif args[0][0] == 'sha384sum':
-                return 'deadbeef {}'.format(args[0][1]).encode('utf-8')
-            elif '/usr/lib/sftp-server' in args[0]:
-                return self._popen(args[0])
-            else:
-                return ''.encode('utf-8')
-        return call_effect
+        return self.call_effect
 
     def _lxc_create_start_stop(self, args):
         if args[0][1] == 'init':
