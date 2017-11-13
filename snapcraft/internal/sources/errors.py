@@ -36,3 +36,10 @@ class DigestDoesNotMatchError(errors.SnapcraftError):
 
     def __init__(self, expected, calculated):
         super().__init__(expected=expected, calculated=calculated)
+
+
+class InvalidDebError(errors.SnapcraftError):
+
+    fmt = ('The {deb_file} used does not contain valid data. '
+           'Ensure a proper deb file is passed for .deb files '
+           'as sources.')
