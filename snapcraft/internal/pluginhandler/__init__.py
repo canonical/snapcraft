@@ -459,16 +459,26 @@ class PluginHandler:
 
         dependency_paths = part_dependency_paths | staged_dependency_paths
 
-        if not self._build_attributes.no_system_libraries():
+        if not self._build_attributes.no_system_libraries() and system:
             system_dependency_paths = {os.path.dirname(d) for d in system}
             dependency_paths.update(system_dependency_paths)
 
-            if system:
-                # Lots of dependencies are linked with a symlink, so we need to
-                # make sure we follow those symlinks when we migrate the
-                # dependencies.
-                _migrate_files(system, system_dependency_paths, '/',
-                               self.primedir, follow_symlinks=True)
+            logger.warning(
+                'The following files from the build host will migrate to the '
+                'snap to\nstatisfy library dependencies:\n\n{}\n'
+                'This behavior is problematic, these dependent libraries '
+                'should be provided\nthrough stage-packages entries or other '
+                'parts.\n'
+                'You can disable this behavior in the part by setting:'
+                '\n    <part-name>:'
+                '\n        build-attributes: [no-system-libraries]'.format(
+                    ''.join([' - /{}\n'.format(p) for p in system])))
+
+            # Lots of dependencies are linked with a symlink, so we need to
+            # make sure we follow those symlinks when we migrate the
+            # dependencies.
+            _migrate_files(system, system_dependency_paths, '/',
+                           self.primedir, follow_symlinks=True)
 
         self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
 
