@@ -146,11 +146,16 @@ class Containerbuild:
             'Failed to get container image info: {}\n'
             'It will not be recorded in manifest.')
         try:
+            image_info_command = [
+                'lxc', 'image', 'list', '--format=json', self._image]
             image_info = json.loads(subprocess.check_output(
-                ['lxc', 'image', 'list',
-                 '--format=json', self._image]).decode())
+                image_info_command).decode())
         except subprocess.CalledProcessError as e:
-            message = '{}, output: {}'.format(str(e), e.output)
+            message = ('`{command}` returned with exit code {returncode}, '
+                       'output: {output}'.format(
+                           command=' '.join(image_info_command),
+                           returncode=e.returncode,
+                           output=e.output))
             logger.warning(FAILURE_WARNING_FORMAT.format(message))
             return
         except json.decoder.JSONDecodeError as e:

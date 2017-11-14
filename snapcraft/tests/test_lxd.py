@@ -635,8 +635,9 @@ class FailedImageInfoTestCase(LXDBaseTestCase):
             exception=CalledProcessError,
             kwargs=dict(cmd='testcmd', returncode=1, output='test output'),
             expected_warn=(
-                "Failed to get container image info: Command 'testcmd' "
-                "returned non-zero exit status 1, output: test output\n"
+                "Failed to get container image info: "
+                "`lxc image list --format=json ubuntu:xenial/amd64` "
+                "returned with exit code 1, output: test output\n"
                 "It will not be recorded in manifest.\n"))),
         ('JSONDecodeError', dict(
             exception=json.decoder.JSONDecodeError,
