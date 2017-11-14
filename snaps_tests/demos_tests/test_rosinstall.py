@@ -25,7 +25,7 @@ class RosinstallTestCase(SnapsTestCase):
 
     @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
     def test_rosinstall(self):
-        snap_path = self.build_snap(self.snap_content_dir, timeout=1800)
+        snap_path = self.build_snap(self.snap_content_dir, timeout=10000)
 
         self.install_snap(snap_path, 'rosinstall-demo', '1.0')
 

@@ -30,7 +30,7 @@ class SharedROSTestCase(SnapsTestCase):
         ros_base_path = os.path.join(self.snap_content_dir, 'ros-base')
         ros_app_path = os.path.join(self.snap_content_dir, 'ros-app')
 
-        base_snap_path = self.build_snap(ros_base_path, timeout=1800)
+        base_snap_path = self.build_snap(ros_base_path, timeout=10000)
 
         # Now tar up its staging area to be used to build ros-app
         subprocess.check_call([
@@ -38,7 +38,7 @@ class SharedROSTestCase(SnapsTestCase):
             os.path.dirname(base_snap_path), 'stage'], cwd=self.src_dir)
 
         # Now build ros-app
-        app_snap_path = self.build_snap(ros_app_path, timeout=1800)
+        app_snap_path = self.build_snap(ros_app_path, timeout=10000)
 
         # Install both snaps
         self.install_snap(base_snap_path, 'ros-base', '1.0')
