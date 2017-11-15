@@ -130,11 +130,13 @@ class Containerbuild:
         subprocess.check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.SNAPCRAFT_SETUP_CORE', '1'])
-        if os.getenv('SNAPCRAFT_PARTS_URI'):
-            subprocess.check_call([
-                'lxc', 'config', 'set', self._container_name,
-                'environment.SNAPCRAFT_PARTS_URI',
-                os.getenv('SNAPCRAFT_PARTS_URI')])
+        for snapcraft_env_var in (
+                'SNAPCRAFT_PARTS_URI', 'SNAPCRAFT_BUILD_INFO'):
+            if os.getenv(snapcraft_env_var):
+                subprocess.check_call([
+                    'lxc', 'config', 'set', self._container_name,
+                    'environment.{}'.format(snapcraft_env_var),
+                    os.getenv(snapcraft_env_var)])
         # Necessary to read asset files with non-ascii characters.
         subprocess.check_call([
             'lxc', 'config', 'set', self._container_name,
