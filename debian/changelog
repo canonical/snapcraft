@@ -13,6 +13,9 @@ snapcraft (2.35) xenial; urgency=medium
   * libraries: exclude the full set of libc6 (#1632)
   * lxd: better surfacing of errors (#1647)
   * tests: fork skip into snaps_tests (#1652)
+  * sources: use arfile to extract debs (#1729)
+  * tests: dotnet only works on 16.04 (#1732)
+  * unit tests: make the check for output less strict (#1738)
   * New upstream release (LP: #1729417)
 
   [ Kyle Fazzari ]
@@ -38,6 +41,14 @@ snapcraft (2.35) xenial; urgency=medium
   * repo: add elementary to deb distros (#1637)
   * internal: more gracefully determine host OS (#1636)
   * integration tests: skip shared ROS test on non-xenial (#1656)
+  * internal: don't reuse variable in OsRelease (#1653)
+  * integration tests: remove ruby version (#1727)
+  * unit tests: reset log level after test (#1735)
+  * autotools: cross-compile using --host instead of env (#1654)
+  * catkin plugin: check for pip packages in part only (#1717)
+  * ruby plugin: be smarter about arch-specific paths (#1730)
+  * demo tests: bump catkin timeout by a lot (#1731)
+  * many: account for python shebang args in rewrite
 
   [ Leo Arias ]
   * typo: replace occured with occurred
@@ -71,6 +82,11 @@ snapcraft (2.35) xenial; urgency=medium
   * tests: use the snapcraft snap for the integration tests (#1625)
   * tests: move the plainbox test to the integration suite (#1642)
   * lxd: fix the push in container builds (#1644)
+  * tests: use the common base handler on the fake snapd server (#1724)
+  * tests: split the integration autopkgtests (#1716)
+  * tests: in autopkgtests, use a tempdir in home, not in the tmpfs (#1657)
+  * recording: record information from the image in container builds  (#1633)
+  * recording: pass the build info flag to the container (#1736)
 
   [ Christian Dywan ]
   * lxd: mount project folder via sshfs in case of a remote (#1302)
@@ -84,6 +100,10 @@ snapcraft (2.35) xenial; urgency=medium
   * lxd: split container classes into different files (#1627)
   * cli: update parts cache in the container (#1546)
   * lifecycle: clean after deleting container (#1587)
+  * lxd: snapcraft refresh in containers (#1412)
+  * lxd: distinguish argless clean from clean -s pull (#1655)
+  * lxd: refresh remote container (#1739)
+  * cli: pass remote from container_config to clean method (#1737)
 
   [ Mark Lee ]
   * project_loader: quote more environment variable values (#1578)
@@ -122,10 +142,17 @@ snapcraft (2.35) xenial; urgency=medium
 
   [ Carlo Lobrano ]
   * store: fix StoreReleaseError format for BAD REQUEST error (#1599)
+  * sources: get svn revision with --show-item flag (#1648)
   * Removed dependency on VERSION_ID in os-release (#1623)
 
   [ Alfonso Sanchez Beato ]
   * kernel plugin: use latest stable core snap (#1624)
+
+  [ Nathan Haines ]
+  * ruby plugin: new stable release 2.4.2 (#1645)
+
+  [ Marius Gripsgard ]
+  * sources: workaround for ZipFile.extractall not preserving permissions (#1723)
 
  -- Sergio Schvezov <sergio.schvezov@canonical.com>  Wed, 01 Nov 2017 19:41:33 +0000
 
