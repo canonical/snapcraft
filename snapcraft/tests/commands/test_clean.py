@@ -97,11 +97,19 @@ parts:
         self.assertThat(self.stage_dir, Not(DirExists()))
         self.assertThat(self.prime_dir, Not(DirExists()))
 
+
+class ContainerizedCleanCommandTestCase(CleanCommandTestCase):
+
+    scenarios = [
+        ('local', dict(snapcraft_container_builds='1', remote='local')),
+        ('remote', dict(snapcraft_container_builds='foo', remote='foo')),
+    ]
+
     def test_clean_containerized_noop(self):
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         self.useFixture(fixtures.EnvironmentVariable(
-                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+            'SNAPCRAFT_CONTAINER_BUILDS', self.snapcraft_container_builds))
         self.make_snapcraft_yaml(n=3)
 
         result = self.run_command(['clean'])
@@ -115,10 +123,10 @@ parts:
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         # Container was created before, and isn't running
-        fake_lxd.name = 'local:snapcraft-clean-test'
+        fake_lxd.name = '{}:snapcraft-clean-test'.format(self.remote)
         fake_lxd.status = 'Stopped'
         self.useFixture(fixtures.EnvironmentVariable(
-                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+            'SNAPCRAFT_CONTAINER_BUILDS', self.snapcraft_container_builds))
         self.make_snapcraft_yaml(n=3)
 
         result = self.run_command(['clean'])
@@ -140,10 +148,10 @@ parts:
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         # Container was created before, and isn't running
-        fake_lxd.name = 'local:snapcraft-clean-test'
+        fake_lxd.name = '{}:snapcraft-clean-test'.format(self.remote)
         fake_lxd.status = 'Stopped'
         self.useFixture(fixtures.EnvironmentVariable(
-                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+            'SNAPCRAFT_CONTAINER_BUILDS', self.snapcraft_container_builds))
         self.make_snapcraft_yaml(n=3)
 
         result = self.run_command(['clean', '-s', 'pull'])
@@ -160,7 +168,7 @@ parts:
         fake_lxd.name = 'local:snapcraft-clean-test'
         self.useFixture(fake_lxd)
         self.useFixture(fixtures.EnvironmentVariable(
-                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+            'SNAPCRAFT_CONTAINER_BUILDS', self.snapcraft_container_builds))
         self.make_snapcraft_yaml(n=3)
 
         result = self.run_command(['clean', 'clean1'])
@@ -169,6 +177,9 @@ parts:
         # clean with parts should NOT delete the container
         self.assertNotEqual(fake_lxd.check_call_mock.call_args,
                             call(['lxc', 'delete', '-f', fake_lxd.name]))
+
+
+class CleanCommandPartsTestCase(CleanCommandTestCase):
 
     def test_local_plugin_not_removed(self):
         self.make_snapcraft_yaml(n=3)
