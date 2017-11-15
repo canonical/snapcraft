@@ -54,5 +54,6 @@ def refresh(debug, **kwargs):
     project_options = get_project_options(**kwargs, debug=debug)
     config = snapcraft.internal.load_config(project_options)
     lxd.Project(project_options=project_options,
+                remote=container_config.remote,
                 output=None, source=os.path.curdir,
                 metadata=config.get_metadata()).refresh()
