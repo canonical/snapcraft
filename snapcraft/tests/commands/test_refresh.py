@@ -21,13 +21,14 @@ from textwrap import dedent
 from unittest import mock
 from unittest.mock import call
 
+from testtools.matchers import Equals
 from snapcraft.tests import TestWithFakeRemoteParts
 from snapcraft.tests import fixture_setup
 from . import CommandBaseTestCase
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 
 
-class RefreshCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
+class RefreshCommandBaseTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
 
     yaml_template = dedent("""\
         name: snap-test
@@ -56,6 +57,14 @@ class RefreshCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         super().make_snapcraft_yaml(snapcraft_yaml)
         self.state_dir = os.path.join(self.parts_dir, 'part1', 'state')
 
+
+class RefreshCommandTestCase(RefreshCommandBaseTestCase):
+
+    scenarios = [
+         ('local', dict(snapcraft_container_builds='1', remote='local')),
+         ('remote', dict(snapcraft_container_builds='foo', remote='foo')),
+    ]
+
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_refresh(self, mock_container_run):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
@@ -64,7 +73,7 @@ class RefreshCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         fake_filesystem = fixture_setup.FakeFilesystem()
         self.useFixture(fake_filesystem)
         self.useFixture(fixtures.EnvironmentVariable(
-                'SNAPCRAFT_CONTAINER_BUILDS', '1'))
+            'SNAPCRAFT_CONTAINER_BUILDS', self.snapcraft_container_builds))
         self.make_snapcraft_yaml()
 
         self.run_command(['refresh'])
@@ -74,6 +83,11 @@ class RefreshCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
             call(['apt-get', 'upgrade', '-y']),
             call(['snap', 'refresh']),
         ])
+        self.assertThat(fake_lxd.name,
+                        Equals('{}:snapcraft-snap-test'.format(self.remote)))
+
+
+class RefreshCommandErrorsTestCase(RefreshCommandBaseTestCase):
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_refresh_fails_without_env_var(self, mock_container_run):
