@@ -180,6 +180,7 @@ def clean(parts, step, **kwargs):
     if container_config.use_container:
         config = snapcraft.internal.load_config(project_options)
         lxd.Project(project_options=project_options,
+                    remote=container_config.remote,
                     output=None, source=os.path.curdir,
                     metadata=config.get_metadata()).clean(parts, step)
     else:
