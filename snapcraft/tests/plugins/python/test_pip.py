@@ -538,6 +538,12 @@ class PipListTestCase(PipCommandTestCase):
         self.assertThat(self.pip.list(), Equals({'foo': '1.0'}))
         self.mock_run.assert_called_once_with(['list', '--format=json'])
 
+    def test_user(self):
+        self.mock_run.return_value = '[{"name": "foo", "version": "1.0"}]'
+        self.assertThat(self.pip.list(user=True), Equals({'foo': '1.0'}))
+        self.mock_run.assert_called_once_with(
+            ['list', '--format=json', '--user'])
+
     def test_missing_name(self):
         self.mock_run.return_value = '[{"version": "1.0"}]'
         raised = self.assertRaises(

@@ -651,7 +651,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
         # If pip dependencies were installed, generate a sitecustomize that
         # allows access to them.
-        if self._pip.is_setup() and self._pip.list():
+        if self._pip.is_setup() and self._pip.list(user=True):
             _python.generate_sitecustomize(
                 '2', stage_dir=self.project.stage_dir,
                 install_dir=self.installdir)

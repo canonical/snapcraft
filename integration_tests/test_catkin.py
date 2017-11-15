@@ -23,7 +23,7 @@ import integration_tests
 from snapcraft.tests import skip
 
 
-class CatkinSharedRosTestCase(integration_tests.TestCase):
+class CatkinTestCase(integration_tests.TestCase):
 
     @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
     def test_shared_ros_builds_without_catkin_in_underlay(self):
@@ -47,3 +47,10 @@ class CatkinSharedRosTestCase(integration_tests.TestCase):
         # Now copy in and build the consumer. This should not throw exceptions.
         self.copy_project_to_cwd(os.path.join('catkin-shared-ros', 'consumer'))
         self.run_snapcraft('build')
+
+    @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
+    def test_catkin_part_builds_after_python_part(self):
+        self.copy_project_to_cwd('catkin-with-python-part')
+
+        # This snap should be staged with no errors
+        self.run_snapcraft('stage')
