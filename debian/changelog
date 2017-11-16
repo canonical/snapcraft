@@ -87,6 +87,7 @@ snapcraft (2.35) xenial; urgency=medium
   * tests: in autopkgtests, use a tempdir in home, not in the tmpfs (#1657)
   * recording: record information from the image in container builds  (#1633)
   * recording: pass the build info flag to the container (#1736)
+  * tests: add the home plug to the plainbox snap (#1740)
 
   [ Christian Dywan ]
   * lxd: mount project folder via sshfs in case of a remote (#1302)
