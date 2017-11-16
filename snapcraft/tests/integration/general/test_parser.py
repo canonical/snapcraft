@@ -18,11 +18,14 @@ import os
 import fixtures
 import subprocess
 
-from snapcraft.tests import integration
-import testscenarios
 
+import testscenarios
 from testtools.matchers import Equals
-from snapcraft.tests import fixture_setup
+
+from snapcraft.tests import (
+    integration,
+    fixture_setup
+)
 
 
 class ParserTestCase(integration.TestCase):
@@ -70,7 +73,8 @@ class TestParserWikis(testscenarios.WithScenarios, ParserTestCase):
         # the original source tree version of snapcraft-parser
         if not os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
             self.snapcraft_parser_command = os.path.join(
-                os.path.dirname(__file__), '..', 'bin', 'snapcraft-parser')
+                os.path.dirname(__file__), '..', '..', '..', '..',
+                'bin', 'snapcraft-parser')
 
     def _read_file(self, filename):
         content = ''
@@ -209,7 +213,7 @@ class TestParserWikis(testscenarios.WithScenarios, ParserTestCase):
 
     def test_local_wiki(self):
         repo_dir = 'repo'
-        base_dir = os.path.join(os.path.dirname(__file__), 'wiki')
+        base_dir = os.path.join(os.path.dirname(integration.__file__), 'wiki')
         wiki_file = os.path.join(base_dir, self.wiki_file)
 
         commit = self._setup_origin(self.snapcraft_files, repo_dir, base_dir)
