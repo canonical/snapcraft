@@ -9,6 +9,8 @@ confinement: strict
 apps:
     plainbox:
         command: bin/plainbox-wrapper
+        # Required because of https://bugs.launchpad.net/snapcraft/+bug/1732076
+        plugs: [home]
 
 parts:
     # The testing framework
