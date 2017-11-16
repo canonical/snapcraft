@@ -121,18 +121,18 @@ The store tests by default will start fake servers that are configured to reply 
 
 Autopkgtests are tests for the project packaged as a deb. The unit tests are run during autopkgtests while the snapcraft deb is being built. Then the resulting deb is installed, and the integration and snaps suites are executed using the installed snapcraft.
 
-To run them locally, the easiest way is to use a LXC container. From the root of the project, run:
+To run them locally, the easiest way is to use a LXC container. Note however that snaps in LXC need squashfuse installed, which we need to do via the `--setup-commands` option. From the root of the project, run:
 
     sudo apt install autopkgtest
-    adt-run --unbuilt-tree . --apt-upgrade --- lxd ubuntu:xenial
+    adt-run --unbuilt-tree . --apt-upgrade --setup-commands="apt install squashfuse -y" --- lxd ubuntu:xenial
 
 It's possible to select only one of the suites, with:
 
-    adt-run --unbuilt-tree . --apt-upgrade --testname=integrationtests --- lxd ubuntu:xenial
+    adt-run --unbuilt-tree . --apt-upgrade --setup-commands="apt install squashfuse -y" --testname=integrationtests --- lxd ubuntu:xenial
 
 or:
 
-    adt-run --unbuilt-tree . --apt-upgrade --testname=snapstests --- lxd ubuntu:xenial
+    adt-run --unbuilt-tree . --apt-upgrade --setup-commands="apt install squashfuse -y" --testname=snapstests --- lxd ubuntu:xenial
 
 ## Spread tests for the snapcraft snap
 
