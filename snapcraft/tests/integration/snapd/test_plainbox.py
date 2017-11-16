@@ -20,11 +20,13 @@ import textwrap
 
 from testtools.matchers import Equals
 
-import integration_tests
-from snapcraft.tests import fixture_setup
+from snapcraft.tests import (
+    fixture_setup,
+    integration
+)
 
 
-class PlainboxTestCase(integration_tests.SnapdIntegrationTestCase):
+class PlainboxTestCase(integration.SnapdIntegrationTestCase):
 
     def test_install_and_execution(self):
         with fixture_setup.WithoutSnapInstalled('plainbox-simple'):

@@ -19,10 +19,10 @@ import subprocess
 import fixtures
 from testtools.matchers import FileExists
 
-import integration_tests
+from snapcraft.tests import integration
 
 
-class ContainerBuildsTestCase(integration_tests.TestCase):
+class ContainerBuildsTestCase(integration.TestCase):
 
     def setUp(self):
         super().setUp()
