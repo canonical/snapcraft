@@ -16,7 +16,7 @@
 
 import logging
 
-from testtools.matchers import Equals
+from testtools.matchers import Contains, Equals, Not
 
 from snapcraft.internal import log
 from snapcraft import tests
@@ -44,12 +44,12 @@ class LogTestCase(tests.TestCase):
         logger.info('Test info')
         logger.warning('Test warning')
 
-        expected_out = ('Test debug\n'
-                        '{}Test info\033[0m\n'
-                        '{}Test warning\033[0m\n').format(
-            self.info_color, self.warning_color)
-
-        self.assertThat(self.fake_terminal.getvalue(), Equals(expected_out))
+        stdout = self.fake_terminal.getvalue()
+        self.assertThat(stdout, Contains('Test debug'))
+        expected_info = '{}Test info\033[0m'.format(self.info_color)
+        self.assertThat(stdout, Contains(expected_info))
+        expected_warning = '{}Test warning\033[0m'.format(self.warning_color)
+        self.assertThat(stdout, Contains(expected_warning))
         self.assertThat(self.fake_terminal.getvalue(stderr=True), Equals(''))
 
     def test_configure_must_send_errors_to_stderr(self):
@@ -62,13 +62,11 @@ class LogTestCase(tests.TestCase):
         logger.error('Test error')
         logger.critical('Test critical')
 
-        expected_err = ('{}Test error\033[0m\n'
-                        '{}Test critical\033[0m\n').format(
-            self.error_color, self.critical_color)
-
-        self.assertThat(
-            self.fake_terminal.getvalue(stderr=True),
-            Equals(expected_err))
+        stderr = self.fake_terminal.getvalue(stderr=True)
+        expected_error = '{}Test error\033[0m'.format(self.error_color)
+        self.assertThat(stderr, Contains(expected_error))
+        expected_crit = '{}Test critical\033[0m'.format(self.critical_color)
+        self.assertThat(stderr, Contains(expected_crit))
         self.assertThat(self.fake_terminal.getvalue(), Equals(''))
 
     def test_configure_must_log_info_and_higher(self):
@@ -82,16 +80,18 @@ class LogTestCase(tests.TestCase):
         logger.error('Test error')
         logger.critical('Test critical')
 
-        expected_out = ('{}Test info\033[0m\n'
-                        '{}Test warning\033[0m\n').format(
-            self.info_color, self.warning_color)
-        expected_err = ('{}Test error\033[0m\n'
-                        '{}Test critical\033[0m\n').format(
-            self.error_color, self.critical_color)
+        stdout = self.fake_terminal.getvalue()
+        self.assertThat(stdout, Not(Contains('Test debug')))
+        expected_info = '{}Test info\033[0m'.format(self.info_color)
+        self.assertThat(stdout, Contains(expected_info))
+        expected_warning = '{}Test warning\033[0m'.format(self.warning_color)
+        self.assertThat(stdout, Contains(expected_warning))
 
-        self.assertThat(self.fake_terminal.getvalue(), Equals(expected_out))
-        self.assertThat(
-            self.fake_terminal.getvalue(stderr=True), Equals(expected_err))
+        stderr = self.fake_terminal.getvalue(stderr=True)
+        expected_error = '{}Test error\033[0m'.format(self.error_color)
+        self.assertThat(stderr, Contains(expected_error))
+        expected_crit = '{}Test critical\033[0m'.format(self.critical_color)
+        self.assertThat(stderr, Contains(expected_crit))
 
     def test_configure_must_support_debug(self):
         logger_name = self.id()
@@ -104,17 +104,18 @@ class LogTestCase(tests.TestCase):
         logger.error('Test error')
         logger.critical('Test critical')
 
-        expected_out = ('Test debug\n'
-                        '{}Test info\033[0m\n'
-                        '{}Test warning\033[0m\n').format(
-            self.info_color, self.warning_color)
-        expected_err = ('{}Test error\033[0m\n'
-                        '{}Test critical\033[0m\n').format(
-            self.error_color, self.critical_color)
+        stdout = self.fake_terminal.getvalue()
+        self.assertThat(stdout, Contains('Test debug'))
+        expected_info = '{}Test info\033[0m'.format(self.info_color)
+        self.assertThat(stdout, Contains(expected_info))
+        expected_warning = '{}Test warning\033[0m'.format(self.warning_color)
+        self.assertThat(stdout, Contains(expected_warning))
 
-        self.assertThat(self.fake_terminal.getvalue(), Equals(expected_out))
-        self.assertThat(
-            self.fake_terminal.getvalue(stderr=True), Equals(expected_err))
+        stderr = self.fake_terminal.getvalue(stderr=True)
+        expected_error = '{}Test error\033[0m'.format(self.error_color)
+        self.assertThat(stderr, Contains(expected_error))
+        expected_crit = '{}Test critical\033[0m'.format(self.critical_color)
+        self.assertThat(stderr, Contains(expected_crit))
 
     def test_configure_must_support_no_tty(self):
         self.fake_terminal = fixture_setup.FakeTerminal(isatty=False)
@@ -129,12 +130,16 @@ class LogTestCase(tests.TestCase):
         logger.error('Test error')
         logger.critical('Test critical')
 
-        expected_out = ('Test debug\n'
-                        'Test info\n'
-                        'Test warning\n')
-        expected_err = ('Test error\n'
-                        'Test critical\n')
+        stdout = self.fake_terminal.getvalue()
+        self.assertThat(stdout, Contains('Test debug'))
+        self.assertThat(stdout, Contains('Test info'))
+        self.assertThat(stdout, Not(Contains(self.info_color)))
+        self.assertThat(stdout, Contains('Test warning'))
+        self.assertThat(stdout, Not(Contains(self.warning_color)))
+        self.assertThat(stdout, Not(Contains('\033[0m')))
 
-        self.assertThat(self.fake_terminal.getvalue(), Equals(expected_out))
-        self.assertThat(
-            self.fake_terminal.getvalue(stderr=True), Equals(expected_err))
+        stderr = self.fake_terminal.getvalue(stderr=True)
+        self.assertThat(stderr, Contains('Test error'))
+        self.assertThat(stderr, Not(Contains(self.error_color)))
+        self.assertThat(stderr, Contains('Test critical'))
+        self.assertThat(stderr, Not(Contains(self.critical_color)))

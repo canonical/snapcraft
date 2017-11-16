@@ -29,8 +29,14 @@ class TestDeb(tests.FakeFileHTTPServerBasedTestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('debian.debfile.DebFile')
-        self.mock_deb = patcher.start()
+        patcher = mock.patch('debian.arfile.ArFile')
+        self.mock_ar = patcher.start()
+        self.mock_ar.return_value.getnames.return_value = [
+            'data.tar.gz', 'control.tar.gz', 'debian-binary']
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('tarfile.open')
+        patcher.start()
         self.addCleanup(patcher.stop)
 
     def test_pull_debfile_must_download_and_extract(self):
@@ -43,7 +49,7 @@ class TestDeb(tests.FakeFileHTTPServerBasedTestCase):
 
         deb_source.pull()
 
-        self.mock_deb.assert_called_once_with(
+        self.mock_ar.assert_called_once_with(
             os.path.join(deb_source.source_dir, deb_file_name))
 
     def test_extract_and_keep_debfile(self):
@@ -57,7 +63,7 @@ class TestDeb(tests.FakeFileHTTPServerBasedTestCase):
         deb_source.provision(dst=dest_dir, keep_deb=True)
 
         deb_download = os.path.join(deb_source.source_dir, deb_file_name)
-        self.mock_deb.assert_called_once_with(
+        self.mock_ar.assert_called_once_with(
             os.path.join(deb_source.source_dir, deb_file_name))
 
         with open(deb_download, 'r') as deb_file:
@@ -68,3 +74,18 @@ class TestDeb(tests.FakeFileHTTPServerBasedTestCase):
             self.assertTrue(sources._source_handler['deb'] is sources.Deb)
         else:
             self.assertRaises(KeyError, sources._source_handler['deb'])
+
+    def test_invalid_deb(self):
+        self.mock_ar.return_value.getnames.return_value = [
+            'control.tar.gz', 'debian-binary']
+
+        deb_file_name = 'test.deb'
+        source = 'http://{}:{}/{file_name}'.format(
+            *self.server.server_address, file_name=deb_file_name)
+        dest_dir = os.path.abspath(os.curdir)
+        deb_source = sources.Deb(source, dest_dir)
+
+        deb_source.download()
+
+        self.assertRaises(sources.errors.InvalidDebError,
+                          deb_source.provision, dst=dest_dir, keep_deb=True)

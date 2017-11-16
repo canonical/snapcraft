@@ -1,4 +1,4 @@
-name: plainbox-test-tool
+name: plainbox-simple
 summary: A Plainbox Test Tool
 description: >
   The Plainbox tool itself coupled with a Provider which contains the test
@@ -9,6 +9,8 @@ confinement: strict
 apps:
     plainbox:
         command: bin/plainbox-wrapper
+        # Required because of https://bugs.launchpad.net/snapcraft/+bug/1732076
+        plugs: [home]
 
 parts:
     # The testing framework
@@ -26,7 +28,7 @@ parts:
     # The test definitions
     simple-plainbox-provider:
         plugin: plainbox-provider
-        source: ./2016.com.example_simple
+        source: ./com.example_simple
         after: [plainbox-local]
     # A wrapper script
     launchers:

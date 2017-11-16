@@ -346,11 +346,11 @@ class AutotoolsPluginTestCase(tests.TestCase):
 class AutotoolsCrossCompilePluginTestCase(tests.TestCase):
 
     scenarios = [
-        ('armv7l', dict(deb_arch='armhf')),
-        ('aarch64', dict(deb_arch='arm64')),
-        ('i386', dict(deb_arch='i386')),
-        ('x86_64', dict(deb_arch='amd64')),
-        ('ppc64le', dict(deb_arch='ppc64el')),
+        ('armv7l', dict(deb_arch='armhf', triplet='arm-linux-gnueabihf')),
+        ('aarch64', dict(deb_arch='arm64', triplet='aarch64-linux-gnu')),
+        ('i386', dict(deb_arch='i386', triplet='i386-linux-gnu')),
+        ('x86_64', dict(deb_arch='amd64', triplet='x86_64-linux-gnu')),
+        ('ppc64le', dict(deb_arch='ppc64el', triplet='powerpc64le-linux-gnu')),
     ]
 
     def setUp(self):
@@ -373,20 +373,17 @@ class AutotoolsCrossCompilePluginTestCase(tests.TestCase):
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.ProjectOptions.is_cross_compiling')
+        patcher = mock.patch(
+            'snapcraft.ProjectOptions.is_cross_compiling',
+            return_value=True)
         patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch.dict(os.environ, {})
-        self.env_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
     def test_cross_compile(self):
         plugin = autotools.AutotoolsPlugin('test-part', self.options,
                                            self.project_options)
         plugin.enable_cross_compilation()
-        env = plugin.env(plugin.sourcedir)
-        self.assertIn('CC={}-gcc'.format(
-            self.project_options.arch_triplet), env)
-        self.assertIn('CXX={}-g++'.format(
-            self.project_options.arch_triplet), env)
+        plugin.build()
+        self.run_mock.assert_has_calls([mock.call([
+            './configure', '--prefix=', '--host={}'.format(self.triplet)],
+            cwd=mock.ANY)])

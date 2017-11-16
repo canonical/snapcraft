@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import platform
 from unittest import mock
 
 from testtools.matchers import Equals, HasLength
@@ -32,7 +31,7 @@ class RubyPluginTestCase(tests.TestCase):
 
         class Options(snapcraft.ProjectOptions):
             source = '.'
-            ruby_version = '2.4.0'
+            ruby_version = '2.4.2'
             gems = []
             use_bundler = False
 
@@ -47,7 +46,7 @@ class RubyPluginTestCase(tests.TestCase):
         }
         expected_ruby_version = {
             'type': 'string',
-            'default': '2.4.0'
+            'default': '2.4.2'
         }
         expected_gems = {
             'type': 'array',
@@ -101,12 +100,16 @@ class RubyPluginTestCase(tests.TestCase):
 
         os.makedirs(
             os.path.join(part_dir, 'lib', 'ruby', 'gems', 'test-version'))
+        libdir = os.path.join('test-part-path', 'lib', 'ruby', 'test-version')
+        arch_libdir = os.path.join(libdir, 'foo-linux-bar')
+        real_arch_libdir = os.path.join(self.path, arch_libdir)
+        os.makedirs(real_arch_libdir)
+        open(os.path.join(real_arch_libdir, 'rbconfig.rb'), 'w').close()
         env = plugin.env('test-part-path')
 
         expected_env = {
             'GEM_HOME="test-part-path/lib/ruby/gems/test-version"',
-            'RUBYLIB="test-part-path/lib/ruby/test-version:test-part-path/'
-            'lib/ruby/test-version/{}-linux"'.format(platform.machine()),
+            'RUBYLIB="{}:{}"'.format(libdir, arch_libdir),
             'GEM_PATH="test-part-path/lib/ruby/gems/test-version"'
         }
         self.assertThat(set(env), Equals(expected_env))
@@ -129,13 +132,36 @@ class RubyPluginTestCase(tests.TestCase):
             str(error),
             Equals('Expected a single Ruby version, but found 2'))
 
+    def test_env_with_rbconfigs(self):
+        plugin = ruby.RubyPlugin(
+            'test-part', self.options, self.project_options)
+        part_dir = os.path.join(self.path, 'test-part-path')
+
+        os.makedirs(
+            os.path.join(part_dir, 'lib', 'ruby', 'gems', 'test-version'))
+        libdir = os.path.join('test-part-path', 'lib', 'ruby', 'test-version')
+
+        for arch in ('foo-linux-bar1', 'foo-linux-bar2'):
+            arch_libdir1 = os.path.join(libdir, arch)
+            real_arch_libdir1 = os.path.join(self.path, arch_libdir1)
+            os.makedirs(real_arch_libdir1)
+            open(os.path.join(real_arch_libdir1, 'rbconfig.rb'), 'w').close()
+
+        error = self.assertRaises(
+            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            plugin.env, 'test-part-path')
+
+        self.assertThat(
+            str(error),
+            Equals('Expected a single rbconfig.rb, but found 2'))
+
     def test_pull_downloads_ruby(self):
         plugin = ruby.RubyPlugin(
             'test-part', self.options, self.project_options)
 
         self.assertThat(
             plugin._ruby_tar.source,
-            Equals('https://cache.ruby-lang.org/pub/ruby/ruby-2.4.0.tar.gz'))
+            Equals('https://cache.ruby-lang.org/pub/ruby/ruby-2.4.2.tar.gz'))
         self.assertThat(
             plugin._ruby_tar.source_dir,
             Equals(os.path.join(self.path, 'parts', 'test-part', 'ruby')))

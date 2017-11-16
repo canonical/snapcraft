@@ -317,13 +317,17 @@ class Pip:
         return [os.path.join(self._python_package_dir, wheel)
                 for wheel in wheels]
 
-    def list(self):
+    def list(self, *, user=False):
         """Determine which packages have been installed.
 
         :return: Dict of installed python packages and their versions
         :rtype: dict
         """
-        output = self._run(['list', '--format=json'])
+        command = ['list', '--format=json']
+        if user:
+            command.append('--user')
+
+        output = self._run(command)
         packages = collections.OrderedDict()
         try:
             json_output = json.loads(

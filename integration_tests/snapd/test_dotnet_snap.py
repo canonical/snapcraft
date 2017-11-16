@@ -19,11 +19,12 @@ import subprocess
 from testtools.matchers import Equals
 
 import integration_tests
-from snapcraft.tests import fixture_setup
+from snapcraft.tests import fixture_setup, skip
 
 
 class DotnetTestCase(integration_tests.SnapdIntegrationTestCase):
 
+    @skip.skip_unless_codename('xenial', 'the dotnet plugin targets Xenial')
     def test_install_and_execution(self):
         if self.deb_arch != 'amd64':
             self.skipTest('The dotnet plugin only supports amd64, for now')

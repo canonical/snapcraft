@@ -132,8 +132,8 @@ class FixShebangTestCase(RepoBaseTestCase):
         }),
         ('python3 bin dir', {
             'file_path': os.path.join('root', 'bin', 'd'),
-            'content': '#!/usr/bin/python3\nraise Exception()',
-            'expected': '#!/usr/bin/python3\nraise Exception()',
+            'content': '#!/usr/bin/python3\nimport this',
+            'expected': '#!/usr/bin/env python3\nimport this',
         }),
         ('sbin dir', {
             'file_path': os.path.join('root', 'sbin', 'b'),

@@ -79,7 +79,10 @@ from snapcraft import (
     formatting_utils,
     repo,
 )
-from snapcraft.internal import errors
+from snapcraft.internal import (
+    errors,
+    mangling,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -651,16 +654,14 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
         # If pip dependencies were installed, generate a sitecustomize that
         # allows access to them.
-        if self._pip.is_setup() and self._pip.list():
+        if self._pip.is_setup() and self._pip.list(user=True):
             _python.generate_sitecustomize(
                 '2', stage_dir=self.project.stage_dir,
                 install_dir=self.installdir)
 
     def _use_in_snap_python(self):
         # Fix all shebangs to use the in-snap python.
-        file_utils.replace_in_file(self.rosdir, re.compile(r''),
-                                   re.compile(r'^#!.*python'),
-                                   r'#!/usr/bin/env python')
+        mangling.rewrite_python_shebangs(self.installdir)
 
         # Also replace the python usage in 10.ros.sh to use the in-snap python.
         ros10_file = os.path.join(self.rosdir,

@@ -13,11 +13,12 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-import debian.debfile
 import os
 import shutil
+import tarfile
 import tempfile
+
+import debian.arfile
 
 from . import errors
 from ._base import FileBase
@@ -53,8 +54,17 @@ class Deb(FileBase):
             os.makedirs(dst)
             shutil.move(tmp_deb, deb_file)
 
-        deb = debian.debfile.DebFile(deb_file)
-        deb.data.tgz().extractall(dst)
+        # Importing DebFile causes LP: #1731478 when snapcraft is
+        # run as a snap.
+        deb_ar = debian.arfile.ArFile(deb_file)
+        try:
+            data_member_name = [
+                i for i in deb_ar.getnames() if i.startswith('data.tar')][0]
+        except IndexError:
+            raise errors.InvalidDebError(deb_file=deb_file)
+        data_member = deb_ar.getmember(data_member_name)
+        with tarfile.open(fileobj=data_member) as tar:
+            tar.extractall(dst)
 
         if not keep_deb:
             os.remove(deb_file)

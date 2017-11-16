@@ -34,18 +34,13 @@ class Cleanbuilder(Containerbuild):
                          project_options=project_options, metadata=metadata,
                          container_name=container_name, remote=remote)
 
-    def _push_file(self, src, dst):
-        subprocess.check_call(['lxc', 'file', 'push',
-                              src, '{}{}'.format(self._container_name, dst)])
-
-    def _pull_file(self, src, dst):
-        subprocess.check_call(['lxc', 'file', 'pull',
-                               '{}{}'.format(self._container_name, src), dst])
-
     def _ensure_container(self):
         subprocess.check_call([
             'lxc', 'launch', '-e', self._image, self._container_name])
         self._configure_container()
+        self._wait_for_network()
+        self._container_run(['apt-get', 'update'])
+        self._inject_snapcraft()
 
     def _setup_project(self):
         logger.info('Setting up container with project assets')
