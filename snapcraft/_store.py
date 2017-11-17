@@ -94,7 +94,7 @@ def _check_dev_agreement_and_namespace_statuses(store):
             if choice in {'y', 'Y'}:
                 try:
                     store.sign_developer_agreement(latest_tos_accepted=True)
-                except:
+                except storeapi.errors.DeveloperAgreementSignError:
                     raise storeapi.errors.NeedTermsSignedError(
                             storeapi.constants.AGREEMENT_SIGN_ERROR.format(
                                 url))
