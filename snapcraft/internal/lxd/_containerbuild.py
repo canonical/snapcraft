@@ -102,8 +102,6 @@ class Containerbuild:
                 else:
                     raise e
             else:
-                # Remove temporary folder if everything went well
-                shutil.rmtree(self.tmp_dir)
                 self._finish()
 
     @contextmanager
@@ -118,6 +116,8 @@ class Containerbuild:
                 print('Stopping {}'.format(self._container_name))
                 subprocess.check_call([
                     'lxc', 'stop', '-f', self._container_name])
+            # Remove temporary folder
+            shutil.rmtree(self.tmp_dir)
 
     def _get_container_status(self):
         containers = json.loads(subprocess.check_output([

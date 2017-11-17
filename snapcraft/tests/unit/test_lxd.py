@@ -323,8 +323,9 @@ class ContainerbuildTestCase(LXDTestCase):
         self.assertIn('Error connecting to',
                       str(self.assertRaises(SnapdError,
                                             builder.execute)))
-        # Temporary folder should remain in case of failure
-        self.fake_filesystem.rmtree_mock.assert_not_called()
+        # Temporary folder should be removed in the end
+        self.fake_filesystem.rmtree_mock.assert_has_calls([
+            call(builder.tmp_dir)])
 
     @patch('snapcraft.internal.common.is_snap')
     def test_inject_snap_api_error(self,
@@ -339,8 +340,9 @@ class ContainerbuildTestCase(LXDTestCase):
         self.assertIn('Error querying \'core\' snap: not found',
                       str(self.assertRaises(SnapdError,
                                             builder.execute)))
-        # Temporary folder should remain in case of failure
-        self.fake_filesystem.rmtree_mock.assert_not_called()
+        # Temporary folder should be removed in the end
+        self.fake_filesystem.rmtree_mock.assert_has_calls([
+            call(builder.tmp_dir)])
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @patch('snapcraft.internal.common.is_snap')
