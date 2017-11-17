@@ -20,8 +20,8 @@
 
 set -ev
 
-if [ "$#" -lt 1 ] || [ "$#" -gt 2 ] ; then
-    echo "Usage: "$0" <test> [PATTERN]"
+if [ "$#" -ne 1 ] ; then
+    echo "Usage: "$0" <test>"
     exit 1
 fi
 
@@ -31,9 +31,9 @@ pattern="$2"
 
 if [ "$test" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
-elif [ "$test" = "unit" ]; then
+elif [ "$test" = "snapcraft/tests/unit" ]; then
     dependencies="apt install -y git bzr subversion mercurial libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov && apt install -y python3-coverage"
-elif [ "$test" = "integration" ] || [ "$test" = "plugins" ] || [ "$test" = "store" ] || [ "$test" = "containers" ] || [ "$test" = "snapd" ]; then
+elif [[ "$test" = "snapcraft/tests/integration"* ]]; then
     # snap install core exits with this error message:
     # - Setup snap "core" (2462) security profiles (cannot reload udev rules: exit status 2
     # but the installation succeeds, so we just ingore it.
@@ -53,9 +53,9 @@ lxc="/snap/bin/lxc"
 
 $lxc file push --recursive $project_path test-runner/root/
 $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
-$lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test $pattern"
+$lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test"
 
-if [ "$test" = "unit" ]; then
+if [ "$test" = "snapcraft/tests/unit" ]; then
     # Report code coverage.
     $lxc exec test-runner -- sh -c "cd snapcraft && python3 -m coverage xml"
     $lxc exec test-runner -- sh -c "cd snapcraft && codecov --token=$CODECOV_TOKEN"

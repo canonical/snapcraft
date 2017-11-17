@@ -3,4 +3,4 @@
 set -e
 
 script_path="$(dirname "$0")"
-SNAPCRAFT_AUTOPKGTEST_SUITES=integration_tests/snapd $script_path/integrationtests
+SNAPCRAFT_AUTOPKGTEST_SUITES=snapcraft/tests/integration/snapd $script_path/integrationtests

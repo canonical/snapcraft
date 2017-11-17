@@ -27,21 +27,21 @@ The static tests suite performs a static analysis on the source code without exe
 
 The unit tests is a suite of low-level white box tests. They excercise units of code to verify that the different parts work as expected in a fully isolated way. Ideally, these tests should call only public functions, objects and methods, leaving the internals of snapcraft as implementation details that can change without having to modifying any tests. To isolate the units from their environment and dependencies we can replace those with test doubles. In order to set up test doubles, we prefer dependency injection through arguments than excessive mocking. These tests can verify the results checking the output printed to the command line, checking the files created during the excecution, inspecting the calls made to the test doubles and verifying that the expected exceptions were thrown.
 
-These tests are in the `snapcraft/tests` directory.
+These tests are in the `snapcraft/tests/unit` directory.
 
 ### Integration tests
 
 The integration tests are a group of suites that excercise snapcraft as a black box. They are only allowed to set up the environment where snapcraft runs and create files; but for the execution phase of the test they can only run the snapcraft command or one of its subcommands. To verify the results they can check the output printed to the command line, the return value of the snapcraft command, and any files created during the execution.
 
-This suite was split in four: plugins, store, snapd and other integration tests. This split is artificial, we made it just because the full suite takes more time than what Travis allows for a single job.
-
-These tests are in the `integration_tests` directory, with the `snapcraft.yamls` and other source files for the tests snaps in `integration_tests/snaps`.
+These tests are in the `snapcraft/tests/integration` directory, with the `snapcraft.yamls` and other source files for the tests snaps in `snapcraft/tests/integration/snaps`.
 
 ### Slow tests
 
 Some tests take too long. This affects the pull requests because we have to wait for a long time, and they will make Travis CI timeout because we have only 50 minutes per suite in there. The solution is to tag these tests as slow, and don't run them in all pull requests. These tests will only be run in autopkgtests.
 
 To mark a test case as slow, set the class attribute `slow_test = True`.
+
+To run all the tests, including the slow ones, set the environment variable `SNAPCRAFT_SLOW_TESTS=1`.
 
 ### Snaps tests
 
@@ -59,50 +59,52 @@ Then, you'll need a few more dependencies:
 
 ### Running the tests
 
-To run all the tests execute:
+To run the static tests, execute:
 
-    ./runtests.sh
-
-You can selectively run only one of the suites, and apply a filter:
-
-    ./runtests.sh [static|unit|integration|plugins|store|snaps] [pattern]
-
-Examples:
-
-  * To run only the static tests:
-
-    ```
     ./runtests.sh static
-    ```
 
-  * To run only the full unit test suite:
+To run the unit tests, execute:
 
-    ```
-    ./runtests.sh unit
-    ```
+    ./runtests.sh snapcraft/tests/unit
 
-  * To run only the unit tests in the file called `test_init.py`:
+To run the integration tests, execute:
 
-    ```
-    ./runtests.sh unit test_init.py
-    ```
+    ./runtests.sh snapcraft/tests/integration
 
-  * To run only the integration tests that interact with the store:
+You can also run a subsuite of the unit or integration suites specifying the path to the directory.
+For example:
+
+  * To run only the unit tests for the plugins:
 
     ```
-    ./runtests.sh store
+    ./runtests.sh snapcraft/tests/unit/plugins
     ```
 
-  * To run only the integration tests for the python plugin:
+  * To run only the integration tests for the store:
 
     ```
-    ./runtests.sh plugins *python*
+    ./runtests.sh snapcraft/tests/integration/store
     ```
 
-  * To run the integration tests that are not related to plugins or the store:
+And you can also run a single test module, test case or test function using the usual python way.
+For example:
+
+  * To run only the unit tests in the test_nodejs module:
 
     ```
-    ./runtests.sh integration
+    python3 -m unittest snapcraft.tests.unit.plugins.tests_nodejs
+    ```
+
+  * To run only the unit tests in the NodePluginTestCase:
+
+    ```
+    python3 -m unittest snapcraft.tests.unit.plugins.tests_nodejs.NodePluginTestCase
+    ```
+
+  * To run only the unit test named test_pull_executes_npm_run_commands:
+
+    ```
+    python3 -m unittest snapcraft.tests.unit.plugins.tests_nodejs.NodePluginTestCase.test_pull_executes_npm_run_commands
     ```
 
 The snaps tests script has more complex arguments. For an explanation of them, run:
@@ -111,11 +113,11 @@ The snaps tests script has more complex arguments. For an explanation of them, r
 
 The integration and snaps suites can be run using the snapcraft source from the repository, or using the snapacraft command installed in the system. By default, they will use the source code, so you can modify your clone of the repository and verify that your changes are correct. If instead you want to verify that the snapcraft version installed in your system is correct, run them with the environment variable `SNAPCRAFT_FROM_INSTALLED` set, like this:
 
-    SNAPCRAFT_FROM_INSTALLED=1 ./runtests.sh [integration|plugins|store|snaps] [pattern]
+    SNAPCRAFT_FROM_INSTALLED=1 ./runtests.sh snapcraft/tests/integration
 
 The store tests by default will start fake servers that are configured to reply like the real store does. But you can run them also against the staging and production store servers. To do that, you will need to set the `TEST_STORE` environment variable to either `staging` or `production`, and you also have to pass credentials for a valid user in that store with the environment variable `TEST_USER_EMAIL` and `TEST_USER_PASSWORD`, like this:
 
-    TEST_STORE=staging TEST_USER_EMAIL=test@example.com TEST_USER_PASSWORD=Hola123* ./runtests.sh store [pattern]
+    TEST_STORE=staging TEST_USER_EMAIL=test@example.com TEST_USER_PASSWORD=Hola123* ./runtests.sh snapcraft/tests/integration/store
 
 ## Autopkgtests for the snapcraft deb
 

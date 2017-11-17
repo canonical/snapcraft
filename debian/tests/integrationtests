@@ -5,7 +5,7 @@ set -e
 echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers.d/autopkgtest
 
 if [ -z "$SNAPCRAFT_AUTOPKGTEST_SUITES" ]; then
-    suites="integration_tests integration_tests/store integration_tests/plugins integration_tests/snapd"
+    suites="snapcraft/tests/integration"
 else
     suites=$SNAPCRAFT_AUTOPKGTEST_SUITES
 fi
