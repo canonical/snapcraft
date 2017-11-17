@@ -76,7 +76,7 @@ def _macaroon_auth(conf):
 def _deserialize_macaroon(value):
     try:
         return pymacaroons.Macaroon.deserialize(value)
-    except pymacaroons.exceptions.MacaroonDeserializationException:
+    except:  # noqa LP: #1733004
         raise errors.InvalidCredentialsError('Failed to deserialize macaroon')
 
 
