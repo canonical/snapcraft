@@ -25,10 +25,10 @@ from testtools.matchers import (
 
 import snapcraft
 from snapcraft.plugins import catkin_tools
-from snapcraft import tests
+from snapcraft.tests import unit
 
 
-class CatkinToolsPluginBaseTestCase(tests.TestCase):
+class CatkinToolsPluginBaseTestCase(unit.TestCase):
 
         def setUp(self):
             super().setUp()
