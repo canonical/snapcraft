@@ -19,7 +19,6 @@ import copy
 import os
 import shutil
 import stat
-import sys
 import tempfile
 from unittest.mock import (
     call,
@@ -40,10 +39,8 @@ from snapcraft.internal import (
     repo,
     states,
 )
-from snapcraft.tests import (
-    fixture_setup,
-    unit
-)
+from snapcraft.tests import fixture_setup
+from snapcraft.tests import unit
 from snapcraft.plugins import nil
 
 
@@ -785,6 +782,11 @@ class StateBaseTestCase(unit.TestCase):
 
         self.handler.makedirs()
 
+        patcher = patch('snapcraft.internal.elf.get_elf_files')
+        self.get_elf_files_mock = patcher.start()
+        self.get_elf_files_mock.return_value = frozenset()
+        self.addCleanup(patcher.stop)
+
 
 class StateTestCase(StateBaseTestCase):
 
@@ -1049,11 +1051,8 @@ class StateTestCase(StateBaseTestCase):
             Equals("Failed to clean step 'stage': Missing necessary state. "
                    "This won't work until a complete clean has occurred."))
 
-    @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('shutil.copy')
-    def test_prime_state(self, mock_copy, mock_find_dependencies):
-        mock_find_dependencies.return_value = set()
-
+    def test_prime_state(self, mock_copy):
         self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')
@@ -1066,8 +1065,8 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
-        mock_find_dependencies.assert_called_once_with(self.handler.primedir,
-                                                       {'bin/1', 'bin/2'})
+        self.get_elf_files_mock.assert_called_once_with(self.handler.primedir,
+                                                        {'bin/1', 'bin/2'})
         self.assertFalse(mock_copy.called)
 
         state = states.get_state(self.handler.plugin.statedir, 'prime')
@@ -1088,12 +1087,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
-    @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('shutil.copy')
-    def test_prime_state_with_stuff_already_primed(self, mock_copy,
-                                                   mock_find_dependencies):
-        mock_find_dependencies.return_value = set()
-
+    def test_prime_state_with_stuff_already_primed(self, mock_copy):
         self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')
@@ -1110,8 +1105,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertThat(self.handler.last_step(), Equals('prime'))
         # bin/2 shouldn't be in this list as it was already primed by another
         # part.
-        mock_find_dependencies.assert_called_once_with(self.handler.primedir,
-                                                       {'bin/1'})
+        self.get_elf_files_mock.assert_called_once_with(self.handler.primedir,
+                                                        {'bin/1'})
         self.assertFalse(mock_copy.called)
 
         state = states.get_state(self.handler.plugin.statedir, 'prime')
@@ -1131,16 +1126,19 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
-    @patch('snapcraft.internal.pluginhandler._find_dependencies')
+    @patch('snapcraft.internal.elf.get_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_with_dependencies(self, mock_migrate_files,
-                                           mock_find_dependencies):
-        mock_find_dependencies.return_value = {
+                                           mock_get_dependencies):
+        mock_get_dependencies.return_value = {
             '/foo/bar/baz',
             '{}/lib1/installed'.format(self.handler.installdir),
             '{}/lib2/staged'.format(self.handler.stagedir),
         }
-
+        self.get_elf_files_mock.return_value = frozenset([
+            os.path.join(self.handler.primedir, 'bin', '1'),
+            os.path.join(self.handler.primedir, 'bin', '2'),
+        ])
         self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')
@@ -1153,7 +1151,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
-        mock_find_dependencies.assert_called_once_with(
+        self.get_elf_files_mock.assert_called_once_with(
             self.handler.primedir, {'bin/1', 'bin/2'})
         mock_migrate_files.assert_has_calls([
             call({'bin/1', 'bin/2'}, {'bin'}, self.handler.stagedir,
@@ -1183,18 +1181,20 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
-    @patch('snapcraft.internal.pluginhandler._find_dependencies')
+    @patch('snapcraft.internal.elf.get_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_disable_ldd_crawl(self, mock_migrate_files,
-                                           mock_find_dependencies):
+                                           mock_get_dependencies):
         # Disable system library migration (i.e. ldd crawling).
         self.handler = self.load_part('test_part', part_properties={
             'build-attributes': ['no-system-libraries']
         })
 
+        self.get_elf_files_mock.return_value = frozenset([
+            os.path.join(self.handler.primedir, 'bin', 'file')])
         # Pretend we found a system dependency, as well as a part and stage
         # dependency.
-        mock_find_dependencies.return_value = {
+        mock_get_dependencies.return_value = {
             '/foo/bar/baz',
             '{}/lib1/installed'.format(self.handler.installdir),
             '{}/lib2/staged'.format(self.handler.stagedir),
@@ -1212,7 +1212,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
-        mock_find_dependencies.assert_called_once_with(
+        self.get_elf_files_mock.assert_called_once_with(
             self.handler.primedir, {'bin/file'})
         # Verify that only the part's files were migrated-- not the system
         # dependency.
@@ -1229,13 +1229,12 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue('lib1' in state.dependency_paths)
         self.assertTrue('lib2' in state.dependency_paths)
 
-    @patch('snapcraft.internal.pluginhandler._find_dependencies')
+    @patch('snapcraft.internal.elf.get_dependencies',
+           return_value=set(['/foo/bar/baz']))
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_with_shadowed_dependencies(self, mock_migrate_files,
-                                                    mock_find_dependencies):
-        mock_find_dependencies.return_value = {
-            '/foo/bar/baz'
-        }
+                                                    mock_get_dependencies):
+        self.get_elf_files_mock.return_value = frozenset(['bin/1'])
 
         self.assertThat(self.handler.last_step(), Equals(None))
 
@@ -1255,7 +1254,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
-        mock_find_dependencies.assert_called_once_with(
+        self.get_elf_files_mock.assert_called_once_with(
             self.handler.primedir, {'bin/1', 'foo/bar/baz'})
         mock_migrate_files.assert_called_once_with(
             {'bin/1', 'foo/bar/baz'}, {'bin', 'foo', 'foo/bar'},
@@ -1267,11 +1266,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertThat(len(state.dependency_paths), Equals(1))
         self.assertTrue('foo/bar' in state.dependency_paths)
 
-    @patch('snapcraft.internal.pluginhandler._find_dependencies')
     @patch('shutil.copy')
-    def test_prime_state_with_prime_keyword(self, mock_copy,
-                                            mock_find_dependencies):
-        mock_find_dependencies.return_value = set()
+    def test_prime_state_with_prime_keyword(self, mock_copy):
         self.handler = self.load_part(
             'test_part', part_properties={'prime': ['bin/1']})
 
@@ -1287,8 +1283,8 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
-        mock_find_dependencies.assert_called_once_with(self.handler.primedir,
-                                                       {'bin/1'})
+        self.get_elf_files_mock.assert_called_once_with(self.handler.primedir,
+                                                        {'bin/1'})
         self.assertFalse(mock_copy.called)
 
         state = states.get_state(self.handler.plugin.statedir, 'prime')
@@ -2127,159 +2123,9 @@ class StagePackagesTestCase(unit.TestCase):
                    "The package 'non-existing' was not found."))
 
 
-class FindDependenciesTestCase(unit.TestCase):
+class FilesetsTestCase(unit.TestCase):
 
-    @patch('magic.open')
-    @patch('snapcraft.internal.libraries.get_dependencies')
-    def test_find_dependencies(self, mock_dependencies, mock_magic):
-        workdir = os.path.join(os.getcwd(), 'workdir')
-        os.makedirs(workdir)
-
-        linked_elf_path = os.path.join(workdir, 'linked')
-        open(linked_elf_path, 'w').close()
-
-        linked_elf_path_b = linked_elf_path.encode(sys.getfilesystemencoding())
-
-        mock_ms = Mock()
-        mock_magic.return_value = mock_ms
-        mock_ms.load.return_value = 0
-        mock_ms.file.return_value = (
-            'ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
-            'dynamically linked interpreter /lib64/ld-linux-x86-64.so.2, '
-            'for GNU/Linux 2.6.32, BuildID[sha1]=XYZ, stripped')
-
-        mock_dependencies.return_value = ['/usr/lib/libDepends.so']
-
-        dependencies = pluginhandler._find_dependencies(workdir, {'linked'})
-
-        mock_ms.file.assert_called_once_with(linked_elf_path_b)
-        self.assertThat(dependencies, Equals({'/usr/lib/libDepends.so'}))
-
-    @patch('magic.open')
-    @patch('snapcraft.internal.libraries.get_dependencies')
-    def test_find_dependencies_skip_object_files(self, mock_dependencies,
-                                                 mock_magic):
-        workdir = os.path.join(os.getcwd(), 'workdir')
-        os.makedirs(workdir)
-        open(os.path.join(workdir, 'object_file.o'), 'w').close()
-
-        mock_ms = Mock()
-        mock_magic.return_value = mock_ms
-        mock_ms.load.return_value = 0
-        mock_ms.file.return_value = (
-            'ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
-            'dynamically linked interpreter /lib64/ld-linux-x86-64.so.2, '
-            'for GNU/Linux 2.6.32, BuildID[sha1]=XYZ, stripped')
-
-        mock_dependencies.return_value = ['/usr/lib/libDepends.so']
-
-        dependencies = pluginhandler._find_dependencies(
-            workdir, {'object_file.o'})
-
-        self.assertFalse(mock_ms.file.called,
-                         'Expected object file to be skipped')
-        self.assertThat(dependencies, Equals(set()))
-
-    @patch('magic.open')
-    @patch('snapcraft.internal.libraries.get_dependencies')
-    def test_no_find_dependencies_of_non_dynamically_linked(
-            self, mock_dependencies, mock_magic):
-        workdir = os.path.join(os.getcwd(), 'workdir')
-        os.makedirs(workdir)
-
-        statically_linked_elf_path = os.path.join(workdir, 'statically-linked')
-        open(statically_linked_elf_path, 'w').close()
-
-        statically_linked_elf_path_b = statically_linked_elf_path.encode(
-            sys.getfilesystemencoding())
-
-        mock_ms = Mock()
-        mock_magic.return_value = mock_ms
-        mock_ms.load.return_value = 0
-        mock_ms.file.return_value = (
-            'ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
-            'statically linked, for GNU/Linux 2.6.32, '
-            'BuildID[sha1]=XYZ, stripped')
-
-        dependencies = pluginhandler._find_dependencies(
-            workdir, {'statically-linked'})
-
-        mock_ms.file.assert_called_once_with(statically_linked_elf_path_b)
-
-        self.assertFalse(
-            mock_dependencies.called,
-            'statically linked files should not have library dependencies')
-
-        self.assertFalse(dependencies)
-
-    @patch('magic.open')
-    @patch('snapcraft.internal.libraries.get_dependencies')
-    def test_no_find_dependencies_of_non_elf_files(
-            self, mock_dependencies, mock_magic):
-        workdir = os.path.join(os.getcwd(), 'workdir')
-        os.makedirs(workdir)
-
-        non_elf_path = os.path.join(workdir, 'non-elf')
-        open(non_elf_path, 'w').close()
-
-        non_elf_path_b = non_elf_path.encode(sys.getfilesystemencoding())
-
-        mock_ms = Mock()
-        mock_magic.return_value = mock_ms
-        mock_ms.load.return_value = 0
-        mock_ms.file.return_value = 'JPEG image data, Exif standard: ...'
-
-        dependencies = pluginhandler._find_dependencies(workdir, {'non-elf'})
-
-        mock_ms.file.assert_called_once_with(non_elf_path_b)
-
-        self.assertFalse(
-            mock_dependencies.called,
-            'non elf files should not have library dependencies')
-
-        self.assertFalse(
-            dependencies,
-            'non elf files should not have library dependencies')
-
-    @patch('magic.open')
-    @patch('snapcraft.internal.libraries.get_dependencies')
-    def test_no_find_dependencies_of_symlinks(
-            self, mock_dependencies, mock_magic):
-        workdir = os.path.join(os.getcwd(), 'workdir')
-        os.makedirs(workdir)
-
-        symlinked_path = os.path.join(workdir, 'symlinked')
-        os.symlink('/bin/dash', symlinked_path)
-
-        mock_ms = Mock()
-        mock_magic.return_value = mock_ms
-        mock_ms.load.return_value = 0
-
-        dependencies = pluginhandler._find_dependencies(workdir, {'symlinked'})
-
-        self.assertFalse(
-            mock_ms.file.called, 'magic is not needed for symlinks')
-
-        self.assertFalse(
-            mock_dependencies.called,
-            'statically linked files should not have library dependencies')
-
-        self.assertFalse(
-            dependencies,
-            'statically linked files should not have library dependencies')
-
-    @patch('magic.open')
-    def test_fail_to_load_magic_raises_exception(self, mock_magic):
-        mock_magic.return_value.load.return_value = 1
-
-        raised = self.assertRaises(
-            RuntimeError,
-            pluginhandler._find_dependencies, '.', set())
-
-        self.assertThat(
-            raised.__str__(), Equals('Cannot load magic header detection'))
-
-    def test__combine_filesets_explicit_wildcard(self):
+    def test_combine_filesets_explicit_wildcard(self):
         fileset_1 = ['a', 'b']
         fileset_2 = ['*']
 
@@ -2288,7 +2134,7 @@ class FindDependenciesTestCase(unit.TestCase):
             fileset_1, fileset_2)
         self.assertThat(set(combined_fileset), Equals(set(expected_fileset)))
 
-    def test__combine_filesets_implicit_wildcard(self):
+    def test_combine_filesets_implicit_wildcard(self):
         fileset_1 = ['a', 'b']
         fileset_2 = ['-c']
 
@@ -2297,7 +2143,7 @@ class FindDependenciesTestCase(unit.TestCase):
             fileset_1, fileset_2)
         self.assertThat(set(combined_fileset), Equals(set(expected_fileset)))
 
-    def test__combine_filesets_no_wildcard(self):
+    def test_combine_filesets_no_wildcard(self):
         fileset_1 = ['a', 'b']
         fileset_2 = ['a']
 
@@ -2306,7 +2152,7 @@ class FindDependenciesTestCase(unit.TestCase):
             fileset_1, fileset_2)
         self.assertThat(set(combined_fileset), Equals(set(expected_fileset)))
 
-    def test__combine_filesets_with_contradiciton(self):
+    def test_combine_filesets_with_contradiciton(self):
         fileset_1 = ['-a']
         fileset_2 = ['a']
 
@@ -2320,14 +2166,14 @@ class FindDependenciesTestCase(unit.TestCase):
                    "keyword, but included by the `prime` keyword: {'a'}")
         )
 
-    def test__get_includes(self):
+    def test_get_includes(self):
         fileset = ['-a', 'b']
         expected_includes = ['b']
 
         includes = pluginhandler._get_includes(fileset)
         self.assertThat(set(includes), Equals(set(expected_includes)))
 
-    def test__get_excludes(self):
+    def test_get_excludes(self):
         fileset = ['-a', 'b']
         expected_excludes = ['a']
 

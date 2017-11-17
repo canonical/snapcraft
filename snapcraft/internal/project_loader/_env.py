@@ -18,10 +18,7 @@ import os
 
 import snapcraft
 from snapcraft import formatting_utils
-from snapcraft.internal import (
-    common,
-    libraries,
-)
+from snapcraft.internal import common, elf
 
 
 def runtime_env(root, arch_triplet):
@@ -43,7 +40,7 @@ def runtime_env(root, arch_triplet):
             'LD_LIBRARY_PATH', paths, prepend='', separator=':'))
 
     # Add more specific LD_LIBRARY_PATH from staged packages if necessary
-    ld_library_paths = libraries.determine_ld_library_path(root)
+    ld_library_paths = elf.determine_ld_library_path(root)
     if ld_library_paths:
         env.append('LD_LIBRARY_PATH="' + ':'.join(ld_library_paths) +
                    ':$LD_LIBRARY_PATH"')
