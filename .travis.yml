@@ -17,23 +17,23 @@ jobs:
       script: sudo ./tools/travis/run_tests.sh static
     - stage: unit
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh unit
+      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/unit
     - if: type != cron
-      script: SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh unit
+      script: SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh snapcraft/tests/unit
     - stage: snap
       if: type != cron
       script: sudo ./tools/travis/build_snapcraft_snap.sh
     - stage: integration
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh integration
+      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/general
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh plugins
+      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/plugins
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh store
+      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/store
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh containers
+      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/containers
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapd
+      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/snapd
     # CLA check, only in pull requests, not comming from the bot.
     - if: type = pull_request AND sender != snappy-m-o
       script: ./tools/travis/run_cla_check.sh
