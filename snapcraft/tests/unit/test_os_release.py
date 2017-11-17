@@ -22,10 +22,10 @@ from snapcraft.internal import (
     os_release,
     errors
 )
-from snapcraft import tests
+from snapcraft.tests import unit
 
 
-class OsReleaseTestCase(tests.TestCase):
+class OsReleaseTestCase(unit.TestCase):
 
     def _write_os_release(self, contents):
         path = 'os-release'

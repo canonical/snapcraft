@@ -28,12 +28,12 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
 
     # plugin list when wrapper at MAX_CHARACTERS_WRAP
     default_plugin_output = (
-        'ant        cmake   dump    gradle  jhbuild  make   '
-        'nil                python   qmake  scons      \n'
-        'autotools  copy    go      gulp    kbuild   maven  '
-        'nodejs             python2  ruby   tar-content\n'
-        'catkin     dotnet  godeps  jdk     kernel   meson  '
-        'plainbox-provider  python3  rust   waf        \n'
+        'ant        catkin-tools  dotnet  godeps  jdk      '
+        'kernel  meson   plainbox-provider  python3  rust         waf\n'
+        'autotools  cmake         dump    gradle  jhbuild  '
+        'make    nil     python             qmake    scons      \n'
+        'catkin     copy          go      gulp    kbuild   '
+        'maven   nodejs  python2            ruby     tar-content\n'
     )
 
     def test_list_plugins_non_tty(self):
@@ -62,12 +62,15 @@ class ListPluginsCommandTestCase(CommandBaseTestCase):
         self.useFixture(fake_terminal)
 
         expected_output = (
-            'ant        dump    jhbuild  nil                qmake      \n'
-            'autotools  go      kbuild   nodejs             ruby       \n'
-            'catkin     godeps  kernel   plainbox-provider  rust       \n'
-            'cmake      gradle  make     python             scons      \n'
-            'copy       gulp    maven    python2            tar-content\n'
-            'dotnet     jdk     meson    python3            waf        \n'
+            'ant           go       make               python3    \n'
+            'autotools     godeps   maven              qmake      \n'
+            'catkin        gradle   meson              ruby       \n'
+            'catkin-tools  gulp     nil                rust       \n'
+            'cmake         jdk      nodejs             scons      \n'
+            'copy          jhbuild  plainbox-provider  tar-content\n'
+            'dotnet        kbuild   python             waf        \n'
+            'dump          kernel   python2          \n'
+
         )
 
         result = self.run_command([self.command_name])
