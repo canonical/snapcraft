@@ -43,6 +43,15 @@ class PipRunTestCase(PythonBaseTestCase):
         self.mock_run_output = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('snapcraft.internal.common.run')
+        self.mock_run = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        # Return json indicating that wheel and setuptools are installed
+        self.mock_run_output.return_value = (
+            '[{"name": "wheel", "version": "1.0"},'
+            '{"name": "setuptools", "version": "1.0"}]')
+
     def _assert_expected_enviroment(self, expected_python, headers_path):
         _pip.Pip(
             python_major_version='test',
@@ -81,9 +90,14 @@ class PipRunTestCase(PythonBaseTestCase):
 
                 return True
 
-        self.mock_run_output.assert_called_once_with(
-            [expected_python, '-m', 'pip'], env=check_env(self),
-            stderr=subprocess.STDOUT)
+        self.mock_run_output.assert_has_calls([
+            mock.call([expected_python, '-m', 'pip'], stderr=subprocess.STDOUT,
+                      env=check_env(self)),
+            mock.call([expected_python, '-m', 'pip', 'list', '--format=json'],
+                      env=mock.ANY),
+            mock.call([expected_python, '-m', 'pip', 'list', '--format=json'],
+                      env=mock.ANY),
+        ])
 
     def test_environment_part_python_without_headers(self):
         expected_python = self._create_python_binary('install_dir')
@@ -165,8 +179,9 @@ class PipRunTestCase(PythonBaseTestCase):
                 return True
 
         self.mock_run_output.assert_has_calls([
-            mock.call([expected_python, '-m', 'pip'], env=check_env(self),
-                      stderr=subprocess.STDOUT)])
+            mock.call(
+                [expected_python, '-m', 'pip'], env=check_env(self),
+                stderr=subprocess.STDOUT)])
 
 
 class SetupTestCase(PipRunTestCase):
@@ -175,6 +190,13 @@ class SetupTestCase(PipRunTestCase):
         super().setUp()
 
         self.command = [self._create_python_binary('install_dir'), '-m', 'pip']
+
+    def _assert_check_for_pip(self):
+        self.mock_run_output.assert_has_calls([
+            mock.call(self.command, stderr=subprocess.STDOUT, env=mock.ANY),
+            mock.call(self.command + ['list', '--format=json'], env=mock.ANY),
+            mock.call(self.command + ['list', '--format=json'], env=mock.ANY),
+        ])
 
     def test_setup_with_pip_installed(self):
         """Test that no attempt is made to reinstall pip"""
@@ -189,8 +211,8 @@ class SetupTestCase(PipRunTestCase):
             install_dir='install_dir',
             stage_dir='stage_dir').setup()
 
-        self.mock_run_output.assert_called_once_with(
-            self.command, stderr=subprocess.STDOUT, env=mock.ANY)
+        self._assert_check_for_pip()
+        self.mock_run.assert_not_called()
 
     def test_setup_without_pip_installed(self):
         """Test that the system pip is used to install our own pip"""
@@ -200,6 +222,9 @@ class SetupTestCase(PipRunTestCase):
             if command == self.command:
                 raise subprocess.CalledProcessError(
                     1, 'foo', b'no module named pip')
+
+            return '[]'
+
         self.mock_run_output.side_effect = fake_run
 
         # Verify that pip is then installed
@@ -216,20 +241,46 @@ class SetupTestCase(PipRunTestCase):
         # 1. That we test for the installed pip
         # 2. That we then download pip (and associated tools) using host pip
         # 3. That we then install pip (and associated tools) using host pip
-        self.assertThat(self.mock_run_output.mock_calls, HasLength(3))
+
+        # Check that we correctly test for the installed pip
         self.mock_run_output.assert_has_calls([
-            mock.call(
-                self.command, env=_CheckPythonhomeEnv(self, part_pythonhome),
-                stderr=subprocess.STDOUT),
+            mock.call(self.command, stderr=subprocess.STDOUT,
+                      env=_CheckPythonhomeEnv(self, part_pythonhome)),
+            mock.call(self.command + ['list', '--format=json'], env=mock.ANY),
+            mock.call(self.command + ['list', '--format=json'], env=mock.ANY),
+        ])
+
+        # Now test that we download and install pip using the host's pip, and
+        # then install the associated tools using the pip we pulled.
+        self.assertThat(self.mock_run.mock_calls, HasLength(6))
+        self.mock_run.assert_has_calls([
             mock.call(
                 _CheckCommand(
-                    self, 'download', ['pip', 'setuptools', 'wheel'], []),
+                    self, 'download', ['pip'], []),
                 env=_CheckPythonhomeEnv(self, host_pythonhome), cwd=None),
             mock.call(
                 _CheckCommand(
-                    self, 'install', ['pip', 'setuptools', 'wheel'],
+                    self, 'install', ['pip'],
                     ['--ignore-installed']),
                 env=_CheckPythonhomeEnv(self, host_pythonhome), cwd=None),
+            mock.call(
+                _CheckCommand(
+                    self, 'download', ['wheel'], []),
+                env=_CheckPythonhomeEnv(self, part_pythonhome), cwd=None),
+            mock.call(
+                _CheckCommand(
+                    self, 'install', ['wheel'],
+                    ['--ignore-installed']),
+                env=_CheckPythonhomeEnv(self, part_pythonhome), cwd=None),
+            mock.call(
+                _CheckCommand(
+                    self, 'download', ['setuptools'], []),
+                env=_CheckPythonhomeEnv(self, part_pythonhome), cwd=None),
+            mock.call(
+                _CheckCommand(
+                    self, 'install', ['setuptools'],
+                    ['--ignore-installed']),
+                env=_CheckPythonhomeEnv(self, part_pythonhome), cwd=None),
         ])
 
     def test_setup_unexpected_error(self):
@@ -453,6 +504,118 @@ class PipInstallTestCase(PipCommandTestCase):
         self._assert_mock_run_with(self.expected_args, **self.expected_kwargs)
 
 
+class PipInstallFixupShebangTestCase(PipCommandTestCase):
+
+    scenarios = [
+        ('bad shebang', {
+            'file_path': 'example.py',
+            'contents': '#!/foo/bar/baz/python',
+            'expected': '#!/usr/bin/env python',
+        }),
+        ('bad shebang and bad permissions', {
+            'file_path': os.path.join('bin', 'another_example.py'),
+            'contents': '#!/foo/baz/python3',
+            'expected': '#!/usr/bin/env python3',
+        }),
+        ('no shebang', {
+            'file_path': 'foo',
+            'contents': 'foo\n#!/usr/bin/python3',
+            'expected': 'foo\n#!/usr/bin/python3',
+        }),
+        ('no shebang and bad permissions', {
+            'file_path': 'bar',
+            'contents': 'bar',
+            'expected': 'bar',
+        }),
+        ('good shebang', {
+            'file_path': 'baz',
+            'contents': '#!/usr/bin/env python',
+            'expected': '#!/usr/bin/env python',
+        }),
+        ('good shebang and bad permissions', {
+            'file_path': os.path.join('qux', 'another_example.py'),
+            'contents': '#!/usr/bin/env python',
+            'expected': '#!/usr/bin/env python',
+        }),
+    ]
+
+    def setUp(self):
+        super().setUp()
+
+        self.file_path = os.path.join(self.pip._install_dir, self.file_path)
+        os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
+
+        with open(self.file_path, 'w') as f:
+            f.write(self.contents)
+
+        self.pip.install(['foo'])
+
+    def test_install_fixes_shebangs(self):
+        with open(self.file_path, 'r') as f:
+            self.assertThat(f.read(), Equals(self.expected))
+
+
+class PipInstallFixupPermissionsTestCase(PipCommandTestCase):
+
+    scenarios = [
+        ('755', {
+            'file_path': 'example.py',
+            'mode': 0o755,
+            'expected_mode': '755',
+        }),
+        ('500', {
+            'file_path': os.path.join('bin', 'another_example.py'),
+            'mode': 0o500,
+            'expected_mode': '755',
+        }),
+        ('777', {
+            'file_path': 'foo',
+            'mode': 0o777,
+            'expected_mode': '777',
+        }),
+        ('700', {
+            'file_path': 'bar',
+            'mode': 0o700,
+            'expected_mode': '755',
+        }),
+        ('000', {
+            'file_path': os.path.join('qux', 'another_example.py'),
+            'mode': 0o000,
+            'expected_mode': '200',
+        }),
+    ]
+
+    def setUp(self):
+        super().setUp()
+
+        self.file_path = os.path.join(self.pip._install_dir, self.file_path)
+        os.makedirs(os.path.dirname(self.file_path), exist_ok=True)
+
+        with open(self.file_path, 'w') as f:
+            f.write('bubbles!')
+
+        os.chmod(self.file_path, self.mode)
+
+        self.pip.install(['foo'])
+
+    def test_install_fixes_permissions(self):
+        self.assertThat(
+            oct(os.stat(self.file_path).st_mode)[-3:],
+            Equals(self.expected_mode))
+
+    @mock.patch.object(os, 'stat')
+    @mock.patch.object(os.path, 'exists', return_value=False)
+    def test_missing_path(self, mock_path_exists, mock_os_stat):
+        _pip._replicate_owner_mode('/nonexistant_path')
+        self.assertFalse(mock_os_stat.called)
+
+    @mock.patch.object(os, 'chmod')
+    def test_symlink(self, mock_chmod):
+        os.symlink(self.file_path, 'link')
+        _pip._replicate_owner_mode('link')
+        self.assertFalse(mock_chmod.called)
+
+
 class PipWheelTestCase(PipCommandTestCase):
 
     scenarios = [
@@ -531,18 +694,20 @@ class PipListTestCase(PipCommandTestCase):
     def test_none(self):
         self.mock_run.return_value = '{}'
         self.assertFalse(self.pip.list())
-        self.mock_run.assert_called_once_with(['list', '--format=json'])
+        self.mock_run.assert_called_once_with(
+            ['list', '--format=json'], runner=mock.ANY)
 
     def test_package(self):
         self.mock_run.return_value = '[{"name": "foo", "version": "1.0"}]'
         self.assertThat(self.pip.list(), Equals({'foo': '1.0'}))
-        self.mock_run.assert_called_once_with(['list', '--format=json'])
+        self.mock_run.assert_called_once_with(
+            ['list', '--format=json'], runner=mock.ANY)
 
     def test_user(self):
         self.mock_run.return_value = '[{"name": "foo", "version": "1.0"}]'
         self.assertThat(self.pip.list(user=True), Equals({'foo': '1.0'}))
         self.mock_run.assert_called_once_with(
-            ['list', '--format=json', '--user'])
+            ['list', '--format=json', '--user'], runner=mock.ANY)
 
     def test_missing_name(self):
         self.mock_run.return_value = '[{"version": "1.0"}]'
