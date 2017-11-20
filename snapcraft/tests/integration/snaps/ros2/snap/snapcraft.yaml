@@ -9,7 +9,7 @@ confinement: strict
 
 apps:
   launch-project:
-    command: launch $(ros2 pkg prefix listener_py)/share/listener_py/launch/talk_and_listen.py
+    command: launch "$(ros2 pkg prefix listener_py)/share/listener_py/launch/talk_and_listen.py"
     plugs: [network]
     environment:
       # Required to get interleaved stdout, see
