@@ -167,7 +167,8 @@ class KernelPluginTestCase(unit.TestCase):
 
     def _simulate_build(
             self, sourcedir, builddir, installdir, do_dtbs=False,
-            do_release=True, do_kernel=True, do_system_map=True):
+            do_release=True, do_kernel=True, do_system_map=True,
+            do_firmware=True):
         os.makedirs(sourcedir)
         kernel_version = '4.4.2'
 
@@ -186,10 +187,11 @@ class KernelPluginTestCase(unit.TestCase):
             modules_dep_path = os.path.join(
                 installdir, 'lib', 'modules', kernel_version, 'modules.dep')
             modules_dep_bin_path = '{}.bin'.format(modules_dep_path)
-            fw_bin_path = os.path.join(
-                installdir, 'lib', 'firmware', 'fake-fw.bin')
-            os.makedirs(os.path.join(
-                installdir, 'lib', 'firmware', 'fake-fw-dir'))
+            if do_firmware:
+                fw_bin_path = os.path.join(
+                    installdir, 'lib', 'firmware', 'fake-fw.bin')
+                os.makedirs(os.path.join(
+                    installdir, 'lib', 'firmware', 'fake-fw-dir'))
             dtb_path = os.path.join(build_arch_path, 'dts', 'fake-dtb.dtb')
 
             os.makedirs(os.path.dirname(release_path))
@@ -199,14 +201,15 @@ class KernelPluginTestCase(unit.TestCase):
                 else:
                     f.write('\n')
 
-            files = [initrd_path, modules_dep_path, modules_dep_bin_path,
-                     fw_bin_path]
+            files = [initrd_path, modules_dep_path, modules_dep_bin_path]
             if do_kernel:
                 files.append(kernel_path)
             if do_system_map:
                 files.append(system_map_path)
             if do_dtbs:
                 files.append(dtb_path)
+            if do_firmware:
+                files.append(fw_bin_path)
 
             for f in files:
                 os.makedirs(os.path.dirname(f), exist_ok=True)
@@ -856,7 +859,8 @@ ACCEPT=n
                                      self.project_options)
 
         self._simulate_build(
-            plugin.sourcedir, plugin.builddir, plugin.installdir, do_dtbs=True)
+            plugin.sourcedir, plugin.builddir, plugin.installdir, do_dtbs=True,
+            do_firmware=False)
 
         plugin.build()
 
