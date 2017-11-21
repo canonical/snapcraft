@@ -139,7 +139,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
             'items': {
                 'type': 'string'
             },
-            'default': [],
         }
         schema['properties']['source-space'] = {
             'type': 'string',
@@ -192,8 +191,6 @@ class CatkinPlugin(snapcraft.BasePlugin):
             'default': 'http://localhost:11311'
         }
 
-        schema['required'].append('catkin-packages')
-
         return schema
 
     @classmethod
@@ -222,16 +219,24 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
     @property
     def PLUGIN_STAGE_SOURCES(self):
-        return """
-deb http://packages.ros.org/ros/ubuntu/ {0} main
-deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0} main universe
-deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0}-updates main universe
-deb http://${{prefix}}.ubuntu.com/${{suffix}}/ {0}-security main universe
-deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
-""".format(_ROS_RELEASE_MAP[self.options.rosdistro])
+        ros_repo = 'http://packages.ros.org/ros/ubuntu/'
+        ubuntu_repo = 'http://${prefix}.ubuntu.com/${suffix}/'
+        security_repo = 'http://${security}.ubuntu.com/${suffix}/'
+        return textwrap.dedent("""
+            deb {ros_repo} {codename} main
+            deb {ubuntu_repo} {codename} main universe
+            deb {ubuntu_repo} {codename}-updates main universe
+            deb {ubuntu_repo} {codename}-security main universe
+            deb {security_repo} {codename}-security main universe
+            """.format(
+                ros_repo=ros_repo,
+                ubuntu_repo=ubuntu_repo,
+                security_repo=security_repo,
+                codename=_ROS_RELEASE_MAP[self.options.rosdistro]))
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+
         self.build_packages.extend(['libc6-dev', 'make', 'python-pip'])
         self.__pip = None
 
@@ -241,7 +246,9 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
             'ros-{}-roslib'.format(self.options.rosdistro))
 
         # Get a unique set of packages
-        self.catkin_packages = set(options.catkin_packages)
+        self.catkin_packages = None
+        if options.catkin_packages is not None:
+            self.catkin_packages = set(options.catkin_packages)
         self._rosdep_path = os.path.join(self.partdir, 'rosdep')
         self._compilers_path = os.path.join(self.partdir, 'compilers')
         self._catkin_path = os.path.join(self.partdir, 'catkin')
@@ -368,8 +375,13 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
             _handle_rosinstall_files(
                 wstool,  source_path, self.options.rosinstall_files)
 
-        # Make sure the package path exists before continuing
-        if self.catkin_packages and not os.path.exists(self._ros_package_path):
+        # Make sure the package path exists before continuing. We only care
+        # about doing this if there are actually packages to build, which is
+        # indicated both by self.catkin_packages being None as well as a
+        # non-empty list.
+        packages_to_build = (
+            self.catkin_packages is None or len(self.catkin_packages) > 0)
+        if packages_to_build and not os.path.exists(self._ros_package_path):
             raise FileNotFoundError(
                 'Unable to find package path: "{}"'.format(
                     self._ros_package_path))
@@ -676,7 +688,7 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
     def _build_catkin_packages(self):
         # Nothing to do if no packages were specified
-        if not self.catkin_packages:
+        if self.catkin_packages is not None and len(self.catkin_packages) == 0:
             return
 
         catkincmd = ['catkin_make_isolated']
@@ -684,9 +696,10 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
         # Install the package
         catkincmd.append('--install')
 
-        # Specify the packages to be built
-        catkincmd.append('--pkg')
-        catkincmd.extend(self.catkin_packages)
+        if self.catkin_packages:
+            # Specify the packages to be built
+            catkincmd.append('--pkg')
+            catkincmd.extend(self.catkin_packages)
 
         # Don't clutter the real ROS workspace-- use the Snapcraft build
         # directory
@@ -745,16 +758,22 @@ def _find_system_dependencies(catkin_packages, rosdep, catkin):
     """Find system dependencies for a given set of Catkin packages."""
 
     resolved_dependencies = {}
+    dependencies = set()
 
     logger.info('Determining system dependencies for Catkin packages...')
-    for package in catkin_packages:
-        # Query rosdep for the list of dependencies for this package
-        dependencies = rosdep.get_dependencies(package)
+    if catkin_packages is not None:
+        for package in catkin_packages:
+            # Query rosdep for the list of dependencies for this package
+            dependencies |= rosdep.get_dependencies(package)
+    else:
+        # Rather than getting dependencies for an explicit list of packages,
+        # let's get the dependencies for the entire workspace.
+        dependencies |= rosdep.get_dependencies()
 
-        for dependency in dependencies:
-            _resolve_package_dependencies(
-                catkin_packages, dependency, catkin, rosdep,
-                resolved_dependencies)
+    for dependency in dependencies:
+        _resolve_package_dependencies(
+            catkin_packages, dependency, catkin, rosdep,
+            resolved_dependencies)
 
     # We currently have nested dict structure of:
     #    dependency name -> package type -> package names
@@ -775,8 +794,8 @@ def _resolve_package_dependencies(catkin_packages, dependency, catkin, rosdep,
                                   resolved_dependencies):
     # No need to resolve this dependency if we know it's local, or if
     # we've already resolved it into a system dependency
-    if (dependency in catkin_packages or
-            dependency in resolved_dependencies):
+    if (dependency in resolved_dependencies or
+            (catkin_packages and dependency in catkin_packages)):
         return
 
     if _dependency_is_in_underlay(catkin, dependency):
