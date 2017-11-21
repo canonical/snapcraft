@@ -28,7 +28,8 @@ from snapcraft.tests.subprocess_utils import (
 )
 
 
-class TestMercurial(unit.sources.SourceTestCase):
+# LP: #1733584
+class TestMercurial(unit.sources.SourceTestCase):  # type: ignore
 
     def setUp(self):
         super().setUp()

@@ -25,7 +25,8 @@ from snapcraft.tests import unit
 from snapcraft.tests.subprocess_utils import call
 
 
-class TestSubversion(unit.sources.SourceTestCase):
+# LP: #1733584
+class TestSubversion(unit.sources.SourceTestCase):  # type: ignore
 
     def setUp(self):
 

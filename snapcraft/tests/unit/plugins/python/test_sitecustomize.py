@@ -23,7 +23,7 @@ from testtools.matchers import (
 
 from snapcraft.plugins import _python
 
-from . import PythonBaseTestCase
+from ._basesuite import PythonBaseTestCase
 
 
 def _create_site_py(base_dir):

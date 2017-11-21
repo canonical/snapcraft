@@ -20,7 +20,7 @@ import os
 import petname
 import subprocess
 
-from . import Containerbuild
+from ._containerbuild import Containerbuild
 
 logger = logging.getLogger(__name__)
 

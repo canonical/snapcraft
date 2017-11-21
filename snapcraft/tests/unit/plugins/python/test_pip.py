@@ -31,7 +31,7 @@ from snapcraft.plugins._python import (
     errors,
 )
 
-from . import PythonBaseTestCase
+from ._basesuite import PythonBaseTestCase
 
 
 class PipRunTestCase(PythonBaseTestCase):
