@@ -16,11 +16,11 @@
 
 from testtools.matchers import Equals
 
-from snapcraft import tests
 from snapcraft.internal import errors
+from snapcraft.tests import unit
 
 
-class ErrorFormattingTestCase(tests.TestCase):
+class ErrorFormattingTestCase(unit.TestCase):
 
     scenarios = (
         ('StepOutdatedError dependents', {
@@ -31,7 +31,7 @@ class ErrorFormattingTestCase(tests.TestCase):
                 'dependents': ['test-dependent']
             },
             'expected_message': (
-                "Failed to resume a snapcraft execution: "
+                "Failed to re-use files from previous build: "
                 "The 'test-step' step of 'test-part' is out of date:\n"
                 "The 'test-step' step for 'test-part' needs to be run again, "
                 "but 'test-dependent' depends on it.\n"
@@ -46,7 +46,7 @@ class ErrorFormattingTestCase(tests.TestCase):
                 'dirty_properties': ['test-property1', 'test-property2']
             },
             'expected_message': (
-                "Failed to resume a snapcraft execution: "
+                "Failed to re-use files from previous build: "
                 "The 'test-step' step of 'test-part' is out of date:\n"
                 "The 'test-property1' and 'test-property2' part properties "
                 "appear to have changed.\n"
@@ -61,7 +61,7 @@ class ErrorFormattingTestCase(tests.TestCase):
                 'dirty_project_options': ['test-option']
             },
             'expected_message': (
-                "Failed to resume a snapcraft execution: "
+                "Failed to re-use files from previous build: "
                 "The 'test-step' step of 'test-part' is out of date:\n"
                 "The 'test-option' project option appears to have changed.\n"
                 "In order to continue, please clean that part's "
@@ -111,7 +111,7 @@ class ErrorFormattingTestCase(tests.TestCase):
             'expected_message': (
                 "Failed to get remote part information: "
                 "Cannot find the part name 'test-part' in the cache. "
-                "If it is an existent remote part, run `snapcraft update` "
+                "If it is an existing remote part, run `snapcraft update` "
                 "and try again. If it has not been defined, consider going to "
                 "https://wiki.ubuntu.com/snapcraft/parts to add it.")}),
         ('PluginError', {
@@ -144,7 +144,7 @@ class ErrorFormattingTestCase(tests.TestCase):
             },
             'expected_message': (
                 "Failed to fetch stage packages: "
-                "Error downloading stage packages for part "
+                "Error downloading packages for part "
                 "'test-part': test-message.")})
     )
 
