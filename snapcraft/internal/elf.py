@@ -100,7 +100,7 @@ def get_dependencies(elf: str) -> Set[str]:
     This may include libraries contained within the project.
     """
     logger.debug('Getting dependencies for {!r}'.format(str(elf)))
-    ldd_out: List[str] = []
+    ldd_out = []  # type: List[str]
     try:
         ldd_out = common.run_output(['ldd', elf]).split('\n')
     except subprocess.CalledProcessError:
@@ -137,13 +137,14 @@ def get_elf_files(root: str, file_list: Sequence[str]) -> FrozenSet[str]:
             continue
 
         # No need to crawl links-- the original should be here, too.
-        path: str = os.path.join(root, part_file)
+        path = os.path.join(root, part_file)  # type: str
         if os.path.islink(path):
             logger.debug('Skipped link {!r} while finding dependencies'.format(
                 path))
             continue
 
-        path_b: bytes = path.encode(fs_encoding, errors='surrogateescape')
+        path_b = path.encode(
+            fs_encoding, errors='surrogateescape')  # type: bytes
         # Finally, make sure this is actually an ELF before queueing it up
         # for an ldd call.
         file_m = ms.file(path_b)
