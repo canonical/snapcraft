@@ -299,9 +299,7 @@ class FakeStore(fixtures.Fixture):
 
 
 class _FakeServerRunning(fixtures.Fixture):
-
-    # To be defined by child fixtures.
-    fake_server = None
+    # fake_server needs to be set by implementing classes
 
     def setUp(self):
         super().setUp()
