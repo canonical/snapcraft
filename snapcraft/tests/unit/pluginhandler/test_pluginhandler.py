@@ -1194,11 +1194,11 @@ class StateTestCase(StateBaseTestCase):
             os.path.join(self.handler.primedir, 'bin', 'file')])
         # Pretend we found a system dependency, as well as a part and stage
         # dependency.
-        mock_get_dependencies.return_value = {
+        mock_get_dependencies.return_value = set([
             '/foo/bar/baz',
             '{}/lib1/installed'.format(self.handler.installdir),
             '{}/lib2/staged'.format(self.handler.stagedir),
-        }
+        ])
 
         self.assertThat(self.handler.last_step(), Equals(None))
 
