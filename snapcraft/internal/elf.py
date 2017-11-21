@@ -36,6 +36,17 @@ logger = logging.getLogger(__name__)
 
 
 def determine_ld_library_path(root: str) -> List[str]:
+    """Determine additional library paths needed for the linker loader.
+
+    This is a workaround until full library searching is implemented which
+    works by searching for ld.so.conf in specific hard coded locations
+    within root.
+
+    :param root str: the root directory to search for specific ld.so.conf
+                     entries.
+    :returns: a list of strings of library paths where releavant libraries
+              can be found withing root.
+    """
     # If more ld.so.conf files need to be supported, add them here.
     ld_config_globs = {
         '{}/usr/lib/*/mesa*/ld.so.conf'.format(root)
@@ -98,6 +109,9 @@ def get_dependencies(elf: str) -> Set[str]:
     """Return a set of libraries that are needed to satisfy elf's runtime.
 
     This may include libraries contained within the project.
+
+    :param str elf: the elf file to resolve dependencies for.
+    :returns: a set of string with paths to the library dependencies of elf.
     """
     logger.debug('Getting dependencies for {!r}'.format(str(elf)))
     ldd_out = []  # type: List[str]
@@ -122,7 +136,13 @@ def get_dependencies(elf: str) -> Set[str]:
 
 
 def get_elf_files(root: str, file_list: Sequence[str]) -> FrozenSet[str]:
-    """Return a frozenset of elf files from file_list prepended with root."""
+    """Return a frozenset of elf files from file_list prepended with root.
+
+    :param str root: the root directory from where the file_list is generated.
+    :param file_list: a list of file in root.
+    :returns: a frozentset of strings representing paths of valid elf files
+              found in root from file_list.
+    """
     ms = magic.open(magic.NONE)
     if ms.load() != 0:
         raise RuntimeError('Cannot load magic header detection')
