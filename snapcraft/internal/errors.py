@@ -39,8 +39,8 @@ class SnapcraftError(Exception):
 
 class MissingStateCleanError(SnapcraftError):
     fmt = (
-        "Failed to clean step {step!r}: "
-        "Missing necessary state. "
+        "Failed to clean step: "
+        "State missing for {step!r}. "
         "This won't work until a complete clean has occurred."
     )
 
@@ -51,7 +51,7 @@ class MissingStateCleanError(SnapcraftError):
 class StepOutdatedError(SnapcraftError):
 
     fmt = (
-        'Failed to resume a snapcraft execution: '
+        'Failed to re-use files from previous build: '
         'The {step!r} step of {part!r} is out of date:\n'
         '{report}'
         'In order to continue, please clean that part\'s {step!r} step '
@@ -218,7 +218,7 @@ class PartNotInCacheError(SnapcraftError):
     fmt = (
         'Failed to get remote part information: '
         'Cannot find the part name {part_name!r} in the cache. '
-        'If it is an existent remote part, run `snapcraft update` and try '
+        'If it is an existing remote part, run `snapcraft update` and try '
         'again. If it has not been defined, consider going to '
         'https://wiki.ubuntu.com/snapcraft/parts to add it.'
     )
@@ -241,9 +241,9 @@ class PluginError(SnapcraftError):
 class SnapcraftPartConflictError(SnapcraftError):
 
     fmt = (
-        'Failed to run the stage step: '
-        'Parts {other_part_name!r} and {part_name!r} have the following file '
-        'paths in common which have different contents:\n'
+        'Failed to run stage step: '
+        'Parts {other_part_name!r} and {part_name!r} have the following '
+        'files, but with different contents:\n'
         '{file_paths}\n\n'
         'Snapcraft offers some capabilities to solve this by use of the '
         'following keywords:\n'
@@ -266,7 +266,7 @@ class MissingCommandError(SnapcraftError):
 
     fmt = (
         'Failed to run command: '
-        'One or more required commands are missing, please install:'
+        'One or more packages are missing, please install:'
         ' {required_commands!r}'
     )
 
@@ -328,7 +328,7 @@ class SnapcraftPathEntryError(SnapcraftError):
     fmt = (
         'Failed to generate snap metadata: '
         'The path {value!r} set for {key!r} in {app!r} does not exist. '
-        'Make sure taht the files are in the `prime` directory.'
+        'Make sure that the files are in the `prime` directory.'
     )
 
 
@@ -364,7 +364,7 @@ class StagePackageDownloadError(SnapcraftError):
 
     fmt = (
         'Failed to fetch stage packages: '
-        'Error downloading stage packages for part {part_name!r}: {message}.'
+        'Error downloading packages for part {part_name!r}: {message}.'
     )
 
     def __init__(self, part_name, message):
