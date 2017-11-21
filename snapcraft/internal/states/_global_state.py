@@ -23,6 +23,7 @@ def _global_state_constructor(loader, node):
     parameters = loader.construct_mapping(node)
     return GlobalState(**parameters)
 
+
 yaml.add_constructor(u'!GlobalState', _global_state_constructor)
 
 

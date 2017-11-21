@@ -13,7 +13,4 @@ parts:
   ros-project:
     plugin: catkin
     source: .
-    catkin-packages:
-      - talker
-      - listener
-    include-roscore: true
+    rosdistro: indigo

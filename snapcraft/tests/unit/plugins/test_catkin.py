@@ -171,21 +171,15 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
         # Check catkin-packages property
         catkin_packages = schema['properties']['catkin-packages']
-        expected = ('type', 'default', 'minitems', 'uniqueItems', 'items')
+        expected = ('type', 'minitems', 'uniqueItems', 'items')
         self.assertThat(catkin_packages, HasLength(len(expected)))
         for prop in expected:
             self.assertThat(catkin_packages, Contains(prop))
         self.assertThat(catkin_packages['type'], Equals('array'))
-        self.assertThat(catkin_packages['default'], Equals([]))
         self.assertThat(catkin_packages['minitems'], Equals(1))
         self.assertTrue(catkin_packages['uniqueItems'])
         self.assertThat(catkin_packages['items'], Contains('type'))
         self.assertThat(catkin_packages['items']['type'], Equals('string'))
-
-        # Check required
-        self.assertTrue('catkin-packages' in schema['required'],
-                        'Expected "catkin-packages" to be included in '
-                        '"required"')
 
     def test_schema_source_space(self):
         schema = catkin.CatkinPlugin.schema()
@@ -463,6 +457,34 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             str(raised),
             Equals('Unable to find package path: "{}"'.format(os.path.join(
                 plugin.sourcedir, self.properties.source_space))))
+
+    def test_invalid_catkin_workspace_invalid_source_space_build_all(self):
+        self.properties.source_space = 'foo'
+        self.properties.catkin_packages = None
+
+        # sourcedir is expected to be the root of the Catkin workspace. Since
+        # it does not contain a `src` folder and source_space wasn't
+        # specified, this should fail.
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        raised = self.assertRaises(FileNotFoundError, plugin.pull)
+
+        self.assertThat(
+            str(raised),
+            Equals('Unable to find package path: "{}"'.format(os.path.join(
+                plugin.sourcedir, self.properties.source_space))))
+
+    def test_invalid_catkin_workspace_invalid_source_no_packages(self):
+        """Test that an invalid source space is fine iff no packages."""
+        self.properties.source_space = 'foo'
+        self.properties.catkin_packages = []
+
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+
+        # Normally pulling should fail, but since there are no packages to
+        # build, even an invalid workspace should be okay.
+        plugin.pull()
 
     def test_invalid_catkin_workspace_source_space_same_as_source(self):
         self.properties.source_space = '.'
@@ -1193,6 +1215,63 @@ class BuildTestCase(CatkinPluginBaseTestCase):
 
         finish_build_mock.assert_called_once_with()
 
+    @mock.patch('snapcraft.plugins.catkin.Compilers')
+    @mock.patch.object(catkin.CatkinPlugin, 'run')
+    @mock.patch.object(catkin.CatkinPlugin, '_run_in_bash')
+    @mock.patch.object(catkin.CatkinPlugin, 'run_output', return_value='foo')
+    @mock.patch.object(catkin.CatkinPlugin, '_prepare_build')
+    @mock.patch.object(catkin.CatkinPlugin, '_finish_build')
+    def test_build_all_packages(self, finish_build_mock, prepare_build_mock,
+                                run_output_mock, bashrun_mock, run_mock,
+                                compilers_mock):
+        self.properties.catkin_packages = None
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.sourcedir, 'src'))
+
+        plugin.build()
+
+        prepare_build_mock.assert_called_once_with()
+
+        # Matching like this for order independence (otherwise it would be
+        # quite fragile)
+        build_attributes = self.build_attributes
+        catkin_cmake_args = self.catkin_cmake_args
+
+        class check_build_command():
+            def __eq__(self, args):
+                command = ' '.join(args)
+                if 'debug' in build_attributes:
+                    build_type_valid = re.match(
+                        '.*--cmake-args.*-DCMAKE_BUILD_TYPE=Debug', command)
+                else:
+                    build_type_valid = re.match(
+                        '.*--cmake-args.*-DCMAKE_BUILD_TYPE=Release', command)
+                args_valid = True
+                if catkin_cmake_args:
+                    expected_args = ' '.join(catkin_cmake_args)
+                    args_valid = re.match(
+                        '.*--cmake-args.*{}'.format(re.escape(expected_args)),
+                        command)
+                return (
+                    args_valid and
+                    build_type_valid and
+                    args[0] == 'catkin_make_isolated' and
+                    '--install' in command and
+                    '--directory {}'.format(plugin.builddir) in command and
+                    '--install-space {}'.format(plugin.rosdir) in command and
+                    '--source-space {}'.format(os.path.join(
+                        plugin.builddir,
+                        plugin.options.source_space)) in command)
+
+        bashrun_mock.assert_called_with(check_build_command(), env=mock.ANY)
+
+        self.assertFalse(
+            self.dependencies_mock.called,
+            'Dependencies should have been discovered in the pull() step')
+
+        finish_build_mock.assert_called_once_with()
+
 
 class FinishBuildTestCase(CatkinPluginBaseTestCase):
 
@@ -1354,7 +1433,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
         super().setUp()
 
         self.rosdep_mock = mock.MagicMock()
-        self.rosdep_mock.get_dependencies.return_value = ['bar']
+        self.rosdep_mock.get_dependencies.return_value = {'bar'}
 
         self.catkin_mock = mock.MagicMock()
         exception = catkin.CatkinPackageNotFoundError('foo')
@@ -1370,6 +1449,19 @@ class FindSystemDependenciesTestCase(unit.TestCase):
             {'apt': {'baz'}}))
 
         self.rosdep_mock.get_dependencies.assert_called_once_with('foo')
+        self.rosdep_mock.resolve_dependency.assert_called_once_with('bar')
+        self.catkin_mock.find.assert_called_once_with('bar')
+
+    def test_find_system_dependencies_system_only_no_packages(self):
+        self.rosdep_mock.resolve_dependency.return_value = {
+            'apt': {'baz'},
+        }
+
+        self.assertThat(catkin._find_system_dependencies(
+            None, self.rosdep_mock, self.catkin_mock), Equals(
+            {'apt': {'baz'}}))
+
+        self.rosdep_mock.get_dependencies.assert_called_once_with()
         self.rosdep_mock.resolve_dependency.assert_called_once_with('bar')
         self.catkin_mock.find.assert_called_once_with('bar')
 
@@ -1395,7 +1487,7 @@ class FindSystemDependenciesTestCase(unit.TestCase):
         self.rosdep_mock.resolve_dependency.assert_not_called()
 
     def test_find_system_dependencies_mixed(self):
-        self.rosdep_mock.get_dependencies.return_value = ['bar', 'baz', 'qux']
+        self.rosdep_mock.get_dependencies.return_value = {'bar', 'baz', 'qux'}
         self.rosdep_mock.resolve_dependency.return_value = {
             'apt': {'quux'},
         }

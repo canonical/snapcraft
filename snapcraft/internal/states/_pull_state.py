@@ -23,6 +23,7 @@ def _pull_state_constructor(loader, node):
     parameters = loader.construct_mapping(node)
     return PullState(**parameters)
 
+
 yaml.add_constructor(u'!PullState', _pull_state_constructor)
 
 
