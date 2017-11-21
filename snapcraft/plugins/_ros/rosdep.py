@@ -99,13 +99,31 @@ class Rosdep:
             raise RuntimeError(
                 'Error updating rosdep database:\n{}'.format(output))
 
-    def get_dependencies(self, package_name):
+    def get_dependencies(self, package_name=None):
+        """Obtain dependencies for a given package, or entire workspace.
+
+        :param str package_name: Package name for which dependences will be
+                                 obtained. If not provided, will obtain
+                                 dependencies for the entire workspace.
+        """
+        command = ['keys']
+        if package_name:
+            command.append(package_name)
+        else:
+            # Adding a few flags that will make rosdep search the entire
+            # workspace:
+            #
+            # -a: select all packages in workspace
+            # -i: ignore any resolved keys that are satisfied by other packages
+            #     in the workspace
+            command.append('-a')
+            command.append('-i')
         try:
-            output = self._run(['keys', package_name]).strip()
+            output = self._run(command).strip()
             if output:
-                return output.split('\n')
+                return set(output.split('\n'))
             else:
-                return []
+                return set()
         except subprocess.CalledProcessError:
             raise FileNotFoundError(
                 'Unable to find Catkin package "{}"'.format(package_name))

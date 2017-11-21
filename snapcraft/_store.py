@@ -94,7 +94,7 @@ def _check_dev_agreement_and_namespace_statuses(store):
             if choice in {'y', 'Y'}:
                 try:
                     store.sign_developer_agreement(latest_tos_accepted=True)
-                except:
+                except:  # noqa LP: #1733003
                     raise storeapi.errors.NeedTermsSignedError(
                             storeapi.constants.AGREEMENT_SIGN_ERROR.format(
                                 url))
@@ -117,7 +117,9 @@ def _check_dev_agreement_and_namespace_statuses(store):
 
 
 def _login(store, packages=None, acls=None, channels=None, save=True):
-    print('Enter your Ubuntu One SSO credentials.')
+    print('Enter your Ubuntu One e-mail address and password.\n'
+          'If you do not have an Ubuntu One account, you can create one at '
+          'https://dashboard.snapcraft.io/openid/login')
     email = input('Email: ')
     password = getpass.getpass('Password: ')
 

@@ -16,7 +16,7 @@
 
 import logging
 
-from snapcraft.internal.common import get_os_release_info
+from snapcraft.internal.os_release import OsRelease
 
 logger = logging.getLogger(__name__)
 
@@ -24,18 +24,19 @@ _DEB_BASED_PLATFORM = [
     'ubuntu',
     'debian',
     'elementary OS',
+    'elementary',
     'neon',
 ]
 
 
 def _is_deb_based(distro=None):
     if not distro:
-        distro = get_os_release_info()['ID']
+        distro = OsRelease().id()
     return distro in _DEB_BASED_PLATFORM
 
 
 def _get_repo_for_platform():
-    distro = get_os_release_info()['ID']
+    distro = OsRelease().id()
     if _is_deb_based(distro):
         from ._deb import Ubuntu
         return Ubuntu

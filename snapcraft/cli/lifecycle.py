@@ -15,8 +15,10 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import click
+import os
 
-from snapcraft.internal import deprecations, lifecycle
+import snapcraft
+from snapcraft.internal import deprecations, lifecycle, lxd
 from ._options import add_build_options, get_project_options
 from . import echo
 from . import env
@@ -176,11 +178,13 @@ def clean(parts, step, **kwargs):
     project_options = get_project_options(**kwargs)
     container_config = env.get_container_config()
     if container_config.use_container:
-        step = step or 'pull'
-        lifecycle.containerbuild(
-            'clean', project_options,
-            container_config, args=['--step', step, *parts])
+        config = snapcraft.internal.load_config(project_options)
+        lxd.Project(project_options=project_options,
+                    remote=container_config.remote,
+                    output=None, source=os.path.curdir,
+                    metadata=config.get_metadata()).clean(parts, step)
     else:
+        step = step or 'pull'
         if step == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '
                          'as the step to clean')

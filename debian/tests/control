@@ -1,4 +1,4 @@
-Tests: integrationtests
+Tests: integrationtests-general, integrationtests-store, integrationtests-plugins, integrationtests-snapd
 Restrictions: needs-root, allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          bzr,

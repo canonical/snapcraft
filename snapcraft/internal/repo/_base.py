@@ -24,6 +24,7 @@ import shutil
 import stat
 
 from snapcraft import file_utils
+from snapcraft.internal import mangling
 from . import errors
 
 _BIN_PATHS = (
@@ -238,9 +239,7 @@ class BaseRepo:
         paths = [p for p in _BIN_PATHS
                  if os.path.exists(os.path.join(unpackdir, p))]
         for p in [os.path.join(unpackdir, p) for p in paths]:
-            file_utils.replace_in_file(p, re.compile(r''),
-                                       re.compile(r'#!.*python\n'),
-                                       r'#!/usr/bin/env python\n')
+            mangling.rewrite_python_shebangs(p)
 
 
 class DummyRepo(BaseRepo):
