@@ -26,6 +26,7 @@ import subprocess
 import sys
 import urllib
 import urllib.request
+from typing import Dict, Set  # noqa
 
 import apt
 from xml.etree import ElementTree
@@ -52,7 +53,7 @@ deb http://${security}.ubuntu.com/${suffix} ${release}-security universe
 deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
 '''
 _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
-_library_list = dict()
+_library_list = dict()  # type: Dict[str, Set[str]]
 
 
 class _AptCache:
