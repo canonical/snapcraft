@@ -16,7 +16,8 @@
 
 
 from pyramid import config
-from wsgiref import simple_server
+# LP: #1733579
+from wsgiref import simple_server  # type: ignore
 
 
 class BaseFakeServer():

@@ -18,7 +18,8 @@ import snapcraft
 import snapcraft.plugins.jhbuild
 
 
-class JHBuildPluginTestCase(snapcraft.tests.unit.TestCase):
+# LP: #1733584
+class JHBuildPluginTestCase(snapcraft.tests.unit.TestCase):  # type: ignore
 
     def _test_plugin(self):
         class Options:

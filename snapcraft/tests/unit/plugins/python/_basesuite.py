@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,13 +13,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import absolute_import, unicode_literals
+import os
+
+import snapcraft
 
 
-try:  # pragma: no cover
-    from builtins import open  # noqa
-    from urllib.parse import quote_plus, urljoin
-except ImportError:  # pragma: no cover
-    from __builtin__ import open  # noqa
-    from urllib import quote_plus  # noqa
-    from urlparse import urljoin  # noqa
+# LP: #1733584
+class PythonBaseTestCase(snapcraft.tests.unit.TestCase):  # type: ignore
+
+    def _create_python_binary(self, base_dir):
+        python_command_path = os.path.join(
+            base_dir, 'usr', 'bin', 'pythontest')
+        os.makedirs(os.path.dirname(python_command_path), exist_ok=True)
+        open(python_command_path, 'w').close()
+        return python_command_path
