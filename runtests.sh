@@ -46,6 +46,7 @@ python3 -m coverage 1>/dev/null 2>&1 && coverage="true"
 run_static_tests(){
     SRC_PATHS="bin snapcraft snaps_tests external_snaps_tests setup.py"
     python3 -m flake8 --max-complexity=10 $SRC_PATHS
+    mypy --ignore-missing-imports --follow-imports=silent -p snapcraft
 }
 
 run_snapcraft_tests(){

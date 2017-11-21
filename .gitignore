@@ -2,6 +2,7 @@ docs/reference.md
 demos/*/parts/
 demos/*/prime/
 demos/*/stage/
+demos/*/snap/.snapcraft/
 demos/**/*.snap
 snap/.snapcraft/
 tests/unit/parts/
@@ -24,3 +25,4 @@ parts
 stage
 prime
 .vscode
+.mypy_cache

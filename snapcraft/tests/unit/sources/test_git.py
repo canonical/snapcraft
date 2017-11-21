@@ -29,7 +29,8 @@ from snapcraft.tests.subprocess_utils import (
 )
 
 
-class TestGit(unit.sources.SourceTestCase):
+# LP: #1733584
+class TestGit(unit.sources.SourceTestCase):  # type: ignore
 
     def setUp(self):
 

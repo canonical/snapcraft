@@ -28,7 +28,7 @@ from snapcraft.plugins._python import (
     _python_finder,
 )
 
-from . import PythonBaseTestCase
+from ._basesuite import PythonBaseTestCase
 
 
 class GetPythonCommandTestCase(PythonBaseTestCase):

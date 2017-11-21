@@ -15,8 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Data/methods shared between plugins and snapcraft
-
-from contextlib import suppress
 import glob
 import logging
 import math
@@ -26,6 +24,8 @@ import subprocess
 import sys
 import tempfile
 import urllib
+from contextlib import suppress
+from typing import List  # noqa
 
 from snapcraft.internal import errors
 
@@ -43,7 +43,7 @@ _librariesdir = _DEFAULT_LIBRARIESDIR
 
 MAX_CHARACTERS_WRAP = 120
 
-env = []
+env = []  # type: List[str]
 
 logger = logging.getLogger(__name__)
 

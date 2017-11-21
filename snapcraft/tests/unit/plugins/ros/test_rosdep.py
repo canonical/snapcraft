@@ -111,7 +111,7 @@ class RosdepTestCase(unit.TestCase):
         self.check_output_mock.return_value = b'foo\nbar\nbaz'
 
         self.assertThat(self.rosdep.get_dependencies('foo'),
-                        Equals(['foo', 'bar', 'baz']))
+                        Equals({'foo', 'bar', 'baz'}))
 
         self.check_output_mock.assert_called_with(['rosdep', 'keys', 'foo'],
                                                   env=mock.ANY)
@@ -119,7 +119,7 @@ class RosdepTestCase(unit.TestCase):
     def test_get_dependencies_no_dependencies(self):
         self.check_output_mock.return_value = b''
 
-        self.assertThat(self.rosdep.get_dependencies('foo'), Equals([]))
+        self.assertThat(self.rosdep.get_dependencies('foo'), Equals(set()))
 
     def test_get_dependencies_invalid_package(self):
         self.check_output_mock.side_effect = subprocess.CalledProcessError(
@@ -131,6 +131,15 @@ class RosdepTestCase(unit.TestCase):
 
         self.assertThat(str(raised),
                         Equals('Unable to find Catkin package "bar"'))
+
+    def test_get_dependencies_entire_workspace(self):
+        self.check_output_mock.return_value = b'foo\nbar\nbaz'
+
+        self.assertThat(self.rosdep.get_dependencies(),
+                        Equals({'foo', 'bar', 'baz'}))
+
+        self.check_output_mock.assert_called_with(
+            ['rosdep', 'keys', '-a', '-i'], env=mock.ANY)
 
     def test_resolve_dependency(self):
         self.check_output_mock.return_value = b'#apt\nmylib-dev'
