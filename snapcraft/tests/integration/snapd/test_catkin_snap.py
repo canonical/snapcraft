@@ -35,6 +35,11 @@ class CatkinTestCase(integration.SnapdIntegrationTestCase):
 
     slow_test = True
 
+    def setUp(self):
+        super().setUp()
+        # share the cache in all tests.
+        self.useFixture(fixture_setup.SharedCache('ros'))
+
     @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
     def test_install_and_execution(self):
         self.useFixture(fixture_setup.WithoutSnapInstalled('ros-example'))

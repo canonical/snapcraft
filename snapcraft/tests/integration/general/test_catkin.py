@@ -19,12 +19,18 @@ import subprocess
 import tempfile
 
 from snapcraft.tests import (
+    fixture_setup,
     integration,
     skip
 )
 
 
 class CatkinTestCase(integration.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        # share the cache in all tests.
+        self.useFixture(fixture_setup.SharedCache('ros'))
 
     @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
     def test_shared_ros_builds_without_catkin_in_underlay(self):
