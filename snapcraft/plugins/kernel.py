@@ -475,6 +475,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
         # but snapd expects modules/ and firmware/
         shutil.move(
             os.path.join(self.installdir, 'lib', 'modules'), self.installdir)
-        shutil.move(
-            os.path.join(self.installdir, 'lib', 'firmware'), self.installdir)
+        if self.options.kernel_with_firmware:
+            shutil.move(
+                os.path.join(self.installdir, 'lib', 'firmware'),
+                self.installdir)
         os.rmdir(os.path.join(self.installdir, 'lib'))
