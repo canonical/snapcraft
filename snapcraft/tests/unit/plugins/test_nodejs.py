@@ -16,8 +16,9 @@
 
 import collections
 import os
-
 from unittest import mock
+
+import fixtures
 from testscenarios.scenarios import multiply_scenarios
 from testtools.matchers import DirExists, Equals, HasLength
 
@@ -71,10 +72,19 @@ class NodePluginBaseTestCase(unit.TestCase):
 
 class NodePluginTestCase(NodePluginBaseTestCase):
 
-    scenarios = [
-        ('npm', dict(package_manager='npm')),
-        ('yarn', dict(package_manager='yarn')),
-    ]
+    scenarios = multiply_scenarios(
+        [
+            ('without-proxy', dict(http_proxy=None, https_proxy=None)),
+            ('with-proxy', dict(
+                http_proxy='http://localhost:3132',
+                https_proxy='http://localhost:3133'))],
+        [('npm', dict(package_manager='npm')),
+         ('yarn', dict(package_manager='yarn'))])
+
+    def setUp(self):
+        super().setUp()
+        for v in ('http_proxy', 'https_proxy'):
+            self.useFixture(fixtures.EnvironmentVariable(v, getattr(self, v)))
 
     def test_pull_local_sources(self):
         self.options.node_package_manager = self.package_manager
@@ -134,9 +144,14 @@ class NodePluginTestCase(NodePluginBaseTestCase):
                     plugin.installdir, clean_target=False, keep_tarball=True),
             ]
         else:
-            cmd = os.path.join(plugin.partdir, 'npm', 'bin', 'yarn')
+            cmd = [os.path.join(plugin.partdir, 'npm', 'bin', 'yarn')]
+            if self.http_proxy is not None:
+                cmd.extend(['--proxy', self.http_proxy])
+            if self.https_proxy is not None:
+                cmd.extend(['--https-proxy', self.https_proxy])
             expected_run_calls = [
-                mock.call([cmd, 'global', 'add',
+                mock.call(cmd +
+                          ['global', 'add',
                            'file:{}'.format(plugin.builddir),
                            '--offline', '--prod',
                            '--global-folder', plugin.installdir,
@@ -182,11 +197,16 @@ class NodePluginTestCase(NodePluginBaseTestCase):
                     plugin.installdir, clean_target=False, keep_tarball=True),
             ]
         else:
-            cmd = os.path.join(plugin.partdir, 'npm', 'bin', 'yarn')
+            cmd = [os.path.join(plugin.partdir, 'npm', 'bin', 'yarn')]
+            if self.http_proxy is not None:
+                cmd.extend(['--proxy', self.http_proxy])
+            if self.https_proxy is not None:
+                cmd.extend(['--https-proxy', self.https_proxy])
             expected_run_calls = [
-                mock.call([cmd, 'add', 'my-pkg'],
+                mock.call(cmd + ['add', 'my-pkg'],
                           cwd=plugin.sourcedir),
-                mock.call([cmd, 'global', 'add', 'my-pkg',
+                mock.call(cmd +
+                          ['global', 'add', 'my-pkg',
                            '--offline', '--prod',
                            '--global-folder', plugin.installdir,
                            '--prefix', plugin.installdir],
@@ -232,16 +252,22 @@ class NodePluginTestCase(NodePluginBaseTestCase):
                           cwd=plugin.sourcedir),
             ]
         else:
-            cmd = [os.path.join(plugin.partdir, 'npm', 'bin', 'yarn'), 'run']
+            cmd = [os.path.join(plugin.partdir, 'npm', 'bin', 'yarn')]
             hidden_bin_path = os.path.join(
                 plugin.sourcedir, 'node_modules', '.bin')
+            env = dict(PATH=hidden_bin_path)
+            if self.http_proxy is not None:
+                cmd.extend(['--proxy', self.http_proxy])
+                env['http_proxy'] = self.http_proxy
+            if self.https_proxy is not None:
+                cmd.extend(['--https-proxy', self.https_proxy])
+                env['https_proxy'] = self.https_proxy
+            cmd.append('run')
             expected_run_calls = [
                 mock.call(cmd + ['command_one'],
-                          cwd=plugin.sourcedir,
-                          env=dict(PATH=hidden_bin_path)),
+                          cwd=plugin.sourcedir, env=env),
                 mock.call(cmd + ['avocado'],
-                          cwd=plugin.sourcedir,
-                          env=dict(PATH=hidden_bin_path)),
+                          cwd=plugin.sourcedir, env=env),
             ]
 
         self.run_mock.assert_has_calls(expected_run_calls)
@@ -267,12 +293,20 @@ class NodePluginTestCase(NodePluginBaseTestCase):
                           cwd=plugin.builddir),
             ]
         else:
-            cmd = [os.path.join(plugin.partdir, 'npm', 'bin', 'yarn'), 'run']
+            cmd = [os.path.join(plugin.partdir, 'npm', 'bin', 'yarn')]
+            env = dict()
+            if self.http_proxy is not None:
+                cmd.extend(['--proxy', self.http_proxy])
+                env['http_proxy'] = self.http_proxy
+            if self.https_proxy is not None:
+                cmd.extend(['--https-proxy', self.https_proxy])
+                env['https_proxy'] = self.https_proxy
+            cmd.append('run')
             expected_run_calls = [
                 mock.call(cmd + ['command_one'],
-                          cwd=plugin.builddir, env=dict()),
+                          cwd=plugin.builddir, env=env),
                 mock.call(cmd + ['avocado'],
-                          cwd=plugin.builddir, env=dict()),
+                          cwd=plugin.builddir, env=env),
             ]
 
         self.run_mock.assert_has_calls(expected_run_calls)
