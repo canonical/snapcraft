@@ -40,7 +40,7 @@ class SnapcraftError(Exception):
 class MissingStateCleanError(SnapcraftError):
     fmt = (
         "Failed to clean step: "
-        "State missing for {step!r}. "
+        "Missing state for {step!r}. "
         "This won't work until a complete clean has occurred."
     )
 
@@ -51,10 +51,10 @@ class MissingStateCleanError(SnapcraftError):
 class StepOutdatedError(SnapcraftError):
 
     fmt = (
-        'Failed to re-use files from previous build: '
+        'Failed to reuse files from previous build: '
         'The {step!r} step of {part!r} is out of date:\n'
         '{report}'
-        'In order to continue, please clean that part\'s {step!r} step '
+        'To continue, please clean that part\'s {step!r} step '
         'by running:\n'
         'snapcraft clean {parts_names} -s {step}\n'
     )

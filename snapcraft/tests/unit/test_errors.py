@@ -31,11 +31,11 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'dependents': ['test-dependent']
             },
             'expected_message': (
-                "Failed to re-use files from previous build: "
+                "Failed to reuse files from previous build: "
                 "The 'test-step' step of 'test-part' is out of date:\n"
                 "The 'test-step' step for 'test-part' needs to be run again, "
                 "but 'test-dependent' depends on it.\n"
-                "In order to continue, please clean that part's "
+                "To continue, please clean that part's "
                 "'test-step' step by running:\n"
                 "snapcraft clean test-dependent -s test-step\n")}),
         ('StepOutdatedError dirty_properties', {
@@ -46,11 +46,11 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'dirty_properties': ['test-property1', 'test-property2']
             },
             'expected_message': (
-                "Failed to re-use files from previous build: "
+                "Failed to reuse files from previous build: "
                 "The 'test-step' step of 'test-part' is out of date:\n"
                 "The 'test-property1' and 'test-property2' part properties "
                 "appear to have changed.\n"
-                "In order to continue, please clean that part's "
+                "To continue, please clean that part's "
                 "'test-step' step by running:\n"
                 "snapcraft clean test-part -s test-step\n")}),
         ('StepOutdatedError dirty_project_options', {
@@ -61,10 +61,10 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'dirty_project_options': ['test-option']
             },
             'expected_message': (
-                "Failed to re-use files from previous build: "
+                "Failed to reuse files from previous build: "
                 "The 'test-step' step of 'test-part' is out of date:\n"
                 "The 'test-option' project option appears to have changed.\n"
-                "In order to continue, please clean that part's "
+                "To continue, please clean that part's "
                 "'test-step' step by running:\n"
                 "snapcraft clean test-part -s test-step\n")}),
         ('PrimeFileConflictError', {
