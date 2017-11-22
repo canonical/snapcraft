@@ -58,4 +58,4 @@ jobs:
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-snapd
     - if: type = cron
-      script: ./tools/travis/make_beta_pr.sh
+      script: ./tools/travis/run_ppa_autopkgtests.sh
