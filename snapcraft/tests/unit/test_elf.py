@@ -13,21 +13,18 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import fixtures
 import logging
 import os
 import subprocess
 import tempfile
+import sys
 from textwrap import dedent
 
 from testtools.matchers import Equals
 from unittest import mock
 
-from snapcraft.internal import (
-    libraries,
-    os_release,
-)
+from snapcraft.internal import elf, os_release
 from snapcraft.tests import unit
 
 
@@ -49,7 +46,7 @@ class TestLdLibraryPathParser(unit.TestCase):
 /baz""")
 
         self.assertThat(
-            libraries._extract_ld_library_paths(file_path),
+            elf._extract_ld_library_paths(file_path),
             Equals(['/foo/bar', '/colon', '/separated', '/comma',
                     '/tab', '/space', '/baz']))
 
@@ -70,7 +67,7 @@ class TestGetLibraries(unit.TestCase):
         ]
         self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
 
-        patcher = mock.patch('snapcraft.internal.libraries._get_system_libs')
+        patcher = mock.patch('snapcraft.internal.elf._get_system_libs')
         self.get_system_libs_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -86,8 +83,9 @@ class TestGetLibraries(unit.TestCase):
         self.useFixture(self.fake_logger)
 
     def test_get_libraries(self):
-        libs = libraries.get_dependencies('foo')
-        self.assertThat(libs, Equals(['/lib/foo.so.1', '/usr/lib/bar.so.2']))
+        libs = elf.get_dependencies('foo')
+        self.assertThat(libs, Equals(frozenset(
+            ['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
 
     def test_get_libraries_excludes_slash_snap(self):
         lines = [
@@ -98,20 +96,21 @@ class TestGetLibraries(unit.TestCase):
         ]
         self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
 
-        libs = libraries.get_dependencies('foo')
-        self.assertThat(libs, Equals(['/lib/foo.so.1', '/usr/lib/bar.so.2']))
+        libs = elf.get_dependencies('foo')
+        self.assertThat(libs, Equals(
+            frozenset(['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
 
     def test_get_libraries_filtered_by_system_libraries(self):
         self.get_system_libs_mock.return_value = frozenset(['foo.so.1'])
 
-        libs = libraries.get_dependencies('foo')
-        self.assertThat(libs, Equals(['/usr/lib/bar.so.2']))
+        libs = elf.get_dependencies('foo')
+        self.assertThat(libs, Equals(frozenset(['/usr/lib/bar.so.2'])))
 
     def test_get_libraries_ldd_failure_logs_warning(self):
         self.run_output_mock.side_effect = subprocess.CalledProcessError(
             1, 'foo', b'bar')
 
-        self.assertThat(libraries.get_dependencies('foo'), Equals([]))
+        self.assertThat(elf.get_dependencies('foo'), Equals(set()))
         self.assertThat(
             self.fake_logger.output,
             Equals("Unable to determine library dependencies for 'foo'\n"))
@@ -158,7 +157,7 @@ class TestSystemLibsOnNewRelease(unit.TestCase):
         self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
 
     def test_fail_gracefully_if_system_libs_not_found(self):
-        self.assertThat(libraries.get_dependencies('foo'), Equals([]))
+        self.assertThat(elf.get_dependencies('foo'), Equals(frozenset()))
 
 
 class TestSystemLibsOnReleasesWithNoVersionId(unit.TestCase):
@@ -166,7 +165,7 @@ class TestSystemLibsOnReleasesWithNoVersionId(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        libraries._libraries = None
+        elf._libraries = None
 
         with open('os-release', 'w') as f:
             f.write(dedent("""\
@@ -188,8 +187,101 @@ class TestSystemLibsOnReleasesWithNoVersionId(unit.TestCase):
         self.os_release_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-    @mock.patch('snapcraft.internal.libraries.repo.Repo.get_package_libraries',
+    @mock.patch('snapcraft.internal.elf.repo.Repo.get_package_libraries',
                 return_value=['/usr/lib/libc.so.6', '/lib/libpthreads.so.6'])
     def test_fail_gracefully_if_no_version_id_found(self, mock_package_libs):
-        self.assertThat(libraries._get_system_libs(),
+        self.assertThat(elf._get_system_libs(),
                         Equals(frozenset(['libc.so.6', 'libpthreads.so.6'])))
+
+
+class GetElfFilesTestCase(unit.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.workdir = os.path.join(os.getcwd(), 'workdir')
+        os.mkdir(self.workdir)
+
+        self.ms_mock = mock.Mock()
+        self.ms_mock.load.return_value = 0
+        self.ms_mock.file.return_value = (
+            'ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
+            'dynamically linked interpreter /lib64/ld-linux-x86-64.so.2, '
+            'for GNU/Linux 2.6.32, BuildID[sha1]=XYZ, stripped'
+        )
+
+        patcher = mock.patch('magic.open')
+        self.magic_mock = patcher.start()
+        self.magic_mock.return_value = self.ms_mock
+        self.addCleanup(patcher.stop)
+
+    def test_get_elf_files(self):
+        linked_elf_path = os.path.join(self.workdir, 'linked')
+        open(linked_elf_path, 'w').close()
+
+        linked_elf_path_b = linked_elf_path.encode(sys.getfilesystemencoding())
+
+        elf_files = elf.get_elf_files(self.workdir, {'linked'})
+
+        self.ms_mock.file.assert_called_once_with(linked_elf_path_b)
+        self.assertThat(elf_files, Equals(frozenset([linked_elf_path])))
+
+    def test_skip_object_files(self):
+        open(os.path.join(self.workdir, 'object_file.o'), 'w').close()
+
+        elf_files = elf.get_elf_files(self.workdir, {'object_file.o'})
+
+        self.assertFalse(self.ms_mock.file.called,
+                         'Expected object file to be skipped')
+        self.assertThat(elf_files, Equals(set()))
+
+    def test_no_find_dependencies_of_non_dynamically_linked(self):
+        statically_linked_elf_path = os.path.join(self.workdir,
+                                                  'statically-linked')
+        open(statically_linked_elf_path, 'w').close()
+
+        statically_linked_elf_path_b = statically_linked_elf_path.encode(
+            sys.getfilesystemencoding())
+
+        self.ms_mock.file.return_value = (
+            'ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
+            'statically linked, for GNU/Linux 2.6.32, '
+            'BuildID[sha1]=XYZ, stripped')
+
+        elf_files = elf.get_elf_files(self.workdir,
+                                      {'statically-linked'})
+
+        self.ms_mock.file.assert_called_once_with(statically_linked_elf_path_b)
+        self.assertThat(elf_files, Equals(set()))
+
+    def test_non_elf_files(self):
+        non_elf_path = os.path.join(self.workdir, 'non-elf')
+        open(non_elf_path, 'w').close()
+
+        non_elf_path_b = non_elf_path.encode(sys.getfilesystemencoding())
+
+        self.ms_mock.file.return_value = 'JPEG image data, Exif standard: ...'
+
+        elf_files = elf.get_elf_files(self.workdir, {'non-elf'})
+
+        self.ms_mock.file.assert_called_once_with(non_elf_path_b)
+        self.assertThat(elf_files, Equals(set()))
+
+    def test_symlinks(self):
+        symlinked_path = os.path.join(self.workdir, 'symlinked')
+        os.symlink('/bin/dash', symlinked_path)
+
+        elf_files = elf.get_elf_files(self.workdir, {'symlinked'})
+
+        self.assertFalse(self.ms_mock.file.called,
+                         'magic is not needed for symlinks')
+        self.assertThat(elf_files, Equals(set()))
+
+    def test_fail_to_load_magic_raises_exception(self):
+        self.magic_mock.return_value.load.return_value = 1
+
+        raised = self.assertRaises(
+            RuntimeError,
+            elf.get_elf_files, '.', set())
+
+        self.assertThat(
+            raised.__str__(), Equals('Cannot load magic header detection'))

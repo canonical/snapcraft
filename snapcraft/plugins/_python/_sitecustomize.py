@@ -92,6 +92,20 @@ def generate_sitecustomize(python_major_version, *, stage_dir, install_dir):
         python_major_version, stage_dir=stage_dir, install_dir=install_dir)
     os.makedirs(os.path.dirname(sitecustomize_path), exist_ok=True)
 
+    # There may very well already be a sitecustomize.py already there. If so,
+    # get rid of it. Is may be a symlink to another sitecustomize.py, in which
+    # case, we'll get rid of that one as well.
+    if os.path.islink(sitecustomize_path):
+        target_path = os.path.realpath(sitecustomize_path)
+
+        # Only remove the target if it's contained within the install directory
+        if target_path.startswith(os.path.abspath(install_dir)+os.sep):
+            with contextlib.suppress(FileNotFoundError):
+                os.remove(target_path)
+
+    with contextlib.suppress(FileNotFoundError):
+        os.remove(sitecustomize_path)
+
     # Create our sitecustomize. Python from the archives already has one
     # which is distro-specific and not needed here, so we truncate it if it's
     # already there.

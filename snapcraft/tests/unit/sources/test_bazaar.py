@@ -26,7 +26,8 @@ from snapcraft.tests import (
 )
 
 
-class TestBazaar(unit.sources.SourceTestCase):
+# LP: #1733584
+class TestBazaar(unit.sources.SourceTestCase):  # type: ignore
 
     def setUp(self):
         super().setUp()

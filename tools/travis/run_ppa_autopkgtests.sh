@@ -1,6 +1,6 @@
-# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#!/bin/bash
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,13 +13,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from __future__ import absolute_import, unicode_literals
 
+# Run the CLA check.
 
-try:  # pragma: no cover
-    from builtins import open  # noqa
-    from urllib.parse import quote_plus, urljoin
-except ImportError:  # pragma: no cover
-    from __builtin__ import open  # noqa
-    from urllib import quote_plus  # noqa
-    from urlparse import urljoin  # noqa
+set -ev
+
+script_path="$(dirname "$0")"
+"$script_path/run_docker_container.sh" autopkgtest-requests
+docker exec -i autopkgtest-requests apt install -y python-launchpadlib
+docker exec -i autopkgtest-requests ./tools/run_ppa_autopkgtests.py
+docker rm -f autopkgtest-requests

@@ -20,8 +20,7 @@ import textwrap
 from testtools.matchers import FileContains
 
 from snapcraft.internal import mangling
-
-from snapcraft import tests
+from snapcraft.tests import unit
 
 
 def _create_file(filename, contents):
@@ -33,7 +32,7 @@ def _create_file(filename, contents):
     return file_path
 
 
-class ManglingPythonShebangTestCase(tests.TestCase):
+class ManglingPythonShebangTestCase(unit.TestCase):
 
     def test_python(self):
         file_path = _create_file('file', textwrap.dedent("""\

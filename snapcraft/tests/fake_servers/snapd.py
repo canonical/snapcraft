@@ -15,15 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import json
 from urllib import parse
+from typing import Any, Dict, List  # noqa
 
 from snapcraft.tests import fake_servers
 
 
 class FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
 
-    snaps_result = []
+    snaps_result = []  # type: List[Dict[str, Any]]
     snap_details_func = None
-    find_result = []
+    find_result = []  # type: List[Dict[str, Any]]
     _private_data = {'new_fake_snap_installed': False}
 
     def do_GET(self):

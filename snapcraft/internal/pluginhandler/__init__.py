@@ -30,16 +30,13 @@ from snapcraft import file_utils
 from snapcraft.internal import (
     common,
     errors,
-    libraries,
+    elf,
     repo,
     sources,
     states,
 )
 from ._scriptlets import ScriptRunner
 from ._build_attributes import BuildAttributes
-
-if sys.platform == 'linux':
-    import magic
 
 from ._plugin_loader import load_plugin  # noqa
 
@@ -444,7 +441,10 @@ class PluginHandler:
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 
-        dependencies = _find_dependencies(self.primedir, snap_files)
+        elf_files = elf.get_elf_files(self.primedir, snap_files)
+        dependencies = set()
+        for elf_file in elf_files:
+            dependencies.update(elf.get_dependencies(elf_file))
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
@@ -743,41 +743,6 @@ def _clean_migrated_files(snap_files, snap_dirs, directory):
         migrated_directory = os.path.join(directory, snap_dir)
         if not os.listdir(migrated_directory):
             os.rmdir(migrated_directory)
-
-
-def _find_dependencies(root, part_files):
-    ms = magic.open(magic.NONE)
-    if ms.load() != 0:
-        raise RuntimeError('Cannot load magic header detection')
-
-    elf_files = set()
-
-    fs_encoding = sys.getfilesystemencoding()
-
-    for part_file in part_files:
-        # Filter out object (*.o) files-- we only care about binaries.
-        if part_file.endswith('.o'):
-            continue
-
-        # No need to crawl links-- the original should be here, too.
-        path = os.path.join(root, part_file)
-        if os.path.islink(path):
-            logger.debug('Skipped link {!r} while finding dependencies'.format(
-                path))
-            continue
-
-        path = path.encode(fs_encoding, errors='surrogateescape')
-        # Finally, make sure this is actually an ELF before queueing it up
-        # for an ldd call.
-        file_m = ms.file(path)
-        if file_m.startswith('ELF') and 'dynamically linked' in file_m:
-            elf_files.add(path)
-
-    dependencies = []
-    for elf_file in elf_files:
-        dependencies += libraries.get_dependencies(elf_file)
-
-    return set(dependencies)
 
 
 def _get_file_list(stage_set):

@@ -20,7 +20,7 @@ import os
 import subprocess
 import time
 
-from . import Containerbuild
+from ._containerbuild import Containerbuild
 
 from snapcraft.internal.errors import (
         ContainerConnectionError,

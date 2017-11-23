@@ -299,9 +299,7 @@ class FakeStore(fixtures.Fixture):
 
 
 class _FakeServerRunning(fixtures.Fixture):
-
-    # To be defined by child fixtures.
-    fake_server = None
+    # fake_server needs to be set by implementing classes
 
     def setUp(self):
         super().setUp()
@@ -1024,3 +1022,23 @@ class FakeSnapd(fixtures.Fixture):
         self.server.shutdown()
         self.server.socket.close()
         thread.join()
+
+
+class SharedCache(fixtures.Fixture):
+
+    def __init__(self, name):
+        super().__init__()
+        self.name = name
+
+    def setUp(self):
+        super().setUp()
+        shared_cache_dir = os.path.join(
+            tempfile.gettempdir(), 'snapcraft_test_cache_{}'.format(self.name))
+        os.makedirs(shared_cache_dir, exist_ok=True)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'XDG_CACHE_HOME', shared_cache_dir))
+        patcher = mock.patch(
+            'xdg.BaseDirectory.xdg_cache_home',
+            new=os.path.join(shared_cache_dir))
+        patcher.start()
+        self.addCleanup(patcher.stop)
