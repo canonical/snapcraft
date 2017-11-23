@@ -40,7 +40,8 @@ class SignBuildTestCase(integration.StoreTestCase):
             'SNAP_GNUPG_HOME', temp_keys_dir))
         self.project = 'basic'
         self.snap_path = '{}_0.1_all.snap'.format(self.project)
-        self.snap_build_path = '{}-build'.format(self.snap_path)
+        self.snap_build_path = (
+            os.path.splitext(self.snap_path)[0] + '.build')
 
     def test_unsuccessful_sign_build_no_login(self):
         self.run_snapcraft('snap', self.project)
@@ -68,7 +69,7 @@ class SignBuildTestCase(integration.StoreTestCase):
         status = self.sign_build(snap_path, local=True)
         self.assertThat(status, Equals(0))
 
-        snap_build_path = '{}-build'.format(snap_path)
+        snap_build_path = os.path.splitext(snap_path)[0] + '.build'
         self.assertThat(snap_build_path, FileExists())
         self.assertThat(snap_build_path,
                         FileContains(matcher=Contains('type: snap-build')))
@@ -100,3 +101,28 @@ class SignBuildTestCase(integration.StoreTestCase):
         self.assertThat(self.snap_build_path, FileExists())
         self.assertThat(self.snap_build_path,
                         FileContains(matcher=Contains('type: snap-build')))
+
+    def test_legacy_build_filename_support(self):
+        self.run_snapcraft('snap', self.project)
+        self.assertThat(self.snap_path, FileExists())
+
+        self.addCleanup(self.logout)
+        self.login()
+
+        legacy_build_path = self.snap_path + '-build'
+        with open(legacy_build_path, 'a') as fd:
+            fd.write('test')
+
+        # Can identify legacy 'snap-build' instead of signing a new one..
+        status = self.sign_build(
+            self.snap_path, has_legacy_build=True, local=True)
+        self.assertThat(status, Equals(0))
+        self.assertThat(legacy_build_path, FileExists())
+        self.assertThat(self.snap_build_path, Not(FileExists()))
+
+        # Pushes the legacy snap-build filename if it exists.
+        status = self.sign_build(
+            self.snap_path, has_legacy_build=True)
+        self.assertThat(status, Equals(0))
+        self.assertThat(legacy_build_path, FileExists())
+        self.assertThat(self.snap_build_path, Not(FileExists()))
