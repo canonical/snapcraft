@@ -446,7 +446,7 @@ class FakeFilesystem(fixtures.Fixture):
         self.addCleanup(patcher.stop)
 
         @contextlib.contextmanager
-        def tempdir(prefix, dir):
+        def tempdir(prefix: str, dir: str):
             self.tmp_dir = os.path.join(dir, '{}-foo'.format(prefix))
             yield self.tmp_dir
 

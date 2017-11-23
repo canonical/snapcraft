@@ -30,6 +30,7 @@ from contextlib import contextmanager
 import subprocess
 import time
 from urllib import parse
+from typing import List
 
 from snapcraft.internal import common
 from snapcraft.internal.errors import (
@@ -239,7 +240,7 @@ class Containerbuild:
         else:
             self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
 
-    def _inject_snap(self, name, tmp_dir):
+    def _inject_snap(self, name: str, tmp_dir: str):
         session = requests_unixsocket.Session()
         # Cf. https://github.com/snapcore/snapd/wiki/REST-API#get-v2snapsname
         # TODO use get_local_snap info from the snaps module.
@@ -350,7 +351,8 @@ class Containerbuild:
             checksum_container = None
         return checksum == checksum_container
 
-    def _inject_assertions(self, filename, assertions, tmp_dir):
+    def _inject_assertions(self, filename: str,
+                           assertions: List[List[str]], tmp_dir: str):
         filepath = os.path.join(tmp_dir, filename)
         with open(filepath, 'wb') as f:
             for assertion in assertions:
