@@ -105,8 +105,12 @@ class StageTestCase(integration.TestCase):
                 'SNAPCRAFT_SETUP_CORE', '1'))
 
         self.run_snapcraft(['stage'], project_dir)
-        self.assertThat(os.path.join(self.stage_dir, 'bin', 'hello-classic'),
-                        FileExists())
+        bin_path = os.path.join(self.stage_dir, 'bin', 'hello-classic')
+        self.assertThat(bin_path, FileExists())
+
+        interpreter = subprocess.check_output([
+            'patchelf', '--print-interpreter', bin_path]).decode()
+        self.assertThat(interpreter, Not(Contains('/snap/core/current')))
 
     def test_staging_libc_links(self):
         project_dir = 'staging_links_to_libc'

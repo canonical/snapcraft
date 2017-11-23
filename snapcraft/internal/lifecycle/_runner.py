@@ -209,7 +209,9 @@ class _Executor:
 
         part = _replace_in_part(part)
 
-        getattr(part, step)()
+        is_classic = self.config.data['confinement'] == 'classic'  # type: bool
+
+        getattr(part, step)(is_classic=is_classic)
 
     def _create_meta(self, step, part_names):
         if step == 'prime' and part_names == self.config.part_names:
