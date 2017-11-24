@@ -29,6 +29,8 @@ jobs:
     - if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/plugins
     - if: type != cron
+      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/plugins/catkin
+    - if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/store
     - if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/containers
@@ -48,6 +50,8 @@ jobs:
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-plugins
     - if: type = cron
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-plugins-catkin
+    - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-snapd
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-general
@@ -55,6 +59,8 @@ jobs:
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-store
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-plugins
+    - if: type = cron
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-plugins-catkin
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-snapd
     - if: type = cron
