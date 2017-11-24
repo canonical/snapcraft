@@ -68,9 +68,9 @@ class Patcher:
         # in by packaging dependencies.
         if common.is_snap():
             snap_dir = os.getenv('SNAP')
-            self._patchelf = os.path.join(snap_dir, 'bin', 'patchelf')
+            self._patchelf_cmd = os.path.join(snap_dir, 'bin', 'patchelf')
         else:
-            self._patchelf = 'patchelf'
+            self._patchelf_cmd = 'patchelf'
 
     def patch(self, *, elf_file: ElfFile) -> None:
         """Patch elf_file with the Patcher instance configuration.
@@ -90,7 +90,7 @@ class Patcher:
         if not elf_file.is_executable:
             return
         try:
-            subprocess.check_call([self._patchelf,
+            subprocess.check_call([self._patchelf_cmd,
                                    '--set-interpreter',  self._dynamic_linker,
                                    elf_file.path])
         # There is no need to catch FileNotFoundError as patchelf should be
