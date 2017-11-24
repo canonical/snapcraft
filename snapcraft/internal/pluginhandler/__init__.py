@@ -444,7 +444,7 @@ class PluginHandler:
         elf_files = elf.get_elf_files(self.primedir, snap_files)
         dependencies = set()
         for elf_file in elf_files:
-            dependencies.update(elf.get_dependencies(elf_file))
+            dependencies.update(elf.get_dependencies(elf_file.path))
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
@@ -474,9 +474,7 @@ class PluginHandler:
             dynamic_linker = self._project_options.get_core_dynamic_linker()
             elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker)
             for elf_file in elf_files:
-                elf_file_path = os.path.join(self.primedir, elf_file)
-                elf_patcher.patch(elf_file=elf_file_path,
-                                  elf_properties=elf_files[elf_file])
+                elf_patcher.patch(elf_file=elf_file)
 
         self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
 

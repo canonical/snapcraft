@@ -222,11 +222,12 @@ class GetElfFilesTestCase(unit.TestCase):
 
         elf_files = elf.get_elf_files(self.workdir, {'linked'})
 
+        self.assertThat(len(elf_files), Equals(1))
         self.ms_mock.file.assert_called_once_with(linked_elf_path_b)
-        expected_elf_files = {
-            linked_elf_path: dict(executable=True)
-        }
-        self.assertThat(elf_files, Equals(expected_elf_files))
+
+        elf_file = set(elf_files).pop()
+        self.assertThat(elf_file.path, Equals(linked_elf_path))
+        self.assertThat(elf_file.is_executable, Equals(True))
 
     def test_get_elf_is_library(self):
         self.ms_mock.file.return_value = (
@@ -241,11 +242,12 @@ class GetElfFilesTestCase(unit.TestCase):
 
         elf_files = elf.get_elf_files(self.workdir, {'linked'})
 
+        self.assertThat(len(elf_files), Equals(1))
         self.ms_mock.file.assert_called_once_with(linked_elf_path_b)
-        expected_elf_files = {
-            linked_elf_path: dict(executable=False)
-        }
-        self.assertThat(elf_files, Equals(expected_elf_files))
+
+        elf_file = set(elf_files).pop()
+        self.assertThat(elf_file.path, Equals(linked_elf_path))
+        self.assertThat(elf_file.is_executable, Equals(False))
 
     def test_skip_object_files(self):
         open(os.path.join(self.workdir, 'object_file.o'), 'w').close()
@@ -254,7 +256,7 @@ class GetElfFilesTestCase(unit.TestCase):
 
         self.assertFalse(self.ms_mock.file.called,
                          'Expected object file to be skipped')
-        self.assertThat(elf_files, Equals(dict()))
+        self.assertThat(elf_files, Equals(set()))
 
     def test_no_find_dependencies_of_non_dynamically_linked(self):
         statically_linked_elf_path = os.path.join(self.workdir,
@@ -273,7 +275,7 @@ class GetElfFilesTestCase(unit.TestCase):
                                       {'statically-linked'})
 
         self.ms_mock.file.assert_called_once_with(statically_linked_elf_path_b)
-        self.assertThat(elf_files, Equals(dict()))
+        self.assertThat(elf_files, Equals(set()))
 
     def test_non_elf_files(self):
         non_elf_path = os.path.join(self.workdir, 'non-elf')
@@ -286,7 +288,7 @@ class GetElfFilesTestCase(unit.TestCase):
         elf_files = elf.get_elf_files(self.workdir, {'non-elf'})
 
         self.ms_mock.file.assert_called_once_with(non_elf_path_b)
-        self.assertThat(elf_files, Equals(dict()))
+        self.assertThat(elf_files, Equals(set()))
 
     def test_symlinks(self):
         symlinked_path = os.path.join(self.workdir, 'symlinked')
@@ -296,14 +298,14 @@ class GetElfFilesTestCase(unit.TestCase):
 
         self.assertFalse(self.ms_mock.file.called,
                          'magic is not needed for symlinks')
-        self.assertThat(elf_files, Equals(dict()))
+        self.assertThat(elf_files, Equals(set()))
 
     def test_fail_to_load_magic_raises_exception(self):
         self.magic_mock.return_value.load.return_value = 1
 
         raised = self.assertRaises(
             RuntimeError,
-            elf.get_elf_files, '.', dict())
+            elf.get_elf_files, '.', set())
 
         self.assertThat(
             raised.__str__(), Equals('Cannot load magic header detection'))
@@ -331,9 +333,9 @@ class TestPatcher(unit.TestCase):
 
     @mock.patch('subprocess.check_call')
     def test_patch(self, check_call_mock):
+        elf_file = elf.ElfFile(path='/fake-elf', is_executable=True)
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld')
-        elf_patcher.patch(elf_file='/fake-elf',
-                          elf_properties=dict(executable=True))
+        elf_patcher.patch(elf_file=elf_file)
 
         check_call_mock.assert_called_once_with([
             self.expected_patchelf, '--set-interpreter', '/lib/fake-ld',
@@ -341,9 +343,9 @@ class TestPatcher(unit.TestCase):
 
     @mock.patch('subprocess.check_call')
     def test_patch_does_nothing_if_no_interpreter(self, check_call_mock):
+        elf_file = elf.ElfFile(path='/fake-elf', is_executable=False)
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld')
-        elf_patcher.patch(elf_file='/fake-elf',
-                          elf_properties=dict(executable=False))
+        elf_patcher.patch(elf_file=elf_file)
 
         self.assertFalse(check_call_mock.called)
 
@@ -353,9 +355,9 @@ class TestPatcherErrors(unit.TestCase):
     @mock.patch('subprocess.check_call',
                 side_effect=subprocess.CalledProcessError(2, ['patchelf']))
     def test_patch_fails_raises_patcherror_exception(self, check_call_mock):
+        elf_file = elf.ElfFile(path='/fake-elf', is_executable=True)
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld')
 
         self.assertRaises(errors.PatcherError,
                           elf_patcher.patch,
-                          elf_file='/fake-elf',
-                          elf_properties=dict(executable=True))
+                          elf_file=elf_file)
