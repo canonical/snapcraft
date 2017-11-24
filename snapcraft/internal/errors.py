@@ -101,6 +101,10 @@ class StepOutdatedError(SnapcraftError):
 
 
 class SnapcraftEnvironmentError(SnapcraftError):
+    # FIXME This exception is too generic.
+    # https://bugs.launchpad.net/snapcraft/+bug/1734231
+    # --elopio - 20171123
+
     fmt = '{message}'
 
     def __init__(self, message):
@@ -128,7 +132,9 @@ class ContainerRunError(SnapcraftError):
     )
 
     def __init__(self, *, command, exit_code):
-        super().__init__(command=' '.join(command), exit_code=exit_code)
+        if isinstance(command, list):
+            command = ' '.join(command)
+        super().__init__(command=command, exit_code=exit_code)
 
 
 class ContainerSnapcraftCmdError(ContainerRunError):
@@ -139,7 +145,9 @@ class ContainerSnapcraftCmdError(ContainerRunError):
     )
 
     def __init__(self, *, command, exit_code):
-        super().__init__(command=' '.join(command), exit_code=exit_code)
+        if isinstance(command, list):
+            command = ' '.join(command)
+        super().__init__(command=command, exit_code=exit_code)
 
 
 class SnapdError(SnapcraftError):
@@ -191,7 +199,7 @@ class InvalidDesktopFileError(SnapcraftError):
 
     fmt = (
         'Failed to generate desktop file: '
-        'Invalid desktop file {filename!r}: {message}. '
+        'Invalid desktop file {filename!r}: {message}.'
         # FIXME include how to fix each of the possible desktop file errors.
         # https://bugs.launchpad.net/snapcraft/+bug/1727435
         # --elopio - 2017-10-25
