@@ -61,7 +61,7 @@ class PluginHandler:
 
     def __init__(self, *, plugin, part_properties, project_options,
                  part_schema, definitions_schema, stage_packages_repo,
-                 grammar_processor):
+                 grammar_processor, confinement):
         self.valid = False
         self.plugin = plugin
         self._part_properties = _expand_part_properties(
@@ -69,6 +69,7 @@ class PluginHandler:
         self.stage_packages = []
         self._stage_packages_repo = stage_packages_repo
         self._grammar_processor = grammar_processor
+        self._confinement = confinement
 
         self._project_options = project_options
         self.deps = []
@@ -240,7 +241,7 @@ class PluginHandler:
         self._fetch_stage_packages()
         self._unpack_stage_packages()
 
-    def pull(self, force=False, **kwargs):
+    def pull(self, force=False):
         self.makedirs()
         self.notify_part_progress('Pulling')
         if self.source_handler:
@@ -292,7 +293,7 @@ class PluginHandler:
         # unpack again here just in case the build step has been cleaned.
         self._unpack_stage_packages()
 
-    def build(self, force=False, **kwargs):
+    def build(self, force=False):
         self.makedirs()
         self.notify_part_progress('Building')
 
@@ -389,7 +390,7 @@ class PluginHandler:
 
         _organize_filesets(fileset.copy(), self.plugin.installdir)
 
-    def stage(self, force=False, **kwargs):
+    def stage(self, force=False):
         self.makedirs()
         self.notify_part_progress('Staging')
         self._organize()
@@ -434,7 +435,7 @@ class PluginHandler:
 
         self.mark_cleaned('stage')
 
-    def prime(self, force=False, is_classic=False) -> None:
+    def prime(self, force=False) -> None:
         self.makedirs()
         self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
@@ -469,9 +470,7 @@ class PluginHandler:
                 _migrate_files(system, system_dependency_paths, '/',
                                self.primedir, follow_symlinks=True)
 
-        # If we are classic we need to patch the elf files for which
-        # prime will be called with instructions to do so
-        if is_classic:
+        if self._confinement == 'classic':
             dynamic_linker = self._project_options.get_core_dynamic_linker()
             elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker)
             for elf_file in elf_files:

@@ -191,7 +191,8 @@ class PartsConfig:
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema,
             stage_packages_repo=stage_packages_repo,
-            grammar_processor=grammar_processor)
+            grammar_processor=grammar_processor,
+            confinement=self._confinement)
 
         self.build_snaps |= grammar_processor.get_build_snaps()
         self.build_tools |= grammar_processor.get_build_packages()
