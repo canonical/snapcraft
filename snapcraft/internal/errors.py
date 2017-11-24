@@ -119,6 +119,10 @@ class ContainerError(SnapcraftError):
 
 
 class ContainerConnectionError(ContainerError):
+    # FIXME this exception is too generic.
+    # https://bugs.launchpad.net/snapcraft/+bug/1734233
+    # --elopio - 20171123
+
     fmt = ('{message}\n'
            'Refer to the documentation at '
            'https://linuxcontainers.org/lxd/getting-started-cli.')
@@ -151,6 +155,10 @@ class ContainerSnapcraftCmdError(ContainerRunError):
 
 
 class SnapdError(SnapcraftError):
+    # FIXME this exception is too generic.
+    # https://bugs.launchpad.net/snapcraft/+bug/1734235
+    # --elopio - 20171123
+
     fmt = '{message}'
 
     def __init__(self, message):
