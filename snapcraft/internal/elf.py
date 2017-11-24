@@ -75,7 +75,7 @@ class Patcher:
     def patch(self, *, elf_file: ElfFile) -> None:
         """Patch elf_file with the Patcher instance configuration.
 
-        patch will to the right thing with regards to the different type
+        patch will to the right thing with regards to the different types
         of elf files.
 
         :param str elf_file: path to the elf_file to patch.
