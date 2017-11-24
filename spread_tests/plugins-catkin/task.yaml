@@ -1,4 +1,4 @@
-summary: plugins integration tests
+summary: catkin plugin integration tests
 
 kill-timeout: 2h
 execute: |
