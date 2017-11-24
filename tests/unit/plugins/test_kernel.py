@@ -67,6 +67,12 @@ class KernelPluginTestCase(unit.TestCase):
         self.check_call_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch("subprocess.check_output")
+        self.check_output_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+        # by default, simulate a Xenial kernel
+        self.check_output_mock.return_value = b"4.4.0"
+
         patcher = mock.patch.object(kernel.KernelPlugin, "run")
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
@@ -414,6 +420,81 @@ class KernelPluginTestCase(unit.TestCase):
 
         self.assertThat(config_contents, Equals("ACCEPT=y\n"))
         self._assert_common_assets(plugin.installdir)
+
+    @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
+    def test_build_kconfigfile_and_missing_firmware_install_target(self):
+        self.options.kconfigfile = "config"
+        with open(self.options.kconfigfile, "w") as f:
+            f.write("ACCEPT=y\n")
+
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
+
+        # linux >= 4.14 removed the 'firmware_install' target
+        self._simulate_build(
+            plugin.sourcedir, plugin.builddir, plugin.installdir, do_firmware=False
+        )
+        self.check_output_mock.return_value = b"4.14.0"
+
+        plugin.build()
+
+        self._assert_generic_check_call(
+            plugin.builddir, plugin.installdir, plugin.os_snap
+        )
+
+        self.assertThat(self.run_mock.call_count, Equals(2))
+        self.run_mock.assert_has_calls(
+            [
+                mock.call(["make", "-j2", "bzImage", "modules"]),
+                mock.call(
+                    [
+                        "make",
+                        "-j2",
+                        "CONFIG_PREFIX={}".format(plugin.installdir),
+                        "modules_install",
+                        "INSTALL_MOD_PATH={}".format(plugin.installdir),
+                    ]
+                ),
+            ]
+        )
+
+        config_file = os.path.join(plugin.builddir, ".config")
+        self.assertTrue(os.path.exists(config_file))
+
+        with open(config_file) as f:
+            config_contents = f.read()
+
+        self.assertThat(config_contents, Equals("ACCEPT=y\n"))
+        self._assert_common_assets(plugin.installdir)
+
+    def test_build_with_missing_kernelversion(self):
+        self.options.kconfigfile = "config"
+        with open(self.options.kconfigfile, "w") as f:
+            f.write("ACCEPT=y\n")
+
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
+
+        self._simulate_build(plugin.sourcedir, plugin.builddir, plugin.installdir)
+        self.check_output_mock.return_value = b""
+
+        raised = self.assertRaises(ValueError, plugin.build)
+
+        self.assertThat(
+            str(raised), Equals("make kernelversion didn't produce any version")
+        )
+
+    def test_build_with_malformed_kernelversion(self):
+        self.options.kconfigfile = "config"
+        with open(self.options.kconfigfile, "w") as f:
+            f.write("ACCEPT=y\n")
+
+        plugin = kernel.KernelPlugin("test-part", self.options, self.project)
+
+        self._simulate_build(plugin.sourcedir, plugin.builddir, plugin.installdir)
+        self.check_output_mock.return_value = b"foobar"
+
+        raised = self.assertRaises(ValueError, plugin.build)
+
+        self.assertThat(str(raised), Equals("Malformed kernel_version: 'foobar'"))
 
     @mock.patch.object(snapcraft.ProjectOptions, "kernel_arch", new="not_arm")
     def test_build_verbose_with_kconfigfile(self):
@@ -1226,6 +1307,7 @@ ACCEPT=n
             ),
         )
         plugin = kernel.KernelPlugin("test-part", self.options, project)
+        plugin._set_kernel_targets()
 
         self.assertThat(plugin.make_targets, Equals(["Image", "modules", "dtbs"]))
 
@@ -1243,6 +1325,7 @@ ACCEPT=n
             ),
         )
         plugin = kernel.KernelPlugin("test-part", self.options, project)
+        plugin._set_kernel_targets()
 
         self.assertThat(plugin.make_targets, Equals(["Image", "modules", "dtbs"]))
 
@@ -1270,6 +1353,7 @@ ACCEPT=n
             ),
         )
         plugin = kernel.KernelPlugin("test-part", self.options, project)
+        plugin._set_kernel_targets()
 
         self.assertThat(plugin.make_targets, Equals(["bzImage", "modules", "dtbs"]))
 
@@ -1345,5 +1429,6 @@ class KernelPluginDefaulTargetsTestCase(unit.TestCase):
             ),
         )
         plugin = kernel.KernelPlugin("test-part", self.options, project)
+        plugin._set_kernel_targets()
 
         self.assertThat(plugin.kernel_image_target, Equals(self.expected))

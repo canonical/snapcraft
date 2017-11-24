@@ -59,6 +59,7 @@ The following kernel specific options are provided by this plugin:
 import glob
 import logging
 import os
+import re
 import shutil
 import subprocess
 import tempfile
@@ -212,10 +213,9 @@ class KernelPlugin(kbuild.KBuildPlugin):
         # We need to be able to shell out to modprobe
         self.build_packages.append("kmod")
 
-        self._set_kernel_targets()
-
         self.os_snap = os.path.join(self.sourcedir, "os.snap")
         self.kernel_release = ""
+        self.kernel_version = []
 
     def enable_cross_compilation(self):
         logger.info(
@@ -387,6 +387,25 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 )
             )
 
+    def _get_kernel_version(self):
+        kernelversion = (
+            subprocess.check_output("make kernelversion", shell=True, cwd=self.builddir)
+            .decode("utf-8")
+            .strip()
+        )
+        if not kernelversion:
+            raise ValueError("make kernelversion didn't produce any version")
+        try:
+            # Linux kernel version is composed of up to 4 elements: version,
+            # patchlevel, sublevel and extraversion - the first three elements
+            # are numbers, while the last one is a an arbitrary ascii
+            # string e.g. 4.18.3-rc6 => '4', '18', '3', 'rc6'
+            self.kernel_version = re.split("\W+", kernelversion)
+            for i in range(0, 3):
+                self.kernel_version[i] = int(self.kernel_version[i])
+        except Exception as e:
+            raise ValueError("Malformed kernel_version: {!r}".format(kernelversion))
+
     def _get_build_arch_dir(self):
         return os.path.join(self.builddir, "arch", self.project.kernel_arch, "boot")
 
@@ -511,6 +530,14 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def do_configure(self):
         super().do_configure()
+
+        self._get_kernel_version()
+        # linux >= 4.14 removed the 'firmware_install' target, hence
+        # skip it to avoid build breakage
+        if self.kernel_version[0] >= 4 and self.kernel_version[1] >= 14:
+            self.options.kernel_with_firmware = False
+
+        self._set_kernel_targets()
 
         builtin, modules = self._do_parse_config(self.get_config_path())
         self._do_check_config(builtin, modules)
