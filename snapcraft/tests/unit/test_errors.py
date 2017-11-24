@@ -26,7 +26,7 @@ class ErrorFormattingTestCase(unit.TestCase):
         ('MissingStateCleanError', {
             'exception': errors.MissingStateCleanError,
             'kwargs': {'step': 'test-step'},
-            'expected_message' : (
+            'expected_message': (
                 "Failed to clean: "
                 "Missing state for 'test-step'. "
                 "This won't work until a complete clean has occurred."
