@@ -23,6 +23,14 @@ from snapcraft.tests import unit
 class ErrorFormattingTestCase(unit.TestCase):
 
     scenarios = (
+        ('MissingStateCleanError', {
+            'exception': errors.MissingStateCleanError,
+            'kwargs': {'step': 'test-step'},
+            'expected_message' : (
+                "Failed to clean: "
+                "Missing state for 'test-step'. "
+                "This won't work until a complete clean has occurred."
+                )}),
         ('StepOutdatedError dependents', {
             'exception': errors.StepOutdatedError,
             'kwargs': {
@@ -67,14 +75,69 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "To continue, please clean that part's "
                 "'test-step' step by running:\n"
                 "snapcraft clean test-part -s test-step\n")}),
+        ('SnapcraftEnvironmentError', {
+            'exception': errors.SnapcraftEnvironmentError,
+            'kwargs': {'message': 'test-message'},
+            'expected_message': 'test-message'}),
+        ('ContainerError', {
+            'exception': errors.ContainerError,
+            'kwargs': {'message': 'test-message'},
+            'expected_message': 'test-message'}),
+        ('ContainerConnectionError', {
+            'exception': errors.ContainerConnectionError,
+            'kwargs': {'message': 'test-message'},
+            'expected_message': (
+                'test-message\n'
+                'Refer to the documentation at '
+                'https://linuxcontainers.org/lxd/getting-started-cli.')}),
+        ('ContainerRunError string', {
+            'exception': errors.ContainerRunError,
+            'kwargs': {
+                'command': 'test-command',
+                'exit_code': '1'
+            },
+            'expected_message': (
+                "The following command failed to run: "
+                "'test-command' exited with 1\n")}),
+        ('ContainerRunError list', {
+            'exception': errors.ContainerRunError,
+            'kwargs': {
+                'command': ['test-command', 'test-argument'],
+                'exit_code': '1'
+            },
+            'expected_message': (
+                "The following command failed to run: "
+                "'test-command test-argument' exited with 1\n")}),
+        ('ContainerSnapcraftCmdError string', {
+            'exception': errors.ContainerSnapcraftCmdError,
+            'kwargs': {
+                'command': 'test-command',
+                'exit_code': '1'
+            },
+            'expected_message': (
+                "Snapcraft command failed in the container: "
+                "'test-command' exited with 1\n")}),
+        ('ContainerSnapcraftCmdError list', {
+            'exception': errors.ContainerSnapcraftCmdError,
+            'kwargs': {
+                'command': ['test-command', 'test-argument'],
+                'exit_code': '1'
+            },
+            'expected_message': (
+                "Snapcraft command failed in the container: "
+                "'test-command test-argument' exited with 1\n")}),
+        ('SnapdError', {
+            'exception': errors.SnapdError,
+            'kwargs': {'message': 'test-message'},
+            'expected_message': 'test-message'}),
         ('PrimeFileConflictError', {
             'exception': errors.PrimeFileConflictError,
-            'kwargs': {'fileset': {'test-file': 'test-value'}},
+            'kwargs': {'fileset': {'test-file'}},
             'expected_message': (
                 "Failed to filter files: "
                 "The following files have been excluded by the `stage` "
                 "keyword, but included by the `prime` keyword: "
-                "{'test-file': 'test-value'}. "
+                "{'test-file'}. "
                 "Edit the `snapcraft.yaml` to make sure that the files "
                 "included in `prime` are also included in `stage`.")}),
         ('InvalidAppCommandError', {
@@ -95,6 +158,16 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "'test-remote' is not a valid name.\n"
                 "Use a LXD remote without colons, spaces and slashes in the "
                 "name.\n")}),
+
+        ('InvalidDesktopFileError', {
+            'exception': errors.InvalidDesktopFileError,
+            'kwargs': {
+                'filename': 'test-file',
+                'message': 'test-message'
+            },
+            'expected_message': (
+                "Failed to generate desktop file: "
+                "Invalid desktop file 'test-file': test-message.")}),
         ('SnapcraftPartMissingError', {
             'exception': errors.SnapcraftPartMissingError,
             'kwargs': {'part_name': 'test-part'},
@@ -118,6 +191,69 @@ class ErrorFormattingTestCase(unit.TestCase):
             'exception': errors.PluginError,
             'kwargs': {'message': 'test-message'},
             'expected_message': 'Failed to load plugin: test-message'}),
+        ('SnapcraftPartConflictError', {
+            'exception': errors.SnapcraftPartConflictError,
+            'kwargs': {
+                'part_name': 'test-part',
+                'other_part_name': 'test-other-part',
+                'conflict_files': ('test-file1', 'test-file2')
+            },
+            'expected_message': (
+                "Failed to stage: "
+                "Parts 'test-other-part' and 'test-part' have the following "
+                "files, but with different contents:\n"
+                "    test-file1\n"
+                "    test-file2\n"
+                "\n"
+                "Snapcraft offers some capabilities to solve this by use of "
+                "the following keywords:\n"
+                "    - `filesets`\n"
+                "    - `stage`\n"
+                "    - `snap`\n"
+                "    - `organize`\n"
+                "\n"
+                "Learn more about these part keywords by running "
+                "`snapcraft help plugins`")}),
+        ('MissingCommandError', {
+            'exception': errors.MissingCommandError,
+            'kwargs': {
+                'required_commands': ['test-command1', 'test-command2']},
+            'expected_message': (
+                "Failed to run command: "
+                "One or more packages are missing, please install:"
+                " ['test-command1', 'test-command2']")}),
+        ('InvalidWikiEntryError', {
+            'exception': errors.InvalidWikiEntryError,
+            'kwargs': {'error': 'test-error'},
+            'expected_message': "Invalid wiki entry: 'test-error'"}),
+        ('PluginOutdatedError', {
+            'exception': errors.PluginOutdatedError,
+            'kwargs': {'message': 'test-message'},
+            'expected_message': 'This plugin is outdated: test-message'}),
+        ('RequiredCommandFailure', {
+            'exception': errors.RequiredCommandFailure,
+            'kwargs': {'command': 'test-command'},
+            'expected_message': "'test-command' failed."}),
+        ('RequiredCommandNotFound', {
+            'exception': errors.RequiredCommandNotFound,
+            'kwargs': {'cmd_list': ['test-command', 'test-argument']},
+            'expected_message': "'test-command' not found."}),
+        ('RequiredPathDoesNotExist', {
+            'exception': errors.RequiredPathDoesNotExist,
+            'kwargs': {'path': 'test-path'},
+            'expected_message': "Required path does not exist: 'test-path'"}),
+        ('SnapcraftPathEntryError', {
+            'exception': errors.SnapcraftPathEntryError,
+            'kwargs': {
+                'value': 'test-path',
+                'key': 'test-key',
+                'app': 'test-app'
+            },
+            'expected_message': (
+                "Failed to generate snap metadata: "
+                "The path 'test-path' set for 'test-key' in 'test-app' does "
+                "not exist. Make sure that the files are in the `prime` "
+                "directory.")}),
         ('InvalidPullPropertiesError', {
             'exception': errors.InvalidPullPropertiesError,
             'kwargs': {
@@ -136,8 +272,8 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "Failed to load plugin: "
                 "Invalid build properties specified by 'test-plugin' plugin: "
                 "['test-property1', 'test-property2']")}),
-        (' StagePackageDownloadError', {
-            'exception': errors. StagePackageDownloadError,
+        ('StagePackageDownloadError', {
+            'exception': errors.StagePackageDownloadError,
             'kwargs': {
                 'part_name': 'test-part',
                 'message': 'test-message'
@@ -145,7 +281,12 @@ class ErrorFormattingTestCase(unit.TestCase):
             'expected_message': (
                 "Failed to fetch stage packages: "
                 "Error downloading packages for part "
-                "'test-part': test-message.")})
+                "'test-part': test-message.")}),
+        ('InvalidContainerImageInfoError', {
+            'exception': errors.InvalidContainerImageInfoError,
+            'kwargs': {'image_info': 'test-image-info'},
+            'expected_message': (
+                'Error parsing the container image info: test-image-info')})
     )
 
     def test_error_formatting(self):
