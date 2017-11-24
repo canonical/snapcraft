@@ -39,7 +39,7 @@ class SnapcraftError(Exception):
 
 class MissingStateCleanError(SnapcraftError):
     fmt = (
-        "Failed to clean step: "
+        "Failed to clean: "
         "Missing state for {step!r}. "
         "This won't work until a complete clean has occurred."
     )
@@ -241,7 +241,7 @@ class PluginError(SnapcraftError):
 class SnapcraftPartConflictError(SnapcraftError):
 
     fmt = (
-        'Failed to run stage step: '
+        'Failed to stage: '
         'Parts {other_part_name!r} and {part_name!r} have the following '
         'files, but with different contents:\n'
         '{file_paths}\n\n'
