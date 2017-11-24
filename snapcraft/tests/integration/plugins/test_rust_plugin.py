@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import re
 import subprocess
 
 import fixtures
@@ -122,19 +121,19 @@ class RustPluginConfinementTestCase(testscenarios.WithScenarios,
         with open(snapcraft_yaml_file, 'w') as f:
             yaml.dump(snapcraft_yaml, f)
 
-    def test_build(self):
+    def test_prime(self):
         self.useFixture(fixtures.EnvironmentVariable(
                 'SNAPCRAFT_SETUP_CORE', '1'))
         self.copy_project_to_cwd('rust-hello')
         self._set_confinement('snapcraft.yaml')
 
-        self.run_snapcraft('build')
+        self.run_snapcraft('prime')
 
-        binary = os.path.join(self.parts_dir, 'rust-hello', 'install',
-                              'bin', 'rust-hello')
-        output = subprocess.check_output(['readelf', '--program', binary])
-        output = output.decode('utf-8')
+        bin_path = os.path.join(self.parts_dir, 'rust-hello', 'install',
+                                'bin', 'rust-hello')
 
-        expected = '.*Requesting program interpreter: {}.*'.format(
-            self.startswith)
-        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
+        interpreter = subprocess.check_output([
+            'patchelf', '--print-interpreter', bin_path]).decode()
+
+        expected_interpreter = r'^{}.*'.format(self.startswith)
+        self.assertThat(interpreter, MatchesRegex(expected_interpreter))

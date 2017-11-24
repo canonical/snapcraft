@@ -25,6 +25,7 @@ from testtools.matchers import (
     Equals,
     FileContains,
     FileExists,
+    MatchesRegex,
     Not,
 )
 
@@ -63,7 +64,8 @@ class PrimeTestCase(integration.TestCase):
 
         interpreter = subprocess.check_output([
             'patchelf', '--print-interpreter', bin_path]).decode()
-        self.assertThat(interpreter, Contains('/snap/core/current'))
+        expected_interpreter = r'^{}.*'.format(self.startswith)
+        self.assertThat(interpreter, MatchesRegex(expected_interpreter))
 
     def test_prime_includes_stage_fileset(self):
         self.run_snapcraft('prime', 'prime-from-stage')

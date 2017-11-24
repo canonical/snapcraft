@@ -108,6 +108,7 @@ class StageTestCase(integration.TestCase):
         bin_path = os.path.join(self.stage_dir, 'bin', 'hello-classic')
         self.assertThat(bin_path, FileExists())
 
+        # ld-linux will not be set until everything is primed.
         interpreter = subprocess.check_output([
             'patchelf', '--print-interpreter', bin_path]).decode()
         self.assertThat(interpreter, Not(Contains('/snap/core/current')))
