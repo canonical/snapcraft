@@ -134,6 +134,5 @@ class RustPluginConfinementTestCase(testscenarios.WithScenarios,
 
         interpreter = subprocess.check_output([
             'patchelf', '--print-interpreter', bin_path]).decode()
-
         expected_interpreter = r'^{}.*'.format(self.startswith)
         self.assertThat(interpreter, MatchesRegex(expected_interpreter))
