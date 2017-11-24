@@ -64,7 +64,7 @@ class PrimeTestCase(integration.TestCase):
 
         interpreter = subprocess.check_output([
             'patchelf', '--print-interpreter', bin_path]).decode()
-        expected_interpreter = r'^{}.*'.format(self.startswith)
+        expected_interpreter = r'^/snap/core/current/.*'
         self.assertThat(interpreter, MatchesRegex(expected_interpreter))
 
     def test_prime_includes_stage_fileset(self):
