@@ -141,7 +141,8 @@ class PythonPlugin(snapcraft.BasePlugin):
         elif self.options.python_version == 'python2':
             return ['python']
 
-    @property
+    # ignore mypy error: Read-only property cannot override read-write property
+    @property  # type: ignore
     def stage_packages(self):
         try:
             _python.get_python_command(
