@@ -20,7 +20,7 @@ import logging
 import os
 import subprocess
 import sys
-from typing import List, Set, Sequence, FrozenSet
+from typing import FrozenSet, List, Set, Sequence
 
 import magic
 
@@ -33,6 +33,69 @@ from snapcraft.internal import (
 
 
 logger = logging.getLogger(__name__)
+
+
+class ElfFile:
+    """ElfFile represents and elf file on a path and its attributes."""
+
+    def __init__(self, *, path: str, is_executable: bool) -> None:
+        """Initialize an ElfFile instance.
+
+        :param str path: path to an elf_file within a snapcraft project.
+        :param bool is_executable: True if the elf_file is an executable,
+                                   meaning that it has in .interp entry
+                                   in its headers.
+        """
+        self.path = path
+        self.is_executable = is_executable
+
+
+class Patcher:
+    """Patcher holds the necessary logic to patch elf files."""
+
+    def __init__(self, *, dynamic_linker: str) -> None:
+        """Create a Patcher instance.
+
+        :param str dynamic_linker: the path to the dynamic linker to set the
+                                   elf file to.
+        """
+        self._dynamic_linker = dynamic_linker
+
+        # If we are running from the snap we want to use the patchelf
+        # bundled there as it would have the capabilty of working
+        # anywhere given the fixed ld it would have.
+        # If not found, resort to whatever is on the system brought
+        # in by packaging dependencies.
+        if common.is_snap():
+            snap_dir = os.getenv('SNAP')
+            self._patchelf_cmd = os.path.join(snap_dir, 'bin', 'patchelf')
+        else:
+            self._patchelf_cmd = 'patchelf'
+
+    def patch(self, *, elf_file: ElfFile) -> None:
+        """Patch elf_file with the Patcher instance configuration.
+
+        If the ELF is executable, patch it to use the configured linker.
+
+        :param ElfFile elf: a data object representing an elf file and its
+                            relevant attributes.
+        :raises snapcraft.internal.errors.PatcherError:
+            raised when the elf_file cannot be patched.
+        """
+        # When setting rpath for libraries is implemented, we will do more
+        # here.
+        if not elf_file.is_executable:
+            return
+        try:
+            subprocess.check_call([self._patchelf_cmd,
+                                   '--set-interpreter',  self._dynamic_linker,
+                                   elf_file.path])
+        # There is no need to catch FileNotFoundError as patchelf should be
+        # bundled with snapcraft which means its lack of existence is a
+        # "packager" error.
+        except subprocess.CalledProcessError as call_error:
+            raise errors.PatcherError(elf_file=elf_file.path,
+                                      message=str(call_error))
 
 
 def determine_ld_library_path(root: str) -> List[str]:
@@ -135,19 +198,19 @@ def get_dependencies(elf: str) -> Set[str]:
     return libs
 
 
-def get_elf_files(root: str, file_list: Sequence[str]) -> FrozenSet[str]:
+def get_elf_files(root: str,
+                  file_list: Sequence[str]) -> FrozenSet[ElfFile]:
     """Return a frozenset of elf files from file_list prepended with root.
 
     :param str root: the root directory from where the file_list is generated.
     :param file_list: a list of file in root.
-    :returns: a frozentset of strings representing paths of valid elf files
-              found in root from file_list.
+    :returns: a frozentset of ElfFile objects.
     """
     ms = magic.open(magic.NONE)
     if ms.load() != 0:
         raise RuntimeError('Cannot load magic header detection')
 
-    elf_files = set()
+    elf_files = set()  # type: Set[ElfFile]
 
     fs_encoding = sys.getfilesystemencoding()
 
@@ -169,6 +232,7 @@ def get_elf_files(root: str, file_list: Sequence[str]) -> FrozenSet[str]:
         # for an ldd call.
         file_m = ms.file(path_b)
         if file_m.startswith('ELF') and 'dynamically linked' in file_m:
-            elf_files.add(path)
+            is_executable = 'interpreter' in file_m
+            elf_files.add(ElfFile(path=path, is_executable=is_executable))
 
     return frozenset(elf_files)

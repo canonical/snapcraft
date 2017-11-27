@@ -8,6 +8,7 @@ Build-Depends: bash-completion,
                dh-python,
                git,
                mercurial,
+               patchelf,
                pkg-config,
                python3 (>= 3.4),
                python3-apt,
@@ -46,7 +47,8 @@ Standards-Version: 3.9.8
 
 Package: snapcraft
 Architecture: all
-Depends: python3-apt,
+Depends: patchelf,
+         python3-apt,
          python3-debian,
          python3-click,
          python3-jsonschema,
