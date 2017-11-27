@@ -66,8 +66,6 @@ class RegisterKeyTestCase(CommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
-            'Login successful.'))
-        self.assertThat(result.output, Contains(
             'Registering key ...'))
         self.assertThat(result.output, Contains(
             'Done. The key "default" ({}) may be used to sign your '
@@ -158,7 +156,7 @@ class RegisterKeyTestCase(CommandBaseTestCase):
             'Cannot continue without logging in successfully.'))
         self.assertThat(mock_input.call_count, Equals(1))
 
-    @mock.patch('snapcraft._store._login')
+    @mock.patch('snapcraft._store.login')
     @mock.patch.object(storeapi.SCAClient, 'register_key')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')

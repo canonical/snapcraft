@@ -446,7 +446,6 @@ class StoreTestCase(TestCase):
         if expect_success:
             process.expect_exact(
                 'We strongly recommend enabling multi-factor authentication:')
-            process.expect_exact('Login successful.')
             process.expect(
                 r'Done\. The key "{}" .* may be used to sign your '
                 r'assertions\.'.format(key_name))

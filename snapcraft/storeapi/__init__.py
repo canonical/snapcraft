@@ -23,6 +23,7 @@ import os
 import urllib.parse
 from time import sleep
 from threading import Thread
+from typing import Iterable
 from queue import Queue
 
 from progressbar import (
@@ -135,7 +136,7 @@ class Client():
 class StoreClient():
     """High-level client for the V2.0 API SCA resources."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.conf = config.Config()
         self.sso = SSOClient(self.conf)
@@ -143,8 +144,9 @@ class StoreClient():
         self.updown = UpDownClient(self.conf)
         self.sca = SCAClient(self.conf)
 
-    def login(self, email, password, one_time_password=None, acls=None,
-              packages=None, channels=None, save=True):
+    def login(self, email: str, password: str, one_time_password: str = None,
+              acls: Iterable[str] = None, packages: Iterable[str] = None,
+              channels: Iterable[str] = None, save: bool = True) -> None:
         """Log in via the Ubuntu One SSO API."""
         if acls is None:
             acls = ['package_upload', 'package_access', 'package_manage']
