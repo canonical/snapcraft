@@ -61,15 +61,15 @@ class PluginHandler:
 
     def __init__(self, *, plugin, part_properties, project_options,
                  part_schema, definitions_schema, stage_packages_repo,
-                 grammar_processor):
+                 grammar_processor, confinement):
         self.valid = False
         self.plugin = plugin
-        self.config = {}
         self._part_properties = _expand_part_properties(
             part_properties, part_schema)
         self.stage_packages = []
         self._stage_packages_repo = stage_packages_repo
         self._grammar_processor = grammar_processor
+        self._confinement = confinement
 
         self._project_options = project_options
         self.deps = []
@@ -435,7 +435,7 @@ class PluginHandler:
 
         self.mark_cleaned('stage')
 
-    def prime(self, force=False):
+    def prime(self, force=False) -> None:
         self.makedirs()
         self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
@@ -444,7 +444,7 @@ class PluginHandler:
         elf_files = elf.get_elf_files(self.primedir, snap_files)
         dependencies = set()
         for elf_file in elf_files:
-            dependencies.update(elf.get_dependencies(elf_file))
+            dependencies.update(elf.get_dependencies(elf_file.path))
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
@@ -469,6 +469,12 @@ class PluginHandler:
                 # dependencies.
                 _migrate_files(system, system_dependency_paths, '/',
                                self.primedir, follow_symlinks=True)
+
+        if self._confinement == 'classic':
+            dynamic_linker = self._project_options.get_core_dynamic_linker()
+            elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker)
+            for elf_file in elf_files:
+                elf_patcher.patch(elf_file=elf_file)
 
         self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
 

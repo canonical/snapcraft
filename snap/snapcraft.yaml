@@ -52,6 +52,12 @@ parts:
         LIBSODIUM=$(readlink -n $TRIPLET_PATH/libsodium.so.18)
         ln -s $LIBSODIUM $TRIPLET_PATH/libsodium.so
     after: [python, apt]
+  patchelf:
+    source: https://launchpad.net/ubuntu/+archive/primary/+files/patchelf_0.9.orig.tar.gz
+    source-checksum: sha256/f2aa40a6148cb3b0ca807a1bf836b081793e55ec9e5540a5356d800132be7e0a
+    plugin: autotools
+    stage:
+        - bin/patchelf
   python:
     source: https://www.python.org/ftp/python/3.6.0/Python-3.6.0.tar.xz
     plugin: autotools

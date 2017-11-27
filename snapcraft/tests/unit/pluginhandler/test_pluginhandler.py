@@ -33,6 +33,7 @@ import snapcraft
 from . import mocks
 from snapcraft.internal import (
     common,
+    elf,
     errors,
     lifecycle,
     pluginhandler,
@@ -1136,8 +1137,10 @@ class StateTestCase(StateBaseTestCase):
             '{}/lib2/staged'.format(self.handler.stagedir),
         }
         self.get_elf_files_mock.return_value = frozenset([
-            os.path.join(self.handler.primedir, 'bin', '1'),
-            os.path.join(self.handler.primedir, 'bin', '2'),
+            elf.ElfFile(path=os.path.join(self.handler.primedir, 'bin', '1'),
+                        is_executable=True),
+            elf.ElfFile(path=os.path.join(self.handler.primedir, 'bin', '2'),
+                        is_executable=True),
         ])
         self.assertThat(self.handler.last_step(), Equals(None))
 
@@ -1191,7 +1194,9 @@ class StateTestCase(StateBaseTestCase):
         })
 
         self.get_elf_files_mock.return_value = frozenset([
-            os.path.join(self.handler.primedir, 'bin', 'file')])
+            elf.ElfFile(
+                path=os.path.join(self.handler.primedir, 'bin', 'file'),
+                is_executable=True)])
         # Pretend we found a system dependency, as well as a part and stage
         # dependency.
         mock_get_dependencies.return_value = set([
@@ -1234,8 +1239,8 @@ class StateTestCase(StateBaseTestCase):
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_with_shadowed_dependencies(self, mock_migrate_files,
                                                     mock_get_dependencies):
-        self.get_elf_files_mock.return_value = frozenset(['bin/1'])
-
+        self.get_elf_files_mock.return_value = frozenset([
+            elf.ElfFile(path='bin/1', is_executable=True)])
         self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')

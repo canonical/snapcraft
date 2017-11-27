@@ -167,7 +167,8 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
                                 step, part_name))
 
     def load_part(self, part_name, plugin_name=None, part_properties=None,
-                  project_options=None, stage_packages_repo=None):
+                  project_options=None, stage_packages_repo=None,
+                  confinement='strict'):
         if not plugin_name:
             plugin_name = 'nil'
         properties = {'plugin': plugin_name}
@@ -202,7 +203,8 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             part_schema=schema,
             definitions_schema=definitions_schema,
             grammar_processor=grammar_processor,
-            stage_packages_repo=stage_packages_repo)
+            stage_packages_repo=stage_packages_repo,
+            confinement=confinement)
 
 
 class TestWithFakeRemoteParts(TestCase):

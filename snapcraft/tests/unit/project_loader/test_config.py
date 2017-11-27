@@ -1721,7 +1721,6 @@ parts:
         environment = config.stage_env()
         self.assertIn(
             'LDFLAGS="$LDFLAGS '
-            '-Wl,--dynamic-linker={core_dynamic_linker} '
             '-Wl,-rpath,'
             '/snap/test/current/lib:'
             '/snap/test/current/usr/lib:'
@@ -1731,7 +1730,6 @@ parts:
             '/snap/core/current/usr/lib:'
             '/snap/core/current/lib/{arch_triplet}:'
             '/snap/core/current/usr/lib/{arch_triplet}"'.format(
-                core_dynamic_linker=dynamic_linker,
                 arch_triplet=self.arch_triplet),
             environment)
 
