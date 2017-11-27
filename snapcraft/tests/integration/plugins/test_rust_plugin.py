@@ -129,8 +129,7 @@ class RustPluginConfinementTestCase(testscenarios.WithScenarios,
 
         self.run_snapcraft('prime')
 
-        bin_path = os.path.join(self.parts_dir, 'rust-hello', 'install',
-                                'bin', 'rust-hello')
+        bin_path = os.path.join('prime', 'bin', 'rust-hello')
 
         interpreter = subprocess.check_output([
             'patchelf', '--print-interpreter', bin_path]).decode()
