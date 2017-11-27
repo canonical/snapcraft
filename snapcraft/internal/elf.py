@@ -75,13 +75,10 @@ class Patcher:
     def patch(self, *, elf_file: ElfFile) -> None:
         """Patch elf_file with the Patcher instance configuration.
 
-        patch will to the right thing with regards to the different types
-        of elf files.
+        If the ELF is executable, patch it to use the configured linker.
 
-        :param str elf_file: path to the elf_file to patch.
-        :param dict elf_properties:
-            properties of the elf file. The property list is as follows:
-                * executable: boolean stating if elf_file is executable.
+        :param ElfFile elf: a data object representing an elf file and its
+                            relevant attributes.
         :raises snapcraft.internal.errors.PatcherError:
             raised when the elf_file cannot be patched.
         """
