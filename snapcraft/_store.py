@@ -387,7 +387,7 @@ def push_metadata(snap_filename, force):
     If force=True it will force the local metadata into the Store,
     ignoring any possible conflict.
     """
-    logger.info("Pushing metadata to the Store (force=%s)", force)
+    logger.debug("Pushing metadata to the Store (force=%s)", force)
 
     # get the metadata from the snap
     snap_yaml = _get_data_from_snap_file(snap_filename)

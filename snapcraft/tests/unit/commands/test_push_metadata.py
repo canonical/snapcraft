@@ -17,7 +17,7 @@
 import os
 from unittest import mock
 
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Contains, Equals, Not
 
 from snapcraft import storeapi, tests
 from snapcraft.storeapi.errors import StorePushError
@@ -59,6 +59,35 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         # push metadata
         with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
             result = self.run_command(['push-metadata', self.snap_file])
+        self.assertThat(result.exit_code, Equals(0))
+
+        self.assertThat(result.output, Not(Contains(
+            "Pushing metadata to the Store (force=False)")))
+        self.assertThat(result.output, Contains(
+            "The metadata has been pushed"))
+        metadata = {
+            'description': 'Description of the most simple snap', 'summary':
+            'Summary of the most simple snap',
+        }
+        self.mock_metadata.assert_called_once_with('basic', metadata, False)
+
+    def test_simple_debug(self):
+        mock_tracker = mock.Mock(storeapi.StatusTracker)
+        mock_tracker.track.return_value = {
+            'code': 'ready_to_release',
+            'processed': True,
+            'can_release': True,
+            'url': '/fake/url',
+            'revision': 9,
+        }
+        patcher = mock.patch.object(storeapi.StoreClient, 'push_metadata')
+        self.mock_metadata = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        # push metadata
+        with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
+            result = self.run_command(
+                ['--debug', 'push-metadata', self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
         self.assertThat(result.output, Contains(
@@ -108,7 +137,8 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.mock_metadata = patcher.start()
         self.addCleanup(patcher.stop)
 
-        result = self.run_command(['push-metadata', self.snap_file, '--force'])
+        result = self.run_command(
+            ['--debug', 'push-metadata', self.snap_file, '--force'])
 
         self.assertThat(result.output, Contains(
             "Pushing metadata to the Store (force=True)"))
