@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -44,10 +44,6 @@ class PushCommandBaseTestCase(CommandBaseTestCase):
         self.snap_file = os.path.join(
             os.path.dirname(tests.__file__), 'data',
             'test-snap.snap')
-
-        patcher = mock.patch.object(storeapi.StoreClient, 'update_metadata')
-        self.mock_metadata = patcher.start()
-        self.addCleanup(patcher.stop)
 
 
 class PushCommandTestCase(PushCommandBaseTestCase):
@@ -203,14 +199,6 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         mock_upload.assert_called_once_with('basic', self.snap_file)
         mock_release.assert_called_once_with('basic', 9, ['beta'])
 
-        self.assertThat(result.output, Contains(
-            "The metadata has been updated"))
-        metadata = {
-            'description': 'Description of the most simple snap', 'summary':
-            'Summary of the most simple snap',
-        }
-        self.mock_metadata.assert_called_once_with('basic', metadata, False)
-
     def test_push_and_release_a_snap_to_N_channels(self):
         mock_tracker = mock.Mock(storeapi.StatusTracker)
         mock_tracker.track.return_value = {
@@ -262,54 +250,6 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         mock_upload.assert_called_once_with('basic', self.snap_file)
         mock_release.assert_called_once_with('basic', 9,
                                              ['edge', 'beta', 'candidate'])
-
-    def test_push_only_metadata_simple(self):
-        patcher = mock.patch.object(storeapi.StoreClient, 'upload')
-        mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        result = self.run_command(['push', self.snap_file, '--only-metadata'])
-
-        mock_upload.assert_not_called()
-
-        self.assertThat(result.output, Contains(
-            "Updating metadata in the Store (force=False)"))
-        self.assertThat(result.output, Contains(
-            "The metadata has been updated"))
-        metadata = {
-            'description': 'Description of the most simple snap', 'summary':
-            'Summary of the most simple snap',
-        }
-        self.mock_metadata.assert_called_once_with('basic', metadata, False)
-
-    def test_push_only_metadata_forced(self):
-        patcher = mock.patch.object(storeapi.StoreClient, 'upload')
-        mock_upload = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        result = self.run_command(
-            ['push', self.snap_file, '--only-metadata', '--force-metadata'])
-
-        mock_upload.assert_not_called()
-
-        self.assertThat(result.output, Contains(
-            "Updating metadata in the Store (force=True)"))
-        self.assertThat(result.output, Contains(
-            "The metadata has been updated"))
-        metadata = {
-            'description': 'Description of the most simple snap', 'summary':
-            'Summary of the most simple snap',
-        }
-        self.mock_metadata.assert_called_once_with('basic', metadata, True)
-
-    def test_metadata_release_mutually_excluded(self):
-        result = self.run_command(
-            ['push', self.snap_file, '--only-metadata', '--release', 'beta'])
-
-        self.assertThat(result.exit_code, Equals(2))
-        self.assertThat(result.output, Contains('Usage:'))
-        self.assertThat(result.output, Contains(
-            "--only-metadata and --release are mutually exclusive"))
 
 
 class PushCommandDeltasTestCase(PushCommandBaseTestCase):

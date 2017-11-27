@@ -401,7 +401,7 @@ class StoreMetadataError(StoreError):
             conflicts = [(error['extra']['name'], error)
                          for error in response_json['error_list']
                          if error['code'] == 'conflict']
-            parts = ["Metadata not updated!"]
+            parts = ["Metadata not pushed!"]
             for field_name, error in sorted(conflicts):
                 sent = metadata.get(field_name)
                 parts.extend((
@@ -410,8 +410,8 @@ class StoreMetadataError(StoreError):
                     "    In the Store:      {!r}".format(error['message']),
                 ))
             parts.append(
-                "You can repeat the push with --only-metadata and "
-                "--force-metadata to force the local values into the Store")
+                "You can repeat the push-metadata command with "
+                "--force to force the local values into the Store")
             self.fmt = "\n".join(parts)
         elif 'error_list' in response_json:
             response_json['text'] = response_json['error_list'][0]['message']

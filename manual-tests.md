@@ -220,14 +220,14 @@
 # Test push metadata with conflicts
 
 1. 'snapcraft build' a simple snap
-2. Do a simple 'snap push'
+2. Do a simple 'snapcraft push SNAP'
 3. Go to the Web and change snap's description
 4. Change the snap's description in the YAML file to something different than you put in the Web
-5. Try to update snap's metadata using `--only-metadata` option in the push
+5. Try to update snap's metadata doing `snapcraft push-metadata SNAP`
 
     * Check that it should error with "conflict" on the description field
 
-6. Force the update using both `--only-metadata` and `--force-metadata` options in the push
+6. Force the update doing `snapcraft push-metadata SNAP --force`
 
     * Check that it should end ok
     * Check in the Web that the description is now what the YAML says
