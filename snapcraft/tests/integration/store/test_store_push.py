@@ -19,7 +19,6 @@ import re
 import subprocess
 
 from testtools.matchers import (
-    Contains,
     FileExists,
     MatchesRegex,
 )
