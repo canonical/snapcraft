@@ -31,7 +31,7 @@ class PushMetadataTestCase(integration.StoreTestCase):
 
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, ['push', snap_file_path])
+            self.run_snapcraft, ['push-metadata', snap_file_path])
         self.assertIn('No valid credentials found. Have you run "snapcraft '
                       'login"?', str(error.output))
 
@@ -54,6 +54,9 @@ class PushMetadataTestCase(integration.StoreTestCase):
         # Push the snap
         snap_file_path = '{}_{}_{}.snap'.format(name, version, 'all')
         self.assertThat(os.path.join(snap_file_path), FileExists())
+        output = self.run_snapcraft(['push', snap_file_path])
+
+        # Now push the metadata
         output = self.run_snapcraft(['push-metadata', snap_file_path])
         expected = "Pushing metadata to the Store (force=False)"
         self.assertThat(output, Contains(expected))
