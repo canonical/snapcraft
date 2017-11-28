@@ -721,6 +721,7 @@ class UploadTestCase(StoreTestCase):
 
     def test_upload_snap(self):
         self.client.login('dummy', 'test correct password')
+        self.client.register('test-snap')
         tracker = self.client.upload('test-snap', self.snap_path)
         self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
         result = tracker.track()
@@ -738,6 +739,7 @@ class UploadTestCase(StoreTestCase):
 
     def test_upload_refreshes_macaroon(self):
         self.client.login('dummy', 'test correct password')
+        self.client.register('test-snap')
         self.fake_store.needs_refresh = True
         tracker = self.client.upload('test-snap', self.snap_path)
         result = tracker.track()
@@ -773,6 +775,7 @@ class UploadTestCase(StoreTestCase):
 
     def test_upload_snap_requires_review(self):
         self.client.login('dummy', 'test correct password')
+        self.client.register('test-review-snap')
         tracker = self.client.upload('test-review-snap', self.snap_path)
         self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
         result = tracker.track()
@@ -791,6 +794,7 @@ class UploadTestCase(StoreTestCase):
 
     def test_upload_duplicate_snap(self):
         self.client.login('dummy', 'test correct password')
+        self.client.register('test-duplicate-snap')
         tracker = self.client.upload('test-duplicate-snap', self.snap_path)
         self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
         result = tracker.track()
@@ -1327,20 +1331,32 @@ class PushMetadataTestCase(StoreTestCase):
         self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
         self.useFixture(self.fake_logger)
 
+    def _setup_snap(self):
+        """Login, register and push a snap.
+
+        These are all the previous steps needed to push metadata.
+        """
+        self.client.login('dummy', 'test correct password')
+        self.client.register('basic')
+        path = os.path.join(
+            os.path.dirname(tests.__file__), 'data', 'test-snap.snap')
+        tracker = self.client.upload('basic', path)
+        tracker.track()
+
     def test_requires_login(self):
         self.assertRaises(
             errors.InvalidCredentialsError,
             self.client.push_metadata, 'basic', {}, False)
 
     def test_refreshes_macaroon(self):
-        self.client.login('dummy', 'test correct password')
+        self._setup_snap()
         self.fake_store.needs_refresh = True
         metadata = {'field_ok': 'foo'}
         self.client.push_metadata('basic', metadata, False)
         self.assertFalse(self.fake_store.needs_refresh)
 
     def test_invalid_data(self):
-        self.client.login('dummy', 'test correct password')
+        self._setup_snap()
         metadata = {'invalid': 'foo'}
         raised = self.assertRaises(
             errors.StoreMetadataError,
@@ -1349,13 +1365,13 @@ class PushMetadataTestCase(StoreTestCase):
             "Received 400: 'Invalid field: invalid'"))
 
     def test_all_ok(self):
-        self.client.login('dummy', 'test correct password')
+        self._setup_snap()
         metadata = {'field_ok': 'foo'}
         result = self.client.push_metadata('basic', metadata, False)
         self.assertIsNone(result)
 
     def test_conflicting_simple_normal(self):
-        self.client.login('dummy', 'test correct password')
+        self._setup_snap()
         metadata = {'test-conflict': 'value'}
         raised = self.assertRaises(
             errors.StoreMetadataError,
@@ -1370,7 +1386,7 @@ class PushMetadataTestCase(StoreTestCase):
         self.assertThat(str(raised), Equals(dedent(should).strip()))
 
     def test_conflicting_multiple_normal(self):
-        self.client.login('dummy', 'test correct password')
+        self._setup_snap()
         metadata = {'test-conflict-1': 'value-1', 'test-conflict-2': 'value-2'}
         raised = self.assertRaises(
             errors.StoreMetadataError,
@@ -1388,7 +1404,7 @@ class PushMetadataTestCase(StoreTestCase):
         self.assertThat(str(raised), Equals(dedent(should).strip()))
 
     def test_conflicting_force(self):
-        self.client.login('dummy', 'test correct password')
+        self._setup_snap()
         metadata = {'test-conflict': 'value'}
         # force the update, even on conflicts!
         result = self.client.push_metadata('basic', metadata, True)
