@@ -24,10 +24,21 @@ from snapcraft.tests import integration
 
 class PushMetadataTestCase(integration.StoreTestCase):
 
+    def _build_snap(self):
+        """Build a snap file and return its name and path."""
+        name = self.get_unique_name()
+        version = self.get_unique_version()
+        self.copy_project_to_cwd('basic')
+        self.update_name_and_version(name, version)
+
+        self.run_snapcraft('snap')
+
+        snap_file_path = '{}_{}_{}.snap'.format(name, version, 'all')
+        self.assertThat(os.path.join(snap_file_path), FileExists())
+        return name, snap_file_path
+
     def test_without_login(self):
-        self.run_snapcraft('snap', 'basic')
-        snap_file_path = 'basic_0.1_{}.snap'.format('all')
-        self.assertThat(snap_file_path, FileExists())
+        _, snap_file_path = self._build_snap()
 
         error = self.assertRaises(
             subprocess.CalledProcessError,
@@ -36,24 +47,14 @@ class PushMetadataTestCase(integration.StoreTestCase):
                       'login"?', str(error.output))
 
     def test_with_login(self):
-        # Make a snap
         self.addCleanup(self.logout)
         self.login()
 
-        # Change to a random name and version.
-        name = self.get_unique_name()
-        version = self.get_unique_version()
-        self.copy_project_to_cwd('basic')
-        self.update_name_and_version(name, version)
-
-        self.run_snapcraft('snap')
-
-        # Register the snap
+        # Build and register the snap
+        name, snap_file_path = self._build_snap()
         self.register(name)
 
         # Push the snap
-        snap_file_path = '{}_{}_{}.snap'.format(name, version, 'all')
-        self.assertThat(os.path.join(snap_file_path), FileExists())
         output = self.run_snapcraft(['push', snap_file_path])
 
         # Now push the metadata
@@ -62,3 +63,18 @@ class PushMetadataTestCase(integration.StoreTestCase):
         self.assertThat(output, Contains(expected))
         expected = "The metadata has been pushed"
         self.assertThat(output, Contains(expected))
+
+    def test_need_push_first(self):
+        self.addCleanup(self.logout)
+        self.login()
+
+        # Build and register the snap
+        name, snap_file_path = self._build_snap()
+        self.register(name)
+
+        # Push the metadata withouth pusing the binary first
+        error = self.assertRaises(
+            subprocess.CalledProcessError,
+            self.run_snapcraft, ['push-metadata', snap_file_path])
+        expected = "Sorry, updating the information on the store has failed"
+        self.assertThat(str(error.output), Contains(expected))
