@@ -552,10 +552,8 @@ class FakeLXD(fixtures.Fixture):
         if args[0] == ['lxc', 'remote', 'get-default']:
             return 'local'.encode('utf-8')
         elif args[0][:2] == ['lxc', 'info']:
-            return '''
-                environment:
-                  kernel_architecture: {}
-                '''.format(self.kernel_arch).encode('utf-8')
+            return 'Architecture: {}'.format(
+                self.kernel_arch).encode('utf-8')
         elif args[0][:3] == ['lxc', 'list', '--format=json']:
             if self.status and args[0][3] == self.name:
                 return string.Template('''
