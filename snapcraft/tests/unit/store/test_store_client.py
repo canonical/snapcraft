@@ -100,6 +100,22 @@ class LoginTestCase(StoreTestCase):
         self.assertIsNotNone(self.client.conf.get('unbound_discharge'))
         self.assertTrue(config.Config().is_empty())
 
+    def test_login_with_exported_login(self):
+        conf = config.Config()
+        conf.set('macaroon', 'test-macaroon')
+        conf.set('unbound_discharge', 'test-unbound-discharge')
+        with open('test-exported-login', 'w+') as config_fd:
+            conf.save(config_fd=config_fd)
+            config_fd.seek(0)
+            self.client.login('', '', config_fd=config_fd)
+
+        # Client configuration is filled, but it's not saved on disk.
+        self.assertThat(
+            self.client.conf.get('macaroon'), Equals('test-macaroon'))
+        self.assertThat(
+            self.client.conf.get('unbound_discharge'),
+            Equals('test-unbound-discharge'))
+
     def test_failed_login_with_wrong_password(self):
         self.assertRaises(
             errors.StoreAuthenticationError,

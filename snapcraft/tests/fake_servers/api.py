@@ -49,6 +49,12 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         configurator.add_view(self.acl, route_name='acl')
 
         configurator.add_route(
+            'verify_acl', urllib.parse.urljoin(
+                self._DEV_API_PATH, 'acl/verify/'),
+            request_method='POST')
+        configurator.add_view(self.verify_acl, route_name='verify_acl')
+
+        configurator.add_route(
             'account_key',
             urllib.parse.urljoin(self._DEV_API_PATH, 'account/account-key'),
             request_method='POST')
@@ -194,6 +200,28 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                     verification_key_id='test verifiacion')
             ])
         payload = json.dumps({'macaroon': macaroon.serialize()}).encode()
+        response_code = 200
+        content_type = 'application/json'
+        return response.Response(
+            payload, response_code, [('Content-Type', content_type)])
+
+    def verify_acl(self, request):
+        if self.fake_store.needs_refresh:
+            return self._refresh_error()
+
+        print(request.json_body)
+
+        return self._verify_acl_wide_open()
+
+    def _verify_acl_wide_open(self):
+        acl = {
+            'snap_ids': None,
+            'channels': None,
+            'permissions': [
+                'package_upload', 'package_access', 'package_manage']
+        }
+
+        payload = json.dumps(acl).encode()
         response_code = 200
         content_type = 'application/json'
         return response.Response(

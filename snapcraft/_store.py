@@ -26,7 +26,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 from subprocess import Popen
-from typing import Iterable
+from typing import Dict, Iterable, TextIO
 
 import yaml
 # Ideally we would move stuff into more logical components
@@ -118,34 +118,48 @@ def _check_dev_agreement_and_namespace_statuses(store) -> None:
             raise
 
 
+def _try_login(email: str, password: str, *,
+               store: storeapi.StoreClient = None, save: bool = True,
+               packages: Iterable[Dict[str, str]] = None,
+               acls: Iterable[str] = None, channels: Iterable[str] = None,
+               config_fd: TextIO = None) -> None:
+    try:
+        store.login(email, password, packages=packages, acls=acls,
+                    channels=channels, config_fd=config_fd, save=save)
+        if not config_fd:
+            print()
+            logger.info(storeapi.constants.TWO_FACTOR_WARNING)
+    except storeapi.errors.StoreTwoFactorAuthenticationRequired:
+        one_time_password = input('Second-factor auth: ')
+        store.login(
+            email, password, one_time_password=one_time_password,
+            acls=acls, packages=packages, channels=channels,
+            config_fd=config_fd, save=save)
+
+    # Continue if agreement and namespace conditions are met.
+    _check_dev_agreement_and_namespace_statuses(store)
+
+
 def login(*, store: storeapi.StoreClient = None,
-          packages: Iterable[str] = None, acls: Iterable[str] = None,
-          channels: Iterable[str] = None, save: bool = True) -> bool:
+          packages: Iterable[Dict[str, str]] = None, save: bool = True,
+          acls: Iterable[str] = None, channels: Iterable[str] = None,
+          config_fd: TextIO = None) -> bool:
     if not store:
         store = storeapi.StoreClient()
 
-    print('Enter your Ubuntu One e-mail address and password.\n'
-          'If you do not have an Ubuntu One account, you can create one at '
-          'https://dashboard.snapcraft.io/openid/login')
-    email = input('Email: ')
-    password = getpass.getpass('Password: ')
+    email = ''
+    password = ''
+
+    if not config_fd:
+        print('Enter your Ubuntu One e-mail address and password.\n'
+              'If you do not have an Ubuntu One account, you can create one '
+              'at https://dashboard.snapcraft.io/openid/login')
+        email = input('Email: ')
+        password = getpass.getpass('Password: ')
 
     try:
-        try:
-            store.login(email, password, packages=packages, acls=acls,
-                        channels=channels, save=save)
-            print()
-            logger.info(storeapi.constants.TWO_FACTOR_WARNING)
-        except storeapi.errors.StoreTwoFactorAuthenticationRequired:
-            one_time_password = input('Second-factor auth: ')
-            store.login(
-                email, password, one_time_password=one_time_password,
-                acls=acls, packages=packages, channels=channels,
-                save=save)
-
-        # Continue if agreement and namespace conditions are met.
-        _check_dev_agreement_and_namespace_statuses(store)
-
+        _try_login(email, password, store=store, packages=packages, acls=acls,
+                   channels=channels, config_fd=config_fd, save=save)
     except storeapi.errors.InvalidCredentialsError:
         return _fail_login(storeapi.constants.INVALID_CREDENTIALS)
     except storeapi.errors.StoreAuthenticationError:
