@@ -445,6 +445,16 @@ class FakeFilesystem(fixtures.Fixture):
         self.makedirs_mock.side_effect = self.makedirs_side_effect()
         self.addCleanup(patcher.stop)
 
+        @contextlib.contextmanager
+        def tempdir(prefix: str, dir: str):
+            self.tmp_dir = os.path.join(dir, '{}-foo'.format(prefix))
+            yield self.tmp_dir
+
+        patcher = mock.patch('tempfile.TemporaryDirectory')
+        self.tempdir_mock = patcher.start()
+        self.tempdir_mock.side_effect = tempdir
+        self.addCleanup(patcher.stop)
+
         patcher = mock.patch('tempfile.mkdtemp')
         self.mkdtemp_mock = patcher.start()
         self.mkdtemp_mock.side_effect = self.mkdtemp_side_effect()

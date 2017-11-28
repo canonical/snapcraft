@@ -355,3 +355,13 @@ class InvalidContainerImageInfoError(SnapcraftError):
 
     def __init__(self, image_info):
         super().__init__(image_info=image_info)
+
+
+class PatcherError(SnapcraftError):
+
+    fmt = (
+        '{elf_file!r} cannot be patched to function properly as a classic '
+        'snap: {message}')
+
+    def __init__(self, *, elf_file, message):
+        super().__init__(elf_file=elf_file, message=message)

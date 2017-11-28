@@ -381,6 +381,33 @@ def sign_build(snap_filename, key_name=None, local=False):
             'Build assertion {} pushed to the Store.'.format(snap_build_path))
 
 
+def push_metadata(snap_filename, force):
+    """Push only the metadata to the server.
+
+    If force=True it will force the local metadata into the Store,
+    ignoring any possible conflict.
+    """
+    logger.debug("Pushing metadata to the Store (force=%s)", force)
+
+    # get the metadata from the snap
+    snap_yaml = _get_data_from_snap_file(snap_filename)
+    metadata = {
+        'summary': snap_yaml['summary'],
+        'description': snap_yaml['description'],
+    }
+
+    # other snap info
+    snap_name = snap_yaml['name']
+
+    # hit the server
+    store = storeapi.StoreClient()
+    with _requires_login():
+        store.push_precheck(snap_name)
+        store.push_metadata(snap_name, metadata, force)
+
+    logger.info("The metadata has been pushed")
+
+
 def push(snap_filename, release_channels=None):
     """Push a snap_filename to the store.
 
@@ -423,16 +450,12 @@ def push(snap_filename, release_channels=None):
     else:
         result = _push_snap(snap_name, snap_filename)
 
-    # This is workaround until LP: #1599875 is solved
-    if 'revision' in result:
-        logger.info('Revision {!r} of {!r} created.'.format(
-            result['revision'], snap_name))
+    logger.info('Revision {!r} of {!r} created.'.format(
+        result['revision'], snap_name))
 
-        snap_cache.cache(snap_filename=snap_filename)
-        snap_cache.prune(deb_arch=arch,
-                         keep_hash=calculate_sha3_384(snap_filename))
-    else:
-        logger.info('Pushing {!r}'.format(snap_name))
+    snap_cache.cache(snap_filename=snap_filename)
+    snap_cache.prune(deb_arch=arch,
+                     keep_hash=calculate_sha3_384(snap_filename))
 
     if release_channels:
         release(snap_name, result['revision'], release_channels)

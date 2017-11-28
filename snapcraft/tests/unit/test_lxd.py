@@ -252,12 +252,7 @@ class ContainerbuildTestCase(LXDTestCase):
         builder1 = self.make_containerbuild()
         builder2 = self.make_containerbuild()
         builder1.execute()
-        # Temporary folder should be removed in the end
-        self.fake_filesystem.rmtree_mock.assert_has_calls([
-            call(builder1.tmp_dir)])
         builder2.execute()
-        self.fake_filesystem.rmtree_mock.assert_has_calls([
-            call(builder2.tmp_dir)])
 
     @patch('snapcraft.internal.common.is_snap')
     def test_parallel_invocation_inject_snap(self, mock_is_snap):
@@ -281,12 +276,7 @@ class ContainerbuildTestCase(LXDTestCase):
         builder1 = self.make_containerbuild()
         builder2 = self.make_containerbuild()
         builder1.execute()
-        # Temporary folder should be removed in the end
-        self.fake_filesystem.rmtree_mock.assert_has_calls([
-            call(builder1.tmp_dir)])
         builder2.execute()
-        self.fake_filesystem.rmtree_mock.assert_has_calls([
-            call(builder2.tmp_dir)])
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @patch('snapcraft.internal.common.is_snap')
@@ -323,8 +313,6 @@ class ContainerbuildTestCase(LXDTestCase):
         self.assertIn('Error connecting to',
                       str(self.assertRaises(SnapdError,
                                             builder.execute)))
-        # Temporary folder should remain in case of failure
-        self.fake_filesystem.rmtree_mock.assert_not_called()
 
     @patch('snapcraft.internal.common.is_snap')
     def test_inject_snap_api_error(self,
@@ -339,8 +327,6 @@ class ContainerbuildTestCase(LXDTestCase):
         self.assertIn('Error querying \'core\' snap: not found',
                       str(self.assertRaises(SnapdError,
                                             builder.execute)))
-        # Temporary folder should remain in case of failure
-        self.fake_filesystem.rmtree_mock.assert_not_called()
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @patch('snapcraft.internal.common.is_snap')
@@ -379,18 +365,19 @@ class ContainerbuildTestCase(LXDTestCase):
             ])
             return
 
+        tmp_dir = self.fake_filesystem.tmp_dir
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'file', 'push',
-                  os.path.join(builder.tmp_dir, 'core_123.assert'),
+                  os.path.join(tmp_dir, 'core_123.assert'),
                   '{}/run/core_123.assert'.format(self.fake_lxd.name)]),
             call(['lxc', 'file', 'push',
-                  os.path.join(builder.tmp_dir, 'core_123.snap'),
+                  os.path.join(tmp_dir, 'core_123.snap'),
                   '{}/run/core_123.snap'.format(self.fake_lxd.name)]),
             call(['lxc', 'file', 'push',
-                  os.path.join(builder.tmp_dir, 'snapcraft_345.assert'),
+                  os.path.join(tmp_dir, 'snapcraft_345.assert'),
                   '{}/run/snapcraft_345.assert'.format(self.fake_lxd.name)]),
             call(['lxc', 'file', 'push',
-                  os.path.join(builder.tmp_dir, 'snapcraft_345.snap'),
+                  os.path.join(tmp_dir, 'snapcraft_345.snap'),
                   '{}/run/snapcraft_345.snap'.format(self.fake_lxd.name)]),
         ])
         mock_container_run.assert_has_calls([
@@ -441,13 +428,14 @@ class ContainerbuildTestCase(LXDTestCase):
             ])
             return
 
+        tmp_dir = self.fake_filesystem.tmp_dir
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['sudo', 'cp', '/var/lib/snapd/snaps/snapcraft_x1.snap',
-                  os.path.join(builder.tmp_dir, 'snapcraft_x1.snap')]),
+                  os.path.join(tmp_dir, 'snapcraft_x1.snap')]),
             call(['sudo', 'chown', str(os.getuid()),
-                  os.path.join(builder.tmp_dir, 'snapcraft_x1.snap')]),
+                  os.path.join(tmp_dir, 'snapcraft_x1.snap')]),
             call(['lxc', 'file', 'push',
-                  os.path.join(builder.tmp_dir, 'snapcraft_x1.snap'),
+                  os.path.join(tmp_dir, 'snapcraft_x1.snap'),
                   '{}/run/snapcraft_x1.snap'.format(self.fake_lxd.name)]),
         ])
         mock_container_run.assert_has_calls([
@@ -506,12 +494,13 @@ class ContainerbuildTestCase(LXDTestCase):
             ])
             return
 
+        tmp_dir = self.fake_filesystem.tmp_dir
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'file', 'push',
-                  os.path.join(builder.tmp_dir, 'snapcraft_123.assert'),
+                  os.path.join(tmp_dir, 'snapcraft_123.assert'),
                   '{}/run/snapcraft_123.assert'.format(self.fake_lxd.name)]),
             call(['lxc', 'file', 'push',
-                  os.path.join(builder.tmp_dir, 'snapcraft_123.snap'),
+                  os.path.join(tmp_dir, 'snapcraft_123.snap'),
                   '{}/run/snapcraft_123.snap'.format(self.fake_lxd.name)]),
         ])
         mock_container_run.assert_has_calls([

@@ -414,6 +414,7 @@ from snapcraft._store import (                      # noqa
     list_registered,
     login,
     push,
+    push_metadata,
     register,
     register_key,
     release,

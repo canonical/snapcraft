@@ -24,7 +24,7 @@ from textwrap import dedent
 from testtools.matchers import Equals
 from unittest import mock
 
-from snapcraft.internal import elf, os_release
+from snapcraft.internal import errors, elf, os_release
 from snapcraft.tests import unit
 
 
@@ -222,8 +222,32 @@ class GetElfFilesTestCase(unit.TestCase):
 
         elf_files = elf.get_elf_files(self.workdir, {'linked'})
 
+        self.assertThat(len(elf_files), Equals(1))
         self.ms_mock.file.assert_called_once_with(linked_elf_path_b)
-        self.assertThat(elf_files, Equals(frozenset([linked_elf_path])))
+
+        elf_file = set(elf_files).pop()
+        self.assertThat(elf_file.path, Equals(linked_elf_path))
+        self.assertThat(elf_file.is_executable, Equals(True))
+
+    def test_get_elf_is_library(self):
+        self.ms_mock.file.return_value = (
+            'ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), '
+            'dynamically linked, '
+            'BuildID[sha1]=62b2bc59168b25ab9b025182c1f5f43194ba167b, stripped'
+        )
+        linked_elf_path = os.path.join(self.workdir, 'linked')
+        open(linked_elf_path, 'w').close()
+
+        linked_elf_path_b = linked_elf_path.encode(sys.getfilesystemencoding())
+
+        elf_files = elf.get_elf_files(self.workdir, {'linked'})
+
+        self.assertThat(len(elf_files), Equals(1))
+        self.ms_mock.file.assert_called_once_with(linked_elf_path_b)
+
+        elf_file = set(elf_files).pop()
+        self.assertThat(elf_file.path, Equals(linked_elf_path))
+        self.assertThat(elf_file.is_executable, Equals(False))
 
     def test_skip_object_files(self):
         open(os.path.join(self.workdir, 'object_file.o'), 'w').close()
@@ -285,3 +309,55 @@ class GetElfFilesTestCase(unit.TestCase):
 
         self.assertThat(
             raised.__str__(), Equals('Cannot load magic header detection'))
+
+
+class TestPatcher(unit.TestCase):
+
+    scenarios = [
+        ('snap',
+         dict(snap='/snap/snapcraft/current',
+              snap_name='snapcraft',
+              expected_patchelf='/snap/snapcraft/current/bin/patchelf')),
+        ('non-snap',
+         dict(snap='',
+              snap_name='',
+              expected_patchelf='patchelf')),
+    ]
+
+    def setUp(self):
+        super().setUp()
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP', self.snap))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP_NAME', self.snap_name))
+
+    @mock.patch('subprocess.check_call')
+    def test_patch(self, check_call_mock):
+        elf_file = elf.ElfFile(path='/fake-elf', is_executable=True)
+        elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld')
+        elf_patcher.patch(elf_file=elf_file)
+
+        check_call_mock.assert_called_once_with([
+            self.expected_patchelf, '--set-interpreter', '/lib/fake-ld',
+            '/fake-elf'])
+
+    @mock.patch('subprocess.check_call')
+    def test_patch_does_nothing_if_no_interpreter(self, check_call_mock):
+        elf_file = elf.ElfFile(path='/fake-elf', is_executable=False)
+        elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld')
+        elf_patcher.patch(elf_file=elf_file)
+
+        self.assertFalse(check_call_mock.called)
+
+
+class TestPatcherErrors(unit.TestCase):
+
+    @mock.patch('subprocess.check_call',
+                side_effect=subprocess.CalledProcessError(2, ['patchelf']))
+    def test_patch_fails_raises_patcherror_exception(self, check_call_mock):
+        elf_file = elf.ElfFile(path='/fake-elf', is_executable=True)
+        elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld')
+
+        self.assertRaises(errors.PatcherError,
+                          elf_patcher.patch,
+                          elf_file=elf_file)

@@ -265,7 +265,11 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
         expected_fileset = [
-            '-bin/pip*',
+            '-bin/pip',
+            '-bin/pip2',
+            '-bin/pip3',
+            '-bin/pip2.7',
+            '-bin/pip3.*',
             '-bin/easy_install*',
             '-bin/wheel',
             '-**/__pycache__',
