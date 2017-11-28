@@ -98,6 +98,14 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         configurator.add_view(
             self.snap_metadata, route_name='snap_metadata_post')
 
+        configurator.add_route(
+            'snap_binary_metadata_post',
+            urllib.parse.urljoin(
+                self._DEV_API_PATH, 'snaps/{snap_id}/binary-metadata'),
+            request_method='POST')
+        configurator.add_view(
+            self.snap_binary_metadata, route_name='snap_binary_metadata_post')
+
         # GET
         configurator.add_route(
             'details',
@@ -139,6 +147,14 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         configurator.add_view(
             self.snap_developers, route_name='snap_developers')
 
+        configurator.add_route(
+            'snap_binary_metadata_get',
+            urllib.parse.urljoin(
+                self._DEV_API_PATH, 'snaps/{snap_id}/binary-metadata'),
+            request_method='GET')
+        configurator.add_view(
+            self.snap_binary_metadata, route_name='snap_binary_metadata_get')
+
         # PUT
         configurator.add_route(
             'put_snap_validations',
@@ -163,6 +179,14 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             request_method='PUT')
         configurator.add_view(
             self.snap_metadata, route_name='snap_metadata_put')
+
+        configurator.add_route(
+            'snap_binary_metadata_put',
+            urllib.parse.urljoin(
+                self._DEV_API_PATH, 'snaps/{snap_id}/binary-metadata'),
+            request_method='PUT')
+        configurator.add_view(
+            self.snap_binary_metadata, route_name='snap_binary_metadata_put')
 
     def _refresh_error(self):
         error = {
@@ -644,6 +668,54 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             response_code = 200
             content_type = 'text/plain'
 
+        return response.Response(
+            payload, response_code, [('Content-Type', content_type)])
+
+    def snap_binary_metadata(self, request):
+        logger.debug('Handling binary metadata request')
+        if request.method == 'GET':
+            current = [
+                {'type': 'icon', 'hash': '1234567890', 'filename': 'icon.png'},
+                {'type': 'screenshot', 'hash': '0987654321',
+                 'filename': 'ss1.png'},
+                {'type': 'screenshot', 'hash': '1122334455',
+                 'filename': 'ss2.png'},
+            ]
+            return response.Response(
+                json.dumps(current).encode('utf-8'), 200,
+                [('Content-Type', 'application/json')])
+        else:
+            # POST/PUT
+            info = json.loads(request.params['info'])
+            invalid = any([e.get('filename', '').endswith('invalid')
+                           for e in info])
+            conflict = any([e.get('filename', '').endswith('conflict')
+                           for e in info])
+            if invalid:
+                err = {'error_list': [{
+                    'message': 'Invalid field: icon',
+                    'code': 'invalid-request',
+                }]}
+                payload = json.dumps(err).encode('utf8')
+                response_code = 400
+            elif conflict and request.method == 'POST':
+                # POST, return error
+                error_list = [{
+                    'message': 'original-icon',
+                    'code': 'conflict',
+                    'extra': {'name': 'icon'},
+                }]
+                payload = json.dumps({'error_list': error_list}).encode('utf8')
+                response_code = 409
+            else:
+                updated_info = []
+                for entry in info:
+                    entry.pop('key', None)
+                    updated_info.append(entry)
+                payload = json.dumps(updated_info).encode('utf-8')
+                response_code = 200
+
+        content_type = 'application/json'
         return response.Response(
             payload, response_code, [('Content-Type', content_type)])
 

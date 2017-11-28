@@ -80,6 +80,13 @@ def _deserialize_macaroon(value):
         raise errors.InvalidCredentialsError('Failed to deserialize macaroon')
 
 
+def _media_hash(media_file):
+    sha = hashlib.sha256(media_file.read())
+    # rewind file before returning
+    media_file.seek(0)
+    return sha.hexdigest()
+
+
 class Client():
     """A base class to define clients for the ols servers.
 
@@ -376,6 +383,19 @@ class StoreClient():
         return self._refresh_if_necessary(
             self.sca.push_metadata, snap_id, snap_name, metadata, force)
 
+    def push_binary_metadata(self, snap_name, metadata, force):
+        """Push the binary metadata to the server."""
+        account_info = self.get_account_information()
+        series = constants.DEFAULT_SERIES
+        try:
+            snap_id = account_info['snaps'][series][snap_name]['snap-id']
+        except KeyError:
+            raise errors.SnapNotFoundError(snap_name, series=series)
+
+        return self._refresh_if_necessary(
+            self.sca.push_binary_metadata, snap_id, snap_name, metadata,
+            force)
+
 
 class SSOClient(Client):
     """The Single Sign On server deals with authentication.
@@ -635,6 +655,64 @@ class SCAClient(Client):
 
         if not response.ok:
             raise errors.StoreMetadataError(snap_name, response, metadata)
+
+    def push_binary_metadata(self, snap_id, snap_name, metadata, force):
+        """Push the binary metadata to SCA."""
+        url = 'snaps/' + snap_id + '/binary-metadata'
+        headers = {
+            'Authorization': _macaroon_auth(self.conf),
+            'Accept': 'application/json',
+        }
+
+        # get current binary metadata information
+        response = self.request('GET', url, headers=headers)
+        if not response.ok:
+            raise errors.StoreMetadataError(snap_name, response, metadata)
+
+        binary_metadata = response.json()
+        # current icons and screenshots
+        icons = [media for media in binary_metadata
+                 if media.get('type') == 'icon']
+        screenshots = [media for media in binary_metadata
+                       if media.get('type') == 'screenshot']
+
+        files = {}
+        # only icon support atm
+        icon = metadata.get('icon')
+        current_icon = icons[0] if icons else None
+        # keep original screenshots
+        info = screenshots
+
+        if current_icon is None and icon is None:
+            # icon unchanged
+            return
+
+        if icon:
+            icon_hash = _media_hash(icon)
+            if current_icon is None or current_icon.get('hash') != icon_hash:
+                upload_icon = {'type': 'icon', 'hash': icon_hash,
+                               'key': 'icon', 'filename': icon.name}
+                info.append(upload_icon)
+                files = {'icon': icon}
+            else:
+                # icon unchanged
+                return
+
+        data = None
+        if not files:
+            # API requires a multipart request, but we have no files to push
+            # https://github.com/requests/requests/issues/1081
+            files = {'info': ('', json.dumps(info))}
+        else:
+            data = {'info': json.dumps(info)}
+
+        method = 'PUT' if force else 'POST'
+        response = self.request(
+            method, url, data=data, files=files, headers=headers)
+        if not response.ok:
+            icon_name = os.path.basename(icon.name) if icon else None
+            raise errors.StoreMetadataError(
+                snap_name, response, {'icon': icon_name})
 
     def snap_release(self, snap_name, revision, channels, delta_format=None):
         data = {
