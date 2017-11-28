@@ -19,6 +19,7 @@ import logging
 import os
 import re
 import urllib.parse
+import uuid
 
 from pyramid import response
 import pymacaroons
@@ -37,7 +38,8 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         super().__init__(server_address)
         self.fake_store = fake_store
         self.account_keys = []
-        self.registered_names = []
+        self.registered_names = {}
+        self.pushed_snaps = set()
 
     def configure(self, configurator):
         # POST
@@ -368,6 +370,9 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                 details_path = 'details/upload-id/duplicate-snap'
             else:
                 details_path = 'details/upload-id/good-snap'
+            if not request.json_body.get('dry_run', False):
+                snap_id = self.registered_names[name]['snap_id']
+                self.pushed_snaps.add(snap_id)
             payload = json.dumps({
                 'status_details_url': urllib.parse.urljoin(
                     'http://localhost:{}/'.format(self.server_port),
@@ -555,8 +560,9 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             payload, response_code, [('Content-Type', content_type)])
 
     def _register_name_successful(self, name, is_private):
-        self.registered_names.append((name, is_private))
-        payload = json.dumps({'snap_id': 'test-snap-id'}).encode()
+        snap_id = uuid.uuid4().hex
+        self.registered_names[name] = dict(private=is_private, snap_id=snap_id)
+        payload = json.dumps({'snap_id': snap_id}).encode()
         response_code = 201
         content_type = 'application/json'
         return response.Response(
@@ -593,6 +599,18 @@ class FakeStoreAPIServer(base.BaseFakeServer):
 
     def snap_metadata(self, request):
         logger.debug('Handling metadata request')
+        snap_id = request.matchdict['snap_id']
+
+        # check if snap was previously pushed
+        if snap_id not in self.pushed_snaps:
+            err = {'error_list': [
+                {'message': 'Snap not found', 'code': 'not-found'}]}
+            payload = json.dumps(err).encode('utf8')
+            response_code = 404
+            content_type = 'application/json'
+            return response.Response(
+                payload, response_code, [('Content-Type', content_type)])
+
         if 'invalid' in request.json_body:
             err = {'error_list': [{
                 'message': 'Invalid field: invalid',
@@ -700,10 +718,10 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                            'since': '2016-12-12T01:01:01Z'},
             }
         snaps.update({
-            name: {'snap-id': 'fake-snap-id', 'status': 'Approved',
-                   'private': private, 'price': None,
+            name: {'snap-id': snap_data['snap_id'], 'status': 'Approved',
+                   'private': snap_data['private'], 'price': None,
                    'since': '2016-12-12T01:01:01Z'}
-            for name, private in self.registered_names})
+            for name, snap_data in self.registered_names.items()})
         payload = json.dumps({
             'account_id': 'abcd',
             'account_keys': self.account_keys,
