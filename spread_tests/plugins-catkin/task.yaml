@@ -7,4 +7,4 @@ execute: |
   [ "$snapcraft_path" = "/snap/bin/snapcraft" ]
   source /snapcraft/venv/bin/activate
   cd /snapcraft
-  ./runtests.sh snapcraft/tests/integration/plugins/catkin
+  ./runtests.sh snapcraft.tests.integration.plugins.catkin
