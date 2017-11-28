@@ -33,7 +33,7 @@ if [ "$test" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
 elif [ "$test" = "snapcraft/tests/unit" ]; then
     dependencies="apt install -y git bzr subversion mercurial libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov && apt install -y python3-coverage"
-elif [[ "$test" = "snapcraft/tests/integration"* ]]; then
+elif [[ "$test" = "snapcraft/tests/integration"* || "$test" = "snapcraft.tests.integration"* ]]; then
     # snap install core exits with this error message:
     # - Setup snap "core" (2462) security profiles (cannot reload udev rules: exit status 2
     # but the installation succeeds, so we just ingore it.
