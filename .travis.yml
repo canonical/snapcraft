@@ -14,56 +14,105 @@ jobs:
     # Tests, only when not triggered by the daily cron.
     - stage: static
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh static
+      script: sudo ./tools/travis/run_tests.sh $TEST
+      env:
+          - TEST=static
     - if: type != cron
       script: sudo ./tools/travis/run_codespell.sh
+      env:
+          - TEST=codespell
     - stage: unit
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/unit
+      script: sudo ./tools/travis/run_tests.sh $TEST
+      env:
+          - TEST=snapcraft/tests/unit
     - if: type != cron
-      script: SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh snapcraft/tests/unit
+      script: sudo ./tools/travis/run_tests.sh $TEST
+      env:
+          - TEST=snapcraft/tests/unit
+          - SNAPCRAFT_TEST_MOCK_MACHINE=armv7l
     - stage: snap
       if: type != cron
       script: sudo ./tools/travis/build_snapcraft_snap.sh
+      env:
+          - TEST=snapcraft-snap
     - stage: integration
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/general
+      script: sudo ./tools/travis/run_tests.sh $TEST
+      env:
+          - TEST=snapcraft/tests/integration/general
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/plugins
+      script: sudo ./tools/travis/run_tests.sh $TEST
+      env:
+          - TEST=snapcraft/tests/integration/plugins
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft.tests.integration.plugins.catkin
+      script: sudo ./tools/travis/run_tests.sh $TEST
+      env:
+          - TEST=snapcraft.tests.integration.plugins.catkin
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/store
+      script: sudo ./tools/travis/run_tests.sh $TEST
+      env:
+          - TEST=snapcraft/tests/integration/store
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/containers
+      script: sudo ./tools/travis/run_tests.sh $TEST
+      env:
+          - TEST=snapcraft/tests/integration/containers
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/snapd
+      script: sudo ./tools/travis/run_tests.sh $TEST
+      env:
+          - TEST=snapcraft/tests/integration/snapd
     # CLA check, only in pull requests, not coming from the bot.
     - if: type = pull_request AND sender != snappy-m-o
       script: ./tools/travis/run_cla_check.sh
+      env:
+          - TEST=cla-check
     # Trigger nightly tests, only in cron.
     - stage: nightly
       if: type = cron
-      script: ./runtests.sh spread
+      script: ./runtests.sh $TEST
+      env:
+          - TEST=spread
     - if: type = cron
-      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-general
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial $TEST
+      env:
+          - TEST=integrationtests-general
     - if: type = cron
-      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-store
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial $TEST
+      env:
+          - TEST=integrationtests-store
     - if: type = cron
-      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-plugins
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial $TEST
+      env:
+          - TEST=integrationtests-plugins
     - if: type = cron
-      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-plugins-catkin
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial $TEST
+      env:
+          - TEST=integrationtests-plugins-catkin
     - if: type = cron
-      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-snapd
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial $TEST
+      env:
+          - TEST=integrationtests-snapd
     - if: type = cron
-      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-general
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic $TEST
+      env:
+          - TEST=integrationtests-general
     - if: type = cron
-      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-store
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic $TEST
+      env:
+          - TEST=integrationtests-store
     - if: type = cron
-      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-plugins
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic $TEST
+      env:
+          - TEST=integrationtests-plugins
     - if: type = cron
-      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-plugins-catkin
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic $TEST
+      env:
+          - TEST=integrationtests-plugins-catkin
     - if: type = cron
-      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-snapd
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic $TEST
+      env:
+          - TEST=integrationtests-snapd
     - if: type = cron
       script: ./tools/travis/run_ppa_autopkgtests.sh
+      env:
+          - TEST=ppa-adt
