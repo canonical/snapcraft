@@ -26,6 +26,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 from subprocess import Popen
+from typing import Iterable
 
 import yaml
 # Ideally we would move stuff into more logical components
@@ -84,19 +85,20 @@ def _get_icon_from_snap_file(snap_path):
             icon_file.close()
 
 
-def _fail_login(msg=''):
+def _fail_login(msg: str = '') -> bool:
     echo.error(msg)
     echo.error('Login failed.')
     return False
 
 
-def _get_url_from_error(error):
-    if error.extra:
-        return error.extra[0].get('url')
-    return None
+def _get_url_from_error(
+        error: storeapi.errors.StoreAccountInformationError) -> str:
+    if error.extra:  # type: ignore
+        return error.extra[0].get('url')  # type: ignore
+    return ''
 
 
-def _check_dev_agreement_and_namespace_statuses(store):
+def _check_dev_agreement_and_namespace_statuses(store) -> None:
     """ Check the agreement and namespace statuses of the dev.
     Fail if either of those conditions is not met.
     Re-raise `StoreAccountInformationError` if we get an error and
@@ -106,7 +108,7 @@ def _check_dev_agreement_and_namespace_statuses(store):
     try:
         store.get_account_information()
     except storeapi.errors.StoreAccountInformationError as e:
-        if storeapi.constants.MISSING_AGREEMENT == e.error:
+        if storeapi.constants.MISSING_AGREEMENT == e.error:  # type: ignore
             # A precaution if store does not return new style error.
             url = (_get_url_from_error(e) or
                    storeapi.constants.UBUNTU_STORE_TOS_URL)
@@ -127,7 +129,7 @@ def _check_dev_agreement_and_namespace_statuses(store):
     try:
         store.get_account_information()
     except storeapi.errors.StoreAccountInformationError as e:
-        if storeapi.constants.MISSING_NAMESPACE in e.error:
+        if storeapi.constants.MISSING_NAMESPACE in e.error:  # type: ignore
             # A precaution if store does not return new style error.
             url = (_get_url_from_error(e) or
                    storeapi.constants.UBUNTU_STORE_ACCOUNT_URL)
@@ -137,7 +139,12 @@ def _check_dev_agreement_and_namespace_statuses(store):
             raise
 
 
-def _login(store, packages=None, acls=None, channels=None, save=True):
+def login(*, store: storeapi.StoreClient = None,
+          packages: Iterable[str] = None, acls: Iterable[str] = None,
+          channels: Iterable[str] = None, save: bool = True) -> bool:
+    if not store:
+        store = storeapi.StoreClient()
+
     print('Enter your Ubuntu One e-mail address and password.\n'
           'If you do not have an Ubuntu One account, you can create one at '
           'https://dashboard.snapcraft.io/openid/login')
@@ -167,16 +174,9 @@ def _login(store, packages=None, acls=None, channels=None, save=True):
     except storeapi.errors.StoreAccountInformationError:
         return _fail_login(storeapi.constants.ACCOUNT_INFORMATION_ERROR)
     except storeapi.errors.NeedTermsSignedError as e:
-        return _fail_login(e.message)
+        return _fail_login(e.message)  # type: ignore
     else:
-        print()
-        echo.info('Login successful.')
         return True
-
-
-def login():
-    store = storeapi.StoreClient()
-    return _login(store)
 
 
 @contextmanager
@@ -314,7 +314,7 @@ def register_key(name):
         raise storeapi.errors.MissingSnapdError('register-key')
     key = _maybe_prompt_for_key(name)
     store = storeapi.StoreClient()
-    if not _login(store, acls=['modify_account_key'], save=False):
+    if not login(store=store, acls=['modify_account_key'], save=False):
         raise storeapi.errors.LoginRequiredError()
     logger.info('Registering key ...')
     account_info = store.get_account_information()
