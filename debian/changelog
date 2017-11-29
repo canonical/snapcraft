@@ -51,6 +51,7 @@ snapcraft (2.35) xenial; urgency=medium
   * many: account for python shebang args in rewrite
 
   [ Leo Arias ]
+  * typo: replace ocurred with occurred
   * node plugin: record installed node packages in manifest
   * node plugin: record the yarn.lock file
   * tests: fix the TEST_STORE environment variable
