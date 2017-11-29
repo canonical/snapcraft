@@ -1,3 +1,54 @@
+snapcraft (2.36) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * static tests: upgrade to the newest flake8 (#1745)
+  * static tests: enable type checking by use of mypy (#1747)
+  * elf: conversion from libraries (#1744)
+  * many: ensure classic confined binaries use the correct interpreter (#1759)
+  * project: export the arch triplet into the environment (#1768)
+
+  [ Kyle Fazzari ]
+  * TESTING: adt on lxc requires squashfuse (#1741)
+  * python plugin: use extracted pip (#1607)
+  * ament plugin: new plugin (#1583) (LP: #1686850)
+  * catkin plugin: support building entire workspace (#1743) (LP: #1721168)
+  * store: refactor acquirement of attenuated macaroon (#1765)
+  * snapcraft.yaml: use gcc to determine tuple (#1764) (LP: #1733922)
+
+  [ Leo Arias ]
+  * tests: reorganize unit and integration suites to make them easier to split
+    for travis (#1638)
+  * tests: share the cache for ros tests (#1725)
+  * tests: run daily autopkgtest in travis (#1643)
+  * tests: add a script to run autopkgtests from the ppa (#1749)
+  * tests: add the missing quote on autopkgtest run (#1756)
+  * tests: move the catkin integration tests to a separate suite (#1760)
+
+  [ Chris Ratliff ]
+  * catkin tools plugin: add catkin tools support. (#1593) (LP: #1693380)
+
+  [ Paolo Pisati ]
+  * kernel plugin: respect the kernel-with-firmware property (#1750)
+
+  [ Colin Watson ]
+  * nodejs plugin: pass proxy configuration to yarn (#1754) (LP: #1733718)
+
+  [ Christian Dywan ]
+  * lxd: always remove tmp_dir after execution (#1742)
+  * lxd: delete container only if parts is empty (#1762)
+
+  [ Facundo Batista ]
+  * store: push-metadata added. (#1634)
+  * tests: push metadata test needs to push the snap first (#1766)
+
+  [ Daniel Watkins ]
+  * python plugin: use finer grained file filters for pip (#1763)
+
+  [ Michael Hudson-Doyle ]
+  * lxd: let lxd choose the architecture (#1718)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Wed, 29 Nov 2017 04:20:26 +0000
+
 snapcraft (2.35) xenial; urgency=medium
 
   [ Sergio Schvezov ]
