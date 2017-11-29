@@ -262,6 +262,9 @@ def login():
     if not snapcraft.login():
         sys.exit(1)
 
+    print()
+    echo.info('Login successful.')
+
 
 @storecli.command()
 def logout():

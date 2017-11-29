@@ -21,21 +21,21 @@ click.echo adding the corresponding color codes for each level.
 import click
 
 
-def info(msg):
+def info(msg: str) -> None:
     """Output msg as informative to stdout.
     If the terminal supports colors the output will be green.
     """
     click.echo('\033[0;32m{}\033[0m'.format(msg))
 
 
-def warning(msg):
+def warning(msg: str) -> None:
     """Output msg as a warning to stdout.
     If the terminal supports color the output will be yellow.
     """
     click.echo('\033[1;33m{}\033[0m'.format(msg))
 
 
-def error(msg):
+def error(msg: str) -> None:
     """Output msg as an error to stdout.
     If the terminal supports color the output will be red.
     """

@@ -18,6 +18,7 @@ import configparser
 import logging
 import os
 import urllib.parse
+from typing import TextIO
 
 from xdg import BaseDirectory
 
@@ -37,18 +38,17 @@ class Config(object):
 
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.parser = configparser.ConfigParser()
-        self.filename = None
         self.load()
 
-    def _section_name(self):
+    def _section_name(self) -> str:
         # The only section we care about is the host from the SSO url
         url = os.environ.get('UBUNTU_SSO_API_ROOT_URL',
                              constants.UBUNTU_SSO_API_ROOT_URL)
         return urllib.parse.urlparse(url).netloc
 
-    def get(self, option_name):
+    def get(self, option_name: str) -> str:
         try:
             return self.parser.get(self._section_name(), option_name)
         except (configparser.NoSectionError,
@@ -56,13 +56,13 @@ class Config(object):
                 KeyError):
             return None
 
-    def set(self, option_name, value):
+    def set(self, option_name: str, value: str) -> None:
         section_name = self._section_name()
         if not self.parser.has_section(section_name):
             self.parser.add_section(section_name)
-        return self.parser.set(section_name, option_name, value)
+        self.parser.set(section_name, option_name, value)
 
-    def is_empty(self):
+    def is_empty(self) -> bool:
         # Only check the current section
         section_name = self._section_name()
         if self.parser.has_section(section_name):
@@ -70,32 +70,37 @@ class Config(object):
                 return False
         return True
 
-    def load(self):
+    def load(self) -> None:
         # Local configurations (per project) are supposed to be static.
         # That's why it's only checked for 'loading' and never written to.
         # Essentially, all authentication-related changes, like login/logout
         # or macaroon-refresh, will not be persisted for the next runs.
+        file_path = ''
         if os.path.exists(LOCAL_CONFIG_FILENAME):
-            self.parser.read(LOCAL_CONFIG_FILENAME)
-            logger.warn(
-                'Using local configuration (`{}`), changes will '
-                'not be persisted.'.format(LOCAL_CONFIG_FILENAME))
-            return
+            file_path = LOCAL_CONFIG_FILENAME
 
-        self.filename = BaseDirectory.load_first_config(
-            'snapcraft', 'snapcraft.cfg')
-        if self.filename and os.path.exists(self.filename):
-            self.parser.read(self.filename)
+            # FIXME: We don't know this for sure when loading the config.
+            # Need a better separation of concerns.
+            logger.warn(
+                'Using local configuration ({!r}), changes will not be '
+                'persisted.'.format(file_path))
+        else:
+            file_path = BaseDirectory.load_first_config(
+                'snapcraft', 'snapcraft.cfg')
+        if file_path and os.path.exists(file_path):
+            self.parser.read(file_path)
 
     @staticmethod
-    def save_path():
+    def save_path() -> str:
         return os.path.join(BaseDirectory.save_config_path('snapcraft'),
                             'snapcraft.cfg')
 
-    def save(self):
-        self.filename = self.save_path()
-        with open(self.filename, 'w') as f:
-            self.parser.write(f)
+    def save(self, *, config_fd: TextIO = None) -> None:
+        if config_fd:
+            self.parser.write(config_fd)
+        else:
+            with open(self.save_path(), 'w') as f:
+                self.parser.write(f)
 
-    def clear(self):
+    def clear(self) -> None:
         self.parser.remove_section(self._section_name())

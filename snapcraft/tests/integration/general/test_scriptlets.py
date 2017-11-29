@@ -58,3 +58,6 @@ class ScriptletTestCase(integration.TestCase):
         self.assertThat(echoed_file_path, FileExists())
         self.assertThat(echoed_file_path,
                         FileContains('config-key=config-value\n'))
+        arch_triplet_file = os.path.join(installdir, 'lib',
+                                         self.arch_triplet, 'lib.so')
+        self.assertThat(arch_triplet_file, FileExists())

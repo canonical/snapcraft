@@ -13,3 +13,5 @@ parts:
     install: |
       touch $SNAPCRAFT_PART_INSTALL/build-done
       echo config-key=config-value > $SNAPCRAFT_PART_INSTALL/config.ini
+      mkdir -p $SNAPCRAFT_PART_INSTALL/lib/$SNAPCRAFT_ARCH_TRIPLET
+      touch $SNAPCRAFT_PART_INSTALL/lib/$SNAPCRAFT_ARCH_TRIPLET/lib.so
