@@ -21,8 +21,13 @@ export PATH=$(pwd)/bin:$PATH
 export PYTHONPATH=$(pwd)${PYTHONPATH:+:$PYTHONPATH}
 
 printhelp(){
-    echo "Usage: ./runtests.sh unit|snaps|<snapcraft-suite>"
-    echo "<snapcraft-suite> can be snapcraft/tests, or any of its subdirectories."
+    echo "Usage: "
+    echo "    ./runtests.sh static"
+    echo "    ./runtests.sh snapcraft/tests/unit"
+    echo "    ./runtests.sh snapcraft/tests/integration[/<test-suite>]"
+    echo "    ./runtests.sh snaps"
+    echo ""
+    echo "<test-suite> can be: $(ls snapcraft/tests/integration| grep '^[a-z].*' | tr '\n' ' ')"
 }
 
 parseargs(){
