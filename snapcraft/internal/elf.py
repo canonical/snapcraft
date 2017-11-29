@@ -108,7 +108,7 @@ def determine_ld_library_path(root: str) -> List[str]:
     :param root str: the root directory to search for specific ld.so.conf
                      entries.
     :returns: a list of strings of library paths where releavant libraries
-              can be found withing root.
+              can be found within root.
     """
     # If more ld.so.conf files need to be supported, add them here.
     ld_config_globs = {

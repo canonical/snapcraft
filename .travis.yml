@@ -15,6 +15,8 @@ jobs:
     - stage: static
       if: type != cron
       script: sudo ./tools/travis/run_tests.sh static
+    - if: type != cron
+      script: sudo ./tools/travis/run_codespell.sh
     - stage: unit
       if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapcraft/tests/unit
@@ -36,7 +38,7 @@ jobs:
       script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/containers
     - if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/snapd
-    # CLA check, only in pull requests, not comming from the bot.
+    # CLA check, only in pull requests, not coming from the bot.
     - if: type = pull_request AND sender != snappy-m-o
       script: ./tools/travis/run_cla_check.sh
     # Trigger nightly tests, only in cron.

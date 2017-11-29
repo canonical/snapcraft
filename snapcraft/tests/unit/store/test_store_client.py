@@ -501,12 +501,12 @@ class RegisterTestCase(StoreTestCase):
 
     def test_register_name_successfully(self):
         self.client.login('dummy', 'test correct password')
-        # No exception will be raised if this is succesful
+        # No exception will be raised if this is successful
         self.client.register('test-good-snap-name')
 
     def test_register_private_name_successfully(self):
         self.client.login('dummy', 'test correct password')
-        # No exception will be raised if this is succesful
+        # No exception will be raised if this is successful
         self.client.register('test-good-snap-name', is_private=True)
 
     def test_register_refreshes_macaroon(self):

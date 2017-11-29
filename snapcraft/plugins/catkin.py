@@ -312,7 +312,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
             'LD_LIBRARY_PATH=$LD_LIBRARY_PATH:{}'.format(ld_library_path),
         ]
 
-        # There's a chicken and egg problem here, everything run get's an
+        # There's a chicken and egg problem here, everything run gets an
         # env built, even package installation, so the first runs for these
         # will likely fail.
         try:
