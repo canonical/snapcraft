@@ -30,7 +30,7 @@ class CleanCommandTestCase(CommandBaseTestCase):
     yaml_template = """name: clean-test
 version: 1.0
 summary: test clean
-description: if the clean is succesful the state file will be updated
+description: if the clean is successful the state file will be updated
 icon: icon.png
 confinement: strict
 grade: stable

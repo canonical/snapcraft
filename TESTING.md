@@ -25,13 +25,13 @@ The static tests suite performs a static analysis on the source code without exe
 
 ### Unit tests
 
-The unit tests is a suite of low-level white box tests. They excercise units of code to verify that the different parts work as expected in a fully isolated way. Ideally, these tests should call only public functions, objects and methods, leaving the internals of snapcraft as implementation details that can change without having to modifying any tests. To isolate the units from their environment and dependencies we can replace those with test doubles. In order to set up test doubles, we prefer dependency injection through arguments than excessive mocking. These tests can verify the results checking the output printed to the command line, checking the files created during the excecution, inspecting the calls made to the test doubles and verifying that the expected exceptions were thrown.
+The unit tests is a suite of low-level white box tests. They exercise units of code to verify that the different parts work as expected in a fully isolated way. Ideally, these tests should call only public functions, objects and methods, leaving the internals of snapcraft as implementation details that can change without having to modifying any tests. To isolate the units from their environment and dependencies we can replace those with test doubles. In order to set up test doubles, we prefer dependency injection through arguments than excessive mocking. These tests can verify the results checking the output printed to the command line, checking the files created during the execution, inspecting the calls made to the test doubles and verifying that the expected exceptions were thrown.
 
 These tests are in the `snapcraft/tests/unit` directory.
 
 ### Integration tests
 
-The integration tests are a group of suites that excercise snapcraft as a black box. They are only allowed to set up the environment where snapcraft runs and create files; but for the execution phase of the test they can only run the snapcraft command or one of its subcommands. To verify the results they can check the output printed to the command line, the return value of the snapcraft command, and any files created during the execution.
+The integration tests are a group of suites that exercise snapcraft as a black box. They are only allowed to set up the environment where snapcraft runs and create files; but for the execution phase of the test they can only run the snapcraft command or one of its subcommands. To verify the results they can check the output printed to the command line, the return value of the snapcraft command, and any files created during the execution.
 
 These tests are in the `snapcraft/tests/integration` directory, with the `snapcraft.yamls` and other source files for the tests snaps in `snapcraft/tests/integration/snaps`.
 

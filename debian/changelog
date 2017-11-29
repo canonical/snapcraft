@@ -51,7 +51,7 @@ snapcraft (2.35) xenial; urgency=medium
   * many: account for python shebang args in rewrite
 
   [ Leo Arias ]
-  * typo: replace occured with occurred
+  * typo: replace occurred with occurred
   * node plugin: record installed node packages in manifest
   * node plugin: record the yarn.lock file
   * tests: fix the TEST_STORE environment variable
@@ -295,7 +295,7 @@ snapcraft (2.33) xenial; urgency=medium
   * core: clean the container on a full clean (#1372)
   * lxd: do not assume user ID of 1000 for raw.idmap (#1385)
   * autotools plugin: Enable cross-compilation support (#1383)
-  * lxd: distingish FileNotFoundError for when not installed (#1400)
+  * lxd: distinguish FileNotFoundError for when not installed (#1400)
   * waf plugin: enable cross-compilation support  (#1397)
   * ci: wait for apt/dpkg lock when setting lxd up (#1421)
   * lxd: stop setting `$HOME` in containers (#1408)
@@ -614,7 +614,7 @@ snapcraft (2.27.1) xenial; urgency=medium
 snapcraft (2.27) xenial; urgency=medium
 
   [ Sergio Schvezov ]
-  * core: switch to using rpath for clasic confinement. (#1094)
+  * core: switch to using rpath for classic confinement. (#1094)
   * python plugin: do the right thing with classic. (#1093)
   * meta: support for the environment keyword. (#1103)
   * meta: correct the deprecation for `setup/gui` use. (#1107)
