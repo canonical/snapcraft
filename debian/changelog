@@ -25,20 +25,20 @@ snapcraft (2.36) xenial; urgency=medium
   * tests: move the catkin integration tests to a separate suite (#1760)
 
   [ Chris Ratliff ]
-  * catkin tools plugin: add catkin tools support. (#1593) (LP: #1693380)
+  * catkin tools plugin: add catkin tools support (#1593)
 
   [ Paolo Pisati ]
   * kernel plugin: respect the kernel-with-firmware property (#1750)
 
   [ Colin Watson ]
-  * nodejs plugin: pass proxy configuration to yarn (#1754) (LP: #1733718)
+  * nodejs plugin: pass proxy configuration to yarn (#1754)
 
   [ Christian Dywan ]
   * lxd: always remove tmp_dir after execution (#1742)
   * lxd: delete container only if parts is empty (#1762)
 
   [ Facundo Batista ]
-  * store: push-metadata added. (#1634)
+  * store: push-metadata added (#1634)
   * tests: push metadata test needs to push the snap first (#1766)
 
   [ Daniel Watkins ]
