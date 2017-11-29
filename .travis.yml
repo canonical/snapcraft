@@ -15,7 +15,7 @@ jobs:
     - stage: static
       if: type != cron
       script: sudo ./tools/travis/run_tests.sh static
-      if: type != cron
+    - if: type != cron
       script: sudo ./tools/travis/run_codespell.sh
     - stage: unit
       if: type != cron
