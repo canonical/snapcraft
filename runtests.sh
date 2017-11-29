@@ -20,11 +20,15 @@ set -e
 export PATH=$(pwd)/bin:$PATH
 export PYTHONPATH=$(pwd)${PYTHONPATH:+:$PYTHONPATH}
 
+printhelp(){
+    echo "Usage: ./runtests.sh unit|snaps|<snapcraft-suite>"
+    echo "<snapcraft-suite> can be snapcraft/tests, or any of its subdirectories."
+}
+
 parseargs(){
     if [[ "$#" -eq 0 ]]; then
-        echo "Usage: ./runtests.sh unit|snaps|<snapcraft-suite>"
-        echo "<snapcraft-suite> can be snapcraft/tests, or any of its subdirectories."
-        exit 1
+        printhelp
+	exit 1
     else
         if [ "$1" == "static" ] ; then
             run_static_tests
@@ -70,6 +74,11 @@ run_spread(){
 
     spread -v linode:
 }
+
+if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+    printhelp
+    exit 0
+fi
 
 parseargs "$@"
 
