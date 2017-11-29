@@ -12,7 +12,7 @@ cache:
 # codespell check before tests
 install:
 - sudo pip install codespell
-- codespell -w
+- codespell -S "*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,./.git"
 
 jobs:
   include:
