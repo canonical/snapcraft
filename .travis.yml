@@ -9,17 +9,14 @@ cache:
   directories:
     - $TRAVIS_BUILD_DIR/snaps-cache
 
-# codespell check before tests
-install:
-- sudo pip install codespell
-- codespell -S "*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,./.git" -w || true
-
 jobs:
   include:
     # Tests, only when not triggered by the daily cron.
     - stage: static
       if: type != cron
       script: sudo ./tools/travis/run_tests.sh static
+      if: type != cron
+      script: sudo ./tools/travis/run_codespell.sh
     - stage: unit
       if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapcraft/tests/unit
