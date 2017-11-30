@@ -72,7 +72,7 @@ def _get_icon_from_snap_file(snap_path):
             ['unsquashfs', '-d',
              os.path.join(temp_dir, 'squashfs-root'),
              snap_path, '-e', 'meta/gui'])
-        logger.debug(output)
+        logger.debug("Output extracting icon from snap: %s", output)
         for extension in ('png', 'svg'):
             icon_name = 'icon.{}'.format(extension)
             icon_path = os.path.join(

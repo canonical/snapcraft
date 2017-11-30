@@ -33,10 +33,11 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        self.icon = None
+        self.pushed_icon = None
 
         def _save_updated_icon(snap_name, metadata, force):
-            self.icon = metadata['icon'].read()
+            self.pushed_icon = (
+                metadata['icon'].read() if metadata['icon'] else None)
 
         patcher = mock.patch.object(
             storeapi.StoreClient, 'push_binary_metadata',
@@ -63,7 +64,7 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
             b'<svg width="256" height="256">\n'
             b'<rect width="256" height="256" style="fill:rgb(0,0,255)" />\n'
             b'</svg>')
-        self.assertEqual(self.icon, expected_icon)
+        self.assertEqual(self.pushed_icon, expected_icon)
         self.assertEqual(args[2], force)
 
     def test_without_snap_must_raise_exception(self):
@@ -150,3 +151,21 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.output, Contains(
             "The metadata has been pushed"))
         self.assert_expected_metadata_calls(force=True)
+
+    def test_snap_without_icon(self):
+        patcher = mock.patch.object(storeapi.StoreClient, 'push_metadata')
+        self.mock_metadata = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        snap_file = os.path.join(
+            os.path.dirname(tests.__file__), 'data', 'test-snap.snap')
+
+        # push metadata
+        with mock.patch('snapcraft.storeapi.StatusTracker'):
+            result = self.run_command(['push-metadata', snap_file])
+        self.assertThat(result.exit_code, Equals(0))
+
+        self.assertThat(result.output, Contains(
+            "The metadata has been pushed"))
+        # icon pushed to store is None
+        self.assertIsNone(self.pushed_icon)
