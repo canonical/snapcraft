@@ -179,8 +179,7 @@ class StoreRegistrationError(StoreError):
         'If you are the publisher most users expect for '
         '{snap_name!r} then please claim the name at {register_name_url!r}\n\n'
         'Please register a name that people will associate with you. '
-        'We can rename your snap later if needed.\n\n'
-        'You can push your own versions of firefox, as firefox@nessita.')
+        'We can rename your snap later if needed.')
 
     __FMT_RETRY_WAIT = (
         'You must wait {retry_after} seconds before trying to register '
