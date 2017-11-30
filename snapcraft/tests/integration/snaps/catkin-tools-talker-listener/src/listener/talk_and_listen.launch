@@ -1,0 +1,13 @@
+<launch>
+    <arg name = "exit-after-receive" default = "false"
+          doc = "exit system after listener receives a single message." />
+
+    <node name = "talker" pkg = "talker" type = "talker_node"
+          required = "true" output = "screen" />
+
+    <node name = "listener" pkg = "listener" type = "listener_node"
+          required = "true" output = "screen">
+        <remap from = "babble" to = "chatter" />
+        <param name = "exit-after-receive" value = "$(arg exit-after-receive)" />
+    </node>
+</launch>

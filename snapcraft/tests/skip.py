@@ -16,6 +16,7 @@
 
 import contextlib
 import functools
+from typing import Any, Callable
 
 from unittest import skipUnless
 
@@ -25,8 +26,9 @@ from snapcraft.internal import (
 )
 
 
-def skip_unless_codename(codename, message):
-    def _wrap(func):
+def skip_unless_codename(
+        codename: str, message: str) -> Callable[..., Callable[..., None]]:
+    def _wrap(func: Callable[..., None]) -> Callable[..., None]:
         release = os_release.OsRelease()
         actual_codename = None
         with contextlib.suppress(errors.OsReleaseCodenameError):
@@ -34,7 +36,7 @@ def skip_unless_codename(codename, message):
 
         @functools.wraps(func)
         @skipUnless(actual_codename == codename, message)
-        def _skip_test(*args, **kwargs):
+        def _skip_test(*args: Any, **kwargs: Any) -> None:
             func(*args, **kwargs)
         return _skip_test
     return _wrap
