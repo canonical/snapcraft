@@ -542,8 +542,8 @@ class RegisterTestCase(StoreTestCase):
                    "If you are the publisher most users expect for "
                    "'test-reserved-snap-name' then please claim the "
                    "name at 'https://myapps.com/register-name/'\n\n"
-                   "Please register a name that people will associate with you. "
-                   "We can rename your snap later if needed."
+                   "Please register a name that people will associate "
+                   "with you. We can rename your snap later if needed."
                    ))
 
     def test_register_already_owned_name(self):
