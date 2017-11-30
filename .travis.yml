@@ -29,8 +29,7 @@ jobs:
     - if: type != cron
       script: sudo ./tools/travis/run_tests.sh $TEST
       env:
-          - TEST=snapcraft/tests/unit
-          - SNAPCRAFT_TEST_MOCK_MACHINE=armv7l
+          - TEST=snapcraft/tests/unit SNAPCRAFT_TEST_MOCK_MACHINE=armv7l
     - stage: snap
       if: type != cron
       script: sudo ./tools/travis/build_snapcraft_snap.sh
