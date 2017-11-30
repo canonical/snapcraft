@@ -7,7 +7,7 @@ language: bash
 
 cache:
   directories:
-    - $TRAVIS_BUILD_DIR/snaps-cache
+    - $HOME/snaps-cache
 
 jobs:
   include:
