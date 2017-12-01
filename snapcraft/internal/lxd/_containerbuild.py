@@ -94,6 +94,8 @@ class Containerbuild:
         try:
             self._ensure_container()
             yield
+        except subprocess.CalledProcessError as e:
+            raise ContainerConnectionError('Failed to setup container')
         finally:
             status = self._get_container_status()
             if status and status['status'] == 'Running':
