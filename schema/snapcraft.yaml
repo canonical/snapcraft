@@ -43,12 +43,8 @@ properties:
       also cannot start or end with a hyphen."
     pattern: "^(?:[a-z0-9]+-?)*[a-z](?:-?[a-z0-9])*$"
   architectures:
-    type: array
-    description: architectures to override with
-    minItems: 1
-    uniqueItems: true
-    items:
-      - type: string
+    $ref: "#/definitions/grammar-array"
+    description: architectures on which to build and run
   version:
     # python's defaul yaml loading code loads 1.0 as an int
     # type: string

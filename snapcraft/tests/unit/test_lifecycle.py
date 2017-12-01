@@ -831,6 +831,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             'SNAPCRAFT_BUILD_INFO', '1'))
         self.make_snapcraft_yaml(
             textwrap.dedent("""\
+                architectures:
+                  - try: [i386, invalid-arch]
+                  - else: [armhf]
                 parts:
                   test-part:
                     plugin: nil
@@ -844,6 +847,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             description: test
             confinement: strict
             grade: stable
+            architectures:
+            - armhf
             parts:
               test-part:
                 build-packages: []
@@ -854,11 +859,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
-            architectures:
-            - {}
             build-packages: []
             build-snaps: []
-            """.format(self.project_options.deb_arch))
+            """)
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))
@@ -875,6 +878,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
 
         self.make_snapcraft_yaml(
             textwrap.dedent("""\
+                architectures: [armhf]
                 parts:
                   test-part:
                     plugin: nil
@@ -888,6 +892,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             description: test
             confinement: strict
             grade: stable
+            architectures:
+            - armhf
             parts:
               test-part:
                 build-packages: []
@@ -900,11 +906,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 stage: []
                 stage-packages: []
                 uname: Linux test uname 4.10 x86_64
-            architectures:
-            - {}
             build-packages: []
             build-snaps: []
-            """.format(self.project_options.deb_arch))
+            """)
         self.assertThat(
             os.path.join('prime', 'snap', 'manifest.yaml'),
             FileContains(expected))

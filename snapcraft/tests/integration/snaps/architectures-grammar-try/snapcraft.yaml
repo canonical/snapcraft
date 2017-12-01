@@ -1,0 +1,14 @@
+name: architectures-grammar-try
+version: '0.1'
+summary: Test architectures grammar try statement
+description: |
+  Verify that the try statement results in an optional architecture spec
+grade: devel
+confinement: strict
+
+architectures:
+  - try: [armhf]
+
+parts:
+  my-part:
+    plugin: nil

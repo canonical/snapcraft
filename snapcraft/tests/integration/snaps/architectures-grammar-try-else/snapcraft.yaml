@@ -1,0 +1,16 @@
+name: architectures-grammar-try-else
+version: '0.1'
+summary: Test architectures grammar try statement else
+description: Verify that the try statement moves to the else if invalid
+grade: devel
+confinement: strict
+
+architectures:
+  - try:
+    - invalid-arch
+  - else:
+    - armhf
+
+parts:
+  my-part:
+    plugin: nil

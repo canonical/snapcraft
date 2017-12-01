@@ -20,6 +20,10 @@ import os
 import platform
 import sys
 
+# These are used my a mypy 'type:' comment below, and nowhere else. As a
+# result, flake8 doesn't think they're used. Thus noqa.
+from typing import Dict, List, Union  # noqa
+
 from snapcraft.internal import common
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.errors import SnapcraftEnvironmentError
@@ -91,7 +95,7 @@ _ARCH_TRANSLATIONS = {
         'triplet': 's390x-linux-gnu',
         'core-dynamic-linker': 'lib/ld64.so.1',
     }
-}
+}  # type: Dict[str, Dict[str, Union[str, List[str]]]]
 
 
 _32BIT_USERSPACE_ARCHITECTURE = {
@@ -282,3 +286,26 @@ def _find_machine(deb_arch):
 
     raise SnapcraftEnvironmentError(
         'Cannot set machine from deb_arch {!r}'.format(deb_arch))
+
+
+def deb_arch_is_supported(deb_arch) -> bool:
+    """Check for support of a specific architecture.
+
+    :param str deb_arch: Debian architecture to check (e.g. amd64).
+    :return: Whether or not architecture is supported by Snapcraft.
+    :rtype: bool
+
+    Supported architecture example:
+    >>> deb_arch_is_supported('amd64')
+    True
+
+    Unsupported architecture example:
+    >>> deb_arch_is_supported('invalid-arch')
+    False
+    """
+
+    for machine in _ARCH_TRANSLATIONS:
+        if _ARCH_TRANSLATIONS[machine].get('deb', '') == deb_arch:
+            return True
+
+    return False

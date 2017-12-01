@@ -1,0 +1,13 @@
+name: architectures-grammar-try-skip
+version: '0.1'
+summary: Test build package grammar try statement
+description: Verify that the try statement skips unsupported architectures
+grade: devel
+confinement: strict
+
+architectures:
+  - try: [invalid-arch]
+
+parts:
+  my-part:
+    plugin: nil

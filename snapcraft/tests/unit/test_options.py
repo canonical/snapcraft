@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import doctest
 import os.path
 from unittest import mock
 
@@ -24,6 +25,11 @@ import snapcraft
 from snapcraft.internal import common
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.tests import unit
+
+
+def load_tests(loader, tests, ignore):
+    tests.addTests(doctest.DocTestSuite(snapcraft._options))
+    return tests
 
 
 class NativeOptionsTestCase(unit.TestCase):
