@@ -32,8 +32,8 @@ _MESSAGE_REGISTER_PRIVATE = dedent("""\
     then we suggest you prefix the name with your developer identity,
     As ‘nessita-yoyodyne-www-site-content’.""")
 _MESSAGE_REGISTER_CONFIRM = dedent("""
-    We always want to ensure that users get the software they expect for a
-    particular name.
+    We always want to ensure that users get the software they expect
+     for a particular name.
 
     If needed, we will rename snaps to ensure that a particular name
     reflects the software most widely expected by our community.
