@@ -83,7 +83,7 @@ class TestGetLibraries(unit.TestCase):
         self.useFixture(self.fake_logger)
 
     def test_get_libraries(self):
-        libs = elf.get_dependencies('foo')
+        libs = elf.ElfFile(path='foo').load_dependencies()
         self.assertThat(libs, Equals(frozenset(
             ['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
 
@@ -96,21 +96,22 @@ class TestGetLibraries(unit.TestCase):
         ]
         self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
 
-        libs = elf.get_dependencies('foo')
+        libs = elf.ElfFile(path='foo').load_dependencies()
         self.assertThat(libs, Equals(
             frozenset(['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
 
     def test_get_libraries_filtered_by_system_libraries(self):
         self.get_system_libs_mock.return_value = frozenset(['foo.so.1'])
 
-        libs = elf.get_dependencies('foo')
+        libs = elf.ElfFile(path='foo').load_dependencies()
         self.assertThat(libs, Equals(frozenset(['/usr/lib/bar.so.2'])))
 
     def test_get_libraries_ldd_failure_logs_warning(self):
         self.run_output_mock.side_effect = subprocess.CalledProcessError(
             1, 'foo', b'bar')
 
-        self.assertThat(elf.get_dependencies('foo'), Equals(set()))
+        self.assertThat(elf.ElfFile(path='foo').load_dependencies(),
+                        Equals(set()))
         self.assertThat(
             self.fake_logger.output,
             Equals("Unable to determine library dependencies for 'foo'\n"))
@@ -157,7 +158,8 @@ class TestSystemLibsOnNewRelease(unit.TestCase):
         self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
 
     def test_fail_gracefully_if_system_libs_not_found(self):
-        self.assertThat(elf.get_dependencies('foo'), Equals(frozenset()))
+        self.assertThat(elf.ElfFile(path='foo').load_dependencies(),
+                        Equals(frozenset()))
 
 
 class TestSystemLibsOnReleasesWithNoVersionId(unit.TestCase):

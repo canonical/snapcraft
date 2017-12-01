@@ -442,9 +442,9 @@ class PluginHandler:
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 
         elf_files = elf.get_elf_files(self.primedir, snap_files)
-        dependencies = set()
+        all_dependencies = set()
         for elf_file in elf_files:
-            dependencies.update(elf.get_dependencies(elf_file.path))
+            all_dependencies.update(elf_file.load_dependencies())
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
@@ -452,7 +452,7 @@ class PluginHandler:
         # already been primed by other means, and migrating them again could
         # potentially override the `stage` or `snap` filtering.
         (in_part, staged, primed, system) = _split_dependencies(
-            dependencies, self.installdir, self.stagedir, self.primedir)
+            all_dependencies, self.installdir, self.stagedir, self.primedir)
 
         part_dependency_paths = {os.path.dirname(d) for d in in_part}
         staged_dependency_paths = {os.path.dirname(d) for d in staged}
@@ -470,9 +470,36 @@ class PluginHandler:
                 _migrate_files(system, system_dependency_paths, '/',
                                self.primedir, follow_symlinks=True)
 
+        # TODO: base snap support
+        core_path = common.get_core_path()
+
+        def library_pather(library_path: str, elf_file_path: str) -> str:
+            # If the path is is in the core snap, use the absolute path,
+            # if the path is primed, use $ORIGIN, and last if the dependency
+            # is not anywhere return an empty string.
+            #
+            # Once we move away from the system library grabbing logic
+            # we can move to a smarter library capturing mechanism.
+            library_path = library_path.replace(self.installdir, self.primedir)
+            if library_path.startswith(core_path):
+                return library_path
+            elif (library_path.startswith(self.primedir) and
+                  os.path.exists(self.primedir)):
+                rel_library_path = os.path.relpath(library_path, elf_file_path)
+                rel_library_path_dir = os.path.dirname(rel_library_path)
+                # return the dirname, with the first .. replace with $ORIGIN
+                return rel_library_path_dir.replace('..', '$ORIGIN', 1)
+            else:
+                return ''
+
         if self._confinement == 'classic':
+            core_rpaths = common.get_library_paths(
+                core_path, self._project_options.arch_triplet,
+                existing_only=False)
             dynamic_linker = self._project_options.get_core_dynamic_linker()
-            elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker)
+            elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker,
+                                      library_path_func=library_pather,
+                                      base_rpaths=core_rpaths)
             for elf_file in elf_files:
                 elf_patcher.patch(elf_file=elf_file)
 
