@@ -294,7 +294,7 @@ def export_login(login_file: TextIO, packages: str, channels: str, acls: str):
     This file can then be used to login to the given account with the
     permissions specified.
 
-    For example, to limit acces to the edge channel of any snap to which the
+    For example, to limit access to the edge channel of any snap to which the
     account has access:
 
         snapcraft export-login --channels=edge
