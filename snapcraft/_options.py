@@ -20,7 +20,7 @@ import os
 import platform
 import sys
 
-# These are used my a mypy 'type:' comment below, and nowhere else. As a
+# These are used by a mypy 'type:' comment below, and nowhere else. As a
 # result, flake8 doesn't think they're used. Thus noqa.
 from typing import Dict, List, Union  # noqa
 
