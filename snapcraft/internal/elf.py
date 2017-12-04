@@ -136,8 +136,14 @@ class Patcher:
 
     def _patch_rpath(self, elf_file: ElfFile) -> None:
         rpath = self._get_rpath(elf_file)
-        print(elf_file.path, 'rpath: ', rpath)
-        self._run_patchelf(['--force-rpath', '--set-rpath', rpath],
+        # Parameters:
+        # --force-rpath: use RPATH instead of RUNPATH.
+        # --shrink-rpath: will remove unneeded entries, with the
+        #                 side effect of prefering host libraries
+        #                 so we simply do not use it.
+        # --set-rpath: set the RPATH to the colon separated argument.
+        self._run_patchelf(['--force-rpath',
+                            '--set-rpath', rpath],
                            elf_file.path)
 
     def _run_patchelf(self, args: List[str], elf_file_path: str) -> None:
