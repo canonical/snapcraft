@@ -49,8 +49,8 @@ class StageTestCase(integration.TestCase):
             '    - `stage`\n'
             '    - `snap`\n'
             '    - `organize`\n\n'
-            'Learn more about these part keywords by running '
-            '`snapcraft help plugins`'
+            'To learn more about these part keywords, run '
+            '`snapcraft help plugins`.'
         )
         self.assertThat(exception.output, Contains(expected_help))
         return exception.output
@@ -82,8 +82,8 @@ class StageTestCase(integration.TestCase):
             '    - `stage`\n'
             '    - `snap`\n'
             '    - `organize`\n\n'
-            'Learn more about these part keywords by running '
-            '`snapcraft help plugins`'
+            'To learn more about these part keywords, run '
+            '`snapcraft help plugins`.'
         )
         self.assertThat(exception.output, Contains(expected_help))
 
