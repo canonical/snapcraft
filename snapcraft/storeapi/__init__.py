@@ -189,7 +189,6 @@ class StoreClient():
         try:
             return func(*args, **kwargs)
         except errors.StoreMacaroonNeedsRefreshError:
-            print('REFRESHING')
             unbound_discharge = self.sso.refresh_unbound_discharge(
                 self.conf.get('unbound_discharge'))
             self.conf.set('unbound_discharge', unbound_discharge)

@@ -291,11 +291,11 @@ def list_registered():
 def export_login(login_file: TextIO, packages: str, channels: str, acls: str):
     """Save attenuated login configuration for a store account in FILE.
 
-    This file can then be used to login to the given account with the
-    permissions specified.
+    This file can then be used to log in to the given account with the
+    specified permissions.
 
-    For example, to limit access to the edge channel of any snap to which the
-    account has access:
+    For example, to limit access to the edge channel of any snap the account
+    can access:
 
         snapcraft export-login --channels=edge
 
@@ -332,8 +332,8 @@ def export_login(login_file: TextIO, packages: str, channels: str, acls: str):
     print()
     echo.info(
         'Login successfully exported to {0!r}. This file can now be used with '
-        "'snapcraft login --with {0}' to login to this account with no "
-        'password and have the following capabilities:\n'.format(
+        "'snapcraft login --with {0}' to log in to this account with no "
+        'password and have these capabilities:\n'.format(
             login_file.name))
     echo.info(_human_readable_acls(store))
     echo.warning(
@@ -359,7 +359,7 @@ def login(login_file):
 
     if login_file:
         echo.info(
-            'Login successful. You now have the following capabilities:\n')
+            'Login successful. You now have these capabilities:\n')
         echo.info(_human_readable_acls(store))
     else:
         echo.info('Login successful.')
