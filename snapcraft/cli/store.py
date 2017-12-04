@@ -281,13 +281,11 @@ def list_registered():
 @storecli.command('export-login')
 @click.argument('login_file', metavar='FILE', type=click.File('w'))
 @click.option('--packages', metavar='<packages>',
-              help='Comma-separated list of packages to limit token access')
+              help='Comma-separated list of packages to limit access')
 @click.option('--channels', metavar='<channels>',
-              help='Comma-separated list of channels to limit token access')
+              help='Comma-separated list of channels to limit access')
 @click.option('--acls', metavar='<acls>',
-              help='Comma-separated list of ACLs to limit token access. Valid '
-                   "ACLs are 'package_upload', 'package_access', and "
-                   "'package_manage'")
+              help='Comma-separated list of ACLs to limit access')
 def export_login(login_file: TextIO, packages: str, channels: str, acls: str):
     """Save attenuated login configuration for a store account in FILE.
 
