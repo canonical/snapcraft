@@ -530,7 +530,7 @@ class EnsureFilePathsTestCase(CreateBaseTestCase):
 
     scenarios = [
         ('desktop', dict(
-            filepath='usr/share/dekstop/desktop.desktop',
+            filepath='usr/share/desktop/desktop.desktop',
             content='[Desktop Entry]\nExec=app2.exe\nIcon=/usr/share/app2.png',
             key='desktop')),
         ('completer', dict(
@@ -552,7 +552,7 @@ class EnsureFilePathsTestCaseFails(CreateBaseTestCase):
 
     scenarios = [
         ('desktop', dict(
-            filepath='usr/share/dekstop/desktop.desktop',
+            filepath='usr/share/desktop/desktop.desktop',
             key='desktop')),
         ('completer', dict(
             filepath='usr/share/completions/complete.sh',

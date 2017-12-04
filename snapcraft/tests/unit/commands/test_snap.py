@@ -42,7 +42,7 @@ class SnapCommandBaseTestCase(CommandBaseTestCase):
         name: snap-test
         version: 1.0
         summary: test snapping
-        description: if snap is succesful a snap package will be available
+        description: if snap is successful a snap package will be available
         architectures: ['amd64']
         type: {}
         confinement: strict
@@ -460,7 +460,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
         container_name = 'local:snapcraft-snap-test'
         project_folder = '/root/build_snap-test'
         fake_lxd.check_call_mock.assert_has_calls([
-            call(['lxc', 'init', 'ubuntu:xenial/amd64', container_name]),
+            call(['lxc', 'init', 'ubuntu:xenial', container_name]),
             call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'config', 'set', container_name,

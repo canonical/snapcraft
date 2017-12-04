@@ -108,7 +108,10 @@ class TestCase(testtools.TestCase):
         self.stage_dir = 'stage'
         self.prime_dir = 'prime'
 
-        self.deb_arch = _ProjectOptions().deb_arch
+        project = _ProjectOptions()
+        self.deb_arch = project.deb_arch
+        self.arch_triplet = project.arch_triplet
+
         release = OsRelease()
         self.distro_series = release.version_codename()
 
@@ -446,7 +449,6 @@ class StoreTestCase(TestCase):
         if expect_success:
             process.expect_exact(
                 'We strongly recommend enabling multi-factor authentication:')
-            process.expect_exact('Login successful.')
             process.expect(
                 r'Done\. The key "{}" .* may be used to sign your '
                 r'assertions\.'.format(key_name))

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016, 2017 Canonical Ltd
+# Copyright 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -501,12 +501,12 @@ class RegisterTestCase(StoreTestCase):
 
     def test_register_name_successfully(self):
         self.client.login('dummy', 'test correct password')
-        # No exception will be raised if this is succesful
+        # No exception will be raised if this is successful
         self.client.register('test-good-snap-name')
 
     def test_register_private_name_successfully(self):
         self.client.login('dummy', 'test correct password')
-        # No exception will be raised if this is succesful
+        # No exception will be raised if this is successful
         self.client.register('test-good-snap-name', is_private=True)
 
     def test_register_refreshes_macaroon(self):
@@ -541,7 +541,9 @@ class RegisterTestCase(StoreTestCase):
                    "\n\n"
                    "If you are the publisher most users expect for "
                    "'test-reserved-snap-name' then please claim the "
-                   "name at 'https://myapps.com/register-name/'"))
+                   "name at 'https://myapps.com/register-name/'\n\n"
+                   "Otherwise, please register another name."
+                   ))
 
     def test_register_already_owned_name(self):
         self.client.login('dummy', 'test correct password')
@@ -721,6 +723,7 @@ class UploadTestCase(StoreTestCase):
 
     def test_upload_snap(self):
         self.client.login('dummy', 'test correct password')
+        self.client.register('test-snap')
         tracker = self.client.upload('test-snap', self.snap_path)
         self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
         result = tracker.track()
@@ -738,6 +741,7 @@ class UploadTestCase(StoreTestCase):
 
     def test_upload_refreshes_macaroon(self):
         self.client.login('dummy', 'test correct password')
+        self.client.register('test-snap')
         self.fake_store.needs_refresh = True
         tracker = self.client.upload('test-snap', self.snap_path)
         result = tracker.track()
@@ -773,6 +777,7 @@ class UploadTestCase(StoreTestCase):
 
     def test_upload_snap_requires_review(self):
         self.client.login('dummy', 'test correct password')
+        self.client.register('test-review-snap')
         tracker = self.client.upload('test-review-snap', self.snap_path)
         self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
         result = tracker.track()
@@ -791,6 +796,7 @@ class UploadTestCase(StoreTestCase):
 
     def test_upload_duplicate_snap(self):
         self.client.login('dummy', 'test correct password')
+        self.client.register('test-duplicate-snap')
         tracker = self.client.upload('test-duplicate-snap', self.snap_path)
         self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
         result = tracker.track()
@@ -1318,3 +1324,90 @@ class SignDeveloperAgreementTestCase(StoreTestCase):
             Equals('There was an error while signing developer agreement.\n'
                    'Reason: \'Internal Server Error\'\n'
                    'Text: \'Broken\''))
+
+
+class PushMetadataTestCase(StoreTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
+        self.useFixture(self.fake_logger)
+
+    def _setup_snap(self):
+        """Login, register and push a snap.
+
+        These are all the previous steps needed to push metadata.
+        """
+        self.client.login('dummy', 'test correct password')
+        self.client.register('basic')
+        path = os.path.join(
+            os.path.dirname(tests.__file__), 'data', 'test-snap.snap')
+        tracker = self.client.upload('basic', path)
+        tracker.track()
+
+    def test_requires_login(self):
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.push_metadata, 'basic', {}, False)
+
+    def test_refreshes_macaroon(self):
+        self._setup_snap()
+        self.fake_store.needs_refresh = True
+        metadata = {'field_ok': 'foo'}
+        self.client.push_metadata('basic', metadata, False)
+        self.assertFalse(self.fake_store.needs_refresh)
+
+    def test_invalid_data(self):
+        self._setup_snap()
+        metadata = {'invalid': 'foo'}
+        raised = self.assertRaises(
+            errors.StoreMetadataError,
+            self.client.push_metadata, 'basic', metadata, False)
+        self.assertThat(str(raised), Equals(
+            "Received 400: 'Invalid field: invalid'"))
+
+    def test_all_ok(self):
+        self._setup_snap()
+        metadata = {'field_ok': 'foo'}
+        result = self.client.push_metadata('basic', metadata, False)
+        self.assertIsNone(result)
+
+    def test_conflicting_simple_normal(self):
+        self._setup_snap()
+        metadata = {'test-conflict': 'value'}
+        raised = self.assertRaises(
+            errors.StoreMetadataError,
+            self.client.push_metadata, 'basic', metadata, False)
+        should = """
+            Metadata not pushed!
+            Conflict in 'test-conflict' field:
+                In snapcraft.yaml: 'value'
+                In the Store:      'value-changed'
+            You can repeat the push-metadata command with --force to force the local values into the Store
+        """  # NOQA
+        self.assertThat(str(raised), Equals(dedent(should).strip()))
+
+    def test_conflicting_multiple_normal(self):
+        self._setup_snap()
+        metadata = {'test-conflict-1': 'value-1', 'test-conflict-2': 'value-2'}
+        raised = self.assertRaises(
+            errors.StoreMetadataError,
+            self.client.push_metadata, 'basic', metadata, False)
+        should = """
+            Metadata not pushed!
+            Conflict in 'test-conflict-1' field:
+                In snapcraft.yaml: 'value-1'
+                In the Store:      'value-1-changed'
+            Conflict in 'test-conflict-2' field:
+                In snapcraft.yaml: 'value-2'
+                In the Store:      'value-2-changed'
+            You can repeat the push-metadata command with --force to force the local values into the Store
+        """  # NOQA
+        self.assertThat(str(raised), Equals(dedent(should).strip()))
+
+    def test_conflicting_force(self):
+        self._setup_snap()
+        metadata = {'test-conflict': 'value'}
+        # force the update, even on conflicts!
+        result = self.client.push_metadata('basic', metadata, True)
+        self.assertIsNone(result)

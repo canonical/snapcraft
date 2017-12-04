@@ -18,12 +18,14 @@ import os
 import subprocess
 from textwrap import dedent
 
+import fixtures
 import testscenarios
 from testtools.matchers import (
     Contains,
     Equals,
     FileContains,
     FileExists,
+    MatchesRegex,
     Not,
 )
 
@@ -36,6 +38,34 @@ class PrimeTestCase(integration.TestCase):
     def setUp(self):
         super().setUp()
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
+
+    def test_classic_confinement(self):
+        project_dir = 'classic-build'
+
+        # The first run should fail as the environment variable is not
+        # set but we can only test this on clean systems.
+        if not os.path.exists(os.path.join(
+                os.path.sep, 'snap', 'core', 'current')):
+            try:
+                self.run_snapcraft(['prime'], project_dir)
+            except subprocess.CalledProcessError:
+                pass
+            else:
+                self.fail(
+                    'This should fail as SNAPCRAFT_SETUP_CORE is not set')
+
+        # Now we set the required environment variable
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_SETUP_CORE', '1'))
+
+        self.run_snapcraft(['prime'], project_dir)
+        bin_path = os.path.join(self.prime_dir, 'bin', 'hello-classic')
+        self.assertThat(bin_path, FileExists())
+
+        interpreter = subprocess.check_output([
+            'patchelf', '--print-interpreter', bin_path]).decode()
+        expected_interpreter = r'^/snap/core/current/.*'
+        self.assertThat(interpreter, MatchesRegex(expected_interpreter))
 
     def test_prime_includes_stage_fileset(self):
         self.run_snapcraft('prime', 'prime-from-stage')

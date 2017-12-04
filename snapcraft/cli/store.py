@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -91,6 +91,7 @@ def register(snap_name, private):
                                 dir_okay=False))
 def push(snap_file, release):
     """Push <snap-file> to the store.
+
     By passing --release with a comma separated list of channels the snap would
     be released to the selected channels if the store review passes for this
     <snap-file>.
@@ -116,6 +117,29 @@ def push(snap_file, release):
             'will be made'.format(channel_list))
 
     snapcraft.push(snap_file, channel_list)
+
+
+@storecli.command('push-metadata')
+@click.option('--force', is_flag=True,
+              help="Force metadata update to override any possible conflict")
+@click.argument('snap-file', metavar='<snap-file>',
+                type=click.Path(exists=True,
+                                readable=True,
+                                resolve_path=True,
+                                dir_okay=False))
+def push_metadata(snap_file, force):
+    """Push metadata from <snap-file> to the store.
+
+    If --force is given, it will force the local metadata into the Store,
+    ignoring any possible conflict.
+
+    \b
+    Examples:
+        snapcraft push-metadata my-snap_0.1_amd64.snap
+        snapcraft push-metadata my-snap_0.1_amd64.snap --force
+    """
+    click.echo('Pushing metadata from {}'.format(os.path.basename(snap_file)))
+    snapcraft.push_metadata(snap_file, force)
 
 
 @storecli.command()
@@ -237,6 +261,9 @@ def login():
     """
     if not snapcraft.login():
         sys.exit(1)
+
+    print()
+    echo.info('Login successful.')
 
 
 @storecli.command()

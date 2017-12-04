@@ -23,7 +23,7 @@ packages.
 
 You tell snapcraft which build system it must drive by specifying the
 snapcraft plugin for that part. Every part must specify a plugin explicitly
-(when you see a part that does not specify a plugin, thats because the
+(when you see a part that does not specify a plugin, that's because the
 actual part definition is in the cloud, where the plugin is specified!)
 
 These plugins implement a lifecycle over the following steps:
@@ -414,6 +414,7 @@ from snapcraft._store import (                      # noqa
     list_registered,
     login,
     push,
+    push_metadata,
     register,
     register_key,
     release,

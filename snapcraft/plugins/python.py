@@ -324,7 +324,11 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     def snap_fileset(self):
         fileset = super().snap_fileset()
-        fileset.append('-bin/pip*')
+        fileset.append('-bin/pip')
+        fileset.append('-bin/pip2')
+        fileset.append('-bin/pip3')
+        fileset.append('-bin/pip2.7')
+        fileset.append('-bin/pip3.*')
         fileset.append('-bin/easy_install*')
         fileset.append('-bin/wheel')
         # Holds all the .pyc files. It is a major cause of inter part

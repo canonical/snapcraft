@@ -224,7 +224,7 @@ class ProjectOptions:
         self.__debug = debug
 
     def get_core_dynamic_linker(self):
-        """Returns the dynamic linker used for the targetted core.
+        """Returns the dynamic linker used for the targeted core.
         If not found realpath for `/lib/ld-linux.so.2` is returned.
         However if core is not installed None will be returned.
         """

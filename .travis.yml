@@ -29,12 +29,14 @@ jobs:
     - if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/plugins
     - if: type != cron
+      script: sudo ./tools/travis/run_tests.sh snapcraft.tests.integration.plugins.catkin
+    - if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/store
     - if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/containers
     - if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/snapd
-    # CLA check, only in pull requests, not comming from the bot.
+    # CLA check, only in pull requests, not coming from the bot.
     - if: type = pull_request AND sender != snappy-m-o
       script: ./tools/travis/run_cla_check.sh
     # Trigger nightly tests, only in cron.
@@ -48,6 +50,8 @@ jobs:
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-plugins
     - if: type = cron
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-plugins-catkin
+    - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-snapd
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-general
@@ -55,6 +59,8 @@ jobs:
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-store
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-plugins
+    - if: type = cron
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-plugins-catkin
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-snapd
     - if: type = cron

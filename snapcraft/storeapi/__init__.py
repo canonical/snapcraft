@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,6 +23,7 @@ import os
 import urllib.parse
 from time import sleep
 from threading import Thread
+from typing import Iterable
 from queue import Queue
 
 from progressbar import (
@@ -135,7 +136,7 @@ class Client():
 class StoreClient():
     """High-level client for the V2.0 API SCA resources."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.conf = config.Config()
         self.sso = SSOClient(self.conf)
@@ -143,8 +144,9 @@ class StoreClient():
         self.updown = UpDownClient(self.conf)
         self.sca = SCAClient(self.conf)
 
-    def login(self, email, password, one_time_password=None, acls=None,
-              packages=None, channels=None, save=True):
+    def login(self, email: str, password: str, one_time_password: str = None,
+              acls: Iterable[str] = None, packages: Iterable[str] = None,
+              channels: Iterable[str] = None, save: bool = True) -> None:
         """Log in via the Ubuntu One SSO API."""
         if acls is None:
             acls = ['package_upload', 'package_access', 'package_manage']
@@ -363,6 +365,18 @@ class StoreClient():
 
     def sign_developer_agreement(self, latest_tos_accepted=False):
         return self.sca.sign_developer_agreement(latest_tos_accepted)
+
+    def push_metadata(self, snap_name, metadata, force):
+        """Push the metadata to the server."""
+        account_info = self.get_account_information()
+        series = constants.DEFAULT_SERIES
+        try:
+            snap_id = account_info['snaps'][series][snap_name]['snap-id']
+        except KeyError:
+            raise errors.SnapNotFoundError(snap_name, series=series)
+
+        return self._refresh_if_necessary(
+            self.sca.push_metadata, snap_id, snap_name, metadata, force)
 
 
 class SSOClient(Client):
@@ -608,6 +622,21 @@ class SCAClient(Client):
             raise errors.StorePushError(data['name'], response)
 
         return StatusTracker(response.json()['status_details_url'])
+
+    def push_metadata(self, snap_id, snap_name, metadata, force):
+        """Push the metadata to SCA."""
+        url = 'snaps/' + snap_id + '/metadata'
+        headers = {
+            'Authorization': _macaroon_auth(self.conf),
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+        }
+        method = 'PUT' if force else 'POST'
+        response = self.request(
+            method, url, data=json.dumps(metadata), headers=headers)
+
+        if not response.ok:
+            raise errors.StoreMetadataError(snap_name, response, metadata)
 
     def snap_release(self, snap_name, revision, channels, delta_format=None):
         data = {

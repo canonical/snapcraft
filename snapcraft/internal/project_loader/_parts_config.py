@@ -191,7 +191,8 @@ class PartsConfig:
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema,
             stage_packages_repo=stage_packages_repo,
-            grammar_processor=grammar_processor)
+            grammar_processor=grammar_processor,
+            confinement=self._confinement)
 
         self.build_snaps |= grammar_processor.get_build_snaps()
         self.build_tools |= grammar_processor.get_build_packages()
@@ -230,6 +231,8 @@ class PartsConfig:
                 self._project_options.arch_triplet,
                 core_dynamic_linker=core_dynamic_linker)
             env.append('SNAPCRAFT_PART_INSTALL="{}"'.format(part.installdir))
+            env.append('SNAPCRAFT_ARCH_TRIPLET="{}"'.format(
+                self._project_options.arch_triplet))
             env.append('SNAPCRAFT_PARALLEL_BUILD_COUNT={}'.format(
                        self._project_options.parallel_build_count))
         else:

@@ -30,7 +30,7 @@ class CleanCommandTestCase(CommandBaseTestCase):
     yaml_template = """name: clean-test
 version: 1.0
 summary: test clean
-description: if the clean is succesful the state file will be updated
+description: if the clean is successful the state file will be updated
 icon: icon.png
 confinement: strict
 grade: stable
@@ -166,6 +166,7 @@ class ContainerizedCleanCommandTestCase(CleanCommandTestCase):
     def test_clean_containerized_with_part(self):
         fake_lxd = fixture_setup.FakeLXD()
         fake_lxd.name = 'local:snapcraft-clean-test'
+        fake_lxd.status = 'Stopped'
         self.useFixture(fake_lxd)
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_CONTAINER_BUILDS', self.snapcraft_container_builds))
@@ -175,8 +176,7 @@ class ContainerizedCleanCommandTestCase(CleanCommandTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         # clean with parts should NOT delete the container
-        self.assertNotEqual(fake_lxd.check_call_mock.call_args,
-                            call(['lxc', 'delete', '-f', fake_lxd.name]))
+        fake_lxd.check_call_mock.assert_not_called()
 
 
 class CleanCommandPartsTestCase(CleanCommandTestCase):

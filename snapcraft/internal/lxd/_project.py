@@ -19,6 +19,7 @@ import logging
 import os
 import subprocess
 import time
+from typing import List
 
 from ._containerbuild import Containerbuild
 
@@ -158,13 +159,14 @@ class Project(Containerbuild):
             self._container_run(['apt-get', 'upgrade', '-y'])
             self._container_run(['snap', 'refresh'])
 
-    def clean(self, parts, step):
+    def clean(self, parts: List[str], step: str):
         # clean with no parts deletes the container
         if not step:
-            if self._get_container_status():
-                print('Deleting {}'.format(self._container_name))
-                subprocess.check_call([
-                    'lxc', 'delete', '-f', self._container_name])
+            if not parts:
+                if self._get_container_status():
+                    print('Deleting {}'.format(self._container_name))
+                    subprocess.check_call([
+                        'lxc', 'delete', '-f', self._container_name])
             step = 'pull'
         # clean normally, without involving the container
         if step == 'strip':

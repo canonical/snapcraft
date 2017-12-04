@@ -25,15 +25,16 @@ import requests_unixsocket
 import shutil
 import sys
 import tempfile
-import yaml
 from contextlib import contextmanager
 import subprocess
 import time
 from urllib import parse
+from typing import List
 
 from snapcraft.internal import common
 from snapcraft.internal.errors import (
         ContainerConnectionError,
+        ContainerError,
         ContainerRunError,
         ContainerSnapcraftCmdError,
         SnapdError,
@@ -68,27 +69,11 @@ class Containerbuild:
             remote = _get_default_remote()
         _verify_remote(remote)
         self._container_name = '{}:snapcraft-{}'.format(remote, container_name)
-        server_environment = self._get_remote_info()['environment']
-        # Use the server architecture to avoid emulation overhead
-        try:
-            kernel = server_environment['kernel_architecture']
-        except KeyError:
-            kernel = server_environment['kernelarchitecture']
-        self._server_arch = _get_deb_arch(kernel)
-        if not self._server_arch:
-            raise ContainerConnectionError(
-                'Unrecognized server architecture {}'.format(kernel))
-        self._image = 'ubuntu:xenial/{}'.format(self._server_arch)
+        self._image = 'ubuntu:xenial'
         # Use a temporary folder the 'lxd' snap can access
-        lxd_common_dir = os.path.expanduser(
+        self._lxd_common_dir = os.path.expanduser(
             os.path.join('~', 'snap', 'lxd', 'common'))
-        os.makedirs(lxd_common_dir, exist_ok=True)
-        self.tmp_dir = tempfile.mkdtemp(prefix='snapcraft', dir=lxd_common_dir)
-
-    def _get_remote_info(self):
-        remote = self._container_name.split(':')[0]
-        return yaml.load(subprocess.check_output([
-            'lxc', 'info', '{}:'.format(remote)]).decode())
+        os.makedirs(self._lxd_common_dir, exist_ok=True)
 
     @contextmanager
     def _container_running(self):
@@ -102,8 +87,6 @@ class Containerbuild:
                 else:
                     raise e
             else:
-                # Remove temporary folder if everything went well
-                shutil.rmtree(self.tmp_dir)
                 self._finish()
 
     @contextmanager
@@ -142,6 +125,15 @@ class Containerbuild:
             'lxc', 'config', 'set', self._container_name,
             'environment.LC_ALL', 'C.UTF-8'])
         self._set_image_info_env_var()
+        info = subprocess.check_output([
+            'lxc', 'info', self._container_name]).decode('utf-8')
+        for line in info.splitlines():
+            if line.startswith("Architecture:"):
+                self._container_arch = _get_deb_arch(
+                    line.split(None, 1)[1].strip())
+                break
+        else:
+            raise ContainerError("Could not find architecture for container")
 
     def _set_image_info_env_var(self):
         FAILURE_WARNING_FORMAT = (
@@ -235,13 +227,14 @@ class Containerbuild:
             # Because of https://bugs.launchpad.net/snappy/+bug/1628289
             self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
 
-            # Push core snap into container
-            self._inject_snap('core')
-            self._inject_snap('snapcraft')
+            with tempfile.TemporaryDirectory(
+                    prefix='snapcraft', dir=self._lxd_common_dir) as tmp_dir:
+                self._inject_snap('core', tmp_dir)
+                self._inject_snap('snapcraft', tmp_dir)
         else:
             self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
 
-    def _inject_snap(self, name):
+    def _inject_snap(self, name: str, tmp_dir: str):
         session = requests_unixsocket.Session()
         # Cf. https://github.com/snapcore/snapd/wiki/REST-API#get-v2snapsname
         # TODO use get_local_snap info from the snaps module.
@@ -262,7 +255,7 @@ class Containerbuild:
 
         # If the server has a different arch we can't inject local snaps
         if (self._project_options.target_arch
-                and self._project_options.target_arch != self._server_arch):
+                and self._project_options.target_arch != self._container_arch):
             channel = json['result']['channel']
             return self._install_snap(name, channel, is_classic=is_classic)
 
@@ -277,7 +270,7 @@ class Containerbuild:
         installed = os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps',
                                  filename)
 
-        filepath = os.path.join(self.tmp_dir, filename)
+        filepath = os.path.join(tmp_dir, filename)
         if rev.startswith('x'):
             logger.info('Making {} user-accessible'.format(filename))
             subprocess.check_call(['sudo', 'cp', installed, filepath])
@@ -296,7 +289,7 @@ class Containerbuild:
                 ['snap-declaration', 'snap-name={}'.format(name)],
                 ['snap-revision', 'snap-revision={}'.format(rev),
                  'snap-id={}'.format(id)],
-            ])
+            ], tmp_dir)
 
         container_filename = os.path.join(os.sep, 'run', filename)
         self._push_file(filepath, container_filename)
@@ -352,8 +345,9 @@ class Containerbuild:
             checksum_container = None
         return checksum == checksum_container
 
-    def _inject_assertions(self, filename, assertions):
-        filepath = os.path.join(self.tmp_dir, filename)
+    def _inject_assertions(self, filename: str,
+                           assertions: List[List[str]], tmp_dir: str):
+        filepath = os.path.join(tmp_dir, filename)
         with open(filepath, 'wb') as f:
             for assertion in assertions:
                 logger.info('Looking up assertion {}'.format(assertion))

@@ -83,8 +83,7 @@ def build_env(root, snap_name, confinement, arch_triplet,
                    # Building tools to continue the build becomes problematic
                    # with nodefaultlib.
                    # '-Wl,-z,nodefaultlib '
-                   '-Wl,--dynamic-linker={0} '
-                   '-Wl,-rpath,{1}"'.format(core_dynamic_linker, rpaths))
+                   '-Wl,-rpath,{}"'.format(rpaths))
 
     paths = common.get_library_paths(root, arch_triplet)
     if paths:
