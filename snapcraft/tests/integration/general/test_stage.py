@@ -37,8 +37,9 @@ class StageTestCase(integration.TestCase):
 
         self.assertThat(exception.returncode, Equals(2))
         expected_conflicts = (
-            "Parts 'p1' and 'p2' have the following file paths in common "
-            "which have different contents:\n    bin/test\n")
+            "Failed to stage: "
+            "Parts 'p1' and 'p2' have the following files, but with different "
+            "contents:\n    bin/test\n")
         self.assertThat(exception.output, Contains(expected_conflicts))
 
         expected_help = (
@@ -69,8 +70,9 @@ class StageTestCase(integration.TestCase):
 
         self.assertThat(exception.returncode, Equals(2))
         expected_conflicts = (
-            "Parts 'p1' and 'p2' have the following file paths in common "
-            "which have different contents:\n    bin/test\n")
+            "Failed to stage: "
+            "Parts 'p1' and 'p2' have the following files, but with different "
+            "contents:\n    bin/test\n")
         self.assertThat(exception.output, Contains(expected_conflicts))
 
         expected_help = (
