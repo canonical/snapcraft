@@ -255,14 +255,18 @@ def list_keys():
     enabled_keys = {
         account_key['public-key-sha3-384']
         for account_key in account_info['account_keys']}
-    tabulated_keys = tabulate(
-        [('*' if key['sha3-384'] in enabled_keys else '-',
-          key['name'], key['sha3-384'],
-          '' if key['sha3-384'] in enabled_keys else '(not registered)')
-         for key in keys],
-        headers=["", "Name", "SHA3-384 fingerprint", ""],
-        tablefmt="plain")
-    print(tabulated_keys)
+    if enabled_keys:
+        tabulated_keys = tabulate(
+            [('*' if key['sha3-384'] in enabled_keys else '-',
+              key['name'], key['sha3-384'],
+              '' if key['sha3-384'] in enabled_keys else '(not registered)')
+             for key in keys],
+            headers=["", "Name", "SHA3-384 fingerprint", ""],
+            tablefmt="plain")
+        print(tabulated_keys)
+    else:
+        print('No keys have been registered.'
+              ' See \'snapcraft register-key --help\' to register a key.')
 
 
 def create_key(name):

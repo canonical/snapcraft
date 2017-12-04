@@ -85,3 +85,23 @@ class ListKeysCommandTestCase(CommandBaseTestCase):
             """).format(
                 default_sha3_384=get_sample_key('default')['sha3-384'],
                 another_sha3_384=get_sample_key('another')['sha3-384'])))
+
+    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch('subprocess.check_output')
+    @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
+    def test_list_keys_without_registered(self, mock_installed,
+                                          mock_check_output,
+                                          mock_get_account_information):
+        mock_installed.return_value = True
+        mock_check_output.side_effect = mock_snap_output
+        mock_get_account_information.return_value = {
+            'account_id': 'abcd',
+            'account_keys': [],
+        }
+
+        result = self.run_command([self.command_name])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            "No keys have been registered. "
+            "See \'snapcraft register-key --help\' to register a key."))
