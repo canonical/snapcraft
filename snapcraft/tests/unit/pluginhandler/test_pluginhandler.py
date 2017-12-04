@@ -1047,10 +1047,7 @@ class StateTestCase(StateBaseTestCase):
             errors.MissingStateCleanError,
             self.handler.clean_stage, {})
 
-        self.assertThat(
-            str(raised),
-            Equals("Failed to clean step 'stage': Missing necessary state. "
-                   "This won't work until a complete clean has occurred."))
+        self.assertThat(raised.step, Equals('stage'))
 
     @patch('shutil.copy')
     def test_prime_state(self, mock_copy):
@@ -1376,10 +1373,7 @@ class StateTestCase(StateBaseTestCase):
             errors.MissingStateCleanError,
             self.handler.clean_prime, {})
 
-        self.assertThat(
-            str(raised),
-            Equals("Failed to clean step 'prime': Missing necessary state. "
-                   "This won't work until a complete clean has occurred."))
+        self.assertThat(raised.step, Equals('prime'))
 
 
 class StateFileMigrationTestCase(StateBaseTestCase):
@@ -1732,11 +1726,7 @@ class CleanTestCase(CleanBaseTestCase):
             errors.MissingStateCleanError,
             handler.clean, step='prime')
 
-        self.assertThat(
-            str(raised),
-            Equals("Failed to clean step 'prime': Missing necessary state. "
-                   "This won't work until a complete clean has occurred."))
-
+        self.assertThat(raised.step, Equals('prime'))
         self.assertTrue(os.path.isfile(primed_file))
 
     def test_clean_stage_multiple_independent_parts(self):
@@ -1846,11 +1836,7 @@ class CleanTestCase(CleanBaseTestCase):
             errors.MissingStateCleanError,
             handler.clean, step='stage')
 
-        self.assertThat(
-            str(raised),
-            Equals("Failed to clean step 'stage': Missing necessary state. "
-                   "This won't work until a complete clean has occurred."))
-
+        self.assertThat(raised.step, Equals('stage'))
         self.assertTrue(os.path.isfile(staged_file))
 
 
@@ -2078,10 +2064,9 @@ class CollisionTestCase(unit.TestCase):
             pluginhandler.check_for_collisions,
             [self.part1, self.part2, self.part3])
 
-        self.assertIn(
-            "Parts 'part2' and 'part3' have the following file paths in "
-            "common which have different contents:\n    1\n    a/2",
-            raised.__str__())
+        self.assertThat(raised.other_part_name, Equals('part2'))
+        self.assertThat(raised.part_name, Equals('part3'))
+        self.assertThat(raised.file_paths, Equals('    1\n    a/2'))
 
     def test_collisions_between_two_parts_pc_files(self):
         raised = self.assertRaises(
@@ -2089,10 +2074,9 @@ class CollisionTestCase(unit.TestCase):
             pluginhandler.check_for_collisions,
             [self.part1, self.part4])
 
-        self.assertIn(
-            "Parts 'part1' and 'part4' have the following file paths in "
-            "common which have different contents:\n    file.pc",
-            raised.__str__())
+        self.assertThat(raised.other_part_name, Equals('part1'))
+        self.assertThat(raised.part_name, Equals('part4'))
+        self.assertThat(raised.file_paths, Equals('    file.pc'))
 
     def test_collision_with_part_not_built(self):
         part_built = self.load_part(
