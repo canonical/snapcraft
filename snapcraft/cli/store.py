@@ -130,8 +130,8 @@ def push(snap_file, release):
 def push_metadata(snap_file, force):
     """Push metadata from <snap-file> to the store.
 
-    If --force is given, it will it will force the local metadata into the
-    Store, ignoring any possible conflict.
+    If --force is given, it will force the local metadata into the Store,
+    ignoring any possible conflict.
 
     \b
     Examples:
