@@ -473,7 +473,7 @@ class PluginHandler:
         # TODO: base snap support
         core_path = common.get_core_path()
 
-        def library_pather(library_path: str, elf_file_path: str) -> str:
+        def mangle_library_path(library_path: str, elf_file_path: str) -> str:
             # If the path is is in the core snap, use the absolute path,
             # if the path is primed, use $ORIGIN, and last if the dependency
             # is not anywhere return an empty string.
@@ -482,9 +482,9 @@ class PluginHandler:
             # we can move to a smarter library capturing mechanism.
             library_path = library_path.replace(self.installdir, self.primedir)
             if library_path.startswith(core_path):
-                return library_path
+                return os.path.dirname(library_path)
             elif (library_path.startswith(self.primedir) and
-                  os.path.exists(self.primedir)):
+                  os.path.exists(library_path)):
                 rel_library_path = os.path.relpath(library_path, elf_file_path)
                 rel_library_path_dir = os.path.dirname(rel_library_path)
                 # return the dirname, with the first .. replace with $ORIGIN
@@ -498,7 +498,7 @@ class PluginHandler:
                 existing_only=False)
             dynamic_linker = self._project_options.get_core_dynamic_linker()
             elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker,
-                                      library_path_func=library_pather,
+                                      library_path_func=mangle_library_path,
                                       base_rpaths=core_rpaths)
             for elf_file in elf_files:
                 elf_patcher.patch(elf_file=elf_file)
