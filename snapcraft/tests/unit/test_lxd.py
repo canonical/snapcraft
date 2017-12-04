@@ -293,6 +293,7 @@ class ContainerbuildTestCase(LXDTestCase):
         builder.execute()
 
         mock_container_run.assert_has_calls([
+            call(['apt-get', 'install', 'squashfuse', '-y']),
             call(['apt-get', 'install', 'snapcraft', '-y']),
         ])
 
