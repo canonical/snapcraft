@@ -15,12 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import importlib
 import sys
+from textwrap import dedent
 
 import click
 
 import snapcraft
 from snapcraft.internal import sources
-from . import echo
 
 
 _TOPICS = {
@@ -36,10 +36,11 @@ def helpcli():
 
 
 @helpcli.command('help')
-@click.argument('topic', metavar='<topic>')
+@click.argument('topic', metavar='<topic>', required=False)
 @click.option('--devel', is_flag=True,
               help='Show more details for snapcraft developers')
-def help_command(topic, devel):
+@click.pass_context
+def help_command(ctx, topic, devel):
     """Obtain help for a certain plugin or topic.
 
     The <topic> can either be a plugin name or one of:
@@ -56,7 +57,16 @@ def help_command(topic, devel):
         snapcraft help sources
         snapcraft help go
     """
-    if topic == 'topics':
+    if not topic:
+        click.echo(ctx.parent.get_help())
+        click.echo(dedent("""\
+
+            You can obtain more help by running
+                snapcraft help topics
+                snapcraft help <topic>
+                snapcraft help <plugin-name>
+        """))
+    elif topic == 'topics':
         for key in _TOPICS:
             click.echo(key)
     elif topic in _TOPICS:
@@ -65,8 +75,16 @@ def help_command(topic, devel):
         try:
             _module_help(topic, devel)
         except ImportError:
-            echo.error('The plugin does not exist. Run `snapcraft '
-                       'list-plugins` to see the available plugins.')
+            click.echo(dedent("""\
+    The argument to help is not a plugin name nor topic, to see the
+    available topics run:
+
+        snapcraft help topics
+
+    to see the available plugins run:
+
+        snapcraft list-plugins
+    """))
             sys.exit(1)
 
 
