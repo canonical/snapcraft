@@ -29,7 +29,7 @@ class ErrorFormattingTestCase(unit.TestCase):
             'expected_message': (
                 "Failed to clean: "
                 "Missing state for 'test-step'. "
-                "This won't work until a complete clean has occurred."
+                "To clean the project, run `snapcraft clean`."
                 )}),
         ('StepOutdatedError dependents', {
             'exception': errors.StepOutdatedError,
@@ -43,9 +43,8 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "The 'test-step' step of 'test-part' is out of date:\n"
                 "The 'test-step' step for 'test-part' needs to be run again, "
                 "but 'test-dependent' depends on it.\n"
-                "To continue, please clean that part's "
-                "'test-step' step by running:\n"
-                "snapcraft clean test-dependent -s test-step\n")}),
+                "To clean that part's 'test-step' step, run "
+                "`snapcraft clean test-dependent -s test-step`.")}),
         ('StepOutdatedError dirty_properties', {
             'exception': errors.StepOutdatedError,
             'kwargs': {
@@ -58,9 +57,8 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "The 'test-step' step of 'test-part' is out of date:\n"
                 "The 'test-property1' and 'test-property2' part properties "
                 "appear to have changed.\n"
-                "To continue, please clean that part's "
-                "'test-step' step by running:\n"
-                "snapcraft clean test-part -s test-step\n")}),
+                "To clean that part's 'test-step', run "
+                "`snapcraft clean test-part -s test-step.`")}),
         ('StepOutdatedError dirty_project_options', {
             'exception': errors.StepOutdatedError,
             'kwargs': {
@@ -72,9 +70,8 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "Failed to reuse files from previous build: "
                 "The 'test-step' step of 'test-part' is out of date:\n"
                 "The 'test-option' project option appears to have changed.\n"
-                "To continue, please clean that part's "
-                "'test-step' step by running:\n"
-                "snapcraft clean test-part -s test-step\n")}),
+                "To clean that part's 'test-step', run "
+                "`snapcraft clean test-part -s test-step`.")}),
         ('SnapcraftEnvironmentError', {
             'exception': errors.SnapcraftEnvironmentError,
             'kwargs': {'message': 'test-message'},
@@ -212,8 +209,8 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "    - `snap`\n"
                 "    - `organize`\n"
                 "\n"
-                "Learn more about these part keywords by running "
-                "`snapcraft help plugins`")}),
+                "To learn more about these part keywords, run "
+                "`snapcraft help plugins`.")}),
         ('MissingCommandError', {
             'exception': errors.MissingCommandError,
             'kwargs': {
