@@ -1,0 +1,15 @@
+name: architectures-grammar-fail
+version: '0.1'
+summary: Test architectures grammar failures
+description: Make sure the architectures grammar handles `else fail` as expected
+grade: devel
+confinement: strict
+
+architectures:
+  - on other-arch:
+    - armhf
+  - else fail
+
+parts:
+  my-part:
+    plugin: nil
