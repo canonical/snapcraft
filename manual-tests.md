@@ -219,7 +219,7 @@
 
 # Test push metadata with conflicts
 
-1. 'snapcraft build' a simple snap
+1. 'snapcraft snap' a simple snap
 2. Do a simple 'snapcraft push SNAP'
 3. Go to the Web and change snap's description
 4. Change the snap's description in the YAML file to something different than you put in the Web
@@ -235,7 +235,7 @@
 
 # Test push binary metadata with conflicts
 
-1. 'snapcraft build' a simple snap
+1. 'snapcraft snap' a simple snap
 2. Do a simple 'snapcraft push SNAP'
 3. Go to the Web and change snap's icon
 4. Change the snap's icon in the YAML file to something different than you put in the Web

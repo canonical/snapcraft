@@ -80,9 +80,11 @@ def _get_icon_from_snap_file(snap_path):
             if os.path.exists(icon_path):
                 icon_file = open(icon_path, 'rb')
                 break
-        yield icon_file
-        if icon_file is not None:
-            icon_file.close()
+        try:
+            yield icon_file
+        finally:
+            if icon_file is not None:
+                icon_file.close()
 
 
 def _fail_login(msg: str = '') -> bool:

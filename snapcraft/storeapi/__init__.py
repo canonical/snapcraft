@@ -42,6 +42,7 @@ import snapcraft
 from snapcraft import config
 from snapcraft.internal.indicators import download_requests_stream
 from . import _agent
+from . import _metadata
 from . import _upload
 from . import constants
 from . import errors
@@ -79,13 +80,6 @@ def _deserialize_macaroon(value):
         return pymacaroons.Macaroon.deserialize(value)
     except:  # noqa LP: #1733004
         raise errors.InvalidCredentialsError('Failed to deserialize macaroon')
-
-
-def _media_hash(media_file):
-    sha = hashlib.sha256(media_file.read())
-    # rewind file before returning
-    media_file.seek(0)
-    return sha.hexdigest()
 
 
 class Client():
@@ -645,76 +639,15 @@ class SCAClient(Client):
 
     def push_metadata(self, snap_id, snap_name, metadata, force):
         """Push the metadata to SCA."""
-        url = 'snaps/' + snap_id + '/metadata'
-        headers = {
-            'Authorization': _macaroon_auth(self.conf),
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        }
-        method = 'PUT' if force else 'POST'
-        response = self.request(
-            method, url, data=json.dumps(metadata), headers=headers)
-
-        if not response.ok:
-            raise errors.StoreMetadataError(snap_name, response, metadata)
+        metadata_handler = _metadata.StoreMetadataHandler(
+            self, _macaroon_auth(self.conf), snap_id, snap_name)
+        metadata_handler.push(metadata, force)
 
     def push_binary_metadata(self, snap_id, snap_name, metadata, force):
         """Push the binary metadata to SCA."""
-        url = 'snaps/' + snap_id + '/binary-metadata'
-        headers = {
-            'Authorization': _macaroon_auth(self.conf),
-            'Accept': 'application/json',
-        }
-
-        # get current binary metadata information
-        response = self.request('GET', url, headers=headers)
-        if not response.ok:
-            raise errors.StoreMetadataError(snap_name, response, metadata)
-
-        binary_metadata = response.json()
-        # current icons and screenshots
-        icons = [media for media in binary_metadata
-                 if media.get('type') == 'icon']
-        screenshots = [media for media in binary_metadata
-                       if media.get('type') == 'screenshot']
-
-        files = {}
-        # only icon support atm
-        icon = metadata.get('icon')
-        current_icon = icons[0] if icons else None
-        # keep original screenshots
-        info = screenshots
-
-        if current_icon is None and icon is None:
-            # icon unchanged
-            return
-
-        if icon:
-            icon_hash = _media_hash(icon)
-            if current_icon is None or current_icon.get('hash') != icon_hash:
-                upload_icon = {'type': 'icon', 'hash': icon_hash,
-                               'key': 'icon', 'filename': icon.name}
-                info.append(upload_icon)
-                files = {'icon': icon}
-            else:
-                # icon unchanged
-                return
-
-        data = None
-        if not files:
-            # API requires a multipart request, but we have no files to push
-            # https://github.com/requests/requests/issues/1081
-            files = {'info': ('', json.dumps(info))}
-        else:
-            data = {'info': json.dumps(info)}
-
-        method = 'PUT' if force else 'POST'
-        response = self.request(
-            method, url, data=data, files=files, headers=headers)
-        if not response.ok:
-            icon_name = os.path.basename(icon.name) if icon else None
-            raise errors.StoreMetadataError(
-                snap_name, response, {'icon': icon_name})
+        metadata_handler = _metadata.StoreMetadataHandler(
+            self, _macaroon_auth(self.conf), snap_id, snap_name)
+        metadata_handler.push_binary(metadata, force)
 
     def snap_release(self, snap_name, revision, channels, delta_format=None):
         data = {
