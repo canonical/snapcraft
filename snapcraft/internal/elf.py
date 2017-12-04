@@ -139,7 +139,7 @@ class Patcher:
         # Parameters:
         # --force-rpath: use RPATH instead of RUNPATH.
         # --shrink-rpath: will remove unneeded entries, with the
-        #                 side effect of prefering host libraries
+        #                 side effect of preferring host libraries
         #                 so we simply do not use it.
         # --set-rpath: set the RPATH to the colon separated argument.
         self._run_patchelf(['--force-rpath',
