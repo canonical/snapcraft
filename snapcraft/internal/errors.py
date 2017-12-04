@@ -55,7 +55,7 @@ class StepOutdatedError(SnapcraftError):
         'The {step!r} step of {part!r} is out of date:\n'
         '{report}'
         'To clean that part\'s {step!r} step, run '
-        '`snapcraft clean {parts_names} -s {step}.`'
+        '`snapcraft clean {parts_names} -s {step}`.'
     )
 
     def __init__(self, *, step, part,
