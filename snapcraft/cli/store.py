@@ -330,11 +330,11 @@ def export_login(login_file: TextIO, packages: str, channels: str, acls: str):
     store.conf.save(config_fd=login_file)
 
     print()
-    echo.info(
-        'Login successfully exported to {0!r}. This file can now be used with '
-        "'snapcraft login --with {0}' to log in to this account with no "
-        'password and have these capabilities:\n'.format(
-            login_file.name))
+    echo.info(dedent("""
+        Login successfully exported to {0!r}. This file can now be used with
+        'snapcraft login --with {0}' to log in to this account with no password
+        and have these capabilities:\n""".format(
+            login_file.name)))
     echo.info(_human_readable_acls(store))
     echo.warning(
         'This exported login is not encrypted. Do not commit it to version '
