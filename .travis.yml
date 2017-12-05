@@ -67,7 +67,7 @@ jobs:
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-snapd
     # Trigger autopkgtests in all the supported distros and architectures for the snapcraft-daily PPA
     - if: type = cron
-      script: ./tools/travis/run_ppa_autopkgtests.sh
+      script: sudo ./tools/travis/run_ppa_autopkgtests.sh
     # Collect the results for the PPA autopkgtests that were triggered the day before.
     - if: type = cron
-      script: ./tools/travis/collect_ppa_autopkgtests_results.sh $(date -d "yesterday" "+%Y%m%d")
+      script: sudo ./tools/travis/collect_ppa_autopkgtests_results.sh $(date -d "yesterday" "+%Y%m%d")
