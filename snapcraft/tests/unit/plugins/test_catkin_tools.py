@@ -198,13 +198,17 @@ class PrepareBuildTestCase(CatkinToolsPluginBaseTestCase):
 
         confArgs = bashrun_mock.mock_calls[0][1][0]
         command = ' '.join(confArgs)
-        self.assertThat(command, Contains('catkin clean -y'))
+        self.assertThat(command, Contains('catkin init'))
 
         confArgs = bashrun_mock.mock_calls[1][1][0]
         command = ' '.join(confArgs)
-        self.assertThat(command, Contains('catkin profile add -f default'))
+        self.assertThat(command, Contains('catkin clean -y'))
 
         confArgs = bashrun_mock.mock_calls[2][1][0]
+        command = ' '.join(confArgs)
+        self.assertThat(command, Contains('catkin profile add -f default'))
+
+        confArgs = bashrun_mock.mock_calls[3][1][0]
         self.assertThat(confArgs[0], Equals('catkin'))
         self.assertThat(confArgs[1], Equals('config'))
 
