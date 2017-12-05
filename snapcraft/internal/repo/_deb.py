@@ -227,7 +227,7 @@ class Ubuntu(BaseRepo):
 
     @classmethod
     def _verify_installable(cls, package: apt.Package):
-        if not package.marked_install:
+        if not package.installed and not package.marked_install:
             broken_deps = []  # type: List[str]
             for deps in package.candidate.dependencies:
                 for dep in deps:
