@@ -64,6 +64,29 @@ def _get_data_from_snap_file(snap_path):
     return snap_yaml
 
 
+@contextmanager
+def _get_icon_from_snap_file(snap_path):
+    icon_file = None
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output = subprocess.check_output(
+            ['unsquashfs', '-d',
+             os.path.join(temp_dir, 'squashfs-root'),
+             snap_path, '-e', 'meta/gui'])
+        logger.debug("Output extracting icon from snap: %s", output)
+        for extension in ('png', 'svg'):
+            icon_name = 'icon.{}'.format(extension)
+            icon_path = os.path.join(
+                temp_dir, 'squashfs-root', 'meta/gui', icon_name)
+            if os.path.exists(icon_path):
+                icon_file = open(icon_path, 'rb')
+                break
+        try:
+            yield icon_file
+        finally:
+            if icon_file is not None:
+                icon_file.close()
+
+
 def _fail_login(msg: str = '') -> bool:
     echo.error(msg)
     echo.error('Login failed.')
@@ -422,6 +445,9 @@ def push_metadata(snap_filename, force):
     with _requires_login():
         store.push_precheck(snap_name)
         store.push_metadata(snap_name, metadata, force)
+        with _get_icon_from_snap_file(snap_filename) as icon:
+            metadata = {'icon': icon}
+            store.push_binary_metadata(snap_name, metadata, force)
 
     logger.info("The metadata has been pushed")
 

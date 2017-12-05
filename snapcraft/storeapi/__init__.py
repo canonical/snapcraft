@@ -42,6 +42,7 @@ import snapcraft
 from snapcraft import config
 from snapcraft.internal.indicators import download_requests_stream
 from . import _agent
+from . import _metadata
 from . import _upload
 from . import constants
 from . import errors
@@ -404,6 +405,19 @@ class StoreClient():
         return self._refresh_if_necessary(
             self.sca.push_metadata, snap_id, snap_name, metadata, force)
 
+    def push_binary_metadata(self, snap_name, metadata, force):
+        """Push the binary metadata to the server."""
+        account_info = self.get_account_information()
+        series = constants.DEFAULT_SERIES
+        try:
+            snap_id = account_info['snaps'][series][snap_name]['snap-id']
+        except KeyError:
+            raise errors.SnapNotFoundError(snap_name, series=series)
+
+        return self._refresh_if_necessary(
+            self.sca.push_binary_metadata, snap_id, snap_name, metadata,
+            force)
+
 
 class SSOClient(Client):
     """The Single Sign On server deals with authentication.
@@ -674,18 +688,15 @@ class SCAClient(Client):
 
     def push_metadata(self, snap_id, snap_name, metadata, force):
         """Push the metadata to SCA."""
-        url = 'snaps/' + snap_id + '/metadata'
-        headers = {
-            'Authorization': _macaroon_auth(self.conf),
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        }
-        method = 'PUT' if force else 'POST'
-        response = self.request(
-            method, url, data=json.dumps(metadata), headers=headers)
+        metadata_handler = _metadata.StoreMetadataHandler(
+            self, _macaroon_auth(self.conf), snap_id, snap_name)
+        metadata_handler.push(metadata, force)
 
-        if not response.ok:
-            raise errors.StoreMetadataError(snap_name, response, metadata)
+    def push_binary_metadata(self, snap_id, snap_name, metadata, force):
+        """Push the binary metadata to SCA."""
+        metadata_handler = _metadata.StoreMetadataHandler(
+            self, _macaroon_auth(self.conf), snap_id, snap_name)
+        metadata_handler.push_binary(metadata, force)
 
     def snap_release(self, snap_name, revision, channels, delta_format=None):
         data = {
