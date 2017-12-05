@@ -47,7 +47,17 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(1))
         self.assertThat(result.output, Contains(
-            'The argument to help is not a plugin name nor topic'))
+            'There is no help topic or plugin'))
+
+    def test_topic_and_plugin_adds_ellipsis_for_long_arg(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        result = self.run_command(['help', '1234567890123'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            '1234567890...'))
 
     def test_print_module_help_when_no_help_for_valid_plugin(self):
         result = self.run_command(['help', 'jdk'])
@@ -104,7 +114,7 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         self.assertThat(result.output, Contains(
             'Snapcraft is a delightful packaging tool.'))
         self.assertThat(result.output, Contains(
-            'To get additional help'))
+            'For more help'))
 
     def test_no_unicode_in_help_strings(self):
         helps = ['topics']

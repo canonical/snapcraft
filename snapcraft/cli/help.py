@@ -20,6 +20,7 @@ from textwrap import dedent
 import click
 
 import snapcraft
+from . import echo
 from snapcraft.internal import sources
 
 
@@ -61,7 +62,7 @@ def help_command(ctx, topic, devel):
         click.echo(ctx.parent.get_help())
         click.echo(dedent("""\
 
-            To get additional help, run:
+            For more help, use:
                 snapcraft help topics
                 snapcraft help <topic>
                 snapcraft help <plugin-name>
@@ -75,16 +76,20 @@ def help_command(ctx, topic, devel):
         try:
             _module_help(topic, devel)
         except ImportError:
-            click.echo(dedent("""\
-    The argument to help is not a plugin name nor topic, to see the
-    available topics run:
+            # 10 is the limit which determines ellipsis is needed
+            if len(topic) > 10:
+                topic = '{}...'.format(topic[:10])
+            echo.wrapped(dedent("""\
+    There is no help topic or plugin {!r}. Try:
+
+    For topics:
 
         snapcraft help topics
 
-    to see the available plugins run:
+    For valid plugins:
 
         snapcraft list-plugins
-    """))
+    """).format(topic))
             sys.exit(1)
 
 
