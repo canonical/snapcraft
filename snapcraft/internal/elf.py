@@ -105,7 +105,7 @@ class Patcher:
         self._base_rpaths = base_rpaths
 
         # If we are running from the snap we want to use the patchelf
-        # bundled there as it would have the capabilty of working
+        # bundled there as it would have the capability of working
         # anywhere given the fixed ld it would have.
         # If not found, resort to whatever is on the system brought
         # in by packaging dependencies.
@@ -136,6 +136,7 @@ class Patcher:
 
     def _patch_rpath(self, elf_file: ElfFile) -> None:
         rpath = self._get_rpath(elf_file)
+        print(elf_file.path, rpath)
         # Parameters:
         # --force-rpath: use RPATH instead of RUNPATH.
         # --shrink-rpath: will remove unneeded entries, with the
@@ -165,7 +166,10 @@ class Patcher:
         origin_paths = ':'.join((r for r in set(rpaths) if r))
         base_rpaths = ':'.join(self._base_rpaths)
 
-        return '{}:{}'.format(origin_paths, base_rpaths)
+        if origin_paths:
+            return '{}:{}'.format(origin_paths, base_rpaths)
+        else:
+            return base_rpaths
 
 
 def determine_ld_library_path(root: str) -> List[str]:
@@ -177,7 +181,7 @@ def determine_ld_library_path(root: str) -> List[str]:
 
     :param root str: the root directory to search for specific ld.so.conf
                      entries.
-    :returns: a list of strings of library paths where releavant libraries
+    :returns: a list of strings of library paths where relevant libraries
               can be found within root.
     """
     # If more ld.so.conf files need to be supported, add them here.
