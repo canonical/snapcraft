@@ -16,6 +16,8 @@
 
 from snapcraft import formatting_utils
 
+from gettext import gettext as _
+
 
 class SnapcraftError(Exception):
     """Base class for all snapcraft exceptions.
@@ -23,7 +25,7 @@ class SnapcraftError(Exception):
     :cvar fmt: A format string that daughter classes override
 
     """
-    fmt = 'Daughter classes should redefine this'
+    fmt = _('Daughter classes should redefine this')
 
     def __init__(self, **kwargs):
         for key, value in kwargs.items():
@@ -39,8 +41,8 @@ class SnapcraftError(Exception):
 
 class MissingStateCleanError(SnapcraftError):
     fmt = (
-        "Failed to clean step {step!r}: Missing necessary state. This won't "
-        "work until a complete clean has occurred."
+        _("Failed to clean step {step!r}: Missing necessary state. This won't "
+          "work until a complete clean has occurred.")
     )
 
     def __init__(self, step):
@@ -50,11 +52,11 @@ class MissingStateCleanError(SnapcraftError):
 class StepOutdatedError(SnapcraftError):
 
     fmt = (
-        'The {step!r} step of {part!r} is out of date:\n'
-        '{report}'
-        'In order to continue, please clean that part\'s {step!r} step '
-        'by running:\n'
-        'snapcraft clean {parts_names} -s {step}\n'
+        _('The {step!r} step of {part!r} is out of date:\n'
+          '{report}'
+          'In order to continue, please clean that part\'s {step!r} step '
+          'by running:\n'
+          'snapcraft clean {parts_names} -s {step}\n')
     )
 
     def __init__(self, *, step, part,
@@ -68,7 +70,7 @@ class StepOutdatedError(SnapcraftError):
                 dirty_properties, 'property appears',
                 'properties appear')
             messages.append(
-                'The {} part {} to have changed.\n'.format(
+                _('The {} part {} to have changed.\n').format(
                     humanized_properties, pluralized_connection))
         if dirty_project_options:
             humanized_options = formatting_utils.humanize_list(
@@ -77,15 +79,15 @@ class StepOutdatedError(SnapcraftError):
                 dirty_project_options, 'option appears',
                 'options appear')
             messages.append(
-                'The {} project {} to have changed.\n'.format(
+                _('The {} project {} to have changed.\n').format(
                     humanized_options, pluralized_connection))
         if dependents:
             humanized_dependents = formatting_utils.humanize_list(
                 dependents, 'and')
             pluralized_dependents = formatting_utils.pluralize(
                 dependents, "depends", "depend")
-            messages.append('The {0!r} step for {1!r} needs to be run again, '
-                            'but {2} {3} on it.\n'.format(
+            messages.append(_('The {0!r} step for {1!r} needs to be run '
+                              'again, but {2} {3} on it.\n').format(
                                 step,
                                 part,
                                 humanized_dependents,
@@ -113,16 +115,16 @@ class ContainerError(SnapcraftError):
 
 
 class ContainerConnectionError(ContainerError):
-    fmt = ('{message}\n'
-           'Refer to the documentation at '
-           'https://linuxcontainers.org/lxd/getting-started-cli.')
+    fmt = (_('{message}\n'
+             'Refer to the documentation at '
+             'https://linuxcontainers.org/lxd/getting-started-cli.'))
 
 
 class ContainerRunError(SnapcraftError):
 
     fmt = (
-        'The following command failed to run: '
-        '{command!r} exited with {exit_code}\n'
+        _('The following command failed to run: '
+          '{command!r} exited with {exit_code}\n')
     )
 
     def __init__(self, *, command, exit_code):
@@ -132,8 +134,8 @@ class ContainerRunError(SnapcraftError):
 class ContainerSnapcraftCmdError(ContainerRunError):
 
     fmt = (
-        'Snapcraft command failed in the container: '
-        '{command!r} exited with {exit_code}\n'
+        _('Snapcraft command failed in the container: '
+          '{command!r} exited with {exit_code}\n')
     )
 
     def __init__(self, *, command, exit_code):
@@ -150,16 +152,16 @@ class SnapdError(SnapcraftError):
 class PrimeFileConflictError(SnapcraftError):
 
     fmt = (
-        'The following files have been excluded by the `stage` keyword, '
-        'but included by the `prime` keyword: {fileset!r}'
+        _('The following files have been excluded by the `stage` keyword, '
+          'but included by the `prime` keyword: {fileset!r}')
     )
 
 
 class InvalidAppCommandError(SnapcraftError):
 
     fmt = (
-        'The specified command {command!r} defined in the app {app!r} does '
-        'not exist or is not executable'
+        _('The specified command {command!r} defined in the app {app!r} does '
+          'not exist or is not executable')
     )
 
     def __init__(self, command, app):
@@ -169,8 +171,8 @@ class InvalidAppCommandError(SnapcraftError):
 class InvalidContainerRemoteError(SnapcraftError):
 
     fmt = (
-        '{remote!r} is not a valid LXD remote name.\n'
-        "Colons, spaces and slashes can't be used.\n"
+        _('{remote!r} is not a valid LXD remote name.\n'
+          "Colons, spaces and slashes can't be used.\n")
     )
 
     def __init__(self, remote):
@@ -180,7 +182,7 @@ class InvalidContainerRemoteError(SnapcraftError):
 class InvalidDesktopFileError(SnapcraftError):
 
     fmt = (
-        'Invalid desktop file {filename!r}: {message}'
+        _('Invalid desktop file {filename!r}: {message}')
     )
 
     def __init__(self, filename, message):
@@ -190,25 +192,25 @@ class InvalidDesktopFileError(SnapcraftError):
 class SnapcraftPartMissingError(SnapcraftError):
 
     fmt = (
-        'Cannot find the definition for part {part_name!r}.\n'
-        'It may be a remote part, run `snapcraft update` '
-        'to refresh the remote parts cache.'
+        _('Cannot find the definition for part {part_name!r}.\n'
+          'It may be a remote part, run `snapcraft update` '
+          'to refresh the remote parts cache.')
     )
 
 
 class PartNotInCacheError(SnapcraftError):
 
     fmt = (
-        'Cannot find the part name {part_name!r} in the cache. Please '
-        'run `snapcraft update` and try again.\nIf it is indeed missing, '
-        'consider going to https://wiki.ubuntu.com/snapcraft/parts '
-        'to add it.'
+        _('Cannot find the part name {part_name!r} in the cache. Please '
+          'run `snapcraft update` and try again.\nIf it is indeed missing, '
+          'consider going to https://wiki.ubuntu.com/snapcraft/parts '
+          'to add it.')
     )
 
 
 class PluginError(SnapcraftError):
 
-    fmt = 'Issue while loading part: {message}'
+    fmt = _('Issue while loading part: {message}')
 
     def __init__(self, message):
         super().__init__(message=message)
@@ -216,24 +218,24 @@ class PluginError(SnapcraftError):
 
 class PluginNotDefinedError(SnapcraftError):
 
-    fmt = ("Issues while validating snapcraft.yaml: the 'plugin' keyword is "
-           "missing for the {part_name} part.")
+    fmt = (_("Issues while validating snapcraft.yaml: the 'plugin' keyword is "
+             "missing for the {part_name} part."))
 
 
 class SnapcraftPartConflictError(SnapcraftError):
 
     fmt = (
-        'Parts {other_part_name!r} and {part_name!r} have the following file '
-        'paths in common which have different contents:\n'
-        '{file_paths}\n\n'
-        'Snapcraft offers some capabilities to solve this by use of the '
-        'following keywords:\n'
-        '    - `filesets`\n'
-        '    - `stage`\n'
-        '    - `snap`\n'
-        '    - `organize`\n\n'
-        'Learn more about these part keywords by running '
-        '`snapcraft help plugins`'
+        _('Parts {other_part_name!r} and {part_name!r} have the following '
+          'file paths in common which have different contents:\n'
+          '{file_paths}\n\n'
+          'Snapcraft offers some capabilities to solve this by use of the '
+          'following keywords:\n'
+          '    - `filesets`\n'
+          '    - `stage`\n'
+          '    - `snap`\n'
+          '    - `organize`\n\n'
+          'Learn more about these part keywords by running '
+          '`snapcraft help plugins`')
     )
 
     def __init__(self, *, part_name, other_part_name, conflict_files):
@@ -246,8 +248,8 @@ class SnapcraftPartConflictError(SnapcraftError):
 class MissingCommandError(SnapcraftError):
 
     fmt = (
-        'One or more required commands are missing, please install:'
-        ' {required_commands!r}'
+        _('One or more required commands are missing, please install:'
+          ' {required_commands!r}')
     )
 
     def __init__(self, required_commands):
@@ -256,7 +258,7 @@ class MissingCommandError(SnapcraftError):
 
 class InvalidWikiEntryError(SnapcraftError):
 
-    fmt = 'Invalid wiki entry: {error!r}'
+    fmt = _('Invalid wiki entry: {error!r}')
 
     def __init__(self, error=None):
         super().__init__(error=error)
@@ -265,15 +267,15 @@ class InvalidWikiEntryError(SnapcraftError):
 class MissingGadgetError(SnapcraftError):
 
     fmt = (
-        'When creating gadget snaps you are required to provide a gadget.yaml file\n'  # noqa
-        'in the root of your snapcraft project\n\n'
-        'Read more about gadget snaps and the gadget.yaml on:\n'
-        'https://github.com/snapcore/snapd/wiki/Gadget-snap')
+        _('When creating gadget snaps you are required to provide a gadget.yaml file\n'  # noqa
+          'in the root of your snapcraft project\n\n'
+          'Read more about gadget snaps and the gadget.yaml on:\n'
+          'https://github.com/snapcore/snapd/wiki/Gadget-snap'))
 
 
 class PluginOutdatedError(SnapcraftError):
 
-    fmt = 'This plugin is outdated: {message}'
+    fmt = _('This plugin is outdated: {message}')
 
     def __init__(self, message):
         super().__init__(message=message)
@@ -281,29 +283,29 @@ class PluginOutdatedError(SnapcraftError):
 
 class RequiredCommandFailure(SnapcraftError):
 
-    fmt = '{command!r} failed.'
+    fmt = _('{command!r} failed.')
 
 
 class RequiredCommandNotFound(SnapcraftError):
 
-    fmt = '{cmd_list[0]!r} not found.'
+    fmt = _('{cmd_list[0]!r} not found.')
 
 
 class RequiredPathDoesNotExist(SnapcraftError):
 
-    fmt = 'Required path does not exist: {path!r}'
+    fmt = _('Required path does not exist: {path!r}')
 
 
 class SnapcraftPathEntryError(SnapcraftError):
 
-    fmt = 'The path {value!r} set for {key!r} in {app!r} does not exist.'
+    fmt = _('The path {value!r} set for {key!r} in {app!r} does not exist.')
 
 
 class InvalidPullPropertiesError(SnapcraftError):
 
     fmt = (
-        'Invalid pull properties specified by {plugin_name!r} plugin: '
-        '{properties}'
+        _('Invalid pull properties specified by {plugin_name!r} plugin: '
+          '{properties}')
     )
 
     def __init__(self, plugin_name, properties):
@@ -313,8 +315,8 @@ class InvalidPullPropertiesError(SnapcraftError):
 class InvalidBuildPropertiesError(SnapcraftError):
 
     fmt = (
-        'Invalid build properties specified by {plugin_name!r} plugin: '
-        '{properties}'
+        _('Invalid build properties specified by {plugin_name!r} plugin: '
+          '{properties}')
     )
 
     def __init__(self, plugin_name, properties):
@@ -323,7 +325,8 @@ class InvalidBuildPropertiesError(SnapcraftError):
 
 class StagePackageDownloadError(SnapcraftError):
 
-    fmt = 'Error downloading stage packages for part {part_name!r}: {message}'
+    fmt = _('Error downloading stage packages '
+            'for part {part_name!r}: {message}')
 
     def __init__(self, part_name, message):
         super().__init__(part_name=part_name, message=message)
@@ -331,27 +334,27 @@ class StagePackageDownloadError(SnapcraftError):
 
 class OsReleaseIdError(SnapcraftError):
 
-    fmt = 'Unable to determine host OS ID'
+    fmt = _('Unable to determine host OS ID')
 
 
 class OsReleaseNameError(SnapcraftError):
 
-    fmt = 'Unable to determine host OS name'
+    fmt = _('Unable to determine host OS name')
 
 
 class OsReleaseVersionIdError(SnapcraftError):
 
-    fmt = 'Unable to determine host OS version ID'
+    fmt = _('Unable to determine host OS version ID')
 
 
 class OsReleaseCodenameError(SnapcraftError):
 
-    fmt = 'Unable to determine host OS version codename'
+    fmt = _('Unable to determine host OS version codename')
 
 
 class InvalidContainerImageInfoError(SnapcraftError):
 
-    fmt = 'Error parsing the container image info: {image_info}'
+    fmt = _('Error parsing the container image info: {image_info}')
 
     def __init__(self, image_info):
         super().__init__(image_info=image_info)
@@ -360,8 +363,8 @@ class InvalidContainerImageInfoError(SnapcraftError):
 class PatcherError(SnapcraftError):
 
     fmt = (
-        '{elf_file!r} cannot be patched to function properly as a classic '
-        'snap: {message}')
+        _('{elf_file!r} cannot be patched to function properly as a classic '
+          'snap: {message}'))
 
     def __init__(self, *, elf_file, message):
         super().__init__(elf_file=elf_file, message=message)

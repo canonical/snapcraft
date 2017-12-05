@@ -24,6 +24,8 @@ from typing import FrozenSet, List, Set, Sequence
 
 import magic
 
+from gettext import gettext as _
+
 from snapcraft.internal import (
     common,
     errors,
@@ -157,7 +159,7 @@ def _get_system_libs() -> FrozenSet[str]:
             common.get_librariesdir(), release.version_id())
 
     if not lib_path or not os.path.exists(lib_path):
-        logger.debug('Only excluding libc libraries from the release')
+        logger.debug(_('Only excluding libc libraries from the release'))
         libc6_libs = [os.path.basename(l)
                       for l in repo.Repo.get_package_libraries('libc6')]
         return frozenset(libc6_libs)
@@ -176,13 +178,13 @@ def get_dependencies(elf: str) -> Set[str]:
     :param str elf: the elf file to resolve dependencies for.
     :returns: a set of string with paths to the library dependencies of elf.
     """
-    logger.debug('Getting dependencies for {!r}'.format(str(elf)))
+    logger.debug(_('Getting dependencies for {!r}').format(str(elf)))
     ldd_out = []  # type: List[str]
     try:
         ldd_out = common.run_output(['ldd', elf]).split('\n')
     except subprocess.CalledProcessError:
         logger.warning(
-            'Unable to determine library dependencies for {!r}'.format(elf))
+            _('Unable to determine library dependencies for {!r}').format(elf))
         return set()
     ldd_out_split = [l.split() for l in ldd_out]
     ldd_out_list = [l[2] for l in ldd_out_split
@@ -208,7 +210,7 @@ def get_elf_files(root: str,
     """
     ms = magic.open(magic.NONE)
     if ms.load() != 0:
-        raise RuntimeError('Cannot load magic header detection')
+        raise RuntimeError(_('Cannot load magic header detection'))
 
     elf_files = set()  # type: Set[ElfFile]
 
@@ -222,8 +224,8 @@ def get_elf_files(root: str,
         # No need to crawl links-- the original should be here, too.
         path = os.path.join(root, part_file)  # type: str
         if os.path.islink(path):
-            logger.debug('Skipped link {!r} while finding dependencies'.format(
-                path))
+            logger.debug(_('Skipped link {!r} while '
+                           'finding dependencies').format(path))
             continue
 
         path_b = path.encode(

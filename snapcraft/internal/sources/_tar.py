@@ -23,6 +23,8 @@ import tempfile
 from . import errors
 from ._base import FileBase
 
+from gettext import gettext as _
+
 
 class Tar(FileBase):
 
@@ -32,16 +34,16 @@ class Tar(FileBase):
                          source_branch, source_depth, source_checksum)
         if source_tag:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-tag for a tar source')
+                _('can\'t specify a source-tag for a tar source'))
         elif source_commit:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-commit for a tar source')
+                _('can\'t specify a source-commit for a tar source'))
         elif source_branch:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a tar source')
+                _('can\'t specify a source-branch for a tar source'))
         if source_depth:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-depth for a tar source')
+                _('can\'t specify a source-depth for a tar source'))
 
     def provision(self, dst, clean_target=True, keep_tarball=False, src=None):
         # TODO add unit tests.

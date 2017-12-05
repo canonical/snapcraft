@@ -21,6 +21,8 @@ import zipfile
 from . import errors
 from ._base import FileBase
 
+from gettext import gettext as _
+
 
 class Zip(FileBase):
 
@@ -30,13 +32,13 @@ class Zip(FileBase):
                          source_branch, source_depth, source_checksum)
         if source_tag:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-tag for a zip source')
+                _('can\'t specify a source-tag for a zip source'))
         elif source_branch:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a zip source')
+                _('can\'t specify a source-branch for a zip source'))
         if source_depth:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-depth for a zip source')
+                _('can\'t specify a source-depth for a zip source'))
 
     def provision(self, dst, clean_target=True, keep_zip=False, src=None):
         if src:

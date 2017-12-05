@@ -40,6 +40,8 @@ from ._build_attributes import BuildAttributes
 
 from ._plugin_loader import load_plugin  # noqa
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
@@ -221,7 +223,8 @@ class PluginHandler:
     def _fetch_stage_packages(self):
         stage_packages = self._grammar_processor.get_stage_packages()
         if stage_packages:
-            logger.debug('Fetching stage-packages {!r}'.format(stage_packages))
+            logger.debug(_('Fetching stage-packages {!r}').format(
+                stage_packages))
             try:
                 self.stage_packages = self._stage_packages_repo.get(
                     stage_packages)
@@ -231,19 +234,19 @@ class PluginHandler:
     def _unpack_stage_packages(self):
         stage_packages = self._grammar_processor.get_stage_packages()
         if stage_packages:
-            logger.debug('Unpacking stage-packages to {!r}'.format(
+            logger.debug(_('Unpacking stage-packages to {!r}').format(
                 self.installdir))
             self._stage_packages_repo.unpack(self.installdir)
 
     def prepare_pull(self, force=False):
         self.makedirs()
-        self.notify_part_progress('Preparing to pull')
+        self.notify_part_progress(_('Preparing to pull'))
         self._fetch_stage_packages()
         self._unpack_stage_packages()
 
     def pull(self, force=False):
         self.makedirs()
-        self.notify_part_progress('Pulling')
+        self.notify_part_progress(_('Pulling'))
         if self.source_handler:
             self.source_handler.pull()
         self.plugin.pull()
@@ -267,12 +270,12 @@ class PluginHandler:
 
     def clean_pull(self, hint=''):
         if self.is_clean('pull'):
-            hint = '{} {}'.format(hint, '(already clean)').strip()
-            self.notify_part_progress('Skipping cleaning pulled source for',
+            hint = '{} {}'.format(hint, _('(already clean)')).strip()
+            self.notify_part_progress(_('Skipping cleaning pulled source for'),
                                       hint)
             return
 
-        self.notify_part_progress('Cleaning pulled source for', hint)
+        self.notify_part_progress(_('Cleaning pulled source for'), hint)
         # Remove ubuntu cache (where stage packages are fetched)
         if os.path.exists(self.plugin.osrepodir):
             shutil.rmtree(self.plugin.osrepodir)
@@ -288,14 +291,14 @@ class PluginHandler:
 
     def prepare_build(self, force=False):
         self.makedirs()
-        self.notify_part_progress('Preparing to build')
+        self.notify_part_progress(_('Preparing to build'))
         # Stage packages are fetched and unpacked in the pull step, but we'll
         # unpack again here just in case the build step has been cleaned.
         self._unpack_stage_packages()
 
     def build(self, force=False):
         self.makedirs()
-        self.notify_part_progress('Building')
+        self.notify_part_progress(_('Building'))
 
         if os.path.exists(self.plugin.build_basedir):
             shutil.rmtree(self.plugin.build_basedir)
@@ -348,11 +351,11 @@ class PluginHandler:
     def clean_build(self, hint=''):
         if self.is_clean('build'):
             hint = '{} {}'.format(hint, '(already clean)').strip()
-            self.notify_part_progress('Skipping cleaning build for',
+            self.notify_part_progress(_('Skipping cleaning build for'),
                                       hint)
             return
 
-        self.notify_part_progress('Cleaning build for', hint)
+        self.notify_part_progress(_('Cleaning build for'), hint)
 
         if os.path.exists(self.plugin.build_basedir):
             shutil.rmtree(self.plugin.build_basedir)
@@ -392,7 +395,7 @@ class PluginHandler:
 
     def stage(self, force=False):
         self.makedirs()
-        self.notify_part_progress('Staging')
+        self.notify_part_progress(_('Staging'))
         self._organize()
         snap_files, snap_dirs = self.migratable_fileset_for('stage')
 
@@ -418,12 +421,12 @@ class PluginHandler:
 
     def clean_stage(self, project_staged_state, hint=''):
         if self.is_clean('stage'):
-            hint = '{} {}'.format(hint, '(already clean)').strip()
-            self.notify_part_progress('Skipping cleaning staging area for',
+            hint = '{} {}'.format(hint, _('(already clean)')).strip()
+            self.notify_part_progress(_('Skipping cleaning staging area for'),
                                       hint)
             return
 
-        self.notify_part_progress('Cleaning staging area for', hint)
+        self.notify_part_progress(_('Cleaning staging area for'), hint)
 
         state = states.get_state(self.plugin.statedir, 'stage')
 
@@ -437,7 +440,7 @@ class PluginHandler:
 
     def prime(self, force=False) -> None:
         self.makedirs()
-        self.notify_part_progress('Priming')
+        self.notify_part_progress(_('Priming'))
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 
@@ -485,12 +488,12 @@ class PluginHandler:
 
     def clean_prime(self, project_primed_state, hint=''):
         if self.is_clean('prime'):
-            hint = '{} {}'.format(hint, '(already clean)').strip()
-            self.notify_part_progress('Skipping cleaning priming area for',
+            hint = '{} {}'.format(hint, _('(already clean)')).strip()
+            self.notify_part_progress(_('Skipping cleaning priming area for'),
                                       hint)
             return
 
-        self.notify_part_progress('Cleaning priming area for', hint)
+        self.notify_part_progress(_('Cleaning priming area for'), hint)
 
         state = states.get_state(self.plugin.statedir, 'prime')
 
@@ -553,7 +556,7 @@ class PluginHandler:
             if step:
                 raise
 
-            logger.info('Cleaning up for part {!r}'.format(self.name))
+            logger.info(_('Cleaning up for part {!r}').format(self.name))
             if os.path.exists(self.plugin.partdir):
                 shutil.rmtree(self.plugin.partdir)
 
@@ -569,7 +572,7 @@ class PluginHandler:
         if step:
             if step not in common.COMMAND_ORDER:
                 raise RuntimeError(
-                    '{!r} is not a valid step for part {!r}'.format(
+                    _('{!r} is not a valid step for part {!r}').format(
                         step, self.name))
 
             index = common.COMMAND_ORDER.index(step)
@@ -728,8 +731,8 @@ def _organize_filesets(fileset, base_dir):
                 shutil.rmtree(src)
             elif os.path.isfile(dst):
                 raise errors.SnapcraftEnvironmentError(
-                    'Trying to organize file {key!r} to {dst!r}, '
-                    'but {dst!r} already exists'.format(
+                    _('Trying to organize file {key!r} to {dst!r}, '
+                      'but {dst!r} already exists').format(
                         key=key, dst=os.path.relpath(dst, base_dir)))
             else:
                 os.makedirs(os.path.dirname(dst), exist_ok=True)
@@ -816,7 +819,7 @@ def _generate_exclude_set(directory, excludes):
 def _validate_relative_paths(files):
     for d in files:
         if os.path.isabs(d):
-            raise errors.PluginError('path "{}" must be relative'.format(d))
+            raise errors.PluginError(_('path "{}" must be relative').format(d))
 
 
 def _file_collides(file_this, file_other):

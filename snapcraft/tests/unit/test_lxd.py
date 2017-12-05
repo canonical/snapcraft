@@ -90,7 +90,7 @@ class CleanbuilderTestCase(LXDTestCase):
         project_folder = '/root/build_project'
         self.make_containerbuild().execute()
 
-        self.assertIn('Waiting for a network connection...\n'
+        self.assertIn('Waiting for a network connection…\n'
                       'Network connection established\n'
                       'Setting up container with project assets\n'
                       'Retrieved snap.snap\n', self.fake_logger.output)

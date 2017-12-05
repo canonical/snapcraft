@@ -40,6 +40,8 @@ import os
 import snapcraft
 from snapcraft import common
 
+from gettext import gettext as _
+
 
 class QmakePlugin(snapcraft.BasePlugin):
 
@@ -95,7 +97,7 @@ class QmakePlugin(snapcraft.BasePlugin):
         elif self.options.qt_version == 'qt4':
             self.build_packages.extend(['qt4-qmake', 'libqt4-dev'])
         else:
-            raise RuntimeError('Unsupported Qt version: {!r}'.format(
+            raise RuntimeError(_('Unsupported Qt version: {!r}').format(
                 self.options.qt_version))
 
     def build(self):

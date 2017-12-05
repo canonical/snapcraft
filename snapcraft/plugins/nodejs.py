@@ -55,6 +55,8 @@ from snapcraft import sources
 from snapcraft.file_utils import link_or_copy_tree
 from snapcraft.internal import errors
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 _NODEJS_BASE = 'node-v{version}-linux-{arch}'
@@ -129,7 +131,8 @@ class NodePlugin(snapcraft.BasePlugin):
             self.options.node_engine, self.project.deb_arch), self._npm_dir)
         if self.options.node_package_manager == 'yarn':
             logger.warning(
-                'EXPERIMENTAL: use of yarn to manage packages is experimental')
+                _('EXPERIMENTAL: use of yarn to '
+                  'manage packages is experimental'))
             self._yarn_tar = sources.Tar(_YARN_URL, self._npm_dir)
         self._manifest = collections.OrderedDict()
 
@@ -271,7 +274,7 @@ class NodePlugin(snapcraft.BasePlugin):
 def _get_nodejs_base(node_engine, machine):
     if machine not in _NODEJS_ARCHES:
         raise errors.SnapcraftEnvironmentError(
-            'architecture not supported ({})'.format(machine))
+            _('architecture not supported ({})').format(machine))
     return _NODEJS_BASE.format(version=node_engine,
                                arch=_NODEJS_ARCHES[machine])
 

@@ -25,6 +25,8 @@ from snapcraft import (
     sources,
 )
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 _ROS2_URL_TEMPLATE = (
@@ -92,11 +94,11 @@ class Bootstrapper:
         self._run_step(
             self._install_tools,
             step=_INSTALL_TOOLS_STEP,
-            skip_message='Tools already installed. Skipping...')
+            skip_message=_('Tools already installed. Skipping…'))
         self._run_step(
             self._fetch_ros2,
             step=_FETCH_ROS2_STEP,
-            skip_message='ros2 already fetched. Skipping...')
+            skip_message=_('ros2 already fetched. Skipping…'))
 
     def build(self):
         """Build the ROS2 underlay.
@@ -111,7 +113,7 @@ class Bootstrapper:
         self._run_step(
             self._build_ros2,
             step=_BUILD_ROS2_STEP,
-            skip_message='ros2 already built. Skipping...')
+            skip_message=_('ros2 already built. Skipping…'))
 
         return self._install_dir
 
@@ -146,15 +148,15 @@ class Bootstrapper:
             self._set_step_done(step)
 
     def _install_tools(self):
-        logger.info('Preparing to fetch vcstool...')
+        logger.info(_('Preparing to fetch vcstool…'))
         ubuntu = repo.Ubuntu(
             self._bootstrap_path, sources=self._ubuntu_sources,
             project_options=self._project)
 
-        logger.info('Fetching vcstool...')
+        logger.info(_('Fetching vcstool…'))
         ubuntu.get(['python3-vcstool'])
 
-        logger.info('Installing vcstool...')
+        logger.info(_('Installing vcstool…'))
         ubuntu.unpack(self._tool_dir)
 
     def _fetch_ros2(self):
@@ -163,13 +165,13 @@ class Bootstrapper:
             _ROS2_URL_TEMPLATE.format(version=self._version),
             self._underlay_dir).download()
 
-        logger.info('Fetching ros2 sources....')
+        logger.info(_('Fetching ros2 sources…'))
         ros2_repos = os.path.join(self._underlay_dir, 'ros2.repos')
         self._run(
             ['vcs', 'import', '--input', ros2_repos, self._source_dir])
 
     def _build_ros2(self):
-        logger.info('Building ros2 underlay...')
+        logger.info(_('Building ros2 underlay…'))
         ament_path = os.path.join(
             self._source_dir, 'ament', 'ament_tools', 'scripts',
             'ament.py')

@@ -53,6 +53,8 @@ import shutil
 import snapcraft
 from snapcraft import common
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -118,10 +120,10 @@ class GodepsPlugin(snapcraft.BasePlugin):
         os.symlink(self.sourcedir, path_in_gopath)
 
         # Fetch and run godeps
-        logger.info('Fetching godeps...')
+        logger.info(_('Fetching godeps…'))
         self._run(['go', 'get', 'github.com/rogpeppe/godeps'])
 
-        logger.info('Obtaining project dependencies...')
+        logger.info(_('Obtaining project dependencies…'))
         self._run(['godeps', '-t', '-u', os.path.join(
             self.sourcedir, self.options.godeps_file)])
 

@@ -44,6 +44,8 @@ import snapcraft
 import snapcraft.common
 import snapcraft.plugins.jdk
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -104,7 +106,8 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
             basedir = 'war'
             jarfiles = warfiles
         else:
-            raise RuntimeError("Could not find any built jar files for part")
+            raise RuntimeError(_("Could not find any "
+                                 "built jar files for part"))
 
         snapcraft.file_utils.link_or_copy_tree(
             src, os.path.join(self.installdir, basedir),

@@ -20,6 +20,8 @@ import os
 import subprocess
 import sys
 
+from gettext import gettext as _
+
 DEFAULT_REFERENCE_FILE = 'docs/reference.md'
 
 
@@ -49,7 +51,7 @@ class Reference:
         self.plugins = []
         self.output_file = output_file
         assert os.path.isdir(os.path.dirname(self.output_file)), \
-            'Directory {} does not exist.'.format(
+            _('Directory {} does not exist.').format(
                 os.path.dirname(self.output_file))
         self._read()
         self._write()
@@ -60,7 +62,7 @@ class Reference:
         self.topics.extend(self.plugins)
         for topic in self.topics:
             text = _get_help_output(topic)
-            if not text.startswith('The plugin has no documentation'):
+            if not text.startswith(_('The plugin has no documentation')):
                 self.docs += [
                     (topic, text)
                 ]
@@ -105,8 +107,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-O', '--output-file',
-        help='specify output file, default: {}'.format(DEFAULT_REFERENCE_FILE),
-        default=DEFAULT_REFERENCE_FILE)
+        help=_('specify output file, default: {}').format(
+            DEFAULT_REFERENCE_FILE), default=DEFAULT_REFERENCE_FILE)
     args = parser.parse_args()
     Reference(args.output_file)
 
@@ -115,5 +117,5 @@ if __name__ == '__main__':
     try:
         main()
     except KeyboardInterrupt:
-        print('Aborted.')
+        print(_('Aborted.'))
         sys.exit(1)

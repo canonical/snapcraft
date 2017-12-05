@@ -26,11 +26,13 @@ from snapcraft.internal import (
     repo
 )
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
 class RosdepDependencyNotFoundError(errors.SnapcraftError):
-    fmt = 'rosdep cannot resolve {dependency!r} into a valid dependency'
+    fmt = _('rosdep cannot resolve {dependency!r} into a valid dependency')
 
     def __init__(self, dependency):
         super().__init__(dependency=dependency)
@@ -38,8 +40,8 @@ class RosdepDependencyNotFoundError(errors.SnapcraftError):
 
 class RosdepUnexpectedResultError(errors.SnapcraftError):
     fmt = (
-        'Received unexpected result from rosdep when trying to resolve '
-        '{dependency!r}:\n{output}'
+        _('Received unexpected result from rosdep when trying to resolve '
+          '{dependency!r}:\n{output}')
     )
 
     def __init__(self, dependency, output):
@@ -73,31 +75,31 @@ class Rosdep:
 
         # rosdep isn't necessarily a dependency of the project, so we'll unpack
         # it off to the side and use it from there.
-        logger.info('Preparing to fetch rosdep...')
+        logger.info(_('Preparing to fetch rosdep…'))
         ubuntu = repo.Ubuntu(self._rosdep_path, sources=self._ubuntu_sources,
                              project_options=self._project)
 
-        logger.info('Fetching rosdep...')
+        logger.info(_('Fetching rosdep…'))
         ubuntu.get(['python-rosdep'])
 
-        logger.info('Installing rosdep...')
+        logger.info(_('Installing rosdep…'))
         ubuntu.unpack(self._rosdep_install_path)
 
-        logger.info('Initializing rosdep database...')
+        logger.info(_('Initializing rosdep database…'))
         try:
             self._run(['init'])
         except subprocess.CalledProcessError as e:
             output = e.output.decode(sys.getfilesystemencoding()).strip()
             raise RuntimeError(
-                'Error initializing rosdep database:\n{}'.format(output))
+                _('Error initializing rosdep database:\n{}').format(output))
 
-        logger.info('Updating rosdep database...')
+        logger.info(_('Updating rosdep database…'))
         try:
             self._run(['update'])
         except subprocess.CalledProcessError as e:
             output = e.output.decode(sys.getfilesystemencoding()).strip()
             raise RuntimeError(
-                'Error updating rosdep database:\n{}'.format(output))
+                _('Error updating rosdep database:\n{}').format(output))
 
     def get_dependencies(self, package_name=None):
         """Obtain dependencies for a given package, or entire workspace.
@@ -126,7 +128,7 @@ class Rosdep:
                 return set()
         except subprocess.CalledProcessError:
             raise FileNotFoundError(
-                'Unable to find Catkin package "{}"'.format(package_name))
+                _('Unable to find Catkin package "{}"').format(package_name))
 
     def resolve_dependency(self, dependency_name):
         try:

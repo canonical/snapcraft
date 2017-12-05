@@ -20,6 +20,8 @@ import os
 
 from snapcraft.internal import common
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -51,8 +53,8 @@ class BasePlugin:
         schema_pull_properties = cls.schema().get('pull-properties', [])
         if schema_pull_properties:
             logger.warning(
-                'Use of pull-properties in the schema is deprecated.\n'
-                'Plugins should now implement get_pull_properties')
+                _('Use of pull-properties in the schema is deprecated.\n'
+                  'Plugins should now implement get_pull_properties'))
             return schema_pull_properties
 
         return []
@@ -62,8 +64,8 @@ class BasePlugin:
         schema_build_properties = cls.schema().get('build-properties', [])
         if schema_build_properties:
             logger.warning(
-                'Use of build-properties in the schema is deprecated.\n'
-                'Plugins should now implement get_build_properties')
+                _('Use of build-properties in the schema is deprecated.\n'
+                  'Plugins should now implement get_build_properties'))
             return schema_build_properties
 
         return []
@@ -178,8 +180,8 @@ class BasePlugin:
     def enable_cross_compilation(self):
         """Enable cross compilation for the plugin."""
         raise NotImplementedError(
-            'The plugin used by {!r} does not support cross-compiling '
-            'to a different target architecture'.format(self.name))
+            _('The plugin used by {!r} does not support cross-compiling '
+              'to a different target architecture').format(self.name))
 
     @property
     def parallel_build_count(self):

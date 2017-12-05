@@ -22,6 +22,8 @@ from .errors import (
     UnsatisfiedStatementError,
 )
 
+from gettext import gettext as _
+
 _SELECTOR_PATTERN = re.compile(r'\Aon\s+([^,\s](?:,?[^,]+)*)\Z')
 _WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
 
@@ -127,7 +129,7 @@ def _extract_on_clause_selectors(on):
     try:
         selector_group = match.group(1)
     except AttributeError:
-        raise OnStatementSyntaxError(on, message='selectors are missing')
+        raise OnStatementSyntaxError(on, message=_('selectors are missing'))
     except IndexError:
         raise OnStatementSyntaxError(on)
 
@@ -135,6 +137,6 @@ def _extract_on_clause_selectors(on):
     # to provide a very generic error when we can try to be more helpful.
     if _WHITESPACE_PATTERN.match(selector_group):
         raise OnStatementSyntaxError(
-            on, message='spaces are not allowed in the selectors')
+            on, message=_('spaces are not allowed in the selectors'))
 
     return {selector.strip() for selector in selector_group.split(',')}

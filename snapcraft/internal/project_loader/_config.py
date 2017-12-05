@@ -42,6 +42,8 @@ from . import (
     replace_attr,
 )
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
@@ -51,11 +53,11 @@ def _validate_icon(instance):
     extension = os.path.splitext(instance.lower())[1]
     if extension not in allowed_extensions:
         raise jsonschema.exceptions.ValidationError(
-            "'icon' must be either a .png or a .svg")
+            _("'icon' must be either a .png or a .svg"))
 
     if not os.path.exists(instance):
         raise jsonschema.exceptions.ValidationError(
-            "Specified icon '{}' does not exist".format(instance))
+            _("Specified icon '{}' does not exist").format(instance))
 
     return True
 
@@ -269,7 +271,7 @@ def _snapcraft_yaml_load(yaml_file):
         with open(yaml_file, encoding=encoding) as fp:
             return yaml.load(fp)
     except yaml.scanner.ScannerError as e:
-        raise errors.YamlValidationError('{} on line {} of {}'.format(
+        raise errors.YamlValidationError(_('{} on line {} of {}').format(
             e.problem, e.problem_mark.line + 1, yaml_file)) from e
 
 
@@ -277,8 +279,8 @@ def _ensure_confinement_default(yaml_data, schema):
     # Provide hint if the confinement property is missing, and add the
     # default. We use the schema here so we don't have to hard-code defaults.
     if 'confinement' not in yaml_data:
-        logger.warning('"confinement" property not specified: defaulting '
-                       'to "strict"')
+        logger.warning(_('"confinement" property not specified: defaulting '
+                         'to "strict"'))
         yaml_data['confinement'] = schema['confinement']['default']
 
 
@@ -302,8 +304,8 @@ def _expand_filesets_for(step, properties):
                 new_step_set.extend(filesets[item[1:]])
             except KeyError:
                 raise errors.SnapcraftLogicError(
-                    '\'{}\' referred to in the \'{}\' fileset but it is not '
-                    'in filesets'.format(item, step))
+                    _('\'{}\' referred to in the \'{}\' fileset but it is not '
+                      'in filesets').format(item, step))
         else:
             new_step_set.append(item)
 

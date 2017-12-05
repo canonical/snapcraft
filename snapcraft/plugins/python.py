@@ -67,10 +67,12 @@ from snapcraft.common import isurl
 from snapcraft.internal import mangling
 from snapcraft.plugins import _python
 
+from gettext import gettext as _
+
 
 class UnsupportedPythonVersionError(snapcraft.internal.errors.SnapcraftError):
 
-    fmt = 'Unsupported python version: {python_version!r}'
+    fmt = _('Unsupported python version: {python_version!r}')
 
 
 class PythonPlugin(snapcraft.BasePlugin):

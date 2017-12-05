@@ -46,6 +46,8 @@ from snapcraft import sources
 from snapcraft import shell_utils
 from snapcraft.internal import errors
 
+from gettext import gettext as _
+
 _RUSTUP = 'https://static.rust-lang.org/rustup.sh'
 
 
@@ -154,8 +156,8 @@ class RustPlugin(snapcraft.BasePlugin):
         fmt = targets.get(self.project.deb_arch)
         if not fmt:
             raise NotImplementedError(
-                '{!r} is not supported as a target architecture when '
-                'cross-compiling with the rust plugin'.format(
+                _('{!r} is not supported as a target architecture when '
+                  'cross-compiling with the rust plugin').format(
                     self.project.deb_arch))
         self._target = fmt.format('unknown-linux', 'gnu')
 
@@ -204,7 +206,7 @@ class RustPlugin(snapcraft.BasePlugin):
                     '--channel={}'.format(self.options.rust_channel))
             else:
                 raise errors.SnapcraftEnvironmentError(
-                    '{} is not a valid rust channel'.format(
+                    _('{} is not a valid rust channel').format(
                         self.options.rust_channel))
         os.makedirs(self._rustpath, exist_ok=True)
         self._rustup_get.download()

@@ -29,6 +29,8 @@ from snapcraft.internal.errors import (
     RequiredPathDoesNotExist,
 )
 
+from gettext import gettext as _
+
 if sys.version_info < (3, 6):
     import sha3  # noqa
 
@@ -79,7 +81,7 @@ def search_and_replace_contents(file_path, search_pattern, replacement):
                 f.truncate()
                 f.write(replaced)
     except PermissionError as e:
-        logger.warning('Unable to open {path} for writing: {error}'.format(
+        logger.warning(_('Unable to open {path} for writing: {error}').format(
             path=file_path, error=e))
 
 
@@ -121,7 +123,7 @@ def link_or_copy(source, destination, follow_symlinks=False):
         try:
             os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
         except PermissionError as e:
-            logger.debug('Unable to chown {destination}: {error}'.format(
+            logger.debug(_('Unable to chown {destination}: {error}').format(
                 destination=destination, error=e))
 
 
@@ -137,13 +139,14 @@ def link_or_copy_tree(source_tree, destination_tree,
     """
 
     if not os.path.isdir(source_tree):
-        raise NotADirectoryError('{!r} is not a directory'.format(source_tree))
+        raise NotADirectoryError(_('{!r} is not a directory').format(
+            source_tree))
 
     if (not os.path.isdir(destination_tree) and
             os.path.exists(destination_tree)):
         raise NotADirectoryError(
-            'Cannot overwrite non-directory {!r} with directory '
-            '{!r}'.format(destination_tree, source_tree))
+            _('Cannot overwrite non-directory {!r} with directory '
+              '{!r}').format(destination_tree, source_tree))
 
     create_similar_directory(source_tree, destination_tree)
 
@@ -187,7 +190,8 @@ def create_similar_directory(source, destination, follow_symlinks=False):
     try:
         os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
     except PermissionError as exception:
-        logger.debug('Unable to chown {}: {}'.format(destination, exception))
+        logger.debug(_('Unable to chown {}: {}').format(destination,
+                                                        exception))
 
     shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
 
@@ -202,7 +206,7 @@ def requires_command_success(command, not_found_fmt=None, failure_fmt=None):
     if isinstance(command, str):
         cmd_list = command.split()
     else:
-        raise TypeError('command must be a string.')
+        raise TypeError(_('command must be a string.'))
     kwargs = dict(command=command, cmd_list=cmd_list)
     try:
         subprocess.check_call(

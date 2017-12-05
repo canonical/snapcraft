@@ -66,7 +66,7 @@ class RegisterKeyTestCase(CommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
-            'Registering key ...'))
+            'Registering key …'))
         self.assertThat(result.output, Contains(
             'Done. The key "default" ({}) may be used to sign your '
             'assertions.'.format(get_sample_key('default')['sha3-384'])))
@@ -253,7 +253,7 @@ class RegisterKeyTestCase(CommandBaseTestCase):
             Equals(
                 'We strongly recommend enabling multi-factor authentication: '
                 'https://help.ubuntu.com/community/SSO/FAQs/2FA\n'
-                'Registering key ...\n'
+                'Registering key …\n'
                 'Done. The key "another" ({}) may be used to sign your '
                 'assertions.\n'.format(get_sample_key('another')['sha3-384'])))
 

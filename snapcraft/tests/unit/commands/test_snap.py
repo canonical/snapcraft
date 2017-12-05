@@ -140,7 +140,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         source = os.path.realpath(os.path.curdir)
         self.assertIn(
             "Using LXD remote 'myremote' from SNAPCRAFT_CONTAINER_BUILDS\n"
-            'Waiting for a network connection...\n'
+            'Waiting for a network connection…\n'
             'Network connection established\n'
             'Mounting {} into container\n'.format(source),
             fake_logger.output)
@@ -452,7 +452,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
         self.assertIn(
             'Using default LXD remote because '
             'SNAPCRAFT_CONTAINER_BUILDS is set to 1\n'
-            'Waiting for a network connection...\n'
+            'Waiting for a network connection…\n'
             'Network connection established\n'
             'Mounting {} into container\n'.format(source),
             fake_logger.output)
@@ -557,7 +557,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
 
         source = os.path.realpath(os.path.curdir)
         self.assertIn(
-            'Waiting for a network connection...\n'
+            'Waiting for a network connection…\n'
             'Network connection established\n'
             'Mounting {} into container\n'.format(source),
             fake_logger.output)

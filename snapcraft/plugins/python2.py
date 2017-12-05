@@ -50,6 +50,8 @@ import logging
 
 from snapcraft.plugins import python
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
@@ -58,6 +60,6 @@ class Python2Plugin(python.PythonPlugin):
     def __init__(self, name, options, project):
         options.python_version = 'python2'
         super().__init__(name, options, project)
-        logger.warning("DEPRECATED: The 'python2' plugin's functionality "
-                       "has been replaced by the 'python' plugin, and it will "
-                       "soon be removed.")
+        logger.warning(_("DEPRECATED: The 'python2' plugin's functionality "
+                         "has been replaced by the 'python' plugin, and it "
+                         "will soon be removed."))

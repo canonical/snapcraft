@@ -17,6 +17,8 @@ import click
 
 from snapcraft import ProjectOptions
 
+from gettext import gettext as _
+
 
 class HiddenOption(click.Option):
 
@@ -32,12 +34,12 @@ _BUILD_OPTION_NAMES = [
 
 _BUILD_OPTIONS = [
     dict(is_flag=True,
-         help=('Detect best candidate location for stage-packages using '
-               'geoip')),
+         help=(_('Detect best candidate location for stage-packages using '
+                 'geoip'))),
     dict(is_flag=True,
-         help='Force a squential build.'),
+         help=_('Force a squential build.')),
     dict(metavar='<arch>',
-         help='Target architecture to cross compile to'),
+         help=_('Target architecture to cross compile to')),
 ]
 
 

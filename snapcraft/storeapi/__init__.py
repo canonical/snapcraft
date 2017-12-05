@@ -46,6 +46,8 @@ from . import _upload
 from . import constants
 from . import errors
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -59,11 +61,11 @@ def _macaroon_auth(conf):
     root_macaroon_raw = conf.get('macaroon')
     if root_macaroon_raw is None:
         raise errors.InvalidCredentialsError(
-            'Root macaroon not in the config file')
+            _('Root macaroon not in the config file'))
     unbound_raw = conf.get('unbound_discharge')
     if unbound_raw is None:
         raise errors.InvalidCredentialsError(
-            'Unbound discharge not in the config file')
+            _('Unbound discharge not in the config file'))
 
     root_macaroon = _deserialize_macaroon(root_macaroon_raw)
     unbound = _deserialize_macaroon(unbound_raw)
@@ -171,7 +173,7 @@ class StoreClient():
             if caveat.location == sso_host:
                 return caveat.caveat_id
         else:
-            raise errors.InvalidCredentialsError('Invalid root macaroon')
+            raise errors.InvalidCredentialsError(_('Invalid root macaroon'))
 
     def logout(self):
         self.conf.clear()
@@ -228,7 +230,7 @@ class StoreClient():
         # discharge. --elopio -2016-06-20
         if self.conf.get('unbound_discharge') is None:
             raise errors.InvalidCredentialsError(
-                'Unbound discharge not in the config file')
+                _('Unbound discharge not in the config file'))
 
         updown_data = _upload.upload_files(snap_filename, self.updown)
 
@@ -297,10 +299,10 @@ class StoreClient():
     def _download_snap(self, name, channel, arch, download_path,
                        download_url, expected_sha512):
         if self._is_downloaded(download_path, expected_sha512):
-            logger.info('Already downloaded {} at {}'.format(
+            logger.info(_('Already downloaded {} at {}').format(
                 name, download_path))
             return
-        logger.info('Downloading {}'.format(name, download_path))
+        logger.info(_('Downloading {}').format(name, download_path))
 
         # we only resume when redirected to our CDN since we use internap's
         # special sauce.
@@ -325,15 +327,15 @@ class StoreClient():
             request.raise_for_status()
             redirections = [h.headers['Location'] for h in request.history]
             if redirections:
-                logger.debug('Redirections for {!r}: {}'.format(
+                logger.debug(_('Redirections for {!r}: {}').format(
                     download_url, ', '.join(redirections)))
             try:
                 download_requests_stream(request, download_path,
                                          total_read=total_read)
                 not_downloaded = False
             except requests.exceptions.ChunkedEncodingError as e:
-                logger.debug('Error while downloading: {!r}. '
-                             'Retries left to download: {!r}.'.format(
+                logger.debug(_('Error while downloading: {!r}. '
+                               'Retries left to download: {!r}.').format(
                                  e, retry_count))
                 retry_count -= 1
                 if not retry_count:
@@ -341,7 +343,7 @@ class StoreClient():
                 sleep(1)
 
         if self._is_downloaded(download_path, expected_sha512):
-            logger.info('Successfully downloaded {} at {}'.format(
+            logger.info(_('Successfully downloaded {} at {}').format(
                 name, download_path))
         else:
             raise errors.SHAMismatchError(download_path, expected_sha512)
@@ -413,7 +415,7 @@ class SSOClient(Client):
                 raise errors.StoreTwoFactorAuthenticationRequired()
             else:
                 raise errors.StoreAuthenticationError(
-                    'Failed to get unbound discharge: {}'.format(
+                    _('Failed to get unbound discharge: {}').format(
                         response.text))
 
     def refresh_unbound_discharge(self, unbound_discharge):
@@ -426,7 +428,7 @@ class SSOClient(Client):
             return response.json()['discharge_macaroon']
         else:
             raise errors.StoreAuthenticationError(
-                'Failed to refresh unbound discharge: {}'.format(
+                _('Failed to refresh unbound discharge: {}').format(
                     response.text))
 
 
@@ -477,7 +479,7 @@ class SnapIndexClient(Client):
                       'download_sha3_384,download_sha512,snap_id,'
                       'revision,release',
         }
-        logger.debug('Getting details for {}'.format(snap_name))
+        logger.debug(_('Getting details for {}').format(snap_name))
         url = 'api/v1/snaps/details/{}'.format(snap_name)
         resp = self.get(url, headers=headers, params=params)
         if resp.status_code != 200:
@@ -535,7 +537,7 @@ class SCAClient(Client):
         if response.ok:
             return response.json()['macaroon']
         else:
-            raise errors.StoreAuthenticationError('Failed to get macaroon')
+            raise errors.StoreAuthenticationError(_('Failed to get macaroon'))
 
     @staticmethod
     def _is_needs_refresh_response(response):
@@ -688,12 +690,13 @@ class SCAClient(Client):
         try:
             response_json = response.json()
         except JSONDecodeError:
-            message = ('Invalid response from the server when pushing '
-                       'validations: {} {}').format(
+            message = (_('Invalid response from the server when pushing '
+                         'validations: {} {}')).format(
                            response.status_code, response)
             logger.debug(message)
             raise errors.StoreValidationError(
-                snap_id, response, message='Invalid response from the server')
+                snap_id, response,
+                message=_('Invalid response from the server'))
 
         return response_json
 
@@ -709,12 +712,13 @@ class SCAClient(Client):
         try:
             response_json = response.json()
         except JSONDecodeError:
-            message = ('Invalid response from the server when getting '
-                       '{}: {} {}').format(
+            message = (_('Invalid response from the server when getting '
+                         '{}: {} {}')).format(
                            endpoint, response.status_code, response)
             logger.debug(message)
             raise errors.StoreValidationError(
-                snap_id, response, message='Invalid response from the server')
+                snap_id, response,
+                message=_('Invalid response from the server'))
 
         return response_json
 
@@ -791,9 +795,9 @@ class SCAClient(Client):
             return results['closed_channels'], results['channel_map_tree']
         except (JSONDecodeError, KeyError):
             logger.debug(
-                'Invalid response from the server on channel closing:\n'
-                '{} {}\n{}'.format(response.status_code, response.reason,
-                                   response.content))
+                _('Invalid response from the server on channel closing:\n'
+                  '{} {}\n{}').format(response.status_code, response.reason,
+                                      response.content))
             raise errors.StoreChannelClosingError(response)
 
     def sign_developer_agreement(self, latest_tos_accepted=False):
@@ -813,11 +817,11 @@ class SCAClient(Client):
 class StatusTracker:
 
     __messages = {
-        'being_processed': 'Processing...',
-        'ready_to_release': 'Ready to release!',
-        'need_manual_review': 'Will need manual review...',
-        'processing_upload_delta_error': 'Error while processing delta...',
-        'processing_error': 'Error while processing...',
+        'being_processed': _('Processing…'),
+        'ready_to_release': _('Ready to release!'),
+        'need_manual_review': _('Will need manual review…'),
+        'processing_upload_delta_error': _('Error while processing delta…'),
+        'processing_error': _('Error while processing…'),
     }
 
     __error_codes = {
@@ -834,7 +838,7 @@ class StatusTracker:
         thread = Thread(target=self._update_status, args=(queue,))
         thread.start()
 
-        widgets = ['Processing...', AnimatedMarker()]
+        widgets = [_('Processing…'), AnimatedMarker()]
         progress_indicator = ProgressBar(widgets=widgets, maxval=UnknownLength)
         progress_indicator.start()
 

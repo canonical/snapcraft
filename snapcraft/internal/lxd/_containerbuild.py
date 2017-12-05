@@ -42,6 +42,8 @@ from snapcraft.internal.errors import (
 from snapcraft._options import _get_deb_arch
 from snapcraft.internal.repo import snaps
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 _NETWORK_PROBE_COMMAND = \
@@ -82,7 +84,7 @@ class Containerbuild:
                 yield
             except ContainerRunError as e:
                 if self._project_options.debug:
-                    logger.info('Debug mode enabled, dropping into a shell')
+                    logger.info(_('Debug mode enabled, dropping into a shell'))
                     self._container_run(['bash', '-i'])
                 else:
                     raise e
@@ -96,9 +98,9 @@ class Containerbuild:
             yield
         finally:
             status = self._get_container_status()
-            if status and status['status'] == 'Running':
+            if status and status['status'] == _('Running'):
                 # Stopping takes a while and lxc doesn't print anything.
-                print('Stopping {}'.format(self._container_name))
+                print(_('Stopping {}').format(self._container_name))
                 subprocess.check_call([
                     'lxc', 'stop', '-f', self._container_name])
 
@@ -128,32 +130,34 @@ class Containerbuild:
         info = subprocess.check_output([
             'lxc', 'info', self._container_name]).decode('utf-8')
         for line in info.splitlines():
-            if line.startswith("Architecture:"):
+            if line.startswith(_("Architecture:")):
                 self._container_arch = _get_deb_arch(
                     line.split(None, 1)[1].strip())
                 break
         else:
-            raise ContainerError("Could not find architecture for container")
+            raise ContainerError(_("Could not find"
+                                   "architecture for container"))
 
     def _set_image_info_env_var(self):
         FAILURE_WARNING_FORMAT = (
-            'Failed to get container image info: {}\n'
-            'It will not be recorded in manifest.')
+            _('Failed to get container image info: {}\n'
+              'It will not be recorded in manifest.'))
         try:
             image_info_command = [
                 'lxc', 'image', 'list', '--format=json', self._image]
             image_info = json.loads(subprocess.check_output(
                 image_info_command).decode())
         except subprocess.CalledProcessError as e:
-            message = ('`{command}` returned with exit code {returncode}, '
-                       'output: {output}'.format(
+            message = (_('`{command}` returned with exit code {returncode}, '
+                         'output: {output}').format(
                            command=' '.join(image_info_command),
                            returncode=e.returncode,
                            output=e.output))
             logger.warning(FAILURE_WARNING_FORMAT.format(message))
             return
         except json.decoder.JSONDecodeError as e:
-            logger.warning(FAILURE_WARNING_FORMAT.format('Not in JSON format'))
+            logger.warning(FAILURE_WARNING_FORMAT.format(
+                _('Not in JSON format')))
             return
         edited_image_info = collections.OrderedDict()
         for field in ('fingerprint', 'architecture', 'created_at'):
@@ -208,7 +212,7 @@ class Containerbuild:
                                         exit_code=e.returncode)
 
     def _wait_for_network(self):
-        logger.info('Waiting for a network connection...')
+        logger.info(_('Waiting for a network connection…'))
         not_connected = True
         retry_count = 5
         while not_connected:
@@ -220,7 +224,7 @@ class Containerbuild:
                 retry_count -= 1
                 if retry_count == 0:
                     raise e
-        logger.info('Network connection established')
+        logger.info(_('Network connection established'))
 
     def _inject_snapcraft(self):
         if common.is_snap():
@@ -244,10 +248,10 @@ class Containerbuild:
             json = session.request('GET', api).json()
         except requests.exceptions.ConnectionError as e:
             raise SnapdError(
-                'Error connecting to {}'.format(api)) from e
+                _('Error connecting to {}').format(api)) from e
         if json['type'] == 'error':
             raise SnapdError(
-                'Error querying {!r} snap: {}'.format(
+                _('Error querying {!r} snap: {}').format(
                     name, json['result']['message']))
         id = json['result']['id']
         # Lookup confinement to know if we need to --classic when installing
@@ -272,7 +276,7 @@ class Containerbuild:
 
         filepath = os.path.join(tmp_dir, filename)
         if rev.startswith('x'):
-            logger.info('Making {} user-accessible'.format(filename))
+            logger.info(_('Making {} user-accessible').format(filename))
             subprocess.check_call(['sudo', 'cp', installed, filepath])
             subprocess.check_call([
                 'sudo', 'chown', str(os.getuid()), filepath])
@@ -280,7 +284,8 @@ class Containerbuild:
             shutil.copyfile(installed, filepath)
 
         if self._is_same_snap(filepath, name):
-            logger.debug('Not re-injecting same version of {!r}'.format(name))
+            logger.debug(_('Not re-injecting '
+                           'same version of {!r}').format(name))
             return
 
         if not rev.startswith('x'):
@@ -350,12 +355,12 @@ class Containerbuild:
         filepath = os.path.join(tmp_dir, filename)
         with open(filepath, 'wb') as f:
             for assertion in assertions:
-                logger.info('Looking up assertion {}'.format(assertion))
+                logger.info(_('Looking up assertion {}').format(assertion))
                 f.write(subprocess.check_output(['snap', 'known', *assertion]))
                 f.write(b'\n')
         container_filename = os.path.join(os.path.sep, 'run', filename)
         self._push_file(filepath, container_filename)
-        logger.info('Adding assertion {}'.format(filename))
+        logger.info(_('Adding assertion {}').format(filename))
         self._container_run(['snap', 'ack', container_filename])
 
 
@@ -375,10 +380,10 @@ def _get_default_remote():
             ['lxc', 'remote', 'get-default'])
     except FileNotFoundError:
         raise ContainerConnectionError(
-            'You must have LXD installed in order to use cleanbuild.')
+            _('You must have LXD installed in order to use cleanbuild.'))
     except subprocess.CalledProcessError:
         raise ContainerConnectionError(
-            'Something seems to be wrong with your installation of LXD.')
+            _('Something seems to be wrong with your installation of LXD.'))
     return default_remote.decode(sys.getfilesystemencoding()).strip()
 
 
@@ -406,10 +411,10 @@ def _verify_remote(remote):
         subprocess.check_output(['lxc', 'list', '{}:'.format(remote)])
     except FileNotFoundError:
         raise ContainerConnectionError(
-            'You must have LXD installed in order to use cleanbuild.')
+            _('You must have LXD installed in order to use cleanbuild.'))
     except subprocess.CalledProcessError as e:
         raise ContainerConnectionError(
-            'There are either no permissions or the remote {!r} '
-            'does not exist.\n'
-            'Verify the existing remotes by running `lxc remote list`\n'
-            .format(remote)) from e
+            _('There are either no permissions or the remote {!r} '
+              'does not exist.\n'
+              'Verify the existing remotes by running `lxc remote list`\n')
+                  .format(remote)) from e

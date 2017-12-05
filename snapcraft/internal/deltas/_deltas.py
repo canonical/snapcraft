@@ -20,6 +20,8 @@ import os
 import subprocess
 import time
 
+from gettext import gettext as _
+
 from snapcraft import file_utils
 from snapcraft.internal.deltas.errors import (
     DeltaFormatError,
@@ -28,7 +30,6 @@ from snapcraft.internal.deltas.errors import (
     DeltaGenerationTooBigError,
     DeltaToolError,
 )
-
 
 logger = logging.getLogger(__name__)
 
@@ -74,13 +75,13 @@ class BaseDeltasGenerator:
     def _check_file_existence(self):
         if not os.path.exists(self.source_path):
             raise ValueError(
-                'source file {!r} does not exist, '
-                'please specify a valid source file'.format(self.source_path))
+                _('source file {!r} does not exist, please '
+                  'specify a valid source file').format(self.source_path))
 
         if not os.path.exists(self.target_path):
             raise ValueError(
-                'target file {!r} does not exist, '
-                'please specify a valid target file'.format(self.target_path))
+                _('target file {!r} does not exist, please '
+                  'specify a valid target file').format(self.target_path))
 
     def _check_delta_gen_tool(self):
         """Check if the delta generation tool exists"""

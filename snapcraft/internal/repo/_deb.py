@@ -38,6 +38,8 @@ from snapcraft.internal.indicators import is_dumb_terminal
 from ._base import BaseRepo
 from . import errors
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +121,7 @@ class _AptCache:
                 os.symlink(dpkg_path, destination)
         else:
             logger.warning(
-                "Cannot find 'dpkg' command needed to support multiarch")
+                _("Cannot find 'dpkg' command needed to support multiarch"))
 
         apt_cache = apt.Cache(rootdir=cache_dir, memonly=True)
         apt_cache.update(fetch_progress=self.progress,
@@ -138,7 +140,7 @@ class _AptCache:
             finally:
                 apt_cache.close()
         except Exception as e:
-            logger.debug('Exception occurred: {!r}'.format(e))
+            logger.debug(_('Exception occurred: {!r}').format(e))
             raise e
 
     def sources_digest(self):
@@ -214,8 +216,8 @@ class Ubuntu(BaseRepo):
                 name = name[:-4]
             if apt_cache.is_virtual_package(name):
                 name = apt_cache.get_providing_packages(name)[0].name
-            logger.debug('Marking {!r} (and its dependencies) to be '
-                         'fetched'.format(name))
+            logger.debug(_('Marking {!r} (and its dependencies) to be '
+                           'fetched').format(name))
             name_arch, version = repo.get_pkg_name_parts(name)
             try:
                 if version:
@@ -228,7 +230,7 @@ class Ubuntu(BaseRepo):
     def _install_new_build_packages(cls, package_names):
         package_names.sort()
         logger.info(
-            'Installing build dependencies: %s', ' '.join(package_names))
+            _('Installing build dependencies: %s'), ' '.join(package_names))
         env = os.environ.copy()
         env.update({
             'DEBIAN_FRONTEND': 'noninteractive',
@@ -248,7 +250,7 @@ class Ubuntu(BaseRepo):
                                   package_names, env=env)
         except subprocess.CalledProcessError as e:
             logger.warning(
-                'Impossible to mark packages as auto-installed: {}'
+                _('Impossible to mark packages as auto-installed: {}')
                 .format(e))
 
     @classmethod
@@ -322,11 +324,11 @@ class Ubuntu(BaseRepo):
                 continue
 
         if skipped_essential:
-            logger.debug('Skipping priority essential packages: '
-                         '{!r}'.format(skipped_essential))
+            logger.debug(_('Skipping priority essential packages: '
+                           '{!r}').format(skipped_essential))
         if skipped_blacklisted:
-            logger.debug('Skipping blacklisted from manifest packages: '
-                         '{!r}'.format(skipped_blacklisted))
+            logger.debug(_('Skipping blacklisted from manifest packages: '
+                           '{!r}').format(skipped_blacklisted))
 
     def _get(self, apt_cache):
         # Ideally we'd use apt.Cache().fetch_archives() here, but it seems to
@@ -434,7 +436,7 @@ def _format_sources_list(sources_list, *,
 def _fix_filemode(path):
     mode = stat.S_IMODE(os.stat(path, follow_symlinks=False).st_mode)
     if mode & 0o4000 or mode & 0o2000:
-        logger.warning('Removing suid/guid from {}'.format(path))
+        logger.warning(_('Removing suid/guid from {}').format(path))
         os.chmod(path, mode & 0o1777)
 
 
@@ -442,13 +444,14 @@ def _try_copy_local(path, target):
     real_path = os.path.realpath(path)
     if os.path.exists(real_path):
         logger.warning(
-            'Copying needed target link from the system {}'.format(real_path))
+            _('Copying needed target link '
+              'from the system {}').format(real_path))
         os.makedirs(os.path.dirname(target), exist_ok=True)
         shutil.copyfile(os.readlink(path), target)
         return True
     else:
         logger.warning(
-            '{} will be a dangling symlink'.format(path))
+            _('{} will be a dangling symlink').format(path))
         return False
 
 

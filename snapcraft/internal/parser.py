@@ -53,6 +53,8 @@ from collections import OrderedDict
 import snapcraft
 from snapcraft.internal import errors, log, project_loader, repo, sources
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 # TODO: make this a temporary directory that gets removed when finished
@@ -120,8 +122,8 @@ def _process_entry_parts(entry_parts, parts, origin, maintainer, description,
     for part_name in entry_parts:
         if '/' in part_name:
             logger.warning(
-                'DEPRECATED: Found a "/" in the name of the {!r} part'.format(
-                    part_name))
+                _('DEPRECATED: Found a "/" in the '
+                  'name of the {!r} part').format(part_name))
         source_part = parts.get(part_name)
         replacements = [
             ('$SNAPCRAFT_PROJECT_NAME', origin_name),
@@ -172,9 +174,9 @@ def _process_entry(data):
         description = data['description']
     except KeyError as e:
         raise errors.InvalidWikiEntryError(
-            'Missing key in wiki entry: {}'.format(e))
+            _('Missing key in wiki entry: {}').format(e))
 
-    logger.info('Processing origin {origin!r}'.format(origin=origin))
+    logger.info(_('Processing origin {origin!r}').format(origin=origin))
     origin_dir = os.path.join(_get_base_dir(), _encode_origin(origin))
     os.makedirs(origin_dir, exist_ok=True)
 
@@ -191,11 +193,11 @@ def _process_entry(data):
         origin_data = _get_origin_data(origin_dir)
     except project_loader.errors.MissingSnapcraftYamlError as e:
         raise errors.InvalidWikiEntryError(
-            'Origin {origin!r} is missing a snapcraft.yaml file.'.format(
+            _('Origin {origin!r} is missing a snapcraft.yaml file.').format(
                 origin=origin)) from e
     except errors.SnapcraftEnvironmentError as e:
         raise errors.InvalidWikiEntryError(
-            'snapcraft.yaml error: {}'.format(e)) from e
+            _('snapcraft.yaml error: {}').format(e)) from e
 
     origin_parts = origin_data.get('parts', {})
     origin_name = origin_data.get('name')
@@ -220,17 +222,18 @@ def _process_wiki_entry(
         data = yaml.load(entry)
     except (ScannerError, ParserError) as e:
         raise errors.InvalidWikiEntryError(
-            'Bad wiki entry, possibly malformed YAML for entry: {}'.format(e))
+            _('Bad wiki entry, possibly '
+              'malformed YAML for entry: {}').format(e))
 
     try:
         parts = data['parts']
     except KeyError as e:
         raise errors.InvalidWikiEntryError(
-            '"parts" missing from wiki entry: {}'.format(entry))
+            _('"parts" missing from wiki entry: {}').format(entry))
     for part_name in parts:
         if part_name and part_name in master_parts_list:
             raise errors.InvalidWikiEntryError(
-                'Duplicate part found in the wiki: {} in entry {}'.format(
+                _('Duplicate part found in the wiki: {} in entry {}').format(
                     part_name, entry))
 
     parts_list, after_parts = _process_entry(data)
@@ -244,7 +247,7 @@ def _process_wiki_entry(
     else:
         pending_validation_entries.append(entry)
         master_missing_parts.update(missing_parts)
-        logger.debug('Parts {!r} are missing'.format(
+        logger.debug(_('Parts {!r} are missing').format(
             ",".join(missing_parts)))
 
 
@@ -299,8 +302,8 @@ def _process_index(output):
             entry, master_parts_list, missing_parts, [])
 
     if len(missing_parts):
-        logger.warning('Parts {!r} are not defined in the parts entry'.format(
-                ",".join(missing_parts)))
+        logger.warning(_('Parts {!r} are not defined '
+                         'in the parts entry').format(",".join(missing_parts)))
         wiki_errors += 1
 
     return {'master_parts_list': master_parts_list,
@@ -321,7 +324,7 @@ def run(args):
     try:
         output = urllib.request.urlopen(index).read()
     except urllib.error.URLError as e:
-        logging.error('Unable to access index: {!r}'.format(e))
+        logging.error(_('Unable to access index: {!r}').format(e))
         return 1
 
     data = _process_index(output)
@@ -329,7 +332,7 @@ def run(args):
     wiki_errors = data['wiki_errors']
 
     if wiki_errors:
-        logger.warning("{} wiki errors found!".format(wiki_errors))
+        logger.warning(_("{} wiki errors found!").format(wiki_errors))
 
     _write_parts_list(path, master_parts_list)
 
@@ -349,7 +352,7 @@ def missing_parts_set(parts, known_parts):
 
 
 def _write_parts_list(path, master_parts_list):
-    logger.info('Writing parts list to {!r}'.format(path))
+    logger.info(_('Writing parts list to {!r}').format(path))
     with open(path, 'w') as fp:
         fp.write(yaml.dump(master_parts_list,
                  default_flow_style=False))

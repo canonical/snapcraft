@@ -64,6 +64,8 @@ import subprocess
 import snapcraft
 from snapcraft.internal import common
 
+from gettext import gettext as _
+
 BUILD_PACKAGES = {
     'apt-file',
     'autoconf',
@@ -251,17 +253,17 @@ class JHBuildPlugin(snapcraft.BasePlugin):
         modules = self.run_jhbuild(['list'] + self.modules,
                                    output=True).splitlines()
 
-        logger.info('Pulling modules')
+        logger.info(_('Pulling modules'))
         self.run_jhbuild(['update'] + modules, output=False)
 
     def build(self):
         self._setup_jhbuild()
 
-        logger.info('Building modules')
+        logger.info(_('Building modules'))
         self.run_jhbuild(['build'] + self.modules,
                          cwd=self.builddir, output=False)
 
-        logger.info('Fixing symbolic links')
+        logger.info(_('Fixing symbolic links'))
         self.run(['symlinks', '-c', '-d', '-r', '-s', '-v', self.installdir])
 
     def _setup_jhbuild(self):
@@ -290,7 +292,7 @@ class JHBuildPlugin(snapcraft.BasePlugin):
                 os.chown(filename, jhbuild_user, jhbuild_group)
 
         if not os.path.exists(self.jhbuild_program):
-            logger.info('Building JHBuild')
+            logger.info(_('Building JHBuild'))
 
             self.maybe_sudo(['./autogen.sh', '--prefix=%s' % os.sep +
                              os.path.join(self.partdir, 'jhbuild', 'usr')],

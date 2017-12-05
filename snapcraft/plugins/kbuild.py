@@ -69,6 +69,8 @@ from snapcraft import BasePlugin
 
 import snapcraft
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
@@ -140,14 +142,14 @@ class KBuildPlugin(BasePlugin):
             with open(os.path.join('debian', 'debian.env'), 'r') as f:
                 env = f.read()
         except OSError as e:
-            raise RuntimeError('Unable to access {}: {}'.format(e.filename,
-                                                                e.strerror))
+            raise RuntimeError(_('Unable to access {}: {}').format(e.filename,
+                                                                   e.strerror))
         arch = self.project.deb_arch
         try:
             branch = env.split('.')[1].strip()
         except IndexError:
-            raise RuntimeError('Malformed debian.env, cannot extract'
-                               ' branch name')
+            raise RuntimeError(_('Malformed debian.env, cannot extract'
+                                 ' branch name'))
         flavour = self.options.kconfigflavour
 
         configfiles = []
@@ -174,8 +176,8 @@ class KBuildPlugin(BasePlugin):
                     with open(config_part_path) as config_part:
                         config_file.write(config_part.read())
         except OSError as e:
-            raise RuntimeError('Unable to access {!r}: '
-                               '{}'.format(e.filename, e.strerror))
+            raise RuntimeError(_('Unable to access {!r}: '
+                                 '{}').format(e.filename, e.strerror))
 
     def get_config_path(self):
         return os.path.join(self.builddir, '.config')

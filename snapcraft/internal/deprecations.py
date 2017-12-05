@@ -24,6 +24,8 @@ module.
 
 import logging
 
+from gettext import gettext as _
+
 _DEPRECATION_MESSAGES = {
     'dn1': "The 'snap' keyword has been replaced by 'prime'.",
     'dn2': "Custom plugins should now be placed in 'snap/plugins'.",
@@ -43,7 +45,7 @@ logger = logging.getLogger(__name__)
 def _deprecation_message(id):
     message = _DEPRECATION_MESSAGES.get(id)
     if not message:
-        raise RuntimeError('No deprecation notice with id {!r}'.format(id))
+        raise RuntimeError(_('No deprecation notice with id {!r}').format(id))
 
     return message
 
@@ -51,5 +53,5 @@ def _deprecation_message(id):
 def handle_deprecation_notice(id):
     message = _deprecation_message(id)
 
-    logger.warning('DEPRECATED: {}\nSee {} for more information.'.format(
+    logger.warning(_('DEPRECATED: {}\nSee {} for more information.').format(
         message, _DEPRECATION_URL_FMT.format(id=id)))

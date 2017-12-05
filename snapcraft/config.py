@@ -24,6 +24,8 @@ from xdg import BaseDirectory
 
 from snapcraft.storeapi import constants
 
+from gettext import gettext as _
+
 LOCAL_CONFIG_FILENAME = '.snapcraft/snapcraft.cfg'
 
 logger = logging.getLogger(__name__)
@@ -82,8 +84,8 @@ class Config(object):
             # FIXME: We don't know this for sure when loading the config.
             # Need a better separation of concerns.
             logger.warn(
-                'Using local configuration ({!r}), changes will not be '
-                'persisted.'.format(file_path))
+                _('Using local configuration ({!r}), changes will not be '
+                  'persisted.').format(file_path))
         else:
             file_path = BaseDirectory.load_first_config(
                 'snapcraft', 'snapcraft.cfg')

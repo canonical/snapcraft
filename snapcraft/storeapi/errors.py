@@ -18,6 +18,8 @@ from simplejson.scanner import JSONDecodeError
 
 from snapcraft.internal.errors import SnapcraftError
 
+from gettext import gettext as _
+
 
 class StoreError(SnapcraftError):
     """Base class for all storeapi exceptions.
@@ -29,8 +31,8 @@ class StoreError(SnapcraftError):
 
 class InvalidCredentialsError(StoreError):
 
-    fmt = ('Invalid credentials: {message}. '
-           'Have you run "snapcraft login"?')
+    fmt = (_('Invalid credentials: {message}. '
+             'Have you run "snapcraft login"?'))
 
     def __init__(self, message):
         super().__init__(message=message)
@@ -38,12 +40,12 @@ class InvalidCredentialsError(StoreError):
 
 class LoginRequiredError(StoreError):
 
-    fmt = 'Cannot continue without logging in successfully.'
+    fmt = _('Cannot continue without logging in successfully.')
 
 
 class StoreRetryError(StoreError):
 
-    fmt = 'There seems to be a network error: {error}'
+    fmt = _('There seems to be a network error: {error}')
 
     def __init__(self, exception):
         super().__init__(error=str(exception))
@@ -52,14 +54,15 @@ class StoreRetryError(StoreError):
 class SnapNotFoundError(StoreError):
 
     __FMT_ARCH_CHANNEL = (
-        'Snap {name!r} for {arch!r} cannot be found in the {channel!r} '
-        'channel.')
-    __FMT_CHANNEL = 'Snap {name!r} was not found in the {channel!r} channel.'
+        _('Snap {name!r} for {arch!r} cannot be found in the {channel!r} '
+          'channel.'))
+    __FMT_CHANNEL = (
+        _('Snap {name!r} was not found in the {channel!r} channel.'))
     __FMT_SERIES_ARCH = (
-        'Snap {name!r} for {arch!r} was not found in {series!r} series.')
-    __FMT_SERIES = 'Snap {name!r} was not found in {series!r} series.'
+        _('Snap {name!r} for {arch!r} was not found in {series!r} series.'))
+    __FMT_SERIES = _('Snap {name!r} was not found in {series!r} series.')
 
-    fmt = 'Snap {name!r} was not found.'
+    fmt = _('Snap {name!r} was not found.')
 
     def __init__(self, name, channel=None, arch=None, series=None):
         if channel and arch:
@@ -76,7 +79,7 @@ class SnapNotFoundError(StoreError):
 
 class SHAMismatchError(StoreError):
 
-    fmt = 'SHA512 checksum for {path} is not {expected_sha}.'
+    fmt = _('SHA512 checksum for {path} is not {expected_sha}.')
 
     def __init__(self, path, expected_sha):
         super().__init__(path=path, expected_sha=expected_sha)
@@ -84,7 +87,7 @@ class SHAMismatchError(StoreError):
 
 class StoreAuthenticationError(StoreError):
 
-    fmt = 'Authentication error: {}.'
+    fmt = _('Authentication error: {}.')
 
     def __init__(self, message):
         super().__init__(message=message)

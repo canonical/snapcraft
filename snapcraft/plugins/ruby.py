@@ -40,6 +40,8 @@ from snapcraft import BasePlugin, file_utils
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from snapcraft.sources import Tar
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -79,8 +81,8 @@ class RubyPlugin(BasePlugin):
         super().__init__(name, options, project)
         # Beta Warning
         # Remove this comment and warning once ruby plugin is stable.
-        logger.warn("The ruby plugin is currently in beta, "
-                    "its API may break. Use at your own risk")
+        logger.warn(_("The ruby plugin is currently in beta, "
+                      "its API may break. Use at your own risk"))
 
         self._ruby_version = options.ruby_version
         self._ruby_part_dir = os.path.join(self.partdir, 'ruby')
@@ -103,10 +105,10 @@ class RubyPlugin(BasePlugin):
         super().pull()
         os.makedirs(self._ruby_part_dir, exist_ok=True)
 
-        logger.info('Fetching ruby {}...'.format(self._ruby_version))
+        logger.info(_('Fetching ruby {}…').format(self._ruby_version))
         self._ruby_tar.download()
 
-        logger.info('Building/installing ruby...')
+        logger.info(_('Building/installing ruby…'))
         self._ruby_install(builddir=self._ruby_part_dir)
 
         self._gem_install()
@@ -145,7 +147,7 @@ class RubyPlugin(BasePlugin):
             paths = glob.glob(os.path.join(rubylib, '*', 'rbconfig.rb'))
             if len(paths) != 1:
                 raise SnapcraftEnvironmentError(
-                    'Expected a single rbconfig.rb, but found {}'.format(
+                    _('Expected a single rbconfig.rb, but found {}').format(
                         len(paths)))
 
             env['RUBYLIB'] = '{}:{}'.format(rubylib, os.path.dirname(paths[0]))
@@ -153,7 +155,7 @@ class RubyPlugin(BasePlugin):
             env['GEM_PATH'] = os.path.join(rubydir, 'gems', ruby_version)
         elif len(versions) > 1:
             raise SnapcraftEnvironmentError(
-                'Expected a single Ruby version, but found {}'.format(
+                _('Expected a single Ruby version, but found {}').format(
                      len(versions)))
 
         return env
@@ -189,7 +191,7 @@ class RubyPlugin(BasePlugin):
         if self.options.use_bundler:
             self._gems = self._gems + ['bundler']
         if self._gems:
-            logger.info('Installing gems...')
+            logger.info(_('Installing gems…'))
             gem_install_cmd = [os.path.join(self.installdir, 'bin', 'ruby'),
                                os.path.join(self.installdir, 'bin', 'gem'),
                                'install', '--env-shebang']

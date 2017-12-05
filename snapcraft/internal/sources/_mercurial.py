@@ -20,6 +20,8 @@ import subprocess
 from . import errors
 from ._base import Base
 
+from gettext import gettext as _
+
 
 class Mercurial(Base):
 
@@ -30,22 +32,22 @@ class Mercurial(Base):
                          source_branch, source_depth, source_checksum, 'hg')
         if source_tag and source_branch:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-tag and source-branch for a '
-                'mercurial source')
+                _('can\'t specify both source-tag and source-branch for a '
+                  'mercurial source'))
         if source_tag and source_commit:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-tag and source-commit for a '
-                'mercurial source')
+                _('can\'t specify both source-tag and source-commit for a '
+                  'mercurial source'))
         if source_branch and source_commit:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-branch and source-commit for a '
-                'mercurial source')
+                _('can\'t specify both source-branch and source-commit for a '
+                  'mercurial source'))
         if source_depth:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify source-depth for a mercurial source')
+                _('can\'t specify source-depth for a mercurial source'))
         if source_checksum:
             raise errors.IncompatibleOptionsError(
-                "can't specify a source-checksum for a mercurial source")
+                _("can't specify a source-checksum for a mercurial source"))
 
         self._call_kwargs = {}
         if silent:

@@ -27,6 +27,8 @@ from requests_toolbelt import (MultipartEncoder, MultipartEncoderMonitor)
 
 from snapcraft.storeapi.errors import StoreUploadError
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -53,8 +55,9 @@ def upload_files(binary_filename, updown_client):
 
         # Create a progress bar that looks like: Uploading foo [==  ] 50%
         progress_bar = ProgressBar(
-            widgets=['Pushing {} '.format(os.path.basename(binary_filename)),
-                     Bar(marker='=', left='[', right=']'), ' ', Percentage()],
+            widgets=[_('Pushing {} ').format(os.path.basename(
+                     binary_filename)), Bar(marker='=', left='[', right=']'),
+                     ' ', Percentage()],
             maxval=os.path.getsize(binary_filename))
         progress_bar.start()
         # Create a monitor for this upload, so that progress can be displayed
@@ -70,8 +73,8 @@ def upload_files(binary_filename, updown_client):
 
     except Exception as err:
         raise RuntimeError(
-            'An unexpected error was found while uploading '
-            'files: {!r}.'.format(err))
+            _('An unexpected error was found while uploading '
+              'files: {!r}.').format(err))
     finally:
         # Close the open file
         binary_file.close()

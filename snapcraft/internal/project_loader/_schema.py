@@ -22,6 +22,8 @@ import yaml
 
 from snapcraft.internal import common
 
+from gettext import gettext as _
+
 
 class Validator:
 
@@ -59,7 +61,8 @@ class Validator:
         except FileNotFoundError:
             from snapcraft.internal.project_loader import errors
             raise errors.YamlValidationError(
-                'snapcraft validation file is missing from installation path')
+                _('snapcraft validation file is '
+                  'missing from installation path'))
 
     def validate(self):
         format_check = jsonschema.FormatChecker()

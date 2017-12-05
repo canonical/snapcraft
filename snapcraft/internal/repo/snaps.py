@@ -24,6 +24,8 @@ from requests import exceptions
 
 from . import errors
 
+from gettext import gettext as _
+
 
 _CHANNEL_RISKS = ['stable', 'candidate', 'beta', 'edge']
 logger = logging.getLogger(__name__)
@@ -188,8 +190,8 @@ def _snap_command_requires_sudo():
     except IndexError:
         requires_root = True
     if requires_root:
-        logger.warning('snapd is not logged in, snap install '
-                       'commands will use sudo')
+        logger.warning(_('snapd is not logged in, snap install '
+                         'commands will use sudo'))
     return requires_root
 
 

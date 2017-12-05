@@ -36,6 +36,8 @@ import fnmatch
 import snapcraft
 from snapcraft import sources
 
+from gettext import gettext as _
+
 
 _RUNTIME_DEFAULT = '2.0.0'
 _SDK_DEFAULT = '2.0.0'
@@ -91,8 +93,8 @@ class DotNetPlugin(snapcraft.BasePlugin):
             sdk_arch = _SDK_DICT_FOR_ARCH[self.project.deb_arch]
         except KeyError as missing_arch:
             raise NotImplementedError(
-                'This plugin does not support architecture '
-                '{}'.format(missing_arch))
+                _('This plugin does not support architecture '
+                  '{}').format(missing_arch))
         # TODO support more SDK releases
         sdk_version = sdk_arch['2.0.0']
 

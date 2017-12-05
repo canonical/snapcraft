@@ -44,6 +44,8 @@ import stat
 
 from snapcraft.plugins import make
 
+from gettext import gettext as _
+
 
 class AutotoolsPlugin(make.MakePlugin):
 
@@ -86,8 +88,8 @@ class AutotoolsPlugin(make.MakePlugin):
         elif options.install_via == 'prefix':
             self.options.make_install_var = ''
         else:
-            raise RuntimeError('Unsupported installation method: "{}"'.format(
-                options.install_via))
+            raise RuntimeError(_('Unsupported installation '
+                                 'method: "{}"').format(options.install_via))
 
     def enable_cross_compilation(self):
         pass

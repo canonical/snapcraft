@@ -20,6 +20,8 @@ import os
 import re
 import sys
 
+from DistUtilsExtra.command import build_i18n
+
 
 # Common distribution data
 name = 'snapcraft'
@@ -150,4 +152,5 @@ else:
             'libarchive-c',
         ],
         test_suite='snapcraft.tests.unit',
+        cmdclass={"build_i18n": build_i18n.build_i18n}
     )

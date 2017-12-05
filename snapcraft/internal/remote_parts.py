@@ -27,6 +27,8 @@ from snapcraft.internal.indicators import download_requests_stream
 from snapcraft.internal.common import get_terminal_width
 from snapcraft.internal import errors
 
+from gettext import gettext as _
+
 
 PARTS_URI = 'https://parts.snapcraft.io/v1/parts.yaml'
 _MATCH_RATIO = 0.6
@@ -46,8 +48,8 @@ def define(part_name):
         remote_part = _RemoteParts().get_part(part_name, full=True)
     except errors.SnapcraftPartMissingError as e:
         raise errors.PartNotInCacheError(part_name=part_name) from e
-    print('Maintainer: {!r}'.format(remote_part.pop('maintainer')))
-    print('Description: {}'.format(remote_part.pop('description')))
+    print(_('Maintainer: {!r}').format(remote_part.pop('maintainer')))
+    print(_('Description: {}').format(remote_part.pop('description')))
     print('')
     yaml.dump({part_name: remote_part},
               default_flow_style=False, stream=sys.stdout)
@@ -64,8 +66,8 @@ def search(part_match):
 
     if not matches:
         # apt search does not return error, we probably shouldn't either.
-        logger.info('No matches found, try to run `snapcraft update` to '
-                    'refresh the remote parts cache.')
+        logger.info(_('No matches found, try to run `snapcraft update` to '
+                      'refresh the remote parts cache.'))
         return
 
     print('{}  {}'.format(
@@ -103,12 +105,12 @@ class _Update(_Base):
                                      headers=headers)
 
         if self._request.status_code == 304:
-            logger.info('The parts cache is already up to date.')
+            logger.info(_('The parts cache is already up to date.'))
             return
         self._request.raise_for_status()
 
         download_requests_stream(self._request, self.parts_yaml,
-                                 'Downloading parts list')
+                                 _('Downloading parts list'))
         self._save_headers()
 
     def _load_headers(self):

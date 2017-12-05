@@ -19,6 +19,8 @@ import tarfile
 
 from snapcraft.internal import errors, load_config, lxd
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -40,11 +42,11 @@ def containerbuild(step, project_options, container_config,
                    output=None, args=[]):
     config = load_config(project_options)
     if container_config.remote:
-        logger.info('Using LXD remote {!r} from SNAPCRAFT_CONTAINER_BUILDS'
-                    .format(container_config.remote))
+        logger.info(_('Using LXD remote {!r} from SNAPCRAFT_CONTAINER_BUILDS'
+                    ).format(container_config.remote))
     else:
-        logger.info('Using default LXD remote because '
-                    'SNAPCRAFT_CONTAINER_BUILDS is set to 1')
+        logger.info(_('Using default LXD remote because '
+                      'SNAPCRAFT_CONTAINER_BUILDS is set to 1'))
     lxd.Project(output=output, source=os.path.curdir,
                 project_options=project_options,
                 remote=container_config.remote,

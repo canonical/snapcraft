@@ -16,6 +16,8 @@
 from snapcraft.file_utils import calculate_hash
 from . import errors
 
+from gettext import gettext as _
+
 
 def split_checksum(source_checksum):
     """Splits source_checksum into algorithm and hash.
@@ -26,7 +28,7 @@ def split_checksum(source_checksum):
         algorithm, digest = source_checksum.split('/', 1)
 
     except ValueError:
-        raise ValueError('invalid checksum format: {!r}'
+        raise ValueError(_('invalid checksum format: {!r}')
                          .format(source_checksum))
     return (algorithm, digest)
 

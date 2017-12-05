@@ -20,6 +20,8 @@ import subprocess
 from . import errors
 from ._base import Base
 
+from gettext import gettext as _
+
 
 class Subversion(Base):
 
@@ -31,20 +33,20 @@ class Subversion(Base):
         if source_tag:
             if source_branch:
                 raise errors.IncompatibleOptionsError(
-                    "Can't specify source-tag OR source-branch for a "
-                    "Subversion source")
+                    _("Can't specify source-tag OR source-branch for a "
+                      "Subversion source"))
             else:
                 raise errors.IncompatibleOptionsError(
-                    "Can't specify source-tag for a Subversion source")
+                    _("Can't specify source-tag for a Subversion source"))
         elif source_branch:
             raise errors.IncompatibleOptionsError(
-                "Can't specify source-branch for a Subversion source")
+                _("Can't specify source-branch for a Subversion source"))
         if source_depth:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify source-depth for a Subversion source')
+                _('can\'t specify source-depth for a Subversion source'))
         if source_checksum:
             raise errors.IncompatibleOptionsError(
-                "can't specify a source-checksum for a Subversion source")
+                _("can't specify a source-checksum for a Subversion source"))
 
         self._call_kwargs = {}
         if silent:

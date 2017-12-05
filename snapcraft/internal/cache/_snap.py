@@ -24,6 +24,8 @@ import yaml
 from ._cache import SnapcraftProjectCache
 from snapcraft import file_utils
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
@@ -72,7 +74,7 @@ class SnapCache(SnapcraftProjectCache):
                 shutil.copyfile(snap_filename, cached_snap_path)
         except OSError:
             logger.warning(
-                'Unable to cache snap {}.'.format(snap_filename))
+                _('Unable to cache snap {}.').format(snap_filename))
         return cached_snap_path
 
     def get(self, *, deb_arch, snap_hash=None):
@@ -118,5 +120,5 @@ class SnapCache(SnapcraftProjectCache):
                     pruned_files_list.append(cached_snap)
                 except OSError:
                     logger.warning(
-                        'Unable to prune snap {}.'.format(cached_snap))
+                        _('Unable to prune snap {}.').format(cached_snap))
         return pruned_files_list

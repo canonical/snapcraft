@@ -42,6 +42,8 @@ from snapcraft.internal.states import (
     get_state
 )
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -294,25 +296,27 @@ class _SnapPackaging:
     def _get_version(self, version, version_script=None):
         new_version = version
         if version_script:
-            logger.info('Determining the version from the project '
-                        'repo (version-script).')
+            logger.info(_('Determining the version from the project '
+                          'repo (version-script).'))
             try:
                 new_version = shell_utils.run_script(version_script).strip()
                 if not new_version:
-                    raise CommandError('The version-script produced no output')
+                    raise CommandError(_('The version-script '
+                                         'produced no output'))
             except subprocess.CalledProcessError as e:
                 raise CommandError(
-                    'The version-script failed to run (exit code {})'.format(
-                        e.returncode))
+                    _('The version-script failed to '
+                      'run (exit code {})').format(e.returncode))
         # we want to whitelist what we support here.
         elif version == 'git':
-            logger.info('Determining the version from the project '
-                        'repo (version: git).')
+            logger.info(_('Determining the version from the project '
+                          'repo (version: git).'))
             vcs_handler = get_source_handler_from_type('git')
             new_version = vcs_handler.generate_version()
 
         if new_version != version:
-            logger.info('The version has been set to {!r}'.format(new_version))
+            logger.info(_('The version has been '
+                          'set to {!r}').format(new_version))
         return new_version
 
     def _write_wrap_exe(self, wrapexec, wrappath,
@@ -434,7 +438,7 @@ class _DesktopFile:
         self._path = os.path.join(prime_dir, filename)
         if not os.path.exists(self._path):
             raise errors.InvalidDesktopFileError(
-                filename, 'does not exist (defined in the app {!r})'.format(
+                filename, _('does not exist (defined in the app {!r})').format(
                     name))
 
     def parse_and_reformat(self):
@@ -444,10 +448,10 @@ class _DesktopFile:
         section = 'Desktop Entry'
         if section not in self._parser.sections():
             raise errors.InvalidDesktopFileError(
-                self._filename, "missing 'Desktop Entry' section")
+                self._filename, _("missing 'Desktop Entry' section"))
         if 'Exec' not in self._parser[section]:
             raise errors.InvalidDesktopFileError(
-                self._filename, "missing 'Exec' key")
+                self._filename, _("missing 'Exec' key"))
         # XXX: do we want to allow more parameters for Exec?
         if self._name == self._snap_name:
             exec_value = '{} %U'.format(self._name)
@@ -462,8 +466,8 @@ class _DesktopFile:
                     self._parser[section]['Icon'] = '${{SNAP}}/{}'.format(icon)
                 else:
                     logger.warning(
-                        'Icon {} specified in desktop file {} not found '
-                        'in prime directory'.format(icon, self._filename))
+                        _('Icon {} specified in desktop file {} not found '
+                          'in prime directory').format(icon, self._filename))
 
     def write(self, *, gui_dir):
         # Rename the desktop file to match the app name. This will help
@@ -480,7 +484,7 @@ class _DesktopFile:
 
 def _find_bin(binary, basedir):
     # If it doesn't exist it might be in the path
-    logger.debug('Checking that {!r} is in the $PATH'.format(binary))
+    logger.debug(_('Checking that {!r} is in the $PATH').format(binary))
     try:
         shell_utils.which(binary, cwd=basedir)
     except subprocess.CalledProcessError:
@@ -490,7 +494,7 @@ def _find_bin(binary, basedir):
 def _validate_hook(hook_path):
     if not os.stat(hook_path).st_mode & stat.S_IEXEC:
         asset = os.path.basename(hook_path)
-        raise CommandError('hook {!r} is not executable'.format(asset))
+        raise CommandError(_('hook {!r} is not executable').format(asset))
 
 
 def _verify_app_paths(basedir, apps):

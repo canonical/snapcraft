@@ -17,6 +17,7 @@ import importlib
 
 import click
 
+from gettext import gettext as _
 
 _SUPPORTED_CI_SYSTEMS = (
     'travis',
@@ -32,8 +33,8 @@ def cicli():
 @click.argument('ci-system', metavar='<ci-system>',
                 type=click.Choice(_SUPPORTED_CI_SYSTEMS))
 @click.option('--refresh', is_flag=True,
-              help=('Refresh the macaroon required to be able to push and '
-                    'release to channels'))
+              help=(_('Refresh the macaroon required to be able to push and '
+                    'release to channels')))
 def enableci(ci_system, refresh):
     """Enable continuous-integration systems to build and release snaps."""
     module = importlib.import_module(

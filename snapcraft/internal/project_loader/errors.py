@@ -19,11 +19,13 @@ import contextlib
 import snapcraft.internal.errors
 from snapcraft import formatting_utils
 
+from gettext import gettext as _
+
 # dict of jsonschema validator -> cause pairs. Wish jsonschema just gave us
 # better messages.
 _VALIDATION_ERROR_CAUSES = {
-    'maxLength': 'maximum length is {validator_value}',
-    'minLength': 'minimum length is {validator_value}',
+    'maxLength': _('maximum length is {validator_value}'),
+    'minLength': _('minimum length is {validator_value}'),
 }
 
 
@@ -34,12 +36,12 @@ class ProjectLoaderError(snapcraft.internal.errors.SnapcraftError):
 
 class InvalidEpochError(ProjectLoaderError):
 
-    fmt = 'epochs are positive integers followed by an optional asterisk'
+    fmt = _('epochs are positive integers followed by an optional asterisk')
 
 
 class DuplicateAliasError(ProjectLoaderError):
 
-    fmt = 'Multiple parts have the same alias defined: {aliases!r}'
+    fmt = _('Multiple parts have the same alias defined: {aliases!r}')
 
     def __str__(self):
         if isinstance(self.aliases, (list, set)):
@@ -50,14 +52,14 @@ class DuplicateAliasError(ProjectLoaderError):
 
 class MissingSnapcraftYamlError(ProjectLoaderError):
 
-    fmt = ('Could not find {snapcraft_yaml}. Are you sure you are in the '
-           'right directory?\n'
-           'To start a new project, use `snapcraft init`')
+    fmt = (_('Could not find {snapcraft_yaml}. Are you sure you are in the '
+             'right directory?\n'
+             'To start a new project, use `snapcraft init`'))
 
 
 class YamlValidationError(ProjectLoaderError):
 
-    fmt = 'Issues while validating {snapcraft_yaml}: {message}'
+    fmt = _('Issues while validating {snapcraft_yaml}: {message}')
 
     @classmethod
     def from_validation_error(cls, error):
@@ -92,7 +94,7 @@ class YamlValidationError(ProjectLoaderError):
 
 class SnapcraftLogicError(ProjectLoaderError):
 
-    fmt = 'Issue detected while analyzing snapcraft.yaml: {message}'
+    fmt = _('Issue detected while analyzing snapcraft.yaml: {message}')
 
     def __init__(self, message):
         super().__init__(message=message)
@@ -103,7 +105,7 @@ def _determine_preamble(error):
     path = _determine_property_path(error)
     if path:
         messages.append(
-            "The '{}' property does not match the required schema:".format(
+            _("The '{}' property does not match the required schema:").format(
                 '/'.join(path)))
     return ' '.join(messages)
 
@@ -172,5 +174,5 @@ def _interpret_anyOf(error):
     except (TypeError, KeyError):
         return ''
 
-    return 'must be one of {}'.format(formatting_utils.humanize_list(
-        usages, 'or'))
+    return _('must be one of {}').format(formatting_utils.humanize_list(
+        usages, _('or')))

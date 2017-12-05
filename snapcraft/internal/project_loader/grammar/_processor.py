@@ -18,6 +18,8 @@ import re
 
 from .errors import GrammarSyntaxError
 
+from gettext import gettext as _
+
 _ON_CLAUSE_PATTERN = re.compile(r'\Aon\s+')
 _TRY_CLAUSE_PATTERN = re.compile(r'\Atry\Z')
 _ELSE_CLAUSE_PATTERN = re.compile(r'\Aelse\Z')
@@ -57,8 +59,8 @@ def process_grammar(grammar, project_options, checker):
         else:
             # jsonschema should never let us get here.
             raise GrammarSyntaxError(
-                "expected grammar section to be either of type 'str' or "
-                "type 'dict', but got {!r}".format(type(section)))
+                _("expected grammar section to be either of type 'str' or "
+                  "type 'dict', but got {!r}").format(type(section)))
 
     # We've parsed the entire grammar, time to process it.
     statements.add(statement)
@@ -116,8 +118,8 @@ def _handle_else(statement, else_body):
         statement.add_else(else_body)
     except AttributeError:
         raise GrammarSyntaxError(
-            "'else' doesn't seem to correspond to an 'on' or "
-            "'try'")
+            _("'else' doesn't seem to correspond to an 'on' or "
+              "'try'"))
 
 
 class _StatementCollection:
@@ -139,8 +141,8 @@ class _StatementCollection:
 
         if statement in self._statements:
             raise GrammarSyntaxError(
-                "found duplicate {!r} statements. These should be "
-                'merged.'.format(statement))
+                _("found duplicate {!r} statements. These should be "
+                  'merged.').format(statement))
 
         self._statements.append(statement)
 

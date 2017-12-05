@@ -22,6 +22,8 @@ import snapcraft
 from snapcraft.internal import sources
 from . import echo
 
+from gettext import gettext as _
+
 
 _TOPICS = {
     'sources': sources,
@@ -85,4 +87,4 @@ def _module_help(module_name, devel):
     elif module.__doc__:
         click.echo(module.__doc__)
     else:
-        click.echo('The plugin has no documentation')
+        click.echo(_('The plugin has no documentation'))

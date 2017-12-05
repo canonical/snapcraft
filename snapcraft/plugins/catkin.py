@@ -84,6 +84,9 @@ from snapcraft.internal import (
     mangling,
 )
 
+from gettext import gettext as _
+
+
 logger = logging.getLogger(__name__)
 
 # Map ROS releases to Ubuntu releases
@@ -102,10 +105,10 @@ _SUPPORTED_DEPENDENCY_TYPES = {
 
 class CatkinInvalidSystemDependencyError(errors.SnapcraftError):
     fmt = (
-        "Package {dependency!r} isn't a valid system dependency. Did you "
-        'forget to add it to catkin-packages? If not, add the Ubuntu package '
-        'containing it to stage-packages until you can get it into the rosdep '
-        'database.'
+        _("Package {dependency!r} isn't a valid system dependency. Did you "
+          'forget to add it to catkin-packages? If not, add the Ubuntu '
+          'package containing it to stage-packages until you can get it into'
+          'the rosdep database.')
     )
 
     def __init__(self, dependency):
@@ -114,8 +117,8 @@ class CatkinInvalidSystemDependencyError(errors.SnapcraftError):
 
 class CatkinUnsupportedDependencyTypeError(errors.SnapcraftError):
     fmt = (
-        'Package {dependency!r} resolved to an unsupported type of '
-        'dependency: {dependency_type!r}'
+        _('Package {dependency!r} resolved to an unsupported type of '
+          'dependency: {dependency_type!r}')
     )
 
     def __init__(self, dependency_type, dependency):
@@ -272,13 +275,13 @@ class CatkinPlugin(snapcraft.BasePlugin):
         if os.path.abspath(self.sourcedir) == os.path.abspath(
                 self._ros_package_path):
             raise RuntimeError(
-                'source-space cannot be the root of the Catkin workspace')
+                _('source-space cannot be the root of the Catkin workspace'))
 
         # Validate selected ROS distro
         if self.options.rosdistro not in _ROS_RELEASE_MAP:
             raise RuntimeError(
-                'Unsupported rosdistro: {!r}. The supported ROS distributions '
-                'are {}'.format(
+                _('Unsupported rosdistro: {!r}. The supported ROS'
+                  'distributions are {}').format(
                     self.options.rosdistro,
                     formatting_utils.humanize_list(
                         _ROS_RELEASE_MAP.keys(), 'and')))
@@ -383,7 +386,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
             self.catkin_packages is None or len(self.catkin_packages) > 0)
         if packages_to_build and not os.path.exists(self._ros_package_path):
             raise FileNotFoundError(
-                'Unable to find package path: "{}"'.format(
+                _('Unable to find package path: "{}"').format(
                     self._ros_package_path))
 
         # Validate the underlay. Note that this validation can't happen in
@@ -396,14 +399,14 @@ class CatkinPlugin(snapcraft.BasePlugin):
         if underlay_build_path:
             if not os.path.isdir(underlay_build_path):
                 raise errors.SnapcraftEnvironmentError(
-                    'Requested underlay ({!r}) does not point to a valid '
-                    'directory'.format(underlay_build_path))
+                    _('Requested underlay ({!r}) does not point to a valid '
+                      'directory').format(underlay_build_path))
 
             if not os.path.isfile(os.path.join(underlay_build_path,
                                                'setup.sh')):
                 raise errors.SnapcraftEnvironmentError(
-                    'Requested underlay ({!r}) does not contain a '
-                    'setup.sh'.format(underlay_build_path))
+                    _('Requested underlay ({!r}) does not contain a '
+                      'setup.sh').format(underlay_build_path))
 
             # Use catkin_find to discover dependencies already in the underlay
             catkin = _Catkin(
@@ -448,7 +451,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
                     system_dependencies[dependency_type] |= dependencies
             else:
                 raise RuntimeError(
-                    'Unable to determine system dependency for roscore')
+                    _('Unable to determine system dependency for roscore'))
 
         # Pull down and install any apt dependencies that were discovered
         self._setup_apt_dependencies(system_dependencies.get('apt'))
@@ -461,30 +464,30 @@ class CatkinPlugin(snapcraft.BasePlugin):
             ubuntudir = os.path.join(self.partdir, 'ubuntu')
             os.makedirs(ubuntudir, exist_ok=True)
 
-            logger.info('Preparing to fetch apt dependencies...')
+            logger.info(_('Preparing to fetch apt dependencies…'))
             ubuntu = repo.Ubuntu(ubuntudir,
                                  sources=self.PLUGIN_STAGE_SOURCES,
                                  project_options=self.project)
 
-            logger.info('Fetching apt dependencies...')
+            logger.info(_('Fetching apt dependencies…'))
             try:
                 ubuntu.get(apt_dependencies)
             except repo.errors.PackageNotFoundError as e:
                 raise RuntimeError(
-                    'Failed to fetch apt dependencies: {}'.format(
+                    _('Failed to fetch apt dependencies: {}').format(
                         e.message))
 
-            logger.info('Installing apt dependencies...')
+            logger.info(_('Installing apt dependencies…'))
             ubuntu.unpack(self.installdir)
 
     def _setup_pip_dependencies(self, pip_dependencies):
         if pip_dependencies:
             self._pip.setup()
 
-            logger.info('Fetching pip dependencies...')
+            logger.info(_('Fetching pip dependencies…'))
             self._pip.download(pip_dependencies)
 
-            logger.info('Installing pip dependencies...')
+            logger.info(_('Installing pip dependencies…'))
             self._pip.install(pip_dependencies)
 
     def clean_pull(self):
@@ -583,13 +586,13 @@ class CatkinPlugin(snapcraft.BasePlugin):
 
         super().build()
 
-        logger.info('Preparing to build Catkin packages...')
+        logger.info(_('Preparing to build Catkin packages…'))
         self._prepare_build()
 
-        logger.info('Building Catkin packages...')
+        logger.info(_('Building Catkin packages…'))
         self._build_catkin_packages()
 
-        logger.info('Cleaning up newly installed Catkin packages...')
+        logger.info(_('Cleaning up newly installed Catkin packages…'))
         self._finish_build()
 
     def _prepare_build(self):
@@ -760,7 +763,7 @@ def _find_system_dependencies(catkin_packages, rosdep, catkin):
     resolved_dependencies = {}
     dependencies = set()
 
-    logger.info('Determining system dependencies for Catkin packages...')
+    logger.info(_('Determining system dependencies for Catkin packages…'))
     if catkin_packages is not None:
         for package in catkin_packages:
             # Query rosdep for the list of dependencies for this package
@@ -802,7 +805,7 @@ def _resolve_package_dependencies(catkin_packages, dependency, catkin, rosdep,
         # Package was found-- don't pull anything extra to satisfy
         # this dependency.
         logger.debug(
-            'Satisfied dependency {!r} in underlay'.format(
+            _('Satisfied dependency {!r} in underlay').format(
                 dependency))
         return
 
@@ -843,12 +846,12 @@ def _handle_rosinstall_files(wstool, source_path, rosinstall_files):
         logger.info('Merging {}'.format(rosinstall_file))
         wstool.merge(os.path.join(source_path, rosinstall_file))
 
-    logger.info('Updating workspace...')
+    logger.info(_('Updating workspace…'))
     wstool.update()
 
 
 class CatkinPackageNotFoundError(errors.SnapcraftError):
-    fmt = 'Unable to find Catkin package {package_name!r}'
+    fmt = _('Unable to find Catkin package {package_name!r}')
 
     def __init__(self, package_name):
         super().__init__(package_name=package_name)
@@ -871,15 +874,15 @@ class Compilers:
         # use the corresponding compiler versions, so they can't be
         # build-packages. We'll just download them to another place and use
         # them from there.
-        logger.info('Preparing to fetch compilers...')
+        logger.info(_('Preparing to fetch compilers…'))
         ubuntu = repo.Ubuntu(
             self._compilers_path, sources=self._ubuntu_sources,
             project_options=self._project)
 
-        logger.info('Fetching compilers...')
+        logger.info(_('Fetching compilers…'))
         ubuntu.get(['gcc', 'g++'])
 
-        logger.info('Installing compilers...')
+        logger.info(_('Installing compilers…'))
         ubuntu.unpack(self._compilers_install_path)
 
     @property
@@ -923,7 +926,7 @@ class Compilers:
                 self._compilers_install_path, 'usr', 'include',
                 self._project.arch_triplet, 'c++')))
         except RuntimeError as e:
-            raise RuntimeError('Unable to determine gcc version: {}'.format(
+            raise RuntimeError(_('Unable to determine gcc version: {}').format(
                 str(e)))
 
         return formatting_utils.combine_paths(
@@ -952,13 +955,13 @@ class _Catkin:
 
         # With the introduction of an underlay, we no longer know where Catkin
         # is. Let's just fetch/unpack our own, and use it.
-        logger.info('Preparing to fetch catkin...')
+        logger.info(_('Preparing to fetch catkin…'))
         ubuntu = repo.Ubuntu(self._catkin_path, sources=self._ubuntu_sources,
                              project_options=self._project)
-        logger.info('Fetching catkin...')
+        logger.info(_('Fetching catkin…'))
         ubuntu.get(['ros-{}-catkin'.format(self._ros_distro)])
 
-        logger.info('Installing catkin...')
+        logger.info(_('Installing catkin…'))
         ubuntu.unpack(self._catkin_install_path)
 
     def find(self, package_name):
@@ -1001,7 +1004,7 @@ class _Catkin:
 def _get_highest_version_path(path):
     paths = sorted(glob.glob(os.path.join(path, '*')))
     if not paths:
-        raise RuntimeError('nothing found in {!r}'.format(path))
+        raise RuntimeError(_('nothing found in {!r}').format(path))
 
     return paths[-1]
 
@@ -1019,16 +1022,16 @@ class _Wstool:
 
         # wstool isn't a dependency of the project, so we'll unpack it
         # somewhere else, and use it from there.
-        logger.info('Preparing to fetch wstool...')
+        logger.info(_('Preparing to fetch wstool…'))
         ubuntu = repo.Ubuntu(self._wstool_path, sources=self._ubuntu_sources,
                              project_options=self._project)
-        logger.info('Fetching wstool...')
+        logger.info(_('Fetching wstool…'))
         ubuntu.get(['python-wstool'])
 
-        logger.info('Installing wstool...')
+        logger.info(_('Installing wstool…'))
         ubuntu.unpack(self._wstool_install_path)
 
-        logger.info('Initializing workspace (if necessary)...')
+        logger.info(_('Initializing workspace (if necessary)…'))
         try:
             self._run(['init', self._ros_package_path, '-j{}'.format(
                 self._project.parallel_build_count)])
@@ -1036,7 +1039,7 @@ class _Wstool:
             output = e.output.decode('utf8').strip()
             if 'already is a workspace' not in output:
                 raise RuntimeError(
-                    'Error initializing workspace:\n{}'.format(output))
+                    _('Error initializing workspace:\n{}').format(output))
 
     def merge(self, rosinstall_file):
         return self._run(

@@ -18,6 +18,8 @@ from snapcraft.internal.os_release import OsRelease
 from ._platform import _is_deb_based
 from snapcraft.internal import errors
 
+from gettext import gettext as _
+
 
 class RepoError(errors.SnapcraftError):
     pass
@@ -25,8 +27,8 @@ class RepoError(errors.SnapcraftError):
 
 class NoNativeBackendError(RepoError):
 
-    fmt = ("Native builds aren't supported on {distro}. "
-           "You can however use 'snapcraft cleanbuild' with a container.")
+    fmt = (_("Native builds aren't supported on {distro}. "
+             "You can however use 'snapcraft cleanbuild' with a container."))
 
     def __init__(self):
         super().__init__(distro=OsRelease().name())
@@ -34,7 +36,7 @@ class NoNativeBackendError(RepoError):
 
 class BuildPackageNotFoundError(RepoError):
 
-    fmt = "Could not find a required package in 'build-packages': {package}"
+    fmt = _("Could not find a required package in 'build-packages': {package}")
 
     def __init__(self, package):
         super().__init__(package=package)
@@ -44,7 +46,7 @@ class PackageNotFoundError(RepoError):
 
     @property
     def message(self):
-        message = 'The package {!r} was not found.'.format(
+        message = _('The package {!r} was not found.').format(
             self.package_name)
         # If the package was multiarch, try to help.
         distro = OsRelease().id()
@@ -52,8 +54,8 @@ class PackageNotFoundError(RepoError):
             (name, arch) = self.package_name.split(':', 2)
             if arch:
                 message += (
-                    '\nYou may need to add support for this architecture with '
-                    "'dpkg --add-architecture {}'.".format(arch))
+                    _('\nYou may need to add support for this architecture '
+                      "with 'dpkg --add-architecture {}'.").format(arch))
         return message
 
     def __init__(self, package_name):
@@ -65,7 +67,7 @@ class PackageNotFoundError(RepoError):
 
 class UnpackError(RepoError):
 
-    fmt = 'Error while provisioning {package!r}'
+    fmt = _('Error while provisioning {package!r}')
 
     def __init__(self, package):
         super().__init__(package=package)

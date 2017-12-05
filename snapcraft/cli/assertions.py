@@ -27,6 +27,8 @@ from . import echo
 from snapcraft import storeapi
 from snapcraft.storeapi import assertions
 
+from gettext import gettext as _
+
 
 _COLLABORATION_HEADER = dedent("""\
     # Change which developers may push or release snaps on the publisher's behalf.
@@ -80,7 +82,7 @@ def register_key(key_name):
                                 resolve_path=True,
                                 dir_okay=False))
 @click.option('--local', is_flag=True,
-              help='Do not push the generated assertion to the store')
+              help=_('Do not push the generated assertion to the store'))
 def sign_build(snap_file, key_name, local):
     """Sign a built snap file and assert it using the developer's key."""
     snapcraft.sign_build(snap_file, key_name=key_name, local=local)
@@ -118,7 +120,7 @@ def edit_collaborators(snap_name, key_name):
     new_dev_assertion = dev_assertion.new_assertion(
         developers=updated_developers)
     if new_dev_assertion.is_equal(dev_assertion):
-        echo.warning('Aborting due to unchanged collaborators list.')
+        echo.warning(_('Aborting due to unchanged collaborators list.'))
         return
 
     try:
@@ -126,13 +128,14 @@ def edit_collaborators(snap_name, key_name):
     except storeapi.errors.StoreValidationError as store_error:
         if store_error.error_list[0]['code'] != 'revoked-uploads':
             raise store_error
-        click.echo('This will revoke the following collaborators: {!r}'.format(
+        click.echo(_('This will revoke the following '
+                     'collaborators: {!r}').format(
             ' '.join(store_error.error_list[0]['extra'])))
-        if click.confirm('Are you sure you want to continue?'):
+        if click.confirm(_('Are you sure you want to continue?')):
             new_dev_assertion.push(force=True)
         else:
-            echo.warning('The collaborators for this snap have not been '
-                         'altered.')
+            echo.warning(_('The collaborators for this snap have not been '
+                           'altered.'))
 
 
 def _update_developers(developers):

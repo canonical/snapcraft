@@ -32,6 +32,8 @@ from snapcraft.plugins.catkin import (
 
 import snapcraft
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
@@ -42,8 +44,8 @@ class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
 
         # Beta Warning
         # Remove this comment and warning once catkin tools plugin is stable.
-        logger.warn("The catkin tools plugin is currently in beta, "
-                    "its API may break. Use at your own risk")
+        logger.warn(_("The catkin tools plugin is currently in beta, "
+                      "its API may break. Use at your own risk"))
 
     def _prepare_build(self):
         super()._prepare_build()

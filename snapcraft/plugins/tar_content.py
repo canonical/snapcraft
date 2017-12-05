@@ -21,6 +21,8 @@ import shutil
 import snapcraft
 import snapcraft.sources
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,13 +45,13 @@ class TarContentPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        logger.warning("DEPRECATED: The 'tar-content' plugin's functionality "
-                       "has been replaced by the 'dump' plugin, and it will "
-                       "soon be removed.")
+        logger.warning(_("DEPRECATED: The 'tar-content' plugin's "
+                         "functionality has been replaced by the 'dump' "
+                         "plugin, and it will soon be removed."))
 
         if (self.options.destination and
                 os.path.isabs(self.options.destination)):
-            raise ValueError('path {!r} must be relative'.format(
+            raise ValueError(_('path {!r} must be relative').format(
                 self.options.destination))
 
     def enable_cross_compilation(self):

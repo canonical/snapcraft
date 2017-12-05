@@ -50,6 +50,8 @@ from glob import iglob
 import snapcraft
 from snapcraft import common
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -139,8 +141,8 @@ class GoPlugin(snapcraft.BasePlugin):
             go_package = self.options.go_importpath
         else:
             logger.warning(
-                'Please consider setting `go-importpath` for the {!r} '
-                'part'.format(self.name))
+                _('Please consider setting `go-importpath` for the {!r} '
+                  'part').format(self.name))
             go_package = os.path.basename(os.path.abspath(self.options.source))
         return go_package
 

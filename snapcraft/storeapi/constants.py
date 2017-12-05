@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from __future__ import absolute_import, unicode_literals
 
+from gettext import gettext as _
+
 
 # FIXME: snapcraft targets the '16' series, hardcode it until more choices
 # become available server side -- vila 2016-04-22
@@ -29,25 +31,25 @@ UBUNTU_STORE_TOS_URL = 'https://dashboard.snapcraft.io/dev/tos/'
 UBUNTU_STORE_ACCOUNT_URL = 'https://dashboard.snapcraft.io/dev/account/'
 
 # Messages and warnings.
-MISSING_AGREEMENT = 'Developer has not signed agreement.'
-MISSING_NAMESPACE = 'Developer profile is missing short namespace.'
+MISSING_AGREEMENT = _('Developer has not signed agreement.')
+MISSING_NAMESPACE = _('Developer profile is missing short namespace.')
 AGREEMENT_ERROR = (
-    'You must agree to the developer terms and conditions to upload snaps.')
+    _('You must agree to the developer terms and conditions to upload snaps.'))
 NAMESPACE_ERROR = (
-    'You need to set a username. It will appear in the developer field '
-    'alongside the other details for your snap. Please visit {} and login '
-    'again.')
+    _('You need to set a username. It will appear in the developer field '
+      'alongside the other details for your snap. Please visit {} and login '
+      'again.'))
 AGREEMENT_INPUT_MSG = (
-    'Do you agree to the developer terms and conditions. ({})? [y/N] ')
+    _('Do you agree to the developer terms and conditions. ({})? [y/N] '))
 AGREEMENT_SIGN_ERROR = (
-    'Unexpected error encountered during signing the developer terms and '
-    'conditions. Please visit {} and agree to the terms and conditions before '
-    'continuing.')
+    _('Unexpected error encountered during signing the developer terms and '
+      'conditions. Please visit {} and agree to the terms and conditions '
+      'before continuing.'))
 TWO_FACTOR_WARNING = (
-    'We strongly recommend enabling multi-factor authentication: '
-    'https://help.ubuntu.com/community/SSO/FAQs/2FA')
-INVALID_CREDENTIALS = 'Invalid credentials supplied.'
-AUTHENTICATION_ERROR = ('Problems encountered when authenticating your '
-                        'credentials.')
-ACCOUNT_INFORMATION_ERROR = ('Unexpected error when obtaining your account '
-                             'information.')
+    _('We strongly recommend enabling multi-factor authentication: '
+      'https://help.ubuntu.com/community/SSO/FAQs/2FA'))
+INVALID_CREDENTIALS = _('Invalid credentials supplied.')
+AUTHENTICATION_ERROR = (_('Problems encountered when authenticating your '
+                          'credentials.'))
+ACCOUNT_INFORMATION_ERROR = (_('Unexpected error when obtaining your account '
+                               'information.'))

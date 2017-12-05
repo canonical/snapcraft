@@ -29,6 +29,8 @@ import os
 
 import snapcraft
 
+from gettext import gettext as _
+
 
 class DumpPlugin(snapcraft.BasePlugin):
 
@@ -65,5 +67,5 @@ def _link_or_copy(source, destination, boundary):
                                           follow_symlinks=follow_symlinks)
     except FileNotFoundError:
         raise FileNotFoundError(
-            '{!r} is a broken symlink pointing outside the snap'.format(
+            _('{!r} is a broken symlink pointing outside the snap').format(
                 source))

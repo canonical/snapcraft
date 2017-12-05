@@ -36,6 +36,8 @@ import textwrap
 import snapcraft
 from . import _ros
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
@@ -96,8 +98,8 @@ deb http://${{security}}.ubuntu.com/${{suffix}} {0}-security main universe
 
         # FIXME: Remove this warning once the plugin (and indeed ROS2) is
         # considered stable
-        logger.warn('The ament plugin is currently in beta, its API may '
-                    'break. Use at your own risk')
+        logger.warn(_('The ament plugin is currently in beta, its API may '
+                      'break. Use at your own risk'))
 
         self._bootstrap_dir = os.path.join(self.partdir, 'bootstrap')
 

@@ -67,6 +67,8 @@ import tempfile
 import snapcraft
 from snapcraft.plugins import kbuild
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
@@ -185,7 +187,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
         self.kernel_release = ''
 
     def enable_cross_compilation(self):
-        logger.info('Cross compiling kernel target {!r}'.format(
+        logger.info(_('Cross compiling kernel target {!r}').format(
                     self.project.kernel_arch))
         super().enable_cross_compilation()
         # by enabling cross compilation, the kernel_arch and deb_arch
@@ -251,7 +253,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
             mime_type = mime_detector.file(os.path.realpath(tmp_initrd_path))
             if not mime_type:
                 raise RuntimeError(
-                    'Unable to determine mime type for {!r}: {}'.format(
+                    _('Unable to determine mime type for {!r}: {}').format(
                         tmp_initrd_path, os.strerror(mime_detector.errno())))
             logger.debug('initrd mime_type: {} {}'.format(
                 tmp_initrd_path, mime_type))
@@ -265,7 +267,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 decompressor = 'xz'
             else:
                 raise RuntimeError(
-                    'initrd file type is unsupported: {!r}'.format(mime_type))
+                    _('initrd file type '
+                      'is unsupported: {!r}').format(mime_type))
 
             subprocess.check_call(
                 'cat {0} | {1} -dc | cpio -i'.format(
@@ -276,7 +279,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def _make_initrd(self):
 
-        logger.info('Generating driver initrd for kernel release: {}'.format(
+        logger.info(_('Generating driver initrd '
+                      'for kernel release: {}').format(
             self.kernel_release))
 
         initrd_unpacked_path = self._unpack_generic_initrd()
@@ -331,8 +335,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
         if not self.kernel_release:
             raise ValueError(
-                'No kernel release version info found at {!r}'.format(
-                    kernel_release_path))
+                _('No kernel release version info found at {!r}').format(
+                      kernel_release_path))
 
     def _get_build_arch_dir(self):
         return os.path.join(
@@ -346,8 +350,8 @@ class KernelPlugin(kbuild.KBuildPlugin):
         dst = os.path.join(self.installdir, kernel)
         if not os.path.exists(src):
             raise ValueError(
-                'kernel build did not output a vmlinux binary in top level '
-                'dir, expected {!r}'.format(src))
+                _('kernel build did not output a vmlinux binary in top level '
+                  'dir, expected {!r}').format(src))
         os.link(src, dst)
         os.link(src, os.path.join(self.installdir, 'kernel.img'))
 
@@ -357,7 +361,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
             self.installdir, 'System.map-{}'.format(self.kernel_release))
         if not os.path.exists(src):
             raise ValueError(
-                'kernel build did not output a System.map in top level dir')
+                _('kernel build did not output a System.map in top level dir'))
         os.link(src, dst)
 
     def _copy_dtbs(self):
@@ -372,7 +376,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
             found_dtbs = glob.glob(os.path.join(base_path, dtb))
             if not found_dtbs:
                 raise RuntimeError(
-                    'No match for dtb {!r} was found'.format(dtb))
+                    _('No match for dtb {!r} was found').format(dtb))
             for f in found_dtbs:
                 os.link(f, os.path.join(dtb_dir, os.path.basename(f)))
 
@@ -395,11 +399,11 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def _do_check_config(self, builtin, modules):
         # check the resulting .config has all the necessary options
-        msg = ('**** WARNING **** WARNING **** WARNING **** WARNING ****\n'
-               'Your kernel config is missing some features that Ubuntu Core '
-               'recommends or requires.\n'
-               'While we will not prevent you from building this kernel snap, '
-               'we suggest you take a look at these:\n')
+        msg = (_('**** WARNING **** WARNING **** WARNING **** WARNING ****\n'
+                 'Your kernel config is missing some features that Ubuntu '
+                 'Core recommends or requires.\n'
+                 'While we will not prevent you from building this kernel '
+                 'snap, we suggest you take a look at these:\n'))
         required_opts = (required_generic + required_security +
                          required_snappy + required_systemd)
         missing = []
@@ -426,10 +430,10 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def _do_check_initrd(self, builtin, modules):
         # check all required_boot[] items are either builtin or part of initrd
-        msg = ("**** WARNING **** WARNING **** WARNING **** WARNING ****\n"
-               "The following features are deemed boot essential for\n"
-               "ubuntu core, consider making them static[=Y] or adding\n"
-               "the corresponding module to initrd:\n")
+        msg = (_("**** WARNING **** WARNING **** WARNING **** WARNING ****\n"
+                 "The following features are deemed boot essential for\n"
+                 "ubuntu core, consider making them static[=Y] or adding\n"
+                 "the corresponding module to initrd:\n"))
         missing = []
 
         for code in required_boot:

@@ -22,6 +22,8 @@ import subprocess
 
 from ._containerbuild import Containerbuild
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
@@ -43,7 +45,7 @@ class Cleanbuilder(Containerbuild):
         self._inject_snapcraft()
 
     def _setup_project(self):
-        logger.info('Setting up container with project assets')
+        logger.info(_('Setting up container with project assets'))
         tar_filename = self._source
         # os.sep needs to be `/` and on Windows it will be set to `\`
         dst = '{}/{}'.format(self._project_folder,
@@ -57,4 +59,4 @@ class Cleanbuilder(Containerbuild):
         # os.sep needs to be `/` and on Windows it will be set to `\`
         src = '{}/{}'.format(self._project_folder, self._snap_output)
         self._pull_file(src, self._snap_output)
-        logger.info('Retrieved {}'.format(self._snap_output))
+        logger.info(_('Retrieved {}').format(self._snap_output))

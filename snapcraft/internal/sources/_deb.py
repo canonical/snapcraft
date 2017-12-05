@@ -23,6 +23,8 @@ import debian.arfile
 from . import errors
 from ._base import FileBase
 
+from gettext import gettext as _
+
 
 class Deb(FileBase):
 
@@ -32,13 +34,13 @@ class Deb(FileBase):
                          source_branch, source_depth, source_checksum)
         if source_tag:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-tag for a deb source')
+                _('can\'t specify a source-tag for a deb source'))
         elif source_commit:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-commit for a deb source')
+                _('can\'t specify a source-commit for a deb source'))
         elif source_branch:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a deb source')
+                _('can\'t specify a source-branch for a deb source'))
 
     def provision(self, dst, clean_target=True, keep_deb=False, src=None):
         if src:

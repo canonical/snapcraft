@@ -22,6 +22,8 @@ from snapcraft.internal import errors, lxd
 from ._options import get_project_options
 from . import env
 
+from gettext import gettext as _
+
 
 @click.group()
 def containerscli():
@@ -30,7 +32,7 @@ def containerscli():
 
 @containerscli.command()
 @click.option('--debug', is_flag=True,
-              help='Shells into the environment if the build fails.')
+              help=_('Shells into the environment if the build fails.'))
 def refresh(debug, **kwargs):
     """Refresh an existing LXD container.
 

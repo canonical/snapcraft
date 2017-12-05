@@ -17,19 +17,21 @@
 
 from snapcraft.internal.errors import SnapcraftError
 
+from gettext import gettext as _
+
 
 class DeltaGenerationError(SnapcraftError):
     """A delta failed to generate."""
 
     fmt = (
-        'Could not generate {delta_format} delta.\n'
-        'stdout log: {stdout_path}\n'
-        'stdout: \n{stdout}\n'
-        '---------'
-        'stderr log: {stderr_path}\n'
-        'stderr: \n{stderr}\n'
-        '---------'
-        'returncode: {returncode}'
+        _('Could not generate {delta_format} delta.\n'
+          'stdout log: {stdout_path}\n'
+          'stdout: \n{stdout}\n'
+          '---------'
+          'stderr log: {stderr_path}\n'
+          'stderr: \n{stderr}\n'
+          '---------'
+          'returncode: {returncode}')
     )
 
 
@@ -37,7 +39,7 @@ class DeltaGenerationTooBigError(SnapcraftError):
     """The generated delta was too large."""
 
     fmt = (
-        'delta saving is less than {delta_min_percentage}%.'
+        _('delta saving is less than {delta_min_percentage}%.')
     )
 
 
@@ -45,7 +47,7 @@ class DeltaFormatError(SnapcraftError):
     """A delta format must be set."""
 
     fmt = (
-        'delta_format must be set in subclass!'
+        _('delta_format must be set in subclass!')
     )
 
 
@@ -53,8 +55,8 @@ class DeltaFormatOptionError(SnapcraftError):
     """A delta format option is not in the defined list."""
 
     fmt = (
-        'delta_format must be a option in {format_options_list}.\n'
-        'for now delta_format={delta_format!r}'
+        _('delta_format must be a option in {format_options_list}.\n'
+          'for now delta_format={delta_format!r}')
     )
 
 
@@ -62,7 +64,7 @@ class DeltaToolError(SnapcraftError):
     """A delta tool executable error"""
 
     fmt = (
-        'Cannot find the executable delta tool {delta_tool!r}.'
+        _('Cannot find the executable delta tool {delta_tool!r}.')
     )
 
     def __init__(self, **kwargs):

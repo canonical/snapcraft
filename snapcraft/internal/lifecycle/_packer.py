@@ -25,6 +25,8 @@ from snapcraft.internal import common, repo
 from snapcraft.internal.indicators import is_dumb_terminal
 from ._runner import execute
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -60,7 +62,7 @@ def pack(directory, output=None):
     snap_build = snap_name + '-build'
     if os.path.isfile(snap_build):
         _new = '{}.{}'.format(snap_build, int(time.time()))
-        logger.warning('Renaming stale build assertion to {}'.format(_new))
+        logger.warning(_('Renaming stale build assertion t)o {}').format(_new))
         os.rename(snap_build, _new)
 
     # These options need to match the review tools:
@@ -73,11 +75,10 @@ def pack(directory, output=None):
                stdout=PIPE, stderr=STDOUT) as proc:
         ret = None
         if is_dumb_terminal():
-            logger.info('Snapping {!r} ...'.format(snap['name']))
+            logger.info(_('Snapping {!r} …').format(snap['name']))
             ret = proc.wait()
         else:
-            message = '\033[0;32m\rSnapping {!r}\033[0;32m '.format(
-                snap['name'])
+            message = '\033[0;32m\r' + _('Snapping {!r}') + '\033[0;32m '.format(snap['name'])
             progress_indicator = ProgressBar(
                 widgets=[message, AnimatedMarker()], maxval=7)
             progress_indicator.start()
@@ -96,7 +97,8 @@ def pack(directory, output=None):
         print('')
         if ret != 0:
             logger.error(proc.stdout.read().decode('utf-8'))
-            raise RuntimeError('Failed to create snap {!r}'.format(snap_name))
+            raise RuntimeError(_('Failed to create '
+                                 'snap {!r}').format(snap_name))
 
         logger.debug(proc.stdout.read().decode('utf-8'))
 

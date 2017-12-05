@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from gettext import gettext as _
+
 
 def combine_paths(paths, prepend, separator):
     """Combine list of paths into a string.
@@ -38,7 +40,7 @@ def format_path_variable(envvar, paths, prepend, separator):
 
     if not paths:
         raise ValueError(
-            "Failed to format '${}': no paths supplied".format(envvar))
+            _("Failed to format '${}': no paths supplied").format(envvar))
 
     return '{envvar}="${envvar}{separator}{paths}"'.format(
         envvar=envvar, separator=separator, paths=combine_paths(

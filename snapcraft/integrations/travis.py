@@ -79,6 +79,8 @@ from snapcraft.internal import load_config
 from snapcraft._store import login
 from snapcraft.config import LOCAL_CONFIG_FILENAME
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 TRAVIS_CONFIG_FILENAME = '.travis.yml'
@@ -99,18 +101,18 @@ def _acquire_and_encrypt_credentials(packages, channels):
     # (IP or reverse-dns) but Travis sudo-enabled containers, needed for
     # running xenial snapcraft, do not have static egress routes.
     # See https://docs.travis-ci.com/user/ip-addresses.
-    logger.info('Acquiring specific authorization information ...')
+    logger.info(_('Acquiring specific authorization information …'))
     store = storeapi.StoreClient()
     if not login(store=store,
                  packages=packages,
                  channels=channels,
                  save=False):
         raise TravisRuntimeError(
-            'Cannot continue without logging in successfully.')
+            _('Cannot continue without logging in successfully.'))
 
     logger.info(
-        'Encrypting authorization for Travis and adjusting project to '
-        'automatically decrypt and use it during "after_success".')
+        _('Encrypting authorization for Travis and adjusting project to '
+          'automatically decrypt and use it during "after_success".'))
     with tempfile.NamedTemporaryFile(mode='w') as fd:
         store.conf.save(config_fd=fd)
         fd.flush()
@@ -138,35 +140,35 @@ def requires_travis_preconditions():
         requires_command_success(
             'travis settings',
             not_found_fmt=(
-                'Travis CLI (`{cmd_list[0]}`) is not available.\n'
-                'Please install it before trying this command again:\n\n'
-                '    $ sudo apt install ruby-dev ruby-ffi libffi-dev\n'
-                '    $ sudo gem install travis\n'),
+                _('Travis CLI (`{cmd_list[0]}`) is not available.\n'
+                  'Please install it before trying this command again:\n\n'
+                  '    $ sudo apt install ruby-dev ruby-ffi libffi-dev\n'
+                  '    $ sudo gem install travis\n')),
             failure_fmt=(
-                'Travis CLI (`{command}`) is not functional or you are not '
-                'allowed to access this repository settings.\n'
-                'Make sure it works correctly in your system before trying '
-                'this command again.')
+                _('Travis CLI (`{command}`) is not functional or you are not '
+                  'allowed to access this repository settings.\n'
+                  'Make sure it works correctly in your system before trying '
+                  'this command again.'))
         ),
         requires_command_success(
             'git status',
             not_found_fmt=(
-                'Git (`{cmd_list[0]}`) is not available, this tool cannot '
-                'verify its prerequisites.\n'
-                'Please install it before trying this command again:\n\n'
-                '    $ sudo apt install git\n'),
+                _('Git (`{cmd_list[0]}`) is not available, this tool cannot '
+                  'verify its prerequisites.\n'
+                  'Please install it before trying this command again:\n\n'
+                  '    $ sudo apt install git\n')),
             failure_fmt=(
-                'The current directory is not a Git repository.\n'
-                'Please switch to the desired project repository where '
-                'Travis should be enabled.')
+                _('The current directory is not a Git repository.\n'
+                  'Please switch to the desired project repository where '
+                  'Travis should be enabled.'))
         ),
         requires_path_exists(
             TRAVIS_CONFIG_FILENAME,
             error_fmt=(
-                'Travis project is not initialized for the current '
-                'directory.\n'
-                'Please initialize Travis project (e.g. `travis init`) with '
-                'appropriate parameters.')
+                _('Travis project is not initialized for the current '
+                  'directory.\n'
+                  'Please initialize Travis project (e.g. `travis init`) with '
+                  'appropriate parameters.'))
         ),
     )
     with ExitStack() as cm:
@@ -180,15 +182,15 @@ def refresh():
     project_config = load_config()
     snap_name = project_config.data['name']
     logger.info(
-        'Refreshing credentials to push and release "{}" snaps '
-        'to edge channel in series {}'.format(snap_name, series))
+        _('Refreshing credentials to push and release "{}" snaps '
+          'to edge channel in series {}').format(snap_name, series))
 
     packages = [{'name': snap_name, 'series': series}]
     channels = ['edge']
     _acquire_and_encrypt_credentials(packages, channels)
 
     logger.info(
-        'Done. Please commit the changes to `{}` file.'.format(
+        _('Done. Please commit the changes to `{}` file.').format(
             ENCRYPTED_CONFIG_FILENAME))
 
 
@@ -198,16 +200,16 @@ def enable():
     project_config = load_config()
     snap_name = project_config.data['name']
     logger.info(
-        'Enabling Travis testbeds to push and release {!r} snaps '
-        'to edge channel in series {!r}'.format(snap_name, series))
+        _('Enabling Travis testbeds to push and release {!r} snaps '
+          'to edge channel in series {!r}').format(snap_name, series))
 
     packages = [{'name': snap_name, 'series': series}]
     channels = ['edge']
     _acquire_and_encrypt_credentials(packages, channels)
 
     logger.info(
-        'Configuring "deploy" phase to build and release the snap in the '
-        'Store.')
+        _('Configuring "deploy" phase to build and release the snap in the '
+          'Store.'))
     with open(TRAVIS_CONFIG_FILENAME, 'r+') as fd:
         travis_conf = yaml.load(fd)
         # Enable 'sudo' capability and 'docker' service.
@@ -232,7 +234,7 @@ def enable():
         yaml.dump(travis_conf, fd, default_flow_style=False)
 
     logger.info(
-        'Done. Now you just have to review and commit changes in your '
-        'Travis project (`{}`).\n'
-        'Also make sure you add the new `{}` file.'.format(
+        _('Done. Now you just have to review and commit changes in your '
+          'Travis project (`{}`).\n'
+          'Also make sure you add the new `{}` file.').format(
             TRAVIS_CONFIG_FILENAME, ENCRYPTED_CONFIG_FILENAME))

@@ -27,6 +27,8 @@ from snapcraft import file_utils
 from snapcraft.internal import mangling
 from . import errors
 
+from gettext import gettext as _
+
 _BIN_PATHS = (
     'bin',
     'sbin',
@@ -223,7 +225,7 @@ class BaseRepo:
         host_target = os.readlink(path)
         if host_target in self.get_package_libraries('libc6'):
             logger.debug(
-                "Not fixing symlink {!r}: it's pointing to libc".format(
+                _("Not fixing symlink {!r}: it's pointing to libc").format(
                     host_target))
             return
 
@@ -252,13 +254,14 @@ def _try_copy_local(path, target):
     real_path = os.path.realpath(path)
     if os.path.exists(real_path):
         logger.warning(
-            'Copying needed target link from the system {}'.format(real_path))
+            _('Copying needed target link '
+              'from the system {}').format(real_path))
         os.makedirs(os.path.dirname(target), exist_ok=True)
         shutil.copyfile(os.readlink(path), target)
         return True
     else:
         logger.warning(
-            '{} will be a dangling symlink'.format(path))
+            _('{} will be a dangling symlink').format(path))
         return False
 
 
@@ -286,5 +289,5 @@ def fix_pkg_config(root, pkg_config_file, prefix_trim=None):
 def _fix_filemode(path):
     mode = stat.S_IMODE(os.stat(path, follow_symlinks=False).st_mode)
     if mode & 0o4000 or mode & 0o2000:
-        logger.warning('Removing suid/guid from {}'.format(path))
+        logger.warning(_('Removing suid/guid from {}').format(path))
         os.chmod(path, mode & 0o1777)

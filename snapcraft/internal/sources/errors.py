@@ -16,6 +16,8 @@
 
 from snapcraft.internal import errors
 
+from gettext import gettext as _
+
 
 class VCSError(errors.SnapcraftError):
     fmt = '{message}'
@@ -31,8 +33,8 @@ class IncompatibleOptionsError(errors.SnapcraftError):
 
 class DigestDoesNotMatchError(errors.SnapcraftError):
 
-    fmt = ('Expected the digest for source to be {expected}, '
-           'but it was {calculated}')
+    fmt = (_('Expected the digest for source to be {expected}, '
+             'but it was {calculated}'))
 
     def __init__(self, expected, calculated):
         super().__init__(expected=expected, calculated=calculated)
@@ -40,6 +42,6 @@ class DigestDoesNotMatchError(errors.SnapcraftError):
 
 class InvalidDebError(errors.SnapcraftError):
 
-    fmt = ('The {deb_file} used does not contain valid data. '
-           'Ensure a proper deb file is passed for .deb files '
-           'as sources.')
+    fmt = (_('The {deb_file} used does not contain valid data. '
+             'Ensure a proper deb file is passed for .deb files '
+             'as sources.'))

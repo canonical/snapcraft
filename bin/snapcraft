@@ -18,6 +18,8 @@
 import os
 import sys
 
+import gettext
+
 # make running from bzr snapshot easy
 if getattr(sys, 'frozen', False):
 	topdir = os.path.dirname(sys.executable)
@@ -27,6 +29,11 @@ else:
 if os.path.exists(os.path.join(topdir, 'setup.py')):
     sys.path = [topdir] + sys.path
 
+LOCALE_DIR = os.path.join(topdir, 'po')
+
+
+gettext.bindtextdomain('snapcraft', LOCALE_DIR)
+gettext.textdomain('snapcraft')
 
 if __name__ == '__main__':
     import snapcraft.cli

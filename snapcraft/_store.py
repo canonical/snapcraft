@@ -46,6 +46,8 @@ from snapcraft.internal.deltas.errors import (
     DeltaToolError,
 )
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +68,7 @@ def _get_data_from_snap_file(snap_path):
 
 def _fail_login(msg: str = '') -> bool:
     echo.error(msg)
-    echo.error('Login failed.')
+    echo.error(_('Login failed.'))
     return False
 
 
@@ -124,11 +126,11 @@ def login(*, store: storeapi.StoreClient = None,
     if not store:
         store = storeapi.StoreClient()
 
-    print('Enter your Ubuntu One e-mail address and password.\n'
-          'If you do not have an Ubuntu One account, you can create one at '
-          'https://dashboard.snapcraft.io/openid/login')
-    email = input('Email: ')
-    password = getpass.getpass('Password: ')
+    print(_('Enter your Ubuntu One e-mail address and password.\n'
+            'If you do not have an Ubuntu One account, you can create one at '
+            'https://dashboard.snapcraft.io/openid/login'))
+    email = input(_('Email: '))
+    password = getpass.getpass(_('Password: '))
 
     try:
         try:
@@ -137,7 +139,7 @@ def login(*, store: storeapi.StoreClient = None,
             print()
             logger.info(storeapi.constants.TWO_FACTOR_WARNING)
         except storeapi.errors.StoreTwoFactorAuthenticationRequired:
-            one_time_password = input('Second-factor auth: ')
+            one_time_password = input(_('Second-factor auth: '))
             store.login(
                 email, password, one_time_password=one_time_password,
                 acls=acls, packages=packages, channels=channels,
@@ -163,8 +165,8 @@ def _requires_login():
     try:
         yield
     except storeapi.errors.InvalidCredentialsError:
-        logger.error('No valid credentials found.'
-                     ' Have you run "snapcraft login"?')
+        logger.error(_('No valid credentials found.'
+                       ' Have you run "snapcraft login"?'))
         raise
 
 
@@ -180,16 +182,18 @@ def list_registered():
         for name, info in account_info['snaps'].get(series, {}).items()
         # Presenting only approved snap registrations, which means name
         # disputes will be displayed/sorted some other way.
-        if info['status'] == 'Approved'
+        if info['status'] == _('Approved')
     ]
 
     if not snaps:
-        print('There are no registered snaps for series {!r}.'.format(series))
+        print(_('There are no registered snaps for series {!r}.').format(
+            series))
         return
 
     tabulated_snaps = tabulate(
         sorted(snaps, key=operator.itemgetter(0)),
-        headers=['Name', 'Since', 'Visibility', 'Price', 'Notes'],
+        headers=[_('Name'), _('Since'), _('Visibility'),
+                 _('Price'), _('Notes')],
         tablefmt='plain')
     print(tabulated_snaps)
 
@@ -205,18 +209,18 @@ def _get_usable_keys(name=None):
 
 def _select_key(keys):
     if len(keys) > 1:
-        print('Select a key:')
+        print(_('Select a key:'))
         print()
         tabulated_keys = tabulate(
             [(i + 1, key['name'], key['sha3-384'])
              for i, key in enumerate(keys)],
-            headers=["Number", "Name", "SHA3-384 fingerprint"],
+            headers=[_("Number"), _("Name"), _("SHA3-384 fingerprint")],
             tablefmt="plain")
         print(tabulated_keys)
         print()
         while True:
             try:
-                keynum = int(input('Key number: ')) - 1
+                keynum = int(input(_('Key number: '))) - 1
             except ValueError:
                 continue
             if keynum >= 0 and keynum < len(keys):
@@ -246,7 +250,7 @@ def list_keys():
           key['name'], key['sha3-384'],
           '' if key['sha3-384'] in enabled_keys else '(not registered)')
          for key in keys],
-        headers=["", "Name", "SHA3-384 fingerprint", ""],
+        headers=["", _("Name"), _("SHA3-384 fingerprint"), ""],
         tablefmt="plain")
     print(tabulated_keys)
 
@@ -295,17 +299,17 @@ def register_key(name):
     store = storeapi.StoreClient()
     if not login(store=store, acls=['modify_account_key'], save=False):
         raise storeapi.errors.LoginRequiredError()
-    logger.info('Registering key ...')
+    logger.info(_('Registering key …'))
     account_info = store.get_account_information()
     account_key_request = _export_key(key['name'], account_info['account_id'])
     store.register_key(account_key_request)
     logger.info(
-        'Done. The key "{}" ({}) may be used to sign your assertions.'.format(
-            key['name'], key['sha3-384']))
+        _('Done. The key "{}" ({}) may be used to sign your '
+          'assertions.').format(key['name'], key['sha3-384']))
 
 
 def register(snap_name, is_private=False):
-    logger.info('Registering {}.'.format(snap_name))
+    logger.info(_('Registering {}.').format(snap_name))
     store = storeapi.StoreClient()
     with _requires_login():
         store.register(snap_name, is_private)
@@ -335,7 +339,7 @@ def sign_build(snap_filename, key_name=None, local=False):
 
     if not os.path.exists(snap_filename):
         raise FileNotFoundError(
-            'The file {!r} does not exist.'.format(snap_filename))
+            _('The file {!r} does not exist.').format(snap_filename))
 
     snap_series = storeapi.constants.DEFAULT_SERIES
     snap_yaml = _get_data_from_snap_file(snap_filename)
@@ -356,7 +360,7 @@ def sign_build(snap_filename, key_name=None, local=False):
     snap_build_path = snap_filename + '-build'
     if os.path.isfile(snap_build_path):
         logger.info(
-            'A signed build assertion for this snap already exists.')
+            _('A signed build assertion for this snap already exists.'))
         with open(snap_build_path, 'rb') as fd:
             snap_build_content = fd.read()
     else:
@@ -373,12 +377,13 @@ def sign_build(snap_filename, key_name=None, local=False):
         with open(snap_build_path, 'w+') as fd:
             fd.write(snap_build_content.decode())
         logger.info(
-            'Build assertion {} saved to disk.'.format(snap_build_path))
+            _('Build assertion {} saved to disk.').format(snap_build_path))
 
     if not local:
         store.push_snap_build(snap_id, snap_build_content.decode())
         logger.info(
-            'Build assertion {} pushed to the Store.'.format(snap_build_path))
+            _('Build assertion {} pushed to the Store.').format(
+                snap_build_path))
 
 
 def push_metadata(snap_filename, force):
@@ -387,7 +392,7 @@ def push_metadata(snap_filename, force):
     If force=True it will force the local metadata into the Store,
     ignoring any possible conflict.
     """
-    logger.debug("Pushing metadata to the Store (force=%s)", force)
+    logger.debug(_("Pushing metadata to the Store (force=%s)"), force)
 
     # get the metadata from the snap
     snap_yaml = _get_data_from_snap_file(snap_filename)
@@ -405,7 +410,7 @@ def push_metadata(snap_filename, force):
         store.push_precheck(snap_name)
         store.push_metadata(snap_name, metadata, force)
 
-    logger.info("The metadata has been pushed")
+    logger.info(_("The metadata has been pushed"))
 
 
 def push(snap_filename, release_channels=None):
@@ -423,7 +428,8 @@ def push(snap_filename, release_channels=None):
     snap_name = snap_yaml['name']
     store = storeapi.StoreClient()
 
-    logger.info('Preparing to push {!r} to the store.'.format(snap_filename))
+    logger.info(_('Preparing to push {!r} to the store.').format(
+        snap_filename))
     with _requires_login():
         store.push_precheck(snap_name)
 
@@ -438,19 +444,19 @@ def push(snap_filename, release_channels=None):
             result = _push_delta(snap_name, snap_filename, source_snap)
         except storeapi.errors.StoreDeltaApplicationError as e:
             logger.warning(
-                'Error generating delta: {}\n'
-                'Falling back to pushing full snap...'.format(str(e)))
+                _('Error generating delta: {}\n'
+                  'Falling back to pushing full snap…').format(str(e)))
             result = _push_snap(snap_name, snap_filename)
         except storeapi.errors.StorePushError as e:
             store_error = e.error_list[0].get('message')
             logger.warning(
-                'Unable to push delta to store: {}\n'
-                'Falling back to pushing full snap...'.format(store_error))
+                _('Unable to push delta to store: {}\n'
+                  'Falling back to pushing full snap…').format(store_error))
             result = _push_snap(snap_name, snap_filename)
     else:
         result = _push_snap(snap_name, snap_filename)
 
-    logger.info('Revision {!r} of {!r} created.'.format(
+    logger.info(_('Revision {!r} of {!r} created.').format(
         result['revision'], snap_name))
 
     snap_cache.cache(snap_filename=snap_filename)
@@ -473,7 +479,7 @@ def _push_snap(snap_name, snap_filename):
 def _push_delta(snap_name, snap_filename, source_snap):
     store = storeapi.StoreClient()
     delta_format = 'xdelta3'
-    logger.info('Found cached source snap {}.'.format(source_snap))
+    logger.info(_('Found cached source snap {}.').format(source_snap))
     target_snap = os.path.join(os.getcwd(), snap_filename)
 
     try:
@@ -489,7 +495,7 @@ def _push_delta(snap_name, snap_filename, source_snap):
                    'delta_hash': calculate_sha3_384(delta_filename)}
 
     try:
-        logger.info('Pushing delta {}.'.format(delta_filename))
+        logger.info(_('Pushing delta {}.').format(delta_filename))
         with _requires_login():
             delta_tracker = store.upload(
                 snap_name,
@@ -511,16 +517,16 @@ def _push_delta(snap_name, snap_filename, source_snap):
                 os.remove(delta_filename)
             except OSError:
                 logger.warning(
-                    'Unable to remove delta {}.'.format(delta_filename))
+                    _('Unable to remove delta {}.').format(delta_filename))
     return result
 
 
 def _get_text_for_opened_channels(opened_channels):
     if len(opened_channels) == 1:
-        return 'The {!r} channel is now open.'.format(opened_channels[0])
+        return _('The {!r} channel is now open.').format(opened_channels[0])
     else:
         channels = ('{!r}'.format(channel) for channel in opened_channels[:-1])
-        return 'The {} and {!r} channels are now open.'.format(
+        return _('The {} and {!r} channels are now open.').format(
             ', '.join(channels), opened_channels[-1])
 
 
@@ -544,7 +550,7 @@ def _get_text_for_channel(channel):
             channel['expires_at'],
         )
     else:
-        logger.error('Unexpected channel info: %r in channel %s',
+        logger.error(_('Unexpected channel info: %r in channel %s'),
                      channel['info'], channel['channel'])
         channel_text = (channel['channel'], '', '', '')
 
@@ -605,9 +611,9 @@ def _tabulated_channel_map_tree(channel_map_tree):
         data += parsed_channels
 
     have_expiration = any(x[5] for x in data)
-    expires_at_header = "Expires at" if have_expiration else ""
-    headers = ['Track', 'Arch', 'Channel',
-               'Version', 'Revision', expires_at_header]
+    expires_at_header = _("Expires at") if have_expiration else ""
+    headers = [_('Track'), _('Arch'), _('Channel'),
+               _('Version'), _('Revision'), expires_at_header]
     return tabulate(data, numalign='left', headers=headers, tablefmt='plain')
 
 
@@ -633,9 +639,9 @@ def close(snap_name, channel_names):
 
     print()
     if len(closed_channels) == 1:
-        msg = 'The {} channel is now closed.'.format(closed_channels[0])
+        msg = _('The {} channel is now closed.').format(closed_channels[0])
     else:
-        msg = 'The {} and {} channels are now closed.'.format(
+        msg = _('The {} and {} channels are now closed.').format(
             ', '.join(closed_channels[:-1]), closed_channels[-1])
     logger.info(msg)
 
@@ -688,7 +694,8 @@ def revisions(snap_name, series, arch):
         for rev in revisions]
     tabulated_revisions = tabulate(
         parsed_revisions, numalign='left',
-        headers=['Rev.', 'Uploaded', 'Arch', 'Version', 'Channels'],
+        headers=[_('Rev.'), _('Uploaded'), _('Arch'),
+                 _('Version'), _('Channels')],
         tablefmt='plain')
     print(tabulated_revisions)
 
@@ -723,11 +730,12 @@ def gated(snap_name):
                 timestamp = timestamp.split('.')[0] + 'Z'
             table_data.append([name, revision, required, timestamp])
         tabulated = tabulate(
-            table_data, headers=['Name', 'Revision', 'Required', 'Approved'],
+            table_data, headers=[_('Name'), _('Revision'), _('Required'),
+                                 _('Approved')],
             tablefmt="plain", missingval='-')
         print(tabulated)
     else:
-        print('There are no validations for snap {!r}'.format(snap_name))
+        print(_('There are no validations for snap {!r}').format(snap_name))
 
 
 def validate(snap_name, validations, revoke=False, key=None):
@@ -752,7 +760,7 @@ def validate(snap_name, validations, revoke=False, key=None):
     # Then, for each requested validation, generate assertion
     for validation in validations:
         gated_name, rev = validation.split('=', 1)
-        echo.info('Getting details for {}'.format(gated_name))
+        echo.info(_('Getting details for {}').format(gated_name))
         approved_data = store.cpi.get_package(gated_name, 'stable')
         assertion = {
             'type': 'validation',
@@ -794,7 +802,7 @@ def _sign_assertion(snap_name, assertion, key, endpoint):
         cmdline, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     data = json.dumps(assertion).encode('utf8')
-    echo.info('Signing {} assertion for {}'.format(endpoint, snap_name))
+    echo.info(_('Signing {} assertion for {}').format(endpoint, snap_name))
     assertion, err = snap_sign.communicate(input=data)
     if snap_sign.returncode != 0:
         err = err.decode()

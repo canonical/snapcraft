@@ -22,6 +22,8 @@ from snapcraft import formatting_utils
 from snapcraft.internal import common, load_config
 from . import constants
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -65,10 +67,10 @@ def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
                 additional_dependents.append(part_name)
 
                 logger.warning(
-                    'Requested clean of {!r} which requires also cleaning '
-                    'the part{} {}'.format(part_name,
-                                           '' if len(dependents) == 1 else 's',
-                                           humanized_parts))
+                    _('Requested clean of {!r} which requires also cleaning '
+                      'the part{} {}').format(part_name,
+                                              '' if len(dependents) == 1
+                                              else 's', humanized_parts))
 
 
 def _clean_parts(part_names, step, config, staged_state, primed_state):

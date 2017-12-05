@@ -20,6 +20,8 @@ import subprocess
 from . import errors
 from ._base import Base
 
+from gettext import gettext as _
+
 
 class Bazaar(Base):
 
@@ -30,17 +32,17 @@ class Bazaar(Base):
                          source_branch, source_depth, source_checksum,  'bzr')
         if source_branch:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a bzr source')
+                _('can\'t specify a source-branch for a bzr source'))
         if source_depth:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify source-depth for a bzr source')
+                _('can\'t specify source-depth for a bzr source'))
         if source_tag and source_commit:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-tag and source-commit for '
-                'a bzr source')
+                _('can\'t specify both source-tag and source-commit for '
+                  'a bzr source'))
         if source_checksum:
             raise errors.IncompatibleOptionsError(
-                "can't specify a source-checksum for a bzr source")
+                _("can't specify a source-checksum for a bzr source"))
 
         self._call_kwargs = {}
         if silent:

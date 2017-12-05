@@ -22,6 +22,8 @@ import tempfile
 from . import errors
 from ._base import FileBase
 
+from gettext import gettext as _
+
 
 class SevenZip(FileBase):
 
@@ -31,13 +33,13 @@ class SevenZip(FileBase):
                          source_branch, source_depth, source_checksum)
         if source_tag:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-tag for a 7z source')
+                _('can\'t specify a source-tag for a 7z source'))
         elif source_commit:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-commit for a 7z source')
+                _('can\'t specify a source-commit for a 7z source'))
         elif source_branch:
             raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a 7z source')
+                _('can\'t specify a source-branch for a 7z source'))
 
     def provision(self, dst, clean_target=True, keep_7z=False, src=None):
         if src:

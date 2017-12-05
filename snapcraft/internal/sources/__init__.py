@@ -81,6 +81,8 @@ import sys
 
 from snapcraft.internal import common
 
+from gettext import gettext as _
+
 if sys.platform == 'linux':
     from ._bazaar import Bazaar          # noqa
     from ._git import Git                # noqa
@@ -186,8 +188,9 @@ def _get_source_type_from_uri(source, ignore_errors=False):  # noqa: C901
     elif source.endswith('7z'):
         source_type = '7z'
     elif common.isurl(source) and not ignore_errors:
-        raise ValueError('no handler to manage source ({})'.format(source))
+        raise ValueError(_('no handler to manage source ({})').format(source))
     elif not os.path.isdir(source) and not ignore_errors:
-        raise ValueError('local source ({}) is not a directory'.format(source))
+        raise ValueError(_('local source ({}) is '
+                           'not a directory').format(source))
 
     return source_type

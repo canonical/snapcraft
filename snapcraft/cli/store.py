@@ -24,14 +24,16 @@ from snapcraft import storeapi
 from snapcraft.storeapi.constants import DEFAULT_SERIES
 from . import echo
 
+from gettext import gettext as _
 
-_MESSAGE_REGISTER_PRIVATE = dedent("""\
+
+_MESSAGE_REGISTER_PRIVATE = dedent(_("""\
     Even though this is private snap, you should think carefully about
     the choice of name and make sure you are confident nobody else will
     have a stronger claim to that particular name. If you are unsure
     then we suggest you prefix the name with your developer identity,
-    As ‘nessita-yoyodyne-www-site-content’.""")
-_MESSAGE_REGISTER_CONFIRM = dedent("""
+    As ‘nessita-yoyodyne-www-site-content’."""))
+_MESSAGE_REGISTER_CONFIRM = dedent(_("""
     We always want to ensure that users get the software they expect
     for a particular name.
 
@@ -43,12 +45,12 @@ _MESSAGE_REGISTER_CONFIRM = dedent("""
     Thunderbird as 'thunderbird-$username'.
 
     Would you say that MOST users will expect {!r} to come from
-    you, and be the software you intend to publish there?""")
-_MESSAGE_REGISTER_SUCCESS = 'Congrats! You are now the publisher of {!r}.'
-_MESSAGE_REGISTER_NO = dedent("""
+    you, and be the software you intend to publish there?"""))
+_MESSAGE_REGISTER_SUCCESS = _('Congrats! You are now the publisher of {!r}.')
+_MESSAGE_REGISTER_NO = dedent(_("""
     Thank you! {!r} will remain available.
 
-    In the meantime you can register an alternative name.""")
+    In the meantime you can register an alternative name."""))
 
 
 @click.group()
@@ -60,7 +62,7 @@ def storecli():
 @storecli.command()
 @click.argument('snap-name', metavar='<snap-name>')
 @click.option('--private', is_flag=True,
-              help='Register the snap as a private one')
+              help=_('Register the snap as a private one'))
 def register(snap_name, private):
     """Register <snap-name> with the store.
 
@@ -82,8 +84,8 @@ def register(snap_name, private):
 
 @storecli.command()
 @click.option('--release', metavar='<channels>',
-              help='Optional comma separated list of channels to release '
-                   '<snap-file>')
+              help=_('Optional comma separated list of channels to release '
+                     '<snap-file>'))
 @click.argument('snap-file', metavar='<snap-file>',
                 type=click.Path(exists=True,
                                 readable=True,
@@ -108,20 +110,21 @@ def push(snap_file, release):
         snapcraft push my-snap_0.2_amd64.snap --release edge
         snapcraft push my-snap_0.3_amd64.snap --release candidate,beta
     """
-    click.echo('Pushing {}'.format(os.path.basename(snap_file)))
+    click.echo(_('Pushing {}').format(os.path.basename(snap_file)))
     channel_list = []
     if release:
         channel_list = release.split(',')
         click.echo(
-            'After pushing, an attempt to release to {} '
-            'will be made'.format(channel_list))
+            _('After pushing, an attempt to release to {} '
+              'will be made').format(channel_list))
 
     snapcraft.push(snap_file, channel_list)
 
 
 @storecli.command('push-metadata')
 @click.option('--force', is_flag=True,
-              help="Force metadata update to override any possible conflict")
+              help=_("Force metadata update to "
+                     "override any possible conflict"))
 @click.argument('snap-file', metavar='<snap-file>',
                 type=click.Path(exists=True,
                                 readable=True,
@@ -138,7 +141,8 @@ def push_metadata(snap_file, force):
         snapcraft push-metadata my-snap_0.1_amd64.snap
         snapcraft push-metadata my-snap_0.1_amd64.snap --force
     """
-    click.echo('Pushing metadata from {}'.format(os.path.basename(snap_file)))
+    click.echo(_('Pushing metadata from {}').format(
+        os.path.basename(snap_file)))
     snapcraft.push_metadata(snap_file, force)
 
 
@@ -201,10 +205,10 @@ def close(snap_name, channels):
 
 @storecli.command()
 @click.option('--arch', metavar='<arch>',
-              help='The snap architecture to get the status for')
+              help=_('The snap architecture to get the status for'))
 @click.option('--series', metavar='<series>',
               default=DEFAULT_SERIES,
-              help='The snap series to get the status for')
+              help=_('The snap series to get the status for'))
 @click.argument('snap-name', metavar='<snap-name>')
 def status(snap_name, series, arch):
     """Get the status on the store for <snap-name>.
@@ -219,10 +223,10 @@ def status(snap_name, series, arch):
 
 @storecli.command('list-revisions')
 @click.option('--arch', metavar='<arch>',
-              help='The snap architecture to get the status for')
+              help=_('The snap architecture to get the status for'))
 @click.option('--series', metavar='<series>',
               default=DEFAULT_SERIES,
-              help='The snap series to get the status for')
+              help=_('The snap series to get the status for'))
 @click.argument('snap-name', metavar='<snap-name>')
 def list_revisions(snap_name, series, arch):
     """Get the history on the store for <snap-name>.
@@ -263,7 +267,7 @@ def login():
         sys.exit(1)
 
     print()
-    echo.info('Login successful.')
+    echo.info(_('Login successful.'))
 
 
 @storecli.command()
@@ -271,7 +275,7 @@ def logout():
     """Clear session credentials."""
     store = storeapi.StoreClient()
     store.logout()
-    echo.info('Credentials cleared.')
+    echo.info(_('Credentials cleared.'))
 
 
 @storecli.command()
@@ -280,7 +284,7 @@ def whoami():
     try:
         account_data = storeapi.StoreClient().whoami()
     except storeapi.errors.InvalidCredentialsError:
-        echo.error('You need to first login to use this command.')
+        echo.error(_('You need to first login to use this command.'))
         sys.exit(1)
 
     click.echo(dedent("""\
@@ -289,5 +293,5 @@ def whoami():
 
     # This is needed because we originally did not store the login information.
     if account_data['email'] == 'unknown':
-        echo.warning('In order to view the correct email you will need to '
-                     'logout and login again.')
+        echo.warning(_('In order to view the correct email you will need to '
+                       'logout and login again.'))

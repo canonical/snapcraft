@@ -227,7 +227,7 @@ class TravisSuccessfulTestCase(unit.TestCase):
             Equals([
                 "Enabling Travis testbeds to push and release 'foo' snaps "
                 "to edge channel in series '16'",
-                'Acquiring specific authorization information ...',
+                'Acquiring specific authorization information …',
                 'Encrypting authorization for Travis and adjusting project '
                 'to automatically decrypt and use it during "after_success".',
                 'Configuring "deploy" phase to build and release the snap in '
@@ -289,7 +289,7 @@ class TravisSuccessfulTestCase(unit.TestCase):
             Equals([
                 'Refreshing credentials to push and release "foo" snaps to '
                 'edge channel in series 16',
-                'Acquiring specific authorization information ...',
+                'Acquiring specific authorization information …',
                 'Encrypting authorization for Travis and adjusting project '
                 'to automatically decrypt and use it during "after_success".',
                 'Done. Please commit the changes to '

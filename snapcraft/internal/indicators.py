@@ -25,10 +25,12 @@ from progressbar import (
     UnknownLength,
 )
 
+from gettext import gettext as _
+
 
 def _init_progress_bar(total_length, destination, message=None):
     if not message:
-        message = 'Downloading {!r}'.format(os.path.basename(destination))
+        message = _('Downloading {!r}').format(os.path.basename(destination))
 
     valid_length = total_length and total_length > 0
 

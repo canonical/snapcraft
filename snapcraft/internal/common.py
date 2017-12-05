@@ -29,6 +29,8 @@ from typing import List  # noqa
 
 from snapcraft.internal import errors
 
+from gettext import gettext as _
+
 
 SNAPCRAFT_FILES = ['snapcraft.yaml', '.snapcraft.yaml', 'parts', 'stage',
                    'prime', 'snap']
@@ -75,8 +77,8 @@ def run_output(cmd, **kwargs):
         try:
             return output.decode(sys.getfilesystemencoding()).strip()
         except UnicodeEncodeError:
-            logger.warning('Could not decode output for {!r} correctly'.format(
-                cmd))
+            logger.warning(_('Could not decode output '
+                             ' for {!r} correctly').format(cmd))
             return output.decode('latin-1', 'surrogateescape').strip()
 
 
@@ -121,15 +123,15 @@ def get_schemadir():
 
 
 def get_arch_triplet():
-    raise errors.PluginOutdatedError("use 'project.arch_triplet'")
+    raise errors.PluginOutdatedError(_("use 'project.arch_triplet'"))
 
 
 def get_arch():
-    raise errors.PluginOutdatedError("use 'project.deb_arch'")
+    raise errors.PluginOutdatedError(_("use 'project.deb_arch'"))
 
 
 def get_parallel_build_count():
-    raise errors.PluginOutdatedError("use 'parallel_build_count'")
+    raise errors.PluginOutdatedError(_("use 'parallel_build_count'"))
 
 
 def set_librariesdir(librariesdir):
@@ -149,7 +151,7 @@ def get_python2_path(root):
         return python_paths[0]
     except IndexError:
         raise errors.SnapcraftEnvironmentError(
-            'PYTHONPATH cannot be set for {!r}'.format(root))
+            _('PYTHONPATH cannot be set for {!r}').format(root))
 
 
 def get_url_scheme(url):

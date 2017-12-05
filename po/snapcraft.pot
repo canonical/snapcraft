@@ -1,0 +1,2335 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2017-12-05 07:26+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../libraries/generate_lib_list.py:16
+msgid "Generating library list"
+msgstr ""
+
+#: ../libraries/generate_lib_list.py:28
+msgid "usage {} <file>"
+msgstr ""
+
+#: ../libraries/generate_lib_list.py:34
+msgid "Downloading"
+msgstr ""
+
+#: ../snapcraft/cli/__init__.py:84
+msgid "DEPRECATED: Use {!r} instead of {!r}"
+msgstr ""
+
+#: ../snapcraft/cli/__init__.py:113
+msgid "Starting snapcraft {} from {}."
+msgstr ""
+
+#: ../snapcraft/cli/_options.py:37
+msgid "Detect best candidate location for stage-packages using geoip"
+msgstr ""
+
+#: ../snapcraft/cli/_options.py:40
+msgid "Force a squential build."
+msgstr ""
+
+#: ../snapcraft/cli/_options.py:42
+msgid "Target architecture to cross compile to"
+msgstr ""
+
+#: ../snapcraft/cli/assertions.py:85
+msgid "Do not push the generated assertion to the store"
+msgstr ""
+
+#: ../snapcraft/cli/assertions.py:123
+msgid "Aborting due to unchanged collaborators list."
+msgstr ""
+
+#: ../snapcraft/cli/assertions.py:131
+msgid "This will revoke the following collaborators: {!r}"
+msgstr ""
+
+#: ../snapcraft/cli/assertions.py:134
+msgid "Are you sure you want to continue?"
+msgstr ""
+
+#: ../snapcraft/cli/assertions.py:137
+msgid "The collaborators for this snap have not been altered."
+msgstr ""
+
+#: ../snapcraft/cli/ci.py:36
+msgid ""
+"Refresh the macaroon required to be able to push and release to channels"
+msgstr ""
+
+#: ../snapcraft/cli/containers.py:35 ../snapcraft/cli/lifecycle.py:203
+msgid "Shells into the environment if the build fails."
+msgstr ""
+
+#: ../snapcraft/cli/help.py:90 ../snapcraft/scripts/generate_reference.py:65
+msgid "The plugin has no documentation"
+msgstr ""
+
+#: ../snapcraft/cli/lifecycle.py:51
+msgid "Created {}."
+msgstr ""
+
+#: ../snapcraft/cli/lifecycle.py:53
+msgid "Edit the file to your liking or run `snapcraft` to get started"
+msgstr ""
+
+#: ../snapcraft/cli/lifecycle.py:120 ../snapcraft/cli/lifecycle.py:148
+msgid "path to the resulting snap."
+msgstr ""
+
+#: ../snapcraft/cli/lifecycle.py:143 ../snapcraft/cli/lifecycle.py:162
+msgid "Snapped {}"
+msgstr ""
+
+#: ../snapcraft/cli/lifecycle.py:170
+msgid "only clean the specified step and those that depend on it."
+msgstr ""
+
+#: ../snapcraft/cli/lifecycle.py:191 ../snapcraft/internal/lxd/_project.py:176
+msgid "DEPRECATED: Use `prime` instead of `strip` as the step to clean"
+msgstr ""
+
+#: ../snapcraft/cli/lifecycle.py:200
+msgid "Use a specific lxd remote instead of a local container."
+msgstr ""
+
+#: ../snapcraft/cli/store.py:30
+msgid ""
+"    Even though this is private snap, you should think carefully about\n"
+"    the choice of name and make sure you are confident nobody else will\n"
+"    have a stronger claim to that particular name. If you are unsure\n"
+"    then we suggest you prefix the name with your developer identity,\n"
+"    As ‘nessita-yoyodyne-www-site-content’."
+msgstr ""
+
+#: ../snapcraft/cli/store.py:36
+msgid ""
+"\n"
+"    We always want to ensure that users get the software they expect\n"
+"    for a particular name.\n"
+"\n"
+"    If needed, we will rename snaps to ensure that a particular name\n"
+"    reflects the software most widely expected by our community.\n"
+"\n"
+"    For example, most people would expect ‘thunderbird’ to be published by\n"
+"    Mozilla. They would also expect to be able to get other snaps of\n"
+"    Thunderbird as 'thunderbird-$username'.\n"
+"\n"
+"    Would you say that MOST users will expect {!r} to come from\n"
+"    you, and be the software you intend to publish there?"
+msgstr ""
+
+#: ../snapcraft/cli/store.py:49
+msgid "Congrats! You are now the publisher of {!r}."
+msgstr ""
+
+#: ../snapcraft/cli/store.py:50
+msgid ""
+"\n"
+"    Thank you! {!r} will remain available.\n"
+"\n"
+"    In the meantime you can register an alternative name."
+msgstr ""
+
+#: ../snapcraft/cli/store.py:65
+msgid "Register the snap as a private one"
+msgstr ""
+
+#: ../snapcraft/cli/store.py:87
+msgid "Optional comma separated list of channels to release <snap-file>"
+msgstr ""
+
+#: ../snapcraft/cli/store.py:113
+msgid "Pushing {}"
+msgstr ""
+
+#: ../snapcraft/cli/store.py:118
+msgid "After pushing, an attempt to release to {} will be made"
+msgstr ""
+
+#: ../snapcraft/cli/store.py:126
+msgid "Force metadata update to override any possible conflict"
+msgstr ""
+
+#: ../snapcraft/cli/store.py:144
+msgid "Pushing metadata from {}"
+msgstr ""
+
+#: ../snapcraft/cli/store.py:208 ../snapcraft/cli/store.py:226
+msgid "The snap architecture to get the status for"
+msgstr ""
+
+#: ../snapcraft/cli/store.py:211 ../snapcraft/cli/store.py:229
+msgid "The snap series to get the status for"
+msgstr ""
+
+#: ../snapcraft/cli/store.py:270
+msgid "Login successful."
+msgstr ""
+
+#: ../snapcraft/cli/store.py:278
+msgid "Credentials cleared."
+msgstr ""
+
+#: ../snapcraft/cli/store.py:287
+msgid "You need to first login to use this command."
+msgstr ""
+
+#: ../snapcraft/cli/store.py:296
+msgid ""
+"In order to view the correct email you will need to logout and login again."
+msgstr ""
+
+#. XXX cprov 20161116: Needs caveat syntax for restricting origins
+#. (IP or reverse-dns) but Travis sudo-enabled containers, needed for
+#. running xenial snapcraft, do not have static egress routes.
+#. See https://docs.travis-ci.com/user/ip-addresses.
+#: ../snapcraft/integrations/travis.py:104
+msgid "Acquiring specific authorization information …"
+msgstr ""
+
+#: ../snapcraft/integrations/travis.py:111 ../snapcraft/storeapi/errors.py:43
+msgid "Cannot continue without logging in successfully."
+msgstr ""
+
+#: ../snapcraft/integrations/travis.py:114
+msgid ""
+"Encrypting authorization for Travis and adjusting project to automatically "
+"decrypt and use it during \"after_success\"."
+msgstr ""
+
+#: ../snapcraft/integrations/travis.py:143
+#, python-brace-format
+msgid ""
+"Travis CLI (`{cmd_list[0]}`) is not available.\n"
+"Please install it before trying this command again:\n"
+"\n"
+"    $ sudo apt install ruby-dev ruby-ffi libffi-dev\n"
+"    $ sudo gem install travis\n"
+msgstr ""
+
+#: ../snapcraft/integrations/travis.py:148
+#, python-brace-format
+msgid ""
+"Travis CLI (`{command}`) is not functional or you are not allowed to access "
+"this repository settings.\n"
+"Make sure it works correctly in your system before trying this command again."
+msgstr ""
+
+#: ../snapcraft/integrations/travis.py:156
+#, python-brace-format
+msgid ""
+"Git (`{cmd_list[0]}`) is not available, this tool cannot verify its "
+"prerequisites.\n"
+"Please install it before trying this command again:\n"
+"\n"
+"    $ sudo apt install git\n"
+msgstr ""
+
+#: ../snapcraft/integrations/travis.py:161
+msgid ""
+"The current directory is not a Git repository.\n"
+"Please switch to the desired project repository where Travis should be "
+"enabled."
+msgstr ""
+
+#: ../snapcraft/integrations/travis.py:168
+msgid ""
+"Travis project is not initialized for the current directory.\n"
+"Please initialize Travis project (e.g. `travis init`) with appropriate "
+"parameters."
+msgstr ""
+
+#: ../snapcraft/integrations/travis.py:185
+msgid ""
+"Refreshing credentials to push and release \"{}\" snaps to edge channel in "
+"series {}"
+msgstr ""
+
+#: ../snapcraft/integrations/travis.py:193
+msgid "Done. Please commit the changes to `{}` file."
+msgstr ""
+
+#: ../snapcraft/integrations/travis.py:203
+msgid ""
+"Enabling Travis testbeds to push and release {!r} snaps to edge channel in "
+"series {!r}"
+msgstr ""
+
+#: ../snapcraft/integrations/travis.py:211
+msgid ""
+"Configuring \"deploy\" phase to build and release the snap in the Store."
+msgstr ""
+
+#: ../snapcraft/integrations/travis.py:237
+msgid ""
+"Done. Now you just have to review and commit changes in your Travis project "
+"(`{}`).\n"
+"Also make sure you add the new `{}` file."
+msgstr ""
+
+#: ../snapcraft/internal/cache/_file.py:47
+msgid ""
+"Skipping caching of {!r} as the expected hash does not match the one provided"
+msgstr ""
+
+#: ../snapcraft/internal/cache/_file.py:61
+msgid "Unable to cache file {}."
+msgstr ""
+
+#: ../snapcraft/internal/cache/_file.py:75
+msgid "Cache hit for hash {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/cache/_snap.py:77
+msgid "Unable to cache snap {}."
+msgstr ""
+
+#: ../snapcraft/internal/cache/_snap.py:123
+msgid "Unable to prune snap {}."
+msgstr ""
+
+#: ../snapcraft/internal/deltas/_deltas.py:78
+msgid "source file {!r} does not exist, please specify a valid source file"
+msgstr ""
+
+#: ../snapcraft/internal/deltas/_deltas.py:83
+msgid "target file {!r} does not exist, please specify a valid target file"
+msgstr ""
+
+#: ../snapcraft/internal/deltas/_xdelta3.py:52
+msgid ""
+"xdelta3 delta diff generation:\n"
+"{}"
+msgstr ""
+
+#: ../snapcraft/internal/deltas/errors.py:27
+#, python-brace-format
+msgid ""
+"Could not generate {delta_format} delta.\n"
+"stdout log: {stdout_path}\n"
+"stdout: \n"
+"{stdout}\n"
+"---------stderr log: {stderr_path}\n"
+"stderr: \n"
+"{stderr}\n"
+"---------returncode: {returncode}"
+msgstr ""
+
+#: ../snapcraft/internal/deltas/errors.py:42
+#, python-brace-format
+msgid "delta saving is less than {delta_min_percentage}%."
+msgstr ""
+
+#: ../snapcraft/internal/deltas/errors.py:50
+msgid "delta_format must be set in subclass!"
+msgstr ""
+
+#: ../snapcraft/internal/deltas/errors.py:58
+msgid ""
+"delta_format must be a option in {format_options_list}.\n"
+"for now delta_format={delta_format!r}"
+msgstr ""
+
+#: ../snapcraft/internal/deltas/errors.py:67
+msgid "Cannot find the executable delta tool {delta_tool!r}."
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_clean.py:70
+msgid "Requested clean of {!r} which requires also cleaning the part{} {}"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_containers.py:45
+msgid "Using LXD remote {!r} from SNAPCRAFT_CONTAINER_BUILDS"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_containers.py:48
+msgid "Using default LXD remote because SNAPCRAFT_CONTAINER_BUILDS is set to 1"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_init.py:51
+msgid "{} already exists!"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_init.py:54
+msgid "snapcraft.yaml already exists!"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_init.py:57
+msgid ".snapcraft.yaml already exists!"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_packer.py:65
+msgid "Renaming stale build assertion t)o {}"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_packer.py:78
+msgid "Snapping {!r} …"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_packer.py:81
+msgid "Snapping {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_packer.py:100
+msgid "Failed to create snap {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_runner.py:68
+msgid "The repo backend is not returning the list of installed packages"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_runner.py:94
+msgid "{!r} already exists, skipping core setup"
+msgstr ""
+
+#. Now unpack
+#: ../snapcraft/internal/lifecycle/_runner.py:118
+msgid "Setting up {!r} in {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_runner.py:154
+msgid "Skipping {}"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_runner.py:155
+msgid "(already ran)"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_runner.py:194
+msgid "Requested {!r} of {!r} but there are unsatisfied prerequisites: {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/lifecycle/_runner.py:202
+msgid "{!r} has prerequisites that need to be staged: {}"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:87
+msgid "Debug mode enabled, dropping into a shell"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:101
+msgid "Running"
+msgstr ""
+
+#. Stopping takes a while and lxc doesn't print anything.
+#: ../snapcraft/internal/lxd/_containerbuild.py:103
+msgid "Stopping {}"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:133
+msgid "Architecture:"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:138
+msgid "Could not findarchitecture for container"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:143
+msgid ""
+"Failed to get container image info: {}\n"
+"It will not be recorded in manifest."
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:151
+#, python-brace-format
+msgid "`{command}` returned with exit code {returncode}, output: {output}"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:160
+msgid "Not in JSON format"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:215
+msgid "Waiting for a network connection…"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:227
+msgid "Network connection established"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:251
+msgid "Error connecting to {}"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:254
+msgid "Error querying {!r} snap: {}"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:279
+msgid "Making {} user-accessible"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:287
+msgid "Not re-injecting same version of {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:358
+msgid "Looking up assertion {}"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:363
+msgid "Adding assertion {}"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:383
+#: ../snapcraft/internal/lxd/_containerbuild.py:414
+msgid "You must have LXD installed in order to use cleanbuild."
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:386
+msgid "Something seems to be wrong with your installation of LXD."
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_containerbuild.py:417
+msgid ""
+"There are either no permissions or the remote {!r} does not exist.\n"
+"Verify the existing remotes by running `lxc remote list`\n"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_project.py:53
+msgid "Stopped"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_project.py:59
+msgid "The container could not be started."
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_project.py:61
+msgid ""
+"\n"
+"The files /etc/subuid and /etc/subgid need to contain this line for mounting "
+"the local folder:\n"
+"    root:1000:1\n"
+"Note: Add the line to both files, do not remove any existing lines.\n"
+"Restart lxd after making this change."
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_project.py:119
+msgid ""
+"You must have openssh-sftp-server installed to use a LXD remote on a "
+"different host.\n"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_project.py:124
+msgid "sftp-server seems to be installed but could not be run.\n"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_project.py:146
+msgid ""
+"The project folder could not be mounted.\n"
+"Fuse must be enabled on the LXD host.\n"
+"You can run the following command to enable it:\n"
+"echo Y | sudo tee /sys/module/fuse/parameters/userns_mounts"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_project.py:156
+msgid "Terminating {}"
+msgstr ""
+
+#: ../snapcraft/internal/lxd/_project.py:170
+msgid "Deleting {}"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:226
+msgid "Fetching stage-packages {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:237
+msgid "Unpacking stage-packages to {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:243
+msgid "Preparing to pull"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:249
+msgid "Pulling"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:273
+#: ../snapcraft/internal/pluginhandler/__init__.py:424
+#: ../snapcraft/internal/pluginhandler/__init__.py:491
+msgid "(already clean)"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:274
+msgid "Skipping cleaning pulled source for"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:278
+msgid "Cleaning pulled source for"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:294
+msgid "Preparing to build"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:301
+msgid "Building"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:354
+msgid "Skipping cleaning build for"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:358
+msgid "Cleaning build for"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:398
+msgid "Staging"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:425
+msgid "Skipping cleaning staging area for"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:429
+msgid "Cleaning staging area for"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:443
+msgid "Priming"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:492
+msgid "Skipping cleaning priming area for"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:496
+msgid "Cleaning priming area for"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:559
+msgid "Cleaning up for part {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:575
+msgid "{!r} is not a valid step for part {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:734
+msgid "Trying to organize file {key!r} to {dst!r}, but {dst!r} already exists"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/__init__.py:822
+msgid "path \"{}\" must be relative"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/_plugin_loader.py:43
+msgid "no plugin found in module {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/_plugin_loader.py:54
+msgid "properties failed to load for {}: {}"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/_plugin_loader.py:62
+msgid ""
+"DEPRECATED: the plugin used by part {!r} needs to be updated to accept "
+"project options in its initializer. See https://github.com/snapcore/"
+"snapcraft/blob/master/docs/plugins.md#initializing-a-plugin for more "
+"information"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/_plugin_loader.py:78
+msgid "Setting {!r} as the compilation target for {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/_plugin_loader.py:90
+#, python-format
+msgid "Loaded local plugin for %s"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/_plugin_loader.py:98
+#, python-format
+msgid "Searching for local plugin for %s"
+msgstr ""
+
+#: ../snapcraft/internal/pluginhandler/_plugin_loader.py:104
+msgid "unknown plugin: {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/grammar/_on.py:132
+msgid "selectors are missing"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/grammar/_on.py:140
+msgid "spaces are not allowed in the selectors"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/grammar/_processor.py:62
+msgid ""
+"expected grammar section to be either of type 'str' or type 'dict', but got "
+"{!r}"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/grammar/_processor.py:121
+msgid "'else' doesn't seem to correspond to an 'on' or 'try'"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/grammar/_processor.py:144
+msgid "found duplicate {!r} statements. These should be merged."
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/grammar/errors.py:38
+msgid "{!r} is not a valid 'on' clause"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/grammar/errors.py:47
+msgid "Unable to satisfy {statement!r}, failure forced"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/__init__.py:63
+msgid "Found a {!r} and a {!r}, please remove one."
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/_config.py:56
+msgid "'icon' must be either a .png or a .svg"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/_config.py:60
+msgid "Specified icon '{}' does not exist"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/_config.py:274
+msgid "{} on line {} of {}"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/_config.py:282
+msgid "\"confinement\" property not specified: defaulting to \"strict\""
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/_config.py:307
+msgid "'{}' referred to in the '{}' fileset but it is not in filesets"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/_env.py:71
+msgid ""
+"classic confinement requires the core snap to be installed. Install it by "
+"running `snap install core`."
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/_parts_config.py:66
+#: ../snapcraft/internal/parser.py:125
+msgid "DEPRECATED: Found a \"/\" in the name of the {!r} part"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/_parts_config.py:120
+msgid "circular dependency chain found in parts definition"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/_parts_config.py:155
+msgid "The part named {!r} is not defined in {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/_parts_config.py:173
+msgid "Setting up part {!r} with plugin {!r} and properties {!r}."
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/_schema.py:64
+msgid "snapcraft validation file is missing from installation path"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/errors.py:27
+#, python-brace-format
+msgid "maximum length is {validator_value}"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/errors.py:28
+#, python-brace-format
+msgid "minimum length is {validator_value}"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/errors.py:39
+msgid "epochs are positive integers followed by an optional asterisk"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/errors.py:44
+msgid "Multiple parts have the same alias defined: {aliases!r}"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/errors.py:55
+#, python-brace-format
+msgid ""
+"Could not find {snapcraft_yaml}. Are you sure you are in the right "
+"directory?\n"
+"To start a new project, use `snapcraft init`"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/errors.py:62
+#, python-brace-format
+msgid "Issues while validating {snapcraft_yaml}: {message}"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/errors.py:97
+#, python-brace-format
+msgid "Issue detected while analyzing snapcraft.yaml: {message}"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/errors.py:108
+msgid "The '{}' property does not match the required schema:"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/errors.py:177
+msgid "must be one of {}"
+msgstr ""
+
+#: ../snapcraft/internal/project_loader/errors.py:178
+msgid "or"
+msgstr ""
+
+#: ../snapcraft/internal/repo/_base.py:228
+msgid "Not fixing symlink {!r}: it's pointing to libc"
+msgstr ""
+
+#: ../snapcraft/internal/repo/_base.py:257
+#: ../snapcraft/internal/repo/_deb.py:447
+msgid "Copying needed target link from the system {}"
+msgstr ""
+
+#: ../snapcraft/internal/repo/_base.py:264
+#: ../snapcraft/internal/repo/_deb.py:454
+msgid "{} will be a dangling symlink"
+msgstr ""
+
+#: ../snapcraft/internal/repo/_base.py:292
+#: ../snapcraft/internal/repo/_deb.py:439
+msgid "Removing suid/guid from {}"
+msgstr ""
+
+#: ../snapcraft/internal/repo/_deb.py:124
+msgid "Cannot find 'dpkg' command needed to support multiarch"
+msgstr ""
+
+#: ../snapcraft/internal/repo/_deb.py:143
+msgid "Exception occurred: {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/repo/_deb.py:219
+msgid "Marking {!r} (and its dependencies) to be fetched"
+msgstr ""
+
+#: ../snapcraft/internal/repo/_deb.py:233
+#, python-format
+msgid "Installing build dependencies: %s"
+msgstr ""
+
+#: ../snapcraft/internal/repo/_deb.py:253
+msgid "Impossible to mark packages as auto-installed: {}"
+msgstr ""
+
+#: ../snapcraft/internal/repo/_deb.py:327
+msgid "Skipping priority essential packages: {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/repo/_deb.py:330
+msgid "Skipping blacklisted from manifest packages: {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/repo/errors.py:30
+#, python-brace-format
+msgid ""
+"Native builds aren't supported on {distro}. You can however use 'snapcraft "
+"cleanbuild' with a container."
+msgstr ""
+
+#: ../snapcraft/internal/repo/errors.py:39
+#, python-brace-format
+msgid "Could not find a required package in 'build-packages': {package}"
+msgstr ""
+
+#: ../snapcraft/internal/repo/errors.py:49
+msgid "The package {!r} was not found."
+msgstr ""
+
+#: ../snapcraft/internal/repo/errors.py:57
+msgid ""
+"\n"
+"You may need to add support for this architecture with 'dpkg --add-"
+"architecture {}'."
+msgstr ""
+
+#: ../snapcraft/internal/repo/errors.py:70
+msgid "Error while provisioning {package!r}"
+msgstr ""
+
+#: ../snapcraft/internal/repo/snaps.py:193
+msgid "snapd is not logged in, snap install commands will use sudo"
+msgstr ""
+
+#: ../snapcraft/internal/sources/__init__.py:191
+msgid "no handler to manage source ({})"
+msgstr ""
+
+#: ../snapcraft/internal/sources/__init__.py:193
+msgid "local source ({}) is not a directory"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_7z.py:36
+msgid "can't specify a source-tag for a 7z source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_7z.py:39
+msgid "can't specify a source-commit for a 7z source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_7z.py:42
+msgid "can't specify a source-branch for a 7z source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_bazaar.py:35
+msgid "can't specify a source-branch for a bzr source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_bazaar.py:38
+msgid "can't specify source-depth for a bzr source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_bazaar.py:41
+msgid "can't specify both source-tag and source-commit for a bzr source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_bazaar.py:45
+msgid "can't specify a source-checksum for a bzr source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_deb.py:37
+msgid "can't specify a source-tag for a deb source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_deb.py:40
+msgid "can't specify a source-commit for a deb source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_deb.py:43
+msgid "can't specify a source-branch for a deb source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_git.py:86
+msgid "can't specify both source-tag and source-branch for a git source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_git.py:90
+msgid "can't specify both source-tag and source-commit for a git source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_git.py:94
+msgid "can't specify both source-branch and source-commit for a git source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_git.py:98
+msgid "can't specify a source-checksum for a git source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_mercurial.py:35
+msgid "can't specify both source-tag and source-branch for a mercurial source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_mercurial.py:39
+msgid "can't specify both source-tag and source-commit for a mercurial source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_mercurial.py:43
+msgid ""
+"can't specify both source-branch and source-commit for a mercurial source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_mercurial.py:47
+msgid "can't specify source-depth for a mercurial source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_mercurial.py:50
+msgid "can't specify a source-checksum for a mercurial source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_rpm.py:36
+msgid "can't specify a source-tag for a rpm source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_rpm.py:39
+msgid "can't specify a source-commit for a rpm source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_rpm.py:42
+msgid "can't specify a source-branch for a rpm source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_subversion.py:36
+msgid "Can't specify source-tag OR source-branch for a Subversion source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_subversion.py:40
+msgid "Can't specify source-tag for a Subversion source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_subversion.py:43
+msgid "Can't specify source-branch for a Subversion source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_subversion.py:46
+msgid "can't specify source-depth for a Subversion source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_subversion.py:49
+msgid "can't specify a source-checksum for a Subversion source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_tar.py:37
+msgid "can't specify a source-tag for a tar source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_tar.py:40
+msgid "can't specify a source-commit for a tar source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_tar.py:43
+msgid "can't specify a source-branch for a tar source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_tar.py:46
+msgid "can't specify a source-depth for a tar source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_zip.py:35
+msgid "can't specify a source-tag for a zip source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_zip.py:38
+msgid "can't specify a source-branch for a zip source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/_zip.py:41
+msgid "can't specify a source-depth for a zip source"
+msgstr ""
+
+#: ../snapcraft/internal/sources/errors.py:36
+#, python-brace-format
+msgid ""
+"Expected the digest for source to be {expected}, but it was {calculated}"
+msgstr ""
+
+#: ../snapcraft/internal/sources/errors.py:45
+#, python-brace-format
+msgid ""
+"The {deb_file} used does not contain valid data. Ensure a proper deb file is "
+"passed for .deb files as sources."
+msgstr ""
+
+#: ../snapcraft/internal/common.py:80
+msgid "Could not decode output  for {!r} correctly"
+msgstr ""
+
+#: ../snapcraft/internal/common.py:126
+msgid "use 'project.arch_triplet'"
+msgstr ""
+
+#: ../snapcraft/internal/common.py:130
+msgid "use 'project.deb_arch'"
+msgstr ""
+
+#: ../snapcraft/internal/common.py:134
+msgid "use 'parallel_build_count'"
+msgstr ""
+
+#: ../snapcraft/internal/common.py:154
+msgid "PYTHONPATH cannot be set for {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/deprecations.py:48
+msgid "No deprecation notice with id {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/deprecations.py:56
+msgid ""
+"DEPRECATED: {}\n"
+"See {} for more information."
+msgstr ""
+
+#: ../snapcraft/internal/elf.py:162
+msgid "Only excluding libc libraries from the release"
+msgstr ""
+
+#: ../snapcraft/internal/elf.py:181
+msgid "Getting dependencies for {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/elf.py:187
+msgid "Unable to determine library dependencies for {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/elf.py:213
+msgid "Cannot load magic header detection"
+msgstr ""
+
+#: ../snapcraft/internal/elf.py:227
+msgid "Skipped link {!r} while finding dependencies"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:28
+msgid "Daughter classes should redefine this"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:44
+msgid ""
+"Failed to clean step {step!r}: Missing necessary state. This won't work "
+"until a complete clean has occurred."
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:55
+msgid ""
+"The {step!r} step of {part!r} is out of date:\n"
+"{report}In order to continue, please clean that part's {step!r} step by "
+"running:\n"
+"snapcraft clean {parts_names} -s {step}\n"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:73
+msgid "The {} part {} to have changed.\n"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:82
+msgid "The {} project {} to have changed.\n"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:89
+msgid "The {0!r} step for {1!r} needs to be run again, but {2} {3} on it.\n"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:118
+#, python-brace-format
+msgid ""
+"{message}\n"
+"Refer to the documentation at https://linuxcontainers.org/lxd/getting-"
+"started-cli."
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:126
+msgid ""
+"The following command failed to run: {command!r} exited with {exit_code}\n"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:137
+msgid ""
+"Snapcraft command failed in the container: {command!r} exited with "
+"{exit_code}\n"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:155
+msgid ""
+"The following files have been excluded by the `stage` keyword, but included "
+"by the `prime` keyword: {fileset!r}"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:163
+msgid ""
+"The specified command {command!r} defined in the app {app!r} does not exist "
+"or is not executable"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:174
+msgid ""
+"{remote!r} is not a valid LXD remote name.\n"
+"Colons, spaces and slashes can't be used.\n"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:185
+msgid "Invalid desktop file {filename!r}: {message}"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:195
+msgid ""
+"Cannot find the definition for part {part_name!r}.\n"
+"It may be a remote part, run `snapcraft update` to refresh the remote parts "
+"cache."
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:204
+msgid ""
+"Cannot find the part name {part_name!r} in the cache. Please run `snapcraft "
+"update` and try again.\n"
+"If it is indeed missing, consider going to https://wiki.ubuntu.com/snapcraft/"
+"parts to add it."
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:213
+#, python-brace-format
+msgid "Issue while loading part: {message}"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:221
+#, python-brace-format
+msgid ""
+"Issues while validating snapcraft.yaml: the 'plugin' keyword is missing for "
+"the {part_name} part."
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:228
+msgid ""
+"Parts {other_part_name!r} and {part_name!r} have the following file paths in "
+"common which have different contents:\n"
+"{file_paths}\n"
+"\n"
+"Snapcraft offers some capabilities to solve this by use of the following "
+"keywords:\n"
+"    - `filesets`\n"
+"    - `stage`\n"
+"    - `snap`\n"
+"    - `organize`\n"
+"\n"
+"Learn more about these part keywords by running `snapcraft help plugins`"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:251
+msgid ""
+"One or more required commands are missing, please install: "
+"{required_commands!r}"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:261
+msgid "Invalid wiki entry: {error!r}"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:270
+msgid ""
+"When creating gadget snaps you are required to provide a gadget.yaml file\n"
+"in the root of your snapcraft project\n"
+"\n"
+"Read more about gadget snaps and the gadget.yaml on:\n"
+"https://github.com/snapcore/snapd/wiki/Gadget-snap"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:278
+#, python-brace-format
+msgid "This plugin is outdated: {message}"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:286
+msgid "{command!r} failed."
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:291
+msgid "{cmd_list[0]!r} not found."
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:296
+msgid "Required path does not exist: {path!r}"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:301
+msgid "The path {value!r} set for {key!r} in {app!r} does not exist."
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:307
+msgid ""
+"Invalid pull properties specified by {plugin_name!r} plugin: {properties}"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:318
+msgid ""
+"Invalid build properties specified by {plugin_name!r} plugin: {properties}"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:328
+msgid "Error downloading stage packages for part {part_name!r}: {message}"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:337
+msgid "Unable to determine host OS ID"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:342
+msgid "Unable to determine host OS name"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:347
+msgid "Unable to determine host OS version ID"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:352
+msgid "Unable to determine host OS version codename"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:357
+#, python-brace-format
+msgid "Error parsing the container image info: {image_info}"
+msgstr ""
+
+#: ../snapcraft/internal/errors.py:366
+msgid ""
+"{elf_file!r} cannot be patched to function properly as a classic snap: "
+"{message}"
+msgstr ""
+
+#: ../snapcraft/internal/indicators.py:33
+msgid "Downloading {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/meta.py:299
+msgid "Determining the version from the project repo (version-script)."
+msgstr ""
+
+#: ../snapcraft/internal/meta.py:304
+msgid "The version-script produced no output"
+msgstr ""
+
+#: ../snapcraft/internal/meta.py:308
+msgid "The version-script failed to run (exit code {})"
+msgstr ""
+
+#: ../snapcraft/internal/meta.py:312
+msgid "Determining the version from the project repo (version: git)."
+msgstr ""
+
+#: ../snapcraft/internal/meta.py:318
+msgid "The version has been set to {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/meta.py:441
+msgid "does not exist (defined in the app {!r})"
+msgstr ""
+
+#: ../snapcraft/internal/meta.py:451
+msgid "missing 'Desktop Entry' section"
+msgstr ""
+
+#: ../snapcraft/internal/meta.py:454
+msgid "missing 'Exec' key"
+msgstr ""
+
+#: ../snapcraft/internal/meta.py:469
+msgid "Icon {} specified in desktop file {} not found in prime directory"
+msgstr ""
+
+#. If it doesn't exist it might be in the path
+#: ../snapcraft/internal/meta.py:487
+msgid "Checking that {!r} is in the $PATH"
+msgstr ""
+
+#: ../snapcraft/internal/meta.py:497
+msgid "hook {!r} is not executable"
+msgstr ""
+
+#: ../snapcraft/internal/parser.py:177
+msgid "Missing key in wiki entry: {}"
+msgstr ""
+
+#: ../snapcraft/internal/parser.py:179
+msgid "Processing origin {origin!r}"
+msgstr ""
+
+#: ../snapcraft/internal/parser.py:196
+msgid "Origin {origin!r} is missing a snapcraft.yaml file."
+msgstr ""
+
+#: ../snapcraft/internal/parser.py:200
+msgid "snapcraft.yaml error: {}"
+msgstr ""
+
+#: ../snapcraft/internal/parser.py:225
+msgid "Bad wiki entry, possibly malformed YAML for entry: {}"
+msgstr ""
+
+#: ../snapcraft/internal/parser.py:232
+msgid "\"parts\" missing from wiki entry: {}"
+msgstr ""
+
+#: ../snapcraft/internal/parser.py:236
+msgid "Duplicate part found in the wiki: {} in entry {}"
+msgstr ""
+
+#: ../snapcraft/internal/parser.py:250
+msgid "Parts {!r} are missing"
+msgstr ""
+
+#: ../snapcraft/internal/parser.py:305
+msgid "Parts {!r} are not defined in the parts entry"
+msgstr ""
+
+#: ../snapcraft/internal/parser.py:327
+msgid "Unable to access index: {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/parser.py:335
+msgid "{} wiki errors found!"
+msgstr ""
+
+#: ../snapcraft/internal/parser.py:355
+msgid "Writing parts list to {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/remote_parts.py:51
+msgid "Maintainer: {!r}"
+msgstr ""
+
+#: ../snapcraft/internal/remote_parts.py:52
+msgid "Description: {}"
+msgstr ""
+
+#. apt search does not return error, we probably shouldn't either.
+#: ../snapcraft/internal/remote_parts.py:69
+msgid ""
+"No matches found, try to run `snapcraft update` to refresh the remote parts "
+"cache."
+msgstr ""
+
+#: ../snapcraft/internal/remote_parts.py:108
+msgid "The parts cache is already up to date."
+msgstr ""
+
+#: ../snapcraft/internal/remote_parts.py:113
+msgid "Downloading parts list"
+msgstr ""
+
+#: ../snapcraft/plugins/_python/_pip.py:158
+msgid "Fetching and installing pip…"
+msgstr ""
+
+#: ../snapcraft/plugins/_python/_pip.py:177
+msgid "Fetching and installing wheel…"
+msgstr ""
+
+#: ../snapcraft/plugins/_python/_pip.py:183
+msgid "Fetching and installing setuptools…"
+msgstr ""
+
+#: ../snapcraft/plugins/_python/errors.py:29
+#, python-brace-format
+msgid "Unable to find {python_version}, searched: {search_paths}"
+msgstr ""
+
+#: ../snapcraft/plugins/_python/errors.py:40
+#, python-brace-format
+msgid "Unable to find user site packages: {site_dir_glob}"
+msgstr ""
+
+#: ../snapcraft/plugins/_python/errors.py:48
+#, python-brace-format
+msgid "Unable to find site.py: {site_py_glob}"
+msgstr ""
+
+#: ../snapcraft/plugins/_python/errors.py:56
+msgid "Pip packages output isn't valid json: {json!r}"
+msgstr ""
+
+#: ../snapcraft/plugins/_python/errors.py:64
+msgid "Pip packages json missing {field!r} field: {json!r}"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/ros2.py:97
+msgid "Tools already installed. Skipping…"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/ros2.py:101
+msgid "ros2 already fetched. Skipping…"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/ros2.py:116
+msgid "ros2 already built. Skipping…"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/ros2.py:151
+msgid "Preparing to fetch vcstool…"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/ros2.py:156
+msgid "Fetching vcstool…"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/ros2.py:159
+msgid "Installing vcstool…"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/ros2.py:168
+msgid "Fetching ros2 sources…"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/ros2.py:174
+msgid "Building ros2 underlay…"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/rosdep.py:35
+msgid "rosdep cannot resolve {dependency!r} into a valid dependency"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/rosdep.py:43
+msgid ""
+"Received unexpected result from rosdep when trying to resolve {dependency!"
+"r}:\n"
+"{output}"
+msgstr ""
+
+#. rosdep isn't necessarily a dependency of the project, so we'll unpack
+#. it off to the side and use it from there.
+#: ../snapcraft/plugins/_ros/rosdep.py:78
+msgid "Preparing to fetch rosdep…"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/rosdep.py:82
+msgid "Fetching rosdep…"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/rosdep.py:85
+msgid "Installing rosdep…"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/rosdep.py:88
+msgid "Initializing rosdep database…"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/rosdep.py:94
+msgid ""
+"Error initializing rosdep database:\n"
+"{}"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/rosdep.py:96
+msgid "Updating rosdep database…"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/rosdep.py:102
+msgid ""
+"Error updating rosdep database:\n"
+"{}"
+msgstr ""
+
+#: ../snapcraft/plugins/_ros/rosdep.py:131
+msgid "Unable to find Catkin package \"{}\""
+msgstr ""
+
+#. FIXME: Remove this warning once the plugin (and indeed ROS2) is
+#. considered stable
+#: ../snapcraft/plugins/ament.py:101
+msgid ""
+"The ament plugin is currently in beta, its API may break. Use at your own "
+"risk"
+msgstr ""
+
+#: ../snapcraft/plugins/autotools.py:91
+msgid "Unsupported installation method: \"{}\""
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:108
+msgid ""
+"Package {dependency!r} isn't a valid system dependency. Did you forget to "
+"add it to catkin-packages? If not, add the Ubuntu package containing it to "
+"stage-packages until you can get it intothe rosdep database."
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:120
+msgid ""
+"Package {dependency!r} resolved to an unsupported type of dependency: "
+"{dependency_type!r}"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:278
+msgid "source-space cannot be the root of the Catkin workspace"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:283
+msgid "Unsupported rosdistro: {!r}. The supported ROSdistributions are {}"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:389
+msgid "Unable to find package path: \"{}\""
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:402
+msgid "Requested underlay ({!r}) does not point to a valid directory"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:408
+msgid "Requested underlay ({!r}) does not contain a setup.sh"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:454
+msgid "Unable to determine system dependency for roscore"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:467
+msgid "Preparing to fetch apt dependencies…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:472
+msgid "Fetching apt dependencies…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:477
+msgid "Failed to fetch apt dependencies: {}"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:480
+msgid "Installing apt dependencies…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:487
+msgid "Fetching pip dependencies…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:490
+msgid "Installing pip dependencies…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:589
+msgid "Preparing to build Catkin packages…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:592
+msgid "Building Catkin packages…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:595
+msgid "Cleaning up newly installed Catkin packages…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:766
+msgid "Determining system dependencies for Catkin packages…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:808
+msgid "Satisfied dependency {!r} in underlay"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:849
+msgid "Updating workspace…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:854
+msgid "Unable to find Catkin package {package_name!r}"
+msgstr ""
+
+#. Since we support building older ROS distros we need to make sure we
+#. use the corresponding compiler versions, so they can't be
+#. build-packages. We'll just download them to another place and use
+#. them from there.
+#: ../snapcraft/plugins/catkin.py:877
+msgid "Preparing to fetch compilers…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:882
+msgid "Fetching compilers…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:885
+msgid "Installing compilers…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:929
+msgid "Unable to determine gcc version: {}"
+msgstr ""
+
+#. With the introduction of an underlay, we no longer know where Catkin
+#. is. Let's just fetch/unpack our own, and use it.
+#: ../snapcraft/plugins/catkin.py:958
+msgid "Preparing to fetch catkin…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:961
+msgid "Fetching catkin…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:964
+msgid "Installing catkin…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:1007
+msgid "nothing found in {!r}"
+msgstr ""
+
+#. wstool isn't a dependency of the project, so we'll unpack it
+#. somewhere else, and use it from there.
+#: ../snapcraft/plugins/catkin.py:1025
+msgid "Preparing to fetch wstool…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:1028
+msgid "Fetching wstool…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:1031
+msgid "Installing wstool…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:1034
+msgid "Initializing workspace (if necessary)…"
+msgstr ""
+
+#: ../snapcraft/plugins/catkin.py:1042
+msgid ""
+"Error initializing workspace:\n"
+"{}"
+msgstr ""
+
+#. Beta Warning
+#. Remove this comment and warning once catkin tools plugin is stable.
+#: ../snapcraft/plugins/catkin_tools.py:47
+msgid ""
+"The catkin tools plugin is currently in beta, its API may break. Use at your "
+"own risk"
+msgstr ""
+
+#: ../snapcraft/plugins/copy.py:78
+msgid ""
+"DEPRECATED: The 'copy' plugin's functionality has been replaced by the "
+"'dump' plugin, and it will soon be removed."
+msgstr ""
+
+#: ../snapcraft/plugins/copy.py:97
+msgid "no matches for {!r}"
+msgstr ""
+
+#: ../snapcraft/plugins/copy.py:135 ../snapcraft/file_utils.py:148
+msgid "Cannot overwrite non-directory {!r} with directory {!r}"
+msgstr ""
+
+#: ../snapcraft/plugins/dotnet.py:96
+msgid "This plugin does not support architecture {}"
+msgstr ""
+
+#: ../snapcraft/plugins/dump.py:70
+msgid "{!r} is a broken symlink pointing outside the snap"
+msgstr ""
+
+#: ../snapcraft/plugins/go.py:144
+msgid "Please consider setting `go-importpath` for the {!r} part"
+msgstr ""
+
+#. Fetch and run godeps
+#: ../snapcraft/plugins/godeps.py:123
+msgid "Fetching godeps…"
+msgstr ""
+
+#: ../snapcraft/plugins/godeps.py:126
+msgid "Obtaining project dependencies…"
+msgstr ""
+
+#: ../snapcraft/plugins/gradle.py:109 ../snapcraft/plugins/maven.py:107
+msgid "Could not find any built jar files for part"
+msgstr ""
+
+#: ../snapcraft/plugins/jhbuild.py:256
+msgid "Pulling modules"
+msgstr ""
+
+#: ../snapcraft/plugins/jhbuild.py:262
+msgid "Building modules"
+msgstr ""
+
+#: ../snapcraft/plugins/jhbuild.py:266
+msgid "Fixing symbolic links"
+msgstr ""
+
+#: ../snapcraft/plugins/jhbuild.py:295
+msgid "Building JHBuild"
+msgstr ""
+
+#: ../snapcraft/plugins/kbuild.py:145
+msgid "Unable to access {}: {}"
+msgstr ""
+
+#: ../snapcraft/plugins/kbuild.py:151
+msgid "Malformed debian.env, cannot extract branch name"
+msgstr ""
+
+#: ../snapcraft/plugins/kbuild.py:179
+msgid "Unable to access {!r}: {}"
+msgstr ""
+
+#: ../snapcraft/plugins/kernel.py:190
+msgid "Cross compiling kernel target {!r}"
+msgstr ""
+
+#: ../snapcraft/plugins/kernel.py:256
+msgid "Unable to determine mime type for {!r}: {}"
+msgstr ""
+
+#: ../snapcraft/plugins/kernel.py:270
+msgid "initrd file type is unsupported: {!r}"
+msgstr ""
+
+#: ../snapcraft/plugins/kernel.py:282
+msgid "Generating driver initrd for kernel release: {}"
+msgstr ""
+
+#: ../snapcraft/plugins/kernel.py:338
+msgid "No kernel release version info found at {!r}"
+msgstr ""
+
+#: ../snapcraft/plugins/kernel.py:353
+msgid ""
+"kernel build did not output a vmlinux binary in top level dir, expected {!r}"
+msgstr ""
+
+#: ../snapcraft/plugins/kernel.py:364
+msgid "kernel build did not output a System.map in top level dir"
+msgstr ""
+
+#: ../snapcraft/plugins/kernel.py:379
+msgid "No match for dtb {!r} was found"
+msgstr ""
+
+#. check the resulting .config has all the necessary options
+#: ../snapcraft/plugins/kernel.py:402
+msgid ""
+"**** WARNING **** WARNING **** WARNING **** WARNING ****\n"
+"Your kernel config is missing some features that Ubuntu Core recommends or "
+"requires.\n"
+"While we will not prevent you from building this kernel snap, we suggest you "
+"take a look at these:\n"
+msgstr ""
+
+#. check all required_boot[] items are either builtin or part of initrd
+#: ../snapcraft/plugins/kernel.py:433
+msgid ""
+"**** WARNING **** WARNING **** WARNING **** WARNING ****\n"
+"The following features are deemed boot essential for\n"
+"ubuntu core, consider making them static[=Y] or adding\n"
+"the corresponding module to initrd:\n"
+msgstr ""
+
+#: ../snapcraft/plugins/nodejs.py:134
+msgid "EXPERIMENTAL: use of yarn to manage packages is experimental"
+msgstr ""
+
+#: ../snapcraft/plugins/nodejs.py:277
+msgid "architecture not supported ({})"
+msgstr ""
+
+#: ../snapcraft/plugins/python.py:75
+msgid "Unsupported python version: {python_version!r}"
+msgstr ""
+
+#: ../snapcraft/plugins/python2.py:63
+msgid ""
+"DEPRECATED: The 'python2' plugin's functionality has been replaced by the "
+"'python' plugin, and it will soon be removed."
+msgstr ""
+
+#: ../snapcraft/plugins/python3.py:63
+msgid ""
+"DEPRECATED: The 'python3' plugin's functionality has been replaced by the "
+"'python' plugin, and it will soon be removed."
+msgstr ""
+
+#: ../snapcraft/plugins/qmake.py:100
+msgid "Unsupported Qt version: {!r}"
+msgstr ""
+
+#. Beta Warning
+#. Remove this comment and warning once ruby plugin is stable.
+#: ../snapcraft/plugins/ruby.py:84
+msgid ""
+"The ruby plugin is currently in beta, its API may break. Use at your own risk"
+msgstr ""
+
+#: ../snapcraft/plugins/ruby.py:108
+msgid "Fetching ruby {}…"
+msgstr ""
+
+#: ../snapcraft/plugins/ruby.py:111
+msgid "Building/installing ruby…"
+msgstr ""
+
+#: ../snapcraft/plugins/ruby.py:150
+msgid "Expected a single rbconfig.rb, but found {}"
+msgstr ""
+
+#: ../snapcraft/plugins/ruby.py:158
+msgid "Expected a single Ruby version, but found {}"
+msgstr ""
+
+#: ../snapcraft/plugins/ruby.py:194
+msgid "Installing gems…"
+msgstr ""
+
+#: ../snapcraft/plugins/rust.py:159
+msgid ""
+"{!r} is not supported as a target architecture when cross-compiling with the "
+"rust plugin"
+msgstr ""
+
+#: ../snapcraft/plugins/rust.py:209
+msgid "{} is not a valid rust channel"
+msgstr ""
+
+#: ../snapcraft/plugins/tar_content.py:48
+msgid ""
+"DEPRECATED: The 'tar-content' plugin's functionality has been replaced by "
+"the 'dump' plugin, and it will soon be removed."
+msgstr ""
+
+#: ../snapcraft/plugins/tar_content.py:54
+msgid "path {!r} must be relative"
+msgstr ""
+
+#: ../snapcraft/scripts/generate_reference.py:54
+msgid "Directory {} does not exist."
+msgstr ""
+
+#: ../snapcraft/scripts/generate_reference.py:110
+msgid "specify output file, default: {}"
+msgstr ""
+
+#: ../snapcraft/scripts/generate_reference.py:120
+msgid "Aborted."
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:64
+msgid "Root macaroon not in the config file"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:68 ../snapcraft/storeapi/__init__.py:233
+msgid "Unbound discharge not in the config file"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:176
+msgid "Invalid root macaroon"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:302
+msgid "Already downloaded {} at {}"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:305
+msgid "Downloading {}"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:330
+msgid "Redirections for {!r}: {}"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:337
+msgid "Error while downloading: {!r}. Retries left to download: {!r}."
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:346
+msgid "Successfully downloaded {} at {}"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:418
+msgid "Failed to get unbound discharge: {}"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:431
+msgid "Failed to refresh unbound discharge: {}"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:482 ../snapcraft/_store.py:763
+msgid "Getting details for {}"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:540
+msgid "Failed to get macaroon"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:693
+msgid "Invalid response from the server when pushing validations: {} {}"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:699 ../snapcraft/storeapi/__init__.py:721
+msgid "Invalid response from the server"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:715
+msgid "Invalid response from the server when getting {}: {} {}"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:798
+msgid ""
+"Invalid response from the server on channel closing:\n"
+"{} {}\n"
+"{}"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:820 ../snapcraft/storeapi/__init__.py:841
+msgid "Processing…"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:821
+msgid "Ready to release!"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:822
+msgid "Will need manual review…"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:823
+msgid "Error while processing delta…"
+msgstr ""
+
+#: ../snapcraft/storeapi/__init__.py:824
+msgid "Error while processing…"
+msgstr ""
+
+#: ../snapcraft/storeapi/_upload.py:58
+msgid "Pushing {} "
+msgstr ""
+
+#: ../snapcraft/storeapi/_upload.py:76
+msgid "An unexpected error was found while uploading files: {!r}."
+msgstr ""
+
+#. Messages and warnings.
+#: ../snapcraft/storeapi/constants.py:34
+msgid "Developer has not signed agreement."
+msgstr ""
+
+#: ../snapcraft/storeapi/constants.py:35
+msgid "Developer profile is missing short namespace."
+msgstr ""
+
+#: ../snapcraft/storeapi/constants.py:37
+msgid "You must agree to the developer terms and conditions to upload snaps."
+msgstr ""
+
+#: ../snapcraft/storeapi/constants.py:39
+msgid ""
+"You need to set a username. It will appear in the developer field alongside "
+"the other details for your snap. Please visit {} and login again."
+msgstr ""
+
+#: ../snapcraft/storeapi/constants.py:43
+msgid "Do you agree to the developer terms and conditions. ({})? [y/N] "
+msgstr ""
+
+#: ../snapcraft/storeapi/constants.py:45
+msgid ""
+"Unexpected error encountered during signing the developer terms and "
+"conditions. Please visit {} and agree to the terms and conditions before "
+"continuing."
+msgstr ""
+
+#: ../snapcraft/storeapi/constants.py:49
+msgid ""
+"We strongly recommend enabling multi-factor authentication: https://help."
+"ubuntu.com/community/SSO/FAQs/2FA"
+msgstr ""
+
+#: ../snapcraft/storeapi/constants.py:51
+msgid "Invalid credentials supplied."
+msgstr ""
+
+#: ../snapcraft/storeapi/constants.py:52
+msgid "Problems encountered when authenticating your credentials."
+msgstr ""
+
+#: ../snapcraft/storeapi/constants.py:54
+msgid "Unexpected error when obtaining your account information."
+msgstr ""
+
+#: ../snapcraft/storeapi/errors.py:34
+#, python-brace-format
+msgid "Invalid credentials: {message}. Have you run \"snapcraft login\"?"
+msgstr ""
+
+#: ../snapcraft/storeapi/errors.py:48
+#, python-brace-format
+msgid "There seems to be a network error: {error}"
+msgstr ""
+
+#: ../snapcraft/storeapi/errors.py:57
+msgid "Snap {name!r} for {arch!r} cannot be found in the {channel!r} channel."
+msgstr ""
+
+#: ../snapcraft/storeapi/errors.py:60
+msgid "Snap {name!r} was not found in the {channel!r} channel."
+msgstr ""
+
+#: ../snapcraft/storeapi/errors.py:62
+msgid "Snap {name!r} for {arch!r} was not found in {series!r} series."
+msgstr ""
+
+#: ../snapcraft/storeapi/errors.py:63
+msgid "Snap {name!r} was not found in {series!r} series."
+msgstr ""
+
+#: ../snapcraft/storeapi/errors.py:65
+msgid "Snap {name!r} was not found."
+msgstr ""
+
+#: ../snapcraft/storeapi/errors.py:82
+#, python-brace-format
+msgid "SHA512 checksum for {path} is not {expected_sha}."
+msgstr ""
+
+#: ../snapcraft/storeapi/errors.py:90
+msgid "Authentication error: {}."
+msgstr ""
+
+#: ../snapcraft/_baseplugin.py:56
+msgid ""
+"Use of pull-properties in the schema is deprecated.\n"
+"Plugins should now implement get_pull_properties"
+msgstr ""
+
+#: ../snapcraft/_baseplugin.py:67
+msgid ""
+"Use of build-properties in the schema is deprecated.\n"
+"Plugins should now implement get_build_properties"
+msgstr ""
+
+#: ../snapcraft/_baseplugin.py:183
+msgid ""
+"The plugin used by {!r} does not support cross-compiling to a different "
+"target architecture"
+msgstr ""
+
+#: ../snapcraft/_store.py:71
+msgid "Login failed."
+msgstr ""
+
+#: ../snapcraft/_store.py:129
+msgid ""
+"Enter your Ubuntu One e-mail address and password.\n"
+"If you do not have an Ubuntu One account, you can create one at https://"
+"dashboard.snapcraft.io/openid/login"
+msgstr ""
+
+#: ../snapcraft/_store.py:132
+msgid "Email: "
+msgstr ""
+
+#: ../snapcraft/_store.py:133
+msgid "Password: "
+msgstr ""
+
+#: ../snapcraft/_store.py:142
+msgid "Second-factor auth: "
+msgstr ""
+
+#: ../snapcraft/_store.py:168
+msgid "No valid credentials found. Have you run \"snapcraft login\"?"
+msgstr ""
+
+#. Presenting only approved snap registrations, which means name
+#. disputes will be displayed/sorted some other way.
+#: ../snapcraft/_store.py:185 ../snapcraft/_store.py:734
+msgid "Approved"
+msgstr ""
+
+#: ../snapcraft/_store.py:189
+msgid "There are no registered snaps for series {!r}."
+msgstr ""
+
+#: ../snapcraft/_store.py:195 ../snapcraft/_store.py:217
+#: ../snapcraft/_store.py:253 ../snapcraft/_store.py:733
+msgid "Name"
+msgstr ""
+
+#: ../snapcraft/_store.py:195
+msgid "Since"
+msgstr ""
+
+#: ../snapcraft/_store.py:195
+msgid "Visibility"
+msgstr ""
+
+#: ../snapcraft/_store.py:196
+msgid "Price"
+msgstr ""
+
+#: ../snapcraft/_store.py:196
+msgid "Notes"
+msgstr ""
+
+#: ../snapcraft/_store.py:212
+msgid "Select a key:"
+msgstr ""
+
+#: ../snapcraft/_store.py:217
+msgid "Number"
+msgstr ""
+
+#: ../snapcraft/_store.py:217 ../snapcraft/_store.py:253
+msgid "SHA3-384 fingerprint"
+msgstr ""
+
+#: ../snapcraft/_store.py:223
+msgid "Key number: "
+msgstr ""
+
+#: ../snapcraft/_store.py:302
+msgid "Registering key …"
+msgstr ""
+
+#: ../snapcraft/_store.py:307
+msgid "Done. The key \"{}\" ({}) may be used to sign your assertions."
+msgstr ""
+
+#: ../snapcraft/_store.py:312
+msgid "Registering {}."
+msgstr ""
+
+#: ../snapcraft/_store.py:342
+msgid "The file {!r} does not exist."
+msgstr ""
+
+#: ../snapcraft/_store.py:363
+msgid "A signed build assertion for this snap already exists."
+msgstr ""
+
+#: ../snapcraft/_store.py:380
+msgid "Build assertion {} saved to disk."
+msgstr ""
+
+#: ../snapcraft/_store.py:385
+msgid "Build assertion {} pushed to the Store."
+msgstr ""
+
+#: ../snapcraft/_store.py:395
+#, python-format
+msgid "Pushing metadata to the Store (force=%s)"
+msgstr ""
+
+#: ../snapcraft/_store.py:413
+msgid "The metadata has been pushed"
+msgstr ""
+
+#: ../snapcraft/_store.py:431
+msgid "Preparing to push {!r} to the store."
+msgstr ""
+
+#: ../snapcraft/_store.py:447
+msgid ""
+"Error generating delta: {}\n"
+"Falling back to pushing full snap…"
+msgstr ""
+
+#: ../snapcraft/_store.py:453
+msgid ""
+"Unable to push delta to store: {}\n"
+"Falling back to pushing full snap…"
+msgstr ""
+
+#: ../snapcraft/_store.py:459
+msgid "Revision {!r} of {!r} created."
+msgstr ""
+
+#: ../snapcraft/_store.py:482
+msgid "Found cached source snap {}."
+msgstr ""
+
+#: ../snapcraft/_store.py:498
+msgid "Pushing delta {}."
+msgstr ""
+
+#: ../snapcraft/_store.py:520
+msgid "Unable to remove delta {}."
+msgstr ""
+
+#: ../snapcraft/_store.py:526
+msgid "The {!r} channel is now open."
+msgstr ""
+
+#: ../snapcraft/_store.py:529
+msgid "The {} and {!r} channels are now open."
+msgstr ""
+
+#: ../snapcraft/_store.py:553
+#, python-format
+msgid "Unexpected channel info: %r in channel %s"
+msgstr ""
+
+#: ../snapcraft/_store.py:614
+msgid "Expires at"
+msgstr ""
+
+#: ../snapcraft/_store.py:615
+msgid "Track"
+msgstr ""
+
+#: ../snapcraft/_store.py:615 ../snapcraft/_store.py:697
+msgid "Arch"
+msgstr ""
+
+#: ../snapcraft/_store.py:615
+msgid "Channel"
+msgstr ""
+
+#: ../snapcraft/_store.py:616 ../snapcraft/_store.py:698
+msgid "Version"
+msgstr ""
+
+#: ../snapcraft/_store.py:616 ../snapcraft/_store.py:733
+msgid "Revision"
+msgstr ""
+
+#: ../snapcraft/_store.py:642
+msgid "The {} channel is now closed."
+msgstr ""
+
+#: ../snapcraft/_store.py:644
+msgid "The {} and {} channels are now closed."
+msgstr ""
+
+#: ../snapcraft/_store.py:697
+msgid "Rev."
+msgstr ""
+
+#: ../snapcraft/_store.py:697
+msgid "Uploaded"
+msgstr ""
+
+#: ../snapcraft/_store.py:698
+msgid "Channels"
+msgstr ""
+
+#: ../snapcraft/_store.py:733
+msgid "Required"
+msgstr ""
+
+#: ../snapcraft/_store.py:738
+msgid "There are no validations for snap {!r}"
+msgstr ""
+
+#: ../snapcraft/_store.py:805
+msgid "Signing {} assertion for {}"
+msgstr ""
+
+#: ../snapcraft/config.py:87
+msgid "Using local configuration ({!r}), changes will not be persisted."
+msgstr ""
+
+#: ../snapcraft/file_utils.py:84
+#, python-brace-format
+msgid "Unable to open {path} for writing: {error}"
+msgstr ""
+
+#: ../snapcraft/file_utils.py:126
+#, python-brace-format
+msgid "Unable to chown {destination}: {error}"
+msgstr ""
+
+#: ../snapcraft/file_utils.py:142
+msgid "{!r} is not a directory"
+msgstr ""
+
+#: ../snapcraft/file_utils.py:193
+msgid "Unable to chown {}: {}"
+msgstr ""
+
+#: ../snapcraft/file_utils.py:209
+msgid "command must be a string."
+msgstr ""
+
+#: ../snapcraft/formatting_utils.py:43
+msgid "Failed to format '${}': no paths supplied"
+msgstr ""

@@ -16,6 +16,8 @@
 
 from snapcraft.internal import errors
 
+from gettext import gettext as _
+
 
 class GrammarError(errors.SnapcraftError):
     """Base class for grammar-related errors."""
@@ -33,7 +35,8 @@ class GrammarSyntaxError(GrammarError):
 class OnStatementSyntaxError(GrammarSyntaxError):
 
     def __init__(self, on_statement, *, message=None):
-        components = ["{!r} is not a valid 'on' clause".format(on_statement)]
+        components = [_("{!r} is not a valid 'on' clause").format(
+            on_statement)]
         if message:
             components.append(message)
         super().__init__(message=': '.join(components))
@@ -41,7 +44,7 @@ class OnStatementSyntaxError(GrammarSyntaxError):
 
 class UnsatisfiedStatementError(GrammarError):
 
-    fmt = 'Unable to satisfy {statement!r}, failure forced'
+    fmt = _('Unable to satisfy {statement!r}, failure forced')
 
     def __init__(self, statement):
         super().__init__(statement=statement)

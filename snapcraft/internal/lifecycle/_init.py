@@ -19,6 +19,8 @@ from textwrap import dedent
 
 from snapcraft.internal import errors
 
+from gettext import gettext as _
+
 
 _TEMPLATE_YAML = dedent("""\
     name: my-snap-name # you probably want to 'snapcraft register <name>'
@@ -46,13 +48,13 @@ def init():
 
     if os.path.exists(snapcraft_yaml_path):
         raise errors.SnapcraftEnvironmentError(
-            '{} already exists!'.format(snapcraft_yaml_path))
+            _('{} already exists!').format(snapcraft_yaml_path))
     elif os.path.exists('snapcraft.yaml'):
         raise errors.SnapcraftEnvironmentError(
-            'snapcraft.yaml already exists!')
+            _('snapcraft.yaml already exists!'))
     elif os.path.exists('.snapcraft.yaml'):
         raise errors.SnapcraftEnvironmentError(
-            '.snapcraft.yaml already exists!')
+            _('.snapcraft.yaml already exists!'))
     yaml = _TEMPLATE_YAML
     with contextlib.suppress(FileExistsError):
         os.mkdir(os.path.dirname(snapcraft_yaml_path))

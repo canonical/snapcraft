@@ -23,6 +23,8 @@ from ._options import add_build_options, get_project_options
 from . import echo
 from . import env
 
+from gettext import gettext as _
+
 
 def _execute(command, parts, **kwargs):
     project_options = get_project_options(**kwargs)
@@ -46,9 +48,9 @@ def lifecyclecli(ctx, **kwargs):
 def init():
     """Initialize a snapcraft project."""
     snapcraft_yaml_path = lifecycle.init()
-    echo.info('Created {}.'.format(snapcraft_yaml_path))
+    echo.info(_('Created {}.').format(snapcraft_yaml_path))
     echo.info(
-        'Edit the file to your liking or run `snapcraft` to get started')
+        _('Edit the file to your liking or run `snapcraft` to get started'))
 
 
 @lifecyclecli.command()
@@ -115,7 +117,7 @@ def prime(parts, **kwargs):
 @lifecyclecli.command()
 @add_build_options()
 @click.argument('directory', required=False)
-@click.option('--output', '-o', help='path to the resulting snap.')
+@click.option('--output', '-o', help=_('path to the resulting snap.'))
 def snap(directory, output, **kwargs):
     """Create a snap.
 
@@ -138,12 +140,12 @@ def snap(directory, output, **kwargs):
     else:
         snap_name = lifecycle.snap(
             project_options, directory=directory, output=output)
-        echo.info('Snapped {}'.format(snap_name))
+        echo.info(_('Snapped {}').format(snap_name))
 
 
 @lifecyclecli.command()
 @click.argument('directory')
-@click.option('--output', '-o', help='path to the resulting snap.')
+@click.option('--output', '-o', help=_('path to the resulting snap.'))
 def pack(directory, output, **kwargs):
     """Create a snap from a directory holding a valid snap.
 
@@ -157,7 +159,7 @@ def pack(directory, output, **kwargs):
 
     """
     snap_name = lifecycle.pack(directory, output)
-    echo.info('Snapped {}'.format(snap_name))
+    echo.info(_('Snapped {}').format(snap_name))
 
 
 @lifecyclecli.command()
@@ -165,8 +167,8 @@ def pack(directory, output, **kwargs):
 @click.argument('parts', nargs=-1, metavar='<part>...', required=False)
 @click.option('--step', '-s',
               type=click.Choice(['pull', 'build', 'stage', 'prime', 'strip']),
-              help='only clean the specified step and those that '
-                   'depend on it.')
+              help=_('only clean the specified step and those that '
+                     'depend on it.'))
 def clean(parts, step, **kwargs):
     """Remove content - cleans downloads, builds or install artifacts.
 
@@ -186,8 +188,8 @@ def clean(parts, step, **kwargs):
     else:
         step = step or 'pull'
         if step == 'strip':
-            echo.warning('DEPRECATED: Use `prime` instead of `strip` '
-                         'as the step to clean')
+            echo.warning(_('DEPRECATED: Use `prime` instead of `strip` '
+                         'as the step to clean'))
             step = 'prime'
         lifecycle.clean(project_options, parts, step)
 
@@ -195,9 +197,10 @@ def clean(parts, step, **kwargs):
 @lifecyclecli.command()
 @add_build_options()
 @click.option('--remote', metavar='<remote>',
-              help='Use a specific lxd remote instead of a local container.')
+              help=_('Use a specific lxd remote '
+                     'instead of a local container.'))
 @click.option('--debug', is_flag=True,
-              help='Shells into the environment if the build fails.')
+              help=_('Shells into the environment if the build fails.'))
 def cleanbuild(remote, debug, **kwargs):
     """Create a snap using a clean environment managed by lxd.
 

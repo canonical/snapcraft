@@ -35,6 +35,8 @@ from ._python_finder import (
 )
 from . import errors
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
@@ -153,7 +155,7 @@ class Pip:
         # Check to see if we have our own pip. If not, we need to use the pip
         # on the host (installed via build-packages) to grab our own.
         if not self._is_pip_installed():
-            logger.info('Fetching and installing pip...')
+            logger.info(_('Fetching and installing pip…'))
 
             real_python_home = self._python_home
 
@@ -172,13 +174,13 @@ class Pip:
 
     def _ensure_wheel_installed(self):
         if not self._is_wheel_installed():
-            logger.info('Fetching and installing wheel...')
+            logger.info(_('Fetching and installing wheel…'))
             self.download({'wheel'})
             self.install({'wheel'}, ignore_installed=True)
 
     def _ensure_setuptools_installed(self):
         if not self._is_setuptools_installed():
-            logger.info('Fetching and installing setuptools...')
+            logger.info(_('Fetching and installing setuptools…'))
             self.download({'setuptools'})
             self.install({'setuptools'}, ignore_installed=True)
 

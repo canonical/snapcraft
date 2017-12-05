@@ -20,6 +20,8 @@ import snapcraft
 from snapcraft import formatting_utils
 from snapcraft.internal import common, elf
 
+from gettext import gettext as _
+
 
 def runtime_env(root, arch_triplet):
     """Set the environment variables required for running binaries."""
@@ -66,8 +68,8 @@ def build_env(root, snap_name, confinement, arch_triplet,
     if confinement == 'classic':
         if not core_dynamic_linker:
             raise snapcraft.internal.errors.SnapcraftEnvironmentError(
-                'classic confinement requires the core snap to be installed. '
-                'Install it by running `snap install core`.')
+                _('classic confinement requires the core snap to be '
+                  'installed. Install it by running `snap install core`.'))
 
         core_path = common.get_core_path()
         core_rpaths = common.get_library_paths(core_path, arch_triplet,

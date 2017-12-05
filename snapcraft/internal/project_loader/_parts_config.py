@@ -32,6 +32,8 @@ from . import (
     grammar_processing,
 )
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
@@ -61,8 +63,8 @@ class PartsConfig:
     def _process_parts(self):
         for part_name in self._parts_data:
             if '/' in part_name:
-                logger.warning('DEPRECATED: Found a "/" '
-                               'in the name of the {!r} part'.format(
+                logger.warning(_('DEPRECATED: Found a "/" '
+                                 'in the name of the {!r} part').format(
                                 part_name))
             self._part_names.append(part_name)
             properties = self._parts_data[part_name] or {}
@@ -115,7 +117,7 @@ class PartsConfig:
                     break
             if not top_part:
                 raise errors.SnapcraftLogicError(
-                    'circular dependency chain found in parts definition')
+                    _('circular dependency chain found in parts definition'))
             sorted_parts = [top_part] + sorted_parts
             self.all_parts.remove(top_part)
 
@@ -150,8 +152,8 @@ class PartsConfig:
         for part_name in part_names:
             if part_name not in self._part_names:
                 raise snapcraft.internal.errors.SnapcraftEnvironmentError(
-                    'The part named {!r} is not defined in '
-                    '{!r}'.format(part_name, self._snapcraft_yaml))
+                    _('The part named {!r} is not defined in '
+                      '{!r}').format(part_name, self._snapcraft_yaml))
 
     def load_part(self, part_name, plugin_name, part_properties):
         # Some legacy parts can have a '/' in them to separate the main project
@@ -168,10 +170,10 @@ class PartsConfig:
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema)
 
-        logger.debug('Setting up part {!r} with plugin {!r} and '
-                     'properties {!r}.'.format(part_name,
-                                               plugin_name,
-                                               part_properties))
+        logger.debug(_('Setting up part {!r} with plugin {!r} and '
+                       'properties {!r}.').format(part_name,
+                                                  plugin_name,
+                                                  part_properties))
 
         sources = getattr(plugin, 'PLUGIN_STAGE_SOURCES', None)
         stage_packages_repo = repo.Repo(

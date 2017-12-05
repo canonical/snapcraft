@@ -28,6 +28,8 @@ from snapcraft.internal import (
     sources,
 )
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
@@ -38,7 +40,7 @@ def load_plugin(plugin_name, part_name, project_options, properties,
     plugin_class = _get_plugin(module)
     if not plugin_class:
         raise errors.PluginError(
-            'no plugin found in module {!r}'.format(plugin_name))
+            _('no plugin found in module {!r}').format(plugin_name))
 
     _validate_pull_and_build_properties(
         plugin_name, plugin_class, part_schema, definitions_schema)
@@ -49,7 +51,7 @@ def load_plugin(plugin_name, part_name, project_options, properties,
     except jsonschema.ValidationError as e:
         error = YamlValidationError.from_validation_error(e)
         raise errors.PluginError(
-            'properties failed to load for {}: {}'.format(
+            _('properties failed to load for {}: {}').format(
                 part_name, error.message))
 
     # For backwards compatibility we add the project to the plugin
@@ -57,10 +59,10 @@ def load_plugin(plugin_name, part_name, project_options, properties,
         plugin = plugin_class(part_name, options, project_options)
     except TypeError:
         logger.warning(
-            'DEPRECATED: the plugin used by part {!r} needs to be updated '
-            'to accept project options in its initializer. See '
-            'https://github.com/snapcore/snapcraft/blob/master/docs/'
-            'plugins.md#initializing-a-plugin for more information'.format(
+            _('DEPRECATED: the plugin used by part {!r} needs to be updated '
+              'to accept project options in its initializer. See '
+              'https://github.com/snapcore/snapcraft/blob/master/docs/'
+              'plugins.md#initializing-a-plugin for more information').format(
                 part_name))
         plugin = plugin_class(part_name, options)
         # This is for plugins that don't inherit from BasePlugin
@@ -73,7 +75,7 @@ def load_plugin(plugin_name, part_name, project_options, properties,
 
     if project_options.is_cross_compiling:
         logger.debug(
-            'Setting {!r} as the compilation target for {!r}'.format(
+            _('Setting {!r} as the compilation target for {!r}').format(
                 project_options.deb_arch, plugin_name))
         plugin.enable_cross_compilation()
 
@@ -85,7 +87,7 @@ def _load_module(module_name, plugin_name, project_options):
     with contextlib.suppress(ImportError):
         module = _load_local('x-{}'.format(plugin_name),
                              project_options.local_plugins_dir)
-        logger.info('Loaded local plugin for %s', plugin_name)
+        logger.info(_('Loaded local plugin for %s'), plugin_name)
 
     if not module:
         with contextlib.suppress(ImportError):
@@ -93,13 +95,13 @@ def _load_module(module_name, plugin_name, project_options):
                 'snapcraft.plugins.{}'.format(module_name))
 
     if not module:
-        logger.info('Searching for local plugin for %s', plugin_name)
+        logger.info(_('Searching for local plugin for %s'), plugin_name)
         with contextlib.suppress(ImportError):
             module = _load_local(module_name,
                                  project_options.local_plugins_dir)
         if not module:
             raise errors.PluginError(
-                'unknown plugin: {!r}'.format(plugin_name))
+                _('unknown plugin: {!r}').format(plugin_name))
 
     return module
 

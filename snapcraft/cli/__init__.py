@@ -37,6 +37,7 @@ from .ci import cicli
 from ._options import add_build_options
 from ._errors import exception_handler
 
+from gettext import gettext as _
 
 command_groups = [
     storecli,
@@ -80,7 +81,7 @@ class SnapcraftGroup(click.Group):
                 deprecations.handle_deprecation_notice(
                     _CMD_DEPRECATION_NOTICES.get(cmd_name))
             else:
-                echo.warning('DEPRECATED: Use {!r} instead of {!r}'.format(
+                echo.warning(_('DEPRECATED: Use {!r} instead of {!r}').format(
                     new_cmd_name, cmd_name))
             cmd = click.Group.get_command(self, ctx, new_cmd_name)
         else:
@@ -109,7 +110,7 @@ def run(ctx, debug, catch_exceptions=False, **kwargs):
 
     if debug:
         log_level = logging.DEBUG
-        click.echo('Starting snapcraft {} from {}.'.format(
+        click.echo(_('Starting snapcraft {} from {}.').format(
             snapcraft.__version__, os.path.dirname(__file__)))
     else:
         log_level = logging.INFO

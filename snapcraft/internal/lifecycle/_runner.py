@@ -35,6 +35,8 @@ from snapcraft.internal.cache import SnapCache
 from snapcraft.internal.project_loader import replace_attr
 from . import constants
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -63,7 +65,8 @@ def execute(step, project_options, part_names=None):
         config.build_tools)
     if installed_packages is None:
         raise ValueError(
-            'The repo backend is not returning the list of installed packages')
+            _('The repo backend is not returning '
+              'the list of installed packages'))
 
     installed_snaps = repo.snaps.install_snaps(config.build_snaps)
 
@@ -88,7 +91,7 @@ def execute(step, project_options, part_names=None):
 def _setup_core(deb_arch):
     core_path = common.get_core_path()
     if os.path.exists(core_path) and os.listdir(core_path):
-        logger.debug('{!r} already exists, skipping core setup'.format(
+        logger.debug(_('{!r} already exists, skipping core setup').format(
             core_path))
         return
     snap_cache = SnapCache(project_name='snapcraft-core')
@@ -112,7 +115,7 @@ def _setup_core(deb_arch):
     core_snap = snap_cache.get(deb_arch=deb_arch)
 
     # Now unpack
-    logger.info('Setting up {!r} in {!r}'.format(core_snap, core_path))
+    logger.info(_('Setting up {!r} in {!r}').format(core_snap, core_path))
     if os.path.exists(core_path) and not os.listdir(core_path):
         check_call(['sudo', 'rmdir', core_path])
     check_call(['sudo', 'mkdir', '-p', os.path.dirname(core_path)])
@@ -148,8 +151,8 @@ class _Executor:
                     self._handle_dirty(part, step, dirty_report)
                 elif not (part.should_step_run(step)):
                     steps_run[part.name].add(step)
-                    part.notify_part_progress('Skipping {}'.format(step),
-                                              '(already ran)')
+                    part.notify_part_progress(_('Skipping {}').format(step),
+                                              _('(already ran)'))
 
         return steps_run
 
@@ -188,16 +191,16 @@ class _Executor:
                              if part_name in unstaged_prereqs]
             if missing_parts:
                 raise RuntimeError(
-                    'Requested {!r} of {!r} but there are unsatisfied '
-                    'prerequisites: {!r}'.format(
+                    _('Requested {!r} of {!r} but there are unsatisfied '
+                      'prerequisites: {!r}').format(
                         step, part.name, ' '.join(missing_parts)))
         elif unstaged_prereqs:
             # prerequisites need to build all the way to the staging
             # step to be able to share the common assets that make them
             # a dependency.
             logger.info(
-                '{!r} has prerequisites that need to be staged: '
-                '{}'.format(part.name, ' '.join(unstaged_prereqs)))
+                _('{!r} has prerequisites that need to be staged: '
+                  '{}').format(part.name, ' '.join(unstaged_prereqs)))
             self.run('stage', unstaged_prereqs)
 
         # Run the preparation function for this step (if implemented)

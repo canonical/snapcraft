@@ -30,6 +30,8 @@ from snapcraft.internal.errors import (
 from snapcraft.internal import lifecycle
 from snapcraft.cli import echo
 
+from gettext import gettext as _
+
 logger = logging.getLogger(__name__)
 
 
@@ -48,20 +50,21 @@ class Project(Containerbuild):
         if new_container:
             subprocess.check_call([
                 'lxc', 'init', self._image, self._container_name])
-        if self._get_container_status()['status'] == 'Stopped':
+        if self._get_container_status()['status'] == _('Stopped'):
             self._configure_container()
             try:
                 subprocess.check_call([
                     'lxc', 'start', self._container_name])
             except subprocess.CalledProcessError:
-                msg = 'The container could not be started.'
+                msg = _('The container could not be started.')
                 if self._container_name.startswith('local:'):
-                    msg += ('\nThe files /etc/subuid and /etc/subgid need to '
-                            'contain this line for mounting the local folder:'
-                            '\n    root:1000:1'
-                            '\nNote: Add the line to both files, do not '
-                            'remove any existing lines.'
-                            '\nRestart lxd after making this change.')
+                    msg += (_('\nThe files /etc/subuid and /etc/subgid need '
+                              'to contain this line for mounting the local '
+                              'folder:'
+                              '\n    root:1000:1'
+                              '\nNote: Add the line to both files, do not '
+                              'remove any existing lines.'
+                              '\nRestart lxd after making this change.'))
                 raise ContainerConnectionError(msg)
         self._wait_for_network()
         if new_container:
@@ -113,12 +116,12 @@ class Project(Containerbuild):
                                          stdin=stdin1, stdout=stdout2)
         except FileNotFoundError:
             raise SnapcraftEnvironmentError(
-                'You must have openssh-sftp-server installed to use a LXD '
-                'remote on a different host.\n'
-                )
+                _('You must have openssh-sftp-server installed to use a LXD '
+                  'remote on a different host.\n')
+                  )
         except subprocess.CalledProcessError:
             raise SnapcraftEnvironmentError(
-                'sftp-server seems to be installed but could not be run.\n'
+                _('sftp-server seems to be installed but could not be run.\n')
                 )
 
         # Use sshfs in slave mode to reverse mount the destination
@@ -140,17 +143,17 @@ class Project(Containerbuild):
                 return
             retry_count -= 1
         raise ContainerConnectionError(
-            'The project folder could not be mounted.\n'
-            'Fuse must be enabled on the LXD host.\n'
-            'You can run the following command to enable it:\n'
-            'echo Y | sudo tee /sys/module/fuse/parameters/userns_mounts')
+            _('The project folder could not be mounted.\n'
+              'Fuse must be enabled on the LXD host.\n'
+              'You can run the following command to enable it:\n'
+              'echo Y | sudo tee /sys/module/fuse/parameters/userns_mounts'))
 
     def _background_process_run(self, cmd, **kwargs):
         self._processes += [subprocess.Popen(cmd, **kwargs)]
 
     def _finish(self):
         for process in self._processes:
-            logger.info('Terminating {}'.format(process.args))
+            logger.info(_('Terminating {}').format(process.args))
             process.terminate()
 
     def refresh(self):
@@ -164,13 +167,13 @@ class Project(Containerbuild):
         if not step:
             if not parts:
                 if self._get_container_status():
-                    print('Deleting {}'.format(self._container_name))
+                    print(_('Deleting {}').format(self._container_name))
                     subprocess.check_call([
                         'lxc', 'delete', '-f', self._container_name])
             step = 'pull'
         # clean normally, without involving the container
         if step == 'strip':
-            echo.warning('DEPRECATED: Use `prime` instead of `strip` '
-                         'as the step to clean')
+            echo.warning(_('DEPRECATED: Use `prime` instead of `strip` '
+                           'as the step to clean'))
             step = 'prime'
         lifecycle.clean(self._project_options, parts, step)

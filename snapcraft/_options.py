@@ -24,6 +24,8 @@ from snapcraft.internal import common
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 
+from gettext import gettext as _
+
 
 logger = logging.getLogger(__name__)
 
@@ -141,7 +143,8 @@ class ProjectOptions:
                 build_count = multiprocessing.cpu_count()
             except NotImplementedError:
                 logger.warning(
-                    'Unable to determine CPU count; disabling parallel builds')
+                    _('Unable to determine CPU count; disabling parallel '
+                      'builds'))
 
         return build_count
 
@@ -166,8 +169,8 @@ class ProjectOptions:
             return self.__machine_info['cross-compiler-prefix']
         except KeyError:
             raise SnapcraftEnvironmentError(
-                'Cross compilation not supported for target arch {!r}'.format(
-                    self.__target_machine))
+                _('Cross compilation not supported for '
+                  'target arch {!r}').format(self.__target_machine))
 
     @property
     def additional_build_packages(self):
@@ -241,7 +244,7 @@ class ProjectOptions:
         while True:
             if dynamic_linker_path in seen_paths:
                 raise SnapcraftEnvironmentError(
-                    "found symlink loop resolving dynamic linker path")
+                    _("found symlink loop resolving dynamic linker path"))
 
             seen_paths.add(dynamic_linker_path)
             if not os.path.lexists(dynamic_linker_path):
@@ -264,7 +267,7 @@ class ProjectOptions:
             self.__target_machine = self.__platform_arch
         else:
             self.__target_machine = _find_machine(target_deb_arch)
-            logger.info('Setting target machine to {!r}'.format(
+            logger.info(_('Setting target machine to {!r}').format(
                 target_deb_arch))
         self.__machine_info = _ARCH_TRANSLATIONS[self.__target_machine]
 
@@ -281,4 +284,4 @@ def _find_machine(deb_arch):
             return machine
 
     raise SnapcraftEnvironmentError(
-        'Cannot set machine from deb_arch {!r}'.format(deb_arch))
+        _('Cannot set machine from deb_arch {!r}').format(deb_arch))

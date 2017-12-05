@@ -18,6 +18,8 @@ import os
 
 from ._schema import Validator  # noqa
 
+from gettext import gettext as _
+
 
 def load_config(project_options=None):
     from ._config import Config
@@ -58,7 +60,7 @@ def get_snapcraft_yaml(base_dir=None):
             snapcraft_yaml='snap/snapcraft.yaml')
     elif len(snapcraft_yamls) > 1:
         raise snapcraft.internal.errors.SnapcraftEnvironmentError(
-            'Found a {!r} and a {!r}, please remove one.'.format(
+            _('Found a {!r} and a {!r}, please remove one.').format(
                 snapcraft_yamls[0], snapcraft_yamls[1]))
 
     return snapcraft_yamls[0]
