@@ -280,14 +280,14 @@ def list_registered():
 
 @storecli.command('export-login')
 @click.argument('login_file', metavar='FILE', type=click.File('w'))
-@click.option('--packages', metavar='<packages>',
-              help='Comma-separated list of packages to limit access')
+@click.option('--snaps', metavar='<snaps>',
+              help='Comma-separated list of snaps to limit access')
 @click.option('--channels', metavar='<channels>',
               help='Comma-separated list of channels to limit access')
 @click.option('--acls', metavar='<acls>',
               help='Comma-separated list of ACLs to limit access')
-def export_login(login_file: TextIO, packages: str, channels: str, acls: str):
-    """Save attenuated login configuration for a store account in FILE.
+def export_login(login_file: TextIO, snaps: str, channels: str, acls: str):
+    """Save login configuration for a store account in FILE.
 
     This file can then be used to log in to the given account with the
     specified permissions.
@@ -299,17 +299,17 @@ def export_login(login_file: TextIO, packages: str, channels: str, acls: str):
 
     Or to limit access to only the edge channel of a single snap:
 
-        snapcraft export-login --packages=my-snap --channels=edge
+        snapcraft export-login --snaps=my-snap --channels=edge
     """
 
-    package_list = None
+    snap_list = None
     channel_list = None
     acl_list = None
 
-    if packages:
-        package_list = []
-        for package in packages.split(','):
-            package_list.append({'name': package, 'series': '16'})
+    if snaps:
+        snap_list = []
+        for package in snaps.split(','):
+            snap_list.append({'name': package, 'series': '16'})
 
     if channels:
         channel_list = channels.split(',')
@@ -319,7 +319,7 @@ def export_login(login_file: TextIO, packages: str, channels: str, acls: str):
 
     store = storeapi.StoreClient()
     if not snapcraft.login(store=store,
-                           packages=package_list,
+                           packages=snap_list,
                            channels=channel_list,
                            acls=acl_list,
                            save=False):
@@ -328,7 +328,7 @@ def export_login(login_file: TextIO, packages: str, channels: str, acls: str):
     store.conf.save(config_fd=login_file)
 
     print()
-    echo.info(dedent("""
+    echo.info(dedent("""\
         Login successfully exported to {0!r}. This file can now be used with
         'snapcraft login --with {0}' to log in to this account with no password
         and have these capabilities:\n""".format(
