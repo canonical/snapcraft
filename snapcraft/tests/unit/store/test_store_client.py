@@ -501,12 +501,12 @@ class RegisterTestCase(StoreTestCase):
 
     def test_register_name_successfully(self):
         self.client.login('dummy', 'test correct password')
-        # No exception will be raised if this is succesful
+        # No exception will be raised if this is successful
         self.client.register('test-good-snap-name')
 
     def test_register_private_name_successfully(self):
         self.client.login('dummy', 'test correct password')
-        # No exception will be raised if this is succesful
+        # No exception will be raised if this is successful
         self.client.register('test-good-snap-name', is_private=True)
 
     def test_register_refreshes_macaroon(self):
@@ -541,7 +541,9 @@ class RegisterTestCase(StoreTestCase):
                    "\n\n"
                    "If you are the publisher most users expect for "
                    "'test-reserved-snap-name' then please claim the "
-                   "name at 'https://myapps.com/register-name/'"))
+                   "name at 'https://myapps.com/register-name/'\n\n"
+                   "Otherwise, please register another name."
+                   ))
 
     def test_register_already_owned_name(self):
         self.client.login('dummy', 'test correct password')

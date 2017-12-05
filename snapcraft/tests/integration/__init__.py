@@ -25,6 +25,7 @@ import time
 import uuid
 import xdg
 from distutils import dir_util
+from typing import Callable, List, Union
 
 import fixtures
 import pexpect
@@ -108,13 +109,18 @@ class TestCase(testtools.TestCase):
         self.stage_dir = 'stage'
         self.prime_dir = 'prime'
 
-        self.deb_arch = _ProjectOptions().deb_arch
+        project = _ProjectOptions()
+        self.deb_arch = project.deb_arch
+        self.arch_triplet = project.arch_triplet
+
         release = OsRelease()
         self.distro_series = release.version_codename()
 
     def run_snapcraft(
-            self, command=None, project_dir=None, debug=True,
-            pre_func=lambda: None, env=None):
+            self, command: Union[str, List[str]] = None,
+            project_dir: str = None,
+            debug: bool = True,
+            pre_func: Callable[[], None] = lambda: None, env=None) -> None:
         if project_dir:
             self.copy_project_to_cwd(project_dir)
 
@@ -174,7 +180,7 @@ class TestCase(testtools.TestCase):
             if os.getenv('SNAPCRAFT_APT_AUTOREMOVE_CHECK_FAIL', False):
                 raise
 
-    def copy_project_to_cwd(self, project_dir):
+    def copy_project_to_cwd(self, project_dir: str) -> None:
         # Because cwd already exists, shutil.copytree would raise
         # FileExistsError. Use the lesser known distutils.dir_util.copy_tree
         dir_util.copy_tree(
@@ -446,7 +452,6 @@ class StoreTestCase(TestCase):
         if expect_success:
             process.expect_exact(
                 'We strongly recommend enabling multi-factor authentication:')
-            process.expect_exact('Login successful.')
             process.expect(
                 r'Done\. The key "{}" .* may be used to sign your '
                 r'assertions\.'.format(key_name))
@@ -604,7 +609,7 @@ class SnapdIntegrationTestCase(TestCase):
 
     slow_test = False
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         if (self.slow_test and
                 not os.environ.get('SNAPCRAFT_SLOW_TESTS', False)):
@@ -612,7 +617,7 @@ class SnapdIntegrationTestCase(TestCase):
         if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
             self.skipTest("The autopkgtest armhf runners can't install snaps")
 
-    def install_snap(self):
+    def install_snap(self) -> None:
         try:
             subprocess.check_output(
                 ['sudo', 'snap', 'install',

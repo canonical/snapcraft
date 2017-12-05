@@ -37,7 +37,7 @@ class UpdateCommandTestCase(CommandBaseTestCase, unit.TestWithFakeRemoteParts):
         name: snap-test
         version: 1.0
         summary: test snapping
-        description: if snap is succesful a snap package will be available
+        description: if snap is successful a snap package will be available
         architectures: ['amd64']
         type: app
         confinement: strict

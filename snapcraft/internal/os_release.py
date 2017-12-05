@@ -16,6 +16,10 @@
 
 import contextlib
 
+# This is used in a mypy 'type:' comment below, but nowhere else. Flake8
+# doesn't like that very much, so noqa.
+from typing import Dict  # noqa
+
 from snapcraft.internal import errors
 
 _ID_TO_UBUNTU_CODENAME = {
@@ -29,19 +33,19 @@ _ID_TO_UBUNTU_CODENAME = {
 class OsRelease:
     """A class to intelligently determine the OS on which we're running"""
 
-    def __init__(self, *, os_release_file='/etc/os-release'):
+    def __init__(self, *, os_release_file: str = '/etc/os-release') -> None:
         """Create a new OsRelease instance.
 
         :param str os_release_file: Path to os-release file to be parsed.
         """
         with open(os_release_file) as f:
-            self._os_release = {}
+            self._os_release = {}  # type: Dict[str, str]
             for line in f:
                 entry = line.rstrip().split('=')
                 if len(entry) == 2:
                     self._os_release[entry[0]] = entry[1].strip('"')
 
-    def id(self):
+    def id(self) -> str:
         """Return the OS ID
 
         :raises OsReleaseIdError: If no ID can be determined.
@@ -51,7 +55,7 @@ class OsRelease:
 
         raise errors.OsReleaseIdError()
 
-    def name(self):
+    def name(self) -> str:
         """Return the OS name
 
         :raises OsReleaseNameError: If no name can be determined.
@@ -61,7 +65,7 @@ class OsRelease:
 
         raise errors.OsReleaseNameError()
 
-    def version_id(self):
+    def version_id(self) -> str:
         """Return the OS version ID
 
         :raises OsReleaseVersionIdError: If no version ID can be determined.
@@ -71,7 +75,7 @@ class OsRelease:
 
         raise errors.OsReleaseVersionIdError()
 
-    def version_codename(self):
+    def version_codename(self) -> str:
         """Return the OS version codename
 
         This first tries to use the VERSION_CODENAME. If that's missing, it
