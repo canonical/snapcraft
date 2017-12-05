@@ -104,7 +104,7 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         self.assertThat(result.output, Contains(
             'Snapcraft is a delightful packaging tool.'))
         self.assertThat(result.output, Contains(
-            'You can obtain more help by running'))
+            'To get additional help'))
 
     def test_no_unicode_in_help_strings(self):
         helps = ['topics']

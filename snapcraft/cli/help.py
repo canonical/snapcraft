@@ -61,7 +61,7 @@ def help_command(ctx, topic, devel):
         click.echo(ctx.parent.get_help())
         click.echo(dedent("""\
 
-            You can obtain more help by running
+            To get additional help, run:
                 snapcraft help topics
                 snapcraft help <topic>
                 snapcraft help <plugin-name>
