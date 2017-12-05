@@ -221,12 +221,12 @@ class Ubuntu(BaseRepo):
                 if version:
                     _set_pkg_version(apt_cache[name_arch], version)
                 apt_cache[name_arch].mark_install()
-                cls._verify_installable(apt_cache[name_arch])
+                cls._verify_marked_install(apt_cache[name_arch])
             except KeyError:
                 raise errors.PackageNotFoundError(name)
 
     @classmethod
-    def _verify_installable(cls, package: apt.Package):
+    def _verify_marked_install(cls, package: apt.Package):
         if not package.installed and not package.marked_install:
             broken_deps = []  # type: List[str]
             for deps in package.candidate.dependencies:
