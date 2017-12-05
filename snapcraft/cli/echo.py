@@ -20,6 +20,18 @@ click.echo adding the corresponding color codes for each level.
 """
 import click
 
+from snapcraft.internal import common
+
+
+def wrapped(msg: str) -> None:
+    """Output msg wrapped to the terminal width to stdout.
+
+    The maximum wrapping is determined by
+    snapcraft.internal.common.MAX_CHARACTERS_WRAP
+    """
+    click.echo(click.formatting.wrap_text(
+        msg, width=common.MAX_CHARACTERS_WRAP, preserve_paragraphs=True))
+
 
 def info(msg: str) -> None:
     """Output msg as informative to stdout.
