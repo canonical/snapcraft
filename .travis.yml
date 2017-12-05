@@ -52,6 +52,8 @@ jobs:
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-plugins
     - if: type = cron
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-plugins-python
+    - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-plugins-catkin
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-snapd
@@ -61,6 +63,8 @@ jobs:
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-store
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-plugins
+    - if: type = cron
+      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-plugins-python
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-plugins-catkin
     - if: type = cron
