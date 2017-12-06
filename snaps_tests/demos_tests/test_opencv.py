@@ -13,17 +13,48 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from testtools.matchers import ContainsAll
+import os
+import subprocess
 
+from testtools.matchers import Contains, ContainsAll, FileExists, MatchesRegex
+
+import snapcraft
 import snaps_tests
+from snaps_tests import skip
 
 
 class OpenCVTestCase(snaps_tests.SnapsTestCase):
 
     snap_content_dir = 'opencv'
 
+    @skip.skip_unless_codename('xenial',
+                               'declared stage-packages only in xenial')
     def test_opencv(self):
         snap_path = self.build_snap(self.snap_content_dir)
+
+        bin_path = os.path.join(os.path.dirname(snap_path),
+                                'prime', 'bin', 'example')
+        self.assertThat(bin_path, FileExists())
+
+        interpreter = subprocess.check_output([
+            'patchelf', '--print-interpreter', bin_path]).decode()
+        expected_interpreter = r'^/snap/core/current/.*'
+        self.assertThat(interpreter, MatchesRegex(expected_interpreter))
+
+        arch_triplet = snapcraft.ProjectOptions().arch_triplet
+
+        # test $ORIGIN in action
+        rpath = subprocess.check_output([
+            'patchelf', '--print-rpath', bin_path]).decode()
+        expected_rpath = '$ORIGIN/../usr/lib/{}:'.format(arch_triplet)
+        self.assertThat(rpath, Contains(expected_rpath))
+
+        # test $ORIGIN applied
+        ldd = subprocess.check_output(['ldd', bin_path]).decode()
+        expected_opencv_path = (
+            '/prime/bin/../usr/lib/{}/libopencv_core'.format(arch_triplet))
+        self.assertThat(ldd, Contains(expected_opencv_path))
+
         self.install_snap(snap_path, 'opencv-example', '1.0')
         if not snaps_tests.config.get('skip-install', False):
             output = self.run_command_in_snappy_testbed(
