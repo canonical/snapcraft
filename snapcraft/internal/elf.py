@@ -38,16 +38,14 @@ logger = logging.getLogger(__name__)
 class ElfFile:
     """ElfFile represents and elf file on a path and its attributes."""
 
-    def __init__(self, *, path: str, is_executable: bool=True) -> None:
+    def __init__(self, *, path: str, magic: str) -> None:
         """Initialize an ElfFile instance.
 
         :param str path: path to an elf_file within a snapcraft project.
-        :param bool is_executable: True if the elf_file is an executable,
-                                   meaning that it has in .interp entry
-                                   in its headers.
+        :param str magic: the magic string for path.
         """
         self.path = path
-        self.is_executable = is_executable
+        self.is_executable = 'interpreter' in magic
         self.dependencies = set()  # type: Set[str]
 
     def load_dependencies(self) -> Set[str]:
@@ -119,6 +117,7 @@ class Patcher:
         """Patch elf_file with the Patcher instance configuration.
 
         If the ELF is executable, patch it to use the configured linker.
+        If the ELF has dependencies, set an rpath to them.
 
         :param ElfFile elf: a data object representing an elf file and its
                             relevant attributes.
@@ -136,7 +135,6 @@ class Patcher:
 
     def _patch_rpath(self, elf_file: ElfFile) -> None:
         rpath = self._get_rpath(elf_file)
-        print(elf_file.path, rpath)
         # Parameters:
         # --force-rpath: use RPATH instead of RUNPATH.
         # --shrink-rpath: will remove unneeded entries, with the
@@ -276,7 +274,6 @@ def get_elf_files(root: str,
         # for an ldd call.
         file_m = ms.file(path_b)
         if file_m.startswith('ELF') and 'dynamically linked' in file_m:
-            is_executable = 'interpreter' in file_m
-            elf_files.add(ElfFile(path=path, is_executable=is_executable))
+            elf_files.add(ElfFile(path=path, magic=file_m))
 
     return frozenset(elf_files)
