@@ -82,8 +82,14 @@ class TestGetLibraries(unit.TestCase):
         self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(self.fake_logger)
 
+        self.stub_magic = ('ELF 64-bit LSB executable, x86-64, '
+                           'version 1 (SYSV),dynamically linked, '
+                           'interpreter /lib64/ld-linux-x86-64.so.2, '
+                           'for GNU/Linux 2.6.32')
+
     def test_get_libraries(self):
-        libs = elf.get_dependencies('foo')
+        libs = elf.ElfFile(path='foo',
+                           magic=self.stub_magic).load_dependencies()
         self.assertThat(libs, Equals(frozenset(
             ['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
 
@@ -96,21 +102,25 @@ class TestGetLibraries(unit.TestCase):
         ]
         self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
 
-        libs = elf.get_dependencies('foo')
+        libs = elf.ElfFile(path='foo',
+                           magic=self.stub_magic).load_dependencies()
         self.assertThat(libs, Equals(
             frozenset(['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
 
     def test_get_libraries_filtered_by_system_libraries(self):
         self.get_system_libs_mock.return_value = frozenset(['foo.so.1'])
 
-        libs = elf.get_dependencies('foo')
+        libs = elf.ElfFile(path='foo',
+                           magic=self.stub_magic).load_dependencies()
         self.assertThat(libs, Equals(frozenset(['/usr/lib/bar.so.2'])))
 
     def test_get_libraries_ldd_failure_logs_warning(self):
         self.run_output_mock.side_effect = subprocess.CalledProcessError(
             1, 'foo', b'bar')
 
-        self.assertThat(elf.get_dependencies('foo'), Equals(set()))
+        dependencies = elf.ElfFile(
+            path='foo', magic=self.stub_magic).load_dependencies()
+        self.assertThat(dependencies, Equals(set()))
         self.assertThat(
             self.fake_logger.output,
             Equals("Unable to determine library dependencies for 'foo'\n"))
@@ -157,7 +167,12 @@ class TestSystemLibsOnNewRelease(unit.TestCase):
         self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
 
     def test_fail_gracefully_if_system_libs_not_found(self):
-        self.assertThat(elf.get_dependencies('foo'), Equals(frozenset()))
+        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
+                      'dynamically linked, interpreter '
+                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
+        self.assertThat(
+            elf.ElfFile(path='foo', magic=stub_magic).load_dependencies(),
+            Equals(frozenset()))
 
 
 class TestSystemLibsOnReleasesWithNoVersionId(unit.TestCase):
@@ -333,7 +348,10 @@ class TestPatcher(unit.TestCase):
 
     @mock.patch('subprocess.check_call')
     def test_patch(self, check_call_mock):
-        elf_file = elf.ElfFile(path='/fake-elf', is_executable=True)
+        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
+                      'dynamically linked, interpreter '
+                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
+        elf_file = elf.ElfFile(path='/fake-elf', magic=stub_magic)
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld')
         elf_patcher.patch(elf_file=elf_file)
 
@@ -343,7 +361,9 @@ class TestPatcher(unit.TestCase):
 
     @mock.patch('subprocess.check_call')
     def test_patch_does_nothing_if_no_interpreter(self, check_call_mock):
-        elf_file = elf.ElfFile(path='/fake-elf', is_executable=False)
+        stub_magic = ('ELF 64-bit LSB shared object, x86-64, '
+                      'version 1 (SYSV), dynamically linked')
+        elf_file = elf.ElfFile(path='/fake-elf', magic=stub_magic)
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld')
         elf_patcher.patch(elf_file=elf_file)
 
@@ -355,7 +375,10 @@ class TestPatcherErrors(unit.TestCase):
     @mock.patch('subprocess.check_call',
                 side_effect=subprocess.CalledProcessError(2, ['patchelf']))
     def test_patch_fails_raises_patcherror_exception(self, check_call_mock):
-        elf_file = elf.ElfFile(path='/fake-elf', is_executable=True)
+        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
+                      'dynamically linked, interpreter '
+                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
+        elf_file = elf.ElfFile(path='/fake-elf', magic=stub_magic)
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld')
 
         self.assertRaises(errors.PatcherError,

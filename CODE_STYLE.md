@@ -42,5 +42,10 @@ fix it.
     self.assertThat(actual, Equals(expected))
     ```
 
+* When writing unit tests that raise errors, the tests should only check the
+  class of the exception raised and it's attributes, not the format of the
+  error message. The formatting of the exception as a string should be
+  tested only once, in the module snapcraft/tests/unit/test_errors.py
+
 [1]: TESTING.md
 [2]: https://www.python.org/dev/peps/pep-0008

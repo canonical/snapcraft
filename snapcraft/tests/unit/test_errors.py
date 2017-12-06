@@ -43,8 +43,9 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "The 'test-step' step of 'test-part' is out of date:\n"
                 "The 'test-step' step for 'test-part' needs to be run again, "
                 "but 'test-dependent' depends on it.\n"
-                "To clean that part's 'test-step' step, run "
-                "`snapcraft clean test-dependent -s test-step`.")}),
+                "To continue, clean that part's "
+                "'test-step' step, run '
+                "`snapcraft clean test-dependent -s test-step.\n`")}),
         ('StepOutdatedError dirty_properties', {
             'exception': errors.StepOutdatedError,
             'kwargs': {
@@ -57,8 +58,9 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "The 'test-step' step of 'test-part' is out of date:\n"
                 "The 'test-property1' and 'test-property2' part properties "
                 "appear to have changed.\n"
-                "To clean that part's 'test-step' step, run "
-                "`snapcraft clean test-part -s test-step`.")}),
+                "To continue, clean that part's "
+                "'test-step' step, run '
+                "`snapcraft clean test-part -s test-step.\n`")}),
         ('StepOutdatedError dirty_project_options', {
             'exception': errors.StepOutdatedError,
             'kwargs': {
@@ -70,8 +72,9 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "Failed to reuse files from previous build: "
                 "The 'test-step' step of 'test-part' is out of date:\n"
                 "The 'test-option' project option appears to have changed.\n"
-                "To clean that part's 'test-step' step, run "
-                "`snapcraft clean test-part -s test-step`.")}),
+                "To continue, clean that part's "
+                "'test-step' step, run '
+                "`snapcraft clean test-part -s test-step.\n`")}),
         ('SnapcraftEnvironmentError', {
             'exception': errors.SnapcraftEnvironmentError,
             'kwargs': {'message': 'test-message'},

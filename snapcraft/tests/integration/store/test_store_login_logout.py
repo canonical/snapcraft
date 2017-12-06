@@ -28,3 +28,6 @@ class LoginLogoutTestCase(integration.StoreTestCase):
             'u1test+snapcraft@canonical.com',
             'wrongpassword',
             expect_success=False)
+
+    def test_login_with(self):
+        pass
