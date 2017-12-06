@@ -44,8 +44,8 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "The 'test-step' step for 'test-part' needs to be run again, "
                 "but 'test-dependent' depends on it.\n"
                 "To continue, clean that part's "
-                "'test-step' step, run '
-                "`snapcraft clean test-dependent -s test-step.\n`")}),
+                "'test-step' step, run "
+                "`snapcraft clean test-dependent -s test-step`.")}),
         ('StepOutdatedError dirty_properties', {
             'exception': errors.StepOutdatedError,
             'kwargs': {
@@ -59,8 +59,8 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "The 'test-property1' and 'test-property2' part properties "
                 "appear to have changed.\n"
                 "To continue, clean that part's "
-                "'test-step' step, run '
-                "`snapcraft clean test-part -s test-step.\n`")}),
+                "'test-step' step, run "
+                "`snapcraft clean test-part -s test-step`.")}),
         ('StepOutdatedError dirty_project_options', {
             'exception': errors.StepOutdatedError,
             'kwargs': {
@@ -73,8 +73,8 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "The 'test-step' step of 'test-part' is out of date:\n"
                 "The 'test-option' project option appears to have changed.\n"
                 "To continue, clean that part's "
-                "'test-step' step, run '
-                "`snapcraft clean test-part -s test-step.\n`")}),
+                "'test-step' step, run "
+                "`snapcraft clean test-part -s test-step`.")}),
         ('SnapcraftEnvironmentError', {
             'exception': errors.SnapcraftEnvironmentError,
             'kwargs': {'message': 'test-message'},
