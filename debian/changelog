@@ -1,3 +1,40 @@
+snapcraft (2.37) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * cli: improve the help command (#1789)
+  * many: set rpath for elf files for classic (#1781)
+
+  [ Kyle Fazzari ]
+  * tests: run codespell as part of static tests (#1783)
+  * catkin-tools plugin: use stage-packages (#1779)
+  * cli: add export-login command (#1780)
+
+  [ Leo Arias ]
+  * tests: move the ppa test trigger to lxd (#1758)
+  * tests: python plugin integration tests moved to a separate suite (#1791)
+  * tests: do not hit the network in python unit tests (#1792)
+  * cli: add what, why, and how to fix to the common errors (#1640)
+  * cli: include consistent commands to fix error conditions (#1790)
+
+  [ Christian Dywan ]
+  * tests: move refresh to unit folder (#1787)
+
+  [ Daniel Lim Wee Soong ]
+  * spelling: fixed spelling and added codespell support (#1770)
+  * cli: more complete error when registering a reserved name (#1778)
+  * static tests: add type hinting to file_utils.py (#1785)
+
+  [ Sangbum Kim ]
+  * cli: show helpful message for 'snapcraft list-keys' with no keys (#1784)
+
+  [ Marcin Mikołajczak ]
+  * tests: add --help command to the runtests.sh script (#1775)
+
+  [ Matias Bordese ]
+  * storeapi: support for pushing binary metadata (#1774)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Wed, 06 Dec 2017 15:22:05 +0000
+
 snapcraft (2.36) xenial; urgency=medium
 
   [ Sergio Schvezov ]
