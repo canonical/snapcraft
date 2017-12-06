@@ -55,7 +55,7 @@ class OpenCVTestCase(snaps_tests.SnapsTestCase):
             '/prime/bin/../usr/lib/{}/libopencv_core'.format(arch_triplet))
         self.assertThat(ldd, Contains(expected_opencv_path))
 
-        self.install_snap(snap_path, 'opencv-example', '1.0')
+        self.install_snap(snap_path, 'opencv-example', '1.0', classic=True)
         if not snaps_tests.config.get('skip-install', False):
             output = self.run_command_in_snappy_testbed(
                 '/snap/bin/opencv-example.example').splitlines()

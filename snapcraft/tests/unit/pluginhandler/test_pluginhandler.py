@@ -1136,11 +1136,14 @@ class StateTestCase(StateBaseTestCase):
             '{}/lib1/installed'.format(self.handler.installdir),
             '{}/lib2/staged'.format(self.handler.stagedir),
         }
+        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
+                      'dynamically linked, interpreter '
+                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
         self.get_elf_files_mock.return_value = frozenset([
             elf.ElfFile(path=os.path.join(self.handler.primedir, 'bin', '1'),
-                        is_executable=True),
+                        magic=stub_magic),
             elf.ElfFile(path=os.path.join(self.handler.primedir, 'bin', '2'),
-                        is_executable=True),
+                        magic=stub_magic),
         ])
         self.assertThat(self.handler.last_step(), Equals(None))
 
@@ -1193,10 +1196,13 @@ class StateTestCase(StateBaseTestCase):
             'build-attributes': ['no-system-libraries']
         })
 
+        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
+                      'dynamically linked, interpreter '
+                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
         self.get_elf_files_mock.return_value = frozenset([
             elf.ElfFile(
                 path=os.path.join(self.handler.primedir, 'bin', 'file'),
-                is_executable=True)])
+                magic=stub_magic)])
         # Pretend we found a system dependency, as well as a part and stage
         # dependency.
         mock_load_dependencies.return_value = set([
@@ -1239,8 +1245,11 @@ class StateTestCase(StateBaseTestCase):
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_with_shadowed_dependencies(self, mock_migrate_files,
                                                     mock_load_dependencies):
+        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
+                      'dynamically linked, interpreter '
+                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
         self.get_elf_files_mock.return_value = frozenset([
-            elf.ElfFile(path='bin/1', is_executable=True)])
+            elf.ElfFile(path='bin/1', magic=stub_magic)])
         self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')
