@@ -736,11 +736,8 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         raised = self.assertRaises(
             errors.InvalidAppCommandError,
             self.packager._wrap_apps, apps)
-        self.assertThat(
-            str(raised),
-            Equals(
-                "The specified command 'command-does-not-exist' defined in "
-                "the app 'app1' does not exist or is not executable"))
+        self.assertThat(raised.command, Equals('command-does-not-exist'))
+        self.assertThat(raised.app, Equals('app1'))
 
     def test_command_is_not_executable(self):
         common.env = ['PATH={}/bin:$PATH'.format(self.prime_dir)]
@@ -753,10 +750,8 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         raised = self.assertRaises(
             errors.InvalidAppCommandError,
             self.packager._wrap_apps, apps)
-        self.assertThat(
-            str(raised),
-            Equals("The specified command 'command-not-executable' defined in "
-                   "the app 'app1' does not exist or is not executable"))
+        self.assertThat(raised.command, Equals('command-not-executable'))
+        self.assertThat(raised.app, Equals('app1'))
 
     def test_command_found(self):
         common.env = ['PATH={}/bin:$PATH'.format(self.prime_dir)]
