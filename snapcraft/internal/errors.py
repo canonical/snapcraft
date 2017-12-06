@@ -41,7 +41,7 @@ class MissingStateCleanError(SnapcraftError):
     fmt = (
         "Failed to clean: "
         "Missing state for {step!r}. "
-        "This won't work until a complete clean has occurred."
+        "To clean the project, run `snapcraft clean`."
     )
 
     def __init__(self, step):
@@ -54,9 +54,8 @@ class StepOutdatedError(SnapcraftError):
         'Failed to reuse files from previous build: '
         'The {step!r} step of {part!r} is out of date:\n'
         '{report}'
-        'To continue, please clean that part\'s {step!r} step '
-        'by running:\n'
-        'snapcraft clean {parts_names} -s {step}\n'
+        'To continue, clean that part\'s {step!r} step, run '
+        '`snapcraft clean {parts_names} -s {step}`.'
     )
 
     def __init__(self, *, step, part,
@@ -267,8 +266,8 @@ class SnapcraftPartConflictError(SnapcraftError):
         '    - `stage`\n'
         '    - `snap`\n'
         '    - `organize`\n\n'
-        'Learn more about these part keywords by running '
-        '`snapcraft help plugins`'
+        'To learn more about these part keywords, run '
+        '`snapcraft help plugins`.'
     )
 
     def __init__(self, *, part_name, other_part_name, conflict_files):
