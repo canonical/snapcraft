@@ -17,17 +17,14 @@
 from snapcraft.tests import integration
 
 
-class LoginLogoutTestCase(integration.StoreTestCase):
+class ExportLoginTestCase(integration.StoreTestCase):
 
-    def test_successful_login(self):
-        self.addCleanup(self.logout)
-        self.login(expect_success=True)
+    def test_successful_export(self):
+        self.export_login('exported', expect_success=True)
 
-    def test_failed_login(self):
-        self.login(
+    def test_failed_export(self):
+        self.export_login(
+            'exported',
             'u1test+snapcraft@canonical.com',
             'wrongpassword',
             expect_success=False)
-
-    def test_login_with(self):
-        pass

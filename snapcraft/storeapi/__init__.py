@@ -23,7 +23,7 @@ import os
 import urllib.parse
 from time import sleep
 from threading import Thread
-from typing import Iterable
+from typing import Dict, Iterable, List, TextIO
 from queue import Queue
 
 from progressbar import (
@@ -122,6 +122,7 @@ class Client():
                 params=params, **kwargs)
         except RetryError as e:
             raise errors.StoreRetryError(e) from e
+
         return response
 
     def get(self, url, **kwargs):
@@ -146,21 +147,27 @@ class StoreClient():
         self.sca = SCAClient(self.conf)
 
     def login(self, email: str, password: str, one_time_password: str = None,
-              acls: Iterable[str] = None, packages: Iterable[str] = None,
-              channels: Iterable[str] = None, save: bool = True) -> None:
+              acls: Iterable[str] = None, channels: Iterable[str] = None,
+              packages: Iterable[Dict[str, str]] = None,
+              config_fd: TextIO = None, save: bool = True) -> None:
         """Log in via the Ubuntu One SSO API."""
         if acls is None:
             acls = ['package_upload', 'package_access', 'package_manage']
-        # Ask the store for the needed capabilities to be associated with the
-        # macaroon.
-        macaroon = self.sca.get_macaroon(acls, packages, channels)
-        caveat_id = self._extract_caveat_id(macaroon)
-        unbound_discharge = self.sso.get_unbound_discharge(
-            email, password, one_time_password, caveat_id)
-        # The macaroon has been discharged, save it in the config
-        self.conf.set('macaroon', macaroon)
-        self.conf.set('unbound_discharge', unbound_discharge)
-        self.conf.set('email', email)
+
+        if config_fd:
+            self.conf.load(config_fd=config_fd)
+        else:
+            # Ask the store for the needed capabilities to be associated with
+            # the macaroon.
+            macaroon = self.sca.get_macaroon(acls, packages, channels)
+            caveat_id = self._extract_caveat_id(macaroon)
+            unbound_discharge = self.sso.get_unbound_discharge(
+                email, password, one_time_password, caveat_id)
+            # The macaroon has been discharged, save it in the config
+            self.conf.set('macaroon', macaroon)
+            self.conf.set('unbound_discharge', unbound_discharge)
+            self.conf.set('email', email)
+
         if save:
             self.conf.save()
 
@@ -203,6 +210,25 @@ class StoreClient():
             account_data[k] = value
 
         return account_data
+
+    def acl(self) -> Dict[str, List[str]]:
+        """Return permissions for the logged-in user."""
+
+        acl_data = {}
+
+        acl_info = self.verify_acl()
+        for key in ('snap_ids', 'channels', 'permissions'):
+            acl_data[key] = acl_info.get(key)
+
+        return acl_data
+
+    def get_snap_name_for_id(self, snap_id: str) -> str:
+        declaration_assertion = self.cpi.get_assertion(
+            'snap-declaration', snap_id)
+        return declaration_assertion['headers']['snap-name']
+
+    def verify_acl(self) -> Dict[str, List[str]]:
+        return self._refresh_if_necessary(self.sca.verify_acl)
 
     def get_account_information(self):
         return self._refresh_if_necessary(self.sca.get_account_information)
@@ -498,6 +524,18 @@ class SnapIndexClient(Client):
             raise errors.SnapNotFoundError(snap_name, channel, arch)
         return resp.json()
 
+    def get_assertion(self, assertion_type: str,
+                      snap_id: str) -> Dict[str, Dict[str, str]]:
+        headers = self.get_default_headers()
+        logger.debug('Getting snap-declaration for {}'.format(snap_id))
+        url = '/api/v1/snaps/assertions/{}/{}/{}'.format(
+            assertion_type, constants.DEFAULT_SERIES, snap_id)
+        response = self.get(url, headers=headers)
+        if response.status_code != 200:
+            raise errors.SnapNotFoundError(
+                snap_id, series=constants.DEFAULT_SERIES)
+        return response.json()
+
     def get(self, url, headers=None, params=None, stream=False):
         if headers is None:
             headers = self.get_default_headers()
@@ -563,6 +601,17 @@ class SCAClient(Client):
         if self._is_needs_refresh_response(response):
             raise errors.StoreMacaroonNeedsRefreshError()
         return response
+
+    def verify_acl(self):
+        auth = _macaroon_auth(self.conf)
+        response = self.post(
+            'acl/verify/',
+            json={'auth_data': {'authorization': auth}},
+            headers={'Accept': 'application/json'})
+        if response.ok:
+            return response.json()
+        else:
+            raise errors.StoreAccountInformationError(response)
 
     def get_account_information(self):
         auth = _macaroon_auth(self.conf)
