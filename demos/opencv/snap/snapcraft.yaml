@@ -2,7 +2,7 @@ name: opencv-example
 version: 1.0
 summary: Use OpenCV and OpenGL
 description: A simple OpenCV example
-confinement: strict
+confinement: classic
 
 build-packages: [gcc, g++, libc6-dev, libopencv-dev]
 
@@ -14,3 +14,4 @@ parts:
   example:
     plugin: cmake
     source: src
+    stage-packages: [libopencv-core2.4v5]

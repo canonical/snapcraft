@@ -1693,13 +1693,6 @@ parts:
                                 item))
 
     def test_config_stage_environment_confinement_classic(self):
-        dynamic_linker = '/snap/core/current/lib/ld.so'
-        patcher = unittest.mock.patch(
-            'snapcraft._options.ProjectOptions.get_core_dynamic_linker')
-        mock_core_dynamic_linker = patcher.start()
-        mock_core_dynamic_linker.return_value = dynamic_linker
-        self.addCleanup(patcher.stop)
-
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
@@ -1712,19 +1705,12 @@ parts:
     plugin: nil
 """)
         config = _config.Config()
-        environment = config.stage_env()
+        part = config.parts.get_part('part1')
+        environment = config.parts.build_env_for_part(part, root_part=True)
         self.assertIn(
-            'LDFLAGS="$LDFLAGS '
-            '-Wl,-rpath,'
-            '/snap/test/current/lib:'
-            '/snap/test/current/usr/lib:'
-            '/snap/test/current/lib/{arch_triplet}:'
-            '/snap/test/current/usr/lib/{arch_triplet}:'
-            '/snap/core/current/lib:'
-            '/snap/core/current/usr/lib:'
-            '/snap/core/current/lib/{arch_triplet}:'
-            '/snap/core/current/usr/lib/{arch_triplet}"'.format(
-                arch_triplet=self.arch_triplet),
+            'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/snap/core/current/lib:'
+            '/snap/core/current/usr/lib:/snap/core/current/lib/{0}:'
+            '/snap/core/current/usr/lib/{0}"'.format(self.arch_triplet),
             environment)
 
     def test_config_stage_environment(self):
