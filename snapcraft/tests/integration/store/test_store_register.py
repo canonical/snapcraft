@@ -38,13 +38,13 @@ class RegisterTestCase(integration.StoreTestCase):
         # The snap name is already registered.
         error = self.assertRaises(
             integration.RegisterError,
-            self.register, 'test-already-registered-snap-name')
+            self.register, 'test-snap-name-already-registered')
         self.assertThat(str(error), Contains(
-            "The name 'test-already-registered-snap-name' is already taken."))
+            "The name 'test-snap-name-already-registered' is already taken."))
         self.assertThat(str(error), Contains(
             'We can if needed rename snaps to ensure they match the '
             'expectations of most users. If you are the publisher most '
-            'users expect for \'test-already-registered-snap-name\' then '
+            'users expect for \'test-snap-name-already-registered\' then '
             'claim the name at'))
 
     def test_registration_of_already_owned_name(self):
