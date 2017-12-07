@@ -581,20 +581,33 @@ class StoreTestCase(TestCase):
         return process.exitstatus
 
     def sign_build(self, snap_filename, key_name='default', local=False,
-                   expect_success=True):
+                   has_legacy_build=False, expect_success=True):
+        snap_build_path = os.path.splitext(snap_filename)[0] + '.build'
         cmd = ['sign-build', snap_filename, '--key-name', key_name]
         if local:
             # only sign it, no pushing
             cmd.append('--local')
         process = pexpect.spawn(self.snapcraft_command, cmd)
         if expect_success:
-            if local:
+            if has_legacy_build:
+                # Processing legacy snap-build filenames results in a
+                # warning telling users how to upate it.
+                legacy_snap_build_path = snap_filename + '-build'
                 process.expect(
-                    'Build assertion .*{}-build saved to disk.'.format(
-                        snap_filename))
+                    'Found a legacy signed build assertion for this snap. '
+                    'In order to remove this warning please rename its '
+                    'extension from ".snap-build" to simply ".build".')
+                if not local:
+                    process.expect(
+                        'Build assertion .*{} pushed.'
+                        .format(legacy_snap_build_path))
             else:
                 process.expect(
-                    'Build assertion .*{}-build pushed.'.format(snap_filename))
+                    'Build assertion .*{} saved to disk.'
+                    .format(snap_build_path))
+                if not local:
+                    process.expect(
+                        'Build assertion .*{} pushed.'.format(snap_build_path))
 
         process.expect(pexpect.EOF)
         process.close()

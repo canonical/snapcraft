@@ -394,10 +394,19 @@ def sign_build(snap_filename, key_name=None, local=False):
         raise storeapi.errors.StoreBuildAssertionPermissionError(
             snap_name, snap_series) from e
 
-    snap_build_path = snap_filename + '-build'
+    legacy_snap_build_path = snap_filename + '-build'
+    snap_build_path = os.path.splitext(snap_filename)[0] + '.build'
     if os.path.isfile(snap_build_path):
         logger.info(
             'A signed build assertion for this snap already exists.')
+        with open(snap_build_path, 'rb') as fd:
+            snap_build_content = fd.read()
+    elif os.path.isfile(legacy_snap_build_path):
+        logger.warning(
+            'Found a legacy signed build assertion for this snap. '
+            'In order to remove this warning please rename its '
+            'extension from ".snap-build" to simply ".build".')
+        snap_build_path = legacy_snap_build_path
         with open(snap_build_path, 'rb') as fd:
             snap_build_content = fd.read()
     else:
