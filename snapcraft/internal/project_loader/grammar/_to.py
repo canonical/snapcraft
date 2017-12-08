@@ -16,13 +16,15 @@
 
 import re
 
+import snapcraft
 from . import process_grammar
 from .errors import (
     ToStatementSyntaxError,
     UnsatisfiedStatementError,
 )
 
-_SELECTOR_PATTERN = re.compile(r'\Ato\s+([^,\s](?:,?[^,]+)*)\Z')
+_SELECTOR_PATTERN = re.compile(
+    r'(\Aon\s+[^,\s](?:,?[^,]+)*\s|)to\s+([^,\s](?:,?[^,]+)*)\Z')
 _WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
 
 
@@ -57,7 +59,7 @@ class ToStatement:
         :type checker: callable
         """
 
-        self.selectors = _extract_to_clause_selectors(to)
+        self._on_selectors, self.selectors = _extract_to_clause_selectors(to)
         self._body = body
         self._project_options = project_options
         self._checker = checker
@@ -82,11 +84,17 @@ class ToStatement:
 
         primitives = set()
         target_arch = self._project_options.deb_arch
+        host_arch = snapcraft.ProjectOptions().deb_arch
 
         # The only selector currently supported is the target arch. Since
         # selectors are matched with an AND, not OR, there should only be one
         # selector.
-        if (len(self.selectors) == 1) and (target_arch in self.selectors):
+        on_matches = (((len(self._on_selectors) == 1) and
+                      host_arch in self._on_selectors) or
+                      len(self._on_selectors) == 0)
+        to_matches = ((len(self.selectors) == 1) and
+                      (target_arch in self.selectors))
+        if on_matches and to_matches:
             primitives = process_grammar(
                 self._body, self._project_options, self._checker)
             # target arch is the default (not the host arch) in a to statement
@@ -123,18 +131,21 @@ def _extract_to_clause_selectors(to):
 
     :param str to: The 'to <selector>' part of the 'to' clause.
 
-    :return: Selectors found within the 'to' clause.
+    :return: Tuple of selectors found within a 'to' or 'on to' clause
     :rtype: set
 
     For example:
-    >>> _extract_to_clause_selectors('to amd64,i386') == {'amd64', 'i386'}
+    >>> _extract_to_clause_selectors('to amd64,i386') == ({''},{'amd64', 'i386'})
     True
-    """
+    >>> _extract_to_clause_selectors('on amd64 to i386') == ({'amd64'},{'i386'})
+    True
+    """  # noqa
 
     match = _SELECTOR_PATTERN.match(to)
 
     try:
-        selector_group = match.group(1)
+        on_selector_group = match.group(1)
+        selector_group = match.group(2)
     except AttributeError:
         raise ToStatementSyntaxError(to, message='selectors are missing')
     except IndexError:
@@ -146,4 +157,6 @@ def _extract_to_clause_selectors(to):
         raise ToStatementSyntaxError(
             to, message='spaces are not allowed in the selectors')
 
-    return {selector.strip() for selector in selector_group.split(',')}
+    return (
+        {selector.strip() for selector in on_selector_group[3:].split(',')},
+        {selector.strip() for selector in selector_group.split(',')})

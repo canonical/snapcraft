@@ -173,6 +173,22 @@ class ToStatementGrammarTestCase(GrammarTestCase):
             'target_arch': 'i386',
             'expected_packages': {'baz'}
         }),
+        ('on amd64 to armhf', {
+            'to': 'on amd64 to armhf',
+            'body': ['foo'],
+            'else_bodies': [],
+            'target_arch': 'armhf',
+            'expected_packages': {'foo:armhf'}
+        }),
+        ('on i386 to armhf', {
+            'to': 'on i386 to amd64',
+            'body': ['foo'],
+            'else_bodies': [
+                ['bar']
+            ],
+            'target_arch': 'amd64',
+            'expected_packages': {'bar'}
+        }),
     ]
 
     @patch('platform.architecture')
