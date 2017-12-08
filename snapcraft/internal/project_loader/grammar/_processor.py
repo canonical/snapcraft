@@ -87,7 +87,7 @@ def _parse_dict(section, statement, statements, project_options,
                 checker=checker)
 
         if _TO_CLAUSE_PATTERN.match(key):
-            # We've come across the begining of a 'to' statement.
+            # We've come across the beginning of a 'to' statement.
             # That means any previous statement we found is complete.
             # The first time through this may be None, but the
             # collection will ignore it.
