@@ -536,15 +536,15 @@ class RegisterTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
             errors.StoreRegistrationError,
-            self.client.register, 'test-already-registered-snap-name')
+            self.client.register, 'test-snap-name-already-registered')
         self.assertThat(
             str(raised),
             Equals(
-                "The name 'test-already-registered-snap-name' is already "
+                "The name 'test-snap-name-already-registered' is already "
                 "taken.\n\n"
                 "We can if needed rename snaps to ensure they match the "
                 "expectations of most users. If you are the publisher most "
-                "users expect for 'test-already-registered-snap-name' then "
+                "users expect for 'test-snap-name-already-registered' then "
                 "claim the name at 'https://myapps.com/register-name/'"))
 
     def test_register_a_reserved_name(self):
