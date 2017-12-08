@@ -14,10 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import configparser
 import logging
 import os
+import textwrap
 from unittest.mock import patch
+
+import testscenarios
 import testtools
 from testtools.matchers import (
     Contains,
@@ -31,13 +35,13 @@ from testtools.matchers import (
 import fixtures
 import yaml
 
+from snapcraft import ProjectOptions
+from snapcraft.internal import common
+from snapcraft.internal import errors
 from snapcraft.internal.meta import (
     _errors as meta_errors,
     _snap_packaging
 )
-from snapcraft import ProjectOptions
-from snapcraft.internal import common
-from snapcraft.internal import errors
 from snapcraft.tests import unit
 
 
@@ -414,6 +418,161 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertThat(
             y['hooks']['bar'], Not(Contains('plugs')),
             "Expected generated 'bar' hook to not contain 'plugs'")
+
+
+class CreateMetadataFromSourceErrorsTestCase(CreateBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.config_data = {
+            'name': 'test-name',
+            'version': 'test-version',
+            'summary': 'test-summary',
+            'description': 'test-description',
+            'adopt-info': 'test-part',
+            'parts': {
+                'test-part': {
+                    'plugin': 'test-plugin',
+                    'parse-info': 'dummy'
+                }
+            }
+        }
+
+    def test_create_metadata_with_missing_parse_info(self):
+        del self.config_data['summary']
+        del self.config_data['parts']['test-part']['parse-info']
+        raised = self.assertRaises(
+            meta_errors.SnapcraftYamlMissingRequiredValue,
+            self.generate_meta_yaml)
+        self.assertThat(raised.key, Equals('parse-info'))
+
+    def test_create_metadata_with_missing_adopt_info(self):
+        del self.config_data['summary']
+        del self.config_data['adopt-info']
+        raised = self.assertRaises(
+            meta_errors.SnapcraftYamlMissingRequiredValue,
+            self.generate_meta_yaml)
+        self.assertThat(raised.key, Equals('adopt-info'))
+
+    def test_create_metadata_with_wrong_adopt_info(self):
+        del self.config_data['summary']
+        self.config_data['adopt-info'] = 'wrong-part'
+        raised = self.assertRaises(
+            meta_errors.WrongAdoptInfo, self.generate_meta_yaml)
+        self.assertThat(raised.part, Equals('wrong-part'))
+
+    def test_create_metadata_from_unexisting_part(self):
+        del self.config_data['summary']
+        self.config_data['parts']['test-part']['parse-info'] = (
+            ['unexisting-path'])
+        raised = self.assertRaises(
+            meta_errors.UnexistingSourceMetaPath, self.generate_meta_yaml)
+        self.assertThat(
+            raised.path,
+            Equals(os.path.join(
+                self.path, 'parts', 'test-part', 'install',
+                'unexisting-path')))
+
+    def test_create_metadata_with_wrong_appstream_file(self):
+        del self.config_data['summary']
+        appstream_file_path = 'testappid.metainfo.xml'
+        self.config_data['parts']['test-part']['parse-info'] = (
+            [appstream_file_path])
+        install_dir = os.path.join('parts', 'test-part', 'install')
+        os.makedirs(install_dir)
+        appstream_file_full_path = os.path.join(
+            self.path, install_dir, appstream_file_path)
+        open(appstream_file_full_path, 'w').close()
+
+        raised = self.assertRaises(
+           meta_errors.AppstreamFileParseError, self.generate_meta_yaml)
+        self.assertThat(
+            raised.path, Equals(appstream_file_full_path))
+
+    def test_create_metadata_with_missing_keys(self):
+        del self.config_data['summary']
+        del self.config_data['description']
+        appstream_file_path = 'testappid.metainfo.xml'
+        self.config_data['parts']['test-part']['parse-info'] = (
+            [appstream_file_path])
+        install_dir = os.path.join('parts', 'test-part', 'install')
+        os.makedirs(install_dir)
+        appstream_file_full_path = os.path.join(
+            self.path, install_dir, appstream_file_path)
+        with open(appstream_file_full_path, 'w') as appstream_file:
+            appstream_file.write(textwrap.dedent(
+                """<?xml version="1.0" encoding="UTF-8"?>
+                <component>
+                  <name>test-name</name>
+                </component>"""))
+
+        raised = self.assertRaises(
+            meta_errors.MissingSnapcraftYamlKeys, self.generate_meta_yaml)
+        self.assertThat(
+            raised.keys, Equals(['summary', 'description']))
+
+    def test_create_metadata_with_unexisting_parser(self):
+        del self.config_data['summary']
+        parse_info_file_path = 'meta-without-parser'
+        self.config_data['parts']['test-part']['parse-info'] = (
+            [parse_info_file_path])
+        install_dir = os.path.join('parts', 'test-part', 'install')
+        os.makedirs(install_dir)
+        parse_info_file_full_path = os.path.join(
+            self.path, install_dir, parse_info_file_path)
+        open(parse_info_file_full_path, 'w').close()
+
+        raised = self.assertRaises(
+            meta_errors.SourceMetadataParserError, self.generate_meta_yaml)
+        self.assertThat(raised.path, Equals(parse_info_file_full_path))
+
+
+class CreateWithAppstreamMetadataTestCase(CreateBaseTestCase):
+
+    scenarios = testscenarios.multiply_scenarios(
+        (('summary', {'key': 'summary'}),
+         ('description', {'key': 'description'})),
+        (('install dir', {'dir': 'install'}),
+         ('build dir', {'dir': 'build'}))
+    )
+
+    def test_create_with_appstream_summary_in_install_dir(self):
+        part = 'test-part'
+        appstream_file_path = 'testappid.metainfo.xml'
+        self.config_data = {
+            'name': 'test-name',
+            'version': 'test-version',
+            'summary': 'test-summary',
+            'description': 'test-description',
+            'adopt-info': part,
+            'parts': {
+                part: {
+                    'plugin': 'dummy',
+                    'parse-info': [appstream_file_path]
+                }
+            }
+        }
+        del self.config_data[self.key]
+        install_dir = os.path.join('parts', part, self.dir)
+        os.makedirs(install_dir)
+        with open(
+                os.path.join(install_dir, appstream_file_path),
+                'w') as appstream_file:
+            appstream_file.write(textwrap.dedent(
+                """<?xml version="1.0" encoding="UTF-8"?>
+                <component>
+                  <{key}>test-{key}</{key}>
+                </component>""".format(key=self.key)))
+
+        meta = self.generate_meta_yaml()
+
+        expected = collections.OrderedDict([
+            ('name', 'test-name'),
+            ('version', 'test-version'),
+            ('summary', 'test-summary'),
+            ('description', 'test-description')])
+
+        self.assertThat(meta, Equals(expected))
 
 
 class WriteSnapDirectoryTestCase(CreateBaseTestCase):

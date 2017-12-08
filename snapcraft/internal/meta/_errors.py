@@ -21,3 +21,73 @@ class CommandError(errors.SnapcraftError):
 
     def __init__(self, message: str) -> None:
         self.fmt = message
+
+
+class SnapMetaGenerationError(errors.SnapcraftError):
+    pass
+
+
+class SnapcraftYamlMissingRequiredValue(SnapMetaGenerationError):
+
+    fmt = (
+        "Failed to generate snap metadata: "
+        "Missing {key!r} from the 'snapcraft.yaml' file."
+    )
+
+    def __init__(self, key):
+        super().__init__(key=key)
+
+
+class WrongAdoptInfo(SnapMetaGenerationError):
+
+    fmt = (
+        "Failed to generate snap metadata: "
+        "'adopt-info' refers to a part named {part!r}, but it is not defined "
+        "in the 'snapcraft.yaml' file.")
+
+    def __init__(self, part):
+        super().__init__(part=part)
+
+
+class UnexistingSourceMetaPath(SnapMetaGenerationError):
+
+    fmt = (
+        "Failed to generate snap metadata: "
+        "'parse-info' in the 'snapcraft.yaml' file refers to a metadata file "
+        "in {path!r}, which does not exist.")
+
+    def __init__(self, path):
+        super().__init__(path=path)
+
+
+class AppstreamFileParseError(SnapMetaGenerationError):
+
+    fmt = (
+        "Failed to generate snap metadata: "
+        "'parse-info' in the 'snapcraft.yaml' file refers to an appstream "
+        "metadata file in {path!r}, which is not a valid XML file.")
+
+    def __init__(self, path):
+        super().__init__(path=path)
+
+
+class MissingSnapcraftYamlKeys(SnapMetaGenerationError):
+
+    fmt = (
+        "Failed to generate snap metadata: "
+        "Missing required keys in the 'snapcraft.yaml' file: {keys!r}.")
+
+    def __init__(self, keys):
+        super().__init__(keys=keys)
+
+
+class SourceMetadataParserError(SnapMetaGenerationError):
+
+    fmt = (
+        "Failed to generate snap metadata: "
+        "'parse-info' in the 'snapcraft.yaml' file refers to a metadata file "
+        "in {path!r}, which cannot be parsed.")
+
+    def __init__(self, path):
+        super().__init__(path=path)
+>>>>>>> metadata: extract metadata from appstream

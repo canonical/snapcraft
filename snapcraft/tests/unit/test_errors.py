@@ -17,6 +17,7 @@
 from testtools.matchers import Equals
 
 from snapcraft.internal import errors
+from snapcraft.internal.meta import _errors as meta_errors
 from snapcraft.tests import unit
 
 
@@ -286,7 +287,50 @@ class ErrorFormattingTestCase(unit.TestCase):
             'exception': errors.InvalidContainerImageInfoError,
             'kwargs': {'image_info': 'test-image-info'},
             'expected_message': (
-                'Error parsing the container image info: test-image-info')})
+                'Error parsing the container image info: test-image-info')}),
+        # meta errors.
+        ('SnapcraftYamlMissingRequiredValue', {
+            'exception': meta_errors.SnapcraftYamlMissingRequiredValue,
+            'kwargs': {'key': 'test-key'},
+            'expected_message': (
+                "Failed to generate snap metadata: "
+                "Missing 'test-key' from the 'snapcraft.yaml' file.")}),
+        ('WrongAdoptInfo', {
+            'exception': meta_errors.WrongAdoptInfo,
+            'kwargs': {'part': 'test-part'},
+            'expected_message': (
+                "Failed to generate snap metadata: "
+                "'adopt-info' refers to a part named 'test-part', but it is "
+                "not defined in the 'snapcraft.yaml' file.")}),
+        ('UnexistingSourceMetaPath', {
+            'exception': meta_errors.UnexistingSourceMetaPath,
+            'kwargs': {'path': 'test/path'},
+            'expected_message': (
+                "Failed to generate snap metadata: "
+                "'parse-info' in the 'snapcraft.yaml' file refers to a "
+                "metadata file in 'test/path', which does not exist.")}),
+        ('AppstreamFileParseError', {
+            'exception': meta_errors.AppstreamFileParseError,
+            'kwargs': {'path': 'test/path'},
+            'expected_message': (
+                "Failed to generate snap metadata: "
+                "'parse-info' in the 'snapcraft.yaml' file refers to an "
+                "appstream metadata file in 'test/path', which is not a valid "
+                "XML file.")}),
+        ('MissingSnapcraftYamlKeys', {
+            'exception': meta_errors.MissingSnapcraftYamlKeys,
+            'kwargs': {'keys': ['test-key1', 'test-key2']},
+            'expected_message': (
+                "Failed to generate snap metadata: "
+                "Missing required keys in the 'snapcraft.yaml' file: "
+                "['test-key1', 'test-key2'].")}),
+        ('SourceMetadataParserError', {
+            'exception': meta_errors.SourceMetadataParserError,
+            'kwargs': {'path': 'test/path'},
+            'expected_message': (
+                "Failed to generate snap metadata: "
+                "'parse-info' in the 'snapcraft.yaml' file refers to a "
+                "metadata file in 'test/path', which cannot be parsed.")}),
     )
 
     def test_error_formatting(self):
