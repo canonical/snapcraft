@@ -30,10 +30,9 @@ For more information check the 'plugins' topic for the former and the
 """
 
 import os
-import re
 
 import snapcraft
-from snapcraft import file_utils
+from snapcraft.internal import mangling
 
 
 class PlainboxProviderPlugin(snapcraft.BasePlugin):
@@ -63,10 +62,7 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
             '--prefix=/providers/{}'.format(self.name),
             '--root={}'.format(self.installdir)])
 
-        # Fix all shebangs to use the in-snap python.
-        file_utils.replace_in_file(self.installdir, re.compile(r''),
-                                   re.compile(r'^#!.*python'),
-                                   r'#!/usr/bin/env python')
+        mangling.rewrite_python_shebangs(self.installdir)
 
     def snap_fileset(self):
         fileset = super().snap_fileset()

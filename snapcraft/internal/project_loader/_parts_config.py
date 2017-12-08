@@ -23,6 +23,7 @@ from snapcraft.internal import (
     repo
 )
 from ._env import (
+    env_for_classic,
     build_env,
     build_env_for_stage,
     runtime_env,
@@ -191,7 +192,8 @@ class PartsConfig:
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema,
             stage_packages_repo=stage_packages_repo,
-            grammar_processor=grammar_processor)
+            grammar_processor=grammar_processor,
+            confinement=self._confinement)
 
         self.build_snaps |= grammar_processor.get_build_snaps()
         self.build_tools |= grammar_processor.get_build_packages()
@@ -208,7 +210,6 @@ class PartsConfig:
 
         env = []
         stagedir = self._project_options.stage_dir
-        core_dynamic_linker = self._project_options.get_core_dynamic_linker()
 
         if root_part:
             # this has to come before any {}/usr/bin
@@ -220,16 +221,16 @@ class PartsConfig:
             env += build_env(
                 part.installdir,
                 self._snap_name,
-                self._confinement,
-                self._project_options.arch_triplet,
-                core_dynamic_linker=core_dynamic_linker)
+                self._project_options.arch_triplet)
             env += build_env_for_stage(
                 stagedir,
                 self._snap_name,
-                self._confinement,
-                self._project_options.arch_triplet,
-                core_dynamic_linker=core_dynamic_linker)
-            env.append('SNAPCRAFT_PART_INSTALL={}'.format(part.installdir))
+                self._project_options.arch_triplet)
+            if self._confinement == 'classic':
+                env += env_for_classic(self._project_options.arch_triplet)
+            env.append('SNAPCRAFT_PART_INSTALL="{}"'.format(part.installdir))
+            env.append('SNAPCRAFT_ARCH_TRIPLET="{}"'.format(
+                self._project_options.arch_triplet))
             env.append('SNAPCRAFT_PARALLEL_BUILD_COUNT={}'.format(
                        self._project_options.parallel_build_count))
         else:

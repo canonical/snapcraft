@@ -30,16 +30,13 @@ from snapcraft import file_utils
 from snapcraft.internal import (
     common,
     errors,
-    libraries,
+    elf,
     repo,
     sources,
     states,
 )
 from ._scriptlets import ScriptRunner
 from ._build_attributes import BuildAttributes
-
-if sys.platform == 'linux':
-    import magic
 
 from ._plugin_loader import load_plugin  # noqa
 
@@ -64,15 +61,15 @@ class PluginHandler:
 
     def __init__(self, *, plugin, part_properties, project_options,
                  part_schema, definitions_schema, stage_packages_repo,
-                 grammar_processor):
+                 grammar_processor, confinement):
         self.valid = False
         self.plugin = plugin
-        self.config = {}
         self._part_properties = _expand_part_properties(
             part_properties, part_schema)
         self.stage_packages = []
         self._stage_packages_repo = stage_packages_repo
         self._grammar_processor = grammar_processor
+        self._confinement = confinement
 
         self._project_options = project_options
         self.deps = []
@@ -438,13 +435,16 @@ class PluginHandler:
 
         self.mark_cleaned('stage')
 
-    def prime(self, force=False):
+    def prime(self, force=False) -> None:
         self.makedirs()
         self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 
-        dependencies = _find_dependencies(self.primedir, snap_files)
+        elf_files = elf.get_elf_files(self.primedir, snap_files)
+        all_dependencies = set()
+        for elf_file in elf_files:
+            all_dependencies.update(elf_file.load_dependencies())
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
@@ -452,7 +452,7 @@ class PluginHandler:
         # already been primed by other means, and migrating them again could
         # potentially override the `stage` or `snap` filtering.
         (in_part, staged, primed, system) = _split_dependencies(
-            dependencies, self.installdir, self.stagedir, self.primedir)
+            all_dependencies, self.installdir, self.stagedir, self.primedir)
 
         part_dependency_paths = {os.path.dirname(d) for d in in_part}
         staged_dependency_paths = {os.path.dirname(d) for d in staged}
@@ -469,6 +469,39 @@ class PluginHandler:
                 # dependencies.
                 _migrate_files(system, system_dependency_paths, '/',
                                self.primedir, follow_symlinks=True)
+
+        # TODO: base snap support
+        core_path = common.get_core_path()
+
+        def mangle_library_path(library_path: str, elf_file_path: str) -> str:
+            # If the path is is in the core snap, use the absolute path,
+            # if the path is primed, use $ORIGIN, and last if the dependency
+            # is not anywhere return an empty string.
+            #
+            # Once we move away from the system library grabbing logic
+            # we can move to a smarter library capturing mechanism.
+            library_path = library_path.replace(self.installdir, self.primedir)
+            if library_path.startswith(core_path):
+                return os.path.dirname(library_path)
+            elif (library_path.startswith(self.primedir) and
+                  os.path.exists(library_path)):
+                rel_library_path = os.path.relpath(library_path, elf_file_path)
+                rel_library_path_dir = os.path.dirname(rel_library_path)
+                # return the dirname, with the first .. replace with $ORIGIN
+                return rel_library_path_dir.replace('..', '$ORIGIN', 1)
+            else:
+                return ''
+
+        if self._confinement == 'classic':
+            core_rpaths = common.get_library_paths(
+                core_path, self._project_options.arch_triplet,
+                existing_only=False)
+            dynamic_linker = self._project_options.get_core_dynamic_linker()
+            elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker,
+                                      library_path_func=mangle_library_path,
+                                      base_rpaths=core_rpaths)
+            for elf_file in elf_files:
+                elf_patcher.patch(elf_file=elf_file)
 
         self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
 
@@ -743,41 +776,6 @@ def _clean_migrated_files(snap_files, snap_dirs, directory):
         migrated_directory = os.path.join(directory, snap_dir)
         if not os.listdir(migrated_directory):
             os.rmdir(migrated_directory)
-
-
-def _find_dependencies(root, part_files):
-    ms = magic.open(magic.NONE)
-    if ms.load() != 0:
-        raise RuntimeError('Cannot load magic header detection')
-
-    elf_files = set()
-
-    fs_encoding = sys.getfilesystemencoding()
-
-    for part_file in part_files:
-        # Filter out object (*.o) files-- we only care about binaries.
-        if part_file.endswith('.o'):
-            continue
-
-        # No need to crawl links-- the original should be here, too.
-        path = os.path.join(root, part_file)
-        if os.path.islink(path):
-            logger.debug('Skipped link {!r} while finding dependencies'.format(
-                path))
-            continue
-
-        path = path.encode(fs_encoding, errors='surrogateescape')
-        # Finally, make sure this is actually an ELF before queueing it up
-        # for an ldd call.
-        file_m = ms.file(path)
-        if file_m.startswith('ELF') and 'dynamically linked' in file_m:
-            elf_files.add(path)
-
-    dependencies = []
-    for elf_file in elf_files:
-        dependencies += libraries.get_dependencies(elf_file)
-
-    return set(dependencies)
 
 
 def _get_file_list(stage_set):

@@ -25,7 +25,9 @@ import snapcraft.internal.dirs
 from snapcraft.internal import deprecations
 from snapcraft.internal import log
 from . import echo
+from . import env
 from .assertions import assertionscli
+from .containers import containerscli
 from .discovery import discoverycli
 from .lifecycle import lifecyclecli
 from .store import storecli
@@ -40,6 +42,7 @@ command_groups = [
     storecli,
     cicli,
     assertionscli,
+    containerscli,
     discoverycli,
     helpcli,
     lifecyclecli,
@@ -90,6 +93,9 @@ class SnapcraftGroup(click.Group):
         # Let's keep edit-collaborators hidden until we get the green light
         # from the store.
         commands.pop(commands.index('edit-collaborators'))
+        container_config = env.get_container_config()
+        if not container_config.use_container:
+            commands.pop(commands.index('refresh'))
         return commands
 
 

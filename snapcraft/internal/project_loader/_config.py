@@ -162,16 +162,13 @@ class Config:
 
     def stage_env(self):
         stage_dir = self._project_options.stage_dir
-        core_dynamic_linker = self._project_options.get_core_dynamic_linker()
         env = []
 
         env += runtime_env(stage_dir, self._project_options.arch_triplet)
         env += build_env_for_stage(
             stage_dir,
             self.data['name'],
-            self.data['confinement'],
-            self._project_options.arch_triplet,
-            core_dynamic_linker=core_dynamic_linker)
+            self._project_options.arch_triplet)
         for part in self.parts.all_parts:
             env += part.env(stage_dir)
 
@@ -201,8 +198,8 @@ class Config:
 
     def project_env(self):
         return [
-            'SNAPCRAFT_STAGE={}'.format(self._project_options.stage_dir),
-            'SNAPCRAFT_PROJECT_NAME={}'.format(self.data['name']),
+            'SNAPCRAFT_STAGE="{}"'.format(self._project_options.stage_dir),
+            'SNAPCRAFT_PROJECT_NAME="{}"'.format(self.data['name']),
             'SNAPCRAFT_PROJECT_VERSION={}'.format(self.data['version']),
             'SNAPCRAFT_PROJECT_GRADE={}'.format(self.data['grade']),
         ]

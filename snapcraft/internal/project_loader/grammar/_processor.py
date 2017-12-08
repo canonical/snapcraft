@@ -76,7 +76,7 @@ def _parse_dict(section, statement, statements, project_options,
 
     for key, value in section.items():
         if _ON_CLAUSE_PATTERN.match(key):
-            # We've come across the begining of an 'on' statement.
+            # We've come across the beginning of an 'on' statement.
             # That means any previous statement we found is complete.
             # The first time through this may be None, but the
             # collection will ignore it.
@@ -98,7 +98,7 @@ def _parse_dict(section, statement, statements, project_options,
                 checker=checker)
 
         if _TRY_CLAUSE_PATTERN.match(key):
-            # We've come across the begining of a 'try' statement.
+            # We've come across the beginning of a 'try' statement.
             # That means any previous statement we found is complete.
             # The first time through this may be None, but the
             # collection will ignore it.

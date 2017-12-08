@@ -1,3 +1,250 @@
+snapcraft (2.37) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * cli: improve the help command (#1789)
+  * many: set rpath for elf files for classic (#1781)
+
+  [ Kyle Fazzari ]
+  * tests: run codespell as part of static tests (#1783)
+  * catkin-tools plugin: use stage-packages (#1779)
+  * cli: add export-login command (#1780)
+
+  [ Leo Arias ]
+  * tests: move the ppa test trigger to lxd (#1758)
+  * tests: python plugin integration tests moved to a separate suite (#1791)
+  * tests: do not hit the network in python unit tests (#1792)
+  * cli: add what, why, and how to fix to the common errors (#1640)
+  * cli: include consistent commands to fix error conditions (#1790)
+
+  [ Christian Dywan ]
+  * tests: move refresh to unit folder (#1787)
+
+  [ Daniel Lim Wee Soong ]
+  * spelling: fixed spelling and added codespell support (#1770)
+  * cli: more complete error when registering a reserved name (#1778)
+  * static tests: add type hinting to file_utils.py (#1785)
+
+  [ Sangbum Kim ]
+  * cli: show helpful message for 'snapcraft list-keys' with no keys (#1784)
+
+  [ Marcin Mikołajczak ]
+  * tests: add --help command to the runtests.sh script (#1775)
+
+  [ Matias Bordese ]
+  * storeapi: support for pushing binary metadata (#1774)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Wed, 06 Dec 2017 15:22:05 +0000
+
+snapcraft (2.36) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * static tests: upgrade to the newest flake8 (#1745)
+  * static tests: enable type checking by use of mypy (#1747)
+  * elf: conversion from libraries (#1744)
+  * many: ensure classic confined binaries use the correct interpreter (#1759)
+  * project: export the arch triplet into the environment (#1768)
+
+  [ Kyle Fazzari ]
+  * TESTING: adt on lxc requires squashfuse (#1741)
+  * python plugin: use extracted pip (#1607)
+  * ament plugin: new plugin (#1583) (LP: #1686850)
+  * catkin plugin: support building entire workspace (#1743) (LP: #1721168)
+  * store: refactor acquirement of attenuated macaroon (#1765)
+  * snapcraft.yaml: use gcc to determine tuple (#1764) (LP: #1733922)
+
+  [ Leo Arias ]
+  * tests: reorganize unit and integration suites to make them easier to split
+    for travis (#1638)
+  * tests: share the cache for ros tests (#1725)
+  * tests: run daily autopkgtest in travis (#1643)
+  * tests: add a script to run autopkgtests from the ppa (#1749)
+  * tests: add the missing quote on autopkgtest run (#1756)
+  * tests: move the catkin integration tests to a separate suite (#1760)
+
+  [ Chris Ratliff ]
+  * catkin tools plugin: add catkin tools support (#1593)
+
+  [ Paolo Pisati ]
+  * kernel plugin: respect the kernel-with-firmware property (#1750)
+
+  [ Colin Watson ]
+  * nodejs plugin: pass proxy configuration to yarn (#1754)
+
+  [ Christian Dywan ]
+  * lxd: always remove tmp_dir after execution (#1742)
+  * lxd: delete container only if parts is empty (#1762)
+
+  [ Facundo Batista ]
+  * store: push-metadata added (#1634)
+  * tests: push metadata test needs to push the snap first (#1766)
+
+  [ Daniel Watkins ]
+  * python plugin: use finer grained file filters for pip (#1763)
+
+  [ Michael Hudson-Doyle ]
+  * lxd: let lxd choose the architecture (#1718)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Wed, 29 Nov 2017 04:20:26 +0000
+
+snapcraft (2.35) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * pluginhandler: error out on scriptlet errors
+  * meta: ensure main keys are ordered in snap.yaml
+  * demos: remove the py?-project demos
+  * store: switch to new endpoints
+  * static: fix flake8 errors in setup.py
+  * docker: add the environment variable to setup core (#1576)
+  * cli: add the pack command (#1565)
+  * store: handle revoked developers (#1554)
+  * lifecycle: split into its own package (#1626)
+  * libraries: exclude the full set of libc6 (#1632)
+  * lxd: better surfacing of errors (#1647)
+  * tests: fork skip into snaps_tests (#1652)
+  * sources: use arfile to extract debs (#1729)
+  * tests: dotnet only works on 16.04 (#1732)
+  * unit tests: make the check for output less strict (#1738)
+  * New upstream release (LP: #1729417)
+
+  [ Kyle Fazzari ]
+  * project_loader: aliases are deprecated
+  * catkin plugin: don't assume catkin is in underlay
+  * catkin plugin: only append PYTHONPATH if set
+  * plugins: extract python finder functions
+  * plugins: extract sitecustomize logic from python
+  * dirs: set plugin, schema, and library dir for snap
+  * plugins: extract pip from python plugin
+  * catkin plugin: support rosdep pip dependencies (#1581)
+  * plugins: add ros2 boostrapper (#1582)
+  * travis: run snapd tests only if not cron (#1592)
+  * snapcraft.yaml: don't re-use build dir (#1601)
+  * schema: improve invalid app, hook, and part errors (#1615)
+  * plugins: build-attributes is already in the state (#1620)
+  * tests: skip catkin test on non-xenial (#1621)
+  * tests: don't hit internet in ros2 units (#1619)
+  * states: add scriptlets to build state (#1618)
+  * schema: sync patterns with snapd (#1622)
+  * snap: remove leaking LD_LIBRARY_PATH (#1635)
+  * store: guide to account creation upon login (#1616)
+  * repo: add elementary to deb distros (#1637)
+  * internal: more gracefully determine host OS (#1636)
+  * integration tests: skip shared ROS test on non-xenial (#1656)
+  * internal: don't reuse variable in OsRelease (#1653)
+  * integration tests: remove ruby version (#1727)
+  * unit tests: reset log level after test (#1735)
+  * autotools: cross-compile using --host instead of env (#1654)
+  * catkin plugin: check for pip packages in part only (#1717)
+  * ruby plugin: be smarter about arch-specific paths (#1730)
+  * demo tests: bump catkin timeout by a lot (#1731)
+  * many: account for python shebang args in rewrite
+
+  [ Leo Arias ]
+  * typo: replace ocurred with occurred
+  * node plugin: record installed node packages in manifest
+  * node plugin: record the yarn.lock file
+  * tests: fix the TEST_STORE environment variable
+  * tests: add integration tests for build snaps
+  * recording: record the machine information collected by uname
+  * tests: add unit tests for the ruby plugin
+  * recording: record the packages installed in the  machine
+  * tests: simplify a little the data in nodejs unit tests
+  * ci: use travis conditionals
+  * recording: record build-snaps installed during the pull
+  * tests: replace the first batch of demo tests with snapd integration tests
+  * rust plugin: record the Cargo.lock file
+  * rust plugin: record the versions of rustup, rustc and cargo
+  * tests: move ruby demo test to snapd integration suite (#1596)
+  * recording: record the snaps installed on the machine (#1567)
+  * style: use dedent for multiline strings (#1584)
+  * tests: refactor the fake snapd to not hardcode values (#1569)
+  * code style: remove the extra quotes in the dedent example (#1594)
+  * recording: do not crash when snapd is not installed (#1598)
+  * tests: fix the skip of snapd integration tests in armhf (#1595)
+  * tests: fix the duplicate plainbox test scenarios (#1608)
+  * tests: reenable the cleanbuild integration test (#1610)
+  * tests: remove the duplicate nodejs integration tests (#1609)
+  * tests: add /snap/bin to PATH in autopkgtests (#1603)
+  * tests: add the slow tag for ros snapd integration test (#1602)
+  * lxd: fix the unit test for the user id map (#1629)
+  * tests: allow to select a suite when running autopkgtests (#1630)
+  * tests: use the snapcraft snap for the integration tests (#1625)
+  * tests: move the plainbox test to the integration suite (#1642)
+  * lxd: fix the push in container builds (#1644)
+  * tests: use the common base handler on the fake snapd server (#1724)
+  * tests: split the integration autopkgtests (#1716)
+  * tests: in autopkgtests, use a tempdir in home, not in the tmpfs (#1657)
+  * recording: record information from the image in container builds  (#1633)
+  * recording: pass the build info flag to the container (#1736)
+  * tests: add the home plug to the plainbox snap (#1740)
+
+  [ Christian Dywan ]
+  * lxd: mount project folder via sshfs in case of a remote (#1302)
+  * lxd: Only pass target arch if specified explicitly
+  * repo: friendly, helpful error for unsupported distros (#1586)
+  * lxd: instructions for /etc/sub{u,g}id after failed start (#1553)
+  * lxd: pass SNAPCRAFT_PARTS_URI through into container (#1585)
+  * lxd: use SUDO_UID for ID mapping (#1588)
+  * lxd: don't inject local snaps on a different arch (#1577)
+  * lxd: don't re-inject the same snaps (#1568)
+  * lxd: split container classes into different files (#1627)
+  * cli: update parts cache in the container (#1546)
+  * lifecycle: clean after deleting container (#1587)
+  * lxd: snapcraft refresh in containers (#1412)
+  * lxd: distinguish argless clean from clean -s pull (#1655)
+  * lxd: refresh remote container (#1739)
+  * cli: pass remote from container_config to clean method (#1737)
+
+  [ Mark Lee ]
+  * project_loader: quote more environment variable values (#1578)
+
+  [ James Beedy ]
+  * ruby plugin: new plugin
+
+  [ Aleix Pol ]
+  * repo: return a proper value in DummyRepo
+  * common: do not fail over on empty or faulty lines in os-release
+
+  [ Jeff Dickey ]
+  * ci: install git in Dockerfile for '{version: git}' usage (#1575)
+
+  [ Michael Vogt ]
+  * meta: add and adapter property for apps
+
+  [ Chris Ratliff ]
+  * catkin plugin: allow ROS_MASTER_URI change (#1572)
+
+  [ Rakesh Singh ]
+  * dotnet plugin: new plugin (#1574)
+
+  [ Martin Wimpress ]
+  * nodejs plugin: update default node engine to 6.11.4 (#1589)
+
+  [ Colin Watson ]
+  * options: fix core-dynamic-linker on ppc64el/s390x (#1600)
+
+  [ Paolo Pisati ]
+  * kbuild plugin: if the parts build dir already contains a .config file, return immediately (#1606)
+  * cross compilation: enable cross compilation of i386 kernel on x86-64 … (#1613)
+
+  [ Jonathan Cave ]
+  * plainbox-provider plugin: init PROVIDERPATH (#1611)
+
+  [ Carlo Lobrano ]
+  * store: fix StoreReleaseError format for BAD REQUEST error (#1599)
+  * sources: get svn revision with --show-item flag (#1648)
+  * Removed dependency on VERSION_ID in os-release (#1623)
+
+  [ Alfonso Sanchez Beato ]
+  * kernel plugin: use latest stable core snap (#1624)
+
+  [ Nathan Haines ]
+  * ruby plugin: new stable release 2.4.2 (#1645)
+
+  [ Marius Gripsgard ]
+  * sources: workaround for ZipFile.extractall not preserving permissions (#1723)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Wed, 01 Nov 2017 19:41:33 +0000
+
 snapcraft (2.34) xenial; urgency=medium
 
   [ Sergio Schvezov ]
@@ -136,7 +383,7 @@ snapcraft (2.33) xenial; urgency=medium
   * core: clean the container on a full clean (#1372)
   * lxd: do not assume user ID of 1000 for raw.idmap (#1385)
   * autotools plugin: Enable cross-compilation support (#1383)
-  * lxd: distingish FileNotFoundError for when not installed (#1400)
+  * lxd: distinguish FileNotFoundError for when not installed (#1400)
   * waf plugin: enable cross-compilation support  (#1397)
   * ci: wait for apt/dpkg lock when setting lxd up (#1421)
   * lxd: stop setting `$HOME` in containers (#1408)
@@ -455,7 +702,7 @@ snapcraft (2.27.1) xenial; urgency=medium
 snapcraft (2.27) xenial; urgency=medium
 
   [ Sergio Schvezov ]
-  * core: switch to using rpath for clasic confinement. (#1094)
+  * core: switch to using rpath for classic confinement. (#1094)
   * python plugin: do the right thing with classic. (#1093)
   * meta: support for the environment keyword. (#1103)
   * meta: correct the deprecation for `setup/gui` use. (#1107)

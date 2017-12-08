@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,6 +16,10 @@
 import os
 import sys
 from textwrap import dedent
+from typing import TextIO
+
+# Using mypy 'type:' comment below, but flake8 thinks these aren't used
+from typing import Dict, List, Union  # noqa
 
 import click
 
@@ -57,6 +61,28 @@ def storecli():
     pass
 
 
+def _human_readable_acls(store: storeapi.StoreClient) -> str:
+    acl = store.acl()
+    snap_names = []
+    if acl['snap_ids']:
+        for snap_id in acl['snap_ids']:
+            snap_names.append(store.get_snap_name_for_id(snap_id))
+    acl['snap_names'] = snap_names
+
+    human_readable_acl = {}  # type: Dict[str, Union[str, List[str]]]
+
+    for key in ('snap_names', 'channels', 'permissions'):
+        human_readable_acl[key] = acl[key]
+        if not acl[key]:
+            human_readable_acl[key] = 'No restriction'
+
+    return dedent("""\
+        snaps:       {snap_names}
+        channels:    {channels}
+        permissions: {permissions}
+    """.format(**human_readable_acl))
+
+
 @storecli.command()
 @click.argument('snap-name', metavar='<snap-name>')
 @click.option('--private', is_flag=True,
@@ -91,6 +117,7 @@ def register(snap_name, private):
                                 dir_okay=False))
 def push(snap_file, release):
     """Push <snap-file> to the store.
+
     By passing --release with a comma separated list of channels the snap would
     be released to the selected channels if the store review passes for this
     <snap-file>.
@@ -116,6 +143,29 @@ def push(snap_file, release):
             'will be made'.format(channel_list))
 
     snapcraft.push(snap_file, channel_list)
+
+
+@storecli.command('push-metadata')
+@click.option('--force', is_flag=True,
+              help="Force metadata update to override any possible conflict")
+@click.argument('snap-file', metavar='<snap-file>',
+                type=click.Path(exists=True,
+                                readable=True,
+                                resolve_path=True,
+                                dir_okay=False))
+def push_metadata(snap_file, force):
+    """Push metadata from <snap-file> to the store.
+
+    If --force is given, it will force the local metadata into the Store,
+    ignoring any possible conflict.
+
+    \b
+    Examples:
+        snapcraft push-metadata my-snap_0.1_amd64.snap
+        snapcraft push-metadata my-snap_0.1_amd64.snap --force
+    """
+    click.echo('Pushing metadata from {}'.format(os.path.basename(snap_file)))
+    snapcraft.push_metadata(snap_file, force)
 
 
 @storecli.command()
@@ -228,17 +278,94 @@ def list_registered():
     snapcraft.list_registered()
 
 
-@storecli.command()
-def login():
-    """Authenticate session against Ubuntu One SSO."""
-    if not snapcraft.login():
+@storecli.command('export-login')
+@click.argument('login_file', metavar='FILE', type=click.File('w'))
+@click.option('--snaps', metavar='<snaps>',
+              help='Comma-separated list of snaps to limit access')
+@click.option('--channels', metavar='<channels>',
+              help='Comma-separated list of channels to limit access')
+@click.option('--acls', metavar='<acls>',
+              help='Comma-separated list of ACLs to limit access')
+def export_login(login_file: TextIO, snaps: str, channels: str, acls: str):
+    """Save login configuration for a store account in FILE.
+
+    This file can then be used to log in to the given account with the
+    specified permissions.
+
+    For example, to limit access to the edge channel of any snap the account
+    can access:
+
+        snapcraft export-login --channels=edge
+
+    Or to limit access to only the edge channel of a single snap:
+
+        snapcraft export-login --snaps=my-snap --channels=edge
+    """
+
+    snap_list = None
+    channel_list = None
+    acl_list = None
+
+    if snaps:
+        snap_list = []
+        for package in snaps.split(','):
+            snap_list.append({'name': package, 'series': '16'})
+
+    if channels:
+        channel_list = channels.split(',')
+
+    if acls:
+        acl_list = acls.split(',')
+
+    store = storeapi.StoreClient()
+    if not snapcraft.login(store=store,
+                           packages=snap_list,
+                           channels=channel_list,
+                           acls=acl_list,
+                           save=False):
         sys.exit(1)
+
+    store.conf.save(config_fd=login_file)
+
+    print()
+    echo.info(dedent("""\
+        Login successfully exported to {0!r}. This file can now be used with
+        'snapcraft login --with {0}' to log in to this account with no password
+        and have these capabilities:\n""".format(
+            login_file.name)))
+    echo.info(_human_readable_acls(store))
+    echo.warning(
+        'This exported login is not encrypted. Do not commit it to version '
+        'control!')
+
+
+@storecli.command()
+@click.option('--with', 'login_file', metavar='<login file>',
+              type=click.File('r'),
+              help="Path to file created with 'snapcraft export-login'")
+def login(login_file):
+    """Login with your Ubuntu One e-mail address and password.
+
+    If you do not have an Ubuntu One account, you can create one at
+    https://dashboard.snapcraft.io/openid/login
+    """
+    store = storeapi.StoreClient()
+    if not snapcraft.login(store=store, config_fd=login_file):
+        sys.exit(1)
+
+    print()
+
+    if login_file:
+        echo.info(
+            'Login successful. You now have these capabilities:\n')
+        echo.info(_human_readable_acls(store))
+    else:
+        echo.info('Login successful.')
 
 
 @storecli.command()
 def logout():
     """Clear session credentials."""
-    echo.info('Clearing credentials for Ubuntu One SSO.')
     store = storeapi.StoreClient()
     store.logout()
     echo.info('Credentials cleared.')

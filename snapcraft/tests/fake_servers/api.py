@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016, 2017 Canonical Ltd
+# Copyright 2016, 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,6 +19,7 @@ import logging
 import os
 import re
 import urllib.parse
+import uuid
 
 from pyramid import response
 import pymacaroons
@@ -37,7 +38,8 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         super().__init__(server_address)
         self.fake_store = fake_store
         self.account_keys = []
-        self.registered_names = []
+        self.registered_names = {}
+        self.pushed_snaps = set()
 
     def configure(self, configurator):
         # POST
@@ -45,6 +47,12 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             'acl', urllib.parse.urljoin(self._DEV_API_PATH, 'acl/'),
             request_method='POST')
         configurator.add_view(self.acl, route_name='acl')
+
+        configurator.add_route(
+            'verify_acl', urllib.parse.urljoin(
+                self._DEV_API_PATH, 'acl/verify/'),
+            request_method='POST')
+        configurator.add_view(self.verify_acl, route_name='verify_acl')
 
         configurator.add_route(
             'account_key',
@@ -88,6 +96,22 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             request_method='POST')
         configurator.add_view(self.agreement, route_name='agreement')
 
+        configurator.add_route(
+            'snap_metadata_post',
+            urllib.parse.urljoin(
+                self._DEV_API_PATH, 'snaps/{snap_id}/metadata'),
+            request_method='POST')
+        configurator.add_view(
+            self.snap_metadata, route_name='snap_metadata_post')
+
+        configurator.add_route(
+            'snap_binary_metadata_post',
+            urllib.parse.urljoin(
+                self._DEV_API_PATH, 'snaps/{snap_id}/binary-metadata'),
+            request_method='POST')
+        configurator.add_view(
+            self.snap_binary_metadata, route_name='snap_binary_metadata_post')
+
         # GET
         configurator.add_route(
             'details',
@@ -129,6 +153,14 @@ class FakeStoreAPIServer(base.BaseFakeServer):
         configurator.add_view(
             self.snap_developers, route_name='snap_developers')
 
+        configurator.add_route(
+            'snap_binary_metadata_get',
+            urllib.parse.urljoin(
+                self._DEV_API_PATH, 'snaps/{snap_id}/binary-metadata'),
+            request_method='GET')
+        configurator.add_view(
+            self.snap_binary_metadata, route_name='snap_binary_metadata_get')
+
         # PUT
         configurator.add_route(
             'put_snap_validations',
@@ -145,6 +177,22 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             request_method='PUT')
         configurator.add_view(
             self.put_snap_developers, route_name='put_snap_developers')
+
+        configurator.add_route(
+            'snap_metadata_put',
+            urllib.parse.urljoin(
+                self._DEV_API_PATH, 'snaps/{snap_id}/metadata'),
+            request_method='PUT')
+        configurator.add_view(
+            self.snap_metadata, route_name='snap_metadata_put')
+
+        configurator.add_route(
+            'snap_binary_metadata_put',
+            urllib.parse.urljoin(
+                self._DEV_API_PATH, 'snaps/{snap_id}/binary-metadata'),
+            request_method='PUT')
+        configurator.add_view(
+            self.snap_binary_metadata, route_name='snap_binary_metadata_put')
 
     def _refresh_error(self):
         error = {
@@ -176,6 +224,28 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                     verification_key_id='test verifiacion')
             ])
         payload = json.dumps({'macaroon': macaroon.serialize()}).encode()
+        response_code = 200
+        content_type = 'application/json'
+        return response.Response(
+            payload, response_code, [('Content-Type', content_type)])
+
+    def verify_acl(self, request):
+        if self.fake_store.needs_refresh:
+            return self._refresh_error()
+
+        print(request.json_body)
+
+        return self._verify_acl_wide_open()
+
+    def _verify_acl_wide_open(self):
+        acl = {
+            'snap_ids': None,
+            'channels': None,
+            'permissions': [
+                'package_upload', 'package_access', 'package_manage']
+        }
+
+        payload = json.dumps(acl).encode()
         response_code = 200
         content_type = 'application/json'
         return response.Response(
@@ -352,6 +422,9 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                 details_path = 'details/upload-id/duplicate-snap'
             else:
                 details_path = 'details/upload-id/good-snap'
+            if not request.json_body.get('dry_run', False):
+                snap_id = self.registered_names[name]['snap_id']
+                self.pushed_snaps.add(snap_id)
             payload = json.dumps({
                 'status_details_url': urllib.parse.urljoin(
                     'http://localhost:{}/'.format(self.server_port),
@@ -539,8 +612,9 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             payload, response_code, [('Content-Type', content_type)])
 
     def _register_name_successful(self, name, is_private):
-        self.registered_names.append((name, is_private))
-        payload = json.dumps({'snap_id': 'test-snap-id'}).encode()
+        snap_id = uuid.uuid4().hex
+        self.registered_names[name] = dict(private=is_private, snap_id=snap_id)
+        payload = json.dumps({'snap_id': snap_id}).encode()
         response_code = 201
         content_type = 'application/json'
         return response.Response(
@@ -572,6 +646,104 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                     }
                 }).encode()
 
+        return response.Response(
+            payload, response_code, [('Content-Type', content_type)])
+
+    def snap_metadata(self, request):
+        logger.debug('Handling metadata request')
+        snap_id = request.matchdict['snap_id']
+
+        # check if snap was previously pushed
+        if snap_id not in self.pushed_snaps:
+            err = {'error_list': [
+                {'message': 'Snap not found', 'code': 'not-found'}]}
+            payload = json.dumps(err).encode('utf8')
+            response_code = 404
+            content_type = 'application/json'
+            return response.Response(
+                payload, response_code, [('Content-Type', content_type)])
+
+        if 'invalid' in request.json_body:
+            err = {'error_list': [{
+                'message': 'Invalid field: invalid',
+                'code': 'invalid-request',
+            }]}
+            payload = json.dumps(err).encode('utf8')
+            response_code = 400
+            content_type = 'application/json'
+        elif any('conflict' in field_name for field_name in request.json_body):
+            # conflicts!
+            if request.method == 'PUT':
+                # update anyway
+                payload = b''
+                response_code = 200
+                content_type = 'text/plain'
+            else:
+                # POST, return error
+                error_list = []
+                for name, value in request.json_body.items():
+                    error_list.append({
+                        'message': value + '-changed',
+                        'code': 'conflict',
+                        'extra': {'name': name},
+                    })
+                payload = json.dumps({'error_list': error_list}).encode('utf8')
+                response_code = 409
+                content_type = 'application/json'
+        else:
+            # all fine by default
+            payload = b''
+            response_code = 200
+            content_type = 'text/plain'
+
+        return response.Response(
+            payload, response_code, [('Content-Type', content_type)])
+
+    def snap_binary_metadata(self, request):
+        logger.debug('Handling binary metadata request')
+        if request.method == 'GET':
+            current = [
+                {'type': 'icon', 'hash': '1234567890', 'filename': 'icon.png'},
+                {'type': 'screenshot', 'hash': '0987654321',
+                 'filename': 'ss1.png'},
+                {'type': 'screenshot', 'hash': '1122334455',
+                 'filename': 'ss2.png'},
+            ]
+            return response.Response(
+                json.dumps(current).encode('utf-8'), 200,
+                [('Content-Type', 'application/json')])
+        else:
+            # POST/PUT
+            info = json.loads(request.params['info'])
+            invalid = any([e.get('filename', '').endswith('invalid')
+                           for e in info])
+            conflict = any([e.get('filename', '').endswith('conflict')
+                           for e in info])
+            if invalid:
+                err = {'error_list': [{
+                    'message': 'Invalid field: icon',
+                    'code': 'invalid-request',
+                }]}
+                payload = json.dumps(err).encode('utf8')
+                response_code = 400
+            elif conflict and request.method == 'POST':
+                # POST, return error
+                error_list = [{
+                    'message': 'original-icon',
+                    'code': 'conflict',
+                    'extra': {'name': 'icon'},
+                }]
+                payload = json.dumps({'error_list': error_list}).encode('utf8')
+                response_code = 409
+            else:
+                updated_info = []
+                for entry in info:
+                    entry.pop('key', None)
+                    updated_info.append(entry)
+                payload = json.dumps(updated_info).encode('utf-8')
+                response_code = 200
+
+        content_type = 'application/json'
         return response.Response(
             payload, response_code, [('Content-Type', content_type)])
 
@@ -646,10 +818,10 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                            'since': '2016-12-12T01:01:01Z'},
             }
         snaps.update({
-            name: {'snap-id': 'fake-snap-id', 'status': 'Approved',
-                   'private': private, 'price': None,
+            name: {'snap-id': snap_data['snap_id'], 'status': 'Approved',
+                   'private': snap_data['private'], 'price': None,
                    'since': '2016-12-12T01:01:01Z'}
-            for name, private in self.registered_names})
+            for name, snap_data in self.registered_names.items()})
         payload = json.dumps({
             'account_id': 'abcd',
             'account_keys': self.account_keys,

@@ -76,7 +76,7 @@ from snapcraft.file_utils import (
     requires_path_exists,
 )
 from snapcraft.internal import load_config
-from snapcraft._store import _login
+from snapcraft._store import login
 from snapcraft.config import LOCAL_CONFIG_FILENAME
 
 logger = logging.getLogger(__name__)
@@ -101,7 +101,10 @@ def _acquire_and_encrypt_credentials(packages, channels):
     # See https://docs.travis-ci.com/user/ip-addresses.
     logger.info('Acquiring specific authorization information ...')
     store = storeapi.StoreClient()
-    if not _login(store, packages=packages, channels=channels, save=False):
+    if not login(store=store,
+                 packages=packages,
+                 channels=channels,
+                 save=False):
         raise TravisRuntimeError(
             'Cannot continue without logging in successfully.')
 
@@ -109,7 +112,7 @@ def _acquire_and_encrypt_credentials(packages, channels):
         'Encrypting authorization for Travis and adjusting project to '
         'automatically decrypt and use it during "after_success".')
     with tempfile.NamedTemporaryFile(mode='w') as fd:
-        store.conf.parser.write(fd)
+        store.conf.save(config_fd=fd)
         fd.flush()
         os.makedirs(
             os.path.dirname(LOCAL_CONFIG_FILENAME), exist_ok=True)

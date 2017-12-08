@@ -26,6 +26,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 from subprocess import Popen
+from typing import Dict, Iterable, TextIO
 
 import yaml
 # Ideally we would move stuff into more logical components
@@ -63,19 +64,43 @@ def _get_data_from_snap_file(snap_path):
     return snap_yaml
 
 
-def _fail_login(msg=''):
+@contextmanager
+def _get_icon_from_snap_file(snap_path):
+    icon_file = None
+    with tempfile.TemporaryDirectory() as temp_dir:
+        output = subprocess.check_output(
+            ['unsquashfs', '-d',
+             os.path.join(temp_dir, 'squashfs-root'),
+             snap_path, '-e', 'meta/gui'])
+        logger.debug("Output extracting icon from snap: %s", output)
+        for extension in ('png', 'svg'):
+            icon_name = 'icon.{}'.format(extension)
+            icon_path = os.path.join(
+                temp_dir, 'squashfs-root', 'meta/gui', icon_name)
+            if os.path.exists(icon_path):
+                icon_file = open(icon_path, 'rb')
+                break
+        try:
+            yield icon_file
+        finally:
+            if icon_file is not None:
+                icon_file.close()
+
+
+def _fail_login(msg: str = '') -> bool:
     echo.error(msg)
     echo.error('Login failed.')
     return False
 
 
-def _get_url_from_error(error):
-    if error.extra:
-        return error.extra[0].get('url')
-    return None
+def _get_url_from_error(
+        error: storeapi.errors.StoreAccountInformationError) -> str:
+    if error.extra:  # type: ignore
+        return error.extra[0].get('url')  # type: ignore
+    return ''
 
 
-def _check_dev_agreement_and_namespace_statuses(store):
+def _check_dev_agreement_and_namespace_statuses(store) -> None:
     """ Check the agreement and namespace statuses of the dev.
     Fail if either of those conditions is not met.
     Re-raise `StoreAccountInformationError` if we get an error and
@@ -85,7 +110,7 @@ def _check_dev_agreement_and_namespace_statuses(store):
     try:
         store.get_account_information()
     except storeapi.errors.StoreAccountInformationError as e:
-        if storeapi.constants.MISSING_AGREEMENT == e.error:
+        if storeapi.constants.MISSING_AGREEMENT == e.error:  # type: ignore
             # A precaution if store does not return new style error.
             url = (_get_url_from_error(e) or
                    storeapi.constants.UBUNTU_STORE_TOS_URL)
@@ -94,7 +119,7 @@ def _check_dev_agreement_and_namespace_statuses(store):
             if choice in {'y', 'Y'}:
                 try:
                     store.sign_developer_agreement(latest_tos_accepted=True)
-                except:
+                except:  # noqa LP: #1733003
                     raise storeapi.errors.NeedTermsSignedError(
                             storeapi.constants.AGREEMENT_SIGN_ERROR.format(
                                 url))
@@ -106,7 +131,7 @@ def _check_dev_agreement_and_namespace_statuses(store):
     try:
         store.get_account_information()
     except storeapi.errors.StoreAccountInformationError as e:
-        if storeapi.constants.MISSING_NAMESPACE in e.error:
+        if storeapi.constants.MISSING_NAMESPACE in e.error:  # type: ignore
             # A precaution if store does not return new style error.
             url = (_get_url_from_error(e) or
                    storeapi.constants.UBUNTU_STORE_ACCOUNT_URL)
@@ -116,27 +141,48 @@ def _check_dev_agreement_and_namespace_statuses(store):
             raise
 
 
-def _login(store, packages=None, acls=None, channels=None, save=True):
-    print('Enter your Ubuntu One SSO credentials.')
-    email = input('Email: ')
-    password = getpass.getpass('Password: ')
-
+def _try_login(email: str, password: str, *,
+               store: storeapi.StoreClient = None, save: bool = True,
+               packages: Iterable[Dict[str, str]] = None,
+               acls: Iterable[str] = None, channels: Iterable[str] = None,
+               config_fd: TextIO = None) -> None:
     try:
-        try:
-            store.login(email, password, packages=packages, acls=acls,
-                        channels=channels, save=save)
+        store.login(email, password, packages=packages, acls=acls,
+                    channels=channels, config_fd=config_fd, save=save)
+        if not config_fd:
             print()
             logger.info(storeapi.constants.TWO_FACTOR_WARNING)
-        except storeapi.errors.StoreTwoFactorAuthenticationRequired:
-            one_time_password = input('Second-factor auth: ')
-            store.login(
-                email, password, one_time_password=one_time_password,
-                acls=acls, packages=packages, channels=channels,
-                save=save)
+    except storeapi.errors.StoreTwoFactorAuthenticationRequired:
+        one_time_password = input('Second-factor auth: ')
+        store.login(
+            email, password, one_time_password=one_time_password,
+            acls=acls, packages=packages, channels=channels,
+            config_fd=config_fd, save=save)
 
-        # Continue if agreement and namespace conditions are met.
-        _check_dev_agreement_and_namespace_statuses(store)
+    # Continue if agreement and namespace conditions are met.
+    _check_dev_agreement_and_namespace_statuses(store)
 
+
+def login(*, store: storeapi.StoreClient = None,
+          packages: Iterable[Dict[str, str]] = None, save: bool = True,
+          acls: Iterable[str] = None, channels: Iterable[str] = None,
+          config_fd: TextIO = None) -> bool:
+    if not store:
+        store = storeapi.StoreClient()
+
+    email = ''
+    password = ''
+
+    if not config_fd:
+        print('Enter your Ubuntu One e-mail address and password.\n'
+              'If you do not have an Ubuntu One account, you can create one '
+              'at https://dashboard.snapcraft.io/openid/login')
+        email = input('Email: ')
+        password = getpass.getpass('Password: ')
+
+    try:
+        _try_login(email, password, store=store, packages=packages, acls=acls,
+                   channels=channels, config_fd=config_fd, save=save)
     except storeapi.errors.InvalidCredentialsError:
         return _fail_login(storeapi.constants.INVALID_CREDENTIALS)
     except storeapi.errors.StoreAuthenticationError:
@@ -144,16 +190,9 @@ def _login(store, packages=None, acls=None, channels=None, save=True):
     except storeapi.errors.StoreAccountInformationError:
         return _fail_login(storeapi.constants.ACCOUNT_INFORMATION_ERROR)
     except storeapi.errors.NeedTermsSignedError as e:
-        return _fail_login(e.message)
+        return _fail_login(e.message)  # type: ignore
     else:
-        print()
-        echo.info('Login successful.')
         return True
-
-
-def login():
-    store = storeapi.StoreClient()
-    return _login(store)
 
 
 @contextmanager
@@ -239,14 +278,18 @@ def list_keys():
     enabled_keys = {
         account_key['public-key-sha3-384']
         for account_key in account_info['account_keys']}
-    tabulated_keys = tabulate(
-        [('*' if key['sha3-384'] in enabled_keys else '-',
-          key['name'], key['sha3-384'],
-          '' if key['sha3-384'] in enabled_keys else '(not registered)')
-         for key in keys],
-        headers=["", "Name", "SHA3-384 fingerprint", ""],
-        tablefmt="plain")
-    print(tabulated_keys)
+    if enabled_keys:
+        tabulated_keys = tabulate(
+            [('*' if key['sha3-384'] in enabled_keys else '-',
+              key['name'], key['sha3-384'],
+              '' if key['sha3-384'] in enabled_keys else '(not registered)')
+             for key in keys],
+            headers=["", "Name", "SHA3-384 fingerprint", ""],
+            tablefmt="plain")
+        print(tabulated_keys)
+    else:
+        print('No keys have been registered.'
+              ' See \'snapcraft register-key --help\' to register a key.')
 
 
 def create_key(name):
@@ -291,7 +334,7 @@ def register_key(name):
         raise storeapi.errors.MissingSnapdError('register-key')
     key = _maybe_prompt_for_key(name)
     store = storeapi.StoreClient()
-    if not _login(store, acls=['modify_account_key'], save=False):
+    if not login(store=store, acls=['modify_account_key'], save=False):
         raise storeapi.errors.LoginRequiredError()
     logger.info('Registering key ...')
     account_info = store.get_account_information()
@@ -379,6 +422,36 @@ def sign_build(snap_filename, key_name=None, local=False):
             'Build assertion {} pushed to the Store.'.format(snap_build_path))
 
 
+def push_metadata(snap_filename, force):
+    """Push only the metadata to the server.
+
+    If force=True it will force the local metadata into the Store,
+    ignoring any possible conflict.
+    """
+    logger.debug("Pushing metadata to the Store (force=%s)", force)
+
+    # get the metadata from the snap
+    snap_yaml = _get_data_from_snap_file(snap_filename)
+    metadata = {
+        'summary': snap_yaml['summary'],
+        'description': snap_yaml['description'],
+    }
+
+    # other snap info
+    snap_name = snap_yaml['name']
+
+    # hit the server
+    store = storeapi.StoreClient()
+    with _requires_login():
+        store.push_precheck(snap_name)
+        store.push_metadata(snap_name, metadata, force)
+        with _get_icon_from_snap_file(snap_filename) as icon:
+            metadata = {'icon': icon}
+            store.push_binary_metadata(snap_name, metadata, force)
+
+    logger.info("The metadata has been pushed")
+
+
 def push(snap_filename, release_channels=None):
     """Push a snap_filename to the store.
 
@@ -421,16 +494,12 @@ def push(snap_filename, release_channels=None):
     else:
         result = _push_snap(snap_name, snap_filename)
 
-    # This is workaround until LP: #1599875 is solved
-    if 'revision' in result:
-        logger.info('Revision {!r} of {!r} created.'.format(
-            result['revision'], snap_name))
+    logger.info('Revision {!r} of {!r} created.'.format(
+        result['revision'], snap_name))
 
-        snap_cache.cache(snap_filename=snap_filename)
-        snap_cache.prune(deb_arch=arch,
-                         keep_hash=calculate_sha3_384(snap_filename))
-    else:
-        logger.info('Pushing {!r}'.format(snap_name))
+    snap_cache.cache(snap_filename=snap_filename)
+    snap_cache.prune(deb_arch=arch,
+                     keep_hash=calculate_sha3_384(snap_filename))
 
     if release_channels:
         release(snap_name, result['revision'], release_channels)

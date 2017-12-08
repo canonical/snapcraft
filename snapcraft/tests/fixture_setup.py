@@ -52,6 +52,11 @@ from snapcraft.tests.subprocess_utils import (
 
 class TempCWD(fixtures.TempDir):
 
+    def __init__(self, rootdir=None):
+        if rootdir is None and 'TMPDIR' in os.environ:
+            rootdir = os.environ.get('TMPDIR')
+        super().__init__(rootdir)
+
     def setUp(self):
         """Create a temporary directory an cd into it for the test duration."""
         super().setUp()
@@ -294,9 +299,7 @@ class FakeStore(fixtures.Fixture):
 
 
 class _FakeServerRunning(fixtures.Fixture):
-
-    # To be defined by child fixtures.
-    fake_server = None
+    # fake_server needs to be set by implementing classes
 
     def setUp(self):
         super().setUp()
@@ -442,12 +445,23 @@ class FakeFilesystem(fixtures.Fixture):
         self.makedirs_mock.side_effect = self.makedirs_side_effect()
         self.addCleanup(patcher.stop)
 
+        @contextlib.contextmanager
+        def tempdir(prefix: str, dir: str):
+            self.tmp_dir = os.path.join(dir, '{}-foo'.format(prefix))
+            yield self.tmp_dir
+
+        patcher = mock.patch('tempfile.TemporaryDirectory')
+        self.tempdir_mock = patcher.start()
+        self.tempdir_mock.side_effect = tempdir
+        self.addCleanup(patcher.stop)
+
         patcher = mock.patch('tempfile.mkdtemp')
         self.mkdtemp_mock = patcher.start()
         self.mkdtemp_mock.side_effect = self.mkdtemp_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.open', mock.mock_open())
+        patcher = mock.patch(
+            'snapcraft.internal.lxd._containerbuild.open', mock.mock_open())
         self.open_mock = patcher.start()
         self.open_mock_default_side_effect = self.open_mock.side_effect
         self.open_mock.side_effect = self.open_side_effect()
@@ -506,22 +520,22 @@ class FakeLXD(fixtures.Fixture):
         self.devices = '{}'
 
     def _setUp(self):
-        patcher = mock.patch('snapcraft.internal.lxd.check_call')
+        patcher = mock.patch('subprocess.check_call')
         self.check_call_mock = patcher.start()
         self.check_call_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.check_output')
+        patcher = mock.patch('subprocess.check_output')
         self.check_output_mock = patcher.start()
         self.check_output_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.Popen')
+        patcher = mock.patch('subprocess.Popen')
         self.popen_mock = patcher.start()
         self.popen_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
+        patcher = mock.patch('time.sleep', lambda _: None)
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -534,40 +548,44 @@ class FakeLXD(fixtures.Fixture):
         self.architecture_mock.return_value = ('64bit', 'ELF')
         self.addCleanup(patcher.stop)
 
+    def call_effect(self, *args, **kwargs):
+        if args[0] == ['lxc', 'remote', 'get-default']:
+            return 'local'.encode('utf-8')
+        elif args[0][:2] == ['lxc', 'info']:
+            return 'Architecture: {}'.format(
+                self.kernel_arch).encode('utf-8')
+        elif args[0][:3] == ['lxc', 'list', '--format=json']:
+            if self.status and args[0][3] == self.name:
+                return string.Template('''
+                    [{"name": "$NAME",
+                      "status": "$STATUS",
+                      "devices": $DEVICES}]
+                    ''').substitute({
+                        # Container name without remote prefix
+                        'NAME': self.name.split(':')[-1],
+                        'STATUS': self.status,
+                        'DEVICES': self.devices,
+                    }).encode('utf-8')
+            return '[]'.encode('utf-8')
+        elif (args[0][0] == 'lxc' and
+              args[0][1] in ['init', 'start', 'launch', 'stop']):
+            return self._lxc_create_start_stop(args)
+        elif args[0][:2] == ['lxc', 'exec']:
+            return self._lxc_exec(args)
+        elif args[0][:4] == ['lxc', 'image', 'list', '--format=json']:
+            return (
+                '[{"architecture":"test-architecture",'
+                '"fingerprint":"test-fingerprint",'
+                '"created_at":"test-created-at"}]').encode('utf-8')
+        elif args[0][0] == 'sha384sum':
+            return 'deadbeef {}'.format(args[0][1]).encode('utf-8')
+        elif '/usr/lib/sftp-server' in args[0]:
+            return self._popen(args[0])
+        else:
+            return ''.encode('utf-8')
+
     def check_output_side_effect(self):
-        def call_effect(*args, **kwargs):
-            if args[0] == ['lxc', 'remote', 'get-default']:
-                return 'local'.encode('utf-8')
-            elif args[0][:2] == ['lxc', 'info']:
-                return '''
-                    environment:
-                      kernel_architecture: {}
-                    '''.format(self.kernel_arch).encode('utf-8')
-            elif args[0][:3] == ['lxc', 'list', '--format=json']:
-                if self.status and args[0][3] == self.name:
-                    return string.Template('''
-                        [{"name": "$NAME",
-                          "status": "$STATUS",
-                          "devices": $DEVICES}]
-                        ''').substitute({
-                            # Container name without remote prefix
-                            'NAME': self.name.split(':')[-1],
-                            'STATUS': self.status,
-                            'DEVICES': self.devices,
-                            }).encode('utf-8')
-                return '[]'.encode('utf-8')
-            elif (args[0][0] == 'lxc' and
-                  args[0][1] in ['init', 'start', 'launch', 'stop']):
-                return self._lxc_create_start_stop(args)
-            elif args[0][:2] == ['lxc', 'exec']:
-                return self._lxc_exec(args)
-            elif args[0][0] == 'sha384sum':
-                return 'deadbeef {}'.format(args[0][1]).encode('utf-8')
-            elif '/usr/lib/sftp-server' in args[0]:
-                return self._popen(args[0])
-            else:
-                return ''.encode('utf-8')
-        return call_effect
+        return self.call_effect
 
     def _lxc_create_start_stop(self, args):
         if args[0][1] == 'init':
@@ -894,11 +912,11 @@ class WithoutSnapInstalled(fixtures.Fixture):
         set up.
     """
 
-    def __init__(self, snap_name):
+    def __init__(self, snap_name: str) -> None:
         super().__init__()
         self.snap_name = snap_name.split('/')[0]
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         if snapcraft.repo.snaps.SnapPackage.is_snap_installed(self.snap_name):
             raise AssertionError(
@@ -908,7 +926,7 @@ class WithoutSnapInstalled(fixtures.Fixture):
 
         self.addCleanup(self._remove_snap)
 
-    def _remove_snap(self):
+    def _remove_snap(self) -> None:
         try:
             subprocess.check_output(
                 ['sudo', 'snap', 'remove', self.snap_name],
@@ -1012,3 +1030,23 @@ class FakeSnapd(fixtures.Fixture):
         self.server.shutdown()
         self.server.socket.close()
         thread.join()
+
+
+class SharedCache(fixtures.Fixture):
+
+    def __init__(self, name) -> None:
+        super().__init__()
+        self.name = name
+
+    def setUp(self) -> None:
+        super().setUp()
+        shared_cache_dir = os.path.join(
+            tempfile.gettempdir(), 'snapcraft_test_cache_{}'.format(self.name))
+        os.makedirs(shared_cache_dir, exist_ok=True)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'XDG_CACHE_HOME', shared_cache_dir))
+        patcher = mock.patch(
+            'xdg.BaseDirectory.xdg_cache_home',
+            new=os.path.join(shared_cache_dir))
+        patcher.start()
+        self.addCleanup(patcher.stop)

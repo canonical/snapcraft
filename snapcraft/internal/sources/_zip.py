@@ -52,7 +52,11 @@ class Zip(FileBase):
             os.makedirs(dst)
             shutil.move(tmp_zip, zip)
 
-        zipfile.ZipFile(zip).extractall(path=dst)
+        # Workaround for: https://bugs.python.org/issue15795
+        with zipfile.ZipFile(zip, 'r') as f:
+            for info in f.infolist():
+                extracted_file = f.extract(info.filename, path=dst)
+                os.chmod(extracted_file, info.external_attr >> 16)
 
         if not keep_zip:
             os.remove(zip)

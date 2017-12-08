@@ -1,0 +1,19 @@
+name: autotools-hello
+version: 0.1
+summary: test the autotools plugin
+description: |
+  This is a basic autotools snap. It just prints a hello world.
+  If you want to add other functionalities to this snap, please don't.
+  Make a new one.
+confinement: strict
+
+apps:
+  autotools-hello:
+    command: hello
+
+build-packages: [gcc]
+
+parts:
+  make-project:
+    plugin: autotools
+    source: http://ftp.gnu.org/gnu/hello/hello-2.10.tar.gz
