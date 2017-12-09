@@ -165,7 +165,8 @@ class TravisSuccessfulTestCase(unit.TestCase):
     @mock.patch('builtins.input')
     @mock.patch('getpass.getpass')
     @mock.patch.object(storeapi.StoreClient, 'login')
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     def test_enable_successfully(
             self, mock_get_account_information, mock_login, mock_getpass,
             mock_input, mock_check_call, mock_check_output):
@@ -243,7 +244,8 @@ class TravisSuccessfulTestCase(unit.TestCase):
     @mock.patch('builtins.input')
     @mock.patch('getpass.getpass')
     @mock.patch.object(storeapi.StoreClient, 'login')
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     def test_refresh_successfully(
             self, mock_get_account_information, mock_login, mock_getpass,
             mock_input, mock_check_call, mock_check_output):

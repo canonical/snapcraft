@@ -53,15 +53,4 @@ def _deserialize_macaroon(value):
     except:  # noqa LP: #1733004
         raise errors.InvalidCredentialsError('Failed to deserialize macaroon')
 
-from .client import Client  # noqa
-from .store_client import (  # noqa
-    StoreClient,
-    SSOClient,
-    SnapIndexClient,
-    UpDownClient,
-    SCAClient
-)
-from .status_tracker import (  # noqa
-    StatusTracker,
-    ProgressBar
-)
+from ._store_client import StoreClient  # noqa

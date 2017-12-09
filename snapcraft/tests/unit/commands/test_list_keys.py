@@ -57,7 +57,8 @@ class ListKeysCommandTestCase(CommandBaseTestCase):
 
         self.assertThat(str(raised), Contains('Invalid credentials'))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_list_keys_successfully(self, mock_installed, mock_check_output,
@@ -86,7 +87,8 @@ class ListKeysCommandTestCase(CommandBaseTestCase):
                 default_sha3_384=get_sample_key('default')['sha3-384'],
                 another_sha3_384=get_sample_key('another')['sha3-384'])))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_list_keys_without_registered(self, mock_installed,

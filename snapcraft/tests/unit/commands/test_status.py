@@ -109,7 +109,7 @@ class StatusCommandTestCase(CommandBaseTestCase):
         self.assertThat(str(raised), Equals(
             "Snap 'snap-test' was not found in '18' series."))
 
-    @mock.patch.object(storeapi.SCAClient, 'snap_status')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_by_unknown_arch(self, mock_account_api, mock_status):
         mock_status.return_value = {}
@@ -121,7 +121,7 @@ class StatusCommandTestCase(CommandBaseTestCase):
         self.assertThat(str(raised), Equals(
             "Snap 'snap-test' for 'some-arch' was not found in '16' series."))
 
-    @mock.patch.object(storeapi.SCAClient, 'snap_status')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'snap_status')
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
     def test_status_by_unknown_series(self, mock_account_api, mock_status):
         mock_status.return_value = {}

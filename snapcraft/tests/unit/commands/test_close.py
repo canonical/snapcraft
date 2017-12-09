@@ -25,7 +25,8 @@ from . import CommandBaseTestCase
 
 class CloseCommandTestCase(CommandBaseTestCase):
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     def test_close_missing_permission(self, mock_get_account_info):
         mock_get_account_info.return_value = {
             'account_id': 'abcd',
@@ -42,8 +43,9 @@ class CloseCommandTestCase(CommandBaseTestCase):
             'Make sure the logged in account has upload permissions on '
             "'foo' in series '16'."))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
-    @mock.patch.object(storeapi.SCAClient, 'close_channels')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'close_channels')
     def test_close_basic(self, mock_close_channels, mock_get_account_info):
         mock_get_account_info.return_value = {
             'snaps': {
@@ -80,8 +82,9 @@ class CloseCommandTestCase(CommandBaseTestCase):
 
             \x1b[0;32mThe beta channel is now closed.\x1b[0m""")))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
-    @mock.patch.object(storeapi.SCAClient, 'close_channels')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'close_channels')
     def test_close_multiple_channels(
             self, mock_close_channels, mock_get_account_info):
         mock_get_account_info.return_value = {
@@ -119,8 +122,9 @@ class CloseCommandTestCase(CommandBaseTestCase):
 
             \x1b[0;32mThe beta and edge channels are now closed.\x1b[0m""")))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
-    @mock.patch.object(storeapi.SCAClient, 'close_channels')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'close_channels')
     def test_close_multiple_architectures(
             self, mock_close_channels, mock_get_account_info):
         mock_get_account_info.return_value = {
@@ -170,8 +174,9 @@ class CloseCommandTestCase(CommandBaseTestCase):
 
             \x1b[0;32mThe beta channel is now closed.\x1b[0m""")))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
-    @mock.patch.object(storeapi.SCAClient, 'close_channels')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'close_channels')
     def test_close_branches(self, mock_close_channels, mock_get_account_info):
         mock_get_account_info.return_value = {
             'snaps': {

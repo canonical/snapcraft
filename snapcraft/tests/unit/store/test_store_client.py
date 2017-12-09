@@ -31,7 +31,7 @@ from snapcraft import (
     ProjectOptions,
 )
 from snapcraft.storeapi import (
-    errors,
+    errors
 )
 from snapcraft.tests import (
     fixture_setup,
@@ -1120,7 +1120,7 @@ class GetSnapRevisionsTestCase(StoreTestCase):
         self.assertFalse(self.fake_store.needs_refresh)
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
-    @mock.patch.object(storeapi.SCAClient, 'get')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'get')
     def test_get_snap_revisions_server_error(
             self, mock_sca_get, mock_account_info):
         mock_account_info.return_value = {
@@ -1264,7 +1264,7 @@ class GetSnapStatusTestCase(StoreTestCase):
         self.assertFalse(self.fake_store.needs_refresh)
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
-    @mock.patch.object(storeapi.SCAClient, 'get')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'get')
     def test_get_snap_status_server_error(
             self, mock_sca_get, mock_account_info):
         mock_account_info.return_value = {
