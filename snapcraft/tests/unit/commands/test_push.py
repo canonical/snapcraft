@@ -55,7 +55,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         self.assertThat(result.output, Contains('Usage:'))
 
     def test_push_a_snap(self):
-        mock_tracker = mock.Mock(storeapi.StatusTracker)
+        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
         mock_tracker.track.return_value = {
             'code': 'ready_to_release',
             'processed': True,
@@ -69,7 +69,8 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         mock_upload.return_value = mock_tracker
 
         # Upload
-        with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
+        with mock.patch('snapcraft.storeapi.'
+                        '_status_tracker.StatusTracker') as mock_tracker:
             result = self.run_command(['push', self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
@@ -129,7 +130,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             self.run_command, ['push', self.snap_file])
 
     def test_upload_raises_deprecation_warning(self):
-        mock_tracker = mock.Mock(storeapi.StatusTracker)
+        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
         mock_tracker.track.return_value = {
             'code': 'ready_to_release',
             'processed': True,
@@ -143,7 +144,8 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         mock_upload.return_value = mock_tracker
 
         # Upload
-        with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
+        with mock.patch('snapcraft.storeapi.'
+                        '_status_tracker.StatusTracker') as mock_tracker:
             result = self.run_command(['upload', self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
@@ -152,7 +154,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         mock_upload.assert_called_once_with('basic', self.snap_file)
 
     def test_push_and_release_a_snap(self):
-        mock_tracker = mock.Mock(storeapi.StatusTracker)
+        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
         mock_tracker.track.return_value = {
             'code': 'ready_to_release',
             'processed': True,
@@ -187,7 +189,8 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         }
 
         # Upload
-        with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
+        with mock.patch('snapcraft.storeapi._status_tracker.'
+                        'StatusTracker') as mock_tracker:
             result = self.run_command(['push', self.snap_file,
                                        '--release', 'beta'])
 
@@ -200,7 +203,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         mock_release.assert_called_once_with('basic', 9, ['beta'])
 
     def test_push_and_release_a_snap_to_N_channels(self):
-        mock_tracker = mock.Mock(storeapi.StatusTracker)
+        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
         mock_tracker.track.return_value = {
             'code': 'ready_to_release',
             'processed': True,
@@ -237,7 +240,8 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         }
 
         # Upload
-        with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
+        with mock.patch('snapcraft.storeapi._status_tracker.'
+                        'StatusTracker') as mock_tracker:
             result = self.run_command(['push', self.snap_file, '--release',
                                        'edge,beta,candidate'])
 
@@ -269,7 +273,7 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        mock_tracker = mock.Mock(storeapi.StatusTracker)
+        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
         mock_tracker.track.return_value = {
             'code': 'ready_to_release',
             'processed': True,
@@ -289,7 +293,8 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
 
     def test_push_revision_cached_with_experimental_deltas(self):
         # Upload
-        with mock.patch('snapcraft.storeapi.StatusTracker'):
+        with mock.patch('snapcraft.storeapi._status_tracker.'
+                        'StatusTracker'):
             result = self.run_command(['push', self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
@@ -308,12 +313,14 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
 
     def test_push_revision_uses_available_delta(self):
         # Push
-        with mock.patch('snapcraft.storeapi.StatusTracker'):
+        with mock.patch('snapcraft.storeapi._status_tracker.'
+                        'StatusTracker'):
             result = self.run_command(['push', self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
         # Push again
-        with mock.patch('snapcraft.storeapi.StatusTracker'):
+        with mock.patch('snapcraft.storeapi._status_tracker.'
+                        'StatusTracker'):
             result = self.run_command(['push', self.snap_file])
 
         self.assertThat(result.exit_code, Equals(0))
@@ -322,7 +329,8 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
 
     def test_push_with_upload_failure_falls_back(self):
         # Upload
-        with mock.patch('snapcraft.storeapi.StatusTracker'):
+        with mock.patch('snapcraft.storeapi._status_tracker.'
+                        'StatusTracker'):
             result = self.run_command(['push', self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
@@ -333,7 +341,7 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
         mock_push_delta.side_effect = StoreDeltaApplicationError(
             'There has been a problem while processing a snap delta.')
 
-        mock_tracker = mock.Mock(storeapi.StatusTracker)
+        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
         mock_tracker.track.return_value = {
             'code': 'ready_to_release',
             'processed': True,
@@ -347,7 +355,8 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
         mock_upload.return_value = mock_tracker
 
         # Upload and ensure fallback is called
-        with mock.patch('snapcraft.storeapi.StatusTracker'):
+        with mock.patch('snapcraft.storeapi.'
+                        '_status_tracker.StatusTracker'):
             result = self.run_command(['push', self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
         mock_upload.assert_called_once_with('basic', self.snap_file)
@@ -381,7 +390,7 @@ class PushCommandDeltasWithPruneTestCase(PushCommandBaseTestCase):
         self.addCleanup(patcher.stop)
         mock_release.return_value = [snap_revision]
 
-        mock_tracker = mock.Mock(storeapi.StatusTracker)
+        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
         mock_tracker.track.return_value = {
             'code': 'ready_to_release',
             'processed': True,
@@ -412,7 +421,8 @@ class PushCommandDeltasWithPruneTestCase(PushCommandBaseTestCase):
             open(os.path.join(snap_cache, cached_snap), 'a').close()
 
         # Upload
-        with mock.patch('snapcraft.storeapi.StatusTracker'):
+        with mock.patch('snapcraft.storeapi._status_tracker.'
+                        'StatusTracker'):
             result = self.run_command(['push', self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 

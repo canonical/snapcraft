@@ -44,7 +44,7 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.output, Contains('Usage:'))
 
     def test_simple(self):
-        mock_tracker = mock.Mock(storeapi.StatusTracker)
+        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
         mock_tracker.track.return_value = {
             'code': 'ready_to_release',
             'processed': True,
@@ -57,7 +57,8 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.addCleanup(patcher.stop)
 
         # push metadata
-        with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
+        with mock.patch('snapcraft.storeapi._status_tracker.'
+                        'StatusTracker') as mock_tracker:
             result = self.run_command(['push-metadata', self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
@@ -72,7 +73,7 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.mock_metadata.assert_called_once_with('basic', metadata, False)
 
     def test_simple_debug(self):
-        mock_tracker = mock.Mock(storeapi.StatusTracker)
+        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
         mock_tracker.track.return_value = {
             'code': 'ready_to_release',
             'processed': True,
@@ -85,7 +86,8 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.addCleanup(patcher.stop)
 
         # push metadata
-        with mock.patch('snapcraft.storeapi.StatusTracker') as mock_tracker:
+        with mock.patch('snapcraft.storeapi._status_tracker.'
+                        'StatusTracker') as mock_tracker:
             result = self.run_command(
                 ['--debug', 'push-metadata', self.snap_file])
         self.assertThat(result.exit_code, Equals(0))

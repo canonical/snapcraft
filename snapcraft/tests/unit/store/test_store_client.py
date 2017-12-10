@@ -709,7 +709,7 @@ class UploadTestCase(StoreTestCase):
         # These should eventually converge to the same module
         pbars = (
             'snapcraft.storeapi._upload.ProgressBar',
-            'snapcraft.storeapi.ProgressBar',
+            'snapcraft.storeapi._status_tracker.ProgressBar',
         )
         for pbar in pbars:
             patcher = mock.patch(pbar, new=unit.SilentProgressBar)
@@ -725,7 +725,8 @@ class UploadTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
         self.client.register('test-snap')
         tracker = self.client.upload('test-snap', self.snap_path)
-        self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
+        self.assertTrue(isinstance(tracker, storeapi._status_tracker.
+                        StatusTracker))
         result = tracker.track()
         expected_result = {
             'code': 'ready_to_release',
@@ -779,7 +780,8 @@ class UploadTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
         self.client.register('test-review-snap')
         tracker = self.client.upload('test-review-snap', self.snap_path)
-        self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
+        self.assertTrue(isinstance(tracker, storeapi._status_tracker.
+                        StatusTracker))
         result = tracker.track()
         expected_result = {
             'code': 'need_manual_review',
@@ -798,7 +800,8 @@ class UploadTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
         self.client.register('test-duplicate-snap')
         tracker = self.client.upload('test-duplicate-snap', self.snap_path)
-        self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
+        self.assertTrue(isinstance(tracker, storeapi._status_tracker.
+                        StatusTracker))
         result = tracker.track()
         expected_result = {
             'code': 'processing_error',
