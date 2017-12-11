@@ -37,6 +37,7 @@ from . import constants
 
 
 logger = logging.getLogger(__name__)
+_DOCKERENV_FILE = '/.dockerenv'
 
 
 def execute(step, project_options, part_names=None):
@@ -73,8 +74,7 @@ def execute(step, project_options, part_names=None):
         state_file.write(yaml.dump(
             states.GlobalState(installed_packages, installed_snaps)))
 
-    if (os.environ.get('SNAPCRAFT_SETUP_CORE') and
-            config.data['confinement'] == 'classic'):
+    if _should_get_core(config.data['confinement']):
         _setup_core(project_options.deb_arch)
 
     _Executor(config, project_options).run(step, part_names)
@@ -117,6 +117,17 @@ def _setup_core(deb_arch):
         check_call(['sudo', 'rmdir', core_path])
     check_call(['sudo', 'mkdir', '-p', os.path.dirname(core_path)])
     check_call(['sudo', 'unsquashfs', '-d', core_path, core_snap])
+
+
+def _should_get_core(confinement: str) -> bool:
+    is_env_var_set = os.environ.get('SNAPCRAFT_SETUP_CORE', False) is not False
+    # This is a quirk so that docker users not using the Dockerfile
+    # we distribute and create can automatically build classic
+    is_docker_instance = os.path.exists(_DOCKERENV_FILE)  # type: bool
+
+    is_classic = (confinement == 'classic')  # type: bool
+
+    return is_classic and (is_env_var_set or is_docker_instance)
 
 
 def _replace_in_part(part):
