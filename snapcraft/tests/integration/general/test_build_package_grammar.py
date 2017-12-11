@@ -130,12 +130,33 @@ class BuildPackageGrammarTestCase(integration.TestCase):
         self.run_snapcraft(['pull'])
         self.assertFalse(self._hello_is_installed())
 
+    def test_on_to_other_arch(self):
+        """Test that 'on to' fetches nothing when building for another arch."""
+
+        with self.modified_yaml() as yaml:
+            yaml['parts']['my-part']['build-packages'] = [
+                OrderedDict({'on i386 to other-arch': ['hello']})
+            ]
+        self.run_snapcraft(['pull'])
+        self.assertFalse(self._hello_is_installed())
+
     def test_to_other_arch_else(self):
         """Test that 'to' moves to the 'else' branch if on other arch."""
 
         with self.modified_yaml() as yaml:
             yaml['parts']['my-part']['build-packages'] = [
                 OrderedDict({'to other-arch': ['foo']}),
+                OrderedDict({'else': ['hello']})
+            ]
+        self.run_snapcraft(['pull'])
+        self.assertTrue(self._hello_is_installed())
+
+    def test_on_to_other_arch_else(self):
+        """Test that 'on to' moves to the 'else' branch if on other arch."""
+
+        with self.modified_yaml() as yaml:
+            yaml['parts']['my-part']['build-packages'] = [
+                OrderedDict({'on i386 to other-arch': ['foo']}),
                 OrderedDict({'else': ['hello']})
             ]
         self.run_snapcraft(['pull'])
@@ -154,12 +175,36 @@ class BuildPackageGrammarTestCase(integration.TestCase):
             ['pull']).output, Contains(
                 "Unable to satisfy 'to other-arch', failure forced"))
 
+    def test_on_to_other_arch_else_fail(self):
+        """Test that 'on to' fails with an error if it hits an 'else fail'."""
+
+        with self.modified_yaml() as yaml:
+            yaml['parts']['my-part']['build-packages'] = [
+                OrderedDict({'on i386 to other-arch': ['foo']}),
+                'else fail'
+            ]
+        self.assertThat(self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft,
+            ['pull']).output, Contains(
+                "Unable to satisfy 'to other-arch', failure forced"))
+
     def test_global_build_package_to_other_arch_else(self):
         """Test that grammar works in global build packages as well."""
 
         with self.modified_yaml('build-package-grammar-global') as yaml:
             yaml['build-packages'] = [
                 OrderedDict({'to other-arch': ['foo']}),
+                OrderedDict({'else': ['hello']}),
+            ]
+        self.run_snapcraft(['pull'])
+        self.assertTrue(self._hello_is_installed())
+
+    def test_global_build_package_on_to_other_arch_else(self):
+        """Test that grammar works in global build packages as well."""
+
+        with self.modified_yaml('build-package-grammar-global') as yaml:
+            yaml['build-packages'] = [
+                OrderedDict({'on i386 to other-arch': ['foo']}),
                 OrderedDict({'else': ['hello']}),
             ]
         self.run_snapcraft(['pull'])
