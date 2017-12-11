@@ -18,6 +18,7 @@ import re
 import glob
 import logging
 import os
+import shutil
 import subprocess
 import sys
 from functools import wraps
@@ -139,7 +140,7 @@ class Patcher:
         else:
             self._patchelf_cmd = 'patchelf'
         logger.debug('Setting the patchelf command to {!r}'.format(
-            self._patchelf_cmd))
+            shutil.which(self._patchelf_cmd)))
 
     def patch(self, *, elf_file: ElfFile) -> None:
         """Patch elf_file with the Patcher instance configuration.
@@ -154,8 +155,7 @@ class Patcher:
         """
         if elf_file.is_executable:
             self._patch_interpreter(elf_file)
-        if elf_file.dependencies:
-            self._patch_rpath(elf_file)
+        self._patch_rpath(elf_file)
 
     def _patch_interpreter(self, elf_file: ElfFile) -> None:
         self._run_patchelf(args=['--set-interpreter',  self._dynamic_linker],
