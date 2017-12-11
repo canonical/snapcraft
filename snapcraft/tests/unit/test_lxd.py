@@ -31,7 +31,6 @@ from testtools.matchers import Contains, Equals
 from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
 from snapcraft.internal.errors import (
-    ContainerError,
     ContainerConnectionError,
     ContainerRunError,
     SnapdError,
@@ -151,11 +150,11 @@ class CleanbuilderTestCase(LXDTestCase):
         self.fake_lxd.check_call_mock.side_effect = call_effect
 
         raised = self.assertRaises(
-            ContainerError,
+            ContainerConnectionError,
             self.make_containerbuild().execute)
         self.assertThat(self.fake_lxd.status, Equals(None))
         # lxc launch should fail and no further commands should come after that
-        self.assertThat(str(raised), Contains("Command '['lxc', 'launch'"))
+        self.assertThat(str(raised), Contains('Failed to setup container'))
 
 
 class ContainerbuildTestCase(LXDTestCase):

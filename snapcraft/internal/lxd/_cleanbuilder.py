@@ -21,7 +21,7 @@ import petname
 import subprocess
 
 from ._containerbuild import Containerbuild
-from snapcraft.internal.errors import ContainerError
+from snapcraft.internal.errors import ContainerConnectionError
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ class Cleanbuilder(Containerbuild):
             subprocess.check_call([
                 'lxc', 'launch', '-e', self._image, self._container_name])
         except subprocess.CalledProcessError as e:
-            raise ContainerError(e)
+            raise ContainerConnectionError('Failed to setup container')
         self._configure_container()
         self._wait_for_network()
         self._container_run(['apt-get', 'update'])

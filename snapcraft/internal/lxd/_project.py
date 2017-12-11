@@ -25,7 +25,6 @@ from ._containerbuild import Containerbuild
 
 from snapcraft.internal.errors import (
         ContainerConnectionError,
-        ContainerError,
         SnapcraftEnvironmentError,
 )
 from snapcraft.internal import lifecycle
@@ -51,7 +50,7 @@ class Project(Containerbuild):
                 subprocess.check_call([
                     'lxc', 'init', self._image, self._container_name])
             except subprocess.CalledProcessError as e:
-                raise ContainerError(e)
+                raise ContainerConnectionError('Failed to setup container')
         if self._get_container_status()['status'] == 'Stopped':
             self._configure_container()
             try:
