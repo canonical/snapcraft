@@ -138,6 +138,8 @@ class Patcher:
             self._patchelf_cmd = os.path.join(snap_dir, 'bin', 'patchelf')
         else:
             self._patchelf_cmd = 'patchelf'
+        logger.debug('Setting the patchelf command to {!r}'.format(
+            self._patchelf_cmd))
 
     def patch(self, *, elf_file: ElfFile) -> None:
         """Patch elf_file with the Patcher instance configuration.
