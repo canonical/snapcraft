@@ -30,7 +30,8 @@ class MultiarchTestCase(integration.TestCase):
 
         self.assertThat(
             exception.output, Contains(
-                "Error downloading stage packages for part 'my-part': The "
+                "Failed to fetch stage packages: "
+                "Error downloading packages for part 'my-part': The "
                 "package 'hello:fake-arch' was not found.\n"
                 'You may need to add support for this architecture with '
                 "'dpkg --add-architecture fake-arch'"))

@@ -343,17 +343,17 @@ class PluginTestCase(unit.TestCase):
             pluginhandler._get_file_list,
             ['rel', '/abs/include'])
 
-        self.assertThat(str(raised), Equals(
-            'Issue while loading part: path "/abs/include" must be relative'))
+        self.assertThat(
+            raised.message, Equals('path "/abs/include" must be relative'))
 
-    def test_filesets_exlcudes_without_relative_paths(self):
+    def test_filesets_excludes_without_relative_paths(self):
         raised = self.assertRaises(
             errors.PluginError,
             pluginhandler._get_file_list,
             ['rel', '-/abs/exclude'])
 
-        self.assertThat(str(raised), Equals(
-            'Issue while loading part: path "/abs/exclude" must be relative'))
+        self.assertThat(
+            raised.message, Equals('path "/abs/exclude" must be relative'))
 
 
 class MigratePluginTestCase(unit.TestCase):
@@ -1047,10 +1047,7 @@ class StateTestCase(StateBaseTestCase):
             errors.MissingStateCleanError,
             self.handler.clean_stage, {})
 
-        self.assertThat(
-            str(raised),
-            Equals("Failed to clean step 'stage': Missing necessary state. "
-                   "This won't work until a complete clean has occurred."))
+        self.assertThat(raised.step, Equals('stage'))
 
     @patch('shutil.copy')
     def test_prime_state(self, mock_copy):
@@ -1127,20 +1124,23 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
-    @patch('snapcraft.internal.elf.get_dependencies')
+    @patch('snapcraft.internal.elf.ElfFile.load_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_with_dependencies(self, mock_migrate_files,
-                                           mock_get_dependencies):
-        mock_get_dependencies.return_value = {
+                                           mock_load_dependencies):
+        mock_load_dependencies.return_value = {
             '/foo/bar/baz',
             '{}/lib1/installed'.format(self.handler.installdir),
             '{}/lib2/staged'.format(self.handler.stagedir),
         }
+        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
+                      'dynamically linked, interpreter '
+                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
         self.get_elf_files_mock.return_value = frozenset([
             elf.ElfFile(path=os.path.join(self.handler.primedir, 'bin', '1'),
-                        is_executable=True),
+                        magic=stub_magic),
             elf.ElfFile(path=os.path.join(self.handler.primedir, 'bin', '2'),
-                        is_executable=True),
+                        magic=stub_magic),
         ])
         self.assertThat(self.handler.last_step(), Equals(None))
 
@@ -1184,22 +1184,25 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
-    @patch('snapcraft.internal.elf.get_dependencies')
+    @patch('snapcraft.internal.elf.ElfFile.load_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_disable_ldd_crawl(self, mock_migrate_files,
-                                           mock_get_dependencies):
+                                           mock_load_dependencies):
         # Disable system library migration (i.e. ldd crawling).
         self.handler = self.load_part('test_part', part_properties={
             'build-attributes': ['no-system-libraries']
         })
 
+        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
+                      'dynamically linked, interpreter '
+                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
         self.get_elf_files_mock.return_value = frozenset([
             elf.ElfFile(
                 path=os.path.join(self.handler.primedir, 'bin', 'file'),
-                is_executable=True)])
+                magic=stub_magic)])
         # Pretend we found a system dependency, as well as a part and stage
         # dependency.
-        mock_get_dependencies.return_value = set([
+        mock_load_dependencies.return_value = set([
             '/foo/bar/baz',
             '{}/lib1/installed'.format(self.handler.installdir),
             '{}/lib2/staged'.format(self.handler.stagedir),
@@ -1234,13 +1237,16 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue('lib1' in state.dependency_paths)
         self.assertTrue('lib2' in state.dependency_paths)
 
-    @patch('snapcraft.internal.elf.get_dependencies',
+    @patch('snapcraft.internal.elf.ElfFile.load_dependencies',
            return_value=set(['/foo/bar/baz']))
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_with_shadowed_dependencies(self, mock_migrate_files,
-                                                    mock_get_dependencies):
+                                                    mock_load_dependencies):
+        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
+                      'dynamically linked, interpreter '
+                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
         self.get_elf_files_mock.return_value = frozenset([
-            elf.ElfFile(path='bin/1', is_executable=True)])
+            elf.ElfFile(path='bin/1', magic=stub_magic)])
         self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')
@@ -1376,10 +1382,7 @@ class StateTestCase(StateBaseTestCase):
             errors.MissingStateCleanError,
             self.handler.clean_prime, {})
 
-        self.assertThat(
-            str(raised),
-            Equals("Failed to clean step 'prime': Missing necessary state. "
-                   "This won't work until a complete clean has occurred."))
+        self.assertThat(raised.step, Equals('prime'))
 
 
 class StateFileMigrationTestCase(StateBaseTestCase):
@@ -1732,11 +1735,7 @@ class CleanTestCase(CleanBaseTestCase):
             errors.MissingStateCleanError,
             handler.clean, step='prime')
 
-        self.assertThat(
-            str(raised),
-            Equals("Failed to clean step 'prime': Missing necessary state. "
-                   "This won't work until a complete clean has occurred."))
-
+        self.assertThat(raised.step, Equals('prime'))
         self.assertTrue(os.path.isfile(primed_file))
 
     def test_clean_stage_multiple_independent_parts(self):
@@ -1846,11 +1845,7 @@ class CleanTestCase(CleanBaseTestCase):
             errors.MissingStateCleanError,
             handler.clean, step='stage')
 
-        self.assertThat(
-            str(raised),
-            Equals("Failed to clean step 'stage': Missing necessary state. "
-                   "This won't work until a complete clean has occurred."))
-
+        self.assertThat(raised.step, Equals('stage'))
         self.assertTrue(os.path.isfile(staged_file))
 
 
@@ -2078,10 +2073,9 @@ class CollisionTestCase(unit.TestCase):
             pluginhandler.check_for_collisions,
             [self.part1, self.part2, self.part3])
 
-        self.assertIn(
-            "Parts 'part2' and 'part3' have the following file paths in "
-            "common which have different contents:\n    1\n    a/2",
-            raised.__str__())
+        self.assertThat(raised.other_part_name, Equals('part2'))
+        self.assertThat(raised.part_name, Equals('part3'))
+        self.assertThat(raised.file_paths, Equals('    1\n    a/2'))
 
     def test_collisions_between_two_parts_pc_files(self):
         raised = self.assertRaises(
@@ -2089,10 +2083,9 @@ class CollisionTestCase(unit.TestCase):
             pluginhandler.check_for_collisions,
             [self.part1, self.part4])
 
-        self.assertIn(
-            "Parts 'part1' and 'part4' have the following file paths in "
-            "common which have different contents:\n    file.pc",
-            raised.__str__())
+        self.assertThat(raised.other_part_name, Equals('part1'))
+        self.assertThat(raised.part_name, Equals('part4'))
+        self.assertThat(raised.file_paths, Equals('    file.pc'))
 
     def test_collision_with_part_not_built(self):
         part_built = self.load_part(
@@ -2110,7 +2103,7 @@ class CollisionTestCase(unit.TestCase):
 
 class StagePackagesTestCase(unit.TestCase):
 
-    def test_missing_stage_package_displays_nice_error(self):
+    def test_missing_stage_package_raises_exception(self):
         fake_repo = Mock()
         fake_repo.get.side_effect = repo.errors.PackageNotFoundError(
             'non-existing')
@@ -2122,10 +2115,10 @@ class StagePackagesTestCase(unit.TestCase):
             errors.StagePackageDownloadError,
             part.prepare_pull)
 
+        self.assertThat(raised.part_name, Equals('stage-test'))
         self.assertThat(
-            str(raised),
-            Equals("Error downloading stage packages for part 'stage-test': "
-                   "The package 'non-existing' was not found."))
+            raised.message,
+            Equals("The package 'non-existing' was not found."))
 
 
 class FilesetsTestCase(unit.TestCase):
@@ -2165,11 +2158,7 @@ class FilesetsTestCase(unit.TestCase):
             errors.PrimeFileConflictError,
             pluginhandler._combine_filesets, fileset_1, fileset_2
         )
-        self.assertThat(
-            raised.__str__(),
-            Equals("The following files have been excluded by the `stage` "
-                   "keyword, but included by the `prime` keyword: {'a'}")
-        )
+        self.assertThat(raised.fileset, Equals({'a'}))
 
     def test_get_includes(self):
         fileset = ['-a', 'b']
