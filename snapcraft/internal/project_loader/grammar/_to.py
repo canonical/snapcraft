@@ -91,7 +91,7 @@ class ToStatement:
         # selector.
         on_matches = (((len(self._on_selectors) == 1) and
                       host_arch in self._on_selectors) or
-                      len(self._on_selectors) == 0)
+                      self._on_selectors == {''})
         to_matches = ((len(self.selectors) == 1) and
                       (target_arch in self.selectors))
         if on_matches and to_matches:

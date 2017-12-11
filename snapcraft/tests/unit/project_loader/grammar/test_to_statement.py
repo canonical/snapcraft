@@ -180,13 +180,13 @@ class ToStatementGrammarTestCase(GrammarTestCase):
             'target_arch': 'armhf',
             'expected_packages': {'foo:armhf'}
         }),
-        ('on i386 to armhf', {
-            'to': 'on i386 to amd64',
+        ('on i386 to armhf, used else', {
+            'to': 'on i386 to armhf',
             'body': ['foo'],
             'else_bodies': [
                 ['bar']
             ],
-            'target_arch': 'amd64',
+            'target_arch': 'armhf',
             'expected_packages': {'bar'}
         }),
     ]
