@@ -150,11 +150,11 @@ class CleanbuilderTestCase(LXDTestCase):
         self.fake_lxd.check_call_mock.side_effect = call_effect
 
         raised = self.assertRaises(
-            CalledProcessError,
+            ContainerConnectionError,
             self.make_containerbuild().execute)
         self.assertThat(self.fake_lxd.status, Equals(None))
         # lxc launch should fail and no further commands should come after that
-        self.assertThat(str(raised), Contains("Command '['lxc', 'launch'"))
+        self.assertThat(str(raised), Contains('Failed to setup container'))
 
 
 class ContainerbuildTestCase(LXDTestCase):
@@ -523,21 +523,34 @@ class ProjectTestCase(ContainerbuildTestCase):
                            project_options=self.project_options,
                            remote=self.remote)
 
-    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
-    def test_start_failed(self, mock_container_run):
-        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
-
+    def test_init_failed(self):
         def call_effect(*args, **kwargs):
-            if args[0][:2] == ['lxc', 'start']:
-                raise CalledProcessError(
-                    returncode=255, cmd=args[0])
-            return d(*args, **kwargs)
+            if args[0][:2] == ['lxc', 'init']:
+                raise CalledProcessError(returncode=255, cmd=args[0])
+            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
 
-        d = self.fake_lxd.check_call_mock.side_effect
         self.fake_lxd.check_call_mock.side_effect = call_effect
 
-        self.assertRaises(ContainerConnectionError,
-                          self.make_containerbuild().execute)
+        raised = self.assertRaises(ContainerConnectionError,
+                                   self.make_containerbuild().execute)
+        self.assertThat(self.fake_lxd.status, Equals(None))
+        # lxc launch should fail and no further commands should come after that
+        self.assertThat(str(raised), Contains('Failed to setup container'))
+
+    def test_start_failed(self):
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['lxc', 'start']:
+                raise CalledProcessError(returncode=255, cmd=args[0])
+            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
+
+        self.fake_lxd.check_call_mock.side_effect = call_effect
+
+        raised = self.assertRaises(ContainerConnectionError,
+                                   self.make_containerbuild().execute)
+        self.assertThat(self.fake_lxd.status, Equals('Stopped'))
+        # lxc launch should fail and no further commands should come after that
+        self.assertThat(str(raised),
+                        Contains('The container could not be started'))
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_ftp_not_installed(self, mock_container_run):
