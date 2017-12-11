@@ -118,6 +118,18 @@ class StagePackageGrammarTestCase(integration.TestCase):
             os.path.join('prime', 'usr', 'bin', 'hello'),
             Not(FileExists()))
 
+    def test_on_to_other_arch(self):
+        """Test that 'on to' for the other arch fetches nothing."""
+
+        with self.modified_yaml() as yaml:
+            yaml['parts']['simple']['stage-packages'] = [
+                OrderedDict({'on i386 to other-arch': ['hello']}),
+            ]
+        self.run_snapcraft(['prime', 'simple'])
+        self.assertThat(
+            os.path.join('prime', 'usr', 'bin', 'hello'),
+            Not(FileExists()))
+
     def test_to_other_arch_else(self):
         """Test that 'else' for the other arch fetches hello."""
 
@@ -131,12 +143,40 @@ class StagePackageGrammarTestCase(integration.TestCase):
             os.path.join('prime', 'usr', 'bin', 'hello'),
             FileExists())
 
+    def test_on_to_other_arch_else(self):
+        """Test that 'else' for the other arch fetches hello."""
+
+        with self.modified_yaml() as yaml:
+            yaml['parts']['simple']['stage-packages'] = [
+                OrderedDict({'on i386 to other-arch': ['foo']}),
+                OrderedDict({'else': ['hello']}),
+            ]
+        self.run_snapcraft(['prime', 'simple'])
+        self.assertThat(
+            os.path.join('prime', 'usr', 'bin', 'hello'),
+            FileExists())
+
     def test_to_other_arch_else_fail(self):
         """Test that 'else' for the other arch fails."""
 
         with self.modified_yaml() as yaml:
             yaml['parts']['simple']['stage-packages'] = [
                 OrderedDict({'to other-arch': ['foo']}),
+                'else fail',
+            ]
+        exception = self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft,
+            ['prime', 'simple'])
+
+        self.assertThat(exception.output, Contains(
+            "Unable to satisfy 'to other-arch', failure forced"))
+
+    def test_on_to_other_arch_else_fail(self):
+        """Test that 'else' for the other arch fails."""
+
+        with self.modified_yaml() as yaml:
+            yaml['parts']['simple']['stage-packages'] = [
+                OrderedDict({'on i386 to other-arch': ['foo']}),
                 'else fail',
             ]
         exception = self.assertRaises(
