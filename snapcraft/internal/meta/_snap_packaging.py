@@ -17,8 +17,6 @@
 import copy
 import collections
 import contextlib
-import configparser
-import json
 import logging
 import os
 import re
@@ -36,10 +34,11 @@ from snapcraft.internal import (
     errors
 )
 from snapcraft.internal.deprecations import handle_deprecation_notice
-from snapcraft.internal.sources import get_source_handler_from_type
-from snapcraft.internal.states import (
-    get_global_state,
-    get_state
+from snapcraft.internal.meta import (
+    _desktop,
+    _errors as meta_errors,
+    _manifest,
+    _version
 )
 
 
@@ -66,10 +65,6 @@ _OPTIONAL_PACKAGE_KEYS = [
     'hooks',
     'environment',
 ]
-
-
-class CommandError(Exception):
-    pass
 
 
 def create_snap_packaging(config_data, project_options, snapcraft_yaml_path):
@@ -155,37 +150,12 @@ class _SnapPackaging:
             os.makedirs(prime_snap_dir, exist_ok=True)
             shutil.copy2(
                 self._snapcraft_yaml_path, recorded_snapcraft_yaml_path)
-            annotated_snapcraft = self._annotate_snapcraft(
-                copy.deepcopy(self._config_data))
+            annotated_snapcraft = _manifest.annotate_snapcraft(
+                copy.deepcopy(self._config_data), self._parts_dir)
             with open(manifest_file_path, 'w') as manifest_file:
                 yaml.dump(
                     annotated_snapcraft, manifest_file,
                     default_flow_style=False)
-
-    def _annotate_snapcraft(self, data):
-        image_info = os.environ.get('SNAPCRAFT_IMAGE_INFO')
-        if image_info:
-            try:
-                image_info_dict = json.loads(image_info)
-            except json.decoder.JSONDecodeError as exception:
-                raise errors.InvalidContainerImageInfoError(
-                    image_info) from exception
-            data['image-info'] = image_info_dict
-        for field in ('build-packages', 'build-snaps'):
-            data[field] = get_global_state().assets.get(field, [])
-        for part in data['parts']:
-            state_dir = os.path.join(self._parts_dir, part, 'state')
-            pull_state = get_state(state_dir, 'pull')
-            data['parts'][part]['build-packages'] = (
-                pull_state.assets.get('build-packages', []))
-            data['parts'][part]['stage-packages'] = (
-                pull_state.assets.get('stage-packages', []))
-            source_details = pull_state.assets.get('source-details', {})
-            if source_details:
-                data['parts'][part].update(source_details)
-            build_state = get_state(state_dir, 'build')
-            data['parts'][part].update(build_state.assets)
-        return data
 
     def write_snap_directory(self):
         # First migrate the snap directory. It will overwrite any conflicting
@@ -236,8 +206,9 @@ class _SnapPackaging:
                 file_path = os.path.join(snap_hooks_dir, hook_name)
                 # First, verify that the hook is actually executable
                 if not os.stat(file_path).st_mode & stat.S_IEXEC:
-                    raise CommandError('hook {!r} is not executable'.format(
-                        hook_name))
+                    raise meta_errors.CommandError(
+                        'hook {!r} is not executable'.format(
+                            hook_name))
 
                 hook_exec = os.path.join('$SNAP', 'snap', 'hooks', hook_name)
                 hook_path = os.path.join(hooks_dir, hook_name)
@@ -277,7 +248,7 @@ class _SnapPackaging:
             snap_yaml[key_name] = self._config_data[key_name]
 
         # Reparse the version, the order should stick.
-        snap_yaml['version'] = self._get_version(
+        snap_yaml['version'] = _version.get_version(
             self._config_data['version'],
             self._config_data.get('version-script'))
 
@@ -290,30 +261,6 @@ class _SnapPackaging:
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
 
         return snap_yaml
-
-    def _get_version(self, version, version_script=None):
-        new_version = version
-        if version_script:
-            logger.info('Determining the version from the project '
-                        'repo (version-script).')
-            try:
-                new_version = shell_utils.run_script(version_script).strip()
-                if not new_version:
-                    raise CommandError('The version-script produced no output')
-            except subprocess.CalledProcessError as e:
-                raise CommandError(
-                    'The version-script failed to run (exit code {})'.format(
-                        e.returncode))
-        # we want to whitelist what we support here.
-        elif version == 'git':
-            logger.info('Determining the version from the project '
-                        'repo (version: git).')
-            vcs_handler = get_source_handler_from_type('git')
-            new_version = vcs_handler.generate_version()
-
-        if new_version != version:
-            logger.info('The version has been set to {!r}'.format(new_version))
-        return new_version
 
     def _write_wrap_exe(self, wrapexec, wrappath,
                         shebang=None, args=None, cwd=None):
@@ -411,71 +358,17 @@ class _SnapPackaging:
         for k in cmds:
             try:
                 app[k] = self._wrap_exe(app[k], '{}-{}'.format(k, name))
-            except CommandError as e:
+            except meta_errors.CommandError as e:
                 raise errors.InvalidAppCommandError(str(e), name)
 
     def _generate_desktop_file(self, name, app):
         desktop_file_name = app.pop('desktop', '')
         if desktop_file_name:
-            desktop_file = _DesktopFile(
+            desktop_file = _desktop.DesktopFile(
                 name=name, filename=desktop_file_name,
                 snap_name=self._config_data['name'], prime_dir=self._prime_dir)
             desktop_file.parse_and_reformat()
             desktop_file.write(gui_dir=os.path.join(self.meta_dir, 'gui'))
-
-
-class _DesktopFile:
-
-    def __init__(self, *, name, filename, snap_name, prime_dir):
-        self._name = name
-        self._filename = filename
-        self._snap_name = snap_name
-        self._prime_dir = prime_dir
-        self._path = os.path.join(prime_dir, filename)
-        if not os.path.exists(self._path):
-            raise errors.InvalidDesktopFileError(
-                filename, 'does not exist (defined in the app {!r})'.format(
-                    name))
-
-    def parse_and_reformat(self):
-        self._parser = configparser.ConfigParser(interpolation=None)
-        self._parser.optionxform = str
-        self._parser.read(self._path, encoding='utf-8')
-        section = 'Desktop Entry'
-        if section not in self._parser.sections():
-            raise errors.InvalidDesktopFileError(
-                self._filename, "missing 'Desktop Entry' section")
-        if 'Exec' not in self._parser[section]:
-            raise errors.InvalidDesktopFileError(
-                self._filename, "missing 'Exec' key")
-        # XXX: do we want to allow more parameters for Exec?
-        if self._name == self._snap_name:
-            exec_value = '{} %U'.format(self._name)
-        else:
-            exec_value = '{}.{} %U'.format(self._snap_name, self._name)
-        self._parser[section]['Exec'] = exec_value
-        if 'Icon' in self._parser[section]:
-            icon = self._parser[section]['Icon']
-            if icon.startswith('/'):
-                icon = icon.lstrip('/')
-                if os.path.exists(os.path.join(self._prime_dir, icon)):
-                    self._parser[section]['Icon'] = '${{SNAP}}/{}'.format(icon)
-                else:
-                    logger.warning(
-                        'Icon {} specified in desktop file {} not found '
-                        'in prime directory'.format(icon, self._filename))
-
-    def write(self, *, gui_dir):
-        # Rename the desktop file to match the app name. This will help
-        # unity8 associate them (https://launchpad.net/bugs/1659330).
-        target_filename = '{}.desktop'.format(self._name)
-        target = os.path.join(gui_dir, target_filename)
-        if os.path.exists(target):
-            # Unlikely. A desktop file in setup/gui/ already existed for
-            # this app. Let's pretend it wasn't there and overwrite it.
-            os.remove(target)
-        with open(target, 'w', encoding='utf-8') as f:
-            self._parser.write(f, space_around_delimiters=False)
 
 
 def _find_bin(binary, basedir):
@@ -484,13 +377,14 @@ def _find_bin(binary, basedir):
     try:
         shell_utils.which(binary, cwd=basedir)
     except subprocess.CalledProcessError:
-        raise CommandError(binary)
+        raise meta_errors.CommandError(binary)
 
 
 def _validate_hook(hook_path):
     if not os.stat(hook_path).st_mode & stat.S_IEXEC:
         asset = os.path.basename(hook_path)
-        raise CommandError('hook {!r} is not executable'.format(asset))
+        raise meta_errors.CommandError(
+            'hook {!r} is not executable'.format(asset))
 
 
 def _verify_app_paths(basedir, apps):
