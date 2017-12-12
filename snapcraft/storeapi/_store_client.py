@@ -32,8 +32,10 @@ class StoreClient():
         self.updown = UpDownClient(self.conf)
         self.sca = SCAClient(self.conf)
 
-    def login(self, email, password, one_time_password=None, acls=None,
-              packages=None, channels=None, save=True):
+    def login(self, email: str, password: str, one_time_password: str = None,
+          acls: Iterable[str] = None, channels: Iterable[str] = None,
+          packages: Iterable[Dict[str, str]] = None,
+          config_fd: TextIO = None, save: bool = True) -> None:
         """Log in via the Ubuntu One SSO API."""
         if acls is None:
             acls = ['package_upload', 'package_access', 'package_manage']
