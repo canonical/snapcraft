@@ -52,9 +52,11 @@ class TestCase(testtools.TestCase):
 
     def setUp(self):
         super().setUp()
-        if os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
-            self.snapcraft_command = 'snapcraft'
-            self.snapcraft_parser_command = 'snapcraft-parser'
+        if os.getenv('SNAPCRAFT_FROM_SNAP', False):
+            self.snapcraft_command = '/snap/bin/snapcraft'
+        elif os.getenv('SNAPCRAFT_FROM_DEB', False):
+            self.snapcraft_command = '/usr/bin/snapcraft'
+            self.snapcraft_parser_command = '/usr/bin/snapcraft-parser'
         else:
             self.snapcraft_command = os.path.join(
                 os.getcwd(), 'bin', 'snapcraft')

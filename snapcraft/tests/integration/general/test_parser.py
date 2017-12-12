@@ -33,6 +33,8 @@ class ParserTestCase(integration.TestCase):
 
     def setUp(self):
         super().setUp()
+        if os.getenv('SNAPCRAFT_FROM_SNAP', False):
+            self.skipTest('The snapcraft-parser is not provided by the snap')
         self.useFixture(fixtures.EnvironmentVariable('TMPDIR', self.path))
 
     def call_parser(self, wiki_path, expect_valid, expect_output=True):
@@ -71,7 +73,7 @@ class TestParserWikis(testscenarios.WithScenarios, ParserTestCase):
 
         # Since we're running in a temporary directory use
         # the original source tree version of snapcraft-parser
-        if not os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
+        if not os.getenv('SNAPCRAFT_FROM_DEB', False):
             self.snapcraft_parser_command = os.path.join(
                 os.path.dirname(__file__), '..', '..', '..', '..',
                 'bin', 'snapcraft-parser')
