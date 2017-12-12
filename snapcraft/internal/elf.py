@@ -18,7 +18,6 @@ import re
 import glob
 import logging
 import os
-import shutil
 import subprocess
 import sys
 from functools import wraps
@@ -139,8 +138,10 @@ class Patcher:
             self._patchelf_cmd = os.path.join(snap_dir, 'bin', 'patchelf')
         else:
             self._patchelf_cmd = 'patchelf'
-        logger.debug('Setting the patchelf command to {!r}'.format(
-            shutil.which(self._patchelf_cmd)))
+
+        logger.debug('snapcraft from snap: {!r}; '
+                     'so patchelf set to {!r}'.format(common.is_snap(),
+                                                      self._patchelf_cmd))
 
     def patch(self, *, elf_file: ElfFile) -> None:
         """Patch elf_file with the Patcher instance configuration.
