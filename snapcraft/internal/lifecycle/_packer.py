@@ -65,7 +65,8 @@ def pack(directory, output=None):
 
     # These options need to match the review tools:
     # http://bazaar.launchpad.net/~click-reviewers/click-reviewers-tools/trunk/view/head:/clickreviews/common.py#L38
-    mksquashfs_args = ['-noappend', '-comp', 'xz', '-no-xattrs']
+    mksquashfs_args = ['-noappend', '-comp', 'xz', '-no-xattrs',
+                       '-no-fragments']
     if snap['type'] != 'os':
         mksquashfs_args.append('-all-root')
 
