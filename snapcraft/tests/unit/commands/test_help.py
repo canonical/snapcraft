@@ -19,7 +19,7 @@ import pydoc
 from unittest import mock
 
 import fixtures
-from testtools.matchers import Equals, StartsWith
+from testtools.matchers import Contains, Equals, StartsWith
 
 from snapcraft.cli.help import _TOPICS
 
@@ -46,10 +46,18 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         result = self.run_command(['help', 'does-not-exist'])
 
         self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(
-            'The plugin does not exist. Run `snapcraft '
-            'list-plugins` to see the available plugins.\n',
-            Equals(result.output))
+        self.assertThat(result.output, Contains(
+            'There is no help topic or plugin'))
+
+    def test_topic_and_plugin_adds_ellipsis_for_long_arg(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        result = self.run_command(['help', '1234567890123'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            '1234567890...'))
 
     def test_print_module_help_when_no_help_for_valid_plugin(self):
         result = self.run_command(['help', 'jdk'])
@@ -99,6 +107,14 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
         self.assertThat(output, Equals(expected),
                         'The help message does not start with {!r} but with '
                         '{!r} instead'.format(expected, output))
+
+    def test_print_generic_help_by_default(self):
+        result = self.run_command(['help'])
+
+        self.assertThat(result.output, Contains(
+            'Snapcraft is a delightful packaging tool.'))
+        self.assertThat(result.output, Contains(
+            'For more help'))
 
     def test_no_unicode_in_help_strings(self):
         helps = ['topics']

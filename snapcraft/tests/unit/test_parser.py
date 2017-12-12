@@ -1241,5 +1241,6 @@ parts: [main2]
         self.assertThat(retval, Equals(2))
 
         self.assertTrue(
-            'One or more required commands are missing, please install'
+            'Failed to run command: '
+            'One or more packages are missing, please install'
             in fake_logger.output, 'No missing package info in output')

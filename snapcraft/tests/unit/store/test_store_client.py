@@ -17,6 +17,7 @@
 import json
 import logging
 import os
+import tempfile
 from textwrap import dedent
 from unittest import mock
 
@@ -99,6 +100,22 @@ class LoginTestCase(StoreTestCase):
         self.assertIsNotNone(self.client.conf.get('macaroon'))
         self.assertIsNotNone(self.client.conf.get('unbound_discharge'))
         self.assertTrue(config.Config().is_empty())
+
+    def test_login_with_exported_login(self):
+        conf = config.Config()
+        conf.set('macaroon', 'test-macaroon')
+        conf.set('unbound_discharge', 'test-unbound-discharge')
+        with open('test-exported-login', 'w+') as config_fd:
+            conf.save(config_fd=config_fd)
+            config_fd.seek(0)
+            self.client.login('', '', config_fd=config_fd)
+
+        # Client configuration is filled, but it's not saved on disk.
+        self.assertThat(
+            self.client.conf.get('macaroon'), Equals('test-macaroon'))
+        self.assertThat(
+            self.client.conf.get('unbound_discharge'),
+            Equals('test-unbound-discharge'))
 
     def test_failed_login_with_wrong_password(self):
         self.assertRaises(
@@ -519,15 +536,15 @@ class RegisterTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
             errors.StoreRegistrationError,
-            self.client.register, 'test-already-registered-snap-name')
+            self.client.register, 'test-snap-name-already-registered')
         self.assertThat(
             str(raised),
             Equals(
-                "The name 'test-already-registered-snap-name' is already "
+                "The name 'test-snap-name-already-registered' is already "
                 "taken.\n\n"
                 "We can if needed rename snaps to ensure they match the "
                 "expectations of most users. If you are the publisher most "
-                "users expect for 'test-already-registered-snap-name' then "
+                "users expect for 'test-snap-name-already-registered' then "
                 "claim the name at 'https://myapps.com/register-name/'"))
 
     def test_register_a_reserved_name(self):
@@ -1413,4 +1430,79 @@ class PushMetadataTestCase(StoreTestCase):
         metadata = {'test-conflict': 'value'}
         # force the update, even on conflicts!
         result = self.client.push_metadata('basic', metadata, True)
+        self.assertIsNone(result)
+
+
+class PushBinaryMetadataTestCase(StoreTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
+        self.useFixture(self.fake_logger)
+
+    def _setup_snap(self):
+        """Login, register and push a snap.
+
+        These are all the previous steps needed to push binary metadata.
+        """
+        self.client.login('dummy', 'test correct password')
+        self.client.register('basic')
+        path = os.path.join(
+            os.path.dirname(tests.__file__), 'data', 'test-snap.snap')
+        tracker = self.client.upload('basic', path)
+        tracker.track()
+
+    def test_requires_login(self):
+        self.assertRaises(
+            errors.InvalidCredentialsError,
+            self.client.push_binary_metadata, 'basic', {}, False)
+
+    def test_refreshes_macaroon(self):
+        self._setup_snap()
+        self.fake_store.needs_refresh = True
+        with tempfile.NamedTemporaryFile(suffix='ok') as f:
+            metadata = {'icon': f}
+            self.client.push_binary_metadata('basic', metadata, False)
+        self.assertFalse(self.fake_store.needs_refresh)
+
+    def test_invalid_data(self):
+        self._setup_snap()
+        with tempfile.NamedTemporaryFile(suffix='invalid') as f:
+            metadata = {'icon': f}
+            raised = self.assertRaises(
+                errors.StoreMetadataError,
+                self.client.push_binary_metadata, 'basic', metadata, False)
+        self.assertThat(str(raised), Equals(
+            "Received 400: 'Invalid field: icon'"))
+
+    def test_all_ok(self):
+        self._setup_snap()
+        with tempfile.NamedTemporaryFile(suffix='ok') as f:
+            metadata = {'icon': f}
+            result = self.client.push_binary_metadata('basic', metadata, False)
+        self.assertIsNone(result)
+
+    def test_conflicting_simple_normal(self):
+        self._setup_snap()
+        with tempfile.NamedTemporaryFile(suffix='conflict') as f:
+            filename = os.path.basename(f.name)
+            metadata = {'icon': f}
+            raised = self.assertRaises(
+                errors.StoreMetadataError,
+                self.client.push_binary_metadata, 'basic', metadata, False)
+        should = ("""
+            Metadata not pushed!
+            Conflict in 'icon' field:
+                In snapcraft.yaml: '{}'
+                In the Store:      'original-icon'
+            You can repeat the push-metadata command with --force to force the local values into the Store
+        """).format(filename) # NOQA
+        self.assertThat(str(raised), Equals(dedent(should).strip()))
+
+    def test_conflicting_force(self):
+        self._setup_snap()
+        with tempfile.NamedTemporaryFile(suffix='conflict') as f:
+            metadata = {'icon': f}
+            # force the update, even on conflicts!
+            result = self.client.push_binary_metadata('basic', metadata, True)
         self.assertIsNone(result)

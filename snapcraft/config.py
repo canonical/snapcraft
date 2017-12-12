@@ -70,25 +70,29 @@ class Config(object):
                 return False
         return True
 
-    def load(self) -> None:
-        # Local configurations (per project) are supposed to be static.
-        # That's why it's only checked for 'loading' and never written to.
-        # Essentially, all authentication-related changes, like login/logout
-        # or macaroon-refresh, will not be persisted for the next runs.
-        file_path = ''
-        if os.path.exists(LOCAL_CONFIG_FILENAME):
-            file_path = LOCAL_CONFIG_FILENAME
-
-            # FIXME: We don't know this for sure when loading the config.
-            # Need a better separation of concerns.
-            logger.warn(
-                'Using local configuration ({!r}), changes will not be '
-                'persisted.'.format(file_path))
+    def load(self, *, config_fd: TextIO = None) -> None:
+        if config_fd:
+            self.parser.read_file(config_fd)
         else:
-            file_path = BaseDirectory.load_first_config(
-                'snapcraft', 'snapcraft.cfg')
-        if file_path and os.path.exists(file_path):
-            self.parser.read(file_path)
+            # Local configurations (per project) are supposed to be static.
+            # That's why it's only checked for 'loading' and never written to.
+            # Essentially, all authentication-related changes, like
+            # login/logout or macaroon-refresh, will not be persisted for the
+            # next runs.
+            file_path = ''
+            if os.path.exists(LOCAL_CONFIG_FILENAME):
+                file_path = LOCAL_CONFIG_FILENAME
+
+                # FIXME: We don't know this for sure when loading the config.
+                # Need a better separation of concerns.
+                logger.warn(
+                    'Using local configuration ({!r}), changes will not be '
+                    'persisted.'.format(file_path))
+            else:
+                file_path = BaseDirectory.load_first_config(
+                    'snapcraft', 'snapcraft.cfg')
+            if file_path and os.path.exists(file_path):
+                self.parser.read(file_path)
 
     @staticmethod
     def save_path() -> str:

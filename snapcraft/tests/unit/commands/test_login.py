@@ -14,11 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from unittest import mock
+import re
 
 from simplejson.scanner import JSONDecodeError
-from testtools.matchers import Contains, Equals, Not
+from testtools.matchers import Contains, Equals, Not, MatchesRegex
 
-from snapcraft import storeapi
+from snapcraft import config, storeapi
 from . import CommandBaseTestCase
 
 
@@ -57,7 +58,7 @@ class LoginCommandTestCase(CommandBaseTestCase):
         self.mock_input.assert_called_once_with('Email: ')
         mock_login.assert_called_once_with(
             'user@example.com', mock.ANY, acls=None, packages=None,
-            channels=None, save=True)
+            channels=None, save=True, config_fd=None)
 
     @mock.patch.object(storeapi._sca_client.SCAClient,
                        'get_account_information')
@@ -84,10 +85,48 @@ class LoginCommandTestCase(CommandBaseTestCase):
         mock_login.assert_has_calls([
             mock.call(
                 'user@example.com', mock.ANY, acls=None, packages=None,
-                channels=None, save=True),
+                channels=None, save=True, config_fd=None),
             mock.call(
                 'user@example.com', mock.ANY, one_time_password='123456',
-                acls=None, packages=None, channels=None, save=True)])
+                acls=None, packages=None, channels=None, save=True,
+                config_fd=None)])
+
+    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    @mock.patch.object(storeapi.StoreClient, 'acl')
+    def test_successful_login_with(
+            self, mock_acl, mock_login, mock_get_account_information):
+        mock_acl.return_value = {
+            'snap_ids': None,
+            'channels': None,
+            'permissions': None,
+        }
+
+        conf = config.Config()
+        conf.set('macaroon', 'test-macaroon')
+        conf.set('unbound_discharge', 'test-unbound-discharge')
+        with open('exported-login', 'w') as f:
+            conf.save(config_fd=f)
+            f.flush()
+        result = self.run_command(['login', '--with', 'exported-login'])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(
+            result.output, Contains('Login successful'))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*snaps:.*?No restriction', re.DOTALL))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*channels:.*?No restriction', re.DOTALL))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*permissions:.*?No restriction', re.DOTALL))
+
+        self.mock_input.assert_not_called()
+        mock_login.assert_called_once_with(
+            '', '', acls=None, packages=None, channels=None, save=True,
+            config_fd=mock.ANY)
 
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_failed_login_with_invalid_credentials(self, mock_login):

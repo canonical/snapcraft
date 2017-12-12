@@ -187,7 +187,8 @@ class TravisSuccessfulTestCase(unit.TestCase):
         mock_login.assert_called_with(
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=None, save=False,
-            channels=['edge'], packages=[{'series': '16', 'name': 'foo'}])
+            channels=['edge'], packages=[{'series': '16', 'name': 'foo'}],
+            config_fd=None)
 
         # Credentials encrypted with travis CLI.
         mock_check_output.assert_called_with(
@@ -266,7 +267,8 @@ class TravisSuccessfulTestCase(unit.TestCase):
         mock_login.assert_called_with(
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=None, save=False,
-            channels=['edge'], packages=[{'series': '16', 'name': 'foo'}])
+            channels=['edge'], packages=[{'series': '16', 'name': 'foo'}],
+            config_fd=None)
 
         # Credentials encrypted with travis CLI.
         mock_check_output.assert_called_with(

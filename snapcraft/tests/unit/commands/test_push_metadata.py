@@ -33,9 +33,39 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
+        self.pushed_icon = None
+
+        def _save_updated_icon(snap_name, metadata, force):
+            self.pushed_icon = (
+                metadata['icon'].read() if metadata['icon'] else None)
+
+        patcher = mock.patch.object(
+            storeapi.StoreClient, 'push_binary_metadata',
+            side_effect=_save_updated_icon)
+        self.mock_binary_metadata = patcher.start()
+        self.addCleanup(patcher.stop)
+
         self.snap_file = os.path.join(
             os.path.dirname(tests.__file__), 'data',
-            'test-snap.snap')
+            'test-snap-with-icon.snap')
+
+    def assert_expected_metadata_calls(self, force=False):
+        # text metadata
+        text_metadata = {
+            'description': 'Description of the most simple snap',
+            'summary': 'Summary of the most simple snap',
+        }
+        self.mock_metadata.assert_called_once_with(
+            'basic', text_metadata, force)
+        # binary metadata
+        args, _ = self.mock_binary_metadata.call_args
+        self.assertEqual(args[0], 'basic')
+        expected_icon = (
+            b'<svg width="256" height="256">\n'
+            b'<rect width="256" height="256" style="fill:rgb(0,0,255)" />\n'
+            b'</svg>')
+        self.assertEqual(self.pushed_icon, expected_icon)
+        self.assertEqual(args[2], force)
 
     def test_without_snap_must_raise_exception(self):
         result = self.run_command(['push-metadata'])
@@ -44,21 +74,12 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.output, Contains('Usage:'))
 
     def test_simple(self):
-        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
-        mock_tracker.track.return_value = {
-            'code': 'ready_to_release',
-            'processed': True,
-            'can_release': True,
-            'url': '/fake/url',
-            'revision': 9,
-        }
         patcher = mock.patch.object(storeapi.StoreClient, 'push_metadata')
         self.mock_metadata = patcher.start()
         self.addCleanup(patcher.stop)
 
         # push metadata
-        with mock.patch('snapcraft.storeapi._status_tracker.'
-                        'StatusTracker') as mock_tracker:
+        with mock.patch('snapcraft.storeapi._status_tracker.StatusTracker'):
             result = self.run_command(['push-metadata', self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
 
@@ -66,28 +87,15 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
             "Pushing metadata to the Store (force=False)")))
         self.assertThat(result.output, Contains(
             "The metadata has been pushed"))
-        metadata = {
-            'description': 'Description of the most simple snap', 'summary':
-            'Summary of the most simple snap',
-        }
-        self.mock_metadata.assert_called_once_with('basic', metadata, False)
+        self.assert_expected_metadata_calls(force=False)
 
     def test_simple_debug(self):
-        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
-        mock_tracker.track.return_value = {
-            'code': 'ready_to_release',
-            'processed': True,
-            'can_release': True,
-            'url': '/fake/url',
-            'revision': 9,
-        }
         patcher = mock.patch.object(storeapi.StoreClient, 'push_metadata')
         self.mock_metadata = patcher.start()
         self.addCleanup(patcher.stop)
 
         # push metadata
-        with mock.patch('snapcraft.storeapi._status_tracker.'
-                        'StatusTracker') as mock_tracker:
+        with mock.patch('snapcraft.storeapi._status_tracker.StatusTracker'):
             result = self.run_command(
                 ['--debug', 'push-metadata', self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
@@ -96,11 +104,7 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
             "Pushing metadata to the Store (force=False)"))
         self.assertThat(result.output, Contains(
             "The metadata has been pushed"))
-        metadata = {
-            'description': 'Description of the most simple snap', 'summary':
-            'Summary of the most simple snap',
-        }
-        self.mock_metadata.assert_called_once_with('basic', metadata, False)
+        self.assert_expected_metadata_calls(force=False)
 
     def test_without_login_must_raise_exception(self):
         raised = self.assertRaises(
@@ -146,8 +150,22 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
             "Pushing metadata to the Store (force=True)"))
         self.assertThat(result.output, Contains(
             "The metadata has been pushed"))
-        metadata = {
-            'description': 'Description of the most simple snap', 'summary':
-            'Summary of the most simple snap',
-        }
-        self.mock_metadata.assert_called_once_with('basic', metadata, True)
+        self.assert_expected_metadata_calls(force=True)
+
+    def test_snap_without_icon(self):
+        patcher = mock.patch.object(storeapi.StoreClient, 'push_metadata')
+        self.mock_metadata = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        snap_file = os.path.join(
+            os.path.dirname(tests.__file__), 'data', 'test-snap.snap')
+
+        # push metadata
+        with mock.patch('snapcraft.storeapi.StatusTracker'):
+            result = self.run_command(['push-metadata', snap_file])
+        self.assertThat(result.exit_code, Equals(0))
+
+        self.assertThat(result.output, Contains(
+            "The metadata has been pushed"))
+        # icon pushed to store is None
+        self.assertIsNone(self.pushed_icon)

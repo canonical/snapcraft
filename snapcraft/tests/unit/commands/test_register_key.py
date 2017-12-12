@@ -74,7 +74,7 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         mock_login.assert_called_with(
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=['modify_account_key'],
-            packages=None, channels=None, save=False)
+            packages=None, channels=None, save=False, config_fd=None)
         self.assertThat(mock_register_key.call_count, Equals(1))
         expected_assertion = dedent('''\
             type: account-key-request

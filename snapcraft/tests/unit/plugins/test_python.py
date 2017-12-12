@@ -239,8 +239,13 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
-        plugin.pull()
-        plugin.build()
+
+        # Patch requests so we don't hit the network when the requirements
+        # and constraints files are downloaded to save their contents in the
+        # manifest.
+        with mock.patch('requests.get'):
+            plugin.pull()
+            plugin.build()
 
         pip_download = self.mock_pip.return_value.download
         pip_download.assert_called_once_with(

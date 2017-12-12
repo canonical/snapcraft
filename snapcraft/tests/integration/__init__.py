@@ -383,12 +383,7 @@ class StoreTestCase(TestCase):
     def is_store_staging(self):
         return os.getenv('TEST_STORE') == 'staging'
 
-    def login(self, email=None, password=None, expect_success=True):
-        email = email or self.test_store.user_email
-        password = password or self.test_store.user_password
-
-        process = pexpect.spawn(self.snapcraft_command, ['login'])
-
+    def _conduct_login(self, process, email, password, expect_success) -> None:
         process.expect_exact(
             'Enter your Ubuntu One e-mail address and password.\r\n'
             'If you do not have an Ubuntu One account, you can create one at '
@@ -400,6 +395,29 @@ class StoreTestCase(TestCase):
         if expect_success:
             process.expect_exact(
                 'We strongly recommend enabling multi-factor authentication:')
+
+    def export_login(self, export_path, email: str = None,
+                     password: str = None,
+                     expect_success: bool = True) -> None:
+        email = email or self.test_store.user_email
+        password = password or self.test_store.user_password
+
+        process = pexpect.spawn(
+            self.snapcraft_command, ['export-login', export_path])
+        self._conduct_login(process, email, password, expect_success)
+
+        if expect_success:
+            process.expect('This exported login is not encrypted')
+        else:
+            process.expect('Login failed')
+
+    def login(self, email=None, password=None, expect_success=True):
+        email = email or self.test_store.user_email
+        password = password or self.test_store.user_password
+
+        process = pexpect.spawn(self.snapcraft_command, ['login'])
+        self._conduct_login(process, email, password, expect_success)
+
         result = 'successful' if expect_success else 'failed'
         process.expect_exact('Login {}.'.format(result))
 

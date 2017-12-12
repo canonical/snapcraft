@@ -192,7 +192,7 @@ class SnapsTestCase(testtools.TestCase):
             raise
 
     def install_snap(self, snap_local_path, snap_name, version,
-                     devmode=False):
+                     devmode=False, classic=False):
         if not config.get('skip-install', False):
             tmp_in_testbed = self.snappy_testbed.run_command(
                 'mktemp -d').strip()
@@ -207,6 +207,8 @@ class SnapsTestCase(testtools.TestCase):
                    snap_path_in_testbed]
             if devmode:
                 cmd.append('--devmode')
+            if classic:
+                cmd.append('--classic')
             try:
                 self.snappy_testbed.run_command(cmd)
             except subprocess.CalledProcessError as e:
