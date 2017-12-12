@@ -57,6 +57,17 @@ class SCAClient(Client):
             raise errors.StoreMacaroonNeedsRefreshError()
         return response
 
+    def verify_acl(self):
+        auth = _macaroon_auth(self.conf)
+        response = self.post(
+            'acl/verify/',
+            json={'auth_data': {'authorization': auth}},
+            headers={'Accept': 'application/json'})
+        if response.ok:
+            return response.json()
+        else:
+            raise errors.StoreAccountInformationError(response)
+
     def get_account_information(self):
         auth = _macaroon_auth(self.conf)
         response = self.get(
