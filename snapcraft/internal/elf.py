@@ -156,7 +156,8 @@ class Patcher:
         """
         if elf_file.is_executable:
             self._patch_interpreter(elf_file)
-        self._patch_rpath(elf_file)
+        if elf_file.dependencies:
+            self._patch_rpath(elf_file)
 
     def _patch_interpreter(self, elf_file: ElfFile) -> None:
         self._run_patchelf(args=['--set-interpreter',  self._dynamic_linker],
