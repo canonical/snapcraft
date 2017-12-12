@@ -958,9 +958,9 @@ class SnapcraftYaml(fixtures.Fixture):
             'parts': {}
         }
         if summary is not None:
-            self.data['summary'] = summary,
+            self.data['summary'] = summary
         if description is not None:
-            self.data['description'] = description,
+            self.data['description'] = description
 
     def update_part(self, name, data):
         part = {name: data}
