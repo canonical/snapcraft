@@ -8,9 +8,10 @@ from simplejson.scanner import JSONDecodeError
 from ._client import Client
 from ._status_tracker import StatusTracker
 
+from . import _metadata
+from . import constants
 from . import errors
 from . import logger, _macaroon_auth
-from . import constants
 
 
 class SCAClient(Client):
@@ -143,6 +144,12 @@ class SCAClient(Client):
 
         if not response.ok:
             raise errors.StoreMetadataError(snap_name, response, metadata)
+
+    def push_binary_metadata(self, snap_id, snap_name, metadata, force):
+        """Push the binary metadata to SCA."""
+        metadata_handler = _metadata.StoreMetadataHandler(
+            self, _macaroon_auth(self.conf), snap_id, snap_name)
+        metadata_handler.push_binary(metadata, force)
 
     def snap_release(self, snap_name, revision, channels, delta_format=None):
         data = {

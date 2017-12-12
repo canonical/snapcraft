@@ -161,7 +161,7 @@ class PushMetadataCommandTestCase(CommandBaseTestCase):
             os.path.dirname(tests.__file__), 'data', 'test-snap.snap')
 
         # push metadata
-        with mock.patch('snapcraft.storeapi.StatusTracker'):
+        with mock.patch('snapcraft.storeapi._status_tracker.StatusTracker'):
             result = self.run_command(['push-metadata', snap_file])
         self.assertThat(result.exit_code, Equals(0))
 

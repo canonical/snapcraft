@@ -2,6 +2,7 @@ import hashlib
 import os
 import urllib.parse
 from time import sleep
+from typing import Dict, Iterable, List, TextIO
 
 import pymacaroons
 import requests
@@ -33,22 +34,27 @@ class StoreClient():
         self.sca = SCAClient(self.conf)
 
     def login(self, email: str, password: str, one_time_password: str = None,
-          acls: Iterable[str] = None, channels: Iterable[str] = None,
-          packages: Iterable[Dict[str, str]] = None,
-          config_fd: TextIO = None, save: bool = True) -> None:
+              acls: Iterable[str] = None, channels: Iterable[str] = None,
+              packages: Iterable[Dict[str, str]] = None,
+              config_fd: TextIO = None, save: bool = True) -> None:
         """Log in via the Ubuntu One SSO API."""
         if acls is None:
             acls = ['package_upload', 'package_access', 'package_manage']
-        # Ask the store for the needed capabilities to be associated with the
-        # macaroon.
-        macaroon = self.sca.get_macaroon(acls, packages, channels)
-        caveat_id = self._extract_caveat_id(macaroon)
-        unbound_discharge = self.sso.get_unbound_discharge(
-            email, password, one_time_password, caveat_id)
-        # The macaroon has been discharged, save it in the config
-        self.conf.set('macaroon', macaroon)
-        self.conf.set('unbound_discharge', unbound_discharge)
-        self.conf.set('email', email)
+
+        if config_fd:
+            self.conf.load(config_fd=config_fd)
+        else:
+            # Ask the store for the needed capabilities to be associated with
+            # the macaroon.
+            macaroon = self.sca.get_macaroon(acls, packages, channels)
+            caveat_id = self._extract_caveat_id(macaroon)
+            unbound_discharge = self.sso.get_unbound_discharge(
+                email, password, one_time_password, caveat_id)
+            # The macaroon has been discharged, save it in the config
+            self.conf.set('macaroon', macaroon)
+            self.conf.set('unbound_discharge', unbound_discharge)
+            self.conf.set('email', email)
+
         if save:
             self.conf.save()
 
@@ -91,6 +97,25 @@ class StoreClient():
             account_data[k] = value
 
         return account_data
+
+    def acl(self) -> Dict[str, List[str]]:
+        """Return permissions for the logged-in user."""
+
+        acl_data = {}
+
+        acl_info = self.verify_acl()
+        for key in ('snap_ids', 'channels', 'permissions'):
+            acl_data[key] = acl_info.get(key)
+
+        return acl_data
+
+    def get_snap_name_for_id(self, snap_id: str) -> str:
+        declaration_assertion = self.cpi.get_assertion(
+            'snap-declaration', snap_id)
+        return declaration_assertion['headers']['snap-name']
+
+    def verify_acl(self) -> Dict[str, List[str]]:
+        return self._refresh_if_necessary(self.sca.verify_acl)
 
     def get_account_information(self):
         return self._refresh_if_necessary(self.sca.get_account_information)
@@ -266,3 +291,16 @@ class StoreClient():
 
         return self._refresh_if_necessary(
             self.sca.push_metadata, snap_id, snap_name, metadata, force)
+
+    def push_binary_metadata(self, snap_name, metadata, force):
+        """Push the binary metadata to the server."""
+        account_info = self.get_account_information()
+        series = constants.DEFAULT_SERIES
+        try:
+            snap_id = account_info['snaps'][series][snap_name]['snap-id']
+        except KeyError:
+            raise errors.SnapNotFoundError(snap_name, series=series)
+
+        return self._refresh_if_necessary(
+            self.sca.push_binary_metadata, snap_id, snap_name, metadata,
+            force)
