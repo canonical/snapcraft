@@ -35,4 +35,7 @@ $lxc exec snap-builder -- sh -c "cd snapcraft && /snap/bin/snapcraft snap --outp
 # Pull the snap from the container to save it into the cache.
 mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
 $lxc file pull "snap-builder/root/snapcraft/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/"
+# Send the snap to transfer.sh
+$lxc exec snap-builder -- sh -c "snap install transfer"
+$lxc exec snap-builder -- sh -c "transfer snap-builder/root/snapcraft/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
 $lxc stop snap-builder
