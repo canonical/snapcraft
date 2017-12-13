@@ -1380,14 +1380,46 @@ class CoreSetupTestCase(unit.TestCase):
         os.chmod(fake_sudo_path, 0o755)
 
         self.useFixture(fixtures.EnvironmentVariable(
-            'SNAPCRAFT_SETUP_CORE', '1'))
-        self.useFixture(fixtures.EnvironmentVariable(
             'PATH', '{}:{}'.format(bin_override, os.path.expandvars('$PATH'))))
 
         self.project_options = snapcraft.ProjectOptions()
 
     @mock.patch.object(storeapi.StoreClient, 'download')
-    def test_core_setup(self, download_mock):
+    def test_core_setup_with_env_var(self, download_mock):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_SETUP_CORE', '1'))
+
+        core_snap = self._create_core_snap()
+        core_snap_hash = calculate_sha3_384(core_snap)
+        download_mock.return_value = core_snap_hash
+        self.tempdir_mock.side_effect = self._setup_tempdir_side_effect(
+            core_snap)
+
+        self._create_classic_confined_snapcraft_yaml()
+        lifecycle.execute('pull', self.project_options)
+
+        regex = (
+            'mkdir -p {}\n'
+            'unsquashfs -d {} .*{}\n').format(
+                os.path.dirname(self.core_path),
+                self.core_path,
+                core_snap_hash)
+        self.assertThat(
+            self.witness_path,
+            FileContains(matcher=MatchesRegex(regex, flags=re.DOTALL)))
+
+        download_mock.assert_called_once_with(
+            'core', 'stable', os.path.join(self.tempdir, 'core.snap'),
+            self.project_options.deb_arch, '')
+
+    @mock.patch.object(storeapi.StoreClient, 'download')
+    @mock.patch('snapcraft.internal.lifecycle._runner._DOCKERENV_FILE')
+    def test_core_setup_if_docker_env(self, dockerenv_fake, download_mock):
+        dockerenv_file = os.path.join(self.tempdir, 'dockerenv')
+        os.makedirs(self.tempdir)
+        open(dockerenv_file, 'w').close()
+        dockerenv_fake.return_value = dockerenv_file
+
         core_snap = self._create_core_snap()
         core_snap_hash = calculate_sha3_384(core_snap)
         download_mock.return_value = core_snap_hash
@@ -1412,6 +1444,9 @@ class CoreSetupTestCase(unit.TestCase):
             self.project_options.deb_arch, '')
 
     def test_core_setup_skipped_if_not_classic(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_SETUP_CORE', '1'))
+
         lifecycle.init()
         lifecycle.execute('pull', self.project_options)
 
