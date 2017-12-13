@@ -40,7 +40,7 @@ class CleanBuildCommandBaseTestCase(CommandBaseTestCase):
             name: snap-test
             version: 1.0
             summary: test cleanbuild
-            description: if snap is succesful a snap package will be available
+            description: if snap is successful a snap package will be available
             architectures: ['amd64']
             confinement: strict
             grade: stable
@@ -153,8 +153,7 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
 
-        self.assertIn(
-            "'foo/bar' is not a valid LXD remote name",
-            str(self.assertRaises(
-                InvalidContainerRemoteError,
-                self.run_command, ['cleanbuild', '--remote', 'foo/bar'])))
+        exception = self.assertRaises(
+            InvalidContainerRemoteError,
+            self.run_command, ['cleanbuild', '--remote', 'foo/bar'])
+        self.assertThat(exception.remote, Equals('foo/bar'))

@@ -1,3 +1,91 @@
+snapcraft (2.37) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * cli: improve the help command (#1789)
+  * many: set rpath for elf files for classic (#1781)
+
+  [ Kyle Fazzari ]
+  * tests: run codespell as part of static tests (#1783)
+  * catkin-tools plugin: use stage-packages (#1779)
+  * cli: add export-login command (#1780)
+
+  [ Leo Arias ]
+  * tests: move the ppa test trigger to lxd (#1758)
+  * tests: python plugin integration tests moved to a separate suite (#1791)
+  * tests: do not hit the network in python unit tests (#1792)
+  * cli: add what, why, and how to fix to the common errors (#1640)
+  * cli: include consistent commands to fix error conditions (#1790)
+
+  [ Christian Dywan ]
+  * tests: move refresh to unit folder (#1787)
+
+  [ Daniel Lim Wee Soong ]
+  * spelling: fixed spelling and added codespell support (#1770)
+  * cli: more complete error when registering a reserved name (#1778)
+  * static tests: add type hinting to file_utils.py (#1785)
+
+  [ Sangbum Kim ]
+  * cli: show helpful message for 'snapcraft list-keys' with no keys (#1784)
+
+  [ Marcin Mikołajczak ]
+  * tests: add --help command to the runtests.sh script (#1775)
+
+  [ Matias Bordese ]
+  * storeapi: support for pushing binary metadata (#1774)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Wed, 06 Dec 2017 15:22:05 +0000
+
+snapcraft (2.36) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * static tests: upgrade to the newest flake8 (#1745)
+  * static tests: enable type checking by use of mypy (#1747)
+  * elf: conversion from libraries (#1744)
+  * many: ensure classic confined binaries use the correct interpreter (#1759)
+  * project: export the arch triplet into the environment (#1768)
+
+  [ Kyle Fazzari ]
+  * TESTING: adt on lxc requires squashfuse (#1741)
+  * python plugin: use extracted pip (#1607)
+  * ament plugin: new plugin (#1583) (LP: #1686850)
+  * catkin plugin: support building entire workspace (#1743) (LP: #1721168)
+  * store: refactor acquirement of attenuated macaroon (#1765)
+  * snapcraft.yaml: use gcc to determine tuple (#1764) (LP: #1733922)
+
+  [ Leo Arias ]
+  * tests: reorganize unit and integration suites to make them easier to split
+    for travis (#1638)
+  * tests: share the cache for ros tests (#1725)
+  * tests: run daily autopkgtest in travis (#1643)
+  * tests: add a script to run autopkgtests from the ppa (#1749)
+  * tests: add the missing quote on autopkgtest run (#1756)
+  * tests: move the catkin integration tests to a separate suite (#1760)
+
+  [ Chris Ratliff ]
+  * catkin tools plugin: add catkin tools support (#1593)
+
+  [ Paolo Pisati ]
+  * kernel plugin: respect the kernel-with-firmware property (#1750)
+
+  [ Colin Watson ]
+  * nodejs plugin: pass proxy configuration to yarn (#1754)
+
+  [ Christian Dywan ]
+  * lxd: always remove tmp_dir after execution (#1742)
+  * lxd: delete container only if parts is empty (#1762)
+
+  [ Facundo Batista ]
+  * store: push-metadata added (#1634)
+  * tests: push metadata test needs to push the snap first (#1766)
+
+  [ Daniel Watkins ]
+  * python plugin: use finer grained file filters for pip (#1763)
+
+  [ Michael Hudson-Doyle ]
+  * lxd: let lxd choose the architecture (#1718)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Wed, 29 Nov 2017 04:20:26 +0000
+
 snapcraft (2.35) xenial; urgency=medium
 
   [ Sergio Schvezov ]
@@ -51,7 +139,7 @@ snapcraft (2.35) xenial; urgency=medium
   * many: account for python shebang args in rewrite
 
   [ Leo Arias ]
-  * typo: replace occured with occurred
+  * typo: replace ocurred with occurred
   * node plugin: record installed node packages in manifest
   * node plugin: record the yarn.lock file
   * tests: fix the TEST_STORE environment variable
@@ -295,7 +383,7 @@ snapcraft (2.33) xenial; urgency=medium
   * core: clean the container on a full clean (#1372)
   * lxd: do not assume user ID of 1000 for raw.idmap (#1385)
   * autotools plugin: Enable cross-compilation support (#1383)
-  * lxd: distingish FileNotFoundError for when not installed (#1400)
+  * lxd: distinguish FileNotFoundError for when not installed (#1400)
   * waf plugin: enable cross-compilation support  (#1397)
   * ci: wait for apt/dpkg lock when setting lxd up (#1421)
   * lxd: stop setting `$HOME` in containers (#1408)
@@ -614,7 +702,7 @@ snapcraft (2.27.1) xenial; urgency=medium
 snapcraft (2.27) xenial; urgency=medium
 
   [ Sergio Schvezov ]
-  * core: switch to using rpath for clasic confinement. (#1094)
+  * core: switch to using rpath for classic confinement. (#1094)
   * python plugin: do the right thing with classic. (#1093)
   * meta: support for the environment keyword. (#1103)
   * meta: correct the deprecation for `setup/gui` use. (#1107)

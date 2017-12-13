@@ -46,8 +46,11 @@ class Project(Containerbuild):
     def _ensure_container(self):
         new_container = not self._get_container_status()
         if new_container:
-            subprocess.check_call([
-                'lxc', 'init', self._image, self._container_name])
+            try:
+                subprocess.check_call([
+                    'lxc', 'init', self._image, self._container_name])
+            except subprocess.CalledProcessError as e:
+                raise ContainerConnectionError('Failed to setup container')
         if self._get_container_status()['status'] == 'Stopped':
             self._configure_container()
             try:

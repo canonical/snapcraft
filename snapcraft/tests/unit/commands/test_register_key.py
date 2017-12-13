@@ -66,8 +66,6 @@ class RegisterKeyTestCase(CommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
-            'Login successful.'))
-        self.assertThat(result.output, Contains(
             'Registering key ...'))
         self.assertThat(result.output, Contains(
             'Done. The key "default" ({}) may be used to sign your '
@@ -75,7 +73,7 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         mock_login.assert_called_with(
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=['modify_account_key'],
-            packages=None, channels=None, save=False)
+            packages=None, channels=None, save=False, config_fd=None)
         self.assertThat(mock_register_key.call_count, Equals(1))
         expected_assertion = dedent('''\
             type: account-key-request
@@ -158,7 +156,7 @@ class RegisterKeyTestCase(CommandBaseTestCase):
             'Cannot continue without logging in successfully.'))
         self.assertThat(mock_input.call_count, Equals(1))
 
-    @mock.patch('snapcraft._store._login')
+    @mock.patch('snapcraft._store.login')
     @mock.patch.object(storeapi.SCAClient, 'register_key')
     @mock.patch.object(storeapi.SCAClient, 'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')

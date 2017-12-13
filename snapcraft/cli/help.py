@@ -15,12 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import importlib
 import sys
+from textwrap import dedent
 
 import click
 
 import snapcraft
-from snapcraft.internal import sources
 from . import echo
+from snapcraft.internal import sources
 
 
 _TOPICS = {
@@ -36,10 +37,11 @@ def helpcli():
 
 
 @helpcli.command('help')
-@click.argument('topic', metavar='<topic>')
+@click.argument('topic', metavar='<topic>', required=False)
 @click.option('--devel', is_flag=True,
               help='Show more details for snapcraft developers')
-def help_command(topic, devel):
+@click.pass_context
+def help_command(ctx, topic, devel):
     """Obtain help for a certain plugin or topic.
 
     The <topic> can either be a plugin name or one of:
@@ -56,7 +58,16 @@ def help_command(topic, devel):
         snapcraft help sources
         snapcraft help go
     """
-    if topic == 'topics':
+    if not topic:
+        click.echo(ctx.parent.get_help())
+        click.echo(dedent("""\
+
+            For more help, use:
+                snapcraft help topics
+                snapcraft help <topic>
+                snapcraft help <plugin-name>
+        """))
+    elif topic == 'topics':
         for key in _TOPICS:
             click.echo(key)
     elif topic in _TOPICS:
@@ -65,8 +76,20 @@ def help_command(topic, devel):
         try:
             _module_help(topic, devel)
         except ImportError:
-            echo.error('The plugin does not exist. Run `snapcraft '
-                       'list-plugins` to see the available plugins.')
+            # 10 is the limit which determines ellipsis is needed
+            if len(topic) > 10:
+                topic = '{}...'.format(topic[:10])
+            echo.wrapped(dedent("""\
+    There is no help topic or plugin {!r}. Try:
+
+    For topics:
+
+        snapcraft help topics
+
+    For valid plugins:
+
+        snapcraft list-plugins
+    """).format(topic))
             sys.exit(1)
 
 

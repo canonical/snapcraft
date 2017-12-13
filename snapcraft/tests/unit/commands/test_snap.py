@@ -42,7 +42,7 @@ class SnapCommandBaseTestCase(CommandBaseTestCase):
         name: snap-test
         version: 1.0
         summary: test snapping
-        description: if snap is succesful a snap package will be available
+        description: if snap is successful a snap package will be available
         architectures: ['amd64']
         type: {}
         confinement: strict
@@ -178,11 +178,10 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             'SNAPCRAFT_CONTAINER_BUILDS', 'foo/bar'))
         self.make_snapcraft_yaml()
 
-        self.assertIn(
-            "'foo/bar' is not a valid LXD remote name",
-            str(self.assertRaises(
-                snapcraft.internal.errors.InvalidContainerRemoteError,
-                self.run_command, ['--debug', 'snap'])))
+        exception = self.assertRaises(
+            snapcraft.internal.errors.InvalidContainerRemoteError,
+            self.run_command, ['--debug', 'snap'])
+        self.assertThat(exception.remote, Equals('foo/bar'))
 
     def test_snap_defaults_on_a_tty(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -352,7 +351,7 @@ type: os
 
         self.assertThat('mysnap.snap', FileExists())
 
-    def test_load_config_with_invalid_plugin_exits_with_error(self):
+    def test_load_config_with_invalid_plugin_raises_exception(self):
         self.make_snapcraft_yaml(snapcraft_yaml=dedent("""\
             name: test-package
             version: 1
@@ -370,8 +369,8 @@ type: os
             snapcraft.internal.errors.PluginError,
             self.run_command, ['snap'])
 
-        self.assertThat(str(raised), Equals(
-            "Issue while loading part: unknown plugin: 'does-not-exist'"))
+        self.assertThat(
+            raised.message, Equals("unknown plugin: 'does-not-exist'"))
 
     @mock.patch('time.time')
     def test_snap_renames_stale_snap_build(self, mocked_time):

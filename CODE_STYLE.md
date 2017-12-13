@@ -28,6 +28,11 @@ For multiline strings, we prefer to use `textwrap.dedent`:
 
 (from https://docs.python.org/3/library/textwrap.html#textwrap.dedent)
 
+## Errors
+
+Error messages must say what happened, why it happened and what you can do to
+fix it.
+
 ## Tests
 
 * When asserting for equality, we prefer to use the `Equals` matcher from
@@ -36,6 +41,11 @@ For multiline strings, we prefer to use `textwrap.dedent`:
     ```
     self.assertThat(actual, Equals(expected))
     ```
+
+* When writing unit tests that raise errors, the tests should only check the
+  class of the exception raised and it's attributes, not the format of the
+  error message. The formatting of the exception as a string should be
+  tested only once, in the module snapcraft/tests/unit/test_errors.py
 
 [1]: TESTING.md
 [2]: https://www.python.org/dev/peps/pep-0008

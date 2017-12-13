@@ -1,0 +1,16 @@
+name: catkin-tools-example
+version: 1.0
+summary: Catkin Tools Example
+description: Contains talker/listener ROS packages and a .launch file.
+confinement: strict
+
+apps:
+  launch-project:
+    command: roslaunch listener talk_and_listen.launch
+    plugs: [network-bind]
+
+parts:
+  ros-project:
+    plugin: catkin-tools
+    rosdistro: kinetic
+    source: .

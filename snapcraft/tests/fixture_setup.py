@@ -912,11 +912,11 @@ class WithoutSnapInstalled(fixtures.Fixture):
         set up.
     """
 
-    def __init__(self, snap_name):
+    def __init__(self, snap_name: str) -> None:
         super().__init__()
         self.snap_name = snap_name.split('/')[0]
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         if snapcraft.repo.snaps.SnapPackage.is_snap_installed(self.snap_name):
             raise AssertionError(
@@ -926,7 +926,7 @@ class WithoutSnapInstalled(fixtures.Fixture):
 
         self.addCleanup(self._remove_snap)
 
-    def _remove_snap(self):
+    def _remove_snap(self) -> None:
         try:
             subprocess.check_output(
                 ['sudo', 'snap', 'remove', self.snap_name],
@@ -1034,11 +1034,11 @@ class FakeSnapd(fixtures.Fixture):
 
 class SharedCache(fixtures.Fixture):
 
-    def __init__(self, name):
+    def __init__(self, name) -> None:
         super().__init__()
         self.name = name
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         shared_cache_dir = os.path.join(
             tempfile.gettempdir(), 'snapcraft_test_cache_{}'.format(self.name))

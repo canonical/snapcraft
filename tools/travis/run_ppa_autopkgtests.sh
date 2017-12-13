@@ -18,8 +18,15 @@
 
 set -ev
 
+lxc="/snap/bin/lxc"
+
 script_path="$(dirname "$0")"
-"$script_path/run_docker_container.sh" autopkgtest-requests
-docker exec -i autopkgtest-requests apt install -y python-launchpadlib
-docker exec -i autopkgtest-requests ./tools/run_ppa_autopkgtests.py
-docker rm -f autopkgtest-requests
+project_path="$(readlink -f "$script_path/../..")"
+
+"$script_path/setup_lxd.sh"
+"$script_path/run_lxd_container.sh" test-trigger
+$lxc file push --recursive $project_path/tools test-trigger/root/
+$lxc exec test-trigger -- sh -c "apt install --yes python python-launchpadlib"
+$lxc exec test-trigger -- sh -c "/root/tools/run_ppa_autopkgtests.py"
+
+$lxc stop test-trigger

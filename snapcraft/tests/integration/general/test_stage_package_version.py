@@ -32,7 +32,8 @@ class StagePackageVersionTestCase(integration.TestCase):
             subprocess.CalledProcessError,
             self.run_snapcraft, 'pull')
         self.assertIn(
-            "Error downloading stage packages for part "
+            "Failed to fetch stage packages: "
+            "Error downloading packages for part "
             "'part-with-stage-packages': "
             "The package 'haskell-doc=invalid' was not found.",
             str(error.output)

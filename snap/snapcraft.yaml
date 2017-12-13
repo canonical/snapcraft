@@ -46,7 +46,7 @@ parts:
         - '*'
         - '**/*.pyc'
     install: |
-        TRIPLET_PATH=$(ls -d $SNAPCRAFT_PART_INSTALL/usr/lib/$(uname -p)-*)
+        TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
         LIBARCHIVE=$(readlink -n $TRIPLET_PATH/libarchive.so.13)
         ln -s $LIBARCHIVE $TRIPLET_PATH/libarchive.so
         LIBSODIUM=$(readlink -n $TRIPLET_PATH/libsodium.so.18)

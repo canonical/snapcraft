@@ -38,7 +38,7 @@ logger = logging.getLogger(__name__)
 class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.extend(['python-catkin-tools'])
+        self.stage_packages.append('python-catkin-tools')
 
         # Beta Warning
         # Remove this comment and warning once catkin tools plugin is stable.
@@ -55,10 +55,13 @@ class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
         self._configure_catkin_profile()
 
     def _clean_catkin(self):
-        # Clean to prevent conflicts with externally built packages.
-        catkincmd = ['catkin', 'clean', '-y']
+        # It's possible that this workspace wasn't initialized to be used with
+        # catkin-tools, so initialize it first. Note that this is a noop if it
+        # was already initialized.
+        self._run_in_bash(['catkin', 'init'])
 
-        self._run_in_bash(catkincmd)
+        # Clean to prevent conflicts with externally built packages.
+        self._run_in_bash(['catkin', 'clean', '-y'])
 
     def _add_catkin_profile(self):
         # Overwrite the default catkin profile to ensure builds
@@ -107,7 +110,7 @@ class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
 
     def _build_catkin_packages(self):
         # Nothing to do if no packages were specified
-        if not self.catkin_packages:
+        if self.catkin_packages is not None and len(self.catkin_packages) == 0:
             return
 
         # Call catkin build.
@@ -119,7 +122,8 @@ class CatkinToolsPlugin(snapcraft.plugins.catkin.CatkinPlugin):
         # Use the newly created default profile.
         catkincmd.extend(['--profile', 'default'])
 
-        catkincmd.extend(self.catkin_packages)
+        if self.catkin_packages:
+            catkincmd.extend(self.catkin_packages)
 
         compilers = Compilers(
             self._compilers_path, self.PLUGIN_STAGE_SOURCES, self.project)
