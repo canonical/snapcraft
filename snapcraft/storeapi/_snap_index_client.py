@@ -1,5 +1,6 @@
 import contextlib
 import os
+from typing import Dict
 
 from ._client import Client
 
@@ -59,6 +60,18 @@ class SnapIndexClient(Client):
         if resp.status_code != 200:
             raise errors.SnapNotFoundError(snap_name, channel, arch)
         return resp.json()
+
+    def get_assertion(self, assertion_type: str,
+                      snap_id: str) -> Dict[str, Dict[str, str]]:
+        headers = self.get_default_headers()
+        logger.debug('Getting snap-declaration for {}'.format(snap_id))
+        url = '/api/v1/snaps/assertions/{}/{}/{}'.format(
+            assertion_type, constants.DEFAULT_SERIES, snap_id)
+        response = self.get(url, headers=headers)
+        if response.status_code != 200:
+            raise errors.SnapNotFoundError(
+                snap_id, series=constants.DEFAULT_SERIES)
+        return response.json()
 
     def get(self, url, headers=None, params=None, stream=False):
         if headers is None:

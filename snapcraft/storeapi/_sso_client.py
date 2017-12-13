@@ -12,9 +12,7 @@ from . import constants
 
 class SSOClient(Client):
     """The Single Sign On server deals with authentication.
-
     It is used directly or indirectly by other servers.
-
     """
     def __init__(self, conf):
         super().__init__(conf, os.environ.get(

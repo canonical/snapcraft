@@ -11,10 +11,8 @@ from . import errors
 
 class Client():
     """A base class to define clients for the ols servers.
-
     This is a simple wrapper around requests.Session so we inherit all good
     bits while providing a simple point for tests to override when needed.
-
     """
 
     def __init__(self, conf, root_url):
@@ -49,6 +47,7 @@ class Client():
                 params=params, **kwargs)
         except RetryError as e:
             raise errors.StoreRetryError(e) from e
+
         return response
 
     def get(self, url, **kwargs):

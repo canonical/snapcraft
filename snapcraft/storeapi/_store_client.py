@@ -25,7 +25,7 @@ from ._up_down_client import UpDownClient
 class StoreClient():
     """High-level client for the V2.0 API SCA resources."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.conf = config.Config()
         self.sso = SSOClient(self.conf)

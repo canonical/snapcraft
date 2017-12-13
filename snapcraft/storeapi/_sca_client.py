@@ -143,18 +143,9 @@ class SCAClient(Client):
 
     def push_metadata(self, snap_id, snap_name, metadata, force):
         """Push the metadata to SCA."""
-        url = 'snaps/' + snap_id + '/metadata'
-        headers = {
-            'Authorization': _macaroon_auth(self.conf),
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-        }
-        method = 'PUT' if force else 'POST'
-        response = self.request(
-            method, url, data=json.dumps(metadata), headers=headers)
-
-        if not response.ok:
-            raise errors.StoreMetadataError(snap_name, response, metadata)
+        metadata_handler = _metadata.StoreMetadataHandler(
+            self, _macaroon_auth(self.conf), snap_id, snap_name)
+        metadata_handler.push(metadata, force)
 
     def push_binary_metadata(self, snap_id, snap_name, metadata, force):
         """Push the binary metadata to SCA."""
@@ -332,33 +323,3 @@ class SCAClient(Client):
         if not response.ok:
             raise errors.DeveloperAgreementSignError(response)
         return response.json()
-
-    def get_package(self, snap_name, channel, arch=None):
-        headers = self.get_default_headers()
-        headers.update({
-            'Accept': 'application/hal+json',
-            'X-Ubuntu-Series': constants.DEFAULT_SERIES,
-        })
-        if arch:
-            headers['X-Ubuntu-Architecture'] = arch
-
-        params = {
-            'channel': channel,
-            # FIXME LP: #1662665
-            'fields': 'status,anon_download_url,download_url,'
-                      'download_sha3_384,download_sha512,snap_id,'
-                      'revision,release',
-        }
-        logger.debug('Getting details for {}'.format(snap_name))
-        url = 'api/v1/snaps/details/{}'.format(snap_name)
-        resp = self.get(url, headers=headers, params=params)
-        if resp.status_code != 200:
-            raise errors.SnapNotFoundError(snap_name, channel, arch)
-        return resp.json()
-
-    def get(self, url, headers=None, params=None, stream=False):
-        if headers is None:
-            headers = self.get_default_headers()
-        response = self.request('GET', url, stream=stream,
-                                headers=headers, params=params)
-        return response
