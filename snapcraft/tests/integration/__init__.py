@@ -20,6 +20,7 @@ import os
 import re
 import shutil
 import subprocess
+from textwrap import dedent
 import sys
 import time
 import uuid
@@ -186,6 +187,25 @@ class TestCase(testtools.TestCase):
         dir_util.copy_tree(
             os.path.join(self.snaps_dir, project_dir), self.path,
             preserve_symlinks=True)
+
+    def construct_yaml(self, name='test', version='0.1',
+                       summary='Simple test snap',
+                       description='Something something',
+                       parts=dedent('''\
+                           my-part:
+                             plugin: nil
+                           '''),
+                       build_packages='[]'):
+        snapcraft_yaml = {
+            'name': name,
+            'version': version,
+            'summary': summary,
+            'description': description,
+            'parts': yaml.load(parts),
+            'build-packages': yaml.load(build_packages),
+        }
+        with open('snapcraft.yaml', 'w') as f:
+            yaml.dump(snapcraft_yaml, f, default_flow_style=False)
 
     def get_output_ignoring_non_zero_exit(self, binary, cwd=None):
         # Executing the binaries exists > 0 on trusty.

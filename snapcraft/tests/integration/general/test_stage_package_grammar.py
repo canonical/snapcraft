@@ -14,11 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import OrderedDict
-import contextlib
 import os
 import subprocess
-import yaml
+from textwrap import dedent
 
 from snapcraft.tests import integration
 from testtools.matchers import (
@@ -29,17 +27,6 @@ from testtools.matchers import (
 
 
 class StagePackageGrammarTestCase(integration.TestCase):
-
-    @contextlib.contextmanager
-    def modified_yaml(self,
-                      project='stage-package-grammar',
-                      snapcraft_yaml_file='snapcraft.yaml'):
-        self.copy_project_to_cwd(project)
-        with open(snapcraft_yaml_file) as f:
-            snapcraft_yaml = yaml.load(f)
-            yield snapcraft_yaml
-            with open(snapcraft_yaml_file, 'w') as f:
-                yaml.dump(snapcraft_yaml, f)
 
     def test_simple(self):
         """Test that 'simple' fetches stage package."""
@@ -109,10 +96,13 @@ class StagePackageGrammarTestCase(integration.TestCase):
     def test_to_other_arch(self):
         """Test that 'to' for the other arch fetches nothing."""
 
-        with self.modified_yaml() as yaml:
-            yaml['parts']['simple']['stage-packages'] = [
-                OrderedDict({'to other-arch': ['hello']}),
-            ]
+        self.construct_yaml(parts=dedent('''\
+            simple:
+              plugin: nil
+              stage-packages:
+              - to other-arch:
+                - hello
+            '''))
         self.run_snapcraft(['prime', 'simple'])
         self.assertThat(
             os.path.join('prime', 'usr', 'bin', 'hello'),
@@ -121,11 +111,15 @@ class StagePackageGrammarTestCase(integration.TestCase):
     def test_to_other_arch_else(self):
         """Test that 'else' for the other arch fetches hello."""
 
-        with self.modified_yaml() as yaml:
-            yaml['parts']['simple']['stage-packages'] = [
-                OrderedDict({'to other-arch': ['foo']}),
-                OrderedDict({'else': ['hello']}),
-            ]
+        self.construct_yaml(parts=dedent('''\
+            simple:
+              plugin: nil
+              stage-packages:
+              - to other-arch:
+                - foo
+              - else:
+                - hello
+            '''))
         self.run_snapcraft(['prime', 'simple'])
         self.assertThat(
             os.path.join('prime', 'usr', 'bin', 'hello'),
@@ -134,11 +128,14 @@ class StagePackageGrammarTestCase(integration.TestCase):
     def test_to_other_arch_else_fail(self):
         """Test that 'else' for the other arch fails."""
 
-        with self.modified_yaml() as yaml:
-            yaml['parts']['simple']['stage-packages'] = [
-                OrderedDict({'to other-arch': ['foo']}),
-                'else fail',
-            ]
+        self.construct_yaml(parts=dedent('''\
+            simple:
+              plugin: nil
+              stage-packages:
+              - to other-arch:
+                - foo
+              - else fail
+            '''))
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft,
             ['prime', 'simple'])
