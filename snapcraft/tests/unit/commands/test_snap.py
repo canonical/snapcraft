@@ -88,7 +88,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
     def test_snap_fails_with_bad_type(self):
@@ -113,7 +114,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
@@ -198,7 +200,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('snap-test_1.0_amd64.snap', FileExists())
@@ -214,7 +217,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('snap-test_1.0_amd64.snap', FileExists())
@@ -244,7 +247,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('snap-test_1.0_amd64.snap', FileExists())
@@ -269,7 +273,8 @@ architectures: [amd64, armhf]
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', 'mysnap', 'my_snap_99_multi.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('my_snap_99_multi.snap', FileExists())
@@ -293,7 +298,8 @@ version: 99
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', 'mysnap', 'my_snap_99_all.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('my_snap_99_all.snap', FileExists())
@@ -320,7 +326,7 @@ type: os
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', 'mysnap', 'my_snap_99_multi.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('my_snap_99_multi.snap', FileExists())
@@ -346,7 +352,8 @@ type: os
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'mysnap.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('mysnap.snap', FileExists())
@@ -617,5 +624,6 @@ class SnapCommandAsDefaultTestCase(SnapCommandBaseTestCase):
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
