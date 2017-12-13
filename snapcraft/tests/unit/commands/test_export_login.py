@@ -39,7 +39,8 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     @mock.patch.object(storeapi.StoreClient, 'acl')
     def test_successful_export(
@@ -74,7 +75,8 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
             channels=None, save=False, config_fd=None)
         mock_acl.assert_called_once_with()
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     @mock.patch.object(storeapi.StoreClient, 'acl')
     def test_successful_login_with_2fa(

@@ -29,7 +29,8 @@ from snapcraft.tests.unit import commands
 
 class WhoamiCommandBaseTestCase(commands.CommandBaseTestCase):
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     def test_unknown_email_must_suggest_logout_and_login(
             self, mock_get_account_information):
         mock_get_account_information.return_value = {}
@@ -50,7 +51,8 @@ class WhoamiCommandBaseTestCase(commands.CommandBaseTestCase):
                 '.*logout and login again.*',
                 flags=re.DOTALL))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     def test_whoami_must_print_email_and_developer_id(
             self, mock_get_account_information):
         mock_get_account_information.return_value = {}
