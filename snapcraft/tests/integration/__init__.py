@@ -140,6 +140,7 @@ class TestCase(testtools.TestCase):
                 stderr=subprocess.STDOUT, universal_newlines=True,
                 env=env)
         except subprocess.CalledProcessError as e:
+            self.addDetail('command', content.text(self.snapcraft_command))
             self.addDetail('output', content.text_content(e.output))
             raise
 
