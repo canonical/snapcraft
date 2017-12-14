@@ -302,8 +302,12 @@ class Containerbuild:
                                '{}{}'.format(self._container_name, src), dst])
 
     def _push_file(self, src, dst):
-        subprocess.check_call(['lxc', 'file', 'push',
-                              src, '{}{}'.format(self._container_name, dst)])
+        try:
+            subprocess.check_call(['lxc', 'file', 'push', src,
+                                   '{}{}'.format(self._container_name, dst)])
+        except Exception as e:
+            raise ConnectionError('Failed to push {} to {}: {}'.format(
+                src, dst, str(e)))
 
     def _install_snap(self, name, channel=None,
                       is_dangerous=False,
