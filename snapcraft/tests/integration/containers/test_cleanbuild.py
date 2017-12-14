@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import os
 import subprocess
 
 from testtools.matchers import FileExists
@@ -38,6 +38,10 @@ class CleanbuildTestCase(integration.TestCase):
             raise subprocess.CalledProcessError(return_code, command)
 
     def test_cleanbuild(self):
+        if os.getenv('SNAPCRAFT_FROM_SNAP', False):
+            self.skipTest('container build tests when running from a snap are '
+                          'currently broken LP: #1738210')
+
         self.run_snapcraft_cleanbuild('basic')
 
         snap_file_path = 'basic_0.1_all.snap'

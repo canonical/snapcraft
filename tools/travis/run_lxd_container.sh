@@ -54,7 +54,7 @@ $lxc config set "$name" environment.CODECOV_TOKEN "$CODECOV_TOKEN"
 $lxc config set "$name" environment.SNAPCRAFT_AUTOPKGTEST_COOKIE "$SNAPCRAFT_AUTOPKGTEST_COOKIE"
 $lxc config set "$name" environment.GH_TOKEN_PPA_AUTOPKGTEST_RESULTS "$GH_TOKEN_PPA_AUTOPKGTEST_RESULTS"
 $lxc config set "$name" environment.LC_ALL "C.UTF-8"
-$lxc config set "$name" environment.SNAPCRAFT_FROM_INSTALLED "1"
+$lxc config set "$name" environment.SNAPCRAFT_FROM_SNAP "1"
 
 $lxc exec "$name" -- apt update
 

@@ -140,12 +140,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
 
         source = os.path.realpath(os.path.curdir)
-        self.assertIn(
-            "Using LXD remote 'myremote' from SNAPCRAFT_CONTAINER_BUILDS\n"
-            'Waiting for a network connection...\n'
-            'Network connection established\n'
-            'Mounting {} into container\n'.format(source),
-            fake_logger.output)
+        self.assertThat(fake_logger.output, Contains(
+            "Using LXD remote 'myremote' from SNAPCRAFT_CONTAINER_BUILDS"))
 
         project_folder = '/root/build_snap-test'
         mock_container_run.assert_has_calls([

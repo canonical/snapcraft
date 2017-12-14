@@ -63,7 +63,7 @@ class PrimeTestCase(integration.TestCase):
         self.assertThat(bin_path, FileExists())
 
         interpreter = subprocess.check_output([
-            'patchelf', '--print-interpreter', bin_path]).decode()
+            self.patchelf_command, '--print-interpreter', bin_path]).decode()
         expected_interpreter = r'^/snap/core/current/.*'
         self.assertThat(interpreter, MatchesRegex(expected_interpreter))
 
