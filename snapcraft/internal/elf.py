@@ -139,10 +139,6 @@ class Patcher:
         else:
             self._patchelf_cmd = 'patchelf'
 
-        logger.debug('snapcraft from snap: {!r}; '
-                     'so patchelf set to {!r}'.format(common.is_snap(),
-                                                      self._patchelf_cmd))
-
     def patch(self, *, elf_file: ElfFile) -> None:
         """Patch elf_file with the Patcher instance configuration.
 
