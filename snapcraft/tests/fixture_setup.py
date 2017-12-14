@@ -862,6 +862,7 @@ class FakeAptCachePackage():
         self.versions = {}
         self.version = version
         self.candidate = self
+        self.dependencies = []
         self.provides = provides if provides else []
         if installed:
             # XXX The installed attribute requires some values that the fake
@@ -891,6 +892,8 @@ class FakeAptCachePackage():
 
     def mark_install(self):
         if not self.installed:
+            if len(self.dependencies):
+                return
             self.marked_install = True
 
     def mark_keep(self):
@@ -903,6 +906,12 @@ class FakeAptCachePackage():
 
     def get_dependencies(self, _):
         return []
+
+
+class FakeAptBaseDependency:
+    def __init__(self, name, target_versions):
+        self.name = name
+        self.target_versions = target_versions
 
 
 class WithoutSnapInstalled(fixtures.Fixture):

@@ -325,3 +325,14 @@ class BuildPackagesTestCase(unit.TestCase):
             errors.BuildPackageNotFoundError,
             repo.Ubuntu.install_build_packages,
             ['package-does-not-exist'])
+
+    @patch('subprocess.check_call')
+    def test_broken_package_requested(self, mock_check_call):
+        self.fake_apt_cache.add_packages(('package-not-installable',))
+        self.fake_apt_cache.cache['package-not-installable'].dependencies = [
+            [fixture_setup.FakeAptBaseDependency('broken-dependency', [])]
+        ]
+        self.assertRaises(
+            errors.PackageBrokenError,
+            repo.Ubuntu.install_build_packages,
+            ['package-not-installable'])
