@@ -940,15 +940,16 @@ class SnapcraftYaml(fixtures.Fixture):
 
     def __init__(
             self, path, name='test-snap', version='test-version',
-            summary='test-summary', description='test-description'):
+            summary='test-summary', description='test-description',
+            parts={'my-part': {'plugin': 'nil'}}, build_packages=[]):
         super().__init__()
-        self.path = path
         self.data = {
             'name': name,
             'version': version,
             'summary': summary,
             'description': description,
-            'parts': {}
+            'parts': parts,
+            'build-packages': build_packages,
         }
 
     def update_part(self, name, data):
