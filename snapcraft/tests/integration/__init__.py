@@ -63,6 +63,11 @@ class TestCase(testtools.TestCase):
             self.snapcraft_parser_command = os.path.join(
                 os.getcwd(), 'bin', 'snapcraft-parser')
 
+        if os.getenv('SNAPCRAFT_FROM_SNAP', False):
+            self.patchelf_command = '/snap/snapcraft/current/bin/patchelf'
+        else:
+            self.patchelf_command = 'patchelf'
+
         self.snaps_dir = os.path.join(os.path.dirname(__file__), 'snaps')
         temp_cwd_fixture = fixture_setup.TempCWD()
         self.useFixture(temp_cwd_fixture)
