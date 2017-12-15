@@ -32,9 +32,8 @@ import fixtures
 import yaml
 
 from snapcraft.internal.meta import (
-    CommandError,
-    create_snap_packaging,
-    _SnapPackaging
+    _errors as meta_errors,
+    _snap_packaging
 )
 from snapcraft import ProjectOptions
 from snapcraft.internal import common
@@ -76,7 +75,8 @@ class CreateBaseTestCase(unit.TestCase):
         self.project_options = ProjectOptions()
 
     def generate_meta_yaml(self):
-        create_snap_packaging(self.config_data, self.project_options, 'dummy')
+        _snap_packaging.create_snap_packaging(
+            self.config_data, self.project_options, 'dummy')
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
@@ -123,7 +123,8 @@ class CreateTestCase(CreateBaseTestCase):
         _create_file('gadget.yaml', content=gadget_yaml)
 
         self.config_data['type'] = 'gadget'
-        create_snap_packaging(self.config_data, self.project_options, 'dummy')
+        _snap_packaging.create_snap_packaging(
+            self.config_data, self.project_options, 'dummy')
 
         expected_gadget = os.path.join(self.meta_dir, 'gadget.yaml')
         self.assertTrue(os.path.exists(expected_gadget))
@@ -135,7 +136,7 @@ class CreateTestCase(CreateBaseTestCase):
 
         self.assertRaises(
             errors.MissingGadgetError,
-            create_snap_packaging,
+            _snap_packaging.create_snap_packaging,
             self.config_data,
             self.project_options,
             'dummy'
@@ -222,10 +223,12 @@ class CreateTestCase(CreateBaseTestCase):
         _create_file('my-icon.png')
         self.config_data['icon'] = 'my-icon.png'
 
-        create_snap_packaging(self.config_data, self.project_options, 'dummy')
+        _snap_packaging.create_snap_packaging(
+            self.config_data, self.project_options, 'dummy')
 
         # Running again should be good
-        create_snap_packaging(self.config_data, self.project_options, 'dummy')
+        _snap_packaging.create_snap_packaging(
+            self.config_data, self.project_options, 'dummy')
 
     def test_create_meta_with_icon_in_setup(self):
         gui_path = os.path.join('setup', 'gui')
@@ -251,13 +254,13 @@ class CreateTestCase(CreateBaseTestCase):
     def test_version_script_exits_bad(self):
         self.config_data['version-script'] = 'exit 1'
 
-        with testtools.ExpectedException(CommandError):
+        with testtools.ExpectedException(meta_errors.CommandError):
             self.generate_meta_yaml()
 
     def test_version_script_with_no_output(self):
         self.config_data['version-script'] = 'echo'
 
-        with testtools.ExpectedException(CommandError):
+        with testtools.ExpectedException(meta_errors.CommandError):
             self.generate_meta_yaml()
 
     def test_create_meta_with_app(self):
@@ -470,7 +473,7 @@ class WriteSnapDirectoryTestCase(CreateBaseTestCase):
 
         # Now write the snap directory. This process should fail as the hook
         # isn't executable.
-        with testtools.ExpectedException(CommandError,
+        with testtools.ExpectedException(meta_errors.CommandError,
                                          "hook 'test-hook' is not executable"):
             self.generate_meta_yaml()
 
@@ -506,7 +509,7 @@ class GenerateHookWrappersTestCase(CreateBaseTestCase):
 
         # Now attempt to generate hook wrappers. This should fail, as the hook
         # itself is not executable.
-        with testtools.ExpectedException(CommandError,
+        with testtools.ExpectedException(meta_errors.CommandError,
                                          "hook 'test-hook' is not executable"):
             self.generate_meta_yaml()
 
@@ -588,7 +591,7 @@ class WrapExeTestCase(unit.TestCase):
         super().setUp()
 
         # TODO move to use outer interface
-        self.packager = _SnapPackaging(
+        self.packager = _snap_packaging._SnapPackaging(
             {'confinement': 'devmode'},
             ProjectOptions(),
             'dummy'
