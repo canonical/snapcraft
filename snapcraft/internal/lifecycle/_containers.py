@@ -32,6 +32,8 @@ def _create_tar_filter(tar_filename):
             return None
         elif fn.endswith('.snap'):
             return None
+        elif fn.endswith('_source.tar.bz2'):
+            return None
         return tarinfo
     return _tar_filter
 
