@@ -70,7 +70,7 @@ _OPTIONAL_PACKAGE_KEYS = [
 
 
 def create_snap_packaging(
-        config_data,
+        config_data: dict,
         project_options: _options.ProjectOptions,
         snapcraft_yaml_path: str) -> str:
     """Create snap.yaml and related assets in meta.

@@ -22,7 +22,7 @@ from snapcraft.internal.meta import (
 )
 
 
-def get_info(keys, config_data, parts_dir):
+def get_info(keys: list, config_data: dict, parts_dir: str) -> dict:
     if 'adopt-info' in config_data:
         part = config_data['adopt-info']
         if part in config_data['parts']:

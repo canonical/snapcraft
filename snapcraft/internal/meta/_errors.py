@@ -34,7 +34,7 @@ class SnapcraftYamlMissingRequiredValue(SnapMetaGenerationError):
         "Missing {key!r} from the 'snapcraft.yaml' file."
     )
 
-    def __init__(self, key):
+    def __init__(self, key: str) -> None:
         super().__init__(key=key)
 
 
@@ -45,7 +45,7 @@ class WrongAdoptInfo(SnapMetaGenerationError):
         "'adopt-info' refers to a part named {part!r}, but it is not defined "
         "in the 'snapcraft.yaml' file.")
 
-    def __init__(self, part):
+    def __init__(self, part: str) -> None:
         super().__init__(part=part)
 
 
@@ -56,7 +56,7 @@ class UnexistingSourceMetaPath(SnapMetaGenerationError):
         "'parse-info' in the 'snapcraft.yaml' file refers to a metadata file "
         "in {path!r}, which does not exist.")
 
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         super().__init__(path=path)
 
 
@@ -67,7 +67,7 @@ class AppstreamFileParseError(SnapMetaGenerationError):
         "'parse-info' in the 'snapcraft.yaml' file refers to an appstream "
         "metadata file in {path!r}, which is not a valid XML file.")
 
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         super().__init__(path=path)
 
 
@@ -77,7 +77,7 @@ class MissingSnapcraftYamlKeys(SnapMetaGenerationError):
         "Failed to generate snap metadata: "
         "Missing required keys in the 'snapcraft.yaml' file: {keys!r}.")
 
-    def __init__(self, keys):
+    def __init__(self, keys: list) -> None:
         super().__init__(keys=keys)
 
 
@@ -88,6 +88,5 @@ class SourceMetadataParserError(SnapMetaGenerationError):
         "'parse-info' in the 'snapcraft.yaml' file refers to a metadata file "
         "in {path!r}, which cannot be parsed.")
 
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         super().__init__(path=path)
->>>>>>> metadata: extract metadata from appstream

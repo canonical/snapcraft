@@ -24,10 +24,10 @@ from xml.etree.ElementTree import (
 
 class AppstreamInfoParser:
 
-    def __init__(self, path):
+    def __init__(self, path: str) -> None:
         self._path = path
 
-    def extract(self, keys):
+    def extract(self, keys: list) -> dict:
         info = {}
         try:
             tree = ElementTree().parse(self._path)
