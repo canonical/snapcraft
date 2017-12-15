@@ -40,6 +40,7 @@ _schemadir = _DEFAULT_SCHEMADIR
 _DEFAULT_LIBRARIESDIR = os.path.join(sys.prefix, 'share', 'snapcraft',
                                      'libraries')
 _librariesdir = _DEFAULT_LIBRARIESDIR
+_DOCKERENV_FILE = '/.dockerenv'
 
 MAX_CHARACTERS_WRAP = 120
 
@@ -104,6 +105,10 @@ def is_snap() -> bool:
     logger.debug('snapcraft is running as a snap {!r}, '
                  'SNAP_NAME set to {!r}'.format(is_snap, snap_name))
     return is_snap
+
+
+def is_docker_instance() -> bool:
+    return os.path.exists(_DOCKERENV_FILE)
 
 
 def set_plugindir(plugindir):

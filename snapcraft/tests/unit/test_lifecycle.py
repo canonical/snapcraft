@@ -1413,7 +1413,7 @@ class CoreSetupTestCase(unit.TestCase):
             self.project_options.deb_arch, '')
 
     @mock.patch.object(storeapi.StoreClient, 'download')
-    @mock.patch('snapcraft.internal.lifecycle._runner._DOCKERENV_FILE')
+    @mock.patch('snapcraft.internal.common._DOCKERENV_FILE')
     def test_core_setup_if_docker_env(self, dockerenv_fake, download_mock):
         dockerenv_file = os.path.join(self.tempdir, 'dockerenv')
         os.makedirs(self.tempdir)

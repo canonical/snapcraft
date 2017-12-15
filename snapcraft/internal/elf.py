@@ -133,9 +133,14 @@ class Patcher:
         # anywhere given the fixed ld it would have.
         # If not found, resort to whatever is on the system brought
         # in by packaging dependencies.
+        # The docker conditional will work if the docker image has the
+        # snaps unpacked in the corresponding locations.
         if common.is_snap():
             snap_dir = os.getenv('SNAP')
             self._patchelf_cmd = os.path.join(snap_dir, 'bin', 'patchelf')
+        elif (common.is_docker_instance() and
+              os.path.exists('/snap/snapcraft/current/bin/patchelf')):
+            self._patchelf_cmd = '/snap/snapcraft/current/bin/patchelf'
         else:
             self._patchelf_cmd = 'patchelf'
 
