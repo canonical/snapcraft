@@ -18,4 +18,6 @@ from snapcraft.internal import errors
 
 
 class CommandError(errors.SnapcraftError):
-    pass
+
+    def __init__(self, message: str) -> None:
+        self.fmt = message

@@ -25,7 +25,7 @@ from snapcraft.internal import sources
 logger = logging.getLogger(__name__)
 
 
-def get_version(version, version_script=None):
+def get_version(version: str, version_script: str = None) -> str:
     new_version = version
     if version_script:
         logger.info('Determining the version from the project '

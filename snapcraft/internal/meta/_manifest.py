@@ -24,7 +24,7 @@ from snapcraft.internal.states import (
 )
 
 
-def annotate_snapcraft(data, parts_dir):
+def annotate_snapcraft(data, parts_dir: str):
     image_info = os.environ.get('SNAPCRAFT_IMAGE_INFO')
     if image_info:
         try:

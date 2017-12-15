@@ -26,7 +26,9 @@ logger = logging.getLogger(__name__)
 
 class DesktopFile:
 
-    def __init__(self, *, name, filename, snap_name, prime_dir):
+    def __init__(
+            self, *, name: str, filename: str,
+            snap_name: str, prime_dir: str) -> None:
         self._name = name
         self._filename = filename
         self._snap_name = snap_name
@@ -65,7 +67,7 @@ class DesktopFile:
                         'Icon {} specified in desktop file {} not found '
                         'in prime directory'.format(icon, self._filename))
 
-    def write(self, *, gui_dir):
+    def write(self, *, gui_dir: str) -> None:
         # Rename the desktop file to match the app name. This will help
         # unity8 associate them (https://launchpad.net/bugs/1659330).
         target_filename = '{}.desktop'.format(self._name)

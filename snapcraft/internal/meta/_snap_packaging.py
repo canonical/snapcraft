@@ -33,6 +33,7 @@ from snapcraft.internal import (
     common,
     errors
 )
+from snapcraft import _options
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.meta import (
     _desktop,
@@ -67,7 +68,10 @@ _OPTIONAL_PACKAGE_KEYS = [
 ]
 
 
-def create_snap_packaging(config_data, project_options, snapcraft_yaml_path):
+def create_snap_packaging(
+        config_data,
+        project_options: _options.ProjectOptions,
+        snapcraft_yaml_path: str) -> str:
     """Create snap.yaml and related assets in meta.
 
     Create the meta directory and provision it with snap.yaml in the snap dir
@@ -90,10 +94,13 @@ def create_snap_packaging(config_data, project_options, snapcraft_yaml_path):
 class _SnapPackaging:
 
     @property
-    def meta_dir(self):
+    def meta_dir(self) -> str:
         return self._meta_dir
 
-    def __init__(self, config_data, project_options, snapcraft_yaml_path):
+    def __init__(
+            self, config_data,
+            project_options: _options.ProjectOptions,
+            snapcraft_yaml_path: str) -> None:
         self._snapcraft_yaml_path = snapcraft_yaml_path
         self._prime_dir = project_options.prime_dir
         self._parts_dir = project_options.parts_dir
@@ -104,7 +111,7 @@ class _SnapPackaging:
 
         os.makedirs(self._meta_dir, exist_ok=True)
 
-    def write_snap_yaml(self):
+    def write_snap_yaml(self) -> str:
         package_snap_path = os.path.join(self.meta_dir, 'snap.yaml')
         snap_yaml = self._compose_snap_yaml()
 
@@ -113,7 +120,7 @@ class _SnapPackaging:
 
         return snap_yaml
 
-    def setup_assets(self):
+    def setup_assets(self) -> None:
         # We do _setup_from_setup first since it is legacy and let the
         # declarative items take over.
         self._setup_gui()
@@ -157,7 +164,7 @@ class _SnapPackaging:
                     annotated_snapcraft, manifest_file,
                     default_flow_style=False)
 
-    def write_snap_directory(self):
+    def write_snap_directory(self) -> None:
         # First migrate the snap directory. It will overwrite any conflicting
         # files.
         for root, directories, files in os.walk('snap'):
@@ -197,7 +204,7 @@ class _SnapPackaging:
 
         self._record_manifest_and_source_snapcraft_yaml()
 
-    def generate_hook_wrappers(self):
+    def generate_hook_wrappers(self) -> None:
         snap_hooks_dir = os.path.join(self._prime_dir, 'snap', 'hooks')
         hooks_dir = os.path.join(self._prime_dir, 'meta', 'hooks')
         if os.path.isdir(snap_hooks_dir):
