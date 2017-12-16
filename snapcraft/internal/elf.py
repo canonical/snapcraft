@@ -20,6 +20,7 @@ import logging
 import os
 import subprocess
 import sys
+from functools import wraps
 from typing import FrozenSet, List, Set, Sequence
 
 import magic
@@ -82,6 +83,31 @@ class ElfFile:
         return libs
 
 
+def _retry_patch(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except errors.PatcherError as patch_error:
+            # This is needed for patchelf to properly work with
+            # go binaries (LP: #1736861).
+            # We do this here instead of the go plugin for two reasons, the
+            # first being that we do not want to blindly remove the section,
+            # only doing it when necessary, and the second, this logic
+            # should eventually be removed once patchelf catches up.
+            try:
+                elf_file_path = kwargs['elf_file_path']
+                subprocess.check_call([
+                    'strip', '--remove-section', '.note.go.buildid',
+                    elf_file_path])
+            except subprocess.CalledProcessError:
+                logger.warning('Could not properly strip .note.go.buildid '
+                               'from {!r}.'.format(elf_file_path))
+                raise patch_error
+            return f(*args, **kwargs)
+    return wrapper
+
+
 class Patcher:
     """Patcher holds the necessary logic to patch elf files."""
 
@@ -107,9 +133,14 @@ class Patcher:
         # anywhere given the fixed ld it would have.
         # If not found, resort to whatever is on the system brought
         # in by packaging dependencies.
+        # The docker conditional will work if the docker image has the
+        # snaps unpacked in the corresponding locations.
         if common.is_snap():
             snap_dir = os.getenv('SNAP')
             self._patchelf_cmd = os.path.join(snap_dir, 'bin', 'patchelf')
+        elif (common.is_docker_instance() and
+              os.path.exists('/snap/snapcraft/current/bin/patchelf')):
+            self._patchelf_cmd = '/snap/snapcraft/current/bin/patchelf'
         else:
             self._patchelf_cmd = 'patchelf'
 
@@ -130,8 +161,8 @@ class Patcher:
             self._patch_rpath(elf_file)
 
     def _patch_interpreter(self, elf_file: ElfFile) -> None:
-        self._run_patchelf(['--set-interpreter',  self._dynamic_linker],
-                           elf_file.path)
+        self._run_patchelf(args=['--set-interpreter',  self._dynamic_linker],
+                           elf_file_path=elf_file.path)
 
     def _patch_rpath(self, elf_file: ElfFile) -> None:
         rpath = self._get_rpath(elf_file)
@@ -141,11 +172,12 @@ class Patcher:
         #                 side effect of preferring host libraries
         #                 so we simply do not use it.
         # --set-rpath: set the RPATH to the colon separated argument.
-        self._run_patchelf(['--force-rpath',
-                            '--set-rpath', rpath],
-                           elf_file.path)
+        self._run_patchelf(args=['--force-rpath',
+                                 '--set-rpath', rpath],
+                           elf_file_path=elf_file.path)
 
-    def _run_patchelf(self, args: List[str], elf_file_path: str) -> None:
+    @_retry_patch
+    def _run_patchelf(self, *, args: List[str], elf_file_path: str) -> None:
         try:
             subprocess.check_call([self._patchelf_cmd] + args +
                                   [elf_file_path])

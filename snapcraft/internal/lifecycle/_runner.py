@@ -37,7 +37,6 @@ from . import constants
 
 
 logger = logging.getLogger(__name__)
-_DOCKERENV_FILE = '/.dockerenv'
 
 
 def execute(step, project_options, part_names=None):
@@ -123,8 +122,7 @@ def _should_get_core(confinement: str) -> bool:
     is_env_var_set = os.environ.get('SNAPCRAFT_SETUP_CORE', False) is not False
     # This is a quirk so that docker users not using the Dockerfile
     # we distribute and create can automatically build classic
-    is_docker_instance = os.path.exists(_DOCKERENV_FILE)  # type: bool
-
+    is_docker_instance = common.is_docker_instance()  # type: bool
     is_classic = (confinement == 'classic')  # type: bool
 
     return is_classic and (is_env_var_set or is_docker_instance)
