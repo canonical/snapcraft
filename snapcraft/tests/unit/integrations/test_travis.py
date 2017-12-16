@@ -16,11 +16,12 @@
 
 import logging
 import subprocess
+from textwrap import dedent
 from unittest import mock
 
 import fixtures
 import yaml
-from testtools.matchers import Equals
+from testtools.matchers import Contains, Equals
 
 from snapcraft import (
     storeapi,
@@ -225,20 +226,14 @@ class TravisSuccessfulTestCase(unit.TestCase):
 
         # Descriptive logging ...
         self.assertThat(
-            self.fake_logger.output.splitlines()[1:],
-            Equals([
-                "Enabling Travis testbeds to push and release 'foo' snaps "
-                "to edge channel in series '16'",
-                'Acquiring specific authorization information ...',
-                'Encrypting authorization for Travis and adjusting project '
-                'to automatically decrypt and use it during "after_success".',
-                'Configuring "deploy" phase to build and release the snap in '
-                'the Store.',
-                'Done. Now you just have to review and commit changes in your '
-                'Travis project (`.travis.yml`).',
-                'Also make sure you add the new '
-                '`.snapcraft/travis_snapcraft.cfg` file.',
-            ]))
+            self.fake_logger.output, Contains(dedent("""\
+                Enabling Travis testbeds to push and release 'foo' snaps to edge channel in series '16'
+                Acquiring specific authorization information ...
+                Encrypting authorization for Travis and adjusting project to automatically decrypt and use it during "after_success".
+                Configuring "deploy" phase to build and release the snap in the Store.
+                Done. Now you just have to review and commit changes in your Travis project (`.travis.yml`).
+                Also make sure you add the new `.snapcraft/travis_snapcraft.cfg` file.
+            """))) # noqa TODO this type of test should not be done
 
     @mock.patch('subprocess.check_output')
     @mock.patch('subprocess.check_call')
@@ -289,13 +284,9 @@ class TravisSuccessfulTestCase(unit.TestCase):
 
         # Descriptive logging ...
         self.assertThat(
-            self.fake_logger.output.splitlines()[1:],
-            Equals([
-                'Refreshing credentials to push and release "foo" snaps to '
-                'edge channel in series 16',
-                'Acquiring specific authorization information ...',
-                'Encrypting authorization for Travis and adjusting project '
-                'to automatically decrypt and use it during "after_success".',
-                'Done. Please commit the changes to '
-                '`.snapcraft/travis_snapcraft.cfg` file.',
-            ]))
+            self.fake_logger.output, Contains(dedent("""\
+                Refreshing credentials to push and release "foo" snaps to edge channel in series 16
+                Acquiring specific authorization information ...
+                Encrypting authorization for Travis and adjusting project to automatically decrypt and use it during "after_success".
+                Done. Please commit the changes to `.snapcraft/travis_snapcraft.cfg` file.
+            """))) # noqa TODO this type of test should not be done
