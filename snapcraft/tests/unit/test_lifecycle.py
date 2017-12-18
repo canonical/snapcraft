@@ -1385,7 +1385,9 @@ class CoreSetupTestCase(unit.TestCase):
         self.project_options = snapcraft.ProjectOptions()
 
     @mock.patch.object(storeapi.StoreClient, 'download')
-    def test_core_setup_with_env_var(self, download_mock):
+    @mock.patch('snapcraft.internal.repo.snaps.install_snaps',
+                return_value=['patchelf=1'])
+    def test_core_setup_with_env_var(self, install_snaps_mock, download_mock):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_SETUP_CORE', '1'))
 
@@ -1413,7 +1415,7 @@ class CoreSetupTestCase(unit.TestCase):
             self.project_options.deb_arch, '')
 
     @mock.patch.object(storeapi.StoreClient, 'download')
-    @mock.patch('snapcraft.internal.lifecycle._runner._DOCKERENV_FILE')
+    @mock.patch('snapcraft.internal.common._DOCKERENV_FILE')
     def test_core_setup_if_docker_env(self, dockerenv_fake, download_mock):
         dockerenv_file = os.path.join(self.tempdir, 'dockerenv')
         os.makedirs(self.tempdir)
@@ -1452,7 +1454,9 @@ class CoreSetupTestCase(unit.TestCase):
 
         self.assertThat(self.witness_path, Not(FileExists()))
 
-    def test_core_setup_skipped_if_core_exists(self):
+    @mock.patch('snapcraft.internal.repo.snaps.install_snaps',
+                return_value=['patchelf=1'])
+    def test_core_setup_skipped_if_core_exists(self, install_snaps_mock):
         os.makedirs(self.core_path)
         open(os.path.join(self.core_path, 'fake-content'), 'w').close()
 

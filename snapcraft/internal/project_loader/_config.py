@@ -25,6 +25,7 @@ import yaml
 
 import snapcraft
 from snapcraft.internal import (
+    common,
     deprecations,
     remote_parts,
     states,
@@ -116,6 +117,11 @@ class Config:
 
         self.build_tools = grammar_processor.get_build_packages()
         self.build_tools |= set(project_options.additional_build_packages)
+
+        # This is required for patching to work correctly
+        if _requires_patchelf_snap(self.data['confinement']):
+            # TODO use stable once possible
+            self.build_snaps.add('patchelf/edge')
 
         self.parts = PartsConfig(parts=self.data,
                                  project_options=self._project_options,
@@ -305,3 +311,11 @@ def _expand_filesets_for(step, properties):
             new_step_set.append(item)
 
     return new_step_set
+
+
+def _requires_patchelf_snap(confinement: str) -> bool:
+    is_snap = common.is_snap()
+    is_docker_instance = common.is_docker_instance()
+    is_classic = confinement == 'classic'
+
+    return (is_classic and not is_snap and not is_docker_instance)

@@ -37,5 +37,8 @@ mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
 $lxc file pull "snap-builder/root/snapcraft/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/"
 # Send the snap to transfer.sh
 $lxc exec snap-builder -- sh -c "snap install transfer"
-$lxc exec snap-builder -- sh -c "transfer snapcraft/snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+# XXX The transfer is getting stuck in master: https://bugs.launchpad.net/snapcraft/+bug/1738461
+# For now, set a timeout and don't fail if the snap couldn't be uploaded.
+# --elopio - 20171215
+$lxc exec snap-builder -- sh -c "timeout 180 transfer snapcraft/snapcraft-pr$TRAVIS_PULL_REQUEST.snap || true"
 $lxc stop snap-builder
