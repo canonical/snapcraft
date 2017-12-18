@@ -58,6 +58,12 @@ class PartGrammarProcessor:
         self._project_options = project_options
         self._repo = repo
 
+        for key, value in properties.items():
+            if key in ['source']:
+                properties[key] = next(iter(grammar.process_grammar(
+                    value, self._project_options,
+                    True)))
+
         self._build_snap_grammar = getattr(plugin, 'build_snaps', [])
         self.__build_snaps = set()
 
