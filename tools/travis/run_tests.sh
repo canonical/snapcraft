@@ -54,6 +54,7 @@ lxc="/snap/bin/lxc"
 "$script_path/run_lxd_container.sh" test-runner
 
 $lxc file push --recursive $project_path test-runner/root/
+$lxc exec test-runner -- sh -c "cd snapcraft && ./tools/travis/setup_lxd.sh"
 $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
 $lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test"
 
