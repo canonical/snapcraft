@@ -943,6 +943,7 @@ class SnapcraftYaml(fixtures.Fixture):
             summary='test-summary', description='test-description',
             parts={'my-part': {'plugin': 'nil'}}, build_packages=[]):
         super().__init__()
+        self.path = path
         self.data = {
             'name': name,
             'version': version,
