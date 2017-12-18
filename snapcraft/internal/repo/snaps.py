@@ -76,7 +76,10 @@ class SnapPackage:
     @property
     def in_store(self):
         if self._is_in_store is None:
-            self._is_in_store = self.get_store_snap_info() is not None
+            try:
+                self._is_in_store = self.get_store_snap_info() is not None
+            except errors.SnapUnavailableError:
+                self._is_in_store = False
         return self._is_in_store
 
     def get_local_snap_info(self):
@@ -89,12 +92,25 @@ class SnapPackage:
         return self._local_snap_info
 
     def get_store_snap_info(self):
-        """Returns a store payload for the snap.
-
-        Validity of the results are determined by checking self.remote."""
+        """Returns a store payload for the snap."""
         if self._is_in_store is None:
-            with contextlib.suppress(exceptions.HTTPError):
-                self._store_snap_info = _get_store_snap_info(self.name)
+            retry_count = 5
+            while retry_count > 0:
+                try:
+                    self._store_snap_info = _get_store_snap_info(self.name)
+                    break
+                except exceptions.HTTPError as http_error:
+                    logger.debug('The http error when checking the store for '
+                                 '{!r} is {!r} (retries left {})'.format(
+                                     self.name,
+                                     http_error.response.status_code,
+                                     retry_count))
+                    if http_error.response.status_code == 404:
+                        raise errors.SnapUnavailableError(
+                            snap_name=self.name,
+                            snap_channel=self.channel)
+                    retry_count -= 1
+
         return self._store_snap_info
 
     def _get_store_channels(self):
@@ -116,7 +132,13 @@ class SnapPackage:
 
     def is_classic(self):
         store_channels = self._get_store_channels()
-        return store_channels[self.channel]['confinement'] == 'classic'
+        try:
+            return store_channels[self.channel]['confinement'] == 'classic'
+        except KeyError:
+            logger.debug('Current store channels are {!r} and the store'
+                         'payload is {!r}'.format(store_channels,
+                                                  self._store_snap_info))
+            raise
 
     def is_valid(self):
         """Check if the snap is valid."""
@@ -167,10 +189,15 @@ def install_snaps(snaps_list):
     snaps_installed = []
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
-        if not snap_pkg.installed and snap_pkg.in_store:
+        if not snap_pkg.in_store:
+            raise errors.SnapUnavailableError(snap_name=snap_pkg.name,
+                                              snap_channel=snap_pkg.channel)
+
+        if not snap_pkg.installed:
             snap_pkg.install()
         elif snap_pkg.get_current_channel() != snap_pkg.channel:
             snap_pkg.refresh()
+
         snap_pkg = SnapPackage(snap)
         snaps_installed.append('{}={}'.format(
             snap_pkg.name, snap_pkg.get_local_snap_info()['revision']))

@@ -380,7 +380,12 @@ class SnapPackageLifecycleTest(SnapPackageBaseTestCase):
         installed_snaps = snaps.install_snaps(['fake-snap'])
         self.assertThat(
             installed_snaps,
-            Equals(['fake-snap=test-fake-snap-revision']))
+            Equals(['fake-snap=test-fake-snap-revision']))        
+
+    def test_install_snaps_non_existent_snap(self):
+        self.fake_snapd.find_code = 404
+        self.assertRaises(errors.SnapUnavailableError,
+                          snaps.install_snaps, ['fake-snap'])
 
     def test_install_multiple_snaps(self):
         self.fake_snapd.find_result = [{
