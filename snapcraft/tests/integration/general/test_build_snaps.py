@@ -70,3 +70,25 @@ class BuildSnapsErrorsTestCase(integration.TestCase):
         self.assertThat(exception.returncode, Equals(2))
         self.assertThat(exception.output, Contains(
             "'inexistent'"))
+
+    def test_snap_exists_but_not_on_channel(self):
+        # If the snap tested here does not exist, then BuildSnapsTestCase
+        # will fail.
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+            self.expectFailure('The autopkgtest armhf runners cannot '
+                               'install snaps')
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml.update_part(
+            'test-part-with-build-snap', {
+                'plugin': 'nil',
+                'build-snaps': ['u1test-snap-with-tracks/test-track-1/beta']
+            })
+        self.useFixture(snapcraft_yaml)
+
+        exception = self.assertRaises(
+            subprocess.CalledProcessError,
+            self.run_snapcraft, ['build'])
+
+        self.assertThat(exception.returncode, Equals(2))
+        self.assertThat(exception.output, Contains(
+            "'u1test-snap-with-tracks'"))
