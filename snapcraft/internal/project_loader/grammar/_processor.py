@@ -73,6 +73,8 @@ def _parse_dict(section, statement, statements, project_options,
     from ._try import TryStatement
 
     for key, value in section.items():
+        value = value if isinstance(value, list) else {value}
+
         if _ON_CLAUSE_PATTERN.match(key):
             # We've come across the beginning of an 'on' statement.
             # That means any previous statement we found is complete.
