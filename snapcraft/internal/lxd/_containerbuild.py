@@ -223,10 +223,6 @@ class Containerbuild:
         logger.info('Network connection established')
 
     def _inject_snapcraft(self):
-        # Because of https://bugs.launchpad.net/snappy/+bug/1628289
-        # Needed to run snapcraft as a snap and build-snaps
-        self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
-
         if common.is_snap():
             with tempfile.TemporaryDirectory(
                     prefix='snapcraft', dir=self._lxd_common_dir) as tmp_dir:
