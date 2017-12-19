@@ -18,6 +18,8 @@ from snapcraft.internal.os_release import OsRelease
 from ._platform import _is_deb_based
 from snapcraft.internal import errors
 
+from typing import List
+
 
 class RepoError(errors.SnapcraftError):
     pass
@@ -38,6 +40,14 @@ class BuildPackageNotFoundError(RepoError):
 
     def __init__(self, package):
         super().__init__(package=package)
+
+
+class PackageBrokenError(RepoError):
+
+    fmt = "The package {package} has unmet dependencies: {deps}"
+
+    def __init__(self, package: str, deps: List[str]) -> None:
+        super().__init__(package=package, deps=' '.join(deps))
 
 
 class PackageNotFoundError(RepoError):

@@ -32,7 +32,7 @@ from snapcraft import (
     ProjectOptions,
 )
 from snapcraft.storeapi import (
-    errors,
+    errors
 )
 from snapcraft.tests import (
     fixture_setup,
@@ -536,15 +536,15 @@ class RegisterTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
             errors.StoreRegistrationError,
-            self.client.register, 'test-already-registered-snap-name')
+            self.client.register, 'test-snap-name-already-registered')
         self.assertThat(
             str(raised),
             Equals(
-                "The name 'test-already-registered-snap-name' is already "
+                "The name 'test-snap-name-already-registered' is already "
                 "taken.\n\n"
                 "We can if needed rename snaps to ensure they match the "
                 "expectations of most users. If you are the publisher most "
-                "users expect for 'test-already-registered-snap-name' then "
+                "users expect for 'test-snap-name-already-registered' then "
                 "claim the name at 'https://myapps.com/register-name/'"))
 
     def test_register_a_reserved_name(self):
@@ -726,7 +726,7 @@ class UploadTestCase(StoreTestCase):
         # These should eventually converge to the same module
         pbars = (
             'snapcraft.storeapi._upload.ProgressBar',
-            'snapcraft.storeapi.ProgressBar',
+            'snapcraft.storeapi._status_tracker.ProgressBar',
         )
         for pbar in pbars:
             patcher = mock.patch(pbar, new=unit.SilentProgressBar)
@@ -742,7 +742,8 @@ class UploadTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
         self.client.register('test-snap')
         tracker = self.client.upload('test-snap', self.snap_path)
-        self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
+        self.assertTrue(isinstance(tracker, storeapi._status_tracker.
+                        StatusTracker))
         result = tracker.track()
         expected_result = {
             'code': 'ready_to_release',
@@ -796,7 +797,8 @@ class UploadTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
         self.client.register('test-review-snap')
         tracker = self.client.upload('test-review-snap', self.snap_path)
-        self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
+        self.assertTrue(isinstance(tracker, storeapi._status_tracker.
+                        StatusTracker))
         result = tracker.track()
         expected_result = {
             'code': 'need_manual_review',
@@ -815,7 +817,8 @@ class UploadTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
         self.client.register('test-duplicate-snap')
         tracker = self.client.upload('test-duplicate-snap', self.snap_path)
-        self.assertTrue(isinstance(tracker, storeapi.StatusTracker))
+        self.assertTrue(isinstance(tracker, storeapi._status_tracker.
+                        StatusTracker))
         result = tracker.track()
         expected_result = {
             'code': 'processing_error',
@@ -1137,7 +1140,7 @@ class GetSnapRevisionsTestCase(StoreTestCase):
         self.assertFalse(self.fake_store.needs_refresh)
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
-    @mock.patch.object(storeapi.SCAClient, 'get')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'get')
     def test_get_snap_revisions_server_error(
             self, mock_sca_get, mock_account_info):
         mock_account_info.return_value = {
@@ -1281,7 +1284,7 @@ class GetSnapStatusTestCase(StoreTestCase):
         self.assertFalse(self.fake_store.needs_refresh)
 
     @mock.patch.object(storeapi.StoreClient, 'get_account_information')
-    @mock.patch.object(storeapi.SCAClient, 'get')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'get')
     def test_get_snap_status_server_error(
             self, mock_sca_get, mock_account_info):
         mock_account_info.return_value = {

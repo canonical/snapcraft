@@ -112,7 +112,7 @@ class StageTestCase(integration.TestCase):
 
         # ld-linux will not be set until everything is primed.
         interpreter = subprocess.check_output([
-            'patchelf', '--print-interpreter', bin_path]).decode()
+            self.patchelf_command, '--print-interpreter', bin_path]).decode()
         self.assertThat(interpreter, Not(Contains('/snap/core/current')))
 
     def test_staging_libc_links(self):

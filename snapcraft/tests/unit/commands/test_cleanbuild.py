@@ -78,6 +78,7 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
             os.path.join(self.prime_dir, 'binary'),
             'snap-test.snap',
             'snap-test_1.0_source.tar.bz2',
+            'snap-test_0.9_source.tar.bz2',
         ]
         for d in dirs:
             os.makedirs(d)

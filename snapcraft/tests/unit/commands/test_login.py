@@ -40,7 +40,8 @@ class LoginCommandTestCase(CommandBaseTestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_successful_login(
             self, mock_login, mock_get_account_information):
@@ -59,7 +60,8 @@ class LoginCommandTestCase(CommandBaseTestCase):
             'user@example.com', mock.ANY, acls=None, packages=None,
             channels=None, save=True, config_fd=None)
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_successful_login_with_2fa(
             self, mock_login, mock_get_account_information):
@@ -89,7 +91,8 @@ class LoginCommandTestCase(CommandBaseTestCase):
                 acls=None, packages=None, channels=None, save=True,
                 config_fd=None)])
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     @mock.patch.object(storeapi.StoreClient, 'acl')
     def test_successful_login_with(

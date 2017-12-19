@@ -16,8 +16,10 @@
 from snapcraft import formatting_utils
 from snapcraft.internal import common, elf
 
+from typing import List
 
-def env_for_classic(arch_triplet):
+
+def env_for_classic(arch_triplet: str) -> List[str]:
     """Set the required environment variables for a classic confined build."""
     env = []
 
@@ -30,7 +32,7 @@ def env_for_classic(arch_triplet):
     return env
 
 
-def runtime_env(root, arch_triplet):
+def runtime_env(root: str, arch_triplet: str) -> List[str]:
     """Set the environment variables required for running binaries."""
     env = []
 
@@ -54,7 +56,7 @@ def runtime_env(root, arch_triplet):
     return env
 
 
-def build_env(root, snap_name, arch_triplet):
+def build_env(root: str, snap_name: str, arch_triplet: str) -> List[str]:
     """Set the environment variables required for building.
 
     This is required for the current parts installdir due to stage-packages
@@ -81,7 +83,8 @@ def build_env(root, snap_name, arch_triplet):
     return env
 
 
-def build_env_for_stage(stagedir, snap_name, arch_triplet):
+def build_env_for_stage(stagedir: str, snap_name: str,
+                        arch_triplet: str) -> List[str]:
     env = build_env(stagedir, snap_name, arch_triplet)
     env.append('PERL5LIB="{0}/usr/share/perl5/"'.format(stagedir))
 

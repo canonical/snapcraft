@@ -52,14 +52,21 @@ class TestCase(testtools.TestCase):
 
     def setUp(self):
         super().setUp()
-        if os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
-            self.snapcraft_command = 'snapcraft'
-            self.snapcraft_parser_command = 'snapcraft-parser'
+        if os.getenv('SNAPCRAFT_FROM_SNAP', False):
+            self.snapcraft_command = '/snap/bin/snapcraft'
+        elif os.getenv('SNAPCRAFT_FROM_DEB', False):
+            self.snapcraft_command = '/usr/bin/snapcraft'
+            self.snapcraft_parser_command = '/usr/bin/snapcraft-parser'
         else:
             self.snapcraft_command = os.path.join(
                 os.getcwd(), 'bin', 'snapcraft')
             self.snapcraft_parser_command = os.path.join(
                 os.getcwd(), 'bin', 'snapcraft-parser')
+
+        if os.getenv('SNAPCRAFT_FROM_SNAP', False):
+            self.patchelf_command = '/snap/snapcraft/current/bin/patchelf'
+        else:
+            self.patchelf_command = 'patchelf'
 
         self.snaps_dir = os.path.join(os.path.dirname(__file__), 'snaps')
         temp_cwd_fixture = fixture_setup.TempCWD()
@@ -138,6 +145,8 @@ class TestCase(testtools.TestCase):
                 stderr=subprocess.STDOUT, universal_newlines=True,
                 env=env)
         except subprocess.CalledProcessError as e:
+            self.addDetail('command', content.text_content(
+                self.snapcraft_command))
             self.addDetail('output', content.text_content(e.output))
             raise
 

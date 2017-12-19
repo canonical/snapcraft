@@ -38,7 +38,7 @@ class RegisterTestCase(CommandBaseTestCase):
 
     def test_register_name_successfully(self):
         with mock.patch.object(
-                storeapi.SCAClient, 'register') as mock_register:
+                storeapi._sca_client.SCAClient, 'register') as mock_register:
             result = self.run_command(['register', 'test-snap'], input='y\n')
 
         self.assertThat(result.exit_code, Equals(0))
@@ -51,7 +51,7 @@ class RegisterTestCase(CommandBaseTestCase):
 
     def test_register_private_name_successfully(self):
         with mock.patch.object(
-                storeapi.SCAClient, 'register') as mock_register:
+                storeapi._sca_client.SCAClient, 'register') as mock_register:
             result = self.run_command(['register', 'test-snap', '--private'],
                                       input='y\n')
 
@@ -69,7 +69,7 @@ class RegisterTestCase(CommandBaseTestCase):
         response = mock.Mock()
         response.json.side_effect = JSONDecodeError('mock-fail', 'doc', 1)
         with mock.patch.object(
-                storeapi.SCAClient, 'register') as mock_register:
+                storeapi._sca_client.SCAClient, 'register') as mock_register:
             mock_register.side_effect = storeapi.errors.StoreRegistrationError(
                 'test-snap', response)
             raised = self.assertRaises(
@@ -82,7 +82,7 @@ class RegisterTestCase(CommandBaseTestCase):
         response = mock.Mock()
         response.json.side_effect = JSONDecodeError('mock-fail', 'doc', 1)
         with mock.patch.object(
-                storeapi.SCAClient, 'register') as mock_register:
+                storeapi._sca_client.SCAClient, 'register') as mock_register:
             mock_register.side_effect = storeapi.errors.StoreRegistrationError(
                 'test-snap', response)
             result = self.run_command(['register', 'test-snap'], input='n\n')

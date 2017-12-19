@@ -37,7 +37,7 @@ class OpenCVTestCase(snaps_tests.SnapsTestCase):
         self.assertThat(bin_path, FileExists())
 
         interpreter = subprocess.check_output([
-            'patchelf', '--print-interpreter', bin_path]).decode()
+            self.patchelf_command, '--print-interpreter', bin_path]).decode()
         expected_interpreter = r'^/snap/core/current/.*'
         self.assertThat(interpreter, MatchesRegex(expected_interpreter))
 
@@ -45,7 +45,7 @@ class OpenCVTestCase(snaps_tests.SnapsTestCase):
 
         # test $ORIGIN in action
         rpath = subprocess.check_output([
-            'patchelf', '--print-rpath', bin_path]).decode()
+            self.patchelf_command, '--print-rpath', bin_path]).decode()
         expected_rpath = '$ORIGIN/../usr/lib/{}:'.format(arch_triplet)
         self.assertThat(rpath, Contains(expected_rpath))
 

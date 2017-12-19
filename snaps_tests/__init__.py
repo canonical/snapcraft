@@ -113,8 +113,10 @@ class SnapsTestCase(testtools.TestCase):
                         self.snap_content_dir, filter_))
         logger.info('Testing {}'.format(self.snap_content_dir))
         super().setUp()
-        if os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
-            self.snapcraft_command = 'snapcraft'
+        if os.getenv('SNAPCRAFT_FROM_SNAP', False):
+            self.snapcraft_command = '/snap/bin/snapcraft'
+        elif os.getenv('SNAPCRAFT_FROM_DEB', False):
+            self.snapcraft_command = '/usr/bin/snapcraft'
         else:
             self.snapcraft_command = os.path.join(
                 os.getcwd(), 'bin', 'snapcraft')

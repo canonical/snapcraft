@@ -80,7 +80,8 @@ class SignBuildTestCase(CommandBaseTestCase):
             'Path "nonexisting.snap" does not exist'))
         self.assertThat(mock_check_output.call_count, Equals(0))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -108,7 +109,8 @@ class SignBuildTestCase(CommandBaseTestCase):
             "'test-snap' for series '16'."))
         self.assertThat(mock_check_output.call_count, Equals(0))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -143,7 +145,8 @@ class SignBuildTestCase(CommandBaseTestCase):
         snap_build_path = self.snap_test.snap_path + '-build'
         self.assertThat(snap_build_path, Not(FileExists()))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -180,7 +183,8 @@ class SignBuildTestCase(CommandBaseTestCase):
         snap_build_path = self.snap_test.snap_path + '-build'
         self.assertThat(snap_build_path, Not(FileExists()))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -217,7 +221,8 @@ class SignBuildTestCase(CommandBaseTestCase):
         snap_build_path = self.snap_test.snap_path + '-build'
         self.assertThat(snap_build_path, Not(FileExists()))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -253,7 +258,8 @@ class SignBuildTestCase(CommandBaseTestCase):
         snap_build_path = self.snap_test.snap_path + '-build'
         self.assertThat(snap_build_path, Not(FileExists()))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -291,7 +297,8 @@ class SignBuildTestCase(CommandBaseTestCase):
             '--grade=stable', '-k', 'default', self.snap_test.snap_path,
         ])
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -327,8 +334,10 @@ class SignBuildTestCase(CommandBaseTestCase):
             '--grade=stable', '-k', 'default', self.snap_test.snap_path,
         ])
 
-    @mock.patch.object(storeapi.SCAClient, 'push_snap_build')
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'push_snap_build')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch('subprocess.check_output')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
@@ -369,8 +378,10 @@ class SignBuildTestCase(CommandBaseTestCase):
         ])
         mock_push_snap_build.assert_called_with('snap-id', 'Mocked assertion')
 
-    @mock.patch.object(storeapi.SCAClient, 'push_snap_build')
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'push_snap_build')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch('snapcraft._store._get_data_from_snap_file')
     @mock.patch('snapcraft.internal.repo.Repo.is_package_installed')
     def test_sign_build_push_existing(
