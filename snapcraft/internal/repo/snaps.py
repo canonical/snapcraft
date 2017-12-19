@@ -94,6 +94,9 @@ class SnapPackage:
     def get_store_snap_info(self):
         """Returns a store payload for the snap."""
         if self._is_in_store is None:
+            # Some environments timeout often, like the armv7 testing
+            # infrastructure. Given that constraint, we add some retry
+            # logic.
             retry_count = 5
             while retry_count > 0:
                 try:
