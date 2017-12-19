@@ -138,6 +138,9 @@ class SnapPackage:
         try:
             return store_channels[self.channel]['confinement'] == 'classic'
         except KeyError:
+            # We have seen some KeyError issues when running tests that are
+            # hard to debug as they only occur there, logging in debug mode
+            # will help uncover the root cause if it happens again.
             logger.debug('Current store channels are {!r} and the store'
                          'payload is {!r}'.format(store_channels,
                                                   self._store_snap_info))
