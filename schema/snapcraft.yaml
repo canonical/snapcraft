@@ -34,6 +34,9 @@ properties:
   build-packages:
     $ref: "#/definitions/grammar-array"
     description: top level build packages.
+  adopt-info:
+    type: string
+    description: name of the part that provides source files that will be parsed to extract snap metadata information
   name:
     type: string
     description: name of the snap package
@@ -361,6 +364,8 @@ properties:
           prepare:
             type: string
             default: ''
+          parse-info:
+            type: array
   plugs:
     type: object
   slots:
@@ -368,9 +373,11 @@ properties:
 required:
   - name
   - version
-  - summary
-  - description
   - parts
+# required by snap.yaml, but that can be filled later by other metadata
+# sources, like appstream.
+#  - summary
+#  - description
 dependencies:
   license-agreement: ["license"]
   license-version: ["license"]

@@ -506,29 +506,6 @@ parts:
                    "hyphens. They cannot be all numbers. They also cannot "
                    "start or end with a hyphen."))
 
-    def test_invalid_yaml_missing_description(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        self.make_snapcraft_yaml("""name: test
-version: "1"
-summary: test
-confinement: strict
-grade: stable
-
-parts:
-  part1:
-    plugin: go
-    stage-packages: [fswebcam]
-""")
-        raised = self.assertRaises(
-            errors.YamlValidationError,
-            _config.Config)
-
-        self.assertThat(
-            raised.message,
-            Equals("'description' is a required property"))
-
     def test_yaml_missing_confinement_must_log(self):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
@@ -2071,7 +2048,7 @@ class DaemonDependencyTestCase(ValidationBaseTestCase):
 class RequiredPropertiesTestCase(ValidationBaseTestCase):
 
     scenarios = [(key, dict(key=key)) for
-                 key in ['name', 'version', 'summary', 'description', 'parts']]
+                 key in ['name', 'version', 'parts']]
 
     def test_required_properties(self):
         data = self.data.copy()

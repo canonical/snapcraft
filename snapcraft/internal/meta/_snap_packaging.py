@@ -38,6 +38,7 @@ from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.meta import (
     _desktop,
     _errors as meta_errors,
+    _from_sources,
     _manifest,
     _version
 )
@@ -69,7 +70,7 @@ _OPTIONAL_PACKAGE_KEYS = [
 
 
 def create_snap_packaging(
-        config_data,
+        config_data: dict,
         project_options: _options.ProjectOptions,
         snapcraft_yaml_path: str) -> str:
     """Create snap.yaml and related assets in meta.
@@ -81,6 +82,14 @@ def create_snap_packaging(
     :param dict config_data: project values defined in snapcraft.yaml.
     :return: meta_dir.
     """
+    missing_mandatory_keys = [
+        key for key in _MANDATORY_PACKAGE_KEYS
+        if key not in config_data]
+    if missing_mandatory_keys:
+        config_data.update(
+            _from_sources.get_info(
+                missing_mandatory_keys, config_data,
+                project_options.parts_dir))
     packaging = _SnapPackaging(
         config_data, project_options, snapcraft_yaml_path)
     packaging.write_snap_yaml()
