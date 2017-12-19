@@ -17,8 +17,12 @@
 import configparser
 import logging
 import os
+from textwrap import dedent
 from unittest.mock import patch
+
+import fixtures
 import testtools
+import yaml
 from testtools.matchers import (
     Contains,
     Equals,
@@ -27,9 +31,6 @@ from testtools.matchers import (
     HasLength,
     Not
 )
-
-import fixtures
-import yaml
 
 from snapcraft.internal.meta import (
     _errors as meta_errors,
@@ -613,11 +614,16 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
-        expected = ('#!/bin/sh\n'
-                    'PATH=$SNAP/usr/bin:$SNAP/bin\n\n'
-                    'export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
-                    '$LD_LIBRARY_PATH\n'
-                    'exec "$SNAP/test_relexepath" "$@"\n')
+        expected = dedent("""\
+            #!/bin/sh
+            PATH=$SNAP/usr/bin:$SNAP/bin
+
+            export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+            # Workaround for LP: #1656340
+            [ -n "$XDG_RUNTIME_DIR" ] && mkdir -p $XDG_RUNTIME_DIR -m 700
+
+            exec "$SNAP/test_relexepath" "$@"
+            """)
 
         self.assertThat(wrapper_path, FileContains(expected))
 
@@ -636,11 +642,16 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         self.assertThat(relative_wrapper_path, Equals('new-name.wrapper'))
 
-        expected = ('#!/bin/sh\n'
-                    'PATH=$SNAP/usr/bin:$SNAP/bin\n\n'
-                    'export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
-                    '$LD_LIBRARY_PATH\n'
-                    'exec "$SNAP/test_relexepath" "$@"\n')
+        expected = dedent("""\
+            #!/bin/sh
+            PATH=$SNAP/usr/bin:$SNAP/bin
+
+            export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
+            # Workaround for LP: #1656340
+            [ -n "$XDG_RUNTIME_DIR" ] && mkdir -p $XDG_RUNTIME_DIR -m 700
+
+            exec "$SNAP/test_relexepath" "$@"
+            """)
         self.assertThat(wrapper_path, FileContains(expected))
 
     def test_snap_shebangs_extracted(self):
@@ -665,9 +676,13 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
-        expected = (
-            '#!/bin/sh\n'
-            'exec "$SNAP/snap_exe" "$SNAP/test_relexepath" "$@"\n')
+        expected = dedent("""\
+            #!/bin/sh
+            # Workaround for LP: #1656340
+            [ -n "$XDG_RUNTIME_DIR" ] && mkdir -p $XDG_RUNTIME_DIR -m 700
+
+            exec "$SNAP/snap_exe" "$SNAP/test_relexepath" "$@"
+            """)
         self.assertThat(wrapper_path, FileContains(expected))
 
         # The shebang wasn't changed, since we don't know what the
@@ -689,8 +704,13 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
-        expected = ('#!/bin/sh\n'
-                    'exec "$SNAP/test_relexepath" "$@"\n')
+        expected = dedent("""\
+            #!/bin/sh
+            # Workaround for LP: #1656340
+            [ -n "$XDG_RUNTIME_DIR" ] && mkdir -p $XDG_RUNTIME_DIR -m 700
+
+            exec "$SNAP/test_relexepath" "$@"
+            """)
         self.assertThat(wrapper_path, FileContains(expected))
 
         self.assertThat(os.path.join(self.prime_dir, relative_exe_path),
@@ -712,8 +732,13 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
-        expected = ('#!/bin/sh\n'
-                    'exec "$SNAP/test_relexepath" "$@"\n')
+        expected = dedent("""\
+            #!/bin/sh
+            # Workaround for LP: #1656340
+            [ -n "$XDG_RUNTIME_DIR" ] && mkdir -p $XDG_RUNTIME_DIR -m 700
+
+            exec "$SNAP/test_relexepath" "$@"
+            """)
         self.assertThat(wrapper_path, FileContains(expected))
 
         with open(path, 'rb') as exe:
@@ -727,8 +752,13 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         relative_wrapper_path = self.packager._wrap_exe('app1')
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
-        expected = ('#!/bin/sh\n'
-                    'exec "app1" "$@"\n')
+        expected = dedent("""\
+            #!/bin/sh
+            # Workaround for LP: #1656340
+            [ -n "$XDG_RUNTIME_DIR" ] && mkdir -p $XDG_RUNTIME_DIR -m 700
+
+            exec "app1" "$@"
+            """)
         self.assertThat(wrapper_path, FileContains(expected))
 
     def test_command_does_not_exist(self):
