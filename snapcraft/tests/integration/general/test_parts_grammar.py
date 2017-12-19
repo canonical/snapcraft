@@ -25,11 +25,23 @@ class PartsGrammarTestCase(integration.TestCase):
     def setUp(self):
         super().setUp()
 
-    def test_source(self):
+    def test_plain_source_string(self):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
         snapcraft_yaml.update_part('my-part', {
             'plugin': 'nil',
             'source': 'https://github.com/snapcrafters/fork-and-rename-me.git',
+        })
+        self.useFixture(snapcraft_yaml)
+        self.run_snapcraft(['pull'])
+
+    def test_source_on_current_arch(self):
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml.update_part('my-part', {
+            'plugin': 'nil',
+            'source': [
+                {'on {}'.format(self.deb_arch): '.'},
+                {'else': 'invalid'},
+            ]
         })
         self.useFixture(snapcraft_yaml)
         self.run_snapcraft(['pull'])
