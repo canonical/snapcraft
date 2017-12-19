@@ -9,7 +9,7 @@ definitions:
         items:
           minitems: 1
           uniqueItems: true
-          oneOf:
+          anyOf:
             - type: object
               usage: "on <selector>[,<selector>...]:"
               additionalProperties: false
@@ -28,6 +28,8 @@ definitions:
               patternProperties:
                 ^else$:
                   $ref: "#/definitions/grammar-string"
+            - type: string
+              pattern: "else fail"
   grammar-array:
     type: array
     minitems: 1
