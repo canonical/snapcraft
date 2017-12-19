@@ -69,6 +69,9 @@ class Project(Containerbuild):
         self._wait_for_network()
         if new_container:
             self._container_run(['apt-get', 'update'])
+            # Because of https://bugs.launchpad.net/snappy/+bug/1628289
+            # Needed to run snapcraft as a snap and build-snaps
+            self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
             self._inject_snapcraft()
 
     def _configure_container(self):
