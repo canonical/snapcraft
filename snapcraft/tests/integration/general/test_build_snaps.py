@@ -70,6 +70,8 @@ class BuildSnapsErrorsTestCase(integration.TestCase):
         self.assertThat(exception.returncode, Equals(2))
         self.assertThat(exception.output, Contains(
             "'inexistent'"))
+        self.assertFalse(snapcraft.repo.snaps.SnapPackage.is_snap_installed(
+            'inexistent'))
 
     def test_snap_exists_but_not_on_channel(self):
         # If the snap tested here does not exist, then BuildSnapsTestCase
@@ -81,7 +83,7 @@ class BuildSnapsErrorsTestCase(integration.TestCase):
         snapcraft_yaml.update_part(
             'test-part-with-build-snap', {
                 'plugin': 'nil',
-                'build-snaps': ['u1test-snap-with-tracks/test-track-1/beta']
+                'build-snaps': ['u1test-snap-with-tracks/not-exists/candidate']
             })
         self.useFixture(snapcraft_yaml)
 
@@ -92,3 +94,6 @@ class BuildSnapsErrorsTestCase(integration.TestCase):
         self.assertThat(exception.returncode, Equals(2))
         self.assertThat(exception.output, Contains(
             "'u1test-snap-with-tracks'"))
+
+        self.assertFalse(snapcraft.repo.snaps.SnapPackage.is_snap_installed(
+            'u1test-snap-with-tracks'))
