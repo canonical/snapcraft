@@ -11,4 +11,4 @@ parts:
   pip-bzr:
     plugin: python
     python-packages:
-        - bzr+lp:curtin#egg=curtin
+        - bzr+lp:~snappy-dev/+junk/bzrtest#egg=bzrtest
