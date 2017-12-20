@@ -58,11 +58,8 @@ class PartGrammarProcessor:
         self._project_options = project_options
         self._repo = repo
 
-        for key, value in properties.items():
-            if key in ['source']:
-                properties[key] = next(iter(grammar.process_grammar(
-                    value if isinstance(value, list) else {value},
-                    self._project_options, True)))
+        self._property_grammar = properties
+        self.__properties = set()
 
         self._build_snap_grammar = getattr(plugin, 'build_snaps', [])
         self.__build_snaps = set()
@@ -72,6 +69,16 @@ class PartGrammarProcessor:
 
         self._stage_package_grammar = getattr(plugin, 'stage_packages', [])
         self.__stage_packages = set()
+
+    def get_properties(self):
+        if not self.__properties:
+            self.__properties = self._property_grammar
+            for key, value in self._property_grammar.items():
+                if key in ['source']:
+                    self.__properties[key] = next(iter(grammar.process_grammar(
+                        value if isinstance(value, list) else {value},
+                        self._project_options, True)))
+        return self.__properties
 
     def get_build_snaps(self):
         if not self.__build_snaps:
