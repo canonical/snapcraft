@@ -69,6 +69,9 @@ class PartGrammarProcessor:
     ...    repo=repo)
     >>> processor.get_properties()['source']
     '.'
+    >>> # plugin is passed through unmodified
+    >>> processor.get_properties()['plugin']
+    'dump'
     """
 
     def __init__(self, *, plugin, properties, project_options, repo):

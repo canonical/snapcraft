@@ -36,24 +36,28 @@ class PartGrammarTestCase(unit.TestCase):
 
     scenarios = [
         ('plain string', {
-            'properties': {'source': 'foo'},
+            'properties': {'plugin': 'dump',
+                           'source': 'foo'},
             'target_arch': 'amd64',
-            'expected': {'source': 'foo'}
+            'expected': {'plugin': 'dump', 'source': 'foo'}
         }),
         ('on amd64', {
-            'properties': {'source': [{'on amd64': 'foo'}]},
+            'properties': {'plugin': 'dump',
+                           'source': [{'on amd64': 'foo'}]},
             'target_arch': 'amd64',
-            'expected': {'source': 'foo'}
+            'expected': {'plugin': 'dump', 'source': 'foo'}
         }),
         ('on i386', {
-            'properties': {'source': [{'on i386': 'foo'}, {'else': 'bar'}]},
+            'properties': {'plugin': 'dump',
+                           'source': [{'on i386': 'foo'}, {'else': 'bar'}]},
             'target_arch': 'amd64',
-            'expected': {'source': 'bar'}
+            'expected': {'plugin': 'dump', 'source': 'bar'}
         }),
         ('on i386, target_arch=i386', {
-            'properties': {'source': [{'on i386': 'foo'}, {'else': 'bar'}]},
+            'properties': {'plugin': 'dump',
+                           'source': [{'on i386': 'foo'}, {'else': 'bar'}]},
             'target_arch': 'i386',
-            'expected': {'source': 'foo'}
+            'expected': {'plugin': 'dump', 'source': 'foo'}
         }),
     ]
 
