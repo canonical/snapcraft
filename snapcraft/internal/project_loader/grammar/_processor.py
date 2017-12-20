@@ -73,7 +73,11 @@ def _parse_dict(section, statement, statements, project_options,
     from ._try import TryStatement
 
     for key, value in section.items():
-        value = value if isinstance(value, list) else {value}
+        # Grammar is always written as a list of selectors but the value can
+        # be a list or a string, in the latter case we wrap it so no special
+        # care needs to be taken when fetching the result from the primitive
+        if not isinstance(value, list):
+            value = {value}
 
         if _ON_CLAUSE_PATTERN.match(key):
             # We've come across the beginning of an 'on' statement.
