@@ -92,7 +92,7 @@ class PartGrammarProcessor:
 
     def get_properties(self):
         if not self.__properties:
-            self.__properties = self._property_grammar
+            self.__properties = self._property_grammar.copy()
             for key, value in self._property_grammar.items():
                 if key in ['source']:
                     self.__properties[key] = next(iter(grammar.process_grammar(

@@ -65,7 +65,7 @@ class PartGrammarTestCase(unit.TestCase):
         repo = mock.Mock()
         repo.is_valid.return_value = True
         plugin = mock.Mock()
-        plugin.properties = self.properties
+        plugin.properties = self.properties.copy()
         self.assertThat(PartGrammarProcessor(
             plugin=plugin,
             properties=plugin.properties,
@@ -73,3 +73,5 @@ class PartGrammarTestCase(unit.TestCase):
                 target_deb_arch=self.target_arch),
             repo=repo).get_properties(),
                         Equals(self.expected))
+        # Verify that the original properties haven't changed
+        self.assertThat(plugin.properties, Equals(self.properties))
