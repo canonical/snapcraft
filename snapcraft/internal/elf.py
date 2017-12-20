@@ -36,6 +36,28 @@ from snapcraft.internal import (
 logger = logging.getLogger(__name__)
 
 
+class Library:
+    """Represents the SONAME and path to the library."""
+
+    def __init__(self, *, soname: str, path: str) -> None:
+        self.soname = soname
+        if 'not found' not in path and os.path.exists(path):
+            self.path = path
+        else:
+            self.path = None
+
+        system_libs = _get_system_libs()
+        if soname in system_libs:
+            self.system_lib = True
+        else:
+            self.system_lib = False
+
+        if path.startswith('/snap/'):
+            self.in_snap = True
+        else:
+            self.in_snap = False
+
+
 class ElfFile:
     """ElfFile represents and elf file on a path and its attributes."""
 
@@ -47,20 +69,24 @@ class ElfFile:
         """
         self.path = path
         self.is_executable = 'interpreter' in magic
-        self.dependencies = set()  # type: Set[str]
+        self.dependencies = set()  # type: Set[Library]
 
-    def load_dependencies(self) -> Set[str]:
+    def load_dependencies(self, base_path: str) -> Set[str]:
         """Load the set of libraries that are needed to satisfy elf's runtime.
 
         This may include libraries contained within the project.
         The object's .dependencies attribute is set after loading.
 
+        :param str base_path: the base path to search for missing dependencies.
         :returns: a set of string with paths to the library dependencies of
                   elf.
         """
         logger.debug('Getting dependencies for {!r}'.format(self.path))
         ldd_out = []  # type: List[str]
         try:
+            # ldd output sample:
+            # /lib64/ld-linux-x86-64.so.2 (0x00007fb3c5298000)
+            # libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb3bef03000)
             ldd_out = common.run_output(['ldd', self.path]).split('\n')
         except subprocess.CalledProcessError:
             logger.warning(
@@ -68,19 +94,13 @@ class ElfFile:
                 '{!r}'.format(self.path))
             return set()
         ldd_out_split = [l.split() for l in ldd_out]
-        ldd_out_list = [l[2] for l in ldd_out_split
-                        if len(l) > 2 and os.path.exists(l[2])]
-
-        # Now lets filter out what would be on the system
-        system_libs = _get_system_libs()
-        libs = {l for l in ldd_out_list
-                if not os.path.basename(l) in system_libs}
-        # Classic confinement won't do what you want with library crawling
-        # and has a nasty side effect described in LP: #1670100
-        libs = {l for l in libs if not l.startswith('/snap/')}
+        libs = {Library(soname=l[0], path=l[2]) for l in ldd_out_split
+                if len(l) > 2}
 
         self.dependencies = libs
-        return libs
+
+        return {l.path for l in libs
+                if l.path and not l.in_snap and not l.system_lib}
 
 
 def _retry_patch(f):
@@ -191,7 +211,8 @@ class Patcher:
     def _get_rpath(self, elf_file) -> str:
         rpaths = []  # type: List[str]
         for dependency in elf_file.dependencies:
-            rpaths.append(self._library_path_func(dependency, elf_file.path))
+            rpaths.append(self._library_path_func(dependency.path,
+                                                  elf_file.path))
 
         origin_paths = ':'.join((r for r in set(rpaths) if r))
         base_rpaths = ':'.join(self._base_rpaths)

@@ -444,7 +444,8 @@ class PluginHandler:
         elf_files = elf.get_elf_files(self.primedir, snap_files)
         all_dependencies = set()
         for elf_file in elf_files:
-            all_dependencies.update(elf_file.load_dependencies())
+            all_dependencies.update(
+                elf_file.load_dependencies(base_path=self.primedir))
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only

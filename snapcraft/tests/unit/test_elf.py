@@ -88,8 +88,8 @@ class TestGetLibraries(unit.TestCase):
                            'for GNU/Linux 2.6.32')
 
     def test_get_libraries(self):
-        libs = elf.ElfFile(path='foo',
-                           magic=self.stub_magic).load_dependencies()
+        elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
+        libs = elf_file.load_dependencies(base_path='/')
         self.assertThat(libs, Equals(frozenset(
             ['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
 
@@ -102,25 +102,25 @@ class TestGetLibraries(unit.TestCase):
         ]
         self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
 
-        libs = elf.ElfFile(path='foo',
-                           magic=self.stub_magic).load_dependencies()
+        elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
+        libs = elf_file.load_dependencies(base_path='/')
         self.assertThat(libs, Equals(
             frozenset(['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
 
     def test_get_libraries_filtered_by_system_libraries(self):
         self.get_system_libs_mock.return_value = frozenset(['foo.so.1'])
 
-        libs = elf.ElfFile(path='foo',
-                           magic=self.stub_magic).load_dependencies()
+        elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
+        libs = elf_file.load_dependencies(base_path='/')
         self.assertThat(libs, Equals(frozenset(['/usr/lib/bar.so.2'])))
 
     def test_get_libraries_ldd_failure_logs_warning(self):
         self.run_output_mock.side_effect = subprocess.CalledProcessError(
             1, 'foo', b'bar')
 
-        dependencies = elf.ElfFile(
-            path='foo', magic=self.stub_magic).load_dependencies()
-        self.assertThat(dependencies, Equals(set()))
+        elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
+        libs = elf_file.load_dependencies(base_path='/')
+        self.assertThat(libs, Equals(set()))
         self.assertThat(
             self.fake_logger.output,
             Equals("Unable to determine library dependencies for 'foo'\n"))
@@ -170,9 +170,9 @@ class TestSystemLibsOnNewRelease(unit.TestCase):
         stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
                       'dynamically linked, interpreter '
                       '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
-        self.assertThat(
-            elf.ElfFile(path='foo', magic=stub_magic).load_dependencies(),
-            Equals(frozenset()))
+        elf_file = elf.ElfFile(path='foo', magic=stub_magic)
+        libs = elf_file.load_dependencies(base_path='/')
+        self.assertThat(libs, Equals(frozenset()))
 
 
 class TestSystemLibsOnReleasesWithNoVersionId(unit.TestCase):
