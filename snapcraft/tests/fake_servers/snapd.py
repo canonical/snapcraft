@@ -25,6 +25,7 @@ class FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
     snaps_result = []  # type: List[Dict[str, Any]]
     snap_details_func = None
     find_result = []  # type: List[Dict[str, Any]]
+    find_exit_code = 200  # type: int
     _private_data = {'new_fake_snap_installed': False}
 
     def do_GET(self):
@@ -39,7 +40,7 @@ class FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):
             self.wfile.write(parsed_url.path.encode())
 
     def _handle_snaps(self):
-        status_code = 200
+        status_code = self.find_exit_code
         params = self.snaps_result
         self.send_response(status_code)
         self.send_header('Content-Type', 'text/application+json')
