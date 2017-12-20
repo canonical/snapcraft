@@ -224,9 +224,6 @@ class Containerbuild:
 
     def _inject_snapcraft(self):
         if common.is_snap():
-            # Because of https://bugs.launchpad.net/snappy/+bug/1628289
-            self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
-
             with tempfile.TemporaryDirectory(
                     prefix='snapcraft', dir=self._lxd_common_dir) as tmp_dir:
                 self._inject_snap('core', tmp_dir)

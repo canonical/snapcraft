@@ -488,6 +488,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   '"http://start.ubuntu.com/connectivity-check.html"' +
                   ', timeout=5)']),
             call(['apt-get', 'update']),
+            call(['apt-get', 'install', 'squashfuse', '-y']),
             call(['snapcraft', 'snap', '--output',
                   'snap-test_1.0_amd64.snap'], cwd=project_folder),
         ])

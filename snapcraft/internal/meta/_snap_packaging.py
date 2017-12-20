@@ -24,6 +24,7 @@ import shlex
 import shutil
 import stat
 import subprocess
+from textwrap import dedent
 
 import yaml
 
@@ -313,6 +314,11 @@ class _SnapPackaging:
                       '$LD_LIBRARY_PATH', file=f)
             if cwd:
                 print('{}'.format(cwd), file=f)
+            # TODO remove this once LP: #1656340 is fixed in snapd.
+            print(dedent("""\
+                # Workaround for LP: #1656340
+                [ -n "$XDG_RUNTIME_DIR" ] && mkdir -p $XDG_RUNTIME_DIR -m 700
+                """), file=f)
             print('exec {} {}'.format(executable, args), file=f)
 
         os.chmod(wrappath, 0o755)

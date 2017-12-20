@@ -81,6 +81,17 @@ class UnpackError(RepoError):
         super().__init__(package=package)
 
 
+class SnapUnavailableError(RepoError):
+
+    fmt = ('Failed to install or refresh a snap: {snap_name!r} does not exist '
+           'or is not available on the desired channel {snap_channel!r}. '
+           'Use `snap info {snap_name}` to get a list of channels the '
+           'snap is available on.')
+
+    def __init__(self, *, snap_name: str, snap_channel: str) -> None:
+        super().__init__(snap_name=snap_name, snap_channel=snap_channel)
+
+
 class SnapInstallError(RepoError):
 
     fmt = ('Error while installing snap {snap_name!r} from channel '

@@ -126,6 +126,7 @@ class CleanbuilderTestCase(LXDTestCase):
                   '"http://start.ubuntu.com/connectivity-check.html"' +
                   ', timeout=5)']),
             call(['apt-get', 'update']),
+            call(['apt-get', 'install', 'squashfuse', '-y']),
             call(['mkdir', project_folder]),
             call(['tar', 'xvf', 'project.tar'],
                  cwd=project_folder),
@@ -133,7 +134,7 @@ class CleanbuilderTestCase(LXDTestCase):
                  cwd=project_folder),
         ])
         # Ensure there's no unexpected calls eg. two network checks
-        self.assertThat(mock_container_run.call_count, Equals(5))
+        self.assertThat(mock_container_run.call_count, Equals(6))
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'file', 'pull',
                   '{}{}/snap.snap'.format(container_name, project_folder),
@@ -293,6 +294,7 @@ class ContainerbuildTestCase(LXDTestCase):
         builder.execute()
 
         mock_container_run.assert_has_calls([
+            call(['apt-get', 'install', 'squashfuse', '-y']),
             call(['apt-get', 'install', 'snapcraft', '-y']),
         ])
 
