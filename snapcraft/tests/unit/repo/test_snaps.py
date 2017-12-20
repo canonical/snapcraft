@@ -248,6 +248,12 @@ class SnapPackageIsValidTest(SnapPackageBaseTestCase):
                 'fake-snap': {'channels': {
                     'strict/stable': {'confinement': 'strict'}}}}],
             expected=True)),
+        ('valid but invalid channel', dict(
+            snap='fake-snap/non-existent/edge',
+            find_result=[{
+                'fake-snap': {'channels': {
+                    'strict/stable': {'confinement': 'strict'}}}}],
+            expected=False)),
         ('invalid', dict(
             snap='missing-snap',
             find_result=[],
@@ -386,6 +392,14 @@ class SnapPackageLifecycleTest(SnapPackageBaseTestCase):
         self.fake_snapd.find_code = 404
         self.assertRaises(errors.SnapUnavailableError,
                           snaps.install_snaps, ['fake-snap'])
+
+    def test_install_snaps_non_existent_channel(self):
+        self.fake_snapd.find_result = [{
+            'fake-snap': {'channels': {
+                'classic/stable': {'confinement': 'classic'}}}}]
+
+        self.assertRaises(errors.SnapUnavailableError,
+                          snaps.install_snaps, ['fake-snap/non-existent/edge'])
 
     def test_install_multiple_snaps(self):
         self.fake_snapd.find_result = [{

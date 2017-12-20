@@ -195,7 +195,7 @@ def install_snaps(snaps_list):
     snaps_installed = []
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
-        if not snap_pkg.in_store:
+        if not snap_pkg.is_valid():
             raise errors.SnapUnavailableError(snap_name=snap_pkg.name,
                                               snap_channel=snap_pkg.channel)
 
