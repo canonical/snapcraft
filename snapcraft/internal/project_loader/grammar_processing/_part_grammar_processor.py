@@ -52,6 +52,23 @@ class PartGrammarProcessor:
     ...    repo=repo)
     >>> processor.get_build_packages()
     {'foo'}
+
+    Properties example:
+    >>> from unittest import mock
+    >>> import snapcraft
+    >>> # Pretend that all packages are valid
+    >>> repo = mock.Mock()
+    >>> repo.is_valid.return_value = True
+    >>> plugin = mock.Mock()
+    >>> plugin.properties = {'plugin': 'dump',
+    ...                      'source': [{'on amd64': '.'}, 'else fail']}
+    >>> processor = PartGrammarProcessor(
+    ...    plugin=plugin,
+    ...    properties=plugin.properties,
+    ...    project_options=snapcraft.ProjectOptions(),
+    ...    repo=repo)
+    >>> processor.get_properties()['source']
+    '.'
     """
 
     def __init__(self, *, plugin, properties, project_options, repo):
