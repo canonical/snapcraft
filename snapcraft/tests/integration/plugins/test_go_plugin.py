@@ -39,6 +39,9 @@ class GoPluginTestCase(integration.TestCase):
 
     def test_classic_with_conflicting_build_id(self):
         # TODO find a faster test to verify LP: #1736861
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
+
         self.run_snapcraft('prime', 'go-gotty')
 
         bin_path = os.path.join(self.prime_dir, 'bin', 'gotty')

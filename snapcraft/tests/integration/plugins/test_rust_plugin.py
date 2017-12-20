@@ -122,6 +122,8 @@ class RustPluginConfinementTestCase(testscenarios.WithScenarios,
             yaml.dump(snapcraft_yaml, f)
 
     def test_prime(self):
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
         self.useFixture(fixtures.EnvironmentVariable(
                 'SNAPCRAFT_SETUP_CORE', '1'))
         self.copy_project_to_cwd('rust-hello')
