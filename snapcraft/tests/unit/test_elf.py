@@ -364,7 +364,6 @@ class TestPatcher(unit.TestCase):
             'SNAP', self.snap))
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAP_NAME', self.snap_name))
-        os.makedirs(self.prime_dir)
 
     @mock.patch('subprocess.check_call')
     def test_patch(self, check_call_mock):
@@ -372,8 +371,10 @@ class TestPatcher(unit.TestCase):
                       'dynamically linked, interpreter '
                       '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
         elf_file = elf.ElfFile(path='/fake-elf', magic=stub_magic)
+        # The base_path does not matter here as there are not files to
+        # be crawled for.
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
-                                  base_path=self.prime_dir)
+                                  base_path='/fake')
         elf_patcher.patch(elf_file=elf_file)
 
         check_call_mock.assert_called_once_with([
@@ -385,8 +386,10 @@ class TestPatcher(unit.TestCase):
         stub_magic = ('ELF 64-bit LSB shared object, x86-64, '
                       'version 1 (SYSV), dynamically linked')
         elf_file = elf.ElfFile(path='/fake-elf', magic=stub_magic)
+        # The base_path does not matter here as there are not files to
+        # be crawled for.
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
-                                  base_path=self.prime_dir)
+                                  base_path='/fake')
         elf_patcher.patch(elf_file=elf_file)
 
         self.assertFalse(check_call_mock.called)
@@ -401,8 +404,10 @@ class TestPatcherErrors(unit.TestCase):
                       'dynamically linked, interpreter '
                       '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
         elf_file = elf.ElfFile(path='/fake-elf', magic=stub_magic)
+        # The base_path does not matter here as there are not files to
+        # be crawled for.
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
-                                  base_path='/random')
+                                  base_path='/fake')
 
         self.assertRaises(errors.PatcherError,
                           elf_patcher.patch,
