@@ -93,8 +93,6 @@ def _get_latest_ssh_private_key():
 
 class SnapsTestCase(testtools.TestCase):
 
-    snap_content_dir = None
-
     def __init__(self, *args, **kwargs):
         # match base snap src path on current
         relative_path = os.path.relpath(

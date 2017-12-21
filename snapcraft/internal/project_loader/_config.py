@@ -121,7 +121,7 @@ class Config:
         # This is required for patching to work correctly
         if _requires_patchelf_snap(self.data['confinement']):
             # TODO use stable once possible
-            self.build_snaps.add('patchelf/edge')
+            self.build_snaps.add('patchelf/latest/edge')
 
         self.parts = PartsConfig(parts=self.data,
                                  project_options=self._project_options,
