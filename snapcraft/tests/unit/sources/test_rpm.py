@@ -42,6 +42,10 @@ class TestRpm(unit.TestCase):
         rpm_source = sources.Rpm(rpm_file_path, dest_dir)
         rpm_source.pull()
 
+        
+        rpm_source2 = sources.Rpm(rpm_file_path, dest_dir,2)
+        rpm_source2.pull()
+    
         self.assertThat(os.listdir(dest_dir), Equals(['test.txt']))
 
     def test_extract_and_keep_rpmfile(self):
