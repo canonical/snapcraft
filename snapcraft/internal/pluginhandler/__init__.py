@@ -70,6 +70,9 @@ class PluginHandler:
         self._stage_packages_repo = stage_packages_repo
         self._grammar_processor = grammar_processor
         self._confinement = confinement
+        self._source = grammar_processor.get_source()
+        if not self._source:
+            self._source = part_schema['source'].get('default')
 
         self._project_options = project_options
         self.deps = []
@@ -95,11 +98,11 @@ class PluginHandler:
         # TODO: we cannot pop source as it is used by plugins. We also make
         # the default '.'
         source_handler = None
-        if properties['source']:
+        if self._source:
             handler_class = sources.get_source_handler(
-                properties['source'], source_type=properties['source-type'])
+                self._source, source_type=properties['source-type'])
             source_handler = handler_class(
-                properties['source'],
+                self._source,
                 self.plugin.sourcedir,
                 source_checksum=properties['source-checksum'],
                 source_branch=properties['source-branch'],
