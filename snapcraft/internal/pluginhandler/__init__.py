@@ -443,9 +443,13 @@ class PluginHandler:
 
         elf_files = elf.get_elf_files(self.primedir, snap_files)
         all_dependencies = set()
+        # TODO: base snap support
+        core_path = common.get_core_path()
+
         for elf_file in elf_files:
             all_dependencies.update(
-                elf_file.load_dependencies(base_path=self.primedir))
+                elf_file.load_dependencies(base_path=self.primedir,
+                                           core_base_path=core_path))
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
@@ -471,9 +475,6 @@ class PluginHandler:
                 _migrate_files(system, system_dependency_paths, '/',
                                self.primedir, follow_symlinks=True)
 
-        # TODO: base snap support
-        core_path = common.get_core_path()
-
         def mangle_library_path(library_path: str, elf_file_path: str) -> str:
             # If the path is is in the core snap, use the absolute path,
             # if the path is primed, use $ORIGIN, and last if the dependency
@@ -481,7 +482,6 @@ class PluginHandler:
             #
             # Once we move away from the system library grabbing logic
             # we can move to a smarter library capturing mechanism.
-            library_path = library_path.replace(self.installdir, self.primedir)
             if library_path.startswith(core_path):
                 return os.path.dirname(library_path)
             elif (library_path.startswith(self.primedir) and

@@ -14,13 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import contextlib
-import re
-import glob
 import logging
 import os
 import subprocess
 import sys
-from functools import wraps
+from functools import lru_cache, wraps
 from typing import FrozenSet, List, Set, Sequence
 
 import magic
@@ -39,12 +37,16 @@ logger = logging.getLogger(__name__)
 class Library:
     """Represents the SONAME and path to the library."""
 
-    def __init__(self, *, soname: str, path: str) -> None:
+    def __init__(self, *, soname: str, path: str, base_path: str,
+                 core_base_path: str) -> None:
         self.soname = soname
-        if 'not found' not in path and os.path.exists(path):
+        if path.startswith(base_path) or path.startswith(core_base_path):
             self.path = path
         else:
-            self.path = None
+            self.path = _crawl_for_path(soname=soname,
+                                        base_path=base_path,
+                                        core_base_path=core_base_path)
+            print('crawled for', self.path)
 
         system_libs = _get_system_libs()
         if soname in system_libs:
@@ -56,6 +58,20 @@ class Library:
             self.in_snap = True
         else:
             self.in_snap = False
+
+
+@lru_cache()
+def _crawl_for_path(*, soname: str, base_path: str,
+                    core_base_path: str) -> str:
+    for root_path in (base_path, core_base_path):
+        if not os.path.exists(root_path):
+            continue
+        for root, directories, files in os.walk(root_path):
+            for file_name in files:
+                if file_name == soname:
+                    file_path = os.path.join(root, file_name)
+                    return file_path
+    return None
 
 
 class ElfFile:
@@ -71,7 +87,8 @@ class ElfFile:
         self.is_executable = 'interpreter' in magic
         self.dependencies = set()  # type: Set[Library]
 
-    def load_dependencies(self, base_path: str) -> Set[str]:
+    def load_dependencies(self, base_path: str,
+                          core_base_path: str) -> Set[str]:
         """Load the set of libraries that are needed to satisfy elf's runtime.
 
         This may include libraries contained within the project.
@@ -94,8 +111,13 @@ class ElfFile:
                 '{!r}'.format(self.path))
             return set()
         ldd_out_split = [l.split() for l in ldd_out]
-        libs = {Library(soname=l[0], path=l[2]) for l in ldd_out_split
-                if len(l) > 2}
+        libs = set()
+        for ldd_line in ldd_out_split:
+            if len(ldd_line) > 2:
+                libs.add(Library(soname=ldd_line[0],
+                                 path=ldd_line[2],
+                                 base_path=base_path,
+                                 core_base_path=core_base_path))
 
         self.dependencies = libs
 
@@ -211,8 +233,9 @@ class Patcher:
     def _get_rpath(self, elf_file) -> str:
         rpaths = []  # type: List[str]
         for dependency in elf_file.dependencies:
-            rpaths.append(self._library_path_func(dependency.path,
-                                                  elf_file.path))
+            if dependency.path:
+                rpaths.append(self._library_path_func(dependency.path,
+                                                      elf_file.path))
 
         origin_paths = ':'.join((r for r in set(rpaths) if r))
         base_rpaths = ':'.join(self._base_rpaths)
@@ -221,49 +244,6 @@ class Patcher:
             return '{}:{}'.format(origin_paths, base_rpaths)
         else:
             return base_rpaths
-
-
-def determine_ld_library_path(root: str) -> List[str]:
-    """Determine additional library paths needed for the linker loader.
-
-    This is a workaround until full library searching is implemented which
-    works by searching for ld.so.conf in specific hard coded locations
-    within root.
-
-    :param root str: the root directory to search for specific ld.so.conf
-                     entries.
-    :returns: a list of strings of library paths where relevant libraries
-              can be found within root.
-    """
-    # If more ld.so.conf files need to be supported, add them here.
-    ld_config_globs = {
-        '{}/usr/lib/*/mesa*/ld.so.conf'.format(root)
-    }
-
-    ld_library_paths = []
-    for this_glob in ld_config_globs:
-        for ld_conf_file in glob.glob(this_glob):
-            ld_library_paths.extend(_extract_ld_library_paths(ld_conf_file))
-
-    return [root + path for path in ld_library_paths]
-
-
-def _extract_ld_library_paths(ld_conf_file: str) -> List[str]:
-    # From the ldconfig manpage, paths can be colon-, space-, tab-, newline-,
-    # or comma-separated.
-    path_delimiters = re.compile(r'[:\s,]')
-    comments = re.compile(r'#.*$')
-
-    paths = []
-    with open(ld_conf_file, 'r') as f:
-        for line in f:
-            # Remove comments from line
-            line = comments.sub('', line).strip()
-
-            if line:
-                paths.extend(path_delimiters.split(line))
-
-    return paths
 
 
 _libraries = None
