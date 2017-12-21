@@ -1656,42 +1656,6 @@ parts:
                 'LD_LIBRARY_PATH' in variable,
                 'Expected no LD_LIBRARY_PATH (got {!r})'.format(variable))
 
-    def test_config_runtime_environment_ld(self):
-        # Place a few ld.so.conf files in supported locations. We expect the
-        # contents of these to make it into the LD_LIBRARY_PATH.
-        mesa_dir = os.path.join(
-            self.prime_dir, 'usr', 'lib', 'my_arch', 'mesa')
-        os.makedirs(mesa_dir)
-        with open(os.path.join(mesa_dir, 'ld.so.conf'), 'w') as f:
-            f.write('/mesa')
-
-        mesa_egl_dir = os.path.join(
-            self.prime_dir, 'usr', 'lib', 'my_arch', 'mesa-egl')
-        os.makedirs(mesa_egl_dir)
-        with open(os.path.join(mesa_egl_dir, 'ld.so.conf'), 'w') as f:
-            f.write('# Standalone comment\n')
-            f.write('/mesa-egl')
-
-        config = _config.Config()
-        environment = config.snap_env()
-
-        # Ensure that the LD_LIBRARY_PATH includes all the above paths
-        paths = []
-        for variable in environment:
-            if 'LD_LIBRARY_PATH' in variable:
-                these_paths = variable.split('=')[1].strip()
-                paths.extend(these_paths.replace('"', '').split(':'))
-
-        self.assertTrue(len(paths) > 0,
-                        'Expected LD_LIBRARY_PATH to be in environment')
-
-        expected = (os.path.join(self.prime_dir, i) for i in
-                    ['mesa', 'mesa-egl'])
-        for item in expected:
-            self.assertTrue(item in paths,
-                            'Expected LD_LIBRARY_PATH to include "{}"'.format(
-                                item))
-
     def test_config_stage_environment_confinement_classic(self):
         self.make_snapcraft_yaml("""name: test
 version: "1"

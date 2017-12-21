@@ -46,7 +46,9 @@ class Library:
             self.path = _crawl_for_path(soname=soname,
                                         base_path=base_path,
                                         core_base_path=core_base_path)
-            print('crawled for', self.path)
+        # Required for libraries on the host and the fetching mechanism
+        if not self.path:
+            self.path = path
 
         system_libs = _get_system_libs()
         if soname in system_libs:
@@ -54,10 +56,10 @@ class Library:
         else:
             self.system_lib = False
 
-        if path.startswith('/snap/'):
-            self.in_snap = True
+        if path.startswith(core_base_path):
+            self.in_base_snap = True
         else:
-            self.in_snap = False
+            self.in_base_snap = False
 
 
 @lru_cache()
@@ -70,7 +72,8 @@ def _crawl_for_path(*, soname: str, base_path: str,
             for file_name in files:
                 if file_name == soname:
                     file_path = os.path.join(root, file_name)
-                    return file_path
+                    if _is_elf(_get_magic(file_path)):
+                        return file_path
     return None
 
 
@@ -121,8 +124,14 @@ class ElfFile:
 
         self.dependencies = libs
 
-        return {l.path for l in libs
-                if l.path and not l.in_snap and not l.system_lib}
+        # Return a set useful only for fetching libraries from the host
+        library_paths = set()  # type: Set[str]
+        for l in libs:
+            if (os.path.exists(l.path) and
+                    not l.in_base_snap and
+                    not l.system_lib):
+                library_paths.add(l.path)
+        return library_paths
 
 
 def _retry_patch(f):
@@ -153,22 +162,16 @@ def _retry_patch(f):
 class Patcher:
     """Patcher holds the necessary logic to patch elf files."""
 
-    def __init__(self, *, dynamic_linker: str,
-                 library_path_func=lambda x: x,
-                 base_rpaths: List[str]= None) -> None:
+    def __init__(self, *, dynamic_linker: str, base_path: str) -> None:
         """Create a Patcher instance.
 
         :param str dynamic_linker: the path to the dynamic linker to set the
                                    elf file to.
-        :param library_path_func: function to determine the library path to a
-                                  given dependency of ElfFile.
-        :param list base_rpaths: library paths for the used base snap.
+        :param str base_paths: the base path for the snap to determine
+                               if use of $ORIGIN is possible.
         """
         self._dynamic_linker = dynamic_linker
-        self._library_path_func = library_path_func
-        if not base_rpaths:
-            base_rpaths = []
-        self._base_rpaths = base_rpaths
+        self._base_path = base_path
 
         # If we are running from the snap we want to use the patchelf
         # bundled there as it would have the capability of working
@@ -231,19 +234,30 @@ class Patcher:
                                       message=str(call_error))
 
     def _get_rpath(self, elf_file) -> str:
-        rpaths = []  # type: List[str]
+        origin_rpaths = set()  # type: Set[str]
+        base_rpaths = set()  # type: Set[str]
         for dependency in elf_file.dependencies:
             if dependency.path:
-                rpaths.append(self._library_path_func(dependency.path,
-                                                      elf_file.path))
+                if dependency.in_base_snap:
+                    base_rpaths.add(os.path.dirname(dependency.path))
+                elif dependency.path.startswith(self._base_path):
+                    rel_library_path = os.path.relpath(dependency.path,
+                                                       elf_file.path)
+                    rel_library_path_dir = os.path.dirname(rel_library_path)
+                    # return the dirname, with the first .. replace
+                    # with $ORIGIN
+                    origin_rpaths.add(rel_library_path_dir.replace(
+                        '..', '$ORIGIN', 1))
 
-        origin_paths = ':'.join((r for r in set(rpaths) if r))
-        base_rpaths = ':'.join(self._base_rpaths)
+        origin_paths = ':'.join((r for r in origin_rpaths if r))
+        core_base_rpaths = ':'.join(base_rpaths)
 
-        if origin_paths:
-            return '{}:{}'.format(origin_paths, base_rpaths)
+        if origin_paths and core_base_rpaths:
+            return '{}:{}'.format(origin_paths, core_base_rpaths)
+        elif origin_paths and not core_base_rpaths:
+            return origin_paths
         else:
-            return base_rpaths
+            return core_base_rpaths
 
 
 _libraries = None
@@ -273,6 +287,22 @@ def _get_system_libs() -> FrozenSet[str]:
     return _libraries
 
 
+@lru_cache()
+def _get_magic(path: str) -> str:
+    ms = magic.open(magic.NONE)
+    if ms.load() != 0:
+        raise RuntimeError('Cannot load magic header detection')
+
+    fs_encoding = sys.getfilesystemencoding()
+    path_b = path.encode(
+        fs_encoding, errors='surrogateescape')  # type: bytes
+    return ms.file(path_b)
+
+
+def _is_elf(file_m: str) -> bool:
+    return file_m.startswith('ELF') and 'dynamically linked' in file_m
+
+
 def get_elf_files(root: str,
                   file_list: Sequence[str]) -> FrozenSet[ElfFile]:
     """Return a frozenset of elf files from file_list prepended with root.
@@ -281,13 +311,7 @@ def get_elf_files(root: str,
     :param file_list: a list of file in root.
     :returns: a frozentset of ElfFile objects.
     """
-    ms = magic.open(magic.NONE)
-    if ms.load() != 0:
-        raise RuntimeError('Cannot load magic header detection')
-
     elf_files = set()  # type: Set[ElfFile]
-
-    fs_encoding = sys.getfilesystemencoding()
 
     for part_file in file_list:
         # Filter out object (*.o) files-- we only care about binaries.
@@ -300,13 +324,9 @@ def get_elf_files(root: str,
             logger.debug('Skipped link {!r} while finding dependencies'.format(
                 path))
             continue
-
-        path_b = path.encode(
-            fs_encoding, errors='surrogateescape')  # type: bytes
-        # Finally, make sure this is actually an ELF before queueing it up
-        # for an ldd call.
-        file_m = ms.file(path_b)
-        if file_m.startswith('ELF') and 'dynamically linked' in file_m:
+        # Finally, make sure this is actually an ELF file
+        file_m = _get_magic(path)
+        if _is_elf(file_m):
             elf_files.add(ElfFile(path=path, magic=file_m))
 
     return frozenset(elf_files)

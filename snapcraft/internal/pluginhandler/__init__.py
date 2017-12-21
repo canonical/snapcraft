@@ -475,32 +475,10 @@ class PluginHandler:
                 _migrate_files(system, system_dependency_paths, '/',
                                self.primedir, follow_symlinks=True)
 
-        def mangle_library_path(library_path: str, elf_file_path: str) -> str:
-            # If the path is is in the core snap, use the absolute path,
-            # if the path is primed, use $ORIGIN, and last if the dependency
-            # is not anywhere return an empty string.
-            #
-            # Once we move away from the system library grabbing logic
-            # we can move to a smarter library capturing mechanism.
-            if library_path.startswith(core_path):
-                return os.path.dirname(library_path)
-            elif (library_path.startswith(self.primedir) and
-                  os.path.exists(library_path)):
-                rel_library_path = os.path.relpath(library_path, elf_file_path)
-                rel_library_path_dir = os.path.dirname(rel_library_path)
-                # return the dirname, with the first .. replace with $ORIGIN
-                return rel_library_path_dir.replace('..', '$ORIGIN', 1)
-            else:
-                return ''
-
         if self._confinement == 'classic':
-            core_rpaths = common.get_library_paths(
-                core_path, self._project_options.arch_triplet,
-                existing_only=False)
             dynamic_linker = self._project_options.get_core_dynamic_linker()
             elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker,
-                                      library_path_func=mangle_library_path,
-                                      base_rpaths=core_rpaths)
+                                      base_path=self.primedir)
             for elf_file in elf_files:
                 elf_patcher.patch(elf_file=elf_file)
 
