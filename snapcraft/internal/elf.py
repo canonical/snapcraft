@@ -37,14 +37,14 @@ logger = logging.getLogger(__name__)
 class Library:
     """Represents the SONAME and path to the library."""
 
-    def __init__(self, *, soname: str, path: str, base_path: str,
+    def __init__(self, *, soname: str, path: str, root_path: str,
                  core_base_path: str) -> None:
         self.soname = soname
-        if path.startswith(base_path) or path.startswith(core_base_path):
+        if path.startswith(root_path) or path.startswith(core_base_path):
             self.path = path
         else:
             self.path = _crawl_for_path(soname=soname,
-                                        base_path=base_path,
+                                        root_path=root_path,
                                         core_base_path=core_base_path)
         # Required for libraries on the host and the fetching mechanism
         if not self.path:
@@ -63,12 +63,12 @@ class Library:
 
 
 @lru_cache()
-def _crawl_for_path(*, soname: str, base_path: str,
+def _crawl_for_path(*, soname: str, root_path: str,
                     core_base_path: str) -> str:
-    for root_path in (base_path, core_base_path):
-        if not os.path.exists(root_path):
+    for path in (root_path, core_base_path):
+        if not os.path.exists(path):
             continue
-        for root, directories, files in os.walk(root_path):
+        for root, directories, files in os.walk(path):
             for file_name in files:
                 if file_name == soname:
                     file_path = os.path.join(root, file_name)
@@ -90,14 +90,14 @@ class ElfFile:
         self.is_executable = 'interpreter' in magic
         self.dependencies = set()  # type: Set[Library]
 
-    def load_dependencies(self, base_path: str,
+    def load_dependencies(self, root_path: str,
                           core_base_path: str) -> Set[str]:
         """Load the set of libraries that are needed to satisfy elf's runtime.
 
         This may include libraries contained within the project.
         The object's .dependencies attribute is set after loading.
 
-        :param str base_path: the base path to search for missing dependencies.
+        :param str root_path: the base path to search for missing dependencies.
         :returns: a set of string with paths to the library dependencies of
                   elf.
         """
@@ -119,7 +119,7 @@ class ElfFile:
             if len(ldd_line) > 2:
                 libs.add(Library(soname=ldd_line[0],
                                  path=ldd_line[2],
-                                 base_path=base_path,
+                                 root_path=root_path,
                                  core_base_path=core_base_path))
 
         self.dependencies = libs
@@ -162,16 +162,16 @@ def _retry_patch(f):
 class Patcher:
     """Patcher holds the necessary logic to patch elf files."""
 
-    def __init__(self, *, dynamic_linker: str, base_path: str) -> None:
+    def __init__(self, *, dynamic_linker: str, root_path: str) -> None:
         """Create a Patcher instance.
 
         :param str dynamic_linker: the path to the dynamic linker to set the
                                    elf file to.
-        :param str base_paths: the base path for the snap to determine
-                               if use of $ORIGIN is possible.
+        :param str root_path: the base path for the snap to determine
+                              if use of $ORIGIN is possible.
         """
         self._dynamic_linker = dynamic_linker
-        self._base_path = base_path
+        self._root_path = root_path
 
         # If we are running from the snap we want to use the patchelf
         # bundled there as it would have the capability of working
@@ -240,7 +240,7 @@ class Patcher:
             if dependency.path:
                 if dependency.in_base_snap:
                     base_rpaths.add(os.path.dirname(dependency.path))
-                elif dependency.path.startswith(self._base_path):
+                elif dependency.path.startswith(self._root_path):
                     rel_library_path = os.path.relpath(dependency.path,
                                                        elf_file.path)
                     rel_library_path_dir = os.path.dirname(rel_library_path)

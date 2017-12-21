@@ -69,7 +69,7 @@ class TestGetLibraries(unit.TestCase):
 
     def test_get_libraries(self):
         elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
-        libs = elf_file.load_dependencies(base_path=self.prime_dir,
+        libs = elf_file.load_dependencies(root_path=self.prime_dir,
                                           core_base_path=self.core_base_path)
         self.assertThat(libs, Equals(frozenset(
             ['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
@@ -92,7 +92,7 @@ class TestGetLibraries(unit.TestCase):
         self.addCleanup(patcher.stop)
 
         elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
-        libs = elf_file.load_dependencies(base_path=self.prime_dir,
+        libs = elf_file.load_dependencies(root_path=self.prime_dir,
                                           core_base_path=self.core_base_path)
         self.assertThat(libs, Equals(frozenset(
             [primed_foo, '/usr/lib/bar.so.2'])))
@@ -102,7 +102,7 @@ class TestGetLibraries(unit.TestCase):
         open(primed_foo, 'w').close()
 
         elf_file = elf.ElfFile(path='foobar', magic=self.stub_magic)
-        libs = elf_file.load_dependencies(base_path=self.prime_dir,
+        libs = elf_file.load_dependencies(root_path=self.prime_dir,
                                           core_base_path=self.core_base_path)
         self.assertThat(libs, Equals(frozenset(
             ['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
@@ -118,7 +118,7 @@ class TestGetLibraries(unit.TestCase):
         self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
 
         elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
-        libs = elf_file.load_dependencies(base_path=self.prime_dir,
+        libs = elf_file.load_dependencies(root_path=self.prime_dir,
                                           core_base_path=self.core_base_path)
         self.assertThat(libs, Equals(
             frozenset(['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
@@ -127,7 +127,7 @@ class TestGetLibraries(unit.TestCase):
         self.get_system_libs_mock.return_value = frozenset(['foo.so.1'])
 
         elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
-        libs = elf_file.load_dependencies(base_path='/',
+        libs = elf_file.load_dependencies(root_path='/',
                                           core_base_path='/snap/core/current')
         self.assertThat(libs, Equals(frozenset(['/usr/lib/bar.so.2'])))
 
@@ -136,7 +136,7 @@ class TestGetLibraries(unit.TestCase):
             1, 'foo', b'bar')
 
         elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
-        libs = elf_file.load_dependencies(base_path='/',
+        libs = elf_file.load_dependencies(root_path='/',
                                           core_base_path='/snap/core/current')
         self.assertThat(libs, Equals(set()))
         self.assertThat(
@@ -189,7 +189,7 @@ class TestSystemLibsOnNewRelease(unit.TestCase):
                       'dynamically linked, interpreter '
                       '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
         elf_file = elf.ElfFile(path='foo', magic=stub_magic)
-        libs = elf_file.load_dependencies(base_path='/fake',
+        libs = elf_file.load_dependencies(root_path='/fake',
                                           core_base_path='/fake-core')
         self.assertThat(libs, Equals(frozenset()))
 
@@ -374,7 +374,7 @@ class TestPatcher(unit.TestCase):
         # The base_path does not matter here as there are not files to
         # be crawled for.
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
-                                  base_path='/fake')
+                                  root_path='/fake')
         elf_patcher.patch(elf_file=elf_file)
 
         check_call_mock.assert_called_once_with([
@@ -389,7 +389,7 @@ class TestPatcher(unit.TestCase):
         # The base_path does not matter here as there are not files to
         # be crawled for.
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
-                                  base_path='/fake')
+                                  root_path='/fake')
         elf_patcher.patch(elf_file=elf_file)
 
         self.assertFalse(check_call_mock.called)
@@ -407,7 +407,7 @@ class TestPatcherErrors(unit.TestCase):
         # The base_path does not matter here as there are not files to
         # be crawled for.
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
-                                  base_path='/fake')
+                                  root_path='/fake')
 
         self.assertRaises(errors.PatcherError,
                           elf_patcher.patch,

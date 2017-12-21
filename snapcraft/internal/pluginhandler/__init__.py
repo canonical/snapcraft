@@ -448,7 +448,7 @@ class PluginHandler:
 
         for elf_file in elf_files:
             all_dependencies.update(
-                elf_file.load_dependencies(base_path=self.primedir,
+                elf_file.load_dependencies(root_path=self.primedir,
                                            core_base_path=core_path))
 
         # Split the necessary dependencies into their corresponding location.
@@ -478,7 +478,7 @@ class PluginHandler:
         if self._confinement == 'classic':
             dynamic_linker = self._project_options.get_core_dynamic_linker()
             elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker,
-                                      base_path=self.primedir)
+                                      root_path=self.primedir)
             for elf_file in elf_files:
                 elf_patcher.patch(elf_file=elf_file)
 
