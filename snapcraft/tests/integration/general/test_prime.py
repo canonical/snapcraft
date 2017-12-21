@@ -40,6 +40,8 @@ class PrimeTestCase(integration.TestCase):
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
     def test_classic_confinement(self):
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
         project_dir = 'classic-build'
 
         # The first run should fail as the environment variable is not

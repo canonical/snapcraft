@@ -53,8 +53,7 @@ class BuildSnapsErrorsTestCase(integration.TestCase):
 
     def test_inexistent_build_snap(self):
         if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
-            self.expectFailure('The autopkgtest armhf runners cannot '
-                               'install snaps')
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
         snapcraft_yaml.update_part(
             'test-part-with-build-snap', {
@@ -77,8 +76,7 @@ class BuildSnapsErrorsTestCase(integration.TestCase):
         # If the snap tested here does not exist, then BuildSnapsTestCase
         # will fail.
         if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
-            self.expectFailure('The autopkgtest armhf runners cannot '
-                               'install snaps')
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
         snapcraft_yaml.update_part(
             'test-part-with-build-snap', {
