@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from snapcraft import formatting_utils
-from snapcraft.internal import common
+from snapcraft.internal import common, elf
 
 from typing import List
 
@@ -46,6 +46,8 @@ def runtime_env(root: str, arch_triplet: str) -> List[str]:
 
     # Add the default LD_LIBRARY_PATH
     paths = common.get_library_paths(root, arch_triplet)
+    # Add more specific LD_LIBRARY_PATH from staged packages if necessary
+    paths += elf.determine_ld_library_path(root)
 
     if paths:
         env.append(formatting_utils.format_path_variable(

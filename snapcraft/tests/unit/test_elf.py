@@ -18,6 +18,7 @@ import logging
 import os
 import subprocess
 import sys
+import tempfile
 from textwrap import dedent
 
 from testtools.matchers import Equals
@@ -25,6 +26,29 @@ from unittest import mock
 
 from snapcraft.internal import errors, elf, os_release
 from snapcraft.tests import unit
+
+
+class TestLdLibraryPathParser(unit.TestCase):
+
+    def _write_conf_file(self, contents):
+        tmp = tempfile.NamedTemporaryFile(delete=False, mode='w')
+        self.addCleanup(os.remove, tmp.name)
+
+        tmp.write(contents)
+        tmp.close()
+
+        return tmp.name
+
+    def test_extract_ld_library_paths(self):
+        file_path = self._write_conf_file("""# This is a comment
+/foo/bar
+/colon:/separated,/comma\t/tab /space # This is another comment
+/baz""")
+
+        self.assertThat(
+            elf._extract_ld_library_paths(file_path),
+            Equals(['/foo/bar', '/colon', '/separated', '/comma',
+                    '/tab', '/space', '/baz']))
 
 
 class TestGetLibraries(unit.TestCase):
