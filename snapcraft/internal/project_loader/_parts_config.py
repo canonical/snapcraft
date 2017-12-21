@@ -187,7 +187,7 @@ class PartsConfig:
 
         part = pluginhandler.PluginHandler(
             plugin=plugin,
-            part_properties=grammar_processor.get_properties(),
+            part_properties=part_properties,
             project_options=self._project_options,
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema,

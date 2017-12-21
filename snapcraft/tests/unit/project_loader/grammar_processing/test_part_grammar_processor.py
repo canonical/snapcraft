@@ -39,25 +39,25 @@ class PartGrammarTestCase(unit.TestCase):
             'properties': {'plugin': 'dump',
                            'source': 'foo'},
             'target_arch': 'amd64',
-            'expected': {'plugin': 'dump', 'source': 'foo'}
+            'expected': 'foo'
         }),
         ('on amd64', {
             'properties': {'plugin': 'dump',
                            'source': [{'on amd64': 'foo'}]},
             'target_arch': 'amd64',
-            'expected': {'plugin': 'dump', 'source': 'foo'}
+            'expected': 'foo'
         }),
         ('on i386', {
             'properties': {'plugin': 'dump',
                            'source': [{'on i386': 'foo'}, {'else': 'bar'}]},
             'target_arch': 'amd64',
-            'expected': {'plugin': 'dump', 'source': 'bar'}
+            'expected': 'bar'
         }),
         ('on i386, target_arch=i386', {
             'properties': {'plugin': 'dump',
                            'source': [{'on i386': 'foo'}, {'else': 'bar'}]},
             'target_arch': 'i386',
-            'expected': {'plugin': 'dump', 'source': 'foo'}
+            'expected': 'foo'
         }),
     ]
 
@@ -71,7 +71,7 @@ class PartGrammarTestCase(unit.TestCase):
             properties=plugin.properties,
             project_options=snapcraft.ProjectOptions(
                 target_deb_arch=self.target_arch),
-            repo=repo).get_properties(),
+            repo=repo).get_source(),
                         Equals(self.expected))
         # Verify that the original properties haven't changed
         self.assertThat(plugin.properties, Equals(self.properties))

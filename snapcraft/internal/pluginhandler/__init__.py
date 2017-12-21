@@ -66,6 +66,7 @@ class PluginHandler:
         self.plugin = plugin
         self._part_properties = _expand_part_properties(
             part_properties, part_schema)
+        self._part_property_grammar = part_properties
         self.stage_packages = []
         self._stage_packages_repo = stage_packages_repo
         self._grammar_processor = grammar_processor
@@ -96,10 +97,14 @@ class PluginHandler:
         # the default '.'
         source_handler = None
         if properties['source']:
+            if 'source' in self._part_property_grammar:
+                source = self._grammar_processor.get_source()
+            else:
+                source = properties['source']
             handler_class = sources.get_source_handler(
-                properties['source'], source_type=properties['source-type'])
+                source, source_type=properties['source-type'])
             source_handler = handler_class(
-                properties['source'],
+                source,
                 self.plugin.sourcedir,
                 source_checksum=properties['source-checksum'],
                 source_branch=properties['source-branch'],
