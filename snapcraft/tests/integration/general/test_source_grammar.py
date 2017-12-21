@@ -48,13 +48,24 @@ class PartsGrammarTestCase(integration.TestCase):
         self.useFixture(snapcraft_yaml)
         self.run_snapcraft(['pull'])
 
-    def test_source_on_other_arch_else(self):
+    def test_source_try(self):
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml.update_part('my-part', {
+            'plugin': 'nil',
+            'source': [
+                {'try': self.test_source},
+                {'else': 'invalid'},
+            ]
+        })
+        self.useFixture(snapcraft_yaml)
+        self.run_snapcraft(['pull'])
+
+    def test_source_on_other_arch(self):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
         snapcraft_yaml.update_part('my-part', {
             'plugin': 'nil',
             'source': [
                 {'on other-arch': 'invalid'},
-                {'else': self.test_source},
             ]
         })
         self.useFixture(snapcraft_yaml)

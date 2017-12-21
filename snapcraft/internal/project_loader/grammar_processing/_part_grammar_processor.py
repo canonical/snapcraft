@@ -53,30 +53,23 @@ class PartGrammarProcessor:
     >>> processor.get_build_packages()
     {'foo'}
 
-    Properties example:
+    Source example:
     >>> from unittest import mock
     >>> import snapcraft
-    >>> # Pretend that all packages are valid
-    >>> repo = mock.Mock()
-    >>> repo.is_valid.return_value = True
     >>> plugin = mock.Mock()
-    >>> plugin.properties = {'plugin': 'dump',
-    ...                      'source': [{'on amd64': '.'}, 'else fail']}
+    >>> plugin.properties = {'source': [{'on amd64': 'foo'}, 'else fail']}
     >>> processor = PartGrammarProcessor(
     ...    plugin=plugin,
     ...    properties=plugin.properties,
     ...    project_options=snapcraft.ProjectOptions(),
-    ...    repo=repo)
+    ...    repo=None)
     >>> processor.get_source()
-    '.'
+    'foo'
     """
 
     def __init__(self, *, plugin, properties, project_options, repo):
         self._project_options = project_options
         self._repo = repo
-
-        self._property_grammar = properties
-        self.__source = None
 
         self._build_snap_grammar = getattr(plugin, 'build_snaps', [])
         self.__build_snaps = set()
@@ -87,12 +80,20 @@ class PartGrammarProcessor:
         self._stage_package_grammar = getattr(plugin, 'stage_packages', [])
         self.__stage_packages = set()
 
+        self._source_grammar = properties.get('source', [''])
+        if not isinstance(self._source_grammar, list):
+            self._source_grammar = [self._source_grammar]
+        self.__source = ''
+
     def get_source(self):
         if not self.__source:
-            value = self._property_grammar['source']
-            self.__source = next(iter(grammar.process_grammar(
-                value if isinstance(value, list) else {value},
-                self._project_options, True)))
+            # The grammar is array-based, even though we only support a single
+            # source.
+            source_array = grammar.process_grammar(
+                self._source_grammar, self._project_options,
+                lambda s: True)
+            if len(source_array) > 0:
+                self.__source = source_array.pop()
         return self.__source
 
     def get_build_snaps(self):

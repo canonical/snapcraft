@@ -35,6 +35,12 @@ def load_tests(loader, tests, ignore):
 class PartGrammarTestCase(unit.TestCase):
 
     scenarios = [
+        ('empty', {
+            'properties': {'plugin': 'dump',
+                           'source': ''},
+            'target_arch': 'amd64',
+            'expected': ''
+        }),
         ('plain string', {
             'properties': {'plugin': 'dump',
                            'source': 'foo'},
@@ -49,6 +55,12 @@ class PartGrammarTestCase(unit.TestCase):
         }),
         ('on i386', {
             'properties': {'plugin': 'dump',
+                           'source': [{'on i386': 'foo'}]},
+            'target_arch': 'amd64',
+            'expected': ''
+        }),
+        ('on i386 with else', {
+            'properties': {'plugin': 'dump',
                            'source': [{'on i386': 'foo'}, {'else': 'bar'}]},
             'target_arch': 'amd64',
             'expected': 'bar'
@@ -59,11 +71,16 @@ class PartGrammarTestCase(unit.TestCase):
             'target_arch': 'i386',
             'expected': 'foo'
         }),
+        ('try', {
+            'properties': {'plugin': 'dump',
+                           'source': [{'try': 'foo'}]},
+            'target_arch': 'amd64',
+            'expected': 'foo'
+        }),
     ]
 
     def test_string_grammar(self):
         repo = mock.Mock()
-        repo.is_valid.return_value = True
         plugin = mock.Mock()
         plugin.properties = self.properties.copy()
         self.assertThat(PartGrammarProcessor(
