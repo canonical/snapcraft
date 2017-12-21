@@ -72,7 +72,7 @@ def _crawl_for_path(*, soname: str, base_path: str,
             for file_name in files:
                 if file_name == soname:
                     file_path = os.path.join(root, file_name)
-                    if _is_elf(_get_magic(file_path)):
+                    if _is_dynamically_linked_elf(_get_magic(file_path)):
                         return file_path
     return None
 
@@ -299,7 +299,7 @@ def _get_magic(path: str) -> str:
     return ms.file(path_b)
 
 
-def _is_elf(file_m: str) -> bool:
+def _is_dynamically_linked_elf(file_m: str) -> bool:
     return file_m.startswith('ELF') and 'dynamically linked' in file_m
 
 
@@ -326,7 +326,7 @@ def get_elf_files(root: str,
             continue
         # Finally, make sure this is actually an ELF file
         file_m = _get_magic(path)
-        if _is_elf(file_m):
+        if _is_dynamically_linked_elf(file_m):
             elf_files.add(ElfFile(path=path, magic=file_m))
 
     return frozenset(elf_files)
