@@ -4,11 +4,11 @@ snapcraft (2.38) xenial; urgency=medium
   * ci: detect docker to auto setup core (#1801)
   * ci: correctly run from snap (#1803)
   * elf: strip the .note.go.buildid to make room for patching elf (#1798)
-  * meta: create XDG_RUNTIME_DIR in wrappers. (#1818)
+  * meta: create XDG_RUNTIME_DIR in wrappers (#1818)
   * tests: use a simpler test for bzr and python (#1821)
   * repo: handle invalid snaps (#1815)
   * tests: skip classic confined tests on armhf (#1822)
-  * elf: search for DT_NEEDED in prime and the base. (#1823)
+  * elf: search for DT_NEEDED in prime and the base (#1823)
   * pluginhandler: warn the inclusion of libraries from the host (#1829)
 
   [ Leo Arias ]
