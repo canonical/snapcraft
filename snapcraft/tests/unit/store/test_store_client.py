@@ -101,6 +101,17 @@ class LoginTestCase(StoreTestCase):
         self.assertIsNotNone(self.client.conf.get('unbound_discharge'))
         self.assertTrue(config.Config().is_empty())
 
+    def test_login_successful_with_expiration(self):
+        self.client.login(
+            'dummy email',
+            'test correct password',
+            packages=[{'name': 'foo', 'series': '16'}],
+            channels=['edge'],
+            expires='2017-12-22'
+        )
+        self.assertIsNotNone(self.client.conf.get('macaroon'))
+        self.assertIsNotNone(self.client.conf.get('unbound_discharge'))
+
     def test_login_with_exported_login(self):
         conf = config.Config()
         conf.set('macaroon', 'test-macaroon')

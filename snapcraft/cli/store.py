@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from dateutil import parser
 import os
 import sys
 from textwrap import dedent
@@ -76,10 +77,14 @@ def _human_readable_acls(store: storeapi.StoreClient) -> str:
         if not acl[key]:
             human_readable_acl[key] = 'No restriction'
 
+    expiration_date = parser.parse(str(acl['expires']))
+    human_readable_acl['expires'] = expiration_date.strftime('%c %Z')
+
     return dedent("""\
         snaps:       {snap_names}
         channels:    {channels}
         permissions: {permissions}
+        expires:     {expires}
     """.format(**human_readable_acl))
 
 
@@ -286,7 +291,10 @@ def list_registered():
               help='Comma-separated list of channels to limit access')
 @click.option('--acls', metavar='<acls>',
               help='Comma-separated list of ACLs to limit access')
-def export_login(login_file: TextIO, snaps: str, channels: str, acls: str):
+@click.option('--expires', metavar='<expiration date>',
+              help='Date/time when this exported login expires')
+def export_login(login_file: TextIO, snaps: str, channels: str, acls: str,
+                 expires: str):
     """Save login configuration for a store account in FILE.
 
     This file can then be used to log in to the given account with the
@@ -295,11 +303,19 @@ def export_login(login_file: TextIO, snaps: str, channels: str, acls: str):
     For example, to limit access to the edge channel of any snap the account
     can access:
 
-        snapcraft export-login --channels=edge
+        snapcraft export-login --channels=edge exported
 
     Or to limit access to only the edge channel of a single snap:
 
-        snapcraft export-login --snaps=my-snap --channels=edge
+        snapcraft export-login --snaps=my-snap --channels=edge exported
+
+    To limit access to a single snap, but only until Sunday:
+
+        snapcraft export-login --snaps=my-snap --expires=Sunday exported
+
+    Or to expire on the first of the year in the PST timezone:
+
+        snapcraft export-login --expires="2018-01-01 17:21:00 PST" exported
     """
 
     snap_list = None
@@ -317,11 +333,21 @@ def export_login(login_file: TextIO, snaps: str, channels: str, acls: str):
     if acls:
         acl_list = acls.split(',')
 
+    if expires:
+        # Make sure the expiration date is in ISO 8601 format, as required by
+        # the store. Using dateutil here gives us the ability to accept far
+        # more user-friendly inputs.
+        try:
+            expires = parser.parse(expires).isoformat()
+        except ValueError:
+            raise storeapi.errors.InvalidExpirationDateError(expires)
+
     store = storeapi.StoreClient()
     if not snapcraft.login(store=store,
                            packages=snap_list,
                            channels=channel_list,
                            acls=acl_list,
+                           expires=expires,
                            save=False):
         sys.exit(1)
 

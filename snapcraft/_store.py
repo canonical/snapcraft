@@ -145,10 +145,11 @@ def _try_login(email: str, password: str, *,
                store: storeapi.StoreClient = None, save: bool = True,
                packages: Iterable[Dict[str, str]] = None,
                acls: Iterable[str] = None, channels: Iterable[str] = None,
-               config_fd: TextIO = None) -> None:
+               expires: str = None, config_fd: TextIO = None) -> None:
     try:
         store.login(email, password, packages=packages, acls=acls,
-                    channels=channels, config_fd=config_fd, save=save)
+                    channels=channels, expires=expires, config_fd=config_fd,
+                    save=save)
         if not config_fd:
             print()
             logger.info(storeapi.constants.TWO_FACTOR_WARNING)
@@ -156,7 +157,7 @@ def _try_login(email: str, password: str, *,
         one_time_password = input('Second-factor auth: ')
         store.login(
             email, password, one_time_password=one_time_password,
-            acls=acls, packages=packages, channels=channels,
+            acls=acls, packages=packages, channels=channels, expires=expires,
             config_fd=config_fd, save=save)
 
     # Continue if agreement and namespace conditions are met.
@@ -166,7 +167,7 @@ def _try_login(email: str, password: str, *,
 def login(*, store: storeapi.StoreClient = None,
           packages: Iterable[Dict[str, str]] = None, save: bool = True,
           acls: Iterable[str] = None, channels: Iterable[str] = None,
-          config_fd: TextIO = None) -> bool:
+          expires: str = None, config_fd: TextIO = None) -> bool:
     if not store:
         store = storeapi.StoreClient()
 
@@ -182,7 +183,8 @@ def login(*, store: storeapi.StoreClient = None,
 
     try:
         _try_login(email, password, store=store, packages=packages, acls=acls,
-                   channels=channels, config_fd=config_fd, save=save)
+                   channels=channels, expires=expires, config_fd=config_fd,
+                   save=save)
     except storeapi.errors.InvalidCredentialsError:
         return _fail_login(storeapi.constants.INVALID_CREDENTIALS)
     except storeapi.errors.StoreAuthenticationError:

@@ -603,3 +603,11 @@ class SignBuildAssertionError(StoreError):
 
     def __init__(self, snap_name):
         super().__init__(snap_name=snap_name)
+
+
+class InvalidExpirationDateError(StoreError):
+
+    fmt = 'Expiration date {expiration!r} is an invalid format'
+
+    def __init__(self, expiration):
+        super().__init__(expiration=expiration)

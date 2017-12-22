@@ -12,6 +12,7 @@ Build-Depends: bash-completion,
                python3 (>= 3.4),
                python3-apt,
                python3-click,
+               python3-dateutil,
                python3-debian,
                python3-docopt,
                python3-fixtures,
@@ -47,6 +48,7 @@ Standards-Version: 3.9.8
 Package: snapcraft
 Architecture: all
 Depends: python3-apt,
+         python3-dateutil,
          python3-debian,
          python3-click,
          python3-jsonschema,

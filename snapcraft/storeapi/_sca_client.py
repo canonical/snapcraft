@@ -22,7 +22,7 @@ class SCAClient(Client):
             'UBUNTU_STORE_API_ROOT_URL',
             constants.UBUNTU_STORE_API_ROOT_URL))
 
-    def get_macaroon(self, acls, packages=None, channels=None):
+    def get_macaroon(self, acls, packages=None, channels=None, expires=None):
         data = {
             'permissions': acls,
         }
@@ -33,6 +33,10 @@ class SCAClient(Client):
         if channels is not None:
             data.update({
                 'channels': channels,
+            })
+        if expires is not None:
+            data.update({
+                'expires': expires,
             })
         headers = {
             'Accept': 'application/json',

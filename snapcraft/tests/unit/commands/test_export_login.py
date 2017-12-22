@@ -50,6 +50,7 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
             'snap_ids': None,
             'channels': None,
             'permissions': None,
+            'expires': '2018-02-01T00:00:00',
         }
 
         result = self.run_command(['export-login', 'exported'])
@@ -68,11 +69,56 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
         self.assertThat(
             result.output, MatchesRegex(
                 r'.*permissions:.*?No restriction', re.DOTALL))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*expires:.*?Thu Feb  1 00:00:00 2018', re.DOTALL))
 
         self.mock_input.assert_called_once_with('Email: ')
         mock_login.assert_called_once_with(
             'user@example.com', mock.ANY, acls=None, packages=None,
-            channels=None, save=False, config_fd=None)
+            channels=None, expires=None, save=False, config_fd=None)
+        mock_acl.assert_called_once_with()
+
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    @mock.patch.object(storeapi.StoreClient, 'acl')
+    def test_successful_export_expires(
+            self, mock_acl, mock_login, mock_get_account_information):
+        self.mock_input.return_value = 'user@example.com'
+        mock_acl.return_value = {
+            'snap_ids': None,
+            'channels': None,
+            'permissions': None,
+            'expires': '2018-01-01T00:00:00',
+        }
+
+        result = self.run_command(
+            ['export-login', '--expires=2018-01-01', 'exported'])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.TWO_FACTOR_WARNING))
+        self.assertThat(
+            result.output, Contains('Login successfully exported'))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*snaps:.*?No restriction', re.DOTALL))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*channels:.*?No restriction', re.DOTALL))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*permissions:.*?No restriction', re.DOTALL))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*expires:.*?Mon Jan  1 00:00:00 2018', re.DOTALL))
+
+        self.mock_input.assert_called_once_with('Email: ')
+        mock_login.assert_called_once_with(
+            'user@example.com', mock.ANY, acls=None, packages=None,
+            channels=None, expires='2018-01-01T00:00:00', save=False,
+            config_fd=None)
         mock_acl.assert_called_once_with()
 
     @mock.patch.object(storeapi._sca_client.SCAClient,
@@ -89,6 +135,7 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
             'snap_ids': None,
             'channels': ['edge'],
             'permissions': None,
+            'expires': '2018-01-01T00:00:00',
         }
 
         result = self.run_command(['export-login', 'exported'])
@@ -107,6 +154,9 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
         self.assertThat(
             result.output, MatchesRegex(
                 r'.*permissions:.*?No restriction', re.DOTALL))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*expires:.*?Mon Jan  1 00:00:00 2018', re.DOTALL))
 
         self.assertThat(self.mock_input.call_count, Equals(2))
         self.mock_input.assert_has_calls([
@@ -115,11 +165,11 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
         mock_login.assert_has_calls([
             mock.call(
                 'user@example.com', mock.ANY, acls=None, packages=None,
-                channels=None, save=False, config_fd=None),
+                channels=None, expires=None, save=False, config_fd=None),
             mock.call(
                 'user@example.com', mock.ANY, one_time_password='123456',
-                acls=None, packages=None, channels=None, save=False,
-                config_fd=None)])
+                acls=None, packages=None, channels=None, expires=None,
+                save=False, config_fd=None)])
 
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_failed_login_with_invalid_credentials(self, mock_login):
