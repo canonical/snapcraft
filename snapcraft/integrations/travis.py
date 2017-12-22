@@ -75,7 +75,7 @@ from snapcraft.file_utils import (
     requires_command_success,
     requires_path_exists,
 )
-from snapcraft.internal import load_config
+from snapcraft.internal import project_loader
 from snapcraft._store import login
 from snapcraft.config import LOCAL_CONFIG_FILENAME
 
@@ -177,7 +177,7 @@ def requires_travis_preconditions():
 @requires_travis_preconditions()
 def refresh():
     series = storeapi.constants.DEFAULT_SERIES
-    project_config = load_config()
+    project_config = project_loader.load_config()
     snap_name = project_config.data['name']
     logger.info(
         'Refreshing credentials to push and release "{}" snaps '
@@ -195,7 +195,7 @@ def refresh():
 @requires_travis_preconditions()
 def enable():
     series = storeapi.constants.DEFAULT_SERIES
-    project_config = load_config()
+    project_config = project_loader.load_config()
     snap_name = project_config.data['name']
     logger.info(
         'Enabling Travis testbeds to push and release {!r} snaps '

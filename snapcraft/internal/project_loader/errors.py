@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from collections import OrderedDict
 import contextlib
 
 import snapcraft.internal.errors
@@ -127,6 +128,23 @@ def _determine_cause(error):
 
         messages.append(
             error.schema['validation-failure'].format(key))
+
+    # anyOf failures might have usable context... try to improve them a bit
+    if error.validator == 'anyOf':
+        contextual_messages = OrderedDict()  # type: Dict[str, str]
+        for contextual_error in error.context:
+            key = contextual_error.schema_path.popleft()
+            if key not in contextual_messages:
+                contextual_messages[key] = []
+            contextual_messages[key].append(contextual_error.message)
+
+        oneOf_messages = []  # type: List[str]
+        for key, value in contextual_messages.items():
+            oneOf_messages.append(formatting_utils.humanize_list(
+                value, 'and', '{}'))
+
+        messages.append(formatting_utils.humanize_list(
+            oneOf_messages, 'or', '{}'))
 
     return ' '.join(messages)
 

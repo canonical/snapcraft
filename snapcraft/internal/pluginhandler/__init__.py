@@ -26,6 +26,7 @@ from glob import glob, iglob
 import yaml
 
 import snapcraft
+import snapcraft.extractors
 from snapcraft import file_utils
 from snapcraft.internal import (
     common,
@@ -37,6 +38,7 @@ from snapcraft.internal import (
 )
 from ._scriptlets import ScriptRunner
 from ._build_attributes import BuildAttributes
+from ._metadata_extraction import extract_metadata
 
 from ._plugin_loader import load_plugin  # noqa
 
@@ -74,6 +76,11 @@ class PluginHandler:
         if not self._source:
             self._source = part_schema['source'].get('default')
 
+        self._pull_state = None  # type: states.PullState
+        self._build_state = None  # type: states.BuildState
+        self._stage_state = None  # type: states.StageState
+        self._prime_state = None  # type: states.PrimeState
+
         self._project_options = project_options
         self.deps = []
 
@@ -92,6 +99,26 @@ class PluginHandler:
             self._part_properties['build-attributes'])
 
         self._migrate_state_file()
+
+    def get_pull_state(self) -> states.PullState:
+        if not self._pull_state:
+            self._pull_state = states.get_state(self.plugin.statedir, 'pull')
+        return self._pull_state
+
+    def get_build_state(self) -> states.BuildState:
+        if not self._build_state:
+            self._build_state = states.get_state(self.plugin.statedir, 'build')
+        return self._build_state
+
+    def get_stage_state(self) -> states.StageState:
+        if not self._stage_state:
+            self._stage_state = states.get_state(self.plugin.statedir, 'stage')
+        return self._stage_state
+
+    def get_prime_state(self) -> states.PrimeState:
+        if not self._prime_state:
+            self._prime_state = states.get_state(self.plugin.statedir, 'prime')
+        return self._prime_state
 
     def _get_source_handler(self, properties):
         """Returns a source_handler for the source in properties."""
@@ -260,12 +287,23 @@ class PluginHandler:
         part_build_packages = self._part_properties.get('build-packages', [])
         part_build_snaps = self._part_properties.get('build-snaps', [])
 
+        # Extract any requested metadata available in the source directory
+        metadata = snapcraft.extractors.ExtractedMetadata()
+        metadata_files = []
+        for path in self._part_properties.get('parse-info', []):
+            file_path = os.path.join(self.plugin.sourcedir, path)
+            with contextlib.suppress(errors.MissingMetadataFileError):
+                metadata.update(extract_metadata(self.name, file_path))
+                metadata_files.append(path)
+
         self.mark_done('pull', states.PullState(
             pull_properties, part_properties=self._part_properties,
             project=self._project_options, stage_packages=self.stage_packages,
             build_snaps=part_build_snaps,
             build_packages=part_build_packages,
-            source_details=self.source_handler.source_details
+            source_details=self.source_handler.source_details,
+            metadata=metadata,
+            metadata_files=metadata_files
         ))
 
     def clean_pull(self, hint=''):
@@ -337,9 +375,40 @@ class PluginHandler:
         plugin_manifest = self.plugin.get_manifest()
         machine_manifest = self._get_machine_manifest()
 
+        # Extract any requested metadata available in the build directory,
+        # followed by the install directory (which takes precedence)
+        metadata_files = []
+        metadata = snapcraft.extractors.ExtractedMetadata()
+        for path in self._part_properties.get('parse-info', []):
+            file_path = os.path.join(self.plugin.builddir, path)
+            found = False
+            with contextlib.suppress(errors.MissingMetadataFileError):
+                metadata.update(extract_metadata(self.name, file_path))
+                found = True
+
+            file_path = os.path.join(self.plugin.installdir, path)
+            with contextlib.suppress(errors.MissingMetadataFileError):
+                metadata.update(extract_metadata(self.name, file_path))
+                found = True
+
+            if found:
+                metadata_files.append(path)
+            else:
+                # If this metadata file is not found in either build or
+                # install, check the pull state to make sure it was found
+                # there. If not, we need to let the user know.
+                state = self.get_pull_state()
+                if not state or path not in state.extracted_metadata['files']:
+                    raise errors.MissingMetadataFileError(self.name, path)
+
         self.mark_done('build', states.BuildState(
-            build_properties, self._part_properties, self._project_options,
-            plugin_manifest, machine_manifest))
+            property_names=build_properties,
+            part_properties=self._part_properties,
+            project=self._project_options,
+            plugin_assets=plugin_manifest,
+            machine_assets=machine_manifest,
+            metadata=metadata,
+            metadata_files=metadata_files))
 
     def _get_machine_manifest(self):
         return {

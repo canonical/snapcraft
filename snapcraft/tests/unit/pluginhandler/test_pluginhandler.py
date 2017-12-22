@@ -27,7 +27,7 @@ from unittest.mock import (
     patch,
 )
 
-from testtools.matchers import Equals, FileExists, Not
+from testtools.matchers import Contains, Equals, FileExists, Not
 
 import snapcraft
 from . import mocks
@@ -70,6 +70,16 @@ class PluginTestCase(unit.TestCase):
                 handler.plugin.build_basedir, 'file1')))
         self.assertTrue(
             os.path.exists(os.path.join(handler.plugin.builddir, 'file2')))
+
+    def test_build_with_missing_metadata_file(self):
+        handler = self.load_part('test-part', part_properties={
+            'parse-info': ['missing-file']
+        })
+        handler.makedirs()
+
+        raised = self.assertRaises(
+            errors.MissingMetadataFileError, handler.build)
+        self.assertThat(raised.path, Equals('missing-file'))
 
     def test_build_without_subdir_copies_sourcedir(self):
         handler = self.load_part('test-part')
@@ -822,13 +832,61 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, 'Expected pull to save state YAML')
         self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(9))
+        self.assertThat(len(state.properties), Equals(10))
         for expected in ['source', 'source-branch', 'source-commit',
                          'source-depth', 'source-subdir', 'source-tag',
-                         'source-type', 'plugin', 'stage-packages']:
+                         'source-type', 'plugin', 'stage-packages',
+                         'parse-info']:
             self.assertTrue(expected in state.properties)
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
+
+    @patch('snapcraft.internal.repo.Repo')
+    def test_pull_state_with_extracted_metadata(self, repo_mock):
+        self.handler = self.load_part('test_part', part_properties={
+            'parse-info': ['metadata-file']
+        })
+
+        # Create metadata file
+        open('metadata-file', 'w').close()
+
+        def _fake_extractor(file_path):
+            return snapcraft.extractors.ExtractedMetadata(
+                summary='test summary',
+                description='test description')
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        self.assertThat(self.handler.last_step(), Equals(None))
+        repo_mock.get_installed_build_packages.return_value = []
+
+        self.handler.pull()
+
+        self.assertThat(self.handler.last_step(), Equals('pull'))
+        state = self.handler.get_pull_state()
+
+        self.assertTrue(state, 'Expected pull to save state YAML')
+        self.assertTrue(type(state) is states.PullState)
+        self.assertTrue(type(state.properties) is OrderedDict)
+        self.assertThat(len(state.properties), Equals(10))
+        for expected in ['source', 'source-branch', 'source-commit',
+                         'source-depth', 'source-subdir', 'source-tag',
+                         'source-type', 'plugin', 'stage-packages',
+                         'parse-info']:
+            self.assertThat(state.properties, Contains(expected))
+        self.assertTrue(type(state.project_options) is OrderedDict)
+        self.assertThat(state.project_options, Contains('deb_arch'))
+
+        self.assertTrue(
+            type(state.extracted_metadata) is OrderedDict)
+        for expected in ('metadata', 'files'):
+            self.assertThat(state.extracted_metadata, Contains(expected))
+        metadata = state.extracted_metadata['metadata']
+        self.assertThat(metadata.get_summary(), Equals('test summary'))
+        self.assertThat(metadata.get_description(), Equals('test description'))
+        files = state.extracted_metadata['files']
+        self.assertThat(files, Equals(['metadata-file']))
 
     def test_pull_state_with_properties(self):
         self.get_pull_properties_mock.return_value = ['foo']
@@ -881,6 +939,51 @@ class StateTestCase(StateBaseTestCase):
             self.assertTrue(expected in state.properties)
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
+
+    def test_build_state_with_extracted_metadata(self):
+        self.handler = self.load_part('test_part', part_properties={
+            'parse-info': ['metadata-file']
+        })
+
+        # Create metadata file
+        open(os.path.join(
+            self.handler.plugin.sourcedir, 'metadata-file'), 'w').close()
+
+        def _fake_extractor(file_path):
+            return snapcraft.extractors.ExtractedMetadata(
+                summary='test summary',
+                description='test description')
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        self.assertThat(self.handler.last_step(), Equals(None))
+
+        self.handler.build()
+
+        self.assertThat(self.handler.last_step(), Equals('build'))
+        state = self.handler.get_build_state()
+
+        self.assertTrue(state, 'Expected build to save state YAML')
+        self.assertTrue(type(state) is states.BuildState)
+        self.assertTrue(type(state.properties) is OrderedDict)
+        self.assertThat(len(state.properties), Equals(8))
+        for expected in ['after', 'build-attributes', 'build-packages',
+                         'disable-parallel', 'organize', 'prepare', 'build',
+                         'install']:
+            self.assertThat(state.properties, Contains(expected))
+        self.assertTrue(type(state.project_options) is OrderedDict)
+        self.assertThat(state.project_options, Contains('deb_arch'))
+
+        self.assertTrue(
+            type(state.extracted_metadata) is OrderedDict)
+        for expected in ('metadata', 'files'):
+            self.assertThat(state.extracted_metadata, Contains(expected))
+        metadata = state.extracted_metadata['metadata']
+        self.assertThat(metadata.get_summary(), Equals('test summary'))
+        self.assertThat(metadata.get_description(), Equals('test description'))
+        files = state.extracted_metadata['files']
+        self.assertThat(files, Equals(['metadata-file']))
 
     def test_build_state_with_properties(self):
         self.get_build_properties_mock.return_value = ['foo']

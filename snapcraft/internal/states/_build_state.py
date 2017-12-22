@@ -16,6 +16,7 @@
 
 import yaml
 
+from snapcraft import extractors
 from snapcraft.internal.states._state import PartState
 
 
@@ -30,13 +31,13 @@ yaml.add_constructor(u'!BuildState', _build_state_constructor)
 def _schema_properties():
     return {
         'after',
+        'build',
         'build-attributes',
         'build-packages',
         'disable-parallel',
+        'install',
         'organize',
         'prepare',
-        'build',
-        'install',
     }
 
 
@@ -45,7 +46,8 @@ class BuildState(PartState):
 
     def __init__(
             self, property_names, part_properties=None, project=None,
-            plugin_assets=None, machine_assets=None):
+            plugin_assets=None, machine_assets=None, metadata=None,
+            metadata_files=None):
         # Save this off before calling super() since we'll need it
         # FIXME: for 3.x the name `schema_properties` is leaking
         #        implementation details from a higher layer.
@@ -56,6 +58,17 @@ class BuildState(PartState):
             self.assets = {}
         if machine_assets:
             self.assets.update(machine_assets)
+
+        if not metadata:
+            metadata = extractors.ExtractedMetadata()
+
+        if not metadata_files:
+            metadata_files = []
+
+        self.extracted_metadata = {
+            'metadata': metadata,
+            'files': metadata_files
+        }
 
         super().__init__(part_properties, project)
 

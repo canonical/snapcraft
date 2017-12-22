@@ -36,10 +36,11 @@ from snapcraft.internal.meta import (
     _errors as meta_errors,
     _snap_packaging
 )
-from snapcraft import ProjectOptions
+from snapcraft import ProjectOptions, extractors
 from snapcraft.internal import common
 from snapcraft.internal import errors
-from snapcraft.tests import unit
+from snapcraft.internal import project_loader
+from snapcraft.tests import unit, fixture_setup
 
 
 class CreateBaseTestCase(unit.TestCase):
@@ -56,6 +57,11 @@ class CreateBaseTestCase(unit.TestCase):
             'confinement': 'devmode',
             'environment': {
                 'GLOBAL': 'y',
+            },
+            'parts': {
+                'test-part': {
+                    'plugin': 'nil',
+                }
             }
         }
 
@@ -75,9 +81,19 @@ class CreateBaseTestCase(unit.TestCase):
 
         self.project_options = ProjectOptions()
 
-    def generate_meta_yaml(self):
+    def generate_meta_yaml(self, *, build=False):
+        os.makedirs('snap', exist_ok=True)
+        with open(os.path.join('snap', 'snapcraft.yaml'), 'w') as f:
+            f.write(yaml.dump(self.config_data))
+
+        self.config = project_loader.load_config()
+        if build:
+            for part in self.config.parts.all_parts:
+                part.pull()
+                part.build()
+
         _snap_packaging.create_snap_packaging(
-            self.config_data, self.project_options, 'dummy')
+            self.config.data, self.config.parts, self.project_options, 'dummy')
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
@@ -93,6 +109,7 @@ class CreateTestCase(CreateBaseTestCase):
 
         expected = {'architectures': ['amd64'],
                     'confinement': 'devmode',
+                    'grade': 'stable',
                     'description': 'my description',
                     'environment': {'GLOBAL': 'y'},
                     'summary': 'my summary',
@@ -124,8 +141,14 @@ class CreateTestCase(CreateBaseTestCase):
         _create_file('gadget.yaml', content=gadget_yaml)
 
         self.config_data['type'] = 'gadget'
+        os.makedirs('snap', exist_ok=True)
+        with open(os.path.join('snap', 'snapcraft.yaml'), 'w') as f:
+            f.write(yaml.dump(self.config_data))
+
+        config = project_loader.load_config()
+
         _snap_packaging.create_snap_packaging(
-            self.config_data, self.project_options, 'dummy')
+            self.config_data, config.parts, self.project_options, 'dummy')
 
         expected_gadget = os.path.join(self.meta_dir, 'gadget.yaml')
         self.assertTrue(os.path.exists(expected_gadget))
@@ -135,10 +158,17 @@ class CreateTestCase(CreateBaseTestCase):
     def test_create_gadget_meta_with_missing_gadget_yaml_raises_error(self):
         self.config_data['type'] = 'gadget'
 
+        os.makedirs('snap', exist_ok=True)
+        with open(os.path.join('snap', 'snapcraft.yaml'), 'w') as f:
+            f.write(yaml.dump(self.config_data))
+
+        config = project_loader.load_config()
+
         self.assertRaises(
             errors.MissingGadgetError,
             _snap_packaging.create_snap_packaging,
             self.config_data,
+            config.parts,
             self.project_options,
             'dummy'
         )
@@ -224,12 +254,18 @@ class CreateTestCase(CreateBaseTestCase):
         _create_file('my-icon.png')
         self.config_data['icon'] = 'my-icon.png'
 
+        os.makedirs('snap', exist_ok=True)
+        with open(os.path.join('snap', 'snapcraft.yaml'), 'w') as f:
+            f.write(yaml.dump(self.config_data))
+
+        config = project_loader.load_config()
+
         _snap_packaging.create_snap_packaging(
-            self.config_data, self.project_options, 'dummy')
+            self.config_data, config.parts, self.project_options, 'dummy')
 
         # Running again should be good
         _snap_packaging.create_snap_packaging(
-            self.config_data, self.project_options, 'dummy')
+            self.config_data, config.parts, self.project_options, 'dummy')
 
     def test_create_meta_with_icon_in_setup(self):
         gui_path = os.path.join('setup', 'gui')
@@ -314,6 +350,7 @@ class CreateTestCase(CreateBaseTestCase):
             'name': 'my-package',
             'version': '1.0',
             'confinement': 'devmode',
+            'grade': 'stable',
             'environment': {'GLOBAL': 'y'},
             'plugs': {
                 'network-server': {
@@ -415,6 +452,96 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertThat(
             y['hooks']['bar'], Not(Contains('plugs')),
             "Expected generated 'bar' hook to not contain 'plugs'")
+
+
+class CreateMetadataFromSourceErrorsTestCase(CreateBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.config_data = {
+            'name': 'test-name',
+            'version': 'test-version',
+            'summary': 'test-summary',
+            'description': 'test-description',
+            'adopt-info': 'test-part',
+            'parts': {
+                'test-part': {
+                    'plugin': 'nil',
+                    'parse-info': ['test-metadata-file']
+                }
+            }
+        }
+        # Create metadata file
+        open('test-metadata-file', 'w').close()
+
+    def test_create_metadata_with_missing_parse_info(self):
+        del self.config_data['summary']
+        del self.config_data['parts']['test-part']['parse-info']
+        raised = self.assertRaises(
+            meta_errors.AdoptedPartNotParsingInfo,
+            self.generate_meta_yaml)
+        self.assertThat(raised.part, Equals('test-part'))
+
+    def test_create_metadata_with_wrong_adopt_info(self):
+        del self.config_data['summary']
+        self.config_data['adopt-info'] = 'wrong-part'
+        raised = self.assertRaises(
+            meta_errors.AdoptedPartMissingError, self.generate_meta_yaml)
+        self.assertThat(raised.part, Equals('wrong-part'))
+
+    def test_metadata_doesnt_overwrite_specified(self):
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(
+                summary='extracted summary',
+                description='extracted description')
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        y = self.generate_meta_yaml(build=True)
+
+        # Since both summary and description were specified, neither should be
+        # overwritten
+        self.assertThat(y['summary'], Equals(self.config_data['summary']))
+        self.assertThat(
+            y['description'], Equals(self.config_data['description']))
+
+    def test_metadata_satisfies_required_property(self):
+        del self.config_data['summary']
+
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(
+                summary='extracted summary',
+                description='extracted description')
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        y = self.generate_meta_yaml(build=True)
+
+        # Summary should come from the extracted metadata, while description
+        # should not.
+        self.assertThat(y['summary'], Equals('extracted summary'))
+        self.assertThat(
+            y['description'], Equals(self.config_data['description']))
+
+    def test_metadata_not_all_properties_satisfied(self):
+        del self.config_data['summary']
+        del self.config_data['description']
+
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(
+                description='extracted description')
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        # Assert that description has been satisfied by extracted metadata, but
+        # summary has not.
+        raised = self.assertRaises(
+            meta_errors.MissingSnapcraftYamlKeysError,
+            self.generate_meta_yaml, build=True)
+        self.assertThat(raised.keys, Equals("'summary'"))
 
 
 class WriteSnapDirectoryTestCase(CreateBaseTestCase):
@@ -544,7 +671,12 @@ class EnsureFilePathsTestCase(CreateBaseTestCase):
     ]
 
     def test_file_path_entry(self):
-        self.config_data['apps'] = {'app': {self.key: self.filepath}}
+        self.config_data['apps'] = {
+            'app': {
+                'command': 'echo "hello"',
+                self.key: self.filepath,
+            }
+        }
         _create_file(os.path.join('prime', self.filepath),
                      content=self.content)
 
@@ -564,7 +696,12 @@ class EnsureFilePathsTestCaseFails(CreateBaseTestCase):
     ]
 
     def test_file_path_entry(self):
-        self.config_data['apps'] = {'app': {self.key: self.filepath}}
+        self.config_data['apps'] = {
+            'app': {
+                'command': 'echo "hello"',
+                self.key: self.filepath,
+            }
+        }
 
         self.assertRaises(
             errors.SnapcraftPathEntryError, self.generate_meta_yaml)

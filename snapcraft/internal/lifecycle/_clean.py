@@ -19,7 +19,7 @@ import os
 import shutil
 
 from snapcraft import formatting_utils
-from snapcraft.internal import common, load_config
+from snapcraft.internal import common, project_loader
 from . import constants
 
 
@@ -174,7 +174,7 @@ def clean(project_options, parts, step=None):
         _cleanup_common_directories_for_step(step, project_options)
         return
 
-    config = load_config()
+    config = project_loader.load_config()
 
     if not parts and (step == 'stage' or step == 'prime'):
         # If we've been asked to clean stage or prime without being given

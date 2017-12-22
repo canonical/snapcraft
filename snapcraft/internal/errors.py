@@ -422,3 +422,41 @@ class PatcherError(SnapcraftError):
 
     def __init__(self, *, elf_file, message):
         super().__init__(elf_file=elf_file, message=message)
+
+
+class MetadataExtractionError(SnapcraftError):
+    pass
+
+
+class MissingMetadataFileError(MetadataExtractionError):
+
+    fmt = (
+        "Failed to generate snap metadata: "
+        "Part {part_name!r} has a 'parse-info' referring to metadata file "
+        "{path!r}, which does not exist.")
+
+    def __init__(self, part_name: str, path: str) -> None:
+        super().__init__(part_name=part_name, path=path)
+
+
+class UnhandledMetadataFileTypeError(MetadataExtractionError):
+
+    fmt = (
+        "Failed to extract metadata from {path!r}: "
+        "This type of file is not supported for supplying metadata."
+    )
+
+    def __init__(self, path: str) -> None:
+        super().__init__(path=path)
+
+
+class InvalidExtractorValueError(MetadataExtractionError):
+
+    fmt = (
+        "Failed to extract metadata from {path!r}: "
+        "Extractor {extractor_name!r} didn't return ExtractedMetadata as "
+        "expected."
+    )
+
+    def __init__(self, path: str, extractor_name: str) -> None:
+        super().__init__(path=path, extractor_name=extractor_name)
