@@ -14,13 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import contextlib
-import re
 import glob
 import logging
 import os
+import re
 import subprocess
 import sys
-from functools import wraps
+from functools import lru_cache, wraps
 from typing import FrozenSet, List, Set, Sequence
 
 import magic
@@ -36,6 +36,49 @@ from snapcraft.internal import (
 logger = logging.getLogger(__name__)
 
 
+class Library:
+    """Represents the SONAME and path to the library."""
+
+    def __init__(self, *, soname: str, path: str, root_path: str,
+                 core_base_path: str) -> None:
+        self.soname = soname
+        if path.startswith(root_path) or path.startswith(core_base_path):
+            self.path = path
+        else:
+            self.path = _crawl_for_path(soname=soname,
+                                        root_path=root_path,
+                                        core_base_path=core_base_path)
+        # Required for libraries on the host and the fetching mechanism
+        if not self.path:
+            self.path = path
+
+        system_libs = _get_system_libs()
+        if soname in system_libs:
+            self.system_lib = True
+        else:
+            self.system_lib = False
+
+        if path.startswith(core_base_path):
+            self.in_base_snap = True
+        else:
+            self.in_base_snap = False
+
+
+@lru_cache()
+def _crawl_for_path(*, soname: str, root_path: str,
+                    core_base_path: str) -> str:
+    for path in (root_path, core_base_path):
+        if not os.path.exists(path):
+            continue
+        for root, directories, files in os.walk(path):
+            for file_name in files:
+                if file_name == soname:
+                    file_path = os.path.join(root, file_name)
+                    if _is_dynamically_linked_elf(_get_magic(file_path)):
+                        return file_path
+    return None
+
+
 class ElfFile:
     """ElfFile represents and elf file on a path and its attributes."""
 
@@ -47,20 +90,25 @@ class ElfFile:
         """
         self.path = path
         self.is_executable = 'interpreter' in magic
-        self.dependencies = set()  # type: Set[str]
+        self.dependencies = set()  # type: Set[Library]
 
-    def load_dependencies(self) -> Set[str]:
+    def load_dependencies(self, root_path: str,
+                          core_base_path: str) -> Set[str]:
         """Load the set of libraries that are needed to satisfy elf's runtime.
 
         This may include libraries contained within the project.
         The object's .dependencies attribute is set after loading.
 
+        :param str root_path: the base path to search for missing dependencies.
         :returns: a set of string with paths to the library dependencies of
                   elf.
         """
         logger.debug('Getting dependencies for {!r}'.format(self.path))
         ldd_out = []  # type: List[str]
         try:
+            # ldd output sample:
+            # /lib64/ld-linux-x86-64.so.2 (0x00007fb3c5298000)
+            # libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb3bef03000)
             ldd_out = common.run_output(['ldd', self.path]).split('\n')
         except subprocess.CalledProcessError:
             logger.warning(
@@ -68,19 +116,24 @@ class ElfFile:
                 '{!r}'.format(self.path))
             return set()
         ldd_out_split = [l.split() for l in ldd_out]
-        ldd_out_list = [l[2] for l in ldd_out_split
-                        if len(l) > 2 and os.path.exists(l[2])]
-
-        # Now lets filter out what would be on the system
-        system_libs = _get_system_libs()
-        libs = {l for l in ldd_out_list
-                if not os.path.basename(l) in system_libs}
-        # Classic confinement won't do what you want with library crawling
-        # and has a nasty side effect described in LP: #1670100
-        libs = {l for l in libs if not l.startswith('/snap/')}
+        libs = set()
+        for ldd_line in ldd_out_split:
+            if len(ldd_line) > 2:
+                libs.add(Library(soname=ldd_line[0],
+                                 path=ldd_line[2],
+                                 root_path=root_path,
+                                 core_base_path=core_base_path))
 
         self.dependencies = libs
-        return libs
+
+        # Return a set useful only for fetching libraries from the host
+        library_paths = set()  # type: Set[str]
+        for l in libs:
+            if (os.path.exists(l.path) and
+                    not l.in_base_snap and
+                    not l.system_lib):
+                library_paths.add(l.path)
+        return library_paths
 
 
 def _retry_patch(f):
@@ -111,22 +164,16 @@ def _retry_patch(f):
 class Patcher:
     """Patcher holds the necessary logic to patch elf files."""
 
-    def __init__(self, *, dynamic_linker: str,
-                 library_path_func=lambda x: x,
-                 base_rpaths: List[str]= None) -> None:
+    def __init__(self, *, dynamic_linker: str, root_path: str) -> None:
         """Create a Patcher instance.
 
         :param str dynamic_linker: the path to the dynamic linker to set the
                                    elf file to.
-        :param library_path_func: function to determine the library path to a
-                                  given dependency of ElfFile.
-        :param list base_rpaths: library paths for the used base snap.
+        :param str root_path: the base path for the snap to determine
+                              if use of $ORIGIN is possible.
         """
         self._dynamic_linker = dynamic_linker
-        self._library_path_func = library_path_func
-        if not base_rpaths:
-            base_rpaths = []
-        self._base_rpaths = base_rpaths
+        self._root_path = root_path
 
         # If we are running from the snap we want to use the patchelf
         # bundled there as it would have the capability of working
@@ -189,17 +236,30 @@ class Patcher:
                                       message=str(call_error))
 
     def _get_rpath(self, elf_file) -> str:
-        rpaths = []  # type: List[str]
+        origin_rpaths = set()  # type: Set[str]
+        base_rpaths = set()  # type: Set[str]
         for dependency in elf_file.dependencies:
-            rpaths.append(self._library_path_func(dependency, elf_file.path))
+            if dependency.path:
+                if dependency.in_base_snap:
+                    base_rpaths.add(os.path.dirname(dependency.path))
+                elif dependency.path.startswith(self._root_path):
+                    rel_library_path = os.path.relpath(dependency.path,
+                                                       elf_file.path)
+                    rel_library_path_dir = os.path.dirname(rel_library_path)
+                    # return the dirname, with the first .. replace
+                    # with $ORIGIN
+                    origin_rpaths.add(rel_library_path_dir.replace(
+                        '..', '$ORIGIN', 1))
 
-        origin_paths = ':'.join((r for r in set(rpaths) if r))
-        base_rpaths = ':'.join(self._base_rpaths)
+        origin_paths = ':'.join((r for r in origin_rpaths if r))
+        core_base_rpaths = ':'.join(base_rpaths)
 
-        if origin_paths:
-            return '{}:{}'.format(origin_paths, base_rpaths)
+        if origin_paths and core_base_rpaths:
+            return '{}:{}'.format(origin_paths, core_base_rpaths)
+        elif origin_paths and not core_base_rpaths:
+            return origin_paths
         else:
-            return base_rpaths
+            return core_base_rpaths
 
 
 def determine_ld_library_path(root: str) -> List[str]:
@@ -272,6 +332,22 @@ def _get_system_libs() -> FrozenSet[str]:
     return _libraries
 
 
+@lru_cache()
+def _get_magic(path: str) -> str:
+    ms = magic.open(magic.NONE)
+    if ms.load() != 0:
+        raise RuntimeError('Cannot load magic header detection')
+
+    fs_encoding = sys.getfilesystemencoding()
+    path_b = path.encode(
+        fs_encoding, errors='surrogateescape')  # type: bytes
+    return ms.file(path_b)
+
+
+def _is_dynamically_linked_elf(file_m: str) -> bool:
+    return file_m.startswith('ELF') and 'dynamically linked' in file_m
+
+
 def get_elf_files(root: str,
                   file_list: Sequence[str]) -> FrozenSet[ElfFile]:
     """Return a frozenset of elf files from file_list prepended with root.
@@ -280,13 +356,7 @@ def get_elf_files(root: str,
     :param file_list: a list of file in root.
     :returns: a frozentset of ElfFile objects.
     """
-    ms = magic.open(magic.NONE)
-    if ms.load() != 0:
-        raise RuntimeError('Cannot load magic header detection')
-
     elf_files = set()  # type: Set[ElfFile]
-
-    fs_encoding = sys.getfilesystemencoding()
 
     for part_file in file_list:
         # Filter out object (*.o) files-- we only care about binaries.
@@ -299,13 +369,9 @@ def get_elf_files(root: str,
             logger.debug('Skipped link {!r} while finding dependencies'.format(
                 path))
             continue
-
-        path_b = path.encode(
-            fs_encoding, errors='surrogateescape')  # type: bytes
-        # Finally, make sure this is actually an ELF before queueing it up
-        # for an ldd call.
-        file_m = ms.file(path_b)
-        if file_m.startswith('ELF') and 'dynamically linked' in file_m:
+        # Finally, make sure this is actually an ELF file
+        file_m = _get_magic(path)
+        if _is_dynamically_linked_elf(file_m):
             elf_files.add(ElfFile(path=path, magic=file_m))
 
     return frozenset(elf_files)

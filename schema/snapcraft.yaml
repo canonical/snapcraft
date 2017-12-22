@@ -1,6 +1,35 @@
 $schema: http://json-schema.org/draft-04/schema#
 
 definitions:
+  grammar-string:
+    oneOf:
+      - type: string
+        usage: "<string>"
+      - type: array
+        items:
+          minitems: 1
+          uniqueItems: true
+          anyOf:
+            - type: object
+              usage: "on <selector>[,<selector>...]:"
+              additionalProperties: false
+              patternProperties:
+                ^on\s+.+$:
+                  $ref: "#/definitions/grammar-string"
+            - type: object
+              usage: "try:"
+              additionalProperties: false
+              patternProperties:
+                ^try$:
+                  $ref: "#/definitions/grammar-string"
+            - type: object
+              usage: "else:"
+              additionalProperties: false
+              patternProperties:
+                ^else$:
+                  $ref: "#/definitions/grammar-string"
+            - type: string
+              pattern: "else fail"
   grammar-array:
     type: array
     minitems: 1
@@ -253,7 +282,7 @@ properties:
             type: string
             description: plugin name
           source:
-            type: string
+            $ref: "#/definitions/grammar-string"
             default: '.'
           source-checksum:
               type: string
