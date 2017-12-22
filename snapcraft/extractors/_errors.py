@@ -20,9 +20,19 @@ from snapcraft.internal.errors import MetadataExtractionError
 class UnhandledFileError(MetadataExtractionError):
 
     fmt = (
-        "Failed to extract metadata from {file_path!r}: "
+        "Failed to extract metadata from {path!r}: "
         "This file is not handled by {extractor_name!r}."
     )
 
-    def __init__(self, file_path: str, extractor_name: str) -> None:
-        super().__init__(file_path=file_path, extractor_name=extractor_name)
+    def __init__(self, path: str, extractor_name: str) -> None:
+        super().__init__(path=path, extractor_name=extractor_name)
+
+
+class AppstreamFileParseError(MetadataExtractionError):
+
+    fmt = (
+        "Failed to extract metadata from {path!r}: "
+        "it's not a valid XML file.")
+
+    def __init__(self, path: str) -> None:
+        super().__init__(path=path)
