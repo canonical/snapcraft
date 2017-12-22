@@ -17,8 +17,7 @@
 import click
 import os
 
-import snapcraft
-from snapcraft.internal import errors, lxd
+from snapcraft.internal import errors, lxd, project_loader
 from ._options import get_project_options
 from . import env
 
@@ -52,7 +51,7 @@ def refresh(debug, **kwargs):
             "snapcraft update")
 
     project_options = get_project_options(**kwargs, debug=debug)
-    config = snapcraft.internal.load_config(project_options)
+    config = project_loader.load_config(project_options)
     lxd.Project(project_options=project_options,
                 remote=container_config.remote,
                 output=None, source=os.path.curdir,

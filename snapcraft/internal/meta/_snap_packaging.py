@@ -25,6 +25,7 @@ import shutil
 import stat
 import subprocess
 from textwrap import dedent
+from typing import Any, Dict, List  # noqa
 
 import yaml
 
@@ -32,7 +33,8 @@ from snapcraft import file_utils
 from snapcraft import shell_utils
 from snapcraft.internal import (
     common,
-    errors
+    errors,
+    project_loader,
 )
 from snapcraft import _options
 from snapcraft.internal.deprecations import handle_deprecation_notice
@@ -70,7 +72,8 @@ _OPTIONAL_PACKAGE_KEYS = [
 
 
 def create_snap_packaging(
-        config_data,
+        config_data: Dict[str, Any],
+        parts_config: project_loader.PartsConfig,
         project_options: _options.ProjectOptions,
         snapcraft_yaml_path: str) -> str:
     """Create snap.yaml and related assets in meta.
@@ -82,6 +85,10 @@ def create_snap_packaging(
     :param dict config_data: project values defined in snapcraft.yaml.
     :return: meta_dir.
     """
+
+    # Update config_data using metadata extracted from the project
+    _update_yaml_with_extracted_metadata(config_data, parts_config)
+
     packaging = _SnapPackaging(
         config_data, project_options, snapcraft_yaml_path)
     packaging.write_snap_yaml()
@@ -90,6 +97,40 @@ def create_snap_packaging(
     packaging.write_snap_directory()
 
     return packaging.meta_dir
+
+
+def _update_yaml_with_extracted_metadata(
+        config_data: Dict[str, Any],
+        parts_config: project_loader.PartsConfig) -> None:
+    if 'adopt-info' in config_data:
+        part_name = config_data['adopt-info']
+        part = parts_config.get_part(part_name)
+        if not part:
+            raise meta_errors.AdoptedPartMissingError(part_name)
+
+        # This would be caught since metadata would be missing, but we want
+        # to be clear about the issue here. This really should be caught by the
+        # schema, but it doesn't seem to support such dynamic behavior.
+        if 'parse-info' not in config_data['parts'][part_name]:
+            raise meta_errors.AdoptedPartNotParsingInfo(part_name)
+
+        # Get the metadata from the pull step first, then update it using the
+        # metadata from the build step (i.e. the data from the build step takes
+        # precedence over the pull step)
+        metadata = part.get_pull_state().extracted_metadata['metadata']
+        metadata.update(part.get_build_state().extracted_metadata['metadata'])
+        for key, value in metadata.to_dict().items():
+            if key not in config_data:
+                config_data[key] = value
+
+    # Verify that all mandatory keys have been satisfied
+    missing_keys = []  # type: List[str]
+    for key in _MANDATORY_PACKAGE_KEYS:
+        if key not in config_data:
+            missing_keys.append(key)
+
+    if missing_keys:
+        raise meta_errors.MissingSnapcraftYamlKeysError(keys=missing_keys)
 
 
 class _SnapPackaging:

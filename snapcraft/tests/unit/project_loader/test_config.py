@@ -506,29 +506,6 @@ parts:
                    "hyphens. They cannot be all numbers. They also cannot "
                    "start or end with a hyphen."))
 
-    def test_invalid_yaml_missing_description(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        self.make_snapcraft_yaml("""name: test
-version: "1"
-summary: test
-confinement: strict
-grade: stable
-
-parts:
-  part1:
-    plugin: go
-    stage-packages: [fswebcam]
-""")
-        raised = self.assertRaises(
-            errors.YamlValidationError,
-            _config.Config)
-
-        self.assertThat(
-            raised.message,
-            Equals("'description' is a required property"))
-
     def test_yaml_missing_confinement_must_log(self):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
@@ -1916,9 +1893,11 @@ class ValidationBaseTestCase(unit.TestCase):
             'version': '1.0-snapcraft1~ppa1',
             'summary': 'my summary less that 79 chars',
             'description': 'description which can be pretty long',
+            'adopt-info': 'part1',
             'parts': {
                 'part1': {
                     'plugin': 'project',
+                    'parse-info': ['test-metadata-file']
                 },
             },
         }
@@ -2038,6 +2017,20 @@ class ValidationTestCase(ValidationBaseTestCase):
             ".*The 'parts/part1' property does not match the required "
             "schema: .* cannot contain both 'snap' and 'prime' keywords.*"))
 
+    def test_missing_required_property_and_missing_adopt_info(self):
+        del self.data['summary']
+        del self.data['adopt-info']
+
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            project_loader.Validator(self.data).validate)
+
+        expected_message = (
+            "'adopt-info' is a required property or 'summary' is a required "
+            "property")
+        self.assertThat(raised.message, Equals(expected_message),
+                        message=self.data)
+
 
 class DaemonDependencyTestCase(ValidationBaseTestCase):
 
@@ -2071,7 +2064,7 @@ class DaemonDependencyTestCase(ValidationBaseTestCase):
 class RequiredPropertiesTestCase(ValidationBaseTestCase):
 
     scenarios = [(key, dict(key=key)) for
-                 key in ['name', 'version', 'summary', 'description', 'parts']]
+                 key in ['name', 'version', 'parts']]
 
     def test_required_properties(self):
         data = self.data.copy()

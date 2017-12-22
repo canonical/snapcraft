@@ -1,6 +1,7 @@
 !PullState
 project_options: {deb_arch: $arch}
 properties:
+  parse-info: []
   plugin: copy
   source: .
   source-branch: ''

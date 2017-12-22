@@ -17,7 +17,7 @@ import logging
 import os
 import tarfile
 
-from snapcraft.internal import errors, load_config, lxd
+from snapcraft.internal import errors, lxd, project_loader
 
 
 logger = logging.getLogger(__name__)
@@ -40,7 +40,7 @@ def _create_tar_filter(tar_filename):
 
 def containerbuild(step, project_options, container_config,
                    output=None, args=[]):
-    config = load_config(project_options)
+    config = project_loader.load_config(project_options)
     if container_config.remote:
         logger.info('Using LXD remote {!r} from SNAPCRAFT_CONTAINER_BUILDS'
                     .format(container_config.remote))
@@ -57,7 +57,7 @@ def cleanbuild(project_options, remote=''):
     if remote and not lxd._remote_is_valid(remote):
         raise errors.InvalidContainerRemoteError(remote)
 
-    config = load_config(project_options)
+    config = project_loader.load_config(project_options)
     tar_filename = '{}_{}_source.tar.bz2'.format(
         config.data['name'], config.data['version'])
 

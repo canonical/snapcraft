@@ -22,11 +22,11 @@ from tempfile import TemporaryDirectory
 import yaml
 
 import snapcraft
-import snapcraft.internal
 from snapcraft.internal import (
     common,
     meta,
     pluginhandler,
+    project_loader,
     repo,
     states
 )
@@ -58,7 +58,7 @@ def execute(step, project_options, part_names=None):
                           over.
     :returns: A dict with the snap name, version, type and architectures.
     """
-    config = snapcraft.internal.load_config(project_options)
+    config = project_loader.load_config(project_options)
     installed_packages = repo.Repo.install_build_packages(
         config.build_tools)
     if installed_packages is None:
@@ -224,7 +224,7 @@ class _Executor:
         if step == 'prime' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
             meta.create_snap_packaging(
-                self.config.data, self.project_options,
+                self.config.data, self.config.parts, self.project_options,
                 self.config.snapcraft_yaml_path)
 
     def _handle_dirty(self, part, step, dirty_report):
