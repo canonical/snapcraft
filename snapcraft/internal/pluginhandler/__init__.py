@@ -474,6 +474,15 @@ class PluginHandler:
                 # dependencies.
                 _migrate_files(system, system_dependency_paths, '/',
                                self.primedir, follow_symlinks=True)
+                formatted_system = '\n'.join(sorted(system))
+                logger.warning(
+                    'Files from the build host were migrated into the snap to '
+                    'satisfy dependencies that would otherwise not be met. '
+                    'This feature will be removed in a future release. If '
+                    'these libraries are needed in the final snap, ensure '
+                    'that the following are either satisfied by a '
+                    'stage-packages entry or through a part:\n{}'.format(
+                        formatted_system))
 
         if self._confinement == 'classic':
             dynamic_linker = self._project_options.get_core_dynamic_linker()
