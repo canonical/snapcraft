@@ -17,6 +17,7 @@ import os
 import sys
 from textwrap import dedent
 from typing import TextIO
+from snapcraft.formatting_utils import humanize_list
 
 # Using mypy 'type:' comment below, but flake8 thinks these aren't used
 from typing import Dict, List, Union  # noqa
@@ -140,7 +141,7 @@ def push(snap_file, release):
         channel_list = release.split(',')
         click.echo(
             'After pushing, an attempt to release to {} '
-            'will be made'.format(channel_list))
+            'will be made'.format(humanize_list(channel_list, 'and')))
 
     snapcraft.push(snap_file, channel_list)
 

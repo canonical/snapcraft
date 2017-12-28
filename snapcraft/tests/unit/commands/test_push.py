@@ -16,8 +16,8 @@
 import os
 from unittest import mock
 
-from xdg import BaseDirectory
 from testtools.matchers import Contains, Equals, FileExists, Not
+from xdg import BaseDirectory
 
 from snapcraft import (
     file_utils,
@@ -254,6 +254,50 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         mock_upload.assert_called_once_with('basic', self.snap_file)
         mock_release.assert_called_once_with('basic', 9,
                                              ['edge', 'beta', 'candidate'])
+
+    def test_push_displays_humanized_message(self):
+        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
+        mock_tracker.track.return_value = {
+            'code': 'ready_to_release',
+            'processed': True,
+            'can_release': True,
+            'url': '/fake/url',
+            'revision': 9,
+        }
+        patcher = mock.patch.object(storeapi.StoreClient, 'upload')
+        mock_upload = patcher.start()
+        self.addCleanup(patcher.stop)
+        mock_upload.return_value = mock_tracker
+
+        patcher = mock.patch.object(storeapi.StoreClient, 'release')
+        mock_release = patcher.start()
+        self.addCleanup(patcher.stop)
+        mock_release.return_value = {
+            'opened_channels': ['beta,edge,candidate'],
+            'channel_map_tree': {
+                'latest': {
+                    '16': {
+                        'amd64':
+                            [
+                                {'channel': 'stable', 'info': 'none'},
+                                {'revision': 9, 'channel': 'candidate',
+                                 'version': '0', 'info': 'specific'},
+                                {'revision': 9, 'channel': 'beta', 'version': '0',
+                                 'info': 'specific'},
+                                {'revision': 9, 'channel': 'edge', 'version': '0',
+                                 'info': 'specific'},
+                            ]
+                    }
+                }
+            }
+        }
+
+        with mock.patch('snapcraft.storeapi._status_tracker.'
+                        'StatusTracker') as mock_tracker:
+            result = self.run_command(['push', self.snap_file, '--release',
+                                       'edge,beta,candidate'])
+        self.assertThat(result.output, Contains(
+            "After pushing, an attempt to release to 'beta', 'candidate', and 'edge' will be made"))
 
 
 class PushCommandDeltasTestCase(PushCommandBaseTestCase):
