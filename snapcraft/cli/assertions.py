@@ -18,6 +18,7 @@ import subprocess
 import tempfile
 from datetime import datetime
 from textwrap import dedent
+from typing import List, Dict
 
 import click
 import yaml
@@ -60,14 +61,14 @@ def list_keys():
 
 @assertionscli.command('create-key')
 @click.argument('key-name', metavar='<key-name>', required=False)
-def create_key(key_name):
+def create_key(key_name: str) -> None:
     """Create a key to sign assertions."""
     snapcraft.create_key(key_name)
 
 
 @assertionscli.command('register-key')
 @click.argument('key-name', metavar='<key-name>', required=False)
-def register_key(key_name):
+def register_key(key_name: str) -> None:
     """Register a key with the store to sign assertions."""
     snapcraft.register_key(key_name)
 
@@ -81,7 +82,7 @@ def register_key(key_name):
                                 dir_okay=False))
 @click.option('--local', is_flag=True,
               help='Do not push the generated assertion to the store')
-def sign_build(snap_file, key_name, local):
+def sign_build(snap_file: str, key_name: str, local: bool) -> None:
     """Sign a built snap file and assert it using the developer's key."""
     snapcraft.sign_build(snap_file, key_name=key_name, local=local)
 
@@ -91,14 +92,14 @@ def sign_build(snap_file, key_name, local):
 @click.argument('validations', metavar='<validation>...',
                 nargs=-1, required=True)
 @click.option('--key-name', metavar='<key-name>')
-def validate(snap_name, validations, key_name):
+def validate(snap_name: str, validations: list, key_name: str) -> None:
     """Validate a gated snap."""
     snapcraft.validate(snap_name, validations, key=key_name)
 
 
 @assertionscli.command()
 @click.argument('snap-name', metavar='<snap-name>')
-def gated(snap_name):
+def gated(snap_name: str) -> None:
     """Get the list of snaps and revisions gating a snap."""
     snapcraft.gated(snap_name)
 
@@ -135,13 +136,15 @@ def edit_collaborators(snap_name, key_name):
                          'altered.')
 
 
-def _update_developers(developers):
+def _update_developers(developers: List[Dict[str, str]]
+                       ) -> List[Dict[str, str]]:
     edit_friendly_developers = _reformat_time_for_editing(developers)
     updated_developers = _edit_developers(edit_friendly_developers)
     return _reformat_time_for_assertion(updated_developers)
 
 
-def _edit_developers(developers):
+def _edit_developers(developers: List[Dict[str, str]]
+                     ) -> List[Dict[str, str]]:
     """Spawn an editor to modify the snap-developer assertion for a snap."""
     editor_cmd = os.getenv('EDITOR', 'vi')
 
@@ -158,7 +161,9 @@ def _edit_developers(developers):
     return developers
 
 
-def _reformat_time_for_editing(developers, time_format='%Y-%m-%d %H:%M:%S'):
+def _reformat_time_for_editing(developers: List[Dict[str, str]],
+                               time_format: str='%Y-%m-%d %H:%M:%S'
+                               ) -> List[Dict[str, str]]:
     reformatted_developers = []
     for developer in developers:
         developer_it = {'developer-id': developer['developer-id']}
@@ -171,7 +176,8 @@ def _reformat_time_for_editing(developers, time_format='%Y-%m-%d %H:%M:%S'):
     return reformatted_developers
 
 
-def _reformat_time_for_assertion(developers):
+def _reformat_time_for_assertion(developers: List[Dict[str, str]]
+                                 ) -> List[Dict[str, str]]:
     reformatted_developers = []
     for developer in developers:
         developer_it = {'developer-id': developer['developer-id']}
