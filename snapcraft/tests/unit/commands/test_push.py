@@ -278,15 +278,15 @@ class PushCommandTestCase(PushCommandBaseTestCase):
                 'latest': {
                     '16': {
                         'amd64':
-                            [
-                                {'channel': 'stable', 'info': 'none'},
-                                {'revision': 9, 'channel': 'candidate',
-                                 'version': '0', 'info': 'specific'},
-                                {'revision': 9, 'channel': 'beta', 'version': '0',
-                                 'info': 'specific'},
-                                {'revision': 9, 'channel': 'edge', 'version': '0',
-                                 'info': 'specific'},
-                            ]
+                        [
+                            {'channel': 'stable', 'info': 'none'},
+                            {'revision': 9, 'channel': 'candidate',
+                             'version': '0', 'info': 'specific'},
+                            {'revision': 9, 'channel': 'beta', 'version': '0',
+                             'info': 'specific'},
+                            {'revision': 9, 'channel': 'edge', 'version': '0',
+                             'info': 'specific'},
+                        ]
                     }
                 }
             }
@@ -296,8 +296,10 @@ class PushCommandTestCase(PushCommandBaseTestCase):
                         'StatusTracker') as mock_tracker:
             result = self.run_command(['push', self.snap_file, '--release',
                                        'edge,beta,candidate'])
+
         self.assertThat(result.output, Contains(
-            "After pushing, an attempt to release to 'beta', 'candidate', and 'edge' will be made"))
+            "After pushing, an attempt to release to 'beta',"
+            " 'candidate', and 'edge' will be made"))
 
 
 class PushCommandDeltasTestCase(PushCommandBaseTestCase):
