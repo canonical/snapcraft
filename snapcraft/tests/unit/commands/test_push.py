@@ -298,8 +298,8 @@ class PushCommandTestCase(PushCommandBaseTestCase):
                                        'edge,beta,candidate'])
 
         self.assertThat(result.output, Contains(
-            "After pushing, an attempt to release to 'beta',"
-            " 'candidate', and 'edge' will be made"))
+            "After pushing, an attempt will be made to release to "
+            "'beta', 'candidate', and 'edge'"))
 
 
 class PushCommandDeltasTestCase(PushCommandBaseTestCase):
