@@ -101,7 +101,7 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
                 r'.*snaps:.*?No restriction', re.DOTALL))
         self.assertThat(
             result.output, MatchesRegex(
-                r".*channels:.*?['edge123']", re.DOTALL))
+                r".*channels:.*?['edge']", re.DOTALL))
         self.assertThat(
             result.output, MatchesRegex(
                 r'.*permissions:.*?No restriction', re.DOTALL))
@@ -178,5 +178,8 @@ def _new_snap(store: storeapi.StoreClient) -> str:
         self.mock_input.assert_called_once_with('Email: ')
         mock_login.assert_called_once_with(
             'user@example.com', mock.ANY, acls=None, packages=None,
+            channels=None, save=False, config_fd=None)
+        mock_acl.assert_called_once_with()
+	         'user@example.com', mock.ANY, acls=None, packages=None,
             channels=None, save=False, config_fd=None)
         mock_acl.assert_called_once_with()
