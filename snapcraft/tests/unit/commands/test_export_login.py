@@ -102,7 +102,7 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
                 r'.*snaps:.*?No restriction', re.DOTALL))
         self.assertThat(
             result.output, MatchesRegex(
-                r".*channels:.*?['edge123']", re.DOTALL))
+                r".*channels:.*?['edge']", re.DOTALL))
         self.assertThat(
             result.output, MatchesRegex(
                 r'.*permissions:.*?No restriction', re.DOTALL))
