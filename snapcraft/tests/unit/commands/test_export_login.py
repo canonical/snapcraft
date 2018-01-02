@@ -180,6 +180,3 @@ def _new_snap(store: storeapi.StoreClient) -> str:
             'user@example.com', mock.ANY, acls=None, packages=None,
             channels=None, save=False, config_fd=None)
         mock_acl.assert_called_once_with()
-	         'user@example.com', mock.ANY, acls=None, packages=None,
-            channels=None, save=False, config_fd=None)
-        mock_acl.assert_called_once_with()
