@@ -1,4 +1,3 @@
-
 # Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
@@ -102,7 +101,7 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
                 r'.*snaps:.*?No restriction', re.DOTALL))
         self.assertThat(
             result.output, MatchesRegex(
-                r".*channels:.*?['edge']", re.DOTALL))
+                r".*channels:.*?['edge123']", re.DOTALL))
         self.assertThat(
             result.output, MatchesRegex(
                 r'.*permissions:.*?No restriction', re.DOTALL))
