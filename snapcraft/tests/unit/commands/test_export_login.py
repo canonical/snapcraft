@@ -85,7 +85,7 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
             None]
         mock_acl.return_value = {
             'snap_ids': None,
-            'channels':['edge'],
+            'channels': ['edge'],
             'permissions': None,
         }
 
@@ -131,29 +131,26 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
             storeapi.constants.INVALID_CREDENTIALS))
         self.assertThat(result.output, Contains('Login failed.'))
 
-def _new_snap(store: storeapi.StoreClient) -> str:
-    acl = store.acl()
-    snap_names = [ ]
+    def new_snap(store: storeapi.StoreClient, snap_id: str) -> str:
+        acl = store.acl()
+        snap_name = ''
 
-    if not(snap_id in acl['snap_ids']):
-	  
-       snap_names.append('Heesen')
-    else:
-        for snap_id in acl['snap_ids']:
-            snap_names.append(store.get_snap_name_for_id(snap_id))
-	    
-    acl['snap_names'] = snap_names
+        if not(snap_id in acl['snap_ids']):
+            snap_name = 'Heesen'
+        else:
+            snap_name = store.get_snap_name_for_id(snap_id)
 
-         
+        return snap_name
+
     @mock.patch.object(storeapi._sca_client.SCAClient,
                        'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     @mock.patch.object(storeapi.StoreClient, 'acl')
-    def test_successful_export(
+    def test_successful_export1(
             self, mock_acl, mock_login, mock_get_account_information):
         self.mock_input.return_value = 'user@example.com'
         mock_acl.return_value = {
-            'snap_ids':['edge123'],
+            'snap_ids': ['edge123'],
             'channels': None,
             'permissions': None,
         }
