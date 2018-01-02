@@ -24,7 +24,7 @@ from typing import Dict, List, Union  # noqa
 import click
 
 import snapcraft
-from snapcraft import storeapi
+from snapcraft import storeapi, formatting_utils
 from snapcraft.storeapi.constants import DEFAULT_SERIES
 from . import echo
 
@@ -139,8 +139,8 @@ def push(snap_file, release):
     if release:
         channel_list = release.split(',')
         click.echo(
-            'After pushing, an attempt to release to {} '
-            'will be made'.format(channel_list))
+            'After pushing, an attempt will be made to release to {}'
+            ''.format(formatting_utils.humanize_list(channel_list, 'and')))
 
     snapcraft.push(snap_file, channel_list)
 
