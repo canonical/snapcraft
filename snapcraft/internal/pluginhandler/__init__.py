@@ -545,9 +545,14 @@ class PluginHandler:
         linker_compatible = (e.is_linker_compatible(linker='ld-2.23.so')
                              for e in elf_files)
         if not all((x for x in linker_compatible)):
+            files = ('- {} -> GLIBC {}'.format(e.path, e.get_required_glibc())
+                     for e in elf_files if e.get_required_glibc())
             logger.warning('The primed files will not work with the current '
-                           'base given the GLIBC missmatch of the primed '
-                           'files and the linker version used in the base.')
+                           'base given the GLIBC mismatch of the primed '
+                           'files and the linker version (2.23) used in the '
+                           'base. These are the GLIBC versions required by '
+                           'the primed files that do not match:\n {}\n'.format(
+                               '\n'.join(files)))
             # TODO implement GH Issue #1668
 
         if not self._build_attributes.no_system_libraries():

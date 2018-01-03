@@ -156,6 +156,9 @@ class ElfFile:
 
     def get_required_glibc(self) -> str:
         """Returns the required glibc version for this ELF file."""
+        with contextlib.suppress(AttributeError):
+            return self._required_glibc  # type: ignore
+
         version_required = ''
         for symbol in self.symbols:
             if not symbol.is_undefined():
@@ -165,6 +168,8 @@ class ElfFile:
             version = symbol.version[6:]
             if parse_version(version) > parse_version(version_required):
                 version_required = version
+
+        self._required_glibc = version_required
         return version_required
 
     def load_dependencies(self, root_path: str,
