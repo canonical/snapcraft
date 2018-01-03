@@ -202,11 +202,39 @@ class InvalidContainerRemoteError(SnapcraftError):
         super().__init__(remote=remote)
 
 
-class InvalidDesktopFileError(SnapcraftError):
+class InexistantFile(SnapcraftError):
 
     fmt = (
         'Failed to generate desktop file: '
         'Invalid desktop file {filename!r}: {message}.'
+        # FIXME include how to fix each of the possible desktop file errors.
+        # https://bugs.launchpad.net/snapcraft/+bug/1727435
+        # --elopio - 2017-10-25
+    )
+
+    def __init__(self, filename, message):
+        super().__init__(filename=filename, message=message)
+
+
+class InvalidDesktopEntry(SnapcraftError):
+
+    fmt = (
+        'Failed to find any Desktop Entry: '
+        'No Desktop Entry for {filename!r}: {message}.'
+        # FIXME include how to fix each of the possible desktop file errors.
+        # https://bugs.launchpad.net/snapcraft/+bug/1727435
+        # --elopio - 2017-10-25
+    )
+
+    def __init__(self, filename, message):
+        super().__init__(filename=filename, message=message)
+
+
+class MissingExecKey(SnapcraftError):
+
+    fmt = (
+        'Failed to find Exec line: '
+        'No Exec line for {filename!r}: {message}.'
         # FIXME include how to fix each of the possible desktop file errors.
         # https://bugs.launchpad.net/snapcraft/+bug/1727435
         # --elopio - 2017-10-25

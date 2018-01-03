@@ -160,21 +160,21 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "Use a LXD remote without colons, spaces and slashes in the "
                 "name.\n")}),
 
-        ('InvalidDesktopFileError', {
-            'exception': errors.InvalidDesktopFileError,
+        ('', {
+            'exception': errors.InexistantFile,
             'kwargs': {
                 'filename': 'test-file',
                 'message': 'test-message'
             },
             'expected_message': (
                 "Failed to generate desktop file: "
-                "Invalid desktop file 'test-file': test-message.")}),
+                "InexistantFile 'test-file': test-message.")}),
         ('SnapcraftPartMissingError', {
             'exception': errors.SnapcraftPartMissingError,
             'kwargs': {'part_name': 'test-part'},
             'expected_message': (
                 "Failed to get part information: "
-                "Cannot find the definition for part 'test-part'. "
+                "Cannot find the definition for part 'test-part'"
                 "If it is a remote part, run `snapcraft update` "
                 "to refresh the remote parts cache. "
                 "If it is a local part, make sure that it is defined in the "
@@ -240,6 +240,7 @@ class ErrorFormattingTestCase(unit.TestCase):
             'kwargs': {'cmd_list': ['test-command', 'test-argument']},
             'expected_message': "'test-command' not found."}),
         ('RequiredPathDoesNotExist', {
+
             'exception': errors.RequiredPathDoesNotExist,
             'kwargs': {'path': 'test-path'},
             'expected_message': "Required path does not exist: 'test-path'"}),
