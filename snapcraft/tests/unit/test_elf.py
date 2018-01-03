@@ -57,6 +57,11 @@ class TestElfBase(unit.TestCase):
 
             """).encode()  # noqa
 
+        self.stub_magic = ('ELF 64-bit LSB executable, x86-64, '
+                           'version 1 (SYSV), '
+                           'dynamically linked, interpreter '
+                           '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
+
 
 class TestLdLibraryPathParser(unit.TestCase):
 
@@ -101,11 +106,6 @@ class TestGetLibraries(TestElfBase):
         self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(self.fake_logger)
 
-        self.stub_magic = ('ELF 64-bit LSB executable, x86-64, '
-                           'version 1 (SYSV),dynamically linked, '
-                           'interpreter /lib64/ld-linux-x86-64.so.2, '
-                           'for GNU/Linux 2.6.32')
-
         self.core_base_path = os.path.join(self.path, 'core')
         os.makedirs(self.core_base_path)
         os.makedirs(self.prime_dir)
@@ -123,11 +123,7 @@ class TestGetLibraries(TestElfBase):
 
         self.ms_mock = mock.Mock()
         self.ms_mock.load.return_value = 0
-        self.ms_mock.file.return_value = (
-            'ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
-            'dynamically linked interpreter /lib64/ld-linux-x86-64.so.2, '
-            'for GNU/Linux 2.6.32, BuildID[sha1]=XYZ, stripped'
-        )
+        self.ms_mock.file.return_value = self.stub_magic
 
         patcher = mock.patch('magic.open')
         self.magic_mock = patcher.start()
@@ -217,10 +213,7 @@ class TestSystemLibsOnNewRelease(TestElfBase):
         self.addCleanup(patcher.stop)
 
     def test_fail_gracefully_if_system_libs_not_found(self):
-        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
-                      'dynamically linked, interpreter '
-                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
-        elf_file = elf.ElfFile(path='foo', magic=stub_magic)
+        elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
         libs = elf_file.load_dependencies(root_path='/fake',
                                           core_base_path='/fake-core')
         self.assertThat(libs, Equals(frozenset()))
@@ -269,11 +262,7 @@ class GetElfFilesTestCase(TestElfBase):
 
         self.ms_mock = mock.Mock()
         self.ms_mock.load.return_value = 0
-        self.ms_mock.file.return_value = (
-            'ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
-            'dynamically linked interpreter /lib64/ld-linux-x86-64.so.2, '
-            'for GNU/Linux 2.6.32, BuildID[sha1]=XYZ, stripped'
-        )
+        self.ms_mock.file.return_value = self.stub_magic
 
         patcher = mock.patch('magic.open')
         self.magic_mock = patcher.start()
@@ -382,11 +371,7 @@ class TestGetRequiredGLIBC(TestElfBase):
     def setUp(self):
         super().setUp()
 
-        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
-                      'dynamically linked, interpreter '
-                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
-
-        self.elf_file = elf.ElfFile(path='/fake-elf', magic=stub_magic)
+        self.elf_file = elf.ElfFile(path='/fake-elf', magic=self.stub_magic)
 
     def test_get_required_glibc(self):
         self.assertThat(self.elf_file.get_required_glibc(), Equals('2.3'))
@@ -405,6 +390,42 @@ class TestGetRequiredGLIBC(TestElfBase):
         self.assertRaises(EnvironmentError,
                           self.elf_file.is_linker_compatible,
                           linker='lib64/ld-linux-x86-64.so.2')
+
+
+class TestElfFileSymbols(TestElfBase):
+
+    def setUp(self):
+        super().setUp()
+
+    def test_symbols(self):
+        elf_file = elf.ElfFile(path='/fake-elf', magic=self.stub_magic)
+
+        self.assertThat(len(elf_file.symbols), Equals(3))
+
+        self.assertThat(elf_file.symbols[0].name, Equals('endgrent'))
+        self.assertThat(elf_file.symbols[0].version, Equals('GLIBC_2.2.5'))
+        self.assertThat(elf_file.symbols[0].section, Equals('UND'))
+
+        self.assertThat(elf_file.symbols[1].name,
+                        Equals('__ctype_toupper_loc'))
+        self.assertThat(elf_file.symbols[1].version, Equals('GLIBC_2.3'))
+        self.assertThat(elf_file.symbols[1].section, Equals('UND'))
+
+        self.assertThat(elf_file.symbols[2].name, Equals('PyCodec_Register'))
+        self.assertThat(elf_file.symbols[2].version, Equals(''))
+        self.assertThat(elf_file.symbols[2].section, Equals('13'))
+
+    def test_symbols_no_match(self):
+        self.check_output_mock.return_value = dedent("""\
+            Symbol table '.dynsym' contains 2281 entries:
+              Num:    Value          Size Type    Bind   Vis      Ndx Name
+                0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
+              0000000000565f20
+            """).encode()  # noqa
+
+        elf_file = elf.ElfFile(path='/fake-elf', magic=self.stub_magic)
+
+        self.assertThat(len(elf_file.symbols), Equals(0))
 
 
 class TestPatcher(TestElfBase):
@@ -433,10 +454,7 @@ class TestPatcher(TestElfBase):
             'SNAP_NAME', self.snap_name))
 
     def test_patch(self):
-        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
-                      'dynamically linked, interpreter '
-                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
-        elf_file = elf.ElfFile(path='/fake-elf', magic=stub_magic)
+        elf_file = elf.ElfFile(path='/fake-elf', magic=self.stub_magic)
         # The base_path does not matter here as there are not files to
         # be crawled for.
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
@@ -472,10 +490,7 @@ class TestPatcherErrors(TestElfBase):
         self.addCleanup(patcher.stop)
 
     def test_patch_fails_raises_patcherror_exception(self):
-        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
-                      'dynamically linked, interpreter '
-                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
-        elf_file = elf.ElfFile(path='/fake-elf', magic=stub_magic)
+        elf_file = elf.ElfFile(path='/fake-elf', magic=self.stub_magic)
         # The base_path does not matter here as there are not files to
         # be crawled for.
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',

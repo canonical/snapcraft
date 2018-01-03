@@ -117,8 +117,8 @@ class ElfFile:
         #   Num:    Value          Size Type    Bind   Vis      Ndx Name
         #     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
         #     1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND endgrent@GLIBC_2.2.5 (2)  # noqa
-        symbol_match = (r'\s*\d+:\s*[0-9a-f]+\s*\d+\s*\S+\s*\S+\s*\S+\s*'
-                        r'(?P<section>\S+)\s*(?P<symbol>\S+).*\Z')
+        symbol_match = (r'^\s+\d+:\s+[0-9a-f]+\s+\d+\s+\S+\s+\S+\s+\S+\s+'
+                        r'(?P<section>\S+)\s+(?P<symbol>\S+).*\Z')
         regex = re.compile(symbol_match)
         for line in symbols_section.split('\n'):
             m = regex.search(line)
