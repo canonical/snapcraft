@@ -82,7 +82,7 @@ def help_command(ctx, topic, devel):
             if len(topic) > 10:
                 topic = '{}...'.format(topic[:10])
             echo.wrapped(dedent("""\
-    There is no help topic or plugin {!r}. Try:
+    There is no help topic, plugin or command {!r}. Try:
 
     For topics:
 
@@ -91,6 +91,10 @@ def help_command(ctx, topic, devel):
     For valid plugins:
 
         snapcraft list-plugins
+
+    Or for general help:
+
+        snapcraft help
     """).format(topic))
             sys.exit(1)
 

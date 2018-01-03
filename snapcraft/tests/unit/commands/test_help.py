@@ -48,7 +48,7 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(1))
         self.assertThat(result.output, Contains(
-            'There is no help topic or plugin'))
+            'There is no help topic, plugin or command'))
 
     def test_topic_and_plugin_adds_ellipsis_for_long_arg(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
