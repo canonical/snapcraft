@@ -536,6 +536,20 @@ class PluginHandler:
 
         dependency_paths = part_dependency_paths | staged_dependency_paths
 
+        # We need to verify now that the GLIBC version would be compatible
+        # with that of the base.
+        # TODO the linker version depends on the chosen base, but that
+        # base may not be installed so we cannot depend on
+        # get_core_dynamic_linker to resolve the final path for which
+        # we resort to our only working base 16, ld-2.23.so.
+        linker_compatible = (e.is_linker_compatible(linker='ld-2.23.so')
+                             for e in elf_files)
+        if not all((x for x in linker_compatible)):
+            logger.warning('The primed files will not work with the current '
+                           'base given the GLIBC missmatch of the primed '
+                           'files and the linker version used in the base.')
+            # TODO implement GH Issue #1668
+
         if not self._build_attributes.no_system_libraries():
             system_dependency_paths = {os.path.dirname(d) for d in system}
             dependency_paths.update(system_dependency_paths)
