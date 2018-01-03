@@ -63,7 +63,15 @@ class Containerbuild:
         self._source = os.path.realpath(source)
         self._project_options = project_options
         self._metadata = metadata
-        self._project_folder = '/root/build_{}'.format(metadata['name'])
+        if os.geteuid() > 0:
+            self._user = os.environ['USER']
+            self._home = '/home/{}'.format(self._user)
+        else:
+            self._user = 'root'
+            self._home = '/{}'.format(self._user)
+        # os.sep needs to be `/` and on Windows it will be set to `\`
+        self._project_folder = '{}/build_{}'.format(self._home,
+                                                    metadata['name'])
 
         if not remote:
             remote = _get_default_remote()
@@ -135,6 +143,26 @@ class Containerbuild:
         else:
             raise ContainerError("Could not find architecture for container")
 
+    def _setup_user(self):
+        # Setup user mirroring host user with sudo access
+        try:
+            self._container_run([
+                'useradd', self._user, '--create-home'])
+        except ContainerRunError as e:
+            # username already in use
+            if e.exit_code != 9:
+                raise e
+        self._container_run([
+            'usermod', self._user, '-o',
+            '-u', str(os.getuid()), '-G', 'sudo'])
+        self._container_run([
+            'chown', '{}:0'.format(os.getuid(), 0),
+            self._home.format(self._user)])
+        subprocess.check_output([
+            'lxc', 'exec', self._container_name, '--',
+            'tee', '-a', '/etc/sudoers'],
+            input='{} ALL=(ALL) NOPASSWD: ALL\n'.format(self._user).encode())
+
     def _set_image_info_env_var(self):
         FAILURE_WARNING_FORMAT = (
             'Failed to get container image info: {}\n'
@@ -195,6 +223,9 @@ class Containerbuild:
         if sh:
             cmd = ['sh', '-c', '{}{}'.format(sh,
                    ' '.join(pipes.quote(arg) for arg in cmd))]
+        # Run commands where file ownership matters as user
+        if os.geteuid() > 0 and (cwd or cmd[0] == 'mkdir'):
+            cmd = ['sudo', '-H', '-u', self._user] + cmd
         try:
             subprocess.check_call([
                 'lxc', 'exec', self._container_name, '--'] + cmd,
@@ -289,6 +320,7 @@ class Containerbuild:
             ], tmp_dir)
 
         container_filename = os.path.join(os.sep, 'run', filename)
+        os.chmod(filepath, 0o777)
         self._push_file(filepath, container_filename)
         self._install_snap(container_filename,
                            is_dangerous=rev.startswith('x'),
@@ -351,6 +383,7 @@ class Containerbuild:
                 f.write(subprocess.check_output(['snap', 'known', *assertion]))
                 f.write(b'\n')
         container_filename = os.path.join(os.path.sep, 'run', filename)
+        os.chmod(filepath, 0o777)
         self._push_file(filepath, container_filename)
         logger.info('Adding assertion {}'.format(filename))
         self._container_run(['snap', 'ack', container_filename])

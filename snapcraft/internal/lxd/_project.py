@@ -66,6 +66,7 @@ class Project(Containerbuild):
                             'remove any existing lines.'
                             '\nRestart lxd after making this change.')
                 raise ContainerConnectionError(msg)
+        self._setup_user()
         self._wait_for_network()
         if new_container:
             self._container_run(['apt-get', 'update'])
@@ -81,7 +82,8 @@ class Project(Containerbuild):
             subprocess.check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'raw.idmap',
-                'both {} 0'.format(os.getenv('SUDO_UID', os.getuid()))])
+                'both {} {}'.format(os.getenv('SUDO_UID', os.getuid()),
+                                    os.getuid())])
         # Remove existing device (to ensure we update old containers)
         devices = self._get_container_status()['devices']
         if self._project_folder in devices:
@@ -132,6 +134,7 @@ class Project(Containerbuild):
         self._container_run(['mkdir', '-p', destination])
         self._background_process_run([
             'lxc', 'exec', self._container_name, '--',
+            'sudo', '-H', '-u', self._user,
             'sshfs', '-o', 'slave', '-o', 'nonempty',
             ':{}'.format(source), destination],
             stdin=stdin2, stdout=stdout1)
@@ -142,6 +145,7 @@ class Project(Containerbuild):
             time.sleep(1)
             if subprocess.check_output([
                     'lxc', 'exec', self._container_name, '--',
+                    'sudo', '-H', '-u', self._user,
                     'ls', self._project_folder]):
                 return
             retry_count -= 1
