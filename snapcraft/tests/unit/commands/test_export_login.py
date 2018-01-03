@@ -131,17 +131,7 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
             storeapi.constants.INVALID_CREDENTIALS))
         self.assertThat(result.output, Contains('Login failed.'))
 
-    def new_snap(store: storeapi.StoreClient, snap_id: str) -> str:
-        acl = store.acl()
-        snap_name = ''
-
-        if not(snap_id in acl['snap_ids']):
-            snap_name = 'Heesen'
-        else:
-            snap_name = store.get_snap_name_for_id(snap_id)
-
-        return snap_name
-
+    @mock.patch.object(storeapi.StoreClient, 'get_snap_name_for_id', 'edge123')
     @mock.patch.object(storeapi._sca_client.SCAClient,
                        'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
@@ -172,8 +162,15 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
             result.output, MatchesRegex(
                 r'.*permissions:.*?No restriction', re.DOTALL))
 
-        self.mock_input.assert_called_once_with('Email: ')
-        mock_login.assert_called_once_with(
-            'user@example.com', mock.ANY, acls=None, packages=None,
-            channels=None, save=False, config_fd=None)
-        mock_acl.assert_called_once_with()
+        self.assertThat(self.mock_input.call_count, Equals(2))
+        self.mock_input.assert_has_calls([
+            mock.call('Email: '), mock.call('Second-factor auth: ')])
+        self.assertThat(mock_login.call_count, Equals(2))
+        mock_login.assert_has_calls([
+            mock.call(
+                'user@example.com', mock.ANY, acls=None, packages=None,
+                channels=None, save=False, config_fd=None),
+            mock.call(
+                'user@example.com', mock.ANY, one_time_password='123456',
+                acls=None, packages=None, channels=None, save=False,
+                config_fd=None)])
