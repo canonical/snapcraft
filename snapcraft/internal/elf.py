@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -155,7 +155,7 @@ class ElfFile:
         """Returns the required glibc version for this ELF file."""
         version_required = ''
         for symbol in self.symbols:
-            if symbol.section != 'UND':
+            if not symbol.is_undefined():
                 continue
             if not symbol.version.startswith('GLIBC_'):
                 continue
