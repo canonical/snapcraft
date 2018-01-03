@@ -42,7 +42,7 @@ def helpcli():
               help='Show more details for snapcraft developers')
 @click.pass_context
 def help_command(ctx, topic, devel):
-    """Obtain help for a certain plugin or topic.
+    """Obtain help for a certain topic, plugin or command.
 
     The <topic> can either be a plugin name or one of:
 
@@ -57,6 +57,7 @@ def help_command(ctx, topic, devel):
         snapcraft help plugins
         snapcraft help sources
         snapcraft help go
+        snapcraft help build
     """
     if not topic:
         click.echo(ctx.parent.get_help())
@@ -66,6 +67,7 @@ def help_command(ctx, topic, devel):
                 snapcraft help topics
                 snapcraft help <topic>
                 snapcraft help <plugin-name>
+                snapcraft help <command-name>
         """))
     elif topic in ctx.parent.command.commands:
         click.echo(ctx.parent.command.commands[topic].get_help(ctx))
