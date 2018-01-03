@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -67,6 +67,8 @@ def help_command(ctx, topic, devel):
                 snapcraft help <topic>
                 snapcraft help <plugin-name>
         """))
+    elif topic in ctx.parent.command.commands:
+        click.echo(ctx.parent.command.commands[topic].get_help(ctx))
     elif topic == 'topics':
         for key in _TOPICS:
             click.echo(key)
