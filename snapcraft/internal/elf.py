@@ -124,10 +124,11 @@ class ElfFile:
             m = regex.search(line)
             if m:
                 section = m.group('section')
+                symbol = m.group('symbol')
                 try:
-                    name, version = m.group('symbol').split('@')
+                    name, version = symbol.split('@')
                 except ValueError:
-                    name = m.group('symbol')
+                    name = symbol
                     version = ''
                 symbols.append(Symbol(name=name, version=version,
                                       section=section))
