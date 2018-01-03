@@ -156,7 +156,7 @@ class Project(Containerbuild):
 
     def _finish(self):
         for process in self._processes:
-            logger.info('Terminating {}'.format(process.args))
+            logger.debug('Terminating {}'.format(process.args))
             process.terminate()
 
     def refresh(self):
