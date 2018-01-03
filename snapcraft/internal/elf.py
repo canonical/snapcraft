@@ -145,7 +145,9 @@ class ElfFile:
         if not m:
             # This is a programmatic error, we don't want to be friendly
             # about this.
-            raise EnvironmentError('{!r} is incorrect.')
+            raise EnvironmentError('The format for the linker should be of the'
+                                   'form <root>/ld-<X>.<Y>.so. {!r} does not '
+                                   'match that format.'.format(linker))
         linker_version = m.group('linker_version')
         r = parse_version(version_required) <= parse_version(linker_version)
         logger.debug('Checking if linker {!r} will work with '
