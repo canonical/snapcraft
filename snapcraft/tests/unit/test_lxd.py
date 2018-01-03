@@ -606,6 +606,19 @@ class ProjectTestCase(ContainerbuildTestCase):
                 ContainerConnectionError,
                 self.make_containerbuild().execute)))
 
+    def test_debug_messages(self):
+        class TestFormatter(logging.Formatter):
+            def format(self, record):
+                message = super().format(record)
+                return '[{}]{}'.format(record.levelname, message)
+
+        self.fake_logger = fixtures.FakeLogger(
+            format='%(message)s', formatter=TestFormatter, level=logging.DEBUG)
+        self.useFixture(self.fake_logger)
+
+        self.make_containerbuild().execute()
+        self.assertIn('[DEBUG]Terminating', self.fake_logger.output)
+
 
 class LocalProjectTestCase(ContainerbuildTestCase):
 
