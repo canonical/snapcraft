@@ -56,7 +56,12 @@ lxc="/snap/bin/lxc"
 $lxc file push --recursive $project_path test-runner/root/
 $lxc exec test-runner -- sh -c "cd snapcraft && ./tools/travis/setup_lxd.sh"
 $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
-$lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test"
+
+if [ "$test" = "snapcraft/tests/integration/snapd" ]; then
+    travis_wait 20 $lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test"
+elif [ "$test" = "snapcraft/tests/integration/plugins" ]; then
+    travis_wait 30 $lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test"
+fi
 
 if [ "$test" = "snapcraft/tests/unit" ]; then
     # Report code coverage.

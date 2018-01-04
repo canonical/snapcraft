@@ -77,7 +77,6 @@ class Library:
             self.in_base_snap = False
 
 
-@lru_cache()
 def _crawl_for_path(*, soname: str, root_path: str,
                     core_base_path: str) -> str:
     for path in (root_path, core_base_path):
@@ -390,8 +389,8 @@ _libraries = None
 
 def _get_system_libs() -> FrozenSet[str]:
     global _libraries
-    if _libraries:
-        return _libraries
+    if _libraries:  # type: ignore
+        return _libraries  # type: ignore
 
     lib_path = None
 

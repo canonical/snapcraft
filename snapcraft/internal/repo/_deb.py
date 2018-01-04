@@ -164,7 +164,9 @@ class Ubuntu(BaseRepo):
             output = subprocess.check_output(
                 ['dpkg', '-L', package_name]).decode(
                     sys.getfilesystemencoding()).strip().split()
-            _library_list[package_name] = {i for i in output if 'lib' in i}
+            _library_list[package_name] = {
+                i for i in output
+                if ('lib' in i and os.path.isfile(i))}
 
         return _library_list[package_name].copy()
 
