@@ -1,0 +1,37 @@
+#!/usr/bin/env python3
+import os
+import sys
+from textwrap import dedent
+
+_DYNSYMS_OUTPUT = {
+    'fake_elf-2.26': dedent("""\
+        Symbol table '.dynsym' contains 2281 entries:
+          Num:    Value          Size Type    Bind   Vis      Ndx Name
+            0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
+            1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND endgrent@GLIBC_2.2.5 (2)
+            2: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __ctype_toupper_loc@GLIBC_2.26 (3)
+          456: 0000000000565f20   124 FUNC    GLOBAL DEFAULT   13 PyCodec_Register"""),  # noqa
+    'fake_elf-2.23': dedent("""\
+        Symbol table '.dynsym' contains 2281 entries:
+          Num:    Value          Size Type    Bind   Vis      Ndx Name
+            0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
+            1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND endgrent@GLIBC_2.2.5 (2)
+            2: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __ctype_toupper_loc@GLIBC_2.23 (3)
+          456: 0000000000565f20   124 FUNC    GLOBAL DEFAULT   13 PyCodec_Register"""),  # noqa
+    'fake_elf-1.1': dedent("""\
+        Symbol table '.dynsym' contains 2281 entries:
+          Num:    Value          Size Type    Bind   Vis      Ndx Name
+            0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
+            1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND endgrent@GLIBC_1.1 (2)
+            2: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __ctype_toupper_loc@GLIBC_0.1 (3)
+          456: 0000000000565f20   124 FUNC    GLOBAL DEFAULT   13 PyCodec_Register"""),  # noqa
+}
+
+
+def main():
+    print(_DYNSYMS_OUTPUT[os.path.basename(sys.argv[-1])])
+    sys.exit(0)
+
+
+if __name__ == '__main__':
+    main()
