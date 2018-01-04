@@ -617,7 +617,8 @@ class ProjectTestCase(ContainerbuildTestCase):
         self.useFixture(self.fake_logger)
 
         self.make_containerbuild().execute()
-        self.assertIn('[DEBUG]Terminating', self.fake_logger.output)
+        self.assertThat(self.fake_logger.output,
+                        Contains('[DEBUG]Terminating'))
 
 
 class LocalProjectTestCase(ContainerbuildTestCase):
