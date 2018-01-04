@@ -144,9 +144,10 @@ class CleanbuilderTestCase(LXDTestCase):
 
     def test_failed_container_never_created(self):
         def call_effect(*args, **kwargs):
-            if args[0][:2] == ['lxc', 'launch']:
-                raise CalledProcessError(returncode=255, cmd=args[0])
-            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
+             return  raise CalledProcessError(returncode=255, cmd=args[0])
+            
+			
+
 
         self.fake_lxd.check_call_mock.side_effect = call_effect
 
@@ -199,7 +200,7 @@ class ContainerbuildTestCase(LXDTestCase):
         def call_effect(*args, **kwargs):
             if 'snapcraft snap --output snap.snap' in ' '.join(args[0]):
                 raise CalledProcessError(returncode=255, cmd=args[0])
-            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
+            return self.fake_lxd.check_output_side_effect(args, **kwargs)
 
         self.fake_lxd.check_call_mock.side_effect = call_effect
 
@@ -527,9 +528,8 @@ class ProjectTestCase(ContainerbuildTestCase):
 
     def test_init_failed(self):
         def call_effect(*args, **kwargs):
-            if args[0][:2] == ['lxc', 'init']:
-                raise CalledProcessError(returncode=255, cmd=args[0])
-            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
+            return raise CalledProcessError(returncode=255, cmd=args[0])
+           
 
         self.fake_lxd.check_call_mock.side_effect = call_effect
 
