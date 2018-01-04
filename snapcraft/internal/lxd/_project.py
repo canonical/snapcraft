@@ -25,6 +25,7 @@ from ._containerbuild import Containerbuild
 
 from snapcraft.internal.errors import (
         ContainerConnectionError,
+        ContainerRunError,
         SnapcraftEnvironmentError,
 )
 from snapcraft.internal import lifecycle
@@ -66,7 +67,6 @@ class Project(Containerbuild):
                             'remove any existing lines.'
                             '\nRestart lxd after making this change.')
                 raise ContainerConnectionError(msg)
-        self._setup_user()
         self._wait_for_network()
         if new_container:
             self._container_run(['apt-get', 'update'])
@@ -97,19 +97,19 @@ class Project(Containerbuild):
                 ])
 
     def _setup_project(self):
-        self._ensure_mount(self._project_folder, self._source)
-
-    def _ensure_mount(self, destination, source):
-        logger.info('Mounting {} into container'.format(source))
         if not self._container_name.startswith('local:'):
-            return self._remote_mount(destination, source)
+            if os.geteuid() > 0:
+                self._setup_user()
+            logger.info('Mounting {} into container'.format(self._source))
+            return self._remote_mount(self._project_folder, self._source)
 
         devices = self._get_container_status()['devices']
-        if destination not in devices:
+        if self._project_folder not in devices:
+            logger.info('Mounting {} into container'.format(self._source))
             subprocess.check_call([
                 'lxc', 'config', 'device', 'add', self._container_name,
-                destination, 'disk', 'source={}'.format(source),
-                'path={}'.format(destination)])
+                self._project_folder, 'disk', 'source={}'.format(self._source),
+                'path={}'.format(self._project_folder)])
 
     def _remote_mount(self, destination, source):
         # Pipes for sshfs and sftp-server to communicate
@@ -154,6 +154,30 @@ class Project(Containerbuild):
             'Fuse must be enabled on the LXD host.\n'
             'You can run the following command to enable it:\n'
             'echo Y | sudo tee /sys/module/fuse/parameters/userns_mounts')
+
+    def _setup_user(self):
+        # Setup user mirroring host user with sudo access
+        self._user = os.environ['USER']
+        self._project_folder = '/home/{}/build_{}'.format(
+            self._user, self._metadata['name'])
+        logger.debug('Setting up user {!r} in container'.format(self._user))
+        try:
+            self._container_run([
+                'useradd', self._user, '--create-home'])
+        except ContainerRunError as e:
+            # username already in use
+            if e.exit_code != 9:
+                raise e
+        self._container_run([
+            'usermod', self._user, '-o',
+            '-u', str(os.getuid()), '-G', 'sudo'])
+        self._container_run([
+            'chown', '{}:0'.format(os.getuid(), 0),
+            '/home/{}'.format(self._user)])
+        subprocess.check_output([
+            'lxc', 'exec', self._container_name, '--',
+            'tee', '-a', '/etc/sudoers'],
+            input='{} ALL=(ALL) NOPASSWD: ALL\n'.format(self._user).encode())
 
     def _background_process_run(self, cmd, **kwargs):
         self._processes += [subprocess.Popen(cmd, **kwargs)]

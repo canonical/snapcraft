@@ -42,7 +42,6 @@ class Cleanbuilder(Containerbuild):
         except subprocess.CalledProcessError as e:
             raise ContainerConnectionError('Failed to setup container')
         self._configure_container()
-        self._setup_user()
         self._wait_for_network()
         self._container_run(['apt-get', 'update'])
         # Because of https://bugs.launchpad.net/snappy/+bug/1628289

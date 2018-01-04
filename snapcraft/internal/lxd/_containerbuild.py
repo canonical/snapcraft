@@ -63,15 +63,8 @@ class Containerbuild:
         self._source = os.path.realpath(source)
         self._project_options = project_options
         self._metadata = metadata
-        if os.geteuid() > 0:
-            self._user = os.environ['USER']
-            self._home = '/home/{}'.format(self._user)
-        else:
-            self._user = 'root'
-            self._home = '/{}'.format(self._user)
-        # os.sep needs to be `/` and on Windows it will be set to `\`
-        self._project_folder = '{}/build_{}'.format(self._home,
-                                                    metadata['name'])
+        self._user = 'root'
+        self._project_folder = '/root/build_{}'.format(metadata['name'])
 
         if not remote:
             remote = _get_default_remote()
@@ -142,26 +135,6 @@ class Containerbuild:
                 break
         else:
             raise ContainerError("Could not find architecture for container")
-
-    def _setup_user(self):
-        # Setup user mirroring host user with sudo access
-        try:
-            self._container_run([
-                'useradd', self._user, '--create-home'])
-        except ContainerRunError as e:
-            # username already in use
-            if e.exit_code != 9:
-                raise e
-        self._container_run([
-            'usermod', self._user, '-o',
-            '-u', str(os.getuid()), '-G', 'sudo'])
-        self._container_run([
-            'chown', '{}:0'.format(os.getuid(), 0),
-            self._home.format(self._user)])
-        subprocess.check_output([
-            'lxc', 'exec', self._container_name, '--',
-            'tee', '-a', '/etc/sudoers'],
-            input='{} ALL=(ALL) NOPASSWD: ALL\n'.format(self._user).encode())
 
     def _set_image_info_env_var(self):
         FAILURE_WARNING_FORMAT = (
