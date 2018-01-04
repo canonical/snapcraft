@@ -32,7 +32,8 @@ from snapcraft import (
     ProjectOptions,
 )
 from snapcraft.storeapi import (
-    errors
+    errors,
+    constants
 )
 from snapcraft.tests import (
     fixture_setup,
@@ -1432,6 +1433,16 @@ class PushMetadataTestCase(StoreTestCase):
         result = self.client.push_metadata('basic', metadata, True)
         self.assertIsNone(result)
 
+    def test_snap_not_found(self):
+        self._setup_snap()
+        metadata = {'field_ok': 'foo'}
+        raised = self.assertRaises(
+            errors.SnapNotFoundError,
+            self.client.push_metadata, 'notbasic', metadata, False)
+        self.assertThat(str(raised),
+                        Equals("Snap 'notbasic' was not found in '{}' series."
+                               .format(constants.DEFAULT_SERIES)))
+
 
 class PushBinaryMetadataTestCase(StoreTestCase):
 
@@ -1506,3 +1517,13 @@ class PushBinaryMetadataTestCase(StoreTestCase):
             # force the update, even on conflicts!
             result = self.client.push_binary_metadata('basic', metadata, True)
         self.assertIsNone(result)
+
+    def test_snap_not_found(self):
+        self._setup_snap()
+        metadata = {'field_ok': 'foo'}
+        raised = self.assertRaises(
+            errors.SnapNotFoundError,
+            self.client.push_metadata, 'notbasic', metadata, False)
+        self.assertThat(str(raised),
+                        Equals("Snap 'notbasic' was not found in '{}' series."
+                               .format(constants.DEFAULT_SERIES)))
