@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -1227,10 +1227,13 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
+    @patch('snapcraft.internal.elf.ElfFile._get_symbols',
+           return_value=list())
     @patch('snapcraft.internal.elf.ElfFile.load_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_with_dependencies(self, mock_migrate_files,
-                                           mock_load_dependencies):
+                                           mock_load_dependencies,
+                                           mock_get_symbols):
         mock_load_dependencies.return_value = {
             '/foo/bar/baz',
             '{}/lib1/installed'.format(self.handler.installdir),
@@ -1287,10 +1290,13 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
+    @patch('snapcraft.internal.elf.ElfFile._get_symbols',
+           return_value=list())
     @patch('snapcraft.internal.elf.ElfFile.load_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_disable_ldd_crawl(self, mock_migrate_files,
-                                           mock_load_dependencies):
+                                           mock_load_dependencies,
+                                           mock_get_symbols):
         # Disable system library migration (i.e. ldd crawling).
         self.handler = self.load_part('test_part', part_properties={
             'build-attributes': ['no-system-libraries']
@@ -1340,11 +1346,14 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue('lib1' in state.dependency_paths)
         self.assertTrue('lib2' in state.dependency_paths)
 
+    @patch('snapcraft.internal.elf.ElfFile._get_symbols',
+           return_value=list())
     @patch('snapcraft.internal.elf.ElfFile.load_dependencies',
            return_value=set(['/foo/bar/baz']))
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_with_shadowed_dependencies(self, mock_migrate_files,
-                                                    mock_load_dependencies):
+                                                    mock_load_dependencies,
+                                                    mock_get_symbols):
         stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
                       'dynamically linked, interpreter '
                       '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')

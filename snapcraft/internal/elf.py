@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,6 +24,7 @@ from functools import lru_cache, wraps
 from typing import FrozenSet, List, Set, Sequence
 
 import magic
+from pkg_resources import parse_version
 
 from snapcraft.internal import (
     common,
@@ -34,6 +35,18 @@ from snapcraft.internal import (
 
 
 logger = logging.getLogger(__name__)
+
+
+class Symbol:
+    """Represents a symbol within an ELF file."""
+
+    def __init__(self, *, name: str, version: str, section: str) -> None:
+        self.name = name
+        self.version = version
+        self.section = section
+
+    def is_undefined(self) -> bool:
+        return self.section == 'UND'
 
 
 class Library:
@@ -91,6 +104,73 @@ class ElfFile:
         self.path = path
         self.is_executable = 'interpreter' in magic
         self.dependencies = set()  # type: Set[Library]
+        self.symbols = self._get_symbols(path)  # type: List[Symbol]
+
+    def _get_symbols(self, path) -> List[Symbol]:
+        symbols = list()  # type: List[Symbol]
+        symbols_section = subprocess.check_output([
+            'readelf', '--wide', '--dyn-syms', path]).decode()
+        # Regex inspired by the regex in lintian to match entries similar to
+        # number '1' from the following sample output
+        #
+        # Symbol table '.dynsym' contains 2281 entries:
+        #   Num:    Value          Size Type    Bind   Vis      Ndx Name
+        #     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
+        #     1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND endgrent@GLIBC_2.2.5 (2)  # noqa
+        symbol_match = (r'^\s+\d+:\s+[0-9a-f]+\s+\d+\s+\S+\s+\S+\s+\S+\s+'
+                        r'(?P<section>\S+)\s+(?P<symbol>\S+).*\Z')
+        regex = re.compile(symbol_match)
+        for line in symbols_section.split('\n'):
+            m = regex.search(line)
+            if m:
+                section = m.group('section')
+                symbol = m.group('symbol')
+                try:
+                    name, version = symbol.split('@')
+                except ValueError:
+                    name = symbol
+                    version = ''
+                symbols.append(Symbol(name=name, version=version,
+                                      section=section))
+        return symbols
+
+    def is_linker_compatible(self, *, linker: str) -> bool:
+        """Determines if linker will work given the required glibc version.
+
+        The linker passed needs to be of the format <root>/ld-<X>.<Y>.so.
+        """
+        version_required = self.get_required_glibc()
+        m = re.search(r'ld-(?P<linker_version>[\d.]+).so$',
+                      os.path.basename(linker))
+        if not m:
+            # This is a programmatic error, we don't want to be friendly
+            # about this.
+            raise EnvironmentError('The format for the linker should be of the'
+                                   'form <root>/ld-<X>.<Y>.so. {!r} does not '
+                                   'match that format.'.format(linker))
+        linker_version = m.group('linker_version')
+        r = parse_version(version_required) <= parse_version(linker_version)
+        logger.debug('Checking if linker {!r} will work with '
+                     'GLIBC_{}: {!r}'.format(linker, version_required, r))
+        return r
+
+    def get_required_glibc(self) -> str:
+        """Returns the required glibc version for this ELF file."""
+        with contextlib.suppress(AttributeError):
+            return self._required_glibc  # type: ignore
+
+        version_required = ''
+        for symbol in self.symbols:
+            if not symbol.is_undefined():
+                continue
+            if not symbol.version.startswith('GLIBC_'):
+                continue
+            version = symbol.version[6:]
+            if parse_version(version) > parse_version(version_required):
+                version_required = version
+
+        self._required_glibc = version_required
+        return version_required
 
     def load_dependencies(self, root_path: str,
                           core_base_path: str) -> Set[str]:
@@ -195,7 +275,7 @@ class Patcher:
         """Patch elf_file with the Patcher instance configuration.
 
         If the ELF is executable, patch it to use the configured linker.
-        If the ELF has dependencies, set an rpath to them.
+        If the ELF has dependencies (DT_NEEDED), set an rpath to them.
 
         :param ElfFile elf: a data object representing an elf file and its
                             relevant attributes.
