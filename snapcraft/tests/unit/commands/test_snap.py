@@ -133,6 +133,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.useFixture(fake_logger)
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_CONTAINER_BUILDS', 'myremote'))
+        self.useFixture(
+            fixtures.EnvironmentVariable('USER', 'user'))
         self.make_snapcraft_yaml()
 
         result = self.run_command(['--debug', 'snap'])
@@ -143,7 +145,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.assertThat(fake_logger.output, Contains(
             "Using LXD remote 'myremote' from SNAPCRAFT_CONTAINER_BUILDS"))
 
-        project_folder = '/root/build_snap-test'
+        project_folder = '/home/user/build_snap-test'
         mock_container_run.assert_has_calls([
             call(['apt-get', 'install', '-y', 'sshfs']),
         ])
@@ -151,6 +153,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['/usr/lib/sftp-server'],
                  stdin=9, stdout=9),
             call(['lxc', 'exec', fake_lxd.name, '--',
+                  'sudo', '-H', '-u', 'user',
                   'sshfs', '-o', 'slave', '-o', 'nonempty',
                   ':{}'.format(source), project_folder],
                  stdin=9, stdout=9),
@@ -473,7 +476,8 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   '"architecture": "test-architecture", '
                   '"created_at": "test-created-at"}']),
             call(['lxc', 'config', 'set', container_name,
-                  'raw.idmap', 'both {} 0'.format(self.expected_idmap)]),
+                  'raw.idmap', 'both {} {}'.format(
+                    self.expected_idmap, self.getuid)]),
             call(['lxc', 'config', 'device', 'add', container_name,
                   'fuse', 'unix-char', 'path=/dev/fuse']),
             call(['lxc', 'start', container_name]),
@@ -558,11 +562,9 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
 
-        source = os.path.realpath(os.path.curdir)
         self.assertIn(
             'Waiting for a network connection...\n'
-            'Network connection established\n'
-            'Mounting {} into container\n'.format(source),
+            'Network connection established\n',
             fake_logger.output)
 
         container_name = 'local:snapcraft-snap-test'
@@ -578,7 +580,8 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   '"architecture": "test-architecture", '
                   '"created_at": "test-created-at"}']),
             call(['lxc', 'config', 'set', container_name,
-                  'raw.idmap', 'both {} 0'.format(self.expected_idmap)]),
+                  'raw.idmap', 'both {} {}'.format(
+                    self.expected_idmap, self.getuid)]),
             call(['lxc', 'config', 'device', 'remove', container_name,
                   project_folder]),
             call(['lxc', 'config', 'device', 'add', container_name,

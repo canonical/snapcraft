@@ -504,6 +504,10 @@ class FakeFilesystem(fixtures.Fixture):
         self.open_mock.side_effect = self.open_side_effect()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('os.chmod')
+        self.chmod_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
         patcher = mock.patch('shutil.copyfile')
         self.copyfile_mock = patcher.start()
         self.addCleanup(patcher.stop)
@@ -640,6 +644,8 @@ class FakeLXD(fixtures.Fixture):
     def _lxc_exec(self, args):
         if self.status and args[0][2] == self.name:
             cmd = args[0][4]
+            if cmd == 'sudo':
+                cmd = args[0][8]
             if cmd == 'ls':
                 return ' '.join(self.files).encode('utf-8')
             elif cmd == 'readlink':

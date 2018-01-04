@@ -516,14 +516,47 @@ class ContainerbuildTestCase(LXDTestCase):
 class ProjectTestCase(ContainerbuildTestCase):
 
     scenarios = [
-        ('remote', dict(remote='myremote', target_arch=None, server='x86_64')),
+          ('remote/root', dict(remote='myremote', target_arch=None, euid=0,
+                               server='x86_64', user='root', home='/root')),
+          ('remote/user', dict(remote='myremote', target_arch=None, euid=1234,
+                               server='x86_64', user='me', home='/home/me')),
     ]
+
+    def setUp(self):
+        super().setUp()
+        patcher = patch('os.geteuid')
+        mock_geteuid = patcher.start()
+        mock_geteuid.return_value = self.euid
+        self.addCleanup(patcher.stop)
+        self.useFixture(
+            fixtures.EnvironmentVariable('USER', self.user))
 
     def make_containerbuild(self):
         return lxd.Project(output='snap.snap', source='project.tar',
                            metadata={'name': 'project'},
                            project_options=self.project_options,
                            remote=self.remote)
+
+    @patch('os.getuid')
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    def test_user_setup(self, mock_container_run, mock_getuid):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_getuid.return_value = 1234
+
+        self.make_containerbuild().execute()
+
+        if self.euid > 0:
+            mock_container_run.assert_has_calls([
+                call(['useradd', self.user, '--create-home']),
+                call(['usermod', self.user, '-o', '-u', '1234', '-G', 'sudo']),
+                call(['chown', '1234:0', self.home]),
+            ])
+            self.fake_lxd.check_output_mock.assert_has_calls([
+                call(['lxc', 'exec', self.fake_lxd.name, '--',
+                      'tee', '-a', '/etc/sudoers'],
+                     input='{} ALL=(ALL) NOPASSWD: ALL\n'.format(
+                         self.user).encode()),
+            ])
 
     def test_init_failed(self):
         def call_effect(*args, **kwargs):
@@ -594,7 +627,7 @@ class ProjectTestCase(ContainerbuildTestCase):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
 
         def call_effect(*args, **kwargs):
-            if args[0][:2] == ['lxc', 'exec'] and args[0][4] == 'ls':
+            if args[0][:2] == ['lxc', 'exec'] and 'ls' in args[0]:
                 return ''.encode('utf-8')
             return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
 
