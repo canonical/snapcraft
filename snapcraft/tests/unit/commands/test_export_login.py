@@ -1,5 +1,4 @@
 # Copyright (C) 2016-2017 Canonical Ltd
-#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
 # published by the Free Software Foundation.
@@ -130,12 +129,15 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.output, Contains(
             storeapi.constants.INVALID_CREDENTIALS))
         self.assertThat(result.output, Contains('Login failed.'))
+    store = storeapi.StoreClient()
+    snap_name = store.get_snap_name_for_id('edge123')
 
-    @mock.patch.object(storeapi.StoreClient, 'get_snap_name_for_id', 'edge123')
+
+class edge123:
     @mock.patch.object(storeapi._sca_client.SCAClient,
                        'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
-    @mock.patch.object(storeapi.StoreClient, 'acl')
+    @mock.patch.object(storeapi.StoreClient, 'snap_ids')
     def test_successful_export1(
             self, mock_acl, mock_login, mock_get_account_information):
         self.mock_input.return_value = 'user@example.com'
