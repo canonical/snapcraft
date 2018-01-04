@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -535,6 +535,25 @@ class PluginHandler:
         staged_dependency_paths = {os.path.dirname(d) for d in staged}
 
         dependency_paths = part_dependency_paths | staged_dependency_paths
+
+        # We need to verify now that the GLIBC version would be compatible
+        # with that of the base.
+        # TODO the linker version depends on the chosen base, but that
+        # base may not be installed so we cannot depend on
+        # get_core_dynamic_linker to resolve the final path for which
+        # we resort to our only working base 16, ld-2.23.so.
+        linker_compatible = (e.is_linker_compatible(linker='ld-2.23.so')
+                             for e in elf_files)
+        if not all((x for x in linker_compatible)):
+            files = ('- {} -> GLIBC {}'.format(e.path, e.get_required_glibc())
+                     for e in elf_files if e.get_required_glibc())
+            logger.warning('The primed files will not work with the current '
+                           'base given the GLIBC mismatch of the primed '
+                           'files and the linker version (2.23) used in the '
+                           'base. These are the GLIBC versions required by '
+                           'the primed files that do not match:\n {}\n'.format(
+                               '\n'.join(files)))
+            # TODO implement GH Issue #1668
 
         if not self._build_attributes.no_system_libraries():
             system_dependency_paths = {os.path.dirname(d) for d in system}
