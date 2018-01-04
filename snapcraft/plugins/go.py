@@ -30,11 +30,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
       not be useful either.
       If the package is a part of the go-importpath the local package
       corresponding to those sources will be used.
-
-    - go-importpath:
-      (string)
-      This entry tells the checked out `source` to live within a certain path
-      within `GOPATH`.
       
     - go-buildtags:
       (list of strings)
