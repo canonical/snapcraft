@@ -202,42 +202,36 @@ class InvalidContainerRemoteError(SnapcraftError):
         super().__init__(remote=remote)
 
 
-class InexistantFile(SnapcraftError):
+class MissingDesktopFileError(SnapcraftError):
 
     fmt = (
         'Failed to generate desktop file: '
-        'Invalid desktop file {filename!r}: {message}.'
-        # FIXME include how to fix each of the possible desktop file errors.
-        # https://bugs.launchpad.net/snapcraft/+bug/1727435
-        # --elopio - 2017-10-25
+        'Invalid desktop file {filename!r}: Check if desktop file matches app name or Create a new path.'
+
     )
 
     def __init__(self, filename, message):
         super().__init__(filename=filename, message=message)
 
 
-class InvalidDesktopEntry(SnapcraftError):
+class MissingDesktopSectionError(SnapcraftError):
 
     fmt = (
         'Failed to find any Desktop Entry: '
-        'No Desktop Entry for {filename!r}: {message}.'
-        # FIXME include how to fix each of the possible desktop file errors.
-        # https://bugs.launchpad.net/snapcraft/+bug/1727435
-        # --elopio - 2017-10-25
+        'No Desktop Entry for {filename!r}: Check in home directory that .desktop file exists.'
+
     )
 
     def __init__(self, filename, message):
         super().__init__(filename=filename, message=message)
 
 
-class MissingExecKey(SnapcraftError):
+class MissingDesktopExecError(SnapcraftError):
 
     fmt = (
         'Failed to find Exec line: '
-        'No Exec line for {filename!r}: {message}.'
-        # FIXME include how to fix each of the possible desktop file errors.
-        # https://bugs.launchpad.net/snapcraft/+bug/1727435
-        # --elopio - 2017-10-25
+        'No Exec line for {filename!r}: Check if file exists or not.'
+
     )
 
     def __init__(self, filename, message):

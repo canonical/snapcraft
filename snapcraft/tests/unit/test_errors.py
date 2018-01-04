@@ -161,14 +161,14 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "name.\n")}),
 
         ('', {
-            'exception': errors.InexistantFile,
+            'exception': errors.MissingDesktopFileError,
             'kwargs': {
                 'filename': 'test-file',
                 'message': 'test-message'
             },
             'expected_message': (
                 "Failed to generate desktop file: "
-                "InexistantFile 'test-file': test-message.")}),
+                "MissingDesktopFileError 'test-file': test-message.")}),
         ('SnapcraftPartMissingError', {
             'exception': errors.SnapcraftPartMissingError,
             'kwargs': {'part_name': 'test-part'},
