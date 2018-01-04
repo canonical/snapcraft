@@ -1523,7 +1523,7 @@ class PushBinaryMetadataTestCase(StoreTestCase):
         metadata = {'field_ok': 'foo'}
         raised = self.assertRaises(
             errors.SnapNotFoundError,
-            self.client.push_metadata, 'notbasic', metadata, False)
+            self.client.push_binary_metadata, 'notbasic', metadata, False)
         self.assertThat(str(raised),
                         Equals("Snap 'notbasic' was not found in '{}' series."
                                .format(constants.DEFAULT_SERIES)))
