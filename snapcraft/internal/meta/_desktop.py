@@ -35,8 +35,8 @@ class DesktopFile:
         self._prime_dir = prime_dir
         self._path = os.path.join(prime_dir, filename)
         if not os.path.exists(self._path):
-            raise errors.InvalidDesktopFileError(
-                filename, 'does not exist (defined in the app {!r})'.format(
+            raise errors.MissingDesktopFileError(
+                filename, 'does not exist (defined in the app {!r}) \n Check if desktop file matches app name or Create a new path '.format(
                     name))
 
     def parse_and_reformat(self):
@@ -45,11 +45,11 @@ class DesktopFile:
         self._parser.read(self._path, encoding='utf-8')
         section = 'Desktop Entry'
         if section not in self._parser.sections():
-            raise errors.InvalidDesktopFileError(
-                self._filename, "missing 'Desktop Entry' section")
+            raise errors.MissingDesktopSectionError(
+                self._filename, "missing 'Desktop Entry' section. \n Check in home directory that .desktop file exists ")
         if 'Exec' not in self._parser[section]:
-            raise errors.InvalidDesktopFileError(
-                self._filename, "missing 'Exec' key")
+            raise errors.MissingDesktopExecError(
+                self._filename, "missing 'Exec' key \n no Desktop file-Check if file exists or not.")
         # XXX: do we want to allow more parameters for Exec?
         if self._name == self._snap_name:
             exec_value = '{} %U'.format(self._name)
