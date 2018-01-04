@@ -71,7 +71,7 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
                 r'.*permissions:.*?No restriction', re.DOTALL))
         self.assertThat(
             result.output, MatchesRegex(
-                r'.*expires:.*?Thu Feb  1 00:00:00 2018', re.DOTALL))
+                r'.*expires:.*?2018-02-01T00:00:00', re.DOTALL))
 
         self.mock_input.assert_called_once_with('Email: ')
         mock_login.assert_called_once_with(
@@ -94,7 +94,7 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
         }
 
         result = self.run_command(
-            ['export-login', '--expires=2018-01-01', 'exported'])
+            ['export-login', '--expires=2018-01-01T00:00:00', 'exported'])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
@@ -112,7 +112,7 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
                 r'.*permissions:.*?No restriction', re.DOTALL))
         self.assertThat(
             result.output, MatchesRegex(
-                r'.*expires:.*?Mon Jan  1 00:00:00 2018', re.DOTALL))
+                r'.*expires:.*?2018-01-01T00:00:00', re.DOTALL))
 
         self.mock_input.assert_called_once_with('Email: ')
         mock_login.assert_called_once_with(
@@ -156,7 +156,7 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
                 r'.*permissions:.*?No restriction', re.DOTALL))
         self.assertThat(
             result.output, MatchesRegex(
-                r'.*expires:.*?Mon Jan  1 00:00:00 2018', re.DOTALL))
+                r'.*expires:.*?2018-01-01T00:00:00', re.DOTALL))
 
         self.assertThat(self.mock_input.call_count, Equals(2))
         self.mock_input.assert_has_calls([
