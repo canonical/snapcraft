@@ -112,3 +112,16 @@ class OsReleaseTestCase(unit.TestCase):
 
         self.assertRaises(
             errors.OsReleaseCodenameError, release.version_codename)
+        
+        def test_no_version_newreleasecodename(self):
+        release = os_release.OsRelease(os_release_file=self._write_os_release(
+            dedent("""\
+                NAME="Ubuntu"
+                ID=ubuntu
+                ID_LIKE=debian
+                PRETTY_NAME="Ubuntu 17.10 LTS"
+            """)))
+
+        self.assertRaises(
+            errors.OsReleaseCodenameError, release.version_codename)
+
