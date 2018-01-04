@@ -155,8 +155,8 @@ class RegisterKeyTestCase(CommandBaseTestCase):
             storeapi.errors.LoginRequiredError,
             self.run_command, ['register-key', 'default'])
 
-        self.assertThat(str(raised), Equals(
-            'Cannot continue without logging in successfully.'))
+        self.assertThat(str(raised), Contains(
+            'Cannot continue without logging in successfully'))
         self.assertThat(mock_input.call_count, Equals(1))
 
     @mock.patch('snapcraft._store.login')

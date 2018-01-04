@@ -46,7 +46,8 @@ class SCAClient(Client):
         if response.ok:
             return response.json()['macaroon']
         else:
-            raise errors.StoreAuthenticationError('Failed to get macaroon')
+            raise errors.StoreAuthenticationError(
+                'Failed to get macaroon', response)
 
     @staticmethod
     def _is_needs_refresh_response(response):

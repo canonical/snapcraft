@@ -126,7 +126,7 @@ class LoginCommandTestCase(CommandBaseTestCase):
                 r'.*permissions:.*?No restriction', re.DOTALL))
         self.assertThat(
             result.output, MatchesRegex(
-                r'.*expires:.*?Mon Jan  1 00:00:00 2018', re.DOTALL))
+                r'.*expires:.*?2018-01-01T00:00:00', re.DOTALL))
 
         self.mock_input.assert_not_called()
         mock_login.assert_called_once_with(
@@ -150,10 +150,11 @@ class LoginCommandTestCase(CommandBaseTestCase):
         mock_login.side_effect = storeapi.errors.StoreAuthenticationError(
             'error')
 
-        result = self.run_command(['login'])
+        raised = self.assertRaises(
+            storeapi.errors.StoreAuthenticationError,
+            self.run_command, ['login'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains('Login failed.'))
+        self.assertThat(raised.message, Equals('error'))
 
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_failed_login_with_store_account_info_error(self, mock_login):
