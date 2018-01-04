@@ -146,11 +146,10 @@ class KernelPluginTestCase(unit.TestCase):
             mock.call('yes "" | make -j2 oldconfig', shell=True,
                       cwd=builddir),
             mock.call(['unsquashfs', os_snap_path,
-                       'usr/lib/ubuntu-core-generic-initrd'],
+                       'boot'],
                       cwd='temporary-directory'),
-            mock.call('cat temporary-directory/squashfs-root/usr/lib/'
-                      'ubuntu-core-generic-initrd/initrd.img-core | '
-                      'gzip -dc | cpio -i',
+            mock.call('cat temporary-directory/squashfs-root/boot'
+                      '/initrd.img-core | gzip -dc | cpio -i',
                       cwd=os.path.join(builddir, 'initrd-staging'),
                       shell=True),
             mock.call('find . | cpio --create --format=newc | '
@@ -225,9 +224,8 @@ class KernelPluginTestCase(unit.TestCase):
         plugin._unpack_generic_initrd()
 
         self.check_call_mock.assert_has_calls([
-            mock.call('cat temporary-directory/squashfs-root/usr/lib/'
-                      'ubuntu-core-generic-initrd/initrd.img-core | '
-                      'gzip -dc | cpio -i',
+            mock.call('cat temporary-directory/squashfs-root/boot/'
+                      'initrd.img-core | gzip -dc | cpio -i',
                       cwd=os.path.join(plugin.builddir, 'initrd-staging'),
                       shell=True)
         ])
@@ -240,9 +238,8 @@ class KernelPluginTestCase(unit.TestCase):
         plugin._unpack_generic_initrd()
 
         self.check_call_mock.assert_has_calls([
-            mock.call('cat temporary-directory/squashfs-root/usr/lib/'
-                      'ubuntu-core-generic-initrd/initrd.img-core | '
-                      'gzip -dc | cpio -i',
+            mock.call('cat temporary-directory/squashfs-root/boot/'
+                      'initrd.img-core | gzip -dc | cpio -i',
                       cwd=os.path.join(plugin.builddir, 'initrd-staging'),
                       shell=True)
         ])
@@ -255,9 +252,8 @@ class KernelPluginTestCase(unit.TestCase):
         plugin._unpack_generic_initrd()
 
         self.check_call_mock.assert_has_calls([
-            mock.call('cat temporary-directory/squashfs-root/usr/lib/'
-                      'ubuntu-core-generic-initrd/initrd.img-core | '
-                      'xz -dc | cpio -i',
+            mock.call('cat temporary-directory/squashfs-root/boot/'
+                      'initrd.img-core | xz -dc | cpio -i',
                       cwd=os.path.join(plugin.builddir, 'initrd-staging'),
                       shell=True)
         ])
@@ -270,9 +266,8 @@ class KernelPluginTestCase(unit.TestCase):
         plugin._unpack_generic_initrd()
 
         self.check_call_mock.assert_has_calls([
-            mock.call('cat temporary-directory/squashfs-root/usr/lib/'
-                      'ubuntu-core-generic-initrd/initrd.img-core | '
-                      'xz -dc | cpio -i',
+            mock.call('cat temporary-directory/squashfs-root/boot/'
+                      'initrd.img-core | xz -dc | cpio -i',
                       cwd=os.path.join(plugin.builddir, 'initrd-staging'),
                       shell=True)
         ])
@@ -420,11 +415,10 @@ class KernelPluginTestCase(unit.TestCase):
             mock.call('yes "" | make -j2 V=1 oldconfig', shell=True,
                       cwd=plugin.builddir),
             mock.call(['unsquashfs', plugin.os_snap,
-                       'usr/lib/ubuntu-core-generic-initrd'],
+                       'boot'],
                       cwd='temporary-directory'),
-            mock.call('cat temporary-directory/squashfs-root/usr/lib/'
-                      'ubuntu-core-generic-initrd/initrd.img-core | '
-                      'gzip -dc | cpio -i',
+            mock.call('cat temporary-directory/squashfs-root/boot/'
+                      'initrd.img-core | gzip -dc | cpio -i',
                       cwd=os.path.join(plugin.builddir, 'initrd-staging'),
                       shell=True),
             mock.call('find . | cpio --create --format=newc | '
