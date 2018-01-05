@@ -130,7 +130,7 @@ class Project(Containerbuild):
 
         # Use sshfs in slave mode to reverse mount the destination
         self._container_run(['apt-get', 'install', '-y', 'sshfs'])
-        self._container_run(['mkdir', '-p', destination])
+        self._container_run(['mkdir', '-p', destination], user=True)
         self._background_process_run([
             'lxc', 'exec', self._container_name, '--',
             'sudo', '-H', '-u', self._user,

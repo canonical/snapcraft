@@ -131,7 +131,7 @@ class CleanbuilderTestCase(LXDTestCase):
             call(['tar', 'xvf', 'project.tar'],
                  cwd=project_folder),
             call(['snapcraft', 'snap', '--output', 'snap.snap', *args],
-                 cwd=project_folder),
+                 cwd=project_folder, user=True),
         ])
         # Ensure there's no unexpected calls eg. two network checks
         self.assertThat(mock_container_run.call_count, Equals(6))

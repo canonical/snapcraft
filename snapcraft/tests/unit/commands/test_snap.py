@@ -494,7 +494,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             call(['apt-get', 'update']),
             call(['apt-get', 'install', 'squashfuse', '-y']),
             call(['snapcraft', 'snap', '--output',
-                  'snap-test_1.0_amd64.snap'], cwd=project_folder),
+                  'snap-test_1.0_amd64.snap'], cwd=project_folder, user=True),
         ])
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
@@ -531,7 +531,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   ', timeout=5)']),
             call(['snapcraft', 'snap', '--output',
                   'snap-test_1.0_amd64.snap'],
-                 cwd=project_folder),
+                 cwd=project_folder, user=True),
         ])
 
     @mock.patch('os.getuid')
@@ -596,7 +596,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                     ', timeout=5)']),
               call(['snapcraft', 'snap', '--output',
                     'snap-test_1.0_amd64.snap'],
-                   cwd=project_folder),
+                   cwd=project_folder, user=True),
         ])
         # Ensure there's no unexpected calls eg. two network checks
         self.assertThat(mock_container_run.call_count, Equals(2))

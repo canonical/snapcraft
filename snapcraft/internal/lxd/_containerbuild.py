@@ -179,9 +179,9 @@ class Containerbuild:
                 command += ['--target-arch', self._project_options.target_arch]
             if args:
                 command += args
-            self._container_run(command, cwd=self._project_folder)
+            self._container_run(command, cwd=self._project_folder, user=True)
 
-    def _container_run(self, cmd, cwd=None, **kwargs):
+    def _container_run(self, cmd: List[str], cwd=None, user=False, **kwargs):
         sh = ''
         original_cmd = cmd.copy()
         # Automatically wait on lock files before running commands
@@ -196,8 +196,7 @@ class Containerbuild:
         if sh:
             cmd = ['sh', '-c', '{}{}'.format(sh,
                    ' '.join(pipes.quote(arg) for arg in cmd))]
-        # Run commands where file ownership matters as user
-        if os.geteuid() > 0 and (cwd or cmd[0] == 'mkdir'):
+        if user:
             cmd = ['sudo', '-H', '-u', self._user] + cmd
         try:
             subprocess.check_call([
