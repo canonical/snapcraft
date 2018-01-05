@@ -483,9 +483,9 @@ class StoreTestCase(TestCase):
                 r'Done\. The key "{}" .* may be used to sign your '
                 r'assertions\.'.format(key_name))
         else:
-            process.expect_exact('Login failed.')
             process.expect_exact(
-                'Cannot continue without logging in successfully.')
+                'Cannot continue without logging in successfully: '
+                'Authentication error: Failed to get unbound discharge.')
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus
