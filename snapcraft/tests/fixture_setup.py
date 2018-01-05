@@ -504,10 +504,6 @@ class FakeFilesystem(fixtures.Fixture):
         self.open_mock.side_effect = self.open_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('os.chmod')
-        self.chmod_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
         patcher = mock.patch('shutil.copyfile')
         self.copyfile_mock = patcher.start()
         self.addCleanup(patcher.stop)

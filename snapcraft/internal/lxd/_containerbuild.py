@@ -292,7 +292,6 @@ class Containerbuild:
             ], tmp_dir)
 
         container_filename = os.path.join(os.sep, 'run', filename)
-        os.chmod(filepath, 0o777)
         self._push_file(filepath, container_filename)
         self._install_snap(container_filename,
                            is_dangerous=rev.startswith('x'),
@@ -355,7 +354,6 @@ class Containerbuild:
                 f.write(subprocess.check_output(['snap', 'known', *assertion]))
                 f.write(b'\n')
         container_filename = os.path.join(os.path.sep, 'run', filename)
-        os.chmod(filepath, 0o777)
         self._push_file(filepath, container_filename)
         logger.info('Adding assertion {}'.format(filename))
         self._container_run(['snap', 'ack', container_filename])
