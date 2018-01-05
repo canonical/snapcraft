@@ -16,11 +16,11 @@ class Client():
     """
 
     def __init__(self, conf, root_url):
-        """Set up Client object
+        """Initialize Client object
 
         :param config conf: Configuration details for the client
-        :param str root_url: Root url for all requests to base on.
-        :type config: snapcraft.config
+        :param str root_url: Root url for all requests.
+        :type config: snapcraft.config.Config
         """
         self.conf = conf
         self.root_url = root_url
@@ -40,8 +40,7 @@ class Client():
         """Send a request to url relative to the root url.
 
         :param str method: Method used for the request.
-        :param str url: url to send the request to, which will be appended with
-                        the root url first.
+        :param str url: Appended with the root url first.
         :param list params: Query parameters to be sent along with the request.
         :param list headers: Headers to be sent along with the request.
 
