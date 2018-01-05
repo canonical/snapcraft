@@ -16,6 +16,12 @@ class Client():
     """
 
     def __init__(self, conf, root_url):
+        """Initialize Client object
+
+        :param config conf: Configuration details for the client
+        :param str root_url: Root url for all requests.
+        :type config: snapcraft.config.Config
+        """
         self.conf = conf
         self.root_url = root_url
         self.session = requests.Session()
@@ -31,7 +37,15 @@ class Client():
         }
 
     def request(self, method, url, params=None, headers=None, **kwargs):
-        """Overriding base class to handle the root url."""
+        """Send a request to url relative to the root url.
+
+        :param str method: Method used for the request.
+        :param str url: Appended with the root url first.
+        :param list params: Query parameters to be sent along with the request.
+        :param list headers: Headers to be sent along with the request.
+
+        :return Response of the request.
+        """
         # Note that url may be absolute in which case 'root_url' is ignored by
         # urljoin.
 
@@ -51,10 +65,34 @@ class Client():
         return response
 
     def get(self, url, **kwargs):
+        """Perform a GET request with the given arguments.
+
+        The arguments are the same as for the request function,
+        namely params and headers.
+
+        :param str url: url to send the request.
+        :return Response of the request.
+        """
         return self.request('GET', url, **kwargs)
 
     def post(self, url, **kwargs):
+        """Perform a POST request with the given arguments.
+
+        The arguments are the same as for the request function,
+        namely params and headers.
+
+        :param str url: url to send the request.
+        :return Response of the request.
+        """
         return self.request('POST', url, **kwargs)
 
     def put(self, url, **kwargs):
+        """Perform a PUT request with the given arguments.
+
+        The arguments are the same as for the request function,
+        namely params and headers.
+
+        :param str url: url to send the request.
+        :return Response of the request.
+        """
         return self.request('PUT', url, **kwargs)
