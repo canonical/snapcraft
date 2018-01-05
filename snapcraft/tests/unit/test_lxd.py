@@ -549,7 +549,7 @@ class ProjectTestCase(ContainerbuildTestCase):
             mock_container_run.assert_has_calls([
                 call(['useradd', self.user, '--create-home']),
                 call(['usermod', self.user, '-o', '-u', '1234', '-G', 'sudo']),
-                call(['chown', '1234:0', self.home]),
+                call(['chown', 'me:me', self.home]),
             ])
             self.fake_lxd.check_output_mock.assert_has_calls([
                 call(['lxc', 'exec', self.fake_lxd.name, '--',

@@ -173,7 +173,7 @@ class Project(Containerbuild):
             'usermod', self._user, '-o',
             '-u', str(os.getuid()), '-G', 'sudo'])
         self._container_run([
-            'chown', '{}:0'.format(os.getuid(), 0),
+            'chown', '{}:{}'.format(self._user, self._user),
             '/home/{}'.format(self._user)])
         subprocess.check_output([
             'lxc', 'exec', self._container_name, '--',
