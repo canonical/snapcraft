@@ -307,9 +307,9 @@ def export_login(login_file: TextIO, snaps: str, channels: str, acls: str,
 
         snapcraft export-login --snaps=my-snap --channels=edge exported
 
-    To limit access to a single snap, but only until the first of the year:
+    To limit access to a single snap, but only until 2019:
 
-        snapcraft export-login --expires="2018-01-01T00:00:00" exported
+        snapcraft export-login --expires="2019-01-01T00:00:00" exported
     """
 
     snap_list = None
