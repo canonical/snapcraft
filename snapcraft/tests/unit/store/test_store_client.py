@@ -23,7 +23,6 @@ from unittest import mock
 
 import fixtures
 import pymacaroons
-import testscenarios
 from testtools.matchers import Contains, Equals
 
 from snapcraft import (
