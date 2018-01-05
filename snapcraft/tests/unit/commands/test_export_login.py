@@ -1,4 +1,7 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
 # Copyright (C) 2016-2017 Canonical Ltd
+#
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
 # published by the Free Software Foundation.
@@ -128,38 +131,39 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(1))
         self.assertThat(result.output, Contains(
             storeapi.constants.INVALID_CREDENTIALS))
-        self.assertThat(result.output, Contains('Login failed.'))
-    store = storeapi.StoreClient()
-    snap_name = store.get_snap_name_for_id('edge123')
 
 
-class edge123:
+self.assertThat(result.output, Contains('Login failed.'))
+
     @mock.patch.object(storeapi._sca_client.SCAClient,
                        'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
-    @mock.patch.object(storeapi.StoreClient, 'snap_ids')
-    def test_successful_export1(
+    @mock.patch.object(storeapi.StoreClient, 'acl')
+    def test_successful_login_with_2fa(
             self, mock_acl, mock_login, mock_get_account_information):
-        self.mock_input.return_value = 'user@example.com'
+        self.mock_input.side_effect = ('user@example.com', '123456')
+        mock_login.side_effect = [
+            storeapi.errors.StoreTwoFactorAuthenticationRequired(),
+            None]
         mock_acl.return_value = {
-            'snap_ids': ['edge123'],
-            'channels': None,
+            'snap_ids': ['myapp'],
+            'channels': ['edge'],
             'permissions': None,
         }
 
         result = self.run_command(['export-login', 'exported'])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains(
-            storeapi.constants.TWO_FACTOR_WARNING))
+        self.assertThat(result.output, Not(Contains(
+            storeapi.constants.TWO_FACTOR_WARNING)))
         self.assertThat(
             result.output, Contains('Login successfully exported'))
         self.assertThat(
             result.output, MatchesRegex(
-                r".*snaps:.*?['edge123']", re.DOTALL))
+                r".*snaps:.*?['myapp']", re.DOTALL))
         self.assertThat(
             result.output, MatchesRegex(
-                r'.*channels:.*?No restriction', re.DOTALL))
+                r".*channels:.*?['edge']", re.DOTALL))
         self.assertThat(
             result.output, MatchesRegex(
                 r'.*permissions:.*?No restriction', re.DOTALL))
@@ -176,3 +180,15 @@ class edge123:
                 'user@example.com', mock.ANY, one_time_password='123456',
                 acls=None, packages=None, channels=None, save=False,
                 config_fd=None)])
+
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    def test_failed_login_with_invalid_credentials(self, mock_login):
+        mock_login.side_effect = storeapi.errors.InvalidCredentialsError(
+            'error')
+
+        result = self.run_command(['export-login', 'exported'])
+
+        self.assertThat(result.exit_code, Equals(1))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.INVALID_CREDENTIALS))
+self.assertThat(result.output, Contains('Login failed.'))
