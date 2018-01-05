@@ -537,6 +537,19 @@ class ProjectTestCase(ContainerbuildTestCase):
                            project_options=self.project_options,
                            remote=self.remote)
 
+    def test_command_with_sudo(self):
+        self.make_containerbuild().execute()
+        project_folder = '{}/build_project'.format(self.home)
+        args = ''
+        if self.target_arch:
+            args += ' --target-arch {}'.format(self.target_arch)
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'exec', self.fake_lxd.name, '--',
+                  'sudo', '-H', '-E', '-u', self.user, 'sh', '-c',
+                  'cd {}; snapcraft snap --output snap.snap{}'.format(
+                      project_folder, args)]),
+        ])
+
     @patch('os.getuid')
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_user_setup(self, mock_container_run, mock_getuid):
@@ -556,6 +569,9 @@ class ProjectTestCase(ContainerbuildTestCase):
                       'tee', '-a', '/etc/sudoers'],
                      input='{} ALL=(ALL) NOPASSWD: ALL\n'.format(
                          self.user).encode()),
+                call(['lxc', 'exec', self.fake_lxd.name, '--',
+                      'sudo', '-H', '-u', 'me', 'ls',
+                      '{}/build_project'.format(self.home)]),
             ])
 
     def test_init_failed(self):

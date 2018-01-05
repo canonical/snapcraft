@@ -197,7 +197,7 @@ class Containerbuild:
             cmd = ['sh', '-c', '{}{}'.format(sh,
                    ' '.join(pipes.quote(arg) for arg in cmd))]
         if user:
-            cmd = ['sudo', '-H', '-u', self._user] + cmd
+            cmd = ['sudo', '-H', '-E', '-u', self._user] + cmd
         try:
             subprocess.check_call([
                 'lxc', 'exec', self._container_name, '--'] + cmd,
