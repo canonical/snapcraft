@@ -38,6 +38,7 @@ class DesktopFile:
             raise errors.InvalidDesktopFileError(
                 filename, 'does not exist (defined in the app {!r})'.format(
                     name))
+            print("Try creating a new path file and try again or check if desktop file matches app name")
 
     def parse_and_reformat(self):
         self._parser = configparser.ConfigParser(interpolation=None)
@@ -47,9 +48,11 @@ class DesktopFile:
         if section not in self._parser.sections():
             raise errors.InvalidDesktopFileError(
                 self._filename, "missing 'Desktop Entry' section")
+            print("No .desktop files detected-Please put the .desktop file in the directory /home/<user>")
         if 'Exec' not in self._parser[section]:
             raise errors.InvalidDesktopFileError(
                 self._filename, "missing 'Exec' key")
+            print("error:filename does not exist and no Desktop Entry for that filename")
         # XXX: do we want to allow more parameters for Exec?
         if self._name == self._snap_name:
             exec_value = '{} %U'.format(self._name)
