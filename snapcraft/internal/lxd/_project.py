@@ -166,7 +166,7 @@ class Project(Containerbuild):
             self._container_run([
                 'useradd', self._user, '--create-home'])
         except ContainerRunError as e:
-            # username already in use
+            # Exit code 9 'username already in use' is safe to ignore
             if e.exit_code != 9:
                 raise e
         self._container_run([
