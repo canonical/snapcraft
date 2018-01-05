@@ -98,8 +98,7 @@ class Project(Containerbuild):
 
     def _setup_project(self):
         if not self._container_name.startswith('local:'):
-            if os.geteuid() > 0:
-                self._setup_user()
+            self._setup_user()
             logger.info('Mounting {} into container'.format(self._source))
             return self._remote_mount(self._project_folder, self._source)
 
@@ -156,6 +155,8 @@ class Project(Containerbuild):
             'echo Y | sudo tee /sys/module/fuse/parameters/userns_mounts')
 
     def _setup_user(self):
+        if os.geteuid() == 0:
+            return
         # Setup user mirroring host user with sudo access
         self._user = os.environ['USER']
         self._project_folder = '/home/{}/build_{}'.format(
