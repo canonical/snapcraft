@@ -17,7 +17,7 @@ class SnapIndexClient(Client):
 
     def __init__(self, conf):
         """Initialize the SnapIndexClient object.
-        
+
         :param config conf: Configuration details for the client.
         :type config: snapcraft.config.Config
         """
@@ -45,11 +45,11 @@ class SnapIndexClient(Client):
 
     def get_package(self, snap_name, channel, arch=None):
         """Get the details for the specified snap.
-        
+
         :param str snap_name: Name of the snap.
         :param str channel: Channel of the snap.
         :param str arch: Architecture of the snap (none by default).
-        
+
         :return Details for the snap.
         """
         headers = self.get_default_headers()
@@ -77,10 +77,10 @@ class SnapIndexClient(Client):
     def get_assertion(self, assertion_type: str,
                       snap_id: str) -> Dict[str, Dict[str, str]]:
         """Get the assertion for the specified snap.
-        
+
         :param str assertion_type: The type of the assertion.
         :param str snap_id: The ID of the snap.
-        
+
         :return Assertion for the snap.
         """
         headers = self.get_default_headers()
@@ -95,14 +95,14 @@ class SnapIndexClient(Client):
 
     def get(self, url, headers=None, params=None, stream=False):
         """Perform a GET request with the given arguments.
-        
+
         :param str url: URL to send the request.
         :param dict headers: Headers to be sent along with the request.
         :param dict params: Query parameters to be sent along with
         the request.
         :param bool stream: Deterimines if the request shouldn't be
         automatically closed (true by default).
-        
+
         :return Response of the request.
         """
         if headers is None:
