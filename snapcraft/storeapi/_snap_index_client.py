@@ -51,6 +51,7 @@ class SnapIndexClient(Client):
         :param str arch: Architecture of the snap (none by default).
 
         :return Details for the snap.
+        :rtype: dict
         """
         headers = self.get_default_headers()
         headers.update({
