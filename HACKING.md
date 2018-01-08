@@ -17,9 +17,9 @@ Make sure pip is up-to-date:
 
     (snapcraft) $ pip install --upgrade pip
     
-Change directories:
+Change directory to Snapcraft:
 
-     cd snapcraft
+    (snapcraft) $ cd snapcraft
 
 
 Install snapcraft (and its dependencies):
