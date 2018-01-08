@@ -25,7 +25,7 @@ transactional update system.
 
 ## Get in touch
 
-We're friendly! Talk to us on [Rocket Chat](https://rocket.ubuntu.com/channel/snapcraft) or on [our forums](https://forum.snapcraft.io/).
+We're friendly! Talk to us on [IRC](https://webchat.freenode.net/?channels=snappy) or on [our forums](https://forum.snapcraft.io/).
 
 Get news and stay up to date on [Twitter](https://twitter.com/snapcraftio),
 [Google+](https://plus.google.com/+SnapcraftIo) or
