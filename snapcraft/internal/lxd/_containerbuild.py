@@ -179,9 +179,10 @@ class Containerbuild:
                 command += ['--target-arch', self._project_options.target_arch]
             if args:
                 command += args
-            self._container_run(command, cwd=self._project_folder, user=True)
+            self._container_run(command, cwd=self._project_folder,
+                                user=self._user)
 
-    def _container_run(self, cmd: List[str], cwd=None, user=False, **kwargs):
+    def _container_run(self, cmd: List[str], cwd=None, user='root', **kwargs):
         sh = ''
         original_cmd = cmd.copy()
         # Automatically wait on lock files before running commands
@@ -196,8 +197,8 @@ class Containerbuild:
         if sh:
             cmd = ['sh', '-c', '{}{}'.format(sh,
                    ' '.join(pipes.quote(arg) for arg in cmd))]
-        if user:
-            cmd = ['sudo', '-H', '-E', '-u', self._user] + cmd
+        if user != 'root':
+            cmd = ['sudo', '-H', '-E', '-u', user] + cmd
         try:
             subprocess.check_call([
                 'lxc', 'exec', self._container_name, '--'] + cmd,

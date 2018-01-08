@@ -130,7 +130,7 @@ class Project(Containerbuild):
 
         # Use sshfs in slave mode to reverse mount the destination
         self._container_run(['apt-get', 'install', '-y', 'sshfs'])
-        self._container_run(['mkdir', '-p', destination], user=True)
+        self._container_run(['mkdir', '-p', destination], user=self._user)
         self._background_process_run([
             'lxc', 'exec', self._container_name, '--',
             'sudo', '-H', '-u', self._user,
@@ -155,6 +155,7 @@ class Project(Containerbuild):
             'echo Y | sudo tee /sys/module/fuse/parameters/userns_mounts')
 
     def _setup_user(self):
+        # If we run as root or sudo we don't need a user in the container
         if os.geteuid() == 0:
             return
         # Setup user mirroring host user with sudo access

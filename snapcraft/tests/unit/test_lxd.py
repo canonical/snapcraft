@@ -131,7 +131,7 @@ class CleanbuilderTestCase(LXDTestCase):
             call(['tar', 'xvf', 'project.tar'],
                  cwd=project_folder),
             call(['snapcraft', 'snap', '--output', 'snap.snap', *args],
-                 cwd=project_folder, user=True),
+                 cwd=project_folder, user='root'),
         ])
         # Ensure there's no unexpected calls eg. two network checks
         self.assertThat(mock_container_run.call_count, Equals(6))
@@ -543,11 +543,15 @@ class ProjectTestCase(ContainerbuildTestCase):
         args = ''
         if self.target_arch:
             args += ' --target-arch {}'.format(self.target_arch)
+        sudo = []
+        if self.user != 'root':
+            sudo = ['sudo', '-H', '-E', '-u', self.user]
         self.fake_lxd.check_call_mock.assert_has_calls([
-            call(['lxc', 'exec', self.fake_lxd.name, '--',
-                  'sudo', '-H', '-E', '-u', self.user, 'sh', '-c',
-                  'cd {}; snapcraft snap --output snap.snap{}'.format(
-                      project_folder, args)]),
+            call(['lxc', 'exec', self.fake_lxd.name, '--'] + sudo
+                 + ['mkdir', '-p', project_folder]),
+            call(['lxc', 'exec', self.fake_lxd.name, '--'] + sudo
+                 + ['sh', '-c', 'cd {}; snapcraft snap --output snap.snap{}'.
+                    format(project_folder, args)]),
         ])
 
     @patch('os.getuid')
