@@ -5,6 +5,12 @@
 First install a few dependencies:
 
     sudo apt install gcc g++ make python3-dev python3-venv libffi-dev libsodium-dev libapt-pkg-dev libarchive13 squashfs-tools patchelf
+    
+   
+Fork the repository snapcraft on https://github.com/snapcore/snapcraft
+
+Then git clone your forked repository:
+    $ git clone https://github.com/username/snapcraft.git
 
 Create and activate a new virtual environment:
 
@@ -16,8 +22,9 @@ Create and activate a new virtual environment:
 Make sure pip is up-to-date:
 
    (snapcraft) $ pip install --upgrade pip
+ 
     
-Change directory to Snapcraft:
+Change directory to snapcraft:
 
    (snapcraft) $ cd snapcraft
 
