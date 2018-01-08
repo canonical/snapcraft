@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,6 +17,7 @@
 import copy
 import collections
 import contextlib
+import itertools
 import logging
 import os
 import re
@@ -37,6 +38,7 @@ from snapcraft.internal import (
     project_loader,
 )
 from snapcraft import _options
+from snapcraft.extractors import _metadata
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.meta import (
     _desktop,
@@ -119,9 +121,7 @@ def _update_yaml_with_extracted_metadata(
         # precedence over the pull step)
         metadata = part.get_pull_state().extracted_metadata['metadata']
         metadata.update(part.get_build_state().extracted_metadata['metadata'])
-        for key, value in metadata.to_dict().items():
-            if key not in config_data:
-                config_data[key] = value
+        _adopt_info(config_data, metadata)
 
     # Verify that all mandatory keys have been satisfied
     missing_keys = []  # type: List[str]
@@ -131,6 +131,97 @@ def _update_yaml_with_extracted_metadata(
 
     if missing_keys:
         raise meta_errors.MissingSnapcraftYamlKeysError(keys=missing_keys)
+
+
+def _adopt_info(
+        config_data: Dict[str, Any],
+        extracted_metadata: _metadata.ExtractedMetadata):
+    metadata_dict = extracted_metadata.to_dict()
+    for key, value in metadata_dict.items():
+        # desktop_file_ids are a special case that will be handled
+        # after all the top level snapcraft.yaml keys.
+        if key != 'desktop_file_ids' and key not in config_data:
+            if key == 'icon':
+                if _icon_file_exists() or not os.path.exists(value):
+                    # Do not overwrite the icon file.
+                    continue
+            config_data[key] = value
+    if 'desktop_file_ids' in metadata_dict:
+        for desktop_file_id in metadata_dict['desktop_file_id']:
+            app_name = _get_app_name_from_desktop_file_id(
+                config_data, desktop_file_id)
+            if app_name and not _desktop_file_exists(app_name):
+                for xdg_data_dir in ('usr/local/share', 'usr/share'):
+                    desktop_file_path = os.path.join(
+                        xdg_data_dir, 'applications',
+                        desktop_file_id.replace('-', '/'))
+                    if os.path.exists(desktop_file_path):
+                        config_data['apps'][app_name]['desktop'] = (
+                            desktop_file_path)
+
+
+def _icon_file_exists() -> bool:
+    """Check if the icon is specified as a file in the assets dir.
+
+    The icon file can be in two directories: 'setup/gui' (deprecated) or
+    'snap/gui'. The icon can be named 'icon.png' or 'icon.svg'.
+
+    :returns: True if the icon file exists, False otherwise.
+    """
+    for icon_path in (
+            os.path.join(asset_dir, 'gui', icon_file) for
+            (asset_dir, icon_file) in itertools.product(
+                ['setup', 'snap'],
+                ['icon.png', 'icon.svg'])):
+        if os.path.exists(icon_path):
+            return True
+    else:
+        return False
+
+
+def _get_app_name_from_desktop_file_id(
+        config_data: Dict[str, Any], desktop_file_id: str) -> str:
+    """Get the snap app name from a desktop file ID.
+
+    Desktop file IDs are defined in
+    https://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#desktop-file-id
+
+    XXX We try to find a match between desktop file id and snap app name.
+    This will be much nicer once snapcraft supports appstream IDs:
+    https://forum.snapcraft.io/t/support-for-appstream-id/2327
+    --elopio - 20180108
+
+    :params desktop_file_id: The identifier of the desktop file.
+    :returns: The name of the snap app that corresponds to the desktop file.
+
+    """  # noqa
+    desktop_file_id_parts = desktop_file_id.split('.')
+    if desktop_file_id_parts[-1] == 'desktop':
+        desktop_file_id_parts = desktop_file_id_parts[:-1]
+    app_id = desktop_file_id_parts[-1]
+    if ('apps' in config_data and
+            app_id in config_data['apps'].keys()):
+        return app_id
+    else:
+        return None
+
+
+def _desktop_file_exists(app_name: str) -> bool:
+    """Check if the desktop file is specified as a file in the assets dir.
+
+    The desktop file can be in two directories: 'setup/gui' (deprecated) or
+    'snap/gui'.
+
+    :params app_name: The name of the snap app.
+    :returns: True if the desktop file exists, False otherwise.
+    """
+    for desktop_path in (
+            os.path.join(asset_dir, 'gui', '{}.desktop'.format(app_name)) for
+            asset_dir in ['setup', 'snap']):
+        if os.path.exists(desktop_path):
+            return True
+    else:
+        return False
 
 
 class _SnapPackaging:
