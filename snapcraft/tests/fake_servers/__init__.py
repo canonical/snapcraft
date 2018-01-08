@@ -103,6 +103,15 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
                     ('maintainer', 'none'),
                 ))),
             ))
+            if 'CUSTOM_PARTS' in os.environ:
+                response = OrderedDict((
+                    ('curl-custom', OrderedDict((
+                        ('plugin', 'autotools'),
+                        ('source', 'http://curl.org'),
+                        ('description', 'custom curl part'),
+                        ('maintainer', 'none'),
+                    ))),
+                ))
         self.send_header('Content-Type', 'text/plain')
         if 'NO_CONTENT_LENGTH' not in os.environ:
             self.send_header('Content-Length', '1000')
