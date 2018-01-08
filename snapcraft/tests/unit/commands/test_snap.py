@@ -120,11 +120,14 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('os.pipe')
+    @mock.patch('os.geteuid')
     def test_snap_containerized_remote(self,
+                                       mock_geteuid,
                                        mock_pipe,
                                        mock_container_run):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         mock_pipe.return_value = (9, 9)
+        mock_geteuid.return_value = 1234
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_filesystem = fixture_setup.FakeFilesystem()
