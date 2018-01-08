@@ -15,11 +15,11 @@ Create and activate a new virtual environment:
 
 Make sure pip is up-to-date:
 
-    (snapcraft) $ pip install --upgrade pip
+   (snapcraft) $ pip install --upgrade pip
     
 Change directory to Snapcraft:
 
-    (snapcraft) $ cd snapcraft
+   (snapcraft) $ cd snapcraft
 
 
 Install snapcraft (and its dependencies):
