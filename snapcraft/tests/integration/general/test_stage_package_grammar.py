@@ -16,8 +16,9 @@
 
 import os
 import subprocess
+from textwrap import dedent
 
-from snapcraft.tests import integration, fixture_setup
+from snapcraft.tests import integration
 from testtools.matchers import (
     Contains,
     FileExists,
@@ -95,15 +96,13 @@ class StagePackageGrammarTestCase(integration.TestCase):
     def test_to_other_arch(self):
         """Test that 'to' for the other arch fetches nothing."""
 
-        self.useFixture(fixture_setup.SnapcraftYaml(
-            self.path,
-            parts={'simple': {
-                'plugin': 'nil',
-                'stage-packages': [
-                    {'to other-arch': ['hello']},
-                ],
-            }},
-        ))
+        self.construct_yaml(parts=dedent('''\
+            simple:
+              plugin: nil
+              stage-packages:
+              - to other-arch:
+                - hello
+            '''))
         self.run_snapcraft(['prime', 'simple'])
         self.assertThat(
             os.path.join('prime', 'usr', 'bin', 'hello'),
@@ -112,16 +111,15 @@ class StagePackageGrammarTestCase(integration.TestCase):
     def test_to_other_arch_else(self):
         """Test that 'else' for the other arch fetches hello."""
 
-        self.useFixture(fixture_setup.SnapcraftYaml(
-            self.path,
-            parts={'simple': {
-                'plugin': 'nil',
-                'stage-packages': [
-                    {'to other-arch': ['foo']},
-                    {'else': ['hello']},
-                ],
-            }},
-        ))
+        self.construct_yaml(parts=dedent('''\
+            simple:
+              plugin: nil
+              stage-packages:
+              - to other-arch:
+                - foo
+              - else:
+                - hello
+            '''))
         self.run_snapcraft(['prime', 'simple'])
         self.assertThat(
             os.path.join('prime', 'usr', 'bin', 'hello'),
@@ -130,16 +128,14 @@ class StagePackageGrammarTestCase(integration.TestCase):
     def test_to_other_arch_else_fail(self):
         """Test that 'else' for the other arch fails."""
 
-        self.useFixture(fixture_setup.SnapcraftYaml(
-            self.path,
-            parts={'simple': {
-                'plugin': 'nil',
-                'stage-packages': [
-                    {'to other-arch': ['foo']},
-                    'else fail'
-                ],
-            }},
-        ))
+        self.construct_yaml(parts=dedent('''\
+            simple:
+              plugin: nil
+              stage-packages:
+              - to other-arch:
+                - foo
+              - else fail
+            '''))
         exception = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft,
             ['prime', 'simple'])
