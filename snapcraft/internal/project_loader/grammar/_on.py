@@ -16,6 +16,8 @@
 
 import re
 
+import snapcraft
+
 from . import process_grammar
 from .errors import (
     OnStatementSyntaxError,
@@ -36,7 +38,7 @@ class OnStatement:
     ...     return True
     >>> with tempfile.TemporaryDirectory() as cache_dir:
     ...     options = ProjectOptions(target_deb_arch='i386')
-    ...     clause = OnStatement(on='on amd64', body=['foo'],
+    ...     clause = OnStatement(on='on i386', body=['foo'],
     ...                          project_options=options,
     ...                          checker=checker)
     ...     clause.add_else(['bar'])
@@ -81,12 +83,14 @@ class OnStatement:
         """
 
         primitives = set()
-        target_arch = self._project_options.deb_arch
+        # A new ProjectOptions instance defaults to the host architecture
+        # whereas self._project would yield the target architecture
+        host_arch = snapcraft.ProjectOptions().deb_arch
 
         # The only selector currently supported is the target arch. Since
         # selectors are matched with an AND, not OR, there should only be one
         # selector.
-        if (len(self.selectors) == 1) and (target_arch in self.selectors):
+        if (len(self.selectors) == 1) and (host_arch in self.selectors):
             primitives = process_grammar(
                 self._body, self._project_options, self._checker)
         else:

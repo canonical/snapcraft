@@ -16,6 +16,7 @@
 
 import testtools
 from testtools.matchers import Equals
+from unittest.mock import patch
 
 import snapcraft
 from snapcraft.internal.project_loader import grammar
@@ -63,7 +64,7 @@ class BasicGrammarTestCase(GrammarTestCase):
         ('mixed including', {
             'grammar': [
                 'foo',
-                {'on i386': ['bar']}
+                {'on amd64': ['bar']}
             ],
             'target_arch': 'i386',
             'expected_packages': {'foo', 'bar'}
@@ -84,10 +85,10 @@ class BasicGrammarTestCase(GrammarTestCase):
             'target_arch': 'amd64',
             'expected_packages': {'foo'}
         }),
-        ('on i386', {
+        ('on amd64 to i386', {
             'grammar': [
-                {'on amd64': ['foo']},
-                {'on i386': ['bar']},
+                {'on i386': ['foo']},
+                {'on amd64': ['bar']},
             ],
             'target_arch': 'i386',
             'expected_packages': {'bar'}
@@ -102,7 +103,7 @@ class BasicGrammarTestCase(GrammarTestCase):
         }),
         ('used else', {
             'grammar': [
-                {'on amd64': ['foo']},
+                {'on i386': ['foo']},
                 {'else': ['bar']},
             ],
             'target_arch': 'i386',
@@ -118,11 +119,11 @@ class BasicGrammarTestCase(GrammarTestCase):
             'target_arch': 'amd64',
             'expected_packages': {'foo'}
         }),
-        ('nested i386', {
+        ('nested amd64, target i386', {
             'grammar': [
-                {'on i386': [
-                    {'on amd64': ['foo']},
-                    {'on i386': ['bar']},
+                {'on amd64': [
+                    {'on i386': ['foo']},
+                    {'on amd64': ['bar']},
                 ]},
             ],
             'target_arch': 'i386',
@@ -140,8 +141,8 @@ class BasicGrammarTestCase(GrammarTestCase):
         }),
         ('nested used else', {
             'grammar': [
-                {'on i386': [
-                    {'on amd64': ['foo']},
+                {'on amd64': [
+                    {'on i386': ['foo']},
                     {'else': ['bar']},
                 ]},
             ],
@@ -175,7 +176,7 @@ class BasicGrammarTestCase(GrammarTestCase):
         }),
         ('nested try else', {
             'grammar': [
-                {'on i386': [
+                {'on amd64': [
                     {'try': ['invalid']},
                     {'else': ['bar']},
                 ]},
@@ -193,7 +194,13 @@ class BasicGrammarTestCase(GrammarTestCase):
         }),
     ]
 
-    def test_basic_grammar(self):
+    @patch('platform.architecture')
+    @patch('platform.machine')
+    def test_basic_grammar(self, platform_machine_mock,
+                           platform_architecture_mock):
+        platform_machine_mock.return_value = 'x86_64'
+        platform_architecture_mock.return_value = ('64bit', 'ELF')
+
         options = snapcraft.ProjectOptions(target_deb_arch=self.target_arch)
         self.assertThat(
             grammar.process_grammar(self.grammar, options, self.checker),

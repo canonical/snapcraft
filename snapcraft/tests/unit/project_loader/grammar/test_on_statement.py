@@ -17,6 +17,7 @@
 import doctest
 import testtools
 from testtools.matchers import Equals
+from unittest.mock import patch
 
 import snapcraft
 from snapcraft.internal.project_loader import grammar
@@ -41,7 +42,7 @@ class OnStatementGrammarTestCase(GrammarTestCase):
             'expected_packages': {'foo'}
         }),
         ('on i386', {
-            'on': 'on amd64',
+            'on': 'on i386',
             'body': ['foo'],
             'else_bodies': [],
             'target_arch': 'i386',
@@ -57,7 +58,7 @@ class OnStatementGrammarTestCase(GrammarTestCase):
             'expected_packages': {'foo'}
         }),
         ('used else', {
-            'on': 'on amd64',
+            'on': 'on i386',
             'body': ['foo'],
             'else_bodies': [
                 ['bar']
@@ -66,7 +67,7 @@ class OnStatementGrammarTestCase(GrammarTestCase):
             'expected_packages': {'bar'}
         }),
         ('third else ignored', {
-            'on': 'on amd64',
+            'on': 'on i386',
             'body': ['foo'],
             'else_bodies': [
                 ['bar'],
@@ -76,7 +77,7 @@ class OnStatementGrammarTestCase(GrammarTestCase):
             'expected_packages': {'bar'}
         }),
         ('third else followed', {
-            'on': 'on amd64',
+            'on': 'on i386',
             'body': ['foo'],
             'else_bodies': [
                 [{'on armhf': ['bar']}],
@@ -95,11 +96,11 @@ class OnStatementGrammarTestCase(GrammarTestCase):
             'target_arch': 'amd64',
             'expected_packages': {'foo'}
         }),
-        ('nested i386', {
-            'on': 'on i386',
+        ('nested amd64', {
+            'on': 'on amd64',
             'body': [
-                {'on amd64': ['foo']},
-                {'on i386': ['bar']},
+                {'on i386': ['foo']},
+                {'on amd64': ['bar']},
             ],
             'else_bodies': [],
             'target_arch': 'i386',
@@ -116,9 +117,9 @@ class OnStatementGrammarTestCase(GrammarTestCase):
             'expected_packages': {'foo'}
         }),
         ('nested body used else', {
-            'on': 'on i386',
+            'on': 'on amd64',
             'body': [
-                {'on amd64': ['foo']},
+                {'on armhf': ['foo']},
                 {'else': ['bar']},
             ],
             'else_bodies': [],
@@ -142,7 +143,7 @@ class OnStatementGrammarTestCase(GrammarTestCase):
             'body': ['foo'],
             'else_bodies': [
                 [
-                    {'on amd64': ['bar']},
+                    {'on i386': ['bar']},
                     {'else': ['baz']},
                 ],
             ],
@@ -151,7 +152,12 @@ class OnStatementGrammarTestCase(GrammarTestCase):
         }),
     ]
 
-    def test_on_statement_grammar(self):
+    @patch('platform.architecture')
+    @patch('platform.machine')
+    def test_on_statement_grammar(self, platform_machine_mock,
+                                  platform_architecture_mock):
+        platform_machine_mock.return_value = 'x86_64'
+        platform_architecture_mock.return_value = ('64bit', 'ELF')
         options = snapcraft.ProjectOptions(target_deb_arch=self.target_arch)
         statement = on.OnStatement(
             on=self.on, body=self.body, project_options=options,
