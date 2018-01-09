@@ -24,6 +24,10 @@ from . import errors
 from ._base import FileBase
 
 
+from tkinter.filedialog import askopenfilename
+from tkinter.filedialog import askdirectory
+
+
 class Tar(FileBase):
 
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
@@ -58,12 +62,17 @@ class Tar(FileBase):
             os.makedirs(dst)
             shutil.move(tmp_tarball, tarball)
 
-        self._extract(tarball, dst)
+        self._extract()
 
         if not keep_tarball:
             os.remove(tarball)
 
-    def _extract(self, tarball, dst):
+    def _extract(self):
+        tarball = askopenfilename(initialdir=None,
+                                  filetypes=(("Tar Lzma File", "*.tar.lzma"),
+                                             ("All Tar Files", "*.tar")),
+                                  title="Choose file to decompress")
+        dst = askdirectory()
         with tarfile.open(tarball) as tar:
             def filter_members(tar):
                 """Filters members and member names:
