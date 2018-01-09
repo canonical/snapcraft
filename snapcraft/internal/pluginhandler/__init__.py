@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -26,6 +26,7 @@ from glob import glob, iglob
 import yaml
 
 import snapcraft
+import snapcraft.extractors
 from snapcraft import file_utils
 from snapcraft.internal import (
     common,
@@ -37,6 +38,7 @@ from snapcraft.internal import (
 )
 from ._scriptlets import ScriptRunner
 from ._build_attributes import BuildAttributes
+from ._metadata_extraction import extract_metadata
 
 from ._plugin_loader import load_plugin  # noqa
 
@@ -70,6 +72,14 @@ class PluginHandler:
         self._stage_packages_repo = stage_packages_repo
         self._grammar_processor = grammar_processor
         self._confinement = confinement
+        self._source = grammar_processor.get_source()
+        if not self._source:
+            self._source = part_schema['source'].get('default')
+
+        self._pull_state = None  # type: states.PullState
+        self._build_state = None  # type: states.BuildState
+        self._stage_state = None  # type: states.StageState
+        self._prime_state = None  # type: states.PrimeState
 
         self._project_options = project_options
         self.deps = []
@@ -90,16 +100,36 @@ class PluginHandler:
 
         self._migrate_state_file()
 
+    def get_pull_state(self) -> states.PullState:
+        if not self._pull_state:
+            self._pull_state = states.get_state(self.plugin.statedir, 'pull')
+        return self._pull_state
+
+    def get_build_state(self) -> states.BuildState:
+        if not self._build_state:
+            self._build_state = states.get_state(self.plugin.statedir, 'build')
+        return self._build_state
+
+    def get_stage_state(self) -> states.StageState:
+        if not self._stage_state:
+            self._stage_state = states.get_state(self.plugin.statedir, 'stage')
+        return self._stage_state
+
+    def get_prime_state(self) -> states.PrimeState:
+        if not self._prime_state:
+            self._prime_state = states.get_state(self.plugin.statedir, 'prime')
+        return self._prime_state
+
     def _get_source_handler(self, properties):
         """Returns a source_handler for the source in properties."""
         # TODO: we cannot pop source as it is used by plugins. We also make
         # the default '.'
         source_handler = None
-        if properties['source']:
+        if self._source:
             handler_class = sources.get_source_handler(
-                properties['source'], source_type=properties['source-type'])
+                self._source, source_type=properties['source-type'])
             source_handler = handler_class(
-                properties['source'],
+                self._source,
                 self.plugin.sourcedir,
                 source_checksum=properties['source-checksum'],
                 source_branch=properties['source-branch'],
@@ -257,12 +287,23 @@ class PluginHandler:
         part_build_packages = self._part_properties.get('build-packages', [])
         part_build_snaps = self._part_properties.get('build-snaps', [])
 
+        # Extract any requested metadata available in the source directory
+        metadata = snapcraft.extractors.ExtractedMetadata()
+        metadata_files = []
+        for path in self._part_properties.get('parse-info', []):
+            file_path = os.path.join(self.plugin.sourcedir, path)
+            with contextlib.suppress(errors.MissingMetadataFileError):
+                metadata.update(extract_metadata(self.name, file_path))
+                metadata_files.append(path)
+
         self.mark_done('pull', states.PullState(
             pull_properties, part_properties=self._part_properties,
             project=self._project_options, stage_packages=self.stage_packages,
             build_snaps=part_build_snaps,
             build_packages=part_build_packages,
-            source_details=self.source_handler.source_details
+            source_details=self.source_handler.source_details,
+            metadata=metadata,
+            metadata_files=metadata_files
         ))
 
     def clean_pull(self, hint=''):
@@ -334,9 +375,40 @@ class PluginHandler:
         plugin_manifest = self.plugin.get_manifest()
         machine_manifest = self._get_machine_manifest()
 
+        # Extract any requested metadata available in the build directory,
+        # followed by the install directory (which takes precedence)
+        metadata_files = []
+        metadata = snapcraft.extractors.ExtractedMetadata()
+        for path in self._part_properties.get('parse-info', []):
+            file_path = os.path.join(self.plugin.builddir, path)
+            found = False
+            with contextlib.suppress(errors.MissingMetadataFileError):
+                metadata.update(extract_metadata(self.name, file_path))
+                found = True
+
+            file_path = os.path.join(self.plugin.installdir, path)
+            with contextlib.suppress(errors.MissingMetadataFileError):
+                metadata.update(extract_metadata(self.name, file_path))
+                found = True
+
+            if found:
+                metadata_files.append(path)
+            else:
+                # If this metadata file is not found in either build or
+                # install, check the pull state to make sure it was found
+                # there. If not, we need to let the user know.
+                state = self.get_pull_state()
+                if not state or path not in state.extracted_metadata['files']:
+                    raise errors.MissingMetadataFileError(self.name, path)
+
         self.mark_done('build', states.BuildState(
-            build_properties, self._part_properties, self._project_options,
-            plugin_manifest, machine_manifest))
+            property_names=build_properties,
+            part_properties=self._part_properties,
+            project=self._project_options,
+            plugin_assets=plugin_manifest,
+            machine_assets=machine_manifest,
+            metadata=metadata,
+            metadata_files=metadata_files))
 
     def _get_machine_manifest(self):
         return {
@@ -443,8 +515,13 @@ class PluginHandler:
 
         elf_files = elf.get_elf_files(self.primedir, snap_files)
         all_dependencies = set()
+        # TODO: base snap support
+        core_path = common.get_core_path()
+
         for elf_file in elf_files:
-            all_dependencies.update(elf_file.load_dependencies())
+            all_dependencies.update(
+                elf_file.load_dependencies(root_path=self.primedir,
+                                           core_base_path=core_path))
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
@@ -459,6 +536,25 @@ class PluginHandler:
 
         dependency_paths = part_dependency_paths | staged_dependency_paths
 
+        # We need to verify now that the GLIBC version would be compatible
+        # with that of the base.
+        # TODO the linker version depends on the chosen base, but that
+        # base may not be installed so we cannot depend on
+        # get_core_dynamic_linker to resolve the final path for which
+        # we resort to our only working base 16, ld-2.23.so.
+        linker_compatible = (e.is_linker_compatible(linker='ld-2.23.so')
+                             for e in elf_files)
+        if not all((x for x in linker_compatible)):
+            files = ('- {} -> GLIBC {}'.format(e.path, e.get_required_glibc())
+                     for e in elf_files if e.get_required_glibc())
+            logger.warning('The primed files will not work with the current '
+                           'base given the GLIBC mismatch of the primed '
+                           'files and the linker version (2.23) used in the '
+                           'base. These are the GLIBC versions required by '
+                           'the primed files that do not match:\n {}\n'.format(
+                               '\n'.join(files)))
+            # TODO implement GH Issue #1668
+
         if not self._build_attributes.no_system_libraries():
             system_dependency_paths = {os.path.dirname(d) for d in system}
             dependency_paths.update(system_dependency_paths)
@@ -469,37 +565,20 @@ class PluginHandler:
                 # dependencies.
                 _migrate_files(system, system_dependency_paths, '/',
                                self.primedir, follow_symlinks=True)
-
-        # TODO: base snap support
-        core_path = common.get_core_path()
-
-        def mangle_library_path(library_path: str, elf_file_path: str) -> str:
-            # If the path is is in the core snap, use the absolute path,
-            # if the path is primed, use $ORIGIN, and last if the dependency
-            # is not anywhere return an empty string.
-            #
-            # Once we move away from the system library grabbing logic
-            # we can move to a smarter library capturing mechanism.
-            library_path = library_path.replace(self.installdir, self.primedir)
-            if library_path.startswith(core_path):
-                return os.path.dirname(library_path)
-            elif (library_path.startswith(self.primedir) and
-                  os.path.exists(library_path)):
-                rel_library_path = os.path.relpath(library_path, elf_file_path)
-                rel_library_path_dir = os.path.dirname(rel_library_path)
-                # return the dirname, with the first .. replace with $ORIGIN
-                return rel_library_path_dir.replace('..', '$ORIGIN', 1)
-            else:
-                return ''
+                formatted_system = '\n'.join(sorted(system))
+                logger.warning(
+                    'Files from the build host were migrated into the snap to '
+                    'satisfy dependencies that would otherwise not be met. '
+                    'This feature will be removed in a future release. If '
+                    'these libraries are needed in the final snap, ensure '
+                    'that the following are either satisfied by a '
+                    'stage-packages entry or through a part:\n{}'.format(
+                        formatted_system))
 
         if self._confinement == 'classic':
-            core_rpaths = common.get_library_paths(
-                core_path, self._project_options.arch_triplet,
-                existing_only=False)
             dynamic_linker = self._project_options.get_core_dynamic_linker()
             elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker,
-                                      library_path_func=mangle_library_path,
-                                      base_rpaths=core_rpaths)
+                                      root_path=self.primedir)
             for elf_file in elf_files:
                 elf_patcher.patch(elf_file=elf_file)
 

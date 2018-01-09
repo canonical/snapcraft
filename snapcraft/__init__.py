@@ -423,6 +423,7 @@ from snapcraft._store import (                      # noqa
     validate,
 )
 from snapcraft import common                        # noqa
+from snapcraft import extractors                    # noqa
 from snapcraft import plugins                       # noqa
 from snapcraft import sources                       # noqa
 from snapcraft import file_utils                    # noqa

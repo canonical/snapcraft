@@ -67,6 +67,18 @@
    build folders as well as the container `snapcraft-<project>` is gone.
 
 
+# Test containerized building with LXD on a remote host
+
+1. Setup LXD on a remote host as described on
+   https://linuxcontainers.org/lxd/getting-started-cli/
+2. Add your remote locally via `lxc remote add <remote>`
+2. Select a project <project> to build.
+3. Run `SNAPCRAFT_CONTAINER_BUILDS=<remote> snapcraft -d` and observe that
+   the debug message `Setting up user <user> in container` shows up.
+4. Run `SNAPCRAFT_CONTAINER_BUILDS=<remote> snapcraft clean` and observe that
+   build folders as well as the container `snapcraft-<project>` is gone.
+
+
 # Test cross-compilation with Go
 
 1. Go to integration_tests/snaps/go-hello.

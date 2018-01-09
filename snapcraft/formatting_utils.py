@@ -48,18 +48,20 @@ def format_path_variable(envvar: str, paths: List[str],
             paths, prepend, separator))
 
 
-def humanize_list(items: List[str], conjunction: str) -> str:
+def humanize_list(items: List[str], conjunction: str,
+                  item_format: str = '{!r}') -> str:
     """Format a list into a human-readable string.
 
     :param list items: List to humanize.
     :param str conjunction: The conjunction used to join the final element to
                             the rest of the list (e.g. 'and').
+    :param str item_format: Format string to use per item.
     """
 
     if len(items) == 0:
         return ''
 
-    quoted_items = ['{!r}'.format(item) for item in sorted(items)]
+    quoted_items = [item_format.format(item) for item in sorted(items)]
     if len(items) == 1:
         return quoted_items[0]
 

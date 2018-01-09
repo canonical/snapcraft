@@ -52,6 +52,19 @@ class PartGrammarProcessor:
     ...    repo=repo)
     >>> processor.get_build_packages()
     {'foo'}
+
+    Source example:
+    >>> from unittest import mock
+    >>> import snapcraft
+    >>> plugin = mock.Mock()
+    >>> plugin.properties = {'source': [{'on amd64': 'foo'}, 'else fail']}
+    >>> processor = PartGrammarProcessor(
+    ...    plugin=plugin,
+    ...    properties=plugin.properties,
+    ...    project_options=snapcraft.ProjectOptions(),
+    ...    repo=None)
+    >>> processor.get_source()
+    'foo'
     """
 
     def __init__(self, *, plugin, properties, project_options, repo):
@@ -66,6 +79,22 @@ class PartGrammarProcessor:
 
         self._stage_package_grammar = getattr(plugin, 'stage_packages', [])
         self.__stage_packages = set()
+
+        self._source_grammar = properties.get('source', [''])
+        if not isinstance(self._source_grammar, list):
+            self._source_grammar = [self._source_grammar]
+        self.__source = ''
+
+    def get_source(self):
+        if not self.__source:
+            # The grammar is array-based, even though we only support a single
+            # source.
+            source_array = grammar.process_grammar(
+                self._source_grammar, self._project_options,
+                lambda s: True)
+            if len(source_array) > 0:
+                self.__source = source_array.pop()
+        return self.__source
 
     def get_build_snaps(self):
         if not self.__build_snaps:

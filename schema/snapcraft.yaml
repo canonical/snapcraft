@@ -1,6 +1,35 @@
 $schema: http://json-schema.org/draft-04/schema#
 
 definitions:
+  grammar-string:
+    oneOf:
+      - type: string
+        usage: "<string>"
+      - type: array
+        items:
+          minitems: 1
+          uniqueItems: true
+          anyOf:
+            - type: object
+              usage: "on <selector>[,<selector>...]:"
+              additionalProperties: false
+              patternProperties:
+                ^on\s+.+$:
+                  $ref: "#/definitions/grammar-string"
+            - type: object
+              usage: "try:"
+              additionalProperties: false
+              patternProperties:
+                ^try$:
+                  $ref: "#/definitions/grammar-string"
+            - type: object
+              usage: "else:"
+              additionalProperties: false
+              patternProperties:
+                ^else$:
+                  $ref: "#/definitions/grammar-string"
+            - type: string
+              pattern: "else fail"
   grammar-array:
     type: array
     minitems: 1
@@ -40,6 +69,9 @@ properties:
   build-packages:
     $ref: "#/definitions/grammar-array"
     description: top level build packages.
+  adopt-info:
+    type: string
+    description: name of the part that provides source files that will be parsed to extract snap metadata information
   name:
     type: string
     description: name of the snap package
@@ -259,7 +291,7 @@ properties:
             type: string
             description: plugin name
           source:
-            type: string
+            $ref: "#/definitions/grammar-string"
             default: '.'
           source-checksum:
               type: string
@@ -367,6 +399,13 @@ properties:
           prepare:
             type: string
             default: ''
+          parse-info:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: []
   plugs:
     type: object
   slots:
@@ -374,9 +413,16 @@ properties:
 required:
   - name
   - version
-  - summary
-  - description
   - parts
+
+# Either summary/description is required, or adopt-info is required to specify
+# the part from which this metadata will be retrieved.
+anyOf:
+  - required:
+    - summary
+    - description
+  - required:
+    - adopt-info
 dependencies:
   license-agreement: ["license"]
   license-version: ["license"]

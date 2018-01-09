@@ -24,7 +24,7 @@ from snapcraft import (
     tests
 )
 from snapcraft.tests import unit
-from snapcraft.cli import run
+from snapcraft.cli._runner import run
 
 
 _sample_keys = [

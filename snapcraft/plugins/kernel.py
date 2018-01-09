@@ -229,7 +229,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def _unpack_generic_initrd(self):
         initrd_path = os.path.join(
-            'usr', 'lib', 'ubuntu-core-generic-initrd', 'initrd.img-core')
+            'boot', 'initrd.img-core')
         initrd_unpacked_path = os.path.join(self.builddir, 'initrd-staging')
         if os.path.exists(initrd_unpacked_path):
             shutil.rmtree(initrd_unpacked_path)

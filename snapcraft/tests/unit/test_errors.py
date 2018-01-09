@@ -17,6 +17,7 @@
 from testtools.matchers import Equals
 
 from snapcraft.internal import errors
+from snapcraft.internal.meta import _errors as meta_errors
 from snapcraft.tests import unit
 
 
@@ -286,7 +287,51 @@ class ErrorFormattingTestCase(unit.TestCase):
             'exception': errors.InvalidContainerImageInfoError,
             'kwargs': {'image_info': 'test-image-info'},
             'expected_message': (
-                'Error parsing the container image info: test-image-info')})
+                'Error parsing the container image info: test-image-info')}),
+        # meta errors.
+        ('AdoptedPartMissingError', {
+            'exception': meta_errors.AdoptedPartMissingError,
+            'kwargs': {'part': 'test-part'},
+            'expected_message': (
+                "Failed to generate snap metadata: "
+                "'adopt-info' refers to a part named 'test-part', but it is "
+                "not defined in the 'snapcraft.yaml' file.")}),
+        ('AdoptedPartNotParsingInfo', {
+            'exception': meta_errors.AdoptedPartNotParsingInfo,
+            'kwargs': {'part': 'test-part'},
+            'expected_message': (
+                "Failed to generate snap metadata: "
+                "'adopt-info' refers to part 'test-part', but that part is "
+                "lacking the 'parse-info' property.")}),
+        ('MissingSnapcraftYamlKeysError', {
+            'exception': meta_errors.MissingSnapcraftYamlKeysError,
+            'kwargs': {'keys': ['test-key1', 'test-key2']},
+            'expected_message': (
+                "Failed to generate snap metadata: "
+                "Missing required key(s) in snapcraft.yaml: "
+                "'test-key1' and 'test-key2'. Either specify the missing "
+                "key(s), or use 'adopt-info' to get them from a part.")}),
+        ('MissingMetadataFileError', {
+            'exception': errors.MissingMetadataFileError,
+            'kwargs': {'part_name': 'test-part', 'path': 'test/path'},
+            'expected_message': (
+                "Failed to generate snap metadata: "
+                "Part 'test-part' has a 'parse-info' referring to metadata "
+                "file 'test/path', which does not exist.")}),
+        ('UnhandledMetadataFileTypeError', {
+            'exception': errors.UnhandledMetadataFileTypeError,
+            'kwargs': {'path': 'test/path'},
+            'expected_message': (
+                "Failed to extract metadata from 'test/path': "
+                "This type of file is not supported for supplying "
+                "metadata.")}),
+        ('InvalidExtractorValueError', {
+            'exception': errors.InvalidExtractorValueError,
+            'kwargs': {'path': 'test/path', 'extractor_name': 'extractor'},
+            'expected_message': (
+                "Failed to extract metadata from 'test/path': "
+                "Extractor 'extractor' didn't return ExtractedMetadata as "
+                "expected.")}),
     )
 
     def test_error_formatting(self):
