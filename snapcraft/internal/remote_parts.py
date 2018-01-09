@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import difflib
+import hashlib
 import logging
 import os
 import sys
@@ -85,7 +86,11 @@ def get_remote_parts():
 class _Base:
 
     def __init__(self):
-        self.parts_dir = os.path.join(BaseDirectory.xdg_data_home, 'snapcraft')
+        self._parts_uri = os.environ.get('SNAPCRAFT_PARTS_URI', PARTS_URI)
+        self.parts_dir = os.path.join(
+            BaseDirectory.xdg_data_home, 'snapcraft',
+            hashlib.sha384(self._parts_uri.encode(
+               sys.getfilesystemencoding())).hexdigest())
         os.makedirs(self.parts_dir, exist_ok=True)
         self.parts_yaml = os.path.join(self.parts_dir, 'parts.yaml')
 
@@ -95,7 +100,6 @@ class _Update(_Base):
     def __init__(self):
         super().__init__()
         self._headers_yaml = os.path.join(self.parts_dir, 'headers.yaml')
-        self._parts_uri = os.environ.get('SNAPCRAFT_PARTS_URI', PARTS_URI)
 
     def execute(self):
         headers = self._load_headers()
