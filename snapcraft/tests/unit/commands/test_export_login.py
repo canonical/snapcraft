@@ -133,8 +133,6 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
                     storeapi.constants.INVALID_CREDENTIALS))
         self.assertThat(result.output, Contains('Login failed.'))
 
-
-
     @mock.patch.object(storeapi._sca_client.SCAClient,
                        'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
