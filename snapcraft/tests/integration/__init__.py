@@ -418,7 +418,8 @@ class StoreTestCase(TestCase):
         if expect_success:
             process.expect('This exported login is not encrypted')
         else:
-            process.expect('Login failed')
+            process.expect(
+                'Authentication error: Failed to get unbound discharge.')
 
     def login(self, email=None, password=None, expect_success=True):
         email = email or self.test_store.user_email
@@ -427,8 +428,11 @@ class StoreTestCase(TestCase):
         process = pexpect.spawn(self.snapcraft_command, ['login'])
         self._conduct_login(process, email, password, expect_success)
 
-        result = 'successful' if expect_success else 'failed'
-        process.expect_exact('Login {}.'.format(result))
+        if expect_success:
+            process.expect_exact('Login successful.')
+        else:
+            process.expect(
+                'Authentication error: Failed to get unbound discharge.')
 
     def logout(self):
         output = self.run_snapcraft('logout')
