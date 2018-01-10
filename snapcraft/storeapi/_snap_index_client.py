@@ -101,7 +101,7 @@ class SnapIndexClient(Client):
         :param dict headers: Headers to be sent along with the request.
         :param dict params: Query parameters to be sent along with
         the request.
-        :param bool stream: Deterimines if the request shouldn't be
+        :param bool stream: Determines if the request shouldn't be
         automatically closed (true by default).
 
         :return Response of the request.
