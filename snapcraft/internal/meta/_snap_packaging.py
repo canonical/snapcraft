@@ -147,7 +147,7 @@ def _adopt_info(
                     continue
             config_data[key] = value
     if 'desktop_file_ids' in metadata_dict:
-        for desktop_file_id in metadata_dict['desktop_file_id']:
+        for desktop_file_id in metadata_dict['desktop_file_ids']:
             app_name = _get_app_name_from_desktop_file_id(
                 config_data, desktop_file_id)
             if app_name and not _desktop_file_exists(app_name):

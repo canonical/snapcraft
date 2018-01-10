@@ -117,8 +117,8 @@ class AppstreamLaunchableTestCase(unit.TestCase):
 
         expected = ExtractedMetadata(
             desktop_file_ids=[
-                'com.example.test-app.desktop1',
-                'com.example.test-app.desktop2'])
+                'com.example.test-app1.desktop',
+                'com.example.test-app2.desktop'])
 
         self.assertThat(
             appstream.extract('foo.metainfo.xml'), Equals(expected))
