@@ -14,4 +14,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This script is only needed as cx_Freeze does not support console scripts
+# thus there are no entry points.
+# We use __import__ to replicate somewhat what would happen if using
+# pkg_resources.
 __import__('snapcraft.cli.__main__', fromlist=['__name__'], level=0)
