@@ -24,7 +24,8 @@ from xml.etree.ElementTree import (
 
 
 def extract(path: str) -> ExtractedMetadata:
-    if not path.endswith('.metainfo.xml'):
+    if (not path.endswith('.metainfo.xml') and
+            not path.endswith('.appdata.xml')):
         raise _errors.UnhandledFileError(path, 'appstream')
 
     try:
