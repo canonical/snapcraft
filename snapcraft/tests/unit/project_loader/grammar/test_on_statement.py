@@ -237,7 +237,13 @@ class OnStatementInvalidGrammarTestCase(GrammarTestCase):
 
 class OnStatementElseFail(GrammarTestCase):
 
-    def test_else_fail(self):
+    @patch('platform.architecture')
+    @patch('platform.machine')
+    def test_else_fail(self, platform_machine_mock,
+                       platform_architecture_mock):
+        platform_machine_mock.return_value = 'x86_64'
+        platform_architecture_mock.return_value = ('64bit', 'ELF')
+
         options = snapcraft.ProjectOptions(
             target_deb_arch='amd64')
         statement = on.OnStatement(
