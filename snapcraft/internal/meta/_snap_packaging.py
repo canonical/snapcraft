@@ -142,7 +142,8 @@ def _adopt_info(
         # after all the top level snapcraft.yaml keys.
         if key != 'desktop_file_ids' and key not in config_data:
             if key == 'icon':
-                if _icon_file_exists() or not os.path.exists(value):
+                if _icon_file_exists() or not os.path.exists(
+                        str(value)):
                     # Do not overwrite the icon file.
                     continue
             config_data[key] = value

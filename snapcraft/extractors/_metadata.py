@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import yaml
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 
 class ExtractedMetadata(yaml.YAMLObject):
@@ -36,7 +36,7 @@ class ExtractedMetadata(yaml.YAMLObject):
             https://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#desktop-file-id
         """  # noqa
 
-        self._data = {}  # type: Dict[str, Any]
+        self._data = {}  # type: Dict[str, Union[str, List[str]]]
 
         if summary:
             self._data['summary'] = summary
@@ -63,7 +63,7 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted summary
         :rtype: str
         """
-        return self._data.get('summary')
+        return str(self._data.get('summary'))
 
     def get_description(self) -> str:
         """Return extracted description.
@@ -71,7 +71,7 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted description
         :rtype: str
         """
-        return self._data.get('description')
+        return str(self._data.get('description'))
 
     def get_icon(self) -> str:
         """Return extracted icon.
@@ -79,7 +79,7 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted icon
         :rtype: str
         """
-        return self._data.get('icon')
+        return str(self._data.get('icon'))
 
     def get_desktop_file_ids(self) -> List[str]:
         """Return extracted desktop files ids.
@@ -87,9 +87,9 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted desktop files ids
         :rtype: list
         """
-        return self._data.get('desktop_file_ids')
+        return list(self._data.get('desktop_file_ids'))
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> Dict[str, Union[str, List[str]]]:
         """Return all extracted metadata.
 
         :returns: All extracted metadata in dict form.
