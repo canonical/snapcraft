@@ -12,3 +12,6 @@ parts:
     plugin: dump
     source: simple.zip
     source-checksum: sha256/e8eae6f110b62687f21eddfca149d638f80d48e2bf4654771af46c7218f0d27e
+  non-unix-zip:
+    plugin: dump
+    source: non-unix.zip
