@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import subprocess
+from textwrap import dedent
 
 import snapcraft
 
@@ -104,4 +105,60 @@ class BuildPackageGrammarTestCase(integration.TestCase):
 
         self.run_snapcraft(['pull'], 'build-package-grammar-global')
 
+        self.assertTrue(self._hello_is_installed())
+
+    def test_to_other_arch(self):
+        """Test that 'to' fetches nothing when building for another arch."""
+
+        self.construct_yaml(parts=dedent('''\
+            my-part:
+              plugin: nil
+              build-packages:
+              - to other-arch:
+                - hello
+            '''))
+        self.run_snapcraft(['pull'])
+        self.assertFalse(self._hello_is_installed())
+
+    def test_to_other_arch_else(self):
+        """Test that 'to' moves to the 'else' branch if on other arch."""
+
+        self.construct_yaml(parts=dedent('''\
+            my-part:
+              plugin: nil
+              build-packages:
+              - to other-arch:
+                - foo
+              - else:
+                - hello
+            '''))
+        self.run_snapcraft(['pull'])
+        self.assertTrue(self._hello_is_installed())
+
+    def test_to_other_arch_else_fail(self):
+        """Test that 'on' fails with an error if it hits an 'else fail'."""
+
+        self.construct_yaml(parts=dedent('''\
+            my-part:
+              plugin: nil
+              build-packages:
+              - to other-arch:
+                - foo
+              - else fail
+            '''))
+        self.assertThat(self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft,
+            ['pull']).output, Contains(
+                "Unable to satisfy 'to other-arch', failure forced"))
+
+    def test_global_build_package_to_other_arch_else(self):
+        """Test that grammar works in global build packages as well."""
+
+        self.construct_yaml(build_packages=dedent('''\
+            - to other-arch:
+              - foo
+            - else:
+              - hello
+            '''))
+        self.run_snapcraft(['pull'])
         self.assertTrue(self._hello_is_installed())
