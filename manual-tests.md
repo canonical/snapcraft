@@ -259,3 +259,14 @@
 
     * Check that it should end ok
     * Check in the Web that the icon is now what the YAML says
+
+
+# Test creating a macaroon with a specific expiration
+
+1. Take note of the current date. Pick a date two days later, and convert it
+   into ISO 8601. For example, midnight on February 5th, 2019 is
+   '2019-02-05T00:00:00'.
+2. Run 'snapcraft export-login --expires="2019-02-05T00:00:00" exported', using
+   the expiration date you calculated.
+3. Snapcraft will print the capabilities of the exported login. Verify that the
+   expiration date you requested is the one that it prints.
