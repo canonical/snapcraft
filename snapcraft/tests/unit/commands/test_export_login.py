@@ -1,4 +1,4 @@
-#  -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2016-2017 Canonical Ltd
 #
@@ -95,31 +95,31 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Not(Contains(
-                        storeapi.constants.TWO_FACTOR_WARNING)))
+            storeapi.constants.TWO_FACTOR_WARNING)))
         self.assertThat(
-                        result.output, Contains('Login successfully exported'))
+            result.output, Contains('Login successfully exported'))
         self.assertThat(
-                        result.output, MatchesRegex(
-                            r'.*snaps:.*?No restriction', re.DOTALL))
+            result.output, MatchesRegex(
+                r'.*snaps:.*?No restriction', re.DOTALL))
         self.assertThat(
-                        result.output, MatchesRegex(
-                            r".*channels:.*?['edge']", re.DOTALL))
+            result.output, MatchesRegex(
+                r".*channels:.*?['edge']", re.DOTALL))
         self.assertThat(
-                        result.output, MatchesRegex(
-                            r'.*permissions:.*?No restriction', re.DOTALL))
+            result.output, MatchesRegex(
+                r'.*permissions:.*?No restriction', re.DOTALL))
 
         self.assertThat(self.mock_input.call_count, Equals(2))
         self.mock_input.assert_has_calls([
-                mock.call('Email: '), mock.call('Second-factor auth: ')])
+            mock.call('Email: '), mock.call('Second-factor auth: ')])
         self.assertThat(mock_login.call_count, Equals(2))
         mock_login.assert_has_calls([
-                mock.call(
-                    'user@example.com', mock.ANY, acls=None, packages=None,
-                    channels=None, save=False, config_fd=None),
-                mock.call(
-                    'user@example.com', mock.ANY, one_time_password='123456',
-                    acls=None, packages=None, channels=None, save=False,
-                    config_fd=None)])
+            mock.call(
+                'user@example.com', mock.ANY, acls=None, packages=None,
+                channels=None, save=False, config_fd=None),
+            mock.call(
+                'user@example.com', mock.ANY, one_time_password='123456',
+                acls=None, packages=None, channels=None, save=False,
+                config_fd=None)])
 
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_failed_login_with_invalid_credentials(self, mock_login):
@@ -130,7 +130,7 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(1))
         self.assertThat(result.output, Contains(
-                    storeapi.constants.INVALID_CREDENTIALS))
+            storeapi.constants.INVALID_CREDENTIALS))
         self.assertThat(result.output, Contains('Login failed.'))
 
     @mock.patch.object(storeapi._sca_client.SCAClient,
@@ -138,15 +138,15 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
     @mock.patch.object(storeapi.StoreClient, 'login')
     @mock.patch.object(storeapi.StoreClient, 'acl')
     def test_export_with_snap_name(
-            self, mock_acl, mock_login, mock_get_account_information):
+           self, mock_acl, mock_login, mock_get_account_information):
         self.mock_input.return_value = 'user@example.com'
         mock_acl.return_value = {
-            'snap_ids': None,
-            'channels': ['edge'],
-            'permissions': None,
+           'snap_ids': None,
+           'channels': None,
+           'permissions': None,
         }
 
-        result = self.run_command(['export-login', 'exported'])
+        result = self.run_command(['export-login', 'myapp'])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
@@ -162,9 +162,3 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
         self.assertThat(
             result.output, MatchesRegex(
                 r'.*permissions:.*?No restriction', re.DOTALL))
-
-        self.mock_input.assert_called_once_with('Email: ')
-        mock_login.assert_called_once_with(
-            'user@example.com', mock.ANY, acls=None, packages=None,
-            channels=None, save=False, config_fd=None)
-        mock_acl.assert_called_once_with()
