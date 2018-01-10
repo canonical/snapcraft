@@ -67,6 +67,18 @@
    build folders as well as the container `snapcraft-<project>` is gone.
 
 
+# Test containerized building with LXD on a remote host
+
+1. Setup LXD on a remote host as described on
+   https://linuxcontainers.org/lxd/getting-started-cli/
+2. Add your remote locally via `lxc remote add <remote>`
+2. Select a project <project> to build.
+3. Run `SNAPCRAFT_CONTAINER_BUILDS=<remote> snapcraft -d` and observe that
+   the debug message `Setting up user <user> in container` shows up.
+4. Run `SNAPCRAFT_CONTAINER_BUILDS=<remote> snapcraft clean` and observe that
+   build folders as well as the container `snapcraft-<project>` is gone.
+
+
 # Test cross-compilation with Go
 
 1. Go to integration_tests/snaps/go-hello.
@@ -247,3 +259,14 @@
 
     * Check that it should end ok
     * Check in the Web that the icon is now what the YAML says
+
+
+# Test creating a macaroon with a specific expiration
+
+1. Take note of the current date. Pick a date two days later, and convert it
+   into ISO 8601. For example, midnight on February 5th, 2019 is
+   '2019-02-05T00:00:00'.
+2. Run 'snapcraft export-login --expires="2019-02-05T00:00:00" exported', using
+   the expiration date you calculated.
+3. Snapcraft will print the capabilities of the exported login. Verify that the
+   expiration date you requested is the one that it prints.

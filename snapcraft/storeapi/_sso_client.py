@@ -42,8 +42,7 @@ class SSOClient(Client):
                 raise errors.StoreTwoFactorAuthenticationRequired()
             else:
                 raise errors.StoreAuthenticationError(
-                    'Failed to get unbound discharge: {}'.format(
-                        response.text))
+                    'Failed to get unbound discharge', response)
 
     def refresh_unbound_discharge(self, unbound_discharge):
         data = {'discharge_macaroon': unbound_discharge}
@@ -55,5 +54,4 @@ class SSOClient(Client):
             return response.json()['discharge_macaroon']
         else:
             raise errors.StoreAuthenticationError(
-                'Failed to refresh unbound discharge: {}'.format(
-                    response.text))
+                'Failed to refresh unbound discharge', response)

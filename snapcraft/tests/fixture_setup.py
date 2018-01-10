@@ -640,6 +640,8 @@ class FakeLXD(fixtures.Fixture):
     def _lxc_exec(self, args):
         if self.status and args[0][2] == self.name:
             cmd = args[0][4]
+            if cmd == 'sudo':
+                cmd = args[0][8]
             if cmd == 'ls':
                 return ' '.join(self.files).encode('utf-8')
             elif cmd == 'readlink':
