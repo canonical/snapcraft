@@ -42,11 +42,11 @@ class OnStatementGrammarTestCase(GrammarTestCase):
             'expected_packages': {'foo'}
         }),
         ('on i386', {
-            'on': 'on i386',
+            'on': 'on amd64',
             'body': ['foo'],
             'else_bodies': [],
             'host_arch': 'i686',
-            'expected_packages': {'foo'}
+            'expected_packages': set()
         }),
         ('ignored else', {
             'on': 'on amd64',
@@ -143,11 +143,11 @@ class OnStatementGrammarTestCase(GrammarTestCase):
             'body': ['foo'],
             'else_bodies': [
                 [
-                    {'on i386': ['bar']},
+                    {'on amd64': ['bar']},
                     {'else': ['baz']},
                 ],
             ],
-            'host_arch': 'x86_64',
+            'host_arch': 'i686',
             'expected_packages': {'baz'}
         }),
     ]
