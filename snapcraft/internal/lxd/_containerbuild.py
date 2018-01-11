@@ -226,13 +226,13 @@ class Containerbuild:
                     raise e
         logger.info('Network connection established')
 
-    def _inject_snapcraft(self):
+    def _inject_snapcraft(self, *, new_container: bool):
         if common.is_snap():
             with tempfile.TemporaryDirectory(
                     prefix='snapcraft', dir=self._lxd_common_dir) as tmp_dir:
                 self._inject_snap('core', tmp_dir)
                 self._inject_snap('snapcraft', tmp_dir)
-        else:
+        elif new_container:
             self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
 
     def _inject_snap(self, name: str, tmp_dir: str):
