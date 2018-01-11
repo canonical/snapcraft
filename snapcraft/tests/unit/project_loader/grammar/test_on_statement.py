@@ -99,12 +99,12 @@ class OnStatementGrammarTestCase(GrammarTestCase):
         ('nested i386', {
             'on': 'on i386',
             'body': [
-                {'on i386': ['foo']},
-                {'on amd64': ['bar']},
+                {'on amd64': ['foo']},
+                {'on i386': ['bar']},
             ],
             'else_bodies': [],
             'host_arch': 'i686',
-            'expected_packages': {'foo'}
+            'expected_packages': {'bar'}
         }),
         ('nested body ignored else', {
             'on': 'on amd64',
