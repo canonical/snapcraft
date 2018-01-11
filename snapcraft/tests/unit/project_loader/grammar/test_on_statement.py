@@ -38,15 +38,15 @@ class OnStatementGrammarTestCase(GrammarTestCase):
             'on': 'on amd64',
             'body': ['foo'],
             'else_bodies': [],
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected_packages': {'foo'}
         }),
         ('on i386', {
             'on': 'on i386',
             'body': ['foo'],
             'else_bodies': [],
-            'target_arch': 'i386',
-            'expected_packages': set()
+            'host_arch': 'i686',
+            'expected_packages': {'foo'}
         }),
         ('ignored else', {
             'on': 'on amd64',
@@ -54,36 +54,36 @@ class OnStatementGrammarTestCase(GrammarTestCase):
             'else_bodies': [
                 ['bar']
             ],
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected_packages': {'foo'}
         }),
         ('used else', {
-            'on': 'on i386',
+            'on': 'on amd64',
             'body': ['foo'],
             'else_bodies': [
                 ['bar']
             ],
-            'target_arch': 'i386',
+            'host_arch': 'i686',
             'expected_packages': {'bar'}
         }),
         ('third else ignored', {
-            'on': 'on i386',
+            'on': 'on amd64',
             'body': ['foo'],
             'else_bodies': [
                 ['bar'],
                 ['baz']
             ],
-            'target_arch': 'i386',
+            'host_arch': 'i686',
             'expected_packages': {'bar'}
         }),
         ('third else followed', {
-            'on': 'on i386',
+            'on': 'on amd64',
             'body': ['foo'],
             'else_bodies': [
                 [{'on armhf': ['bar']}],
                 ['baz']
             ],
-            'target_arch': 'i386',
+            'host_arch': 'i686',
             'expected_packages': {'baz'}
         }),
         ('nested amd64', {
@@ -93,18 +93,18 @@ class OnStatementGrammarTestCase(GrammarTestCase):
                 {'on i386': ['bar']},
             ],
             'else_bodies': [],
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected_packages': {'foo'}
         }),
-        ('nested amd64', {
-            'on': 'on amd64',
+        ('nested i386', {
+            'on': 'on i386',
             'body': [
                 {'on i386': ['foo']},
                 {'on amd64': ['bar']},
             ],
             'else_bodies': [],
-            'target_arch': 'i386',
-            'expected_packages': {'bar'}
+            'host_arch': 'i686',
+            'expected_packages': {'foo'}
         }),
         ('nested body ignored else', {
             'on': 'on amd64',
@@ -113,17 +113,17 @@ class OnStatementGrammarTestCase(GrammarTestCase):
                 {'else': ['bar']},
             ],
             'else_bodies': [],
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected_packages': {'foo'}
         }),
         ('nested body used else', {
-            'on': 'on amd64',
+            'on': 'on i386',
             'body': [
                 {'on armhf': ['foo']},
                 {'else': ['bar']},
             ],
             'else_bodies': [],
-            'target_arch': 'i386',
+            'host_arch': 'i686',
             'expected_packages': {'bar'}
         }),
         ('nested else ignored else', {
@@ -135,7 +135,7 @@ class OnStatementGrammarTestCase(GrammarTestCase):
                     {'else': ['baz']},
                 ],
             ],
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected_packages': {'bar'}
         }),
         ('nested else used else', {
@@ -147,7 +147,7 @@ class OnStatementGrammarTestCase(GrammarTestCase):
                     {'else': ['baz']},
                 ],
             ],
-            'target_arch': 'i386',
+            'host_arch': 'x86_64',
             'expected_packages': {'baz'}
         }),
     ]
@@ -156,9 +156,9 @@ class OnStatementGrammarTestCase(GrammarTestCase):
     @patch('platform.machine')
     def test_on_statement_grammar(self, platform_machine_mock,
                                   platform_architecture_mock):
-        platform_machine_mock.return_value = 'x86_64'
+        platform_machine_mock.return_value = self.host_arch
         platform_architecture_mock.return_value = ('64bit', 'ELF')
-        options = snapcraft.ProjectOptions(target_deb_arch=self.target_arch)
+        options = snapcraft.ProjectOptions()
         statement = on.OnStatement(
             on=self.on, body=self.body, project_options=options,
             checker=self.checker)
@@ -176,7 +176,6 @@ class OnStatementInvalidGrammarTestCase(GrammarTestCase):
             'on': 'on amd64, ubuntu',
             'body': ['foo'],
             'else_bodies': [],
-            'target_arch': 'amd64',
             'expected_exception':
                 ".*not a valid 'on' clause.*spaces are not allowed in the "
                 'selectors.*',
@@ -185,28 +184,24 @@ class OnStatementInvalidGrammarTestCase(GrammarTestCase):
             'on': 'on ,amd64',
             'body': ['foo'],
             'else_bodies': [],
-            'target_arch': 'amd64',
             'expected_exception': ".*not a valid 'on' clause",
         }),
         ('ending with comma', {
             'on': 'on amd64,',
             'body': ['foo'],
             'else_bodies': [],
-            'target_arch': 'amd64',
             'expected_exception': ".*not a valid 'on' clause",
         }),
         ('multiple commas', {
             'on': 'on amd64,,ubuntu',
             'body': ['foo'],
             'else_bodies': [],
-            'target_arch': 'amd64',
             'expected_exception': ".*not a valid 'on' clause",
         }),
         ('invalid selector format', {
             'on': 'on',
             'body': ['foo'],
             'else_bodies': [],
-            'target_arch': 'amd64',
             'expected_exception':
                 ".*not a valid 'on' clause.*selectors are missing",
         }),
@@ -214,7 +209,6 @@ class OnStatementInvalidGrammarTestCase(GrammarTestCase):
             'on': 'im-invalid',
             'body': ['foo'],
             'else_bodies': [],
-            'target_arch': 'amd64',
             'expected_exception': ".*not a valid 'on' clause",
         }),
     ]
@@ -223,8 +217,7 @@ class OnStatementInvalidGrammarTestCase(GrammarTestCase):
         with testtools.ExpectedException(
                 grammar.errors.OnStatementSyntaxError,
                 self.expected_exception):
-            options = snapcraft.ProjectOptions(
-                target_deb_arch=self.target_arch)
+            options = snapcraft.ProjectOptions()
             statement = on.OnStatement(
                 on=self.on, body=self.body, project_options=options,
                 checker=self.checker)

@@ -58,7 +58,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                 'foo',
                 'bar',
             ],
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected_packages': {'foo', 'bar'}
         }),
         ('mixed including', {
@@ -66,7 +66,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                 'foo',
                 {'on amd64': ['bar']}
             ],
-            'target_arch': 'i386',
+            'host_arch': 'x86_64',
             'expected_packages': {'foo', 'bar'}
         }),
         ('mixed excluding', {
@@ -74,7 +74,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                 'foo',
                 {'on i386': ['bar']}
             ],
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected_packages': {'foo'}
         }),
         ('on amd64', {
@@ -82,31 +82,31 @@ class BasicGrammarTestCase(GrammarTestCase):
                 {'on amd64': ['foo']},
                 {'on i386': ['bar']},
             ],
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected_packages': {'foo'}
         }),
-        ('on amd64 to i386', {
+        ('on i386', {
             'grammar': [
                 {'on i386': ['foo']},
                 {'on amd64': ['bar']},
             ],
-            'target_arch': 'i386',
-            'expected_packages': {'bar'}
+            'host_arch': 'i686',
+            'expected_packages': {'foo'}
         }),
         ('ignored else', {
             'grammar': [
                 {'on amd64': ['foo']},
                 {'else': ['bar']},
             ],
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected_packages': {'foo'}
         }),
         ('used else', {
             'grammar': [
-                {'on i386': ['foo']},
+                {'on amd64': ['foo']},
                 {'else': ['bar']},
             ],
-            'target_arch': 'i386',
+            'host_arch': 'i686',
             'expected_packages': {'bar'}
         }),
         ('nested amd64', {
@@ -116,18 +116,18 @@ class BasicGrammarTestCase(GrammarTestCase):
                     {'on i386': ['bar']},
                 ]},
             ],
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected_packages': {'foo'}
         }),
-        ('nested amd64, target i386', {
+        ('nested amd64, host i386', {
             'grammar': [
-                {'on amd64': [
+                {'on i386': [
                     {'on i386': ['foo']},
                     {'on amd64': ['bar']},
                 ]},
             ],
-            'target_arch': 'i386',
-            'expected_packages': {'bar'}
+            'host_arch': 'i686',
+            'expected_packages': {'foo'}
         }),
         ('nested ignored else', {
             'grammar': [
@@ -136,7 +136,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                     {'else': ['bar']},
                 ]},
             ],
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected_packages': {'foo'}
         }),
         ('nested used else', {
@@ -146,14 +146,14 @@ class BasicGrammarTestCase(GrammarTestCase):
                     {'else': ['bar']},
                 ]},
             ],
-            'target_arch': 'i386',
+            'host_arch': 'x86_64',
             'expected_packages': {'bar'}
         }),
         ('try', {
             'grammar': [
                 {'try': ['valid']},
             ],
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected_packages': {'valid'}
         }),
         ('try else', {
@@ -161,7 +161,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                 {'try': ['invalid']},
                 {'else': ['valid']},
             ],
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected_packages': {'valid'}
         }),
         ('nested try', {
@@ -171,17 +171,17 @@ class BasicGrammarTestCase(GrammarTestCase):
                     {'else': ['bar']},
                 ]},
             ],
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected_packages': {'foo'}
         }),
         ('nested try else', {
             'grammar': [
-                {'on amd64': [
+                {'on i386': [
                     {'try': ['invalid']},
                     {'else': ['bar']},
                 ]},
             ],
-            'target_arch': 'i386',
+            'host_arch': 'i686',
             'expected_packages': {'bar'}
         }),
         ('optional', {
@@ -189,7 +189,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                 'foo',
                 {'try': ['invalid']},
             ],
-            'target_arch': 'amd64',
+            'host_arch': 'i686',
             'expected_packages': {'foo'}
         }),
     ]
@@ -198,10 +198,10 @@ class BasicGrammarTestCase(GrammarTestCase):
     @patch('platform.machine')
     def test_basic_grammar(self, platform_machine_mock,
                            platform_architecture_mock):
-        platform_machine_mock.return_value = 'x86_64'
+        platform_machine_mock.return_value = self.host_arch
         platform_architecture_mock.return_value = ('64bit', 'ELF')
 
-        options = snapcraft.ProjectOptions(target_deb_arch=self.target_arch)
+        options = snapcraft.ProjectOptions()
         self.assertThat(
             grammar.process_grammar(self.grammar, options, self.checker),
             Equals(self.expected_packages))
@@ -214,21 +214,18 @@ class InvalidGrammarTestCase(GrammarTestCase):
             'grammar': [
                 {'else': ['foo']}
             ],
-            'target_arch': 'amd64',
             'expected_exception': ".*'else' doesn't seem to correspond.*",
         }),
         ('unmatched else fail', {
             'grammar': [
                 'else fail'
             ],
-            'target_arch': 'amd64',
             'expected_exception': ".*'else' doesn't seem to correspond.*",
         }),
         ('unexpected type', {
             'grammar': [
                 5,
             ],
-            'target_arch': 'amd64',
             'expected_exception': ".*expected grammar section.*but got.*",
         }),
     ]
