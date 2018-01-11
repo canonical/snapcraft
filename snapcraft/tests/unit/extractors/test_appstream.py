@@ -18,24 +18,25 @@ import textwrap
 
 from snapcraft.extractors import appstream, ExtractedMetadata
 
+import testscenarios
 from testtools.matchers import Equals
 
+from snapcraft.extractors import _errors
 from snapcraft.tests import unit
 
 
 class AppstreamTestCase(unit.TestCase):
 
-    scenarios = [
-        ('summary', {
-            'key': 'summary',
-        }),
-        ('description', {
-            'key': 'description',
-        }),
-    ]
+    scenarios = testscenarios.multiply_scenarios(
+        [('summary', {'key': 'summary'}),
+         ('description', {'key': 'description'})],
+        [('metainfo', {'file_extension': 'metainfo.xml'}),
+         ('appdata', {'file_extension': 'appdata.xml'})]
+    )
 
     def test_appstream(self):
-        with open('foo.metainfo.xml', 'w') as f:
+        file_name = 'foo.{}'.format(self.file_extension)
+        with open(file_name, 'w') as f:
             f.write(textwrap.dedent("""\
                 <?xml version="1.0" encoding="UTF-8"?>
                 <component>
@@ -46,4 +47,15 @@ class AppstreamTestCase(unit.TestCase):
         expected = ExtractedMetadata(**kwargs)
 
         self.assertThat(
-            appstream.extract('foo.metainfo.xml'), Equals(expected))
+            appstream.extract(file_name), Equals(expected))
+
+
+class AppstreamUnhandledFileTestCase(unit.TestCase):
+
+    def test_unhandled_file_test_case(self):
+        raised = self.assertRaises(
+            _errors.UnhandledFileError, appstream.extract,
+            'unhandled-file')
+
+        self.assertThat(raised.path, Equals('unhandled-file'))
+        self.assertThat(raised.extractor_name, Equals('appstream'))

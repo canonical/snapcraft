@@ -204,6 +204,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             definitions_schema=definitions_schema,
             grammar_processor=grammar_processor,
             stage_packages_repo=stage_packages_repo,
+            snap_base_path='/snap/fake-name/current',
             confinement=confinement)
 
 

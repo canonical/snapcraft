@@ -115,9 +115,17 @@ class SnapsTestCase(testtools.TestCase):
             self.snapcraft_command = '/snap/bin/snapcraft'
         elif os.getenv('SNAPCRAFT_FROM_DEB', False):
             self.snapcraft_command = '/usr/bin/snapcraft'
-        else:
+        elif os.getenv('VIRTUAL_ENV'):
             self.snapcraft_command = os.path.join(
-                os.getcwd(), 'bin', 'snapcraft')
+                os.getenv('VIRTUAL_ENV'), 'bin', 'snapcraft')
+            self.snapcraft_parser_command = os.path.join(
+                os.getenv('VIRTUAL_ENV'), 'bin', 'snapcraft-parser')
+        else:
+            raise EnvironmentError(
+                'snapcraft is not setup correctly for testing. Either set '
+                'SNAPCRAFT_FROM_SNAP or SNAPCRAFT_FROM_DEB to run from either '
+                'the snap or deb, or make sure your venv is properly setup '
+                'as described in HACKING.md.')
 
         self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
 
