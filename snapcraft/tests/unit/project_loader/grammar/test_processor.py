@@ -64,9 +64,9 @@ class BasicGrammarTestCase(GrammarTestCase):
         ('mixed including', {
             'grammar': [
                 'foo',
-                {'on amd64': ['bar']}
+                {'on i386': ['bar']}
             ],
-            'host_arch': 'x86_64',
+            'host_arch': 'i686',
             'expected_packages': {'foo', 'bar'}
         }),
         ('mixed excluding', {
@@ -87,11 +87,11 @@ class BasicGrammarTestCase(GrammarTestCase):
         }),
         ('on i386', {
             'grammar': [
-                {'on i386': ['foo']},
-                {'on amd64': ['bar']},
+                {'on amd64': ['foo']},
+                {'on i386': ['bar']},
             ],
             'host_arch': 'i686',
-            'expected_packages': {'foo'}
+            'expected_packages': {'bar'}
         }),
         ('ignored else', {
             'grammar': [
@@ -119,15 +119,15 @@ class BasicGrammarTestCase(GrammarTestCase):
             'host_arch': 'x86_64',
             'expected_packages': {'foo'}
         }),
-        ('nested amd64, host i386', {
+        ('nested i386', {
             'grammar': [
                 {'on i386': [
-                    {'on i386': ['foo']},
-                    {'on amd64': ['bar']},
+                    {'on amd64': ['foo']},
+                    {'on i386': ['bar']},
                 ]},
             ],
             'host_arch': 'i686',
-            'expected_packages': {'foo'}
+            'expected_packages': {'bar'}
         }),
         ('nested ignored else', {
             'grammar': [
@@ -141,12 +141,12 @@ class BasicGrammarTestCase(GrammarTestCase):
         }),
         ('nested used else', {
             'grammar': [
-                {'on amd64': [
-                    {'on i386': ['foo']},
+                {'on i386': [
+                    {'on amd64': ['foo']},
                     {'else': ['bar']},
                 ]},
             ],
-            'host_arch': 'x86_64',
+            'host_arch': 'i686',
             'expected_packages': {'bar'}
         }),
         ('try', {

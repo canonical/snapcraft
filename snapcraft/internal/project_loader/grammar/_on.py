@@ -32,16 +32,20 @@ class OnStatement:
     """Process an 'on' statement in the grammar.
 
     For example:
-    >>> import tempfile
     >>> from snapcraft import ProjectOptions
+    >>> from unittest import mock
+    >>>
     >>> def checker(primitive):
     ...     return True
-    >>> with tempfile.TemporaryDirectory() as cache_dir:
-    ...     options = ProjectOptions(target_deb_arch='i386')
-    ...     clause = OnStatement(on='on i386', body=['foo'],
-    ...                          project_options=options,
-    ...                          checker=checker)
-    ...     clause.add_else(['bar'])
+    >>> options = ProjectOptions()
+    >>>
+    >>> clause = OnStatement(on='on amd64', body=['foo'],
+    ...                      project_options=options,
+    ...                      checker=checker)
+    >>> clause.add_else(['bar'])
+    >>> with mock.patch('platform.machine') as mock_machine:
+    ...     # Pretend this machine is an i686, not amd64
+    ...     mock_machine.return_value = 'i686'
     ...     clause.process()
     {'bar'}
     """
