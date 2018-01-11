@@ -163,11 +163,28 @@ class ErrorFormattingTestCase(unit.TestCase):
         ('', {
             'exception': errors.MissingDesktopFileError,
             'kwargs': {
-                'filename': 'test-file'
+                'filename': 'app_name'
             },
             'expected_message': (
                 "Failed to generate desktop file: "
                 "{filename!r} defined in app {app_name!r} does not exist.")}),
+        ('', {
+            'exception': errors.MissingDesktopSectionError,
+            'kwargs': {
+                'file_name': 'section_name'
+            },
+            'expected_message': (
+                "Failed to generate desktop file: "
+                "Missing {section_name!r} section: "
+                "in desktop file {filename!r}.")}),
+        ('', {
+            'exception': errors.MissingDesktopExecError,
+            'kwargs': {
+                'filename': 'test-file'
+            },
+            'expected_message': (
+                "Failed to generate desktop file: "
+                "Missing Exec key in desktop file {filename!r}")}),
         ('SnapcraftPartMissingError', {
             'exception': errors.SnapcraftPartMissingError,
             'kwargs': {'part_name': 'test-part'},
