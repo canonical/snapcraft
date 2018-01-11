@@ -22,11 +22,11 @@ from tempfile import TemporaryDirectory
 import yaml
 
 import snapcraft
-import snapcraft.internal
 from snapcraft.internal import (
     common,
     meta,
     pluginhandler,
+    project_loader,
     repo,
     states
 )
@@ -58,7 +58,7 @@ def execute(step, project_options, part_names=None):
                           over.
     :returns: A dict with the snap name, version, type and architectures.
     """
-    config = snapcraft.internal.load_config(project_options)
+    config = project_loader.load_config(project_options)
     installed_packages = repo.Repo.install_build_packages(
         config.build_tools)
     if installed_packages is None:
@@ -73,8 +73,7 @@ def execute(step, project_options, part_names=None):
         state_file.write(yaml.dump(
             states.GlobalState(installed_packages, installed_snaps)))
 
-    if (os.environ.get('SNAPCRAFT_SETUP_CORE') and
-            config.data['confinement'] == 'classic'):
+    if _should_get_core(config.data['confinement']):
         _setup_core(project_options.deb_arch)
 
     _Executor(config, project_options).run(step, part_names)
@@ -117,6 +116,16 @@ def _setup_core(deb_arch):
         check_call(['sudo', 'rmdir', core_path])
     check_call(['sudo', 'mkdir', '-p', os.path.dirname(core_path)])
     check_call(['sudo', 'unsquashfs', '-d', core_path, core_snap])
+
+
+def _should_get_core(confinement: str) -> bool:
+    is_env_var_set = os.environ.get('SNAPCRAFT_SETUP_CORE', False) is not False
+    # This is a quirk so that docker users not using the Dockerfile
+    # we distribute and create can automatically build classic
+    is_docker_instance = common.is_docker_instance()  # type: bool
+    is_classic = (confinement == 'classic')  # type: bool
+
+    return is_classic and (is_env_var_set or is_docker_instance)
 
 
 def _replace_in_part(part):
@@ -215,7 +224,7 @@ class _Executor:
         if step == 'prime' and part_names == self.config.part_names:
             common.env = self.config.snap_env()
             meta.create_snap_packaging(
-                self.config.data, self.project_options,
+                self.config.data, self.config.parts, self.project_options,
                 self.config.snapcraft_yaml_path)
 
     def _handle_dirty(self, part, step, dirty_report):

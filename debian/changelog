@@ -1,3 +1,57 @@
+snapcraft (2.38) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * ci: detect docker to auto setup core (#1801)
+  * ci: correctly run from snap (#1803)
+  * elf: strip the .note.go.buildid to make room for patching elf (#1798)
+  * meta: create XDG_RUNTIME_DIR in wrappers (#1818)
+  * tests: use a simpler test for bzr and python (#1821)
+  * repo: handle invalid snaps (#1815)
+  * tests: skip classic confined tests on armhf (#1822)
+  * elf: search for DT_NEEDED in prime and the base (#1823)
+  * pluginhandler: warn the inclusion of libraries from the host (#1829)
+
+  [ Leo Arias ]
+  * tests: update the snap name already registered for store tests (#1797)
+  * tests: update the registered snap fake (#1799)
+  * tests: collect the autopkgtest results and save them to a repo  (#1755)
+  * meta: refactor into a package (#1804)
+  * ci: don't fail if the snap transfer fails (#1808)
+
+  [ Kyle Fazzari ]
+  * metadata: add infrastructure for extracting metadata from parts (#1825)
+  * extractors: support appstream metadata in parts (#1826)
+
+  [ Michael Hudson-Doyle ]
+  * lxd: suppress traceback when lxc launch / init fails (#1771)
+
+  [ Daniel Lim Wee Soong ]
+  * storeapi: breakdown code into modules (#1793)
+
+  [ Tyler Hicks ]
+  * lifecycle: use the -no-fragments mksquashfs option (#1805)
+
+  [ Daniel Lim Wee Soong ]
+  * ci: transfer generated snapcraft snap to transfer.sh (#1806)
+
+  [ Christian Dywan ]
+  * repo: error for packages with broken dependencies (#1788)
+  * lxd: always install squashfuse (#1786)
+  * tests: run test_cleanbuild in LXD on Travis (#1807)
+  * grammar: support grammar-powered source (#1817)
+
+  [ Ted Gould ]
+  * lifecycle: do not include source tarballs from previous runs (#1795)
+
+  [ Konrad Krawiec ]
+  * static tests: add type hints to formatting_utils (#1809)
+  * tests: add more unit tests for formatting_utils (#1813)
+
+  [ Ivan Fonseca ]
+  * static tests: type hinting for various modules (#1812)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Fri, 22 Dec 2017 16:55:56 +0000
+
 snapcraft (2.37) xenial; urgency=medium
 
   [ Sergio Schvezov ]

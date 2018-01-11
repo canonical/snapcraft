@@ -17,6 +17,7 @@
 import os
 
 from ._schema import Validator  # noqa
+from ._parts_config import PartsConfig  # noqa
 
 
 def load_config(project_options=None):

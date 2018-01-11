@@ -203,7 +203,7 @@ class PythonPluginTestCase(integration.TestCase):
         self.assertThat(
             glob(os.path.join(
                 self.parts_dir, 'pip-bzr', 'python-packages',
-                'curtin-*.zip'))[0],
+                'bzrtest-*.zip'))[0],
             FileExists())
 
     def test_build_with_data_files_with_root(self):

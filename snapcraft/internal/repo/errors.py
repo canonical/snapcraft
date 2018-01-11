@@ -18,6 +18,8 @@ from snapcraft.internal.os_release import OsRelease
 from ._platform import _is_deb_based
 from snapcraft.internal import errors
 
+from typing import List
+
 
 class RepoError(errors.SnapcraftError):
     pass
@@ -38,6 +40,14 @@ class BuildPackageNotFoundError(RepoError):
 
     def __init__(self, package):
         super().__init__(package=package)
+
+
+class PackageBrokenError(RepoError):
+
+    fmt = "The package {package} has unmet dependencies: {deps}"
+
+    def __init__(self, package: str, deps: List[str]) -> None:
+        super().__init__(package=package, deps=' '.join(deps))
 
 
 class PackageNotFoundError(RepoError):
@@ -69,6 +79,17 @@ class UnpackError(RepoError):
 
     def __init__(self, package):
         super().__init__(package=package)
+
+
+class SnapUnavailableError(RepoError):
+
+    fmt = ('Failed to install or refresh a snap: {snap_name!r} does not exist '
+           'or is not available on the desired channel {snap_channel!r}. '
+           'Use `snap info {snap_name}` to get a list of channels the '
+           'snap is available on.')
+
+    def __init__(self, *, snap_name: str, snap_channel: str) -> None:
+        super().__init__(snap_name=snap_name, snap_channel=snap_channel)
 
 
 class SnapInstallError(RepoError):

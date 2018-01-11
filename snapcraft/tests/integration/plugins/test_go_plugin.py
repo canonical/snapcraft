@@ -18,7 +18,8 @@ import os
 import subprocess
 
 import yaml
-from testtools.matchers import Equals, FileContains, FileExists, Not
+from testtools.matchers import (Equals, FileContains, FileExists, MatchesRegex,
+                                Not)
 
 from snapcraft.tests import integration
 import snapcraft
@@ -35,6 +36,22 @@ class GoPluginTestCase(integration.TestCase):
             os.path.join(self.stage_dir, 'bin', os.path.basename(self.path)),
             universal_newlines=True)
         self.assertThat(binary_output, Equals('Hello snapcrafter\n'))
+
+    def test_classic_with_conflicting_build_id(self):
+        # TODO find a faster test to verify LP: #1736861
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
+
+        self.run_snapcraft('prime', 'go-gotty')
+
+        bin_path = os.path.join(self.prime_dir, 'bin', 'gotty')
+
+        self.assertThat(bin_path, FileExists())
+
+        interpreter = subprocess.check_output([
+            self.patchelf_command, '--print-interpreter', bin_path]).decode()
+        expected_interpreter = r'^/snap/core/current/.*'
+        self.assertThat(interpreter, MatchesRegex(expected_interpreter))
 
     def test_building_multiple_main_packages(self):
         self.run_snapcraft('stage', 'go-with-multiple-main-packages')

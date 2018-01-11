@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import List, Set
 
-def combine_paths(paths, prepend, separator):
+
+def combine_paths(paths: List[str], prepend: str, separator: str) -> str:
     """Combine list of paths into a string.
 
     :param list paths: List of paths to stringify.
@@ -27,7 +29,8 @@ def combine_paths(paths, prepend, separator):
     return separator.join(paths)
 
 
-def format_path_variable(envvar, paths, prepend, separator):
+def format_path_variable(envvar: str, paths: List[str],
+                         prepend: str, separator: str) -> str:
     """Return a path-like environment variable definition that appends.
 
     :param str envvar: The environment variable in question.
@@ -45,18 +48,20 @@ def format_path_variable(envvar, paths, prepend, separator):
             paths, prepend, separator))
 
 
-def humanize_list(items, conjunction):
+def humanize_list(items: List[str], conjunction: str,
+                  item_format: str = '{!r}') -> str:
     """Format a list into a human-readable string.
 
     :param list items: List to humanize.
     :param str conjunction: The conjunction used to join the final element to
                             the rest of the list (e.g. 'and').
+    :param str item_format: Format string to use per item.
     """
 
     if len(items) == 0:
         return ''
 
-    quoted_items = ['{!r}'.format(item) for item in sorted(items)]
+    quoted_items = [item_format.format(item) for item in sorted(items)]
     if len(items) == 1:
         return quoted_items[0]
 
@@ -68,7 +73,7 @@ def humanize_list(items, conjunction):
     return '{} {} {}'.format(humanized, conjunction, quoted_items[-1])
 
 
-def pluralize(container, if_one, if_multiple):
+def pluralize(container: Set[str], if_one: str, if_multiple: str) -> str:
     if len(container) == 1:
         return if_one
     else:

@@ -63,6 +63,7 @@ class Containerbuild:
         self._source = os.path.realpath(source)
         self._project_options = project_options
         self._metadata = metadata
+        self._user = 'root'
         self._project_folder = '/root/build_{}'.format(metadata['name'])
 
         if not remote:
@@ -178,9 +179,10 @@ class Containerbuild:
                 command += ['--target-arch', self._project_options.target_arch]
             if args:
                 command += args
-            self._container_run(command, cwd=self._project_folder)
+            self._container_run(command, cwd=self._project_folder,
+                                user=self._user)
 
-    def _container_run(self, cmd, cwd=None, **kwargs):
+    def _container_run(self, cmd: List[str], cwd=None, user='root', **kwargs):
         sh = ''
         original_cmd = cmd.copy()
         # Automatically wait on lock files before running commands
@@ -195,6 +197,8 @@ class Containerbuild:
         if sh:
             cmd = ['sh', '-c', '{}{}'.format(sh,
                    ' '.join(pipes.quote(arg) for arg in cmd))]
+        if user != 'root':
+            cmd = ['sudo', '-H', '-E', '-u', user] + cmd
         try:
             subprocess.check_call([
                 'lxc', 'exec', self._container_name, '--'] + cmd,
@@ -224,9 +228,6 @@ class Containerbuild:
 
     def _inject_snapcraft(self):
         if common.is_snap():
-            # Because of https://bugs.launchpad.net/snappy/+bug/1628289
-            self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
-
             with tempfile.TemporaryDirectory(
                     prefix='snapcraft', dir=self._lxd_common_dir) as tmp_dir:
                 self._inject_snap('core', tmp_dir)

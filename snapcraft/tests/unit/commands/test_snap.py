@@ -88,7 +88,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
     def test_snap_fails_with_bad_type(self):
@@ -113,16 +114,20 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('os.pipe')
+    @mock.patch('os.geteuid')
     def test_snap_containerized_remote(self,
+                                       mock_geteuid,
                                        mock_pipe,
                                        mock_container_run):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         mock_pipe.return_value = (9, 9)
+        mock_geteuid.return_value = 1234
         fake_lxd = fixture_setup.FakeLXD()
         self.useFixture(fake_lxd)
         fake_filesystem = fixture_setup.FakeFilesystem()
@@ -131,6 +136,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.useFixture(fake_logger)
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_CONTAINER_BUILDS', 'myremote'))
+        self.useFixture(
+            fixtures.EnvironmentVariable('USER', 'user'))
         self.make_snapcraft_yaml()
 
         result = self.run_command(['--debug', 'snap'])
@@ -138,14 +145,10 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
 
         source = os.path.realpath(os.path.curdir)
-        self.assertIn(
-            "Using LXD remote 'myremote' from SNAPCRAFT_CONTAINER_BUILDS\n"
-            'Waiting for a network connection...\n'
-            'Network connection established\n'
-            'Mounting {} into container\n'.format(source),
-            fake_logger.output)
+        self.assertThat(fake_logger.output, Contains(
+            "Using LXD remote 'myremote' from SNAPCRAFT_CONTAINER_BUILDS"))
 
-        project_folder = '/root/build_snap-test'
+        project_folder = '/home/user/build_snap-test'
         mock_container_run.assert_has_calls([
             call(['apt-get', 'install', '-y', 'sshfs']),
         ])
@@ -153,6 +156,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             call(['/usr/lib/sftp-server'],
                  stdin=9, stdout=9),
             call(['lxc', 'exec', fake_lxd.name, '--',
+                  'sudo', '-H', '-u', 'user',
                   'sshfs', '-o', 'slave', '-o', 'nonempty',
                   ':{}'.format(source), project_folder],
                  stdin=9, stdout=9),
@@ -198,7 +202,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('snap-test_1.0_amd64.snap', FileExists())
@@ -214,7 +219,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('snap-test_1.0_amd64.snap', FileExists())
@@ -244,7 +249,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('snap-test_1.0_amd64.snap', FileExists())
@@ -269,7 +275,8 @@ architectures: [amd64, armhf]
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', 'mysnap', 'my_snap_99_multi.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('my_snap_99_multi.snap', FileExists())
@@ -293,7 +300,8 @@ version: 99
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', 'mysnap', 'my_snap_99_all.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('my_snap_99_all.snap', FileExists())
@@ -320,7 +328,7 @@ type: os
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', 'mysnap', 'my_snap_99_multi.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('my_snap_99_multi.snap', FileExists())
@@ -346,7 +354,8 @@ type: os
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'mysnap.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('mysnap.snap', FileExists())
@@ -470,7 +479,8 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   '"architecture": "test-architecture", '
                   '"created_at": "test-created-at"}']),
             call(['lxc', 'config', 'set', container_name,
-                  'raw.idmap', 'both {} 0'.format(self.expected_idmap)]),
+                  'raw.idmap', 'both {} {}'.format(
+                    self.expected_idmap, self.getuid)]),
             call(['lxc', 'config', 'device', 'add', container_name,
                   'fuse', 'unix-char', 'path=/dev/fuse']),
             call(['lxc', 'start', container_name]),
@@ -485,8 +495,10 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   '"http://start.ubuntu.com/connectivity-check.html"' +
                   ', timeout=5)']),
             call(['apt-get', 'update']),
+            call(['apt-get', 'install', 'squashfuse', '-y']),
             call(['snapcraft', 'snap', '--output',
-                  'snap-test_1.0_amd64.snap'], cwd=project_folder),
+                  'snap-test_1.0_amd64.snap'],
+                 cwd=project_folder, user='root'),
         ])
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
@@ -523,7 +535,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   ', timeout=5)']),
             call(['snapcraft', 'snap', '--output',
                   'snap-test_1.0_amd64.snap'],
-                 cwd=project_folder),
+                 cwd=project_folder, user='root'),
         ])
 
     @mock.patch('os.getuid')
@@ -554,11 +566,9 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
 
-        source = os.path.realpath(os.path.curdir)
         self.assertIn(
             'Waiting for a network connection...\n'
-            'Network connection established\n'
-            'Mounting {} into container\n'.format(source),
+            'Network connection established\n',
             fake_logger.output)
 
         container_name = 'local:snapcraft-snap-test'
@@ -574,7 +584,8 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   '"architecture": "test-architecture", '
                   '"created_at": "test-created-at"}']),
             call(['lxc', 'config', 'set', container_name,
-                  'raw.idmap', 'both {} 0'.format(self.expected_idmap)]),
+                  'raw.idmap', 'both {} {}'.format(
+                    self.expected_idmap, self.getuid)]),
             call(['lxc', 'config', 'device', 'remove', container_name,
                   project_folder]),
             call(['lxc', 'config', 'device', 'add', container_name,
@@ -589,7 +600,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                     ', timeout=5)']),
               call(['snapcraft', 'snap', '--output',
                     'snap-test_1.0_amd64.snap'],
-                   cwd=project_folder),
+                   cwd=project_folder, user='root'),
         ])
         # Ensure there's no unexpected calls eg. two network checks
         self.assertThat(mock_container_run.call_count, Equals(2))
@@ -617,5 +628,6 @@ class SnapCommandAsDefaultTestCase(SnapCommandBaseTestCase):
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
+            '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)

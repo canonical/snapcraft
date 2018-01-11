@@ -75,6 +75,12 @@ def _parse_dict(section, statement, statements, project_options,
     from ._try import TryStatement
 
     for key, value in section.items():
+        # Grammar is always written as a list of selectors but the value can
+        # be a list or a string, in the latter case we wrap it so no special
+        # care needs to be taken when fetching the result from the primitive
+        if not isinstance(value, list):
+            value = {value}
+
         if _TO_CLAUSE_PATTERN.match(key):
             # We've come across the beginning of a 'to' statement.
             # That means any previous statement we found is complete.
@@ -95,6 +101,17 @@ def _parse_dict(section, statement, statements, project_options,
 
             statement = OnStatement(
                 on=key, body=value, project_options=project_options,
+                checker=checker)
+
+        if _TO_CLAUSE_PATTERN.match(key):
+            # We've come across the beginning of a 'to' statement.
+            # That means any previous statement we found is complete.
+            # The first time through this may be None, but the
+            # collection will ignore it.
+            statements.add(statement)
+
+            statement = ToStatement(
+                to=key, body=value, project_options=project_options,
                 checker=checker)
 
         if _TRY_CLAUSE_PATTERN.match(key):

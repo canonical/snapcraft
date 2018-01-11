@@ -40,7 +40,8 @@ class LoginCommandTestCase(CommandBaseTestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_successful_login(
             self, mock_login, mock_get_account_information):
@@ -57,9 +58,10 @@ class LoginCommandTestCase(CommandBaseTestCase):
         self.mock_input.assert_called_once_with('Email: ')
         mock_login.assert_called_once_with(
             'user@example.com', mock.ANY, acls=None, packages=None,
-            channels=None, save=True, config_fd=None)
+            channels=None, expires=None, save=True, config_fd=None)
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_successful_login_with_2fa(
             self, mock_login, mock_get_account_information):
@@ -83,13 +85,14 @@ class LoginCommandTestCase(CommandBaseTestCase):
         mock_login.assert_has_calls([
             mock.call(
                 'user@example.com', mock.ANY, acls=None, packages=None,
-                channels=None, save=True, config_fd=None),
+                channels=None, expires=None, save=True, config_fd=None),
             mock.call(
                 'user@example.com', mock.ANY, one_time_password='123456',
-                acls=None, packages=None, channels=None, save=True,
-                config_fd=None)])
+                acls=None, packages=None, channels=None, expires=None,
+                save=True, config_fd=None)])
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     @mock.patch.object(storeapi.StoreClient, 'acl')
     def test_successful_login_with(
@@ -98,6 +101,7 @@ class LoginCommandTestCase(CommandBaseTestCase):
             'snap_ids': None,
             'channels': None,
             'permissions': None,
+            'expires': '2018-01-01T00:00:00',
         }
 
         conf = config.Config()
@@ -120,11 +124,14 @@ class LoginCommandTestCase(CommandBaseTestCase):
         self.assertThat(
             result.output, MatchesRegex(
                 r'.*permissions:.*?No restriction', re.DOTALL))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*expires:.*?2018-01-01T00:00:00', re.DOTALL))
 
         self.mock_input.assert_not_called()
         mock_login.assert_called_once_with(
-            '', '', acls=None, packages=None, channels=None, save=True,
-            config_fd=mock.ANY)
+            '', '', acls=None, packages=None, channels=None, expires=None,
+            save=True, config_fd=mock.ANY)
 
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_failed_login_with_invalid_credentials(self, mock_login):
@@ -143,10 +150,11 @@ class LoginCommandTestCase(CommandBaseTestCase):
         mock_login.side_effect = storeapi.errors.StoreAuthenticationError(
             'error')
 
-        result = self.run_command(['login'])
+        raised = self.assertRaises(
+            storeapi.errors.StoreAuthenticationError,
+            self.run_command, ['login'])
 
-        self.assertThat(result.exit_code, Equals(1))
-        self.assertThat(result.output, Contains('Login failed.'))
+        self.assertThat(raised.message, Equals('error'))
 
     @mock.patch.object(storeapi.StoreClient, 'login')
     def test_failed_login_with_store_account_info_error(self, mock_login):

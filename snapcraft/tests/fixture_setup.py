@@ -19,6 +19,7 @@ import contextlib
 import copy
 import io
 import os
+import pkgutil
 import socketserver
 import string
 import subprocess
@@ -31,6 +32,7 @@ from functools import partial
 from types import ModuleType
 from unittest import mock
 from subprocess import CalledProcessError
+from typing import Callable
 
 import fixtures
 import xdg
@@ -433,6 +435,41 @@ class FakePlugin(fixtures.Fixture):
         del sys.modules[self._import_name]
 
 
+class FakeMetadataExtractor(fixtures.Fixture):
+    """Dynamically generate a new module containing the provided extractor"""
+
+    def __init__(self, extractor_name: str,
+                 extractor: Callable[
+                    [str], snapcraft.extractors.ExtractedMetadata],
+                 exported_name='extract') -> None:
+        super().__init__()
+        self._extractor_name = extractor_name
+        self._exported_name = exported_name
+        self._import_name = 'snapcraft.extractors.{}'.format(extractor_name)
+        self._extractor = extractor
+
+    def _setUp(self) -> None:
+        extractor_module = ModuleType(self._import_name)
+        setattr(extractor_module, self._exported_name, self._extractor)
+        sys.modules[self._import_name] = extractor_module
+        self.addCleanup(self._remove_module)
+
+        real_iter_modules = pkgutil.iter_modules
+
+        def _fake_iter_modules(path):
+            if path == snapcraft.extractors.__path__:
+                yield None, self._extractor_name, False
+            else:
+                yield real_iter_modules(path)
+
+        patcher = mock.patch('pkgutil.iter_modules', new=_fake_iter_modules)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def _remove_module(self) -> None:
+        del sys.modules[self._import_name]
+
+
 class FakeFilesystem(fixtures.Fixture):
     '''Keep track of created and removed directories'''
 
@@ -603,6 +640,8 @@ class FakeLXD(fixtures.Fixture):
     def _lxc_exec(self, args):
         if self.status and args[0][2] == self.name:
             cmd = args[0][4]
+            if cmd == 'sudo':
+                cmd = args[0][8]
             if cmd == 'ls':
                 return ' '.join(self.files).encode('utf-8')
             elif cmd == 'readlink':
@@ -862,6 +901,7 @@ class FakeAptCachePackage():
         self.versions = {}
         self.version = version
         self.candidate = self
+        self.dependencies = []
         self.provides = provides if provides else []
         if installed:
             # XXX The installed attribute requires some values that the fake
@@ -891,6 +931,8 @@ class FakeAptCachePackage():
 
     def mark_install(self):
         if not self.installed:
+            if len(self.dependencies):
+                return
             self.marked_install = True
 
     def mark_keep(self):
@@ -903,6 +945,12 @@ class FakeAptCachePackage():
 
     def get_dependencies(self, _):
         return []
+
+
+class FakeAptBaseDependency:
+    def __init__(self, name, target_versions):
+        self.name = name
+        self.target_versions = target_versions
 
 
 class WithoutSnapInstalled(fixtures.Fixture):
@@ -946,10 +994,12 @@ class SnapcraftYaml(fixtures.Fixture):
         self.data = {
             'name': name,
             'version': version,
-            'summary': summary,
-            'description': description,
             'parts': {}
         }
+        if summary is not None:
+            self.data['summary'] = summary
+        if description is not None:
+            self.data['description'] = description
 
     def update_part(self, name, data):
         part = {name: data}

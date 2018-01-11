@@ -13,7 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
+import os
 import subprocess
 
 import fixtures
@@ -26,6 +26,9 @@ class ContainerBuildsTestCase(integration.TestCase):
 
     def setUp(self):
         super().setUp()
+        if os.getenv('SNAPCRAFT_FROM_SNAP', False):
+            self.skipTest('container build tests when running from a snap are '
+                          'currently broken LP: #1738210')
         self.useFixture(
             fixtures.EnvironmentVariable('SNAPCRAFT_CONTAINER_BUILDS', '1'))
 

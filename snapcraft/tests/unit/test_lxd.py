@@ -126,14 +126,15 @@ class CleanbuilderTestCase(LXDTestCase):
                   '"http://start.ubuntu.com/connectivity-check.html"' +
                   ', timeout=5)']),
             call(['apt-get', 'update']),
+            call(['apt-get', 'install', 'squashfuse', '-y']),
             call(['mkdir', project_folder]),
             call(['tar', 'xvf', 'project.tar'],
                  cwd=project_folder),
             call(['snapcraft', 'snap', '--output', 'snap.snap', *args],
-                 cwd=project_folder),
+                 cwd=project_folder, user='root'),
         ])
         # Ensure there's no unexpected calls eg. two network checks
-        self.assertThat(mock_container_run.call_count, Equals(5))
+        self.assertThat(mock_container_run.call_count, Equals(6))
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'file', 'pull',
                   '{}{}/snap.snap'.format(container_name, project_folder),
@@ -150,11 +151,11 @@ class CleanbuilderTestCase(LXDTestCase):
         self.fake_lxd.check_call_mock.side_effect = call_effect
 
         raised = self.assertRaises(
-            CalledProcessError,
+            ContainerConnectionError,
             self.make_containerbuild().execute)
         self.assertThat(self.fake_lxd.status, Equals(None))
         # lxc launch should fail and no further commands should come after that
-        self.assertThat(str(raised), Contains("Command '['lxc', 'launch'"))
+        self.assertThat(str(raised), Contains('Failed to setup container'))
 
 
 class ContainerbuildTestCase(LXDTestCase):
@@ -293,6 +294,7 @@ class ContainerbuildTestCase(LXDTestCase):
         builder.execute()
 
         mock_container_run.assert_has_calls([
+            call(['apt-get', 'install', 'squashfuse', '-y']),
             call(['apt-get', 'install', 'snapcraft', '-y']),
         ])
 
@@ -514,8 +516,20 @@ class ContainerbuildTestCase(LXDTestCase):
 class ProjectTestCase(ContainerbuildTestCase):
 
     scenarios = [
-        ('remote', dict(remote='myremote', target_arch=None, server='x86_64')),
+          ('remote/root', dict(remote='myremote', target_arch=None, euid=0,
+                               server='x86_64', user='root', home='/root')),
+          ('remote/user', dict(remote='myremote', target_arch=None, euid=1234,
+                               server='x86_64', user='me', home='/home/me')),
     ]
+
+    def setUp(self):
+        super().setUp()
+        patcher = patch('os.geteuid')
+        mock_geteuid = patcher.start()
+        mock_geteuid.return_value = self.euid
+        self.addCleanup(patcher.stop)
+        self.useFixture(
+            fixtures.EnvironmentVariable('USER', self.user))
 
     def make_containerbuild(self):
         return lxd.Project(output='snap.snap', source='project.tar',
@@ -523,21 +537,75 @@ class ProjectTestCase(ContainerbuildTestCase):
                            project_options=self.project_options,
                            remote=self.remote)
 
+    def test_command_with_sudo(self):
+        self.make_containerbuild().execute()
+        project_folder = '{}/build_project'.format(self.home)
+        args = ''
+        if self.target_arch:
+            args += ' --target-arch {}'.format(self.target_arch)
+        sudo = []
+        if self.user != 'root':
+            sudo = ['sudo', '-H', '-E', '-u', self.user]
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'exec', self.fake_lxd.name, '--'] + sudo
+                 + ['mkdir', '-p', project_folder]),
+            call(['lxc', 'exec', self.fake_lxd.name, '--'] + sudo
+                 + ['sh', '-c', 'cd {}; snapcraft snap --output snap.snap{}'.
+                    format(project_folder, args)]),
+        ])
+
+    @patch('os.getuid')
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
-    def test_start_failed(self, mock_container_run):
+    def test_user_setup(self, mock_container_run, mock_getuid):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_getuid.return_value = 1234
 
+        self.make_containerbuild().execute()
+
+        if self.euid > 0:
+            mock_container_run.assert_has_calls([
+                call(['useradd', self.user, '--create-home']),
+                call(['usermod', self.user, '-o', '-u', '1234', '-G', 'sudo']),
+                call(['chown', 'me:me', self.home]),
+            ])
+            self.fake_lxd.check_output_mock.assert_has_calls([
+                call(['lxc', 'exec', self.fake_lxd.name, '--',
+                      'tee', '-a', '/etc/sudoers'],
+                     input='{} ALL=(ALL) NOPASSWD: ALL\n'.format(
+                         self.user).encode()),
+                call(['lxc', 'exec', self.fake_lxd.name, '--',
+                      'sudo', '-H', '-u', 'me', 'ls',
+                      '{}/build_project'.format(self.home)]),
+            ])
+
+    def test_init_failed(self):
         def call_effect(*args, **kwargs):
-            if args[0][:2] == ['lxc', 'start']:
-                raise CalledProcessError(
-                    returncode=255, cmd=args[0])
-            return d(*args, **kwargs)
+            if args[0][:2] == ['lxc', 'init']:
+                raise CalledProcessError(returncode=255, cmd=args[0])
+            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
 
-        d = self.fake_lxd.check_call_mock.side_effect
         self.fake_lxd.check_call_mock.side_effect = call_effect
 
-        self.assertRaises(ContainerConnectionError,
-                          self.make_containerbuild().execute)
+        raised = self.assertRaises(ContainerConnectionError,
+                                   self.make_containerbuild().execute)
+        self.assertThat(self.fake_lxd.status, Equals(None))
+        # lxc launch should fail and no further commands should come after that
+        self.assertThat(str(raised), Contains('Failed to setup container'))
+
+    def test_start_failed(self):
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['lxc', 'start']:
+                raise CalledProcessError(returncode=255, cmd=args[0])
+            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
+
+        self.fake_lxd.check_call_mock.side_effect = call_effect
+
+        raised = self.assertRaises(ContainerConnectionError,
+                                   self.make_containerbuild().execute)
+        self.assertThat(self.fake_lxd.status, Equals('Stopped'))
+        # lxc launch should fail and no further commands should come after that
+        self.assertThat(str(raised),
+                        Contains('The container could not be started'))
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_ftp_not_installed(self, mock_container_run):
@@ -579,7 +647,7 @@ class ProjectTestCase(ContainerbuildTestCase):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
 
         def call_effect(*args, **kwargs):
-            if args[0][:2] == ['lxc', 'exec'] and args[0][4] == 'ls':
+            if args[0][:2] == ['lxc', 'exec'] and 'ls' in args[0]:
                 return ''.encode('utf-8')
             return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
 
@@ -590,6 +658,20 @@ class ProjectTestCase(ContainerbuildTestCase):
             str(self.assertRaises(
                 ContainerConnectionError,
                 self.make_containerbuild().execute)))
+
+    def test_debug_messages(self):
+        class TestFormatter(logging.Formatter):
+            def format(self, record):
+                message = super().format(record)
+                return '[{}]{}'.format(record.levelname, message)
+
+        self.fake_logger = fixtures.FakeLogger(
+            format='%(message)s', formatter=TestFormatter, level=logging.DEBUG)
+        self.useFixture(self.fake_logger)
+
+        self.make_containerbuild().execute()
+        self.assertThat(self.fake_logger.output,
+                        Contains('[DEBUG]Terminating'))
 
 
 class LocalProjectTestCase(ContainerbuildTestCase):

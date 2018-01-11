@@ -42,8 +42,9 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         mock_installed.assert_called_with('snapd')
         self.assertThat(mock_check_output.call_count, Equals(0))
 
-    @mock.patch.object(storeapi.SCAClient, 'register_key')
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'register_key')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
@@ -73,7 +74,8 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         mock_login.assert_called_with(
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=['modify_account_key'],
-            packages=None, channels=None, save=False, config_fd=None)
+            packages=None, channels=None, expires=None, save=False,
+            config_fd=None)
         self.assertThat(mock_register_key.call_count, Equals(1))
         expected_assertion = dedent('''\
             type: account-key-request
@@ -131,8 +133,9 @@ class RegisterKeyTestCase(CommandBaseTestCase):
             "You have no usable key named 'nonexistent'"))
         self.assertThat(mock_input.call_count, Equals(0))
 
-    @mock.patch.object(storeapi.SCAClient, 'register_key')
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'register_key')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
@@ -152,13 +155,14 @@ class RegisterKeyTestCase(CommandBaseTestCase):
             storeapi.errors.LoginRequiredError,
             self.run_command, ['register-key', 'default'])
 
-        self.assertThat(str(raised), Equals(
-            'Cannot continue without logging in successfully.'))
+        self.assertThat(str(raised), Contains(
+            'Cannot continue without logging in successfully'))
         self.assertThat(mock_input.call_count, Equals(1))
 
     @mock.patch('snapcraft._store.login')
-    @mock.patch.object(storeapi.SCAClient, 'register_key')
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'register_key')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
@@ -188,8 +192,9 @@ class RegisterKeyTestCase(CommandBaseTestCase):
             'Error fetching account information from store: '
             '500 Internal Server Error'))
 
-    @mock.patch.object(storeapi.SCAClient, 'register_key')
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'register_key')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')
@@ -216,8 +221,9 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         self.assertThat(str(raised), Equals(
             'Key registration failed: 500 Internal Server Error'))
 
-    @mock.patch.object(storeapi.SCAClient, 'register_key')
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient, 'register_key')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     @mock.patch('subprocess.check_output')
     @mock.patch('getpass.getpass')

@@ -16,11 +16,12 @@
 
 import logging
 import subprocess
+from textwrap import dedent
 from unittest import mock
 
 import fixtures
 import yaml
-from testtools.matchers import Equals
+from testtools.matchers import Contains, Equals
 
 from snapcraft import (
     storeapi,
@@ -165,7 +166,8 @@ class TravisSuccessfulTestCase(unit.TestCase):
     @mock.patch('builtins.input')
     @mock.patch('getpass.getpass')
     @mock.patch.object(storeapi.StoreClient, 'login')
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     def test_enable_successfully(
             self, mock_get_account_information, mock_login, mock_getpass,
             mock_input, mock_check_call, mock_check_output):
@@ -187,7 +189,7 @@ class TravisSuccessfulTestCase(unit.TestCase):
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=None, save=False,
             channels=['edge'], packages=[{'series': '16', 'name': 'foo'}],
-            config_fd=None)
+            expires=None, config_fd=None)
 
         # Credentials encrypted with travis CLI.
         mock_check_output.assert_called_with(
@@ -224,27 +226,22 @@ class TravisSuccessfulTestCase(unit.TestCase):
 
         # Descriptive logging ...
         self.assertThat(
-            self.fake_logger.output.splitlines()[1:],
-            Equals([
-                "Enabling Travis testbeds to push and release 'foo' snaps "
-                "to edge channel in series '16'",
-                'Acquiring specific authorization information ...',
-                'Encrypting authorization for Travis and adjusting project '
-                'to automatically decrypt and use it during "after_success".',
-                'Configuring "deploy" phase to build and release the snap in '
-                'the Store.',
-                'Done. Now you just have to review and commit changes in your '
-                'Travis project (`.travis.yml`).',
-                'Also make sure you add the new '
-                '`.snapcraft/travis_snapcraft.cfg` file.',
-            ]))
+            self.fake_logger.output, Contains(dedent("""\
+                Enabling Travis testbeds to push and release 'foo' snaps to edge channel in series '16'
+                Acquiring specific authorization information ...
+                Encrypting authorization for Travis and adjusting project to automatically decrypt and use it during "after_success".
+                Configuring "deploy" phase to build and release the snap in the Store.
+                Done. Now you just have to review and commit changes in your Travis project (`.travis.yml`).
+                Also make sure you add the new `.snapcraft/travis_snapcraft.cfg` file.
+            """))) # noqa TODO this type of test should not be done
 
     @mock.patch('subprocess.check_output')
     @mock.patch('subprocess.check_call')
     @mock.patch('builtins.input')
     @mock.patch('getpass.getpass')
     @mock.patch.object(storeapi.StoreClient, 'login')
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     def test_refresh_successfully(
             self, mock_get_account_information, mock_login, mock_getpass,
             mock_input, mock_check_call, mock_check_output):
@@ -266,7 +263,7 @@ class TravisSuccessfulTestCase(unit.TestCase):
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=None, save=False,
             channels=['edge'], packages=[{'series': '16', 'name': 'foo'}],
-            config_fd=None)
+            expires=None, config_fd=None)
 
         # Credentials encrypted with travis CLI.
         mock_check_output.assert_called_with(
@@ -287,13 +284,9 @@ class TravisSuccessfulTestCase(unit.TestCase):
 
         # Descriptive logging ...
         self.assertThat(
-            self.fake_logger.output.splitlines()[1:],
-            Equals([
-                'Refreshing credentials to push and release "foo" snaps to '
-                'edge channel in series 16',
-                'Acquiring specific authorization information ...',
-                'Encrypting authorization for Travis and adjusting project '
-                'to automatically decrypt and use it during "after_success".',
-                'Done. Please commit the changes to '
-                '`.snapcraft/travis_snapcraft.cfg` file.',
-            ]))
+            self.fake_logger.output, Contains(dedent("""\
+                Refreshing credentials to push and release "foo" snaps to edge channel in series 16
+                Acquiring specific authorization information ...
+                Encrypting authorization for Travis and adjusting project to automatically decrypt and use it during "after_success".
+                Done. Please commit the changes to `.snapcraft/travis_snapcraft.cfg` file.
+            """))) # noqa TODO this type of test should not be done

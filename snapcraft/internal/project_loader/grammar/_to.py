@@ -139,6 +139,9 @@ def _extract_to_clause_selectors(to):
     True
     >>> _extract_to_clause_selectors('on amd64 to i386') == ({'amd64'},{'i386'})
     True
+    For example:
+    >>> _extract_to_clause_selectors('to amd64,i386') == {'amd64', 'i386'}
+    True
     """  # noqa
 
     match = _SELECTOR_PATTERN.match(to)
@@ -146,6 +149,7 @@ def _extract_to_clause_selectors(to):
     try:
         on_selector_group = match.group(1)
         selector_group = match.group(2)
+        selector_group = match.group(1)
     except AttributeError:
         raise ToStatementSyntaxError(to, message='selectors are missing')
     except IndexError:

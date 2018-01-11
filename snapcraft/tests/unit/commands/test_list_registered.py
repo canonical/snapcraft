@@ -36,7 +36,8 @@ class ListRegisteredTestCase(StoreCommandsBaseTestCase):
 
         self.assertThat(str(raised), Contains('Invalid credentials'))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     def test_list_registered_empty(self, mock_get_account_information):
         mock_get_account_information.return_value = {
             'snaps': {},
@@ -48,7 +49,8 @@ class ListRegisteredTestCase(StoreCommandsBaseTestCase):
         self.assertThat(result.output, Contains(
             "There are no registered snaps for series '16'."))
 
-    @mock.patch.object(storeapi.SCAClient, 'get_account_information')
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
     def test_list_registered_successfully(self, mock_get_account_information):
         mock_get_account_information.return_value = {
             'snaps': {

@@ -1,7 +1,6 @@
-#!/usr/bin/env python3
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016 Canonical Ltd
+# Copyright (C) 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,17 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
-import sys
-
-# make running from source easy
-topdir = os.path.abspath(os.path.join(__file__, '..', '..'))
-if os.path.exists(os.path.join(topdir, 'setup.py')):
-    sys.path = [topdir] + sys.path
-
-
-if __name__ == '__main__':
-    import snapcraft.internal.parser
-    wiki_errors = snapcraft.internal.parser.main()
-    if wiki_errors:
-        sys.exit(1)
+from snapcraft.internal.meta._snap_packaging import (  # noqa
+    create_snap_packaging
+)

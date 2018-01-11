@@ -538,7 +538,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                 request.json_body))
         snap_name = request.json_body['snap_name']
 
-        if snap_name == 'test-already-registered-snap-name':
+        if snap_name == 'test-snap-name-already-registered':
             return self._register_name_409_error('already_registered')
         elif snap_name == 'test-reserved-snap-name':
             return self._register_name_409_error('reserved_name')

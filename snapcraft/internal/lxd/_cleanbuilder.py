@@ -21,6 +21,7 @@ import petname
 import subprocess
 
 from ._containerbuild import Containerbuild
+from snapcraft.internal.errors import ContainerConnectionError
 
 logger = logging.getLogger(__name__)
 
@@ -35,11 +36,17 @@ class Cleanbuilder(Containerbuild):
                          container_name=container_name, remote=remote)
 
     def _ensure_container(self):
-        subprocess.check_call([
-            'lxc', 'launch', '-e', self._image, self._container_name])
+        try:
+            subprocess.check_call([
+                'lxc', 'launch', '-e', self._image, self._container_name])
+        except subprocess.CalledProcessError as e:
+            raise ContainerConnectionError('Failed to setup container')
         self._configure_container()
         self._wait_for_network()
         self._container_run(['apt-get', 'update'])
+        # Because of https://bugs.launchpad.net/snappy/+bug/1628289
+        # Needed to run snapcraft as a snap and build-snaps
+        self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
         self._inject_snapcraft()
 
     def _setup_project(self):

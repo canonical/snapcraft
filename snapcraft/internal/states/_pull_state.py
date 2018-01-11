@@ -16,6 +16,7 @@
 
 import yaml
 
+import snapcraft.extractors
 from snapcraft.internal.states._state import PartState
 
 
@@ -29,15 +30,16 @@ yaml.add_constructor(u'!PullState', _pull_state_constructor)
 
 def _schema_properties():
     return {
+        'parse-info',
         'plugin',
-        'stage-packages',
         'source',
         'source-commit',
         'source-depth',
         'source-tag',
         'source-type',
         'source-branch',
-        'source-subdir'
+        'source-subdir',
+        'stage-packages',
     }
 
 
@@ -46,7 +48,7 @@ class PullState(PartState):
 
     def __init__(self, property_names, part_properties=None, project=None,
                  stage_packages=None, build_snaps=None, build_packages=None,
-                 source_details=None):
+                 source_details=None, metadata=None, metadata_files=None):
         # Save this off before calling super() since we'll need it
         # FIXME: for 3.x the name `schema_properties` is leaking
         #        implementation details from a higher layer.
@@ -56,6 +58,17 @@ class PullState(PartState):
             'build-snaps': build_snaps,
             'build-packages': build_packages,
             'source-details': source_details,
+        }
+
+        if not metadata:
+            metadata = snapcraft.extractors.ExtractedMetadata()
+
+        if not metadata_files:
+            metadata_files = []
+
+        self.extracted_metadata = {
+            'metadata': metadata,
+            'files': metadata_files
         }
 
         super().__init__(part_properties, project)

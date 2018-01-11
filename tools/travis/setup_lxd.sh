@@ -26,10 +26,15 @@ while fuser /var/lib/dpkg/lock >/dev/null 2>&1; do
     sleep 1
 done
 apt-get install --yes snapd
+apt-get remove --yes lxd lxd-client
 
 # Use edge because the feature to copy links to the container has not yet been
 # released to stable:
 # https://github.com/lxc/lxd/commit/004e7c361e1d914795d3ba7582654622e32ff193
+# snap install core exits with this error message:
+# - Setup snap "core" (3604) security profiles (cannot reload udev rules: exit status 2)
+# but the installation succeeds, so we just ingore it.
+snap install core || echo 'ignored error'
 snap install lxd --edge
 # Wait while LXD first generates its keys. In a low entropy environment this
 # can take a while.

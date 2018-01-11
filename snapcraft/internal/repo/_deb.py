@@ -26,7 +26,7 @@ import subprocess
 import sys
 import urllib
 import urllib.request
-from typing import Dict, Set  # noqa
+from typing import Dict, Set, List  # noqa
 
 import apt
 from xml.etree import ElementTree
@@ -164,7 +164,9 @@ class Ubuntu(BaseRepo):
             output = subprocess.check_output(
                 ['dpkg', '-L', package_name]).decode(
                     sys.getfilesystemencoding()).strip().split()
-            _library_list[package_name] = {i for i in output if 'lib' in i}
+            _library_list[package_name] = {
+                i for i in output
+                if ('lib' in i and os.path.isfile(i))}
 
         return _library_list[package_name].copy()
 
@@ -221,8 +223,19 @@ class Ubuntu(BaseRepo):
                 if version:
                     _set_pkg_version(apt_cache[name_arch], version)
                 apt_cache[name_arch].mark_install()
+                cls._verify_marked_install(apt_cache[name_arch])
             except KeyError:
                 raise errors.PackageNotFoundError(name)
+
+    @classmethod
+    def _verify_marked_install(cls, package: apt.Package):
+        if not package.installed and not package.marked_install:
+            broken_deps = []  # type: List[str]
+            for deps in package.candidate.dependencies:
+                for dep in deps:
+                    if not dep.target_versions:
+                        broken_deps.append(dep.name)
+            raise errors.PackageBrokenError(package.name, broken_deps)
 
     @classmethod
     def _install_new_build_packages(cls, package_names):

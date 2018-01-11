@@ -30,6 +30,9 @@ class OpenCVTestCase(snaps_tests.SnapsTestCase):
     @skip.skip_unless_codename('xenial',
                                'declared stage-packages only in xenial')
     def test_opencv(self):
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
+
         snap_path = self.build_snap(self.snap_content_dir)
 
         bin_path = os.path.join(os.path.dirname(snap_path),
@@ -37,7 +40,7 @@ class OpenCVTestCase(snaps_tests.SnapsTestCase):
         self.assertThat(bin_path, FileExists())
 
         interpreter = subprocess.check_output([
-            'patchelf', '--print-interpreter', bin_path]).decode()
+            self.patchelf_command, '--print-interpreter', bin_path]).decode()
         expected_interpreter = r'^/snap/core/current/.*'
         self.assertThat(interpreter, MatchesRegex(expected_interpreter))
 
@@ -45,7 +48,7 @@ class OpenCVTestCase(snaps_tests.SnapsTestCase):
 
         # test $ORIGIN in action
         rpath = subprocess.check_output([
-            'patchelf', '--print-rpath', bin_path]).decode()
+            self.patchelf_command, '--print-rpath', bin_path]).decode()
         expected_rpath = '$ORIGIN/../usr/lib/{}:'.format(arch_triplet)
         self.assertThat(rpath, Contains(expected_rpath))
 

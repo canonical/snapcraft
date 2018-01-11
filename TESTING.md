@@ -111,9 +111,13 @@ The snaps tests script has more complex arguments. For an explanation of them, r
 
     python3 -m snaps_tests -h
 
-The integration and snaps suites can be run using the snapcraft source from the repository, or using the snapacraft command installed in the system. By default, they will use the source code, so you can modify your clone of the repository and verify that your changes are correct. If instead you want to verify that the snapcraft version installed in your system is correct, run them with the environment variable `SNAPCRAFT_FROM_INSTALLED` set, like this:
+The integration and snaps suites can be run using the snapcraft source from the repository, or using the snapacraft command installed in the system. By default, they will use the source code, so you can modify your clone of the repository and verify that your changes are correct. If instead you want to verify that the snapcraft version installed in your system is correct, run them with the environment variable `SNAPCRAFT_FROM_DEB` or `SNAPCRAFT_FROM_SNAP` set, like this:
 
-    SNAPCRAFT_FROM_INSTALLED=1 ./runtests.sh snapcraft/tests/integration
+    SNAPCRAFT_FROM_DEB=1 ./runtests.sh snapcraft/tests/integration
+
+or
+
+    SNAPCRAFT_FROM_SNAP=1 ./runtests.sh snapcraft/tests/integration
 
 The store tests by default will start fake servers that are configured to reply like the real store does. But you can run them also against the staging and production store servers. To do that, you will need to set the `TEST_STORE` environment variable to either `staging` or `production`, and you also have to pass credentials for a valid user in that store with the environment variable `TEST_USER_EMAIL` and `TEST_USER_PASSWORD`, like this:
 
