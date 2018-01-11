@@ -162,34 +162,3 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
         self.assertThat(
             result.output, MatchesRegex(
                 r'.*permissions:.*?No restriction', re.DOTALL))
-
-
-    @mock.patch.object(storeapi._sca_client.SCAClient,
-                       'get_account_information')
-    @mock.patch.object(storeapi.StoreClient, 'login')
-    @mock.patch.object(storeapi.StoreClient, 'acl')
-    def test_export_with_snap_name(
-           self, mock_acl, mock_login, mock_get_account_information):
-        self.mock_input.return_value = 'user@example.com'
-        mock_acl.return_value = {
-           'snap_ids': None,
-           'channels': None,
-           'permissions': None,
-        }
-
-        result = self.run_command(['export-login', 'myapp'])
-
-        self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains(
-            storeapi.constants.TWO_FACTOR_WARNING))
-        self.assertThat(
-            result.output, Contains('Login successfully exported'))
-        self.assertThat(
-            result.output, MatchesRegex(
-                r".*snaps:.*?['myapp']", re.DOTALL))
-        self.assertThat(
-            result.output, MatchesRegex(
-                r".*channels:.*?['edge']", re.DOTALL))
-        self.assertThat(
-            result.output, MatchesRegex(
-                r'.*permissions:.*?No restriction', re.DOTALL))
