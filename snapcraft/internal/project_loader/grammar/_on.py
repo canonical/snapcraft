@@ -88,7 +88,7 @@ class OnStatement:
 
         primitives = set()
         # A new ProjectOptions instance defaults to the host architecture
-        # whereas self._project would yield the target architecture
+        # whereas self._project_options would yield the target architecture
         host_arch = snapcraft.ProjectOptions().deb_arch
 
         # The only selector currently supported is the target arch. Since

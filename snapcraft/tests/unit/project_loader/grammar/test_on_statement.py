@@ -119,7 +119,7 @@ class OnStatementGrammarTestCase(GrammarTestCase):
         ('nested body used else', {
             'on': 'on i386',
             'body': [
-                {'on armhf': ['foo']},
+                {'on amd64': ['foo']},
                 {'else': ['bar']},
             ],
             'else_bodies': [],
@@ -237,8 +237,7 @@ class OnStatementElseFail(GrammarTestCase):
         platform_machine_mock.return_value = 'x86_64'
         platform_architecture_mock.return_value = ('64bit', 'ELF')
 
-        options = snapcraft.ProjectOptions(
-            target_deb_arch='amd64')
+        options = snapcraft.ProjectOptions()
         statement = on.OnStatement(
             on='on i386', body=['foo'], project_options=options,
             checker=self.checker)
