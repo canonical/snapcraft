@@ -17,7 +17,6 @@
 import testtools
 from testtools.matchers import Equals
 from unittest.mock import patch
-from testscenarios.scenarios import multiply_scenarios
 
 import snapcraft
 from snapcraft.internal.project_loader import grammar
@@ -53,12 +52,13 @@ class GrammarOnDuplicatesTestCase(GrammarTestCase):
 
 class BasicGrammarTestCase(GrammarTestCase):
 
-    scenarios = multiply_scenarios([
+    scenarios = [
         ('unconditional', {
             'grammar': [
                 'foo',
                 'bar',
             ],
+            'target_arch': 'amd64',
             'expected_packages': {'foo', 'bar'}
         }),
         ('mixed including', {
@@ -66,6 +66,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                 'foo',
                 {'on amd64': ['bar']}
             ],
+            'target_arch': 'i386',
             'expected_packages': {'foo', 'bar'}
         }),
         ('mixed excluding', {
@@ -73,6 +74,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                 'foo',
                 {'on i386': ['bar']}
             ],
+            'target_arch': 'amd64',
             'expected_packages': {'foo'}
         }),
         ('on amd64', {
@@ -80,6 +82,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                 {'on amd64': ['foo']},
                 {'on i386': ['bar']},
             ],
+            'target_arch': 'amd64',
             'expected_packages': {'foo'}
         }),
         ('on amd64 to i386', {
@@ -87,6 +90,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                 {'on i386': ['foo']},
                 {'on amd64': ['bar']},
             ],
+            'target_arch': 'i386',
             'expected_packages': {'bar'}
         }),
         ('ignored else', {
@@ -94,6 +98,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                 {'on amd64': ['foo']},
                 {'else': ['bar']},
             ],
+            'target_arch': 'amd64',
             'expected_packages': {'foo'}
         }),
         ('used else', {
@@ -101,6 +106,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                 {'on i386': ['foo']},
                 {'else': ['bar']},
             ],
+            'target_arch': 'i386',
             'expected_packages': {'bar'}
         }),
         ('nested amd64', {
@@ -110,6 +116,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                     {'on i386': ['bar']},
                 ]},
             ],
+            'target_arch': 'amd64',
             'expected_packages': {'foo'}
         }),
         ('nested amd64, target i386', {
@@ -119,6 +126,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                     {'on amd64': ['bar']},
                 ]},
             ],
+            'target_arch': 'i386',
             'expected_packages': {'bar'}
         }),
         ('nested ignored else', {
@@ -128,6 +136,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                     {'else': ['bar']},
                 ]},
             ],
+            'target_arch': 'amd64',
             'expected_packages': {'foo'}
         }),
         ('nested used else', {
@@ -137,12 +146,14 @@ class BasicGrammarTestCase(GrammarTestCase):
                     {'else': ['bar']},
                 ]},
             ],
+            'target_arch': 'i386',
             'expected_packages': {'bar'}
         }),
         ('try', {
             'grammar': [
                 {'try': ['valid']},
             ],
+            'target_arch': 'amd64',
             'expected_packages': {'valid'}
         }),
         ('try else', {
@@ -150,6 +161,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                 {'try': ['invalid']},
                 {'else': ['valid']},
             ],
+            'target_arch': 'amd64',
             'expected_packages': {'valid'}
         }),
         ('nested try', {
@@ -159,6 +171,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                     {'else': ['bar']},
                 ]},
             ],
+            'target_arch': 'amd64',
             'expected_packages': {'foo'}
         }),
         ('nested try else', {
@@ -168,6 +181,7 @@ class BasicGrammarTestCase(GrammarTestCase):
                     {'else': ['bar']},
                 ]},
             ],
+            'target_arch': 'i386',
             'expected_packages': {'bar'}
         }),
         ('optional', {
@@ -175,11 +189,10 @@ class BasicGrammarTestCase(GrammarTestCase):
                 'foo',
                 {'try': ['invalid']},
             ],
+            'target_arch': 'amd64',
             'expected_packages': {'foo'}
         }),
-    ], [
-        ('targeting amd64', {'target_arch': 'x86_64'}),
-        ('targeting i386', {'target_arch': 'i686'})])
+    ]
 
     @patch('platform.architecture')
     @patch('platform.machine')
@@ -196,28 +209,29 @@ class BasicGrammarTestCase(GrammarTestCase):
 
 class InvalidGrammarTestCase(GrammarTestCase):
 
-    scenarios = multiply_scenarios([
+    scenarios = [
         ('unmatched else', {
             'grammar': [
                 {'else': ['foo']}
             ],
+            'target_arch': 'amd64',
             'expected_exception': ".*'else' doesn't seem to correspond.*",
         }),
         ('unmatched else fail', {
             'grammar': [
                 'else fail'
             ],
+            'target_arch': 'amd64',
             'expected_exception': ".*'else' doesn't seem to correspond.*",
         }),
         ('unexpected type', {
             'grammar': [
                 5,
             ],
+            'target_arch': 'amd64',
             'expected_exception': ".*expected grammar section.*but got.*",
         }),
-    ], [
-        ('targeting amd64', {'target_arch': 'x86_64'}),
-        ('targeting i386', {'target_arch': 'i686'})])
+    ]
 
     def test_invalid_grammar(self):
         with testtools.ExpectedException(
