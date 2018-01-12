@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -12,7 +12,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <http://www.gnu.org/licenses/>
 from unittest import mock
 import re
 
@@ -141,12 +141,12 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
            self, mock_acl, mock_login, mock_get_account_information):
         self.mock_input.return_value = 'user@example.com'
         mock_acl.return_value = {
-           'snap_ids': None,
+           'snap_ids': ['myapp'],
            'channels': None,
            'permissions': None,
         }
 
-        result = self.run_command(['export-login', 'myapp'])
+        result = self.run_command(['export-login', 'exported'])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
