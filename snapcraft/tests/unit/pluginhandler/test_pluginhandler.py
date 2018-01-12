@@ -853,7 +853,10 @@ class StateTestCase(StateBaseTestCase):
         def _fake_extractor(file_path):
             return snapcraft.extractors.ExtractedMetadata(
                 summary='test summary',
-                description='test description')
+                description='test description',
+                icon='/test/path',
+                desktop_file_ids=['com.example.test-app.desktop']
+            )
 
         self.useFixture(fixture_setup.FakeMetadataExtractor(
             'fake', _fake_extractor))
@@ -885,6 +888,10 @@ class StateTestCase(StateBaseTestCase):
         metadata = state.extracted_metadata['metadata']
         self.assertThat(metadata.get_summary(), Equals('test summary'))
         self.assertThat(metadata.get_description(), Equals('test description'))
+        self.assertThat(metadata.get_icon(), Equals('/test/path'))
+        self.assertThat(
+            metadata.get_desktop_file_ids(),
+            Equals(['com.example.test-app.desktop']))
         files = state.extracted_metadata['files']
         self.assertThat(files, Equals(['metadata-file']))
 
@@ -952,7 +959,9 @@ class StateTestCase(StateBaseTestCase):
         def _fake_extractor(file_path):
             return snapcraft.extractors.ExtractedMetadata(
                 summary='test summary',
-                description='test description')
+                description='test description',
+                icon='/test/path',
+                desktop_file_ids=['com.example.test-app.desktop'])
 
         self.useFixture(fixture_setup.FakeMetadataExtractor(
             'fake', _fake_extractor))
@@ -982,6 +991,10 @@ class StateTestCase(StateBaseTestCase):
         metadata = state.extracted_metadata['metadata']
         self.assertThat(metadata.get_summary(), Equals('test summary'))
         self.assertThat(metadata.get_description(), Equals('test description'))
+        self.assertThat(metadata.get_icon(), Equals('/test/path'))
+        self.assertThat(
+            metadata.get_desktop_file_ids(),
+            Equals(['com.example.test-app.desktop']))
         files = state.extracted_metadata['files']
         self.assertThat(files, Equals(['metadata-file']))
 

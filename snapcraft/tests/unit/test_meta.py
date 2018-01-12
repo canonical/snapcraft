@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,6 +23,7 @@ from unittest.mock import patch
 import fixtures
 import testtools
 import yaml
+import testscenarios
 from testtools.matchers import (
     Contains,
     Equals,
@@ -454,7 +455,7 @@ class CreateTestCase(CreateBaseTestCase):
             "Expected generated 'bar' hook to not contain 'plugs'")
 
 
-class CreateMetadataFromSourceErrorsTestCase(CreateBaseTestCase):
+class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):
 
     def setUp(self):
         super().setUp()
@@ -469,10 +470,19 @@ class CreateMetadataFromSourceErrorsTestCase(CreateBaseTestCase):
                     'plugin': 'nil',
                     'parse-info': ['test-metadata-file']
                 }
+            },
+            'apps': {
+                'test-app': {
+                    'command': 'echo'
+                }
             }
         }
         # Create metadata file
         open('test-metadata-file', 'w').close()
+
+
+class CreateMetadataFromSourceErrorsTestCase(
+        CreateMetadataFromSourceBaseTestCase):
 
     def test_create_metadata_with_missing_parse_info(self):
         del self.config_data['summary']
@@ -505,6 +515,17 @@ class CreateMetadataFromSourceErrorsTestCase(CreateBaseTestCase):
         self.assertThat(y['summary'], Equals(self.config_data['summary']))
         self.assertThat(
             y['description'], Equals(self.config_data['description']))
+
+    def test_metadata_with_unexisting_icon(self):
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(
+                icon='test/extracted/unexistent/icon/path')
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        # The meta generation should just ignore the dead path, and not fail.
+        self.generate_meta_yaml(build=True)
 
     def test_metadata_satisfies_required_property(self):
         del self.config_data['summary']
@@ -542,6 +563,65 @@ class CreateMetadataFromSourceErrorsTestCase(CreateBaseTestCase):
             meta_errors.MissingSnapcraftYamlKeysError,
             self.generate_meta_yaml, build=True)
         self.assertThat(raised.keys, Equals("'summary'"))
+
+
+class MetadataFromSourceWithIconFileTestCase(
+        CreateMetadataFromSourceBaseTestCase):
+
+    scenarios = testscenarios.multiply_scenarios(
+        (('setup/gui', dict(directory=os.path.join('setup', 'gui'))),
+         ('snap/gui', dict(directory=os.path.join('snap', 'gui')))),
+        (('icon.png', dict(file_name='icon.png')),
+         ('icon.svg', dict(file_name='icon.svg')))
+    )
+
+    def test_metadata_doesnt_overwrite_icon_file(self):
+        os.makedirs(self.directory)
+        icon_content = 'setup icon'
+        _create_file(
+            os.path.join(self.directory, self.file_name),
+            content=icon_content)
+
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(
+                icon='test/extracted/unexistent/icon/path')
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        self.generate_meta_yaml(build=True)
+
+        expected_icon = os.path.join(self.meta_dir, 'gui', self.file_name)
+        self.assertThat(expected_icon, FileContains(icon_content))
+
+
+class MetadataFromSourceWithDesktopFileTestCase(
+        CreateMetadataFromSourceBaseTestCase):
+
+    scenarios = (
+        ('setup/gui', dict(directory=os.path.join('setup', 'gui'))),
+        ('snap/gui', dict(directory=os.path.join('snap', 'gui')))
+    )
+
+    def test_metadata_doesnt_overwrite_desktop_file(self):
+        os.makedirs(self.directory)
+        desktop_content = 'setup desktop'
+        _create_file(
+            os.path.join(self.directory, 'test-app.desktop'),
+            content=desktop_content)
+
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(
+                desktop_file_ids=['com.example.test-app.desktop'])
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        self.generate_meta_yaml(build=True)
+
+        expected_desktop = os.path.join(
+            self.meta_dir, 'gui', 'test-app.desktop')
+        self.assertThat(expected_desktop, FileContains(desktop_content))
 
 
 class WriteSnapDirectoryTestCase(CreateBaseTestCase):

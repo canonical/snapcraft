@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -994,7 +994,8 @@ class SnapcraftYaml(fixtures.Fixture):
         self.data = {
             'name': name,
             'version': version,
-            'parts': {}
+            'parts': {},
+            'apps': {}
         }
         if summary is not None:
             self.data['summary'] = summary
@@ -1004,6 +1005,10 @@ class SnapcraftYaml(fixtures.Fixture):
     def update_part(self, name, data):
         part = {name: data}
         self.data['parts'].update(part)
+
+    def update_app(self, name, data):
+        app = {name: data}
+        self.data['apps'].update(app)
 
     def setUp(self):
         super().setUp()
