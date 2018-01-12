@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from testtools.matchers import HasPermissions
 from snapcraft.tests import integration
 
 
@@ -21,6 +22,9 @@ class ExportLoginTestCase(integration.StoreTestCase):
 
     def test_successful_export(self):
         self.export_login('exported', expect_success=True)
+
+        # Verify that the exported login is only readable by the owner
+        self.assertThat('exported', HasPermissions('0400'))
 
     def test_failed_export(self):
         self.export_login(
