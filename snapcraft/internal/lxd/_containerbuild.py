@@ -126,15 +126,6 @@ class Containerbuild:
             'lxc', 'config', 'set', self._container_name,
             'environment.LC_ALL', 'C.UTF-8'])
         self._set_image_info_env_var()
-        info = subprocess.check_output([
-            'lxc', 'info', self._container_name]).decode('utf-8')
-        for line in info.splitlines():
-            if line.startswith("Architecture:"):
-                self._container_arch = _get_deb_arch(
-                    line.split(None, 1)[1].strip())
-                break
-        else:
-            raise ContainerError("Could not find architecture for container")
 
     def _set_image_info_env_var(self):
         FAILURE_WARNING_FORMAT = (
@@ -255,8 +246,8 @@ class Containerbuild:
         is_classic = json['result']['confinement'] == 'classic'
 
         # If the server has a different arch we can't inject local snaps
-        if (self._project_options.target_arch
-                and self._project_options.target_arch != self._container_arch):
+        target_arch = self._project_options.target_arch
+        if (target_arch and target_arch != self._get_container_arch()):
             channel = json['result']['channel']
             return self._install_snap(name, channel, is_classic=is_classic)
 
@@ -297,6 +288,14 @@ class Containerbuild:
         self._install_snap(container_filename,
                            is_dangerous=rev.startswith('x'),
                            is_classic=is_classic)
+
+    def _get_container_arch(self):
+        info = subprocess.check_output([
+            'lxc', 'info', self._container_name]).decode('utf-8')
+        for line in info.splitlines():
+            if line.startswith("Architecture:"):
+                return _get_deb_arch(line.split(None, 1)[1].strip())
+        raise ContainerError("Could not find architecture for container")
 
     def _pull_file(self, src, dst):
         subprocess.check_call(['lxc', 'file', 'pull',

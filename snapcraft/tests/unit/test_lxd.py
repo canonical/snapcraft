@@ -117,9 +117,6 @@ class CleanbuilderTestCase(LXDTestCase):
             call(['lxc', 'file', 'push', os.path.realpath('project.tar'),
                   '{}/root/build_project/project.tar'.format(container_name)]),
         ])
-        self.fake_lxd.check_output_mock.assert_has_calls([
-            call(['lxc', 'info', container_name]),
-        ])
         mock_container_run.assert_has_calls([
             call(['python3', '-c', 'import urllib.request; ' +
                   'urllib.request.urlopen(' +
@@ -520,6 +517,9 @@ class ProjectTestCase(ContainerbuildTestCase):
                                server='x86_64', user='root', home='/root')),
           ('remote/user', dict(remote='myremote', target_arch=None, euid=1234,
                                server='x86_64', user='me', home='/home/me')),
+          ('cross/user', dict(remote='myremote', target_arch='armhf',
+                              cross=True, euid=1234,
+                              server='x86_64', user='me', home='/home/me')),
     ]
 
     def setUp(self):
