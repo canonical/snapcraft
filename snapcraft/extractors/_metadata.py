@@ -63,7 +63,8 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted summary
         :rtype: str
         """
-        return str(self._data.get('summary'))
+        summary = self._data.get('summary')
+        return str(summary) if summary else None
 
     def get_description(self) -> str:
         """Return extracted description.
@@ -71,7 +72,8 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted description
         :rtype: str
         """
-        return str(self._data.get('description'))
+        description = self._data.get('description')
+        return str(description) if description else None
 
     def get_icon(self) -> str:
         """Return extracted icon.
@@ -79,7 +81,8 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted icon
         :rtype: str
         """
-        return str(self._data.get('icon'))
+        icon = self._data.get('icon')
+        return str(icon) if icon else None
 
     def get_desktop_file_ids(self) -> List[str]:
         """Return extracted desktop files ids.
@@ -87,7 +90,8 @@ class ExtractedMetadata(yaml.YAMLObject):
         :returns: Extracted desktop files ids
         :rtype: list
         """
-        return list(self._data.get('desktop_file_ids'))
+        desktop_file_ids = self._data.get('desktop_file_ids')
+        return list(desktop_file_ids) if desktop_file_ids else None
 
     def to_dict(self) -> Dict[str, Union[str, List[str]]]:
         """Return all extracted metadata.
