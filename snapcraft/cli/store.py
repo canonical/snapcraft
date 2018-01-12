@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+import functools
 import stat
 import sys
 from textwrap import dedent
@@ -337,10 +338,12 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str,
                            save=False):
         sys.exit(1)
 
-    with open(login_file, 'w') as f:
+    # This is sensitive-- it should only be accessible by the owner
+    private_open = functools.partial(os.open, mode=0o600)
+    with open(login_file, 'w', opener=private_open) as f:
         store.conf.save(config_fd=f)
 
-    # This is sensitive-- make sure it's only readable by the owner
+    # Now that the file has been written, we can just make it owner-readable
     os.chmod(login_file, stat.S_IRUSR)
 
     print()
