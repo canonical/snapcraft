@@ -43,7 +43,7 @@ class AppstreamTestCase(unit.TestCase):
             'key': 'icon',
             'attributes': {'type': 'local'},
             'value': '/test/path',
-        })],
+         })],
         [('metainfo', {'file_extension': 'metainfo.xml'}),
          ('appdata', {'file_extension': 'appdata.xml'})]
     )
