@@ -559,6 +559,9 @@ class ProjectTestCase(ContainerbuildTestCase):
              'channel': 'edge',
              'revision': '345'},
         ]
+        # Container was created before, and isn't running
+        self.fake_lxd.name = 'myremote:snapcraft-project'
+        self.fake_lxd.status = 'Stopped'
 
         self.make_containerbuild().execute()
 
