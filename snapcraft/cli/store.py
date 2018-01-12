@@ -340,7 +340,9 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str,
 
     # This is sensitive-- it should only be accessible by the owner
     private_open = functools.partial(os.open, mode=0o600)
-    with open(login_file, 'w', opener=private_open) as f:
+
+    # mypy doesn't have the opener arg in its stub. Ignore its warning
+    with open(login_file, 'w', opener=private_open) as f:  # type: ignore
         store.conf.save(config_fd=f)
 
     # Now that the file has been written, we can just make it owner-readable
