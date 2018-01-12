@@ -103,17 +103,6 @@ def _parse_dict(section, statement, statements, project_options,
                 on=key, body=value, project_options=project_options,
                 checker=checker)
 
-        if _TO_CLAUSE_PATTERN.match(key):
-            # We've come across the beginning of a 'to' statement.
-            # That means any previous statement we found is complete.
-            # The first time through this may be None, but the
-            # collection will ignore it.
-            statements.add(statement)
-
-            statement = ToStatement(
-                to=key, body=value, project_options=project_options,
-                checker=checker)
-
         if _TRY_CLAUSE_PATTERN.match(key):
             # We've come across the beginning of a 'try' statement.
             # That means any previous statement we found is complete.
