@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,6 +17,7 @@
 import contextlib
 import logging
 import os
+import subprocess
 from unittest import mock
 
 import fixtures
@@ -66,11 +67,6 @@ class KernelPluginTestCase(unit.TestCase):
 
         patcher = mock.patch('snapcraft.BasePlugin.build')
         self.base_build_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('magic.Magic.file',
-                             return_value='application/gzip')
-        self.file_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
         @contextlib.contextmanager
@@ -149,7 +145,7 @@ class KernelPluginTestCase(unit.TestCase):
                        'boot'],
                       cwd='temporary-directory'),
             mock.call('cat temporary-directory/squashfs-root/boot'
-                      '/initrd.img-core | gzip -dc | cpio -i',
+                      '/initrd.img-core | xz -dc | cpio -i',
                       cwd=os.path.join(builddir, 'initrd-staging'),
                       shell=True),
             mock.call('find . | cpio --create --format=newc | '
@@ -217,24 +213,14 @@ class KernelPluginTestCase(unit.TestCase):
         self.base_build_mock.side_effect = create_assets
 
     def test_unpack_gzip_initrd(self):
-        self.file_mock.return_value = 'application/gzip'
+        def check_call_effect(*args, **kwargs):
+            if 'xz' in args[0]:
+                raise subprocess.CalledProcessError(1, args)
+
+        self.check_call_mock.side_effect = check_call_effect
+
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      self.project_options)
-
-        plugin._unpack_generic_initrd()
-
-        self.check_call_mock.assert_has_calls([
-            mock.call('cat temporary-directory/squashfs-root/boot/'
-                      'initrd.img-core | gzip -dc | cpio -i',
-                      cwd=os.path.join(plugin.builddir, 'initrd-staging'),
-                      shell=True)
-        ])
-
-    def test_unpack_xgzip_initrd(self):
-        self.file_mock.return_value = 'application/x-gzip'
-        plugin = kernel.KernelPlugin('test-part', self.options,
-                                     self.project_options)
-
         plugin._unpack_generic_initrd()
 
         self.check_call_mock.assert_has_calls([
@@ -245,21 +231,6 @@ class KernelPluginTestCase(unit.TestCase):
         ])
 
     def test_unpack_lzma_initrd(self):
-        self.file_mock.return_value = 'application/x-lzma'
-        plugin = kernel.KernelPlugin('test-part', self.options,
-                                     self.project_options)
-
-        plugin._unpack_generic_initrd()
-
-        self.check_call_mock.assert_has_calls([
-            mock.call('cat temporary-directory/squashfs-root/boot/'
-                      'initrd.img-core | xz -dc | cpio -i',
-                      cwd=os.path.join(plugin.builddir, 'initrd-staging'),
-                      shell=True)
-        ])
-
-    def test_unpack_xz_initrd(self):
-        self.file_mock.return_value = 'application/x-xz'
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      self.project_options)
 
@@ -273,17 +244,17 @@ class KernelPluginTestCase(unit.TestCase):
         ])
 
     def test_unpack_unsupported_initrd_type(self):
-        self.file_mock.return_value = 'application/foo'
+        def check_call_effect(*args, **kwargs):
+            if 'unsquashfs' not in args[0]:
+                raise subprocess.CalledProcessError(1, args)
+
+        self.check_call_mock.side_effect = check_call_effect
         plugin = kernel.KernelPlugin('test-part', self.options,
                                      self.project_options)
 
-        raised = self.assertRaises(
+        self.assertRaises(
             RuntimeError,
             plugin._unpack_generic_initrd)
-
-        self.assertThat(
-            str(raised),
-            Equals("initrd file type is unsupported: 'application/foo'"))
 
     def test_pack_initrd_modules(self):
         self.options.kernel_initrd_modules = [
@@ -418,7 +389,7 @@ class KernelPluginTestCase(unit.TestCase):
                        'boot'],
                       cwd='temporary-directory'),
             mock.call('cat temporary-directory/squashfs-root/boot/'
-                      'initrd.img-core | gzip -dc | cpio -i',
+                      'initrd.img-core | xz -dc | cpio -i',
                       cwd=os.path.join(plugin.builddir, 'initrd-staging'),
                       shell=True),
             mock.call('find . | cpio --create --format=newc | '
