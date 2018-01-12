@@ -12,7 +12,7 @@ confinement: classic
 
 apps:
   snapcraft:
-    command: bin/snapcraft-classic
+    command: $SNAP/usr/bin/python3 $SNAP/bin/snapcraft
 
 parts:
   snapcraft-bin:
@@ -38,7 +38,6 @@ parts:
     stage-packages:
         - libarchive13
         - libffi6
-        - libmagic1
         - libsodium18
         - squashfs-tools
         - xdelta3

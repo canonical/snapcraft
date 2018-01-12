@@ -1240,8 +1240,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
-    @patch('snapcraft.internal.elf.ElfFile._get_symbols',
-           return_value=list())
+    @patch('snapcraft.internal.elf.ElfFile._extract_readelf',
+           return_value=('EXEC', list()))
     @patch('snapcraft.internal.elf.ElfFile.load_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_with_dependencies(self, mock_migrate_files,
@@ -1252,14 +1252,9 @@ class StateTestCase(StateBaseTestCase):
             '{}/lib1/installed'.format(self.handler.installdir),
             '{}/lib2/staged'.format(self.handler.stagedir),
         }
-        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
-                      'dynamically linked, interpreter '
-                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
         self.get_elf_files_mock.return_value = frozenset([
-            elf.ElfFile(path=os.path.join(self.handler.primedir, 'bin', '1'),
-                        magic=stub_magic),
-            elf.ElfFile(path=os.path.join(self.handler.primedir, 'bin', '2'),
-                        magic=stub_magic),
+            elf.ElfFile(path=os.path.join(self.handler.primedir, 'bin', '1')),
+            elf.ElfFile(path=os.path.join(self.handler.primedir, 'bin', '2')),
         ])
         self.assertThat(self.handler.last_step(), Equals(None))
 
@@ -1303,8 +1298,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
-    @patch('snapcraft.internal.elf.ElfFile._get_symbols',
-           return_value=list())
+    @patch('snapcraft.internal.elf.ElfFile._extract_readelf',
+           return_value=('EXEC', list()))
     @patch('snapcraft.internal.elf.ElfFile.load_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_disable_ldd_crawl(self, mock_migrate_files,
@@ -1315,13 +1310,9 @@ class StateTestCase(StateBaseTestCase):
             'build-attributes': ['no-system-libraries']
         })
 
-        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
-                      'dynamically linked, interpreter '
-                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
         self.get_elf_files_mock.return_value = frozenset([
-            elf.ElfFile(
-                path=os.path.join(self.handler.primedir, 'bin', 'file'),
-                magic=stub_magic)])
+            elf.ElfFile(path=os.path.join(
+                self.handler.primedir, 'bin', 'file'))])
         # Pretend we found a system dependency, as well as a part and stage
         # dependency.
         mock_load_dependencies.return_value = set([
@@ -1359,19 +1350,16 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue('lib1' in state.dependency_paths)
         self.assertTrue('lib2' in state.dependency_paths)
 
-    @patch('snapcraft.internal.elf.ElfFile._get_symbols',
-           return_value=list())
+    @patch('snapcraft.internal.elf.ElfFile._extract_readelf',
+           return_value=('EXEC', list()))
     @patch('snapcraft.internal.elf.ElfFile.load_dependencies',
            return_value=set(['/foo/bar/baz']))
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_with_shadowed_dependencies(self, mock_migrate_files,
                                                     mock_load_dependencies,
                                                     mock_get_symbols):
-        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
-                      'dynamically linked, interpreter '
-                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
         self.get_elf_files_mock.return_value = frozenset([
-            elf.ElfFile(path='bin/1', magic=stub_magic)])
+            elf.ElfFile(path='bin/1')])
         self.assertThat(self.handler.last_step(), Equals(None))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')
