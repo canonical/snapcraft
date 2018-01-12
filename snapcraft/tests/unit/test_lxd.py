@@ -14,11 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import errno
 import json
 import logging
 import os
 import requests
-from subprocess import CalledProcessError
+from subprocess import CalledProcessError, TimeoutExpired
 from unittest.mock import (
     call,
     patch,
@@ -31,6 +32,7 @@ from testtools.matchers import Contains, Equals
 from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
 from snapcraft.internal.errors import (
+    ContainerError,
     ContainerConnectionError,
     ContainerRunError,
     SnapdError,
@@ -708,6 +710,114 @@ class LocalProjectTestCase(ContainerbuildTestCase):
         # Should not attempt to stop a container that wasn't started
         self.assertNotIn(call(['lxc', 'stop', '-f', self.fake_lxd.name]),
                          self.fake_lxd.check_call_mock.call_args_list)
+
+
+class MultipassTestCase(LXDBaseTestCase):
+
+    server = 'x86_64'
+    target_arch = None
+
+    def make_containerbuild(self):
+        return lxd.Project(output='snap.snap', source='project.tar',
+                           metadata={'name': 'project'},
+                           project_options=self.project_options,
+                           remote='multipass')
+
+    def test_not_installed(self):
+        def call_effect(*args, **kwargs):
+            if args[0][:1] == ['multipass']:
+                raise FileNotFoundError(
+                    errno.ENOENT, os.strerror(errno.ENOENT), args[0])
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_output_mock.side_effect
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.assertIn(
+            'Multipass is not installed',
+            str(self.assertRaises(
+                ContainerError,
+                self.make_containerbuild)))
+
+    def test_start_failed(self):
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['multipass', 'start']:
+                raise CalledProcessError(
+                    returncode=255, cmd=args[0])
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_call_mock.side_effect
+        self.fake_lxd.check_call_mock.side_effect = call_effect
+
+        self.assertIn(
+            'Failed to setup multipass remote',
+            str(self.assertRaises(
+                ContainerError,
+                self.make_containerbuild)))
+
+    def test_bridge_failed(self):
+        def call_effect(*args, **kwargs):
+            if 'dpkg-reconfigure' in args[0]:
+                raise CalledProcessError(
+                    returncode=255, cmd=args[0])
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_output_mock.side_effect
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.assertIn(
+            'Failed to configure LXD bridge',
+            str(self.assertRaises(
+                ContainerError,
+                self.make_containerbuild)))
+
+    def test_bridge_timeout(self):
+        def call_effect(*args, **kwargs):
+            if 'dpkg-reconfigure' in args[0]:
+                raise TimeoutExpired(args[0], 5)
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_output_mock.side_effect
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.assertIn(
+            'Failed to configure LXD bridge',
+            str(self.assertRaises(
+                ContainerError,
+                self.make_containerbuild)))
+
+    def test_lxd_configured(self):
+        def call_effect(*args, **kwargs):
+            if 'dpkg-reconfigure' in args[0]:
+                raise TimeoutExpired(args[0], 5)
+            elif 'debconf-show' in args[0]:
+                return '* lxd/bridge-ipv4: true'.encode()
+            elif args[0][-3:] == ['lxc', 'config', 'show']:
+                return 'core.trust_password: true'.encode()
+            elif args[0][-3:] == ['multipass', 'info', 'snapcraft']:
+                return 'IPv4: 1.2.3.4'.encode()
+            elif args[0][-2:] == ['ifconfig', 'lxdbr0']:
+                return 'inet addr:10.10.10.1'.encode()
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_output_mock.side_effect
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.make_containerbuild()
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'remote', 'add', 'multipass', '1.2.3.4',
+                  '--password=snapcraft', '--accept-certificate']),
+        ])
+
+    @patch('snapcraft.internal.lxd.Containerbuild._get_multipass_remote')
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    def test_instance_stopped(self, mock_container_run, mock_remote):
+        mock_remote.side_effect = lambda: 'multipass'
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        self.make_containerbuild().execute()
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['multipass', 'stop', 'snapcraft']),
+        ])
 
 
 class FailedImageInfoTestCase(LXDBaseTestCase):
