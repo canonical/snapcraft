@@ -17,15 +17,14 @@ import fixtures
 import logging
 import os
 import subprocess
-import sys
 import tempfile
 from textwrap import dedent
 
-from testtools.matchers import Equals
+from testtools.matchers import Contains, Equals
 from unittest import mock
 
 from snapcraft.internal import errors, elf, os_release
-from snapcraft.tests import unit
+from snapcraft.tests import unit, fixture_setup
 
 
 class TestElfBase(unit.TestCase):
@@ -33,34 +32,8 @@ class TestElfBase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft.internal.common.run_output')
-        self.run_output_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        lines = [
-            'foo.so.1 => /lib/foo.so.1 (0xdead)',
-            'bar.so.2 => /usr/lib/bar.so.2 (0xbeef)',
-            '/lib/baz.so.2 (0x1234)',
-        ]
-        self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
-
-        patcher = mock.patch('subprocess.check_output')
-        self.check_output_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-        self.check_output_mock.return_value = dedent("""\
-            Symbol table '.dynsym' contains 2281 entries:
-              Num:    Value          Size Type    Bind   Vis      Ndx Name
-                0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
-                1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND endgrent@GLIBC_2.2.5 (2)
-                2: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND __ctype_toupper_loc@GLIBC_2.3 (3)
-              456: 0000000000565f20   124 FUNC    GLOBAL DEFAULT   13 PyCodec_Register
-
-            """).encode()  # noqa
-
-        self.stub_magic = ('ELF 64-bit LSB executable, x86-64, '
-                           'version 1 (SYSV), '
-                           'dynamically linked, interpreter '
-                           '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
+        self.fake_elf = fixture_setup.FakeElf(root_path=self.path)
+        self.useFixture(self.fake_elf)
 
 
 class TestLdLibraryPathParser(unit.TestCase):
@@ -106,81 +79,68 @@ class TestGetLibraries(TestElfBase):
         self.fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(self.fake_logger)
 
-        self.core_base_path = os.path.join(self.path, 'core')
-        os.makedirs(self.core_base_path)
-        os.makedirs(self.prime_dir)
-
     def test_get_libraries(self):
-        elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
-        libs = elf_file.load_dependencies(root_path=self.prime_dir,
-                                          core_base_path=self.core_base_path)
-        self.assertThat(libs, Equals(frozenset(
-            ['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
+        elf_file = self.fake_elf['fake_elf-2.23']
+        libs = elf_file.load_dependencies(
+            root_path=self.fake_elf.root_path,
+            core_base_path=self.fake_elf.core_base_path)
+
+        self.assertThat(libs, Equals(set(
+            [self.fake_elf.root_libraries['foo.so.1'],
+             '/usr/lib/bar.so.2'])))
 
     def test_primed_libraries_are_preferred(self):
-        primed_foo = os.path.join(self.prime_dir, 'foo.so.1')
-        open(primed_foo, 'w').close()
+        elf_file = self.fake_elf['fake_elf-2.23']
+        libs = elf_file.load_dependencies(
+            root_path=self.fake_elf.root_path,
+            core_base_path=self.fake_elf.core_base_path)
 
-        self.ms_mock = mock.Mock()
-        self.ms_mock.load.return_value = 0
-        self.ms_mock.file.return_value = self.stub_magic
-
-        patcher = mock.patch('magic.open')
-        self.magic_mock = patcher.start()
-        self.magic_mock.return_value = self.ms_mock
-        self.addCleanup(patcher.stop)
-
-        elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
-        libs = elf_file.load_dependencies(root_path=self.prime_dir,
-                                          core_base_path=self.core_base_path)
         self.assertThat(libs, Equals(frozenset(
-            [primed_foo, '/usr/lib/bar.so.2'])))
+            [self.fake_elf.root_libraries['foo.so.1'],
+             '/usr/lib/bar.so.2'])))
 
     def test_non_elf_primed_sonames_matches_are_ignored(self):
-        primed_foo = os.path.join(self.prime_dir, 'foo.so.1')
-        open(primed_foo, 'w').close()
+        primed_foo = os.path.join(self.fake_elf.root_path, 'foo.so.1')
+        with open(primed_foo, 'wb') as f:
+            # A bz2 header
+            f.write(b'\x42\x5a\x68')
 
-        elf_file = elf.ElfFile(path='foobar', magic=self.stub_magic)
-        libs = elf_file.load_dependencies(root_path=self.prime_dir,
-                                          core_base_path=self.core_base_path)
+        elf_file = self.fake_elf['fake_elf-2.23']
+        libs = elf_file.load_dependencies(
+            root_path=self.fake_elf.root_path,
+            core_base_path=self.fake_elf.core_base_path)
+
         self.assertThat(libs, Equals(frozenset(
             ['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
 
     def test_get_libraries_excludes_slash_snap(self):
-        lines = [
-            'foo.so.1 => /lib/foo.so.1 (0xdead)',
-            'bar.so.2 => /usr/lib/bar.so.2 (0xbeef)',
-            'barsnap.so.2 => {}/barsnap.so.2 (0xbeef)'.format(
-                self.core_base_path),
-            '/lib/baz.so.2 (0x1234)',
-        ]
-        self.run_output_mock.return_value = '\t' + '\n\t'.join(lines) + '\n'
+        elf_file = self.fake_elf['fake_elf-with-core-libs']
+        libs = elf_file.load_dependencies(
+            root_path=self.fake_elf.root_path,
+            core_base_path=self.fake_elf.core_base_path)
 
-        elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
-        libs = elf_file.load_dependencies(root_path=self.prime_dir,
-                                          core_base_path=self.core_base_path)
-        self.assertThat(libs, Equals(
-            frozenset(['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
+        self.assertThat(libs, Equals(set(
+            [self.fake_elf.root_libraries['foo.so.1'],
+             '/usr/lib/bar.so.2'])))
 
     def test_get_libraries_filtered_by_system_libraries(self):
         self.get_system_libs_mock.return_value = frozenset(['foo.so.1'])
 
-        elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
+        elf_file = self.fake_elf['fake_elf-2.23']
         libs = elf_file.load_dependencies(root_path='/',
                                           core_base_path='/snap/core/current')
         self.assertThat(libs, Equals(frozenset(['/usr/lib/bar.so.2'])))
 
     def test_get_libraries_ldd_failure_logs_warning(self):
-        self.run_output_mock.side_effect = subprocess.CalledProcessError(
-            1, 'foo', b'bar')
+        elf_file = self.fake_elf['fake_elf-bad-ldd']
+        libs = elf_file.load_dependencies(
+            root_path=self.fake_elf.root_path,
+            core_base_path=self.fake_elf.core_base_path)
 
-        elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
-        libs = elf_file.load_dependencies(root_path='/',
-                                          core_base_path='/snap/core/current')
         self.assertThat(libs, Equals(set()))
         self.assertThat(
             self.fake_logger.output,
-            Equals("Unable to determine library dependencies for 'foo'\n"))
+            Contains("Unable to determine library dependencies for"))
 
 
 class TestSystemLibsOnNewRelease(TestElfBase):
@@ -213,7 +173,7 @@ class TestSystemLibsOnNewRelease(TestElfBase):
         self.addCleanup(patcher.stop)
 
     def test_fail_gracefully_if_system_libs_not_found(self):
-        elf_file = elf.ElfFile(path='foo', magic=self.stub_magic)
+        elf_file = self.fake_elf['fake_elf-2.23']
         libs = elf_file.load_dependencies(root_path='/fake',
                                           core_base_path='/fake-core')
         self.assertThat(libs, Equals(frozenset()))
@@ -253,117 +213,54 @@ class TestSystemLibsOnReleasesWithNoVersionId(unit.TestCase):
                         Equals(frozenset(['libc.so.6', 'libpthreads.so.6'])))
 
 
-class GetElfFilesTestCase(TestElfBase):
-
-    def setUp(self):
-        super().setUp()
-        self.workdir = os.path.join(os.getcwd(), 'workdir')
-        os.mkdir(self.workdir)
-
-        self.ms_mock = mock.Mock()
-        self.ms_mock.load.return_value = 0
-        self.ms_mock.file.return_value = self.stub_magic
-
-        patcher = mock.patch('magic.open')
-        self.magic_mock = patcher.start()
-        self.magic_mock.return_value = self.ms_mock
-        self.addCleanup(patcher.stop)
+class TestGetElfFiles(TestElfBase):
 
     def test_get_elf_files(self):
-        linked_elf_path = os.path.join(self.workdir, 'linked')
-        open(linked_elf_path, 'w').close()
-
-        linked_elf_path_b = linked_elf_path.encode(sys.getfilesystemencoding())
-
-        elf_files = elf.get_elf_files(self.workdir, {'linked'})
+        elf_files = elf.get_elf_files(self.fake_elf.root_path,
+                                      {'fake_elf-2.23'})
 
         self.assertThat(len(elf_files), Equals(1))
-        self.ms_mock.file.assert_called_once_with(linked_elf_path_b)
-
         elf_file = set(elf_files).pop()
-        self.assertThat(elf_file.path, Equals(linked_elf_path))
-        self.assertThat(elf_file.is_executable, Equals(True))
+        self.assertThat(elf_file.is_executable(), Equals(True))
 
     def test_get_elf_is_library(self):
-        self.ms_mock.file.return_value = (
-            'ELF 64-bit LSB shared object, x86-64, version 1 (SYSV), '
-            'dynamically linked, '
-            'BuildID[sha1]=62b2bc59168b25ab9b025182c1f5f43194ba167b, stripped'
-        )
-        linked_elf_path = os.path.join(self.workdir, 'linked')
-        open(linked_elf_path, 'w').close()
-
-        linked_elf_path_b = linked_elf_path.encode(sys.getfilesystemencoding())
-
-        elf_files = elf.get_elf_files(self.workdir, {'linked'})
+        elf_files = elf.get_elf_files(self.fake_elf.root_path,
+                                      {'fake_elf-shared-object'})
 
         self.assertThat(len(elf_files), Equals(1))
-        self.ms_mock.file.assert_called_once_with(linked_elf_path_b)
-
         elf_file = set(elf_files).pop()
-        self.assertThat(elf_file.path, Equals(linked_elf_path))
-        self.assertThat(elf_file.is_executable, Equals(False))
+        self.assertThat(elf_file.is_executable(), Equals(False))
+        self.assertThat(elf_file.is_shared_object(), Equals(True))
 
     def test_skip_object_files(self):
-        open(os.path.join(self.workdir, 'object_file.o'), 'w').close()
+        open(os.path.join(
+            self.fake_elf.root_path, 'object_file.o'), 'w').close()
 
-        elf_files = elf.get_elf_files(self.workdir, {'object_file.o'})
-
-        self.assertFalse(self.ms_mock.file.called,
-                         'Expected object file to be skipped')
+        elf_files = elf.get_elf_files(self.fake_elf.root_path,
+                                      {'object_file.o'})
         self.assertThat(elf_files, Equals(set()))
 
-    def test_no_find_dependencies_of_non_dynamically_linked(self):
-        statically_linked_elf_path = os.path.join(self.workdir,
-                                                  'statically-linked')
-        open(statically_linked_elf_path, 'w').close()
-
-        statically_linked_elf_path_b = statically_linked_elf_path.encode(
-            sys.getfilesystemencoding())
-
-        self.ms_mock.file.return_value = (
-            'ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
-            'statically linked, for GNU/Linux 2.6.32, '
-            'BuildID[sha1]=XYZ, stripped')
-
-        elf_files = elf.get_elf_files(self.workdir,
-                                      {'statically-linked'})
-
-        self.ms_mock.file.assert_called_once_with(statically_linked_elf_path_b)
+    def test_no_find_dependencies_statically_linked(self):
+        elf_files = elf.get_elf_files(self.fake_elf.root_path,
+                                      {'fake_elf-static'})
         self.assertThat(elf_files, Equals(set()))
 
     def test_non_elf_files(self):
-        non_elf_path = os.path.join(self.workdir, 'non-elf')
-        open(non_elf_path, 'w').close()
+        with open(os.path.join(
+                self.fake_elf.root_path, 'non-elf'), 'wb') as f:
+            # A bz2 header
+            f.write(b'\x42\x5a\x68')
 
-        non_elf_path_b = non_elf_path.encode(sys.getfilesystemencoding())
-
-        self.ms_mock.file.return_value = 'JPEG image data, Exif standard: ...'
-
-        elf_files = elf.get_elf_files(self.workdir, {'non-elf'})
-
-        self.ms_mock.file.assert_called_once_with(non_elf_path_b)
+        elf_files = elf.get_elf_files(self.fake_elf.root_path, {'non-elf'})
         self.assertThat(elf_files, Equals(set()))
 
     def test_symlinks(self):
-        symlinked_path = os.path.join(self.workdir, 'symlinked')
+        symlinked_path = os.path.join(self.fake_elf.root_path, 'symlinked')
         os.symlink('/bin/dash', symlinked_path)
 
-        elf_files = elf.get_elf_files(self.workdir, {'symlinked'})
+        elf_files = elf.get_elf_files(self.fake_elf.root_path, {'symlinked'})
 
-        self.assertFalse(self.ms_mock.file.called,
-                         'magic is not needed for symlinks')
         self.assertThat(elf_files, Equals(set()))
-
-    def test_fail_to_load_magic_raises_exception(self):
-        self.magic_mock.return_value.load.return_value = 1
-
-        raised = self.assertRaises(
-            RuntimeError,
-            elf.get_elf_files, '.', set('libfake.so'))
-
-        self.assertThat(
-            raised.__str__(), Equals('Cannot load magic header detection'))
 
 
 class TestGetRequiredGLIBC(TestElfBase):
@@ -371,16 +268,18 @@ class TestGetRequiredGLIBC(TestElfBase):
     def setUp(self):
         super().setUp()
 
-        self.elf_file = elf.ElfFile(path='/fake-elf', magic=self.stub_magic)
+        self.elf_file = self.fake_elf['fake_elf-2.23']
 
     def test_get_required_glibc(self):
-        self.assertThat(self.elf_file.get_required_glibc(), Equals('2.3'))
+        self.assertThat(self.elf_file.get_required_glibc(), Equals('2.23'))
 
     def test_linker_version_greater_than_required_glibc(self):
-        self.assertTrue(self.elf_file.is_linker_compatible(linker='ld-2.4.so'))
+        self.assertTrue(
+            self.elf_file.is_linker_compatible(linker='ld-2.26.so'))
 
     def test_linker_version_equals_required_glibc(self):
-        self.assertTrue(self.elf_file.is_linker_compatible(linker='ld-2.3.so'))
+        self.assertTrue(
+            self.elf_file.is_linker_compatible(linker='ld-2.23.so'))
 
     def test_linker_version_less_than_required_glibc(self):
         self.assertFalse(
@@ -398,7 +297,7 @@ class TestElfFileSymbols(TestElfBase):
         super().setUp()
 
     def test_symbols(self):
-        elf_file = elf.ElfFile(path='/fake-elf', magic=self.stub_magic)
+        elf_file = self.fake_elf['fake_elf-2.23']
 
         self.assertThat(len(elf_file.symbols), Equals(3))
 
@@ -408,7 +307,7 @@ class TestElfFileSymbols(TestElfBase):
 
         self.assertThat(elf_file.symbols[1].name,
                         Equals('__ctype_toupper_loc'))
-        self.assertThat(elf_file.symbols[1].version, Equals('GLIBC_2.3'))
+        self.assertThat(elf_file.symbols[1].version, Equals('GLIBC_2.23'))
         self.assertThat(elf_file.symbols[1].section, Equals('UND'))
 
         self.assertThat(elf_file.symbols[2].name, Equals('PyCodec_Register'))
@@ -416,16 +315,11 @@ class TestElfFileSymbols(TestElfBase):
         self.assertThat(elf_file.symbols[2].section, Equals('13'))
 
     def test_symbols_no_match(self):
-        self.check_output_mock.return_value = dedent("""\
-            Symbol table '.dynsym' contains 2281 entries:
-              Num:    Value          Size Type    Bind   Vis      Ndx Name
-                0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
-              0000000000565f20
-            """).encode()  # noqa
+        # fake_elf-shared-object has no GLIBC dependency, but two symbols
+        # nonetheless
+        elf_file = self.fake_elf['fake_elf-shared-object']
 
-        elf_file = elf.ElfFile(path='/fake-elf', magic=self.stub_magic)
-
-        self.assertThat(len(elf_file.symbols), Equals(0))
+        self.assertThat(len(elf_file.symbols), Equals(2))
 
 
 class TestPatcher(TestElfBase):
@@ -454,7 +348,7 @@ class TestPatcher(TestElfBase):
             'SNAP_NAME', self.snap_name))
 
     def test_patch(self):
-        elf_file = elf.ElfFile(path='/fake-elf', magic=self.stub_magic)
+        elf_file = self.fake_elf['fake_elf-2.23']
         # The base_path does not matter here as there are not files to
         # be crawled for.
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
@@ -463,12 +357,10 @@ class TestPatcher(TestElfBase):
 
         self.check_call_mock.assert_called_once_with([
             self.expected_patchelf, '--set-interpreter', '/lib/fake-ld',
-            '/fake-elf'])
+            elf_file.path])
 
     def test_patch_does_nothing_if_no_interpreter(self):
-        stub_magic = ('ELF 64-bit LSB shared object, x86-64, '
-                      'version 1 (SYSV), dynamically linked')
-        elf_file = elf.ElfFile(path='/fake-elf', magic=stub_magic)
+        elf_file = self.fake_elf['fake_elf-static']
         # The base_path does not matter here as there are not files to
         # be crawled for.
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
@@ -490,7 +382,7 @@ class TestPatcherErrors(TestElfBase):
         self.addCleanup(patcher.stop)
 
     def test_patch_fails_raises_patcherror_exception(self):
-        elf_file = elf.ElfFile(path='/fake-elf', magic=self.stub_magic)
+        elf_file = self.fake_elf['fake_elf-2.23']
         # The base_path does not matter here as there are not files to
         # be crawled for.
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
