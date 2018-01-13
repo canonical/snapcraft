@@ -19,6 +19,7 @@ import re
 import shutil
 import tarfile
 import tempfile
+import lzma
 
 from . import errors
 from ._base import FileBase
@@ -103,4 +104,8 @@ class Tar(FileBase):
         if member.islnk() and not member.issym():
             if member.linkname.startswith(common + '/'):
                 member.linkname = member.linkname[len(common + '/'):]
-            member.linkname = re.sub(r'^(\.{0,2}/)*', r'', member.linkname)
+        member.linkname = re.sub(r'^(\.{0,2}/)*', r'', member.linkname)
+
+    def lzma_decompress(self, lzmafile):
+        lzd = lzma.LZMADecompressor(lzmafile)
+        self._test_decompressor(lzd, lzma.COMPRESSED_XZ, lzma.CHECK_CRC64)
