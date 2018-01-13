@@ -12,7 +12,7 @@ confinement: classic
 
 apps:
   snapcraft:
-    command: $SNAP/usr/bin/python3 $SNAP/bin/snapcraft
+    command: bin/snapcraft
 
 parts:
   snapcraft-bin:
