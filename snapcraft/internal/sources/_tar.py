@@ -20,6 +20,7 @@ import shutil
 import tarfile
 import tempfile
 
+
 from . import errors
 from ._base import FileBase
 
@@ -50,7 +51,7 @@ class Tar(FileBase):
         else:
             tarball = os.path.join(
                 self.source_dir, os.path.basename(self.source))
-
+        filename, file_extension = os.path.splitext(tarball)
         if clean_target:
             tmp_tarball = tempfile.NamedTemporaryFile().name
             shutil.move(tarball, tmp_tarball)
@@ -58,7 +59,11 @@ class Tar(FileBase):
             os.makedirs(dst)
             shutil.move(tmp_tarball, tarball)
 
-        self._extract(tarball, dst)
+        if file_extension == '.lzma':
+            self._extractlzma(tarball, dst)
+
+        if file_extension == '.tar':
+            self._extract(tarball, dst)
 
         if not keep_tarball:
             os.remove(tarball)
@@ -93,6 +98,10 @@ class Tar(FileBase):
                     yield m
 
             tar.extractall(members=filter_members(tar), path=dst)
+
+    def _extractlzma(self, lzma_data, dst):
+        with tarfile.open(lzma_data) as lzma:
+            lzma.extractall(path=dst)
 
     def _strip_prefix(self, common, member):
         if member.name.startswith(common + '/'):
