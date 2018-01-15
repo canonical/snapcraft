@@ -25,7 +25,6 @@ import requests_unixsocket
 import shutil
 import sys
 import tempfile
-from textwrap import dedent
 import yaml
 from contextlib import contextmanager
 import subprocess
@@ -91,7 +90,6 @@ class Containerbuild:
                     ])
             subprocess.check_call([
                 'multipass', 'start', 'snapcraft'])
-            self._setup_bridge()
             self._setup_lxd()
 
             return 'multipass'
@@ -102,63 +100,39 @@ class Containerbuild:
                 'Failed to setup multipass remote: {!r}'.format(
                     ' '.join(e.cmd)))
 
-    def _setup_bridge(self):
-        logger.debug('Setting up the bridge')
-        # debconf database may be locked by another process, so loop and re-try
-        retry_count = 10
-        while True:
-            time.sleep(1)
-            try:
-                answers = dedent('''\
-                    yes
-                    lxdbr0
-                    yes
-                    10.10.10.1
-                    24
-                    10.10.10.2
-                    10.10.10.254
-                    250
-                    yes
-                    no
-
-                    snapcraft
-                    no
-                    yes
-                ''')
-
-                subprocess.check_output([
-                    'multipass', 'exec', 'snapcraft', '--',
-                    'sudo', 'dpkg-reconfigure',
-                    '--frontend', 'teletype', 'lxd'],
-                    timeout=5, input=answers.encode())
-            except subprocess.CalledProcessError:
-                # /var/cache/debconf/config.dat is locked
-                retry_count -= 1
-            except subprocess.TimeoutExpired:
-                # Timeout may or may not mean success
-                # Check for a question we would have answered before
-                # * indicates answered, the default is false
-                if '* lxd/bridge-ipv4: true' in subprocess.check_output([
-                        'multipass', 'exec', 'snapcraft', '--',
-                        'debconf-show', 'lxd']).decode():
-                    break
-                retry_count -= 1
-            finally:
-                if retry_count == 0:
-                    raise ContainerError('Failed to configure LXD bridge')
-
     def _setup_lxd(self):
+        if 'lxd' not in subprocess.check_output([
+                'multipass', 'exec', 'snapcraft', '--',
+                'snap', 'list']).decode():
+            logger.debug('Installing LXD')
+            subprocess.check_call([
+                'multipass', 'exec', 'snapcraft', '--',
+                'sudo', 'snap', 'install', 'lxd'])
+        subprocess.check_call([
+            'multipass', 'exec', 'snapcraft', '--',
+            'sudo', '/snap/bin/lxd', 'waitready'])
         if 'core.trust_password: true' not in subprocess.check_output([
                 'multipass', 'exec', 'snapcraft', '--',
-                'lxc', 'config', 'show']).decode():
+                '/snap/bin/lxc', 'config', 'show']).decode():
             logger.debug('Configuring LXD')
             # Expose LXD over the network
             subprocess.check_call([
                 'multipass', 'exec', 'snapcraft', '--',
-                'sudo', 'lxd', 'init', '--auto',
+                'sudo', '/snap/bin/lxd', 'init', '--auto',
                 '--network-address', '0.0.0.0',
                 '--network-port', '8443',
                 '--trust-password', 'snapcraft'])
+        if 'lxdbr0' not in subprocess.check_output([
+                'multipass', 'exec', 'snapcraft', '--',
+                '/snap/bin/lxc', 'network', 'list']).decode():
+            subprocess.check_call([
+                'multipass', 'exec', 'snapcraft', '--',
+                'sudo', '/snap/bin/lxc', 'network',
+                'create', 'lxdbr0'])
+            subprocess.check_call([
+                'multipass', 'exec', 'snapcraft', '--',
+                'sudo', '/snap/bin/lxc', 'network',
+                'attach-profile', 'lxdbr0', 'default', 'eth0'])
 
         remotes = subprocess.check_output([
             'lxc', 'remote', 'list']).decode()
@@ -176,7 +150,7 @@ class Containerbuild:
         while True:
             time.sleep(1)
             try:
-                if 'inet addr:10.10.10.1' in subprocess.check_output([
+                if 'inet addr:' in subprocess.check_output([
                         'multipass', 'exec', 'snapcraft', '--',
                         'ifconfig', 'lxdbr0'], timeout=5).decode():
                     break

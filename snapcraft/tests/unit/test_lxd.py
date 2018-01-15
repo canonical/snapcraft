@@ -755,45 +755,10 @@ class MultipassTestCase(LXDBaseTestCase):
                 ContainerError,
                 self.make_containerbuild)))
 
-    def test_bridge_failed(self):
+    def test_lxd_not_installed(self):
         def call_effect(*args, **kwargs):
-            if 'dpkg-reconfigure' in args[0]:
-                raise CalledProcessError(
-                    returncode=255, cmd=args[0])
-            return d(*args, **kwargs)
-
-        d = self.fake_lxd.check_output_mock.side_effect
-        self.fake_lxd.check_output_mock.side_effect = call_effect
-
-        self.assertIn(
-            'Failed to configure LXD bridge',
-            str(self.assertRaises(
-                ContainerError,
-                self.make_containerbuild)))
-
-    def test_bridge_timeout(self):
-        def call_effect(*args, **kwargs):
-            if 'dpkg-reconfigure' in args[0]:
-                raise TimeoutExpired(args[0], 5)
-            return d(*args, **kwargs)
-
-        d = self.fake_lxd.check_output_mock.side_effect
-        self.fake_lxd.check_output_mock.side_effect = call_effect
-
-        self.assertIn(
-            'Failed to configure LXD bridge',
-            str(self.assertRaises(
-                ContainerError,
-                self.make_containerbuild)))
-
-    def test_lxd_configured(self):
-        def call_effect(*args, **kwargs):
-            if 'dpkg-reconfigure' in args[0]:
-                raise TimeoutExpired(args[0], 5)
-            elif 'debconf-show' in args[0]:
-                return '* lxd/bridge-ipv4: true'.encode()
-            elif args[0][-3:] == ['lxc', 'config', 'show']:
-                return 'core.trust_password: true'.encode()
+            if args[0][-2:] == ['snap', 'list']:
+                return ''.encode()
             elif args[0][-3:] == ['multipass', 'info', 'snapcraft']:
                 return 'IPv4: 1.2.3.4'.encode()
             elif args[0][-2:] == ['ifconfig', 'lxdbr0']:
@@ -805,6 +770,80 @@ class MultipassTestCase(LXDBaseTestCase):
 
         self.make_containerbuild()
         self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['multipass', 'exec', 'snapcraft', '--',
+                  'sudo', 'snap', 'install', 'lxd']),
+        ])
+
+    def test_lxd_init_needed(self):
+        def call_effect(*args, **kwargs):
+            if args[0][-2:] == ['snap', 'list']:
+                return 'lxd 2.21 5408 canonical -'.encode()
+            elif args[0][-3:] == ['multipass', 'info', 'snapcraft']:
+                return 'IPv4: 1.2.3.4'.encode()
+            elif args[0][-2:] == ['ifconfig', 'lxdbr0']:
+                return 'inet addr:10.10.10.1'.encode()
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_output_mock.side_effect
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.make_containerbuild()
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['multipass', 'exec', 'snapcraft', '--',
+                  'sudo', '/snap/bin/lxd', 'waitready']),
+            call(['multipass', 'exec', 'snapcraft', '--',
+                  'sudo', '/snap/bin/lxd', 'init', '--auto',
+                  '--network-address', '0.0.0.0',
+                  '--network-port', '8443',
+                  '--trust-password', 'snapcraft']),
+            call(['multipass', 'exec', 'snapcraft', '--',
+                  'sudo', '/snap/bin/lxc', 'network',
+                  'create', 'lxdbr0']),
+            call(['multipass', 'exec', 'snapcraft', '--',
+                  'sudo', '/snap/bin/lxc', 'network',
+                  'attach-profile', 'lxdbr0', 'default', 'eth0']),
+            call(['lxc', 'remote', 'add', 'multipass', '1.2.3.4',
+                  '--password=snapcraft', '--accept-certificate']),
+        ])
+
+    def test_bridge_timeout(self):
+        def call_effect(*args, **kwargs):
+            if args[0][-2:] == ['ifconfig', 'lxdbr0']:
+                raise TimeoutExpired(args[0], 5)
+            elif args[0][-3:] == ['multipass', 'info', 'snapcraft']:
+                return 'IPv4: 1.2.3.4'.encode()
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_output_mock.side_effect
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.assertIn(
+            'Failed to setup LXD bridge',
+            str(self.assertRaises(
+                ContainerError,
+                self.make_containerbuild)))
+
+    def test_lxd_configured(self):
+        def call_effect(*args, **kwargs):
+            if args[0][-2:] == ['snap', 'list']:
+                return 'lxd 2.21 5408 canonical -'.encode()
+            elif args[0][-3:] == ['/snap/bin/lxc', 'config', 'show']:
+                return 'core.trust_password: true'.encode()
+            elif args[0][-3:] == ['/snap/bin/lxc', 'network', 'list']:
+                return 'lxdbr0 | bridge | YES | | 1'.encode()
+            elif args[0][-3:] == ['multipass', 'info', 'snapcraft']:
+                return 'IPv4: 1.2.3.4'.encode()
+            elif args[0][-2:] == ['ifconfig', 'lxdbr0']:
+                return 'inet addr:10.10.10.1'.encode()
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_output_mock.side_effect
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.make_containerbuild()
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['multipass', 'exec', 'snapcraft', '--',
+                  'sudo', '/snap/bin/lxd', 'waitready']),
             call(['lxc', 'remote', 'add', 'multipass', '1.2.3.4',
                   '--password=snapcraft', '--accept-certificate']),
         ])
