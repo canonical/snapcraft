@@ -61,8 +61,7 @@ class Tar(FileBase):
 
         if file_extension == '.lzma':
             self._extractlzma(tarball, dst)
-
-        if file_extension == '.tar':
+        else:
             self._extract(tarball, dst)
 
         if not keep_tarball:
