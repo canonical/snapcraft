@@ -205,20 +205,20 @@ class InvalidContainerRemoteError(SnapcraftError):
 class MissingDesktopFileError(SnapcraftError):
 
     fmt = (
-        'Failed to generate desktop file: '
-        '{filename!r} defined in app {app_name!r} does not exist.'
+        "Failed to generate desktop file: "
+        "{filename!r} defined in app {name!r} does not exist."
 
     )
 
-    def __init__(self, filename, app_name):
-        super().__init__(filename=filename, app_name=app_name)
+    def __init__(self, filename, name):
+        super().__init__(filename=filename, name=name)
 
 
 class MissingDesktopSectionError(SnapcraftError):
 
     fmt = (
-        'Failed to generate desktop file:'
-        'Missing {section_name!r} section in desktop file {filename!r}.'
+        "Failed to generate desktop file: "
+        "Missing {section_name!r} section in desktop file {filename!r}."
 
     )
 
@@ -229,8 +229,8 @@ class MissingDesktopSectionError(SnapcraftError):
 class MissingDesktopExecError(SnapcraftError):
 
     fmt = (
-        'Failed to generate desktop file:'
-        'Missing Exec key in desktop file {filename!r}'
+        "Failed to generate desktop file: "
+        "Missing Exec key in desktop file {filename!r}."
 
     )
 

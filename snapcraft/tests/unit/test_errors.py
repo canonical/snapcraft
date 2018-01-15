@@ -163,34 +163,36 @@ class ErrorFormattingTestCase(unit.TestCase):
         ('', {
             'exception': errors.MissingDesktopFileError,
             'kwargs': {
-                'filename': 'app_name'
+                'filename': '{filename!r}',
+                'name': '{name!r}'
             },
             'expected_message': (
                 "Failed to generate desktop file: "
-                "{filename!r} defined in app {app_name!r} does not exist.")}),
+                "'{filename!r}' defined in app '{name!r}' does not exist.")}),
         ('', {
             'exception': errors.MissingDesktopSectionError,
             'kwargs': {
-                'file_name': 'section_name'
+                'filename': '{filename!r}',
+                'section_name': '{section_name!r}'
             },
             'expected_message': (
                 "Failed to generate desktop file: "
-                "Missing {section_name!r} section: "
-                "in desktop file {filename!r}.")}),
+                "Missing '{section_name!r}' section "
+                "in desktop file '{filename!r}'.")}),
         ('', {
             'exception': errors.MissingDesktopExecError,
             'kwargs': {
-                'filename': 'test-file'
+                'filename': '{filename!r}'
             },
             'expected_message': (
                 "Failed to generate desktop file: "
-                "Missing Exec key in desktop file {filename!r}")}),
+                "Missing Exec key in desktop file '{filename!r}'.")}),
         ('SnapcraftPartMissingError', {
             'exception': errors.SnapcraftPartMissingError,
             'kwargs': {'part_name': 'test-part'},
             'expected_message': (
                 "Failed to get part information: "
-                "Cannot find the definition for part 'test-part'"
+                "Cannot find the definition for part 'test-part'. "
                 "If it is a remote part, run `snapcraft update` "
                 "to refresh the remote parts cache. "
                 "If it is a local part, make sure that it is defined in the "

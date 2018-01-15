@@ -28,16 +28,14 @@ class DesktopFile:
 
     def __init__(
             self, *, name: str, filename: str,
-            snap_name: str, prime_dir: str, app_name: str, section_name: str) -> None:
+            snap_name: str, prime_dir: str) -> None:
         self._name = name
-        self._filename = filename
-        self._app_name = app_name
-        self._section_name = section_name
         self._snap_name = snap_name
+        self._filename = filename
         self._prime_dir = prime_dir
         self._path = os.path.join(prime_dir, filename)
         if not os.path.exists(self._path):
-            raise errors.MissingDesktopFileError(self._filename, self._app_name)
+            raise errors.MissingDesktopFileError(filename, self._name)
 
     def parse_and_reformat(self):
         self._parser = configparser.ConfigParser(interpolation=None)
@@ -45,7 +43,7 @@ class DesktopFile:
         self._parser.read(self._path, encoding='utf-8')
         section = 'Desktop Entry'
         if section not in self._parser.sections():
-            raise errors.MissingDesktopSectionError(self._filename, self._section_name)
+            raise errors.MissingDesktopSectionError(self._filename, section)
         if 'Exec' not in self._parser[section]:
             raise errors.MissingDesktopExecError(self._filename)
         # XXX: do we want to allow more parameters for Exec?
