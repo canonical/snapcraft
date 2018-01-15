@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -415,13 +415,41 @@ class InvalidContainerImageInfoError(SnapcraftError):
 
 
 class PatcherError(SnapcraftError):
+    pass
+
+
+class GenericPatcherError(PatcherError):
 
     fmt = (
         '{elf_file!r} cannot be patched to function properly as a classic '
-        'snap: {message}')
+        'snap: {message}'
+    )
 
-    def __init__(self, *, elf_file, message):
+    def __init__(self, *, elf_file, process_exception):
+        message = '{} failed with exit code {}'.format(
+                ' '.join(process_exception.cmd),
+                process_exception.returncode)
         super().__init__(elf_file=elf_file, message=message)
+
+
+class PatcherNewerPatchelfError(PatcherError):
+
+    fmt = (
+        '{elf_file!r} cannot be patched to function properly as a classic '
+        'snap: {message} with {patchelf_version!r}.\n'
+        'Try adding the `after: [patchelf]` and a `patchelf` part that would '
+        'filter out files from prime `prime: [-*]` or '
+        '`build-snaps: [patchelf/latest/edge]` to the failing part in your '
+        '`snapcraft.yaml` to use a newer patchelf.'
+    )
+
+    def __init__(self, *, elf_file, process_exception, patchelf_version):
+        message = '{} failed with exit code {}'.format(
+                ' '.join(process_exception.cmd),
+                process_exception.returncode)
+        super().__init__(elf_file=elf_file,
+                         message=message,
+                         patchelf_version=patchelf_version)
 
 
 class MetadataExtractionError(SnapcraftError):

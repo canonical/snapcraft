@@ -1385,9 +1385,7 @@ class CoreSetupTestCase(unit.TestCase):
         self.project_options = snapcraft.ProjectOptions()
 
     @mock.patch.object(storeapi.StoreClient, 'download')
-    @mock.patch('snapcraft.internal.repo.snaps.install_snaps',
-                return_value=['patchelf=1'])
-    def test_core_setup_with_env_var(self, install_snaps_mock, download_mock):
+    def test_core_setup_with_env_var(self, download_mock):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_SETUP_CORE', '1'))
 
@@ -1401,6 +1399,7 @@ class CoreSetupTestCase(unit.TestCase):
         lifecycle.execute('pull', self.project_options)
 
         regex = (
+            '.*'
             'mkdir -p {}\n'
             'unsquashfs -d {} .*{}\n').format(
                 os.path.dirname(self.core_path),
@@ -1432,6 +1431,7 @@ class CoreSetupTestCase(unit.TestCase):
         lifecycle.execute('pull', self.project_options)
 
         regex = (
+            '.*'
             'mkdir -p {}\n'
             'unsquashfs -d {} .*{}\n').format(
                 os.path.dirname(self.core_path),
@@ -1454,16 +1454,12 @@ class CoreSetupTestCase(unit.TestCase):
 
         self.assertThat(self.witness_path, Not(FileExists()))
 
-    @mock.patch('snapcraft.internal.repo.snaps.install_snaps',
-                return_value=['patchelf=1'])
-    def test_core_setup_skipped_if_core_exists(self, install_snaps_mock):
+    def test_core_setup_skipped_if_core_exists(self):
         os.makedirs(self.core_path)
         open(os.path.join(self.core_path, 'fake-content'), 'w').close()
 
         self._create_classic_confined_snapcraft_yaml()
         lifecycle.execute('pull', self.project_options)
-
-        self.assertThat(self.witness_path, Not(FileExists()))
 
     def _create_classic_confined_snapcraft_yaml(self):
         snapcraft_yaml_path = lifecycle.init()

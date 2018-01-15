@@ -16,7 +16,6 @@
 import fixtures
 import logging
 import os
-import subprocess
 import tempfile
 from textwrap import dedent
 
@@ -324,29 +323,6 @@ class TestElfFileSymbols(TestElfBase):
 
 class TestPatcher(TestElfBase):
 
-    scenarios = [
-        ('snap',
-         dict(snap='/snap/snapcraft/current',
-              snap_name='snapcraft',
-              expected_patchelf='/snap/snapcraft/current/bin/patchelf')),
-        ('non-snap',
-         dict(snap='',
-              snap_name='',
-              expected_patchelf='patchelf')),
-    ]
-
-    def setUp(self):
-        super().setUp()
-
-        patcher = mock.patch('subprocess.check_call')
-        self.check_call_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAP', self.snap))
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAP_NAME', self.snap_name))
-
     def test_patch(self):
         elf_file = self.fake_elf['fake_elf-2.23']
         # The base_path does not matter here as there are not files to
@@ -354,10 +330,6 @@ class TestPatcher(TestElfBase):
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
                                   root_path='/fake')
         elf_patcher.patch(elf_file=elf_file)
-
-        self.check_call_mock.assert_called_once_with([
-            self.expected_patchelf, '--set-interpreter', '/lib/fake-ld',
-            elf_file.path])
 
     def test_patch_does_nothing_if_no_interpreter(self):
         elf_file = self.fake_elf['fake_elf-static']
@@ -367,27 +339,45 @@ class TestPatcher(TestElfBase):
                                   root_path='/fake')
         elf_patcher.patch(elf_file=elf_file)
 
-        self.assertFalse(self.check_call_mock.called)
-
-
-class TestPatcherErrors(TestElfBase):
-
-    def setUp(self):
-        super().setUp()
-
-        patcher = mock.patch('subprocess.check_call')
-        check_call_mock = patcher.start()
-        check_call_mock.side_effect = subprocess.CalledProcessError(
-            2, ['patchelf'])
-        self.addCleanup(patcher.stop)
-
-    def test_patch_fails_raises_patcherror_exception(self):
-        elf_file = self.fake_elf['fake_elf-2.23']
+    def test_patchelf_from_snap_used_if_using_snap(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP', '/snap/snapcraft/current'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP_NAME', 'snapcraft'))
         # The base_path does not matter here as there are not files to
         # be crawled for.
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
                                   root_path='/fake')
 
-        self.assertRaises(errors.PatcherError,
+        expected_patchelf = os.path.join('/snap', 'snapcraft', 'current',
+                                         'bin', 'patchelf')
+        self.assertThat(elf_patcher._patchelf_cmd, Equals(expected_patchelf))
+
+
+class TestPatcherErrors(TestElfBase):
+
+    def test_patch_fails_raises_patcherror_exception(self):
+        elf_file = self.fake_elf['fake_elf-bad-patchelf']
+        # The base_path does not matter here as there are not files to
+        # be crawled for.
+        elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
+                                  root_path='/fake')
+
+        self.assertRaises(errors.GenericPatcherError,
+                          elf_patcher.patch,
+                          elf_file=elf_file)
+
+    def test_patch_fails_with_old_version(self):
+        self.fake_elf = fixture_setup.FakeElf(root_path=self.path,
+                                              patchelf_version='0.8')
+        self.useFixture(self.fake_elf)
+
+        elf_file = self.fake_elf['fake_elf-bad-patchelf']
+        # The base_path does not matter here as there are not files to
+        # be crawled for.
+        elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
+                                  root_path='/fake')
+
+        self.assertRaises(errors.PatcherNewerPatchelfError,
                           elf_patcher.patch,
                           elf_file=elf_file)

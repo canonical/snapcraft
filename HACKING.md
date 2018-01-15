@@ -4,7 +4,7 @@
 
 First install a few dependencies:
 
-    sudo apt install gcc g++ make python3-dev python3-venv libffi-dev libsodium-dev libapt-pkg-dev libarchive13 squashfs-tools patchelf
+    sudo apt install gcc g++ make python3-dev python3-venv libffi-dev libsodium-dev libapt-pkg-dev libarchive13 squashfs-tools
 
 Create and activate a new virtual environment:
 

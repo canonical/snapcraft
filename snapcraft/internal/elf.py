@@ -18,12 +18,15 @@ import glob
 import logging
 import os
 import re
+import shutil
 import subprocess
+import tempfile
 from functools import wraps
 from typing import FrozenSet, List, Set, Sequence, Tuple
 
 from pkg_resources import parse_version
 
+from snapcraft import shell_utils
 from snapcraft.internal import (
     common,
     errors,
@@ -269,6 +272,8 @@ def _retry_patch(f):
             # should eventually be removed once patchelf catches up.
             try:
                 elf_file_path = kwargs['elf_file_path']
+                logger.info('Failed to update {!r}. Retrying with '
+                            'different parameters.'.format(elf_file_path))
                 subprocess.check_call([
                     'strip', '--remove-section', '.note.go.buildid',
                     elf_file_path])
@@ -301,14 +306,17 @@ class Patcher:
         # in by packaging dependencies.
         # The docker conditional will work if the docker image has the
         # snaps unpacked in the corresponding locations.
-        if common.is_snap():
+        which_patchelf = shell_utils.which('patchelf')
+        if which_patchelf.endswith('stage/patchelf'):
+            self._patchelf_cmd = which_patchelf
+        elif common.is_snap():
             snap_dir = os.getenv('SNAP')
             self._patchelf_cmd = os.path.join(snap_dir, 'bin', 'patchelf')
         elif (common.is_docker_instance() and
               os.path.exists('/snap/snapcraft/current/bin/patchelf')):
             self._patchelf_cmd = '/snap/snapcraft/current/bin/patchelf'
         else:
-            self._patchelf_cmd = 'patchelf'
+            self._patchelf_cmd = which_patchelf
 
     def patch(self, *, elf_file: ElfFile) -> None:
         """Patch elf_file with the Patcher instance configuration.
@@ -321,39 +329,57 @@ class Patcher:
         :raises snapcraft.internal.errors.PatcherError:
             raised when the elf_file cannot be patched.
         """
+        patchelf_args = []
         # If it has dynamic symbols it has a dynamic loader
-        if elf_file.symbols:
-            self._patch_interpreter(elf_file)
+        if elf_file.is_executable() and elf_file.symbols:
+            patchelf_args.extend(['--set-interpreter',  self._dynamic_linker])
         if elf_file.dependencies:
-            self._patch_rpath(elf_file)
+            # Parameters:
+            # --force-rpath: use RPATH instead of RUNPATH.
+            # --shrink-rpath: will remove unneeded entries, with the
+            #                 side effect of preferring host libraries
+            #                 so we simply do not use it.
+            # --set-rpath: set the RPATH to the colon separated argument.
+            rpath = self._get_rpath(elf_file)
+            patchelf_args.extend(['--force-rpath', '--set-rpath', rpath])
 
-    def _patch_interpreter(self, elf_file: ElfFile) -> None:
-        self._run_patchelf(args=['--set-interpreter',  self._dynamic_linker],
-                           elf_file_path=elf_file.path)
+        # no patchelf_args means there is nothing to do.
+        if not patchelf_args:
+            return
 
-    def _patch_rpath(self, elf_file: ElfFile) -> None:
-        rpath = self._get_rpath(elf_file)
-        # Parameters:
-        # --force-rpath: use RPATH instead of RUNPATH.
-        # --shrink-rpath: will remove unneeded entries, with the
-        #                 side effect of preferring host libraries
-        #                 so we simply do not use it.
-        # --set-rpath: set the RPATH to the colon separated argument.
-        self._run_patchelf(args=['--force-rpath',
-                                 '--set-rpath', rpath],
+        self._run_patchelf(patchelf_args=patchelf_args,
                            elf_file_path=elf_file.path)
 
     @_retry_patch
-    def _run_patchelf(self, *, args: List[str], elf_file_path: str) -> None:
-        try:
-            subprocess.check_call([self._patchelf_cmd] + args +
-                                  [elf_file_path])
-        # There is no need to catch FileNotFoundError as patchelf should be
-        # bundled with snapcraft which means its lack of existence is a
-        # "packager" error.
-        except subprocess.CalledProcessError as call_error:
-            raise errors.PatcherError(elf_file=elf_file_path,
-                                      message=str(call_error))
+    def _run_patchelf(self, *, patchelf_args: List[str],
+                      elf_file_path: str) -> None:
+
+        with tempfile.NamedTemporaryFile() as temp_file:
+            shutil.copy2(elf_file_path, temp_file.name)
+
+            cmd = [self._patchelf_cmd] + patchelf_args + [temp_file.name]
+            try:
+                subprocess.check_call(cmd)
+            # There is no need to catch FileNotFoundError as patchelf should be
+            # bundled with snapcraft which means its lack of existence is a
+            # "packager" error.
+            except subprocess.CalledProcessError as call_error:
+                patchelf_version = subprocess.check_output(
+                    [self._patchelf_cmd, '--version']).decode().strip()
+                # 0.10 is the version where patching certain binaries will
+                # work (currently known affected packages are mostly built
+                # with go).
+                if parse_version(patchelf_version) < parse_version('0.10'):
+                    raise errors.PatcherNewerPatchelfError(
+                        elf_file=elf_file_path,
+                        process_exception=call_error,
+                        patchelf_version=patchelf_version)
+                else:
+                    raise errors.GenericPatcherError(
+                        elf_file=elf_file_path,
+                        process_exception=call_error)
+
+            shutil.copy2(temp_file.name, elf_file_path)
 
     def _get_rpath(self, elf_file) -> str:
         origin_rpaths = set()  # type: Set[str]

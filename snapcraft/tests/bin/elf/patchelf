@@ -1,0 +1,18 @@
+#!/usr/bin/env python3
+import sys
+
+
+def main():
+    if sys.argv[-1] == '--version':
+        print('{VERSION}')
+        sys.exit(0)
+
+    with open(sys.argv[-1], 'rb') as reader:
+        data = reader.read(17)
+        if data == b'\x7fELFnointerpreter':
+            sys.exit(1)
+    sys.exit(0)
+
+
+if __name__ == '__main__':
+    main()
