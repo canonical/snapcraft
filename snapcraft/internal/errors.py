@@ -418,7 +418,7 @@ class PatcherError(SnapcraftError):
     pass
 
 
-class GenericPatcherError(PatcherError):
+class PatcherGenericError(PatcherError):
 
     fmt = (
         '{elf_file!r} cannot be patched to function properly as a classic '

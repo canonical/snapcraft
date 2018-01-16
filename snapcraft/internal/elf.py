@@ -26,7 +26,6 @@ from typing import FrozenSet, List, Set, Sequence, Tuple
 
 from pkg_resources import parse_version
 
-from snapcraft import shell_utils
 from snapcraft.internal import (
     common,
     errors,
@@ -288,27 +287,36 @@ def _retry_patch(f):
 class Patcher:
     """Patcher holds the necessary logic to patch elf files."""
 
-    def __init__(self, *, dynamic_linker: str, root_path: str) -> None:
+    def __init__(self, *, dynamic_linker: str, root_path: str,
+                 preferred_patchelf_path=None) -> None:
         """Create a Patcher instance.
 
         :param str dynamic_linker: the path to the dynamic linker to set the
                                    elf file to.
         :param str root_path: the base path for the snap to determine
                               if use of $ORIGIN is possible.
+        :param str preferred_patchelf_path: patch the necessary elf_files with
+                                        this patchelf.
         """
         self._dynamic_linker = dynamic_linker
         self._root_path = root_path
 
-        # If we are running from the snap we want to use the patchelf
+        # We will first fallback to the preferred_patchelf_path,
+        # if that is not found we will look for the snap and finally,
+        # if we are running from the snap we want to use the patchelf
         # bundled there as it would have the capability of working
         # anywhere given the fixed ld it would have.
         # If not found, resort to whatever is on the system brought
         # in by packaging dependencies.
         # The docker conditional will work if the docker image has the
         # snaps unpacked in the corresponding locations.
-        which_patchelf = shell_utils.which('patchelf')
-        if which_patchelf.endswith('stage/patchelf'):
-            self._patchelf_cmd = which_patchelf
+        if preferred_patchelf_path:
+            self._patchelf_cmd = preferred_patchelf_path
+        # We use the full path here as the path may not be set on
+        # build systems where the path is recently created and added
+        # to the environment
+        elif os.path.exists('/snap/bin/pathelf'):
+            self._patchelf_cmd = '/snap/bin/pathelf'
         elif common.is_snap():
             snap_dir = os.getenv('SNAP')
             self._patchelf_cmd = os.path.join(snap_dir, 'bin', 'patchelf')
@@ -316,7 +324,7 @@ class Patcher:
               os.path.exists('/snap/snapcraft/current/bin/patchelf')):
             self._patchelf_cmd = '/snap/snapcraft/current/bin/patchelf'
         else:
-            self._patchelf_cmd = which_patchelf
+            self._patchelf_cmd = 'patchelf'
 
     def patch(self, *, elf_file: ElfFile) -> None:
         """Patch elf_file with the Patcher instance configuration.
@@ -379,7 +387,7 @@ class Patcher:
                         process_exception=call_error,
                         patchelf_version=patchelf_version)
                 else:
-                    raise errors.GenericPatcherError(
+                    raise errors.PatcherGenericError(
                         elf_file=elf_file_path,
                         process_exception=call_error)
 

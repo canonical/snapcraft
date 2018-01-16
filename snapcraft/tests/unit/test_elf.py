@@ -363,7 +363,7 @@ class TestPatcherErrors(TestElfBase):
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
                                   root_path='/fake')
 
-        self.assertRaises(errors.GenericPatcherError,
+        self.assertRaises(errors.PatcherGenericError,
                           elf_patcher.patch,
                           elf_file=elf_file)
 

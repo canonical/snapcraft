@@ -550,6 +550,11 @@ class PluginHandler:
                     'stage-packages entry or through a part:\n{}'.format(
                         formatted_system))
 
+        # TODO revisit if we need to support variations and permutations
+        #  of this
+        staged_patchelf_path = os.path.join(self.stagedir, 'bin', 'patchelf')
+        if not os.path.exists(staged_patchelf_path):
+            staged_patchelf_path = None
         # We need to verify now that the GLIBC version would be compatible
         # with that of the base.
         # TODO the linker version depends on the chosen base, but that
@@ -562,11 +567,14 @@ class PluginHandler:
             handle_glibc_mismatch(elf_files=elf_files,
                                   root_path=self.primedir,
                                   snap_base_path=self._snap_base_path,
-                                  core_base_path=core_path)
+                                  core_base_path=core_path,
+                                  preferred_patchelf_path=staged_patchelf_path)
         elif self._confinement == 'classic':
             dynamic_linker = self._project_options.get_core_dynamic_linker()
-            elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker,
-                                      root_path=self.primedir)
+            elf_patcher = elf.Patcher(
+                dynamic_linker=dynamic_linker,
+                root_path=self.primedir,
+                preferred_patchelf_path=staged_patchelf_path)
             for elf_file in elf_files:
                 elf_patcher.patch(elf_file=elf_file)
 
