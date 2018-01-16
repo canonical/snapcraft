@@ -94,7 +94,9 @@ class Containerbuild:
 
             return 'multipass'
         except FileNotFoundError:
-            raise ContainerError('Multipass is not installed')
+            raise ContainerError(
+                'Multipass is not installed.\n'
+                'Run "sudo snap install multipass --beta --classic".')
         except subprocess.CalledProcessError as e:
             raise ContainerError(
                 'Failed to setup multipass remote: {!r}'.format(
