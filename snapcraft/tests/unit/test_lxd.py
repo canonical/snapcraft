@@ -848,10 +848,9 @@ class MultipassTestCase(LXDBaseTestCase):
                   '--password=snapcraft', '--accept-certificate']),
         ])
 
-    @patch('snapcraft.internal.lxd.Containerbuild._get_multipass_remote')
+    @patch('snapcraft.internal.lxd.Containerbuild._setup_multipass_remote')
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_instance_stopped(self, mock_container_run, mock_remote):
-        mock_remote.side_effect = lambda: 'multipass'
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         self.make_containerbuild().execute()
         self.fake_lxd.check_call_mock.assert_has_calls([

@@ -70,7 +70,7 @@ class Containerbuild:
         if not remote:
             remote = _get_default_remote()
         elif remote == 'multipass':
-            remote = self._get_multipass_remote()
+            self._setup_multipass_remote()
         _verify_remote(remote)
         self._container_name = '{}:snapcraft-{}'.format(remote, container_name)
         self._image = 'ubuntu:xenial'
@@ -79,7 +79,7 @@ class Containerbuild:
             os.path.join('~', 'snap', 'lxd', 'common'))
         os.makedirs(self._lxd_common_dir, exist_ok=True)
 
-    def _get_multipass_remote(self):
+    def _setup_multipass_remote(self):
         try:
             containers = subprocess.check_output([
                 'multipass', 'list']).decode()
@@ -91,8 +91,6 @@ class Containerbuild:
             subprocess.check_call([
                 'multipass', 'start', 'snapcraft'])
             self._setup_lxd()
-
-            return 'multipass'
         except FileNotFoundError:
             raise ContainerError(
                 'Multipass is not installed.\n'
