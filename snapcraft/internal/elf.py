@@ -354,6 +354,10 @@ class Patcher:
     def _run_patchelf(self, *, patchelf_args: List[str],
                       elf_file_path: str) -> None:
 
+        # Run patchelf on a copy of the primed file and replace it
+        # after it is successful. This allows us to break the potential
+        # hard link created when migrating the file across the steps of
+        # the part.
         with tempfile.NamedTemporaryFile() as temp_file:
             shutil.copy2(elf_file_path, temp_file.name)
 
