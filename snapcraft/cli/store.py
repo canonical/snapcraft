@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+import functools
+import stat
 import sys
 from textwrap import dedent
-from typing import TextIO
 
 # Using mypy 'type:' comment below, but flake8 thinks these aren't used
 from typing import Dict, List, Union  # noqa
@@ -282,7 +283,8 @@ def list_registered():
 
 
 @storecli.command('export-login')
-@click.argument('login_file', metavar='FILE', type=click.File('w'))
+@click.argument('login_file', metavar='FILE',
+                type=click.Path(dir_okay=False, writable=True))
 @click.option('--snaps', metavar='<snaps>',
               help='Comma-separated list of snaps to limit access')
 @click.option('--channels', metavar='<channels>',
@@ -291,7 +293,7 @@ def list_registered():
               help='Comma-separated list of ACLs to limit access')
 @click.option('--expires', metavar='<expiration date>',
               help='Date/time (in ISO 8601) when this exported login expires')
-def export_login(login_file: TextIO, snaps: str, channels: str, acls: str,
+def export_login(login_file: str, snaps: str, channels: str, acls: str,
                  expires: str):
     """Save login configuration for a store account in FILE.
 
@@ -336,14 +338,22 @@ def export_login(login_file: TextIO, snaps: str, channels: str, acls: str,
                            save=False):
         sys.exit(1)
 
-    store.conf.save(config_fd=login_file)
+    # This is sensitive-- it should only be accessible by the owner
+    private_open = functools.partial(os.open, mode=0o600)
+
+    # mypy doesn't have the opener arg in its stub. Ignore its warning
+    with open(login_file, 'w', opener=private_open) as f:  # type: ignore
+        store.conf.save(config_fd=f)
+
+    # Now that the file has been written, we can just make it owner-readable
+    os.chmod(login_file, stat.S_IRUSR)
 
     print()
     echo.info(dedent("""\
         Login successfully exported to {0!r}. This file can now be used with
         'snapcraft login --with {0}' to log in to this account with no password
         and have these capabilities:\n""".format(
-            login_file.name)))
+            login_file)))
     echo.info(_human_readable_acls(store))
     echo.warning(
         'This exported login is not encrypted. Do not commit it to version '
