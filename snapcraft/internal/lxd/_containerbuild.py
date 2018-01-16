@@ -101,36 +101,26 @@ class Containerbuild:
                     ' '.join(e.cmd)))
 
     def _setup_lxd(self):
-        if 'lxd' not in subprocess.check_output([
-                'multipass', 'exec', 'snapcraft', '--',
-                'snap', 'list']).decode():
+        if 'lxd' not in self._multipass_exec(['snap', 'list']).decode():
             logger.debug('Installing LXD')
-            subprocess.check_call([
-                'multipass', 'exec', 'snapcraft', '--',
-                'sudo', 'snap', 'install', 'lxd'])
-        subprocess.check_call([
-            'multipass', 'exec', 'snapcraft', '--',
-            'sudo', '/snap/bin/lxd', 'waitready'])
-        if 'core.trust_password: true' not in subprocess.check_output([
-                'multipass', 'exec', 'snapcraft', '--',
+            self._multipass_exec(['sudo', 'snap', 'install', 'lxd'])
+        self._multipass_exec(['sudo', '/snap/bin/lxd', 'waitready'])
+        if 'core.trust_password: true' not in self._multipass_exec([
                 '/snap/bin/lxc', 'config', 'show']).decode():
             logger.debug('Configuring LXD')
             # Expose LXD over the network
-            subprocess.check_call([
-                'multipass', 'exec', 'snapcraft', '--',
+            self._multipass_exec([
                 'sudo', '/snap/bin/lxd', 'init', '--auto',
                 '--network-address', '0.0.0.0',
                 '--network-port', '8443',
                 '--trust-password', 'snapcraft'])
-        if 'lxdbr0' not in subprocess.check_output([
-                'multipass', 'exec', 'snapcraft', '--',
+        if 'lxdbr0' not in self._multipass_exec([
                 '/snap/bin/lxc', 'network', 'list']).decode():
-            subprocess.check_call([
-                'multipass', 'exec', 'snapcraft', '--',
+            logger.debug('Adding network bridge')
+            self._multipass_exec([
                 'sudo', '/snap/bin/lxc', 'network',
                 'create', 'lxdbr0'])
-            subprocess.check_call([
-                'multipass', 'exec', 'snapcraft', '--',
+            self._multipass_exec([
                 'sudo', '/snap/bin/lxc', 'network',
                 'attach-profile', 'lxdbr0', 'default', 'eth0'])
 
@@ -150,9 +140,8 @@ class Containerbuild:
         while True:
             time.sleep(1)
             try:
-                if 'inet addr:' in subprocess.check_output([
-                        'multipass', 'exec', 'snapcraft', '--',
-                        'ifconfig', 'lxdbr0'], timeout=5).decode():
+                if 'inet addr:' in self._multipass_exec(
+                        ['ifconfig', 'lxdbr0'], timeout=5).decode():
                     break
             except subprocess.TimeoutExpired:
                 # Timeout may or may not mean success
@@ -165,6 +154,10 @@ class Containerbuild:
         subprocess.check_call([
             'lxc', 'remote', 'add', 'multipass', multipass_ip,
             '--password=snapcraft', '--accept-certificate'])
+
+    def _multipass_exec(self, cmd: List[str], **kwargs):
+        return subprocess.check_output([
+            'multipass', 'exec', 'snapcraft', '--'] + cmd, **kwargs)
 
     @contextmanager
     def _container_running(self):

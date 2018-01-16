@@ -769,7 +769,7 @@ class MultipassTestCase(LXDBaseTestCase):
         self.fake_lxd.check_output_mock.side_effect = call_effect
 
         self.make_containerbuild()
-        self.fake_lxd.check_call_mock.assert_has_calls([
+        self.fake_lxd.check_output_mock.assert_has_calls([
             call(['multipass', 'exec', 'snapcraft', '--',
                   'sudo', 'snap', 'install', 'lxd']),
         ])
@@ -788,20 +788,26 @@ class MultipassTestCase(LXDBaseTestCase):
         self.fake_lxd.check_output_mock.side_effect = call_effect
 
         self.make_containerbuild()
-        self.fake_lxd.check_call_mock.assert_has_calls([
+        self.fake_lxd.check_output_mock.assert_has_calls([
             call(['multipass', 'exec', 'snapcraft', '--',
                   'sudo', '/snap/bin/lxd', 'waitready']),
+            call(['multipass', 'exec', 'snapcraft', '--',
+                  '/snap/bin/lxc', 'config', 'show']),
             call(['multipass', 'exec', 'snapcraft', '--',
                   'sudo', '/snap/bin/lxd', 'init', '--auto',
                   '--network-address', '0.0.0.0',
                   '--network-port', '8443',
                   '--trust-password', 'snapcraft']),
             call(['multipass', 'exec', 'snapcraft', '--',
+                  '/snap/bin/lxc', 'network', 'list']),
+            call(['multipass', 'exec', 'snapcraft', '--',
                   'sudo', '/snap/bin/lxc', 'network',
                   'create', 'lxdbr0']),
             call(['multipass', 'exec', 'snapcraft', '--',
                   'sudo', '/snap/bin/lxc', 'network',
                   'attach-profile', 'lxdbr0', 'default', 'eth0']),
+        ])
+        self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'remote', 'add', 'multipass', '1.2.3.4',
                   '--password=snapcraft', '--accept-certificate']),
         ])
@@ -841,9 +847,11 @@ class MultipassTestCase(LXDBaseTestCase):
         self.fake_lxd.check_output_mock.side_effect = call_effect
 
         self.make_containerbuild()
-        self.fake_lxd.check_call_mock.assert_has_calls([
+        self.fake_lxd.check_output_mock.assert_has_calls([
             call(['multipass', 'exec', 'snapcraft', '--',
                   'sudo', '/snap/bin/lxd', 'waitready']),
+        ])
+        self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'remote', 'add', 'multipass', '1.2.3.4',
                   '--password=snapcraft', '--accept-certificate']),
         ])
