@@ -264,7 +264,7 @@ class SnapcraftPartConflictError(SnapcraftError):
         'following keywords:\n'
         '    - `filesets`\n'
         '    - `stage`\n'
-        '    - `snap`\n'
+        '    - `prime`\n'
         '    - `organize`\n\n'
         'To learn more about these part keywords, run '
         '`snapcraft help plugins`.'
