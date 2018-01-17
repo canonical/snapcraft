@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -42,7 +42,7 @@ def helpcli():
               help='Show more details for snapcraft developers')
 @click.pass_context
 def help_command(ctx, topic, devel):
-    """Obtain help for a certain plugin or topic.
+    """Obtain help for a certain topic, plugin or command.
 
     The <topic> can either be a plugin name or one of:
 
@@ -57,6 +57,7 @@ def help_command(ctx, topic, devel):
         snapcraft help plugins
         snapcraft help sources
         snapcraft help go
+        snapcraft help build
     """
     if not topic:
         click.echo(ctx.parent.get_help())
@@ -66,7 +67,10 @@ def help_command(ctx, topic, devel):
                 snapcraft help topics
                 snapcraft help <topic>
                 snapcraft help <plugin-name>
+                snapcraft help <command-name>
         """))
+    elif topic in ctx.parent.command.commands:
+        click.echo(ctx.parent.command.commands[topic].get_help(ctx))
     elif topic == 'topics':
         for key in _TOPICS:
             click.echo(key)
@@ -80,7 +84,7 @@ def help_command(ctx, topic, devel):
             if len(topic) > 10:
                 topic = '{}...'.format(topic[:10])
             echo.wrapped(dedent("""\
-    There is no help topic or plugin {!r}. Try:
+    There is no help topic, plugin or command {!r}. Try:
 
     For topics:
 
@@ -89,6 +93,10 @@ def help_command(ctx, topic, devel):
     For valid plugins:
 
         snapcraft list-plugins
+
+    Or for general help:
+
+        snapcraft help
     """).format(topic))
             sys.exit(1)
 

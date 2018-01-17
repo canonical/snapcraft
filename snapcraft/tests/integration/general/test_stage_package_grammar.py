@@ -16,6 +16,7 @@
 
 import os
 import subprocess
+from textwrap import dedent
 
 from snapcraft.tests import integration
 from testtools.matchers import (
@@ -91,3 +92,53 @@ class StagePackageGrammarTestCase(integration.TestCase):
 
         self.assertThat(exception.output, Contains(
             "Unable to satisfy 'on other-arch', failure forced"))
+
+    def test_to_other_arch(self):
+        """Test that 'to' for the other arch fetches nothing."""
+
+        self.construct_yaml(parts=dedent('''\
+            simple:
+              plugin: nil
+              stage-packages:
+              - to other-arch:
+                - hello
+            '''))
+        self.run_snapcraft(['prime', 'simple'])
+        self.assertThat(
+            os.path.join('prime', 'usr', 'bin', 'hello'),
+            Not(FileExists()))
+
+    def test_to_other_arch_else(self):
+        """Test that 'else' for the other arch fetches hello."""
+
+        self.construct_yaml(parts=dedent('''\
+            simple:
+              plugin: nil
+              stage-packages:
+              - to other-arch:
+                - foo
+              - else:
+                - hello
+            '''))
+        self.run_snapcraft(['prime', 'simple'])
+        self.assertThat(
+            os.path.join('prime', 'usr', 'bin', 'hello'),
+            FileExists())
+
+    def test_to_other_arch_else_fail(self):
+        """Test that 'else' for the other arch fails."""
+
+        self.construct_yaml(parts=dedent('''\
+            simple:
+              plugin: nil
+              stage-packages:
+              - to other-arch:
+                - foo
+              - else fail
+            '''))
+        exception = self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft,
+            ['prime', 'simple'])
+
+        self.assertThat(exception.output, Contains(
+            "Unable to satisfy 'to other-arch', failure forced"))

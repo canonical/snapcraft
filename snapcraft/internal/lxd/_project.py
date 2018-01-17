@@ -25,6 +25,7 @@ from ._containerbuild import Containerbuild
 
 from snapcraft.internal.errors import (
         ContainerConnectionError,
+        ContainerRunError,
         SnapcraftEnvironmentError,
 )
 from snapcraft.internal import lifecycle
@@ -81,7 +82,8 @@ class Project(Containerbuild):
             subprocess.check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'raw.idmap',
-                'both {} 0'.format(os.getenv('SUDO_UID', os.getuid()))])
+                'both {} {}'.format(os.getenv('SUDO_UID', os.getuid()),
+                                    os.getuid())])
         # Remove existing device (to ensure we update old containers)
         devices = self._get_container_status()['devices']
         if self._project_folder in devices:
@@ -95,19 +97,18 @@ class Project(Containerbuild):
                 ])
 
     def _setup_project(self):
-        self._ensure_mount(self._project_folder, self._source)
-
-    def _ensure_mount(self, destination, source):
-        logger.info('Mounting {} into container'.format(source))
         if not self._container_name.startswith('local:'):
-            return self._remote_mount(destination, source)
+            self._setup_user()
+            logger.info('Mounting {} into container'.format(self._source))
+            return self._remote_mount(self._project_folder, self._source)
 
         devices = self._get_container_status()['devices']
-        if destination not in devices:
+        if self._project_folder not in devices:
+            logger.info('Mounting {} into container'.format(self._source))
             subprocess.check_call([
                 'lxc', 'config', 'device', 'add', self._container_name,
-                destination, 'disk', 'source={}'.format(source),
-                'path={}'.format(destination)])
+                self._project_folder, 'disk', 'source={}'.format(self._source),
+                'path={}'.format(self._project_folder)])
 
     def _remote_mount(self, destination, source):
         # Pipes for sshfs and sftp-server to communicate
@@ -129,9 +130,10 @@ class Project(Containerbuild):
 
         # Use sshfs in slave mode to reverse mount the destination
         self._container_run(['apt-get', 'install', '-y', 'sshfs'])
-        self._container_run(['mkdir', '-p', destination])
+        self._container_run(['mkdir', '-p', destination], user=self._user)
         self._background_process_run([
             'lxc', 'exec', self._container_name, '--',
+            'sudo', '-H', '-u', self._user,
             'sshfs', '-o', 'slave', '-o', 'nonempty',
             ':{}'.format(source), destination],
             stdin=stdin2, stdout=stdout1)
@@ -142,6 +144,7 @@ class Project(Containerbuild):
             time.sleep(1)
             if subprocess.check_output([
                     'lxc', 'exec', self._container_name, '--',
+                    'sudo', '-H', '-u', self._user,
                     'ls', self._project_folder]):
                 return
             retry_count -= 1
@@ -151,12 +154,39 @@ class Project(Containerbuild):
             'You can run the following command to enable it:\n'
             'echo Y | sudo tee /sys/module/fuse/parameters/userns_mounts')
 
+    def _setup_user(self):
+        # If we run as root or sudo we don't need a user in the container
+        if os.geteuid() == 0:
+            return
+        # Setup user mirroring host user with sudo access
+        self._user = os.environ['USER']
+        self._project_folder = '/home/{}/build_{}'.format(
+            self._user, self._metadata['name'])
+        logger.debug('Setting up user {!r} in container'.format(self._user))
+        try:
+            self._container_run([
+                'useradd', self._user, '--create-home'])
+        except ContainerRunError as e:
+            # Exit code 9 'username already in use' is safe to ignore
+            if e.exit_code != 9:
+                raise e
+        self._container_run([
+            'usermod', self._user, '-o',
+            '-u', str(os.getuid()), '-G', 'sudo'])
+        self._container_run([
+            'chown', '{}:{}'.format(self._user, self._user),
+            '/home/{}'.format(self._user)])
+        subprocess.check_output([
+            'lxc', 'exec', self._container_name, '--',
+            'tee', '-a', '/etc/sudoers'],
+            input='{} ALL=(ALL) NOPASSWD: ALL\n'.format(self._user).encode())
+
     def _background_process_run(self, cmd, **kwargs):
         self._processes += [subprocess.Popen(cmd, **kwargs)]
 
     def _finish(self):
         for process in self._processes:
-            logger.info('Terminating {}'.format(process.args))
+            logger.debug('Terminating {}'.format(process.args))
             process.terminate()
 
     def refresh(self):

@@ -14,9 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
+import functools
+import stat
 import sys
 from textwrap import dedent
-from typing import TextIO
 
 # Using mypy 'type:' comment below, but flake8 thinks these aren't used
 from typing import Dict, List, Union  # noqa
@@ -24,7 +25,7 @@ from typing import Dict, List, Union  # noqa
 import click
 
 import snapcraft
-from snapcraft import storeapi
+from snapcraft import storeapi, formatting_utils
 from snapcraft.storeapi.constants import DEFAULT_SERIES
 from . import echo
 
@@ -69,7 +70,9 @@ def _human_readable_acls(store: storeapi.StoreClient) -> str:
             snap_names.append(store.get_snap_name_for_id(snap_id))
     acl['snap_names'] = snap_names
 
-    human_readable_acl = {}  # type: Dict[str, Union[str, List[str]]]
+    human_readable_acl = {
+        'expires': str(acl['expires'])
+    }  # type: Dict[str, Union[str, List[str]]]
 
     for key in ('snap_names', 'channels', 'permissions'):
         human_readable_acl[key] = acl[key]
@@ -80,6 +83,7 @@ def _human_readable_acls(store: storeapi.StoreClient) -> str:
         snaps:       {snap_names}
         channels:    {channels}
         permissions: {permissions}
+        expires:     {expires}
     """.format(**human_readable_acl))
 
 
@@ -139,8 +143,8 @@ def push(snap_file, release):
     if release:
         channel_list = release.split(',')
         click.echo(
-            'After pushing, an attempt to release to {} '
-            'will be made'.format(channel_list))
+            'After pushing, an attempt will be made to release to {}'
+            ''.format(formatting_utils.humanize_list(channel_list, 'and')))
 
     snapcraft.push(snap_file, channel_list)
 
@@ -279,14 +283,18 @@ def list_registered():
 
 
 @storecli.command('export-login')
-@click.argument('login_file', metavar='FILE', type=click.File('w'))
+@click.argument('login_file', metavar='FILE',
+                type=click.Path(dir_okay=False, writable=True))
 @click.option('--snaps', metavar='<snaps>',
               help='Comma-separated list of snaps to limit access')
 @click.option('--channels', metavar='<channels>',
               help='Comma-separated list of channels to limit access')
 @click.option('--acls', metavar='<acls>',
               help='Comma-separated list of ACLs to limit access')
-def export_login(login_file: TextIO, snaps: str, channels: str, acls: str):
+@click.option('--expires', metavar='<expiration date>',
+              help='Date/time (in ISO 8601) when this exported login expires')
+def export_login(login_file: str, snaps: str, channels: str, acls: str,
+                 expires: str):
     """Save login configuration for a store account in FILE.
 
     This file can then be used to log in to the given account with the
@@ -295,11 +303,15 @@ def export_login(login_file: TextIO, snaps: str, channels: str, acls: str):
     For example, to limit access to the edge channel of any snap the account
     can access:
 
-        snapcraft export-login --channels=edge
+        snapcraft export-login --channels=edge exported
 
     Or to limit access to only the edge channel of a single snap:
 
-        snapcraft export-login --snaps=my-snap --channels=edge
+        snapcraft export-login --snaps=my-snap --channels=edge exported
+
+    To limit access to a single snap, but only until 2019:
+
+        snapcraft export-login --expires="2019-01-01T00:00:00" exported
     """
 
     snap_list = None
@@ -322,17 +334,26 @@ def export_login(login_file: TextIO, snaps: str, channels: str, acls: str):
                            packages=snap_list,
                            channels=channel_list,
                            acls=acl_list,
+                           expires=expires,
                            save=False):
         sys.exit(1)
 
-    store.conf.save(config_fd=login_file)
+    # This is sensitive-- it should only be accessible by the owner
+    private_open = functools.partial(os.open, mode=0o600)
+
+    # mypy doesn't have the opener arg in its stub. Ignore its warning
+    with open(login_file, 'w', opener=private_open) as f:  # type: ignore
+        store.conf.save(config_fd=f)
+
+    # Now that the file has been written, we can just make it owner-readable
+    os.chmod(login_file, stat.S_IRUSR)
 
     print()
     echo.info(dedent("""\
         Login successfully exported to {0!r}. This file can now be used with
         'snapcraft login --with {0}' to log in to this account with no password
         and have these capabilities:\n""".format(
-            login_file.name)))
+            login_file)))
     echo.info(_human_readable_acls(store))
     echo.warning(
         'This exported login is not encrypted. Do not commit it to version '

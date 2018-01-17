@@ -20,6 +20,7 @@ import os
 import re
 import shutil
 import subprocess
+from textwrap import dedent
 import sys
 import time
 import uuid
@@ -57,11 +58,17 @@ class TestCase(testtools.TestCase):
         elif os.getenv('SNAPCRAFT_FROM_DEB', False):
             self.snapcraft_command = '/usr/bin/snapcraft'
             self.snapcraft_parser_command = '/usr/bin/snapcraft-parser'
-        else:
+        elif os.getenv('VIRTUAL_ENV'):
             self.snapcraft_command = os.path.join(
-                os.getcwd(), 'bin', 'snapcraft')
+                os.getenv('VIRTUAL_ENV'), 'bin', 'snapcraft')
             self.snapcraft_parser_command = os.path.join(
-                os.getcwd(), 'bin', 'snapcraft-parser')
+                os.getenv('VIRTUAL_ENV'), 'bin', 'snapcraft-parser')
+        else:
+            raise EnvironmentError(
+                'snapcraft is not setup correctly for testing. Either set '
+                'SNAPCRAFT_FROM_SNAP or SNAPCRAFT_FROM_DEB to run from either '
+                'the snap or deb, or make sure your venv is properly setup '
+                'as described in HACKING.md.')
 
         if os.getenv('SNAPCRAFT_FROM_SNAP', False):
             self.patchelf_command = '/snap/snapcraft/current/bin/patchelf'
@@ -195,6 +202,25 @@ class TestCase(testtools.TestCase):
         dir_util.copy_tree(
             os.path.join(self.snaps_dir, project_dir), self.path,
             preserve_symlinks=True)
+
+    def construct_yaml(self, name='test', version='0.1',
+                       summary='Simple test snap',
+                       description='Something something',
+                       parts=dedent('''\
+                           my-part:
+                             plugin: nil
+                           '''),
+                       build_packages='[]'):
+        snapcraft_yaml = {
+            'name': name,
+            'version': version,
+            'summary': summary,
+            'description': description,
+            'parts': yaml.load(parts),
+            'build-packages': yaml.load(build_packages),
+        }
+        with open('snapcraft.yaml', 'w') as f:
+            yaml.dump(snapcraft_yaml, f, default_flow_style=False)
 
     def get_output_ignoring_non_zero_exit(self, binary, cwd=None):
         # Executing the binaries exists > 0 on trusty.
@@ -418,7 +444,8 @@ class StoreTestCase(TestCase):
         if expect_success:
             process.expect('This exported login is not encrypted')
         else:
-            process.expect('Login failed')
+            process.expect(
+                'Authentication error: Failed to get unbound discharge.')
 
     def login(self, email=None, password=None, expect_success=True):
         email = email or self.test_store.user_email
@@ -427,8 +454,11 @@ class StoreTestCase(TestCase):
         process = pexpect.spawn(self.snapcraft_command, ['login'])
         self._conduct_login(process, email, password, expect_success)
 
-        result = 'successful' if expect_success else 'failed'
-        process.expect_exact('Login {}.'.format(result))
+        if expect_success:
+            process.expect_exact('Login successful.')
+        else:
+            process.expect(
+                'Authentication error: Failed to get unbound discharge.')
 
     def logout(self):
         output = self.run_snapcraft('logout')
@@ -483,9 +513,9 @@ class StoreTestCase(TestCase):
                 r'Done\. The key "{}" .* may be used to sign your '
                 r'assertions\.'.format(key_name))
         else:
-            process.expect_exact('Login failed.')
             process.expect_exact(
-                'Cannot continue without logging in successfully.')
+                'Cannot continue without logging in successfully: '
+                'Authentication error: Failed to get unbound discharge.')
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus

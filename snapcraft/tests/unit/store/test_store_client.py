@@ -32,7 +32,8 @@ from snapcraft import (
     ProjectOptions,
 )
 from snapcraft.storeapi import (
-    errors
+    errors,
+    constants
 )
 from snapcraft.tests import (
     fixture_setup,
@@ -100,6 +101,17 @@ class LoginTestCase(StoreTestCase):
         self.assertIsNotNone(self.client.conf.get('macaroon'))
         self.assertIsNotNone(self.client.conf.get('unbound_discharge'))
         self.assertTrue(config.Config().is_empty())
+
+    def test_login_successful_with_expiration(self):
+        self.client.login(
+            'dummy email',
+            'test correct password',
+            packages=[{'name': 'foo', 'series': '16'}],
+            channels=['edge'],
+            expires='2017-12-22'
+        )
+        self.assertIsNotNone(self.client.conf.get('macaroon'))
+        self.assertIsNotNone(self.client.conf.get('unbound_discharge'))
 
     def test_login_with_exported_login(self):
         conf = config.Config()
@@ -1506,3 +1518,40 @@ class PushBinaryMetadataTestCase(StoreTestCase):
             # force the update, even on conflicts!
             result = self.client.push_binary_metadata('basic', metadata, True)
         self.assertIsNone(result)
+
+
+class SnapNotFoundTestCase(StoreTestCase):
+
+    scenarios = (
+        ('push_metadata', dict(attribute='push_metadata')),
+        ('push_binary_metadata', dict(attribute='push_binary_metadata')),
+    )
+
+    def setUp(self):
+        super().setUp()
+        self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
+        self.useFixture(self.fake_logger)
+
+    def _setup_snap(self):
+        """Login, register and push a snap.
+
+        These are all the previous steps needed to push binary metadata.
+        """
+        self.client.login('dummy', 'test correct password')
+        self.client.register('basic')
+        path = os.path.join(
+            os.path.dirname(tests.__file__), 'data', 'test-snap.snap')
+        tracker = self.client.upload('basic', path)
+        tracker.track()
+
+    def test_snap_not_found(self):
+        self._setup_snap()
+        metadata = {'field_ok': 'dummy'}
+        raised = self.assertRaises(
+            errors.SnapNotFoundError,
+            getattr(self.client, self.attribute),
+            'test-unexistent-snap', metadata, False)
+        self.assertThat(str(raised),
+                        Equals("Snap 'test-unexistent-snap' was not "
+                               "found in '{}' series."
+                               .format(constants.DEFAULT_SERIES)))

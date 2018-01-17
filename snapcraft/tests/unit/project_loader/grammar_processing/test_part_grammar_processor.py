@@ -17,6 +17,7 @@
 import snapcraft
 from snapcraft.tests import unit
 from testtools.matchers import Equals
+from unittest.mock import patch
 
 from snapcraft.internal.project_loader.grammar_processing import (
     PartGrammarProcessor,
@@ -38,56 +39,61 @@ class PartGrammarTestCase(unit.TestCase):
         ('empty', {
             'properties': {'plugin': 'dump',
                            'source': ''},
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected': ''
         }),
         ('plain string', {
             'properties': {'plugin': 'dump',
                            'source': 'foo'},
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected': 'foo'
         }),
         ('on amd64', {
             'properties': {'plugin': 'dump',
                            'source': [{'on amd64': 'foo'}]},
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected': 'foo'
         }),
         ('on i386', {
             'properties': {'plugin': 'dump',
                            'source': [{'on i386': 'foo'}]},
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected': ''
         }),
         ('on i386 with else', {
             'properties': {'plugin': 'dump',
                            'source': [{'on i386': 'foo'}, {'else': 'bar'}]},
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected': 'bar'
         }),
-        ('on i386, target_arch=i386', {
+        ('on i386, host_arch=i386', {
             'properties': {'plugin': 'dump',
                            'source': [{'on i386': 'foo'}, {'else': 'bar'}]},
-            'target_arch': 'i386',
+            'host_arch': 'i686',
             'expected': 'foo'
         }),
         ('try', {
             'properties': {'plugin': 'dump',
                            'source': [{'try': 'foo'}]},
-            'target_arch': 'amd64',
+            'host_arch': 'x86_64',
             'expected': 'foo'
         }),
     ]
 
-    def test_string_grammar(self):
+    @patch('platform.architecture')
+    @patch('platform.machine')
+    def test_string_grammar(self, platform_machine_mock,
+                            platform_architecture_mock):
+        platform_machine_mock.return_value = self.host_arch
+        platform_architecture_mock.return_value = ('64bit', 'ELF')
+
         repo = mock.Mock()
         plugin = mock.Mock()
         plugin.properties = self.properties.copy()
         self.assertThat(PartGrammarProcessor(
             plugin=plugin,
             properties=plugin.properties,
-            project_options=snapcraft.ProjectOptions(
-                target_deb_arch=self.target_arch),
+            project_options=snapcraft.ProjectOptions(),
             repo=repo).get_source(),
                         Equals(self.expected))
         # Verify that the original properties haven't changed

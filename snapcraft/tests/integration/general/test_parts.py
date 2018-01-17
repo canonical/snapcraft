@@ -14,7 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import hashlib
 import os
+import sys
 
 import yaml
 from testtools.matchers import Contains, Equals
@@ -24,10 +26,17 @@ from snapcraft.tests import integration
 
 class PartsTestCase(integration.TestCase):
 
+    def _parts_dir(self):
+        parts_uri = 'https://parts.snapcraft.io/v1/parts.yaml'
+        return os.path.join(
+            'data', 'snapcraft',
+            hashlib.sha384(parts_uri.encode(
+                sys.getfilesystemencoding())).hexdigest())
+
     def setUp(self):
         super().setUp()
 
-        self.parts_dir = os.path.join('data', 'snapcraft')
+        self.parts_dir = self._parts_dir()
         self.parts_yaml = os.path.join(self.parts_dir, 'parts.yaml')
         self.headers_yaml = os.path.join(self.parts_dir, 'headers.yaml')
 

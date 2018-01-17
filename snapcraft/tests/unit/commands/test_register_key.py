@@ -74,7 +74,8 @@ class RegisterKeyTestCase(CommandBaseTestCase):
         mock_login.assert_called_with(
             'sample.person@canonical.com', 'secret',
             one_time_password='123456', acls=['modify_account_key'],
-            packages=None, channels=None, save=False, config_fd=None)
+            packages=None, channels=None, expires=None, save=False,
+            config_fd=None)
         self.assertThat(mock_register_key.call_count, Equals(1))
         expected_assertion = dedent('''\
             type: account-key-request
@@ -154,8 +155,8 @@ class RegisterKeyTestCase(CommandBaseTestCase):
             storeapi.errors.LoginRequiredError,
             self.run_command, ['register-key', 'default'])
 
-        self.assertThat(str(raised), Equals(
-            'Cannot continue without logging in successfully.'))
+        self.assertThat(str(raised), Contains(
+            'Cannot continue without logging in successfully'))
         self.assertThat(mock_input.call_count, Equals(1))
 
     @mock.patch('snapcraft._store.login')

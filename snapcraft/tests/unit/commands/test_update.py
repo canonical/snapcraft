@@ -17,6 +17,8 @@ import os
 from collections import OrderedDict
 
 import fixtures
+import hashlib
+import sys
 import yaml
 from testtools.matchers import Contains, Equals, FileExists
 from xdg import BaseDirectory
@@ -48,11 +50,41 @@ class UpdateCommandTestCase(CommandBaseTestCase, unit.TestWithFakeRemoteParts):
                 plugin: nil
         """)
 
+    def _parts_dir(self):
+        parts_uri = os.environ.get('SNAPCRAFT_PARTS_URI')
+        return os.path.join(
+            BaseDirectory.xdg_data_home, 'snapcraft',
+            hashlib.sha384(parts_uri.encode(
+                sys.getfilesystemencoding())).hexdigest())
+
     def setUp(self):
         super().setUp()
-        self.parts_dir = os.path.join(BaseDirectory.xdg_data_home, 'snapcraft')
+        self.parts_dir = self._parts_dir()
         self.parts_yaml = os.path.join(self.parts_dir, 'parts.yaml')
         self.headers_yaml = os.path.join(self.parts_dir, 'headers.yaml')
+
+    def test_changed_parts_uri(self):
+        result = self.run_command(['update'])
+        self.assertThat(result.exit_code, Equals(0))
+
+        self.useFixture(fixture_setup.FakeParts())
+        self.useFixture(fixtures.EnvironmentVariable('CUSTOM_PARTS', '1'))
+        self.parts_dir = self._parts_dir()
+        self.parts_yaml = os.path.join(self.parts_dir, 'parts.yaml')
+        result = self.run_command(['update'])
+        self.assertThat(result.exit_code, Equals(0))
+
+        expected_parts = OrderedDict()
+        expected_parts['curl-custom'] = p = OrderedDict()
+        p['plugin'] = 'autotools'
+        p['source'] = 'http://curl.org'
+        p['description'] = 'custom curl part'
+        p['maintainer'] = 'none'
+
+        with open(self.parts_yaml) as parts_file:
+            parts = yaml.load(parts_file)
+
+        self.assertThat(parts, Equals(expected_parts))
 
     def test_update(self):
         result = self.run_command(['update'])
@@ -149,5 +181,5 @@ class UpdateCommandTestCase(CommandBaseTestCase, unit.TestWithFakeRemoteParts):
 
         project_folder = '/root/build_snap-test'
         mock_container_run.assert_has_calls([
-            call(['snapcraft', 'update'], cwd=project_folder),
+            call(['snapcraft', 'update'], cwd=project_folder, user='root'),
         ])

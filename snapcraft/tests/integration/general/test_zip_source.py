@@ -43,8 +43,12 @@ class TarPluginTestCase(integration.TestCase):
         self.assertThat(os.access(
             os.path.join(self.stage_dir, 'exec'), os.X_OK),
             Equals(True))
+        self.assertThat(os.access(
+            os.path.join(self.stage_dir, 'non-unix'), os.X_OK),
+            Equals(True))
         expected_dirs = [
             'dir-simple',
+            'non-unix',
         ]
         for expected_dir in expected_dirs:
             self.assertThat(

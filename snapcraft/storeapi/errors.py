@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from simplejson.scanner import JSONDecodeError
+from typing import List  # noqa
 
 from snapcraft.internal.errors import SnapcraftError
 
@@ -38,7 +39,13 @@ class InvalidCredentialsError(StoreError):
 
 class LoginRequiredError(StoreError):
 
-    fmt = 'Cannot continue without logging in successfully.'
+    fmt = '{message}'
+
+    def __init__(self, extra_information=''):
+        message = 'Cannot continue without logging in successfully'
+        if extra_information:
+            message += ': {}'.format(extra_information)
+        super().__init__(message=message)
 
 
 class StoreRetryError(StoreError):
@@ -84,9 +91,22 @@ class SHAMismatchError(StoreError):
 
 class StoreAuthenticationError(StoreError):
 
-    fmt = 'Authentication error: {}.'
+    fmt = 'Authentication error: {message}.'
 
-    def __init__(self, message):
+    def __init__(self, message, response=None):
+        # Unfortunately the store doesn't give us a consistent error response,
+        # so we'll check the ones of which we're aware.
+        if response:
+            response_json = response.json()
+            extra_error_message = ''
+            if 'error_message' in response_json:
+                extra_error_message = response_json['error_message']
+            elif 'message' in response_json:
+                extra_error_message = response_json['message']
+
+            if extra_error_message:
+                message += ': {}'.format(extra_error_message)
+
         super().__init__(message=message)
 
 

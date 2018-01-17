@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,6 +20,7 @@ import copy
 import io
 import os
 import pkgutil
+import shutil
 import socketserver
 import string
 import subprocess
@@ -50,6 +51,7 @@ from snapcraft.tests.subprocess_utils import (
     call,
     call_with_output,
 )
+from snapcraft.internal import elf
 
 
 class TempCWD(fixtures.TempDir):
@@ -640,6 +642,8 @@ class FakeLXD(fixtures.Fixture):
     def _lxc_exec(self, args):
         if self.status and args[0][2] == self.name:
             cmd = args[0][4]
+            if cmd == 'sudo':
+                cmd = args[0][8]
             if cmd == 'ls':
                 return ' '.join(self.files).encode('utf-8')
             elif cmd == 'readlink':
@@ -992,7 +996,8 @@ class SnapcraftYaml(fixtures.Fixture):
         self.data = {
             'name': name,
             'version': version,
-            'parts': {}
+            'parts': {},
+            'apps': {}
         }
         if summary is not None:
             self.data['summary'] = summary
@@ -1002,6 +1007,10 @@ class SnapcraftYaml(fixtures.Fixture):
     def update_part(self, name, data):
         part = {name: data}
         self.data['parts'].update(part)
+
+    def update_app(self, name, data):
+        app = {name: data}
+        self.data['apps'].update(app)
 
     def setUp(self):
         super().setUp()
@@ -1098,3 +1107,69 @@ class SharedCache(fixtures.Fixture):
             new=os.path.join(shared_cache_dir))
         patcher.start()
         self.addCleanup(patcher.stop)
+
+
+class FakeElf(fixtures.Fixture):
+
+    def __getitem__(self, item):
+        return self._elf_files[item]
+
+    def __init__(self, *, root_path):
+        super().__init__()
+
+        self.root_path = root_path
+        self.core_base_path = None
+
+    def _setUp(self):
+        super()._setUp()
+
+        self.core_base_path = self.useFixture(fixtures.TempDir()).path
+
+        binaries_path = os.path.abspath(os.path.join(
+            __file__, '..', 'bin', 'readelf'))
+
+        new_binaries_path = self.useFixture(fixtures.TempDir()).path
+        current_path = os.environ.get('PATH')
+        new_path = '{}:{}'.format(new_binaries_path, current_path)
+        self.useFixture(fixtures.EnvironmentVariable('PATH', new_path))
+
+        # Copy readelf
+        shutil.copy(os.path.join(binaries_path, 'readelf'),
+                    os.path.join(new_binaries_path, 'readelf'))
+        os.chmod(os.path.join(new_binaries_path, 'readelf'), 0o755)
+
+        # Some values in ldd need to be set with core_path
+        with open(os.path.join(binaries_path, 'ldd')) as rf:
+            with open(os.path.join(new_binaries_path, 'ldd'), 'w') as wf:
+                for line in rf.readlines():
+                    wf.write(line.replace('{CORE_PATH}', self.core_base_path))
+        os.chmod(os.path.join(new_binaries_path, 'ldd'), 0o755)
+
+        self._elf_files = {
+            'fake_elf-2.26': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-2.26')),
+            'fake_elf-2.23': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-2.23')),
+            'fake_elf-1.1': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-1.1')),
+            'fake_elf-static': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-static')),
+            'fake_elf-shared-object': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-shared-object')),
+            'fake_elf-bad-ldd': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-bad-ldd')),
+            'fake_elf-with-core-libs': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-with-core-libs')),
+        }
+
+        for elf_file in self._elf_files.values():
+            with open(elf_file.path, 'wb') as f:
+                f.write(b'\x7fELF')
+
+        self.root_libraries = {
+            'foo.so.1': os.path.join(self.root_path, 'foo.so.1'),
+        }
+
+        for root_library in self.root_libraries.values():
+            with open(root_library, 'wb') as f:
+                f.write(b'\x7fELF')

@@ -22,7 +22,7 @@ class SCAClient(Client):
             'UBUNTU_STORE_API_ROOT_URL',
             constants.UBUNTU_STORE_API_ROOT_URL))
 
-    def get_macaroon(self, acls, packages=None, channels=None):
+    def get_macaroon(self, acls, packages=None, channels=None, expires=None):
         data = {
             'permissions': acls,
         }
@@ -34,6 +34,10 @@ class SCAClient(Client):
             data.update({
                 'channels': channels,
             })
+        if expires is not None:
+            data.update({
+                'expires': expires,
+            })
         headers = {
             'Accept': 'application/json',
         }
@@ -42,7 +46,8 @@ class SCAClient(Client):
         if response.ok:
             return response.json()['macaroon']
         else:
-            raise errors.StoreAuthenticationError('Failed to get macaroon')
+            raise errors.StoreAuthenticationError(
+                'Failed to get macaroon', response)
 
     @staticmethod
     def _is_needs_refresh_response(response):

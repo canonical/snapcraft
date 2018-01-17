@@ -75,6 +75,16 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
         if ims_date is not None and ims_date >= self._parts_date:
             self.send_response(304)
             response = {}
+        elif 'CUSTOM_PARTS' in os.environ:
+            self.send_response(200)
+            response = OrderedDict((
+                ('curl-custom', OrderedDict((
+                    ('plugin', 'autotools'),
+                    ('source', 'http://curl.org'),
+                    ('description', 'custom curl part'),
+                    ('maintainer', 'none'),
+                ))),
+            ))
         else:
             self.send_response(200)
             response = OrderedDict((

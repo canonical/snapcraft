@@ -2,7 +2,7 @@ import hashlib
 import os
 import urllib.parse
 from time import sleep
-from typing import Dict, Iterable, List, TextIO
+from typing import Dict, Iterable, List, TextIO, Union
 
 import pymacaroons
 import requests
@@ -35,7 +35,7 @@ class StoreClient():
 
     def login(self, email: str, password: str, one_time_password: str = None,
               acls: Iterable[str] = None, channels: Iterable[str] = None,
-              packages: Iterable[Dict[str, str]] = None,
+              packages: Iterable[Dict[str, str]] = None, expires: str = None,
               config_fd: TextIO = None, save: bool = True) -> None:
         """Log in via the Ubuntu One SSO API."""
         if acls is None:
@@ -46,7 +46,7 @@ class StoreClient():
         else:
             # Ask the store for the needed capabilities to be associated with
             # the macaroon.
-            macaroon = self.sca.get_macaroon(acls, packages, channels)
+            macaroon = self.sca.get_macaroon(acls, packages, channels, expires)
             caveat_id = self._extract_caveat_id(macaroon)
             unbound_discharge = self.sso.get_unbound_discharge(
                 email, password, one_time_password, caveat_id)
@@ -98,13 +98,13 @@ class StoreClient():
 
         return account_data
 
-    def acl(self) -> Dict[str, List[str]]:
+    def acl(self) -> Dict[str, Union[List[str], str]]:
         """Return permissions for the logged-in user."""
 
         acl_data = {}
 
         acl_info = self.verify_acl()
-        for key in ('snap_ids', 'channels', 'permissions'):
+        for key in ('snap_ids', 'channels', 'permissions', 'expires'):
             acl_data[key] = acl_info.get(key)
 
         return acl_data
@@ -114,7 +114,7 @@ class StoreClient():
             'snap-declaration', snap_id)
         return declaration_assertion['headers']['snap-name']
 
-    def verify_acl(self) -> Dict[str, List[str]]:
+    def verify_acl(self) -> Dict[str, Union[List[str], str]]:
         return self._refresh_if_necessary(self.sca.verify_acl)
 
     def get_account_information(self):

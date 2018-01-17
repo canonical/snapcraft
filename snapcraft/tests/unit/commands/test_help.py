@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,6 +22,7 @@ import fixtures
 from testtools.matchers import Contains, Equals, StartsWith
 
 from snapcraft.cli.help import _TOPICS
+from snapcraft.cli._runner import run
 
 from . import CommandBaseTestCase
 
@@ -47,7 +48,7 @@ class HelpCommandTestCase(HelpCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(1))
         self.assertThat(result.output, Contains(
-            'There is no help topic or plugin'))
+            'There is no help topic, plugin or command'))
 
     def test_topic_and_plugin_adds_ellipsis_for_long_arg(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -155,3 +156,16 @@ class TopicWithDevelTestCase(HelpCommandBaseTestCase):
             output, Equals(expected[self.topic]),
             'The help message does not start with {!r} but with '
             '{!r} instead'.format(expected[self.topic], output))
+
+
+class TestHelpForCommand(HelpCommandBaseTestCase):
+
+    scenarios = [(c, dict(command=c)) for c in run.commands]
+
+    def test_help_for_command(self):
+        result = self.run_command(['help', self.command])
+        self.assertThat(result.exit_code, Equals(0))
+        # Verify that the first line of help text is correct
+        # to ensure no name squatting takes place.
+        self.assertThat(result.output, Contains(
+            run.commands[self.command].help.split('\n')[0]))
