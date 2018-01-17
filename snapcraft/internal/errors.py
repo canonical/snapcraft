@@ -229,7 +229,6 @@ class MissingDesktopExecError(SnapcraftError):
     fmt = (
         "Failed to generate desktop file: "
         "Missing Exec key in desktop file {filename!r}."
-
     )
 
     def __init__(self, filename):
