@@ -24,11 +24,13 @@ import stat
 import string
 import subprocess
 import sys
+import tarfile
 import urllib
 import urllib.request
 from typing import Dict, Set, List  # noqa
 
 import apt
+import debian.arfile
 from xml.etree import ElementTree
 
 import snapcraft
@@ -371,11 +373,15 @@ class Ubuntu(BaseRepo):
     def unpack(self, unpackdir):
         pkgs_abs_path = glob.glob(os.path.join(self._downloaddir, '*.deb'))
         for pkg in pkgs_abs_path:
-            # TODO needs elegance and error control
+            # Importing DebFile causes LP: #1731478 when snapcraft is a snap
+            ar = debian.arfile.ArFile(pkg)
             try:
-                subprocess.check_call(
-                    ['dpkg-deb', '--extract', pkg, unpackdir])
-            except subprocess.CalledProcessError:
+                data_member_name = [
+                    i for i in ar.getnames() if i.startswith('data.tar')][0]
+                data_member = ar.getmember(data_member_name)
+                with tarfile.open(fileobj=data_member) as f:
+                    f.extractall(unpackdir)
+            except OSError:
                 raise errors.UnpackError(pkg)
         self.normalize(unpackdir)
 
