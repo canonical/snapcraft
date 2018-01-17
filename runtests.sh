@@ -23,11 +23,11 @@ export PYTHONPATH=$(pwd)${PYTHONPATH:+:$PYTHONPATH}
 printhelp(){
     echo "Usage: "
     echo "    ./runtests.sh static"
-    echo "    ./runtests.sh snapcraft/tests/unit"
-    echo "    ./runtests.sh snapcraft/tests/integration[/<test-suite>]"
+    echo "    ./runtests.sh tests/unit"
+    echo "    ./runtests.sh tests/integration[/<test-suite>]"
     echo "    ./runtests.sh snaps"
     echo ""
-    echo "<test-suite> can be: $(ls snapcraft/tests/integration| grep '^[a-z].*' | tr '\n' ' ')"
+    echo "<test-suite> can be: $(ls tests/integration| grep '^[a-z].*' | tr '\n' ' ')"
 }
 
 parseargs(){
@@ -53,14 +53,14 @@ parseargs(){
 python3 -m coverage 1>/dev/null 2>&1 && coverage="true"
 
 run_static_tests(){
-    SRC_PATHS="bin snapcraft snaps_tests external_snaps_tests setup.py"
+    SRC_PATHS="bin external_snaps_tests setup.py snapcraft snaps_tests tests"
     python3 -m flake8 --max-complexity=10 $SRC_PATHS
     codespell -S "*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,./.git,changelog" -q4
     mypy --ignore-missing-imports --follow-imports=silent -p snapcraft
 }
 
 run_snapcraft_tests(){
-    if [[ ! -z "$coverage" ]] && [[ "$1" == "snapcraft/tests/unit"* ]]; then
+    if [[ ! -z "$coverage" ]] && [[ "$1" == "tests/unit"* ]]; then
         python3 -m coverage erase
         python3 -m coverage run --branch --source snapcraft -m unittest discover -b -v -s "$1" -t .
     else
@@ -88,7 +88,7 @@ fi
 
 parseargs "$@"
 
-if [[ ! -z "$coverage" ]] && [[ "$1" == "snapcraft/tests/unit"* ]]; then
+if [[ ! -z "$coverage" ]] && [[ "$1" == "tests/unit"* ]]; then
     python3 -m coverage report
 
     echo

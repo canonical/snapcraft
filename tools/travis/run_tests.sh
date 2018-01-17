@@ -31,9 +31,9 @@ pattern="$2"
 
 if [ "$test" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
-elif [ "$test" = "snapcraft/tests/unit" ]; then
+elif [ "$test" = "tests/unit" ]; then
     dependencies="apt install -y git bzr subversion mercurial libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov && apt install -y python3-coverage"
-elif [[ "$test" = "snapcraft/tests/integration"* || "$test" = "snapcraft.tests.integration"* ]]; then
+elif [[ "$test" = "tests/integration"* || "$test" = "tests.integration"* ]]; then
     # TODO remove the need to install the snapcraft dependencies due to nesting
     #      the tests in the snapcraft package
     # snap install core exits with this error message:
@@ -58,7 +58,7 @@ $lxc exec test-runner -- sh -c "cd snapcraft && ./tools/travis/setup_lxd.sh"
 $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
 $lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test"
 
-if [ "$test" = "snapcraft/tests/unit" ]; then
+if [ "$test" = "tests/unit" ]; then
     # Report code coverage.
     $lxc exec test-runner -- sh -c "cd snapcraft && python3 -m coverage xml"
     $lxc exec test-runner -- sh -c "cd snapcraft && codecov --token=$CODECOV_TOKEN"
