@@ -207,7 +207,6 @@ class MissingDesktopFileError(SnapcraftError):
     fmt = (
         "Failed to generate desktop file: "
         "{filename!r} defined in app {name!r} does not exist."
-
     )
 
     def __init__(self, filename, name):
@@ -219,7 +218,6 @@ class MissingDesktopSectionError(SnapcraftError):
     fmt = (
         "Failed to generate desktop file: "
         "Missing {section_name!r} section in desktop file {filename!r}."
-
     )
 
     def __init__(self, filename, section_name):
