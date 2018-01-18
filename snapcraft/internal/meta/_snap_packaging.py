@@ -148,27 +148,23 @@ def _adopt_info(
         extracted_metadata: _metadata.ExtractedMetadata):
     metadata_dict = extracted_metadata.to_dict()
     for key, value in metadata_dict.items():
-        # desktop_file_ids are a special case that will be handled
+        # desktop_file_paths are a special case that will be handled
         # after all the top level snapcraft.yaml keys.
-        if key != 'desktop_file_ids' and key not in config_data:
+        if key != 'desktop_file_paths' and key not in config_data:
             if key == 'icon':
                 if _icon_file_exists() or not os.path.exists(
                         str(value)):
                     # Do not overwrite the icon file.
                     continue
             config_data[key] = value
-    if 'desktop_file_ids' in metadata_dict:
-        for desktop_file_id in metadata_dict['desktop_file_ids']:
-            app_name = _get_app_name_from_desktop_file_id(
-                config_data, desktop_file_id)
+    if 'desktop_file_paths' in metadata_dict:
+        for desktop_file_path in metadata_dict['desktop_file_paths']:
+            app_name = _get_app_name_from_desktop_file_path(
+                config_data, desktop_file_path)
             if app_name and not _desktop_file_exists(app_name):
-                for xdg_data_dir in ('usr/local/share', 'usr/share'):
-                    desktop_file_path = os.path.join(
-                        xdg_data_dir, 'applications',
-                        desktop_file_id.replace('-', '/'))
-                    if os.path.exists(desktop_file_path):
-                        config_data['apps'][app_name]['desktop'] = (
-                            desktop_file_path)
+                if os.path.exists(desktop_file_path):
+                    config_data['apps'][app_name]['desktop'] = (
+                        desktop_file_path)
 
 
 def _icon_file_exists() -> bool:
@@ -190,22 +186,23 @@ def _icon_file_exists() -> bool:
         return False
 
 
-def _get_app_name_from_desktop_file_id(
-        config_data: Dict[str, Any], desktop_file_id: str) -> str:
-    """Get the snap app name from a desktop file ID.
+def _get_app_name_from_desktop_file_path(
+        config_data: Dict[str, Any], desktop_file_path: str) -> str:
+    """Get the snap app name from a desktop file path.
 
-    Desktop file IDs are defined in
-    https://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#desktop-file-id
-
-    XXX We try to find a match between desktop file id and snap app name.
+    XXX We try to find a match between desktop file path and snap app name.
     This will be much nicer once snapcraft supports appstream IDs:
     https://forum.snapcraft.io/t/support-for-appstream-id/2327
     --elopio - 20180108
 
-    :params desktop_file_id: The identifier of the desktop file.
+    :params desktop_file_path: The path to the desktop file.
     :returns: The name of the snap app that corresponds to the desktop file.
 
-    """  # noqa
+    """
+    desktop_file_id = desktop_file_path[
+        desktop_file_path.find('applications') +
+        len('applications') + 1:
+    ].replace('/', '-')
     desktop_file_id_parts = desktop_file_id.split('.')
     if desktop_file_id_parts[-1] == 'desktop':
         desktop_file_id_parts = desktop_file_id_parts[:-1]
