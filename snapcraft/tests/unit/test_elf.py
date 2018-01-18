@@ -220,16 +220,7 @@ class TestGetElfFiles(TestElfBase):
 
         self.assertThat(len(elf_files), Equals(1))
         elf_file = set(elf_files).pop()
-        self.assertThat(elf_file.is_executable(), Equals(True))
-
-    def test_get_elf_is_library(self):
-        elf_files = elf.get_elf_files(self.fake_elf.root_path,
-                                      {'fake_elf-shared-object'})
-
-        self.assertThat(len(elf_files), Equals(1))
-        elf_file = set(elf_files).pop()
-        self.assertThat(elf_file.is_executable(), Equals(False))
-        self.assertThat(elf_file.is_shared_object(), Equals(True))
+        self.assertThat(elf_file.interp, Equals('/lib64/ld-linux-x86-64.so.2'))
 
     def test_skip_object_files(self):
         open(os.path.join(
