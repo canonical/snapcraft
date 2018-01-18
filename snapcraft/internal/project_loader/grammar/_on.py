@@ -24,7 +24,8 @@ from .errors import (
     UnsatisfiedStatementError,
 )
 
-_SELECTOR_PATTERN = re.compile(r'\Aon\s+([^,\s](?:,?[^,]+)*)\Z')
+_SELECTOR_PATTERN = re.compile(
+    r'\A(on)\s+([^,\s](?:,?[^,\s]+)*)(\s(to)\s+([^,\s](?:,?\S+)*)|)\Z')
 _WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
 
 
@@ -87,14 +88,7 @@ class OnStatement:
         """
 
         primitives = set()
-        # A new ProjectOptions instance defaults to the host architecture
-        # whereas self._project_options would yield the target architecture
-        host_arch = snapcraft.ProjectOptions().deb_arch
-
-        # The only selector currently supported is the target arch. Since
-        # selectors are matched with an AND, not OR, there should only be one
-        # selector.
-        if (len(self.selectors) == 1) and (host_arch in self.selectors):
+        if self.matches():
             primitives = process_grammar(
                 self._body, self._project_options, self._checker)
         else:
@@ -109,6 +103,21 @@ class OnStatement:
                     break
 
         return primitives
+
+    def matches(self) -> bool:
+        """Evaluates if the selectors match
+
+        :return str: True if the selectors match.
+        """
+
+        # A new ProjectOptions instance defaults to the host architecture
+        # whereas self._project_options would yield the target architecture
+        host_arch = snapcraft.ProjectOptions().deb_arch
+
+        # The only selector currently supported is the host arch. Since
+        # selectors are matched with an AND, not OR, there should only be one
+        # selector.
+        return (len(self.selectors) == 1) and (host_arch in self.selectors)
 
     def __eq__(self, other):
         return self.selectors == other.selectors
@@ -133,7 +142,7 @@ def _extract_on_clause_selectors(on):
     match = _SELECTOR_PATTERN.match(on)
 
     try:
-        selector_group = match.group(1)
+        selector_group = match.group(2)
     except AttributeError:
         raise OnStatementSyntaxError(on, message='selectors are missing')
     except IndexError:

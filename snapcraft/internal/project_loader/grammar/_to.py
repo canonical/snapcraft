@@ -16,7 +16,6 @@
 
 import re
 
-import snapcraft
 from . import process_grammar
 from .errors import (
     ToStatementSyntaxError,
@@ -24,7 +23,7 @@ from .errors import (
 )
 
 _SELECTOR_PATTERN = re.compile(
-    r'(\Aon\s+[^,\s](?:,?[^,]+)*\s|)to\s+([^,\s](?:,?[^,]+)*)\Z')
+    r'\A((on)\s+([^,\s](?:,?[^,\s]+)*)\s|)((to)\s+([^,\s](?:,?[^,]+)*))\Z')
 _WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
 
 
@@ -59,11 +58,22 @@ class ToStatement:
         :type checker: callable
         """
 
-        self._on_selectors, self.selectors = _extract_to_clause_selectors(to)
+        self.selectors = _extract_to_clause_selectors(to)
         self._body = body
         self._project_options = project_options
         self._checker = checker
         self._else_bodies = []
+        self._on_statement = None
+
+    def add_on(self, on_statement):
+        """Add a leading 'on' statement.
+
+        :param OnStatement on_statement: An OnStatement.
+
+        The 'on' statement will be evaluated first.
+        """
+
+        self._on_statement = on_statement
 
     def add_else(self, else_body):
         """Add an 'else' clause to the statement.
@@ -83,18 +93,7 @@ class ToStatement:
         """
 
         primitives = set()
-        target_arch = self._project_options.deb_arch
-        host_arch = snapcraft.ProjectOptions().deb_arch
-
-        # The only selector currently supported is the target arch. Since
-        # selectors are matched with an AND, not OR, there should only be one
-        # selector.
-        on_matches = (((len(self._on_selectors) == 1) and
-                      host_arch in self._on_selectors) or
-                      self._on_selectors == {''})
-        to_matches = ((len(self.selectors) == 1) and
-                      (target_arch in self.selectors))
-        if on_matches and to_matches:
+        if self.matches():
             primitives = process_grammar(
                 self._body, self._project_options, self._checker)
             # target arch is the default (not the host arch) in a to statement
@@ -119,6 +118,23 @@ class ToStatement:
 
         return primitives
 
+    def matches(self) -> bool:
+        """Evaluates if the selectors match
+
+        :return str: True if the selectors match.
+        """
+
+        # If there's an "on" statement, it must also match
+        if self._on_statement and not self._on_statement.matches():
+            return False
+
+        target_arch = self._project_options.deb_arch
+
+        # The only selector currently supported is the target arch. Since
+        # selectors are matched with an AND, not OR, there should only be one
+        # selector.
+        return ((len(self.selectors) == 1) and (target_arch in self.selectors))
+
     def __eq__(self, other):
         return self.selectors == other.selectors
 
@@ -135,21 +151,16 @@ def _extract_to_clause_selectors(to):
     :rtype: set
 
     For example:
-    >>> _extract_to_clause_selectors('to amd64,i386') == ({''},{'amd64', 'i386'})
+    >>> _extract_to_clause_selectors('to amd64,i386') == ({'amd64', 'i386'})
     True
-    >>> _extract_to_clause_selectors('on amd64 to i386') == ({'amd64'},{'i386'})
-    True
-    For example:
-    >>> _extract_to_clause_selectors('to amd64,i386') == {'amd64', 'i386'}
+    >>> _extract_to_clause_selectors('on amd64 to i386') == ({'i386'})
     True
     """  # noqa
 
     match = _SELECTOR_PATTERN.match(to)
 
     try:
-        on_selector_group = match.group(1)
-        selector_group = match.group(2)
-        selector_group = match.group(1)
+        selector_group = match.group(6)
     except AttributeError:
         raise ToStatementSyntaxError(to, message='selectors are missing')
     except IndexError:
@@ -161,6 +172,4 @@ def _extract_to_clause_selectors(to):
         raise ToStatementSyntaxError(
             to, message='spaces are not allowed in the selectors')
 
-    return (
-        {selector.strip() for selector in on_selector_group[3:].split(',')},
-        {selector.strip() for selector in selector_group.split(',')})
+    return {selector.strip() for selector in selector_group.split(',')}

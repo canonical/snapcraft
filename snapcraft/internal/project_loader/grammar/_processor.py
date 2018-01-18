@@ -91,6 +91,10 @@ def _parse_dict(section, statement, statements, project_options,
             statement = ToStatement(
                 to=key, body=value, project_options=project_options,
                 checker=checker)
+            if _ON_CLAUSE_PATTERN.match(key):
+                statement.add_on(OnStatement(
+                    on=key, body=value, project_options=project_options,
+                    checker=checker))
 
         elif _ON_CLAUSE_PATTERN.match(key):
             # We've come across the beginning of an 'on' statement.
