@@ -542,8 +542,7 @@ class ProjectTestCase(ContainerbuildTestCase):
     def test_inject_snap_existing_container(self,
                                             mock_is_snap,
                                             mock_container_run):
-        mock_is_snap.side_effect = lambda: True
-        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_is_snap.return_value = True
 
         fake_snapd = fixture_setup.FakeSnapd()
         self.useFixture(fake_snapd)
@@ -574,14 +573,14 @@ class ProjectTestCase(ContainerbuildTestCase):
                 call(['snap', 'refresh', 'snapcraft', '--channel', 'edge',
                       '--classic']),
             ])
-            return
-
-        mock_container_run.assert_has_calls([
-            call(['snap', 'ack', '/run/core_123.assert']),
-            call(['snap', 'install', '/run/core_123.snap']),
-            call(['snap', 'ack', '/run/snapcraft_345.assert']),
-            call(['snap', 'install', '/run/snapcraft_345.snap', '--classic']),
-        ])
+        else:
+            mock_container_run.assert_has_calls([
+                call(['snap', 'ack', '/run/core_123.assert']),
+                call(['snap', 'install', '/run/core_123.snap']),
+                call(['snap', 'ack', '/run/snapcraft_345.assert']),
+                call(['snap', 'install', '/run/snapcraft_345.snap',
+                      '--classic']),
+            ])
 
     def test_command_with_sudo(self):
         self.make_containerbuild().execute()
