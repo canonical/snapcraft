@@ -199,19 +199,19 @@ def _get_app_name_from_desktop_file_path(
     :returns: The name of the snap app that corresponds to the desktop file.
 
     """
-    if 'applications' in desktop_file_path:
-        desktop_file_id = desktop_file_path[
-            desktop_file_path.find('applications') +
-            len('applications') + 1:
-        ].replace('/', '-')
-        desktop_file_id_parts = desktop_file_id.split('.')
-        if desktop_file_id_parts[-1] == 'desktop':
-            desktop_file_id_parts = desktop_file_id_parts[:-1]
-            app_id = desktop_file_id_parts[-1]
-            if ('apps' in config_data and
-                    app_id in config_data['apps'].keys()):
-                return app_id
-    return None
+    desktop_file_id = desktop_file_path[
+        desktop_file_path.find('applications') +
+        len('applications') + 1:
+    ].replace('/', '-')
+    desktop_file_id_parts = desktop_file_id.split('.')
+    if desktop_file_id_parts[-1] == 'desktop':
+        desktop_file_id_parts = desktop_file_id_parts[:-1]
+    app_id = desktop_file_id_parts[-1]
+    if ('apps' in config_data and
+            app_id in config_data['apps'].keys()):
+        return app_id
+    else:
+        return None
 
 
 def _desktop_file_exists(app_name: str) -> bool:
