@@ -25,10 +25,10 @@ import fixtures
 import pymacaroons
 from testtools.matchers import Contains, Equals
 
+import tests
 from snapcraft import (
     config,
     storeapi,
-    tests,
     ProjectOptions,
 )
 from snapcraft.storeapi import (

@@ -23,10 +23,8 @@ import fixtures
 import yaml
 from testtools.matchers import Contains, Equals
 
-from snapcraft import (
-    storeapi,
-    tests,
-)
+import tests
+from snapcraft import storeapi
 from snapcraft.integrations import travis
 from snapcraft.internal.errors import (
     RequiredCommandFailure,

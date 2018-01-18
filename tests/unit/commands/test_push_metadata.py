@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2017 Canonical Ltd
+# Copyright 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,7 +19,8 @@ from unittest import mock
 
 from testtools.matchers import Contains, Equals, Not
 
-from snapcraft import storeapi, tests
+import tests
+from snapcraft import storeapi
 from snapcraft.storeapi.errors import StorePushError
 from . import CommandBaseTestCase
 

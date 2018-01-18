@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,7 +21,8 @@ from unittest import mock
 import fixtures
 from testtools.matchers import Contains, Equals, FileExists, Not
 
-from snapcraft import storeapi, tests
+import tests
+from snapcraft import storeapi
 from . import CommandBaseTestCase
 
 
