@@ -38,12 +38,16 @@ class OsRelease:
 
         :param str os_release_file: Path to os-release file to be parsed.
         """
-        with open(os_release_file) as f:
-            self._os_release = {}  # type: Dict[str, str]
-            for line in f:
-                entry = line.rstrip().split('=')
-                if len(entry) == 2:
-                    self._os_release[entry[0]] = entry[1].strip('"')
+        self._os_release = {}  # type: Dict[str, str]
+        try:
+            with open(os_release_file) as f:
+                for line in f:
+                    entry = line.rstrip().split('=')
+                    if len(entry) == 2:
+                        self._os_release[entry[0]] = entry[1].strip('"')
+        except FileNotFoundError:
+            self._os_release['ID'] = 'unknown'
+            self._os_release['NAME'] = 'unknown'
 
     def id(self) -> str:
         """Return the OS ID
