@@ -340,9 +340,10 @@ class ErrorFormattingTestCase(unit.TestCase):
                        'process_exception': CalledProcessError(
                            cmd=['patchelf'], returncode=-1)},
             'expected_message': (
-                "'test/path' cannot be patched to function properly as a "
-                'classic snap: patchelf failed with exit code -1 with '
-                "'patchelf 0.9'.\n"
+                "'test/path' cannot be patched to function properly in a "
+                'classic confined snap: patchelf failed with exit code -1.\n'
+                "'patchelf 0.9' may be too old. A newer version of patchelf "
+                'may be required.\n'
                 'Try adding the `after: [patchelf]` and a `patchelf` part '
                 'that would filter out files from prime `prime: [-*]` or '
                 '`build-snaps: [patchelf/latest/edge]` to the failing part '
@@ -353,8 +354,8 @@ class ErrorFormattingTestCase(unit.TestCase):
                        'process_exception': CalledProcessError(
                            cmd=['patchelf'], returncode=-1)},
             'expected_message': (
-                "'test/path' cannot be patched to function properly as a "
-                'classic snap: patchelf failed with exit code -1'
+                "'test/path' cannot be patched to function properly in a "
+                'classic confined snap: patchelf failed with exit code -1'
             )}),
     )
 

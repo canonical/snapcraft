@@ -421,8 +421,8 @@ class PatcherError(SnapcraftError):
 class PatcherGenericError(PatcherError):
 
     fmt = (
-        '{elf_file!r} cannot be patched to function properly as a classic '
-        'snap: {message}'
+        '{elf_file!r} cannot be patched to function properly in a classic '
+        'confined snap: {message}'
     )
 
     def __init__(self, *, elf_file, process_exception):
@@ -435,8 +435,10 @@ class PatcherGenericError(PatcherError):
 class PatcherNewerPatchelfError(PatcherError):
 
     fmt = (
-        '{elf_file!r} cannot be patched to function properly as a classic '
-        'snap: {message} with {patchelf_version!r}.\n'
+        '{elf_file!r} cannot be patched to function properly in a classic '
+        'confined snap: {message}.\n'
+        '{patchelf_version!r} may be too old. A newer version of patchelf '
+        'may be required.\n'
         'Try adding the `after: [patchelf]` and a `patchelf` part that would '
         'filter out files from prime `prime: [-*]` or '
         '`build-snaps: [patchelf/latest/edge]` to the failing part in your '

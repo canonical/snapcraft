@@ -273,8 +273,9 @@ def _retry_patch(f):
             # should eventually be removed once patchelf catches up.
             try:
                 elf_file_path = kwargs['elf_file_path']
-                logger.info('Failed to update {!r}. Retrying with '
-                            'different parameters.'.format(elf_file_path))
+                logger.info('Failed to update {!r}. Retrying after stripping '
+                            'the .note.go.buildid from the elf file.'.format(
+                                elf_file_path))
                 subprocess.check_call([
                     'strip', '--remove-section', '.note.go.buildid',
                     elf_file_path])
@@ -317,8 +318,8 @@ class Patcher:
         # We use the full path here as the path may not be set on
         # build systems where the path is recently created and added
         # to the environment
-        elif os.path.exists('/snap/bin/pathelf'):
-            self._patchelf_cmd = '/snap/bin/pathelf'
+        elif os.path.exists('/snap/bin/patchelf'):
+            self._patchelf_cmd = '/snap/bin/patchelf'
         elif common.is_snap():
             snap_dir = os.getenv('SNAP')
             self._patchelf_cmd = os.path.join(snap_dir, 'bin', 'patchelf')
