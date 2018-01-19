@@ -61,6 +61,7 @@ class PrimeTestCase(integration.TestCase):
                 'SNAPCRAFT_SETUP_CORE', '1'))
 
         self.run_snapcraft(['prime'], project_dir)
+
         bin_path = os.path.join(self.prime_dir, 'bin', 'hello-classic')
         self.assertThat(bin_path, FileExists())
 
@@ -69,6 +70,15 @@ class PrimeTestCase(integration.TestCase):
         expected_interpreter = r'^/snap/core/current/.*'
         self.assertThat(interpreter, MatchesRegex(expected_interpreter))
 
+        # We check stage to make sure the hard link is broken.
+        staged_bin_path = os.path.join(self.stage_dir, 'bin', 'hello-classic')
+        self.assertThat(staged_bin_path, FileExists())
+        
+        staged_interpreter = subprocess.check_output([
+            self.patchelf_command, '--print-interpreter',
+            staged_bin_path]).decode()
+        self.assertThat(staged_interpreter, MatchesRegex(r'^/lib.*'))
+        
     def test_prime_includes_stage_fileset(self):
         self.run_snapcraft('prime', 'prime-from-stage')
         self.assertThat(

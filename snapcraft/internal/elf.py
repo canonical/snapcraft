@@ -393,6 +393,8 @@ class Patcher:
                         elf_file=elf_file_path,
                         process_exception=call_error)
 
+            # We unlink to break the potential hard link
+            os.unlink(elf_file_path)
             shutil.copy2(temp_file.name, elf_file_path)
 
     def _get_rpath(self, elf_file) -> str:
