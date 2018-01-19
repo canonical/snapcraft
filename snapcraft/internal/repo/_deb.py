@@ -24,18 +24,16 @@ import stat
 import string
 import subprocess
 import sys
-import tarfile
 import urllib
 import urllib.request
 from typing import Dict, Set, List  # noqa
 
 import apt
-import debian.arfile
 from xml.etree import ElementTree
 
 import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal import cache, repo, common, os_release
+from snapcraft.internal import cache, repo, common, os_release, sources
 from snapcraft.internal.indicators import is_dumb_terminal
 from ._base import BaseRepo
 from . import errors
@@ -373,16 +371,8 @@ class Ubuntu(BaseRepo):
     def unpack(self, unpackdir):
         pkgs_abs_path = glob.glob(os.path.join(self._downloaddir, '*.deb'))
         for pkg in pkgs_abs_path:
-            # Importing DebFile causes LP: #1731478 when snapcraft is a snap
-            ar = debian.arfile.ArFile(pkg)
-            try:
-                data_member_name = [
-                    i for i in ar.getnames() if i.startswith('data.tar')][0]
-                data_member = ar.getmember(data_member_name)
-                with tarfile.open(fileobj=data_member) as f:
-                    f.extractall(unpackdir)
-            except OSError:
-                raise errors.UnpackError(pkg)
+            sources.Deb(None, None).provision(
+                unpackdir, src=pkg, clean_target=False, keep_deb=True)
         self.normalize(unpackdir)
 
     def _manifest_dep_names(self, apt_cache):
