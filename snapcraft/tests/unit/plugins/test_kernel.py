@@ -1002,6 +1002,22 @@ ACCEPT=n
                 'PATH={}:/usr/{}/bin'.format(os.environ.copy().get('PATH', ''),
                                              'aarch64-linux-gnu')]))
 
+    def test_override_cross_compile_empty(self):
+        project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
+        plugin = kernel.KernelPlugin('test-part', self.options,
+                                     project_options)
+        self.useFixture(fixtures.EnvironmentVariable('CROSS_COMPILE',
+                                                     ''))
+        plugin.enable_cross_compilation()
+
+        self.assertThat(
+            plugin.make_cmd,
+            Equals([
+                'make', '-j2', 'ARCH=arm64',
+                'CROSS_COMPILE=aarch64-linux-gnu-',
+                'PATH={}:/usr/{}/bin'.format(os.environ.copy().get('PATH', ''),
+                                             'aarch64-linux-gnu')]))
+
     def test_kernel_image_target_as_map(self):
         self.options.kernel_image_target = {'arm64': 'Image'}
         project_options = snapcraft.ProjectOptions(target_deb_arch='arm64')
