@@ -26,9 +26,9 @@ _SELECTOR_PATTERN = re.compile(r"""
 (?# start of the line
 \A
 (?# host arch)
-(?: on \s+ (?P<host>(?: \w+ )(?: , \s* (?: \w+ ))*) \s* )?
+(?: on \s+ (?P<host>(?: [^\s,]+ )(?: , \s* (?: \w+ ))*) \s* )?
 (?# optional target arch)
-(?: to \s+ (?P<target>(?: \w+ )(?: , \s* (?: \w+ ))*) \s* )?
+(?: to \s+ (?P<target>(?: [^\s,]+ )(?: , \s* (?: \w+ ))*) \s* )?
 (?#: end of the line)
 \Z""", re.X)
 _WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')

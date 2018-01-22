@@ -174,6 +174,20 @@ class ToStatementGrammarTestCase(GrammarTestCase):
             'target_arch': 'i386',
             'expected_packages': {'baz'}
         }),
+        ('with hyphen', {
+            'to': 'to other-arch',
+            'body': ['foo'],
+            'else_bodies': [],
+            'target_arch': 'armhf',
+            'expected_packages': set()
+        }),
+        ('multiple selectors', {
+            'to': 'to amd64,armhf',
+            'body': ['foo'],
+            'else_bodies': [],
+            'target_arch': 'armhf',
+            'expected_packages': set()
+        }),
         ('on amd64 to armhf', {
             'to': 'on amd64 to armhf',
             'body': ['foo'],
