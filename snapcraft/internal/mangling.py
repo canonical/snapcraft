@@ -61,7 +61,7 @@ def _get_dynamic_linker(library_list: List[str]) -> str:
     for library in library_list:
         m = regex.search(os.path.basename(library))
         if m:
-            return m.group('dynamic_linker')
+            return library
 
     raise RuntimeError(
         'The format for the linker should be of the form '
@@ -113,25 +113,25 @@ def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
                    'base. These are the GLIBC versions required by '
                    'the primed files that do not match and will be '
                    'patched:\n {}\n'
-                   'To work around this, the newer libc will be '
-                   'migrated into the snap, and these files will be '
-                   'patched to use it.'.format('\n'.join(formatted_list)))
+                   'For this to work, `libc6` will need to be explicitly '
+                   'added to `stage-packages` for this part. These files '
+                   'will be patched to use it.'.format(
+                       '\n'.join(formatted_list)))
     # We assume the current system will satisfy the GLIBC requirement,
     # get the current libc6 libraries (which includes the linker)
-    libc6_libraries = repo.Repo.get_package_libraries('libc6')
-    libc6_path = os.path.join('snap', 'libc6')
+    libc6_libraries_list = repo.Repo.get_package_libraries('libc6')
+
+    # For security reasons, we do not want to automatically pull in
+    # libraries but expect them to be consciously brought in by stage-packages
+    # instead.
+    libc6_libraries_paths = [os.path.join(root_path, l[1:])
+                             for l in libc6_libraries_list]
+
+    dynamic_linker = _get_dynamic_linker(libc6_libraries_paths)
 
     # Before doing anything else, verify there's a dynamic linker we can use.
     dynamic_linker_path = os.path.join(
-        snap_base_path, libc6_path, _get_dynamic_linker(libc6_libraries))
-
-    dest_dir = os.path.join(root_path, libc6_path)
-    os.makedirs(dest_dir, exist_ok=True)
-
-    for src in libc6_libraries:
-        dst = os.path.join(dest_dir, os.path.basename(src))
-        # follow_symlinks is set to True for elf crawling to work.
-        file_utils.link_or_copy(src, dst, follow_symlinks=True)
+        snap_base_path, dynamic_linker[1:])
 
     elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker_path,
                               root_path=root_path,

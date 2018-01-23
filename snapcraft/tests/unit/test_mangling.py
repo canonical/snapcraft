@@ -165,8 +165,6 @@ class HandleGlibcTestCase(unit.TestCase):
             snap_base_path='/snap/snap-name/current')
 
         self.get_packages_mock.assert_called_once_with('libc6')
-        self.assertThat(os.path.join(self.path, 'snap', 'libc6', 'ld-2.26.so'),
-                        FileExists())
         # Only fake_elf1 requires a newer libc6
         self.patch_mock.assert_called_once_with(
             elf_file=self.fake_elf['fake_elf-2.26'])

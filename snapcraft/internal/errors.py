@@ -454,6 +454,18 @@ class PatcherNewerPatchelfError(PatcherError):
                          patchelf_version=patchelf_version)
 
 
+class StagePackageMissingError(SnapcraftError):
+
+    fmt = (
+        '{package!r} is required as a `stage-packages` entry for this part to '
+        'work properly.\n'
+        'Add {package!r} as a stage-packages entry for this part.'
+    )
+
+    def __init__(self, *, package):
+        super().__init__(package=package)
+
+
 class MetadataExtractionError(SnapcraftError):
     pass
 
