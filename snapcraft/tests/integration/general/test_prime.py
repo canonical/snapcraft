@@ -73,12 +73,12 @@ class PrimeTestCase(integration.TestCase):
         # We check stage to make sure the hard link is broken.
         staged_bin_path = os.path.join(self.stage_dir, 'bin', 'hello-classic')
         self.assertThat(staged_bin_path, FileExists())
-        
+
         staged_interpreter = subprocess.check_output([
             self.patchelf_command, '--print-interpreter',
             staged_bin_path]).decode()
         self.assertThat(staged_interpreter, MatchesRegex(r'^/lib.*'))
-        
+
     def test_prime_includes_stage_fileset(self):
         self.run_snapcraft('prime', 'prime-from-stage')
         self.assertThat(
