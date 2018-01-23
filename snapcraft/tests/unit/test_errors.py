@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from subprocess import CalledProcessError
 
 from testtools.matchers import Equals
 
@@ -332,6 +333,30 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "Failed to extract metadata from 'test/path': "
                 "Extractor 'extractor' didn't return ExtractedMetadata as "
                 "expected.")}),
+        ('PatcherNewerPatchelfError', {
+            'exception': errors.PatcherNewerPatchelfError,
+            'kwargs': {'elf_file': 'test/path',
+                       'patchelf_version': 'patchelf 0.9',
+                       'process_exception': CalledProcessError(
+                           cmd=['patchelf'], returncode=-1)},
+            'expected_message': (
+                "'test/path' cannot be patched to function properly in a "
+                'classic confined snap: patchelf failed with exit code -1.\n'
+                "'patchelf 0.9' may be too old. A newer version of patchelf "
+                'may be required.\n'
+                'Try adding the `after: [patchelf]` and a `patchelf` part '
+                'that would filter out files from prime `prime: [-*]` or '
+                '`build-snaps: [patchelf/latest/edge]` to the failing part '
+                'in your `snapcraft.yaml` to use a newer patchelf.')}),
+        ('PatcherGenericError', {
+            'exception': errors.PatcherGenericError,
+            'kwargs': {'elf_file': 'test/path',
+                       'process_exception': CalledProcessError(
+                           cmd=['patchelf'], returncode=-1)},
+            'expected_message': (
+                "'test/path' cannot be patched to function properly in a "
+                'classic confined snap: patchelf failed with exit code -1'
+            )}),
     )
 
     def test_error_formatting(self):
