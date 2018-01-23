@@ -22,15 +22,7 @@ from .errors import (
     UnsatisfiedStatementError,
 )
 
-_SELECTOR_PATTERN = re.compile(r"""
-(?# start of the line
-\A
-(?# host arch)
-(?: on \s+ (?P<host>(?: [^\s,]+ )(?: , \s* (?: \w+ ))*) \s* )?
-(?# optional target arch)
-(?: to \s+ (?P<target>(?: [^\s,]+ )(?: , \s* (?: \w+ ))*) \s* )?
-(?#: end of the line)
-\Z""", re.X)
+_SELECTOR_PATTERN = re.compile(r'\Ato\s+([^,\s](?:,?[^,]+)*)\Z')
 _WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
 
 
@@ -70,17 +62,6 @@ class ToStatement:
         self._project_options = project_options
         self._checker = checker
         self._else_bodies = []
-        self._on_statement = None
-
-    def add_on(self, on_statement):
-        """Add a leading 'on' statement.
-
-        :param OnStatement on_statement: An OnStatement.
-
-        The 'on' statement will be evaluated first.
-        """
-
-        self._on_statement = on_statement
 
     def add_else(self, else_body):
         """Add an 'else' clause to the statement.
@@ -131,10 +112,6 @@ class ToStatement:
         :return str: True if the selectors match.
         """
 
-        # If there's an "on" statement, it must also match
-        if self._on_statement and not self._on_statement.matches():
-            return False
-
         target_arch = self._project_options.deb_arch
 
         # The only selector currently supported is the target arch. Since
@@ -154,20 +131,18 @@ def _extract_to_clause_selectors(to):
 
     :param str to: The 'to <selector>' part of the 'to' clause.
 
-    :return: Tuple of selectors found within a 'to' or 'on to' clause
+    :return: Selectors found within the 'to' clause.
     :rtype: set
 
     For example:
-    >>> _extract_to_clause_selectors('to amd64,i386') == ({'amd64', 'i386'})
+    >>> _extract_to_clause_selectors('to amd64,i386') == {'amd64', 'i386'}
     True
-    >>> _extract_to_clause_selectors('on amd64 to i386') == ({'i386'})
-    True
-    """  # noqa
+    """
 
     match = _SELECTOR_PATTERN.match(to)
 
     try:
-        selector_group = match.groupdict()['target']
+        selector_group = match.group(1)
     except AttributeError:
         raise ToStatementSyntaxError(to, message='selectors are missing')
     except IndexError:

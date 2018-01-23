@@ -24,15 +24,7 @@ from .errors import (
     UnsatisfiedStatementError,
 )
 
-_SELECTOR_PATTERN = re.compile(r"""
-(?# start of the line
-\A
-(?# host arch)
-(?: on \s+ (?P<host>(?: [^\s,]+ )(?: , \s* (?: \w+ ))*) \s* )?
-(?# optional target arch)
-(?: to \s+ (?P<target>(?: [^\s,]+ )(?: , \s* (?: \w+ ))*) \s* )?
-(?#: end of the line)
-\Z""", re.X)
+_SELECTOR_PATTERN = re.compile(r'\Aon\s+([^,\s](?:,?[^,]+)*)\Z')
 _WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
 
 
@@ -149,7 +141,7 @@ def _extract_on_clause_selectors(on):
     match = _SELECTOR_PATTERN.match(on)
 
     try:
-        selector_group = match.groupdict()['host']
+        selector_group = match.group(1)
     except AttributeError:
         raise OnStatementSyntaxError(on, message='selectors are missing')
     except IndexError:

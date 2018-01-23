@@ -18,8 +18,9 @@ import re
 
 from .errors import GrammarSyntaxError
 
+_ON_TO_CLAUSE_PATTERN = re.compile(r'(\Aon\s+\S+)\s+(to\s+\S+\Z)')
 _ON_CLAUSE_PATTERN = re.compile(r'\Aon\s+')
-_TO_CLAUSE_PATTERN = re.compile(r'(\Aon\s+\S+\s+|)to\s+')
+_TO_CLAUSE_PATTERN = re.compile(r'\Ato\s+')
 _TRY_CLAUSE_PATTERN = re.compile(r'\Atry\Z')
 _ELSE_CLAUSE_PATTERN = re.compile(r'\Aelse\Z')
 _ELSE_FAIL_PATTERN = re.compile(r'\Aelse\s+fail\Z')
@@ -81,6 +82,26 @@ def _parse_dict(section, statement, statements, project_options,
         if not isinstance(value, list):
             value = {value}
 
+        if _ON_TO_CLAUSE_PATTERN.match(key):
+            # We've come across the beginning of a compound statement
+            # with both 'on' and 'to'.
+            # Those will be split into separate statements.
+
+            on, to = _ON_TO_CLAUSE_PATTERN.match(key).groups()
+            key = on
+            value = [{to: value}]
+
+        if _ON_CLAUSE_PATTERN.match(key):
+            # We've come across the beginning of an 'on' statement.
+            # That means any previous statement we found is complete.
+            # The first time through this may be None, but the
+            # collection will ignore it.
+            statements.add(statement)
+
+            statement = OnStatement(
+                on=key, body=value, project_options=project_options,
+                checker=checker)
+
         if _TO_CLAUSE_PATTERN.match(key):
             # We've come across the beginning of a 'to' statement.
             # That means any previous statement we found is complete.
@@ -90,21 +111,6 @@ def _parse_dict(section, statement, statements, project_options,
 
             statement = ToStatement(
                 to=key, body=value, project_options=project_options,
-                checker=checker)
-            if _ON_CLAUSE_PATTERN.match(key):
-                statement.add_on(OnStatement(
-                    on=key, body=value, project_options=project_options,
-                    checker=checker))
-
-        elif _ON_CLAUSE_PATTERN.match(key):
-            # We've come across the beginning of an 'on' statement.
-            # That means any previous statement we found is complete.
-            # The first time through this may be None, but the
-            # collection will ignore it.
-            statements.add(statement)
-
-            statement = OnStatement(
-                on=key, body=value, project_options=project_options,
                 checker=checker)
 
         if _TRY_CLAUSE_PATTERN.match(key):

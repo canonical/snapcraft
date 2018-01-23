@@ -21,7 +21,6 @@ from unittest.mock import patch
 
 import snapcraft
 from snapcraft.internal.project_loader import grammar
-import snapcraft.internal.project_loader.grammar._on as on
 import snapcraft.internal.project_loader.grammar._to as to
 
 from . import GrammarTestCase
@@ -188,22 +187,6 @@ class ToStatementGrammarTestCase(GrammarTestCase):
             'target_arch': 'armhf',
             'expected_packages': set()
         }),
-        ('on amd64 to armhf', {
-            'to': 'on amd64 to armhf',
-            'body': ['foo'],
-            'else_bodies': [],
-            'target_arch': 'armhf',
-            'expected_packages': {'foo:armhf'}
-        }),
-        ('on i386 to armhf, used else', {
-            'to': 'on i386 to armhf',
-            'body': ['foo'],
-            'else_bodies': [
-                ['bar']
-            ],
-            'target_arch': 'armhf',
-            'expected_packages': {'bar'}
-        }),
     ]
 
     @patch('platform.architecture')
@@ -216,10 +199,6 @@ class ToStatementGrammarTestCase(GrammarTestCase):
         statement = to.ToStatement(
             to=self.to, body=self.body, project_options=options,
             checker=self.checker)
-        if 'on' in self.to:
-            statement.add_on(on.OnStatement(
-                on=self.to, body=self.body, project_options=options,
-                checker=self.checker))
 
         for else_body in self.else_bodies:
             statement.add_else(else_body)
