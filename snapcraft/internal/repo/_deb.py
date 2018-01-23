@@ -33,7 +33,7 @@ from xml.etree import ElementTree
 
 import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal import cache, repo, common, os_release
+from snapcraft.internal import cache, repo, common, os_release, sources
 from snapcraft.internal.indicators import is_dumb_terminal
 from ._base import BaseRepo
 from . import errors
@@ -371,12 +371,8 @@ class Ubuntu(BaseRepo):
     def unpack(self, unpackdir):
         pkgs_abs_path = glob.glob(os.path.join(self._downloaddir, '*.deb'))
         for pkg in pkgs_abs_path:
-            # TODO needs elegance and error control
-            try:
-                subprocess.check_call(
-                    ['dpkg-deb', '--extract', pkg, unpackdir])
-            except subprocess.CalledProcessError:
-                raise errors.UnpackError(pkg)
+            sources.Deb(None, None).provision(
+                unpackdir, src=pkg, clean_target=False, keep_deb=True)
         self.normalize(unpackdir)
 
     def _manifest_dep_names(self, apt_cache):

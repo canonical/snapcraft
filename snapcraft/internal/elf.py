@@ -19,11 +19,9 @@ import logging
 import os
 import re
 import subprocess
-import sys
-from functools import lru_cache, wraps
-from typing import FrozenSet, List, Set, Sequence
+from functools import wraps
+from typing import FrozenSet, List, Set, Sequence, Tuple
 
-import magic
 from pkg_resources import parse_version
 
 from snapcraft.internal import (
@@ -86,7 +84,7 @@ def _crawl_for_path(*, soname: str, root_path: str,
             for file_name in files:
                 if file_name == soname:
                     file_path = os.path.join(root, file_name)
-                    if _is_dynamically_linked_elf(_get_magic(file_path)):
+                    if ElfFile.is_elf(file_path):
                         return file_path
     return None
 
@@ -94,44 +92,86 @@ def _crawl_for_path(*, soname: str, root_path: str,
 class ElfFile:
     """ElfFile represents and elf file on a path and its attributes."""
 
-    def __init__(self, *, path: str, magic: str) -> None:
+    @classmethod
+    def is_elf(cls, path: str) -> bool:
+        with open(path, 'rb') as bin_file:
+            return bin_file.read(4) == b'\x7fELF'
+
+    def __init__(self, *, path: str) -> None:
         """Initialize an ElfFile instance.
 
         :param str path: path to an elf_file within a snapcraft project.
-        :param str magic: the magic string for path.
         """
         self.path = path
-        self.is_executable = 'interpreter' in magic
         self.dependencies = set()  # type: Set[Library]
-        self.symbols = self._get_symbols(path)  # type: List[Symbol]
+        self._type, self.symbols = self._extract_readelf(path)
 
-    def _get_symbols(self, path) -> List[Symbol]:
+    def is_executable(self):
+        return self._type == 'EXEC'
+
+    def is_shared_object(self):
+        return self._type == 'DYN'
+
+    def _extract_readelf(self, path) -> Tuple[str, List[Symbol]]:
+        file_type = str()
         symbols = list()  # type: List[Symbol]
-        symbols_section = subprocess.check_output([
-            'readelf', '--wide', '--dyn-syms', path]).decode()
+        output = subprocess.check_output([
+            'readelf', '--wide', '--file-header', '--dyn-syms', path])
+        readelf_lines = output.decode().split('\n')
         # Regex inspired by the regex in lintian to match entries similar to
         # number '1' from the following sample output
+        # ELF Header:
+        #  Magic:   7f 45 4c 46 02 01 01 00 00 00 00 00 00 00 00 00
+        #  Class:                             ELF64
+        #  Data:                              2's complement, little endian
+        #  Version:                           1 (current)
+        #  OS/ABI:                            UNIX - System V
+        #  ABI Version:                       0
+        #  Type:                              EXEC (Executable file)
+        #  Machine:                           Advanced Micro Devices X86-64
+        #  Version:                           0x1
+        #  Entry point address:               0x422270
+        #  Start of program headers:          64 (bytes into file)
+        #  Start of section headers:          1097096 (bytes into file)
+        #  Flags:                             0x0
+        #  Size of this header:               64 (bytes)
+        #  Size of program headers:           56 (bytes)
+        #  Number of program headers:         9
+        #  Size of section headers:           64 (bytes)
+        #  Number of section headers:         30
+        #  Section header string table index: 29
         #
         # Symbol table '.dynsym' contains 2281 entries:
         #   Num:    Value          Size Type    Bind   Vis      Ndx Name
         #     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
         #     1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND endgrent@GLIBC_2.2.5 (2)  # noqa
+        type_match = r'^\s+Type:\s+(?P<type>\w+) \(.*\)\Z'
+        type_regex = re.compile(type_match)
         symbol_match = (r'^\s+\d+:\s+[0-9a-f]+\s+\d+\s+\S+\s+\S+\s+\S+\s+'
                         r'(?P<section>\S+)\s+(?P<symbol>\S+).*\Z')
-        regex = re.compile(symbol_match)
-        for line in symbols_section.split('\n'):
-            m = regex.search(line)
-            if m:
-                section = m.group('section')
-                symbol = m.group('symbol')
-                try:
-                    name, version = symbol.split('@')
-                except ValueError:
-                    name = symbol
-                    version = ''
-                symbols.append(Symbol(name=name, version=version,
-                                      section=section))
-        return symbols
+        symbol_regex = re.compile(symbol_match)
+        in_symbols_section = False
+        for line in readelf_lines:
+            if line.startswith("Symbol table '.dynsym'"):
+                in_symbols_section = True
+            if in_symbols_section:
+                m = symbol_regex.search(line)
+                if m:
+                    section = m.group('section')
+                    symbol = m.group('symbol')
+                    try:
+                        name, version = symbol.split('@')
+                    except ValueError:
+                        name = symbol
+                        version = ''
+                    symbols.append(Symbol(name=name, version=version,
+                                          section=section))
+            else:
+                m = type_regex.match(line)
+                if m:
+                    file_type = m.group('type')
+
+        return file_type, symbols
 
     def is_linker_compatible(self, *, linker: str) -> bool:
         """Determines if linker will work given the required glibc version.
@@ -281,7 +321,8 @@ class Patcher:
         :raises snapcraft.internal.errors.PatcherError:
             raised when the elf_file cannot be patched.
         """
-        if elf_file.is_executable:
+        # If it has dynamic symbols it has a dynamic loader
+        if elf_file.symbols:
             self._patch_interpreter(elf_file)
         if elf_file.dependencies:
             self._patch_rpath(elf_file)
@@ -411,18 +452,6 @@ def _get_system_libs() -> FrozenSet[str]:
     return _libraries
 
 
-@lru_cache()
-def _get_magic(path: str) -> str:
-    ms = magic.open(magic.NONE)
-    if ms.load() != 0:
-        raise RuntimeError('Cannot load magic header detection')
-
-    fs_encoding = sys.getfilesystemencoding()
-    path_b = path.encode(
-        fs_encoding, errors='surrogateescape')  # type: bytes
-    return ms.file(path_b)
-
-
 def _is_dynamically_linked_elf(file_m: str) -> bool:
     return file_m.startswith('ELF') and 'dynamically linked' in file_m
 
@@ -449,8 +478,10 @@ def get_elf_files(root: str,
                 path))
             continue
         # Finally, make sure this is actually an ELF file
-        file_m = _get_magic(path)
-        if _is_dynamically_linked_elf(file_m):
-            elf_files.add(ElfFile(path=path, magic=file_m))
+        if ElfFile.is_elf(path):
+            elf_file = ElfFile(path=path)
+            # if we have dyn symbols we are dynamic
+            if elf_file.symbols:
+                elf_files.add(ElfFile(path=path))
 
     return frozenset(elf_files)

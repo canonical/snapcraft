@@ -18,11 +18,10 @@ import os
 import textwrap
 from unittest.mock import patch
 
-import fixtures
 from testtools.matchers import FileContains, FileExists, Not
 
-from snapcraft.internal import elf, mangling
-from snapcraft.tests import unit
+from snapcraft.internal import mangling
+from snapcraft.tests import unit, fixture_setup
 
 
 def _create_file(filename, contents):
@@ -110,39 +109,6 @@ class ManglingPythonShebangTestCase(unit.TestCase):
         """)))
 
 
-class FakeElf(fixtures.Fixture):
-
-    def __init__(self, *, root_path):
-        super().__init__()
-
-        self.root_path = root_path
-
-    def _setUp(self):
-        super()._setUp()
-
-        readelf_path = os.path.abspath(os.path.join(
-            __file__, '..', '..', 'bin', 'readelf'))
-        current_path = os.environ.get('PATH')
-        new_path = '{}:{}'.format(readelf_path, current_path)
-        self.useFixture(fixtures.EnvironmentVariable('PATH', new_path))
-
-        stub_magic = ('ELF 64-bit LSB executable, x86-64, version 1 (SYSV), '
-                      'dynamically linked, interpreter '
-                      '/lib64/ld-linux-x86-64.so.2, for GNU/Linux 2.6.32')
-
-        self.elf_files = [
-            elf.ElfFile(path=os.path.join(self.root_path, 'fake_elf-2.26'),
-                        magic=stub_magic),
-            elf.ElfFile(path=os.path.join(self.root_path, 'fake_elf-2.23'),
-                        magic=stub_magic),
-            elf.ElfFile(path=os.path.join(self.root_path, 'fake_elf-1.1'),
-                        magic=stub_magic),
-        ]
-
-        for elf_file in self.elf_files:
-            open(elf_file.path, 'w').close()
-
-
 # This is just a subset
 _LIBC6_LIBRARIES = [
     'ld-2.26.so',
@@ -182,12 +148,18 @@ class HandleGlibcTestCase(unit.TestCase):
         self.get_packages_mock.return_value = self._setup_libc6()
         self.addCleanup(patcher.stop)
 
-        self.fake_elf = FakeElf(root_path=self.path)
+        self.fake_elf = fixture_setup.FakeElf(root_path=self.path)
         self.useFixture(self.fake_elf)
 
     def test_glibc_mangling(self):
+        elf_files = [
+            self.fake_elf['fake_elf-2.26'],
+            self.fake_elf['fake_elf-2.23'],
+            self.fake_elf['fake_elf-1.1'],
+        ]
+
         mangling.handle_glibc_mismatch(
-            elf_files=self.fake_elf.elf_files,
+            elf_files=elf_files,
             root_path=self.path,
             core_base_path='/snap/core/current',
             snap_base_path='/snap/snap-name/current')
@@ -197,12 +169,16 @@ class HandleGlibcTestCase(unit.TestCase):
                         FileExists())
         # Only fake_elf1 requires a newer libc6
         self.patch_mock.assert_called_once_with(
-            elf_file=self.fake_elf.elf_files[0])
+            elf_file=self.fake_elf['fake_elf-2.26'])
 
     def test_nothing_to_patch(self):
+        elf_files = [
+            self.fake_elf['fake_elf-2.23'],
+            self.fake_elf['fake_elf-1.1'],
+        ]
+
         mangling.handle_glibc_mismatch(
-            # Pass part of the slice without fake_elf-2.26
-            elf_files=self.fake_elf.elf_files[1:],
+            elf_files=elf_files,
             root_path=self.path,
             core_base_path='/snap/core/current',
             snap_base_path='/snap/snap-name/current')
@@ -214,10 +190,15 @@ class HandleGlibcTestCase(unit.TestCase):
 
     def test_bad_dynamic_linker_in_libc6_package(self):
         self.get_packages_mock.return_value = {'/usr/lib/dyn-linker-2.25.so'}
+        elf_files = [
+            self.fake_elf['fake_elf-2.26'],
+            self.fake_elf['fake_elf-2.23'],
+            self.fake_elf['fake_elf-1.1'],
+        ]
 
         self.assertRaises(RuntimeError,
                           mangling.handle_glibc_mismatch,
-                          elf_files=self.fake_elf.elf_files,
+                          elf_files=elf_files,
                           root_path=self.path,
                           core_base_path='/snap/core/current',
                           snap_base_path='/snap/snap-name/current')

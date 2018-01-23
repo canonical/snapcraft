@@ -1,0 +1,31 @@
+#!/usr/bin/env python3
+import os
+import sys
+
+_LDD_OUT = {
+    'default': [
+        'foo.so.1 => /lib/foo.so.1 (0xdead)',
+        'bar.so.2 => /usr/lib/bar.so.2 (0xbeef)',
+        '/lib/baz.so.2 (0x1234)'
+    ],
+    'fake_elf-with-core-libs': [
+        'foo.so.1 => /lib/foo.so.1 (0xdead)',
+        'bar.so.2 => /usr/lib/bar.so.2 (0xbeef)',
+        'barsnap.so.2 => {CORE_PATH}/barsnap.so.2 (0xbeef)',
+        '/lib/baz.so.2 (0x1234)',
+    ],
+}
+
+
+def main():
+    basename = os.path.basename(sys.argv[-1])
+    if basename == 'fake_elf-bad-ldd':
+        sys.exit(1)
+    lines = _LDD_OUT.get(basename, _LDD_OUT['default'])
+    output = '\t' + '\n\t'.join(lines) + '\n'
+    print(output)
+    sys.exit(0)
+
+
+if __name__ == '__main__':
+    main()
