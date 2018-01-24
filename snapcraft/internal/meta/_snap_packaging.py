@@ -73,6 +73,17 @@ _OPTIONAL_PACKAGE_KEYS = [
 ]
 
 
+class OctInt(int):
+    """An int represented in octal form."""
+
+
+def oct_int_representer(dumper, data):
+    return yaml.ScalarNode('tag:yaml.org,2002:int', '{:04o}'.format(data))
+
+
+yaml.add_representer(OctInt, oct_int_representer)
+
+
 def create_snap_packaging(
         config_data: Dict[str, Any],
         parts_config: project_loader.PartsConfig,
@@ -400,6 +411,7 @@ class _SnapPackaging:
         if 'apps' in self._config_data:
             _verify_app_paths(basedir='prime', apps=self._config_data['apps'])
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
+            snap_yaml['apps'] = self._render_socket_modes(snap_yaml['apps'])
 
         return snap_yaml
 
@@ -515,6 +527,15 @@ class _SnapPackaging:
                 snap_name=self._config_data['name'], prime_dir=self._prime_dir)
             desktop_file.parse_and_reformat()
             desktop_file.write(gui_dir=os.path.join(self.meta_dir, 'gui'))
+
+    def _render_socket_modes(self, apps):
+        for app in apps.values():
+            sockets = app.get('sockets', {})
+            for socket in sockets.values():
+                mode = socket.get('socket-mode')
+                if mode is not None:
+                    socket['socket-mode'] = OctInt(mode)
+        return apps
 
 
 def _find_bin(binary, basedir):
