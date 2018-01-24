@@ -357,6 +357,15 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "'test/path' cannot be patched to function properly in a "
                 'classic confined snap: patchelf failed with exit code -1'
             )}),
+        ('StagePackageMissingError', {
+            'exception': errors.StagePackageMissingError,
+            'kwargs': {'package': 'libc6'},
+            'expected_message': (
+                "'libc6' is required as a `stage-packages` entry for this "
+                "part to work properly.\nAdd 'libc6' as a `stage-packages` "
+                "entry for this part."
+            )
+        }),
     )
 
     def test_error_formatting(self):

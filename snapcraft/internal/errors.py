@@ -459,7 +459,7 @@ class StagePackageMissingError(SnapcraftError):
     fmt = (
         '{package!r} is required as a `stage-packages` entry for this part to '
         'work properly.\n'
-        'Add {package!r} as a stage-packages entry for this part.'
+        'Add {package!r} as a `stage-packages` entry for this part.'
     )
 
     def __init__(self, *, package):
