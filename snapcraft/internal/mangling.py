@@ -76,6 +76,8 @@ def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
     """Copy over libc6 libraries from the host and patch necessary elf files.
 
     If no newer glibc version is detected in elf_files, this function returns.
+    The dynamic linker and related libraries to libc6 are expected to be found
+    in root_path.
 
     :param snapcraft.internal.elf.ElfFile elf_files:
         set of candidate elf files to patch if a newer libc6 is required.
@@ -112,11 +114,7 @@ def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
                    'files and the linker version (2.23) used in the '
                    'base. These are the GLIBC versions required by '
                    'the primed files that do not match and will be '
-                   'patched:\n {}\n'
-                   'For this to work, `libc6` will need to be explicitly '
-                   'added to `stage-packages` for this part. These files '
-                   'will be patched to use it.'.format(
-                       '\n'.join(formatted_list)))
+                   'patched:\n {}\n'.format('\n'.join(formatted_list)))
     # We assume the current system will satisfy the GLIBC requirement,
     # get the current libc6 libraries (which includes the linker)
     libc6_libraries_list = repo.Repo.get_package_libraries('libc6')
