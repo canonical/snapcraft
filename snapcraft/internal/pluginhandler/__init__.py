@@ -564,7 +564,7 @@ class PluginHandler:
         linker_compatible = (e.is_linker_compatible(linker='ld-2.23.so')
                              for e in elf_files)
         if not all((x for x in linker_compatible)):
-            if 'libc6' not in self.stage_packages:
+            if 'libc6' not in self._part_properties.get('stage-packages', []):
                 raise errors.StagePackageMissingError(package='libc6')
 
             handle_glibc_mismatch(elf_files=elf_files,
