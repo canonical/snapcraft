@@ -193,7 +193,7 @@ class BuildPackageGrammarTestCase(integration.TestCase):
         self.assertThat(self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft,
             ['pull']).output, Contains(
-                "Unable to satisfy 'to i386', failure forced"))
+                "Unable to satisfy 'on i386', failure forced"))
 
     def test_global_build_package_to_other_arch_else(self):
         """Test that grammar works in global build packages as well."""
