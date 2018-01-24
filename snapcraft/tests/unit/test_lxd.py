@@ -32,9 +32,11 @@ from testtools.matchers import Contains, Equals
 from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
 from snapcraft.internal.errors import (
-    ContainerError,
     ContainerConnectionError,
     ContainerRunError,
+    MultipassNotInstalledError,
+    MultipassSetupError,
+    MultipassNetworkBridgeError,
     SnapdError,
     SnapcraftEnvironmentError,
 )
@@ -736,7 +738,7 @@ class MultipassTestCase(LXDBaseTestCase):
         self.assertIn(
             'Multipass is not installed',
             str(self.assertRaises(
-                ContainerError,
+                MultipassNotInstalledError,
                 self.make_containerbuild)))
 
     def test_start_failed(self):
@@ -752,7 +754,7 @@ class MultipassTestCase(LXDBaseTestCase):
         self.assertIn(
             'Failed to setup multipass remote',
             str(self.assertRaises(
-                ContainerError,
+                MultipassSetupError,
                 self.make_containerbuild)))
 
     def test_lxd_not_installed(self):
@@ -826,7 +828,7 @@ class MultipassTestCase(LXDBaseTestCase):
         self.assertIn(
             'Failed to setup LXD bridge',
             str(self.assertRaises(
-                ContainerError,
+                MultipassNetworkBridgeError,
                 self.make_containerbuild)))
 
     def test_lxd_configured(self):

@@ -38,6 +38,9 @@ from snapcraft.internal.errors import (
         ContainerError,
         ContainerRunError,
         ContainerSnapcraftCmdError,
+        MultipassNotInstalledError,
+        MultipassSetupError,
+        MultipassNetworkBridgeError,
         SnapdError,
 )
 from snapcraft._options import _get_deb_arch
@@ -81,24 +84,24 @@ class Containerbuild:
 
     def _setup_multipass_remote(self):
         try:
-            containers = subprocess.check_output([
-                'multipass', 'list']).decode()
-            # Trailing space to disambiguate names starting with snapcraft
-            if 'snapcraft ' not in containers:
+            subprocess.check_output(['multipass', 'info', 'snapcraft'])
+            try:
+                subprocess.check_call([
+                    'multipass', 'start', 'snapcraft'])
+                self._setup_lxd()
+            except subprocess.CalledProcessError as e:
+                raise MultipassSetupError(e.cmd)
+        except FileNotFoundError:
+            raise MultipassNotInstalledError()
+        except subprocess.CalledProcessError as e:
+            # Instance doesn't exist
+            try:
                 subprocess.check_call([
                     'multipass', 'launch', '--name=snapcraft', '--disk', '10G',
-                    ])
-            subprocess.check_call([
-                'multipass', 'start', 'snapcraft'])
-            self._setup_lxd()
-        except FileNotFoundError:
-            raise ContainerError(
-                'Multipass is not installed.\n'
-                'Run "sudo snap install multipass --beta --classic".')
-        except subprocess.CalledProcessError as e:
-            raise ContainerError(
-                'Failed to setup multipass remote: {!r}'.format(
-                    ' '.join(e.cmd)))
+                ])
+                self._setup_lxd()
+            except subprocess.CalledProcessError as e:
+                raise MultipassSetupError(e.cmd)
 
     def _setup_lxd(self):
         if 'lxd' not in self._multipass_exec(['snap', 'list']).decode():
@@ -148,7 +151,7 @@ class Containerbuild:
                 pass
             retry_count -= 1
             if retry_count == 0:
-                raise ContainerError('Failed to setup LXD bridge')
+                raise MultipassNetworkBridgeError()
 
         logger.debug('Adding multipass LXD remote')
         subprocess.check_call([

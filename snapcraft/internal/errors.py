@@ -153,6 +153,24 @@ class ContainerSnapcraftCmdError(ContainerRunError):
         super().__init__(command=command, exit_code=exit_code)
 
 
+class MultipassNotInstalledError(SnapcraftError):
+    fmt = (
+           'Multipass is not installed.\n'
+           'Run "sudo snap install multipass --beta --classic".'
+    )
+
+
+class MultipassSetupError(SnapcraftError):
+    fmt = 'Failed to setup multipass remote: {cmd}'
+
+    def __init__(self, cmd):
+        super().__init__(cmd=' '.join(cmd))
+
+
+class MultipassNetworkBridgeError(SnapcraftError):
+    fmt = 'Failed to setup LXD bridge'
+
+
 class SnapdError(SnapcraftError):
     # FIXME this exception is too generic.
     # https://bugs.launchpad.net/snapcraft/+bug/1734235
