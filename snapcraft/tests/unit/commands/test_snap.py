@@ -163,6 +163,47 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         ])
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @mock.patch('os.pipe')
+    @mock.patch('os.geteuid')
+    def test_snap_multipass(self,
+                            mock_geteuid,
+                            mock_pipe,
+                            mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        mock_pipe.return_value = (9, 9)
+        mock_geteuid.return_value = 1234
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        fake_filesystem = fixture_setup.FakeFilesystem()
+        self.useFixture(fake_filesystem)
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_CONTAINER_BUILDS', 'multipass'))
+        self.useFixture(
+            fixtures.EnvironmentVariable('USER', 'user'))
+
+        def call_effect(*args, **kwargs):
+            if args[0][-3:] == ['multipass', 'info', 'snapcraft']:
+                return 'IPv4: 1.2.3.4'.encode()
+            elif args[0][-2:] == ['ifconfig', 'lxdbr0']:
+                return 'inet addr:10.10.10.1'.encode()
+            return d(*args, **kwargs)
+
+        d = fake_lxd.check_output_mock.side_effect
+        fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.make_snapcraft_yaml()
+
+        result = self.run_command(['--debug', 'snap'])
+
+        self.assertThat(result.exit_code, Equals(0))
+
+        self.assertThat(fake_logger.output, Contains(
+            "Using a VM instance because "
+            "SNAPCRAFT_CONTAINER_BUILDS is set to 'multipass'"))
+
+    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('shutil.rmtree')
     @mock.patch('os.makedirs')
     @mock.patch('snapcraft.internal.lxd.open')
