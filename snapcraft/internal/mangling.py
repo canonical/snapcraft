@@ -129,7 +129,7 @@ def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
 
     # Before doing anything else, verify there's a dynamic linker we can use.
     dynamic_linker_path = os.path.join(
-        snap_base_path, dynamic_linker[1:])
+        snap_base_path, dynamic_linker[len(root_path)+1:])
 
     elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker_path,
                               root_path=root_path,
