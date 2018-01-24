@@ -114,7 +114,7 @@ def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
                    'files and the linker version (2.23) used in the '
                    'base. These are the GLIBC versions required by '
                    'the primed files that do not match and will be '
-                   'patched:\n {}\n'.format('\n'.join(formatted_list)))
+                   'patched:\n{}\n'.format('\n'.join(formatted_list)))
     # We assume the current system will satisfy the GLIBC requirement,
     # get the current libc6 libraries (which includes the linker)
     libc6_libraries_list = repo.Repo.get_package_libraries('libc6')
