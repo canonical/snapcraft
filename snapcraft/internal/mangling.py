@@ -127,7 +127,10 @@ def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
 
     dynamic_linker = _get_dynamic_linker(libc6_libraries_paths)
 
-    # Before doing anything else, verify there's a dynamic linker we can use.
+    # Get the path to the "would be" dynamic linker when this snap is
+    # installed. Strip the root_path from the retrieved dynamic_linker
+    # variables + the leading `/` so that os.path.join can perform the
+    # proper join with snap_base_path.
     dynamic_linker_path = os.path.join(
         snap_base_path, dynamic_linker[len(root_path)+1:])
 
