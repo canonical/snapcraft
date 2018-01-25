@@ -361,8 +361,8 @@ class ErrorFormattingTestCase(unit.TestCase):
             'exception': errors.StagePackageMissingError,
             'kwargs': {'package': 'libc6'},
             'expected_message': (
-                "'libc6' is required as a `stage-packages` entry for this "
-                "part to work properly.\nAdd 'libc6' as a `stage-packages` "
+                "'libc6' is required inside the snap for this "
+                "part to work properly.\nAdd it as a `stage-packages` "
                 "entry for this part."
             )
         }),
