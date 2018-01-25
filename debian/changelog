@@ -1,3 +1,64 @@
+snapcraft (2.39) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * tests: fix broken rust test snap (#1838)
+  * docker: instructions to build from the snap (#1840)
+  * cli: implement help <command> (#1845)
+  * elf: warn if primed files will not work with the base's linker (#1843)
+  * setup: simplify bin/snapcraft and correct tests (#1860)
+  * pluginhandler: patch and handle elf files on glibc mismatch
+  * tests: split more tests and and add an invisible ticker for travis
+  * tests: call file directly for the HasArchitecture checker (#1868)
+  * kernel plugin: remove dependency on magic (#1867)
+  * elf: remove dependency on magic (#1870)
+  * elf: cleaner patchelf experience (#1873)
+  * Revert "meta: create XDG_RUNTIME_DIR in wrappers. (#1818)" (#1883)
+  * elf: better handling for newer libc6 (#1881)
+  [ Paolo Pisati ]
+  * kernel plugin: update initrd.img-core path to boot/initrd.img (#1839)
+  * kbuild plugin: pick up CROSS_COMPILE only if not empty (#1874)
+  * New upstream release (LP: #1745488)
+
+  [ Kyle Fazzari ]
+  * cli: add expiration option to export-login (#1831)
+  * zip: support extracting non-unix zip files (#1862)
+  * cli: exported login should only be readable by owner (#1869)
+
+  [ Leo Arias ]
+  * extractors: also support appdata.xml appstream files. (#1861)
+  * extractors: support appstream icon and desktop (#1853)
+
+  [ Christian Dywan ]
+  * lxd: change "Terminating" message to debug level (#1842)
+  * lxd: use user in container when mounting remote via sshfs (#1847)
+  * remote_parts: Use hashed folder based on parts URI (#1856)
+  * grammar: to statement (#1639)
+  * grammar: make on statement use host architecture (#1857)
+  * repo: use debian.arfile instead of dpkg-deb (#1878)
+  * lxd: always (re-)injects snaps if necessary (#1865)
+
+  [ Alberto Donato ]
+  * schema: add options to configure applications socket activation (#1617)
+
+  [ Herman Yanush ]
+  * cli: humanize push message (#1833)
+
+  [ Konrad Krawiec ]
+  * cmake plugin: update plugin help (#1832)
+  * storeapi: add docstrings for _snap_index_client.py (#1855)
+
+  [ Marcin Mikołajczak ]
+  * static tests: add type hint for cli/assertions.py module (#1811)
+
+  [ Alan Pope ]
+  * README: remove rocketchat link (#1854)
+
+  [ Daniel Lim Wee Soong ]
+  * storeapi: add docstrings to _client (#1851)
+  * tests: add snap not found tests (#1849)
+
+ -- Sergio Schvezov <sergio.schvezov@canonical.com>  Thu, 25 Jan 2018 21:40:43 +0000
+
 snapcraft (2.38) xenial; urgency=medium
 
   [ Sergio Schvezov ]
