@@ -46,8 +46,7 @@ class OsRelease:
                     if len(entry) == 2:
                         self._os_release[entry[0]] = entry[1].strip('"')
         except FileNotFoundError:
-            self._os_release['ID'] = 'unknown'
-            self._os_release['NAME'] = 'unknown'
+            pass
 
     def id(self) -> str:
         """Return the OS ID
