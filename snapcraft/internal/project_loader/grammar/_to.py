@@ -61,7 +61,19 @@ class ToStatement:
         self._body = body
         self._project_options = project_options
         self._checker = checker
+        self._prerequisites = []
         self._else_bodies = []
+
+    def add_prerequisite(self, prerequisite):
+        """Add a prerequisite statement that has to match.
+
+        :param object prerequisite: A prerequisite statement.
+
+        Prerequisite statements have to match in addition to this statement
+        for the purposes of an 'else' or 'else fail' clause.
+        """
+
+        self._prerequisites.append(prerequisite)
 
     def add_else(self, else_body):
         """Add an 'else' clause to the statement.
@@ -97,6 +109,11 @@ class ToStatement:
             for else_body in self._else_bodies:
                 if not else_body:
                     # Handle the 'else fail' case.
+                    # Find the prerequisite that failed (if any)
+                    for prerequisite in self._prerequisites:
+                        if not prerequisite.matches():
+                            raise UnsatisfiedStatementError(prerequisite)
+                    # The failure is in this statement
                     raise UnsatisfiedStatementError(self)
 
                 primitives = process_grammar(
@@ -111,6 +128,11 @@ class ToStatement:
 
         :return str: True if the selectors match.
         """
+
+        # All prerequisites (if any) have to match
+        for prerequisite in self._prerequisites:
+            if not prerequisite.matches():
+                return False
 
         target_arch = self._project_options.deb_arch
 

@@ -179,7 +179,7 @@ class BuildPackageGrammarTestCase(integration.TestCase):
             ['pull']).output, Contains(
                 "Unable to satisfy 'to other-arch', failure forced"))
 
-    def test_on_to_other_arch_else_fail(self):
+    def test_on_to_other_arch_else_fail_on(self):
         """Test that 'on to' fails with an error if it hits an 'else fail'."""
 
         self.construct_yaml(parts=dedent('''\
@@ -194,6 +194,22 @@ class BuildPackageGrammarTestCase(integration.TestCase):
             subprocess.CalledProcessError, self.run_snapcraft,
             ['pull']).output, Contains(
                 "Unable to satisfy 'on i386', failure forced"))
+
+    def test_on_to_other_arch_else_fail_to(self):
+        """Test that 'on to' fails with an error if it hits an 'else fail'."""
+
+        self.construct_yaml(parts=dedent('''\
+            my-part:
+              plugin: nil
+              build-packages:
+              - on amd64 to other-arch:
+                - foo
+              - else fail
+            '''))
+        self.assertThat(self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft,
+            ['pull']).output, Contains(
+                "Unable to satisfy 'to other-arch', failure forced"))
 
     def test_global_build_package_to_other_arch_else(self):
         """Test that grammar works in global build packages as well."""
