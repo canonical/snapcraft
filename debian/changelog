@@ -14,9 +14,6 @@ snapcraft (2.39) xenial; urgency=medium
   * elf: cleaner patchelf experience (#1873)
   * Revert "meta: create XDG_RUNTIME_DIR in wrappers. (#1818)" (#1883)
   * elf: better handling for newer libc6 (#1881)
-  [ Paolo Pisati ]
-  * kernel plugin: update initrd.img-core path to boot/initrd.img (#1839)
-  * kbuild plugin: pick up CROSS_COMPILE only if not empty (#1874)
   * New upstream release (LP: #1745488)
 
   [ Kyle Fazzari ]
@@ -36,6 +33,10 @@ snapcraft (2.39) xenial; urgency=medium
   * grammar: make on statement use host architecture (#1857)
   * repo: use debian.arfile instead of dpkg-deb (#1878)
   * lxd: always (re-)injects snaps if necessary (#1865)
+
+  [ Paolo Pisati ]
+  * kernel plugin: update initrd.img-core path to boot/initrd.img (#1839)
+  * kbuild plugin: pick up CROSS_COMPILE only if not empty (#1874)
 
   [ Alberto Donato ]
   * schema: add options to configure applications socket activation (#1617)
