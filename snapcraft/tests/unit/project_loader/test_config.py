@@ -339,8 +339,7 @@ parts:
         self.make_snapcraft_yaml(yaml)
         config = _config.Config(ProjectOptionsFake())
 
-        self.assertThat(config.parts.build_tools,
-                        Equals(set(['patchelf'])))
+        self.assertThat(config.parts.build_tools, Equals(set()))
 
     def test_invalid_yaml_missing_name(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
