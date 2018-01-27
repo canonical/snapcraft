@@ -183,8 +183,7 @@ class ManifestRecordingBuildPackagesTestCase(
 
         """
         expected_packages = [
-            'haskell-doc', 'haskell98-tutorial', 'patchelf',
-            'haskell98-report']
+            'haskell-doc', 'haskell98-tutorial', 'haskell98-report']
         self.addCleanup(
             subprocess.call,
             ['sudo', 'apt', 'remove', '-y'] + expected_packages)
