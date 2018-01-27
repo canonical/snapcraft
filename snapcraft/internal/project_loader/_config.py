@@ -113,10 +113,6 @@ class Config:
         self.build_tools = grammar_processor.get_build_packages()
         self.build_tools |= set(project_options.additional_build_packages)
 
-        # Always install patchelf given that we will potentially need it to
-        # support snaps building on a newer base than that of the runtime.
-        self.build_tools.add('patchelf')
-
         self.parts = PartsConfig(parts=self.data,
                                  project_options=self._project_options,
                                  validator=self._validator,
