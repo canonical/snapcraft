@@ -14,10 +14,10 @@ if a proper docker bridge is setup.
 
 ### snapcraft snap on edge
 
-    docker build --no-cache -f snap-edge.Dockerfile --label snapcore/snapcraft --tag snapcraft:edge --network host .
+    docker build --no-cache -f snap-edge.Dockerfile --label snapcore/snapcraft --tag snapcore/snapcraft:edge --network host .
     docker push snapcore/snapcraft:edge
 
 ### snapcraft snap on beta
 
-    docker build --no-cache -f snap-beta.Dockerfile --label snapcore/snapcraft --tag snapcraft:beta --network host .
+    docker build --no-cache -f snap-beta.Dockerfile --label snapcore/snapcraft --tag snapcore/snapcraft:beta --network host .
     docker push snapcore/snapcraft:beta
