@@ -48,37 +48,56 @@ def snap(project_options, directory=None, output=None):
 
 
 def pack(directory, output=None):
+    mksquashfs_command = 'mksquashfs'
+    if common.is_snap():
+        snap_dir = os.getenv('SNAP')
+        mksquashfs_command = os.path.join(snap_dir, 'usr', 'bin', 'mksquashfs')
+    elif (common.is_docker_instance() and
+          os.path.exists('/snap/snapcraft/current/usr/bin/mksquashfs')):
+        mksquashfs_command = '/snap/snapcraft/current/usr/bin/mksquashfs'
+
     # Check for our prerequesite external command early
-    repo.check_for_command('mksquashfs')
+    repo.check_for_command(mksquashfs_command)
 
     snap = _snap_data_from_dir(directory)
-    snap_name = output or common.format_snap_name(snap)
+    output_snap_name = output or common.format_snap_name(snap)
 
     # If a .snap-build exists at this point, when we are about to override
     # the snap blob, it is stale. We rename it so user have a chance to
     # recover accidentally lost assertions.
-    snap_build = snap_name + '-build'
+    snap_build = output_snap_name + '-build'
     if os.path.isfile(snap_build):
         _new = '{}.{}'.format(snap_build, int(time.time()))
         logger.warning('Renaming stale build assertion to {}'.format(_new))
         os.rename(snap_build, _new)
 
+    _run_mksquashfs(
+        mksquashfs_command, directory=directory, snap_name=snap['name'],
+        snap_type=snap['type'], output_snap_name=output_snap_name)
+
+    return output_snap_name
+
+
+def _run_mksquashfs(mksquashfs_command, *, directory, snap_name, snap_type,
+                    output_snap_name):
     # These options need to match the review tools:
     # http://bazaar.launchpad.net/~click-reviewers/click-reviewers-tools/trunk/view/head:/clickreviews/common.py#L38
     mksquashfs_args = ['-noappend', '-comp', 'xz', '-no-xattrs',
                        '-no-fragments']
-    if snap['type'] != 'os':
+    if snap_type != 'os':
         mksquashfs_args.append('-all-root')
 
-    with Popen(['mksquashfs', directory, snap_name] + mksquashfs_args,
-               stdout=PIPE, stderr=STDOUT) as proc:
+    complete_command = [
+        mksquashfs_command, directory, output_snap_name] + mksquashfs_args
+
+    with Popen(complete_command, stdout=PIPE, stderr=STDOUT) as proc:
         ret = None
         if is_dumb_terminal():
-            logger.info('Snapping {!r} ...'.format(snap['name']))
+            logger.info('Snapping {!r} ...'.format(snap_name))
             ret = proc.wait()
         else:
             message = '\033[0;32m\rSnapping {!r}\033[0;32m '.format(
-                snap['name'])
+                snap_name)
             progress_indicator = ProgressBar(
                 widgets=[message, AnimatedMarker()], maxval=7)
             progress_indicator.start()
@@ -97,8 +116,7 @@ def pack(directory, output=None):
         print('')
         if ret != 0:
             logger.error(proc.stdout.read().decode('utf-8'))
-            raise RuntimeError('Failed to create snap {!r}'.format(snap_name))
+            raise RuntimeError('Failed to create snap {!r}'.format(
+                output_snap_name))
 
         logger.debug(proc.stdout.read().decode('utf-8'))
-
-    return snap_name
