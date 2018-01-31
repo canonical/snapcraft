@@ -86,7 +86,7 @@ def _crawl_for_path(*, soname: str, root_path: str,
             for file_name in files:
                 if file_name == soname:
                     file_path = os.path.join(root, file_name)
-                    if ElfFile.is_elf(file_path):
+                    if os.path.exists(file_path) and ElfFile.is_elf(file_path):
                         return file_path
     return None
 
