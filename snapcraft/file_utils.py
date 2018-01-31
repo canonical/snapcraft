@@ -88,6 +88,55 @@ def search_and_replace_contents(file_path: str,
             path=file_path, error=e))
 
 
+def copytree(source, destination,
+             symlinks: bool=False,
+             ignore: Callable[..., set]=None,
+             copy_function: Callable[..., None]=shutil.copy2) -> str:
+    """Recursively copy source to destination.
+
+    Unlike shutil.copytree errors are not consumed but raised normally where
+    they occur.
+    Failing to copy permission bits of symlinks is not considered an error.
+
+    :param str source: Source directory to be copied.
+    :param str destination: Destination directory.
+    :param bool symlinks: If True, create symbolic links in the destination
+    :param callbable ignore: Callable of files to not copy.
+    :param callbable copy_function: Callable that actually copies.
+    """
+    names = os.listdir(source)
+    if ignore is not None:
+        ignored_names = ignore(source, names)
+    else:
+        ignored_names = set()
+
+    os.makedirs(destination)
+    for name in names:
+        if name in ignored_names:
+            continue
+        srcname = os.path.join(source, name)
+        dstname = os.path.join(destination, name)
+        if os.path.islink(srcname):
+            linkto = os.readlink(srcname)
+            if symlinks:
+                os.symlink(linkto, dstname)
+                with suppress(FileNotFoundError):
+                    shutil.copystat(srcname, dstname,
+                                    follow_symlinks=not symlinks)
+            else:
+                if os.path.isdir(srcname):
+                    shutil.copytree(srcname, dstname, symlinks, ignore,
+                                    copy_function)
+                else:
+                    copy_function(srcname, dstname)
+        elif os.path.isdir(srcname):
+            copytree(srcname, dstname, symlinks, ignore, copy_function)
+        else:
+            copy_function(srcname, dstname)
+    shutil.copystat(source, destination)
+    return destination
+
+
 def link_or_copy(source: str, destination: str,
                  follow_symlinks: bool=False) -> None:
     """Hard-link source and destination files. Copy if it fails to link.

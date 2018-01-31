@@ -349,8 +349,8 @@ class PluginHandler:
             else:
                 return []
 
-        shutil.copytree(self.plugin.sourcedir, self.plugin.build_basedir,
-                        symlinks=True, ignore=ignore)
+        file_utils.copytree(self.plugin.sourcedir, self.plugin.build_basedir,
+                            symlinks=True, ignore=ignore)
 
         script_runner = ScriptRunner(builddir=self.plugin.build_basedir)
 
