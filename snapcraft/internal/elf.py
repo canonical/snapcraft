@@ -397,9 +397,16 @@ class Patcher:
             os.unlink(elf_file_path)
             shutil.copy2(temp_file.name, elf_file_path)
 
+    def _get_existing_rpath(self, elf_file_path):
+        output = subprocess.check_output([self._patchelf_cmd, '--print-rpath',
+                                          elf_file_path])
+        return output.decode().strip().split(':')
+
     def _get_rpath(self, elf_file) -> str:
-        origin_rpaths = set()  # type: Set[str]
+        origin_rpaths = list()  # type: List[str]
         base_rpaths = set()  # type: Set[str]
+        existing_rpaths = self._get_existing_rpath(elf_file.path)
+
         for dependency in elf_file.dependencies:
             if dependency.path:
                 if dependency.in_base_snap:
@@ -410,8 +417,15 @@ class Patcher:
                     rel_library_path_dir = os.path.dirname(rel_library_path)
                     # return the dirname, with the first .. replace
                     # with $ORIGIN
-                    origin_rpaths.add(rel_library_path_dir.replace(
+                    origin_rpaths.append(rel_library_path_dir.replace(
                         '..', '$ORIGIN', 1))
+
+        if existing_rpaths:
+            # Only keep those that mention origin and are not already in our
+            # bundle.
+            existing_rpaths = [r for r in existing_rpaths
+                               if '$ORIGIN' in r and r not in origin_rpaths]
+            origin_rpaths = existing_rpaths + origin_rpaths
 
         origin_paths = ':'.join((r for r in origin_rpaths if r))
         core_base_rpaths = ':'.join(base_rpaths)
