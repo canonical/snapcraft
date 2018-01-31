@@ -28,7 +28,7 @@ from snapcraft.internal import (
     pluginhandler,
     project_loader,
     repo,
-    states
+    states,
 )
 from snapcraft.internal import errors
 from snapcraft.internal.cache import SnapCache
@@ -115,7 +115,8 @@ def _setup_core(deb_arch):
     if os.path.exists(core_path) and not os.listdir(core_path):
         check_call(['sudo', 'rmdir', core_path])
     check_call(['sudo', 'mkdir', '-p', os.path.dirname(core_path)])
-    check_call(['sudo', 'unsquashfs', '-d', core_path, core_snap])
+    unsquashfs_path = snapcraft.file_utils.get_tool_path('unsquashfs')
+    check_call(['sudo', unsquashfs_path, '-d', core_path, core_snap])
 
 
 def _should_get_core(confinement: str) -> bool:

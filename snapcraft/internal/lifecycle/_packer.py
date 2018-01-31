@@ -21,6 +21,7 @@ from subprocess import Popen, PIPE, STDOUT
 import yaml
 from progressbar import AnimatedMarker, ProgressBar
 
+from snapcraft import file_utils
 from snapcraft.internal import common, repo
 from snapcraft.internal.indicators import is_dumb_terminal
 from ._runner import execute
@@ -48,13 +49,7 @@ def snap(project_options, directory=None, output=None):
 
 
 def pack(directory, output=None):
-    mksquashfs_command = 'mksquashfs'
-    if common.is_snap():
-        snap_dir = os.getenv('SNAP')
-        mksquashfs_command = os.path.join(snap_dir, 'usr', 'bin', 'mksquashfs')
-    elif (common.is_docker_instance() and
-          os.path.exists('/snap/snapcraft/current/usr/bin/mksquashfs')):
-        mksquashfs_command = '/snap/snapcraft/current/usr/bin/mksquashfs'
+    mksquashfs_command = file_utils.get_tool_path('mksquashfs')
 
     # Check for our prerequesite external command early
     repo.check_for_command(mksquashfs_command)
