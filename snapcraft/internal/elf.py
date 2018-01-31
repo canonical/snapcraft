@@ -108,11 +108,22 @@ class ElfFile:
         self.dependencies = set()  # type: Set[Library]
         self.interp, self.symbols = self._extract_readelf(path)
 
+    def _get_readelf_cmd(self):
+        readelf_cmd = 'readelf'
+        if common.is_snap():
+            snap_dir = os.getenv('SNAP')
+            readelf_cmd = os.path.join(snap_dir, 'usr', 'bin', 'readelf')
+        elif (common.is_docker_instance() and
+              os.path.exists('/snap/snapcraft/current/usr/bin/readelf')):
+            readelf_cmd = '/snap/snapcraft/current/usr/bin/readelf'
+        return readelf_cmd
+
     def _extract_readelf(self, path) -> Tuple[str, List[Symbol]]:
+        readelf_cmd = self._get_readelf_cmd()
         interp = str()
         symbols = list()  # type: List[Symbol]
         output = subprocess.check_output([
-            'readelf', '--wide', '--program-headers', '--dyn-syms', path])
+            readelf_cmd, '--wide', '--program-headers', '--dyn-syms', path])
         readelf_lines = output.decode().split('\n')
         # Regex inspired by the regexes in lintian to match entries similar to
         # the following sample output
