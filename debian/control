@@ -45,7 +45,8 @@ Standards-Version: 3.9.8
 
 Package: snapcraft
 Architecture: all
-Depends: patchelf,
+Depends: binutils,
+         patchelf,
          python3-apt,
          python3-debian,
          python3-click,
