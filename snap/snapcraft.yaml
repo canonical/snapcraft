@@ -36,6 +36,7 @@ parts:
         - libsodium-dev
         - liblzma-dev
     stage-packages:
+        - binutils
         - libarchive13
         - libffi6
         - libsodium18
