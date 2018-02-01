@@ -103,7 +103,16 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.make_snapcraft_yaml()
 
-        self.run_command(['snap'])
+        original_exists = os.path.exists
+
+        def _fake_exists(path):
+            if path == '/snap/snapcraft/current/usr/bin/mksquashfs':
+                return True
+            else:
+                return original_exists(path)
+
+        with mock.patch('os.path.exists', side_effect=_fake_exists):
+            self.run_command(['snap'])
 
         mksquashfs_path = os.path.join('/snap', 'snapcraft', 'current',
                                        'usr', 'bin', 'mksquashfs')

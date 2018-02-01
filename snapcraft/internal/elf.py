@@ -26,6 +26,7 @@ from typing import FrozenSet, List, Set, Sequence, Tuple
 
 from pkg_resources import parse_version
 
+from snapcraft import file_utils
 from snapcraft.internal import (
     common,
     errors,
@@ -111,8 +112,9 @@ class ElfFile:
     def _extract_readelf(self, path) -> Tuple[str, List[Symbol]]:
         interp = str()
         symbols = list()  # type: List[Symbol]
+        readelf_path = file_utils.get_tool_path('readelf')
         output = subprocess.check_output([
-            'readelf', '--wide', '--program-headers', '--dyn-syms', path])
+            readelf_path, '--wide', '--program-headers', '--dyn-syms', path])
         readelf_lines = output.decode().split('\n')
         # Regex inspired by the regexes in lintian to match entries similar to
         # the following sample output
