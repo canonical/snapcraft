@@ -21,6 +21,7 @@ class JdkPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+        self.build_packages.append('ca-certificates-java')
         self.stage_packages.append('default-jdk')
 
     def env(self, root):

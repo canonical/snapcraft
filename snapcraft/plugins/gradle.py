@@ -74,7 +74,6 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
         filename = os.path.join(os.getcwd(), 'gradlew')
         if not os.path.isfile(filename):
             self.build_packages.append('gradle')
-        self.build_packages.append('ca-certificates-java')
 
     @classmethod
     def get_build_properties(cls):
