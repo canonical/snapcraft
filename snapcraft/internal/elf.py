@@ -115,7 +115,7 @@ class ElfFile:
         readelf_path = file_utils.get_tool_path('readelf')
         output = subprocess.check_output([
             readelf_path, '--wide', '--program-headers', '--dyn-syms', path])
-        readelf_lines = output.decode().split('\n')
+        readelf_lines = output.decode(errors='surrogateescape').split('\n')
         # Regex inspired by the regexes in lintian to match entries similar to
         # the following sample output
         # Program Headers:
