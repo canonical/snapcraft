@@ -39,7 +39,7 @@ elif [[ "$test" = "snapcraft/tests/integration"* || "$test" = "snapcraft.tests.i
     # snap install core exits with this error message:
     # - Setup snap "core" (2462) security profiles (cannot reload udev rules: exit status 2
     # but the installation succeeds, so we just ingore it.
-    dependencies="apt install -y bzr git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev mercurial python3-pip subversion sudo snapd && python3 -m pip install -r requirements-devel.txt -r requirements.txt && (snap install core || echo 'ignored error') && sudo snap install snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap --dangerous --classic"
+    dependencies="apt install -y bzr git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev libarchive-dev mercurial python3-pip subversion sudo snapd && python3 -m pip install -r requirements-devel.txt -r requirements.txt && (snap install core || echo 'ignored error') && ${SNAPCRAFT_INSTALL_COMMAND:-sudo snap install snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap --dangerous --classic}"
 else
     echo "Unknown test suite: $test"
     exit 1

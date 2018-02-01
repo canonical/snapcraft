@@ -27,6 +27,7 @@ from testtools.matchers import (
     FileExists,
     MatchesRegex,
     Not,
+    StartsWith,
 )
 
 import snapcraft
@@ -61,6 +62,7 @@ class PrimeTestCase(integration.TestCase):
                 'SNAPCRAFT_SETUP_CORE', '1'))
 
         self.run_snapcraft(['prime'], project_dir)
+
         bin_path = os.path.join(self.prime_dir, 'bin', 'hello-classic')
         self.assertThat(bin_path, FileExists())
 
@@ -68,6 +70,46 @@ class PrimeTestCase(integration.TestCase):
             self.patchelf_command, '--print-interpreter', bin_path]).decode()
         expected_interpreter = r'^/snap/core/current/.*'
         self.assertThat(interpreter, MatchesRegex(expected_interpreter))
+
+        # We check stage to make sure the hard link is broken.
+        staged_bin_path = os.path.join(self.stage_dir, 'bin', 'hello-classic')
+        self.assertThat(staged_bin_path, FileExists())
+
+        staged_interpreter = subprocess.check_output([
+            self.patchelf_command, '--print-interpreter',
+            staged_bin_path]).decode()
+        self.assertThat(staged_interpreter, MatchesRegex(r'^/lib.*'))
+
+    def test_classic_confinement_with_existing_rpath(self):
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
+        project_dir = 'classic-build-existing-rpath'
+
+        # The first run should fail as the environment variable is not
+        # set but we can only test this on clean systems.
+        if not os.path.exists(os.path.join(
+                os.path.sep, 'snap', 'core', 'current')):
+            try:
+                self.run_snapcraft(['prime'], project_dir)
+            except subprocess.CalledProcessError:
+                pass
+            else:
+                self.fail(
+                    'This should fail as SNAPCRAFT_SETUP_CORE is not set')
+
+        # Now we set the required environment variable
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_SETUP_CORE', '1'))
+
+        self.run_snapcraft(['prime'], project_dir)
+
+        bin_path = os.path.join(self.prime_dir, 'bin', 'hello-classic')
+        self.assertThat(bin_path, FileExists())
+
+        rpath = subprocess.check_output([
+            self.patchelf_command, '--print-rpath', bin_path]).decode().strip()
+        expected_rpath = '$ORIGIN/../fake-lib:/snap/core/current/'
+        self.assertThat(rpath, StartsWith(expected_rpath))
 
     def test_prime_includes_stage_fileset(self):
         self.run_snapcraft('prime', 'prime-from-stage')

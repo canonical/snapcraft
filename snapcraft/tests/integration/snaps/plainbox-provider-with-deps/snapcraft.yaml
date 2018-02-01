@@ -7,20 +7,27 @@ description: |
 confinement: strict
 
 parts:
-    plainbox-local:
-        plugin: python3
-        python-packages:
-            - plainbox
-            - requests-oauthlib
+    checkbox-ng-dev:
+        plugin: python
+        source: git://git.launchpad.net/checkbox-ng
+        source-type: git
+        stage-packages:
+            - libc6
         build-packages:
             - libxml2-dev
             - libxslt1-dev
             - zlib1g-dev
             - build-essential
+        python-packages:
+            - requests-oauthlib
+            - XlsxWriter
+            - Jinja2
+            - guacamole
+            - padme
     parent-plainbox-provider:
         plugin: plainbox-provider
         source: ./2017.com.example_parent
-        after: [plainbox-local]
+        after: [checkbox-ng-dev]
     child-plainbox-provider:
         plugin: plainbox-provider
         source: ./2017.com.example_child

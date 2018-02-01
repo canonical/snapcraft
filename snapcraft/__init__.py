@@ -382,7 +382,7 @@ if _os.environ.get('SNAP_NAME') == 'snapcraft':
             for filename in files:
                 res = _re.search(regex, filename)
                 if res:
-                    return res.group(0)
+                    return _os.path.join(root, res.group(0))
 
     import ctypes.util
     ctypes.util.find_library = find_library

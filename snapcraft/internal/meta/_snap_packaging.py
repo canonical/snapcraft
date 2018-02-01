@@ -25,7 +25,6 @@ import shlex
 import shutil
 import stat
 import subprocess
-from textwrap import dedent
 from typing import Any, Dict, List  # noqa
 
 import yaml
@@ -71,6 +70,17 @@ _OPTIONAL_PACKAGE_KEYS = [
     'hooks',
     'environment',
 ]
+
+
+class OctInt(int):
+    """An int represented in octal form."""
+
+
+def oct_int_representer(dumper, data):
+    return yaml.ScalarNode('tag:yaml.org,2002:int', '{:04o}'.format(data))
+
+
+yaml.add_representer(OctInt, oct_int_representer)
 
 
 def create_snap_packaging(
@@ -400,6 +410,7 @@ class _SnapPackaging:
         if 'apps' in self._config_data:
             _verify_app_paths(basedir='prime', apps=self._config_data['apps'])
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
+            snap_yaml['apps'] = self._render_socket_modes(snap_yaml['apps'])
 
         return snap_yaml
 
@@ -447,11 +458,6 @@ class _SnapPackaging:
                       '$LD_LIBRARY_PATH', file=f)
             if cwd:
                 print('{}'.format(cwd), file=f)
-            # TODO remove this once LP: #1656340 is fixed in snapd.
-            print(dedent("""\
-                # Workaround for LP: #1656340
-                [ -n "$XDG_RUNTIME_DIR" ] && mkdir -p $XDG_RUNTIME_DIR -m 700
-                """), file=f)
             print('exec {} {}'.format(executable, args), file=f)
 
         os.chmod(wrappath, 0o755)
@@ -515,6 +521,15 @@ class _SnapPackaging:
                 snap_name=self._config_data['name'], prime_dir=self._prime_dir)
             desktop_file.parse_and_reformat()
             desktop_file.write(gui_dir=os.path.join(self.meta_dir, 'gui'))
+
+    def _render_socket_modes(self, apps):
+        for app in apps.values():
+            sockets = app.get('sockets', {})
+            for socket in sockets.values():
+                mode = socket.get('socket-mode')
+                if mode is not None:
+                    socket['socket-mode'] = OctInt(mode)
+        return apps
 
 
 def _find_bin(binary, basedir):
