@@ -14,16 +14,26 @@ snapcraft (2.39) xenial; urgency=medium
   * elf: cleaner patchelf experience (#1873)
   * Revert "meta: create XDG_RUNTIME_DIR in wrappers. (#1818)" (#1883)
   * elf: better handling for newer libc6 (#1881)
+  * elf: make patchelf a dependency (#1888)
+  * docker: user proper tags in Readme.md (#1897)
+  * elf: do not strip rpaths that contain $ORIGIN (#1896)
+  * elf: check if file exists before checking if ELF (#1901)
   * New upstream release (LP: #1745488)
 
   [ Kyle Fazzari ]
   * cli: add expiration option to export-login (#1831)
   * zip: support extracting non-unix zip files (#1862)
   * cli: exported login should only be readable by owner (#1869)
+  * lifecycle: use in-snap mksquashfs if running from snap (#1891)
+  * cli: use C.UTF-8 if locale not set (#1893)
+  * docker: beta should use beta, edge use edge (#1895)
+  * docker: don't rely on snapcraft-classic
+  * many: use in-snap unsquashfs and readelf if running from snap (#1902)
 
   [ Leo Arias ]
   * extractors: also support appdata.xml appstream files. (#1861)
   * extractors: support appstream icon and desktop (#1853)
+  * tests: allow to overwrite the snapcraft install command (#1894)
 
   [ Christian Dywan ]
   * lxd: change "Terminating" message to debug level (#1842)
@@ -57,6 +67,12 @@ snapcraft (2.39) xenial; urgency=medium
   [ Daniel Lim Wee Soong ]
   * storeapi: add docstrings to _client (#1851)
   * tests: add snap not found tests (#1849)
+
+  [ Chris Glass ]
+  * cli: fixed typo in help (#1890)
+
+  [ Jonathan Cave ]
+  * tests: remove plainbox part from plugin tests (#1889)
 
  -- Sergio Schvezov <sergio.schvezov@canonical.com>  Thu, 25 Jan 2018 21:40:43 +0000
 
