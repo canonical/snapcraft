@@ -23,7 +23,7 @@ packages.
 
 You tell snapcraft which build system it must drive by specifying the
 snapcraft plugin for that part. Every part must specify a plugin explicitly
-(when you see a part that does not specify a plugin, thats because the
+(when you see a part that does not specify a plugin, that's because the
 actual part definition is in the cloud, where the plugin is specified!)
 
 These plugins implement a lifecycle over the following steps:
@@ -382,7 +382,7 @@ if _os.environ.get('SNAP_NAME') == 'snapcraft':
             for filename in files:
                 res = _re.search(regex, filename)
                 if res:
-                    return res.group(0)
+                    return _os.path.join(root, res.group(0))
 
     import ctypes.util
     ctypes.util.find_library = find_library
@@ -414,15 +414,16 @@ from snapcraft._store import (                      # noqa
     list_registered,
     login,
     push,
+    push_metadata,
     register,
     register_key,
     release,
     sign_build,
     status,
     validate,
-    collaborate,
 )
 from snapcraft import common                        # noqa
+from snapcraft import extractors                    # noqa
 from snapcraft import plugins                       # noqa
 from snapcraft import sources                       # noqa
 from snapcraft import file_utils                    # noqa

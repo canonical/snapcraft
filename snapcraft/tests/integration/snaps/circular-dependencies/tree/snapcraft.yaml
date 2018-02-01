@@ -1,0 +1,94 @@
+name: dep-tree
+summary: A tree of things to make sure work
+description: |
+    A snapcraft.yaml that has a relatively complex tree of
+    dependencies that can stress test the dependency resolution
+    code in Snapcraft.
+version: 1.0
+confinement: strict
+
+parts:
+    root:
+        plugin: copy
+        files:
+            file: file
+    a:
+        plugin: copy
+        files:
+            file: file
+        after: [root]
+    b:
+        plugin: copy
+        files:
+            file: file
+        after: [root]
+    c:
+        plugin: copy
+        files:
+            file: file
+        after: [root]
+    aa:
+        plugin: copy
+        files:
+            file: file
+        after: [a]
+    ab:
+        plugin: copy
+        files:
+            file: file
+        after: [a]
+    ac:
+        plugin: copy
+        files:
+            file: file
+        after: [a]
+    ba:
+        plugin: copy
+        files:
+            file: file
+        after: [b]
+    bb:
+        plugin: copy
+        files:
+            file: file
+        after: [b]
+    bc:
+        plugin: copy
+        files:
+            file: file
+        after: [b]
+    ca:
+        plugin: copy
+        files:
+            file: file
+        after: [c]
+    cb:
+        plugin: copy
+        files:
+            file: file
+        after: [c]
+    cc:
+        plugin: copy
+        files:
+            file: file
+        after: [c]
+    x:
+        plugin: copy
+        files:
+            file: file
+        after: [aa, ba, ca]
+    y:
+        plugin: copy
+        files:
+            file: file
+        after: [ab, bb, cb]
+    z:
+        plugin: copy
+        files:
+            file: file
+        after: [ac, bc, cc]
+    last:
+        plugin: copy
+        files:
+            file: file
+        after: [x, y, z]

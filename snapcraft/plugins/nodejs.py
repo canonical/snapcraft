@@ -58,7 +58,7 @@ from snapcraft.internal import errors
 logger = logging.getLogger(__name__)
 
 _NODEJS_BASE = 'node-v{version}-linux-{arch}'
-_NODEJS_VERSION = '6.10.2'
+_NODEJS_VERSION = '6.11.4'
 _NODEJS_TMPL = 'https://nodejs.org/dist/v{version}/{base}.tar.gz'
 _NODEJS_ARCHES = {
     'i386': 'x86',
@@ -191,6 +191,10 @@ class NodePlugin(snapcraft.BasePlugin):
         self._yarn_tar.provision(
             self._npm_dir, clean_target=False, keep_tarball=True)
         yarn_cmd = [os.path.join(self._npm_dir, 'bin', 'yarn')]
+        if 'http_proxy' in os.environ:
+            yarn_cmd.extend(['--proxy', os.environ['http_proxy']])
+        if 'https_proxy' in os.environ:
+            yarn_cmd.extend(['--https-proxy', os.environ['https_proxy']])
         flags = []
         if rootdir == self.builddir:
             yarn_add = yarn_cmd + ['global', 'add']

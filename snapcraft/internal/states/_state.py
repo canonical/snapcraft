@@ -101,5 +101,5 @@ def get_state(state_dir, step):
     return state
 
 
-def get_step_state_file(state_dir, step):
+def get_step_state_file(state_dir: str, step: str) -> str:
     return os.path.join(state_dir, step)

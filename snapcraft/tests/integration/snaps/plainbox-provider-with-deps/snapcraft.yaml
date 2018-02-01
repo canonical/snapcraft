@@ -1,0 +1,34 @@
+name: test-package
+version: 0.1
+summary: Create a snap of a plainbox provider
+description: |
+    Create a snap that has two providers with an import of a parent test to the
+    child. This exercises the call of manage.py validate
+confinement: strict
+
+parts:
+    checkbox-ng-dev:
+        plugin: python
+        source: git://git.launchpad.net/checkbox-ng
+        source-type: git
+        stage-packages:
+            - libc6
+        build-packages:
+            - libxml2-dev
+            - libxslt1-dev
+            - zlib1g-dev
+            - build-essential
+        python-packages:
+            - requests-oauthlib
+            - XlsxWriter
+            - Jinja2
+            - guacamole
+            - padme
+    parent-plainbox-provider:
+        plugin: plainbox-provider
+        source: ./2017.com.example_parent
+        after: [checkbox-ng-dev]
+    child-plainbox-provider:
+        plugin: plainbox-provider
+        source: ./2017.com.example_child
+        after: [parent-plainbox-provider]

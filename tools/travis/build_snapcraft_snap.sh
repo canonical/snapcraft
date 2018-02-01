@@ -31,6 +31,14 @@ $lxc exec snap-builder -- sh -c "snap install core" || echo "ignored error"
 $lxc file push --recursive $project_path snap-builder/root/
 # TODO use the stable snap once it's published.
 $lxc exec snap-builder -- sh -c "snap install snapcraft --candidate --classic"
-$lxc exec snap-builder -- sh -c "cd snapcraft && /snap/bin/snapcraft"
-
+$lxc exec snap-builder -- sh -c "cd snapcraft && /snap/bin/snapcraft snap --output snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
+# Pull the snap from the container to save it into the cache.
+mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
+$lxc file pull "snap-builder/root/snapcraft/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" "$TRAVIS_BUILD_DIR/snaps-cache/"
+# Send the snap to transfer.sh
+$lxc exec snap-builder -- sh -c "snap install transfer"
+# XXX The transfer is getting stuck in master: https://bugs.launchpad.net/snapcraft/+bug/1738461
+# For now, set a timeout and don't fail if the snap couldn't be uploaded.
+# --elopio - 20171215
+$lxc exec snap-builder -- sh -c "timeout 180 transfer snapcraft/snapcraft-pr$TRAVIS_PULL_REQUEST.snap || true"
 $lxc stop snap-builder

@@ -23,6 +23,7 @@ def _prime_state_constructor(loader, node):
     parameters = loader.construct_mapping(node)
     return PrimeState(**parameters)
 
+
 yaml.add_constructor(u'!PrimeState', _prime_state_constructor)
 
 

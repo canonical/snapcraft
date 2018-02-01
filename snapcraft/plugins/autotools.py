@@ -89,15 +89,6 @@ class AutotoolsPlugin(make.MakePlugin):
             raise RuntimeError('Unsupported installation method: "{}"'.format(
                 options.install_via))
 
-    def env(self, root):
-        env = super().env(root)
-        if self.project.is_cross_compiling:
-            env.extend([
-                'CC={}-gcc'.format(self.project.arch_triplet),
-                'CXX={}-g++'.format(self.project.arch_triplet),
-            ])
-        return env
-
     def enable_cross_compilation(self):
         pass
 
@@ -129,7 +120,8 @@ class AutotoolsPlugin(make.MakePlugin):
         else:
             configure_command.append('--prefix=' + self.installdir)
         if self.project.is_cross_compiling:
-            configure_command.append('--host={}'.format(self.project.deb_arch))
+            configure_command.append('--host={}'.format(
+                self.project.arch_triplet))
 
         self.run(configure_command + self.options.configflags)
         self.make()

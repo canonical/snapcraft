@@ -93,8 +93,6 @@ def _get_latest_ssh_private_key():
 
 class SnapsTestCase(testtools.TestCase):
 
-    snap_content_dir = None
-
     def __init__(self, *args, **kwargs):
         # match base snap src path on current
         relative_path = os.path.relpath(
@@ -113,11 +111,21 @@ class SnapsTestCase(testtools.TestCase):
                         self.snap_content_dir, filter_))
         logger.info('Testing {}'.format(self.snap_content_dir))
         super().setUp()
-        if os.getenv('SNAPCRAFT_FROM_INSTALLED', False):
-            self.snapcraft_command = 'snapcraft'
-        else:
+        if os.getenv('SNAPCRAFT_FROM_SNAP', False):
+            self.snapcraft_command = '/snap/bin/snapcraft'
+        elif os.getenv('SNAPCRAFT_FROM_DEB', False):
+            self.snapcraft_command = '/usr/bin/snapcraft'
+        elif os.getenv('VIRTUAL_ENV'):
             self.snapcraft_command = os.path.join(
-                os.getcwd(), 'bin', 'snapcraft')
+                os.getenv('VIRTUAL_ENV'), 'bin', 'snapcraft')
+            self.snapcraft_parser_command = os.path.join(
+                os.getenv('VIRTUAL_ENV'), 'bin', 'snapcraft-parser')
+        else:
+            raise EnvironmentError(
+                'snapcraft is not setup correctly for testing. Either set '
+                'SNAPCRAFT_FROM_SNAP or SNAPCRAFT_FROM_DEB to run from either '
+                'the snap or deb, or make sure your venv is properly setup '
+                'as described in HACKING.md.')
 
         self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
 
@@ -192,7 +200,7 @@ class SnapsTestCase(testtools.TestCase):
             raise
 
     def install_snap(self, snap_local_path, snap_name, version,
-                     devmode=False):
+                     devmode=False, classic=False):
         if not config.get('skip-install', False):
             tmp_in_testbed = self.snappy_testbed.run_command(
                 'mktemp -d').strip()
@@ -207,6 +215,8 @@ class SnapsTestCase(testtools.TestCase):
                    snap_path_in_testbed]
             if devmode:
                 cmd.append('--devmode')
+            if classic:
+                cmd.append('--classic')
             try:
                 self.snappy_testbed.run_command(cmd)
             except subprocess.CalledProcessError as e:

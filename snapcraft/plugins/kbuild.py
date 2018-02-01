@@ -109,8 +109,7 @@ class KBuildPlugin(BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['kdefconfig', 'kconfigfile', 'kconfigs', 'kconfigflavour',
-                'build-attributes']
+        return ['kdefconfig', 'kconfigfile', 'kconfigs', 'kconfigflavour']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -126,7 +125,7 @@ class KBuildPlugin(BasePlugin):
     def enable_cross_compilation(self):
         self.make_cmd.append('ARCH={}'.format(
             self.project.kernel_arch))
-        if 'CROSS_COMPILE' in os.environ:
+        if os.environ.get('CROSS_COMPILE'):
             toolchain = os.environ['CROSS_COMPILE']
         else:
             toolchain = self.project.cross_compiler_prefix
@@ -182,6 +181,10 @@ class KBuildPlugin(BasePlugin):
         return os.path.join(self.builddir, '.config')
 
     def do_base_config(self, config_path):
+        # if the parts build dir already contains a .config file,
+        # use it
+        if os.path.isfile(config_path):
+            return
         # if kconfigfile is provided use that
         # elif kconfigflavour is provided, assemble the ubuntu.flavour config
         # otherwise use defconfig to seed the base config

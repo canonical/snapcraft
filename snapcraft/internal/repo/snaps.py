@@ -76,7 +76,10 @@ class SnapPackage:
     @property
     def in_store(self):
         if self._is_in_store is None:
-            self._is_in_store = self.get_store_snap_info() is not None
+            try:
+                self._is_in_store = self.get_store_snap_info() is not None
+            except errors.SnapUnavailableError:
+                self._is_in_store = False
         return self._is_in_store
 
     def get_local_snap_info(self):
@@ -89,12 +92,28 @@ class SnapPackage:
         return self._local_snap_info
 
     def get_store_snap_info(self):
-        """Returns a store payload for the snap.
-
-        Validity of the results are determined by checking self.remote."""
+        """Returns a store payload for the snap."""
         if self._is_in_store is None:
-            with contextlib.suppress(exceptions.HTTPError):
-                self._store_snap_info = _get_store_snap_info(self.name)
+            # Some environments timeout often, like the armv7 testing
+            # infrastructure. Given that constraint, we add some retry
+            # logic.
+            retry_count = 5
+            while retry_count > 0:
+                try:
+                    self._store_snap_info = _get_store_snap_info(self.name)
+                    break
+                except exceptions.HTTPError as http_error:
+                    logger.debug('The http error when checking the store for '
+                                 '{!r} is {!r} (retries left {})'.format(
+                                     self.name,
+                                     http_error.response.status_code,
+                                     retry_count))
+                    if http_error.response.status_code == 404:
+                        raise errors.SnapUnavailableError(
+                            snap_name=self.name,
+                            snap_channel=self.channel)
+                    retry_count -= 1
+
         return self._store_snap_info
 
     def _get_store_channels(self):
@@ -116,7 +135,16 @@ class SnapPackage:
 
     def is_classic(self):
         store_channels = self._get_store_channels()
-        return store_channels[self.channel]['confinement'] == 'classic'
+        try:
+            return store_channels[self.channel]['confinement'] == 'classic'
+        except KeyError:
+            # We have seen some KeyError issues when running tests that are
+            # hard to debug as they only occur there, logging in debug mode
+            # will help uncover the root cause if it happens again.
+            logger.debug('Current store channels are {!r} and the store'
+                         'payload is {!r}'.format(store_channels,
+                                                  self._store_snap_info))
+            raise
 
     def is_valid(self):
         """Check if the snap is valid."""
@@ -160,13 +188,26 @@ class SnapPackage:
 
 
 def install_snaps(snaps_list):
-    """Install snaps of the format <snap-name>/<channel>."""
+    """Install snaps of the format <snap-name>/<channel>.
+
+    :return: a list of "name=revision" for the snaps installed.
+    """
+    snaps_installed = []
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
-        if not snap_pkg.installed and snap_pkg.in_store:
+        if not snap_pkg.is_valid():
+            raise errors.SnapUnavailableError(snap_name=snap_pkg.name,
+                                              snap_channel=snap_pkg.channel)
+
+        if not snap_pkg.installed:
             snap_pkg.install()
         elif snap_pkg.get_current_channel() != snap_pkg.channel:
             snap_pkg.refresh()
+
+        snap_pkg = SnapPackage(snap)
+        snaps_installed.append('{}={}'.format(
+            snap_pkg.name, snap_pkg.get_local_snap_info()['revision']))
+    return snaps_installed
 
 
 def _snap_command_requires_sudo():
@@ -183,6 +224,19 @@ def _snap_command_requires_sudo():
         logger.warning('snapd is not logged in, snap install '
                        'commands will use sudo')
     return requires_root
+
+
+def get_installed_snaps():
+    """Return all the snaps installed in the system.
+
+    :return: a list of "name=revision" for the snaps installed.
+    """
+    try:
+        local_snaps = _get_local_snaps()
+    except exceptions.ConnectionError as e:
+        local_snaps = []
+    return ['{}={}'.format(snap['name'], snap['revision']) for
+            snap in local_snaps]
 
 
 def _get_parsed_snap(snap):
@@ -218,3 +272,12 @@ def _get_store_snap_info(snap_name):
         snap_info = session.get(url)
     snap_info.raise_for_status()
     return snap_info.json()['result'][0]
+
+
+def _get_local_snaps():
+    slug = 'snaps'
+    url = get_snapd_socket_path_template().format(slug)
+    with requests_unixsocket.Session() as session:
+        snap_info = session.get(url)
+    snap_info.raise_for_status()
+    return snap_info.json()['result']

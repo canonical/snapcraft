@@ -1,0 +1,20 @@
+name: make-hello
+version: 0.1
+summary: test the make plugin
+description: |
+  This is a basic make snap. It just prints a hello world.
+  If you want to add other functionalities to this snap, please don't.
+  Make a new one.
+icon: icon.png
+confinement: strict
+
+build-packages: [gcc, libc6-dev]
+
+apps:
+  make-hello:
+    command: test
+
+parts:
+  make-project:
+    plugin: make
+    source: .

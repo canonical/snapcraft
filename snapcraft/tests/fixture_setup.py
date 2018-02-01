@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,9 +19,13 @@ import contextlib
 import copy
 import io
 import os
+import pkgutil
+import shutil
+import socketserver
 import string
 import subprocess
 import sys
+import tempfile
 import threading
 import urllib.parse
 import uuid
@@ -29,6 +33,7 @@ from functools import partial
 from types import ModuleType
 from unittest import mock
 from subprocess import CalledProcessError
+from typing import Callable
 
 import fixtures
 import xdg
@@ -39,15 +44,22 @@ from snapcraft.tests import fake_servers
 from snapcraft.tests.fake_servers import (
     api,
     search,
+    snapd,
     upload
 )
 from snapcraft.tests.subprocess_utils import (
     call,
     call_with_output,
 )
+from snapcraft.internal import elf
 
 
 class TempCWD(fixtures.TempDir):
+
+    def __init__(self, rootdir=None):
+        if rootdir is None and 'TMPDIR' in os.environ:
+            rootdir = os.environ.get('TMPDIR')
+        super().__init__(rootdir)
 
     def setUp(self):
         """Create a temporary directory an cd into it for the test duration."""
@@ -128,7 +140,8 @@ class SilentSnapProgress(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft.internal.lifecycle.ProgressBar')
+        patcher = mock.patch(
+            'snapcraft.internal.lifecycle._packer.ProgressBar')
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -290,9 +303,7 @@ class FakeStore(fixtures.Fixture):
 
 
 class _FakeServerRunning(fixtures.Fixture):
-
-    # To be defined by child fixtures.
-    fake_server = None
+    # fake_server needs to be set by implementing classes
 
     def setUp(self):
         super().setUp()
@@ -426,6 +437,41 @@ class FakePlugin(fixtures.Fixture):
         del sys.modules[self._import_name]
 
 
+class FakeMetadataExtractor(fixtures.Fixture):
+    """Dynamically generate a new module containing the provided extractor"""
+
+    def __init__(self, extractor_name: str,
+                 extractor: Callable[
+                    [str], snapcraft.extractors.ExtractedMetadata],
+                 exported_name='extract') -> None:
+        super().__init__()
+        self._extractor_name = extractor_name
+        self._exported_name = exported_name
+        self._import_name = 'snapcraft.extractors.{}'.format(extractor_name)
+        self._extractor = extractor
+
+    def _setUp(self) -> None:
+        extractor_module = ModuleType(self._import_name)
+        setattr(extractor_module, self._exported_name, self._extractor)
+        sys.modules[self._import_name] = extractor_module
+        self.addCleanup(self._remove_module)
+
+        real_iter_modules = pkgutil.iter_modules
+
+        def _fake_iter_modules(path):
+            if path == snapcraft.extractors.__path__:
+                yield None, self._extractor_name, False
+            else:
+                yield real_iter_modules(path)
+
+        patcher = mock.patch('pkgutil.iter_modules', new=_fake_iter_modules)
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def _remove_module(self) -> None:
+        del sys.modules[self._import_name]
+
+
 class FakeFilesystem(fixtures.Fixture):
     '''Keep track of created and removed directories'''
 
@@ -438,12 +484,23 @@ class FakeFilesystem(fixtures.Fixture):
         self.makedirs_mock.side_effect = self.makedirs_side_effect()
         self.addCleanup(patcher.stop)
 
+        @contextlib.contextmanager
+        def tempdir(prefix: str, dir: str):
+            self.tmp_dir = os.path.join(dir, '{}-foo'.format(prefix))
+            yield self.tmp_dir
+
+        patcher = mock.patch('tempfile.TemporaryDirectory')
+        self.tempdir_mock = patcher.start()
+        self.tempdir_mock.side_effect = tempdir
+        self.addCleanup(patcher.stop)
+
         patcher = mock.patch('tempfile.mkdtemp')
         self.mkdtemp_mock = patcher.start()
         self.mkdtemp_mock.side_effect = self.mkdtemp_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.open', mock.mock_open())
+        patcher = mock.patch(
+            'snapcraft.internal.lxd._containerbuild.open', mock.mock_open())
         self.open_mock = patcher.start()
         self.open_mock_default_side_effect = self.open_mock.side_effect
         self.open_mock.side_effect = self.open_side_effect()
@@ -502,22 +559,22 @@ class FakeLXD(fixtures.Fixture):
         self.devices = '{}'
 
     def _setUp(self):
-        patcher = mock.patch('snapcraft.internal.lxd.check_call')
+        patcher = mock.patch('subprocess.check_call')
         self.check_call_mock = patcher.start()
         self.check_call_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.check_output')
+        patcher = mock.patch('subprocess.check_output')
         self.check_output_mock = patcher.start()
         self.check_output_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.Popen')
+        patcher = mock.patch('subprocess.Popen')
         self.popen_mock = patcher.start()
         self.popen_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.internal.lxd.sleep', lambda _: None)
+        patcher = mock.patch('time.sleep', lambda _: None)
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -530,38 +587,44 @@ class FakeLXD(fixtures.Fixture):
         self.architecture_mock.return_value = ('64bit', 'ELF')
         self.addCleanup(patcher.stop)
 
+    def call_effect(self, *args, **kwargs):
+        if args[0] == ['lxc', 'remote', 'get-default']:
+            return 'local'.encode('utf-8')
+        elif args[0][:2] == ['lxc', 'info']:
+            return 'Architecture: {}'.format(
+                self.kernel_arch).encode('utf-8')
+        elif args[0][:3] == ['lxc', 'list', '--format=json']:
+            if self.status and args[0][3] == self.name:
+                return string.Template('''
+                    [{"name": "$NAME",
+                      "status": "$STATUS",
+                      "devices": $DEVICES}]
+                    ''').substitute({
+                        # Container name without remote prefix
+                        'NAME': self.name.split(':')[-1],
+                        'STATUS': self.status,
+                        'DEVICES': self.devices,
+                    }).encode('utf-8')
+            return '[]'.encode('utf-8')
+        elif (args[0][0] == 'lxc' and
+              args[0][1] in ['init', 'start', 'launch', 'stop']):
+            return self._lxc_create_start_stop(args)
+        elif args[0][:2] == ['lxc', 'exec']:
+            return self._lxc_exec(args)
+        elif args[0][:4] == ['lxc', 'image', 'list', '--format=json']:
+            return (
+                '[{"architecture":"test-architecture",'
+                '"fingerprint":"test-fingerprint",'
+                '"created_at":"test-created-at"}]').encode('utf-8')
+        elif args[0][0] == 'sha384sum':
+            return 'deadbeef {}'.format(args[0][1]).encode('utf-8')
+        elif '/usr/lib/sftp-server' in args[0]:
+            return self._popen(args[0])
+        else:
+            return ''.encode('utf-8')
+
     def check_output_side_effect(self):
-        def call_effect(*args, **kwargs):
-            if args[0] == ['lxc', 'remote', 'get-default']:
-                return 'local'.encode('utf-8')
-            elif args[0][:2] == ['lxc', 'info']:
-                return '''
-                    environment:
-                      kernel_architecture: {}
-                    '''.format(self.kernel_arch).encode('utf-8')
-            elif args[0][:3] == ['lxc', 'list', '--format=json']:
-                if self.status and args[0][3] == self.name:
-                    return string.Template('''
-                        [{"name": "$NAME",
-                          "status": "$STATUS",
-                          "devices": $DEVICES}]
-                        ''').substitute({
-                            # Container name without remote prefix
-                            'NAME': self.name.split(':')[-1],
-                            'STATUS': self.status,
-                            'DEVICES': self.devices,
-                            }).encode('utf-8')
-                return '[]'.encode('utf-8')
-            elif (args[0][0] == 'lxc' and
-                  args[0][1] in ['init', 'start', 'launch', 'stop']):
-                return self._lxc_create_start_stop(args)
-            elif args[0][:2] == ['lxc', 'exec']:
-                return self._lxc_exec(args)
-            elif '/usr/lib/sftp-server' in args[0]:
-                return self._popen(args[0])
-            else:
-                return ''.encode('utf-8')
-        return call_effect
+        return self.call_effect
 
     def _lxc_create_start_stop(self, args):
         if args[0][1] == 'init':
@@ -579,11 +642,18 @@ class FakeLXD(fixtures.Fixture):
     def _lxc_exec(self, args):
         if self.status and args[0][2] == self.name:
             cmd = args[0][4]
+            if cmd == 'sudo':
+                cmd = args[0][8]
             if cmd == 'ls':
                 return ' '.join(self.files).encode('utf-8')
+            elif cmd == 'readlink':
+                if args[0][-1].endswith('/current'):
+                    raise CalledProcessError(returncode=1, cmd=cmd)
             elif cmd == 'sshfs':
                 self.files = ['foo', 'bar']
                 return self._popen(args[0])
+            elif 'sha384sum' in args[0][-1]:
+                raise CalledProcessError(returncode=1, cmd=cmd)
 
     def _popen(self, args):
         class Popen:
@@ -593,47 +663,6 @@ class FakeLXD(fixtures.Fixture):
             def terminate(self):
                 pass
         return Popen(args)
-
-
-class FakeSnapd(fixtures.Fixture):
-    '''...'''
-
-    def __init__(self):
-        self.snaps = {
-            'core': {'confinement': 'strict',
-                     'id': '2kkitQurgOkL3foImG4wDwn9CIANuHlt',
-                     'revision': '123'},
-            'snapcraft': {'confinement': 'classic',
-                          'id': '3lljuRvshPlM4gpJnH5xExo0DJBOvImu',
-                          'revision': '345'},
-        }
-
-    def _setUp(self):
-        patcher = mock.patch('requests_unixsocket.Session.request')
-        self.session_request_mock = patcher.start()
-        self.session_request_mock.side_effect = self.request_side_effect()
-        self.addCleanup(patcher.stop)
-
-    def request_side_effect(self):
-        def request_effect(*args, **kwargs):
-            if args[0] == 'GET' and '/v2/snaps/' in args[1]:
-                class Session:
-                    def __init__(self, name, snaps):
-                        self._name = name
-                        self._snaps = snaps
-
-                    def json(self):
-                        if self._name not in self._snaps:
-                            return {'status': 'Not Found',
-                                    'result': {'message': 'not found'},
-                                    'status-code': 404,
-                                    'type': 'error'}
-                        return {'status': 'OK',
-                                'type': 'sync',
-                                'result': self._snaps[self._name]}
-                name = args[1].split('/')[-1]
-                return Session(name, self.snaps)
-        return request_effect
 
 
 class GitRepo(fixtures.Fixture):
@@ -874,6 +903,7 @@ class FakeAptCachePackage():
         self.versions = {}
         self.version = version
         self.candidate = self
+        self.dependencies = []
         self.provides = provides if provides else []
         if installed:
             # XXX The installed attribute requires some values that the fake
@@ -903,6 +933,8 @@ class FakeAptCachePackage():
 
     def mark_install(self):
         if not self.installed:
+            if len(self.dependencies):
+                return
             self.marked_install = True
 
     def mark_keep(self):
@@ -917,6 +949,12 @@ class FakeAptCachePackage():
         return []
 
 
+class FakeAptBaseDependency:
+    def __init__(self, name, target_versions):
+        self.name = name
+        self.target_versions = target_versions
+
+
 class WithoutSnapInstalled(fixtures.Fixture):
     """Assert that a snap is not installed and remove it on clean up.
 
@@ -924,11 +962,11 @@ class WithoutSnapInstalled(fixtures.Fixture):
         set up.
     """
 
-    def __init__(self, snap_name):
+    def __init__(self, snap_name: str) -> None:
         super().__init__()
         self.snap_name = snap_name.split('/')[0]
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         if snapcraft.repo.snaps.SnapPackage.is_snap_installed(self.snap_name):
             raise AssertionError(
@@ -938,7 +976,7 @@ class WithoutSnapInstalled(fixtures.Fixture):
 
         self.addCleanup(self._remove_snap)
 
-    def _remove_snap(self):
+    def _remove_snap(self) -> None:
         try:
             subprocess.check_output(
                 ['sudo', 'snap', 'remove', self.snap_name],
@@ -958,17 +996,195 @@ class SnapcraftYaml(fixtures.Fixture):
         self.data = {
             'name': name,
             'version': version,
-            'summary': summary,
-            'description': description,
-            'parts': {}
+            'parts': {},
+            'apps': {}
         }
+        if summary is not None:
+            self.data['summary'] = summary
+        if description is not None:
+            self.data['description'] = description
 
     def update_part(self, name, data):
         part = {name: data}
         self.data['parts'].update(part)
+
+    def update_app(self, name, data):
+        app = {name: data}
+        self.data['apps'].update(app)
 
     def setUp(self):
         super().setUp()
         with open(os.path.join(self.path, 'snapcraft.yaml'),
                   'w') as snapcraft_yaml_file:
             yaml.dump(self.data, snapcraft_yaml_file)
+
+
+class UnixHTTPServer(socketserver.UnixStreamServer):
+
+    def get_request(self):
+        request, client_address = self.socket.accept()
+        # BaseHTTPRequestHandler expects a tuple with the client address at
+        # index 0, so we fake one
+        if len(client_address) == 0:
+            client_address = (self.server_address,)
+        return (request, client_address)
+
+
+class FakeSnapd(fixtures.Fixture):
+
+    @property
+    def snaps_result(self):
+        self.request_handler.snaps_result
+
+    @snaps_result.setter
+    def snaps_result(self, value):
+        self.request_handler.snaps_result = value
+
+    @property
+    def snap_details_func(self):
+        self.request_handler.snap_details_func
+
+    @snap_details_func.setter
+    def snap_details_func(self, value):
+        self.request_handler.snap_details_func = value
+
+    @property
+    def find_result(self):
+        self.request_handler.find_result
+
+    @find_result.setter
+    def find_result(self, value):
+        self.request_handler.find_result = value
+
+    def __init__(self):
+        super().__init__()
+        self.request_handler = snapd.FakeSnapdRequestHandler
+        self.snaps_result = []
+        self.find_result = []
+        self.snap_details_func = None
+
+    def setUp(self):
+        super().setUp()
+        snapd_fake_socket_path = tempfile.mkstemp()[1]
+        os.unlink(snapd_fake_socket_path)
+
+        socket_path_patcher = mock.patch(
+            'snapcraft.internal.repo.snaps.get_snapd_socket_path_template')
+        mock_socket_path = socket_path_patcher.start()
+        mock_socket_path.return_value = 'http+unix://{}/v2/{{}}'.format(
+            snapd_fake_socket_path.replace('/', '%2F'))
+        self.addCleanup(socket_path_patcher.stop)
+
+        self._start_fake_server(snapd_fake_socket_path)
+
+    def _start_fake_server(self, socket):
+        self.server = UnixHTTPServer(socket, self.request_handler)
+        server_thread = threading.Thread(target=self.server.serve_forever)
+        server_thread.start()
+        self.addCleanup(self._stop_fake_server, server_thread)
+
+    def _stop_fake_server(self, thread):
+        self.server.shutdown()
+        self.server.socket.close()
+        thread.join()
+
+
+class SharedCache(fixtures.Fixture):
+
+    def __init__(self, name) -> None:
+        super().__init__()
+        self.name = name
+
+    def setUp(self) -> None:
+        super().setUp()
+        shared_cache_dir = os.path.join(
+            tempfile.gettempdir(), 'snapcraft_test_cache_{}'.format(self.name))
+        os.makedirs(shared_cache_dir, exist_ok=True)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'XDG_CACHE_HOME', shared_cache_dir))
+        patcher = mock.patch(
+            'xdg.BaseDirectory.xdg_cache_home',
+            new=os.path.join(shared_cache_dir))
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+
+class FakeElf(fixtures.Fixture):
+
+    def __getitem__(self, item):
+        return self._elf_files[item]
+
+    def __init__(self, *, root_path, patchelf_version='0.10'):
+        super().__init__()
+
+        self.root_path = root_path
+        self.core_base_path = None
+        self._patchelf_version = patchelf_version
+
+    def _setUp(self):
+        super()._setUp()
+
+        self.core_base_path = self.useFixture(fixtures.TempDir()).path
+
+        binaries_path = os.path.abspath(os.path.join(
+            __file__, '..', 'bin', 'elf'))
+
+        new_binaries_path = self.useFixture(fixtures.TempDir()).path
+        current_path = os.environ.get('PATH')
+        new_path = '{}:{}'.format(new_binaries_path, current_path)
+        self.useFixture(fixtures.EnvironmentVariable('PATH', new_path))
+
+        # Copy readelf and strip
+        for f in ['readelf', 'strip']:
+            shutil.copy(os.path.join(binaries_path, f),
+                        os.path.join(new_binaries_path, f))
+            os.chmod(os.path.join(new_binaries_path, f), 0o755)
+
+        # Some values in ldd need to be set with core_path
+        with open(os.path.join(binaries_path, 'ldd')) as rf:
+            with open(os.path.join(new_binaries_path, 'ldd'), 'w') as wf:
+                for line in rf.readlines():
+                    wf.write(line.replace('{CORE_PATH}', self.core_base_path))
+        os.chmod(os.path.join(new_binaries_path, 'ldd'), 0o755)
+
+        # Some values in ldd need to be set with core_path
+        self.patchelf_path = os.path.join(new_binaries_path, 'patchelf')
+        with open(os.path.join(binaries_path, 'patchelf')) as rf:
+            with open(self.patchelf_path, 'w') as wf:
+                for line in rf.readlines():
+                    wf.write(line.replace(
+                        '{VERSION}', self._patchelf_version))
+        os.chmod(os.path.join(new_binaries_path, 'patchelf'), 0o755)
+
+        self._elf_files = {
+            'fake_elf-2.26': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-2.26')),
+            'fake_elf-2.23': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-2.23')),
+            'fake_elf-1.1': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-1.1')),
+            'fake_elf-static': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-static')),
+            'fake_elf-shared-object': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-shared-object')),
+            'fake_elf-bad-ldd': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-bad-ldd')),
+            'fake_elf-bad-patchelf': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-bad-patchelf')),
+            'fake_elf-with-core-libs': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-with-core-libs')),
+        }
+
+        for elf_file in self._elf_files.values():
+            with open(elf_file.path, 'wb') as f:
+                f.write(b'\x7fELF')
+                if elf_file.path.endswith('fake_elf-bad-patchelf'):
+                    f.write(b'nointerpreter')
+
+        self.root_libraries = {
+            'foo.so.1': os.path.join(self.root_path, 'foo.so.1'),
+        }
+
+        for root_library in self.root_libraries.values():
+            with open(root_library, 'wb') as f:
+                f.write(b'\x7fELF')

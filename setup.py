@@ -30,10 +30,14 @@ url = 'https://github.com/snapcore/snapcraft'
 packages = [
     'snapcraft',
     'snapcraft.cli',
+    'snapcraft.extractors',
     'snapcraft.integrations',
     'snapcraft.internal',
     'snapcraft.internal.cache',
     'snapcraft.internal.deltas',
+    'snapcraft.internal.lifecycle',
+    'snapcraft.internal.lxd',
+    'snapcraft.internal.meta',
     'snapcraft.internal.pluginhandler',
     'snapcraft.internal.project_loader',
     'snapcraft.internal.project_loader.grammar',
@@ -43,6 +47,7 @@ packages = [
     'snapcraft.internal.states',
     'snapcraft.plugins',
     'snapcraft.plugins._ros',
+    'snapcraft.plugins._python',
     'snapcraft.storeapi'
 ]
 package_data = {'snapcraft.internal.repo': ['manifest.txt']}

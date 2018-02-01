@@ -1,0 +1,13 @@
+name: ruby-bundle-install
+version: 0.1
+summary: Test bundle install
+description: |
+  Snap to test 'bundle install' command
+confinement: strict
+
+parts:
+  ruby-bundle-install:
+    plugin: ruby
+    use-bundler: true
+    stage:
+      - bin

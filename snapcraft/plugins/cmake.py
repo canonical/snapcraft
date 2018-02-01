@@ -19,6 +19,9 @@
 These are projects that have a CMakeLists.txt that drives the build.
 The plugin requires a CMakeLists.txt in the root of the source tree.
 
+This plugin also supports options from the `make` plugin. Run
+`snapcraft help make` for more details.
+
 This plugin uses the common plugin keywords as well as those for "sources".
 For more information check the 'plugins' topic for the former and the
 'sources' topic for the latter.

@@ -23,6 +23,7 @@ def _stage_state_constructor(loader, node):
     parameters = loader.construct_mapping(node)
     return StageState(**parameters)
 
+
 yaml.add_constructor(u'!StageState', _stage_state_constructor)
 
 

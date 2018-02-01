@@ -16,8 +16,10 @@
 from snapcraft.file_utils import calculate_hash
 from . import errors
 
+from typing import Tuple
 
-def split_checksum(source_checksum):
+
+def split_checksum(source_checksum: str) -> Tuple:
     """Splits source_checksum into algorithm and hash.
     :raises ValueError: if source_checksum is not of the form algorightm/hash.
     :returns: a tuple consisting of the algorithm and the hash.
@@ -31,7 +33,7 @@ def split_checksum(source_checksum):
     return (algorithm, digest)
 
 
-def verify_checksum(source_checksum, checkfile):
+def verify_checksum(source_checksum: str, checkfile: str) -> Tuple:
     """Verifies that checkfile corresponds to the given source_checksum.
     :param str source_checksum: algorithm/hash expected for checkfile.
     :param str checkfile: the file to calculate the sum for with the

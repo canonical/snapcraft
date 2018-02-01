@@ -30,10 +30,9 @@ For more information check the 'plugins' topic for the former and the
 """
 
 import os
-import re
 
 import snapcraft
-from snapcraft import file_utils
+from snapcraft.internal import mangling
 
 
 class PlainboxProviderPlugin(snapcraft.BasePlugin):
@@ -46,6 +45,10 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
         super().build()
 
         env = os.environ.copy()
+        # Ensure the first provider does not attempt to validate against
+        # providers installed on the build host by initialising PROVIDERPATH
+        # to empty
+        env['PROVIDERPATH'] = ''
         provider_stage_dir = os.path.join(self.project.stage_dir, 'providers')
         if os.path.exists(provider_stage_dir):
             provider_dirs = [os.path.join(provider_stage_dir, provider)
@@ -59,10 +62,7 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
             '--prefix=/providers/{}'.format(self.name),
             '--root={}'.format(self.installdir)])
 
-        # Fix all shebangs to use the in-snap python.
-        file_utils.replace_in_file(self.installdir, re.compile(r''),
-                                   re.compile(r'^#!.*python'),
-                                   r'#!/usr/bin/env python')
+        mangling.rewrite_python_shebangs(self.installdir)
 
     def snap_fileset(self):
         fileset = super().snap_fileset()

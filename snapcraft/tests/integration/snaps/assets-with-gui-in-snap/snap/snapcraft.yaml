@@ -1,0 +1,20 @@
+name: snap-with-assets-in-snap
+version: '0.1'
+summary: Make gui assets in snap available in meta
+description: |
+  Verify the assets in snap are respected and copied over
+  correctly.
+
+grade: devel
+confinement: devmode
+
+apps:
+  my-app:
+      command: bash
+      # ensure we still have a valid desktop file even when no adapter
+      # (wrapper) is generated
+      adapter: none
+
+parts:
+  my-app:
+    plugin: nil

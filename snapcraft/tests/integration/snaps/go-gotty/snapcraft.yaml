@@ -1,0 +1,20 @@
+name: gotty
+version: 'v2.0.0-alpha.2'
+summary: Share your terminal as a web application
+description: |
+  GoTTY is a simple command line tool that turns your CLI tools into web
+  applications.
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: classic
+
+parts:
+  gotty:
+    source: https://github.com/yudai/gotty
+    source-type: git
+    source-commit: 2c50c432906f1034fa1efec8f7866315f8c81025
+    plugin: go
+    go-importpath: github.com/yudai/gotty
+    after: [go]
+  go:
+    source-tag: go1.9.2

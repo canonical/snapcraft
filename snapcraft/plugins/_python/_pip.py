@@ -20,12 +20,14 @@ import json
 import logging
 import os
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
 
 import snapcraft
 from snapcraft import file_utils
+from snapcraft.internal import mangling
 from ._python_finder import (
     get_python_command,
     get_python_headers,
@@ -56,6 +58,37 @@ def _process_common_args(*, packages, constraints,
     return args
 
 
+def _replicate_owner_mode(path):
+    # Don't bother with a path that doesn't exist or is a symlink. The target
+    # of the symlink will either be updated anyway, or we won't have permission
+    # to change it.
+    if not os.path.exists(path) or os.path.islink(path):
+        return
+
+    file_mode = os.stat(path).st_mode
+
+    # We at least need to write to it to fix shebangs later
+    new_mode = file_mode | stat.S_IWUSR
+
+    # If the owner can execute it, so should everyone else.
+    if file_mode & stat.S_IXUSR:
+        new_mode |= stat.S_IXUSR | stat.S_IXGRP | stat.S_IXOTH
+
+    # If the owner can read it, so should everyone else
+    if file_mode & stat.S_IRUSR:
+        new_mode |= stat.S_IRUSR | stat.S_IRGRP | stat.S_IROTH
+
+    os.chmod(path, new_mode)
+
+
+def _fix_permissions(path):
+    for root, dirs, files in os.walk(path):
+        for filename in files:
+            _replicate_owner_mode(os.path.join(root, filename))
+        for dirname in dirs:
+            _replicate_owner_mode(os.path.join(root, dirname))
+
+
 class Pip:
     """Wrapper for pip abstracting the args necessary for use in a part.
 
@@ -71,8 +104,7 @@ class Pip:
                  stage_dir):
         """Initialize pip.
 
-        Check to see if pip has already been installed. If not, fetch pip,
-        setuptools, and wheel, and install them so they can be used.
+        You must call setup() before you can actually use pip.
 
         :param str python_major_version: The python major version to find (2 or
                                          3)
@@ -99,13 +131,29 @@ class Pip:
             self._python_major_version, stage_dir=self._stage_dir,
             install_dir=self._install_dir)
 
-        self._setup()
+    def setup(self):
+        """Install pip and dependencies.
 
-    def _setup(self):
-        # Check to see if we have our own pip, yet. If not, we need to use the
-        # pip on the host (installed via build-packages) to grab our own.
+        Check to see if pip has already been installed. If not, fetch pip,
+        setuptools, and wheel, and install them so they can be used.
+        """
+
+        self._ensure_pip_installed()
+        self._ensure_wheel_installed()
+        self._ensure_setuptools_installed()
+
+    def is_setup(self):
+        """Return true if this class has already been setup."""
+
+        return (
+            self._is_pip_installed() and self._is_wheel_installed() and
+            self._is_setuptools_installed())
+
+    def _ensure_pip_installed(self):
+        # Check to see if we have our own pip. If not, we need to use the pip
+        # on the host (installed via build-packages) to grab our own.
         if not self._is_pip_installed():
-            logger.info('Fetching pip, setuptools, and wheel...')
+            logger.info('Fetching and installing pip...')
 
             real_python_home = self._python_home
 
@@ -115,14 +163,24 @@ class Pip:
             try:
                 self._python_home = os.path.join(os.path.sep, 'usr')
 
-                # Using the host's pip, install our own pip and other tools we
-                # need.
-                self.download({'pip', 'setuptools', 'wheel'})
-                self.install(
-                    {'pip', 'setuptools', 'wheel'}, ignore_installed=True)
+                # Using the host's pip, install our own pip
+                self.download({'pip'})
+                self.install({'pip'}, ignore_installed=True)
             finally:
                 # Now that we have our own pip, reset the python home
                 self._python_home = real_python_home
+
+    def _ensure_wheel_installed(self):
+        if not self._is_wheel_installed():
+            logger.info('Fetching and installing wheel...')
+            self.download({'wheel'})
+            self.install({'wheel'}, ignore_installed=True)
+
+    def _ensure_setuptools_installed(self):
+        if not self._is_setuptools_installed():
+            logger.info('Fetching and installing setuptools...')
+            self.download({'setuptools'})
+            self.install({'setuptools'}, ignore_installed=True)
 
     def _is_pip_installed(self):
         try:
@@ -131,15 +189,23 @@ class Pip:
             # one we think it is, we need to process the stderr. So we'll
             # redirect it to stdout. If it's not the error we expect, something
             # is wrong, so re-raise it.
-            self._run([], stderr=subprocess.STDOUT)
+            #
+            # Using _run_output here so stdout doesn't get printed to the
+            # terminal.
+            self._run_output([], stderr=subprocess.STDOUT)
         except subprocess.CalledProcessError as e:
             output = e.output.decode(sys.getfilesystemencoding()).strip()
             if 'no module named pip' in output.lower():
                 return False
             else:
                 raise e
-
         return True
+
+    def _is_wheel_installed(self):
+        return 'wheel' in self.list()
+
+    def _is_setuptools_installed(self):
+        return 'setuptools' in self.list()
 
     def download(self, packages, *, setup_py_dir=None, constraints=None,
                  requirements=None, process_dependency_links=False):
@@ -229,6 +295,13 @@ class Pip:
         self._run(['install', '--user', '--no-compile', '--no-index',
                    '--find-links', self._python_package_dir] + args, cwd=cwd)
 
+        # Installing with --user results in a directory with 700 permissions.
+        # We need it a bit more open than that, so open it up.
+        _fix_permissions(self._install_dir)
+
+        # Fix all shebangs to use the in-snap python.
+        mangling.rewrite_python_shebangs(self._install_dir)
+
     def wheel(self, packages, *, setup_py_dir=None, constraints=None,
               requirements=None, process_dependency_links=False):
         """Build wheels of packages in the cache.
@@ -257,7 +330,7 @@ class Pip:
             cwd = setup_py_dir
 
         if not args:
-            return  # No operation was requested
+            return []  # No operation was requested
 
         wheels = []
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -284,13 +357,19 @@ class Pip:
         return [os.path.join(self._python_package_dir, wheel)
                 for wheel in wheels]
 
-    def list(self):
+    def list(self, *, user=False):
         """Determine which packages have been installed.
+
+        :param boolean user: Whether or not to limit results to user base.
 
         :return: Dict of installed python packages and their versions
         :rtype: dict
         """
-        output = self._run(['list', '--format=json'])
+        command = ['list', '--format=json']
+        if user:
+            command.append('--user')
+
+        output = self._run_output(command)
         packages = collections.OrderedDict()
         try:
             json_output = json.loads(
@@ -341,9 +420,18 @@ class Pip:
 
         return env
 
-    def _run(self, args, **kwargs):
+    def _run(self, args, runner=None, **kwargs):
         env = self.env()
 
-        return snapcraft.internal.common.run_output(
+        # Using None as the default value instead of common.run so we can mock
+        # common.run.
+        if runner is None:
+            runner = snapcraft.internal.common.run
+
+        return runner(
             [self._python_command, '-m', 'pip'] + list(args), env=env,
             **kwargs)
+
+    def _run_output(self, args, **kwargs):
+        return self._run(
+            args, runner=snapcraft.internal.common.run_output, **kwargs)

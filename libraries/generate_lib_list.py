@@ -30,7 +30,7 @@ def main():
     config = load_config()
     with tempfile.NamedTemporaryFile() as temp:
         print('Downloading')
-        download('ubuntu-core', 'stable', temp.name, config, 'amd64')
+        download('core', 'stable', temp.name, config, 'amd64')
         lib_list = generate_list(temp.name)
 
     lib_list = ('{}\n'.format(l) for l in lib_list)

@@ -17,7 +17,7 @@
 import os.path
 
 
-def setup_dirs():
+def setup_dirs() -> None:
     """
     Ensure that snapcraft.common plugindir is setup correctly
     and support running out of a development snapshot

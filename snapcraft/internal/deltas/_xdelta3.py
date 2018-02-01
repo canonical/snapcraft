@@ -13,13 +13,11 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-
 import logging
 import shutil
 import subprocess
 
-from snapcraft.internal.deltas import BaseDeltasGenerator
+from snapcraft.internal.deltas._deltas import BaseDeltasGenerator
 
 
 logger = logging.getLogger(__name__)

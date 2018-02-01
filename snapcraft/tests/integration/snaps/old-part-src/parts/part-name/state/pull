@@ -1,0 +1,14 @@
+!PullState
+project_options: {deb_arch: $arch}
+properties:
+  parse-info: []
+  plugin: copy
+  source: .
+  source-branch: ''
+  source-commit: ''
+  source-depth: 0
+  source-subdir: ''
+  source-tag: ''
+  source-type: ''
+  stage-packages: []
+schema_properties: []

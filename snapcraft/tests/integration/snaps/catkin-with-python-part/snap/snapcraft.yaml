@@ -1,0 +1,31 @@
+name: catkin-with-python-part
+version: '1.0'
+summary: Snap with a Catkin and Python part
+description: |
+  This snap ensures that the Catkin plugin plays nicely with the Python plugin.
+  It also ensures that Catkin's handling of rosinstall files continues to work.
+
+grade: devel
+confinement: strict
+
+parts:
+  python-part:
+    plugin: python
+    python-version: python2
+    python-packages:
+    - transitions
+
+  catkin-part:
+    plugin: catkin
+    rosdistro: kinetic
+    rosinstall-files: [ros_tutorials.rosinstall]
+    catkin-packages:
+      - roscpp_tutorials
+
+    # Make sure this runs after the python part has been staged, as that poses
+    # the most problems.
+    after: [python-part]
+
+    stage:
+      # The python part includes a sitecustomize that we don't want to clobber
+      - -usr/lib/python2.7/sitecustomize.py

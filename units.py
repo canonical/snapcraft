@@ -1,4 +1,4 @@
 import unittest
 
-unittest.main('snapcraft.tests.commands.test_build',
+unittest.main('snapcraft.tests.unit.commands.test_build',
               argv=['BuildCommandTestCase'])  # noqa

@@ -15,6 +15,24 @@ tests. Some other rules are only socially enforced during code reviews.
 
 We adhere to the Style Guide for Python Code documented in the [PEP 8][2].
 
+## Multiline strings
+
+For multiline strings, we prefer to use `textwrap.dedent`:
+
+    # end first line with \ to avoid the empty line!
+    s = textwrap.dedent("""\
+        hello
+          world
+        """)
+    print(repr(s))  # prints 'hello\n  world\n'
+
+(from https://docs.python.org/3/library/textwrap.html#textwrap.dedent)
+
+## Errors
+
+Error messages must say what happened, why it happened and what you can do to
+fix it.
+
 ## Tests
 
 * When asserting for equality, we prefer to use the `Equals` matcher from
@@ -23,6 +41,11 @@ We adhere to the Style Guide for Python Code documented in the [PEP 8][2].
     ```
     self.assertThat(actual, Equals(expected))
     ```
+
+* When writing unit tests that raise errors, the tests should only check the
+  class of the exception raised and it's attributes, not the format of the
+  error message. The formatting of the exception as a string should be
+  tested only once, in the module snapcraft/tests/unit/test_errors.py
 
 [1]: TESTING.md
 [2]: https://www.python.org/dev/peps/pep-0008

@@ -1,0 +1,42 @@
+name: plainbox-simple
+summary: A Plainbox Test Tool
+description: >
+  The Plainbox tool itself coupled with a Provider which contains the test
+  definitions
+version: 0.1
+confinement: strict
+
+apps:
+    plainbox:
+        command: bin/plainbox-wrapper
+        # Required because of https://bugs.launchpad.net/snapcraft/+bug/1732076
+        plugs: [home]
+
+parts:
+    # The testing framework
+    plainbox-local:
+        plugin: python3
+        python-packages:
+            - plainbox
+            - requests-oauthlib
+            - xlsxwriter
+        build-packages:
+            - libxml2-dev
+            - libxslt1-dev
+            - zlib1g-dev
+            - build-essential
+    # The test definitions
+    simple-plainbox-provider:
+        plugin: plainbox-provider
+        source: ./com.example_simple
+        after: [plainbox-local]
+    # A wrapper script
+    launchers:
+        plugin: dump
+        source: .
+        organize:
+            launchers/plainbox-wrapper: bin/plainbox-wrapper
+        filesets:
+            wrapper: [bin/plainbox-wrapper]
+        stage: [$wrapper]
+        snap: [$wrapper]

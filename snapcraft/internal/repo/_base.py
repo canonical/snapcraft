@@ -24,6 +24,8 @@ import shutil
 import stat
 
 from snapcraft import file_utils
+from snapcraft.internal import mangling
+from . import errors
 
 _BIN_PATHS = (
     'bin',
@@ -64,7 +66,7 @@ class BaseRepo:
                   directories.
         :rtype: set.
         """
-        raise NotImplemented()
+        raise errors.NoNativeBackendError()
 
     @classmethod
     def get_packages_for_source_type(cls, source_type):
@@ -87,7 +89,7 @@ class BaseRepo:
         :returns: a set of packages that need to be installed on the host.
         :rtype: set of strings.
         """
-        raise NotImplementedError()
+        raise errors.NoNativeBackendError()
 
     @classmethod
     def install_build_packages(cls, package_names):
@@ -98,7 +100,7 @@ class BaseRepo:
         :raises snapcraft.repo.errors.BuildPackageNotFoundError:
             if one of the package_names cannot be installed.
         """
-        raise NotImplementedError()
+        raise errors.NoNativeBackendError()
 
     @classmethod
     def build_package_is_valid(cls, package_name):
@@ -107,7 +109,7 @@ class BaseRepo:
         :param package_name: a package name to check.
         :type package_name: str
         """
-        raise NotImplementedError()
+        raise errors.NoNativeBackendError()
 
     @classmethod
     def is_package_installed(cls, package_name):
@@ -117,7 +119,7 @@ class BaseRepo:
         :returns: True if package_name is installed if not False.
         :rtype: boolean
         """
-        raise NotImplementedError()
+        raise errors.NoNativeBackendError()
 
     @classmethod
     def get_installed_packages(cls):
@@ -125,7 +127,7 @@ class BaseRepo:
 
         :rtype: list of strings with the form package=version.
         """
-        raise NotImplementedError()
+        raise errors.NoNativeBackendError()
 
     def __init__(self, rootdir, *args, **kwargs):
         """Initialize a repository handler.
@@ -150,7 +152,7 @@ class BaseRepo:
         :raises snapcraft.repo.errors.PackageNotFoundError:
             when a package in package_names is not found.
         """
-        raise NotImplemented()
+        raise errors.NoNativeBackendError()
 
     def unpack(self, unpackdir):
         """Unpack obtained packages into unpackdir.
@@ -163,7 +165,7 @@ class BaseRepo:
 
         :param str unpackdir: target directory to unpack packages to.
         """
-        raise NotImplemented()
+        raise errors.NoNativeBackendError()
 
     def normalize(self, unpackdir):
         """Normalize artifacts in unpackdir.
@@ -237,15 +239,13 @@ class BaseRepo:
         paths = [p for p in _BIN_PATHS
                  if os.path.exists(os.path.join(unpackdir, p))]
         for p in [os.path.join(unpackdir, p) for p in paths]:
-            file_utils.replace_in_file(p, re.compile(r''),
-                                       re.compile(r'#!.*python\n'),
-                                       r'#!/usr/bin/env python\n')
+            mangling.rewrite_python_shebangs(p)
 
 
 class DummyRepo(BaseRepo):
 
     def get_packages_for_source_type(*args, **kwargs):
-        pass
+        return set()
 
 
 def _try_copy_local(path, target):

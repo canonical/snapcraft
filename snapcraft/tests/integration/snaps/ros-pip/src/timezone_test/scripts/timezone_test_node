@@ -1,0 +1,15 @@
+#!/usr/bin/env python
+
+import rospy
+import tzlocal
+
+
+def main():
+    # This line verifies that we can connect to ROS master
+    rospy.init_node('timezone_test')
+
+    # This line verifies that we can use tzlocal, which is a pip dependency
+    print('Local timezone: {}'.format(tzlocal.get_localzone()))
+
+if __name__ == '__main__':
+    main()

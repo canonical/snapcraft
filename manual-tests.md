@@ -67,6 +67,18 @@
    build folders as well as the container `snapcraft-<project>` is gone.
 
 
+# Test containerized building with LXD on a remote host
+
+1. Setup LXD on a remote host as described on
+   https://linuxcontainers.org/lxd/getting-started-cli/
+2. Add your remote locally via `lxc remote add <remote>`
+2. Select a project <project> to build.
+3. Run `SNAPCRAFT_CONTAINER_BUILDS=<remote> snapcraft -d` and observe that
+   the debug message `Setting up user <user> in container` shows up.
+4. Run `SNAPCRAFT_CONTAINER_BUILDS=<remote> snapcraft clean` and observe that
+   build folders as well as the container `snapcraft-<project>` is gone.
+
+
 # Test cross-compilation with Go
 
 1. Go to integration_tests/snaps/go-hello.
@@ -215,3 +227,46 @@
 2. Make sure Snapcraft works by running `snapcraft init` followed by `snapcraft`.
 3. Follow HACKING.md to install using `pip` while using --editable.
 4. Repeat step 2.
+
+
+# Test push metadata with conflicts
+
+1. 'snapcraft snap' a simple snap
+2. Do a simple 'snapcraft push SNAP'
+3. Go to the Web and change snap's description
+4. Change the snap's description in the YAML file to something different than you put in the Web
+5. Try to update snap's metadata doing `snapcraft push-metadata SNAP`
+
+    * Check that it should error with "conflict" on the description field
+
+6. Force the update doing `snapcraft push-metadata SNAP --force`
+
+    * Check that it should end ok
+    * Check in the Web that the description is now what the YAML says
+
+
+# Test push binary metadata with conflicts
+
+1. 'snapcraft snap' a simple snap
+2. Do a simple 'snapcraft push SNAP'
+3. Go to the Web and change snap's icon
+4. Change the snap's icon in the YAML file to something different than you put in the Web
+5. Try to update snap's metadata using `snapcraft push-metadata SNAP`
+
+    * Check that it should error with "conflict" on the icon field
+
+6. Force the update doing `snapcraft push-metadata SNAP --force`
+
+    * Check that it should end ok
+    * Check in the Web that the icon is now what the YAML says
+
+
+# Test creating a macaroon with a specific expiration
+
+1. Take note of the current date. Pick a date two days later, and convert it
+   into ISO 8601. For example, midnight on February 5th, 2019 is
+   '2019-02-05T00:00:00'.
+2. Run 'snapcraft export-login --expires="2019-02-05T00:00:00" exported', using
+   the expiration date you calculated.
+3. Snapcraft will print the capabilities of the exported login. Verify that the
+   expiration date you requested is the one that it prints.

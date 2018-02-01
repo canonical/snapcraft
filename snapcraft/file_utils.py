@@ -21,8 +21,9 @@ import os
 import shutil
 import subprocess
 import sys
+from typing import Pattern, Callable, Generator
 
-
+from snapcraft.internal import common
 from snapcraft.internal.errors import (
     RequiredCommandFailure,
     RequiredCommandNotFound,
@@ -36,7 +37,9 @@ if sys.version_info < (3, 6):
 logger = logging.getLogger(__name__)
 
 
-def replace_in_file(directory, file_pattern, search_pattern, replacement):
+def replace_in_file(directory: str, file_pattern: Pattern,
+                    search_pattern: Pattern,
+                    replacement: str) -> None:
     """Searches and replaces patterns that match a file pattern.
 
     :param str directory: The directory to look for files.
@@ -58,7 +61,9 @@ def replace_in_file(directory, file_pattern, search_pattern, replacement):
                         file_path, search_pattern, replacement)
 
 
-def search_and_replace_contents(file_path, search_pattern, replacement):
+def search_and_replace_contents(file_path: str,
+                                search_pattern: Pattern,
+                                replacement: str) -> None:
     """Search file and replace any occurrence of pattern with replacement.
 
     :param str file_path: Path of file to be searched.
@@ -83,7 +88,8 @@ def search_and_replace_contents(file_path, search_pattern, replacement):
             path=file_path, error=e))
 
 
-def link_or_copy(source, destination, follow_symlinks=False):
+def link_or_copy(source: str, destination: str,
+                 follow_symlinks: bool=False) -> None:
     """Hard-link source and destination files. Copy if it fails to link.
 
     Hard-linking may fail (e.g. a cross-device link, or permission denied), so
@@ -125,15 +131,16 @@ def link_or_copy(source, destination, follow_symlinks=False):
                 destination=destination, error=e))
 
 
-def link_or_copy_tree(source_tree, destination_tree,
-                      copy_function=link_or_copy):
-    """Copy a source tree into a destination, hard-linking if possile.
+def link_or_copy_tree(source_tree: str, destination_tree: str,
+                      copy_function: Callable[..., None]
+                      =link_or_copy) -> None:
+    """Copy a source tree into a destination, hard-linking if possible.
 
     :param str source_tree: Source directory to be copied.
     :param str destination_tree: Destination directory. If this directory
                                  already exists, the files in `source_tree`
                                  will take precedence.
-    :param str boundary: Filesystem boundary no symlinks are allowed to cross.
+    :param callable copy_function: Callable that actually copies.
     """
 
     if not os.path.isdir(source_tree):
@@ -170,7 +177,8 @@ def link_or_copy_tree(source_tree, destination_tree,
             copy_function(source, destination)
 
 
-def create_similar_directory(source, destination, follow_symlinks=False):
+def create_similar_directory(source: str, destination: str,
+                             follow_symlinks: bool=False) -> None:
     """Create a directory with the same permission bits and owner information.
 
     :param str source: Directory from which to copy name, permission bits, and
@@ -192,13 +200,14 @@ def create_similar_directory(source, destination, follow_symlinks=False):
     shutil.copystat(source, destination, follow_symlinks=follow_symlinks)
 
 
-def executable_exists(path):
+def executable_exists(path: str) -> bool:
     """Return True if 'path' exists and is readable and executable."""
     return os.path.exists(path) and os.access(path, os.R_OK | os.X_OK)
 
 
 @contextmanager
-def requires_command_success(command, not_found_fmt=None, failure_fmt=None):
+def requires_command_success(command: str, not_found_fmt: str=None,
+                             failure_fmt: str=None) -> Generator:
     if isinstance(command, str):
         cmd_list = command.split()
     else:
@@ -219,7 +228,8 @@ def requires_command_success(command, not_found_fmt=None, failure_fmt=None):
 
 
 @contextmanager
-def requires_path_exists(path, error_fmt=None):
+def requires_path_exists(path: str,
+                         error_fmt: str=None) -> Generator:
     if not os.path.exists(path):
         kwargs = dict(path=path)
         if error_fmt is not None:
@@ -228,12 +238,12 @@ def requires_path_exists(path, error_fmt=None):
     yield
 
 
-def calculate_sha3_384(path):
+def calculate_sha3_384(path: str) -> str:
     """Calculate sha3 384 hash, reading the file in 1MB chunks."""
     return calculate_hash(path, algorithm='sha3_384')
 
 
-def calculate_hash(path, *, algorithm):
+def calculate_hash(path: str, *, algorithm: str) -> str:
     """Calculate the hash for path with algorithm."""
     # This will raise an AttributeError if algorithm is unsupported
     hasher = getattr(hashlib, algorithm)()
@@ -246,3 +256,39 @@ def calculate_hash(path, *, algorithm):
                 break
             hasher.update(buf)
     return hasher.hexdigest()
+
+
+def get_tool_path(command_name):
+    """Return the path to the given command
+
+    By default this utilizes the PATH, but if Snapcraft is running out of the
+    snap or out of Docker, it ensures it's using the one in the snap, not the
+    host.
+
+    :return: Path to command
+    :rtype: str
+    """
+    path = command_name
+
+    if common.is_snap():
+        path = _command_path_in_root(os.getenv('SNAP'), command_name)
+    elif common.is_docker_instance():
+        path = _command_path_in_root(os.path.join(
+            os.sep, 'snap', 'snapcraft', 'current'), command_name)
+
+    if path:
+        return path
+    else:
+        return command_name
+
+
+def _command_path_in_root(root, command_name):
+    for bin_directory in (os.path.join('usr', 'local', 'sbin'),
+                          os.path.join('usr', 'local', 'bin'),
+                          os.path.join('usr', 'sbin'),
+                          os.path.join('usr', 'bin'),
+                          os.path.join('sbin'),
+                          os.path.join('bin')):
+        path = os.path.join(root, bin_directory, command_name)
+        if os.path.exists(path):
+            return path

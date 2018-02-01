@@ -52,7 +52,23 @@ class Zip(FileBase):
             os.makedirs(dst)
             shutil.move(tmp_zip, zip)
 
-        zipfile.ZipFile(zip).extractall(path=dst)
+        # Workaround for: https://bugs.python.org/issue15795
+        with zipfile.ZipFile(zip, 'r') as f:
+            for info in f.infolist():
+                extracted_file = f.extract(info.filename, path=dst)
+
+                # Extract the mode from the file. Note that external_attr is
+                # a four-byte value, where the high two bytes represent UNIX
+                # permissions and file type bits, and the low two bytes contain
+                # MS-DOS FAT file attributes. Keep the mode to permissions
+                # only-- no sticky bit, uid bit, or gid bit.
+                mode = info.external_attr >> 16 & 0x1FF
+
+                # If the zip file was created on a non-unix system, it's
+                # possible for the mode to end up being zero. That makes it
+                # pretty useless, so ignore it if so.
+                if mode:
+                    os.chmod(extracted_file, mode)
 
         if not keep_zip:
             os.remove(zip)

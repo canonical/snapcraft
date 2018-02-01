@@ -1,4 +1,7 @@
+# -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
+#
 # Copyright (C) 2016-2017 Marius Gripsgard (mariogrip@ubuntu.com)
+# Copyright (C) 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -33,9 +36,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
       Features used to build optional dependencies
 """
 
-from contextlib import suppress
+import collections
 import os
 import shutil
+from contextlib import suppress
 
 import snapcraft
 from snapcraft import sources
@@ -91,6 +95,7 @@ class RustPlugin(snapcraft.BasePlugin):
         self._rustlib = os.path.join(self._rustpath, "lib")
         self._rustup_get = sources.Script(_RUSTUP, self._rustpath)
         self._rustup = os.path.join(self._rustpath, "rustup.sh")
+        self._manifest = collections.OrderedDict()
 
     def build(self):
         super().build()
@@ -105,6 +110,7 @@ class RustPlugin(snapcraft.BasePlugin):
             cmd.append("--features")
             cmd.append(' '.join(self.options.rust_features))
         self.run(cmd, env=self._build_env())
+        self._record_manifest()
 
     def _write_cross_compile_config(self):
         if not self.project.is_cross_compiling:
@@ -121,6 +127,20 @@ class RustPlugin(snapcraft.BasePlugin):
                 linker = "{}"
                 '''.format(self._target, self._target,
                            '{}-gcc'.format(self.project.arch_triplet)))
+
+    def _record_manifest(self):
+        self._manifest['rustup-version'] = self.run_output(
+            [self._rustup, '--version'])
+        self._manifest['rustc-version'] = self.run_output(
+            [self._rustc, '--version'])
+        self._manifest['cargo-version'] = self.run_output(
+            [self._cargo, '--version'])
+        with suppress(FileNotFoundError, IsADirectoryError):
+            with open(os.path.join(self.builddir, 'Cargo.lock')) as lock_file:
+                self._manifest['cargo-lock-contents'] = lock_file.read()
+
+    def get_manifest(self):
+        return self._manifest
 
     def enable_cross_compilation(self):
         # Cf. rustc --print target-list

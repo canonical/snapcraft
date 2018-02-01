@@ -3,7 +3,7 @@ project: snapcraft
 environment:
   LANG: "$(echo ${LANG:-C.UTF-8})"
   LANGUAGE: "$(echo ${LANGUAGE:-en})"
-  SNAPCRAFT_FROM_INSTALLED: "1"
+  SNAPCRAFT_FROM_SNAP: "1"
 
 backends:
   lxd:

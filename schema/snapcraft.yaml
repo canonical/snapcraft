@@ -1,6 +1,35 @@
 $schema: http://json-schema.org/draft-04/schema#
 
 definitions:
+  grammar-string:
+    oneOf:
+      - type: string
+        usage: "<string>"
+      - type: array
+        items:
+          minitems: 1
+          uniqueItems: true
+          anyOf:
+            - type: object
+              usage: "on <selector>[,<selector>...]:"
+              additionalProperties: false
+              patternProperties:
+                ^on\s+.+$:
+                  $ref: "#/definitions/grammar-string"
+            - type: object
+              usage: "try:"
+              additionalProperties: false
+              patternProperties:
+                ^try$:
+                  $ref: "#/definitions/grammar-string"
+            - type: object
+              usage: "else:"
+              additionalProperties: false
+              patternProperties:
+                ^else$:
+                  $ref: "#/definitions/grammar-string"
+            - type: string
+              pattern: "else fail"
   grammar-array:
     type: array
     minitems: 1
@@ -14,6 +43,12 @@ definitions:
           additionalProperties: false
           patternProperties:
             ^on\s+.+$:
+              $ref: "#/definitions/grammar-array"
+        - type: object
+          usage: "to <selector>[,<selector>...]:"
+          additionalProperties: false
+          patternProperties:
+            ^to\s+.+$:
               $ref: "#/definitions/grammar-array"
         - type: object
           usage: "try:"
@@ -34,10 +69,17 @@ properties:
   build-packages:
     $ref: "#/definitions/grammar-array"
     description: top level build packages.
+  adopt-info:
+    type: string
+    description: name of the part that provides source files that will be parsed to extract snap metadata information
   name:
     type: string
     description: name of the snap package
-    pattern: "^[a-z0-9][a-z0-9+-]*$"
+    validation-failure:
+      "{.instance!r} is not a valid snap name. Snap names consist of lower-case
+      alphanumeric characters and hyphens. They cannot be all numbers. They
+      also cannot start or end with a hyphen."
+    pattern: "^(?:[a-z0-9]+-?)*[a-z](?:-?[a-z0-9])*$"
   architectures:
     type: array
     description: architectures to override with
@@ -49,6 +91,10 @@ properties:
     # python's defaul yaml loading code loads 1.0 as an int
     # type: string
     description: package version
+    validation-failure:
+      "{.instance!r} is not a valid snap version. Snap versions consist of
+      upper- and lower-case alphanumeric characters, as well as periods, plus
+      signs, tildes, and hyphens."
     pattern: "^[a-zA-Z0-9.+~-]+$"
     maxLength: 32
   version-script:
@@ -120,6 +166,10 @@ properties:
   apps:
     type: object
     additionalProperties: false
+    validation-failure:
+            "{!r} is not a valid app name. App names consist of upper- and
+            lower-case alphanumeric characters and hyphens. They cannot start
+            or end with a hyphen."
     patternProperties:
       "^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$":
         type: object
@@ -194,11 +244,44 @@ properties:
                 - type: string
                   minLength: 1
                 - type: number
+          adapter:
+            type: string
+            description: What kind of wrapper to generate for the given command
+            enum:
+              - none
+          sockets:
+            type: object
+            additionalProperties: false
+            validation-failure:
+              "{!r} is not a valid socket name. Socket names consist of
+              lower-case alphanumeric characters and hyphens."
+            patternProperties:
+              "^[a-z][a-z0-9_-]*$":
+                type: object
+                required:
+                  - listen-stream
+                description: Sockets for automatic service activation
+                additionalProperties: false
+                properties:
+                  listen-stream:
+                    anyOf:
+                      - type: integer
+                        usage: "port number, an integer between 1 and 65535"
+                        minimum: 1
+                        maximum: 65535
+                      - type: string
+                        usage: "socket path, a string"
+                  socket-mode:
+                    type: integer
   hooks:
     type: object
     additionalProperties: false
+    validation-failure:
+        "{!r} is not a valid hook name. Hook names consist of lower-case
+        alphanumeric characters and hyphens. They cannot start or end with a
+        hyphen."
     patternProperties:
-      "^[a-zA-Z0-9](?:-?[a-zA-Z0-9])*$":
+      "^[a-z](?:-?[a-z0-9])*$":
         type: object
         additionalProperties: false
         properties:
@@ -212,6 +295,10 @@ properties:
     type: object
     minProperties: 1
     additionalProperties: false
+    validation-failure:
+        "{!r} is not a valid part name. Part names consist of lower-case
+        alphanumeric characters, hyphens, plus signs, and forward slashes. As a
+        special case, 'plugins' is also not a valid part name."
     patternProperties:
       ^(?!plugins$)[a-z0-9][a-z0-9+-\/]*$:
         # Make sure snap/prime are mutually exclusive
@@ -219,7 +306,8 @@ properties:
           - not:
               type: object
               required: [snap, prime]
-              validation-failure: "{.instance} cannot contain both 'snap' and 'prime' keywords."
+              validation-failure:
+                  "{.instance} cannot contain both 'snap' and 'prime' keywords."
         type: object
         minProperties: 1
         properties:
@@ -227,7 +315,7 @@ properties:
             type: string
             description: plugin name
           source:
-            type: string
+            $ref: "#/definitions/grammar-string"
             default: '.'
           source-checksum:
               type: string
@@ -335,6 +423,13 @@ properties:
           prepare:
             type: string
             default: ''
+          parse-info:
+            type: array
+            minitems: 1
+            uniqueItems: true
+            items:
+              type: string
+            default: []
   plugs:
     type: object
   slots:
@@ -342,9 +437,16 @@ properties:
 required:
   - name
   - version
-  - summary
-  - description
   - parts
+
+# Either summary/description is required, or adopt-info is required to specify
+# the part from which this metadata will be retrieved.
+anyOf:
+  - required:
+    - summary
+    - description
+  - required:
+    - adopt-info
 dependencies:
   license-agreement: ["license"]
   license-version: ["license"]

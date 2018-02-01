@@ -15,8 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # Data/methods shared between plugins and snapcraft
-
-from contextlib import suppress
 import glob
 import logging
 import math
@@ -26,6 +24,8 @@ import subprocess
 import sys
 import tempfile
 import urllib
+from contextlib import suppress
+from typing import List  # noqa
 
 from snapcraft.internal import errors
 
@@ -40,10 +40,11 @@ _schemadir = _DEFAULT_SCHEMADIR
 _DEFAULT_LIBRARIESDIR = os.path.join(sys.prefix, 'share', 'snapcraft',
                                      'libraries')
 _librariesdir = _DEFAULT_LIBRARIESDIR
+_DOCKERENV_FILE = '/.dockerenv'
 
 MAX_CHARACTERS_WRAP = 120
 
-env = []
+env = []  # type: List[str]
 
 logger = logging.getLogger(__name__)
 
@@ -98,8 +99,16 @@ def format_snap_name(snap):
     return '{name}_{version}_{arch}.snap'.format(**snap)
 
 
-def is_snap():
-    return os.environ.get('SNAP_NAME') == 'snapcraft'
+def is_snap() -> bool:
+    snap_name = os.environ.get('SNAP_NAME', '')
+    is_snap = snap_name == 'snapcraft'
+    logger.debug('snapcraft is running as a snap {!r}, '
+                 'SNAP_NAME set to {!r}'.format(is_snap, snap_name))
+    return is_snap
+
+
+def is_docker_instance() -> bool:
+    return os.path.exists(_DOCKERENV_FILE)
 
 
 def set_plugindir(plugindir):
@@ -263,12 +272,3 @@ def get_pkg_config_paths(root, arch_triplet):
     ]
 
     return [p for p in paths if os.path.exists(p)]
-
-
-def get_os_release_info():
-    with open("/etc/os-release") as os_release_file:
-        os_release_dict = {}
-        for line in os_release_file:
-            key, value = line.rstrip().split('=')
-            os_release_dict[key] = value.strip('"')
-    return os_release_dict

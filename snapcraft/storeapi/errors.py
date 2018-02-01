@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright 2016-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from simplejson.scanner import JSONDecodeError
+from typing import List  # noqa
 
 from snapcraft.internal.errors import SnapcraftError
 
@@ -29,7 +30,8 @@ class StoreError(SnapcraftError):
 
 class InvalidCredentialsError(StoreError):
 
-    fmt = 'Invalid credentials: {message}.'
+    fmt = ('Invalid credentials: {message}. '
+           'Have you run "snapcraft login"?')
 
     def __init__(self, message):
         super().__init__(message=message)
@@ -37,7 +39,13 @@ class InvalidCredentialsError(StoreError):
 
 class LoginRequiredError(StoreError):
 
-    fmt = 'Cannot continue without logging in successfully.'
+    fmt = '{message}'
+
+    def __init__(self, extra_information=''):
+        message = 'Cannot continue without logging in successfully'
+        if extra_information:
+            message += ': {}'.format(extra_information)
+        super().__init__(message=message)
 
 
 class StoreRetryError(StoreError):
@@ -83,9 +91,22 @@ class SHAMismatchError(StoreError):
 
 class StoreAuthenticationError(StoreError):
 
-    fmt = 'Authentication error: {}.'
+    fmt = 'Authentication error: {message}.'
 
-    def __init__(self, message):
+    def __init__(self, message, response=None):
+        # Unfortunately the store doesn't give us a consistent error response,
+        # so we'll check the ones of which we're aware.
+        if response:
+            response_json = response.json()
+            extra_error_message = ''
+            if 'error_message' in response_json:
+                extra_error_message = response_json['error_message']
+            elif 'message' in response_json:
+                extra_error_message = response_json['message']
+
+            if extra_error_message:
+                message += ': {}'.format(extra_error_message)
+
         super().__init__(message=message)
 
 
@@ -176,7 +197,8 @@ class StoreRegistrationError(StoreError):
     __FMT_RESERVED = (
         'The name {snap_name!r} is reserved.\n\n'
         'If you are the publisher most users expect for '
-        '{snap_name!r} then please claim the name at {register_name_url!r}')
+        '{snap_name!r} then please claim the name at {register_name_url!r}\n\n'
+        'Otherwise, please register another name.')
 
     __FMT_RETRY_WAIT = (
         'You must wait {retry_after} seconds before trying to register '
@@ -311,23 +333,109 @@ class StoreReleaseError(StoreError):
         'Sorry, try `snapcraft register {snap_name}` before trying to '
         'release or choose an existing revision.')
 
-    fmt = 'Received {status_code!r}: {text!r}'
+    __FMT_BAD_REQUEST = (
+        '{code}: {message}\n')
+
+    __FMT_UNAUTHORIZED_OR_FORBIDDEN = (
+        'Received {status_code!r}: {text!r}')
 
     def __init__(self, snap_name, response):
+        self.fmt_errors = {
+            400: self.__fmt_error_400,
+            401: self.__fmt_error_401_or_403,
+            403: self.__fmt_error_401_or_403,
+            404: self.__fmt_error_404,
+        }
+
+        fmt_error = self.fmt_errors.get(
+            response.status_code, self.__fmt_error_unknown)
+
+        self.fmt = fmt_error(response)
+
+        super().__init__(snap_name=snap_name)
+
+    def __to_json(self, response):
+        try:
+            response_json = response.json()
+        except (AttributeError, JSONDecodeError):
+            response_json = {}
+
+        return response_json
+
+    def __fmt_error_400(self, response):
+        response_json = self.__to_json(response)
+
+        try:
+            fmt = ''
+            for error in response_json['error_list']:
+                fmt += self.__FMT_BAD_REQUEST.format(**error)
+
+        except (AttributeError, KeyError):
+            fmt = self.__fmt_error_unknown(response)
+
+        return fmt
+
+    def __fmt_error_401_or_403(self, response):
+        try:
+            text = response.text
+
+        except AttributeError:
+            text = 'error while releasing'
+
+        return self.__FMT_UNAUTHORIZED_OR_FORBIDDEN.format(
+            status_code=response.status_code, text=text)
+
+    def __fmt_error_404(self, response):
+        return self.__FMT_NOT_REGISTERED
+
+    def __fmt_error_unknown(self, response):
+        response_json = self.__to_json(response)
+
+        try:
+            fmt = '{errors}'.format(**response_json)
+
+        except AttributeError:
+            fmt = '{}'.format(response)
+
+        return fmt
+
+
+class StoreMetadataError(StoreError):
+
+    __FMT_NOT_FOUND = (
+        "Sorry, updating the information on the store has failed, first run "
+        "`snapcraft register {snap_name}` and then "
+        "`snapcraft push <snap-file>`."
+    )
+
+    fmt = 'Received {status_code!r}: {text!r}'
+
+    def __init__(self, snap_name, response, metadata):
         try:
             response_json = response.json()
         except (AttributeError, JSONDecodeError):
             response_json = {}
 
         if response.status_code == 404:
-            self.fmt = self.__FMT_NOT_REGISTERED
-        elif response.status_code == 401 or response.status_code == 403:
-            try:
-                response_json['text'] = response.text
-            except AttributeError:
-                response_json['text'] = 'error while releasing'
-        elif 'errors' in response_json:
-            self.fmt = '{errors}'
+            self.fmt = self.__FMT_NOT_FOUND
+        elif response.status_code == 409:
+            conflicts = [(error['extra']['name'], error)
+                         for error in response_json['error_list']
+                         if error['code'] == 'conflict']
+            parts = ["Metadata not pushed!"]
+            for field_name, error in sorted(conflicts):
+                sent = metadata.get(field_name)
+                parts.extend((
+                    "Conflict in {!r} field:".format(field_name),
+                    "    In snapcraft.yaml: {!r}".format(sent),
+                    "    In the Store:      {!r}".format(error['message']),
+                ))
+            parts.append(
+                "You can repeat the push-metadata command with "
+                "--force to force the local values into the Store")
+            self.fmt = "\n".join(parts)
+        elif 'error_list' in response_json:
+            response_json['text'] = response_json['error_list'][0]['message']
 
         super().__init__(snap_name=snap_name, status_code=response.status_code,
                          **response_json)
@@ -340,7 +448,9 @@ class StoreValidationError(StoreError):
     def __init__(self, snap_id, response, message=None):
         try:
             response_json = response.json()
-            response_json['text'] = response.json()['error_list'][0]['message']
+            error = response.json()['error_list'][0]
+            response_json['text'] = error.get('message')
+            response_json['extra'] = error.get('extra')
         except (AttributeError, JSONDecodeError):
             response_json = {'text': message or response}
 

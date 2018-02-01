@@ -1,0 +1,4 @@
+<launch>
+    <node name = "timezone_test" pkg = "timezone_test" type = "timezone_test_node"
+          required = "true" output = "screen" />
+</launch>

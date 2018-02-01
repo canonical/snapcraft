@@ -1,0 +1,14 @@
+name: pip-bzr
+version: 1
+summary: Test that bzr VCS based packages can be pulled.
+description: |
+  bzr requires special consideration when using the python
+  plugin.
+confinement: strict
+grade: devel
+
+parts:
+  pip-bzr:
+    plugin: python
+    python-packages:
+        - bzr+lp:~snappy-dev/+junk/bzrtest#egg=bzrtest
