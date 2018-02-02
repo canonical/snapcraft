@@ -1109,6 +1109,32 @@ class SharedCache(fixtures.Fixture):
         self.addCleanup(patcher.stop)
 
 
+def _fake_elffile_extract(self, path):
+    name = os.path.basename(path)
+    if name in ['fake_elf-2.26', 'fake_elf-bad-ldd', 'fake_elf-with-core-libs',
+                'fake_elf-bad-patchelf']:
+        glibc = elf.NeededLibrary(name='libc.so.6')
+        glibc.add_version('GLIBC_2.2.5')
+        glibc.add_version('GLIBC_2.26')
+        return '/lib64/ld-linux-x86-64.so.2', {glibc.name: glibc}
+    elif name == 'fake_elf-2.23':
+        glibc = elf.NeededLibrary(name='libc.so.6')
+        glibc.add_version('GLIBC_2.2.5')
+        glibc.add_version('GLIBC_2.23')
+        return '/lib64/ld-linux-x86-64.so.2', {glibc.name: glibc}
+    elif name == 'fake_elf-1.1':
+        glibc = elf.NeededLibrary(name='libc.so.6')
+        glibc.add_version('GLIBC_1.1')
+        glibc.add_version('GLIBC_0.1')
+        return '/lib64/ld-linux-x86-64.so.2', {glibc.name: glibc}
+    elif name == 'fake_elf-static':
+        return '', {}
+    elif name == 'fake_elf-shared-object':
+        openssl = elf.NeededLibrary(name='libssl.so.1.0.0')
+        openssl.add_version('OPENSSL_1.0.0')
+        return '', {openssl.name: openssl}
+
+
 class FakeElf(fixtures.Fixture):
 
     def __getitem__(self, item):
@@ -1134,8 +1160,8 @@ class FakeElf(fixtures.Fixture):
         new_path = '{}:{}'.format(new_binaries_path, current_path)
         self.useFixture(fixtures.EnvironmentVariable('PATH', new_path))
 
-        # Copy readelf and strip
-        for f in ['readelf', 'strip']:
+        # Copy strip
+        for f in ['strip']:
             shutil.copy(os.path.join(binaries_path, f),
                         os.path.join(new_binaries_path, f))
             os.chmod(os.path.join(new_binaries_path, f), 0o755)
@@ -1155,6 +1181,11 @@ class FakeElf(fixtures.Fixture):
                     wf.write(line.replace(
                         '{VERSION}', self._patchelf_version))
         os.chmod(os.path.join(new_binaries_path, 'patchelf'), 0o755)
+
+        patcher = mock.patch.object(elf.ElfFile, '_extract',
+                                    new_callable=lambda: _fake_elffile_extract)
+        patcher.start()
+        self.addCleanup(patcher.stop)
 
         self._elf_files = {
             'fake_elf-2.26': elf.ElfFile(

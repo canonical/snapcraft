@@ -281,35 +281,30 @@ class TestGetRequiredGLIBC(TestElfBase):
                           linker='lib64/ld-linux-x86-64.so.2')
 
 
-class TestElfFileSymbols(TestElfBase):
+class TestElfFileNeeded(TestElfBase):
 
     def setUp(self):
         super().setUp()
 
-    def test_symbols(self):
+    def test_needed(self):
         elf_file = self.fake_elf['fake_elf-2.23']
 
-        self.assertThat(len(elf_file.symbols), Equals(3))
+        self.assertThat(sorted(elf_file.needed.keys()), Equals(['libc.so.6']))
 
-        self.assertThat(elf_file.symbols[0].name, Equals('endgrent'))
-        self.assertThat(elf_file.symbols[0].version, Equals('GLIBC_2.2.5'))
-        self.assertThat(elf_file.symbols[0].section, Equals('UND'))
+        glibc = elf_file.needed['libc.so.6']
+        self.assertThat(glibc.name, Equals('libc.so.6'))
+        self.assertThat(glibc.versions, Equals({'GLIBC_2.2.5', 'GLIBC_2.23'}))
 
-        self.assertThat(elf_file.symbols[1].name,
-                        Equals('__ctype_toupper_loc'))
-        self.assertThat(elf_file.symbols[1].version, Equals('GLIBC_2.23'))
-        self.assertThat(elf_file.symbols[1].section, Equals('UND'))
-
-        self.assertThat(elf_file.symbols[2].name, Equals('PyCodec_Register'))
-        self.assertThat(elf_file.symbols[2].version, Equals(''))
-        self.assertThat(elf_file.symbols[2].section, Equals('13'))
-
-    def test_symbols_no_match(self):
+    def test_shared_object_needed(self):
         # fake_elf-shared-object has no GLIBC dependency, but two symbols
         # nonetheless
         elf_file = self.fake_elf['fake_elf-shared-object']
 
-        self.assertThat(len(elf_file.symbols), Equals(2))
+        self.assertThat(sorted(elf_file.needed.keys()), Equals(['libssl.so.1.0.0']))
+
+        openssl = elf_file.needed['libssl.so.1.0.0']
+        self.assertThat(openssl.name, Equals('libssl.so.1.0.0'))
+        self.assertThat(openssl.versions, Equals({'OPENSSL_1.0.0'}))
 
 
 class TestPatcher(TestElfBase):
