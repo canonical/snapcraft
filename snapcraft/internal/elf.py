@@ -115,17 +115,22 @@ class ElfFile:
         with open(path, 'rb') as fp:
             elf = elftools.elf.elffile.ELFFile(fp)
 
+            # If we are processing a detached debug info file, these
+            # sections will be present but empty.
             interp_section = elf.get_section_by_name('.interp')
-            if interp_section is not None:
+            if (interp_section is not None and
+                interp_section.header.sh_type != 'SHT_NOBITS'):
                 interp = interp_section.data().rstrip(b'\x00').decode('ascii')
 
             dynamic_section = elf.get_section_by_name('.dynamic')
-            if dynamic_section is not None:
+            if (dynamic_section is not None and
+                dynamic_section.header.sh_type != 'SHT_NOBITS'):
                 for tag in dynamic_section.iter_tags('DT_NEEDED'):
                     libs[tag.needed] = NeededLibrary(name=tag.needed)
 
             verneed_section = elf.get_section_by_name('.gnu.version_r')
-            if verneed_section is not None:
+            if (verneed_section is not None and
+                verneed_section.header.sh_type != 'SHT_NOBITS'):
                 for library, versions in verneed_section.iter_versions():
                     lib = libs[library.name]
                     for version in versions:
