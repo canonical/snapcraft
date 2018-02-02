@@ -39,6 +39,18 @@ from snapcraft.internal import (
 logger = logging.getLogger(__name__)
 
 
+# Old pyelftools uses byte strings for section names.  Some data is
+# also returned as bytes, which is handled below.
+if parse_version(elftools.__version__) >= parse_version('0.24'):
+    _DYNAMIC = '.dynamic'
+    _GNU_VERSION_R = '.gnu.version_r'
+    _INTERP = '.interp'
+else:
+    _DYNAMIC = b'.dynamic'
+    _GNU_VERSION_R = b'.gnu.version_r'
+    _INTERP = b'.interp'
+
+
 class NeededLibrary:
     """Represents an ELF library version."""
 
@@ -118,26 +130,37 @@ class ElfFile:
 
             # If we are processing a detached debug info file, these
             # sections will be present but empty.
-            interp_section = elf.get_section_by_name('.interp')
+            interp_section = elf.get_section_by_name(_INTERP)
             if (interp_section is not None and
                 interp_section.header.sh_type != 'SHT_NOBITS'):
                 interp = interp_section.data().rstrip(b'\x00').decode('ascii')
 
-            dynamic_section = elf.get_section_by_name('.dynamic')
+            dynamic_section = elf.get_section_by_name(_DYNAMIC)
             if (dynamic_section is not None and
                 dynamic_section.header.sh_type != 'SHT_NOBITS'):
                 for tag in dynamic_section.iter_tags('DT_NEEDED'):
-                    libs[tag.needed] = NeededLibrary(name=tag.needed)
+                    needed = tag.needed
+                    if isinstance(needed, bytes):
+                        needed = needed.decode('ascii')
+                    libs[needed] = NeededLibrary(name=needed)
                 for tag in dynamic_section.iter_tags('DT_SONAME'):
                     soname = tag.soname
+                    if isinstance(soname, bytes):
+                        soname = soname.decode('ascii')
 
-            verneed_section = elf.get_section_by_name('.gnu.version_r')
+            verneed_section = elf.get_section_by_name(_GNU_VERSION_R)
             if (verneed_section is not None and
                 verneed_section.header.sh_type != 'SHT_NOBITS'):
                 for library, versions in verneed_section.iter_versions():
-                    lib = libs[library.name]
+                    library_name = library.name
+                    if isinstance(library_name, bytes):
+                        library_name = library_name.decode('ascii')
+                    lib = libs[library_name]
                     for version in versions:
-                        lib.add_version(version.name)
+                        version_name = version.name
+                        if isinstance(version_name, bytes):
+                            version_name = version_name.decode('ascii')
+                        lib.add_version(version_name)
         return interp, soname, libs
 
     def is_linker_compatible(self, *, linker: str) -> bool:
