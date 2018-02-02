@@ -18,8 +18,9 @@ import logging
 import os
 import tempfile
 from textwrap import dedent
+import sys
 
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Contains, Equals, NotEquals
 from unittest import mock
 
 from snapcraft.internal import errors, elf, os_release
@@ -56,6 +57,35 @@ class TestLdLibraryPathParser(unit.TestCase):
             elf._extract_ld_library_paths(file_path),
             Equals(['/foo/bar', '/colon', '/separated', '/comma',
                     '/tab', '/space', '/baz']))
+
+
+class TestElfFileSmoketest(unit.TestCase):
+
+    def test_bin_echo(self):
+        # Try parsing a file without the pyelftools logic mocked out
+        elf_file = elf.ElfFile(path=sys.executable)
+
+        self.assertThat(elf_file.path, Equals(sys.executable))
+
+        # We expect Python to be a dynamic linked executable with an
+        # ELF interpreter.
+        self.assertTrue(isinstance(elf_file.interp, str))
+        self.assertThat(elf_file.interp, NotEquals(''))
+
+        # Python is not a shared library, so has no soname
+        self.assertThat(elf_file.soname, Equals(''))
+
+        # We expect that Python will be linked to libc
+        for lib in elf_file.needed.values():
+            if lib.name.startswith('libc.so'):
+                break
+        else:
+            self.fail("Expected to find libc in needed library list")
+
+        self.assertTrue(isinstance(lib.name, str))
+        for version in lib.versions:
+            self.assertTrue(isinstance(version, str),
+                            "expected {!r} to be a string".format(version))
 
 
 class TestGetLibraries(TestElfBase):
