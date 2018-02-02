@@ -27,7 +27,6 @@ from typing import Dict, FrozenSet, List, Set, Sequence, Tuple
 import elftools.elf.elffile
 from pkg_resources import parse_version
 
-from snapcraft import file_utils
 from snapcraft.internal import (
     common,
     errors,
@@ -132,12 +131,12 @@ class ElfFile:
             # sections will be present but empty.
             interp_section = elf.get_section_by_name(_INTERP)
             if (interp_section is not None and
-                interp_section.header.sh_type != 'SHT_NOBITS'):
+                    interp_section.header.sh_type != 'SHT_NOBITS'):
                 interp = interp_section.data().rstrip(b'\x00').decode('ascii')
 
             dynamic_section = elf.get_section_by_name(_DYNAMIC)
             if (dynamic_section is not None and
-                dynamic_section.header.sh_type != 'SHT_NOBITS'):
+                    dynamic_section.header.sh_type != 'SHT_NOBITS'):
                 for tag in dynamic_section.iter_tags('DT_NEEDED'):
                     needed = tag.needed
                     if isinstance(needed, bytes):
@@ -150,7 +149,7 @@ class ElfFile:
 
             verneed_section = elf.get_section_by_name(_GNU_VERSION_R)
             if (verneed_section is not None and
-                verneed_section.header.sh_type != 'SHT_NOBITS'):
+                    verneed_section.header.sh_type != 'SHT_NOBITS'):
                 for library, versions in verneed_section.iter_versions():
                     library_name = library.name
                     if isinstance(library_name, bytes):

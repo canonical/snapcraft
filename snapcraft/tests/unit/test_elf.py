@@ -304,7 +304,8 @@ class TestElfFileAttrs(TestElfBase):
 
         self.assertThat(elf_file.interp, Equals(''))
         self.assertThat(elf_file.soname, Equals('libfake_elf.so.0'))
-        self.assertThat(sorted(elf_file.needed.keys()), Equals(['libssl.so.1.0.0']))
+        self.assertThat(sorted(elf_file.needed.keys()),
+                        Equals(['libssl.so.1.0.0']))
 
         openssl = elf_file.needed['libssl.so.1.0.0']
         self.assertThat(openssl.name, Equals('libssl.so.1.0.0'))
