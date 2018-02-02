@@ -107,10 +107,11 @@ class ElfFile:
         """
         self.path = path
         self.dependencies = set()  # type: Set[Library]
-        self.interp, self.needed = self._extract(path)
+        self.interp, self.soname, self.needed = self._extract(path)
 
-    def _extract(self, path) -> Tuple[str, Dict[str, NeededLibrary]]:
+    def _extract(self, path) -> Tuple[str, str, Dict[str, NeededLibrary]]:
         interp = str()
+        soname = str()
         libs = dict()
         with open(path, 'rb') as fp:
             elf = elftools.elf.elffile.ELFFile(fp)
@@ -127,6 +128,8 @@ class ElfFile:
                 dynamic_section.header.sh_type != 'SHT_NOBITS'):
                 for tag in dynamic_section.iter_tags('DT_NEEDED'):
                     libs[tag.needed] = NeededLibrary(name=tag.needed)
+                for tag in dynamic_section.iter_tags('DT_SONAME'):
+                    soname = tag.soname
 
             verneed_section = elf.get_section_by_name('.gnu.version_r')
             if (verneed_section is not None and
@@ -135,7 +138,7 @@ class ElfFile:
                     lib = libs[library.name]
                     for version in versions:
                         lib.add_version(version.name)
-        return interp, libs
+        return interp, soname, libs
 
     def is_linker_compatible(self, *, linker: str) -> bool:
         """Determines if linker will work given the required glibc version.

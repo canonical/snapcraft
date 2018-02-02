@@ -281,25 +281,29 @@ class TestGetRequiredGLIBC(TestElfBase):
                           linker='lib64/ld-linux-x86-64.so.2')
 
 
-class TestElfFileNeeded(TestElfBase):
+class TestElfFileAttrs(TestElfBase):
 
     def setUp(self):
         super().setUp()
 
-    def test_needed(self):
+    def test_executable(self):
         elf_file = self.fake_elf['fake_elf-2.23']
 
+        self.assertThat(elf_file.interp, Equals('/lib64/ld-linux-x86-64.so.2'))
+        self.assertThat(elf_file.soname, Equals(''))
         self.assertThat(sorted(elf_file.needed.keys()), Equals(['libc.so.6']))
 
         glibc = elf_file.needed['libc.so.6']
         self.assertThat(glibc.name, Equals('libc.so.6'))
         self.assertThat(glibc.versions, Equals({'GLIBC_2.2.5', 'GLIBC_2.23'}))
 
-    def test_shared_object_needed(self):
+    def test_shared_object(self):
         # fake_elf-shared-object has no GLIBC dependency, but two symbols
         # nonetheless
         elf_file = self.fake_elf['fake_elf-shared-object']
 
+        self.assertThat(elf_file.interp, Equals(''))
+        self.assertThat(elf_file.soname, Equals('libfake_elf.so.0'))
         self.assertThat(sorted(elf_file.needed.keys()), Equals(['libssl.so.1.0.0']))
 
         openssl = elf_file.needed['libssl.so.1.0.0']

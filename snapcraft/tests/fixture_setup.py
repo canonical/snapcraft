@@ -1116,23 +1116,23 @@ def _fake_elffile_extract(self, path):
         glibc = elf.NeededLibrary(name='libc.so.6')
         glibc.add_version('GLIBC_2.2.5')
         glibc.add_version('GLIBC_2.26')
-        return '/lib64/ld-linux-x86-64.so.2', {glibc.name: glibc}
+        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}
     elif name == 'fake_elf-2.23':
         glibc = elf.NeededLibrary(name='libc.so.6')
         glibc.add_version('GLIBC_2.2.5')
         glibc.add_version('GLIBC_2.23')
-        return '/lib64/ld-linux-x86-64.so.2', {glibc.name: glibc}
+        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}
     elif name == 'fake_elf-1.1':
         glibc = elf.NeededLibrary(name='libc.so.6')
         glibc.add_version('GLIBC_1.1')
         glibc.add_version('GLIBC_0.1')
-        return '/lib64/ld-linux-x86-64.so.2', {glibc.name: glibc}
+        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}
     elif name == 'fake_elf-static':
-        return '', {}
+        return '', '', {}
     elif name == 'fake_elf-shared-object':
         openssl = elf.NeededLibrary(name='libssl.so.1.0.0')
         openssl.add_version('OPENSSL_1.0.0')
-        return '', {openssl.name: openssl}
+        return '', 'libfake_elf.so.0', {openssl.name: openssl}
 
 
 class FakeElf(fixtures.Fixture):
