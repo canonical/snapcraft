@@ -140,3 +140,9 @@ class DotNetPlugin(snapcraft.BasePlugin):
             if fnmatch.fnmatch(file, '*.??proj'):
                 return os.path.splitext(file)[0]
                 break
+
+    def env(self, root):
+        if root == self.installdir:
+            return ['PATH={}:$PATH'.format(self._dotnet_sdk_dir)]
+        else:
+            return []
