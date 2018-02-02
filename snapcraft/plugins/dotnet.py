@@ -32,24 +32,18 @@ The plugin will take into account the following build-attributes:
 import os
 import shutil
 import fnmatch
+import urllib.request
+import json
 
 import snapcraft
 from snapcraft import sources
 
 
-_RUNTIME_DEFAULT = '2.0.0'
-_SDK_DEFAULT = '2.0.0'
-# TODO extend for more than xenial
-_SDKS_AMD64 = {
-    '2.0.0': dict(url_path='http://dotnetcli.blob.core.windows.net/dotnet/'
-                           'Sdk/2.0.0/dotnet-sdk-2.0.0-linux-x64.tar.gz',
-                  checksum='sha256/6059a6f72fb7aa6205ef4b52583e9c041f'
-                           'd128e768870a0fc4a33ed84c98ca6b')
-              }
+_DOTNET_RELEASE_METADATA_URL = 'https://raw.githubusercontent.com/dotnet/core/master/release-notes/releases.json'  # noqa
+_RUNTIME_DEFAULT = '2.0.5'
+
 # TODO extend for other architectures
-_SDK_DICT_FOR_ARCH = {
-    'amd64': _SDKS_AMD64,
-}
+_SDK_ARCH = ['amd64']
 
 
 class DotNetPlugin(snapcraft.BasePlugin):
@@ -58,10 +52,27 @@ class DotNetPlugin(snapcraft.BasePlugin):
     def schema(cls):
         schema = super().schema()
 
+        schema['properties']['dotnet-runtime-version'] = {
+            'type': 'string',
+            'default': _RUNTIME_DEFAULT,
+        }
+
         if 'required' in schema:
             del schema['required']
 
         return schema
+
+    @classmethod
+    def get_pull_properties(cls):
+        # Inform Snapcraft of the properties associated with pulling. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        return ['dotnet-runtime-version']
+
+    @classmethod
+    def get_build_properties(cls):
+        # Inform Snapcraft of the properties associated with building. If these
+        # change in the YAML Snapcraft will consider the build step dirty.
+        return ['dotnet-runtime-version']
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
@@ -87,18 +98,16 @@ class DotNetPlugin(snapcraft.BasePlugin):
         self._dotnet_cmd = os.path.join(self._dotnet_sdk_dir, 'dotnet')
 
     def _get_sdk(self):
-        try:
-            sdk_arch = _SDK_DICT_FOR_ARCH[self.project.deb_arch]
-        except KeyError as missing_arch:
+        sdk_arch = self.project.deb_arch
+        if sdk_arch not in _SDK_ARCH:
             raise NotImplementedError(
                 'This plugin does not support architecture '
-                '{}'.format(missing_arch))
-        # TODO support more SDK releases
-        sdk_version = sdk_arch['2.0.0']
+                '{}'.format(sdk_arch))
+        sdk_info = self._get_sdk_info(self.options.dotnet_runtime_version)
 
-        sdk_url = sdk_version['url_path']
+        sdk_url = sdk_info['package_url']
         return sources.Tar(sdk_url, self._dotnet_sdk_dir,
-                           source_checksum=sdk_version['checksum'])
+                           source_checksum=sdk_info['checksum'])
 
     def pull(self):
         super().pull()
@@ -140,3 +149,63 @@ class DotNetPlugin(snapcraft.BasePlugin):
             if fnmatch.fnmatch(file, '*.??proj'):
                 return os.path.splitext(file)[0]
                 break
+
+    def _get_version_metadata(self, version):
+        jsonData = self._get_dotnet_release_metadata()
+        package_data = list(filter(lambda x: x['version-runtime']
+                            == version, jsonData))
+
+        if not package_data or len(package_data) < 1:
+            print('error occurred while fetching  the version details'
+                  'or the version specified is incorrect')
+
+        return package_data
+
+    def _get_dotnet_release_metadata(self):
+        package_metadata = []
+
+        req = urllib.request.Request(_DOTNET_RELEASE_METADATA_URL)
+        r = urllib.request.urlopen(req).read()
+        package_metadata = json.loads(r.decode('utf-8'))
+
+        return package_metadata
+
+    def _get_sdk_info(self, version):
+        metadata = self._get_version_metadata(version)
+
+        sdk_packge_name = []
+        if 'sdk-linux-x64' in metadata[0]:
+            # look for sdk-linux-x64 property, if it doesn't exist
+            # look for ubuntu.14.04 entry as shipped during 1.1
+            sdk_packge_name = metadata[0]['sdk-linux-x64']
+        elif 'sdk-ubuntu.14.04' in metadata[0]:
+            sdk_packge_name = metadata[0]['sdk-ubuntu.14.04']
+
+        sdk_package_url = '{}{}'.format(metadata[0]['blob-sdk'],
+                                        sdk_packge_name)
+        sdk_checksum = self._get_package_checksum(
+                            metadata[0]['checksums-sdk'], sdk_packge_name)
+
+        return {'package_url': sdk_package_url, 'checksum': sdk_checksum}
+
+    def _get_package_checksum(self, checksum_url, filename):
+        req = urllib.request.Request(checksum_url)
+        data = urllib.request.urlopen(req)
+
+        checksum = []
+        for line in data:
+            text = str(line, 'utf-8').split()
+            if len(text) == 2 and 'Hash' in text[0]:
+                hash = text[1]
+
+            if len(text) == 2 and filename in text[1]:
+                checksum = text[0]
+                break
+
+        return '{}/{}'.format(hash.lower(), checksum)
+
+    def env(self, root):
+        if root == self.installdir:
+            return ['PATH={}:$PATH'.format(self._dotnet_sdk_dir)]
+        else:
+            return []
