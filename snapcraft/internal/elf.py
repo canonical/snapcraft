@@ -22,7 +22,7 @@ import shutil
 import subprocess
 import tempfile
 from functools import wraps
-from typing import Dict, FrozenSet, List, Set, Sequence, Tuple
+from typing import Dict, FrozenSet, List, Set, Sequence, Tuple, Union  # noqa
 
 import elftools.elf.elffile
 from pkg_resources import parse_version
@@ -41,9 +41,9 @@ logger = logging.getLogger(__name__)
 # Old pyelftools uses byte strings for section names.  Some data is
 # also returned as bytes, which is handled below.
 if parse_version(elftools.__version__) >= parse_version('0.24'):
-    _DYNAMIC = '.dynamic'
-    _GNU_VERSION_R = '.gnu.version_r'
-    _INTERP = '.interp'
+    _DYNAMIC = '.dynamic'              # type: Union[str, bytes]
+    _GNU_VERSION_R = '.gnu.version_r'  # type: Union[str, bytes]
+    _INTERP = '.interp'                # type: Union[str, bytes]
 else:
     _DYNAMIC = b'.dynamic'
     _GNU_VERSION_R = b'.gnu.version_r'
@@ -55,7 +55,7 @@ class NeededLibrary:
 
     def __init__(self, *, name: str) -> None:
         self.name = name
-        self.versions = set()
+        self.versions = set()  # type: Set[str]
 
     def add_version(self, version: str) -> None:
         self.versions.add(version)
@@ -120,7 +120,7 @@ class ElfFile:
         self.dependencies = set()  # type: Set[Library]
         self.interp, self.soname, self.needed = self._extract(path)
 
-    def _extract(self, path) -> Tuple[str, str, Dict[str, NeededLibrary]]:
+    def _extract(self, path) -> Tuple[str, str, Dict[str, NeededLibrary]]:  # noqa: C901,E501
         interp = str()
         soname = str()
         libs = dict()
