@@ -15,11 +15,15 @@ apps:
     command: bin/snapcraft
 
 parts:
-  snapcraft-bin:
-    source: bin
+  patches:
+    source: patches
     plugin: dump
-    organize:
-        snapcraft-classic: bin/snapcraft-classic
+    build-packages: [patch]
+    install: |
+      patch $SNAPCRAFT_STAGE/usr/lib/python3.6/ctypes/__init__.py ctypes.patch
+    prime:
+      - -ctypes.patch
+    after: [snapcraft]
   bash-completion:
     source: debian
     plugin: dump
