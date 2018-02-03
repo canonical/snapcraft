@@ -16,7 +16,7 @@ apps:
 
 parts:
   ctypes:
-    source: ctypes
+    source: ctypes_override
     plugin: dump
     organize:
       __init__.py: usr/lib/python3.6/ctypes/__init__.py
@@ -53,7 +53,7 @@ parts:
         ln -s $LIBARCHIVE $TRIPLET_PATH/libarchive.so
         LIBSODIUM=$(readlink -n $TRIPLET_PATH/libsodium.so.18)
         ln -s $LIBSODIUM $TRIPLET_PATH/libsodium.so
-    after: [python, apt]
+    after: [python, apt, ctypes]
   patchelf:
     source: https://github.com/NixOS/patchelf
     source-type: git
