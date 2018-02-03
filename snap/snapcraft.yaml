@@ -15,15 +15,11 @@ apps:
     command: bin/snapcraft
 
 parts:
-  patches:
-    source: patches
+  ctypes:
+    source: ctypes
     plugin: dump
-    build-packages: [patch]
-    install: |
-      patch $SNAPCRAFT_STAGE/usr/lib/python3.6/ctypes/__init__.py ctypes.patch
-    prime:
-      - -ctypes.patch
-    after: [snapcraft]
+    organize:
+      __init__.py: usr/lib/python3.6/ctypes/__init__.py
   bash-completion:
     source: debian
     plugin: dump
@@ -46,6 +42,8 @@ parts:
         - libsodium18
         - squashfs-tools
         - xdelta3
+    stage:
+        - -usr/lib/python3.5
     prime:
         - '*'
         - '**/*.pyc'
@@ -68,6 +66,8 @@ parts:
     plugin: autotools
     configflags: [--prefix=/usr]
     build-packages: [libssl-dev]
+    stage:
+        - -usr/lib/python3.6/ctypes/__init__.py
     prime:
         - -usr/include
   apt:
