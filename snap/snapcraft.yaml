@@ -42,8 +42,6 @@ parts:
         - libsodium18
         - squashfs-tools
         - xdelta3
-    stage:
-        - -usr/lib/python3.5
     prime:
         - '*'
         - '**/*.pyc'
