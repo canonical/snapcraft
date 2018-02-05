@@ -860,6 +860,39 @@ class MultipassTestCase(LXDBaseTestCase):
 
     @patch('snapcraft.internal.lxd.Containerbuild._setup_multipass_remote')
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    def test_mount(self, mock_container_run, mock_remote):
+        project_folder = '/root/build_project'
+        self.make_containerbuild().execute()
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['multipass', 'mount', '{}/project.tar'.format(os.getcwd()),
+                  'snapcraft:{}'.format(project_folder)]),
+            call(['lxc', 'config', 'device', 'add',
+                  self.fake_lxd.name, project_folder, 'disk',
+                  'source={}'.format(project_folder),
+                  'path={}'.format(project_folder)]),
+        ])
+
+    @patch('snapcraft.internal.lxd.Containerbuild._setup_multipass_remote')
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    def test_mount_exists(self, mock_container_run, mock_remote):
+        project_folder = '/root/build_project'
+
+        def call_effect(*args, **kwargs):
+            if args[0][-3:] == ['multipass', 'info', 'snapcraft']:
+                return project_folder.encode()
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_output_mock.side_effect
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.make_containerbuild().execute()
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['multipass', 'unmount',
+                  'snapcraft:{}'.format(project_folder)]),
+        ])
+
+    @patch('snapcraft.internal.lxd.Containerbuild._setup_multipass_remote')
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_instance_stopped(self, mock_container_run, mock_remote):
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         self.make_containerbuild().execute()

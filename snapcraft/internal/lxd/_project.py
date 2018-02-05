@@ -97,6 +97,10 @@ class Project(Containerbuild):
                 ])
 
     def _setup_project(self):
+        if self._container_name.startswith('multipass:'):
+            logger.info('Mounting {} into container'.format(self._source))
+            return self._multipass_mount(self._project_folder, self._source)
+
         if not self._container_name.startswith('local:'):
             self._setup_user()
             logger.info('Mounting {} into container'.format(self._source))
@@ -109,6 +113,19 @@ class Project(Containerbuild):
                 'lxc', 'config', 'device', 'add', self._container_name,
                 self._project_folder, 'disk', 'source={}'.format(self._source),
                 'path={}'.format(self._project_folder)])
+
+    def _multipass_mount(self, destination, source):
+        if destination in subprocess.check_output([
+                'multipass', 'info', 'snapcraft']).decode():
+            subprocess.check_call(['multipass', 'unmount',
+                                   'snapcraft:{}'.format(destination)])
+        subprocess.check_call([
+            'multipass', 'mount', source,
+            'snapcraft:{}'.format(destination)])
+        subprocess.check_call([
+            'lxc', 'config', 'device', 'add', self._container_name,
+            self._project_folder, 'disk', 'source={}'.format(destination),
+            'path={}'.format(destination)])
 
     def _remote_mount(self, destination, source):
         # Pipes for sshfs and sftp-server to communicate
