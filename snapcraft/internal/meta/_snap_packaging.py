@@ -402,9 +402,6 @@ class _SnapPackaging:
         snap_yaml['version'] = _version.get_version(
             self._config_data['version'],
             self._config_data.get('version-script'))
-        if not isinstance(snap_yaml['version'], str):
-            logger.warn('"version" property is not a string: {!r}'.format(
-                        snap_yaml['version']))
 
         for key_name in _OPTIONAL_PACKAGE_KEYS:
             if key_name in self._config_data:

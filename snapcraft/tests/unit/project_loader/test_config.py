@@ -384,6 +384,24 @@ parts:
         self.assertThat(metadata['version'], Equals('1'))
         self.assertThat(metadata['arch'], Equals(['amd64']))
 
+    def test_version_float_with_trailing_0(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: test
+version: 2.10 # Trailing 0
+summary: test
+description: test
+confinement: strict
+grade: stable
+parts:
+  part1:
+    plugin: nil
+""")
+        config = project_loader.load_config()
+        self.assertThat(
+            config.data['version'], Equals('2.10'))
+
     def test_version_script(self):
         self.make_snapcraft_yaml("""name: test
 version: "1.0"

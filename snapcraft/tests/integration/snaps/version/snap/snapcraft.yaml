@@ -1,9 +1,0 @@
-name: version-test
-version: 2.10
-summary: test version string
-description: |
-  The version should be parsed as a string.
-
-parts:
-  dummy:
-    plugin: nil
