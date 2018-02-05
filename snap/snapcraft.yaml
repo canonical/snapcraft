@@ -18,8 +18,8 @@ parts:
   ctypes:
     source: ctypes_override
     plugin: dump
-    organize:
-      __init__.py: usr/lib/python3.6/ctypes/__init__.py
+    prime:
+        - -ctypes_init.diff
   bash-completion:
     source: debian
     plugin: dump
@@ -47,7 +47,7 @@ parts:
         TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
         LIBSODIUM=$(readlink -n $TRIPLET_PATH/libsodium.so.18)
         ln -s $LIBSODIUM $TRIPLET_PATH/libsodium.so
-    after: [python, apt, ctypes]
+    after: [python, apt]
   patchelf:
     source: https://github.com/NixOS/patchelf
     source-type: git
@@ -59,11 +59,12 @@ parts:
     source: https://www.python.org/ftp/python/3.6.0/Python-3.6.0.tar.xz
     plugin: autotools
     configflags: [--prefix=/usr]
-    build-packages: [libssl-dev]
-    stage:
-        - -usr/lib/python3.6/ctypes/__init__.py
+    build-packages: [libssl-dev, patch]
     prime:
         - -usr/include
+    install: |
+        patch $SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/ctypes/__init__.py $SNAPCRAFT_STAGE/ctypes_init.diff
+    after: [ctypes]
   apt:
     source: https://github.com/Debian/apt
     source-type: git
