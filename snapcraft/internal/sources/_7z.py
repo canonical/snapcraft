@@ -1,6 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2017 Tim Süberkrüb
+# Copyright (C) 2018 Canonical
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,8 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import libarchive
+import shlex
 import shutil
+import subprocess
 import tempfile
 
 from . import errors
@@ -28,7 +30,8 @@ class SevenZip(FileBase):
     def __init__(self, source, source_dir, source_tag=None, source_commit=None,
                  source_branch=None, source_depth=None, source_checksum=None):
         super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth, source_checksum)
+                         source_branch, source_depth, source_checksum,
+                         '7zip')
         if source_tag:
             raise errors.IncompatibleOptionsError(
                 'can\'t specify a source-tag for a 7z source')
@@ -45,6 +48,7 @@ class SevenZip(FileBase):
         else:
             seven_zip_file = os.path.join(
                 self.source_dir, os.path.basename(self.source))
+        seven_zip_file = os.path.realpath(seven_zip_file)
 
         if clean_target:
             tmp_7z = tempfile.NamedTemporaryFile().name
@@ -53,11 +57,8 @@ class SevenZip(FileBase):
             os.makedirs(dst)
             shutil.move(tmp_7z, seven_zip_file)
 
-        # Open the 7z file and extract it to destination
-        with libarchive.file_reader(seven_zip_file) as archive:
-            for file_entry in archive:
-                file_entry.pathname = os.path.join(dst, file_entry.pathname)
-                libarchive.extract.extract_entries([file_entry])
+        extract_command = ['7z', 'x', seven_zip_file]
+        subprocess.check_output(extract_command, cwd=dst)
 
         if not keep_7z:
             os.remove(seven_zip_file)

@@ -184,6 +184,8 @@ class Ubuntu(BaseRepo):
             packages = {'subversion'}
         elif source_type == 'rpm2cpio':
             packages = {'rpm2cpio'}
+        elif source_type == '7zip':
+            packages = {'p7zip-full'}
         else:
             packages = set()
 
