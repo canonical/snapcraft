@@ -31,13 +31,11 @@ parts:
     requirements: requirements.txt
     build-packages:
         - build-essential
-        - libarchive13
         - libffi-dev
         - libsodium-dev
         - liblzma-dev
     stage-packages:
         - binutils
-        - libarchive13
         - libffi6
         - libsodium18
         - squashfs-tools
@@ -47,8 +45,6 @@ parts:
         - '**/*.pyc'
     install: |
         TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
-        LIBARCHIVE=$(readlink -n $TRIPLET_PATH/libarchive.so.13)
-        ln -s $LIBARCHIVE $TRIPLET_PATH/libarchive.so
         LIBSODIUM=$(readlink -n $TRIPLET_PATH/libsodium.so.18)
         ln -s $LIBSODIUM $TRIPLET_PATH/libsodium.so
     after: [python, apt, ctypes]

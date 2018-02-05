@@ -182,6 +182,8 @@ class Ubuntu(BaseRepo):
             packages = {'mercurial'}
         elif source_type == 'subversion' or source_type == 'svn':
             packages = {'subversion'}
+        elif source_type == 'rpm2cpio':
+            packages = {'rpm2cpio'}
         else:
             packages = set()
 

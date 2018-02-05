@@ -430,7 +430,7 @@ class LibraryLoader(object):
         return getattr(self, name)
 
     def LoadLibrary(self, name):
-        if name in ('libsodium.so', 'libarchive.so.13'):
+        if name == 'libsodium.so':
             _name = _os.path.join(
                         _os.getenv('SNAP'), 'usr', 'lib',
                         _ARCH_TRIPLET.get(_os.getenv('SNAP_ARCH')),
