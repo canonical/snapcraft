@@ -11,7 +11,7 @@
 > 
 > 
 421a433,439
->         if name == 'libsodium.so' and _os.getenv('SNAP_NAME', '') == 'snapcraft:
+>         if name == 'libsodium.so' and _os.getenv('SNAP_NAME', '') == 'snapcraft':
 >             _name = _os.path.join(
 >                         _os.getenv('SNAP'), 'usr', 'lib',
 >                         _ARCH_TRIPLET.get(_os.getenv('SNAP_ARCH')),
