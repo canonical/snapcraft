@@ -149,7 +149,6 @@ else:
             'pysha3',
             'pyxdg',
             'requests',
-            'libarchive-c',
         ],
         test_suite='snapcraft.tests.unit',
     )
