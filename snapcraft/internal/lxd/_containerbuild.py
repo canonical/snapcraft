@@ -75,6 +75,8 @@ class Containerbuild:
         self._lxd_common_dir = os.path.expanduser(
             os.path.join('~', 'snap', 'lxd', 'common'))
         os.makedirs(self._lxd_common_dir, exist_ok=True)
+        # Work-around for https://github.com/lxc/lxd/issues/4183
+        os.environ['SNAP'] = ''
 
     @contextmanager
     def _container_running(self):
