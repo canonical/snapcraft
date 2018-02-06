@@ -59,7 +59,7 @@ class Project(Containerbuild):
                     'lxc', 'start', self._container_name])
             except subprocess.CalledProcessError:
                 msg = 'The container could not be started.'
-                if self._container_name.startswith('local:'):
+                if self._remote == 'local':
                     msg += ('\nThe files /etc/subuid and /etc/subgid need to '
                             'contain this line for mounting the local folder:'
                             '\n    root:1000:1'
@@ -77,7 +77,7 @@ class Project(Containerbuild):
 
     def _configure_container(self):
         super()._configure_container()
-        if self._container_name.startswith('local:'):
+        if self._remote == 'local':
             # Map host user to root inside container
             subprocess.check_call([
                 'lxc', 'config', 'set', self._container_name,
@@ -97,7 +97,7 @@ class Project(Containerbuild):
                 ])
 
     def _setup_project(self):
-        if not self._container_name.startswith('local:'):
+        if self._remote != 'local':
             self._setup_user()
             logger.info('Mounting {} into container'.format(self._source))
             return self._remote_mount(self._project_folder, self._source)
@@ -199,6 +199,7 @@ class Project(Containerbuild):
         # clean with no parts deletes the container
         if not step:
             if not parts:
+                self._ensure_remote()
                 if self._get_container_status():
                     print('Deleting {}'.format(self._container_name))
                     subprocess.check_call([
