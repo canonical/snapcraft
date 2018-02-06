@@ -182,7 +182,8 @@ class ManifestRecordingBuildPackagesTestCase(
         dependencies.
 
         """
-        if self.patchelf_command.startswith('/snap/snapcraft/current'):
+        if (self.patchelf_command.startswith('/snap/snapcraft/current') or
+                self.deb_arch == 'armhf'):
             expected_packages = [
                 'haskell-doc', 'haskell98-tutorial', 'haskell98-report']
         else:

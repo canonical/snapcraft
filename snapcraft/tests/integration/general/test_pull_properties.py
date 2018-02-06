@@ -59,6 +59,8 @@ class PullPropertiesTestCase(integration.TestCase):
         self.assertThat(state.properties['stage-packages'], Equals(['curl']))
 
     def test_pull_with_arch(self):
+        if self.deb_arch == 'armhf':
+            self.skipTest('For now, we just support crosscompile from amd64')
         self.run_snapcraft(['pull', '--target-arch=i386', 'go-hello'],
                            'go-hello')
         state_file = os.path.join(self.parts_dir,
@@ -69,6 +71,8 @@ class PullPropertiesTestCase(integration.TestCase):
         self.assertThat(state.project_options['deb_arch'], Equals('i386'))
 
     def test_arch_with_pull(self):
+        if self.deb_arch == 'armhf':
+            self.skipTest('For now, we just support crosscompile from amd64')
         self.run_snapcraft(['--target-arch=i386', 'pull', 'go-hello'],
                            'go-hello')
         state_file = os.path.join(self.parts_dir,
