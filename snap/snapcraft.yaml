@@ -15,11 +15,11 @@ apps:
     command: bin/snapcraft
 
 parts:
-  snapcraft-bin:
-    source: bin
+  ctypes:
+    source: ctypes_override
     plugin: dump
-    organize:
-        snapcraft-classic: bin/snapcraft-classic
+    prime:
+        - -ctypes_init.diff
   bash-completion:
     source: debian
     plugin: dump
@@ -31,13 +31,11 @@ parts:
     requirements: requirements.txt
     build-packages:
         - build-essential
-        - libarchive13
         - libffi-dev
         - libsodium-dev
         - liblzma-dev
     stage-packages:
         - binutils
-        - libarchive13
         - libffi6
         - libsodium18
         - squashfs-tools
@@ -47,8 +45,6 @@ parts:
         - '**/*.pyc'
     install: |
         TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
-        LIBARCHIVE=$(readlink -n $TRIPLET_PATH/libarchive.so.13)
-        ln -s $LIBARCHIVE $TRIPLET_PATH/libarchive.so
         LIBSODIUM=$(readlink -n $TRIPLET_PATH/libsodium.so.18)
         ln -s $LIBSODIUM $TRIPLET_PATH/libsodium.so
     after: [python, apt]
@@ -63,9 +59,12 @@ parts:
     source: https://www.python.org/ftp/python/3.6.0/Python-3.6.0.tar.xz
     plugin: autotools
     configflags: [--prefix=/usr]
-    build-packages: [libssl-dev]
+    build-packages: [libssl-dev, patch]
     prime:
         - -usr/include
+    install: |
+        patch $SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/ctypes/__init__.py $SNAPCRAFT_STAGE/ctypes_init.diff
+    after: [ctypes]
   apt:
     source: https://github.com/Debian/apt
     source-type: git
