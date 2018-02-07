@@ -671,7 +671,7 @@ class SnapdIntegrationTestCase(TestCase):
         super().setUp()
         run_slow_tests = os.environ.get('SNAPCRAFT_SLOW_TESTS', False)
         if run_slow_tests:
-            run_slow_tests = distutils.util.strtobool(run_slow_tests)
+            run_slow_tests = distutils.util.strtobool(str(run_slow_tests))
         if (self.slow_test and not run_slow_tests):
             self.skipTest('Not running slow tests')
         if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
