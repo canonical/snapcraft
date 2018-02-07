@@ -103,6 +103,16 @@ def _crawl_for_path(*, soname: str, root_path: str,
     return None
 
 
+# Old versions of pyelftools return bytes rather than strings for
+# certain APIs.  So we pass those values through this function to get
+# a consistent result.
+def _ensure_str(s):
+    if isinstance(s, bytes):
+        return s.decode('ascii')
+    assert isinstance(s, str)
+    return s
+
+
 class ElfFile:
     """ElfFile represents and elf file on a path and its attributes."""
 
@@ -120,7 +130,7 @@ class ElfFile:
         self.dependencies = set()  # type: Set[Library]
         self.interp, self.soname, self.needed = self._extract(path)
 
-    def _extract(self, path) -> Tuple[str, str, Dict[str, NeededLibrary]]:  # noqa: C901,E501
+    def _extract(self, path) -> Tuple[str, str, Dict[str, NeededLibrary]]:
         interp = str()
         soname = str()
         libs = dict()
@@ -138,28 +148,19 @@ class ElfFile:
             if (dynamic_section is not None and
                     dynamic_section.header.sh_type != 'SHT_NOBITS'):
                 for tag in dynamic_section.iter_tags('DT_NEEDED'):
-                    needed = tag.needed
-                    if isinstance(needed, bytes):
-                        needed = needed.decode('ascii')
+                    needed = _ensure_str(tag.needed)
                     libs[needed] = NeededLibrary(name=needed)
                 for tag in dynamic_section.iter_tags('DT_SONAME'):
-                    soname = tag.soname
-                    if isinstance(soname, bytes):
-                        soname = soname.decode('ascii')
+                    soname = _ensure_str(tag.soname)
 
             verneed_section = elf.get_section_by_name(_GNU_VERSION_R)
             if (verneed_section is not None and
                     verneed_section.header.sh_type != 'SHT_NOBITS'):
                 for library, versions in verneed_section.iter_versions():
-                    library_name = library.name
-                    if isinstance(library_name, bytes):
-                        library_name = library_name.decode('ascii')
+                    library_name = _ensure_str(library.name)
                     lib = libs[library_name]
                     for version in versions:
-                        version_name = version.name
-                        if isinstance(version_name, bytes):
-                            version_name = version_name.decode('ascii')
-                        lib.add_version(version_name)
+                        lib.add_version(_ensure_str(version.name))
         return interp, soname, libs
 
     def is_linker_compatible(self, *, linker: str) -> bool:
