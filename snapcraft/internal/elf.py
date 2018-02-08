@@ -158,6 +158,12 @@ class ElfFile:
                     verneed_section.header.sh_type != 'SHT_NOBITS'):
                 for library, versions in verneed_section.iter_versions():
                     library_name = _ensure_str(library.name)
+                    # If the ELF file only references weak symbols
+                    # from a library, it may be absent from DT_NEEDED
+                    # but still have an entry in .gnu.version_r for
+                    # symbol versions.
+                    if library_name not in libs:
+                        continue
                     lib = libs[library_name]
                     for version in versions:
                         lib.add_version(_ensure_str(version.name))
