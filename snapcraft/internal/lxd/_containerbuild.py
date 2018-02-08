@@ -84,7 +84,8 @@ class Containerbuild:
 
     def _setup_multipass_remote(self):
         try:
-            subprocess.check_output(['multipass', 'info', 'snapcraft'])
+            subprocess.check_output(['multipass', 'info', 'snapcraft'],
+                                    stderr=subprocess.DEVNULL)
             try:
                 subprocess.check_call([
                     'multipass', 'start', 'snapcraft'])
