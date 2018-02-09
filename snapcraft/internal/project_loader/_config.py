@@ -24,7 +24,7 @@ import jsonschema
 import yaml
 
 import snapcraft
-from snapcraft.internal import deprecations, remote_parts, states
+from snapcraft.internal import common, deprecations, remote_parts, states
 from ._schema import Validator
 from ._parts_config import PartsConfig
 from ._env import (
@@ -112,6 +112,10 @@ class Config:
 
         self.build_tools = grammar_processor.get_build_packages()
         self.build_tools |= set(project_options.additional_build_packages)
+
+        if not (common.is_snap() or os.getenv('SNAPCRAFT_NO_PATCHELF')
+                or project_options.deb_arch == 'armhf'):
+            self.build_tools.add('patchelf')
 
         self.parts = PartsConfig(parts=self.data,
                                  project_options=self._project_options,

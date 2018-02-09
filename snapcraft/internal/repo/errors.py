@@ -31,7 +31,11 @@ class NoNativeBackendError(RepoError):
            "You can however use 'snapcraft cleanbuild' with a container.")
 
     def __init__(self):
-        super().__init__(distro=OsRelease().name())
+        try:
+            distro = OsRelease().name()
+        except errors.OsReleaseNameError:
+            distro = 'this system'
+        super().__init__(distro=distro)
 
 
 class BuildPackageNotFoundError(RepoError):
