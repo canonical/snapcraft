@@ -73,7 +73,7 @@ class Project(Containerbuild):
             # Because of https://bugs.launchpad.net/snappy/+bug/1628289
             # Needed to run snapcraft as a snap and build-snaps
             self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
-            self._inject_snapcraft()
+        self._inject_snapcraft(new_container=new_container)
 
     def _configure_container(self):
         super()._configure_container()

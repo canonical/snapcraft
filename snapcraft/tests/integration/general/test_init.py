@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,23 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
+import fixtures
+from snapcraft.tests import integration
 
-import snaps_tests
 
+class InitTestCase(integration.TestCase):
 
-class GitTestCase(snaps_tests.SnapsTestCase):
+    def test_init_without_locale(self):
+        self.useFixture(fixtures.EnvironmentVariable('LC_ALL'))
+        self.useFixture(fixtures.EnvironmentVariable('LANG'))
 
-    snap_content_dir = 'git'
-
-    def test_git(self):
-        if snapcraft.ProjectOptions().deb_arch == 'armhf':
-            self.skipTest("Snaps can't yet be installed in a lxc container.")
-
-        # Building classic snaps require the core snap to be installed
-        self.install_store_snap('core')
-
-        self.build_snap(self.snap_content_dir)
-        # TODO reenable git once snap-confine and snapd bits are in place
-        # snap_name = 'git'
-        # self.install_snap(snap_path, snap_name, '2.8.0')
+        # This should not throw exceptions
+        self.run_snapcraft(['init'])

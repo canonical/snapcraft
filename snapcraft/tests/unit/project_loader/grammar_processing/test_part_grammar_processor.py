@@ -29,7 +29,8 @@ from unittest import mock
 
 
 def load_tests(loader, tests, ignore):
-    tests.addTests(doctest.DocTestSuite(processor))
+    if snapcraft.ProjectOptions().deb_arch == 'amd64':
+        tests.addTests(doctest.DocTestSuite(processor))
     return tests
 
 

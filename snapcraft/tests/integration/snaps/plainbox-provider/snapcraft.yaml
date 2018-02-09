@@ -7,8 +7,10 @@ description: |
 confinement: strict
 
 parts:
-    plainbox-dev:
+    checkbox-ng-dev:
         plugin: python
+        source: git://git.launchpad.net/checkbox-ng
+        source-type: git
         build-packages:
             - libxml2-dev
             - libxslt1-dev
@@ -20,25 +22,11 @@ parts:
             - Jinja2
             - guacamole
             - padme
-        source: git://git.launchpad.net/plainbox
-        source-type: git
     checkbox-support-dev:
         plugin: python
         source: git://git.launchpad.net/checkbox-support
         source-type: git
-    checkbox-ng-dev:
-        plugin: python
-        source: git://git.launchpad.net/checkbox-ng
-        source-type: git
-        stage:
-            - bin/checkbox*
-            - lib/*/*/checkbox_ng*/*
-            - lib/*/*/checkbox_ng*/*/*
-        snap:
-            - bin/checkbox*
-            - lib/*/*/checkbox_ng*/*
-            - lib/*/*/checkbox_ng*/*/*
     simple-plainbox-provider:
         plugin: plainbox-provider
         source: ./2016.com.example_simple
-        after: [plainbox-dev, checkbox-support-dev, checkbox-ng-dev]
+        after: [checkbox-ng-dev, checkbox-support-dev]

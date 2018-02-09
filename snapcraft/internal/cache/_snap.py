@@ -41,8 +41,9 @@ class SnapCache(SnapcraftProjectCache):
 
     def _get_snap_deb_arch(self, snap_filename):
         with tempfile.TemporaryDirectory() as temp_dir:
+            unsquashfs_path = file_utils.get_tool_path('unsquashfs')
             output = subprocess.check_output(
-                ['unsquashfs', '-d',
+                [unsquashfs_path, '-d',
                  os.path.join(temp_dir, 'squashfs-root'),
                  snap_filename, '-e', os.path.join('meta', 'snap.yaml')])
             logger.debug(output)

@@ -121,9 +121,6 @@ class CleanbuilderTestCase(LXDTestCase):
             call(['lxc', 'file', 'push', os.path.realpath('project.tar'),
                   '{}/root/build_project/project.tar'.format(container_name)]),
         ])
-        self.fake_lxd.check_output_mock.assert_has_calls([
-            call(['lxc', 'info', container_name]),
-        ])
         mock_container_run.assert_has_calls([
             call(['python3', '-c', 'import urllib.request; ' +
                   'urllib.request.urlopen(' +
@@ -524,6 +521,9 @@ class ProjectTestCase(ContainerbuildTestCase):
                                server='x86_64', user='root', home='/root')),
           ('remote/user', dict(remote='myremote', target_arch=None, euid=1234,
                                server='x86_64', user='me', home='/home/me')),
+          ('cross/user', dict(remote='myremote', target_arch='armhf',
+                              cross=True, euid=1234,
+                              server='x86_64', user='me', home='/home/me')),
     ]
 
     def setUp(self):
@@ -540,6 +540,51 @@ class ProjectTestCase(ContainerbuildTestCase):
                            metadata={'name': 'project'},
                            project_options=self.project_options,
                            remote=self.remote)
+
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @patch('snapcraft.internal.common.is_snap')
+    def test_inject_snap_existing_container(self,
+                                            mock_is_snap,
+                                            mock_container_run):
+        mock_is_snap.return_value = True
+
+        fake_snapd = fixture_setup.FakeSnapd()
+        self.useFixture(fake_snapd)
+        fake_snapd.snaps_result = [
+            {'name': 'core',
+             'confinement': 'strict',
+             'id': '2kkitQurgOkL3foImG4wDwn9CIANuHlt',
+             'channel': 'stable',
+             'revision': '123'},
+            {'name': 'snapcraft',
+             'confinement': 'classic',
+             'id': '3lljuRvshPlM4gpJnH5xExo0DJBOvImu',
+             'channel': 'edge',
+             'revision': '345'},
+        ]
+        # Container was created before, and isn't running
+        self.fake_lxd.name = 'myremote:snapcraft-project'
+        self.fake_lxd.status = 'Stopped'
+
+        self.make_containerbuild().execute()
+
+        if hasattr(self, 'cross') and self.cross:
+            mock_container_run.assert_has_calls([
+                call(['snap', 'install', 'core', '--channel', 'stable']),
+                call(['snap', 'refresh', 'core', '--channel', 'stable']),
+                call(['snap', 'install', 'snapcraft', '--channel', 'edge',
+                      '--classic']),
+                call(['snap', 'refresh', 'snapcraft', '--channel', 'edge',
+                      '--classic']),
+            ])
+        else:
+            mock_container_run.assert_has_calls([
+                call(['snap', 'ack', '/run/core_123.assert']),
+                call(['snap', 'install', '/run/core_123.snap']),
+                call(['snap', 'ack', '/run/snapcraft_345.assert']),
+                call(['snap', 'install', '/run/snapcraft_345.snap',
+                      '--classic']),
+            ])
 
     def test_command_with_sudo(self):
         self.make_containerbuild().execute()

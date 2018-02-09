@@ -199,7 +199,11 @@ class PartsConfig:
         self.build_snaps |= grammar_processor.get_build_snaps()
         self.build_tools |= grammar_processor.get_build_packages()
 
+        # TODO: this should not pass in command but the required package,
+        #       where the required package is to be determined by the
+        #       source handler.
         if part.source_handler and part.source_handler.command:
+            # TODO get_packages_for_source_type should not be a thing.
             self.build_tools |= repo.Repo.get_packages_for_source_type(
                 part.source_handler.command)
         self.all_parts.append(part)
