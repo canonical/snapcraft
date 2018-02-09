@@ -791,10 +791,15 @@ class MultipassTestCase(LXDBaseTestCase):
             if args[0][:2] == ['multipass', 'start']:
                 raise CalledProcessError(
                     returncode=255, cmd=args[0])
+            elif args[0][:2] == ['multipass', 'info']:
+                return '''{"info":{
+                    "snapcraft":{
+                        "mounts": {}}}}'''.encode()
             return d(*args, **kwargs)
 
         d = self.fake_lxd.check_call_mock.side_effect
         self.fake_lxd.check_call_mock.side_effect = call_effect
+        self.fake_lxd.check_output_mock.side_effect = call_effect
 
         self.assertIn(
             'Failed to setup multipass remote',
@@ -806,8 +811,10 @@ class MultipassTestCase(LXDBaseTestCase):
         def call_effect(*args, **kwargs):
             if args[0][-2:] == ['snap', 'list']:
                 return ''.encode()
-            elif args[0][-3:] == ['multipass', 'info', 'snapcraft']:
-                return 'IPv4: 1.2.3.4'.encode()
+            elif args[0][:2] == ['multipass', 'info']:
+                return '''{"info":{
+                    "snapcraft":{
+                        "ipv4": ["1.2.3.4"]}}}'''.encode()
             elif args[0][-2:] == ['ifconfig', 'lxdbr0']:
                 return 'inet addr:10.10.10.1'.encode()
             return d(*args, **kwargs)
@@ -825,8 +832,10 @@ class MultipassTestCase(LXDBaseTestCase):
         def call_effect(*args, **kwargs):
             if args[0][-2:] == ['snap', 'list']:
                 return 'lxd 2.21 5408 canonical -'.encode()
-            elif args[0][-3:] == ['multipass', 'info', 'snapcraft']:
-                return 'IPv4: 1.2.3.4'.encode()
+            elif args[0][:2] == ['multipass', 'info']:
+                return '''{"info":{
+                    "snapcraft":{
+                        "ipv4": ["1.2.3.4"]}}}'''.encode()
             elif args[0][-2:] == ['ifconfig', 'lxdbr0']:
                 return 'inet addr:10.10.10.1'.encode()
             return d(*args, **kwargs)
@@ -863,8 +872,10 @@ class MultipassTestCase(LXDBaseTestCase):
         def call_effect(*args, **kwargs):
             if args[0][-2:] == ['ifconfig', 'lxdbr0']:
                 raise TimeoutExpired(args[0], 5)
-            elif args[0][-3:] == ['multipass', 'info', 'snapcraft']:
-                return 'IPv4: 1.2.3.4'.encode()
+            elif args[0][:2] == ['multipass', 'info']:
+                return '''{"info":{
+                    "snapcraft":{
+                        "ipv4": ["1.2.3.4"]}}}'''.encode()
             return d(*args, **kwargs)
 
         d = self.fake_lxd.check_output_mock.side_effect
@@ -884,8 +895,10 @@ class MultipassTestCase(LXDBaseTestCase):
                 return 'core.trust_password: true'.encode()
             elif args[0][-3:] == ['/snap/bin/lxc', 'network', 'list']:
                 return 'lxdbr0 | bridge | YES | | 1'.encode()
-            elif args[0][-3:] == ['multipass', 'info', 'snapcraft']:
-                return 'IPv4: 1.2.3.4'.encode()
+            elif args[0][:2] == ['multipass', 'info']:
+                return '''{"info":{
+                    "snapcraft":{
+                        "ipv4": ["1.2.3.4"]}}}'''.encode()
             elif args[0][-2:] == ['ifconfig', 'lxdbr0']:
                 return 'inet addr:10.10.10.1'.encode()
             return d(*args, **kwargs)
@@ -906,6 +919,16 @@ class MultipassTestCase(LXDBaseTestCase):
     @patch('snapcraft.internal.lxd.Containerbuild._setup_multipass_remote')
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_mount(self, mock_container_run, mock_remote):
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['multipass', 'info']:
+                return '''{"info":{
+                    "snapcraft":{
+                        "mounts": {"/root/build_project": {}}}}}'''.encode()
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_output_mock.side_effect
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
         project_folder = '/root/build_project'
         self.make_containerbuild().execute()
         self.fake_lxd.check_call_mock.assert_has_calls([
@@ -923,8 +946,10 @@ class MultipassTestCase(LXDBaseTestCase):
         project_folder = '/root/build_project'
 
         def call_effect(*args, **kwargs):
-            if args[0][-3:] == ['multipass', 'info', 'snapcraft']:
-                return project_folder.encode()
+            if args[0][:2] == ['multipass', 'info']:
+                return '''{"info":{
+                    "snapcraft":{
+                        "mounts": {"/root/build_project": {}}}}}'''.encode()
             return d(*args, **kwargs)
 
         d = self.fake_lxd.check_output_mock.side_effect
@@ -939,6 +964,17 @@ class MultipassTestCase(LXDBaseTestCase):
     @patch('snapcraft.internal.lxd.Containerbuild._setup_multipass_remote')
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_instance_stopped(self, mock_container_run, mock_remote):
+
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['multipass', 'info']:
+                return '''{"info":{
+                    "snapcraft":{
+                        "mounts": {}}}}'''.encode()
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_output_mock.side_effect
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
         mock_container_run.side_effect = lambda cmd, **kwargs: cmd
         self.make_containerbuild().execute()
         self.fake_lxd.check_call_mock.assert_has_calls([

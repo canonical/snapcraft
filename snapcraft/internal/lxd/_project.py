@@ -115,8 +115,7 @@ class Project(Containerbuild):
                 'path={}'.format(self._project_folder)])
 
     def _multipass_mount(self, destination, source):
-        if destination in subprocess.check_output([
-                'multipass', 'info', 'snapcraft']).decode():
+        if destination in self._get_vm_status()['mounts']:
             subprocess.check_call(['multipass', 'unmount',
                                    'snapcraft:{}'.format(destination)])
         subprocess.check_call([

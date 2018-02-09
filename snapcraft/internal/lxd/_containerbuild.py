@@ -25,7 +25,6 @@ import requests_unixsocket
 import shutil
 import sys
 import tempfile
-import yaml
 from contextlib import contextmanager
 import subprocess
 import time
@@ -84,25 +83,24 @@ class Containerbuild:
 
     def _setup_multipass_remote(self):
         try:
-            subprocess.check_output(['multipass', 'info', 'snapcraft'],
-                                    stderr=subprocess.DEVNULL)
-            try:
+            if self._get_vm_status():
                 subprocess.check_call([
                     'multipass', 'start', 'snapcraft'])
-                self._setup_lxd()
-            except subprocess.CalledProcessError as e:
-                raise MultipassSetupError(e.cmd)
-        except FileNotFoundError:
-            raise MultipassNotInstalledError()
-        except subprocess.CalledProcessError as e:
-            # Instance doesn't exist
-            try:
+            else:
                 subprocess.check_call([
                     'multipass', 'launch', '--name=snapcraft', '--disk', '10G',
                 ])
-                self._setup_lxd()
-            except subprocess.CalledProcessError as e:
-                raise MultipassSetupError(e.cmd)
+            self._setup_lxd()
+        except FileNotFoundError:
+            raise MultipassNotInstalledError()
+        except subprocess.CalledProcessError as e:
+            raise MultipassSetupError(e.cmd)
+
+    def _get_vm_status(self):
+        vms = json.loads(subprocess.check_output([
+            'multipass', 'info', '--format=json', '--all']).decode())
+        if 'snapcraft' in vms['info']:
+            return vms['info']['snapcraft']
 
     def _setup_lxd(self):
         if 'lxd' not in self._multipass_exec(['snap', 'list']).decode():
@@ -135,8 +133,7 @@ class Containerbuild:
             logger.debug('Removing existing remote')
             # Remove existing remote in case the IP has changed
             subprocess.check_call(['lxc', 'remote', 'remove', 'multipass'])
-        multipass_ip = yaml.load(subprocess.check_output([
-            'multipass', 'info', 'snapcraft']).decode())['IPv4']
+        multipass_ip = self._get_vm_status()['ipv4'][0]
 
         logger.debug('Waiting for LXD bridge to come up')
         # It takes a while for the network bridge to come up
@@ -191,8 +188,7 @@ class Containerbuild:
                     'lxc', 'stop', '-f', self._container_name])
                 remote, container_name = self._container_name.split(':')
                 if remote == 'multipass':
-                    subprocess.check_call([
-                        'multipass', 'stop', 'snapcraft'])
+                    subprocess.check_call(['multipass', 'stop', 'snapcraft'])
 
     def _get_container_status(self):
         containers = json.loads(subprocess.check_output([

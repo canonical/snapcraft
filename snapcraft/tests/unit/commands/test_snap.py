@@ -240,8 +240,11 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             fixtures.EnvironmentVariable('USER', 'user'))
 
         def call_effect(*args, **kwargs):
-            if args[0][-3:] == ['multipass', 'info', 'snapcraft']:
-                return 'IPv4: 1.2.3.4'.encode()
+            if args[0][:2] == ['multipass', 'info']:
+                return '''{"info":{
+                    "snapcraft":{
+                        "mounts": {},
+                        "ipv4": ["1.2.3.4"]}}}'''.encode()
             elif args[0][-2:] == ['ifconfig', 'lxdbr0']:
                 return 'inet addr:10.10.10.1'.encode()
             return d(*args, **kwargs)
