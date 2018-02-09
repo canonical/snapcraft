@@ -18,8 +18,9 @@ import logging
 import os
 import tempfile
 from textwrap import dedent
+import sys
 
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Contains, Equals, NotEquals
 from unittest import mock
 
 from snapcraft.internal import errors, elf, os_release
@@ -56,6 +57,35 @@ class TestLdLibraryPathParser(unit.TestCase):
             elf._extract_ld_library_paths(file_path),
             Equals(['/foo/bar', '/colon', '/separated', '/comma',
                     '/tab', '/space', '/baz']))
+
+
+class TestElfFileSmoketest(unit.TestCase):
+
+    def test_bin_echo(self):
+        # Try parsing a file without the pyelftools logic mocked out
+        elf_file = elf.ElfFile(path=sys.executable)
+
+        self.assertThat(elf_file.path, Equals(sys.executable))
+
+        # We expect Python to be a dynamic linked executable with an
+        # ELF interpreter.
+        self.assertTrue(isinstance(elf_file.interp, str))
+        self.assertThat(elf_file.interp, NotEquals(''))
+
+        # Python is not a shared library, so has no soname
+        self.assertThat(elf_file.soname, Equals(''))
+
+        # We expect that Python will be linked to libc
+        for lib in elf_file.needed.values():
+            if lib.name.startswith('libc.so'):
+                break
+        else:
+            self.fail("Expected to find libc in needed library list")
+
+        self.assertTrue(isinstance(lib.name, str))
+        for version in lib.versions:
+            self.assertTrue(isinstance(version, str),
+                            "expected {!r} to be a string".format(version))
 
 
 class TestGetLibraries(TestElfBase):
@@ -281,35 +311,35 @@ class TestGetRequiredGLIBC(TestElfBase):
                           linker='lib64/ld-linux-x86-64.so.2')
 
 
-class TestElfFileSymbols(TestElfBase):
+class TestElfFileAttrs(TestElfBase):
 
     def setUp(self):
         super().setUp()
 
-    def test_symbols(self):
+    def test_executable(self):
         elf_file = self.fake_elf['fake_elf-2.23']
 
-        self.assertThat(len(elf_file.symbols), Equals(3))
+        self.assertThat(elf_file.interp, Equals('/lib64/ld-linux-x86-64.so.2'))
+        self.assertThat(elf_file.soname, Equals(''))
+        self.assertThat(sorted(elf_file.needed.keys()), Equals(['libc.so.6']))
 
-        self.assertThat(elf_file.symbols[0].name, Equals('endgrent'))
-        self.assertThat(elf_file.symbols[0].version, Equals('GLIBC_2.2.5'))
-        self.assertThat(elf_file.symbols[0].section, Equals('UND'))
+        glibc = elf_file.needed['libc.so.6']
+        self.assertThat(glibc.name, Equals('libc.so.6'))
+        self.assertThat(glibc.versions, Equals({'GLIBC_2.2.5', 'GLIBC_2.23'}))
 
-        self.assertThat(elf_file.symbols[1].name,
-                        Equals('__ctype_toupper_loc'))
-        self.assertThat(elf_file.symbols[1].version, Equals('GLIBC_2.23'))
-        self.assertThat(elf_file.symbols[1].section, Equals('UND'))
-
-        self.assertThat(elf_file.symbols[2].name, Equals('PyCodec_Register'))
-        self.assertThat(elf_file.symbols[2].version, Equals(''))
-        self.assertThat(elf_file.symbols[2].section, Equals('13'))
-
-    def test_symbols_no_match(self):
+    def test_shared_object(self):
         # fake_elf-shared-object has no GLIBC dependency, but two symbols
         # nonetheless
         elf_file = self.fake_elf['fake_elf-shared-object']
 
-        self.assertThat(len(elf_file.symbols), Equals(2))
+        self.assertThat(elf_file.interp, Equals(''))
+        self.assertThat(elf_file.soname, Equals('libfake_elf.so.0'))
+        self.assertThat(sorted(elf_file.needed.keys()),
+                        Equals(['libssl.so.1.0.0']))
+
+        openssl = elf_file.needed['libssl.so.1.0.0']
+        self.assertThat(openssl.name, Equals('libssl.so.1.0.0'))
+        self.assertThat(openssl.versions, Equals({'OPENSSL_1.0.0'}))
 
 
 class TestPatcher(TestElfBase):

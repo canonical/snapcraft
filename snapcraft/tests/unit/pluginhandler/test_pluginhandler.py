@@ -1240,8 +1240,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
-    @patch('snapcraft.internal.elf.ElfFile._extract_readelf',
-           return_value=('EXEC', list()))
+    @patch('snapcraft.internal.elf.ElfFile._extract',
+           return_value=('EXEC', '', dict()))
     @patch('snapcraft.internal.elf.ElfFile.load_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_with_dependencies(self, mock_migrate_files,
@@ -1298,8 +1298,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
-    @patch('snapcraft.internal.elf.ElfFile._extract_readelf',
-           return_value=('EXEC', list()))
+    @patch('snapcraft.internal.elf.ElfFile._extract',
+           return_value=('EXEC', '', dict()))
     @patch('snapcraft.internal.elf.ElfFile.load_dependencies')
     @patch('snapcraft.internal.pluginhandler._migrate_files')
     def test_prime_state_disable_ldd_crawl(self, mock_migrate_files,
@@ -1350,8 +1350,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue('lib1' in state.dependency_paths)
         self.assertTrue('lib2' in state.dependency_paths)
 
-    @patch('snapcraft.internal.elf.ElfFile._extract_readelf',
-           return_value=('EXEC', list()))
+    @patch('snapcraft.internal.elf.ElfFile._extract',
+           return_value=('EXEC', '', dict()))
     @patch('snapcraft.internal.elf.ElfFile.load_dependencies',
            return_value=set(['/foo/bar/baz']))
     @patch('snapcraft.internal.pluginhandler._migrate_files')
