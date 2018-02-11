@@ -538,24 +538,7 @@ class PluginHandler:
         dependency_paths = part_dependency_paths | staged_dependency_paths
 
         if not self._build_attributes.no_system_libraries():
-            system_dependency_paths = {os.path.dirname(d) for d in system}
-            dependency_paths.update(system_dependency_paths)
-
-            if system:
-                # Lots of dependencies are linked with a symlink, so we need to
-                # make sure we follow those symlinks when we migrate the
-                # dependencies.
-                _migrate_files(system, system_dependency_paths, '/',
-                               self.primedir, follow_symlinks=True)
-                formatted_system = '\n'.join(sorted(system))
-                logger.warning(
-                    'Files from the build host were migrated into the snap to '
-                    'satisfy dependencies that would otherwise not be met. '
-                    'This feature will be removed in a future release. If '
-                    'these libraries are needed in the final snap, ensure '
-                    'that the following are either satisfied by a '
-                    'stage-packages entry or through a part:\n{}'.format(
-                        formatted_system))
+            _retrieve_system_files(system, dependency_paths, self.primedir)
 
         # TODO revisit if we need to support variations and permutations
         #  of this
@@ -1031,3 +1014,25 @@ def _combine_filesets(starting_fileset, modifying_fileset):
         return list(set(starting_fileset + modifying_fileset))
     else:
         return modifying_fileset
+
+
+def _retrieve_system_files(system, dependency_paths, primedir):
+    # TODO delete when host copy functionality is gone
+    system_dependency_paths = {os.path.dirname(d) for d in system}
+    dependency_paths.update(system_dependency_paths)
+
+    if system:
+        # Lots of dependencies are linked with a symlink, so we need to
+        # make sure we follow those symlinks when we migrate the
+        # dependencies.
+        _migrate_files(system, system_dependency_paths, '/',
+                       primedir, follow_symlinks=True)
+        formatted_system = '\n'.join(sorted(system))
+        logger.warning(
+            'Files from the build host were migrated into the snap to '
+            'satisfy dependencies that would otherwise not be met. '
+            'This feature will be removed in a future release. If '
+            'these libraries are needed in the final snap, ensure '
+            'that the following are either satisfied by a '
+            'stage-packages entry or through a part:\n{}'.format(
+                formatted_system))
