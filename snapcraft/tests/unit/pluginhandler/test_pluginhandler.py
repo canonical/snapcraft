@@ -1179,8 +1179,9 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
-        self.get_elf_files_mock.assert_called_once_with(self.handler.primedir,
-                                                        {'bin/1', 'bin/2'})
+        self.get_elf_files_mock.assert_called_once_with(
+            self.handler.primedir, {'bin/1', 'bin/2'},
+            full_elf_parsing=False)
         self.assertFalse(mock_copy.called)
 
         state = states.get_state(self.handler.plugin.statedir, 'prime')
@@ -1219,8 +1220,9 @@ class StateTestCase(StateBaseTestCase):
         self.assertThat(self.handler.last_step(), Equals('prime'))
         # bin/2 shouldn't be in this list as it was already primed by another
         # part.
-        self.get_elf_files_mock.assert_called_once_with(self.handler.primedir,
-                                                        {'bin/1'})
+        self.get_elf_files_mock.assert_called_once_with(
+            self.handler.primedir, {'bin/1'},
+            full_elf_parsing=False)
         self.assertFalse(mock_copy.called)
 
         state = states.get_state(self.handler.plugin.statedir, 'prime')
@@ -1269,7 +1271,8 @@ class StateTestCase(StateBaseTestCase):
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
         self.get_elf_files_mock.assert_called_once_with(
-            self.handler.primedir, {'bin/1', 'bin/2'})
+            self.handler.primedir, {'bin/1', 'bin/2'},
+            full_elf_parsing=False)
         mock_migrate_files.assert_has_calls([
             call({'bin/1', 'bin/2'}, {'bin'}, self.handler.stagedir,
                  self.handler.primedir),
@@ -1334,7 +1337,8 @@ class StateTestCase(StateBaseTestCase):
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
         self.get_elf_files_mock.assert_called_once_with(
-            self.handler.primedir, {'bin/file'})
+            self.handler.primedir, {'bin/file'},
+            full_elf_parsing=False)
         # Verify that only the part's files were migrated-- not the system
         # dependency.
         mock_migrate_files.assert_called_once_with(
@@ -1379,7 +1383,8 @@ class StateTestCase(StateBaseTestCase):
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
         self.get_elf_files_mock.assert_called_once_with(
-            self.handler.primedir, {'bin/1', 'foo/bar/baz'})
+            self.handler.primedir, {'bin/1', 'foo/bar/baz'},
+            full_elf_parsing=False)
         mock_migrate_files.assert_called_once_with(
             {'bin/1', 'foo/bar/baz'}, {'bin', 'foo', 'foo/bar'},
             self.handler.stagedir, self.handler.primedir)
@@ -1407,8 +1412,9 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
-        self.get_elf_files_mock.assert_called_once_with(self.handler.primedir,
-                                                        {'bin/1'})
+        self.get_elf_files_mock.assert_called_once_with(
+            self.handler.primedir, {'bin/1'},
+            full_elf_parsing=False)
         self.assertFalse(mock_copy.called)
 
         state = states.get_state(self.handler.plugin.statedir, 'prime')

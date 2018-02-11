@@ -121,7 +121,7 @@ class ElfFile:
         with open(path, 'rb') as bin_file:
             return bin_file.read(4) == b'\x7fELF'
 
-    def __init__(self, *, path: str) -> None:
+    def __init__(self, *, path: str, full_elf_parsing: bool=True) -> None:
         """Initialize an ElfFile instance.
 
         :param str path: path to an elf_file within a snapcraft project.
@@ -504,11 +504,15 @@ def _is_dynamically_linked_elf(file_m: str) -> bool:
 
 
 def get_elf_files(root: str,
-                  file_list: Sequence[str]) -> FrozenSet[ElfFile]:
+                  file_list: Sequence[str],
+                  *,
+                  full_elf_parsing: bool=True) -> FrozenSet[ElfFile]:
     """Return a frozenset of elf files from file_list prepended with root.
 
     :param str root: the root directory from where the file_list is generated.
     :param file_list: a list of file in root.
+    :param full_elf_parsing: if set, the elf file will be analyzed in full
+                             to detect ABI inconsistencies.
     :returns: a frozentset of ElfFile objects.
     """
     elf_files = set()  # type: Set[ElfFile]
@@ -526,7 +530,7 @@ def get_elf_files(root: str,
             continue
         # Finally, make sure this is actually an ELF file
         if ElfFile.is_elf(path):
-            elf_file = ElfFile(path=path)
+            elf_file = ElfFile(path=path, full_elf_parsing=full_elf_parsing)
             # if we have dyn symbols we are dynamic
             if elf_file.needed:
                 elf_files.add(ElfFile(path=path))

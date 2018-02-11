@@ -22,7 +22,7 @@ import os
 import shutil
 import sys
 from glob import glob, iglob
-
+from typing import Union, List, Iterator  # noqa
 import yaml
 
 import snapcraft.extractors
@@ -507,7 +507,14 @@ class PluginHandler:
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 
-        elf_files = elf.get_elf_files(self.primedir, snap_files)
+        full_elf_parsing = True
+        if (self._project_options.is_host_same_base or
+                self._confinement != 'classic'):
+            full_elf_parsing = False
+
+        elf_files = elf.get_elf_files(self.primedir, snap_files,
+                                      full_elf_parsing=full_elf_parsing)
+
         all_dependencies = set()
         # TODO: base snap support
         core_path = common.get_core_path()
@@ -561,9 +568,16 @@ class PluginHandler:
         # base may not be installed so we cannot depend on
         # get_core_dynamic_linker to resolve the final path for which
         # we resort to our only working base 16, ld-2.23.so.
-        linker_compatible = (e.is_linker_compatible(linker='ld-2.23.so')
+        if self._project_options.is_host_same_base:
+            # Given that the build is taking place on a host that matches the
+            # base we will speed things up and avoid checking for linker
+            # compatibility which we did not load when getting all the elf
+            # files.
+            linker_compat = [True]  # type: Union[List[bool], Iterator[bool]]
+        else:
+            linker_compat = (e.is_linker_compatible(linker='ld-2.23.so')
                              for e in elf_files)
-        if not all((x for x in linker_compatible)):
+        if not all((x for x in linker_compat)):
             if 'libc6' not in self._part_properties.get('stage-packages', []):
                 raise errors.StagePackageMissingError(package='libc6')
 
