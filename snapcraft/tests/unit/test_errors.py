@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+import requests.exceptions
 from subprocess import CalledProcessError
 
 from testtools.matchers import Equals
@@ -364,6 +365,17 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "'libc6' is required inside the snap for this "
                 "part to work properly.\nAdd it as a `stage-packages` "
                 "entry for this part."
+            )
+        }),
+        ('RemotePartsUpdateConnectionError', {
+            'exception': errors.RemotePartsUpdateConnectionError,
+            'kwargs': {
+                'requests_exception': requests.exceptions.ConnectionError(
+                    "I'm a naughty error")
+            },
+            'expected_message': (
+                'Failed to update cache of remote parts: A Connection error '
+                'occurred.\nPlease try again.'
             )
         }),
     )
