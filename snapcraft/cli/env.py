@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 from distutils import util
-from snapcraft.internal import errors, lxd
+from snapcraft.internal import common, errors, lxd
 
 
 class ContainerConfig:
@@ -49,6 +49,11 @@ class ContainerConfig:
     @property
     def remote(self):
         return self._remote
+
+    @property
+    def image(self):
+        # TODO: allow this to be overridden
+        return common.DEFAULT_LXD_IMAGE
 
 
 def get_container_config():

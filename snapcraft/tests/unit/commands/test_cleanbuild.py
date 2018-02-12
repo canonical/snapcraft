@@ -19,6 +19,7 @@ import os
 import subprocess
 import tarfile
 from textwrap import dedent
+from unittest.mock import call
 
 import fixtures
 from testtools.matchers import Contains, Equals
@@ -113,6 +114,19 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
             tar_members,
             Contains(os.path.join('.', 'snap', 'snapcraft.yaml')),
             'snap/snapcraft unexpectedly excluded from tarball')
+
+    def test_cleanbuild_image(self):
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+
+        self.run_command(['cleanbuild', '--image=image-name'])
+
+        class any_name:
+            def __eq__(self, other):
+                return True
+        fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'launch', '-e', 'image-name', any_name()]),
+            ])
 
     def test_cleanbuild_debug_appended_goes_to_shell_on_errors(self):
         fake_lxd = fixture_setup.FakeLXD()

@@ -17,7 +17,13 @@
 import click
 import os
 
-from snapcraft.internal import deprecations, lifecycle, lxd, project_loader
+from snapcraft.internal import (
+    common,
+    deprecations,
+    lifecycle,
+    lxd,
+    project_loader,
+    )
 from ._options import add_build_options, get_project_options
 from . import echo
 from . import env
@@ -181,7 +187,8 @@ def clean(parts, step, **kwargs):
         lxd.Project(project_options=project_options,
                     remote=container_config.remote,
                     output=None, source=os.path.curdir,
-                    metadata=config.get_metadata()).clean(parts, step)
+                    metadata=config.get_metadata(),
+                    image=None).clean(parts, step)
     else:
         step = step or 'pull'
         if step == 'strip':
@@ -195,9 +202,11 @@ def clean(parts, step, **kwargs):
 @add_build_options()
 @click.option('--remote', metavar='<remote>',
               help='Use a specific lxd remote instead of a local container.')
+@click.option('--image', metavar='<image>', default=common.DEFAULT_LXD_IMAGE,
+              help=('Build in an instance of this image.'))
 @click.option('--debug', is_flag=True,
               help='Shells into the environment if the build fails.')
-def cleanbuild(remote, debug, **kwargs):
+def cleanbuild(remote, image, debug, **kwargs):
     """Create a snap using a clean environment managed by lxd.
 
     \b
@@ -215,7 +224,7 @@ def cleanbuild(remote, debug, **kwargs):
     https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
     """
     project_options = get_project_options(**kwargs, debug=debug)
-    lifecycle.cleanbuild(project_options, remote)
+    lifecycle.cleanbuild(project_options, image, remote)
 
 
 if __name__ == '__main__':

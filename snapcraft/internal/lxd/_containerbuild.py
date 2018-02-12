@@ -56,7 +56,7 @@ _STORE_KEY = (
 class Containerbuild:
 
     def __init__(self, *, output, source, project_options,
-                 metadata, container_name, remote=None):
+                 metadata, container_name, image, remote=None):
         if not output:
             output = common.format_snap_name(metadata)
         self._snap_output = output
@@ -70,7 +70,7 @@ class Containerbuild:
             remote = _get_default_remote()
         _verify_remote(remote)
         self._container_name = '{}:snapcraft-{}'.format(remote, container_name)
-        self._image = 'ubuntu:xenial'
+        self._image = image
         # Use a temporary folder the 'lxd' snap can access
         self._lxd_common_dir = os.path.expanduser(
             os.path.join('~', 'snap', 'lxd', 'common'))

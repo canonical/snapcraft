@@ -48,6 +48,8 @@ env = []  # type: List[str]
 
 logger = logging.getLogger(__name__)
 
+DEFAULT_LXD_IMAGE = 'ubuntu:xenial'
+
 
 def assemble_env():
     return '\n'.join(['export ' + e for e in env])

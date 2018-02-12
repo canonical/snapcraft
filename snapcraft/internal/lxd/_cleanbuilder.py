@@ -29,11 +29,12 @@ logger = logging.getLogger(__name__)
 class Cleanbuilder(Containerbuild):
 
     def __init__(self, *, output=None, source, project_options,
-                 metadata=None, remote=None):
+                 metadata=None, image, remote=None):
         container_name = petname.Generate(3, '-')
         super().__init__(output=output, source=source,
                          project_options=project_options, metadata=metadata,
-                         container_name=container_name, remote=remote)
+                         container_name=container_name, image=image,
+                         remote=remote)
 
     def _ensure_container(self):
         try:
