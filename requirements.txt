@@ -2,7 +2,6 @@ click>=6.2
 configparser==3.5.0
 docopt==0.6.2
 jsonschema==2.5.1
-libarchive-c==2.5
 progressbar33==2.4
 PyYAML==3.11
 pyxdg==0.25
@@ -13,6 +12,7 @@ https://launchpad.net/python-distutils-extra/trunk/2.39/+download/python-distuti
 requests-toolbelt==0.6.0
 responses==0.5.1
 petname==1.12
+pyelftools==0.24
 pymacaroons==0.9.2; sys_platform != 'win32'
 pymacaroons==0.10.0; sys_platform == 'win32'
 pymacaroons-pynacl==0.9.3

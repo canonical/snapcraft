@@ -5,7 +5,8 @@ Tests: integrationtests-general,
        integrationtests-plugins-nodejs,
        integrationtests-plugins-java,
        integrationtests-plugins-catkin,
-       integrationtests-snapd
+       integrationtests-snapd,
+       integrationtests-snapd-slow
 Restrictions: needs-root, allow-stderr, isolation-container, rw-build-tree
 Depends: @,
          bzr,

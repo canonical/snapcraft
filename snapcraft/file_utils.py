@@ -23,7 +23,7 @@ import subprocess
 import sys
 from typing import Pattern, Callable, Generator
 
-
+from snapcraft.internal import common
 from snapcraft.internal.errors import (
     RequiredCommandFailure,
     RequiredCommandNotFound,
@@ -256,3 +256,39 @@ def calculate_hash(path: str, *, algorithm: str) -> str:
                 break
             hasher.update(buf)
     return hasher.hexdigest()
+
+
+def get_tool_path(command_name):
+    """Return the path to the given command
+
+    By default this utilizes the PATH, but if Snapcraft is running out of the
+    snap or out of Docker, it ensures it's using the one in the snap, not the
+    host.
+
+    :return: Path to command
+    :rtype: str
+    """
+    path = command_name
+
+    if common.is_snap():
+        path = _command_path_in_root(os.getenv('SNAP'), command_name)
+    elif common.is_docker_instance():
+        path = _command_path_in_root(os.path.join(
+            os.sep, 'snap', 'snapcraft', 'current'), command_name)
+
+    if path:
+        return path
+    else:
+        return command_name
+
+
+def _command_path_in_root(root, command_name):
+    for bin_directory in (os.path.join('usr', 'local', 'sbin'),
+                          os.path.join('usr', 'local', 'bin'),
+                          os.path.join('usr', 'sbin'),
+                          os.path.join('usr', 'bin'),
+                          os.path.join('sbin'),
+                          os.path.join('bin')):
+        path = os.path.join(root, bin_directory, command_name)
+        if os.path.exists(path):
+            return path

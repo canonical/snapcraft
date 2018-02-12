@@ -16,11 +16,11 @@
 import fixtures
 import logging
 import os
-import subprocess
 import tempfile
 from textwrap import dedent
+import sys
 
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Contains, Equals, NotEquals
 from unittest import mock
 
 from snapcraft.internal import errors, elf, os_release
@@ -57,6 +57,35 @@ class TestLdLibraryPathParser(unit.TestCase):
             elf._extract_ld_library_paths(file_path),
             Equals(['/foo/bar', '/colon', '/separated', '/comma',
                     '/tab', '/space', '/baz']))
+
+
+class TestElfFileSmoketest(unit.TestCase):
+
+    def test_bin_echo(self):
+        # Try parsing a file without the pyelftools logic mocked out
+        elf_file = elf.ElfFile(path=sys.executable)
+
+        self.assertThat(elf_file.path, Equals(sys.executable))
+
+        # We expect Python to be a dynamic linked executable with an
+        # ELF interpreter.
+        self.assertTrue(isinstance(elf_file.interp, str))
+        self.assertThat(elf_file.interp, NotEquals(''))
+
+        # Python is not a shared library, so has no soname
+        self.assertThat(elf_file.soname, Equals(''))
+
+        # We expect that Python will be linked to libc
+        for lib in elf_file.needed.values():
+            if lib.name.startswith('libc.so'):
+                break
+        else:
+            self.fail("Expected to find libc in needed library list")
+
+        self.assertTrue(isinstance(lib.name, str))
+        for version in lib.versions:
+            self.assertTrue(isinstance(version, str),
+                            "expected {!r} to be a string".format(version))
 
 
 class TestGetLibraries(TestElfBase):
@@ -221,16 +250,7 @@ class TestGetElfFiles(TestElfBase):
 
         self.assertThat(len(elf_files), Equals(1))
         elf_file = set(elf_files).pop()
-        self.assertThat(elf_file.is_executable(), Equals(True))
-
-    def test_get_elf_is_library(self):
-        elf_files = elf.get_elf_files(self.fake_elf.root_path,
-                                      {'fake_elf-shared-object'})
-
-        self.assertThat(len(elf_files), Equals(1))
-        elf_file = set(elf_files).pop()
-        self.assertThat(elf_file.is_executable(), Equals(False))
-        self.assertThat(elf_file.is_shared_object(), Equals(True))
+        self.assertThat(elf_file.interp, Equals('/lib64/ld-linux-x86-64.so.2'))
 
     def test_skip_object_files(self):
         open(os.path.join(
@@ -291,61 +311,38 @@ class TestGetRequiredGLIBC(TestElfBase):
                           linker='lib64/ld-linux-x86-64.so.2')
 
 
-class TestElfFileSymbols(TestElfBase):
+class TestElfFileAttrs(TestElfBase):
 
     def setUp(self):
         super().setUp()
 
-    def test_symbols(self):
+    def test_executable(self):
         elf_file = self.fake_elf['fake_elf-2.23']
 
-        self.assertThat(len(elf_file.symbols), Equals(3))
+        self.assertThat(elf_file.interp, Equals('/lib64/ld-linux-x86-64.so.2'))
+        self.assertThat(elf_file.soname, Equals(''))
+        self.assertThat(sorted(elf_file.needed.keys()), Equals(['libc.so.6']))
 
-        self.assertThat(elf_file.symbols[0].name, Equals('endgrent'))
-        self.assertThat(elf_file.symbols[0].version, Equals('GLIBC_2.2.5'))
-        self.assertThat(elf_file.symbols[0].section, Equals('UND'))
+        glibc = elf_file.needed['libc.so.6']
+        self.assertThat(glibc.name, Equals('libc.so.6'))
+        self.assertThat(glibc.versions, Equals({'GLIBC_2.2.5', 'GLIBC_2.23'}))
 
-        self.assertThat(elf_file.symbols[1].name,
-                        Equals('__ctype_toupper_loc'))
-        self.assertThat(elf_file.symbols[1].version, Equals('GLIBC_2.23'))
-        self.assertThat(elf_file.symbols[1].section, Equals('UND'))
-
-        self.assertThat(elf_file.symbols[2].name, Equals('PyCodec_Register'))
-        self.assertThat(elf_file.symbols[2].version, Equals(''))
-        self.assertThat(elf_file.symbols[2].section, Equals('13'))
-
-    def test_symbols_no_match(self):
+    def test_shared_object(self):
         # fake_elf-shared-object has no GLIBC dependency, but two symbols
         # nonetheless
         elf_file = self.fake_elf['fake_elf-shared-object']
 
-        self.assertThat(len(elf_file.symbols), Equals(2))
+        self.assertThat(elf_file.interp, Equals(''))
+        self.assertThat(elf_file.soname, Equals('libfake_elf.so.0'))
+        self.assertThat(sorted(elf_file.needed.keys()),
+                        Equals(['libssl.so.1.0.0']))
+
+        openssl = elf_file.needed['libssl.so.1.0.0']
+        self.assertThat(openssl.name, Equals('libssl.so.1.0.0'))
+        self.assertThat(openssl.versions, Equals({'OPENSSL_1.0.0'}))
 
 
 class TestPatcher(TestElfBase):
-
-    scenarios = [
-        ('snap',
-         dict(snap='/snap/snapcraft/current',
-              snap_name='snapcraft',
-              expected_patchelf='/snap/snapcraft/current/bin/patchelf')),
-        ('non-snap',
-         dict(snap='',
-              snap_name='',
-              expected_patchelf='patchelf')),
-    ]
-
-    def setUp(self):
-        super().setUp()
-
-        patcher = mock.patch('subprocess.check_call')
-        self.check_call_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAP', self.snap))
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAP_NAME', self.snap_name))
 
     def test_patch(self):
         elf_file = self.fake_elf['fake_elf-2.23']
@@ -355,10 +352,6 @@ class TestPatcher(TestElfBase):
                                   root_path='/fake')
         elf_patcher.patch(elf_file=elf_file)
 
-        self.check_call_mock.assert_called_once_with([
-            self.expected_patchelf, '--set-interpreter', '/lib/fake-ld',
-            elf_file.path])
-
     def test_patch_does_nothing_if_no_interpreter(self):
         elf_file = self.fake_elf['fake_elf-static']
         # The base_path does not matter here as there are not files to
@@ -367,27 +360,45 @@ class TestPatcher(TestElfBase):
                                   root_path='/fake')
         elf_patcher.patch(elf_file=elf_file)
 
-        self.assertFalse(self.check_call_mock.called)
-
-
-class TestPatcherErrors(TestElfBase):
-
-    def setUp(self):
-        super().setUp()
-
-        patcher = mock.patch('subprocess.check_call')
-        check_call_mock = patcher.start()
-        check_call_mock.side_effect = subprocess.CalledProcessError(
-            2, ['patchelf'])
-        self.addCleanup(patcher.stop)
-
-    def test_patch_fails_raises_patcherror_exception(self):
-        elf_file = self.fake_elf['fake_elf-2.23']
+    def test_patchelf_from_snap_used_if_using_snap(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP', '/snap/snapcraft/current'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP_NAME', 'snapcraft'))
         # The base_path does not matter here as there are not files to
         # be crawled for.
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
                                   root_path='/fake')
 
-        self.assertRaises(errors.PatcherError,
+        expected_patchelf = os.path.join('/snap', 'snapcraft', 'current',
+                                         'bin', 'patchelf')
+        self.assertThat(elf_patcher._patchelf_cmd, Equals(expected_patchelf))
+
+
+class TestPatcherErrors(TestElfBase):
+
+    def test_patch_fails_raises_patcherror_exception(self):
+        elf_file = self.fake_elf['fake_elf-bad-patchelf']
+        # The base_path does not matter here as there are not files to
+        # be crawled for.
+        elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
+                                  root_path='/fake')
+
+        self.assertRaises(errors.PatcherGenericError,
+                          elf_patcher.patch,
+                          elf_file=elf_file)
+
+    def test_patch_fails_with_old_version(self):
+        self.fake_elf = fixture_setup.FakeElf(root_path=self.path,
+                                              patchelf_version='0.8')
+        self.useFixture(self.fake_elf)
+
+        elf_file = self.fake_elf['fake_elf-bad-patchelf']
+        # The base_path does not matter here as there are not files to
+        # be crawled for.
+        elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
+                                  root_path='/fake')
+
+        self.assertRaises(errors.PatcherNewerPatchelfError,
                           elf_patcher.patch,
                           elf_file=elf_file)

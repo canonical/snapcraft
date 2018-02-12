@@ -33,7 +33,7 @@ import yaml
 from snapcraft.cli import echo
 from tabulate import tabulate
 
-from snapcraft.file_utils import calculate_sha3_384
+from snapcraft.file_utils import calculate_sha3_384, get_tool_path
 from snapcraft import storeapi
 from snapcraft.internal import (
     cache,
@@ -52,8 +52,9 @@ logger = logging.getLogger(__name__)
 
 def _get_data_from_snap_file(snap_path):
     with tempfile.TemporaryDirectory() as temp_dir:
+        unsquashfs_path = get_tool_path('unsquashfs')
         output = subprocess.check_output(
-            ['unsquashfs', '-d',
+            [unsquashfs_path, '-d',
              os.path.join(temp_dir, 'squashfs-root'),
              snap_path, '-e', os.path.join('meta', 'snap.yaml')])
         logger.debug(output)
@@ -68,8 +69,9 @@ def _get_data_from_snap_file(snap_path):
 def _get_icon_from_snap_file(snap_path):
     icon_file = None
     with tempfile.TemporaryDirectory() as temp_dir:
+        unsquashfs_path = get_tool_path('unsquashfs')
         output = subprocess.check_output(
-            ['unsquashfs', '-d',
+            [unsquashfs_path, '-d',
              os.path.join(temp_dir, 'squashfs-root'),
              snap_path, '-e', 'meta/gui'])
         logger.debug("Output extracting icon from snap: %s", output)

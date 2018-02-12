@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,18 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import distutils.util
 import fileinput
 import glob
 import os
 import re
 import shutil
 import subprocess
-from textwrap import dedent
 import sys
 import time
 import uuid
 import xdg
 from distutils import dir_util
+from textwrap import dedent
 from typing import Callable, List, Union
 
 import fixtures
@@ -668,8 +669,10 @@ class SnapdIntegrationTestCase(TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        if (self.slow_test and
-                not os.environ.get('SNAPCRAFT_SLOW_TESTS', False)):
+        run_slow_tests = os.environ.get('SNAPCRAFT_SLOW_TESTS', False)
+        if run_slow_tests:
+            run_slow_tests = distutils.util.strtobool(str(run_slow_tests))
+        if (self.slow_test and not run_slow_tests):
             self.skipTest('Not running slow tests')
         if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
             self.skipTest("The autopkgtest armhf runners can't install snaps")
