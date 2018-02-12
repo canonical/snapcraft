@@ -1,5 +1,0 @@
-#!/bin/sh
-
-export MAGIC=$SNAP/usr/share/file/magic.mgc
-
-exec $SNAP/usr/bin/python3 $SNAP/bin/snapcraft "$@"

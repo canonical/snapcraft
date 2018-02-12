@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,8 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 import logging
+from os import path
 
 import snapcraft
 from snapcraft.internal import (
@@ -193,12 +193,17 @@ class PartsConfig:
             definitions_schema=self._validator.definitions_schema,
             stage_packages_repo=stage_packages_repo,
             grammar_processor=grammar_processor,
+            snap_base_path=path.join('/', 'snap', self._snap_name, 'current'),
             confinement=self._confinement)
 
         self.build_snaps |= grammar_processor.get_build_snaps()
         self.build_tools |= grammar_processor.get_build_packages()
 
+        # TODO: this should not pass in command but the required package,
+        #       where the required package is to be determined by the
+        #       source handler.
         if part.source_handler and part.source_handler.command:
+            # TODO get_packages_for_source_type should not be a thing.
             self.build_tools |= repo.Repo.get_packages_for_source_type(
                 part.source_handler.command)
         self.all_parts.append(part)

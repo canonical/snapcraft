@@ -820,6 +820,9 @@ class RecordManifestBaseTestCase(BaseLifecycleTestCase):
 
         self.fake_apt_cache = fixture_setup.FakeAptCache()
         self.useFixture(self.fake_apt_cache)
+        self.fake_apt_cache.add_package(
+            fixture_setup.FakeAptCachePackage(
+                'patchelf', '0.9', installed=True))
 
         self.fake_snapd = fixture_setup.FakeSnapd()
         self.useFixture(self.fake_snapd)
@@ -849,7 +852,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             parts:
               test-part:
                 build-packages: []
-                installed-packages: []
+                installed-packages:
+                - patchelf=0.9
                 installed-snaps: []
                 plugin: nil
                 prime: []
@@ -893,7 +897,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             parts:
               test-part:
                 build-packages: []
-                installed-packages: []
+                installed-packages:
+                - patchelf=0.9
                 installed-snaps:
                 - test-snap-1=test-snap-1-revision
                 - test-snap-2=test-snap-2-revision
@@ -939,6 +944,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
               test-part:
                 build-packages: []
                 installed-packages:
+                - patchelf=0.9
                 - test-package1=test-version1
                 - test-package2=test-version2
                 installed-snaps: []
@@ -984,7 +990,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             parts:
               test-part:
                 build-packages: []
-                installed-packages: []
+                installed-packages:
+                - patchelf=0.9
                 installed-snaps: []
                 plugin: nil
                 prime: []
@@ -1034,7 +1041,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             parts:
               test-part:
                 build-packages: []
-                installed-packages: []
+                installed-packages:
+                - patchelf=0.9
                 installed-snaps: []
                 plugin: nil
                 prime: []
@@ -1078,7 +1086,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             parts:
               test-part:
                 build-packages: []
-                installed-packages: []
+                installed-packages:
+                - patchelf=0.9
                 installed-snaps: []
                 plugin: nil
                 prime: []
@@ -1129,7 +1138,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
               test-part:
                 build-packages:
                 - test-package:any
-                installed-packages: []
+                installed-packages:
+                - patchelf=0.9
                 installed-snaps: []
                 plugin: nil
                 prime: []
@@ -1176,7 +1186,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
               test-part:
                 build-packages:
                 - test-virtual-package
-                installed-packages: []
+                installed-packages:
+                - patchelf=0.9
                 installed-snaps: []
                 plugin: nil
                 prime: []
@@ -1217,7 +1228,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             parts:
               test-part:
                 build-packages: []
-                installed-packages: []
+                installed-packages:
+                - patchelf=0.9
                 installed-snaps: []
                 plugin: nil
                 prime: []
@@ -1261,7 +1273,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             parts:
               test-part:
                 build-packages: []
-                installed-packages: []
+                installed-packages:
+                - patchelf=0.9
                 installed-snaps: []
                 plugin: nil
                 prime: []
@@ -1327,7 +1340,8 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(
             parts:
               test-part:
                 build-packages: []
-                installed-packages: []
+                installed-packages:
+                - patchelf=0.9
                 installed-snaps: []
                 plugin: nil
                 prime:
@@ -1385,9 +1399,7 @@ class CoreSetupTestCase(unit.TestCase):
         self.project_options = snapcraft.ProjectOptions()
 
     @mock.patch.object(storeapi.StoreClient, 'download')
-    @mock.patch('snapcraft.internal.repo.snaps.install_snaps',
-                return_value=['patchelf=1'])
-    def test_core_setup_with_env_var(self, install_snaps_mock, download_mock):
+    def test_core_setup_with_env_var(self, download_mock):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_SETUP_CORE', '1'))
 
@@ -1401,6 +1413,7 @@ class CoreSetupTestCase(unit.TestCase):
         lifecycle.execute('pull', self.project_options)
 
         regex = (
+            '.*'
             'mkdir -p {}\n'
             'unsquashfs -d {} .*{}\n').format(
                 os.path.dirname(self.core_path),
@@ -1432,6 +1445,7 @@ class CoreSetupTestCase(unit.TestCase):
         lifecycle.execute('pull', self.project_options)
 
         regex = (
+            '.*'
             'mkdir -p {}\n'
             'unsquashfs -d {} .*{}\n').format(
                 os.path.dirname(self.core_path),
@@ -1454,16 +1468,12 @@ class CoreSetupTestCase(unit.TestCase):
 
         self.assertThat(self.witness_path, Not(FileExists()))
 
-    @mock.patch('snapcraft.internal.repo.snaps.install_snaps',
-                return_value=['patchelf=1'])
-    def test_core_setup_skipped_if_core_exists(self, install_snaps_mock):
+    def test_core_setup_skipped_if_core_exists(self):
         os.makedirs(self.core_path)
         open(os.path.join(self.core_path, 'fake-content'), 'w').close()
 
         self._create_classic_confined_snapcraft_yaml()
         lifecycle.execute('pull', self.project_options)
-
-        self.assertThat(self.witness_path, Not(FileExists()))
 
     def _create_classic_confined_snapcraft_yaml(self):
         snapcraft_yaml_path = lifecycle.init()

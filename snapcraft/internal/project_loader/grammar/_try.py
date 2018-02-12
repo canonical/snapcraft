@@ -21,16 +21,14 @@ class TryStatement:
     """Process a 'try' statement in the grammar.
 
     For example:
-    >>> import tempfile
     >>> from snapcraft import ProjectOptions
     >>> def checker(primitive):
     ...     return 'invalid' not in primitive
-    >>> with tempfile.TemporaryDirectory() as cache_dir:
-    ...     options = ProjectOptions(target_deb_arch='i386')
-    ...     clause = TryStatement(body=['invalid'], project_options=options,
-    ...                           checker=checker)
-    ...     clause.add_else(['valid'])
-    ...     clause.process()
+    >>> options = ProjectOptions()
+    >>> clause = TryStatement(body=['invalid'], project_options=options,
+    ...                       checker=checker)
+    >>> clause.add_else(['valid'])
+    >>> clause.process()
     {'valid'}
     """
 

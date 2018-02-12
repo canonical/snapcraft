@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017, 2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -36,11 +36,30 @@ def extract(path: str) -> ExtractedMetadata:
     summary = None
     node = tree.find('summary')
     if node is not None:
-        summary = node.text
+        summary = node.text.strip()
 
     description = None
     node = tree.find('description')
     if node is not None:
-        description = node.text
+        description = node.text.strip()
 
-    return ExtractedMetadata(summary=summary, description=description)
+    icon = None
+    node = tree.find('icon')
+    if (node is not None and 'type' in node.attrib and
+            node.attrib['type'] == 'local'):
+        # TODO Currently we only support local icons.
+        # See bug https://bugs.launchpad.net/snapcraft/+bug/1742348
+        # for supporting remote icons.
+        # --elopio -20180109
+        icon = node.text.strip()
+
+    desktop_file_ids = []
+    nodes = tree.findall('launchable')
+    for node in nodes:
+        if ('type' in node.attrib and
+                node.attrib['type'] == 'desktop-id'):
+            desktop_file_ids.append(node.text.strip())
+
+    return ExtractedMetadata(
+        summary=summary, description=description, icon=icon,
+        desktop_file_ids=desktop_file_ids)

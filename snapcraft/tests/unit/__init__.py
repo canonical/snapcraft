@@ -141,6 +141,10 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.parts_dir = os.path.join(os.getcwd(), 'parts')
         self.local_plugins_dir = os.path.join(self.snap_dir, 'plugins')
 
+        # Avoid installing patchelf in the tests
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_NO_PATCHELF', '1'))
+
         machine = os.environ.get('SNAPCRAFT_TEST_MOCK_MACHINE', None)
         if machine:
             patcher = mock.patch('platform.machine')
@@ -204,6 +208,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             definitions_schema=definitions_schema,
             grammar_processor=grammar_processor,
             stage_packages_repo=stage_packages_repo,
+            snap_base_path='/snap/fake-name/current',
             confinement=confinement)
 
 

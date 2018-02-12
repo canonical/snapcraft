@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,10 +17,10 @@
 import configparser
 import logging
 import os
-from textwrap import dedent
 from unittest.mock import patch
 
 import fixtures
+import testscenarios
 import testtools
 import yaml
 from testtools.matchers import (
@@ -281,6 +281,22 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertFalse('icon' in y,
                          'icon found in snap.yaml {}'.format(y))
 
+    def test_create_meta_with_sockets(self):
+        os.mkdir(self.prime_dir)
+        _create_file(os.path.join(self.prime_dir, 'app.sh'))
+        sockets = {
+            'sock1': {
+                'listen-stream': 8080,
+            },
+            'sock2': {
+                'listen-stream': '$SNAP_COMMON/sock2',
+                'socket-mode': 0o640}}
+        self.config_data['apps'] = {
+            'app': {'command': 'app.sh',
+                    'sockets':  sockets}}
+        y = self.generate_meta_yaml()
+        self.assertThat(y['apps']['app']['sockets'], Equals(sockets))
+
     def test_version_script(self):
         self.config_data['version-script'] = 'echo 10.1-devel'
 
@@ -454,7 +470,7 @@ class CreateTestCase(CreateBaseTestCase):
             "Expected generated 'bar' hook to not contain 'plugs'")
 
 
-class CreateMetadataFromSourceErrorsTestCase(CreateBaseTestCase):
+class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):
 
     def setUp(self):
         super().setUp()
@@ -469,10 +485,19 @@ class CreateMetadataFromSourceErrorsTestCase(CreateBaseTestCase):
                     'plugin': 'nil',
                     'parse-info': ['test-metadata-file']
                 }
+            },
+            'apps': {
+                'test-app': {
+                    'command': 'echo'
+                }
             }
         }
         # Create metadata file
         open('test-metadata-file', 'w').close()
+
+
+class CreateMetadataFromSourceErrorsTestCase(
+        CreateMetadataFromSourceBaseTestCase):
 
     def test_create_metadata_with_missing_parse_info(self):
         del self.config_data['summary']
@@ -505,6 +530,17 @@ class CreateMetadataFromSourceErrorsTestCase(CreateBaseTestCase):
         self.assertThat(y['summary'], Equals(self.config_data['summary']))
         self.assertThat(
             y['description'], Equals(self.config_data['description']))
+
+    def test_metadata_with_unexisting_icon(self):
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(
+                icon='test/extracted/unexistent/icon/path')
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        # The meta generation should just ignore the dead path, and not fail.
+        self.generate_meta_yaml(build=True)
 
     def test_metadata_satisfies_required_property(self):
         del self.config_data['summary']
@@ -542,6 +578,65 @@ class CreateMetadataFromSourceErrorsTestCase(CreateBaseTestCase):
             meta_errors.MissingSnapcraftYamlKeysError,
             self.generate_meta_yaml, build=True)
         self.assertThat(raised.keys, Equals("'summary'"))
+
+
+class MetadataFromSourceWithIconFileTestCase(
+        CreateMetadataFromSourceBaseTestCase):
+
+    scenarios = testscenarios.multiply_scenarios(
+        (('setup/gui', dict(directory=os.path.join('setup', 'gui'))),
+         ('snap/gui', dict(directory=os.path.join('snap', 'gui')))),
+        (('icon.png', dict(file_name='icon.png')),
+         ('icon.svg', dict(file_name='icon.svg')))
+    )
+
+    def test_metadata_doesnt_overwrite_icon_file(self):
+        os.makedirs(self.directory)
+        icon_content = 'setup icon'
+        _create_file(
+            os.path.join(self.directory, self.file_name),
+            content=icon_content)
+
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(
+                icon='test/extracted/unexistent/icon/path')
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        self.generate_meta_yaml(build=True)
+
+        expected_icon = os.path.join(self.meta_dir, 'gui', self.file_name)
+        self.assertThat(expected_icon, FileContains(icon_content))
+
+
+class MetadataFromSourceWithDesktopFileTestCase(
+        CreateMetadataFromSourceBaseTestCase):
+
+    scenarios = (
+        ('setup/gui', dict(directory=os.path.join('setup', 'gui'))),
+        ('snap/gui', dict(directory=os.path.join('snap', 'gui')))
+    )
+
+    def test_metadata_doesnt_overwrite_desktop_file(self):
+        os.makedirs(self.directory)
+        desktop_content = 'setup desktop'
+        _create_file(
+            os.path.join(self.directory, 'test-app.desktop'),
+            content=desktop_content)
+
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(
+                desktop_file_ids=['com.example.test-app.desktop'])
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        self.generate_meta_yaml(build=True)
+
+        expected_desktop = os.path.join(
+            self.meta_dir, 'gui', 'test-app.desktop')
+        self.assertThat(expected_desktop, FileContains(desktop_content))
 
 
 class WriteSnapDirectoryTestCase(CreateBaseTestCase):
@@ -751,16 +846,11 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
-        expected = dedent("""\
-            #!/bin/sh
-            PATH=$SNAP/usr/bin:$SNAP/bin
-
-            export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
-            # Workaround for LP: #1656340
-            [ -n "$XDG_RUNTIME_DIR" ] && mkdir -p $XDG_RUNTIME_DIR -m 700
-
-            exec "$SNAP/test_relexepath" "$@"
-            """)
+        expected = ('#!/bin/sh\n'
+                    'PATH=$SNAP/usr/bin:$SNAP/bin\n\n'
+                    'export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
+                    '$LD_LIBRARY_PATH\n'
+                    'exec "$SNAP/test_relexepath" "$@"\n')
 
         self.assertThat(wrapper_path, FileContains(expected))
 
@@ -779,16 +869,11 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 
         self.assertThat(relative_wrapper_path, Equals('new-name.wrapper'))
 
-        expected = dedent("""\
-            #!/bin/sh
-            PATH=$SNAP/usr/bin:$SNAP/bin
-
-            export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH
-            # Workaround for LP: #1656340
-            [ -n "$XDG_RUNTIME_DIR" ] && mkdir -p $XDG_RUNTIME_DIR -m 700
-
-            exec "$SNAP/test_relexepath" "$@"
-            """)
+        expected = ('#!/bin/sh\n'
+                    'PATH=$SNAP/usr/bin:$SNAP/bin\n\n'
+                    'export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
+                    '$LD_LIBRARY_PATH\n'
+                    'exec "$SNAP/test_relexepath" "$@"\n')
         self.assertThat(wrapper_path, FileContains(expected))
 
     def test_snap_shebangs_extracted(self):
@@ -813,13 +898,9 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
-        expected = dedent("""\
-            #!/bin/sh
-            # Workaround for LP: #1656340
-            [ -n "$XDG_RUNTIME_DIR" ] && mkdir -p $XDG_RUNTIME_DIR -m 700
-
-            exec "$SNAP/snap_exe" "$SNAP/test_relexepath" "$@"
-            """)
+        expected = (
+            '#!/bin/sh\n'
+            'exec "$SNAP/snap_exe" "$SNAP/test_relexepath" "$@"\n')
         self.assertThat(wrapper_path, FileContains(expected))
 
         # The shebang wasn't changed, since we don't know what the
@@ -841,13 +922,8 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
-        expected = dedent("""\
-            #!/bin/sh
-            # Workaround for LP: #1656340
-            [ -n "$XDG_RUNTIME_DIR" ] && mkdir -p $XDG_RUNTIME_DIR -m 700
-
-            exec "$SNAP/test_relexepath" "$@"
-            """)
+        expected = ('#!/bin/sh\n'
+                    'exec "$SNAP/test_relexepath" "$@"\n')
         self.assertThat(wrapper_path, FileContains(expected))
 
         self.assertThat(os.path.join(self.prime_dir, relative_exe_path),
@@ -869,13 +945,8 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
-        expected = dedent("""\
-            #!/bin/sh
-            # Workaround for LP: #1656340
-            [ -n "$XDG_RUNTIME_DIR" ] && mkdir -p $XDG_RUNTIME_DIR -m 700
-
-            exec "$SNAP/test_relexepath" "$@"
-            """)
+        expected = ('#!/bin/sh\n'
+                    'exec "$SNAP/test_relexepath" "$@"\n')
         self.assertThat(wrapper_path, FileContains(expected))
 
         with open(path, 'rb') as exe:
@@ -889,13 +960,8 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
         relative_wrapper_path = self.packager._wrap_exe('app1')
         wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
 
-        expected = dedent("""\
-            #!/bin/sh
-            # Workaround for LP: #1656340
-            [ -n "$XDG_RUNTIME_DIR" ] && mkdir -p $XDG_RUNTIME_DIR -m 700
-
-            exec "app1" "$@"
-            """)
+        expected = ('#!/bin/sh\n'
+                    'exec "app1" "$@"\n')
         self.assertThat(wrapper_path, FileContains(expected))
 
     def test_command_does_not_exist(self):

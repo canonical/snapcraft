@@ -33,7 +33,7 @@ from xml.etree import ElementTree
 
 import snapcraft
 from snapcraft import file_utils
-from snapcraft.internal import cache, repo, common, os_release
+from snapcraft.internal import cache, repo, common, os_release, sources
 from snapcraft.internal.indicators import is_dumb_terminal
 from ._base import BaseRepo
 from . import errors
@@ -164,7 +164,9 @@ class Ubuntu(BaseRepo):
             output = subprocess.check_output(
                 ['dpkg', '-L', package_name]).decode(
                     sys.getfilesystemencoding()).strip().split()
-            _library_list[package_name] = {i for i in output if 'lib' in i}
+            _library_list[package_name] = {
+                i for i in output
+                if ('lib' in i and os.path.isfile(i))}
 
         return _library_list[package_name].copy()
 
@@ -180,6 +182,10 @@ class Ubuntu(BaseRepo):
             packages = {'mercurial'}
         elif source_type == 'subversion' or source_type == 'svn':
             packages = {'subversion'}
+        elif source_type == 'rpm2cpio':
+            packages = {'rpm2cpio'}
+        elif source_type == '7zip':
+            packages = {'p7zip-full'}
         else:
             packages = set()
 
@@ -369,12 +375,8 @@ class Ubuntu(BaseRepo):
     def unpack(self, unpackdir):
         pkgs_abs_path = glob.glob(os.path.join(self._downloaddir, '*.deb'))
         for pkg in pkgs_abs_path:
-            # TODO needs elegance and error control
-            try:
-                subprocess.check_call(
-                    ['dpkg-deb', '--extract', pkg, unpackdir])
-            except subprocess.CalledProcessError:
-                raise errors.UnpackError(pkg)
+            sources.Deb(None, None).provision(
+                unpackdir, src=pkg, clean_target=False, keep_deb=True)
         self.normalize(unpackdir)
 
     def _manifest_dep_names(self, apt_cache):

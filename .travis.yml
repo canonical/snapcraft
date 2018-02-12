@@ -27,7 +27,17 @@ jobs:
       if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/general
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/plugins
+      script:
+      - "travis_wait 30 sleep 1800 &"
+      - sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/plugins
+    - if: type != cron
+      script:
+      - "travis_wait 30 sleep 1800 &"
+      - sudo ./tools/travis/run_tests.sh snapcraft.tests.integration.plugins.nodejs
+    - if: type != cron
+      script:
+      - "travis_wait 30 sleep 1800 &"
+      - sudo ./tools/travis/run_tests.sh snapcraft.tests.integration.plugins.java
     - if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapcraft.tests.integration.plugins.python
     - if: type != cron
@@ -37,7 +47,9 @@ jobs:
     - if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/containers
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/snapd
+      script:
+      - "travis_wait 20 sleep 1200 &"
+      - sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/snapd
     # CLA check, only in pull requests, not coming from the bot.
     - if: type = pull_request AND sender != snappy-m-o
       script: ./tools/travis/run_cla_check.sh
@@ -54,6 +66,14 @@ jobs:
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-plugins
     - if: type = cron
+      script:
+      - "travis_wait 30 sleep 1800 &"
+      - sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-plugins-nodejs
+    - if: type = cron
+      script:
+      - "travis_wait 30 sleep 1800 &"
+      - sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-plugins-java
+    - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-plugins-python
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu:xenial integrationtests-plugins-catkin
@@ -66,11 +86,21 @@ jobs:
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-plugins
     - if: type = cron
+      script:
+      - "travis_wait 30 sleep 1800 &"
+      - sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-plugins-nodejs
+    - if: type = cron
+      script:
+      - "travis_wait 30 sleep 1800 &"
+      - sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-plugins-java
+    - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-plugins-python
     - if: type = cron
       script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-plugins-catkin
     - if: type = cron
-      script: sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-snapd
+      script:
+      - "travis_wait 20 sleep 1200 &"
+      - sudo ./tools/travis/run_autopkgtests.sh ubuntu-daily:bionic integrationtests-snapd
     # Trigger autopkgtests in all the supported distros and architectures for the snapcraft-daily PPA
     - if: type = cron
       script: sudo ./tools/travis/run_ppa_autopkgtests.sh
