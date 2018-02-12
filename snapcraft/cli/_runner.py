@@ -29,6 +29,7 @@ from .lifecycle import lifecyclecli
 from .store import storecli
 from .parts import partscli
 from .help import helpcli
+from .version import versioncli, SNAPCRAFT_VERSION_TEMPLATE
 from .ci import cicli
 from ._command_group import SnapcraftGroup
 from ._options import add_build_options
@@ -44,11 +45,13 @@ command_groups = [
     helpcli,
     lifecyclecli,
     partscli,
+    versioncli,
 ]
 
 
 @click.group(cls=SnapcraftGroup, invoke_without_command=True)
-@click.version_option(version=snapcraft.__version__)
+@click.version_option(message=SNAPCRAFT_VERSION_TEMPLATE,  # type: ignore
+                      version=snapcraft.__version__)
 @click.pass_context
 @add_build_options(hidden=True)
 @click.option('--debug', '-d', is_flag=True)
