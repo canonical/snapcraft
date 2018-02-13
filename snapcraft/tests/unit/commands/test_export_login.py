@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2015-2017 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -12,7 +12,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <http://www.gnu.org/licenses/>
 from unittest import mock
 import re
 
@@ -182,3 +182,33 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
         self.assertThat(result.output, Contains(
             storeapi.constants.INVALID_CREDENTIALS))
         self.assertThat(result.output, Contains('Login failed.'))
+
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    @mock.patch.object(storeapi.StoreClient, 'acl')
+    def test_export_with_snap_name(
+           self, mock_acl, mock_login, mock_get_account_information):
+        self.mock_input.return_value = 'user@example.com'
+        mock_acl.return_value = {
+           'snap_ids': ['myapp'],
+           'channels': None,
+           'permissions': None,
+        }
+
+        result = self.run_command(['export-login', 'exported'])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.TWO_FACTOR_WARNING))
+        self.assertThat(
+            result.output, Contains('Login successfully exported'))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r".*snaps:.*?['myapp']", re.DOTALL))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r".*channels:.*?['edge']", re.DOTALL))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*permissions:.*?No restriction', re.DOTALL))
