@@ -263,7 +263,9 @@ class TestGetElfFiles(TestElfBase):
     def test_no_find_dependencies_statically_linked(self):
         elf_files = elf.get_elf_files(self.fake_elf.root_path,
                                       {'fake_elf-static'})
-        self.assertThat(elf_files, Equals(set()))
+        elf_file, = elf_files
+        self.assertThat(elf_file.dependencies, Equals(set()))
+        self.assertThat(elf_file.interp, Equals(''))
 
     def test_non_elf_files(self):
         with open(os.path.join(

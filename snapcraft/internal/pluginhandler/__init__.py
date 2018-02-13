@@ -507,13 +507,7 @@ class PluginHandler:
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 
-        full_elf_parsing = True
-        if (self._project_options.is_host_same_base or
-                self._confinement != 'classic'):
-            full_elf_parsing = False
-
-        elf_files = elf.get_elf_files(self.primedir, snap_files,
-                                      full_elf_parsing=full_elf_parsing)
+        elf_files = elf.get_elf_files(self.primedir, snap_files)
 
         all_dependencies = set()
         # TODO: base snap support
