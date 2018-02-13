@@ -864,7 +864,7 @@ class ValidVersionTestCase(YamlTestCase):
         version in ['buttered-popcorn', '1.2.3', 'v12.4:1:2~', 'HeLlo']
     ]
 
-    def test_valid_yaml_invalid_version(self):
+    def test_valid_version(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
@@ -888,7 +888,7 @@ class InvalidVersionTestCase(YamlTestCase):
         version in ['*', '', '-bad', 'still-bad-', ':foo']
     ]
 
-    def test_invalid_yaml_invalid_version(self):
+    def test_invalid_version(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
