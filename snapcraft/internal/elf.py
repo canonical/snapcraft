@@ -92,6 +92,11 @@ class Library:
 _soname_paths = dict()  # type: Dict[str, str]
 
 
+def reset_soname_paths():
+    global _soname_paths
+    _soname_paths = dict()  # type: Dict[str, str]
+
+
 def _crawl_for_path(*, soname: str, root_path: str,
                     core_base_path: str) -> str:
     global _soname_paths
