@@ -885,7 +885,10 @@ class ValidVersionTestCase(YamlTestCase):
 class InvalidVersionTestCase(YamlTestCase):
     scenarios = [
         (version, dict(version=version)) for
-        version in ['*', '', '-bad', 'still-bad-', ':foo']
+        version in [
+            '*', '', ':v', '.v', '+v', '~v', '_v', '-v', 'v:', 'v.', 'v_',
+            'v-',
+        ]
     ]
 
     def test_invalid_version(self):
