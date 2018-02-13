@@ -89,8 +89,17 @@ class Library:
             self.in_base_snap = False
 
 
+_soname_paths = dict()  # type: Dict[str, str]
+
+
 def _crawl_for_path(*, soname: str, root_path: str,
                     core_base_path: str) -> str:
+    global _soname_paths
+
+    # Speed things up and return what was already found once.
+    if soname in _soname_paths:
+        return _soname_paths[soname]
+
     for path in (root_path, core_base_path):
         if not os.path.exists(path):
             continue
@@ -99,6 +108,7 @@ def _crawl_for_path(*, soname: str, root_path: str,
                 if file_name == soname:
                     file_path = os.path.join(root, file_name)
                     if os.path.exists(file_path) and ElfFile.is_elf(file_path):
+                        _soname_paths[soname] = file_path
                         return file_path
     return None
 
@@ -151,6 +161,7 @@ class ElfFile:
         self._needed = None
 
     def _extract(self, path) -> Tuple[str, str, Dict[str, NeededLibrary]]:
+        logger.debug('Extracting elf information from {!r}'.format(self.path))
         interp = str()
         soname = str()
         libs = dict()
