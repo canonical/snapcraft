@@ -111,8 +111,11 @@ class SnapsTestCase(testtools.TestCase):
                         self.snap_content_dir, filter_))
         logger.info('Testing {}'.format(self.snap_content_dir))
         super().setUp()
+
+        self.patchelf_command = 'patchelf'
         if os.getenv('SNAPCRAFT_FROM_SNAP', False):
             self.snapcraft_command = '/snap/bin/snapcraft'
+            self.patchelf_command = '/snap/snapcraft/current/bin/patchelf'
         elif os.getenv('SNAPCRAFT_FROM_DEB', False):
             self.snapcraft_command = '/usr/bin/snapcraft'
         elif os.getenv('VIRTUAL_ENV'):

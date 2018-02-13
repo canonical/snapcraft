@@ -160,18 +160,24 @@ class SnapTestCase(integration.TestCase):
         self.run_snapcraft('snap')
 
     def test_snap_with_arch(self):
+        if self.deb_arch == 'armhf':
+            self.skipTest('For now, we just support crosscompile from amd64')
         self.run_snapcraft('init')
 
         self.run_snapcraft(['snap', '--target-arch=i386'])
         self.assertThat('my-snap-name_0.1_i386.snap', FileExists())
 
     def test_arch_with_snap(self):
+        if self.deb_arch == 'armhf':
+            self.skipTest('For now, we just support crosscompile from amd64')
         self.run_snapcraft('init')
 
         self.run_snapcraft(['--target-arch=i386', 'snap'])
         self.assertThat('my-snap-name_0.1_i386.snap', FileExists())
 
     def test_implicit_command_with_arch(self):
+        if self.deb_arch == 'armhf':
+            self.skipTest('For now, we just support crosscompile from amd64')
         self.run_snapcraft('init')
 
         self.run_snapcraft('--target-arch=i386')
