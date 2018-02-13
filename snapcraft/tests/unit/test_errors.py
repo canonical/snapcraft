@@ -161,15 +161,33 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "Use a LXD remote without colons, spaces and slashes in the "
                 "name.\n")}),
 
-        ('InvalidDesktopFileError', {
-            'exception': errors.InvalidDesktopFileError,
+        ('', {
+            'exception': errors.MissingDesktopFileError,
             'kwargs': {
-                'filename': 'test-file',
-                'message': 'test-message'
+                'filename': '{filename!r}',
+                'name': '{name!r}'
             },
             'expected_message': (
                 "Failed to generate desktop file: "
-                "Invalid desktop file 'test-file': test-message.")}),
+                "'{filename!r}' defined in app '{name!r}' does not exist.")}),
+        ('', {
+            'exception': errors.MissingDesktopSectionError,
+            'kwargs': {
+                'filename': '{filename!r}',
+                'section_name': '{section_name!r}'
+            },
+            'expected_message': (
+                "Failed to generate desktop file: "
+                "Missing '{section_name!r}' section "
+                "in desktop file '{filename!r}'.")}),
+        ('', {
+            'exception': errors.MissingDesktopExecError,
+            'kwargs': {
+                'filename': '{filename!r}'
+            },
+            'expected_message': (
+                "Failed to generate desktop file: "
+                "Missing Exec key in desktop file '{filename!r}'.")}),
         ('SnapcraftPartMissingError', {
             'exception': errors.SnapcraftPartMissingError,
             'kwargs': {'part_name': 'test-part'},
@@ -241,6 +259,7 @@ class ErrorFormattingTestCase(unit.TestCase):
             'kwargs': {'cmd_list': ['test-command', 'test-argument']},
             'expected_message': "'test-command' not found."}),
         ('RequiredPathDoesNotExist', {
+
             'exception': errors.RequiredPathDoesNotExist,
             'kwargs': {'path': 'test-path'},
             'expected_message': "Required path does not exist: 'test-path'"}),

@@ -202,18 +202,37 @@ class InvalidContainerRemoteError(SnapcraftError):
         super().__init__(remote=remote)
 
 
-class InvalidDesktopFileError(SnapcraftError):
+class MissingDesktopFileError(SnapcraftError):
 
     fmt = (
-        'Failed to generate desktop file: '
-        'Invalid desktop file {filename!r}: {message}.'
-        # FIXME include how to fix each of the possible desktop file errors.
-        # https://bugs.launchpad.net/snapcraft/+bug/1727435
-        # --elopio - 2017-10-25
+        "Failed to generate desktop file: "
+        "{filename!r} defined in app {name!r} does not exist."
     )
 
-    def __init__(self, filename, message):
-        super().__init__(filename=filename, message=message)
+    def __init__(self, filename, name):
+        super().__init__(filename=filename, name=name)
+
+
+class MissingDesktopSectionError(SnapcraftError):
+
+    fmt = (
+        "Failed to generate desktop file: "
+        "Missing {section_name!r} section in desktop file {filename!r}."
+    )
+
+    def __init__(self, filename, section_name):
+        super().__init__(filename=filename, section_name=section_name)
+
+
+class MissingDesktopExecError(SnapcraftError):
+
+    fmt = (
+        "Failed to generate desktop file: "
+        "Missing Exec key in desktop file {filename!r}."
+    )
+
+    def __init__(self, filename):
+        super().__init__(filename=filename)
 
 
 class SnapcraftPartMissingError(SnapcraftError):
