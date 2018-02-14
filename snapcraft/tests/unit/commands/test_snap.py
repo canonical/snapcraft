@@ -258,6 +258,10 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
 
+        fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'config', 'set', fake_lxd.name,
+                  'raw.idmap', 'both 1000 0']),
+        ])
         self.assertThat(fake_logger.output, Contains(
             "Using a VM instance because "
             "SNAPCRAFT_CONTAINER_BUILDS is set to 'multipass'"))

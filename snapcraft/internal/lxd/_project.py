@@ -84,6 +84,11 @@ class Project(Containerbuild):
                 'raw.idmap',
                 'both {} {}'.format(os.getenv('SUDO_UID', os.getuid()),
                                     os.getuid())])
+        elif self._container_name.startswith('multipass:'):
+            # Map VM user ubuntu (1000) to root (0) inside container
+            subprocess.check_call([
+                'lxc', 'config', 'set', self._container_name,
+                'raw.idmap', 'both 1000 0'])
         # Remove existing device (to ensure we update old containers)
         devices = self._get_container_status()['devices']
         if self._project_folder in devices:
