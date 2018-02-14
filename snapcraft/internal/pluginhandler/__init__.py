@@ -56,7 +56,8 @@ class PluginHandler:
 
     def __init__(self, *, plugin, part_properties, project_options,
                  part_schema, definitions_schema, stage_packages_repo,
-                 grammar_processor, snap_base_path, confinement):
+                 grammar_processor, snap_base_path, confinement,
+                 soname_cache):
         self.valid = False
         self.plugin = plugin
         self._part_properties = _expand_part_properties(
@@ -66,6 +67,7 @@ class PluginHandler:
         self._grammar_processor = grammar_processor
         self._snap_base_path = snap_base_path
         self._confinement = confinement
+        self._soname_cache = soname_cache
         self._source = grammar_processor.get_source()
         if not self._source:
             self._source = part_schema['source'].get('default')
@@ -512,10 +514,14 @@ class PluginHandler:
         # TODO: base snap support
         core_path = common.get_core_path()
 
+        # Reset to take into account new data inside prime provided by other
+        # parts.
+        self._soname_cache.reset()
         for elf_file in elf_files:
             all_dependencies.update(
                 elf_file.load_dependencies(root_path=self.primedir,
-                                           core_base_path=core_path))
+                                           core_base_path=core_path,
+                                           soname_cache=self._soname_cache))
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
@@ -571,7 +577,8 @@ class PluginHandler:
                                   root_path=self.primedir,
                                   snap_base_path=self._snap_base_path,
                                   core_base_path=core_path,
-                                  preferred_patchelf_path=staged_patchelf_path)
+                                  preferred_patchelf_path=staged_patchelf_path,
+                                  soname_cache=self._soname_cache)
         elif self._confinement == 'classic':
             dynamic_linker = self._project_options.get_core_dynamic_linker()
             elf_patcher = elf.Patcher(

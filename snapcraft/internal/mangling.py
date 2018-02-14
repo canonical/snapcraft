@@ -72,7 +72,8 @@ def _get_dynamic_linker(library_list: List[str]) -> str:
 def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
                           root_path: str, core_base_path: str,
                           snap_base_path: str,
-                          preferred_patchelf_path=None) -> None:
+                          preferred_patchelf_path=None,
+                          soname_cache: elf.SonameCache=None) -> None:
     """Copy over libc6 libraries from the host and patch necessary elf files.
 
     If no newer glibc version is detected in elf_files, this function returns.
@@ -88,6 +89,9 @@ def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
     :param str preferred_patchelf_path: patch the necessary elf_files with
                                         this patchelf.
     """
+    if soname_cache is None:
+        soname_cache = elf.SonameCache()
+
     formatted_list = list()  # type: List[str]
     patch_elf_files = list()  # type: List[elf.ElfFile]
     for elf_file in elf_files:
@@ -141,5 +145,6 @@ def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
         # Search for dependencies again now that the new libc6 is
         # migrated.
         elf_file.load_dependencies(root_path=root_path,
-                                   core_base_path=core_base_path)
+                                   core_base_path=core_base_path,
+                                   soname_cache=soname_cache)
         elf_patcher.patch(elf_file=elf_file)
