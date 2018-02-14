@@ -35,6 +35,8 @@ class TestElfBase(unit.TestCase):
         self.fake_elf = fixture_setup.FakeElf(root_path=self.path)
         self.useFixture(self.fake_elf)
 
+        self.addCleanup(elf.reset_soname_paths)
+
 
 class TestLdLibraryPathParser(unit.TestCase):
 

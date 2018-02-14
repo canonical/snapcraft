@@ -89,8 +89,25 @@ class Library:
             self.in_base_snap = False
 
 
+_soname_paths = dict()  # type: Dict[str, str]
+
+
+def reset_soname_paths(only_none=False):
+    global _soname_paths
+    if only_none:
+        _soname_paths = {k: v for (k, v) in _soname_paths if v is not None}
+    else:
+        _soname_paths = dict()  # type: Dict[str, str]
+
+
 def _crawl_for_path(*, soname: str, root_path: str,
                     core_base_path: str) -> str:
+    global _soname_paths
+    # Speed things up and return what was already found once.
+    if soname in _soname_paths:
+        return _soname_paths[soname]
+
+    logger.debug('Crawling to find soname {!r}'.format(soname))
     for path in (root_path, core_base_path):
         if not os.path.exists(path):
             continue
@@ -99,7 +116,11 @@ def _crawl_for_path(*, soname: str, root_path: str,
                 if file_name == soname:
                     file_path = os.path.join(root, file_name)
                     if os.path.exists(file_path) and ElfFile.is_elf(file_path):
+                        _soname_paths[soname] = file_path
                         return file_path
+
+    # If not found we cache it too
+    _soname_paths[soname] = None
     return None
 
 
@@ -512,6 +533,10 @@ def get_elf_files(root: str,
     :returns: a frozentset of ElfFile objects.
     """
     elf_files = set()  # type: Set[ElfFile]
+
+    # We need to reset the empty soname cache entries in case they are provided
+    # by a new set of root files
+    reset_soname_paths(only_none=True)
 
     for part_file in file_list:
         # Filter out object (*.o) files-- we only care about binaries.
