@@ -118,6 +118,22 @@ class TestGetLibraries(TestElfBase):
             [self.fake_elf.root_libraries['foo.so.1'],
              '/usr/lib/bar.so.2'])))
 
+    def test_get_libraries_with_soname_cache(self):
+        elf_file = self.fake_elf['fake_elf-2.23']
+
+        soname_cache = elf.SonameCache()
+        soname_cache['bar.so.2'] = '/lib/bar.so.2'
+
+        libs = elf_file.load_dependencies(
+            root_path=self.fake_elf.root_path,
+            core_base_path=self.fake_elf.core_base_path,
+            soname_cache=soname_cache)
+
+        # With no cache this would have returned '/usr/lib/bar.so.2'
+        self.assertThat(libs, Equals(set(
+            [self.fake_elf.root_libraries['foo.so.1'],
+             '/lib/bar.so.2'])))
+
     def test_primed_libraries_are_preferred(self):
         elf_file = self.fake_elf['fake_elf-2.23']
         libs = elf_file.load_dependencies(
@@ -402,3 +418,31 @@ class TestPatcherErrors(TestElfBase):
         self.assertRaises(errors.PatcherNewerPatchelfError,
                           elf_patcher.patch,
                           elf_file=elf_file)
+
+
+class TestSonameCache(unit.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.soname_cache = elf.SonameCache()
+
+    def test_add_and_retrieve_soname_path(self):
+        self.soname_cache['soname.so'] = '/fake/path/soname.so'
+        self.assertThat(self.soname_cache['soname.so'],
+                        Equals('/fake/path/soname.so'))
+
+    def test_add_and_verify_soname_path(self):
+        self.soname_cache['soname.so'] = '/fake/path/soname.so'
+        self.assertTrue('soname.so' in self.soname_cache)
+
+    def test_add_many_remove_empty_entries(self):
+        self.soname_cache['soname.so'] = '/fake/path/soname.so'
+        self.soname_cache['notfound.so'] = None
+
+        self.assertTrue('soname.so' in self.soname_cache)
+        self.assertTrue('notfound.so' in self.soname_cache)
+
+        self.soname_cache.reset()
+
+        self.assertTrue('soname.so' in self.soname_cache)
+        self.assertFalse('notfound.so' in self.soname_cache)

@@ -67,7 +67,7 @@ class SonameCache:
 
     def reset(self):
         """Reset the cache values that are empty."""
-        self._soname_paths = {k: v for (k, v) in self._soname_paths
+        self._soname_paths = {k: v for (k, v) in self._soname_paths.items()
                               if v is not None}
 
 
