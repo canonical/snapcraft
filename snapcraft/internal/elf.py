@@ -22,11 +22,11 @@ import shutil
 import subprocess
 import tempfile
 from functools import wraps
-from typing import FrozenSet, List, Set, Sequence, Tuple
+from typing import Dict, FrozenSet, List, Set, Sequence, Tuple, Union  # noqa
 
+import elftools.elf.elffile
 from pkg_resources import parse_version
 
-from snapcraft import file_utils
 from snapcraft.internal import (
     common,
     errors,
@@ -38,16 +38,27 @@ from snapcraft.internal import (
 logger = logging.getLogger(__name__)
 
 
-class Symbol:
-    """Represents a symbol within an ELF file."""
+# Old pyelftools uses byte strings for section names.  Some data is
+# also returned as bytes, which is handled below.
+if parse_version(elftools.__version__) >= parse_version('0.24'):
+    _DYNAMIC = '.dynamic'              # type: Union[str, bytes]
+    _GNU_VERSION_R = '.gnu.version_r'  # type: Union[str, bytes]
+    _INTERP = '.interp'                # type: Union[str, bytes]
+else:
+    _DYNAMIC = b'.dynamic'
+    _GNU_VERSION_R = b'.gnu.version_r'
+    _INTERP = b'.interp'
 
-    def __init__(self, *, name: str, version: str, section: str) -> None:
+
+class NeededLibrary:
+    """Represents an ELF library version."""
+
+    def __init__(self, *, name: str) -> None:
         self.name = name
-        self.version = version
-        self.section = section
+        self.versions = set()  # type: Set[str]
 
-    def is_undefined(self) -> bool:
-        return self.section == 'UND'
+    def add_version(self, version: str) -> None:
+        self.versions.add(version)
 
 
 class Library:
@@ -92,6 +103,16 @@ def _crawl_for_path(*, soname: str, root_path: str,
     return None
 
 
+# Old versions of pyelftools return bytes rather than strings for
+# certain APIs.  So we pass those values through this function to get
+# a consistent result.
+def _ensure_str(s):
+    if isinstance(s, bytes):
+        return s.decode('ascii')
+    assert isinstance(s, str)
+    return s
+
+
 class ElfFile:
     """ElfFile represents and elf file on a path and its attributes."""
 
@@ -107,77 +128,46 @@ class ElfFile:
         """
         self.path = path
         self.dependencies = set()  # type: Set[Library]
-        self.interp, self.symbols = self._extract_readelf(path)
+        self.interp, self.soname, self.needed = self._extract(path)
 
-    def _extract_readelf(self, path) -> Tuple[str, List[Symbol]]:
+    def _extract(self, path) -> Tuple[str, str, Dict[str, NeededLibrary]]:
         interp = str()
-        symbols = list()  # type: List[Symbol]
-        readelf_path = file_utils.get_tool_path('readelf')
-        output = subprocess.check_output([
-            readelf_path, '--wide', '--program-headers', '--dyn-syms', path])
-        readelf_lines = output.decode(errors='surrogateescape').split('\n')
-        # Regex inspired by the regexes in lintian to match entries similar to
-        # the following sample output
-        # Program Headers:
-        #   Type           Offset   VirtAddr           PhysAddr           FileSiz  MemSiz   Flg Align     # noqa
-        #   PHDR           0x41d000 0x000000000041d000 0x000000000041d000 0x000268 0x000268 R E 0x8       # noqa
-        #   LOAD           0x000000 0x0000000000000000 0x0000000000000000 0x069904 0x069904 R E 0x200000  # noqa
-        #   GNU_STACK      0x000000 0x0000000000000000 0x0000000000000000 0x000000 0x000000 RW  0x10      # noqa
-        #   INTERP         0x000270 0x0000000000000270 0x0000000000000270 0x00001c 0x00001c R   0x1       # noqa
-        #       [Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]
-        #   NOTE           0x00028c 0x000000000000028c 0x000000000000028c 0x000044 0x000044 R   0x4       # noqa
-        #   GNU_EH_FRAME   0x05cb48 0x000000000005cb48 0x000000000005cb48 0x00189c 0x00189c R   0x4       # noqa
-        #   LOAD           0x06a780 0x000000000026a780 0x000000000026a780 0x003a91 0x004c78 RW  0x200000  # noqa
-        #   TLS            0x06a780 0x000000000026a780 0x000000000026a780 0x000128 0x000128 R   0x20      # noqa
-        #   GNU_RELRO      0x06a780 0x000000000026a780 0x000000000026a780 0x003880 0x003880 R   0x1       # noqa
-        #   LOAD           0x41d000 0x000000000041d000 0x000000000041d000 0x000b18 0x000b18 RW  0x1000    # noqa
-        #   DYNAMIC        0x41d268 0x000000000041d268 0x000000000041d268 0x000220 0x000220 RW  0x8       # noqa
-        #
-        #  Section to Segment mapping:
-        #   Segment Sections...
-        #    00
-        #    01     .interp .note.ABI-tag .note.gnu.build-id .gnu.hash .dynsym .gnu.version .gnu.version_r .rela.dyn .init .plt .plt.got .text .fini .rodata .eh_frame_hdr .eh_frame .gcc_except_table  # noqa
-        #    02
-        #    03     .interp
-        #    04     .note.ABI-tag .note.gnu.build-id
-        #    05     .eh_frame_hdr
-        #    06     .tdata .init_array .fini_array .jcr .data.rel.ro .got .data .bss          # noqa
-        #    07     .tdata
-        #    08     .tdata .init_array .fini_array .jcr .data.rel.ro .got
-        #    09     .dynamic .dynstr
-        #    10     .dynamic
-        # Symbol table '.dynsym' contains 2281 entries:
-        #   Num:    Value          Size Type    Bind   Vis      Ndx Name
-        #     0: 0000000000000000     0 NOTYPE  LOCAL  DEFAULT  UND
-        #     1: 0000000000000000     0 FUNC    GLOBAL DEFAULT  UND endgrent@GLIBC_2.2.5 (2)  # noqa
-        interp_match = (r'^\s+\[Requesting program interpreter:\s'
-                        r'(?P<interp>[\S-]+)\]\Z')
-        interp_regex = re.compile(interp_match)
-        symbol_match = (r'^\s+\d+:\s+[0-9a-f]+\s+\d+\s+\S+\s+\S+\s+\S+\s+'
-                        r'(?P<section>\S+)\s+(?P<symbol>\S+).*\Z')
-        symbol_regex = re.compile(symbol_match)
-        in_symbols_section = False
-        for line in readelf_lines:
-            if line.startswith("Symbol table '.dynsym'"):
-                in_symbols_section = True
-            if in_symbols_section:
-                m = symbol_regex.search(line)
-                if m:
-                    section = m.group('section')
-                    symbol = m.group('symbol')
-                    try:
-                        name, version = symbol.split('@')
-                    except ValueError:
-                        name = symbol
-                        version = ''
-                    symbols.append(Symbol(name=name, version=version,
-                                          section=section))
-            else:
-                m = interp_regex.match(line)
-                if m:
-                    interp = m.group('interp')
+        soname = str()
+        libs = dict()
+        with open(path, 'rb') as fp:
+            elf = elftools.elf.elffile.ELFFile(fp)
 
-        return interp, symbols
+            # If we are processing a detached debug info file, these
+            # sections will be present but empty.
+            interp_section = elf.get_section_by_name(_INTERP)
+            if (interp_section is not None and
+                    interp_section.header.sh_type != 'SHT_NOBITS'):
+                interp = interp_section.data().rstrip(b'\x00').decode('ascii')
+
+            dynamic_section = elf.get_section_by_name(_DYNAMIC)
+            if (dynamic_section is not None and
+                    dynamic_section.header.sh_type != 'SHT_NOBITS'):
+                for tag in dynamic_section.iter_tags('DT_NEEDED'):
+                    needed = _ensure_str(tag.needed)
+                    libs[needed] = NeededLibrary(name=needed)
+                for tag in dynamic_section.iter_tags('DT_SONAME'):
+                    soname = _ensure_str(tag.soname)
+
+            verneed_section = elf.get_section_by_name(_GNU_VERSION_R)
+            if (verneed_section is not None and
+                    verneed_section.header.sh_type != 'SHT_NOBITS'):
+                for library, versions in verneed_section.iter_versions():
+                    library_name = _ensure_str(library.name)
+                    # If the ELF file only references weak symbols
+                    # from a library, it may be absent from DT_NEEDED
+                    # but still have an entry in .gnu.version_r for
+                    # symbol versions.
+                    if library_name not in libs:
+                        continue
+                    lib = libs[library_name]
+                    for version in versions:
+                        lib.add_version(_ensure_str(version.name))
+        return interp, soname, libs
 
     def is_linker_compatible(self, *, linker: str) -> bool:
         """Determines if linker will work given the required glibc version.
@@ -205,14 +195,13 @@ class ElfFile:
             return self._required_glibc  # type: ignore
 
         version_required = ''
-        for symbol in self.symbols:
-            if not symbol.is_undefined():
-                continue
-            if not symbol.version.startswith('GLIBC_'):
-                continue
-            version = symbol.version[6:]
-            if parse_version(version) > parse_version(version_required):
-                version_required = version
+        for lib in self.needed.values():
+            for version in lib.versions:
+                if not version.startswith('GLIBC_'):
+                    continue
+                version = version[6:]
+                if parse_version(version) > parse_version(version_required):
+                    version_required = version
 
         self._required_glibc = version_required
         return version_required
@@ -539,7 +528,7 @@ def get_elf_files(root: str,
         if ElfFile.is_elf(path):
             elf_file = ElfFile(path=path)
             # if we have dyn symbols we are dynamic
-            if elf_file.symbols:
+            if elf_file.needed:
                 elf_files.add(ElfFile(path=path))
 
     return frozenset(elf_files)

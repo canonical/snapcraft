@@ -78,12 +78,12 @@ class Project(Containerbuild):
     def _configure_container(self):
         super()._configure_container()
         if self._container_name.startswith('local:'):
-            # Map host user to root inside container
+            # Map host user to root (0) inside container
             subprocess.check_call([
                 'lxc', 'config', 'set', self._container_name,
                 'raw.idmap',
                 'both {} {}'.format(os.getenv('SUDO_UID', os.getuid()),
-                                    os.getuid())])
+                                    0)])
         elif self._container_name.startswith('multipass:'):
             # Map VM user ubuntu (1000) to root (0) inside container
             subprocess.check_call([

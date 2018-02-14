@@ -584,7 +584,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   '"created_at": "test-created-at"}']),
             call(['lxc', 'config', 'set', container_name,
                   'raw.idmap', 'both {} {}'.format(
-                    self.expected_idmap, self.getuid)]),
+                    self.expected_idmap, '0')]),
             call(['lxc', 'config', 'device', 'add', container_name,
                   'fuse', 'unix-char', 'path=/dev/fuse']),
             call(['lxc', 'start', container_name]),
@@ -689,7 +689,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   '"created_at": "test-created-at"}']),
             call(['lxc', 'config', 'set', container_name,
                   'raw.idmap', 'both {} {}'.format(
-                    self.expected_idmap, self.getuid)]),
+                    self.expected_idmap, 0)]),
             call(['lxc', 'config', 'device', 'remove', container_name,
                   project_folder]),
             call(['lxc', 'config', 'device', 'add', container_name,
