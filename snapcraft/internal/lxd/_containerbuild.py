@@ -83,6 +83,18 @@ class Containerbuild:
 
     def _setup_multipass_remote(self):
         try:
+            remotes = subprocess.check_output([
+                'lxc', 'remote', 'list']).decode()
+            # Trailing space to disambiguate names starting with multipass
+            if 'multipass ' in remotes:
+                logger.debug('Removing existing remote')
+                # Remove existing remote in case the IP has changed
+                subprocess.check_call(['lxc', 'remote', 'remove', 'multipass'])
+        except FileNotFoundError:
+            raise ContainerConnectionError(
+                'You must have LXD installed in order to use Multipass.')
+
+        try:
             if self._get_vm_status():
                 subprocess.check_call([
                     'multipass', 'start', 'snapcraft'])
@@ -126,15 +138,7 @@ class Containerbuild:
                 'sudo', '/snap/bin/lxc', 'network',
                 'attach-profile', 'lxdbr0', 'default', 'eth0'])
 
-        remotes = subprocess.check_output([
-            'lxc', 'remote', 'list']).decode()
-        # Trailing space to disambiguate names starting with multipass
-        if 'multipass ' in remotes:
-            logger.debug('Removing existing remote')
-            # Remove existing remote in case the IP has changed
-            subprocess.check_call(['lxc', 'remote', 'remove', 'multipass'])
         multipass_ip = self._get_vm_status()['ipv4'][0]
-
         logger.debug('Waiting for LXD bridge to come up')
         # It takes a while for the network bridge to come up
         retry_count = 10

@@ -770,7 +770,23 @@ class MultipassTestCase(LXDBaseTestCase):
                            project_options=self.project_options,
                            remote='multipass')
 
-    def test_not_installed(self):
+    def test_lxd_client_not_installed(self):
+        def call_effect(*args, **kwargs):
+            if args[0][:1] == ['lxc']:
+                raise FileNotFoundError(
+                    errno.ENOENT, os.strerror(errno.ENOENT), args[0])
+            return d(*args, **kwargs)
+
+        d = self.fake_lxd.check_output_mock.side_effect
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.assertIn(
+            'You must have LXD installed in order to use Multipass.',
+            str(self.assertRaises(
+                ContainerConnectionError,
+                self.make_containerbuild)))
+
+    def test_multipass_not_installed(self):
         def call_effect(*args, **kwargs):
             if args[0][:1] == ['multipass']:
                 raise FileNotFoundError(
@@ -807,7 +823,7 @@ class MultipassTestCase(LXDBaseTestCase):
                 MultipassSetupError,
                 self.make_containerbuild)))
 
-    def test_lxd_not_installed(self):
+    def test_lxd_not_installed_in_vm(self):
         def call_effect(*args, **kwargs):
             if args[0][-2:] == ['snap', 'list']:
                 return ''.encode()
