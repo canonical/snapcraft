@@ -515,8 +515,10 @@ class PluginHandler:
 
         for elf_file in elf_files:
             all_dependencies.update(
-                elf_file.load_dependencies(root_path=self.primedir,
-                                           core_base_path=core_path))
+                elf_file.load_dependencies(
+                    root_path=self.primedir,
+                    core_base_path=core_path,
+                    arch_triplet=self._project_options.arch_triplet))
 
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
@@ -558,11 +560,13 @@ class PluginHandler:
             if 'libc6' not in self._part_properties.get('stage-packages', []):
                 raise errors.StagePackageMissingError(package='libc6')
 
-            handle_glibc_mismatch(elf_files=elf_files,
-                                  root_path=self.primedir,
-                                  snap_base_path=self._snap_base_path,
-                                  core_base_path=core_path,
-                                  preferred_patchelf_path=staged_patchelf_path)
+            handle_glibc_mismatch(
+                elf_files=elf_files,
+                root_path=self.primedir,
+                snap_base_path=self._snap_base_path,
+                core_base_path=core_path,
+                arch_triplet=self._project_options.arch_triplet,
+                preferred_patchelf_path=staged_patchelf_path)
         elif self._confinement == 'classic':
             dynamic_linker = self._project_options.get_core_dynamic_linker()
             elf_patcher = elf.Patcher(

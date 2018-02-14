@@ -114,7 +114,8 @@ class TestGetLibraries(TestElfBase):
         elf_file = self.fake_elf['fake_elf-2.23']
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
-            core_base_path=self.fake_elf.core_base_path)
+            core_base_path=self.fake_elf.core_base_path,
+            arch_triplet='arch')
 
         self.assertThat(libs, Equals(set(
             [self.fake_elf.root_libraries['foo.so.1'],
@@ -124,7 +125,8 @@ class TestGetLibraries(TestElfBase):
         elf_file = self.fake_elf['fake_elf-2.23']
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
-            core_base_path=self.fake_elf.core_base_path)
+            core_base_path=self.fake_elf.core_base_path,
+            arch_triplet='arch')
 
         self.assertThat(libs, Equals(frozenset(
             [self.fake_elf.root_libraries['foo.so.1'],
@@ -139,7 +141,8 @@ class TestGetLibraries(TestElfBase):
         elf_file = self.fake_elf['fake_elf-2.23']
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
-            core_base_path=self.fake_elf.core_base_path)
+            core_base_path=self.fake_elf.core_base_path,
+            arch_triplet='arch')
 
         self.assertThat(libs, Equals(frozenset(
             ['/lib/foo.so.1', '/usr/lib/bar.so.2'])))
@@ -148,7 +151,8 @@ class TestGetLibraries(TestElfBase):
         elf_file = self.fake_elf['fake_elf-with-core-libs']
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
-            core_base_path=self.fake_elf.core_base_path)
+            core_base_path=self.fake_elf.core_base_path,
+            arch_triplet='arch')
 
         self.assertThat(libs, Equals(set(
             [self.fake_elf.root_libraries['foo.so.1'],
@@ -159,14 +163,16 @@ class TestGetLibraries(TestElfBase):
 
         elf_file = self.fake_elf['fake_elf-2.23']
         libs = elf_file.load_dependencies(root_path='/',
-                                          core_base_path='/snap/core/current')
+                                          core_base_path='/snap/core/current',
+                                          arch_triplet='arch')
         self.assertThat(libs, Equals(frozenset(['/usr/lib/bar.so.2'])))
 
     def test_get_libraries_ldd_failure_logs_warning(self):
         elf_file = self.fake_elf['fake_elf-bad-ldd']
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
-            core_base_path=self.fake_elf.core_base_path)
+            core_base_path=self.fake_elf.core_base_path,
+            arch_triplet='arch')
 
         self.assertThat(libs, Equals(set()))
         self.assertThat(
@@ -206,7 +212,8 @@ class TestSystemLibsOnNewRelease(TestElfBase):
     def test_fail_gracefully_if_system_libs_not_found(self):
         elf_file = self.fake_elf['fake_elf-2.23']
         libs = elf_file.load_dependencies(root_path='/fake',
-                                          core_base_path='/fake-core')
+                                          core_base_path='/fake-core',
+                                          arch_triplet='arch')
         self.assertThat(libs, Equals(frozenset()))
 
 

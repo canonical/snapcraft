@@ -92,19 +92,24 @@ class Library:
 _soname_paths = dict()  # type: Dict[str, str]
 
 
-def reset_soname_paths():
+def reset_soname_paths(only_none=False):
     global _soname_paths
-    _soname_paths = dict()  # type: Dict[str, str]
+    if only_none:
+        for soname in _soname_paths:
+            if _soname_paths[soname] is None:
+                del _soname_paths[soname]
+    else:
+        _soname_paths = dict()  # type: Dict[str, str]
 
 
 def _crawl_for_path(*, soname: str, root_path: str,
                     core_base_path: str) -> str:
     global _soname_paths
-
     # Speed things up and return what was already found once.
     if soname in _soname_paths:
         return _soname_paths[soname]
 
+    logger.debug('Crawling to find soname {!r}'.format(soname))
     for path in (root_path, core_base_path):
         if not os.path.exists(path):
             continue
@@ -115,6 +120,8 @@ def _crawl_for_path(*, soname: str, root_path: str,
                     if os.path.exists(file_path) and ElfFile.is_elf(file_path):
                         _soname_paths[soname] = file_path
                         return file_path
+    # If not found we cache it too
+    _soname_paths[soname] = None
     return None
 
 
@@ -243,27 +250,42 @@ class ElfFile:
         return version_required
 
     def load_dependencies(self, root_path: str,
-                          core_base_path: str) -> Set[str]:
+                          core_base_path: str,
+                          arch_triplet: str) -> Set[str]:
         """Load the set of libraries that are needed to satisfy elf's runtime.
 
         This may include libraries contained within the project.
         The object's .dependencies attribute is set after loading.
 
-        :param str root_path: the base path to search for missing dependencies.
+        :param str root_path: the root path to search for missing dependencies.
+        :param str core_base_path: the base path to core to search for missing
+                                   dependencies.
+        :param str arch_triplet: the architecture triplet to search for
+                                 dependencies.
         :returns: a set of string with paths to the library dependencies of
                   elf.
         """
         logger.debug('Getting dependencies for {!r}'.format(self.path))
         ldd_out = []  # type: List[str]
+
+        root_library_paths = common.get_library_paths(root_path, arch_triplet)
+        core_base_library_paths = common.get_library_paths(
+            root_path, arch_triplet)
+        ld_library_path = ':'.join(
+            root_library_paths + core_base_library_paths)
+        env = os.environ.copy()
+        env['LD_LIBRARY_PATH'] = ld_library_path
         try:
             # ldd output sample:
             # /lib64/ld-linux-x86-64.so.2 (0x00007fb3c5298000)
             # libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb3bef03000)
-            ldd_out = common.run_output(['ldd', self.path]).split('\n')
-        except subprocess.CalledProcessError:
+            output = subprocess.check_output(['ldd', self.path], env=env)
+            ldd_out = output.decode(
+                errors='surrogateescape').strip().split('\n')
+        except subprocess.CalledProcessError as e:
             logger.warning(
                 'Unable to determine library dependencies for '
-                '{!r}'.format(self.path))
+                '{!r}: {}'.format(self.path, e.output))
             return set()
         ldd_out_split = [l.split() for l in ldd_out]
         libs = set()
@@ -547,6 +569,10 @@ def get_elf_files(root: str, file_list: Sequence[str]) -> FrozenSet[ElfFile]:
     :returns: a frozentset of ElfFile objects.
     """
     elf_files = set()  # type: Set[ElfFile]
+
+    # We need to reset the empty soname cache entries in case they are provided
+    # by a new set of root files
+    reset_soname_paths(only_none=True)
 
     for part_file in file_list:
         # Filter out object (*.o) files-- we only care about binaries.

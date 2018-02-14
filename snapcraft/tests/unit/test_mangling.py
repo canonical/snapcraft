@@ -162,7 +162,8 @@ class HandleGlibcTestCase(unit.TestCase):
             elf_files=elf_files,
             root_path=self.path,
             core_base_path='/snap/core/current',
-            snap_base_path='/snap/snap-name/current')
+            snap_base_path='/snap/snap-name/current',
+            arch_triplet='arch')
 
         self.get_packages_mock.assert_called_once_with('libc6')
         # Only fake_elf1 requires a newer libc6
@@ -179,7 +180,8 @@ class HandleGlibcTestCase(unit.TestCase):
             elf_files=elf_files,
             root_path=self.path,
             core_base_path='/snap/core/current',
-            snap_base_path='/snap/snap-name/current')
+            snap_base_path='/snap/snap-name/current',
+            arch_triplet='arch')
 
         self.get_packages_mock.assert_not_called()
         self.assertThat(os.path.join(self.path, 'snap', 'libc6', 'ld-2.26.so'),
@@ -199,4 +201,5 @@ class HandleGlibcTestCase(unit.TestCase):
                           elf_files=elf_files,
                           root_path=self.path,
                           core_base_path='/snap/core/current',
-                          snap_base_path='/snap/snap-name/current')
+                          snap_base_path='/snap/snap-name/current',
+                          arch_triplet='arch')
