@@ -1,3 +1,32 @@
+snapcraft (2.39.1) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * tests: setup the correct environment for adt (#1907)
+  * snap: patch ctypes for the snap and remove libarchive (#1915)
+  * tests: update tests to work in adt (#1908)
+  * elf: cache crawled files (#1925)
+  * New upstream release (LP: #1745488)
+
+  [ Leo Arias ]
+  * elf: use surrogate escape when decoding readelf output (#1903)
+
+  [ Christian Dywan ]
+  * os-release: stub for when /etc/os-release doesn't exist (#1880)
+
+  [ James Henstridge ]
+  * elf: pyelftools to parse ELF files rather than readelf (#1913)
+
+  [ Christian Dywan ]
+  * lxd: raw.idmap expects host and container id respectively (#1904)
+
+  [ Kyle Fazzari ]
+  * docker: add Dockerfiles for all risk levels (#1914)
+  * schema: update version regex (#1924)
+  * mypy: update to 0.560 (#1923)
+  * remote_parts: handle connection errors (#1906)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 15 Feb 2018 12:14:00 +0000
+
 snapcraft (2.39) xenial; urgency=medium
 
   [ Sergio Schvezov ]
@@ -18,7 +47,6 @@ snapcraft (2.39) xenial; urgency=medium
   * docker: user proper tags in Readme.md (#1897)
   * elf: do not strip rpaths that contain $ORIGIN (#1896)
   * elf: check if file exists before checking if ELF (#1901)
-  * New upstream release (LP: #1745488)
 
   [ Kyle Fazzari ]
   * cli: add expiration option to export-login (#1831)
