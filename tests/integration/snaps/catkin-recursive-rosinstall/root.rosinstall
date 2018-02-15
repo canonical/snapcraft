@@ -1,0 +1,3 @@
+- git:
+    local-name: repo1
+    uri: ../repos/repo1

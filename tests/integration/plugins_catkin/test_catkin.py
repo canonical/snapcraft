@@ -18,6 +18,11 @@ import os
 import subprocess
 import tempfile
 
+from testtools.matchers import (
+    FileContains,
+    FileExists,
+)
+
 from tests import (
     fixture_setup,
     integration,
@@ -61,3 +66,30 @@ class CatkinTestCase(integration.TestCase):
 
         # This snap should be staged with no errors
         self.run_snapcraft('stage')
+
+    @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
+    def test_catkin_recursively_parses_rosinstall_files(self):
+        self.copy_project_to_cwd('catkin-recursive-rosinstall')
+
+        # Unpack the git repos for the test
+        subprocess.check_call(['tar', 'xf', 'repos.tar'])
+
+        # Pull should have no errors
+        self.run_snapcraft('pull')
+
+        repo1_path = os.path.join(
+            self.parts_dir, 'catkin-part', 'src', 'src', 'repo1')
+        repo2_path = os.path.join(
+            self.parts_dir, 'catkin-part', 'src', 'src', 'repo2')
+        repo3_path = os.path.join(
+            self.parts_dir, 'catkin-part', 'src', 'src', 'repo3')
+
+        self.assertThat(
+            os.path.join(repo1_path, 'repo1.rosinstall'), FileExists())
+        self.assertThat(os.path.join(repo1_path, 'file1'), FileContains('1\n'))
+
+        self.assertThat(
+            os.path.join(repo2_path, 'repo2.rosinstall'), FileExists())
+        self.assertThat(os.path.join(repo2_path, 'file2'), FileContains('2\n'))
+
+        self.assertThat(os.path.join(repo3_path, 'file3'), FileContains('3\n'))

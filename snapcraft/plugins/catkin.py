@@ -38,6 +38,11 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (list of strings)
       List of rosinstall files to merge while pulling. Paths are relative to
       the source.
+    - recursive-rosinstall:
+      (boolean)
+      Whether or not to recursively merge/update rosinstall files from fetched
+      sources. Will continue until all rosinstall files have been merged.
+      Defaults to false.
     - catkin-cmake-args:
       (list of strings)
       Configure flags to pass onto the cmake invocation from catkin.
@@ -177,6 +182,11 @@ class CatkinPlugin(snapcraft.BasePlugin):
             'default': [],
         }
 
+        schema['properties']['recursive-rosinstall'] = {
+            'type': 'boolean',
+            'default': False,
+        }
+
         schema['properties']['catkin-cmake-args'] = {
             'type': 'array',
             'minitems': 1,
@@ -198,7 +208,8 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
         return ['rosdistro', 'catkin-packages', 'source-space',
-                'include-roscore', 'underlay', 'rosinstall-files']
+                'include-roscore', 'underlay', 'rosinstall-files',
+                'recursive-rosinstall']
 
     @classmethod
     def get_build_properties(cls):
@@ -362,7 +373,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # There may be nothing contained within the source but a rosinstall
         # file. We need to use it to flesh out the workspace before continuing
         # with the pull.
-        if self.options.rosinstall_files:
+        if self.options.rosinstall_files or self.options.recursive_rosinstall:
             wstool = _ros.wstool.Wstool(
                 self._ros_package_path, self._wstool_path,
                 self.PLUGIN_STAGE_SOURCES, self.project)
@@ -372,8 +383,21 @@ class CatkinPlugin(snapcraft.BasePlugin):
             if self.options.source_subdir:
                 source_path = os.path.join(self.sourcedir,
                                            self.options.source_subdir)
-            _handle_rosinstall_files(
-                wstool,  source_path, self.options.rosinstall_files)
+
+            # Create a set of paths to rosinstall files
+            rosinstall_files = set()
+            for rosinstall_file in self.options.rosinstall_files:
+                rosinstall_files.add(
+                    os.path.join(source_path, rosinstall_file))
+
+            # Recursively handling rosinstall files is a superset of handling
+            # individual rosinstall files. If both are specified, the recursive
+            # option will cover it.
+            if self.options.recursive_rosinstall:
+                _recursively_handle_rosinstall_files(wstool, source_path)
+            else:
+                _handle_rosinstall_files(
+                    wstool, rosinstall_files)
 
         # Make sure the package path exists before continuing. We only care
         # about doing this if there are actually packages to build, which is
@@ -836,15 +860,40 @@ def _dependency_is_in_underlay(catkin, dependency):
     return False
 
 
-def _handle_rosinstall_files(wstool, source_path, rosinstall_files):
+def _handle_rosinstall_files(wstool, rosinstall_files):
     """Merge given rosinstall files into our workspace."""
 
     for rosinstall_file in rosinstall_files:
         logger.info('Merging {}'.format(rosinstall_file))
-        wstool.merge(os.path.join(source_path, rosinstall_file))
+        wstool.merge(rosinstall_file)
 
     logger.info('Updating workspace...')
     wstool.update()
+
+
+def _recursively_handle_rosinstall_files(wstool, source_path, *,
+                                         cache=None):
+    "Recursively find and merge rosinstall files and update workspace"
+
+    rosinstall_files = set()  # type: Set[str]
+    if not cache:
+        cache = set()  # type: Set[str]
+
+    # Walk the entire source directory looking for rosinstall files. Keep track
+    # of any we haven't seen previously.
+    for root, directories, files in os.walk(source_path):
+        for file_name in files:
+            path = os.path.join(root, file_name)
+            if path.endswith('.rosinstall') and path not in cache:
+                rosinstall_files.add(path)
+
+    # If we came across previously-unseen rosinstall files, add them to the
+    # cache. Then handle them (merge/update). Finally, walk again. Do this
+    # until no new rosinstall files are discovered.
+    if rosinstall_files:
+        cache.update(rosinstall_files)
+        _handle_rosinstall_files(wstool, rosinstall_files)
+        _recursively_handle_rosinstall_files(wstool, source_path, cache=cache)
 
 
 class CatkinPackageNotFoundError(errors.SnapcraftError):
