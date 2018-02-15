@@ -21,10 +21,10 @@ from unittest.mock import patch
 import snapcraft
 from snapcraft.internal.project_loader import grammar
 
-from . import GrammarTestCase
+from . import GrammarBaseTestCase
 
 
-class GrammarOnDuplicatesTestCase(GrammarTestCase):
+class GrammarOnDuplicatesTestCase(GrammarBaseTestCase):
 
     scenarios = [
         ('same order', {
@@ -50,7 +50,7 @@ class GrammarOnDuplicatesTestCase(GrammarTestCase):
                 self.grammar, snapcraft.ProjectOptions(), self.checker)
 
 
-class BasicGrammarTestCase(GrammarTestCase):
+class BasicGrammarTestCase(GrammarBaseTestCase):
 
     scenarios = [
         ('unconditional', {
@@ -207,7 +207,7 @@ class BasicGrammarTestCase(GrammarTestCase):
             Equals(self.expected_packages))
 
 
-class InvalidGrammarTestCase(GrammarTestCase):
+class InvalidGrammarTestCase(GrammarBaseTestCase):
 
     scenarios = [
         ('unmatched else', {
