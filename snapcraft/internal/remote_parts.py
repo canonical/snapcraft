@@ -103,8 +103,12 @@ class _Update(_Base):
 
     def execute(self):
         headers = self._load_headers()
-        self._request = requests.get(self._parts_uri, stream=True,
-                                     headers=headers)
+
+        try:
+            self._request = requests.get(self._parts_uri, stream=True,
+                                         headers=headers)
+        except requests.exceptions.RequestException as e:
+            raise errors.RemotePartsUpdateConnectionError(e) from e
 
         if self._request.status_code == 304:
             logger.info('The parts cache is already up to date.')
