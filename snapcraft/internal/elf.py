@@ -50,6 +50,27 @@ else:
     _INTERP = b'.interp'
 
 
+class SonameCache:
+    """A cache for sonames."""
+    def __getitem__(self, key):
+        return self._soname_paths[key]
+
+    def __setitem__(self, key, item):
+        self._soname_paths[key] = item
+
+    def __contains__(self, key):
+        return key in self._soname_paths
+
+    def __init__(self):
+        """Initialize a cache for sonames"""
+        self._soname_paths = dict()  # type: Dict[str, str]
+
+    def reset(self):
+        """Reset the cache values that are empty."""
+        self._soname_paths = {k: v for (k, v) in self._soname_paths.items()
+                              if v is not None}
+
+
 class NeededLibrary:
     """Represents an ELF library version."""
 
@@ -65,14 +86,15 @@ class Library:
     """Represents the SONAME and path to the library."""
 
     def __init__(self, *, soname: str, path: str, root_path: str,
-                 core_base_path: str) -> None:
+                 core_base_path: str, soname_cache: SonameCache) -> None:
         self.soname = soname
         if path.startswith(root_path) or path.startswith(core_base_path):
             self.path = path
         else:
             self.path = _crawl_for_path(soname=soname,
                                         root_path=root_path,
-                                        core_base_path=core_base_path)
+                                        core_base_path=core_base_path,
+                                        soname_cache=soname_cache)
         # Required for libraries on the host and the fetching mechanism
         if not self.path:
             self.path = path
@@ -90,7 +112,12 @@ class Library:
 
 
 def _crawl_for_path(*, soname: str, root_path: str,
-                    core_base_path: str) -> str:
+                    core_base_path: str, soname_cache: SonameCache) -> str:
+    # Speed things up and return what was already found once.
+    if soname in soname_cache:
+        return soname_cache[soname]
+
+    logger.debug('Crawling to find soname {!r}'.format(soname))
     for path in (root_path, core_base_path):
         if not os.path.exists(path):
             continue
@@ -99,7 +126,11 @@ def _crawl_for_path(*, soname: str, root_path: str,
                 if file_name == soname:
                     file_path = os.path.join(root, file_name)
                     if os.path.exists(file_path) and ElfFile.is_elf(file_path):
+                        soname_cache[soname] = file_path
                         return file_path
+
+    # If not found we cache it too
+    soname_cache[soname] = None
     return None
 
 
@@ -207,16 +238,24 @@ class ElfFile:
         return version_required
 
     def load_dependencies(self, root_path: str,
-                          core_base_path: str) -> Set[str]:
+                          core_base_path: str,
+                          soname_cache: SonameCache=None) -> Set[str]:
         """Load the set of libraries that are needed to satisfy elf's runtime.
 
         This may include libraries contained within the project.
         The object's .dependencies attribute is set after loading.
 
-        :param str root_path: the base path to search for missing dependencies.
+        :param str root_path: the root path to search for missing dependencies.
+        :param str core_base_path: the core base path to search for missing
+                                   dependencies.
+        :param SonameCache soname_cache: a cache of previously search
+                                         dependencies.
         :returns: a set of string with paths to the library dependencies of
                   elf.
         """
+        if soname_cache is None:
+            soname_cache = SonameCache()
+
         logger.debug('Getting dependencies for {!r}'.format(self.path))
         ldd_out = []  # type: List[str]
         try:
@@ -236,7 +275,8 @@ class ElfFile:
                 libs.add(Library(soname=ldd_line[0],
                                  path=ldd_line[2],
                                  root_path=root_path,
-                                 core_base_path=core_base_path))
+                                 core_base_path=core_base_path,
+                                 soname_cache=soname_cache))
 
         self.dependencies = libs
 

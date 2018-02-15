@@ -27,7 +27,7 @@ import testscenarios
 import testtools
 
 import snapcraft
-from snapcraft.internal import common
+from snapcraft.internal import common, elf
 from snapcraft.tests import fake_servers, fixture_setup
 from snapcraft.internal.project_loader import grammar_processing
 
@@ -209,7 +209,8 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             grammar_processor=grammar_processor,
             stage_packages_repo=stage_packages_repo,
             snap_base_path='/snap/fake-name/current',
-            confinement=confinement)
+            confinement=confinement,
+            soname_cache=elf.SonameCache())
 
 
 class TestWithFakeRemoteParts(TestCase):
