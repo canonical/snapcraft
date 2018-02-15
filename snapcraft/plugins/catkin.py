@@ -363,7 +363,7 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # file. We need to use it to flesh out the workspace before continuing
         # with the pull.
         if self.options.rosinstall_files:
-            wstool = _Wstool(
+            wstool = _ros.wstool.Wstool(
                 self._ros_package_path, self._wstool_path,
                 self.PLUGIN_STAGE_SOURCES, self.project)
             wstool.setup()
@@ -1004,59 +1004,3 @@ def _get_highest_version_path(path):
         raise RuntimeError('nothing found in {!r}'.format(path))
 
     return paths[-1]
-
-
-class _Wstool:
-    def __init__(self, ros_package_path, wstool_path, ubuntu_sources, project):
-        self._ros_package_path = ros_package_path
-        self._ubuntu_sources = ubuntu_sources
-        self._wstool_path = wstool_path
-        self._wstool_install_path = os.path.join(wstool_path, 'install')
-        self._project = project
-
-    def setup(self):
-        os.makedirs(self._wstool_install_path, exist_ok=True)
-
-        # wstool isn't a dependency of the project, so we'll unpack it
-        # somewhere else, and use it from there.
-        logger.info('Preparing to fetch wstool...')
-        ubuntu = repo.Ubuntu(self._wstool_path, sources=self._ubuntu_sources,
-                             project_options=self._project)
-        logger.info('Fetching wstool...')
-        ubuntu.get(['python-wstool'])
-
-        logger.info('Installing wstool...')
-        ubuntu.unpack(self._wstool_install_path)
-
-        logger.info('Initializing workspace (if necessary)...')
-        try:
-            self._run(['init', self._ros_package_path, '-j{}'.format(
-                self._project.parallel_build_count)])
-        except subprocess.CalledProcessError as e:
-            output = e.output.decode('utf8').strip()
-            if 'already is a workspace' not in output:
-                raise RuntimeError(
-                    'Error initializing workspace:\n{}'.format(output))
-
-    def merge(self, rosinstall_file):
-        return self._run(
-            ['merge', rosinstall_file, '--confirm-all', '-t{}'.format(
-                self._ros_package_path)]).strip()
-
-    def update(self):
-        return self._run(
-            ['update', '-j{}'.format(self._project.parallel_build_count),
-             '-t{}'.format(self._ros_package_path)]).strip()
-
-    def _run(self, arguments):
-        env = os.environ.copy()
-
-        env['PATH'] += ':' + os.path.join(self._wstool_install_path, 'usr',
-                                          'bin')
-        # The execution path of python doesn't seem to cause these packages to
-        # be picked up, so put them on the PYTHONPATH manually.
-        env['PYTHONPATH'] = os.path.join(self._wstool_install_path, 'usr',
-                                         'lib', 'python2.7', 'dist-packages')
-
-        return subprocess.check_output(['wstool'] + arguments,
-                                       env=env).decode('utf8').strip()
