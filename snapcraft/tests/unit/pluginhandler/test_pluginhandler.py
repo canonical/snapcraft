@@ -41,8 +41,8 @@ from snapcraft.internal import (
     states,
 )
 from snapcraft.internal.sources.errors import (
-    UnhandledSourceError,
-    SourceIsNotADirectoryError,
+    SnapcraftSourceUnhandledError,
+    SnapcraftSourceNotADirectoryError,
 )
 from snapcraft.tests import fixture_setup
 from snapcraft.tests import unit
@@ -102,7 +102,7 @@ class PluginTestCase(unit.TestCase):
     @patch('os.path.isdir', return_value=False)
     def test_local_non_dir_source_path_must_raise_exception(self, mock_isdir):
         raised = self.assertRaises(
-            SourceIsNotADirectoryError,
+            SnapcraftSourceNotADirectoryError,
             self.load_part,
             'test-part', part_properties={'source': 'file'})
 
@@ -2351,7 +2351,7 @@ class SourcesTestCase(unit.TestCase):
         properties = dict(source='unrecognized://test_source')
 
         raised = self.assertRaises(
-            UnhandledSourceError,
+            SnapcraftSourceUnhandledError,
             self.load_part, 'test-part', part_properties=properties)
 
         self.assertThat(raised.__str__(),

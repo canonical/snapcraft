@@ -21,7 +21,7 @@ class VCSError(errors.SnapcraftError):
     fmt = '{message}'
 
 
-class UnhandledSourceError(errors.SnapcraftError):
+class SnapcraftSourceUnhandledError(errors.SnapcraftError):
 
     fmt = ('no handler to manage source ({source})')
 
@@ -29,7 +29,7 @@ class UnhandledSourceError(errors.SnapcraftError):
         super().__init__(source=source)
 
 
-class SourceIsNotADirectoryError(errors.SnapcraftError):
+class SnapcraftSourceNotADirectoryError(errors.SnapcraftError):
 
     fmt = ('local source ({source}) is not a directory')
 

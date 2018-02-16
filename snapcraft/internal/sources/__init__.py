@@ -187,8 +187,8 @@ def _get_source_type_from_uri(source, ignore_errors=False):  # noqa: C901
     elif source.endswith('7z'):
         source_type = '7z'
     elif common.isurl(source) and not ignore_errors:
-        raise errors.UnhandledSourceError(source)
+        raise errors.SnapcraftSourceUnhandledError(source)
     elif not os.path.isdir(source) and not ignore_errors:
-        raise errors.SourceIsNotADirectoryError(source)
+        raise errors.SnapcraftSourceNotADirectoryError(source)
 
     return source_type
