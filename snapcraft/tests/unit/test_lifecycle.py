@@ -1442,18 +1442,47 @@ class CoreSetupTestCase(unit.TestCase):
             core_snap)
 
         self._create_classic_confined_snapcraft_yaml()
-        lifecycle.execute('pull', self.project_options)
+
+        original_exists = os.path.exists
+
+        def _fake_exists(path):
+            if path == '/snap/snapcraft/current/usr/bin/unsquashfs':
+                return True
+            else:
+                return original_exists(path)
+
+        actual_unsquashfs_path = None
+        original_check_output = subprocess.check_output
+
+        # Pull requires unsquashfs to work, but we're faking it out to use one
+        # that doesn't exist. So we record what path it WOULD use, and then
+        # pass it through to the real one so the rest of the function works.
+        def _fake_check_output(*args, **kwargs):
+            nonlocal actual_unsquashfs_path
+            if 'unsquashfs' in args[0][0]:
+                actual_unsquashfs_path = args[0][0]
+                args[0][0] = 'unsquashfs'
+
+            original_check_output(*args, **kwargs)
+
+        with mock.patch('subprocess.check_output',
+                        side_effect=_fake_check_output):
+            with mock.patch('os.path.exists', side_effect=_fake_exists):
+                lifecycle.execute('pull', self.project_options)
 
         regex = (
             '.*'
             'mkdir -p {}\n'
-            'unsquashfs -d {} .*{}\n').format(
+            '/snap/snapcraft/current/usr/bin/unsquashfs -d {} .*{}\n').format(
                 os.path.dirname(self.core_path),
                 self.core_path,
                 core_snap_hash)
         self.assertThat(
             self.witness_path,
             FileContains(matcher=MatchesRegex(regex, flags=re.DOTALL)))
+
+        self.assertThat(actual_unsquashfs_path, Equals(
+            '/snap/snapcraft/current/usr/bin/unsquashfs'))
 
         download_mock.assert_called_once_with(
             'core', 'stable', os.path.join(self.tempdir, 'core.snap'),
