@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 from simplejson.scanner import JSONDecodeError
 from typing import List  # noqa
 
@@ -91,12 +92,12 @@ class SHAMismatchError(StoreError):
 
 class StoreAuthenticationError(StoreError):
 
-    fmt = 'Authentication error: {message}.'
+    fmt = 'Authentication error: {message}'
 
     def __init__(self, message, response=None):
         # Unfortunately the store doesn't give us a consistent error response,
         # so we'll check the ones of which we're aware.
-        if response:
+        with contextlib.suppress(AttributeError, JSONDecodeError):
             response_json = response.json()
             extra_error_message = ''
             if 'error_message' in response_json:

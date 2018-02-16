@@ -160,6 +160,18 @@ class LoginTestCase(StoreTestCase):
 
         self.assertTrue(config.Config().is_empty())
 
+    def test_failed_login_with_unregistered_snap(self):
+        raised = self.assertRaises(
+            errors.StoreAuthenticationError,
+            self.client.login,
+            'dummy email',
+            'test correct password',
+            packages=[{'name': 'unregistered-snap-name', 'series': '16'}])
+
+        self.assertThat(str(raised), Contains('not found'))
+
+        self.assertTrue(config.Config().is_empty())
+
 
 class DownloadTestCase(StoreTestCase):
 
