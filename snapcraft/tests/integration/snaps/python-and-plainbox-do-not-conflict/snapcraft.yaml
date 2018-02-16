@@ -8,10 +8,10 @@ confinement: strict
 grade: devel
 
 parts:
-    plainbox-local:
+    checkbox-ng-local:
         plugin: python
         python-packages:
-            - plainbox
+            - checkbox-ng
             - requests-oauthlib
         build-packages:
             - libxml2-dev
@@ -23,4 +23,4 @@ parts:
         stage-packages:
             - python3-yaml
         source: ./2016.com.example_simple
-        after: [plainbox-local]
+        after: [checkbox-ng-local]
