@@ -109,7 +109,7 @@ class RustPluginConfinementTestCase(testscenarios.WithScenarios,
 
     scenarios = (
         ('classic', dict(confinement='classic',
-                         startswith='/snap/core/current/lib')),
+                         startswith='/snap/')),
         ('strict', dict(confinement='strict',
                         startswith='/lib')),
     )

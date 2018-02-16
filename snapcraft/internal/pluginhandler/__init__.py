@@ -569,17 +569,31 @@ class PluginHandler:
         # we resort to our only working base 16, ld-2.23.so.
         linker_compatible = (e.is_linker_compatible(linker='ld-2.23.so')
                              for e in elf_files)
-        if not all((x for x in linker_compatible)):
-            if 'libc6' not in self._part_properties.get('stage-packages', []):
+        all_linker_compatible = all((x for x in linker_compatible))
+        # If libc6 is staged, to avoid symbol mixups we will resort to
+        # glibc mangling.
+        libc6_staged = 'libc6' in self._part_properties.get(
+            'stage-packages', [])
+        is_classic = self._confinement == 'classic'
+        # classic confined snaps built on anything but a host supporting the
+        # the target base will require glibc mangling.
+        classic_mangling_needed = (
+            is_classic and
+            not self._project_options.is_host_comatible_with_base)
+        if (not all_linker_compatible or
+                libc6_staged or classic_mangling_needed):
+            if not libc6_staged:
                 raise errors.StagePackageMissingError(package='libc6')
-
+            logger.warning('The primed files in this part require additional '
+                           'patching to work correctly with the target base '
+                           'snap.')
             handle_glibc_mismatch(elf_files=elf_files,
                                   root_path=self.primedir,
                                   snap_base_path=self._snap_base_path,
                                   core_base_path=core_path,
                                   preferred_patchelf_path=staged_patchelf_path,
                                   soname_cache=self._soname_cache)
-        elif self._confinement == 'classic':
+        elif is_classic:
             dynamic_linker = self._project_options.get_core_dynamic_linker()
             elf_patcher = elf.Patcher(
                 dynamic_linker=dynamic_linker,

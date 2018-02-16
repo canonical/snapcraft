@@ -19,10 +19,11 @@ import multiprocessing
 import os
 import platform
 import sys
+from contextlib import suppress
 
-from snapcraft.internal import common
+from snapcraft.internal import common, errors
 from snapcraft.internal.deprecations import handle_deprecation_notice
-from snapcraft.internal.errors import SnapcraftEnvironmentError
+from snapcraft.internal.os_release import OsRelease
 
 
 logger = logging.getLogger(__name__)
@@ -165,7 +166,7 @@ class ProjectOptions:
                 return ''
             return self.__machine_info['cross-compiler-prefix']
         except KeyError:
-            raise SnapcraftEnvironmentError(
+            raise errors.SnapcraftEnvironmentError(
                 'Cross compilation not supported for target arch {!r}'.format(
                     self.__target_machine))
 
@@ -223,6 +224,16 @@ class ProjectOptions:
         self._set_machine(target_deb_arch)
         self.__debug = debug
 
+    @property
+    def is_host_comatible_with_base(self):
+        codename = None
+        with suppress(errors.OsReleaseCodenameError):
+            codename = OsRelease().version_codename()
+            logger.debug('Running on {!r}'.format(codename))
+
+        # TODO support more bases
+        return codename == 'xenial' or codename == 'trusty'
+
     def get_core_dynamic_linker(self):
         """Returns the dynamic linker used for the targeted core.
         If not found realpath for `/lib/ld-linux.so.2` is returned.
@@ -240,7 +251,7 @@ class ProjectOptions:
         seen_paths = set()
         while True:
             if dynamic_linker_path in seen_paths:
-                raise SnapcraftEnvironmentError(
+                raise errors.SnapcraftEnvironmentError(
                     "found symlink loop resolving dynamic linker path")
 
             seen_paths.add(dynamic_linker_path)
@@ -280,5 +291,5 @@ def _find_machine(deb_arch):
         elif _ARCH_TRANSLATIONS[machine].get('uts_machine', '') == deb_arch:
             return machine
 
-    raise SnapcraftEnvironmentError(
+    raise errors.SnapcraftEnvironmentError(
         'Cannot set machine from deb_arch {!r}'.format(deb_arch))

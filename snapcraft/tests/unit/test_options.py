@@ -172,3 +172,25 @@ class OptionsTestCase(unit.TestCase):
         mock_platform_architecture.return_value = ('64bit', 'ELF')
         options = snapcraft.ProjectOptions(target_deb_arch='i386')
         self.assertThat(options.cross_compiler_prefix, Equals(''))
+
+
+class TestHostIsCompatibleWithTargetBase(unit.TestCase):
+
+    scenarios = (
+        ('trusty', dict(codename='trusty', is_compatible=True)),
+        ('xenial', dict(codename='xenial', is_compatible=True)),
+        ('artful', dict(codename='bionic', is_compatible=False)),
+    )
+
+    def setUp(self):
+        super().setUp()
+        patcher = mock.patch(
+            'snapcraft.internal.os_release.OsRelease.version_codename')
+        self.codename_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_compatibility(self):
+        self.codename_mock.return_value = self.codename
+
+        self.assertThat(snapcraft.ProjectOptions().is_host_comatible_with_base,
+                        Equals(self.is_compatible))
