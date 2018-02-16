@@ -21,6 +21,22 @@ class VCSError(errors.SnapcraftError):
     fmt = '{message}'
 
 
+class UnhandledSourceError(errors.SnapcraftError):
+
+    fmt = ('no handler to manage source ({source})')
+
+    def __init__(self, source):
+        super().__init__(source=source)
+
+
+class SourceIsNotADirectoryError(errors.SnapcraftError):
+
+    fmt = ('local source ({source}) is not a directory')
+
+    def __init__(self, source):
+        super().__init__(source=source)
+
+
 class IncompatibleOptionsError(errors.SnapcraftError):
 
     fmt = '{message}'
