@@ -101,17 +101,12 @@ class PluginTestCase(unit.TestCase):
 
     @patch('os.path.isdir', return_value=False)
     def test_local_non_dir_source_path_must_raise_exception(self, mock_isdir):
-        raised = self.assertRaises(
+        self.assertRaises(
             SnapcraftSourceNotADirectoryError,
             self.load_part,
             'test-part', part_properties={'source': 'file'})
 
         mock_isdir.assert_any_call('file')
-
-        self.assertThat(str(raised), Equals(
-            "Failed to pick an appropriate source handler:\n"
-            "'file' looks like a local filename but there is no directory "
-            "with that name that could be used as a source."))
 
     def test_fileset_include_excludes(self):
         stage_set = [
@@ -2352,15 +2347,9 @@ class SourcesTestCase(unit.TestCase):
     def test_source_with_unrecognized_source_must_raise_exception(self):
         properties = dict(source='unrecognized://test_source')
 
-        raised = self.assertRaises(
+        self.assertRaises(
             SnapcraftSourceUnhandledError,
             self.load_part, 'test-part', part_properties=properties)
-
-        self.assertThat(raised.__str__(), Equals(
-            'Failed to pick an appropriate source handler:\n'
-            'unrecognized://test_source does not look like a known format.\n'
-            'Check that the URL is correct and consider adding '
-            '"source-type".'))
 
 
 class CleanPullTestCase(unit.TestCase):
