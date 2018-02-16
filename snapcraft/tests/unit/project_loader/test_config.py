@@ -861,7 +861,7 @@ parts:
 class ValidVersionTestCase(YamlBaseTestCase):
     scenarios = [
         (version, dict(version=version)) for
-        version in ['buttered-popcorn', '1.2.3', 'v12.4:1:2~', 'HeLlo']
+        version in ['buttered-popcorn', '1.2.3', 'v12.4:1:2~', 'HeLlo', 'v+']
     ]
 
     def test_valid_version(self):
@@ -887,7 +887,7 @@ class InvalidVersionTestCase(YamlBaseTestCase):
         (version, dict(version=version)) for
         version in [
             '*', '', ':v', '.v', '+v', '~v', '_v', '-v', 'v:', 'v.', 'v_',
-            'v-',
+            'v-', 'underscores_are_bad',
         ]
     ]
 
@@ -912,14 +912,13 @@ class InvalidVersionTestCase(YamlBaseTestCase):
 
         self.assertThat(
             raised.message,
-            Equals(
-                "The 'version' property does not match the required schema: "
-                "{!r} is not a valid snap version. Snap versions consist of "
-                "upper- and lower-case alphanumeric characters, as well as "
-                "periods, colons, plus signs, tildes, hyphens, and "
-                "underscores. They cannot begin with a period, colon, plus "
-                "sign, tilde, hyphen, or underscore. They cannot end with a "
-                "period, colon, hyphen, or underscore.".format(self.version)))
+            Equals("The 'version' property does not match the required "
+                   "schema: {!r} is not a valid snap version. Snap versions "
+                   "consist of upper- and lower-case alphanumeric characters, "
+                   "as well as periods, colons, plus signs, tildes, and "
+                   "hyphens. They cannot begin with a period, colon, plus "
+                   "sign, tilde, or hyphen. They cannot end with a period, "
+                   "colon, or hyphen.".format(self.version)))
 
 
 class YamlEncodingsTestCase(YamlBaseTestCase):
