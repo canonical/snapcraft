@@ -858,7 +858,7 @@ parts:
         self.mock_load_part.assert_has_calls([call1, call2], any_order=True)
 
 
-class ValidVersionTestCase(YamlTestCase):
+class ValidVersionTestCase(YamlBaseTestCase):
     scenarios = [
         (version, dict(version=version)) for
         version in ['buttered-popcorn', '1.2.3', 'v12.4:1:2~', 'HeLlo']
@@ -882,7 +882,7 @@ class ValidVersionTestCase(YamlTestCase):
         _config.Config()
 
 
-class InvalidVersionTestCase(YamlTestCase):
+class InvalidVersionTestCase(YamlBaseTestCase):
     scenarios = [
         (version, dict(version=version)) for
         version in [

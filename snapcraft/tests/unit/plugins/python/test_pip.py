@@ -34,7 +34,7 @@ from snapcraft.plugins._python import (
 from ._basesuite import PythonBaseTestCase
 
 
-class PipRunTestCase(PythonBaseTestCase):
+class PipRunBaseTestCase(PythonBaseTestCase):
 
     def setUp(self):
         super().setUp()
@@ -98,6 +98,9 @@ class PipRunTestCase(PythonBaseTestCase):
             mock.call([expected_python, '-m', 'pip', 'list', '--format=json'],
                       env=mock.ANY),
         ])
+
+
+class PipRunTestCase(PipRunBaseTestCase):
 
     def test_environment_part_python_without_headers(self):
         expected_python = self._create_python_binary('install_dir')
@@ -184,7 +187,7 @@ class PipRunTestCase(PythonBaseTestCase):
                 stderr=subprocess.STDOUT)])
 
 
-class SetupTestCase(PipRunTestCase):
+class SetupTestCase(PipRunBaseTestCase):
 
     def setUp(self):
         super().setUp()
@@ -300,7 +303,7 @@ class SetupTestCase(PipRunTestCase):
         self.assertRaises(subprocess.CalledProcessError, pip.setup)
 
 
-class PipTestCase(PythonBaseTestCase):
+class PipBaseTestCase(PythonBaseTestCase):
 
     def setUp(self):
         super().setUp()
@@ -310,6 +313,9 @@ class PipTestCase(PythonBaseTestCase):
         self.addCleanup(patcher.stop)
 
         self._create_python_binary('install_dir')
+
+
+class PipTestCase(PipBaseTestCase):
 
     def test_clean_packages(self):
         pip = _pip.Pip(
@@ -326,7 +332,7 @@ class PipTestCase(PythonBaseTestCase):
         self.assertFalse(os.path.exists(packages_dir))
 
 
-class PipCommandTestCase(PipTestCase):
+class PipCommandBaseTestCase(PipBaseTestCase):
 
     def setUp(self):
         super().setUp()
@@ -341,7 +347,7 @@ class PipCommandTestCase(PipTestCase):
         self.mock_run.reset_mock()
 
 
-class PipDownloadTestCase(PipCommandTestCase):
+class PipDownloadTestCase(PipCommandBaseTestCase):
 
     scenarios = [
         ('packages', {
@@ -413,7 +419,7 @@ class PipDownloadTestCase(PipCommandTestCase):
         self._assert_mock_run_with(self.expected_args, **self.expected_kwargs)
 
 
-class PipInstallTestCase(PipCommandTestCase):
+class PipInstallTestCase(PipCommandBaseTestCase):
 
     scenarios = [
         ('packages', {
@@ -504,7 +510,7 @@ class PipInstallTestCase(PipCommandTestCase):
         self._assert_mock_run_with(self.expected_args, **self.expected_kwargs)
 
 
-class PipInstallFixupShebangTestCase(PipCommandTestCase):
+class PipInstallFixupShebangTestCase(PipCommandBaseTestCase):
 
     scenarios = [
         ('bad shebang', {
@@ -555,7 +561,7 @@ class PipInstallFixupShebangTestCase(PipCommandTestCase):
             self.assertThat(f.read(), Equals(self.expected))
 
 
-class PipInstallFixupPermissionsTestCase(PipCommandTestCase):
+class PipInstallFixupPermissionsTestCase(PipCommandBaseTestCase):
 
     scenarios = [
         ('755', {
@@ -616,7 +622,7 @@ class PipInstallFixupPermissionsTestCase(PipCommandTestCase):
         self.assertFalse(mock_chmod.called)
 
 
-class PipWheelTestCase(PipCommandTestCase):
+class PipWheelTestCase(PipCommandBaseTestCase):
 
     scenarios = [
         ('packages', {
@@ -689,7 +695,7 @@ class PipWheelTestCase(PipCommandTestCase):
         self._assert_mock_run_with(self.expected_args, **self.expected_kwargs)
 
 
-class PipListTestCase(PipCommandTestCase):
+class PipListTestCase(PipCommandBaseTestCase):
 
     def test_none(self):
         self.mock_run.return_value = '{}'
