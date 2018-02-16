@@ -45,6 +45,8 @@ from snapcraft.internal.repo import snaps
 logger = logging.getLogger(__name__)
 
 _NETWORK_PROBE_COMMAND = \
+    'import sys; sys.excepthook = lambda t,e,b : ' \
+    'print("{{}}: {{}}".format(t.__name__, e));' \
     'import urllib.request; urllib.request.urlopen("{}", timeout=5)'.format(
         'http://start.ubuntu.com/connectivity-check.html')
 _PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
@@ -220,7 +222,9 @@ class Containerbuild:
             except ContainerRunError as e:
                 retry_count -= 1
                 if retry_count == 0:
-                    raise e
+                    raise ContainerConnectionError(
+                        'No network connection in the container.\n'
+                        'If using a proxy, check its configuration.')
         logger.info('Network connection established')
 
     def _inject_snapcraft(self, *, new_container: bool):

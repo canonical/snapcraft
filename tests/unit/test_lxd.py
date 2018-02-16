@@ -32,7 +32,6 @@ from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
 from snapcraft.internal.errors import (
     ContainerConnectionError,
-    ContainerRunError,
     SnapdError,
     SnapcraftEnvironmentError,
 )
@@ -118,9 +117,10 @@ class CleanbuilderTestCase(LXDTestCase):
                   '{}/root/build_project/project.tar'.format(container_name)]),
         ])
         mock_container_run.assert_has_calls([
-            call(['python3', '-c', 'import urllib.request; ' +
-                  'urllib.request.urlopen(' +
-                  '"http://start.ubuntu.com/connectivity-check.html"' +
+            call(['python3', '-c', 'import sys; sys.excepthook = lambda t,e,b'
+                  ' : print("{}: {}".format(t.__name__, e));'
+                  'import urllib.request; urllib.request.urlopen('
+                  '"http://start.ubuntu.com/connectivity-check.html"'
                   ', timeout=5)']),
             call(['apt-get', 'update']),
             call(['apt-get', 'install', 'squashfuse', '-y']),
@@ -189,7 +189,7 @@ class ContainerbuildTestCase(LXDTestCase):
 
         builder = self.make_containerbuild()
 
-        self.assertRaises(ContainerRunError,
+        self.assertRaises(ContainerConnectionError,
                           builder._wait_for_network)
 
     def test_failed_build_with_debug(self):
