@@ -109,7 +109,9 @@ class PluginTestCase(unit.TestCase):
         mock_isdir.assert_any_call('file')
 
         self.assertThat(str(raised), Equals(
-             'local source (file) is not a directory'))
+            "Failed to pick an appropriate source handler:\n"
+            "'file' looks like a local filename but there is no directory "
+            "with that name that could be used as a source."))
 
     def test_fileset_include_excludes(self):
         stage_set = [
@@ -2354,9 +2356,11 @@ class SourcesTestCase(unit.TestCase):
             SnapcraftSourceUnhandledError,
             self.load_part, 'test-part', part_properties=properties)
 
-        self.assertThat(raised.__str__(),
-                        Equals('no handler to manage source '
-                               '(unrecognized://test_source)'))
+        self.assertThat(raised.__str__(), Equals(
+            'Failed to pick an appropriate source handler:\n'
+            'unrecognized://test_source does not look like a known format.\n'
+            'Check that the URL is correct and consider adding '
+            '"source-type".'))
 
 
 class CleanPullTestCase(unit.TestCase):

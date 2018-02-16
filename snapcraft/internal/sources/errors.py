@@ -23,7 +23,9 @@ class VCSError(errors.SnapcraftError):
 
 class SnapcraftSourceUnhandledError(errors.SnapcraftError):
 
-    fmt = ('no handler to manage source ({source})')
+    fmt = ('Failed to pick an appropriate source handler:\n'
+           '{source} does not look like a known format.\n'
+           'Check that the URL is correct and consider adding "source-type".')
 
     def __init__(self, source):
         super().__init__(source=source)
@@ -31,7 +33,9 @@ class SnapcraftSourceUnhandledError(errors.SnapcraftError):
 
 class SnapcraftSourceNotADirectoryError(errors.SnapcraftError):
 
-    fmt = ('local source ({source}) is not a directory')
+    fmt = ('Failed to pick an appropriate source handler:\n'
+           '{source!r} looks like a local filename but there is no directory '
+           'with that name that could be used as a source.')
 
     def __init__(self, source):
         super().__init__(source=source)
