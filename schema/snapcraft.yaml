@@ -94,10 +94,10 @@ properties:
     validation-failure:
       "{.instance!r} is not a valid snap version. Snap versions consist of
       upper- and lower-case alphanumeric characters, as well as periods,
-      colons, plus signs, tildes, hyphens, and underscores. They cannot begin
-      with a period, colon, plus sign, tilde, hyphen, or underscore. They
-      cannot end with a period, colon, hyphen, or underscore."
-    pattern: "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~_-]*[a-zA-Z0-9+~])?$"
+      colons, plus signs, tildes, and hyphens. They cannot begin with a period,
+      colon, plus sign, tilde, or hyphen. They cannot end with a period, colon,
+      or hyphen."
+    pattern: "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"
     maxLength: 32
   version-script:
     type: string
