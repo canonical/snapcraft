@@ -106,6 +106,51 @@ parts:
 
         self.assertThat(latest_snap, Equals(expected_snap_path))
 
+    def test_snap_cache_get_latest_no_architectures(self):
+        # Create snaps
+        meta_dir = os.path.join(self.path, 'prime', 'meta')
+        os.makedirs(meta_dir)
+        with open(os.path.join(meta_dir, 'snap.yaml'), 'w') as f:
+            f.write("""name: my-snap-name
+summary: test cached snap
+description: test cached snap
+confinement: devmode
+grade: devel
+version: '0.1'
+""")
+        result = self.run_command(['pack', os.path.join(self.path, 'prime')])
+        self.assertThat(result.exit_code, Equals(0))
+        snap_file = glob.glob('*0.1*.snap')[0]
+
+        snap_cache = cache.SnapCache(project_name='my-snap-name')
+        snap_cache.cache(snap_filename=snap_file)
+
+        with open(os.path.join(meta_dir, 'snap.yaml'), 'w') as f:
+            f.write("""name: my-snap-name
+summary: test cached snap
+description: test cached snap
+confinement: devmode
+grade: devel
+version: '0.2'
+""")
+        result = self.run_command(['pack', os.path.join(self.path, 'prime')])
+        self.assertThat(result.exit_code, Equals(0))
+        snap_file_latest = glob.glob('*0.2*.snap')[0]
+
+        snap_cache.cache(snap_filename=snap_file_latest)
+        latest_hash = file_utils.calculate_sha3_384(snap_file_latest)
+
+        # get latest
+        latest_snap = snap_cache.get(deb_arch='all')
+
+        expected_snap_path = os.path.join(
+            snap_cache.snap_cache_root,
+            'all',
+            latest_hash
+        )
+
+        self.assertThat(latest_snap, Equals(expected_snap_path))
+
     def test_snap_cache_get_by_hash(self):
         snap_cache = cache.SnapCache(project_name='my-snap-name')
         snap_cache.cache(snap_filename=self.snap_path)
