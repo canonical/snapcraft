@@ -20,7 +20,7 @@ from testtools.matchers import Equals
 import snapcraft
 import snapcraft.internal.project_loader.grammar._try as _try
 
-from . import GrammarTestCase
+from . import GrammarBaseTestCase
 
 
 def load_tests(loader, tests, ignore):
@@ -28,7 +28,7 @@ def load_tests(loader, tests, ignore):
     return tests
 
 
-class TryStatementGrammarTestCase(GrammarTestCase):
+class TryStatementGrammarTestCase(GrammarBaseTestCase):
 
     scenarios = [
         ('followed body', {

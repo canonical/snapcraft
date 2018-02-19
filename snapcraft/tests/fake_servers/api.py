@@ -211,6 +211,22 @@ class FakeStoreAPIServer(base.BaseFakeServer):
     # POST
 
     def acl(self, request):
+        content_type = 'application/json'
+
+        if 'packages' in request.json_body:
+            packages = request.json_body['packages']
+            unregistered_package = {
+                'name': 'unregistered-snap-name',
+                'series': '16',
+            }
+            if unregistered_package in packages:
+                return response.Response(
+                    json.dumps({
+                        'error_message': "Snap not found for the given snap "
+                                         "name: 'unregistered-snap-name' and "
+                                         "series: '16'",
+                    }).encode(), 404, [('Content-Type', content_type)])
+
         permission = request.path.split('/')[-1]
         logger.debug(
             'Handling ACL request for {}'.format(permission))
@@ -225,7 +241,6 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             ])
         payload = json.dumps({'macaroon': macaroon.serialize()}).encode()
         response_code = 200
-        content_type = 'application/json'
         return response.Response(
             payload, response_code, [('Content-Type', content_type)])
 

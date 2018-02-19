@@ -829,6 +829,7 @@ class WrapExeTestCase(unit.TestCase):
             ProjectOptions(),
             'dummy'
         )
+        self.packager._is_host_compatible_with_base = True
 
     @patch('snapcraft.internal.common.assemble_env')
     def test_wrap_exe_must_write_wrapper(self, mock_assemble_env):
@@ -850,6 +851,29 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
                     'PATH=$SNAP/usr/bin:$SNAP/bin\n\n'
                     'export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:'
                     '$LD_LIBRARY_PATH\n'
+                    'exec "$SNAP/test_relexepath" "$@"\n')
+
+        self.assertThat(wrapper_path, FileContains(expected))
+
+    @patch('snapcraft.internal.common.assemble_env')
+    def test_empty_wrapper_if_not_on_compatible_host_for_target_base(
+            self, mock_assemble_env):
+        self.packager._is_host_compatible_with_base = False
+        mock_assemble_env.return_value = """\
+PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
+""".format(self.parts_dir)
+
+        relative_exe_path = 'test_relexepath'
+        _create_file(os.path.join(self.prime_dir, relative_exe_path))
+
+        # Check that the wrapper is created even if there is already a file
+        # with the same name.
+        _create_file(os.path.join(self.prime_dir, 'test_relexepath.wrapper'))
+
+        relative_wrapper_path = self.packager._wrap_exe(relative_exe_path)
+        wrapper_path = os.path.join(self.prime_dir, relative_wrapper_path)
+
+        expected = ('#!/bin/sh\n'
                     'exec "$SNAP/test_relexepath" "$@"\n')
 
         self.assertThat(wrapper_path, FileContains(expected))

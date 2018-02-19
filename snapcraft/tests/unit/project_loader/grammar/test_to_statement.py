@@ -23,7 +23,7 @@ import snapcraft
 from snapcraft.internal.project_loader import grammar
 import snapcraft.internal.project_loader.grammar._to as to
 
-from . import GrammarTestCase
+from . import GrammarBaseTestCase
 
 
 def load_tests(loader, tests, ignore):
@@ -31,7 +31,7 @@ def load_tests(loader, tests, ignore):
     return tests
 
 
-class ToStatementGrammarTestCase(GrammarTestCase):
+class ToStatementGrammarTestCase(GrammarBaseTestCase):
 
     scenarios = [
         ('no target arch', {
@@ -192,7 +192,7 @@ class ToStatementGrammarTestCase(GrammarTestCase):
         self.assertThat(statement.process(), Equals(self.expected_packages))
 
 
-class ToStatementInvalidGrammarTestCase(GrammarTestCase):
+class ToStatementInvalidGrammarTestCase(GrammarBaseTestCase):
 
     scenarios = [
         ('spaces in selectors', {
@@ -258,7 +258,7 @@ class ToStatementInvalidGrammarTestCase(GrammarTestCase):
             statement.process()
 
 
-class ToStatementElseFail(GrammarTestCase):
+class ToStatementElseFail(GrammarBaseTestCase):
 
     @patch('platform.architecture')
     @patch('platform.machine')

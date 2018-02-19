@@ -23,7 +23,7 @@ import snapcraft
 from snapcraft.internal.project_loader import grammar
 import snapcraft.internal.project_loader.grammar._on as on
 
-from . import GrammarTestCase
+from . import GrammarBaseTestCase
 
 
 def load_tests(loader, tests, ignore):
@@ -31,7 +31,7 @@ def load_tests(loader, tests, ignore):
     return tests
 
 
-class OnStatementGrammarTestCase(GrammarTestCase):
+class OnStatementGrammarTestCase(GrammarBaseTestCase):
 
     scenarios = [
         ('on amd64', {
@@ -169,7 +169,7 @@ class OnStatementGrammarTestCase(GrammarTestCase):
         self.assertThat(statement.process(), Equals(self.expected_packages))
 
 
-class OnStatementInvalidGrammarTestCase(GrammarTestCase):
+class OnStatementInvalidGrammarTestCase(GrammarBaseTestCase):
 
     scenarios = [
         ('spaces in selectors', {
@@ -228,7 +228,7 @@ class OnStatementInvalidGrammarTestCase(GrammarTestCase):
             statement.process()
 
 
-class OnStatementElseFail(GrammarTestCase):
+class OnStatementElseFail(GrammarBaseTestCase):
 
     @patch('platform.architecture')
     @patch('platform.machine')

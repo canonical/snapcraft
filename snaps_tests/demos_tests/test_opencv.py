@@ -30,8 +30,7 @@ class OpenCVTestCase(snaps_tests.SnapsTestCase):
     @skip.skip_unless_codename('xenial',
                                'declared stage-packages only in xenial')
     def test_opencv(self):
-        if (os.environ.get('ADT_TEST') and
-                snapcraft.ProjectOptions().deb_arch == 'armhf'):
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
             self.skipTest("The autopkgtest armhf runners can't install snaps")
 
         snap_path = self.build_snap(self.snap_content_dir)
@@ -42,7 +41,7 @@ class OpenCVTestCase(snaps_tests.SnapsTestCase):
 
         interpreter = subprocess.check_output([
             self.patchelf_command, '--print-interpreter', bin_path]).decode()
-        expected_interpreter = r'^/snap/core/current/.*'
+        expected_interpreter = r'^/snap/.*'
         self.assertThat(interpreter, MatchesRegex(expected_interpreter))
 
         arch_triplet = snapcraft.ProjectOptions().arch_triplet

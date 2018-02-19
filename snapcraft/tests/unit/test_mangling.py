@@ -16,9 +16,9 @@
 
 import os
 import textwrap
-from unittest.mock import patch
+from unittest.mock import call, patch
 
-from testtools.matchers import FileContains, FileExists, Not
+from testtools.matchers import FileContains
 
 from snapcraft.internal import mangling
 from snapcraft.tests import unit, fixture_setup
@@ -165,26 +165,12 @@ class HandleGlibcTestCase(unit.TestCase):
             snap_base_path='/snap/snap-name/current')
 
         self.get_packages_mock.assert_called_once_with('libc6')
-        # Only fake_elf1 requires a newer libc6
-        self.patch_mock.assert_called_once_with(
-            elf_file=self.fake_elf['fake_elf-2.26'])
-
-    def test_nothing_to_patch(self):
-        elf_files = [
-            self.fake_elf['fake_elf-2.23'],
-            self.fake_elf['fake_elf-1.1'],
-        ]
-
-        mangling.handle_glibc_mismatch(
-            elf_files=elf_files,
-            root_path=self.path,
-            core_base_path='/snap/core/current',
-            snap_base_path='/snap/snap-name/current')
-
-        self.get_packages_mock.assert_not_called()
-        self.assertThat(os.path.join(self.path, 'snap', 'libc6', 'ld-2.26.so'),
-                        Not(FileExists()))
-        self.patch_mock.assert_not_called()
+        # Everything in the set will be patched regardless of compatibility
+        self.patch_mock.assert_has_calls([
+            call(elf_file=self.fake_elf['fake_elf-2.26']),
+            call(elf_file=self.fake_elf['fake_elf-2.23']),
+            call(elf_file=self.fake_elf['fake_elf-1.1']),
+        ])
 
     def test_bad_dynamic_linker_in_libc6_package(self):
         self.get_packages_mock.return_value = {'/usr/lib/dyn-linker-2.25.so'}
