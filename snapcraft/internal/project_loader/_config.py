@@ -268,6 +268,10 @@ def _snapcraft_yaml_load(yaml_file):
     except yaml.scanner.ScannerError as e:
         raise errors.YamlValidationError('{} on line {} of {}'.format(
             e.problem, e.problem_mark.line + 1, yaml_file)) from e
+    except yaml.reader.ReaderError as e:
+        raise errors.YamlValidationError(
+            'Invalid character {!r} at position {} of {}: {}'.format(
+                chr(e.character), e.position + 1, yaml_file, e.reason)) from e
 
 
 def _ensure_confinement_default(yaml_data, schema):
