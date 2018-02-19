@@ -22,6 +22,7 @@ import os
 import shutil
 import sys
 from glob import glob, iglob
+from typing import Dict, Set  # noqa
 
 import yaml
 
@@ -523,38 +524,7 @@ class PluginHandler:
                                            core_base_path=core_path,
                                            soname_cache=self._soname_cache))
 
-        # Split the necessary dependencies into their corresponding location.
-        # We'll both migrate and track the system dependencies, but we'll only
-        # track the part and staged dependencies, since they should have
-        # already been primed by other means, and migrating them again could
-        # potentially override the `stage` or `snap` filtering.
-        (in_part, staged, primed, system) = _split_dependencies(
-            all_dependencies, self.installdir, self.stagedir, self.primedir)
-
-        part_dependency_paths = {os.path.dirname(d) for d in in_part}
-        staged_dependency_paths = {os.path.dirname(d) for d in staged}
-
-        dependency_paths = part_dependency_paths | staged_dependency_paths
-
-        if not self._build_attributes.no_system_libraries():
-            system_dependency_paths = {os.path.dirname(d) for d in system}
-            dependency_paths.update(system_dependency_paths)
-
-            if system:
-                # Lots of dependencies are linked with a symlink, so we need to
-                # make sure we follow those symlinks when we migrate the
-                # dependencies.
-                _migrate_files(system, system_dependency_paths, '/',
-                               self.primedir, follow_symlinks=True)
-                formatted_system = '\n'.join(sorted(system))
-                logger.warning(
-                    'Files from the build host were migrated into the snap to '
-                    'satisfy dependencies that would otherwise not be met. '
-                    'This feature will be removed in a future release. If '
-                    'these libraries are needed in the final snap, ensure '
-                    'that the following are either satisfied by a '
-                    'stage-packages entry or through a part:\n{}'.format(
-                        formatted_system))
+        dependency_paths = self._handle_dependencies(all_dependencies)
 
         # TODO revisit if we need to support variations and permutations
         #  of this
@@ -567,19 +537,38 @@ class PluginHandler:
         # base may not be installed so we cannot depend on
         # get_core_dynamic_linker to resolve the final path for which
         # we resort to our only working base 16, ld-2.23.so.
-        linker_compatible = (e.is_linker_compatible(linker='ld-2.23.so')
-                             for e in elf_files)
-        if not all((x for x in linker_compatible)):
-            if 'libc6' not in self._part_properties.get('stage-packages', []):
+        linker_incompat = dict()  # type: Dict[str, str]
+        for elf_file in elf_files:
+            if not elf_file.is_linker_compatible(linker='ld-2.23.so'):
+                linker_incompat[elf_file.path] = elf_file.get_required_glibc()
+        # If libc6 is staged, to avoid symbol mixups we will resort to
+        # glibc mangling.
+        libc6_staged = 'libc6' in self._part_properties.get(
+            'stage-packages', [])
+        is_classic = self._confinement == 'classic'
+        # classic confined snaps built on anything but a host supporting the
+        # the target base will require glibc mangling.
+        classic_mangling_needed = (
+            is_classic and
+            not self._project_options.is_host_compatible_with_base)
+        if linker_incompat:
+            formatted_items = ['- {} (requires GLIBC {})'.format(k, v)
+                               for k, v in linker_incompat.items()]
+            logger.warning(
+                'The GLIBC version of the targeted core is 2.23. A newer '
+                'libc will be required for the following files:\n{}'.format(
+                    '\n'.join(formatted_items)))
+        if (linker_incompat or
+                libc6_staged or classic_mangling_needed):
+            if not libc6_staged:
                 raise errors.StagePackageMissingError(package='libc6')
-
             handle_glibc_mismatch(elf_files=elf_files,
                                   root_path=self.primedir,
                                   snap_base_path=self._snap_base_path,
                                   core_base_path=core_path,
                                   preferred_patchelf_path=staged_patchelf_path,
                                   soname_cache=self._soname_cache)
-        elif self._confinement == 'classic':
+        elif is_classic:
             dynamic_linker = self._project_options.get_core_dynamic_linker()
             elf_patcher = elf.Patcher(
                 dynamic_linker=dynamic_linker,
@@ -631,6 +620,39 @@ class PluginHandler:
         # part.
         _clean_migrated_files(primed_files, primed_directories,
                               shared_directory)
+
+    def _handle_dependencies(self, all_dependencies: Set[str]):
+        # Split the necessary dependencies into their corresponding location.
+        # We'll both migrate and track the system dependencies, but we'll only
+        # track the part and staged dependencies, since they should have
+        # already been primed by other means, and migrating them again could
+        # potentially override the `stage` or `snap` filtering.
+        (in_part, staged, primed, system) = _split_dependencies(
+            all_dependencies, self.installdir, self.stagedir, self.primedir)
+        part_dependency_paths = {os.path.dirname(d) for d in in_part}
+        staged_dependency_paths = {os.path.dirname(d) for d in staged}
+        dependency_paths = part_dependency_paths | staged_dependency_paths
+
+        if not self._build_attributes.no_system_libraries():
+            system_dependency_paths = {os.path.dirname(d) for d in system}
+            dependency_paths.update(system_dependency_paths)
+
+            if system:
+                # Lots of dependencies are linked with a symlink, so we need to
+                # make sure we follow those symlinks when we migrate the
+                # dependencies.
+                _migrate_files(system, system_dependency_paths, '/',
+                               self.primedir, follow_symlinks=True)
+                formatted_system = '\n'.join(sorted(system))
+                logger.warning(
+                    'Files from the build host were migrated into the snap to '
+                    'satisfy dependencies that would otherwise not be met. '
+                    'This feature will be removed in a future release. If '
+                    'these libraries are needed in the final snap, ensure '
+                    'that the following are either satisfied by a '
+                    'stage-packages entry or through a part:\n{}'.format(
+                        formatted_system))
+        return dependency_paths
 
     def get_primed_dependency_paths(self):
         dependency_paths = set()
