@@ -485,7 +485,7 @@ parts:
 
         self.make_snapcraft_yaml("""name: foobar
 version: "1"
-summary: test💩
+summary: test\uffff
 description: nothing
 """)
         raised = self.assertRaises(
@@ -493,7 +493,7 @@ description: nothing
             _config.Config)
 
         self.assertThat(raised.message, Equals(
-            "Invalid character '💩' at position 40 "
+            "Invalid character '\\uffff' at position 40 "
             "of snap/snapcraft.yaml: special characters are not allowed"))
 
     def test_invalid_yaml_invalid_name_chars(self):
