@@ -232,7 +232,7 @@ class PartsConfig:
             # Only set the paths to the base snap if we are building on the
             # same host. Failing to do so will cause Segmentation Faults.
             if (self._confinement == 'classic' and
-                    self._project_options.is_host_comatible_with_base):
+                    self._project_options.is_host_compatible_with_base):
                 env += env_for_classic(self._project_options.arch_triplet)
             env.append('SNAPCRAFT_PART_INSTALL="{}"'.format(part.installdir))
             env.append('SNAPCRAFT_ARCH_TRIPLET="{}"'.format(

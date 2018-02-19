@@ -550,7 +550,7 @@ class PluginHandler:
         # the target base will require glibc mangling.
         classic_mangling_needed = (
             is_classic and
-            not self._project_options.is_host_comatible_with_base)
+            not self._project_options.is_host_compatible_with_base)
         if linker_incompat:
             formatted_items = ['- {} (requires GLIBC {})'.format(k, v)
                                for k, v in linker_incompat.items()]

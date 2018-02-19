@@ -225,7 +225,7 @@ class ProjectOptions:
         self.__debug = debug
 
     @property
-    def is_host_comatible_with_base(self):
+    def is_host_compatible_with_base(self):
         codename = None
         with suppress(errors.OsReleaseCodenameError):
             codename = OsRelease().version_codename()

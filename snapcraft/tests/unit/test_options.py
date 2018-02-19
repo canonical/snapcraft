@@ -192,5 +192,6 @@ class TestHostIsCompatibleWithTargetBase(unit.TestCase):
     def test_compatibility(self):
         self.codename_mock.return_value = self.codename
 
-        self.assertThat(snapcraft.ProjectOptions().is_host_comatible_with_base,
-                        Equals(self.is_compatible))
+        self.assertThat(
+            snapcraft.ProjectOptions().is_host_compatible_with_base,
+            Equals(self.is_compatible))

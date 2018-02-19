@@ -829,7 +829,7 @@ class WrapExeTestCase(unit.TestCase):
             ProjectOptions(),
             'dummy'
         )
-        self.packager._is_host_comatible_with_base = True
+        self.packager._is_host_compatible_with_base = True
 
     @patch('snapcraft.internal.common.assemble_env')
     def test_wrap_exe_must_write_wrapper(self, mock_assemble_env):
@@ -858,7 +858,7 @@ PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
     @patch('snapcraft.internal.common.assemble_env')
     def test_empty_wrapper_if_not_on_compatible_host_for_target_base(
             self, mock_assemble_env):
-        self.packager._is_host_comatible_with_base = False
+        self.packager._is_host_compatible_with_base = False
         mock_assemble_env.return_value = """\
 PATH={0}/part1/install/usr/bin:{0}/part1/install/bin
 """.format(self.parts_dir)
