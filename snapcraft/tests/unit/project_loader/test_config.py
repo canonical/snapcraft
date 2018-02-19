@@ -496,6 +496,24 @@ description: nothing
             "Invalid character '\\uffff' at position 40 "
             "of snap/snapcraft.yaml: special characters are not allowed"))
 
+    def test_invalid_yaml_invalid_unicode_workaround(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: foobar
+version: "1"
+summary: test💩
+description: nothing
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        c = _config.Config()
+
+        self.assertThat(c.data['summary'], Equals('test💩'))
+
     def test_invalid_yaml_invalid_name_chars(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
