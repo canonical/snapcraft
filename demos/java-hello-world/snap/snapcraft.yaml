@@ -1,5 +1,5 @@
 name: java-hello-world
-version: 0
+version: "1.0"
 summary: A java example
 description: this is not much more than an example
 confinement: strict
@@ -7,7 +7,7 @@ grade: stable
 
 apps:
  hello:
-   command: java oata.HelloWorld
+   command: usr/lib/jvm/default-java/bin/java oata.HelloWorld
 
 parts:
     local:
