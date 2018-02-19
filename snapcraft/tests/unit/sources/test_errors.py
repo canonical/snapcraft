@@ -24,20 +24,22 @@ class ErrorFormattingTestCase(unit.TestCase):
     scenarios = (
         ('SnapcraftSourceUnhandledError', {
             'exception': errors.SnapcraftSourceUnhandledError,
-            'kwargs': {'source': 'unknown://source/type'},
+            'kwargs': {'source': 'unknown://source/type',
+                       'part_name': 'example'},
             'expected_message': (
-                'Failed to pick an appropriate source handler:\n'
-                'unknown://source/type does not look like a known format.\n'
-                'Check that the URL is correct and consider adding '
-                '"source-type".'
+                "Failed to pull source for part 'example': "
+                "unable to determine source type of 'unknown://source/type'.\n"
+                "Check that the URL is correct or consider specifying "
+                "`source-type` for this part. "
+                "See `snapcraft help sources` for more information."
                 )}),
         ('SnapcraftSourceNotADirectoryError', {
             'exception': errors.SnapcraftSourceNotADirectoryError,
-            'kwargs': {'source': 'foo'},
+            'kwargs': {'source': 'foo', 'part_name': 'example'},
             'expected_message': (
-                "Failed to pick an appropriate source handler:\n"
-                "'foo' looks like a local filename but there is no directory "
-                "with that name that could be used as a source."
+                "Failed to pull source for part 'example': "
+                "'foo' is not a directory.\n"
+                "See `snapcraft help sources` for more information."
                 )}),
     )
 

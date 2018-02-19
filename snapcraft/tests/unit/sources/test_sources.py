@@ -43,8 +43,8 @@ class TestUri(unit.TestCase):
 
     ]
 
-    def test_get_source_typefrom_uri(self):
-        self.assertThat(sources._get_source_type_from_uri(self.source),
+    def test_get_source_type_from_uri(self):
+        self.assertThat(sources._get_source_type_from_uri(self.source, 'foo'),
                         Equals(self.result))
 
 
@@ -96,8 +96,9 @@ class SourceWithBranchTestCase(unit.TestCase):
     ]
 
     def test_get_source_with_branch_must_raise_error(self):
-        handler = sources.get_source_handler('https://source.com',
-                                             source_type=self.source_type)
+        handler = sources.get_source_handler(
+            'https://source.com', source_type=self.source_type,
+            part_name='foo')
         raised = self.assertRaises(
             sources.errors.IncompatibleOptionsError,
             handler,
@@ -129,8 +130,9 @@ class SourceWithBranchAndTagTestCase(unit.TestCase):
     ]
 
     def test_get_source_with_branch_and_tag_must_raise_error(self):
-        handler = sources.get_source_handler('https://source.com',
-                                             source_type=self.source_type)
+        handler = sources.get_source_handler(
+            'https://source.com',
+            source_type=self.source_type, part_name='foo')
         raised = self.assertRaises(
             sources.errors.IncompatibleOptionsError,
             handler,

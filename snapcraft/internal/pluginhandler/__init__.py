@@ -123,7 +123,8 @@ class PluginHandler:
         source_handler = None
         if self._source:
             handler_class = sources.get_source_handler(
-                self._source, source_type=properties['source-type'])
+                self._source, source_type=properties['source-type'],
+                part_name=self.name)
             source_handler = handler_class(
                 self._source,
                 self.plugin.sourcedir,
