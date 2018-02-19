@@ -24,10 +24,9 @@ class ErrorFormattingTestCase(unit.TestCase):
     scenarios = (
         ('SnapcraftSourceUnhandledError', {
             'exception': errors.SnapcraftSourceUnhandledError,
-            'kwargs': {'source': 'unknown://source/type',
-                       'part_name': 'example'},
+            'kwargs': {'source': 'unknown://source/type'},
             'expected_message': (
-                "Failed to pull source for part 'example': "
+                "Failed to pull source: "
                 "unable to determine source type of 'unknown://source/type'.\n"
                 "Check that the URL is correct or consider specifying "
                 "`source-type` for this part. "

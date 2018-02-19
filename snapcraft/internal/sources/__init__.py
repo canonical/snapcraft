@@ -156,9 +156,9 @@ def get_source_handler_from_type(source_type):
     return _source_handler.get(source_type)
 
 
-def get_source_handler(source, *, source_type='', part_name):
+def get_source_handler(source, *, source_type=''):
     if not source_type:
-        source_type = _get_source_type_from_uri(source, part_name)
+        source_type = _get_source_type_from_uri(source)
 
     return _source_handler[source_type]
 
@@ -166,8 +166,7 @@ def get_source_handler(source, *, source_type='', part_name):
 _tar_type_regex = re.compile(r'.*\.((tar(\.(xz|gz|bz2))?)|tgz)$')
 
 
-def _get_source_type_from_uri(source,
-                              part_name, ignore_errors=False):  # noqa: C901
+def _get_source_type_from_uri(source, ignore_errors=False):  # noqa: C901
     for extension in ['zip', 'deb', 'rpm', '7z']:
         if source.endswith('.{}'.format(extension)):
             return extension
@@ -184,6 +183,6 @@ def _get_source_type_from_uri(source,
     elif os.path.isdir(source):
         source_type = 'local'
     elif not ignore_errors:
-        raise errors.SnapcraftSourceUnhandledError(source, part_name)
+        raise errors.SnapcraftSourceUnhandledError(source)
 
     return source_type
