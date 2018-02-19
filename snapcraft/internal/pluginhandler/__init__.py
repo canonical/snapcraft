@@ -621,7 +621,7 @@ class PluginHandler:
         _clean_migrated_files(primed_files, primed_directories,
                               shared_directory)
 
-    def _handle_dependencies(self, all_dependencies: Set[elf.ElfFile]):
+    def _handle_dependencies(self, all_dependencies: Set[str]):
         # Split the necessary dependencies into their corresponding location.
         # We'll both migrate and track the system dependencies, but we'll only
         # track the part and staged dependencies, since they should have
