@@ -33,14 +33,6 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "`source-type` for this part. "
                 "See `snapcraft help sources` for more information."
                 )}),
-        ('SnapcraftSourceNotADirectoryError', {
-            'exception': errors.SnapcraftSourceNotADirectoryError,
-            'kwargs': {'source': 'foo', 'part_name': 'example'},
-            'expected_message': (
-                "Failed to pull source for part 'example': "
-                "'foo' is not a directory.\n"
-                "See `snapcraft help sources` for more information."
-                )}),
     )
 
     def test_error_formatting(self):

@@ -33,16 +33,6 @@ class SnapcraftSourceUnhandledError(errors.SnapcraftError):
         super().__init__(source=source, part_name=part_name)
 
 
-class SnapcraftSourceNotADirectoryError(errors.SnapcraftError):
-
-    fmt = ('Failed to pull source for part {part_name!r}: '
-           '{source!r} is not a directory.\n'
-           'See `snapcraft help sources` for more information.')
-
-    def __init__(self, source, part_name):
-        super().__init__(source=source, part_name=part_name)
-
-
 class IncompatibleOptionsError(errors.SnapcraftError):
 
     fmt = '{message}'

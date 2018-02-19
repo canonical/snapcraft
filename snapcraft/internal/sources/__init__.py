@@ -79,7 +79,6 @@ import os.path
 import re
 import sys
 
-from snapcraft.internal import common
 from . import errors
 
 if sys.platform == 'linux':
@@ -182,9 +181,9 @@ def _get_source_type_from_uri(source,
         source_type = 'subversion'
     elif _tar_type_regex.match(source):
         source_type = 'tar'
-    elif common.isurl(source) and not ignore_errors:
+    elif os.path.isdir(source):
+        source_type = 'local'
+    elif not ignore_errors:
         raise errors.SnapcraftSourceUnhandledError(source, part_name)
-    elif not os.path.isdir(source) and not ignore_errors:
-        raise errors.SnapcraftSourceNotADirectoryError(source, part_name)
 
     return source_type
