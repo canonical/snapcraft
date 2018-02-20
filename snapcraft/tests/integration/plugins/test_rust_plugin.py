@@ -110,8 +110,6 @@ class RustPluginConfinementTestCase(testscenarios.WithScenarios,
     scenarios = (
         ('classic', dict(confinement='classic',
                          startswith='/snap/')),
-        ('strict', dict(confinement='strict',
-                        startswith='/lib')),
     )
 
     def _set_confinement(self, snapcraft_yaml_file):
