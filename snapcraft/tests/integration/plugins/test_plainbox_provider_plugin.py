@@ -45,6 +45,8 @@ class PlainboxProviderPluginStageTestCase(testscenarios.WithScenarios,
 class PlainboxProviderPluginTestCase(integration.TestCase):
 
     def test_snap_provider_with_deps(self):
+        if self.deb_arch == 'armhf':
+            self.skipTest("No patchelf deb for armhf")
         project_dir = 'plainbox-provider-with-deps'
         self.run_snapcraft('prime', project_dir)
         # No assertion required as the project will fail to complete to the
