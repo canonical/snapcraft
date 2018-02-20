@@ -17,7 +17,7 @@
 from snapcraft.tests import unit
 
 
-class GrammarTestCase(unit.TestCase):
+class GrammarBaseTestCase(unit.TestCase):
 
     def checker(self, primitive):
         return 'invalid' not in primitive

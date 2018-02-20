@@ -1,23 +1,23 @@
-name: plainbox-simple
-summary: A Plainbox Test Tool
+name: checkbox-simple
+summary: A checkbox Test Tool
 description: >
-  The Plainbox tool itself coupled with a Provider which contains the test
+  The Checkbox tool itself coupled with a Provider which contains the test
   definitions
 version: 0.1
 confinement: strict
 
 apps:
-    plainbox:
-        command: bin/plainbox-wrapper
+    checkbox-cli:
+        command: bin/checkbox-cli-wrapper
         # Required because of https://bugs.launchpad.net/snapcraft/+bug/1732076
         plugs: [home]
 
 parts:
     # The testing framework
-    plainbox-local:
+    checkbox-ng-local:
         plugin: python3
         python-packages:
-            - plainbox
+            - checkbox-ng
             - requests-oauthlib
             - xlsxwriter
         build-packages:
@@ -29,14 +29,14 @@ parts:
     simple-plainbox-provider:
         plugin: plainbox-provider
         source: ./com.example_simple
-        after: [plainbox-local]
+        after: [checkbox-ng-local]
     # A wrapper script
     launchers:
         plugin: dump
         source: .
         organize:
-            launchers/plainbox-wrapper: bin/plainbox-wrapper
+            launchers/checkbox-cli-wrapper: bin/checkbox-cli-wrapper
         filesets:
-            wrapper: [bin/plainbox-wrapper]
+            wrapper: [bin/checkbox-cli-wrapper]
         stage: [$wrapper]
         snap: [$wrapper]

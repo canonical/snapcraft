@@ -4,6 +4,7 @@ Priority: extra
 Maintainer: Snapcraft Team <snapcraft@lists.snapcraft.io>
 Build-Depends: bash-completion,
                bzr,
+               cpio,
                debhelper (>= 9),
                dh-python,
                git,

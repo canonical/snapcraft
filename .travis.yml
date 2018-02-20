@@ -45,8 +45,6 @@ jobs:
     - if: type != cron
       script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/store
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/containers
-    - if: type != cron
       script:
       - "travis_wait 20 sleep 1200 &"
       - sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/snapd

@@ -40,6 +40,9 @@ from snapcraft.internal import (
     repo,
     states,
 )
+from snapcraft.internal.sources.errors import (
+    SnapcraftSourceUnhandledError,
+)
 from snapcraft.tests import fixture_setup
 from snapcraft.tests import unit
 from snapcraft.plugins import nil
@@ -97,15 +100,12 @@ class PluginTestCase(unit.TestCase):
 
     @patch('os.path.isdir', return_value=False)
     def test_local_non_dir_source_path_must_raise_exception(self, mock_isdir):
-        raised = self.assertRaises(
-            ValueError,
+        self.assertRaises(
+            SnapcraftSourceUnhandledError,
             self.load_part,
             'test-part', part_properties={'source': 'file'})
 
         mock_isdir.assert_any_call('file')
-
-        self.assertThat(str(raised), Equals(
-             'local source (file) is not a directory'))
 
     def test_fileset_include_excludes(self):
         stage_set = [
@@ -2346,13 +2346,9 @@ class SourcesTestCase(unit.TestCase):
     def test_source_with_unrecognized_source_must_raise_exception(self):
         properties = dict(source='unrecognized://test_source')
 
-        raised = self.assertRaises(
-            ValueError,
+        self.assertRaises(
+            SnapcraftSourceUnhandledError,
             self.load_part, 'test-part', part_properties=properties)
-
-        self.assertThat(raised.__str__(),
-                        Equals('no handler to manage source '
-                               '(unrecognized://test_source)'))
 
 
 class CleanPullTestCase(unit.TestCase):

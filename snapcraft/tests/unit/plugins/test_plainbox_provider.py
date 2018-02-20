@@ -99,7 +99,7 @@ class PythonPluginTestCase(unit.TestCase):
                                    file_info['path']), 'r') as f:
                 self.assertThat(f.read(), Equals(file_info['expected']))
 
-    def test_build_with_proivder_stage_dir(self):
+    def test_build_with_provider_stage_dir(self):
         self.useFixture(fixture_setup.CleanEnvironment())
 
         plugin = plainbox_provider.PlainboxProviderPlugin(

@@ -516,7 +516,7 @@ class StoreTestCase(TestCase):
         else:
             process.expect_exact(
                 'Cannot continue without logging in successfully: '
-                'Authentication error: Failed to get unbound discharge.')
+                'Authentication error: Failed to get unbound discharge')
         process.expect(pexpect.EOF)
         process.close()
         return process.exitstatus

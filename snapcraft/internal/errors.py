@@ -228,7 +228,11 @@ class SnapcraftPartMissingError(SnapcraftError):
     )
 
 
-class PartNotInCacheError(SnapcraftError):
+class RemotePartsError(SnapcraftError):
+    pass
+
+
+class PartNotInCacheError(RemotePartsError):
 
     fmt = (
         'Failed to get remote part information: '
@@ -237,6 +241,17 @@ class PartNotInCacheError(SnapcraftError):
         'again. If it has not been defined, consider going to '
         'https://wiki.ubuntu.com/snapcraft/parts to add it.'
     )
+
+
+class RemotePartsUpdateConnectionError(RemotePartsError):
+
+    fmt = (
+        'Failed to update cache of remote parts: {message}\n'
+        'Please try again.'
+    )
+
+    def __init__(self, requests_exception):
+        super().__init__(message=requests_exception.__doc__)
 
 
 class PluginError(SnapcraftError):

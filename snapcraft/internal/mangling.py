@@ -72,7 +72,8 @@ def _get_dynamic_linker(library_list: List[str]) -> str:
 def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
                           root_path: str, core_base_path: str,
                           snap_base_path: str,
-                          preferred_patchelf_path=None) -> None:
+                          preferred_patchelf_path=None,
+                          soname_cache: elf.SonameCache=None) -> None:
     """Copy over libc6 libraries from the host and patch necessary elf files.
 
     If no newer glibc version is detected in elf_files, this function returns.
@@ -88,33 +89,9 @@ def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
     :param str preferred_patchelf_path: patch the necessary elf_files with
                                         this patchelf.
     """
-    formatted_list = list()  # type: List[str]
-    patch_elf_files = list()  # type: List[elf.ElfFile]
-    for elf_file in elf_files:
-        required_glibc = elf_file.get_required_glibc()
-        if not required_glibc:
-            continue
+    if soname_cache is None:
+        soname_cache = elf.SonameCache()
 
-        # We need to verify now that the GLIBC version would be compatible
-        # with that of the base.
-        # TODO the linker version depends on the chosen base, but that
-        # base may not be installed so we cannot depend on
-        # get_core_dynamic_linker to resolve the final path for which
-        # we resort to our only working base 16, ld-2.23.so.
-        if not elf_file.is_linker_compatible(linker='ld-2.23.so'):
-            formatted_list.append('- {} -> GLIBC {}'.format(
-                elf_file.path, required_glibc))
-            patch_elf_files.append(elf_file)
-
-    if not patch_elf_files:
-        return
-
-    logger.warning('The primed files will not work with the current '
-                   'base given the GLIBC mismatch of the primed '
-                   'files and the linker version (2.23) used in the '
-                   'base. These are the GLIBC versions required by '
-                   'the primed files that do not match and will be '
-                   'patched:\n{}\n'.format('\n'.join(formatted_list)))
     # We assume the current system will satisfy the GLIBC requirement,
     # get the current libc6 libraries (which includes the linker)
     libc6_libraries_list = repo.Repo.get_package_libraries('libc6')
@@ -137,9 +114,10 @@ def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
     elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker_path,
                               root_path=root_path,
                               preferred_patchelf_path=preferred_patchelf_path)
-    for elf_file in patch_elf_files:
+    for elf_file in elf_files:
         # Search for dependencies again now that the new libc6 is
         # migrated.
         elf_file.load_dependencies(root_path=root_path,
-                                   core_base_path=core_base_path)
+                                   core_base_path=core_base_path,
+                                   soname_cache=soname_cache)
         elf_patcher.patch(elf_file=elf_file)

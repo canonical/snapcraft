@@ -79,7 +79,7 @@ import os.path
 import re
 import sys
 
-from snapcraft.internal import common
+from . import errors
 
 if sys.platform == 'linux':
     from ._bazaar import Bazaar          # noqa
@@ -167,6 +167,9 @@ _tar_type_regex = re.compile(r'.*\.((tar(\.(xz|gz|bz2))?)|tgz)$')
 
 
 def _get_source_type_from_uri(source, ignore_errors=False):  # noqa: C901
+    for extension in ['zip', 'deb', 'rpm', '7z']:
+        if source.endswith('.{}'.format(extension)):
+            return extension
     source_type = ''
     if source.startswith('bzr:') or source.startswith('lp:'):
         source_type = 'bzr'
@@ -177,17 +180,9 @@ def _get_source_type_from_uri(source, ignore_errors=False):  # noqa: C901
         source_type = 'subversion'
     elif _tar_type_regex.match(source):
         source_type = 'tar'
-    elif source.endswith('.zip'):
-        source_type = 'zip'
-    elif source.endswith('deb'):
-        source_type = 'deb'
-    elif source.endswith('rpm'):
-        source_type = 'rpm'
-    elif source.endswith('7z'):
-        source_type = '7z'
-    elif common.isurl(source) and not ignore_errors:
-        raise ValueError('no handler to manage source ({})'.format(source))
-    elif not os.path.isdir(source) and not ignore_errors:
-        raise ValueError('local source ({}) is not a directory'.format(source))
+    elif os.path.isdir(source):
+        source_type = 'local'
+    elif not ignore_errors:
+        raise errors.SnapcraftSourceUnhandledError(source)
 
     return source_type

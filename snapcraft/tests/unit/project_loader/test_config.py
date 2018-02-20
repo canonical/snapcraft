@@ -788,57 +788,6 @@ parts:
             "The 'environment/INVALID' property does not match the required "
             "schema: \[1, 2\].*")
 
-    def test_invalid_yaml_empty_version(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        self.make_snapcraft_yaml("""name: test
-version: ''
-summary: test
-description: test
-confinement: strict
-grade: stable
-parts:
-  part1:
-    plugin: nil
-""")
-        raised = self.assertRaises(
-            errors.YamlValidationError,
-            _config.Config)
-
-        self.assertThat(
-            raised.message,
-            Equals("The 'version' property does not match the required "
-                   "schema: '' is not a valid snap version. Snap versions "
-                   "consist of upper- and lower-case alphanumeric characters, "
-                   "as well as periods, plus signs, tildes, and hyphens."))
-
-    def test_invalid_yaml_invalid_version(self):
-        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
-        self.useFixture(fake_logger)
-
-        self.make_snapcraft_yaml(dedent("""
-            name: test
-            version: '*'
-            summary: test
-            description: test
-            confinement: strict
-            grade: stable
-            parts:
-              part1:
-                plugin: nil
-        """))
-        raised = self.assertRaises(
-            errors.YamlValidationError,
-            _config.Config)
-
-        self.assertThat(
-            raised.message,
-            Equals("The 'version' property does not match the required "
-                   "schema: '*' is not a valid snap version. Snap versions "
-                   "consist of upper- and lower-case alphanumeric characters, "
-                   "as well as periods, plus signs, tildes, and hyphens."))
-
     def test_invalid_yaml_version_too_long(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
@@ -907,6 +856,69 @@ parts:
              'stage-packages': ['fswebcam']})
 
         self.mock_load_part.assert_has_calls([call1, call2], any_order=True)
+
+
+class ValidVersionTestCase(YamlBaseTestCase):
+    scenarios = [
+        (version, dict(version=version)) for
+        version in ['buttered-popcorn', '1.2.3', 'v12.4:1:2~', 'HeLlo', 'v+']
+    ]
+
+    def test_valid_version(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml(dedent("""
+            name: test
+            version: {!r}
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              part1:
+                plugin: nil
+        """).format(self.version))
+        _config.Config()
+
+
+class InvalidVersionTestCase(YamlBaseTestCase):
+    scenarios = [
+        (version, dict(version=version)) for
+        version in [
+            '*', '', ':v', '.v', '+v', '~v', '_v', '-v', 'v:', 'v.', 'v_',
+            'v-', 'underscores_are_bad',
+        ]
+    ]
+
+    def test_invalid_version(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml(dedent("""
+            name: test
+            version: {!r}
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              part1:
+                plugin: nil
+        """).format(self.version))
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            _config.Config)
+
+        self.assertThat(
+            raised.message,
+            Equals("The 'version' property does not match the required "
+                   "schema: {!r} is not a valid snap version. Snap versions "
+                   "consist of upper- and lower-case alphanumeric characters, "
+                   "as well as periods, colons, plus signs, tildes, and "
+                   "hyphens. They cannot begin with a period, colon, plus "
+                   "sign, tilde, or hyphen. They cannot end with a period, "
+                   "colon, or hyphen.".format(self.version)))
 
 
 class YamlEncodingsTestCase(YamlBaseTestCase):

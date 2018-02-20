@@ -8,10 +8,10 @@ description: |
 confinement: strict
 
 parts:
-    plainbox-local:
+    checkbox-ng-local:
         plugin: python3
         python-packages:
-            - plainbox
+            - checkbox-ng
             - requests-oauthlib
         build-packages:
             - libxml2-dev
@@ -21,5 +21,5 @@ parts:
     simple-plainbox-provider:
         plugin: plainbox-provider
         source: ./2016.com.example_simple
-        after: [plainbox-local]
+        after: [checkbox-ng-local]
         stage-packages: [python3-petname]

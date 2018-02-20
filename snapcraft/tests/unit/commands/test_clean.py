@@ -25,7 +25,7 @@ import snapcraft.internal.errors
 from . import CommandBaseTestCase
 
 
-class CleanCommandTestCase(CommandBaseTestCase):
+class CleanCommandBaseTestCase(CommandBaseTestCase):
 
     yaml_template = """name: clean-test
 version: 1.0
@@ -76,6 +76,9 @@ parts:
 
         return parts
 
+
+class CleanCommandTestCase(CleanCommandBaseTestCase):
+
     def test_part_to_remove_not_defined_exits_with_error(self):
         self.make_snapcraft_yaml(n=3)
 
@@ -98,7 +101,7 @@ parts:
         self.assertThat(self.prime_dir, Not(DirExists()))
 
 
-class ContainerizedCleanCommandTestCase(CleanCommandTestCase):
+class ContainerizedCleanCommandTestCase(CleanCommandBaseTestCase):
 
     scenarios = [
         ('local', dict(snapcraft_container_builds='1', remote='local')),
@@ -181,7 +184,7 @@ class ContainerizedCleanCommandTestCase(CleanCommandTestCase):
         fake_lxd.check_call_mock.assert_not_called()
 
 
-class CleanCommandPartsTestCase(CleanCommandTestCase):
+class CleanCommandPartsTestCase(CleanCommandBaseTestCase):
 
     def test_local_plugin_not_removed(self):
         self.make_snapcraft_yaml(n=3)
