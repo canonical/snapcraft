@@ -21,6 +21,18 @@ class VCSError(errors.SnapcraftError):
     fmt = '{message}'
 
 
+class SnapcraftSourceUnhandledError(errors.SnapcraftError):
+
+    fmt = ('Failed to pull source: '
+           'unable to determine source type of {source!r}.\n'
+           'Check that the URL is correct or '
+           'consider specifying `source-type` for this part. '
+           'See `snapcraft help sources` for more information.')
+
+    def __init__(self, source):
+        super().__init__(source=source)
+
+
 class IncompatibleOptionsError(errors.SnapcraftError):
 
     fmt = '{message}'

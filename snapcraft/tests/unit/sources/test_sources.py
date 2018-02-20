@@ -43,7 +43,7 @@ class TestUri(unit.TestCase):
 
     ]
 
-    def test_get_source_typefrom_uri(self):
+    def test_get_source_type_from_uri(self):
         self.assertThat(sources._get_source_type_from_uri(self.source),
                         Equals(self.result))
 
