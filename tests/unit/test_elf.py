@@ -20,7 +20,7 @@ import tempfile
 from textwrap import dedent
 import sys
 
-from testtools.matchers import Contains, Equals, NotEquals
+from testtools.matchers import Contains, Equals, NotEquals, StartsWith
 from unittest import mock
 
 from snapcraft.internal import errors, elf, os_release
@@ -61,11 +61,18 @@ class TestLdLibraryPathParser(unit.TestCase):
 
 class TestElfFileSmoketest(unit.TestCase):
 
-    def test_bin_echo(self):
+    def test_extract_python(self):
         # Try parsing a file without the pyelftools logic mocked out
         elf_file = elf.ElfFile(path=sys.executable)
 
         self.assertThat(elf_file.path, Equals(sys.executable))
+
+        # The arch attribute will be a tuple of three strings
+        self.assertTrue(isinstance(elf_file.arch, tuple))
+        self.assertThat(len(elf_file.arch), Equals(3))
+        self.assertThat(elf_file.arch[0], StartsWith('ELFCLASS'))
+        self.assertThat(elf_file.arch[1], StartsWith('ELFDATA'))
+        self.assertThat(elf_file.arch[2], StartsWith('EM_'))
 
         # We expect Python to be a dynamic linked executable with an
         # ELF interpreter.
