@@ -12,7 +12,7 @@ snapcraft (2.39.2) xenial; urgency=medium
   * store: support pushing snap with no architectures (#1937)
   * storeapi: handle errors even for >400 responses (#1936)
 
-  [ Leo Arias ]
+  [ Christian Dywan ]
   * sources: proper errors for invalid handlers (#1929)
 
   [ Sylvain Pineau ]
