@@ -35,7 +35,7 @@ parts:
         - libsodium-dev
         - liblzma-dev
     stage-packages:
-        - binutils
+        - execstack
         - libffi6
         - libsodium18
         - squashfs-tools

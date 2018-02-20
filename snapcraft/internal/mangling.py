@@ -16,6 +16,7 @@
 import logging
 import os
 import re
+import subprocess
 from typing import FrozenSet, List
 
 from snapcraft import file_utils
@@ -121,3 +122,31 @@ def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
                                    core_base_path=core_base_path,
                                    soname_cache=soname_cache)
         elf_patcher.patch(elf_file=elf_file)
+
+
+def clear_execstack(*, elf_files: FrozenSet[elf.ElfFile]) -> None:
+    """Clears the execstack for the relevant elf_files
+
+    param elf.ElfFile elf_files: the full list of elf files to analyze
+                                 and clear the execstack if present.
+    """
+    execstack_path = file_utils.get_tool_path('execstack')
+    elf_files_with_execstack = [e for e in elf_files if e.execstack_set]
+
+    if elf_files_with_execstack:
+        formatted_items = ['- {}'.format(e.path)
+                           for e in elf_files_with_execstack]
+        logger.warning(
+            'The execstacks are going to be cleared for the following '
+            'files:\n{}\n'
+            'To disable this behavior set '
+            '`build-properties: [keep-execstack]` '
+            'for the part.'.format('\n'.join(formatted_items)))
+
+    for elf_file in elf_files_with_execstack:
+        try:
+            subprocess.check_call([execstack_path, '--clear-execstack',
+                                   elf_file.path])
+        except subprocess.CalledProcessError:
+            logger.warning('Failed to clear execstack for {!r}'.format(
+                elf_file.path))

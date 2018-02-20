@@ -159,12 +159,19 @@ class ElfFile:
         """
         self.path = path
         self.dependencies = set()  # type: Set[Library]
-        self.interp, self.soname, self.needed = self._extract(path)
+        elf_data = self._extract(path)
+        self.interp = elf_data[0]
+        self.soname = elf_data[1]
+        self.needed = elf_data[2]
+        self.execstack_set = elf_data[3]
 
-    def _extract(self, path) -> Tuple[str, str, Dict[str, NeededLibrary]]:
+    def _extract(self, path):  # noqa: C901
+        # type: (str) -> Tuple[str, str, Dict[str, NeededLibrary], bool]
         interp = str()
         soname = str()
         libs = dict()
+        execstack_set = False
+
         with open(path, 'rb') as fp:
             elf = elftools.elf.elffile.ELFFile(fp)
 
@@ -198,7 +205,14 @@ class ElfFile:
                     lib = libs[library_name]
                     for version in versions:
                         lib.add_version(_ensure_str(version.name))
-        return interp, soname, libs
+
+            for segment in elf.iter_segments():
+                if segment['p_type'] == 'PT_GNU_STACK':
+                    mode = segment['p_flags']
+                    if mode & 1:
+                        execstack_set = True
+
+        return interp, soname, libs, execstack_set
 
     def is_linker_compatible(self, *, linker: str) -> bool:
         """Determines if linker will work given the required glibc version.

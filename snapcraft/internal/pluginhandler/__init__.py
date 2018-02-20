@@ -29,7 +29,7 @@ import yaml
 import snapcraft.extractors
 from snapcraft import file_utils
 from snapcraft.internal import common, elf, errors, repo, sources, states
-from snapcraft.internal.mangling import handle_glibc_mismatch
+from snapcraft.internal.mangling import clear_execstack, handle_glibc_mismatch
 
 from ._build_attributes import BuildAttributes
 from ._metadata_extraction import extract_metadata
@@ -504,7 +504,7 @@ class PluginHandler:
 
         self.mark_cleaned('stage')
 
-    def prime(self, force=False) -> None:
+    def prime(self, force=False) -> None:  # noqa: C901
         self.makedirs()
         self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
@@ -525,6 +525,9 @@ class PluginHandler:
                                            soname_cache=self._soname_cache))
 
         dependency_paths = self._handle_dependencies(all_dependencies)
+
+        if not self._build_attributes.keep_execstack():
+            clear_execstack(elf_files=elf_files)
 
         # TODO revisit if we need to support variations and permutations
         #  of this

@@ -7,6 +7,7 @@ Build-Depends: bash-completion,
                cpio,
                debhelper (>= 9),
                dh-python,
+               execstack,
                git,
                mercurial,
                p7zip-full,
@@ -48,7 +49,7 @@ Standards-Version: 3.9.8
 
 Package: snapcraft
 Architecture: all
-Depends: binutils,
+Depends: execstack,
          python3-apt,
          python3-debian,
          python3-click,

@@ -281,6 +281,18 @@ class TestGetElfFiles(TestElfBase):
                                       {'fake_elf-static'})
         self.assertThat(elf_files, Equals(set()))
 
+    def test_elf_with_execstack(self):
+        elf_files = elf.get_elf_files(self.fake_elf.root_path,
+                                      {'fake_elf-with-execstack'})
+        elf_file = set(elf_files).pop()
+        self.assertThat(elf_file.execstack_set, Equals(True))
+
+    def test_elf_without_execstack(self):
+        elf_files = elf.get_elf_files(self.fake_elf.root_path,
+                                      {'fake_elf-2.23'})
+        elf_file = set(elf_files).pop()
+        self.assertThat(elf_file.execstack_set, Equals(False))
+
     def test_non_elf_files(self):
         with open(os.path.join(
                 self.fake_elf.root_path, 'non-elf'), 'wb') as f:
