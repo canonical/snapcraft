@@ -37,7 +37,8 @@ import snapcraft.internal.project_loader._config as _config
 
 from snapcraft.tests import (
     fixture_setup,
-    unit
+    unit,
+    skip
 )
 
 
@@ -1682,6 +1683,7 @@ parts:
                             'Expected LD_LIBRARY_PATH to include "{}"'.format(
                                 item))
 
+    @skip.skip_unless_codename('xenial', 'classic env is different elsewhere')
     def test_config_stage_environment_confinement_classic(self):
         self.make_snapcraft_yaml("""name: test
 version: "1"
