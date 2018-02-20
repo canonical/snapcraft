@@ -13,3 +13,4 @@ parts:
     local:
         plugin: ant
         source: .
+        stage-packages: [libc6]

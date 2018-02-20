@@ -23,3 +23,4 @@ parts:
       - lib
     install: |
       cp ./ruby-hello.rb $SNAPCRAFT_PART_INSTALL/bin/ruby-hello.rb
+    stage-packages: [libc6]

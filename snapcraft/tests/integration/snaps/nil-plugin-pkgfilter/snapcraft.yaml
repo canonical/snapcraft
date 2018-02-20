@@ -12,6 +12,7 @@ parts:
     nm-tools:
         plugin: nil
         stage-packages:
+            - libc6
             - network-manager
         snap:
             - usr/bin/nmcli

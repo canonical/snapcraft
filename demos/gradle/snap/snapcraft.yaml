@@ -14,3 +14,4 @@ parts:
         plugin: gradle
         source: .
         gradle-options: [--debug]
+        stage-packages: [libc6]

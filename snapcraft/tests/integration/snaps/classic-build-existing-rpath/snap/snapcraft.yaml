@@ -12,5 +12,6 @@ parts:
   hello:
     plugin: make
     build-packages: [patchelf]
+    stage-packages: [libc6]
     install: |
       patchelf --force-rpath --set-rpath "\$ORIGIN/../fake-lib" $SNAPCRAFT_PART_INSTALL/bin/hello-classic

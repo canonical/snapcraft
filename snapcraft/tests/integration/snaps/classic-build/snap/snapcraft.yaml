@@ -11,3 +11,4 @@ confinement: classic
 parts:
   hello:
     plugin: make
+    stage-packages: [libc6]
