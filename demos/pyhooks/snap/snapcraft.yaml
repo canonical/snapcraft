@@ -13,3 +13,4 @@ parts:
     install: |
       mkdir -p $SNAPCRAFT_PART_INSTALL/snap/hooks
       cp configure_hook.py $SNAPCRAFT_PART_INSTALL/snap/hooks/configure
+    stage-packages: [libc6]
