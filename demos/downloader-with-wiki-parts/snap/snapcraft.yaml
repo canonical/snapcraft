@@ -14,4 +14,7 @@ parts:
         source: .
         after:
             - curl
+        stage-packages: [libc6]
+    curl:
+        stage-packages: [libc6]
 build-packages: [libssl-dev]
