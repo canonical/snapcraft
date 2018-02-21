@@ -34,6 +34,7 @@ from testtools.matchers import (
     MatchesRegex
 )
 
+import snapcraft
 from snaps_tests import testbed
 
 logger = logging.getLogger(__name__)
@@ -103,6 +104,9 @@ class SnapsTestCase(testtools.TestCase):
         super().__init__(*args, **kwargs)
 
     def setUp(self):
+        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+            self.skipTest('The demos are only supported on amd64')
+
         filter_ = config.get('filter', None)
         if filter_:
             if not re.match(filter_, self.snap_content_dir):

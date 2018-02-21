@@ -14,7 +14,7 @@ parts:
         source: .
         after:
             - curl
-        stage-packages: [libc6]
+        stage-packages: [libc6, zlib1g]
     curl:
         stage-packages: [libc6]
-build-packages: [libssl-dev]
+build-packages: [libssl-dev, zlib1g-dev]

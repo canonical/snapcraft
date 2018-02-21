@@ -8,7 +8,6 @@ grade: stable
 apps:
  hello:
     command: usr/lib/jvm/default-java/bin/java oata.HelloWorld
-    adapter: none
     environment:
        JAVA_HOME: $SNAP/usr/lib/jvm/default-java
        CLASSPATH: $SNAP/jar/HelloWorld.jar
@@ -21,4 +20,3 @@ parts:
         stage-packages:
             - libc6
             - libstdc++6
-    
