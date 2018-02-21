@@ -14,4 +14,4 @@ parts:
   example:
     plugin: cmake
     source: src
-    stage-packages: [libopencv-core2.4v5]
+    stage-packages: [libopencv-core2.4v5, libc6]

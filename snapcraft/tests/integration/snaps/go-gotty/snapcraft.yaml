@@ -15,7 +15,9 @@ parts:
     source-commit: 2c50c432906f1034fa1efec8f7866315f8c81025
     plugin: go
     build-snaps: [patchelf/latest/edge]
+    stage-packages: [libc6]
     go-importpath: github.com/yudai/gotty
     after: [go]
   go:
     source-tag: go1.9.2
+    stage-packages: [libc6]

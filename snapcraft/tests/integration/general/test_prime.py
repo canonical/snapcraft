@@ -68,7 +68,7 @@ class PrimeTestCase(integration.TestCase):
 
         interpreter = subprocess.check_output([
             self.patchelf_command, '--print-interpreter', bin_path]).decode()
-        expected_interpreter = r'^/snap/core/current/.*'
+        expected_interpreter = r'^/snap/.*'
         self.assertThat(interpreter, MatchesRegex(expected_interpreter))
 
         # We check stage to make sure the hard link is broken.
@@ -108,7 +108,7 @@ class PrimeTestCase(integration.TestCase):
 
         rpath = subprocess.check_output([
             self.patchelf_command, '--print-rpath', bin_path]).decode().strip()
-        expected_rpath = '$ORIGIN/../fake-lib:/snap/core/current/'
+        expected_rpath = '$ORIGIN/../fake-lib:$ORIGIN/../lib/x86_64-linux-gnu'
         self.assertThat(rpath, StartsWith(expected_rpath))
 
     def test_prime_includes_stage_fileset(self):

@@ -29,7 +29,7 @@ from testtools.matchers import (
 )
 
 import snapcraft
-from snapcraft.tests import integration
+from snapcraft.tests import integration, skip
 
 
 class SnapTestCase(integration.TestCase):
@@ -38,6 +38,8 @@ class SnapTestCase(integration.TestCase):
         super().setUp()
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
+    @skip.skip_unless_codename('xenial',
+                               'wrapper depends on host matching base')
     def test_snap(self):
         self.copy_project_to_cwd('assemble')
         self.run_snapcraft('snap')

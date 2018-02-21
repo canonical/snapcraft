@@ -11,3 +11,4 @@ parts:
   rust-hello:
     plugin: rust
     source: .
+    stage-packages: [libc6]

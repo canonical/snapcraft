@@ -14,3 +14,6 @@ parts:
       dist.dir: 'target'
     ant-build-targets:
       - artifacts
+    stage:
+      - -usr/share/icons
+    stage-packages: [libc6]

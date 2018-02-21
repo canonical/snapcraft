@@ -21,4 +21,5 @@ parts:
     stage-packages:
       # Here for the plugins-- they're not linked in automatically.
       - libqtgui4
+      - libc6
     after: [qt4conf] # A wiki part
