@@ -253,6 +253,14 @@ class Config:
         return snapcraft_yaml
 
 
+class Loader(yaml.Loader):
+    pass
+
+
+def float_constructor(self, node):
+    return self.construct_yaml_str(node)
+
+
 def _snapcraft_yaml_load(yaml_file):
     with open(yaml_file, 'rb') as fp:
         bs = fp.read(2)
@@ -264,7 +272,11 @@ def _snapcraft_yaml_load(yaml_file):
 
     try:
         with open(yaml_file, encoding=encoding) as fp:
-            return yaml.load(fp)
+            # Override the loader here so we can parse float as str
+            # which matters when eg. having "version: 2.10"
+            Loader.add_constructor(
+                u'tag:yaml.org,2002:float', float_constructor)
+            return yaml.load(fp, Loader)
     except yaml.scanner.ScannerError as e:
         raise errors.YamlValidationError('{} on line {} of {}'.format(
             e.problem, e.problem_mark.line + 1, yaml_file)) from e
