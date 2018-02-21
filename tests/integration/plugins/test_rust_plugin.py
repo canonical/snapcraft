@@ -1,6 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Marius Gripsgard (mariogrip@ubuntu.com)
+# Copyright (C) 2016 Marius Gripsgard (mariogrip@ubuntu.com)
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,8 +24,8 @@ import yaml
 from testtools.matchers import Equals, FileExists, MatchesRegex, Not
 
 import snapcraft
-from snapcraft.tests import integration
-from snapcraft.tests.matchers import HasArchitecture
+from tests import integration
+from tests.matchers import HasArchitecture
 
 
 class RustPluginBaseTestCase(integration.TestCase):

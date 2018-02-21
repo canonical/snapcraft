@@ -16,7 +16,7 @@
 from testtools.matchers import Equals
 
 from snapcraft.internal.sources import errors
-from snapcraft.tests import unit
+from tests import unit
 
 
 class ErrorFormattingTestCase(unit.TestCase):

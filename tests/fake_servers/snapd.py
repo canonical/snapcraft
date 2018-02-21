@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,7 +17,7 @@ import json
 from urllib import parse
 from typing import Any, Dict, List  # noqa
 
-from snapcraft.tests import fake_servers
+from tests import fake_servers
 
 
 class FakeSnapdRequestHandler(fake_servers.BaseHTTPRequestHandler):

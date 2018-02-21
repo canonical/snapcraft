@@ -20,7 +20,7 @@ import textwrap
 
 from testtools.matchers import Equals
 
-from snapcraft.tests import (
+from tests import (
     fixture_setup,
     integration
 )

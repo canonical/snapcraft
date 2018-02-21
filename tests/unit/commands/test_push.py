@@ -24,13 +24,13 @@ from xdg import BaseDirectory
 from snapcraft import (
     file_utils,
     storeapi,
-    tests
 )
 from snapcraft.storeapi.errors import (
     StoreDeltaApplicationError,
     StorePushError,
     StoreUploadError
 )
+import tests
 from . import CommandBaseTestCase
 
 

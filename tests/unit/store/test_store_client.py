@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright 2016, 2017 Canonical Ltd
+# Copyright 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -28,14 +28,14 @@ from testtools.matchers import Contains, Equals
 from snapcraft import (
     config,
     storeapi,
-    tests,
     ProjectOptions,
 )
 from snapcraft.storeapi import (
     errors,
     constants
 )
-from snapcraft.tests import (
+import tests
+from tests import (
     fixture_setup,
     unit
 )
@@ -175,7 +175,7 @@ class LoginTestCase(StoreTestCase):
 
 class DownloadTestCase(StoreTestCase):
 
-    # sha512 of snapcraft/tests/data/test-snap.snap
+    # sha512 of tests/data/test-snap.snap
     EXPECTED_SHA512 = (
         '69D57DCACF4F126592D4E6FF689AD8BB8A083C7B9FE44F6E738EF'
         'd22a956457f14146f7f067b47bd976cf0292f2993ad864ccb498b'

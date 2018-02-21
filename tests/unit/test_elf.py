@@ -24,7 +24,7 @@ from testtools.matchers import Contains, Equals, NotEquals
 from unittest import mock
 
 from snapcraft.internal import errors, elf, os_release
-from snapcraft.tests import unit, fixture_setup
+from tests import unit, fixture_setup
 
 
 class TestElfBase(unit.TestCase):

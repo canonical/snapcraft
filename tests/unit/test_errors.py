@@ -20,7 +20,7 @@ from testtools.matchers import Equals
 
 from snapcraft.internal import errors
 from snapcraft.internal.meta import _errors as meta_errors
-from snapcraft.tests import unit
+from tests import unit
 
 
 class ErrorFormattingTestCase(unit.TestCase):

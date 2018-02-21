@@ -14,12 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
 import snapcraft.plugins.jhbuild
+from tests import unit
 
 
 # LP: #1733584
-class JHBuildPluginTestCase(snapcraft.tests.unit.TestCase):  # type: ignore
+class JHBuildPluginTestCase(unit.TestCase):  # type: ignore
 
     def _test_plugin(self):
         class Options:

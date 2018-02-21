@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016, 2017 Canonical Ltd
+# Copyright (C) 2016, 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,8 +21,8 @@ import urllib.parse
 
 from pyramid import response
 
-import snapcraft.tests
-from snapcraft.tests.fake_servers import base
+import tests
+from tests.fake_servers import base
 
 
 logger = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ class FakeStoreSearchServer(base.BaseFakeServer):
     def _get_details_payload(self, request):
         # core snap is used in integration tests with fake servers.
         snap = request.matchdict['snap']
-        # sha512sum snapcraft/tests/data/test-snap.snap
+        # sha512sum tests/data/test-snap.snap
         test_sha512 = (
             '69d57dcacf4f126592d4e6ff689ad8bb8a083c7b9fe44f6e738ef'
             'd22a956457f14146f7f067b47bd976cf0292f2993ad864ccb498b'
@@ -109,8 +109,7 @@ class FakeStoreSearchServer(base.BaseFakeServer):
         # TODO create a test snap during the test instead of hardcoding it.
         # --elopio - 2016-05-01
         snap_path = os.path.join(
-            os.path.dirname(snapcraft.tests.__file__), 'data',
-            'test-snap.snap')
+            os.path.dirname(tests.__file__), 'data', 'test-snap.snap')
 
         with open(snap_path, 'rb') as snap_file:
             return response.Response(

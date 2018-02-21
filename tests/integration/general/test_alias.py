@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,9 +18,9 @@ import os
 import stat
 
 import yaml
-
-from snapcraft.tests import integration
 from testtools.matchers import Equals, FileExists
+
+from tests import integration
 
 
 # FIXME: Ideally this would be a snaps test so we can run the aliases, but that

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -29,7 +29,7 @@ from snapcraft.internal import (
     dirs,
     project_loader
 )
-from snapcraft.tests import unit
+from tests import unit
 
 
 class TestParts(unit.TestCase):

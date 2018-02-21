@@ -40,18 +40,18 @@ import xdg
 import yaml
 
 import snapcraft
-from snapcraft.tests import fake_servers
-from snapcraft.tests.fake_servers import (
+from snapcraft.internal import elf
+from tests import fake_servers
+from tests.fake_servers import (
     api,
     search,
     snapd,
     upload
 )
-from snapcraft.tests.subprocess_utils import (
+from tests.subprocess_utils import (
     call,
     call_with_output,
 )
-from snapcraft.internal import elf
 
 
 class TempCWD(fixtures.TempDir):
@@ -877,7 +877,7 @@ class FakeAptCache(fixtures.Fixture):
         # Add all the packages in the manifest.
         with open(os.path.abspath(
                 os.path.join(
-                    __file__, '..', '..',
+                    __file__, '..', '..', 'snapcraft',
                     'internal', 'repo', 'manifest.txt'))) as manifest_file:
             self.add_packages([line.strip() for line in manifest_file])
 

@@ -40,7 +40,7 @@ from testtools.matchers import MatchesRegex
 
 from snapcraft import ProjectOptions as _ProjectOptions
 from snapcraft.internal.os_release import OsRelease
-from snapcraft.tests import (
+from tests import (
     fixture_setup,
     subprocess_utils
 )

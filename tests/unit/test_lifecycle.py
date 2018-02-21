@@ -1,7 +1,7 @@
 
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -42,7 +42,7 @@ from snapcraft import storeapi
 from snapcraft.file_utils import calculate_sha3_384
 from snapcraft.internal import errors, pluginhandler, lifecycle
 from snapcraft.internal.lifecycle._runner import _replace_in_part
-from snapcraft.tests import (
+from tests import (
     fixture_setup,
     unit
 )

@@ -43,9 +43,11 @@ from snapcraft.internal import (
 from snapcraft.internal.sources.errors import (
     SnapcraftSourceUnhandledError,
 )
-from snapcraft.tests import fixture_setup
-from snapcraft.tests import unit
 from snapcraft.plugins import nil
+from tests import (
+    fixture_setup,
+    unit
+)
 
 
 class PluginTestCase(unit.TestCase):

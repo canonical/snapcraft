@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,12 +19,12 @@ from textwrap import dedent
 
 from click.testing import CliRunner
 
-from snapcraft import (
-    storeapi,
-    tests
-)
-from snapcraft.tests import unit
+from snapcraft import storeapi
 from snapcraft.cli._runner import run
+from tests import (
+    fixture_setup,
+    unit
+)
 
 
 _sample_keys = [
@@ -122,6 +122,6 @@ class StoreCommandsBaseTestCase(CommandBaseTestCase):
 
     def setUp(self):
         super().setUp()
-        self.fake_store = tests.fixture_setup.FakeStore()
+        self.fake_store = fixture_setup.FakeStore()
         self.useFixture(self.fake_store)
         self.client = storeapi.StoreClient()

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 # Copyright (C) 2016 Harald Sitter <sitter@kde.org>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -24,7 +24,7 @@ from testtools.matchers import Equals, HasLength
 import snapcraft
 from snapcraft.plugins import autotools
 from snapcraft.plugins import make
-from snapcraft.tests import unit
+from tests import unit
 
 
 class AutotoolsPluginTestCase(unit.TestCase):

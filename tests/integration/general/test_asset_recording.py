@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -26,9 +26,11 @@ import testscenarios
 from testtools.matchers import Contains, Equals
 
 import snapcraft
-from snapcraft.tests import integration
 from snapcraft.internal.repo import snaps
-from snapcraft.tests import fixture_setup
+from tests import (
+    integration,
+    fixture_setup
+)
 
 
 class AssetRecordingBaseTestCase(integration.TestCase):

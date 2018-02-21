@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -23,17 +23,16 @@ import fixtures
 import yaml
 from testtools.matchers import Contains, Equals
 
-from snapcraft import (
-    storeapi,
-    tests,
-)
+from snapcraft import storeapi
 from snapcraft.integrations import travis
 from snapcraft.internal.errors import (
     RequiredCommandFailure,
     RequiredCommandNotFound,
     RequiredPathDoesNotExist,
 )
-from snapcraft.tests import unit
+import tests
+from tests import unit
+
 
 test_snapcraft_yaml = """
 name: foo

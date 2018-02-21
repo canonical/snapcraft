@@ -21,8 +21,8 @@ import yaml
 
 from testtools.matchers import Equals, FileExists
 
-from snapcraft import tests
-from snapcraft.tests import (
+import tests
+from tests import (
     fixture_setup,
     integration
 )

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,13 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-
-from snapcraft.cli._errors import exception_handler
-import snapcraft.internal.errors
-
 from unittest import mock
 
-from snapcraft.tests import unit
+import snapcraft.internal.errors
+from snapcraft.cli._errors import exception_handler
+from tests import unit
 
 
 class TestSnapcraftError(snapcraft.internal.errors.SnapcraftError):

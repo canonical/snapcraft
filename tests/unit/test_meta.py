@@ -40,7 +40,7 @@ from snapcraft import ProjectOptions, extractors
 from snapcraft.internal import common
 from snapcraft.internal import errors
 from snapcraft.internal import project_loader
-from snapcraft.tests import unit, fixture_setup
+from tests import unit, fixture_setup
 
 
 class CreateBaseTestCase(unit.TestCase):

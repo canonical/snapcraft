@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -32,8 +32,8 @@ from testtools.matchers import (
     FileExists,
     Not,
 )
+from tests import fixture_setup
 from . import CommandBaseTestCase
-from snapcraft.tests import fixture_setup
 
 
 class SnapCommandBaseTestCase(CommandBaseTestCase):

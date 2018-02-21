@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,9 +19,10 @@ import os
 from testtools.matchers import Equals
 
 import snapcraft
+import tests
 from snapcraft import file_utils
 from snapcraft.internal import cache
-from snapcraft.tests.unit.commands import CommandBaseTestCase
+from tests.unit.commands import CommandBaseTestCase
 
 
 class SnapCacheBaseTestCase(CommandBaseTestCase):
@@ -31,7 +32,7 @@ class SnapCacheBaseTestCase(CommandBaseTestCase):
 
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
         self.snap_path = os.path.join(
-            os.path.dirname(snapcraft.tests.__file__), 'data',
+            os.path.dirname(tests.__file__), 'data',
             'test-snap.snap')
 
 

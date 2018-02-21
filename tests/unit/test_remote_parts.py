@@ -14,17 +14,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from unittest import mock
+
 import requests.exceptions
+from testtools.matchers import Equals
 
 from snapcraft.internal import (
     errors,
     remote_parts,
 )
-
-from unittest import mock
-from testtools.matchers import Equals
-
-from snapcraft.tests import unit
+from tests import unit
 
 
 class TestRemoteParts(unit.TestCase):

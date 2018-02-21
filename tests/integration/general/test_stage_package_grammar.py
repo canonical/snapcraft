@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,7 +18,7 @@ import os
 import subprocess
 from textwrap import dedent
 
-from snapcraft.tests import integration
+from tests import integration
 from testtools.matchers import (
     Contains,
     FileExists,

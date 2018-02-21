@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,7 +24,7 @@ from testtools.matchers import Equals
 
 import snapcraft
 from snapcraft.internal import errors
-from snapcraft.tests import (
+from tests import (
     fixture_setup,
     unit
 )

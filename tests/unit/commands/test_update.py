@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,6 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 from collections import OrderedDict
+from textwrap import dedent
+from unittest import mock
+from unittest.mock import call
 
 import fixtures
 import hashlib
@@ -22,11 +25,8 @@ import sys
 import yaml
 from testtools.matchers import Contains, Equals, FileExists
 from xdg import BaseDirectory
-from textwrap import dedent
-from unittest import mock
-from unittest.mock import call
 
-from snapcraft.tests import (
+from tests import (
     fixture_setup,
     unit
 )

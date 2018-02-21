@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,13 +18,11 @@ import os
 import re
 from unittest import mock
 
-from snapcraft import storeapi
-
 import fixtures
 from testtools.matchers import MatchesRegex
 
-
-from snapcraft.tests.unit import commands
+from snapcraft import storeapi
+from tests.unit import commands
 
 
 class WhoamiCommandBaseTestCase(commands.CommandBaseTestCase):

@@ -20,7 +20,7 @@ import sys
 from testtools.matchers import FileExists
 
 from snapcraft.internal import sources
-from snapcraft.tests import unit
+from tests import unit
 
 
 class TestRpm(unit.TestCase):

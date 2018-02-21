@@ -1,6 +1,7 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
 # Copyright (C) 2016-2017 Neal Gompa
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,7 +19,7 @@ import os
 
 from testtools.matchers import FileExists
 
-from snapcraft.tests import integration
+from tests import integration
 
 
 class RpmSourceTestCase(integration.TestCase):

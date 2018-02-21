@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,18 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
-from snapcraft.tests import unit
-from testtools.matchers import Equals
-from unittest.mock import patch
+import doctest
+from unittest import mock
 
+from testtools.matchers import Equals
+
+import snapcraft
 from snapcraft.internal.project_loader.grammar_processing import (
     PartGrammarProcessor,
     _part_grammar_processor as processor
 )
-
-import doctest
-from unittest import mock
+from tests import unit
 
 
 def load_tests(loader, tests, ignore):
@@ -81,8 +80,8 @@ class PartGrammarTestCase(unit.TestCase):
         }),
     ]
 
-    @patch('platform.architecture')
-    @patch('platform.machine')
+    @mock.patch('platform.architecture')
+    @mock.patch('platform.machine')
     def test_string_grammar(self, platform_machine_mock,
                             platform_architecture_mock):
         platform_machine_mock.return_value = self.host_arch

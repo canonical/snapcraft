@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,18 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
-
-import fixtures
-from xdg import BaseDirectory
 from textwrap import dedent
 from unittest import mock
 from unittest.mock import call
 
+import fixtures
 from testtools.matchers import Equals
-from snapcraft.tests.unit import TestWithFakeRemoteParts
-from snapcraft.tests import fixture_setup
-from . import CommandBaseTestCase
+from xdg import BaseDirectory
+
 from snapcraft.internal.errors import SnapcraftEnvironmentError
+from tests import fixture_setup
+from tests.unit import TestWithFakeRemoteParts
+from . import CommandBaseTestCase
 
 
 class RefreshCommandBaseTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):

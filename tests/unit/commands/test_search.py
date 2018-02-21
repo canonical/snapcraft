@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2016-2017 Canonical Ltd
+# Copyright (C) 2016-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -19,8 +19,8 @@ import logging
 import fixtures
 from testtools.matchers import Contains, Equals
 
-from snapcraft.tests import fixture_setup
-from snapcraft.tests.unit import TestWithFakeRemoteParts
+from tests import fixture_setup
+from tests.unit import TestWithFakeRemoteParts
 from . import CommandBaseTestCase
 
 

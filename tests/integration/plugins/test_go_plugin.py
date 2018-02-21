@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -21,9 +21,9 @@ import yaml
 from testtools.matchers import (Equals, FileContains, FileExists, MatchesRegex,
                                 Not)
 
-from snapcraft.tests import integration
 import snapcraft
-from snapcraft.tests.matchers import HasArchitecture
+from tests import integration
+from tests.matchers import HasArchitecture
 
 
 class GoPluginTestCase(integration.TestCase):

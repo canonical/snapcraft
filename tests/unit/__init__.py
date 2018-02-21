@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -18,6 +18,7 @@ import contextlib
 import logging
 import os
 import stat
+from unittest import mock
 
 import fixtures
 import http.server
@@ -28,10 +29,8 @@ import testtools
 
 import snapcraft
 from snapcraft.internal import common, elf
-from snapcraft.tests import fake_servers, fixture_setup
 from snapcraft.internal.project_loader import grammar_processing
-
-from unittest import mock
+from tests import fake_servers, fixture_setup
 
 
 class ContainsList(list):
@@ -119,7 +118,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.addCleanup(common.set_librariesdir, common.get_librariesdir())
         self.addCleanup(common.reset_env)
         common.set_schemadir(
-                os.path.join(__file__, '..', '..', '..', '..', 'schema'))
+                os.path.join(__file__, '..', '..', '..', 'schema'))
         self.fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(self.fake_logger)
 

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,7 +20,8 @@ import shutil
 from textwrap import dedent
 
 from testtools.matchers import Contains, Equals, FileExists
-from snapcraft.tests import integration
+
+from tests import integration
 
 
 class GitSourceTestCase(integration.GitSourceBaseTestCase):

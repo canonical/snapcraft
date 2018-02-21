@@ -28,7 +28,7 @@ from textwrap import dedent
 import snapcraft
 from snapcraft import storeapi
 from snapcraft.plugins import kernel
-from snapcraft.tests import unit
+from tests import unit
 
 
 class KernelPluginTestCase(unit.TestCase):

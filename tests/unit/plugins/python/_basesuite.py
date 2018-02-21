@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,11 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
-import snapcraft
+from tests import unit
 
 
 # LP: #1733584
-class PythonBaseTestCase(snapcraft.tests.unit.TestCase):  # type: ignore
+class PythonBaseTestCase(unit.TestCase):  # type: ignore
 
     def _create_python_binary(self, base_dir):
         python_command_path = os.path.join(
