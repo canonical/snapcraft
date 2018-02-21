@@ -27,13 +27,13 @@ The static tests suite performs a static analysis on the source code without exe
 
 The unit tests is a suite of low-level white box tests. They exercise units of code to verify that the different parts work as expected in a fully isolated way. Ideally, these tests should call only public functions, objects and methods, leaving the internals of snapcraft as implementation details that can change without having to modifying any tests. To isolate the units from their environment and dependencies we can replace those with test doubles. In order to set up test doubles, we prefer dependency injection through arguments than excessive mocking. These tests can verify the results checking the output printed to the command line, checking the files created during the execution, inspecting the calls made to the test doubles and verifying that the expected exceptions were thrown.
 
-These tests are in the `snapcraft/tests/unit` directory.
+These tests are in the `tests/unit` directory.
 
 ### Integration tests
 
 The integration tests are a group of suites that exercise snapcraft as a black box. They are only allowed to set up the environment where snapcraft runs and create files; but for the execution phase of the test they can only run the snapcraft command or one of its subcommands. To verify the results they can check the output printed to the command line, the return value of the snapcraft command, and any files created during the execution.
 
-These tests are in the `snapcraft/tests/integration` directory, with the `snapcraft.yamls` and other source files for the tests snaps in `snapcraft/tests/integration/snaps`.
+These tests are in the `tests/integration` directory, with the `snapcraft.yamls` and other source files for the tests snaps in `tests/integration/snaps`.
 
 ### Slow tests
 
@@ -65,11 +65,11 @@ To run the static tests, execute:
 
 To run the unit tests, execute:
 
-    ./runtests.sh snapcraft/tests/unit
+    ./runtests.sh tests/unit
 
 To run the integration tests, execute:
 
-    ./runtests.sh snapcraft/tests/integration
+    ./runtests.sh tests/integration
 
 You can also run a subsuite of the unit or integration suites specifying the path to the directory.
 For example:
@@ -77,13 +77,13 @@ For example:
   * To run only the unit tests for the plugins:
 
     ```
-    ./runtests.sh snapcraft/tests/unit/plugins
+    ./runtests.sh tests/unit/plugins
     ```
 
   * To run only the integration tests for the store:
 
     ```
-    ./runtests.sh snapcraft/tests/integration/store
+    ./runtests.sh tests/integration/store
     ```
 
 And you can also run a single test module, test case or test function using the usual python way.
@@ -92,19 +92,19 @@ For example:
   * To run only the unit tests in the test_nodejs module:
 
     ```
-    python3 -m unittest snapcraft.tests.unit.plugins.tests_nodejs
+    python3 -m unittest tests.unit.plugins.tests_nodejs
     ```
 
   * To run only the unit tests in the NodePluginTestCase:
 
     ```
-    python3 -m unittest snapcraft.tests.unit.plugins.tests_nodejs.NodePluginTestCase
+    python3 -m unittest tests.unit.plugins.tests_nodejs.NodePluginTestCase
     ```
 
   * To run only the unit test named test_pull_executes_npm_run_commands:
 
     ```
-    python3 -m unittest snapcraft.tests.unit.plugins.tests_nodejs.NodePluginTestCase.test_pull_executes_npm_run_commands
+    python3 -m unittest tests.unit.plugins.tests_nodejs.NodePluginTestCase.test_pull_executes_npm_run_commands
     ```
 
 The snaps tests script has more complex arguments. For an explanation of them, run:
@@ -113,15 +113,15 @@ The snaps tests script has more complex arguments. For an explanation of them, r
 
 The integration and snaps suites can be run using the snapcraft source from the repository, or using the snapacraft command installed in the system. By default, they will use the source code, so you can modify your clone of the repository and verify that your changes are correct. If instead you want to verify that the snapcraft version installed in your system is correct, run them with the environment variable `SNAPCRAFT_FROM_DEB` or `SNAPCRAFT_FROM_SNAP` set, like this:
 
-    SNAPCRAFT_FROM_DEB=1 ./runtests.sh snapcraft/tests/integration
+    SNAPCRAFT_FROM_DEB=1 ./runtests.sh tests/integration
 
 or
 
-    SNAPCRAFT_FROM_SNAP=1 ./runtests.sh snapcraft/tests/integration
+    SNAPCRAFT_FROM_SNAP=1 ./runtests.sh tests/integration
 
 The store tests by default will start fake servers that are configured to reply like the real store does. But you can run them also against the staging and production store servers. To do that, you will need to set the `TEST_STORE` environment variable to either `staging` or `production`, and you also have to pass credentials for a valid user in that store with the environment variable `TEST_USER_EMAIL` and `TEST_USER_PASSWORD`, like this:
 
-    TEST_STORE=staging TEST_USER_EMAIL=test@example.com TEST_USER_PASSWORD=Hola123* ./runtests.sh snapcraft/tests/integration/store
+    TEST_STORE=staging TEST_USER_EMAIL=test@example.com TEST_USER_PASSWORD=Hola123* ./runtests.sh tests/integration/store
 
 ## Autopkgtests for the snapcraft deb
 
