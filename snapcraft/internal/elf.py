@@ -217,7 +217,8 @@ class ElfFile:
         linker_version = m.group('linker_version')
         r = parse_version(version_required) <= parse_version(linker_version)
         logger.debug('Checking if linker {!r} will work with '
-                     'GLIBC_{}: {!r}'.format(linker, version_required, r))
+                     'GLIBC_{} required by {!r}: {!r}'.format(
+                         linker, version_required, self.path, r))
         return r
 
     def get_required_glibc(self) -> str:
@@ -531,10 +532,10 @@ def _get_system_libs() -> FrozenSet[str]:
         logger.debug('Only excluding libc libraries from the release')
         libc6_libs = [os.path.basename(l)
                       for l in repo.Repo.get_package_libraries('libc6')]
-        return frozenset(libc6_libs)
-
-    with open(lib_path) as fn:
-        _libraries = frozenset(fn.read().split())
+        _libraries = frozenset(libc6_libs)
+    else:
+        with open(lib_path) as fn:
+            _libraries = frozenset(fn.read().split())
 
     return _libraries
 
