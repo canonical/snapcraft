@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import codecs
+import contextlib
 import logging
 import os
 import os.path
@@ -24,7 +25,8 @@ import jsonschema
 import yaml
 
 import snapcraft
-from snapcraft.internal import common, deprecations, remote_parts, states
+from snapcraft.internal import (common, deprecations, remote_parts, states,
+                                os_release)
 from ._schema import Validator
 from ._parts_config import PartsConfig
 from ._env import (
@@ -113,8 +115,7 @@ class Config:
         self.build_tools = grammar_processor.get_build_packages()
         self.build_tools |= set(project_options.additional_build_packages)
 
-        if not (common.is_snap() or os.getenv('SNAPCRAFT_NO_PATCHELF')
-                or project_options.deb_arch == 'armhf'):
+        if _patchelf_install_required(project_options):
             self.build_tools.add('patchelf')
 
         self.parts = PartsConfig(parts=self.data,
@@ -251,6 +252,19 @@ class Config:
 
         snapcraft_yaml['parts'] = new_parts
         return snapcraft_yaml
+
+
+def _patchelf_install_required(project_options) -> bool:
+    is_xenial = False
+    with contextlib.suppress(os_release.errors.OsReleaseCodenameError):
+        is_xenial = os_release.OsRelease().version_codename() == 'xenial'
+
+    is_snap = common.is_snap()
+    is_environment = os.getenv('SNAPCRAFT_NO_PATCHELF')
+    is_arch_armhf = project_options.deb_arch == 'armhf'
+
+    return not (is_snap or is_environment or
+                (is_arch_armhf and is_xenial))
 
 
 def _snapcraft_yaml_load(yaml_file):

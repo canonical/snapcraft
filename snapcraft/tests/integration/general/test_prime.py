@@ -108,7 +108,7 @@ class PrimeTestCase(integration.TestCase):
 
         rpath = subprocess.check_output([
             self.patchelf_command, '--print-rpath', bin_path]).decode().strip()
-        expected_rpath = '$ORIGIN/../fake-lib:$ORIGIN/../lib/x86_64-linux-gnu'
+        expected_rpath = '$ORIGIN/../fake-lib:$ORIGIN/../lib/'
         self.assertThat(rpath, StartsWith(expected_rpath))
 
     def test_prime_includes_stage_fileset(self):
