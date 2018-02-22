@@ -17,37 +17,37 @@ jobs:
       script: sudo ./tools/travis/run_tests.sh static
     - stage: unit
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/unit
+      script: sudo ./tools/travis/run_tests.sh tests/unit
     - if: type != cron
-      script: SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh snapcraft/tests/unit
+      script: SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh tests/unit
     - stage: snap
       if: type != cron
       script: sudo ./tools/travis/build_snapcraft_snap.sh
     - stage: integration
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/general
+      script: sudo ./tools/travis/run_tests.sh tests/integration/general
     - if: type != cron
       script:
       - "travis_wait 30 sleep 1800 &"
-      - sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/plugins
+      - sudo ./tools/travis/run_tests.sh tests/integration/plugins
     - if: type != cron
       script:
       - "travis_wait 30 sleep 1800 &"
-      - sudo ./tools/travis/run_tests.sh snapcraft.tests.integration.plugins.nodejs
+      - sudo ./tools/travis/run_tests.sh tests.integration.plugins_nodejs
     - if: type != cron
       script:
       - "travis_wait 30 sleep 1800 &"
-      - sudo ./tools/travis/run_tests.sh snapcraft.tests.integration.plugins.java
+      - sudo ./tools/travis/run_tests.sh tests.integration.plugins_java
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft.tests.integration.plugins.python
+      script: sudo ./tools/travis/run_tests.sh tests.integration.plugins_python
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft.tests.integration.plugins.catkin
+      script: sudo ./tools/travis/run_tests.sh tests.integration.plugins_catkin
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/store
+      script: sudo ./tools/travis/run_tests.sh tests/integration/store
     - if: type != cron
       script:
       - "travis_wait 20 sleep 1200 &"
-      - sudo ./tools/travis/run_tests.sh snapcraft/tests/integration/snapd
+      - sudo ./tools/travis/run_tests.sh tests/integration/snapd
     # CLA check, only in pull requests, not coming from the bot.
     - if: type = pull_request AND sender != snappy-m-o
       script: ./tools/travis/run_cla_check.sh

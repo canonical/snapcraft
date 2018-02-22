@@ -1,3 +1,25 @@
+snapcraft (2.39.2) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * tests: improvements to demos (#1938)
+  * tests: remove the webcam-webui demo (#1940)
+  * elf: contemplate more patching scenarios (#1935)
+  * New upstream release (LP: #1745488)
+
+  [ Kyle Fazzari ]
+  * tests: remove duplicate tests (#1928)
+  * schema: remove underscore from version pattern (#1933)
+  * store: support pushing snap with no architectures (#1937)
+  * storeapi: handle errors even for >400 responses (#1936)
+
+  [ Christian Dywan ]
+  * sources: proper errors for invalid handlers (#1929)
+
+  [ Sylvain Pineau ]
+  * tests: update the plainbox-provider tests (#1931)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Tue, 20 Feb 2018 00:40:00 +0000
+
 snapcraft (2.39.1) xenial; urgency=medium
 
   [ Sergio Schvezov ]
@@ -5,7 +27,6 @@ snapcraft (2.39.1) xenial; urgency=medium
   * snap: patch ctypes for the snap and remove libarchive (#1915)
   * tests: update tests to work in adt (#1908)
   * elf: cache crawled files (#1925)
-  * New upstream release (LP: #1745488)
 
   [ Leo Arias ]
   * elf: use surrogate escape when decoding readelf output (#1903)
