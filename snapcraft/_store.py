@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager
+import contextlib
 import getpass
 import hashlib
 import json
@@ -65,7 +65,7 @@ def _get_data_from_snap_file(snap_path):
     return snap_yaml
 
 
-@contextmanager
+@contextlib.contextmanager
 def _get_icon_from_snap_file(snap_path):
     icon_file = None
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -198,7 +198,7 @@ def login(*, store: storeapi.StoreClient = None,
     return True
 
 
-@contextmanager
+@contextlib.contextmanager
 def _requires_login():
     try:
         yield
@@ -478,9 +478,12 @@ def push(snap_filename, release_channels=None):
         store.push_precheck(snap_name)
 
     snap_cache = cache.SnapCache(project_name=snap_name)
-    arch = snap_yaml['architectures'][0]
-    source_snap = snap_cache.get(deb_arch=arch)
+    arch = 'all'
 
+    with contextlib.suppress(KeyError):
+        arch = snap_yaml['architectures'][0]
+
+    source_snap = snap_cache.get(deb_arch=arch)
     sha3_384_available = hasattr(hashlib, 'sha3_384')
 
     if sha3_384_available and source_snap:
