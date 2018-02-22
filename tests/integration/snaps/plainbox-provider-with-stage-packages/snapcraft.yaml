@@ -1,0 +1,25 @@
+name: test-package
+version: 0.1
+summary: Create a snap of a plainbox provider using python3 stage-packages
+description: |
+    This is a regression test for 'LP: #1663792' to verify that python3
+    based stage-packages can still work transparently with the python3
+    based plainbox-provider plugin.
+confinement: strict
+
+parts:
+    checkbox-ng-local:
+        plugin: python3
+        python-packages:
+            - checkbox-ng
+            - requests-oauthlib
+        build-packages:
+            - libxml2-dev
+            - libxslt1-dev
+            - zlib1g-dev
+            - build-essential
+    simple-plainbox-provider:
+        plugin: plainbox-provider
+        source: ./2016.com.example_simple
+        after: [checkbox-ng-local]
+        stage-packages: [python3-petname]

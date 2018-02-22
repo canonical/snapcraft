@@ -1,0 +1,7 @@
+#!/bin/sh
+
+set -e
+
+script_path="$(dirname "$0")"
+SNAPCRAFT_SLOW_TESTS=1 SNAPCRAFT_AUTOPKGTEST_SUITES=tests/integration/snapd SNAPCRAFT_TEST_PATTERN=test_ament*.py $script_path/integrationtests
+SNAPCRAFT_SLOW_TESTS=1 SNAPCRAFT_AUTOPKGTEST_SUITES=tests/integration/snapd SNAPCRAFT_TEST_PATTERN=test_catkin*.py $script_path/integrationtests

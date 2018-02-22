@@ -93,9 +93,11 @@ properties:
     description: package version
     validation-failure:
       "{.instance!r} is not a valid snap version. Snap versions consist of
-      upper- and lower-case alphanumeric characters, as well as periods, plus
-      signs, tildes, and hyphens."
-    pattern: "^[a-zA-Z0-9.+~-]+$"
+      upper- and lower-case alphanumeric characters, as well as periods,
+      colons, plus signs, tildes, and hyphens. They cannot begin with a period,
+      colon, plus sign, tilde, or hyphen. They cannot end with a period, colon,
+      or hyphen."
+    pattern: "^[a-zA-Z0-9](?:[a-zA-Z0-9:.+~-]*[a-zA-Z0-9+~])?$"
     maxLength: 32
   version-script:
     type: string
@@ -249,6 +251,30 @@ properties:
             description: What kind of wrapper to generate for the given command
             enum:
               - none
+          sockets:
+            type: object
+            additionalProperties: false
+            validation-failure:
+              "{!r} is not a valid socket name. Socket names consist of
+              lower-case alphanumeric characters and hyphens."
+            patternProperties:
+              "^[a-z][a-z0-9_-]*$":
+                type: object
+                required:
+                  - listen-stream
+                description: Sockets for automatic service activation
+                additionalProperties: false
+                properties:
+                  listen-stream:
+                    anyOf:
+                      - type: integer
+                        usage: "port number, an integer between 1 and 65535"
+                        minimum: 1
+                        maximum: 65535
+                      - type: string
+                        usage: "socket path, a string"
+                  socket-mode:
+                    type: integer
   hooks:
     type: object
     additionalProperties: false

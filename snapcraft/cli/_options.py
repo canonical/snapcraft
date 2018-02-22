@@ -35,7 +35,7 @@ _BUILD_OPTIONS = [
          help=('Detect best candidate location for stage-packages using '
                'geoip')),
     dict(is_flag=True,
-         help='Force a squential build.'),
+         help='Force a sequential build.'),
     dict(metavar='<arch>',
          help='Target architecture to cross compile to'),
 ]

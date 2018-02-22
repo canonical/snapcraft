@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from contextlib import contextmanager
+import contextlib
 import getpass
 import hashlib
 import json
@@ -33,7 +33,7 @@ import yaml
 from snapcraft.cli import echo
 from tabulate import tabulate
 
-from snapcraft.file_utils import calculate_sha3_384
+from snapcraft.file_utils import calculate_sha3_384, get_tool_path
 from snapcraft import storeapi
 from snapcraft.internal import (
     cache,
@@ -52,8 +52,9 @@ logger = logging.getLogger(__name__)
 
 def _get_data_from_snap_file(snap_path):
     with tempfile.TemporaryDirectory() as temp_dir:
+        unsquashfs_path = get_tool_path('unsquashfs')
         output = subprocess.check_output(
-            ['unsquashfs', '-d',
+            [unsquashfs_path, '-d',
              os.path.join(temp_dir, 'squashfs-root'),
              snap_path, '-e', os.path.join('meta', 'snap.yaml')])
         logger.debug(output)
@@ -64,12 +65,13 @@ def _get_data_from_snap_file(snap_path):
     return snap_yaml
 
 
-@contextmanager
+@contextlib.contextmanager
 def _get_icon_from_snap_file(snap_path):
     icon_file = None
     with tempfile.TemporaryDirectory() as temp_dir:
+        unsquashfs_path = get_tool_path('unsquashfs')
         output = subprocess.check_output(
-            ['unsquashfs', '-d',
+            [unsquashfs_path, '-d',
              os.path.join(temp_dir, 'squashfs-root'),
              snap_path, '-e', 'meta/gui'])
         logger.debug("Output extracting icon from snap: %s", output)
@@ -196,7 +198,7 @@ def login(*, store: storeapi.StoreClient = None,
     return True
 
 
-@contextmanager
+@contextlib.contextmanager
 def _requires_login():
     try:
         yield
@@ -476,9 +478,12 @@ def push(snap_filename, release_channels=None):
         store.push_precheck(snap_name)
 
     snap_cache = cache.SnapCache(project_name=snap_name)
-    arch = snap_yaml['architectures'][0]
-    source_snap = snap_cache.get(deb_arch=arch)
+    arch = 'all'
 
+    with contextlib.suppress(KeyError):
+        arch = snap_yaml['architectures'][0]
+
+    source_snap = snap_cache.get(deb_arch=arch)
     sha3_384_available = hasattr(hashlib, 'sha3_384')
 
     if sha3_384_available and source_snap:

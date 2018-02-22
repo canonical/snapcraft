@@ -41,8 +41,9 @@ class SnapCache(SnapcraftProjectCache):
 
     def _get_snap_deb_arch(self, snap_filename):
         with tempfile.TemporaryDirectory() as temp_dir:
+            unsquashfs_path = file_utils.get_tool_path('unsquashfs')
             output = subprocess.check_output(
-                ['unsquashfs', '-d',
+                [unsquashfs_path, '-d',
                  os.path.join(temp_dir, 'squashfs-root'),
                  snap_filename, '-e', os.path.join('meta', 'snap.yaml')])
             logger.debug(output)
@@ -51,7 +52,10 @@ class SnapCache(SnapcraftProjectCache):
             ) as yaml_file:
                 snap_yaml = yaml.load(yaml_file)
         # XXX: add multiarch support later
-        return snap_yaml['architectures'][0]
+        try:
+            return snap_yaml['architectures'][0]
+        except KeyError:
+            return 'all'
 
     def _get_snap_cache_path(self, snap_filename):
         snap_hash = file_utils.calculate_sha3_384(snap_filename)

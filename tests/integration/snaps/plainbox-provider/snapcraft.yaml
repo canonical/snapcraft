@@ -1,0 +1,32 @@
+name: test-package
+version: 0.1
+summary: Create a snap of a plainbox provider
+description: |
+    Create a snap of a very simple plainbox that could
+    then be used by a checkbox application
+confinement: strict
+
+parts:
+    checkbox-ng-dev:
+        plugin: python
+        source: git://git.launchpad.net/checkbox-ng
+        source-type: git
+        build-packages:
+            - libxml2-dev
+            - libxslt1-dev
+            - zlib1g-dev
+            - build-essential
+        python-packages:
+            - requests-oauthlib
+            - XlsxWriter
+            - Jinja2
+            - guacamole
+            - padme
+    checkbox-support-dev:
+        plugin: python
+        source: git://git.launchpad.net/checkbox-support
+        source-type: git
+    simple-plainbox-provider:
+        plugin: plainbox-provider
+        source: ./2016.com.example_simple
+        after: [checkbox-ng-dev, checkbox-support-dev]
