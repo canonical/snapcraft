@@ -208,8 +208,10 @@ class ElfFile:
 
             for segment in elf.iter_segments():
                 if segment['p_type'] == 'PT_GNU_STACK':
+                    # p_flags holds the bit mask for this segment.
+                    # See `man 5 elf`.
                     mode = segment['p_flags']
-                    if mode & 1:
+                    if mode & elftools.elf.constants.P_FLAGS.PF_X:
                         execstack_set = True
 
         return interp, soname, libs, execstack_set
