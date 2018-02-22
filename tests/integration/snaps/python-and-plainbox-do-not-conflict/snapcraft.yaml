@@ -1,0 +1,26 @@
+name: plainbox-and-python
+version: 0.1
+summary: Create a snap of a plainbox provider and a python part
+description: |
+    Combine parts using the plainbox and python plugins and
+    verify they do not collide.
+confinement: strict
+grade: devel
+
+parts:
+    checkbox-ng-local:
+        plugin: python
+        python-packages:
+            - checkbox-ng
+            - requests-oauthlib
+        build-packages:
+            - libxml2-dev
+            - libxslt1-dev
+            - zlib1g-dev
+            - build-essential
+    simple-plainbox-provider:
+        plugin: plainbox-provider
+        stage-packages:
+            - python3-yaml
+        source: ./2016.com.example_simple
+        after: [checkbox-ng-local]

@@ -16,6 +16,7 @@
 
 import logging
 
+from snapcraft.internal.errors import OsReleaseIdError
 from snapcraft.internal.os_release import OsRelease
 
 logger = logging.getLogger(__name__)
@@ -31,13 +32,15 @@ _DEB_BASED_PLATFORM = [
 
 def _is_deb_based(distro=None):
     if not distro:
-        distro = OsRelease().id()
+        try:
+            distro = OsRelease().id()
+        except OsReleaseIdError:
+            distro = 'unknown'
     return distro in _DEB_BASED_PLATFORM
 
 
 def _get_repo_for_platform():
-    distro = OsRelease().id()
-    if _is_deb_based(distro):
+    if _is_deb_based():
         from ._deb import Ubuntu
         return Ubuntu
     else:
