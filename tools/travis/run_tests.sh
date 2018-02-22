@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -31,9 +31,9 @@ pattern="$2"
 
 if [ "$test" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
-elif [ "$test" = "snapcraft/tests/unit" ]; then
+elif [ "$test" = "tests/unit" ]; then
     dependencies="apt install -y git bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov && apt install -y python3-coverage"
-elif [[ "$test" = "snapcraft/tests/integration"* || "$test" = "snapcraft.tests.integration"* ]]; then
+elif [[ "$test" = "tests/integration"* || "$test" = "tests.integration"* ]]; then
     # TODO remove the need to install the snapcraft dependencies due to nesting
     #      the tests in the snapcraft package
     # snap install core exits with this error message:
