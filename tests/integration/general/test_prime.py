@@ -177,7 +177,7 @@ class PrimeTestCase(integration.TestCase):
             stage_bin_path]).decode().strip()
         # 'X' means the executable stack is required. See `man 8 execstack`.
         self.assertThat(stage_bin_query, Equals('X {}'.format(stage_bin_path)))
-        
+
         prime_bin_path = os.path.join('prime', 'bin', 'test')
         prime_bin_query = subprocess.check_output([
             self.execstack_command, '--query',
