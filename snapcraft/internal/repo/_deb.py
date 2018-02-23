@@ -384,7 +384,7 @@ class Ubuntu(BaseRepo):
             logging.debug('Ignoring already existing file: {}'.format(
                 destfile))
             return os.path.abspath(destfile)
-        acq = apt.apt_pkg.Acquire(self.progress)
+        acq = apt.apt_pkg.Acquire(self._apt.progress)
         acqfile = apt.apt_pkg.AcquireFile(
             acq, package_candidate.uri, package_candidate._records.md5_hash,
             package_candidate.size, base, destfile=destfile)
