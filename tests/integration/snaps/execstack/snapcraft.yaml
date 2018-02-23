@@ -6,7 +6,7 @@ description: |
   when priming
 confinement: strict
 
-build-packages: [gcc, libc6-dev]
+build-packages: [gcc, libc6-dev, execstack]
 
 apps:
   make-hello:
