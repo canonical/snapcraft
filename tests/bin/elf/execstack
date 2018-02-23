@@ -1,0 +1,16 @@
+#!/usr/bin/env python3
+import os
+import sys
+
+def main():
+    basename = os.path.basename(sys.argv[-1])
+    exit_code = 0
+    if basename == 'fake_elf-with-bad-execstack':
+        exit_code = 1
+    elif basename == 'fake_elf-with-execstack':
+        open('{}.execstack'.format(sys.argv[-1]), 'w').close()
+    sys.exit(exit_code)
+
+
+if __name__ == '__main__':
+    main()

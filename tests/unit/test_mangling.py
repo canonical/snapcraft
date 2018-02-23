@@ -18,7 +18,7 @@ import os
 import textwrap
 from unittest.mock import call, patch
 
-from testtools.matchers import FileContains
+from testtools.matchers import FileContains, FileExists, Not
 
 from snapcraft.internal import mangling
 from tests import unit, fixture_setup
@@ -186,3 +186,36 @@ class HandleGlibcTestCase(unit.TestCase):
                           root_path=self.path,
                           core_base_path='/snap/core/current',
                           snap_base_path='/snap/snap-name/current')
+
+
+class TestClearExecstack(unit.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.fake_elf = fixture_setup.FakeElf(root_path=self.path)
+        self.useFixture(self.fake_elf)
+
+    def test_execstack_clears(self):
+        elf_files = [self.fake_elf['fake_elf-with-execstack']]
+
+        mangling.clear_execstack(elf_files=elf_files)
+
+        self.assertThat('{}.execstack'.format(elf_files[0].path),
+                        FileExists())
+
+    def test_bad_execstack_does_not_blow_up(self):
+        elf_files = [self.fake_elf['fake_elf-with-bad-execstack']]
+
+        mangling.clear_execstack(elf_files=elf_files)
+
+        self.assertThat('{}.execstack'.format(elf_files[0].path),
+                        Not(FileExists()))
+
+    def test_no_execstack_does_nothing(self):
+        elf_files = [self.fake_elf['fake_elf-2.23']]
+
+        mangling.clear_execstack(elf_files=elf_files)
+
+        self.assertThat('{}.execstack'.format(elf_files[0].path),
+                        Not(FileExists()))

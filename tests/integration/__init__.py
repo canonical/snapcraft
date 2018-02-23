@@ -73,8 +73,11 @@ class TestCase(testtools.TestCase):
 
         if os.getenv('SNAPCRAFT_FROM_SNAP', False):
             self.patchelf_command = '/snap/snapcraft/current/bin/patchelf'
+            self.execstack_command = (
+                '/snap/snapcraft/current/usr/sbin/execstack')
         else:
             self.patchelf_command = 'patchelf'
+            self.execstack_command = 'execstack'
 
         self.snaps_dir = os.path.join(os.path.dirname(__file__), 'snaps')
         temp_cwd_fixture = fixture_setup.TempCWD()
