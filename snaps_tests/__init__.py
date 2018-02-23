@@ -22,6 +22,7 @@ import re
 import shutil
 import subprocess
 import sys
+from typing import Any, Dict  # noqa: F401
 
 import fixtures
 import pexpect
@@ -39,7 +40,7 @@ from snaps_tests import testbed
 
 logger = logging.getLogger(__name__)
 
-config = {}
+config = {}  # type: Dict[str, Any]
 
 _KVM_REDIRECT_PORTS = ['8080', '9000', '3000']
 
@@ -152,7 +153,7 @@ class SnapsTestCase(testtools.TestCase):
                     ip, port, 'ubuntu', proxy)
             self.snappy_testbed.wait()
 
-    def build_snap(self, snap_content_dir, timeout=900):
+    def build_snap(self, snap_content_dir, timeout=1800):
         project_dir = os.path.join(self.src_dir, snap_content_dir)
         tmp_project_dir = os.path.join(self.path, snap_content_dir)
         shutil.copytree(project_dir, tmp_project_dir, symlinks=True)
