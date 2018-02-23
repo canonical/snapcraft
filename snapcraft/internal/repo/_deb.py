@@ -178,6 +178,8 @@ class _AptCache:
                 "The item %r could not be fetched: %s" %
                 (acqfile.destfile, acqfile.error_text))
 
+        return os.path.abspath(destfile)
+
 
 class Ubuntu(BaseRepo):
 
