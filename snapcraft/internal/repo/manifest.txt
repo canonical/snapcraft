@@ -39,6 +39,7 @@ libblkid1
 libbz2-1.0
 libc-bin
 libc6
+libc6-dev
 libcap2
 libcap2-bin
 libcomerr2
