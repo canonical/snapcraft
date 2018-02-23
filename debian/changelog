@@ -1,4 +1,4 @@
-snapcraft (2.39.2+18.04.1) bionic; urgency=medium
+snapcraft (2.39.2+18.04.2) bionic; urgency=medium
 
   [ Sergio Schvezov ]
   * tests: improvements to demos (#1938)
