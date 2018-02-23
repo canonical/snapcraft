@@ -381,17 +381,19 @@ class Ubuntu(BaseRepo):
         destfile = os.path.join(self._cache.packages_dir, base)
         if apt.package._file_is_same(destfile, package_candidate.size,
                                      package_candidate._records.md5_hash):
-            logging.debug('Ignoring already existing file: {}'.format(destfile))
+            logging.debug('Ignoring already existing file: {}'.format(
+                destfile))
             return os.path.abspath(destfile)
-        acq = apt_pkg.Acquire(progress)
-        acqfile = apt_pkg.AcquireFile(
+        acq = apt.apt_pkg.Acquire(self.progress)
+        acqfile = apt.apt_pkg.AcquireFile(
             acq, package_candidate.uri, package_candidate._records.md5_hash,
             package_candidate.size, base, destfile=destfile)
         acq.run()
 
         if acqfile.status != acqfile.STAT_DONE:
-            raise FetchError("The item %r could not be fetched: %s" %
-                             (acqfile.destfile, acqfile.error_text))
+            raise apt.apt_pkgFetchError(
+                "The item %r could not be fetched: %s" %
+                (acqfile.destfile, acqfile.error_text))
 
     def unpack(self, unpackdir):
         pkgs_abs_path = glob.glob(os.path.join(self._downloaddir, '*.deb'))
