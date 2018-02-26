@@ -1,0 +1,23 @@
+name: test-package
+version: 0.1
+summary: Create a snap of a plainbox provider
+description: |
+    Create a snap of a very simple checkbox-ng that could
+    then be used by a checkbox application
+confinement: strict
+
+parts:
+    checkbox-ng-local:
+        plugin: python3
+        python-packages:
+            - checkbox-ng
+            - requests-oauthlib
+        build-packages:
+            - libxml2-dev
+            - libxslt1-dev
+            - zlib1g-dev
+            - build-essential
+    simple-plainbox-provider:
+        plugin: plainbox-provider
+        source: ./2016.com.example_simple
+        after: [checkbox-ng-local]

@@ -14,16 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snaps_tests
+from snaps_tests import SnapsTestCase, skip
 
 
-class GradleTestCase(snaps_tests.SnapsTestCase):
+class GradleTestCase(SnapsTestCase):
 
     snap_content_dir = 'gradle-with-outputdir'
 
-    def test_java_hello_world(self):
+    @skip.skip_unless_codename('xenial', 'LP: #1683761')
+    def test_gradle_with_output_dir(self):
         snap_path = self.build_snap(self.snap_content_dir)
-        self.install_snap(snap_path, 'java-hello-gradle-with-outputdir', '0')
+        self.install_snap(snap_path, 'java-hello-gradle-with-outputdir', '1.0')
         self.assert_command_in_snappy_testbed(
             '/snap/bin/java-hello-gradle-with-outputdir.hello',
             'Hello Gradle\n')

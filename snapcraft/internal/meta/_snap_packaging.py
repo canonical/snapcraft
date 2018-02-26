@@ -249,7 +249,8 @@ class _SnapPackaging:
         self._prime_dir = project_options.prime_dir
         self._parts_dir = project_options.parts_dir
         self._arch_triplet = project_options.arch_triplet
-
+        self._is_host_compatible_with_base = (
+            project_options.is_host_compatible_with_base)
         self._meta_dir = os.path.join(self._prime_dir, 'meta')
         self._config_data = config_data.copy()
 
@@ -430,7 +431,10 @@ class _SnapPackaging:
         # environment it is dropped into.
         replace_path = re.compile(r'{}/[a-z0-9][a-z0-9+-]*/install'.format(
             re.escape(self._parts_dir)))
-        if self._config_data['confinement'] == 'classic':
+        # Confinement classic or when building on a host that does not match
+        # the target base means we cannot setup an environment that will work.
+        if (self._config_data['confinement'] == 'classic' or
+                not self._is_host_compatible_with_base):
             assembled_env = None
         else:
             assembled_env = common.assemble_env()
@@ -499,7 +503,7 @@ class _SnapPackaging:
             if os.path.splitext(f)[1] == '.desktop':
                 os.remove(os.path.join(gui_dir, f))
         for app in apps:
-            adapter = apps[app].get('adapter', '')
+            adapter = apps[app].pop('adapter', '')
             if adapter != 'none':
                 self._wrap_app(app, apps[app])
             self._generate_desktop_file(app, apps[app])

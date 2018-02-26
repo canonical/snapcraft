@@ -1,0 +1,42 @@
+name: checkbox-simple
+summary: A checkbox Test Tool
+description: >
+  The Checkbox tool itself coupled with a Provider which contains the test
+  definitions
+version: 0.1
+confinement: strict
+
+apps:
+    checkbox-cli:
+        command: bin/checkbox-cli-wrapper
+        # Required because of https://bugs.launchpad.net/snapcraft/+bug/1732076
+        plugs: [home]
+
+parts:
+    # The testing framework
+    checkbox-ng-local:
+        plugin: python3
+        python-packages:
+            - checkbox-ng
+            - requests-oauthlib
+            - xlsxwriter
+        build-packages:
+            - libxml2-dev
+            - libxslt1-dev
+            - zlib1g-dev
+            - build-essential
+    # The test definitions
+    simple-plainbox-provider:
+        plugin: plainbox-provider
+        source: ./com.example_simple
+        after: [checkbox-ng-local]
+    # A wrapper script
+    launchers:
+        plugin: dump
+        source: .
+        organize:
+            launchers/checkbox-cli-wrapper: bin/checkbox-cli-wrapper
+        filesets:
+            wrapper: [bin/checkbox-cli-wrapper]
+        stage: [$wrapper]
+        snap: [$wrapper]

@@ -17,11 +17,7 @@ import logging
 from os import path
 
 import snapcraft
-from snapcraft.internal import (
-    deprecations,
-    pluginhandler,
-    repo
-)
+from snapcraft.internal import deprecations, elf, pluginhandler, repo
 from ._env import (
     env_for_classic,
     build_env,
@@ -42,6 +38,7 @@ class PartsConfig:
                  build_snaps, build_tools, snapcraft_yaml):
         self._snap_name = parts['name']
         self._confinement = parts['confinement']
+        self._soname_cache = elf.SonameCache()
         self._parts_data = parts.get('parts', {})
         self._project_options = project_options
         self._validator = validator
@@ -194,7 +191,8 @@ class PartsConfig:
             stage_packages_repo=stage_packages_repo,
             grammar_processor=grammar_processor,
             snap_base_path=path.join('/', 'snap', self._snap_name, 'current'),
-            confinement=self._confinement)
+            confinement=self._confinement,
+            soname_cache=self._soname_cache)
 
         self.build_snaps |= grammar_processor.get_build_snaps()
         self.build_tools |= grammar_processor.get_build_packages()
@@ -231,7 +229,10 @@ class PartsConfig:
                 stagedir,
                 self._snap_name,
                 self._project_options.arch_triplet)
-            if self._confinement == 'classic':
+            # Only set the paths to the base snap if we are building on the
+            # same host. Failing to do so will cause Segmentation Faults.
+            if (self._confinement == 'classic' and
+                    self._project_options.is_host_compatible_with_base):
                 env += env_for_classic(self._project_options.arch_triplet)
             env.append('SNAPCRAFT_PART_INSTALL="{}"'.format(part.installdir))
             env.append('SNAPCRAFT_ARCH_TRIPLET="{}"'.format(

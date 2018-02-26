@@ -154,6 +154,32 @@ class _AptCache:
 
         return _get_local_sources_list()
 
+    def fetch_binary(self, *, package_candidate, destination: str) -> None:
+        # This is a workaround for the overly verbose python-apt we use.
+        # There is an unreleased patch which once released could replace
+        # this code https://salsa.debian.org/apt-team/python-apt/commit/d122f9142df614dbb5f7644112280140dc155ecc  # noqa
+        # What follows is almost a tit for tat implementation of upstream's
+        # fetch_binary logic.
+        base = os.path.basename(package_candidate._records.filename)
+        destfile = os.path.join(destination, base)
+        if apt.package._file_is_same(destfile, package_candidate.size,
+                                     package_candidate._records.md5_hash):
+            logging.debug('Ignoring already existing file: {}'.format(
+                destfile))
+            return os.path.abspath(destfile)
+        acq = apt.apt_pkg.Acquire(self.progress)
+        acqfile = apt.apt_pkg.AcquireFile(
+            acq, package_candidate.uri, package_candidate._records.md5_hash,
+            package_candidate.size, base, destfile=destfile)
+        acq.run()
+
+        if acqfile.status != acqfile.STAT_DONE:
+            raise apt.package.FetchError(
+                "The item %r could not be fetched: %s" %
+                (acqfile.destfile, acqfile.error_text))
+
+        return os.path.abspath(destfile)
+
 
 class Ubuntu(BaseRepo):
 
@@ -362,8 +388,9 @@ class Ubuntu(BaseRepo):
         pkg_list = []
         for package in apt_cache.get_changes():
             pkg_list.append(str(package.candidate))
-            source = package.candidate.fetch_binary(
-                self._cache.packages_dir, progress=self._apt.progress)
+            source = self._apt.fetch_binary(
+                package_candidate=package.candidate,
+                destination=self._cache.packages_dir)
             destination = os.path.join(
                 self._downloaddir, os.path.basename(source))
             with contextlib.suppress(FileNotFoundError):
