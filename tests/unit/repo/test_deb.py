@@ -67,8 +67,12 @@ class UbuntuTestCase(RepoBaseTestCase):
         self.assertThat(name, Equals('hello'))
         self.assertThat(version, Equals('2.10-1'))
 
+    @patch('snapcraft.internal.repo._deb._AptCache.fetch_binary')
     @patch('snapcraft.internal.repo._deb.apt.apt_pkg')
-    def test_get_package(self, mock_apt_pkg):
+    def test_get_package(self, mock_apt_pkg, mock_fetch_binary):
+        fake_package_path = os.path.join(self.path, 'fake-package.deb')
+        open(fake_package_path, 'w').close()
+        mock_fetch_binary.return_value = fake_package_path
         self.mock_cache().is_virtual_package.return_value = False
 
         project_options = snapcraft.ProjectOptions(
@@ -96,18 +100,18 @@ class UbuntuTestCase(RepoBaseTestCase):
             self.mock_cache.return_value.__getitem__.call_args_list,
             Contains(call('fake-package')))
 
-        self.mock_package.assert_has_calls([
-            call.candidate.fetch_binary(ANY, progress=ANY)
-        ])
-
         # Verify that the package was actually fetched and copied into the
         # requested location.
         self.assertThat(
             os.path.join(self.tempdir, 'download', 'fake-package.deb'),
             FileExists())
 
-    @patch('snapcraft.repo._deb.apt.apt_pkg')
-    def test_get_multiarch_package(self, mock_apt_pkg):
+    @patch('snapcraft.internal.repo._deb._AptCache.fetch_binary')
+    @patch('snapcraft.internal.repo._deb.apt.apt_pkg')
+    def test_get_multiarch_package(self, mock_apt_pkg, mock_fetch_binary):
+        fake_package_path = os.path.join(self.path, 'fake-package.deb')
+        open(fake_package_path, 'w').close()
+        mock_fetch_binary.return_value = fake_package_path
         self.mock_cache().is_virtual_package.return_value = False
 
         project_options = snapcraft.ProjectOptions(
@@ -133,10 +137,6 @@ class UbuntuTestCase(RepoBaseTestCase):
         self.assertThat(
             self.mock_cache.return_value.__getitem__.call_args_list,
             Contains(call('fake-package:arch')))
-
-        self.mock_package.assert_has_calls([
-            call.candidate.fetch_binary(ANY, progress=ANY)
-        ])
 
         # Verify that the package was actually fetched and copied into the
         # requested location.

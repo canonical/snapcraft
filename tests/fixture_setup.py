@@ -874,6 +874,16 @@ class FakeAptCache(fixtures.Fixture):
         for package, version in self.packages:
             self.add_package(FakeAptCachePackage(package, version))
 
+        def fetch_binary(package_candidate, destination):
+            path = os.path.join(self.path, package_candidate.name)
+            open(path, 'w').close()
+            return path
+
+        patcher = mock.patch('snapcraft.repo._deb._AptCache.fetch_binary')
+        mock_fetch_binary = patcher.start()
+        mock_fetch_binary.side_effect = fetch_binary
+        self.addCleanup(patcher.stop)
+
         # Add all the packages in the manifest.
         with open(os.path.abspath(
                 os.path.join(
@@ -939,11 +949,6 @@ class FakeAptCachePackage():
 
     def mark_keep(self):
         pass
-
-    def fetch_binary(self, dir_, progress):
-        path = os.path.join(self.temp_dir, self.name)
-        open(path, 'w').close()
-        return path
 
     def get_dependencies(self, _):
         return []
