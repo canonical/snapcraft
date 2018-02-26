@@ -13,21 +13,26 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from testtools.matchers import Equals
 
-from . import CommandBaseTestCase
+import click
+
+import snapcraft
+
+SNAPCRAFT_VERSION_TEMPLATE = 'snapcraft, version %(version)s'
 
 
-class VersionCommandTestCase(CommandBaseTestCase):
-    def test_has_version(self):
-        result = self.run_command(['--version'])
-        self.assertThat(result.exit_code, Equals(0))
+@click.group()
+def versioncli():
+    """Version commands"""
+    pass
 
-    def test_has_version_without_hyphens(self):
-        result = self.run_command(['version'])
-        self.assertThat(result.exit_code, Equals(0))
 
-    def test_method_return_same_value(self):
-        result1 = self.run_command(['version'])
-        result2 = self.run_command(['--version'])
-        self.assertEqual(result1.output, result2.output)
+@versioncli.command('version')
+def version():
+    """Obtain snapcraft's version number.
+
+    Examples:
+        snapcraft version
+        snapcraft --version
+    """
+    click.echo(SNAPCRAFT_VERSION_TEMPLATE % {'version': snapcraft.__version__})
