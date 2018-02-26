@@ -35,15 +35,9 @@ def extract(path: str) -> ExtractedMetadata:
     except ParseError as e:
         raise _errors.AppstreamFileParseError(path) from e
 
-    summary = None
-    node = tree.find('summary')
-    if node is not None:
-        summary = node.text.strip()
-
-    description = None
-    node = tree.find('description')
-    if node is not None:
-        description = node.text.strip()
+    common_id = _get_value_from_xml_element(tree, 'id')
+    summary = _get_value_from_xml_element(tree, 'summary')
+    description = _get_value_from_xml_element(tree, 'description')
 
     icon = None
     node = tree.find('icon')
@@ -66,8 +60,16 @@ def extract(path: str) -> ExtractedMetadata:
                 desktop_file_paths.append(desktop_file_path)
 
     return ExtractedMetadata(
-        summary=summary, description=description, icon=icon,
-        desktop_file_paths=desktop_file_paths)
+        common_id=common_id, summary=summary, description=description,
+        icon=icon, desktop_file_paths=desktop_file_paths)
+
+
+def _get_value_from_xml_element(tree, key) -> str:
+    node = tree.find(key)
+    if node is not None:
+        return node.text.strip()
+    else:
+        return None
 
 
 def _desktop_file_id_to_path(desktop_file_id: str) -> str:

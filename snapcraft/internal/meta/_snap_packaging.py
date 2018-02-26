@@ -157,14 +157,15 @@ def _adopt_info(
                     # Do not overwrite the icon file.
                     continue
             config_data[key] = value
-    if 'desktop_file_paths' in metadata_dict:
-        for desktop_file_path in metadata_dict['desktop_file_paths']:
-            app_name = _get_app_name_from_desktop_file_path(
-                config_data, desktop_file_path)
-            if app_name and not _desktop_file_exists(app_name):
+    if 'desktop_file_paths' in metadata_dict and 'common_id' in metadata_dict:
+        app_name = _get_app_name_from_common_id(
+            config_data, str(metadata_dict['common_id']))
+        if app_name and not _desktop_file_exists(app_name):
+            for desktop_file_path in metadata_dict['desktop_file_paths']:
                 if os.path.exists(desktop_file_path):
                     config_data['apps'][app_name]['desktop'] = (
                         desktop_file_path)
+                    break
 
 
 def _icon_file_exists() -> bool:
@@ -186,31 +187,20 @@ def _icon_file_exists() -> bool:
         return False
 
 
-def _get_app_name_from_desktop_file_path(
-        config_data: Dict[str, Any], desktop_file_path: str) -> str:
-    """Get the snap app name from a desktop file path.
+def _get_app_name_from_common_id(
+        config_data: Dict[str, Any], common_id: str) -> str:
+    """Get the snap app name with a common-id.
 
-    XXX We try to find a match between desktop file path and snap app name.
-    This will be much nicer once snapcraft supports appstream IDs:
-    https://forum.snapcraft.io/t/support-for-appstream-id/2327
-    --elopio - 20180108
-
-    :params desktop_file_path: The path to the desktop file.
-    :returns: The name of the snap app that corresponds to the desktop file.
+    :params dict config_data: Project values defined in snapcraft.yaml.
+    :params common_id: The common identifier across multiple packaging
+        formats.
+    :returns: The name of the snap app with the common-id.
 
     """
-    if 'applications' in desktop_file_path:
-        desktop_file_id = desktop_file_path[
-            desktop_file_path.find('applications') +
-            len('applications') + 1:
-        ].replace('/', '-')
-        desktop_file_id_parts = desktop_file_id.split('.')
-        if desktop_file_id_parts[-1] == 'desktop':
-            desktop_file_id_parts = desktop_file_id_parts[:-1]
-            app_id = desktop_file_id_parts[-1]
-            if ('apps' in config_data and
-                    app_id in config_data['apps'].keys()):
-                return app_id
+    if 'apps' in config_data:
+        for app in config_data['apps']:
+            if config_data['apps'][app].get('common-id') == common_id:
+                return app
     return None
 
 

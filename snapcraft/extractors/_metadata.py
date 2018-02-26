@@ -24,11 +24,13 @@ class ExtractedMetadata(yaml.YAMLObject):
     yaml_tag = u'!ExtractedMetadata'
 
     def __init__(
-            self, *, summary: str='',
+            self, *, common_id: str='', summary: str='',
             description: str='', icon: str='',
             desktop_file_paths: List[str]=None) -> None:
         """Create a new ExtractedMetadata instance.
 
+        :param str: common_id: The common identifier across multiple packaging
+            formats
         :param str summary: Extracted summary
         :param str description: Extracted description
         :param str icon: Extracted icon
@@ -37,6 +39,8 @@ class ExtractedMetadata(yaml.YAMLObject):
 
         self._data = {}  # type: Dict[str, Union[str, List[str]]]
 
+        if common_id:
+            self._data['common_id'] = common_id
         if summary:
             self._data['summary'] = summary
         if description:
@@ -55,6 +59,15 @@ class ExtractedMetadata(yaml.YAMLObject):
         :param ExtractedMetadata other: Metadata from which to update
         """
         self._data.update(other.to_dict())
+
+    def get_common_id(self) -> str:
+        """Return extracted common_id.
+
+        :returns: Extracted common_id
+        :rtype: str
+        """
+        common_id = self._data.get('common_id')
+        return str(common_id) if common_id else None
 
     def get_summary(self) -> str:
         """Return extracted summary.
