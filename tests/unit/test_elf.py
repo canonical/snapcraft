@@ -318,6 +318,18 @@ class TestGetElfFiles(TestElfBase):
         self.assertThat(elf_files, Equals(set()))
 
 
+class TestGetElfFilesToPatch(TestElfBase):
+
+    def test_get_elf_files_to_patch(self):
+        elf_files = elf.get_elf_files(
+            self.fake_elf.root_path,
+            {'libc.so.6', 'libssl.so.1.0.0', 'fake_elf-shared-object',
+             'fake_elf-2.26'})
+        to_patch = elf.get_elf_files_to_patch(elf_files)
+        self.assertThat({os.path.basename(e.path) for e in to_patch},
+                        Equals({'fake_elf-shared-object', 'fake_elf-2.26'}))
+
+
 class TestGetRequiredGLIBC(TestElfBase):
 
     def setUp(self):

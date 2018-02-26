@@ -1152,6 +1152,10 @@ def _fake_elffile_extract(self, path):
         glibc.add_version('GLIBC_2.23')
         return (arch, '/lib64/ld-linux-x86-64.so.2', '',
                 {glibc.name: glibc}, True)
+    elif name == 'libc.so.6':
+        return arch, '', 'libc.so.6', {}, False
+    elif name == 'libssl.so.1.0.0':
+        return arch, '', 'libssl.so.1.0.0', {}, False
 
 
 class FakeElf(fixtures.Fixture):
@@ -1228,6 +1232,10 @@ class FakeElf(fixtures.Fixture):
             'fake_elf-with-bad-execstack': elf.ElfFile(
                 path=os.path.join(self.root_path,
                                   'fake_elf-with-bad-execstack')),
+            'libc.so.6': elf.ElfFile(
+                path=os.path.join(self.root_path, 'libc.so.6')),
+            'libssl.so.1.0.0': elf.ElfFile(
+                path=os.path.join(self.root_path, 'libssl.so.1.0.0')),
         }
 
         for elf_file in self._elf_files.values():

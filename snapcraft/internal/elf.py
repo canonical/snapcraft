@@ -598,3 +598,16 @@ def get_elf_files(root: str,
                 elf_files.add(ElfFile(path=path))
 
     return frozenset(elf_files)
+
+
+def get_elf_files_to_patch(elf_files: FrozenSet[ElfFile]) -> FrozenSet[ElfFile]:
+    """Return a frozenset of elf files that need patching."""
+    sonames = {(elf.arch, elf.soname): elf for elf in elf_files
+               if elf.soname != ''}
+    referenced_libraries = set()
+    for elf in elf_files:
+        for soname in elf.needed:
+            lib = sonames.get((elf.arch, soname))
+            if lib is not None:
+                referenced_libraries.add(lib)
+    return elf_files - referenced_libraries
