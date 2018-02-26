@@ -854,7 +854,7 @@ class StateTestCase(StateBaseTestCase):
 
         def _fake_extractor(file_path):
             return snapcraft.extractors.ExtractedMetadata(
-                commond_id='test_common_id',
+                common_id='test_common_id',
                 summary='test summary',
                 description='test description',
                 icon='/test/path',
