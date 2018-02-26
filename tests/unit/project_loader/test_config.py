@@ -426,10 +426,62 @@ parts:
         self.assertThat(
             raised.message,
             Equals("The 'name' property does not match the required "
-                   "schema: 1 is not a valid snap name. Snap names "
-                   "consist of lower-case alphanumeric characters and "
-                   "hyphens. They cannot be all numbers. They also cannot "
-                   "start or end with a hyphen."))
+                   "schema: snap names need to be strings."))
+
+    def test_invalid_yaml_invalid_name_as_list(self):
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name: []
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+grade: stable
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            _config.Config)
+
+        self.assertThat(
+            raised.message,
+            Equals("The 'name' property does not match the required "
+                   "schema: snap names need to be strings."))
+
+    def test_invalid_yaml_invalid_name_as_huge_map(self):
+        # making my point about not printing the thing for failed type check
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+        self.make_snapcraft_yaml("""name:
+  - a: &a {a: {a: {a: {a: {a: {a: {a: {a: {a: {a: {a: {a: {a: {}}}}}}}}}}}}}}
+  - b: &b [*a, *a, *a, *a, *a, *a, *a, *a, *a, *a, *a, *a, *a, *a, *a, *a, *a]
+  - c: &c [*b, *b, *b, *b, *b, *b, *b, *b, *b, *b, *b, *b, *b, *b, *b, *b, *b]
+  - z: "I could go on but time and memory are both too short"
+version: "1"
+summary: test
+description: nothing
+confinement: strict
+grade: stable
+
+parts:
+  part1:
+    plugin: go
+    stage-packages: [fswebcam]
+""")
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            _config.Config)
+
+        self.assertThat(
+            raised.message,
+            Equals("The 'name' property does not match the required "
+                   "schema: snap names need to be strings."))
 
     def test_invalid_yaml_invalid_icon_extension(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
@@ -501,11 +553,10 @@ parts:
 
         self.assertThat(
             raised.message,
-            Equals("The 'name' property does not match the required schema: "
-                   "'myapp@me_1.0' is not a valid snap name. Snap names "
-                   "consist of lower-case alphanumeric characters and "
-                   "hyphens. They cannot be all numbers. They also cannot "
-                   "start or end with a hyphen."))
+            Equals("The 'name' property does not match the required schema:"
+                   " 'myapp@me_1.0' is not a valid snap name. Snap names can"
+                   " only use ASCII lowercase letters, numbers, and hyphens,"
+                   " and must have at least one letter."))
 
     def test_yaml_missing_confinement_must_log(self):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
@@ -2093,12 +2144,51 @@ class RequiredPropertiesTestCase(ValidationBaseTestCase):
 
 
 class InvalidNamesTestCase(ValidationBaseTestCase):
+    e1 = "not a valid snap name. Snap names can only use ASCII lowercase" \
+      " letters, numbers, and hyphens, and must have at least one letter."
+    e2 = "not a valid snap name. Snap names cannot start with a hyphen."
+    e3 = "not a valid snap name. Snap names cannot end with a hyphen."
+    e4 = "not a valid snap name. Snap names cannot have two hyphens in a row."
+    e5 = "too long (maximum length is 40)"
 
-    scenarios = [(name, dict(name=name)) for
-                 name in [
-                    'package@awesome', 'something.another', '_hideme', '-no',
-                    'a:a', '123'
-    ]]
+    scenarios = [
+        # snapcraft's existing unit tests
+        ("existing test #1", dict(name='package@awesome', err=e1)),
+        ("existing test #2", dict(name='something.another', err=e1)),
+        ("existing test #3", dict(name='_hideme', err=e1)),
+        ("existing test #4", dict(name='-no', err=e2)),
+        ("existing test #5", dict(name='a:a', err=e1)),
+        ("existing test #6", dict(name='123', err=e1)),
+
+        # this one manages to fail every validation test except type
+        ("order check",
+            dict(name="-----------------------------------------", err=e5)),
+
+        # from snapd's unit tests (except those covered by above)
+        ("name cannot be empty", dict(name="", err=e1)),
+        ("name cannot be too long", dict(
+            name="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", err=e5)),
+        ("dashes alone are not a name", dict(name="-", err=e1)),
+        ("dashes alone are not a name, take 2", dict(name="--", err=e1)),
+        ("double dashes in a name are not ok", dict(name="a--a", err=e4)),
+        ("name should not end with a dash", dict(name="a-", err=e3)),
+        ("name cannot have any spaces in it, #1", dict(name="a ", err=e1)),
+        ("name cannot have any spaces in it, #2", dict(name=" a", err=e1)),
+        ("name cannot have any spaces in it, #3", dict(name="a a", err=e1)),
+        ("a number alone is not a name", dict(name="0", err=e1)),
+        ("just numbers and dashes", dict(name="1-2-3", err=e1)),
+        ("plain ASCII #1", dict(name="реасе", err=e1)),
+        ("plain ASCII #2", dict(name="日本語", err=e1)),
+        ("plain ASCII #3", dict(name="한글", err=e1)),
+        ("plain ASCII #4", dict(name="ру́сский язы́к", err=e1)),
+
+        # from review-tools', except as covered
+        ("stress the regexper", dict(
+            name="u-9490371368748654323415773467328453675-", err=e3)),
+        ("review-tools bad", dict(name="foo?bar", err=e1)),
+        ("review-tools bad1", dict(name="foo/bar", err=e1)),
+        ("review-tools bad6", dict(name="foo-Bar", err=e1)),
+    ]
 
     def test_invalid_names(self):
         data = self.data.copy()
@@ -2109,10 +2199,8 @@ class InvalidNamesTestCase(ValidationBaseTestCase):
             project_loader.Validator(data).validate)
 
         expected_message = (
-            "The 'name' property does not match the required schema: '{}' is "
-            "not a valid snap name. Snap names consist of lower-case "
-            "alphanumeric characters and hyphens. They cannot be all numbers. "
-            "They also cannot start or end with a hyphen.").format(self.name)
+            "The 'name' property does not match the required schema: "
+            "{!r} is {}").format(self.name, self.err)
         self.assertThat(raised.message, Equals(expected_message),
                         message=data)
 
