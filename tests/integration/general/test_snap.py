@@ -80,10 +80,34 @@ class SnapTestCase(integration.TestCase):
                          'command-binary-wrapper-none.wrapper.wrapper'),
             Not(FileExists()))
 
+        # LP: #1750658
+        self.assertThat(
+            os.path.join(self.prime_dir, 'meta', 'snap.yaml'),
+            FileContains(dedent("""\
+                name: assemble
+                version: 1.0
+                summary: one line summary
+                description: a longer description
+                architectures:
+                - amd64
+                confinement: strict
+                grade: stable
+                apps:
+                  assemble-bin:
+                    command: command-assemble-bin.wrapper
+                  assemble-service:
+                    command: command-assemble-service.wrapper
+                    daemon: simple
+                    stop-command: stop-command-assemble-service.wrapper
+                  binary-wrapper-none:
+                    command: subdir/binary3
+                  binary2:
+                    command: command-binary2.wrapper
+            """)))
+
     def test_snap_default(self):
         self.copy_project_to_cwd('assemble')
         self.run_snapcraft([])
-
         snap_file_path = 'assemble_1.0_{}.snap'.format(self.deb_arch)
         self.assertThat(snap_file_path, FileExists())
 
