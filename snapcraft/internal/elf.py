@@ -600,7 +600,8 @@ def get_elf_files(root: str,
     return frozenset(elf_files)
 
 
-def get_elf_files_to_patch(elf_files: FrozenSet[ElfFile]) -> FrozenSet[ElfFile]:
+def get_elf_files_to_patch(elf_files):
+    # type: (FrozenSet[ElfFile]) -> FrozenSet[ElfFile]
     """Return a frozenset of elf files that need patching."""
     sonames = {(elf.arch, elf.soname): elf for elf in elf_files
                if elf.soname != ''}

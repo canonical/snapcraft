@@ -577,7 +577,8 @@ class PluginHandler:
                 dynamic_linker=dynamic_linker,
                 root_path=self.primedir,
                 preferred_patchelf_path=staged_patchelf_path)
-            for elf_file in elf_files:
+            files_to_patch = elf.get_elf_files_to_patch(elf_files)
+            for elf_file in files_to_patch:
                 elf_patcher.patch(elf_file=elf_file)
 
         self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
