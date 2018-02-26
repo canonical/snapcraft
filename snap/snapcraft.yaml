@@ -15,11 +15,12 @@ apps:
     command: bin/snapcraft
 
 parts:
-  ctypes:
-    source: ctypes_override
+  patches:
+    source: patches
     plugin: dump
     prime:
         - -ctypes_init.diff
+        - -pyyaml-support-high-codepoints.diff
   bash-completion:
     source: debian
     plugin: dump
@@ -47,6 +48,7 @@ parts:
         TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
         LIBSODIUM=$(readlink -n $TRIPLET_PATH/libsodium.so.18)
         ln -s $LIBSODIUM $TRIPLET_PATH/libsodium.so
+        patch -d $SNAPCRAFT_PART_INSTALL/lib/python3.6/site-packages -p1 < $SNAPCRAFT_STAGE/pyyaml-support-high-codepoints.diff
     after: [python, apt]
   patchelf:
     source: https://github.com/NixOS/patchelf
@@ -64,7 +66,7 @@ parts:
         - -usr/include
     install: |
         patch $SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/ctypes/__init__.py $SNAPCRAFT_STAGE/ctypes_init.diff
-    after: [ctypes]
+    after: [patches]
   apt:
     source: https://github.com/Debian/apt
     source-type: git

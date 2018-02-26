@@ -264,11 +264,6 @@ def _snapcraft_yaml_load(yaml_file):
     else:
         encoding = 'utf-8'
 
-    # Work-around for https://github.com/yaml/pyyaml/issues/25
-    yaml.reader.Reader.NON_PRINTABLE = re.compile(
-        u'[^\x09\x0A\x0D\x20-\x7E\x85\xA0-'
-        '\uD7FF\uE000-\uFFFD\U00010000-\U0010FFFF]')
-
     try:
         with open(yaml_file, encoding=encoding) as fp:
             return yaml.load(fp)
