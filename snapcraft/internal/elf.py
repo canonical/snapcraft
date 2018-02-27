@@ -177,9 +177,12 @@ class ElfFile:
             elf = elftools.elf.elffile.ELFFile(fp)
 
             # A set of fields to identify the architecture of the ELF file:
-            #  e_machine: instruction set (e.g. x86-64 vs. arm64)
             #  EI_CLASS: 32/64 bit (e.g. amd64 vs. x32)
             #  EI_DATA: byte orer (e.g. ppc64 vs. ppc64le)
+            #  e_machine: instruction set (e.g. x86-64 vs. arm64)
+            #
+            # For amd64 binaries, this will evaluate to:
+            #   ('ELFCLASS64', 'ELFDATA2LSB', 'EM_X86_64')
             arch = (elf.header.e_ident.EI_CLASS,
                     elf.header.e_ident.EI_DATA,
                     elf.header.e_machine)
