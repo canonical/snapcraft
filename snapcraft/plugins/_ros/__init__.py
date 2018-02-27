@@ -16,3 +16,4 @@
 
 from snapcraft.plugins._ros import rosdep  # noqa
 from snapcraft.plugins._ros import ros2  # noqa
+from snapcraft.plugins._ros import wstool  # noqa

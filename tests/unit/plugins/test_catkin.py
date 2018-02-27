@@ -103,7 +103,7 @@ class CatkinPluginBaseTestCase(unit.TestCase):
         self.catkin_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('snapcraft.plugins.catkin._Wstool')
+        patcher = mock.patch('snapcraft.plugins._ros.wstool.Wstool')
         self.wstool_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -1742,105 +1742,3 @@ class CatkinFindTestCase(unit.TestCase):
         self.assertThat(
             ' '.join(positional_args),
             Contains('catkin_find --first-only foo'))
-
-
-class WstoolTestCase(unit.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.project = snapcraft.ProjectOptions()
-        self.wstool = catkin._Wstool(
-            'package_path', 'wstool_path', 'sources', self.project)
-
-        patcher = mock.patch('snapcraft.repo.Ubuntu')
-        self.ubuntu_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = mock.patch('subprocess.check_output')
-        self.check_output_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-    def test_setup(self):
-        # Return something other than a Mock to ease later assertions
-        self.check_output_mock.return_value = b''
-
-        self.wstool.setup()
-
-        # Verify that only wstool was installed (no other .debs)
-        self.assertThat(self.ubuntu_mock.call_count, Equals(1))
-        self.assertThat(
-            self.ubuntu_mock.return_value.get.call_count, Equals(1))
-        self.assertThat(
-            self.ubuntu_mock.return_value.unpack.call_count, Equals(1))
-        self.ubuntu_mock.assert_has_calls([
-            mock.call(self.wstool._wstool_path, sources='sources',
-                      project_options=self.project),
-            mock.call().get(['python-wstool']),
-            mock.call().unpack(self.wstool._wstool_install_path)])
-
-        # Verify that wstool was initialized
-        self.check_output_mock.assert_called_once_with(
-            ['wstool', 'init', 'package_path', '-j2'], env=mock.ANY)
-
-    def test_setup_can_run_multiple_times(self):
-        self.wstool.setup()
-
-        # Make sure running setup() again doesn't have problems with the old
-        # environment. An exception will be raised if setup can't be called
-        # twice.
-        self.wstool.setup()
-
-    def test_setup_initialization_rosinstall_already_exists(self):
-        """Test that an existing .rosinstall file is not an error."""
-
-        def run(args, **kwargs):
-            if args[0:2] == ['wstool', 'init']:
-                raise subprocess.CalledProcessError(
-                    1, 'foo',
-                    b'Error: There already is a workspace config file '
-                    b'.rosinstall at ".". Use wstool install/modify.')
-
-        self.check_output_mock.side_effect = run
-
-        self.wstool.setup()
-
-    def test_setup_initialization_failure(self):
-        def run(args, **kwargs):
-            if args[0:2] == ['wstool', 'init']:
-                raise subprocess.CalledProcessError(1, 'foo', b'bar')
-
-        self.check_output_mock.side_effect = run
-
-        raised = self.assertRaises(RuntimeError, self.wstool.setup)
-
-        self.assertThat(str(raised),
-                        Equals('Error initializing workspace:\nbar'))
-
-    def test_merge(self):
-        self.wstool.merge('rosinstall-file')
-
-        self.check_output_mock.assert_called_with(
-            ['wstool', 'merge', 'rosinstall-file', '--confirm-all',
-             '-tpackage_path'],
-            env=mock.ANY)
-
-    def test_update(self):
-        self.wstool.update()
-
-        self.check_output_mock.assert_called_with(
-            ['wstool', 'update', '-j2', '-tpackage_path'], env=mock.ANY)
-
-    def test_run(self):
-        wstool = self.wstool
-        wstool._run(['init'])
-
-        class check_env():
-            def __eq__(self, env):
-                return (
-                    env['PATH'] == os.environ['PATH'] + ':' + os.path.join(
-                        wstool._wstool_install_path, 'usr', 'bin') and
-                    env['PYTHONPATH'] == os.path.join(
-                        wstool._wstool_install_path, 'usr', 'lib',
-                        'python2.7', 'dist-packages'))
-
-        self.check_output_mock.assert_called_with(mock.ANY, env=check_env())
