@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
+
 from ._metadata import ExtractedMetadata
 from snapcraft.extractors import _errors
 
@@ -53,13 +55,29 @@ def extract(path: str) -> ExtractedMetadata:
         # --elopio -20180109
         icon = node.text.strip()
 
-    desktop_file_ids = []
+    desktop_file_paths = []
     nodes = tree.findall('launchable')
     for node in nodes:
         if ('type' in node.attrib and
                 node.attrib['type'] == 'desktop-id'):
-            desktop_file_ids.append(node.text.strip())
+            desktop_file_id = node.text.strip()
+            desktop_file_path = _desktop_file_id_to_path(desktop_file_id)
+            if desktop_file_path:
+                desktop_file_paths.append(desktop_file_path)
 
     return ExtractedMetadata(
         summary=summary, description=description, icon=icon,
-        desktop_file_ids=desktop_file_ids)
+        desktop_file_paths=desktop_file_paths)
+
+
+def _desktop_file_id_to_path(desktop_file_id: str) -> str:
+    # For details about desktop file ids and their corresponding paths, see
+    # https://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#desktop-file-id  # noqa
+    for xdg_data_dir in ('usr/local/share', 'usr/share'):
+        desktop_file_path = os.path.join(
+            xdg_data_dir, 'applications',
+            desktop_file_id.replace('-', '/'))
+        if os.path.exists(desktop_file_path):
+            return desktop_file_path
+    else:
+        return None

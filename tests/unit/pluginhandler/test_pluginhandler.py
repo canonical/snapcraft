@@ -857,7 +857,8 @@ class StateTestCase(StateBaseTestCase):
                 summary='test summary',
                 description='test description',
                 icon='/test/path',
-                desktop_file_ids=['com.example.test-app.desktop']
+                desktop_file_paths=[
+                    'usr/share/applications/com.example.test/app.desktop']
             )
 
         self.useFixture(fixture_setup.FakeMetadataExtractor(
@@ -892,8 +893,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertThat(metadata.get_description(), Equals('test description'))
         self.assertThat(metadata.get_icon(), Equals('/test/path'))
         self.assertThat(
-            metadata.get_desktop_file_ids(),
-            Equals(['com.example.test-app.desktop']))
+            metadata.get_desktop_file_paths(),
+            Equals(['usr/share/applications/com.example.test/app.desktop']))
         files = state.extracted_metadata['files']
         self.assertThat(files, Equals(['metadata-file']))
 
@@ -963,7 +964,8 @@ class StateTestCase(StateBaseTestCase):
                 summary='test summary',
                 description='test description',
                 icon='/test/path',
-                desktop_file_ids=['com.example.test-app.desktop'])
+                desktop_file_paths=[
+                    'usr/share/applications/com.example.test/app.desktop'])
 
         self.useFixture(fixture_setup.FakeMetadataExtractor(
             'fake', _fake_extractor))
@@ -995,8 +997,8 @@ class StateTestCase(StateBaseTestCase):
         self.assertThat(metadata.get_description(), Equals('test description'))
         self.assertThat(metadata.get_icon(), Equals('/test/path'))
         self.assertThat(
-            metadata.get_desktop_file_ids(),
-            Equals(['com.example.test-app.desktop']))
+            metadata.get_desktop_file_paths(),
+            Equals(['usr/share/applications/com.example.test/app.desktop']))
         files = state.extracted_metadata['files']
         self.assertThat(files, Equals(['metadata-file']))
 
