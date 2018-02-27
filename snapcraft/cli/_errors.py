@@ -60,7 +60,7 @@ def exception_handler(exception_type, exception, exception_traceback, *,
 
     if not is_snapcraft_error:
         echo.error('Sorry, Snapcraft had an internal error.')
-        if RavenClient is not None and _is_environment_ok():
+        if _is_send_error_data():
             _submit_trace(exception)
 
     should_print_error = not debug and (
@@ -74,9 +74,10 @@ def exception_handler(exception_type, exception, exception_traceback, *,
     sys.exit(exit_code)
 
 
-def _is_environment_ok():
-    send_data = os.environ.get('SNAPCRAFT_SEND_ERROR_DATA', 'y')
-    return send_data == 'y'
+def _is_send_error_data():
+    is_raven_client = RavenClient is not None
+    is_env_send_data = os.environ.get('SNAPCRAFT_SEND_ERROR_DATA', 'y') == 'y'
+    return is_env_send_data and is_raven_client
 
 
 def _submit_trace(exception):
