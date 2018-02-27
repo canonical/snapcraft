@@ -13,6 +13,7 @@ confinement: classic
 apps:
   snapcraft:
     command: bin/snapcraft
+    completer: snapcraft-completion
 
 parts:
   ctypes:
@@ -35,7 +36,7 @@ parts:
         - libsodium-dev
         - liblzma-dev
     stage-packages:
-        - binutils
+        - execstack
         - libffi6
         - libsodium18
         - squashfs-tools

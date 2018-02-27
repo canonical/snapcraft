@@ -874,6 +874,16 @@ class FakeAptCache(fixtures.Fixture):
         for package, version in self.packages:
             self.add_package(FakeAptCachePackage(package, version))
 
+        def fetch_binary(package_candidate, destination):
+            path = os.path.join(self.path, package_candidate.name)
+            open(path, 'w').close()
+            return path
+
+        patcher = mock.patch('snapcraft.repo._deb._AptCache.fetch_binary')
+        mock_fetch_binary = patcher.start()
+        mock_fetch_binary.side_effect = fetch_binary
+        self.addCleanup(patcher.stop)
+
         # Add all the packages in the manifest.
         with open(os.path.abspath(
                 os.path.join(
@@ -939,11 +949,6 @@ class FakeAptCachePackage():
 
     def mark_keep(self):
         pass
-
-    def fetch_binary(self, dir_, progress):
-        path = os.path.join(self.temp_dir, self.name)
-        open(path, 'w').close()
-        return path
 
     def get_dependencies(self, _):
         return []
@@ -1116,23 +1121,31 @@ def _fake_elffile_extract(self, path):
         glibc = elf.NeededLibrary(name='libc.so.6')
         glibc.add_version('GLIBC_2.2.5')
         glibc.add_version('GLIBC_2.26')
-        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}
+        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}, False
     elif name == 'fake_elf-2.23':
         glibc = elf.NeededLibrary(name='libc.so.6')
         glibc.add_version('GLIBC_2.2.5')
         glibc.add_version('GLIBC_2.23')
-        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}
+        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}, False
     elif name == 'fake_elf-1.1':
         glibc = elf.NeededLibrary(name='libc.so.6')
         glibc.add_version('GLIBC_1.1')
         glibc.add_version('GLIBC_0.1')
-        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}
+        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}, False
     elif name == 'fake_elf-static':
-        return '', '', {}
+        return '', '', {}, False
     elif name == 'fake_elf-shared-object':
         openssl = elf.NeededLibrary(name='libssl.so.1.0.0')
         openssl.add_version('OPENSSL_1.0.0')
-        return '', 'libfake_elf.so.0', {openssl.name: openssl}
+        return '', 'libfake_elf.so.0', {openssl.name: openssl}, False
+    elif name == 'fake_elf-with-execstack':
+        glibc = elf.NeededLibrary(name='libc.so.6')
+        glibc.add_version('GLIBC_2.23')
+        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}, True
+    elif name == 'fake_elf-with-bad-execstack':
+        glibc = elf.NeededLibrary(name='libc.so.6')
+        glibc.add_version('GLIBC_2.23')
+        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}, True
 
 
 class FakeElf(fixtures.Fixture):
@@ -1161,7 +1174,7 @@ class FakeElf(fixtures.Fixture):
         self.useFixture(fixtures.EnvironmentVariable('PATH', new_path))
 
         # Copy strip
-        for f in ['strip']:
+        for f in ['strip', 'execstack']:
             shutil.copy(os.path.join(binaries_path, f),
                         os.path.join(new_binaries_path, f))
             os.chmod(os.path.join(new_binaries_path, f), 0o755)
@@ -1204,6 +1217,11 @@ class FakeElf(fixtures.Fixture):
                 path=os.path.join(self.root_path, 'fake_elf-bad-patchelf')),
             'fake_elf-with-core-libs': elf.ElfFile(
                 path=os.path.join(self.root_path, 'fake_elf-with-core-libs')),
+            'fake_elf-with-execstack': elf.ElfFile(
+                path=os.path.join(self.root_path, 'fake_elf-with-execstack')),
+            'fake_elf-with-bad-execstack': elf.ElfFile(
+                path=os.path.join(self.root_path,
+                                  'fake_elf-with-bad-execstack')),
         }
 
         for elf_file in self._elf_files.values():

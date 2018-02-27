@@ -627,7 +627,8 @@ class MetadataFromSourceWithDesktopFileTestCase(
 
         def _fake_extractor(file_path):
             return extractors.ExtractedMetadata(
-                desktop_file_ids=['com.example.test-app.desktop'])
+                desktop_file_paths=[
+                    'usr/share/applications/com.example.test/app.desktop'])
 
         self.useFixture(fixture_setup.FakeMetadataExtractor(
             'fake', _fake_extractor))
