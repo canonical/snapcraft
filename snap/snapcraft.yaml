@@ -13,6 +13,7 @@ confinement: classic
 apps:
   snapcraft:
     command: bin/snapcraft
+    completer: snapcraft-completion
 
 parts:
   ctypes:
