@@ -83,8 +83,9 @@ class RegisterTestCase(integration.StoreTestCase):
             integration.RegisterError, self.register, name)
 
         self.assertThat(str(error), Contains(
-            'The name {!r} is not valid. It can only contain dashes, numbers '
-            'and lowercase ascii letters.'.format(name)))
+            'The name {!r} is not valid: it should only have ASCII lowercase '
+            'letters, numbers, and hyphens, and must have at least '
+            'one letter.'.format(name)))
 
     def test_registration_of_too_long_name(self):
         self.login()
@@ -93,8 +94,8 @@ class RegisterTestCase(integration.StoreTestCase):
             integration.RegisterError, self.register, name)
 
         self.assertThat(str(error), Contains(
-            'The name {} should not be longer than 40 characters.'
-            .format(name)))
+            'The name {!r} is not valid: it should be no longer than 40 '
+            'characters.'.format(name)))
 
     def test_registrations_in_a_row_fail_if_too_fast(self):
         # This test has a potential to fail if working off a slow
