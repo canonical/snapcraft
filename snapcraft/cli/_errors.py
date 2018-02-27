@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import sys
 import traceback
 
@@ -59,7 +60,7 @@ def exception_handler(exception_type, exception, exception_traceback, *,
 
     if not is_snapcraft_error:
         echo.error('Sorry, Snapcraft had an internal error.')
-        if RavenClient is not None:
+        if RavenClient is not None and _is_environment_ok():
             _submit_trace(exception)
 
     should_print_error = not debug and (
@@ -71,6 +72,11 @@ def exception_handler(exception_type, exception, exception_traceback, *,
             echo.error(str(exception))
 
     sys.exit(exit_code)
+
+
+def _is_environment_ok():
+    send_data = os.environ.get('SNAPCRAFT_SEND_ERROR_DATA', 'y')
+    return send_data == 'y'
 
 
 def _submit_trace(exception):
