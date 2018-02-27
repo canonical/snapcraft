@@ -37,6 +37,9 @@ from snapcraft.internal.errors import (
         ContainerError,
         ContainerRunError,
         ContainerSnapcraftCmdError,
+        MultipassNotInstalledError,
+        MultipassSetupError,
+        MultipassNetworkBridgeError,
         SnapdError,
 )
 from snapcraft._options import _get_deb_arch
@@ -68,6 +71,8 @@ class Containerbuild:
 
         if not remote:
             remote = _get_default_remote()
+        elif remote == 'multipass':
+            self._setup_multipass_remote()
         _verify_remote(remote)
         self._container_name = '{}:snapcraft-{}'.format(remote, container_name)
         self._image = 'ubuntu:xenial'
@@ -75,6 +80,89 @@ class Containerbuild:
         self._lxd_common_dir = os.path.expanduser(
             os.path.join('~', 'snap', 'lxd', 'common'))
         os.makedirs(self._lxd_common_dir, exist_ok=True)
+
+    def _setup_multipass_remote(self):
+        try:
+            remotes = subprocess.check_output([
+                'lxc', 'remote', 'list']).decode()
+            # Trailing space to disambiguate names starting with multipass
+            if 'multipass ' in remotes:
+                logger.debug('Removing existing remote')
+                # Remove existing remote in case the IP has changed
+                subprocess.check_call(['lxc', 'remote', 'remove', 'multipass'])
+        except FileNotFoundError:
+            raise ContainerConnectionError(
+                'You must have LXD installed in order to use Multipass.')
+
+        try:
+            if self._get_vm_status():
+                subprocess.check_call([
+                    'multipass', 'start', 'snapcraft'])
+            else:
+                subprocess.check_call([
+                    'multipass', 'launch', '--name=snapcraft', '--disk', '10G',
+                ])
+            self._setup_lxd()
+        except FileNotFoundError:
+            raise MultipassNotInstalledError()
+        except subprocess.CalledProcessError as e:
+            raise MultipassSetupError(e.cmd)
+
+    def _get_vm_status(self):
+        vms = json.loads(subprocess.check_output([
+            'multipass', 'info', '--format=json', '--all']).decode())
+        if 'snapcraft' in vms['info']:
+            return vms['info']['snapcraft']
+
+    def _setup_lxd(self):
+        if 'lxd' not in self._multipass_exec(['snap', 'list']).decode():
+            logger.debug('Installing LXD')
+            self._multipass_exec(['sudo', 'snap', 'install', 'lxd'])
+        self._multipass_exec(['sudo', '/snap/bin/lxd', 'waitready'])
+        if 'core.trust_password: true' not in self._multipass_exec([
+                '/snap/bin/lxc', 'config', 'show']).decode():
+            logger.debug('Configuring LXD')
+            # Expose LXD over the network
+            self._multipass_exec([
+                'sudo', '/snap/bin/lxd', 'init', '--auto',
+                '--network-address', '0.0.0.0',
+                '--network-port', '8443',
+                '--trust-password', 'snapcraft'])
+        if 'lxdbr0' not in self._multipass_exec([
+                '/snap/bin/lxc', 'network', 'list']).decode():
+            logger.debug('Adding network bridge')
+            self._multipass_exec([
+                'sudo', '/snap/bin/lxc', 'network',
+                'create', 'lxdbr0'])
+            self._multipass_exec([
+                'sudo', '/snap/bin/lxc', 'network',
+                'attach-profile', 'lxdbr0', 'default', 'eth0'])
+
+        multipass_ip = self._get_vm_status()['ipv4'][0]
+        logger.debug('Waiting for LXD bridge to come up')
+        # It takes a while for the network bridge to come up
+        retry_count = 10
+        while True:
+            time.sleep(1)
+            try:
+                if 'inet addr:' in self._multipass_exec(
+                        ['ifconfig', 'lxdbr0'], timeout=5).decode():
+                    break
+            except subprocess.TimeoutExpired:
+                # Timeout may or may not mean success
+                pass
+            retry_count -= 1
+            if retry_count == 0:
+                raise MultipassNetworkBridgeError()
+
+        logger.debug('Adding multipass LXD remote')
+        subprocess.check_call([
+            'lxc', 'remote', 'add', 'multipass', multipass_ip,
+            '--password=snapcraft', '--accept-certificate'])
+
+    def _multipass_exec(self, cmd: List[str], **kwargs):
+        return subprocess.check_output([
+            'multipass', 'exec', 'snapcraft', '--'] + cmd, **kwargs)
 
     @contextmanager
     def _container_running(self):
@@ -102,6 +190,9 @@ class Containerbuild:
                 print('Stopping {}'.format(self._container_name))
                 subprocess.check_call([
                     'lxc', 'stop', '-f', self._container_name])
+                remote, container_name = self._container_name.split(':')
+                if remote == 'multipass':
+                    subprocess.check_call(['multipass', 'stop', 'snapcraft'])
 
     def _get_container_status(self):
         containers = json.loads(subprocess.check_output([
