@@ -22,7 +22,6 @@ from testtools.matchers import (
     Not
 )
 
-import snapcraft
 from tests import integration
 
 
@@ -32,9 +31,8 @@ class NoSystemLibrariesTestCase(integration.TestCase):
         self.run_snapcraft(['prime', 'main-no-prereq'], 'fake-curl-library')
 
         # Verify that the system's libcurl was pulled in.
-        arch = snapcraft.ProjectOptions().arch_triplet
         libcurl_path = os.path.join(
-            self.prime_dir, 'usr', 'lib', arch, 'libcurl.so*')
+            self.prime_dir, 'usr', 'lib', self.arch_triplet, 'libcurl.so*')
         self.assertTrue(glob.glob(libcurl_path + '*'))
 
     def test_no_system_libraries(self):
