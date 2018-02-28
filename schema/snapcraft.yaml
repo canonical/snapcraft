@@ -17,6 +17,12 @@ definitions:
                 ^on\s+.+$:
                   $ref: "#/definitions/grammar-string"
             - type: object
+              usage: "to <selector>[,<selector>...]:"
+              additionalProperties: false
+              patternProperties:
+                ^to\s+.+$:
+                  $ref: "#/definitions/grammar-string"
+            - type: object
               usage: "try:"
               additionalProperties: false
               patternProperties:

@@ -17,6 +17,8 @@
 from snapcraft.internal import repo
 from snapcraft.internal.project_loader import grammar
 
+from ._package_transformer import package_transformer
+
 
 class GlobalGrammarProcessor:
     """Process global properties that support grammar.
@@ -39,8 +41,10 @@ class GlobalGrammarProcessor:
 
     def get_build_packages(self):
         if not self.__build_packages:
-            self.__build_packages = grammar.process_grammar(
+            processor = grammar.GrammarProcessor(
                 self._build_package_grammar, self._project_options,
-                repo.Repo.build_package_is_valid)
+                repo.Repo.build_package_is_valid,
+                transformer=package_transformer)
+            self.__build_packages = processor.process()
 
         return self.__build_packages
