@@ -14,14 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import snapcraft
 from tests import integration
 
 
 class MavenPluginTestCase(integration.TestCase):
 
     def test_build_maven_plugin(self):
-        if snapcraft.ProjectOptions().deb_arch == 'armhf':
+        if self.deb_arch == 'armhf':
             # https://bugs.launchpad.net/snapcraft/+bug/1647405
             self.skipTest('The maven plugin does not support armhf')
         self.run_snapcraft('build', 'maven-with-options')

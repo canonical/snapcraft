@@ -23,7 +23,6 @@ import testscenarios
 import yaml
 from testtools.matchers import Equals, FileExists, MatchesRegex, Not
 
-import snapcraft
 from tests import integration
 from tests.matchers import HasArchitecture
 
@@ -36,7 +35,7 @@ class RustPluginBaseTestCase(integration.TestCase):
             super().run_snapcraft(command, project_dir, debug)
             failed = False
         except subprocess.CalledProcessError:
-            if snapcraft.ProjectOptions().deb_arch == 'arm64':
+            if self.deb_arch == 'arm64':
                 # https://github.com/rust-lang/rustup.sh/issues/82
                 self.expectFailure(
                     'The rustup script does not support arm64.',
@@ -95,7 +94,7 @@ class RustPluginTestCase(RustPluginBaseTestCase):
                          'Cargo.lock'), FileExists())
 
     def test_cross_compiling(self):
-        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+        if self.deb_arch != 'amd64':
             self.skipTest('The test only handles amd64 to arm64')
 
         self.run_snapcraft(['build', '--target-arch=arm64'],
