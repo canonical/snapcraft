@@ -21,7 +21,6 @@ import yaml
 from testtools.matchers import (Equals, FileContains, FileExists, MatchesRegex,
                                 Not)
 
-import snapcraft
 from tests import integration
 from tests.matchers import HasArchitecture
 
@@ -76,7 +75,7 @@ class GoPluginTestCase(integration.TestCase):
             self.assertThat(os.path.join('stage', 'bin', bin), FileExists())
 
     def test_cross_compiling(self):
-        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+        if self.deb_arch != 'amd64':
             self.skipTest('The test only handles amd64 to arm64')
 
         target_arch = 'arm64'
@@ -87,7 +86,7 @@ class GoPluginTestCase(integration.TestCase):
         self.assertThat(binary, HasArchitecture('aarch64'))
 
     def test_cross_compiling_with_cgo(self):
-        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+        if self.deb_arch != 'amd64':
             self.skipTest('The test only handles amd64 to arm64')
 
         target_arch = 'arm64'

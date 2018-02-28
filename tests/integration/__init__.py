@@ -38,12 +38,12 @@ from unittest import mock
 from testtools import content
 from testtools.matchers import MatchesRegex
 
-from snapcraft import ProjectOptions as _ProjectOptions
 from snapcraft.internal.os_release import OsRelease
 from tests import (
     fixture_setup,
     subprocess_utils
 )
+from tests.integration import platform
 
 
 class RegisterError(Exception):
@@ -127,9 +127,8 @@ class TestCase(testtools.TestCase):
         self.stage_dir = 'stage'
         self.prime_dir = 'prime'
 
-        project = _ProjectOptions()
-        self.deb_arch = project.deb_arch
-        self.arch_triplet = project.arch_triplet
+        self.deb_arch = platform.get_deb_arch()
+        self.arch_triplet = platform.get_arch_triplet()
 
         release = OsRelease()
         self.distro_series = release.version_codename()

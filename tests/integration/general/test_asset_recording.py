@@ -25,7 +25,6 @@ import fixtures
 import testscenarios
 from testtools.matchers import Contains, Equals
 
-import snapcraft
 from snapcraft.internal.repo import snaps
 from tests import (
     integration,
@@ -140,7 +139,7 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
 
         self.assertThat(
             recorded_yaml['architectures'],
-            Equals([snapcraft.ProjectOptions().deb_arch]))
+            Equals([self.deb_arch]))
 
     def test_prime_records_build_snaps(self):
         if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':

@@ -33,17 +33,25 @@ class AppstreamTestCase(unit.TestCase):
             'key': 'summary',
             'attributes': {},
             'value': 'test-summary',
+            'param_name': 'summary'
         }),
          ('description', {
              'key': 'description',
              'attributes': {},
              'value': 'test-description',
-
+             'param_name': 'description',
          }),
          ('local icon', {
             'key': 'icon',
             'attributes': {'type': 'local'},
+            'param_name': 'icon',
             'value': '/test/path',
+         }),
+         ('common id', {
+             'key': 'id',
+             'attributes': {},
+             'param_name': 'common_id',
+             'value': 'test-id'
          })],
         [('metainfo', {'file_extension': 'metainfo.xml'}),
          ('appdata', {'file_extension': 'appdata.xml'})]
@@ -64,7 +72,7 @@ class AppstreamTestCase(unit.TestCase):
                 </component>""".format(
                     key=self.key, value=self.value, attributes=attributes)))
 
-        kwargs = {self.key: self.value}
+        kwargs = {self.param_name: self.value}
         expected = ExtractedMetadata(**kwargs)
 
         self.assertThat(
