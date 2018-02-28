@@ -26,14 +26,13 @@ class ExtractedMetadata(yaml.YAMLObject):
     def __init__(
             self, *, summary: str='',
             description: str='', icon: str='',
-            desktop_file_ids: List[str]=None) -> None:
+            desktop_file_paths: List[str]=None) -> None:
         """Create a new ExtractedMetadata instance.
 
         :param str summary: Extracted summary
         :param str description: Extracted description
         :param str icon: Extracted icon
-        :param dict desktop_file_ids: Extracted desktop file ids, as defined in
-            https://standards.freedesktop.org/desktop-entry-spec/desktop-entry-spec-latest.html#desktop-file-id
+        :param list desktop_file_paths: Extracted desktop file paths
         """  # noqa
 
         self._data = {}  # type: Dict[str, Union[str, List[str]]]
@@ -44,8 +43,8 @@ class ExtractedMetadata(yaml.YAMLObject):
             self._data['description'] = description
         if icon:
             self._data['icon'] = icon
-        if desktop_file_ids:
-            self._data['desktop_file_ids'] = desktop_file_ids
+        if desktop_file_paths:
+            self._data['desktop_file_paths'] = desktop_file_paths
 
     def update(self, other: 'ExtractedMetadata') -> None:
         """Update this metadata with other metadata.
@@ -84,14 +83,14 @@ class ExtractedMetadata(yaml.YAMLObject):
         icon = self._data.get('icon')
         return str(icon) if icon else None
 
-    def get_desktop_file_ids(self) -> List[str]:
-        """Return extracted desktop files ids.
+    def get_desktop_file_paths(self) -> List[str]:
+        """Return extracted desktop files paths.
 
-        :returns: Extracted desktop files ids
+        :returns: Extracted desktop files paths
         :rtype: list
         """
-        desktop_file_ids = self._data.get('desktop_file_ids')
-        return list(desktop_file_ids) if desktop_file_ids else None
+        desktop_file_paths = self._data.get('desktop_file_paths')
+        return list(desktop_file_paths) if desktop_file_paths else None
 
     def to_dict(self) -> Dict[str, Union[str, List[str]]]:
         """Return all extracted metadata.

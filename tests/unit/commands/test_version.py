@@ -19,7 +19,15 @@ from . import CommandBaseTestCase
 
 
 class VersionCommandTestCase(CommandBaseTestCase):
-
     def test_has_version(self):
         result = self.run_command(['--version'])
         self.assertThat(result.exit_code, Equals(0))
+
+    def test_has_version_without_hyphens(self):
+        result = self.run_command(['version'])
+        self.assertThat(result.exit_code, Equals(0))
+
+    def test_method_return_same_value(self):
+        result1 = self.run_command(['version'])
+        result2 = self.run_command(['--version'])
+        self.assertEqual(result1.output, result2.output)

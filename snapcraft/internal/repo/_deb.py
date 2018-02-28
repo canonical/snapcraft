@@ -315,7 +315,7 @@ class Ubuntu(BaseRepo):
                             package.name, package.installed.version))
         return installed_packages
 
-    def __init__(self, rootdir, sources=None, project_options=None):
+    def __init__(self, rootdir, sources=None, project_options=None) -> None:
         super().__init__(rootdir)
         self._downloaddir = os.path.join(rootdir, 'download')
 
@@ -333,7 +333,7 @@ class Ubuntu(BaseRepo):
         with self._apt.archive(self._cache.base_dir) as apt_cache:
             return package_name in apt_cache
 
-    def get(self, package_names):
+    def get(self, package_names) -> None:
         with self._apt.archive(self._cache.base_dir) as apt_cache:
             self._mark_install(apt_cache, package_names)
             self._filter_base_packages(apt_cache, package_names)
@@ -399,7 +399,7 @@ class Ubuntu(BaseRepo):
 
         return pkg_list
 
-    def unpack(self, unpackdir):
+    def unpack(self, unpackdir) -> None:
         pkgs_abs_path = glob.glob(os.path.join(self._downloaddir, '*.deb'))
         for pkg in pkgs_abs_path:
             sources.Deb(None, None).provision(

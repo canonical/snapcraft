@@ -14,6 +14,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.plugins._ros import rosdep  # noqa
-from snapcraft.plugins._ros import ros2  # noqa
-from snapcraft.plugins._ros import wstool  # noqa
+import click
+
+import snapcraft
+
+SNAPCRAFT_VERSION_TEMPLATE = 'snapcraft, version %(version)s'
+
+
+@click.group()
+def versioncli():
+    """Version commands"""
+    pass
+
+
+@versioncli.command('version')
+def version():
+    """Obtain snapcraft's version number.
+
+    Examples:
+        snapcraft version
+        snapcraft --version
+    """
+    click.echo(SNAPCRAFT_VERSION_TEMPLATE % {'version': snapcraft.__version__})

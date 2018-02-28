@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import textwrap
 
 from snapcraft.extractors import appstream, ExtractedMetadata
@@ -83,6 +84,15 @@ class AppstreamUnhandledFileTestCase(unit.TestCase):
 
 class AppstreamLaunchableTestCase(unit.TestCase):
 
+    scenarios = (
+        ('usr/share',
+         {'desktop_file_path':
+          'usr/share/applications/com.example.test/app.desktop'}),
+        ('usr/local/share',
+         {'desktop_file_path':
+          'usr/local/share/applications/com.example.test/app.desktop'})
+    )
+
     def test_appstream_with_launchable(self):
         with open('foo.metainfo.xml', 'w') as f:
             f.write(textwrap.dedent("""\
@@ -93,11 +103,17 @@ class AppstreamLaunchableTestCase(unit.TestCase):
                   </launchable>
                 </component>"""))
 
+        os.makedirs(os.path.dirname(self.desktop_file_path))
+        open(self.desktop_file_path, 'w').close()
+
         expected = ExtractedMetadata(
-            desktop_file_ids=['com.example.test-app.desktop'])
+            desktop_file_paths=[self.desktop_file_path])
 
         self.assertThat(
             appstream.extract('foo.metainfo.xml'), Equals(expected))
+
+
+class AppstreamMultipleLaunchableTestCase(unit.TestCase):
 
     def test_appstream_with_multiple_launchables(self):
         with open('foo.metainfo.xml', 'w') as f:
@@ -113,12 +129,21 @@ class AppstreamLaunchableTestCase(unit.TestCase):
                   <launchable type="desktop-id">
                     com.example.test-app2.desktop
                   </launchable>
+                  <launchable type="desktop-id">
+                    unexisting
+                  </launchable>
                 </component>"""))
 
+        os.makedirs('usr/local/share/applications/com.example.test/')
+        open('usr/local/share/applications/com.example.test/app1.desktop',
+             'w').close()
+        open('usr/local/share/applications/com.example.test/app2.desktop',
+             'w').close()
+
         expected = ExtractedMetadata(
-            desktop_file_ids=[
-                'com.example.test-app1.desktop',
-                'com.example.test-app2.desktop'])
+            desktop_file_paths=[
+                'usr/local/share/applications/com.example.test/app1.desktop',
+                'usr/local/share/applications/com.example.test/app2.desktop'])
 
         self.assertThat(
             appstream.extract('foo.metainfo.xml'), Equals(expected))

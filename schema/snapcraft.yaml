@@ -73,13 +73,31 @@ properties:
     type: string
     description: name of the part that provides source files that will be parsed to extract snap metadata information
   name:
-    type: string
     description: name of the snap package
-    validation-failure:
-      "{.instance!r} is not a valid snap name. Snap names consist of lower-case
-      alphanumeric characters and hyphens. They cannot be all numbers. They
-      also cannot start or end with a hyphen."
-    pattern: "^(?:[a-z0-9]+-?)*[a-z](?:-?[a-z0-9])*$"
+    allOf:
+      - type: string
+        # this failure message avoids printing repr of the thing, as it could be huge
+        validation-failure: "snap names need to be strings."
+        # string, but too long, is caught by this
+        maxLength: 40
+      - pattern: "^[a-z0-9-]*[a-z][a-z0-9-]*$"
+        validation-failure:
+          "{.instance!r} is not a valid snap name. Snap names can only use ASCII
+          lowercase letters, numbers, and hyphens, and must have at least one
+          letter."
+      - pattern: "^[^-]"
+        validation-failure:
+          "{.instance!r} is not a valid snap name. Snap names cannot start with
+          a hyphen."
+      - pattern: "[^-]$"
+        validation-failure:
+          "{.instance!r} is not a valid snap name. Snap names cannot end with a
+          hyphen."
+      - not:
+          pattern: "--"
+        validation-failure:
+          "{.instance!r} is not a valid snap name. Snap names cannot have two
+          hyphens in a row."
   architectures:
     type: array
     description: architectures to override with
