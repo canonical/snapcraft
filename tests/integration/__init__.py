@@ -92,6 +92,10 @@ class TestCase(testtools.TestCase):
             'XDG_DATA_HOME', os.path.join(self.path, 'data')))
         self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
 
+        # Do not send crash reports
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_SEND_ERROR_DATA', 'n'))
+
         patcher = mock.patch(
             'xdg.BaseDirectory.xdg_config_home',
             new=os.path.join(self.path, '.config'))
