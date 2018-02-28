@@ -384,18 +384,20 @@ class CatkinPlugin(snapcraft.BasePlugin):
                 source_path = os.path.join(self.sourcedir,
                                            self.options.source_subdir)
 
-            # Create a set of paths to rosinstall files
-            rosinstall_files = set()
-            for rosinstall_file in self.options.rosinstall_files:
-                rosinstall_files.add(
-                    os.path.join(source_path, rosinstall_file))
-
             # Recursively handling rosinstall files is a superset of handling
             # individual rosinstall files. If both are specified, the recursive
             # option will cover it.
             if self.options.recursive_rosinstall:
                 _recursively_handle_rosinstall_files(wstool, source_path)
             else:
+                # The rosinstall files in the YAML are relative to the part's
+                # source. However, _handle_rosinstall_files requires absolute
+                # paths.
+                rosinstall_files = set()
+                for rosinstall_file in self.options.rosinstall_files:
+                    rosinstall_files.add(
+                        os.path.join(source_path, rosinstall_file))
+
                 _handle_rosinstall_files(
                     wstool, rosinstall_files)
 
