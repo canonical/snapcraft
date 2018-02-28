@@ -597,14 +597,19 @@ class FakeStoreAPIServer(base.BaseFakeServer):
 
     def _register_name_invalid(self, snap_name):
         # Emulates the current Store behaviour and never combines errors.
-        # It's either using invalid chars or too long, never both.
         if len(snap_name) > 40:
-            msg = ('The name {} should not be longer than 40 characters.'
-                   .format(snap_name))
+            msg = ("The name '{}' is not valid: it should be no longer than"
+                   " 40 characters.").format(snap_name)
+        elif snap_name.startswith('-') or snap_name.endswith('-'):
+            msg = ("The name '{}' is not valid: it should not start"
+                   " nor end with a hyphen.").format(snap_name)
+        elif '--' in snap_name:
+            msg = ("The name '{}' is not valid: it should not have"
+                   " two hyphens in a row.").format(snap_name)
         else:
-            msg = (
-                'The name {!r} is not valid. It can only contain dashes, '
-                'numbers and lowercase ascii letters.'.format(snap_name))
+            msg = ("The name '{}' is not valid: it should only have"
+                   " ASCII lowercase letters, numbers, and hyphens,"
+                   " and must have at least one letter.").format(snap_name)
 
         payload = json.dumps({
             'error_list': [
