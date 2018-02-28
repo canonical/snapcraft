@@ -437,7 +437,7 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
         _, kwargs = self.mock_upload.call_args
         self.assertThat(kwargs.get('delta_format'), Equals('xdelta3'))
 
-    def test_push_with_upload_failure_falls_back(self):
+    def test_push_with_delta_generation_failure_falls_back(self):
         # Upload
         with mock.patch('snapcraft.storeapi._status_tracker.'
                         'StatusTracker'):
@@ -470,6 +470,53 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
             result = self.run_command(['push', self.snap_file])
         self.assertThat(result.exit_code, Equals(0))
         mock_upload.assert_called_once_with('basic', self.snap_file)
+
+    def test_push_with_delta_upload_failure_falls_back(self):
+        # Upload
+        with mock.patch('snapcraft.storeapi._status_tracker.'
+                        'StatusTracker'):
+            result = self.run_command(['push', self.snap_file])
+        self.assertThat(result.exit_code, Equals(0))
+
+        mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
+        mock_tracker.track.return_value = {
+            'code': 'ready_to_release',
+            'processed': True,
+            'can_release': True,
+            'url': '/fake/url',
+            'revision': 9,
+        }
+        result = {
+            'code': 'processing_upload_delta_error',
+            'errors': [
+                {
+                    'message': 'Delta service failed to apply delta within 60s'
+                }
+            ]
+        }
+        mock_tracker.raise_for_code.side_effect = [
+            storeapi.errors.StoreReviewError(result=result),
+            None]
+        patcher = mock.patch.object(storeapi.StoreClient, 'upload')
+        mock_upload = patcher.start()
+        self.addCleanup(patcher.stop)
+        mock_upload.return_value = mock_tracker
+
+        # Upload and ensure fallback is called
+        with mock.patch('snapcraft.storeapi.'
+                        '_status_tracker.StatusTracker'):
+            result = self.run_command(['push', self.snap_file])
+        self.assertThat(result.exit_code, Equals(0))
+        mock_upload.assert_has_calls([
+            mock.call('basic', mock.ANY, delta_format='xdelta3',
+                      delta_hash=mock.ANY, source_hash=mock.ANY,
+                      target_hash=mock.ANY),
+            mock.call().track(),
+            mock.call().raise_for_code(),
+            mock.call('basic', self.snap_file),
+            mock.call().track(),
+            mock.call().raise_for_code(),
+        ])
 
 
 class PushCommandDeltasWithPruneTestCase(PushCommandBaseTestCase):
