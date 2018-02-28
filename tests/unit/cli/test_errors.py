@@ -56,27 +56,50 @@ class ErrorsTestCase(unit.TestCase):
         except Exception:
             exception_handler(*sys.exc_info(), debug=debug)
 
-    def assert_exception_traceback_exit_1(self):
+    def assert_exception_traceback_exit_1_with_debug(self):
         self.error_mock.assert_not_called
         self.exit_mock.assert_called_once_with(1)
         self.print_exception_mock.assert_called_once_with(
             RuntimeError, mock.ANY, mock.ANY)
 
-    def test_handler_traceback_non_snapcraft_exceptions_no_debug(self):
+    def assert_no_exception_traceback_exit_1_without_debug(self):
+        self.error_mock.assert_not_called
+        self.exit_mock.assert_called_once_with(1)
+        self.print_exception_mock.assert_not_called()
+
+    @mock.patch('click.confirm', return_value=False)
+    def test_handler_traceback_non_snapcraft_exceptions_no_debug(
+            self, click_confirm_mock):
         try:
             self.call_handler(RuntimeError('not a SnapcraftError'), False)
         except Exception:
             self.fail('Exception unexpectedly raised')
 
-        self.assert_exception_traceback_exit_1()
+        self.assert_no_exception_traceback_exit_1_without_debug()
 
-    def test_handler_traceback_non_snapcraft_exceptions_debug(self):
+    @mock.patch('click.confirm', return_value=False)
+    def test_handler_traceback_non_snapcraft_exceptions_debug(
+            self, click_confirm_mock):
         try:
             self.call_handler(RuntimeError('not a SnapcraftError'), True)
         except Exception:
             self.fail('Exception unexpectedly raised')
 
-        self.assert_exception_traceback_exit_1()
+        self.assert_exception_traceback_exit_1_with_debug()
+
+    @mock.patch('snapcraft.cli._errors.RavenClient')
+    @mock.patch('snapcraft.cli._errors.RequestsHTTPTransport')
+    @mock.patch('click.confirm', return_value=True)
+    def test_handler_traceback_send_traceback_to_sentry(
+            self, click_confirm_mock, raven_request_mock, raven_client_mock):
+        try:
+            self.call_handler(RuntimeError('not a SnapcraftError'), True)
+        except Exception:
+            self.fail('Exception unexpectedly raised')
+
+        self.assert_exception_traceback_exit_1_with_debug()
+        raven_client_mock.assert_called_once_with(
+            mock.ANY, transport=raven_request_mock)
 
     def test_handler_catches_snapcraft_exceptions_no_debug(self):
         try:
