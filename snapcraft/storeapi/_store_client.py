@@ -39,7 +39,14 @@ class StoreClient():
               config_fd: TextIO = None, save: bool = True) -> None:
         """Log in via the Ubuntu One SSO API."""
         if acls is None:
-            acls = ['package_upload', 'package_access', 'package_manage']
+            acls = [
+                'package_access',
+                'package_manage',
+                'package_push',
+                'package_register',
+                'package_release',
+                'package_update',
+            ]
 
         if config_fd:
             self.conf.load(config_fd=config_fd)
