@@ -29,16 +29,21 @@ logger = logging.getLogger(__name__)
 class Cleanbuilder(Containerbuild):
 
     def __init__(self, *, output=None, source, project_options,
-                 metadata=None, remote=None):
+                 metadata=None, remote=None, profile=None):
+        self._profile = profile
         container_name = petname.Generate(3, '-')
         super().__init__(output=output, source=source,
                          project_options=project_options, metadata=metadata,
                          container_name=container_name, remote=remote)
 
     def _ensure_container(self):
+        launch_command = ['lxc', 'launch']
+        if self._profile:
+            launch_command = launch_command + ['-p', self._profile]
+        launch_command = launch_command + [
+            '-e', self._image, self._container_name]
         try:
-            subprocess.check_call([
-                'lxc', 'launch', '-e', self._image, self._container_name])
+            subprocess.check_call(launch_command)
         except subprocess.CalledProcessError as e:
             raise ContainerConnectionError('Failed to setup container')
         self._configure_container()
