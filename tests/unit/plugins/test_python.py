@@ -364,6 +364,26 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
             Equals('testpackage1==1.0\ntestpackage2==1.2'))
 
 
+class FileMissingPythonPluginTest(BasePythonPluginTestCase):
+
+    scenarios = (
+        ('constraints', dict(property='constraints',
+                             file_path='constraints.txt')),
+        ('requirements', dict(property='requirements',
+                              file_path='requirements.txt'))
+    )
+
+    def test_constraints_file_missing(self):
+        setattr(self.options, self.property, self.file_path)
+
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+        setup_directories(plugin, self.options.python_version)
+
+        self.assertRaises(python.SnapcraftPluginPythonFileMissing,
+                          plugin.pull)
+
+
 class PythonPluginWithURLTestCase(
         BasePythonPluginTestCase, unit.FakeFileHTTPServerBasedTestCase):
 

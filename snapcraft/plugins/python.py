@@ -73,6 +73,20 @@ class UnsupportedPythonVersionError(snapcraft.internal.errors.SnapcraftError):
     fmt = 'Unsupported python version: {python_version!r}'
 
 
+class SnapcraftPluginPythonFileMissing(
+        snapcraft.internal.errors.SnapcraftError):
+
+    fmt = (
+        'Failed to find the referred {plugin_property} file at the given '
+        'path: {plugin_property_value!r}.\n'
+        'Check the property and ensure the file exists.'
+    )
+
+    def __init__(self, *, plugin_property, plugin_property_value):
+        super().__init__(plugin_property=plugin_property,
+                         plugin_property_value=plugin_property_value)
+
+
 class PythonPlugin(snapcraft.BasePlugin):
 
     @classmethod
@@ -246,11 +260,13 @@ class PythonPlugin(snapcraft.BasePlugin):
             if isurl(self.options.constraints):
                 constraints = {self.options.constraints}
             else:
-                constraints = {self._find_file(
-                    filename=self.options.constraints)}
-                if not constraints:
-                    # TODO snapcraft owned message
-                    raise FileNotFoundError(self.options.constraints)
+                constraints_file = self._find_file(
+                    filename=self.options.constraints)
+                if not constraints_file:
+                    raise SnapcraftPluginPythonFileMissing(
+                        plugin_property='constraints',
+                        plugin_property_value=self.options.constraints)
+                constraints = {constraints_file}
         return constraints
 
     def _get_requirements(self):
@@ -259,11 +275,13 @@ class PythonPlugin(snapcraft.BasePlugin):
             if isurl(self.options.requirements):
                 requirements = {self.options.requirements}
             else:
-                requirements = {self._find_file(
-                    filename=self.options.requirements)}
-                if not requirements:
-                    # TODO snapcraft owned message
-                    raise FileNotFoundError(self.options.requirements)
+                requirements_file = self._find_file(
+                    filename=self.options.requirements)
+                if not requirements_file:
+                    raise SnapcraftPluginPythonFileMissing(
+                        plugin_property='requirements',
+                        plugin_property_value=self.options.requirements)
+                requirements = {requirements_file}
 
         return requirements
 
