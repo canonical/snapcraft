@@ -854,6 +854,7 @@ class StateTestCase(StateBaseTestCase):
 
         def _fake_extractor(file_path):
             return snapcraft.extractors.ExtractedMetadata(
+                common_id='test_common_id',
                 summary='test summary',
                 description='test description',
                 icon='/test/path',
@@ -889,6 +890,7 @@ class StateTestCase(StateBaseTestCase):
         for expected in ('metadata', 'files'):
             self.assertThat(state.extracted_metadata, Contains(expected))
         metadata = state.extracted_metadata['metadata']
+        self.assertThat(metadata.get_common_id(), Equals('test_common_id'))
         self.assertThat(metadata.get_summary(), Equals('test summary'))
         self.assertThat(metadata.get_description(), Equals('test description'))
         self.assertThat(metadata.get_icon(), Equals('/test/path'))
@@ -961,6 +963,7 @@ class StateTestCase(StateBaseTestCase):
 
         def _fake_extractor(file_path):
             return snapcraft.extractors.ExtractedMetadata(
+                common_id='test_common_id',
                 summary='test summary',
                 description='test description',
                 icon='/test/path',
@@ -993,6 +996,7 @@ class StateTestCase(StateBaseTestCase):
         for expected in ('metadata', 'files'):
             self.assertThat(state.extracted_metadata, Contains(expected))
         metadata = state.extracted_metadata['metadata']
+        self.assertThat(metadata.get_common_id(), Equals('test_common_id'))
         self.assertThat(metadata.get_summary(), Equals('test summary'))
         self.assertThat(metadata.get_description(), Equals('test description'))
         self.assertThat(metadata.get_icon(), Equals('/test/path'))

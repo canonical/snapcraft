@@ -326,6 +326,7 @@ class CreateTestCase(CreateBaseTestCase):
             'app4': {'command': 'app.sh', 'plugs': ['network-server'],
                      'environment': {'XDG_SOMETHING': '$SNAP_USER_DATA',
                                      'LANG': 'C'}},
+            'app5': {'command': 'app.sh', 'common-id': 'test-common-id'}
         }
         self.config_data['plugs'] = {
             'network-server': {'interface': 'network-bind'}}
@@ -360,6 +361,10 @@ class CreateTestCase(CreateBaseTestCase):
                         'XDG_SOMETHING': '$SNAP_USER_DATA',
                         'LANG': 'C'}
                 },
+                'app5': {
+                    'command': 'command-app5.wrapper',
+                    'common-id': 'test-common-id'
+                }
             },
             'description': 'my description',
             'summary': 'my summary',

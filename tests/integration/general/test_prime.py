@@ -30,15 +30,10 @@ from testtools.matchers import (
     StartsWith,
 )
 
-import snapcraft
 from tests import integration
 
 
 class PrimeTestCase(integration.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
     def test_classic_confinement(self):
         if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':

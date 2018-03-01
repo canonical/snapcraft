@@ -28,15 +28,10 @@ from testtools.matchers import (
     Not,
 )
 
-import snapcraft
 from tests import integration
 
 
 class SnapTestCase(integration.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        self.deb_arch = snapcraft.ProjectOptions().deb_arch
 
     def test_snap(self):
         self.copy_project_to_cwd('assemble')

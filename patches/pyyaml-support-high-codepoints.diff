@@ -1,0 +1,27 @@
+diff --git a/yaml/emitter.py b/yaml/emitter.py
+index 34cb145..1f8ed92 100644
+--- a/yaml/emitter.py
++++ b/yaml/emitter.py
+@@ -698,7 +698,8 @@ class Emitter:
+                 line_breaks = True
+             if not (ch == '\n' or '\x20' <= ch <= '\x7E'):
+                 if (ch == '\x85' or '\xA0' <= ch <= '\uD7FF'
+-                        or '\uE000' <= ch <= '\uFFFD') and ch != '\uFEFF':
++                        or '\uE000' <= ch <= '\uFFFD'
++                        or '\U00010000' <= ch < '\U0010ffff') and ch != '\uFEFF':
+                     unicode_characters = True
+                     if not self.allow_unicode:
+                         special_characters = True
+diff --git a/yaml/reader.py b/yaml/reader.py
+index f70e920..5764f2d 100644
+--- a/yaml/reader.py
++++ b/yaml/reader.py
+@@ -134,7 +134,7 @@ class Reader(object):
+                 self.encoding = 'utf-8'
+         self.update(1)
+ 
+-    NON_PRINTABLE = re.compile('[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD]')
++    NON_PRINTABLE = re.compile('[^\x09\x0A\x0D\x20-\x7E\x85\xA0-\uD7FF\uE000-\uFFFD\U00010000-\U0010ffff]')
+     def check_printable(self, data):
+         match = self.NON_PRINTABLE.search(data)
+         if match:
