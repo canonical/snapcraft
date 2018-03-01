@@ -233,7 +233,7 @@ class ContainerbuildTestCase(LXDTestCase):
                 'You must have LXD installed in order to use cleanbuild.\n'
                 'Refer to the documentation at '
                 'https://linuxcontainers.org/lxd/getting-started-cli.'):
-            self.make_containerbuild()
+            self.make_containerbuild().execute()
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_remote_does_not_exist(self, mock_run):
@@ -242,7 +242,7 @@ class ContainerbuildTestCase(LXDTestCase):
 
         with ExpectedException(ContainerConnectionError,
                                'There are either.*{}.*'.format(self.remote)):
-            self.make_containerbuild()
+            self.make_containerbuild().execute()
 
     @patch('snapcraft.internal.common.is_snap')
     def test_parallel_invocation(self, mock_is_snap):
