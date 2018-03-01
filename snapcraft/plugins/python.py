@@ -220,9 +220,13 @@ class PythonPlugin(snapcraft.BasePlugin):
     def _find_file(self, *, filename: str) -> str:
         # source-subdir defaults to ''
         for basepath in [self.builddir, self.sourcedir]:
-            filepath = os.path.join(basepath,
-                                    self.options.source_subdir,
-                                    filename)
+            if basepath == self.sourcedir:
+                # This is overwritten in the base plugin
+                # TODO add consistency
+                source_subdir = self.options.source_subdir
+            else:
+                source_subdir = ''
+            filepath = os.path.join(basepath, source_subdir, filename)
             if os.path.exists(filepath):
                 return filepath
 
