@@ -429,6 +429,14 @@ class InvalidContainerImageInfoError(SnapcraftError):
         super().__init__(image_info=image_info)
 
 
+class InvalidLaunchpadBuildInfoError(SnapcraftError):
+
+    fmt = 'Error parsing the Launchpad build info: {build_info}'
+
+    def __init__(self, build_info):
+        super().__init__(build_info=build_info)
+
+
 class PatcherError(SnapcraftError):
     pass
 

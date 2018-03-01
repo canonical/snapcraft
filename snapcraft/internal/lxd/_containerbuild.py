@@ -115,7 +115,8 @@ class Containerbuild:
             'lxc', 'config', 'set', self._container_name,
             'environment.SNAPCRAFT_SETUP_CORE', '1'])
         for snapcraft_env_var in (
-                'SNAPCRAFT_PARTS_URI', 'SNAPCRAFT_BUILD_INFO'):
+                'SNAPCRAFT_PARTS_URI', 'SNAPCRAFT_BUILD_INFO',
+                'LAUNCHPAD_BUILD_INFO'):
             if os.getenv(snapcraft_env_var):
                 subprocess.check_call([
                     'lxc', 'config', 'set', self._container_name,

@@ -33,6 +33,14 @@ def annotate_snapcraft(data, parts_dir: str):
             raise errors.InvalidContainerImageInfoError(
                 image_info) from exception
         data['image-info'] = image_info_dict
+    build_info = os.environ.get('LAUNCHPAD_BUILD_INFO')
+    if build_info:
+        try:
+            build_info_dict = json.loads(build_info)
+        except json.decoder.JSONDecodeError as exception:
+            raise errors.InvalidLaunchpadBuildInfoError(
+                build_info) from exception
+        data['build-info'] = build_info_dict
     for field in ('build-packages', 'build-snaps'):
         data[field] = get_global_state().assets.get(field, [])
     for part in data['parts']:
