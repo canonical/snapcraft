@@ -217,18 +217,22 @@ class PythonPlugin(snapcraft.BasePlugin):
             self._python_major_version, stage_dir=self.project.stage_dir,
             install_dir=self.installdir)
 
+    def _find_file(self, *, filename: str) -> str:
+        # source-subdir defaults to ''
+        for basepath in [self.builddir, self.sourcedir]:
+            filepath = os.path.join(basepath,
+                                    self.options.source_subdir,
+                                    filename)
+            if os.path.exists(filepath):
+                return filepath
+
+        return None
+
     def _get_setup_py_dir(self):
         setup_py_dir = None
-        setup_py = 'setup.py'
-        if self.options.source_subdir:
-            sourcedir = os.path.join(self.sourcedir,
-                                     self.options.source_subdir)
-        else:
-            sourcedir = self.sourcedir
-        if os.listdir(sourcedir):
-            setup_py = os.path.join(sourcedir, 'setup.py')
-        if os.path.exists(setup_py):
-            setup_py_dir = os.path.dirname(setup_py)
+        setup_py_path = self._find_file(filename='setup.py')
+        if setup_py_path:
+            setup_py_dir = os.path.dirname(setup_py_path)
 
         return setup_py_dir
 
@@ -238,8 +242,11 @@ class PythonPlugin(snapcraft.BasePlugin):
             if isurl(self.options.constraints):
                 constraints = {self.options.constraints}
             else:
-                constraints = {os.path.join(
-                    self.sourcedir, self.options.constraints)}
+                constraints = {self._find_file(
+                    filename=self.options.constraints)}
+                if not constraints:
+                    # TODO snapcraft owned message
+                    raise FileNotFoundError(self.options.constraints)
         return constraints
 
     def _get_requirements(self):
@@ -248,8 +255,11 @@ class PythonPlugin(snapcraft.BasePlugin):
             if isurl(self.options.requirements):
                 requirements = {self.options.requirements}
             else:
-                requirements = {os.path.join(
-                    self.sourcedir, self.options.requirements)}
+                requirements = {self._find_file(
+                    filename=self.options.requirements)}
+                if not requirements:
+                    # TODO snapcraft owned message
+                    raise FileNotFoundError(self.options.requirements)
 
         return requirements
 
