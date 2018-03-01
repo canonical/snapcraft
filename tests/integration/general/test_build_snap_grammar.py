@@ -20,11 +20,11 @@ import subprocess
 import testscenarios
 from testtools.matchers import Contains, Equals
 
-import snapcraft
 from tests import (
     fixture_setup,
     integration
 )
+from tests.integration import repo
 
 
 def _construct_scenarios():
@@ -80,7 +80,7 @@ class BuildSnapGrammarTestCase(testscenarios.WithScenarios,
         self.run_snapcraft('pull')
 
         self.assertThat(
-            snapcraft.repo.snaps.SnapPackage.is_snap_installed('hello'),
+            repo.is_snap_installed('hello'),
             Equals(self.hello_installed))
 
 

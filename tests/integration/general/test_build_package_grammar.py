@@ -19,8 +19,8 @@ from textwrap import dedent
 
 from testtools.matchers import Contains
 
-import snapcraft
 from tests import integration
+from tests.integration import repo
 
 
 class BuildPackageGrammarTestCase(integration.TestCase):
@@ -46,7 +46,7 @@ class BuildPackageGrammarTestCase(integration.TestCase):
             self.fail("unable to remove 'hello': {}".format(e.output))
 
     def _hello_is_installed(self):
-        return snapcraft.repo.Ubuntu.is_package_installed('hello')
+        return repo.is_package_installed('hello')
 
     def test_simple(self):
         """Test that grammar installs standalone build package."""
