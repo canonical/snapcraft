@@ -264,10 +264,10 @@ def _patchelf_install_required(project_options) -> bool:
 
     is_snap = common.is_snap()
     is_environment = os.getenv('SNAPCRAFT_NO_PATCHELF')
-    is_arch_armhf = project_options.deb_arch == 'armhf'
+    is_arch_missing_xenial = project_options.deb_arch in ('armhf', 's390x')
 
     return not (is_snap or is_environment or
-                (is_arch_armhf and is_xenial))
+                (is_arch_missing_xenial and is_xenial))
 
 
 def _snapcraft_yaml_load(yaml_file):
