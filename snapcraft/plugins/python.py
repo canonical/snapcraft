@@ -220,8 +220,13 @@ class PythonPlugin(snapcraft.BasePlugin):
     def _get_setup_py_dir(self):
         setup_py_dir = None
         setup_py = 'setup.py'
-        if os.listdir(self.sourcedir):
-            setup_py = os.path.join(self.sourcedir, 'setup.py')
+        if self.options.source_subdir:
+            sourcedir = os.path.join(self.sourcedir,
+                                     self.options.source_subdir)
+        else:
+            sourcedir = self.sourcedir
+        if os.listdir(sourcedir):
+            setup_py = os.path.join(sourcedir, 'setup.py')
         if os.path.exists(setup_py):
             setup_py_dir = os.path.dirname(setup_py)
 
