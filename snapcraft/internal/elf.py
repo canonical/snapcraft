@@ -132,7 +132,7 @@ def _crawl_for_path(*, soname: str, root_path: str,
             for file_name in files:
                 if file_name == soname:
                     file_path = os.path.join(root, file_name)
-                    if os.path.exists(file_path) and ElfFile.is_elf(file_path):
+                    if ElfFile.is_elf(file_path):
                         soname_cache[soname] = file_path
                         return file_path
 
@@ -156,6 +156,9 @@ class ElfFile:
 
     @classmethod
     def is_elf(cls, path: str) -> bool:
+        if not os.path.isfile(path):
+            # ELF binaries are regular files
+            return False
         with open(path, 'rb') as bin_file:
             return bin_file.read(4) == b'\x7fELF'
 
