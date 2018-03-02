@@ -314,6 +314,13 @@ class TestGetElfFiles(TestElfBase):
         elf_files = elf.get_elf_files('/dev', {'null'})
         self.assertThat(elf_files, Equals(set()))
 
+    def test_fifo(self):
+        fifo_path = os.path.join(self.fake_elf.root_path, 'fifo')
+        os.mkfifo(fifo_path)
+
+        elf_files = elf.get_elf_files(self.fake_elf.root_path, {'fifo'})
+        self.assertThat(elf_files, Equals(set()))
+
 
 class TestGetRequiredGLIBC(TestElfBase):
 
