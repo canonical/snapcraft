@@ -29,7 +29,7 @@ class LibraryPrecedenceTestCase(integration.TestCase):
 
     def test_snapped_library_takes_precedence_over_system(self):
         self.run_snapcraft('stage', 'fake-curl-library')
-        self.run_snapcraft(['prime', 'main'])
+        self.run_snapcraft(['prime'])
 
         # Verify that, while the binary was primed, no library was pulled in.
         self.assertThat(
