@@ -88,13 +88,20 @@ class Library:
     def __init__(self, *, soname: str, path: str, root_path: str,
                  core_base_path: str, soname_cache: SonameCache) -> None:
         self.soname = soname
-        if path.startswith(root_path) or path.startswith(core_base_path):
+
+        # We need to always look for the soname inside root first,
+        # and after exhausting all options look in core_base_path.
+        if path.startswith(root_path):
             self.path = path
         else:
             self.path = _crawl_for_path(soname=soname,
                                         root_path=root_path,
                                         core_base_path=core_base_path,
                                         soname_cache=soname_cache)
+
+        if not self.path and path.startswith(core_base_path):
+            self.path = path
+
         # Required for libraries on the host and the fetching mechanism
         if not self.path:
             self.path = path
