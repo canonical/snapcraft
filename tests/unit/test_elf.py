@@ -310,6 +310,10 @@ class TestGetElfFiles(TestElfBase):
 
         self.assertThat(elf_files, Equals(set()))
 
+    def test_device_files(self):
+        elf_files = elf.get_elf_files('/dev', {'null'})
+        self.assertThat(elf_files, Equals(set()))
+
 
 class TestGetRequiredGLIBC(TestElfBase):
 
