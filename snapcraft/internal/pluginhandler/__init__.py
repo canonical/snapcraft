@@ -560,18 +560,19 @@ class PluginHandler:
                 'The GLIBC version of the targeted core is 2.23. A newer '
                 'libc will be required for the following files:\n{}'.format(
                     '\n'.join(formatted_items)))
-        if (linker_incompat or
-                libc6_staged or classic_mangling_needed):
+
+        dynamic_linker = None
+        if linker_incompat or libc6_staged or classic_mangling_needed:
             if not libc6_staged:
                 raise errors.StagePackageMissingError(package='libc6')
-            handle_glibc_mismatch(elf_files=elf_files,
-                                  root_path=self.primedir,
-                                  snap_base_path=self._snap_base_path,
-                                  core_base_path=core_path,
-                                  preferred_patchelf_path=staged_patchelf_path,
-                                  soname_cache=self._soname_cache)
+            dynamic_linker = handle_glibc_mismatch(
+                root_path=self.primedir,
+                snap_base_path=self._snap_base_path,
+                core_base_path=core_path)
         elif is_classic:
             dynamic_linker = self._project_options.get_core_dynamic_linker()
+
+        if dynamic_linker:
             elf_patcher = elf.Patcher(
                 dynamic_linker=dynamic_linker,
                 root_path=self.primedir,

@@ -70,29 +70,15 @@ def _get_dynamic_linker(library_list: List[str]) -> str:
         'current libc6 package')
 
 
-def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
-                          root_path: str, core_base_path: str,
-                          snap_base_path: str,
-                          preferred_patchelf_path=None,
-                          soname_cache: elf.SonameCache=None) -> None:
-    """Copy over libc6 libraries from the host and patch necessary elf files.
+def handle_glibc_mismatch(*, root_path: str, core_base_path: str,
+                          snap_base_path: str) -> str:
+    """Find and return the dynamic linker that would be seen at runtime.
 
-    If no newer glibc version is detected in elf_files, this function returns.
-    The dynamic linker and related libraries to libc6 are expected to be found
-    in root_path.
-
-    :param snapcraft.internal.elf.ElfFile elf_files:
-        set of candidate elf files to patch if a newer libc6 is required.
     :param str root_path: the root path of a snap tree.
-    :param str core_base_path: the path to the base snap.
     :param str snap_base_path: absolute path to the snap once installed to
                                setup proper rpaths.
-    :param str preferred_patchelf_path: patch the necessary elf_files with
-                                        this patchelf.
+    :returns: the path to the dynamic linker to use
     """
-    if soname_cache is None:
-        soname_cache = elf.SonameCache()
-
     # We assume the current system will satisfy the GLIBC requirement,
     # get the current libc6 libraries (which includes the linker)
     libc6_libraries_list = repo.Repo.get_package_libraries('libc6')
@@ -112,16 +98,7 @@ def handle_glibc_mismatch(*, elf_files: FrozenSet[elf.ElfFile],
     dynamic_linker_path = os.path.join(
         snap_base_path, dynamic_linker[len(root_path)+1:])
 
-    elf_patcher = elf.Patcher(dynamic_linker=dynamic_linker_path,
-                              root_path=root_path,
-                              preferred_patchelf_path=preferred_patchelf_path)
-    for elf_file in elf_files:
-        # Search for dependencies again now that the new libc6 is
-        # migrated.
-        elf_file.load_dependencies(root_path=root_path,
-                                   core_base_path=core_base_path,
-                                   soname_cache=soname_cache)
-        elf_patcher.patch(elf_file=elf_file)
+    return dynamic_linker_path
 
 
 def clear_execstack(*, elf_files: FrozenSet[elf.ElfFile]) -> None:

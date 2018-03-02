@@ -16,9 +16,9 @@
 
 import os
 import textwrap
-from unittest.mock import call, patch
+from unittest.mock import patch
 
-from testtools.matchers import FileContains, FileExists, Not
+from testtools.matchers import EndsWith, FileContains, FileExists, Not
 
 from snapcraft.internal import mangling
 from tests import unit, fixture_setup
@@ -135,54 +135,25 @@ class HandleGlibcTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
-        patcher = patch('snapcraft.internal.elf.ElfFile.load_dependencies')
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher = patch('snapcraft.internal.elf.Patcher.patch')
-        self.patch_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
         patcher = patch('snapcraft.internal.repo.Repo.get_package_libraries')
         self.get_packages_mock = patcher.start()
         self.get_packages_mock.return_value = self._setup_libc6()
         self.addCleanup(patcher.stop)
 
-        self.fake_elf = fixture_setup.FakeElf(root_path=self.path)
-        self.useFixture(self.fake_elf)
-
     def test_glibc_mangling(self):
-        elf_files = [
-            self.fake_elf['fake_elf-2.26'],
-            self.fake_elf['fake_elf-2.23'],
-            self.fake_elf['fake_elf-1.1'],
-        ]
-
-        mangling.handle_glibc_mismatch(
-            elf_files=elf_files,
+        dynamic_linker = mangling.handle_glibc_mismatch(
             root_path=self.path,
             core_base_path='/snap/core/current',
             snap_base_path='/snap/snap-name/current')
 
         self.get_packages_mock.assert_called_once_with('libc6')
-        # Everything in the set will be patched regardless of compatibility
-        self.patch_mock.assert_has_calls([
-            call(elf_file=self.fake_elf['fake_elf-2.26']),
-            call(elf_file=self.fake_elf['fake_elf-2.23']),
-            call(elf_file=self.fake_elf['fake_elf-1.1']),
-        ])
+
+        self.assertThat(dynamic_linker, EndsWith('ld-2.26.so'))
 
     def test_bad_dynamic_linker_in_libc6_package(self):
         self.get_packages_mock.return_value = {'/usr/lib/dyn-linker-2.25.so'}
-        elf_files = [
-            self.fake_elf['fake_elf-2.26'],
-            self.fake_elf['fake_elf-2.23'],
-            self.fake_elf['fake_elf-1.1'],
-        ]
-
         self.assertRaises(RuntimeError,
                           mangling.handle_glibc_mismatch,
-                          elf_files=elf_files,
                           root_path=self.path,
                           core_base_path='/snap/core/current',
                           snap_base_path='/snap/snap-name/current')
