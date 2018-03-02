@@ -218,3 +218,10 @@ class PythonPluginTestCase(integration.TestCase):
         # Regression test for https://bugs.launchpad.net/snapcraft/+bug/1663739
         self.run_snapcraft('stage', 'python-with-two-parts')
         # If there is a conflict, stage will raise an exception.
+
+    def test_use_of_source_subdir_picks_up_setup_py(self):
+        # Regression test for LP: #1752481
+        self.run_snapcraft('stage', 'python-with-source-subdir')
+
+        self.assertThat(os.path.join(self.stage_dir, 'bin', 'hello'),
+                        FileExists())
