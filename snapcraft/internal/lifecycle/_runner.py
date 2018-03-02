@@ -190,25 +190,33 @@ class _Executor:
     def _run_step(self, step, part, part_names):
         common.reset_env()
         prereqs = self.parts_config.get_prereqs(part.name)
-        unstaged_prereqs = {p for p in prereqs
-                            if 'stage' not in self._steps_run[p]}
 
-        if unstaged_prereqs and not unstaged_prereqs.issubset(part_names):
+        # Dependencies need to be primed to have paths to.
+        if step == 'prime':
+            required_step = 'prime'
+        # Or staged to be built with.
+        else:
+            required_step = 'stage'
+
+        step_prereqs = {p for p in prereqs
+                        if required_step not in self._steps_run[p]}
+
+        if step_prereqs and not step_prereqs.issubset(part_names):
             missing_parts = [part_name for part_name in self.config.part_names
-                             if part_name in unstaged_prereqs]
+                             if part_name in step_prereqs]
             if missing_parts:
                 raise RuntimeError(
                     'Requested {!r} of {!r} but there are unsatisfied '
                     'prerequisites: {!r}'.format(
                         step, part.name, ' '.join(missing_parts)))
-        elif unstaged_prereqs:
+        elif step_prereqs:
             # prerequisites need to build all the way to the staging
             # step to be able to share the common assets that make them
             # a dependency.
             logger.info(
-                '{!r} has prerequisites that need to be staged: '
-                '{}'.format(part.name, ' '.join(unstaged_prereqs)))
-            self.run('stage', unstaged_prereqs)
+                '{!r} has prerequisites that need to be {}d: '
+                '{}'.format(part.name, required_step, ' '.join(step_prereqs)))
+            self.run(required_step, step_prereqs)
 
         # Run the preparation function for this step (if implemented)
         with contextlib.suppress(AttributeError):
