@@ -20,11 +20,11 @@ import subprocess
 import testscenarios
 from testtools.matchers import Equals, Contains
 
-import snapcraft
 from tests import (
     fixture_setup,
     integration
 )
+from tests.integration import repo
 
 
 class BuildSnapsTestCase(
@@ -48,7 +48,7 @@ class BuildSnapsTestCase(
         self.useFixture(snapcraft_yaml)
         self.run_snapcraft('build')
         self.assertTrue(
-            snapcraft.repo.snaps.SnapPackage.is_snap_installed(self.snap))
+            repo.is_snap_installed(self.snap))
 
 
 class BuildSnapsErrorsTestCase(integration.TestCase):
@@ -71,8 +71,7 @@ class BuildSnapsErrorsTestCase(integration.TestCase):
         self.assertThat(exception.returncode, Equals(2))
         self.assertThat(exception.output, Contains(
             "'inexistent'"))
-        self.assertFalse(snapcraft.repo.snaps.SnapPackage.is_snap_installed(
-            'inexistent'))
+        self.assertFalse(repo.is_snap_installed('inexistent'))
 
     def test_snap_exists_but_not_on_channel(self):
         # If the snap tested here does not exist, then BuildSnapsTestCase
@@ -95,5 +94,4 @@ class BuildSnapsErrorsTestCase(integration.TestCase):
         self.assertThat(exception.output, Contains(
             "'u1test-snap-with-tracks'"))
 
-        self.assertFalse(snapcraft.repo.snaps.SnapPackage.is_snap_installed(
-            'u1test-snap-with-tracks'))
+        self.assertFalse(repo.is_snap_installed('u1test-snap-with-tracks'))
