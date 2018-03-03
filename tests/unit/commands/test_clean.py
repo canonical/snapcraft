@@ -171,6 +171,8 @@ class ContainerizedCleanCommandTestCase(CleanCommandBaseTestCase):
         fake_lxd.name = 'local:snapcraft-clean-test'
         fake_lxd.status = 'Stopped'
         self.useFixture(fake_lxd)
+        # Container should not be initialized at all
+        fake_lxd.check_output_mock.side_effect = FileNotFoundError('lxc')
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_CONTAINER_BUILDS', self.snapcraft_container_builds))
         self.make_snapcraft_yaml(n=3)

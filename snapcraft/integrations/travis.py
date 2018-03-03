@@ -101,7 +101,14 @@ def _acquire_and_encrypt_credentials(packages, channels):
     # See https://docs.travis-ci.com/user/ip-addresses.
     logger.info('Acquiring specific authorization information ...')
     store = storeapi.StoreClient()
+    # Travis cannot register new names or add new developers.
+    acls = [
+        'package_access',
+        'package_push',
+        'package_release',
+    ]
     if not login(store=store,
+                 acls=acls,
                  packages=packages,
                  channels=channels,
                  save=False):

@@ -186,7 +186,8 @@ class TravisSuccessfulTestCase(unit.TestCase):
         # Attenuated credentials requested from the Store.
         mock_login.assert_called_with(
             'sample.person@canonical.com', 'secret',
-            one_time_password='123456', acls=None, save=False,
+            one_time_password='123456', save=False,
+            acls=['package_access', 'package_push', 'package_release'],
             channels=['edge'], packages=[{'series': '16', 'name': 'foo'}],
             expires=None, config_fd=None)
 
@@ -260,7 +261,8 @@ class TravisSuccessfulTestCase(unit.TestCase):
         # Attenuated credentials requested from the Store.
         mock_login.assert_called_with(
             'sample.person@canonical.com', 'secret',
-            one_time_password='123456', acls=None, save=False,
+            one_time_password='123456', save=False,
+            acls=['package_access', 'package_push', 'package_release'],
             channels=['edge'], packages=[{'series': '16', 'name': 'foo'}],
             expires=None, config_fd=None)
 
