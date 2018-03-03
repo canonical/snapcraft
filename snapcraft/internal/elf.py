@@ -65,10 +65,14 @@ class SonameCache:
         """Initialize a cache for sonames"""
         self._soname_paths = dict()  # type: Dict[str, str]
 
-    def reset(self):
-        """Reset the cache values that are empty."""
-        self._soname_paths = {k: v for (k, v) in self._soname_paths.items()
-                              if v is not None}
+    def reset_except_root(self, root):
+        """Reset the cache values that aren't contained within root."""
+        new_soname_paths = {}  # type: Dict[str, str]
+        for key, value in self._soname_paths.items():
+            if value is not None and value.startswith(root):
+                new_soname_paths[key] = value
+
+        self._soname_paths = new_soname_paths
 
 
 class NeededLibrary:

@@ -515,9 +515,8 @@ class PluginHandler:
         # TODO: base snap support
         core_path = common.get_core_path()
 
-        # Reset to take into account new data inside prime provided by other
-        # parts.
-        self._soname_cache.reset()
+        # Clear the cache of all libs that aren't already in the primedir
+        self._soname_cache.reset_except_root(self.primedir)
         for elf_file in elf_files:
             all_dependencies.update(
                 elf_file.load_dependencies(root_path=self.primedir,
