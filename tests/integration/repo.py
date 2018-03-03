@@ -14,14 +14,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 from urllib import parse
 
 import apt
 import requests_unixsocket
+from requests import exceptions
 
 
 def is_snap_installed(snap):
-    return _get_local_snap_info(_get_parsed_snap(snap)[0]) is not None
+    local_snap_info = None
+    with contextlib.suppress(exceptions.HTTPError):
+        local_snap_info = _get_local_snap_info(_get_parsed_snap(snap)[0])
+    return local_snap_info is not None
 
 
 def _get_parsed_snap(snap):
