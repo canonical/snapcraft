@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,25 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import functools
 from typing import Any, Callable
 
 from unittest import skipUnless
 
-from snapcraft.internal import (
-    errors,
-    os_release,
-)
+from tests import os_release
 
 
 def skip_unless_codename(
         codename: str, message: str) -> Callable[..., Callable[..., None]]:
     def _wrap(func: Callable[..., None]) -> Callable[..., None]:
-        release = os_release.OsRelease()
-        actual_codename = None
-        with contextlib.suppress(errors.OsReleaseCodenameError):
-            actual_codename = release.version_codename()
+        actual_codename = os_release.get_version_codename()
 
         @functools.wraps(func)
         @skipUnless(actual_codename == codename, message)
