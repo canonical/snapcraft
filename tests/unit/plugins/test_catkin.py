@@ -79,6 +79,7 @@ class CatkinPluginBaseTestCase(unit.TestCase):
             catkin_cmake_args = []
             underlay = None
             rosinstall_files = None
+            recursive_rosinstall = False
             build_attributes = []
             catkin_ros_master_uri = 'http://localhost:11311'
 
@@ -149,7 +150,8 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         properties = schema['properties']
         expected = ('rosdistro', 'catkin-packages', 'source-space',
                     'include-roscore', 'catkin-cmake-args', 'underlay',
-                    'rosinstall-files', 'catkin-ros-master-uri')
+                    'rosinstall-files', 'recursive-rosinstall',
+                    'catkin-ros-master-uri')
         self.assertThat(properties, HasLength(len(expected)))
         for prop in expected:
             self.assertThat(properties, Contains(prop))
@@ -265,6 +267,18 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(rosinstall_files['items'], Contains('type'))
         self.assertThat(rosinstall_files['items']['type'], Equals('string'))
 
+    def test_schema_recursive_rosinstall(self):
+        schema = catkin.CatkinPlugin.schema()
+
+        # Check recursive-rosinstall property
+        recursive_rosinstall = schema['properties']['recursive-rosinstall']
+        expected = ('type', 'default')
+        self.assertThat(recursive_rosinstall, HasLength(len(expected)))
+        for prop in expected:
+            self.assertThat(recursive_rosinstall, Contains(prop))
+        self.assertThat(recursive_rosinstall['type'], Equals('boolean'))
+        self.assertThat(recursive_rosinstall['default'], Equals(False))
+
     def test_schema_catkin_ros_master_uri(self):
         schema = catkin.CatkinPlugin.schema()
 
@@ -281,7 +295,8 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
     def test_get_pull_properties(self):
         expected_pull_properties = ['rosdistro', 'catkin-packages',
                                     'source-space', 'include-roscore',
-                                    'underlay', 'rosinstall-files']
+                                    'underlay', 'rosinstall-files',
+                                    'recursive-rosinstall']
         actual_pull_properties = catkin.CatkinPlugin.get_pull_properties()
 
         self.assertThat(actual_pull_properties,
@@ -1548,19 +1563,59 @@ class HandleRosinstallFilesTestCase(unit.TestCase):
         self.wstool_mock = mock.MagicMock()
 
     def test_single_rosinstall_file(self):
+        rosinstall_file = os.path.join('source_path', 'rosinstall_file')
         catkin._handle_rosinstall_files(
-            self.wstool_mock, 'source_path', ['rosinstall_file'])
+            self.wstool_mock, [rosinstall_file])
         self.wstool_mock.merge.assert_called_once_with(
             os.path.join('source_path', 'rosinstall_file'))
 
     def test_multiple_rosinstall_files(self):
+        rosinstall_files = [
+            os.path.join('source_path', 'file1'),
+            os.path.join('source_path', 'file2'),
+        ]
+
         catkin._handle_rosinstall_files(
-            self.wstool_mock, 'source_path', ['file1', 'file2'])
+            self.wstool_mock, rosinstall_files)
 
         # The order matters here. It should be the same as how they were passed
         self.wstool_mock.merge.assert_has_calls([
             mock.call(os.path.join('source_path', 'file1')),
             mock.call(os.path.join('source_path', 'file2'))
+        ])
+
+
+class RecursivelyHandleRosinstallFilesTestCase(unit.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.wstool_mock = mock.MagicMock()
+
+    def test_recursive_rosinstall(self):
+        counter = 0
+
+        # A fake update that plops a new rosinstall file down every time
+        # it's called (up to two times).
+        def _fake_wstool_update():
+            nonlocal counter
+            if counter < 2:
+                counter += 1
+                open(os.path.join('source_path', '{}.rosinstall'.format(
+                    counter)), 'w').close()
+
+        self.wstool_mock.update.side_effect = _fake_wstool_update
+
+        os.mkdir('source_path')
+        open(os.path.join('source_path', '0.rosinstall'), 'w').close()
+
+        catkin._recursively_handle_rosinstall_files(
+            self.wstool_mock, 'source_path')
+
+        self.wstool_mock.merge.assert_has_calls([
+            mock.call(os.path.join('source_path', '0.rosinstall')),
+            mock.call(os.path.join('source_path', '1.rosinstall')),
+            mock.call(os.path.join('source_path', '2.rosinstall'))
         ])
 
 
