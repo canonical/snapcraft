@@ -310,6 +310,17 @@ class TestGetElfFiles(TestElfBase):
 
         self.assertThat(elf_files, Equals(set()))
 
+    def test_device_files(self):
+        elf_files = elf.get_elf_files('/dev', {'null'})
+        self.assertThat(elf_files, Equals(set()))
+
+    def test_fifo(self):
+        fifo_path = os.path.join(self.fake_elf.root_path, 'fifo')
+        os.mkfifo(fifo_path)
+
+        elf_files = elf.get_elf_files(self.fake_elf.root_path, {'fifo'})
+        self.assertThat(elf_files, Equals(set()))
+
 
 class TestGetRequiredGLIBC(TestElfBase):
 
@@ -447,14 +458,17 @@ class TestSonameCache(unit.TestCase):
         self.soname_cache['soname.so'] = '/fake/path/soname.so'
         self.assertTrue('soname.so' in self.soname_cache)
 
-    def test_add_many_remove_empty_entries(self):
+    def test_reset_except_root(self):
         self.soname_cache['soname.so'] = '/fake/path/soname.so'
+        self.soname_cache['soname2.so'] = '/keep/me/soname2.so'
         self.soname_cache['notfound.so'] = None
 
         self.assertTrue('soname.so' in self.soname_cache)
+        self.assertTrue('soname2.so' in self.soname_cache)
         self.assertTrue('notfound.so' in self.soname_cache)
 
-        self.soname_cache.reset()
+        self.soname_cache.reset_except_root('/keep/me')
 
-        self.assertTrue('soname.so' in self.soname_cache)
+        self.assertFalse('soname.so' in self.soname_cache)
         self.assertFalse('notfound.so' in self.soname_cache)
+        self.assertTrue('soname2.so' in self.soname_cache)

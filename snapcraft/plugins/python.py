@@ -73,6 +73,20 @@ class UnsupportedPythonVersionError(snapcraft.internal.errors.SnapcraftError):
     fmt = 'Unsupported python version: {python_version!r}'
 
 
+class SnapcraftPluginPythonFileMissing(
+        snapcraft.internal.errors.SnapcraftError):
+
+    fmt = (
+        'Failed to find the referred {plugin_property} file at the given '
+        'path: {plugin_property_value!r}.\n'
+        'Check the property and ensure the file exists.'
+    )
+
+    def __init__(self, *, plugin_property, plugin_property_value):
+        super().__init__(plugin_property=plugin_property,
+                         plugin_property_value=plugin_property_value)
+
+
 class PythonPlugin(snapcraft.BasePlugin):
 
     @classmethod
@@ -217,13 +231,26 @@ class PythonPlugin(snapcraft.BasePlugin):
             self._python_major_version, stage_dir=self.project.stage_dir,
             install_dir=self.installdir)
 
+    def _find_file(self, *, filename: str) -> str:
+        # source-subdir defaults to ''
+        for basepath in [self.builddir, self.sourcedir]:
+            if basepath == self.sourcedir:
+                # This is overwritten in the base plugin
+                # TODO add consistency
+                source_subdir = self.options.source_subdir
+            else:
+                source_subdir = ''
+            filepath = os.path.join(basepath, source_subdir, filename)
+            if os.path.exists(filepath):
+                return filepath
+
+        return None
+
     def _get_setup_py_dir(self):
         setup_py_dir = None
-        setup_py = 'setup.py'
-        if os.listdir(self.sourcedir):
-            setup_py = os.path.join(self.sourcedir, 'setup.py')
-        if os.path.exists(setup_py):
-            setup_py_dir = os.path.dirname(setup_py)
+        setup_py_path = self._find_file(filename='setup.py')
+        if setup_py_path:
+            setup_py_dir = os.path.dirname(setup_py_path)
 
         return setup_py_dir
 
@@ -233,8 +260,13 @@ class PythonPlugin(snapcraft.BasePlugin):
             if isurl(self.options.constraints):
                 constraints = {self.options.constraints}
             else:
-                constraints = {os.path.join(
-                    self.sourcedir, self.options.constraints)}
+                constraints_file = self._find_file(
+                    filename=self.options.constraints)
+                if not constraints_file:
+                    raise SnapcraftPluginPythonFileMissing(
+                        plugin_property='constraints',
+                        plugin_property_value=self.options.constraints)
+                constraints = {constraints_file}
         return constraints
 
     def _get_requirements(self):
@@ -243,8 +275,13 @@ class PythonPlugin(snapcraft.BasePlugin):
             if isurl(self.options.requirements):
                 requirements = {self.options.requirements}
             else:
-                requirements = {os.path.join(
-                    self.sourcedir, self.options.requirements)}
+                requirements_file = self._find_file(
+                    filename=self.options.requirements)
+                if not requirements_file:
+                    raise SnapcraftPluginPythonFileMissing(
+                        plugin_property='requirements',
+                        plugin_property_value=self.options.requirements)
+                requirements = {requirements_file}
 
         return requirements
 

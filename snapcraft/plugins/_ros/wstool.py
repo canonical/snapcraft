@@ -55,9 +55,22 @@ class WorkspaceUpdateError(WstoolError):
 
 
 class Wstool:
+    """This class serves as a Python wrapper for the CLI utility wstool."""
+
     def __init__(self, ros_package_path: str, wstool_path: str,
                  ubuntu_sources: str,
                  project: snapcraft.ProjectOptions) -> None:
+        """Create new Wstool
+
+        :param str ros_package_path: The path where the packages should be
+                                     fetched.
+        :param str wstool_path: Working directory for wstool (where it will be
+                                installed).
+        :param str ubuntu_sources: Ubuntu repositories from which wstool will
+                                   be installed.
+        :param project: Instance of ProjectOptions for project-wide settings.
+        :type project: snapcraft.ProjectOptions
+        """
         self._ros_package_path = ros_package_path
         self._ubuntu_sources = ubuntu_sources
         self._wstool_path = wstool_path
@@ -65,6 +78,8 @@ class Wstool:
         self._project = project
 
     def setup(self) -> None:
+        """Download/install wstool, and initialize workspace."""
+
         os.makedirs(self._wstool_install_path, exist_ok=True)
 
         # wstool isn't a dependency of the project, so we'll unpack it
@@ -89,7 +104,15 @@ class Wstool:
                 raise WorkspaceInitializationError(stderr)
 
     def merge(self, rosinstall_file: str) -> str:
+        """Merge rosinstall file with existing rosinstall in workspace.
+
+        :param str rosinstall_file: Path to rosinstall file to merge in.
+        """
+
         try:
+            # Summary of arguments used:
+            # --confirm-all: Don't ask for confirmation
+            # -t: Path to workspace
             return self._run(
                 ['merge', rosinstall_file, '--confirm-all', '-t{}'.format(
                     self._ros_package_path)]).strip()
@@ -98,7 +121,15 @@ class Wstool:
             raise RosinstallMergeError(rosinstall_file, stderr)
 
     def update(self) -> str:
+        """Update workspace from rosinstall file.
+
+        This actually hits the network and downloads all repositories in
+        the workspace's rosinstall file.
+        """
         try:
+            # Summary of arguments used:
+            # -j: Use multiple jobs to fetch
+            # -t: Path to workspace (into which packages will be fetched)
             return self._run(
                 ['update', '-j{}'.format(self._project.parallel_build_count),
                  '-t{}'.format(self._ros_package_path)])

@@ -65,10 +65,14 @@ class SonameCache:
         """Initialize a cache for sonames"""
         self._soname_paths = dict()  # type: Dict[str, str]
 
-    def reset(self):
-        """Reset the cache values that are empty."""
-        self._soname_paths = {k: v for (k, v) in self._soname_paths.items()
-                              if v is not None}
+    def reset_except_root(self, root):
+        """Reset the cache values that aren't contained within root."""
+        new_soname_paths = {}  # type: Dict[str, str]
+        for key, value in self._soname_paths.items():
+            if value is not None and value.startswith(root):
+                new_soname_paths[key] = value
+
+        self._soname_paths = new_soname_paths
 
 
 class NeededLibrary:
@@ -125,7 +129,7 @@ def _crawl_for_path(*, soname: str, root_path: str,
             for file_name in files:
                 if file_name == soname:
                     file_path = os.path.join(root, file_name)
-                    if os.path.exists(file_path) and ElfFile.is_elf(file_path):
+                    if ElfFile.is_elf(file_path):
                         soname_cache[soname] = file_path
                         return file_path
 
@@ -149,6 +153,9 @@ class ElfFile:
 
     @classmethod
     def is_elf(cls, path: str) -> bool:
+        if not os.path.isfile(path):
+            # ELF binaries are regular files
+            return False
         with open(path, 'rb') as bin_file:
             return bin_file.read(4) == b'\x7fELF'
 
