@@ -53,6 +53,6 @@ class RegisterKeyTestCase(integration.StoreTestCase):
 
     def test_failed_login_for_key_registration(self):
         status = self.register_key(
-            'default', 'u1test+snapcraft@canonical.com', 'wrongpassword',
+            'default', 'snapcraft-test+user@canonical.com', 'wrongpassword',
             expect_success=False)
         self.assertNotEqual(0, status)

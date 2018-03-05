@@ -546,7 +546,7 @@ class StoreTestCase(TestCase):
         process.close()
         return process.exitstatus
 
-    def get_unique_name(self, prefix='snapcrafttest'):
+    def get_unique_name(self, prefix='test-snapcraft'):
         """Return a unique snap name.
 
         It uses a UUIDv4 to create unique names and limits its full size

@@ -119,9 +119,20 @@ or
 
     SNAPCRAFT_FROM_SNAP=1 ./runtests.sh tests/integration
 
+## Setting up the store test user
+
 The store tests by default will start fake servers that are configured to reply like the real store does. But you can run them also against the staging and production store servers. To do that, you will need to set the `TEST_STORE` environment variable to either `staging` or `production`, and you also have to pass credentials for a valid user in that store with the environment variable `TEST_USER_EMAIL` and `TEST_USER_PASSWORD`, like this:
 
     TEST_STORE=staging TEST_USER_EMAIL=test@example.com TEST_USER_PASSWORD=Hola123* ./runtests.sh tests/integration/store
+
+To prepare a user for testing, go to https://login.staging.ubuntu.com/ (or
+https://login.ubuntu.com/ for the production store) and create a new user. Then
+go to https://dashboard.staging.snapcraft.io/ (or
+https://dashboard.staging.snapcraft.io/ for the production store) to sign the
+developer agreement.
+
+Note that most testing should be done on the staging server. If multiple tests
+have to be executed on production, notify the store team before.
 
 ## Autopkgtests for the snapcraft deb
 

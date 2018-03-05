@@ -471,7 +471,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             }).encode()
         elif (
                 name == 'test-snap' or
-                name.startswith('snapcrafttest')):
+                name.startswith('test-snapcraft')):
             payload = json.dumps({
                 'opened_channels': channels,
                 'channel_map': [
