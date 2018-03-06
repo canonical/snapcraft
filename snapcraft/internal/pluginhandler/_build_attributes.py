@@ -23,5 +23,8 @@ class BuildAttributes:
     def no_system_libraries(self):
         return 'no-system-libraries' in self._attributes
 
+    def no_patchelf(self):
+        return 'no-patchelf' in self._attributes
+
     def keep_execstack(self):
         return 'keep-execstack' in self._attributes

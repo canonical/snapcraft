@@ -995,12 +995,14 @@ class SnapcraftYaml(fixtures.Fixture):
 
     def __init__(
             self, path, name='test-snap', version='test-version',
-            summary='test-summary', description='test-description'):
+            summary='test-summary', description='test-description',
+            confinement='strict'):
         super().__init__()
         self.path = path
         self.data = {
             'name': name,
             'version': version,
+            'confinement': confinement,
             'parts': {},
             'apps': {}
         }
@@ -1019,7 +1021,8 @@ class SnapcraftYaml(fixtures.Fixture):
 
     def setUp(self):
         super().setUp()
-        with open(os.path.join(self.path, 'snapcraft.yaml'),
+        os.makedirs(os.path.join(self.path, 'snap'), exist_ok=True)
+        with open(os.path.join(self.path, 'snap', 'snapcraft.yaml'),
                   'w') as snapcraft_yaml_file:
             yaml.dump(self.data, snapcraft_yaml_file)
 

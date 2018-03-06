@@ -571,13 +571,25 @@ class PluginHandler:
         elif is_classic:
             dynamic_linker = self._project_options.get_core_dynamic_linker()
 
-        if dynamic_linker:
+        if dynamic_linker and not self._build_attributes.no_patchelf():
+            logger.warning(
+                'Files in this part are going to be patched to work correctly '
+                'in the environment.\n'
+                'To disable this behavior set '
+                '`build-properties: [no-patchelf]` for the part.')
             elf_patcher = elf.Patcher(
                 dynamic_linker=dynamic_linker,
                 root_path=self.primedir,
                 preferred_patchelf_path=staged_patchelf_path)
             for elf_file in elf_files:
                 elf_patcher.patch(elf_file=elf_file)
+        elif dynamic_linker and self._build_attributes.no_patchelf():
+            logger.warning(
+                'The following files are not going to be patched to work '
+                'correctly in the environment as '
+                '`build-attributes: [no-patchelf]` is set for the '
+                'part:\n{}'.format(
+                    '- {}\n'.join([e.path for e in elf_files])))
 
         self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
 
