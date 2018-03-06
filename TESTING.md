@@ -169,3 +169,57 @@ We have a suite of external snaps tests that runs each night using the latest sn
 This is an experimental suite, with still some details to define. The idea is to build a snap recording a manifest of all the details of the build. Then build the snap again, but this time using the manifest instead of the source `snapcraft.yaml`, and compare that both snaps are equal.
 
 Currently, the suite is using the snaps of the integration suite to check the reproducibility. It is located in https://github.com/elopio/snapcraft-reproducible/
+
+## Testing arm
+
+It is possible to emulate an arm64 machine on an amd64 host, which is very useful for running manual exploratory tests for snapcraft. To set it up:
+
+1. Download the latest ubuntu arm64 uefi image from https://cloud-images.ubuntu.com/releases/16.04/release/
+2. Keep a pristine copy of the image, in case you want to reset the machine, replacing <UBUNTU_IMAGE> with the name of the file you donwloaded on step 1:
+
+    $ cp <UBUNTU_IMAGE> <UBUNTU_IMAGE>.pristine
+
+3. Download the latest UEFI firmware image QEMU_EFI.fd from https://releases.linaro.org/components/kernel/uefi-linaro/latest/release/qemu64/
+4. Create a cloud init file, replacing <USER> and <SSH_PUBLIC_KEY> with your values:
+
+    $ cat > cloud.txt << EOF
+    #cloud-config
+    users:
+      - name: <USER>
+        ssh-authorized-keys:
+          - ssh-rsa <SSH_PUBLIC_KEY>
+        sudo: ['ALL=(ALL) NOPASSWD:ALL']
+        groups: sudo
+        shell: /bin/bash
+    EOF
+
+5. Create a cloud-config disk image:
+
+    $ sudo apt install --yes cloud-image-utils
+    $ cloud-localds --disk-format qcow2 cloud.img cloud.txt
+
+6. Run the image in qemu, replacing <UBUNTU_IMAGE> with the path of the file you downloaded on step 1.
+
+    $ sudo apt install qemu-system-arm
+    $ qemu-system-aarch64 \
+        -smp 2 \
+        -m 1024 \
+        -M virt \
+        -cpu cortex-a57 \
+        -bios QEMU_EFI.fd \
+        -nographic \
+        -device virtio-blk-device,drive=image \
+        -drive if=none,id=image,file=ubuntu-16.04-server-cloudimg-arm64-uefi1.img \
+        -device virtio-blk-device,drive=cloud \
+        -drive if=none,id=cloud,file=cloud.img \
+        -device virtio-net-device,netdev=user0 \
+        -netdev user,id=user0 \
+        -redir tcp:2222::22
+
+7. ssh into the emulated machine, replacing <USER> with the one you specified in step 4:
+
+    $ ssh -p 2222 <USER>@localhost
+
+(Source: https://gist.github.com/george-hawkins/16ee37063213f348a17717a7007d2c79)
+
+To test snapcraft on an armhf machine, currently the only simple option is to install ubuntu classic on BeagleBoard (https://elinux.org/BeagleBoardUbuntu) or on Raspberry Pi 2 (https://wiki.ubuntu.com/ARM/RaspberryPi).
