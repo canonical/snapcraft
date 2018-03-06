@@ -1,0 +1,15 @@
+name: catkin-recursive-rosinstall
+version: '0.1'
+summary: Ensure rosinstall files can be merged recursively
+description: |
+  This example won't build. It's only meant for pulling.
+
+grade: devel
+confinement: strict
+
+parts:
+  catkin-part:
+    plugin: catkin
+    rosdistro: kinetic
+    rosinstall-files: [root.rosinstall]
+    recursive-rosinstall: true

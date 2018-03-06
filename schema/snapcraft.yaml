@@ -201,6 +201,9 @@ properties:
           reload-command: ["daemon"]
         additionalProperties: false
         properties:
+          common-id:
+            type: string
+            description: common identifier across multiple packaging formats
           desktop:
             type: string
             description: path to a desktop file representing the app, relative to the prime directory

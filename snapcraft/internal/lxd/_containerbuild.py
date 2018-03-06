@@ -66,10 +66,8 @@ class Containerbuild:
         self._user = 'root'
         self._project_folder = '/root/build_{}'.format(metadata['name'])
 
-        if not remote:
-            remote = _get_default_remote()
-        _verify_remote(remote)
-        self._container_name = '{}:snapcraft-{}'.format(remote, container_name)
+        self._remote = remote
+        self._container_name = 'snapcraft-{}'.format(container_name)
         self._image = 'ubuntu:xenial'
         # Use a temporary folder the 'lxd' snap can access
         self._lxd_common_dir = os.path.expanduser(
@@ -90,8 +88,16 @@ class Containerbuild:
             else:
                 self._finish()
 
+    def _ensure_remote(self):
+        if not self._remote:
+            self._remote = _get_default_remote()
+        _verify_remote(self._remote)
+        self._container_name = '{}:{}'.format(self._remote,
+                                              self._container_name)
+
     @contextmanager
     def _ensure_started(self):
+        self._ensure_remote()
         try:
             self._ensure_container()
             yield

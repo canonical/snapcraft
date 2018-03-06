@@ -15,14 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 
-from testtools.matchers import (
-    DirExists,
-    FileExists,
-    Not,
-)
+from testtools.matchers import DirExists, FileExists, MatchesRegex, Not
 
-from tests import integration
+from tests import integration, fixture_setup
 
 
 class RpathTestCase(integration.TestCase):
@@ -40,3 +37,24 @@ class RpathTestCase(integration.TestCase):
             os.path.join(
                 self.prime_dir, os.path.abspath(self.prime_dir).lstrip('/')),
             Not(DirExists()))
+
+
+class Libc6TestCase(integration.TestCase):
+
+    def test_primed_libc6(self):
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml.update_part('test-part', {
+            'plugin': 'nil',
+            'stage-packages': ['libc6', 'hello']
+        })
+        self.useFixture(snapcraft_yaml)
+
+        self.run_snapcraft('prime')
+
+        bin_path = os.path.join(self.prime_dir, 'usr', 'bin', 'hello')
+        self.assertThat(bin_path, FileExists())
+
+        interpreter = subprocess.check_output([
+            self.patchelf_command, '--print-interpreter', bin_path]).decode()
+        expected_interpreter = r'^/snap/test-snap/current/lib/.*'
+        self.assertThat(interpreter, MatchesRegex(expected_interpreter))

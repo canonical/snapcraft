@@ -22,7 +22,6 @@ from testtools.matchers import (
     Not
 )
 
-from snapcraft import _options
 from tests import integration
 
 
@@ -30,13 +29,11 @@ class HardlinkSrcOldTreeTestCase(integration.TestCase):
 
     def test_build_old_tree_still_filters(self):
         self.copy_project_to_cwd('old-part-src')
-        platform_architecture = _options._get_platform_architecture()
-        arch = _options._ARCH_TRANSLATIONS[platform_architecture]['deb']
         with fileinput.FileInput(
                 os.path.join(self.parts_dir, 'part-name', 'state', 'pull'),
                 inplace=True) as pull_state:
             for line in pull_state:
-                print(line.replace('$arch', arch), end='')
+                print(line.replace('$arch', self.deb_arch), end='')
 
         self.run_snapcraft('build')
 

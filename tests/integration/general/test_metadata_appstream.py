@@ -37,6 +37,7 @@ class AppstreamMetadataTestCase(integration.TestCase):
             appstream_file.write(textwrap.dedent(
                 """<?xml version="1.0" encoding="UTF-8"?>
                 <component>
+                  <id>com.example.testid</id>
                   <description>test-appstream-description</description>
                   <summary>test-appstream-summary</summary>
                   <icon type="local">assets/test-icon.png</icon>
@@ -120,7 +121,10 @@ class AppstreamMetadataTestCase(integration.TestCase):
                 'plugin': 'dump',
                 'parse-info': ['test.metainfo.xml']})
         snapcraft_yaml.update_app(
-            'test-app', {'command': 'echo'})
+            'test-app', {
+                'command': 'echo',
+                'common-id': 'com.example.testid'
+            })
         self.useFixture(snapcraft_yaml)
 
         self.run_snapcraft('prime')

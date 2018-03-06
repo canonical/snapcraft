@@ -612,8 +612,8 @@ class RegisterTestCase(StoreTestCase):
             errors.StoreRegistrationError,
             self.client.register, name)
         expected = (
-            'The name {} should not be longer than 40 characters.'
-            .format(name))
+            "The name '{}' is not valid: it should be no longer than 40"
+            " characters.".format(name))
         self.assertThat(str(raised), Equals(expected))
 
     def test_registering_name_invalid(self):
@@ -623,8 +623,9 @@ class RegisterTestCase(StoreTestCase):
             errors.StoreRegistrationError,
             self.client.register, name)
         expected = (
-            'The name {!r} is not valid. It can only contain dashes, numbers '
-            'and lowercase ascii letters.'.format(name))
+            "The name '{}' is not valid: it should only have"
+            " ASCII lowercase letters, numbers, and hyphens,"
+            " and must have at least one letter.".format(name))
         self.assertThat(str(raised), Equals(expected))
 
     def test_unhandled_registration_error_path(self):

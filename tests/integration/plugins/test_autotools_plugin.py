@@ -18,7 +18,6 @@ import os
 
 from testtools.matchers import Equals
 
-import snapcraft
 from tests import integration
 from tests.matchers import HasArchitecture
 
@@ -33,7 +32,7 @@ class AutotoolsPluginTestCase(integration.TestCase):
         self.assertThat(binary_output, Equals('Hello, world!\n'))
 
     def test_cross_compiling(self):
-        if snapcraft.ProjectOptions().deb_arch != 'amd64':
+        if self.deb_arch != 'amd64':
             self.skipTest('The test only handles amd64 to arm64')
 
         self.run_snapcraft(['build', '--target-arch=arm64'],

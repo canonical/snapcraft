@@ -29,7 +29,7 @@ import yaml
 import snapcraft.extractors
 from snapcraft import file_utils
 from snapcraft.internal import common, elf, errors, repo, sources, states
-from snapcraft.internal.mangling import clear_execstack, handle_glibc_mismatch
+from snapcraft.internal.mangling import clear_execstack
 
 from ._build_attributes import BuildAttributes
 from ._metadata_extraction import extract_metadata
@@ -515,9 +515,8 @@ class PluginHandler:
         # TODO: base snap support
         core_path = common.get_core_path()
 
-        # Reset to take into account new data inside prime provided by other
-        # parts.
-        self._soname_cache.reset()
+        # Clear the cache of all libs that aren't already in the primedir
+        self._soname_cache.reset_except_root(self.primedir)
         for elf_file in elf_files:
             all_dependencies.update(
                 elf_file.load_dependencies(root_path=self.primedir,
@@ -561,18 +560,18 @@ class PluginHandler:
                 'The GLIBC version of the targeted core is 2.23. A newer '
                 'libc will be required for the following files:\n{}'.format(
                     '\n'.join(formatted_items)))
-        if (linker_incompat or
-                libc6_staged or classic_mangling_needed):
+
+        dynamic_linker = None
+        if linker_incompat or libc6_staged or classic_mangling_needed:
             if not libc6_staged:
                 raise errors.StagePackageMissingError(package='libc6')
-            handle_glibc_mismatch(elf_files=elf_files,
-                                  root_path=self.primedir,
-                                  snap_base_path=self._snap_base_path,
-                                  core_base_path=core_path,
-                                  preferred_patchelf_path=staged_patchelf_path,
-                                  soname_cache=self._soname_cache)
+            dynamic_linker = elf.find_linker(
+                root_path=self.primedir,
+                snap_base_path=self._snap_base_path)
         elif is_classic:
             dynamic_linker = self._project_options.get_core_dynamic_linker()
+
+        if dynamic_linker:
             elf_patcher = elf.Patcher(
                 dynamic_linker=dynamic_linker,
                 root_path=self.primedir,

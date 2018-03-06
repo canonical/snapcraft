@@ -60,6 +60,7 @@ class BasePythonPluginTestCase(unit.TestCase):
 
         class Options:
             source = '.'
+            source_subdir = ''
             requirements = ''
             constraints = ''
             python_version = 'python3'
@@ -148,9 +149,10 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
 
-        plugin.pull()
-
         requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
+        open(requirements_path, 'w').close()
+
+        plugin.pull()
 
         pip_download = self.mock_pip.return_value.download
         pip_download.assert_called_once_with(
@@ -169,9 +171,10 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
                                      self.project_options)
         setup_directories(plugin, self.options.python_version)
 
-        plugin.pull()
-
         constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
+        open(constraints_path, 'w').close()
+
+        plugin.pull()
 
         pip_download = self.mock_pip.return_value.download
         pip_download.assert_called_once_with(
@@ -202,16 +205,18 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
             path = os.path.join(plugin.sourcedir, file_name)
             open(path, 'w').close()
 
+        requirements_path = os.path.join(plugin.builddir, 'requirements.txt')
+        constraints_path = os.path.join(plugin.builddir, 'constraints.txt')
+
         def build_side_effect():
             open(os.path.join(plugin.builddir, 'setup.py'), 'w').close()
             os.mkdir(os.path.join(plugin.builddir, 'dist'))
             open(os.path.join(
                 plugin.builddir, 'dist', 'package.tar'), 'w').close()
+            open(requirements_path, 'w').close()
+            open(constraints_path, 'w').close()
 
         mock_base_build.side_effect = build_side_effect
-
-        requirements_path = os.path.join(plugin.sourcedir, 'requirements.txt')
-        constraints_path = os.path.join(plugin.sourcedir, 'constraints.txt')
 
         pip_wheel = self.mock_pip.return_value.wheel
         pip_wheel.return_value = ['foo', 'bar']
@@ -225,7 +230,7 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         pip_wheel.assert_called_once_with(
             ['test', 'packages'], constraints={constraints_path},
             process_dependency_links=False, requirements={requirements_path},
-            setup_py_dir=plugin.sourcedir)
+            setup_py_dir=plugin.builddir)
 
         pip_install = self.mock_pip.return_value.install
         pip_install.assert_called_once_with(
@@ -357,6 +362,26 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         self.assertThat(
             plugin.get_manifest()['constraints-contents'],
             Equals('testpackage1==1.0\ntestpackage2==1.2'))
+
+
+class FileMissingPythonPluginTest(BasePythonPluginTestCase):
+
+    scenarios = (
+        ('constraints', dict(property='constraints',
+                             file_path='constraints.txt')),
+        ('requirements', dict(property='requirements',
+                              file_path='requirements.txt'))
+    )
+
+    def test_constraints_file_missing(self):
+        setattr(self.options, self.property, self.file_path)
+
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+        setup_directories(plugin, self.options.python_version)
+
+        self.assertRaises(python.SnapcraftPluginPythonFileMissing,
+                          plugin.pull)
 
 
 class PythonPluginWithURLTestCase(

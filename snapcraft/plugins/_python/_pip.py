@@ -24,6 +24,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+from typing import List, Set
 
 import snapcraft
 from snapcraft import file_utils
@@ -38,8 +39,10 @@ from . import errors
 logger = logging.getLogger(__name__)
 
 
-def _process_common_args(*, packages, constraints,
-                         requirements, process_dependency_links):
+def _process_common_args(*, packages: List[str],
+                         constraints: Set[str],
+                         requirements: Set[str],
+                         process_dependency_links: bool) -> List[str]:
     args = []
     if constraints:
         for constraint in constraints:

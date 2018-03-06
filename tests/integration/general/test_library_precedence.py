@@ -29,13 +29,15 @@ class LibraryPrecedenceTestCase(integration.TestCase):
 
     def test_snapped_library_takes_precedence_over_system(self):
         self.run_snapcraft('stage', 'fake-curl-library')
-        self.run_snapcraft(['prime', 'main'])
+        self.run_snapcraft(['prime', 'main', 'fake-curl'])
 
-        # Verify that, while the binary was primed, no library was pulled in.
+        # We will have everything in, given that we require dependencies
+        # to be primed.
         self.assertThat(
             os.path.join(self.prime_dir, 'bin', 'main'), FileExists())
         self.assertThat(
-            os.path.join(self.prime_dir, 'lib'), Not(DirExists()))
+            os.path.join(self.prime_dir, 'lib'), DirExists())
+        # If this exist, snapcraft brought libbcurl in from the host.
         self.assertThat(
             os.path.join(self.prime_dir, 'usr'), Not(DirExists()))
 

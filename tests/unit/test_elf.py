@@ -20,7 +20,13 @@ import tempfile
 from textwrap import dedent
 import sys
 
-from testtools.matchers import Contains, Equals, NotEquals, StartsWith
+from testtools.matchers import (
+    Contains,
+    EndsWith,
+    Equals,
+    NotEquals,
+    StartsWith,
+)
 from unittest import mock
 
 from snapcraft.internal import errors, elf, os_release
@@ -61,7 +67,7 @@ class TestLdLibraryPathParser(unit.TestCase):
 
 class TestElfFileSmoketest(unit.TestCase):
 
-    def test_extract_python(self):
+    def test_bin_echo(self):
         # Try parsing a file without the pyelftools logic mocked out
         elf_file = elf.ElfFile(path=sys.executable)
 
@@ -317,6 +323,17 @@ class TestGetElfFiles(TestElfBase):
 
         self.assertThat(elf_files, Equals(set()))
 
+    def test_device_files(self):
+        elf_files = elf.get_elf_files('/dev', {'null'})
+        self.assertThat(elf_files, Equals(set()))
+
+    def test_fifo(self):
+        fifo_path = os.path.join(self.fake_elf.root_path, 'fifo')
+        os.mkfifo(fifo_path)
+
+        elf_files = elf.get_elf_files(self.fake_elf.root_path, {'fifo'})
+        self.assertThat(elf_files, Equals(set()))
+
 
 class TestGetElfFilesToPatch(TestElfBase):
 
@@ -466,14 +483,66 @@ class TestSonameCache(unit.TestCase):
         self.soname_cache['soname.so'] = '/fake/path/soname.so'
         self.assertTrue('soname.so' in self.soname_cache)
 
-    def test_add_many_remove_empty_entries(self):
+    def test_reset_except_root(self):
         self.soname_cache['soname.so'] = '/fake/path/soname.so'
+        self.soname_cache['soname2.so'] = '/keep/me/soname2.so'
         self.soname_cache['notfound.so'] = None
 
         self.assertTrue('soname.so' in self.soname_cache)
+        self.assertTrue('soname2.so' in self.soname_cache)
         self.assertTrue('notfound.so' in self.soname_cache)
 
-        self.soname_cache.reset()
+        self.soname_cache.reset_except_root('/keep/me')
 
-        self.assertTrue('soname.so' in self.soname_cache)
+        self.assertFalse('soname.so' in self.soname_cache)
         self.assertFalse('notfound.so' in self.soname_cache)
+        self.assertTrue('soname2.so' in self.soname_cache)
+
+
+# This is just a subset
+_LIBC6_LIBRARIES = [
+    'ld-2.26.so',
+    'ld-linux-x86-64.so.2',
+    'libBrokenLocale-2.26.so',
+    'libBrokenLocale.so.1',
+    'libSegFault.so',
+    'libanl-2.26.so',
+]
+
+
+class HandleGlibcTestCase(unit.TestCase):
+
+    def _setup_libc6(self):
+        lib_path = os.path.join(self.path, 'lib')
+        libraries = {os.path.join(lib_path, l) for l in _LIBC6_LIBRARIES}
+
+        os.mkdir(lib_path)
+        for library in libraries:
+            open(library, 'w').close()
+
+        return libraries
+
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch(
+            'snapcraft.internal.repo.Repo.get_package_libraries')
+        self.get_packages_mock = patcher.start()
+        self.get_packages_mock.return_value = self._setup_libc6()
+        self.addCleanup(patcher.stop)
+
+    def test_glibc_mangling(self):
+        dynamic_linker = elf.find_linker(
+            root_path=self.path,
+            snap_base_path='/snap/snap-name/current')
+
+        self.get_packages_mock.assert_called_once_with('libc6')
+
+        self.assertThat(dynamic_linker, EndsWith('ld-2.26.so'))
+
+    def test_bad_dynamic_linker_in_libc6_package(self):
+        self.get_packages_mock.return_value = {'/usr/lib/dyn-linker-2.25.so'}
+        self.assertRaises(RuntimeError,
+                          elf.find_linker,
+                          root_path=self.path,
+                          snap_base_path='/snap/snap-name/current')

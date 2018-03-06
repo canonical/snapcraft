@@ -65,10 +65,14 @@ class SonameCache:
         """Initialize a cache for sonames"""
         self._soname_paths = dict()  # type: Dict[str, str]
 
-    def reset(self):
-        """Reset the cache values that are empty."""
-        self._soname_paths = {k: v for (k, v) in self._soname_paths.items()
-                              if v is not None}
+    def reset_except_root(self, root):
+        """Reset the cache values that aren't contained within root."""
+        new_soname_paths = {}  # type: Dict[str, str]
+        for key, value in self._soname_paths.items():
+            if value is not None and value.startswith(root):
+                new_soname_paths[key] = value
+
+        self._soname_paths = new_soname_paths
 
 
 class NeededLibrary:
@@ -88,13 +92,20 @@ class Library:
     def __init__(self, *, soname: str, path: str, root_path: str,
                  core_base_path: str, soname_cache: SonameCache) -> None:
         self.soname = soname
-        if path.startswith(root_path) or path.startswith(core_base_path):
+
+        # We need to always look for the soname inside root first,
+        # and after exhausting all options look in core_base_path.
+        if path.startswith(root_path):
             self.path = path
         else:
             self.path = _crawl_for_path(soname=soname,
                                         root_path=root_path,
                                         core_base_path=core_base_path,
                                         soname_cache=soname_cache)
+
+        if not self.path and path.startswith(core_base_path):
+            self.path = path
+
         # Required for libraries on the host and the fetching mechanism
         if not self.path:
             self.path = path
@@ -125,7 +136,7 @@ def _crawl_for_path(*, soname: str, root_path: str,
             for file_name in files:
                 if file_name == soname:
                     file_path = os.path.join(root, file_name)
-                    if os.path.exists(file_path) and ElfFile.is_elf(file_path):
+                    if ElfFile.is_elf(file_path):
                         soname_cache[soname] = file_path
                         return file_path
 
@@ -149,6 +160,9 @@ class ElfFile:
 
     @classmethod
     def is_elf(cls, path: str) -> bool:
+        if not os.path.isfile(path):
+            # ELF binaries are regular files
+            return False
         with open(path, 'rb') as bin_file:
             return bin_file.read(4) == b'\x7fELF'
 
@@ -615,3 +629,48 @@ def get_elf_files_to_patch(elf_files):
             if lib is not None:
                 referenced_libraries.add(lib)
     return elf_files - referenced_libraries
+
+
+def _get_dynamic_linker(library_list: List[str]) -> str:
+    """Return the dynamic linker from library_list."""
+    regex = re.compile(r'(?P<dynamic_linker>ld-[\d.]+.so)$')
+
+    for library in library_list:
+        m = regex.search(os.path.basename(library))
+        if m:
+            return library
+
+    raise RuntimeError(
+        'The format for the linker should be of the form '
+        '<root>/ld-<X>.<Y>.so. There are no matches for the '
+        'current libc6 package')
+
+
+def find_linker(*, root_path: str, snap_base_path: str) -> str:
+    """Find and return the dynamic linker that would be seen at runtime.
+
+    :param str root_path: the root path of a snap tree.
+    :param str snap_base_path: absolute path to the snap once installed to
+                               setup proper rpaths.
+    :returns: the path to the dynamic linker to use
+    """
+    # We assume the current system will satisfy the GLIBC requirement,
+    # get the current libc6 libraries (which includes the linker)
+    libc6_libraries_list = repo.Repo.get_package_libraries('libc6')
+
+    # For security reasons, we do not want to automatically pull in
+    # libraries but expect them to be consciously brought in by stage-packages
+    # instead.
+    libc6_libraries_paths = [os.path.join(root_path, l[1:])
+                             for l in libc6_libraries_list]
+
+    dynamic_linker = _get_dynamic_linker(libc6_libraries_paths)
+
+    # Get the path to the "would be" dynamic linker when this snap is
+    # installed. Strip the root_path from the retrieved dynamic_linker
+    # variables + the leading `/` so that os.path.join can perform the
+    # proper join with snap_base_path.
+    dynamic_linker_path = os.path.join(
+        snap_base_path, dynamic_linker[len(root_path)+1:])
+
+    return dynamic_linker_path
