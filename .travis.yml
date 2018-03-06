@@ -23,6 +23,10 @@ jobs:
     - stage: snap
       if: type != cron
       script: sudo ./tools/travis/build_snapcraft_snap.sh
+    - os: osx
+      script:
+      - brew upgrade python
+      - python3 ./tools/brew_install_from_source.py
     - stage: integration
       if: type != cron
       script: sudo ./tools/travis/run_tests.sh tests/integration/general
