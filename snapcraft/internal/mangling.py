@@ -14,13 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
-import os
 import re
 import subprocess
-from typing import FrozenSet, List
+from typing import FrozenSet
 
 from snapcraft import file_utils
-from snapcraft.internal import elf, repo
+from snapcraft.internal import elf
 
 
 logger = logging.getLogger(__name__)
@@ -53,52 +52,6 @@ def rewrite_python_shebangs(root_dir):
     file_utils.replace_in_file(
         root_dir, file_pattern, shebang_pattern_with_args,
         r"""#!/bin/sh\n''''exec \1 \2 -- "$0" "$@" # '''""")
-
-
-def _get_dynamic_linker(library_list: List[str]) -> str:
-    """Return the dynamic linker from library_list."""
-    regex = re.compile(r'(?P<dynamic_linker>ld-[\d.]+.so)$')
-
-    for library in library_list:
-        m = regex.search(os.path.basename(library))
-        if m:
-            return library
-
-    raise RuntimeError(
-        'The format for the linker should be of the form '
-        '<root>/ld-<X>.<Y>.so. There are no matches for the '
-        'current libc6 package')
-
-
-def handle_glibc_mismatch(*, root_path: str, core_base_path: str,
-                          snap_base_path: str) -> str:
-    """Find and return the dynamic linker that would be seen at runtime.
-
-    :param str root_path: the root path of a snap tree.
-    :param str snap_base_path: absolute path to the snap once installed to
-                               setup proper rpaths.
-    :returns: the path to the dynamic linker to use
-    """
-    # We assume the current system will satisfy the GLIBC requirement,
-    # get the current libc6 libraries (which includes the linker)
-    libc6_libraries_list = repo.Repo.get_package_libraries('libc6')
-
-    # For security reasons, we do not want to automatically pull in
-    # libraries but expect them to be consciously brought in by stage-packages
-    # instead.
-    libc6_libraries_paths = [os.path.join(root_path, l[1:])
-                             for l in libc6_libraries_list]
-
-    dynamic_linker = _get_dynamic_linker(libc6_libraries_paths)
-
-    # Get the path to the "would be" dynamic linker when this snap is
-    # installed. Strip the root_path from the retrieved dynamic_linker
-    # variables + the leading `/` so that os.path.join can perform the
-    # proper join with snap_base_path.
-    dynamic_linker_path = os.path.join(
-        snap_base_path, dynamic_linker[len(root_path)+1:])
-
-    return dynamic_linker_path
 
 
 def clear_execstack(*, elf_files: FrozenSet[elf.ElfFile]) -> None:

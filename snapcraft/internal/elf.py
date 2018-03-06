@@ -603,3 +603,48 @@ def get_elf_files(root: str,
                 elf_files.add(ElfFile(path=path))
 
     return frozenset(elf_files)
+
+
+def _get_dynamic_linker(library_list: List[str]) -> str:
+    """Return the dynamic linker from library_list."""
+    regex = re.compile(r'(?P<dynamic_linker>ld-[\d.]+.so)$')
+
+    for library in library_list:
+        m = regex.search(os.path.basename(library))
+        if m:
+            return library
+
+    raise RuntimeError(
+        'The format for the linker should be of the form '
+        '<root>/ld-<X>.<Y>.so. There are no matches for the '
+        'current libc6 package')
+
+
+def find_linker(*, root_path: str, snap_base_path: str) -> str:
+    """Find and return the dynamic linker that would be seen at runtime.
+
+    :param str root_path: the root path of a snap tree.
+    :param str snap_base_path: absolute path to the snap once installed to
+                               setup proper rpaths.
+    :returns: the path to the dynamic linker to use
+    """
+    # We assume the current system will satisfy the GLIBC requirement,
+    # get the current libc6 libraries (which includes the linker)
+    libc6_libraries_list = repo.Repo.get_package_libraries('libc6')
+
+    # For security reasons, we do not want to automatically pull in
+    # libraries but expect them to be consciously brought in by stage-packages
+    # instead.
+    libc6_libraries_paths = [os.path.join(root_path, l[1:])
+                             for l in libc6_libraries_list]
+
+    dynamic_linker = _get_dynamic_linker(libc6_libraries_paths)
+
+    # Get the path to the "would be" dynamic linker when this snap is
+    # installed. Strip the root_path from the retrieved dynamic_linker
+    # variables + the leading `/` so that os.path.join can perform the
+    # proper join with snap_base_path.
+    dynamic_linker_path = os.path.join(
+        snap_base_path, dynamic_linker[len(root_path)+1:])
+
+    return dynamic_linker_path

@@ -29,7 +29,7 @@ import yaml
 import snapcraft.extractors
 from snapcraft import file_utils
 from snapcraft.internal import common, elf, errors, repo, sources, states
-from snapcraft.internal.mangling import clear_execstack, handle_glibc_mismatch
+from snapcraft.internal.mangling import clear_execstack
 
 from ._build_attributes import BuildAttributes
 from ._metadata_extraction import extract_metadata
@@ -565,10 +565,9 @@ class PluginHandler:
         if linker_incompat or libc6_staged or classic_mangling_needed:
             if not libc6_staged:
                 raise errors.StagePackageMissingError(package='libc6')
-            dynamic_linker = handle_glibc_mismatch(
+            dynamic_linker = elf.find_linker(
                 root_path=self.primedir,
-                snap_base_path=self._snap_base_path,
-                core_base_path=core_path)
+                snap_base_path=self._snap_base_path)
         elif is_classic:
             dynamic_linker = self._project_options.get_core_dynamic_linker()
 
