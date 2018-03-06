@@ -90,7 +90,7 @@ class Library:
     """Represents the SONAME and path to the library."""
 
     def __init__(self, *, soname: str, path: str, root_path: str,
-                 core_base_path: str, soname_cache: SonameCache) -> None:
+                 core_base_path: str, arch: str, soname_cache: SonameCache) -> None:
         self.soname = soname
 
         # We need to always look for the soname inside root first,
@@ -101,6 +101,7 @@ class Library:
             self.path = _crawl_for_path(soname=soname,
                                         root_path=root_path,
                                         core_base_path=core_base_path,
+                                        arch=arch,
                                         soname_cache=soname_cache)
 
         if not self.path and path.startswith(core_base_path):
@@ -123,7 +124,7 @@ class Library:
 
 
 def _crawl_for_path(*, soname: str, root_path: str,
-                    core_base_path: str, soname_cache: SonameCache) -> str:
+                    core_base_path: str, arch: str, soname_cache: SonameCache) -> str:
     # Speed things up and return what was already found once.
     if soname in soname_cache:
         return soname_cache[soname]
@@ -137,8 +138,12 @@ def _crawl_for_path(*, soname: str, root_path: str,
                 if file_name == soname:
                     file_path = os.path.join(root, file_name)
                     if ElfFile.is_elf(file_path):
-                        soname_cache[soname] = file_path
-                        return file_path
+                        # We found a match by name, anyway. Let's verify that
+                        # the architecture is the one we want.
+                        elf_file = ElfFile(path=file_path)
+                        if elf_file.arch == arch:
+                            soname_cache[soname] = file_path
+                            return file_path
 
     # If not found we cache it too
     soname_cache[soname] = None
@@ -178,9 +183,11 @@ class ElfFile:
         self.soname = elf_data[1]
         self.needed = elf_data[2]
         self.execstack_set = elf_data[3]
+        self.arch = elf_data[4]
 
     def _extract(self, path):  # noqa: C901
         # type: (str) -> Tuple[str, str, Dict[str, NeededLibrary], bool]
+        arch = str()
         interp = str()
         soname = str()
         libs = dict()
@@ -188,6 +195,8 @@ class ElfFile:
 
         with open(path, 'rb') as fp:
             elf = elftools.elf.elffile.ELFFile(fp)
+
+            arch = elf.get_machine_arch()
 
             # If we are processing a detached debug info file, these
             # sections will be present but empty.
@@ -228,7 +237,7 @@ class ElfFile:
                     if mode & elftools.elf.constants.P_FLAGS.PF_X:
                         execstack_set = True
 
-        return interp, soname, libs, execstack_set
+        return interp, soname, libs, execstack_set, arch
 
     def is_linker_compatible(self, *, linker: str) -> bool:
         """Determines if linker will work given the required glibc version.
@@ -307,6 +316,7 @@ class ElfFile:
                                  path=ldd_line[2],
                                  root_path=root_path,
                                  core_base_path=core_base_path,
+                                 arch=self.arch,
                                  soname_cache=soname_cache))
 
         self.dependencies = libs
