@@ -175,7 +175,7 @@ Currently, the suite is using the snaps of the integration suite to check the re
 It is possible to emulate an arm64 machine on an amd64 host, which is very useful for running manual exploratory tests for snapcraft. To set it up:
 
 1. Download the latest ubuntu arm64 uefi image from https://cloud-images.ubuntu.com/releases/16.04/release/
-2. Keep a pristine copy of the image, in case you want to reset the machine, replacing <UBUNTU_IMAGE> with the name of the file you donwloaded on step 1:
+2. Keep a pristine copy of the image, in case you want to reset the machine, replacing <UBUNTU_IMAGE> with the name of the file you downloaded on step 1:
 
     $ cp <UBUNTU_IMAGE> <UBUNTU_IMAGE>.pristine
 
