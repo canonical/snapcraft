@@ -589,7 +589,7 @@ class PluginHandler:
                 'correctly in the environment as '
                 '`build-attributes: [no-patchelf]` is set for the '
                 'part:\n{}'.format(
-                    '- {}\n'.join([e.path for e in elf_files])))
+                    ''.join(['- {}\n'.format(e.path) for e in elf_files])))
 
         self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
 
