@@ -573,8 +573,8 @@ class PluginHandler:
 
         if dynamic_linker and not self._build_attributes.no_patchelf():
             logger.warning(
-                'Files in this part are going to be patched to work correctly '
-                'in the environment.\n'
+                'Files in this part are going to be patched to execute '
+                'correctly on diverse environments.\n'
                 'To disable this behavior set '
                 '`build-properties: [no-patchelf]` for the part.')
             elf_patcher = elf.Patcher(
