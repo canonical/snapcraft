@@ -17,7 +17,6 @@
 import os
 import re
 import subprocess
-import unittest
 
 from testtools.matchers import (
     FileExists,
