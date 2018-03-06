@@ -576,7 +576,7 @@ class PluginHandler:
                 'Files in this part are going to be patched to execute '
                 'correctly on diverse environments.\n'
                 'To disable this behavior set '
-                '`build-properties: [no-patchelf]` for the part.')
+                '`build-attributes: [no-patchelf]` for the part.')
             elf_patcher = elf.Patcher(
                 dynamic_linker=dynamic_linker,
                 root_path=self.primedir,
