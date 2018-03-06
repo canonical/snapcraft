@@ -139,6 +139,12 @@ developer agreement.
 Note that most testing should be done on the staging server. If multiple tests
 have to be executed on production, notify the store team before.
 
+## Testing on macOS
+
+We can currently run a minimal subset of snapcraft integration tests on macOS. They are run by travis, using a brew formula that builds the installer from the branch. Once the virtualization tool for Ubuntu on mac is finalized, the full suite can be executed.
+
+For manual exploratory testing, the team has one mac machine available.
+
 ## Autopkgtests for the snapcraft deb
 
 Autopkgtests are tests for the project packaged as a deb. The unit tests are run during autopkgtests while the snapcraft deb is being built. Then the resulting deb is installed, and the integration and snaps suites are executed using the installed snapcraft.
