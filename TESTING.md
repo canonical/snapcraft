@@ -7,6 +7,8 @@ These are tests for features that are not possible to automate, or that the comp
 
 We try very hard to automate as much as possible and to keep the manual test suite as small as possible. Please do not add a manual test before discussing it with the team, and make sure that there are very good reasons not to automate it.
 
+When running manual tests against the production store, make sure to use the test user email account and the well-known test prefixes, because otherwise they will pollute important KPIs. To register a user, use an email address like snapcraft-test+<your-user-name>-<unique-id>@canonical.com (e.g., snapcraft-test+elopio-123@canonical.com). This will send the confirmation email and any notifications to the inbox of snapcraft-test@canonical.com, and the snapcraft team has the password to access that inbox. To register a snap or anything else that has a name, like tracks, keys, etc., prefix the name with test-snapcraft and your name (e.g., test-snapcraft-snap-elopio-123, test-snapcraft-track-elopio-111).
+
 ### Staging server
 
 Snapcraft has the ability to upload snaps for publication in the Snappy Store. If you're working on a feature that requires you to interact with the store, you might want to use the staging server instead of the production store. To do that, make sure you have an account on the [staging server](https://login.staging.ubuntu.com), then run:

@@ -546,6 +546,9 @@ class StoreTestCase(TestCase):
         process.close()
         return process.exitstatus
 
+    # Do not change this prefix. If you use a different one, it will pollute
+    # KPIs, so always notify the store team if you need to use a different
+    # value.
     def get_unique_name(self, prefix='test-snapcraft'):
         """Return a unique snap name.
 
