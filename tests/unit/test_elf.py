@@ -134,8 +134,9 @@ class TestGetLibraries(TestElfBase):
     def test_get_libraries_with_soname_cache(self):
         elf_file = self.fake_elf['fake_elf-2.23']
 
+        arch = ('ELFCLASS64', 'ELFDATA2LSB', 'EM_X86_64')
         soname_cache = elf.SonameCache()
-        soname_cache['bar.so.2'] = '/lib/bar.so.2'
+        soname_cache[arch, 'bar.so.2'] = '/lib/bar.so.2'
 
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
@@ -472,31 +473,55 @@ class TestSonameCache(unit.TestCase):
 
     def setUp(self):
         super().setUp()
+        self.arch = ('ELFCLASS64', 'ELFDATA2LSB', 'EM_X86_64')
         self.soname_cache = elf.SonameCache()
 
     def test_add_and_retrieve_soname_path(self):
-        self.soname_cache['soname.so'] = '/fake/path/soname.so'
-        self.assertThat(self.soname_cache['soname.so'],
+        self.soname_cache[self.arch, 'soname.so'] = '/fake/path/soname.so'
+        self.assertThat(self.soname_cache[self.arch, 'soname.so'],
                         Equals('/fake/path/soname.so'))
 
     def test_add_and_verify_soname_path(self):
-        self.soname_cache['soname.so'] = '/fake/path/soname.so'
-        self.assertTrue('soname.so' in self.soname_cache)
+        self.soname_cache[self.arch, 'soname.so'] = '/fake/path/soname.so'
+        self.assertTrue((self.arch, 'soname.so') in self.soname_cache)
 
     def test_reset_except_root(self):
-        self.soname_cache['soname.so'] = '/fake/path/soname.so'
-        self.soname_cache['soname2.so'] = '/keep/me/soname2.so'
-        self.soname_cache['notfound.so'] = None
+        self.soname_cache[self.arch, 'soname.so'] = '/fake/path/soname.so'
+        self.soname_cache[self.arch, 'soname2.so'] = '/keep/me/soname2.so'
+        self.soname_cache[self.arch, 'notfound.so'] = None
 
-        self.assertTrue('soname.so' in self.soname_cache)
-        self.assertTrue('soname2.so' in self.soname_cache)
-        self.assertTrue('notfound.so' in self.soname_cache)
+        self.assertTrue((self.arch, 'soname.so') in self.soname_cache)
+        self.assertTrue((self.arch, 'soname2.so') in self.soname_cache)
+        self.assertTrue((self.arch, 'notfound.so') in self.soname_cache)
 
         self.soname_cache.reset_except_root('/keep/me')
 
-        self.assertFalse('soname.so' in self.soname_cache)
-        self.assertFalse('notfound.so' in self.soname_cache)
-        self.assertTrue('soname2.so' in self.soname_cache)
+        self.assertFalse((self.arch, 'soname.so') in self.soname_cache)
+        self.assertFalse((self.arch, 'notfound.so') in self.soname_cache)
+        self.assertTrue((self.arch, 'soname2.so') in self.soname_cache)
+
+
+class TestSonameCacheErrors(unit.TestCase):
+
+    scenarios = (
+        ('invalid string key', dict(
+            key='soname.so',
+            partial_message='The key for')),
+        ('invalid first argument tuple', dict(
+            key=(('ELFCLASS64', 'ELFDATA2LSB'), 'soname.so'),
+            partial_message='The first element')),
+        ('invalid second argument type', dict(
+            key=(('ELFCLASS64', 'ELFDATA2LSB', 'EM_X86_64'), 1),
+            partial_message='The second element')),
+    )
+
+    def test_error(self):
+        soname_cache = elf.SonameCache()
+        raised = self.assertRaises(EnvironmentError,
+                                   soname_cache.__setitem__,
+                                   self.key, '/soname.so')
+
+        self.assertThat(str(raised), StartsWith(self.partial_message))
 
 
 # This is just a subset

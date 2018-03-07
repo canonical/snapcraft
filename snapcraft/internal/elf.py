@@ -72,6 +72,16 @@ class SonameCache:
         return self._soname_paths[key]
 
     def __setitem__(self, key, item):
+        # Initial API error checks
+        if not isinstance(key, tuple):
+            raise EnvironmentError('The key for SonameCache has to be a '
+                                   '(arch, soname) tuple.')
+        if not isinstance(key[0], tuple) or len(key[0]) != 3:
+            raise EnvironmentError('The first element of the key needs to of '
+                                   'type ElfArchitectureTuple.')
+        if not isinstance(key[1], str):
+            raise EnvironmentError('The second element of the key needs to be '
+                                   'of type str representing the soname.')
         self._soname_paths[key] = item
 
     def __contains__(self, key):
