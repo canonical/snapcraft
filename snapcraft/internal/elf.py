@@ -90,7 +90,9 @@ class Library:
     """Represents the SONAME and path to the library."""
 
     def __init__(self, *, soname: str, path: str, root_path: str,
-                 core_base_path: str, arch: str, soname_cache: SonameCache) -> None:
+                 core_base_path: str,
+                 arch: Tuple[str, str, str],
+                 soname_cache: SonameCache) -> None:
         self.soname = soname
 
         # We need to always look for the soname inside root first,
@@ -123,8 +125,9 @@ class Library:
             self.in_base_snap = False
 
 
-def _crawl_for_path(*, soname: str, root_path: str,
-                    core_base_path: str, arch: str, soname_cache: SonameCache) -> str:
+def _crawl_for_path(*, soname: str, root_path: str, core_base_path: str,
+                    arch: Tuple[str, str, str],
+                    soname_cache: SonameCache) -> str:
     # Speed things up and return what was already found once.
     if soname in soname_cache:
         return soname_cache[soname]
@@ -187,7 +190,7 @@ class ElfFile:
 
     def _extract(self, path):  # noqa: C901
         # type: (str) -> Tuple[Tuple[str, str, str], str, str, Dict[str, NeededLibrary], bool]  # noqa: E501
-        arch = str()
+        arch = None  # type: Tuple[str, str, str]
         interp = str()
         soname = str()
         libs = dict()
