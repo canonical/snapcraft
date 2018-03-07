@@ -1159,6 +1159,8 @@ def _fake_elffile_extract(self, path):
         return arch, '', 'libc.so.6', {}, False
     elif name == 'libssl.so.1.0.0':
         return arch, '', 'libssl.so.1.0.0', {}, False
+    else:
+        return arch, '', '', {}, False
 
 
 class FakeElf(fixtures.Fixture):

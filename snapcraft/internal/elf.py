@@ -38,6 +38,22 @@ from snapcraft.internal import (
 logger = logging.getLogger(__name__)
 
 
+class NeededLibrary:
+    """Represents an ELF library version."""
+
+    def __init__(self, *, name: str) -> None:
+        self.name = name
+        self.versions = set()  # type: Set[str]
+
+    def add_version(self, version: str) -> None:
+        self.versions.add(version)
+
+
+ElfArchitectureTuple = Tuple[str, str, str]
+ElfDataTuple = Tuple[ElfArchitectureTuple, str, str, Dict[str, NeededLibrary], bool]  # noqa: E501
+SonameCacheDict = Dict[Tuple[ElfArchitectureTuple, str], str]
+
+
 # Old pyelftools uses byte strings for section names.  Some data is
 # also returned as bytes, which is handled below.
 if parse_version(elftools.__version__) >= parse_version('0.24'):
@@ -56,6 +72,16 @@ class SonameCache:
         return self._soname_paths[key]
 
     def __setitem__(self, key, item):
+        # Initial API error checks
+        if not isinstance(key, tuple):
+            raise EnvironmentError('The key for SonameCache has to be a '
+                                   '(arch, soname) tuple.')
+        if not isinstance(key[0], tuple) or len(key[0]) != 3:
+            raise EnvironmentError('The first element of the key needs to of '
+                                   'type ElfArchitectureTuple.')
+        if not isinstance(key[1], str):
+            raise EnvironmentError('The second element of the key needs to be '
+                                   'of type str representing the soname.')
         self._soname_paths[key] = item
 
     def __contains__(self, key):
@@ -63,11 +89,11 @@ class SonameCache:
 
     def __init__(self):
         """Initialize a cache for sonames"""
-        self._soname_paths = dict()  # type: Dict[str, str]
+        self._soname_paths = dict()  # type: SonameCacheDict
 
     def reset_except_root(self, root):
         """Reset the cache values that aren't contained within root."""
-        new_soname_paths = {}  # type: Dict[str, str]
+        new_soname_paths = dict()  # type: SonameCacheDict
         for key, value in self._soname_paths.items():
             if value is not None and value.startswith(root):
                 new_soname_paths[key] = value
@@ -75,22 +101,12 @@ class SonameCache:
         self._soname_paths = new_soname_paths
 
 
-class NeededLibrary:
-    """Represents an ELF library version."""
-
-    def __init__(self, *, name: str) -> None:
-        self.name = name
-        self.versions = set()  # type: Set[str]
-
-    def add_version(self, version: str) -> None:
-        self.versions.add(version)
-
-
 class Library:
     """Represents the SONAME and path to the library."""
 
     def __init__(self, *, soname: str, path: str, root_path: str,
-                 core_base_path: str, soname_cache: SonameCache) -> None:
+                 core_base_path: str, arch: ElfArchitectureTuple,
+                 soname_cache: SonameCache) -> None:
         self.soname = soname
 
         # We need to always look for the soname inside root first,
@@ -101,6 +117,7 @@ class Library:
             self.path = _crawl_for_path(soname=soname,
                                         root_path=root_path,
                                         core_base_path=core_base_path,
+                                        arch=arch,
                                         soname_cache=soname_cache)
 
         if not self.path and path.startswith(core_base_path):
@@ -116,17 +133,19 @@ class Library:
         else:
             self.system_lib = False
 
-        if path.startswith(core_base_path):
+        # self.path has the correct resulting path.
+        if self.path.startswith(core_base_path):
             self.in_base_snap = True
         else:
             self.in_base_snap = False
 
 
-def _crawl_for_path(*, soname: str, root_path: str,
-                    core_base_path: str, soname_cache: SonameCache) -> str:
+def _crawl_for_path(*, soname: str, root_path: str, core_base_path: str,
+                    arch: ElfArchitectureTuple,
+                    soname_cache: SonameCache) -> str:
     # Speed things up and return what was already found once.
-    if soname in soname_cache:
-        return soname_cache[soname]
+    if (arch, soname) in soname_cache:
+        return soname_cache[arch, soname]
 
     logger.debug('Crawling to find soname {!r}'.format(soname))
     for path in (root_path, core_base_path):
@@ -137,11 +156,15 @@ def _crawl_for_path(*, soname: str, root_path: str,
                 if file_name == soname:
                     file_path = os.path.join(root, file_name)
                     if ElfFile.is_elf(file_path):
-                        soname_cache[soname] = file_path
-                        return file_path
+                        # We found a match by name, anyway. Let's verify that
+                        # the architecture is the one we want.
+                        elf_file = ElfFile(path=file_path)
+                        if elf_file.arch == arch:
+                            soname_cache[arch, soname] = file_path
+                            return file_path
 
     # If not found we cache it too
-    soname_cache[soname] = None
+    soname_cache[arch, soname] = None
     return None
 
 
@@ -180,8 +203,8 @@ class ElfFile:
         self.needed = elf_data[3]
         self.execstack_set = elf_data[4]
 
-    def _extract(self, path):  # noqa: C901
-        # type: (str) -> Tuple[Tuple[str, str, str], str, str, Dict[str, NeededLibrary], bool]  # noqa: E501
+    def _extract(self, path: str) -> ElfDataTuple:  # noqa: C901
+        arch = None  # type: ElfArchitectureTuple
         interp = str()
         soname = str()
         libs = dict()
@@ -319,6 +342,7 @@ class ElfFile:
                                  path=ldd_line[2],
                                  root_path=root_path,
                                  core_base_path=core_base_path,
+                                 arch=self.arch,
                                  soname_cache=soname_cache))
 
         self.dependencies = libs
