@@ -20,7 +20,13 @@ import tempfile
 from textwrap import dedent
 import sys
 
-from testtools.matchers import Contains, EndsWith, Equals, NotEquals
+from testtools.matchers import (
+    Contains,
+    EndsWith,
+    Equals,
+    NotEquals,
+    StartsWith,
+)
 from unittest import mock
 
 from snapcraft.internal import errors, elf, os_release
@@ -66,6 +72,13 @@ class TestElfFileSmoketest(unit.TestCase):
         elf_file = elf.ElfFile(path=sys.executable)
 
         self.assertThat(elf_file.path, Equals(sys.executable))
+
+        # The arch attribute will be a tuple of three strings
+        self.assertTrue(isinstance(elf_file.arch, tuple))
+        self.assertThat(len(elf_file.arch), Equals(3))
+        self.assertThat(elf_file.arch[0], StartsWith('ELFCLASS'))
+        self.assertThat(elf_file.arch[1], StartsWith('ELFDATA'))
+        self.assertThat(elf_file.arch[2], StartsWith('EM_'))
 
         # We expect Python to be a dynamic linked executable with an
         # ELF interpreter.
@@ -320,6 +333,18 @@ class TestGetElfFiles(TestElfBase):
 
         elf_files = elf.get_elf_files(self.fake_elf.root_path, {'fifo'})
         self.assertThat(elf_files, Equals(set()))
+
+
+class TestGetElfFilesToPatch(TestElfBase):
+
+    def test_get_elf_files_to_patch(self):
+        elf_files = elf.get_elf_files(
+            self.fake_elf.root_path,
+            {'libc.so.6', 'libssl.so.1.0.0', 'fake_elf-shared-object',
+             'fake_elf-2.26'})
+        to_patch = elf.get_elf_files_to_patch(elf_files)
+        self.assertThat({os.path.basename(e.path) for e in to_patch},
+                        Equals({'fake_elf-shared-object', 'fake_elf-2.26'}))
 
 
 class TestGetRequiredGLIBC(TestElfBase):

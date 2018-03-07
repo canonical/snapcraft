@@ -1118,37 +1118,47 @@ class SharedCache(fixtures.Fixture):
 
 
 def _fake_elffile_extract(self, path):
+    arch = ('ELFCLASS64', 'ELFDATA2LSB', 'EM_X86_64')
     name = os.path.basename(path)
     if name in ['fake_elf-2.26', 'fake_elf-bad-ldd', 'fake_elf-with-core-libs',
                 'fake_elf-bad-patchelf']:
         glibc = elf.NeededLibrary(name='libc.so.6')
         glibc.add_version('GLIBC_2.2.5')
         glibc.add_version('GLIBC_2.26')
-        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}, False
+        return (arch, '/lib64/ld-linux-x86-64.so.2', '',
+                {glibc.name: glibc}, False)
     elif name == 'fake_elf-2.23':
         glibc = elf.NeededLibrary(name='libc.so.6')
         glibc.add_version('GLIBC_2.2.5')
         glibc.add_version('GLIBC_2.23')
-        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}, False
+        return (arch, '/lib64/ld-linux-x86-64.so.2', '',
+                {glibc.name: glibc}, False)
     elif name == 'fake_elf-1.1':
         glibc = elf.NeededLibrary(name='libc.so.6')
         glibc.add_version('GLIBC_1.1')
         glibc.add_version('GLIBC_0.1')
-        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}, False
+        return (arch, '/lib64/ld-linux-x86-64.so.2', '',
+                {glibc.name: glibc}, False)
     elif name == 'fake_elf-static':
-        return '', '', {}, False
+        return arch, '', '', {}, False
     elif name == 'fake_elf-shared-object':
         openssl = elf.NeededLibrary(name='libssl.so.1.0.0')
         openssl.add_version('OPENSSL_1.0.0')
-        return '', 'libfake_elf.so.0', {openssl.name: openssl}, False
+        return arch, '', 'libfake_elf.so.0', {openssl.name: openssl}, False
     elif name == 'fake_elf-with-execstack':
         glibc = elf.NeededLibrary(name='libc.so.6')
         glibc.add_version('GLIBC_2.23')
-        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}, True
+        return (arch, '/lib64/ld-linux-x86-64.so.2', '',
+                {glibc.name: glibc}, True)
     elif name == 'fake_elf-with-bad-execstack':
         glibc = elf.NeededLibrary(name='libc.so.6')
         glibc.add_version('GLIBC_2.23')
-        return '/lib64/ld-linux-x86-64.so.2', '', {glibc.name: glibc}, True
+        return (arch, '/lib64/ld-linux-x86-64.so.2', '',
+                {glibc.name: glibc}, True)
+    elif name == 'libc.so.6':
+        return arch, '', 'libc.so.6', {}, False
+    elif name == 'libssl.so.1.0.0':
+        return arch, '', 'libssl.so.1.0.0', {}, False
 
 
 class FakeElf(fixtures.Fixture):
@@ -1225,6 +1235,10 @@ class FakeElf(fixtures.Fixture):
             'fake_elf-with-bad-execstack': elf.ElfFile(
                 path=os.path.join(self.root_path,
                                   'fake_elf-with-bad-execstack')),
+            'libc.so.6': elf.ElfFile(
+                path=os.path.join(self.root_path, 'libc.so.6')),
+            'libssl.so.1.0.0': elf.ElfFile(
+                path=os.path.join(self.root_path, 'libssl.so.1.0.0')),
         }
 
         for elf_file in self._elf_files.values():
