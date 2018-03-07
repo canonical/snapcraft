@@ -123,7 +123,8 @@ class Library:
         else:
             self.system_lib = False
 
-        if path.startswith(core_base_path):
+        # self.path has the correct resulting path.
+        if self.path.startswith(core_base_path):
             self.in_base_snap = True
         else:
             self.in_base_snap = False
@@ -134,7 +135,7 @@ def _crawl_for_path(*, soname: str, root_path: str, core_base_path: str,
                     soname_cache: SonameCache) -> str:
     # Speed things up and return what was already found once.
     if (arch, soname) in soname_cache:
-        return soname_cache[soname]
+        return soname_cache[arch, soname]
 
     logger.debug('Crawling to find soname {!r}'.format(soname))
     for path in (root_path, core_base_path):
@@ -153,7 +154,7 @@ def _crawl_for_path(*, soname: str, root_path: str, core_base_path: str,
                             return file_path
 
     # If not found we cache it too
-    soname_cache[soname] = None
+    soname_cache[arch, soname] = None
     return None
 
 
