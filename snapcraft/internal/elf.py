@@ -636,7 +636,7 @@ def get_elf_files(root: str,
             elf_file = ElfFile(path=path)
             # if we have dyn symbols we are dynamic
             if elf_file.needed:
-                elf_files.add(ElfFile(path=path))
+                elf_files.add(elf_file)
 
     return frozenset(elf_files)
 
