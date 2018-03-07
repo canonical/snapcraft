@@ -70,7 +70,7 @@ def clear_execstack(*, elf_files: FrozenSet[elf.ElfFile]) -> None:
             'The execstacks are going to be cleared for the following '
             'files:\n{}\n'
             'To disable this behavior set '
-            '`build-properties: [keep-execstack]` '
+            '`build-attributes: [keep-execstack]` '
             'for the part.'.format('\n'.join(formatted_items)))
 
     for elf_file in elf_files_with_execstack:
