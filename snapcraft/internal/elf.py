@@ -179,14 +179,14 @@ class ElfFile:
         self.path = path
         self.dependencies = set()  # type: Set[Library]
         elf_data = self._extract(path)
-        self.interp = elf_data[0]
-        self.soname = elf_data[1]
-        self.needed = elf_data[2]
-        self.execstack_set = elf_data[3]
-        self.arch = elf_data[4]
+        self.arch = elf_data[0]
+        self.interp = elf_data[1]
+        self.soname = elf_data[2]
+        self.needed = elf_data[3]
+        self.execstack_set = elf_data[4]
 
     def _extract(self, path):  # noqa: C901
-        # type: (str) -> Tuple[str, str, Dict[str, NeededLibrary], bool]
+        # type: (str) -> Tuple[Tuple[str, str, str], str, str, Dict[str, NeededLibrary], bool]  # noqa: E501
         arch = str()
         interp = str()
         soname = str()
@@ -196,7 +196,16 @@ class ElfFile:
         with open(path, 'rb') as fp:
             elf = elftools.elf.elffile.ELFFile(fp)
 
-            arch = elf.get_machine_arch()
+            # A set of fields to identify the architecture of the ELF file:
+            #  EI_CLASS: 32/64 bit (e.g. amd64 vs. x32)
+            #  EI_DATA: byte orer (e.g. ppc64 vs. ppc64le)
+            #  e_machine: instruction set (e.g. x86-64 vs. arm64)
+            #
+            # For amd64 binaries, this will evaluate to:
+            #   ('ELFCLASS64', 'ELFDATA2LSB', 'EM_X86_64')
+            arch = (elf.header.e_ident.EI_CLASS,
+                    elf.header.e_ident.EI_DATA,
+                    elf.header.e_machine)
 
             # If we are processing a detached debug info file, these
             # sections will be present but empty.
@@ -237,7 +246,7 @@ class ElfFile:
                     if mode & elftools.elf.constants.P_FLAGS.PF_X:
                         execstack_set = True
 
-        return interp, soname, libs, execstack_set, arch
+        return arch, interp, soname, libs, execstack_set
 
     def is_linker_compatible(self, *, linker: str) -> bool:
         """Determines if linker will work given the required glibc version.
@@ -613,6 +622,20 @@ def get_elf_files(root: str,
                 elf_files.add(ElfFile(path=path))
 
     return frozenset(elf_files)
+
+
+def get_elf_files_to_patch(elf_files):
+    # type: (FrozenSet[ElfFile]) -> FrozenSet[ElfFile]
+    """Return a frozenset of elf files that need patching."""
+    sonames = {(elf.arch, elf.soname): elf for elf in elf_files
+               if elf.soname != ''}
+    referenced_libraries = set()
+    for elf in elf_files:
+        for soname in elf.needed:
+            lib = sonames.get((elf.arch, soname))
+            if lib is not None:
+                referenced_libraries.add(lib)
+    return elf_files - referenced_libraries
 
 
 def _get_dynamic_linker(library_list: List[str]) -> str:
