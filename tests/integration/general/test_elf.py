@@ -17,7 +17,7 @@
 import os
 import subprocess
 
-from testtools.matchers import DirExists, FileExists, MatchesRegex, Not
+from testtools.matchers import Equals, DirExists, FileExists, MatchesRegex, Not
 
 from tests import integration, fixture_setup
 
@@ -58,3 +58,57 @@ class Libc6TestCase(integration.TestCase):
             self.patchelf_command, '--print-interpreter', bin_path]).decode()
         expected_interpreter = r'^/snap/test-snap/current/lib/.*'
         self.assertThat(interpreter, MatchesRegex(expected_interpreter))
+
+
+class ExecStackTestCase(integration.TestCase):
+
+    def _setup_project(self, keep_execstack: bool):
+        if keep_execstack:
+            attributes = ['keep-execstack']
+        else:
+            attributes = []
+
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml.update_part('test-part', {
+            'plugin': 'nil',
+            'build-attributes': attributes,
+            'build': ('/usr/sbin/execstack --set-execstack '
+                      '$SNAPCRAFT_PART_INSTALL/usr/bin/hello'),
+            'prime': ['usr/bin/hello'],
+            'build-packages': ['execstack'],
+            'stage-packages': ['hello'],
+        })
+        self.useFixture(snapcraft_yaml)
+
+    def _assert_execstack(self, is_set: bool):
+        stage_bin_path = os.path.join('stage', 'usr', 'bin', 'hello')
+        stage_bin_query = subprocess.check_output([
+            self.execstack_command, '--query',
+            stage_bin_path]).decode().strip()
+        # 'X' means the executable stack is required. See `man 8 execstack`.
+        self.assertThat(stage_bin_query, Equals('X {}'.format(stage_bin_path)))
+
+        prime_bin_path = os.path.join('prime', 'usr', 'bin', 'hello')
+        prime_bin_query = subprocess.check_output([
+            self.execstack_command, '--query',
+            prime_bin_path]).decode().strip()
+        # '-' means the executable stack is not required.
+        # See `man 8 execstack`.
+        if is_set:
+            expected_value = 'X'
+        else:
+            expected_value = '-'
+        self.assertThat(prime_bin_query, Equals('{} {}'.format(
+            expected_value, prime_bin_path)))
+
+    def test_keep_execstack(self):
+        self._setup_project(keep_execstack=True)
+        self.run_snapcraft('prime')
+
+        self._assert_execstack(is_set=True)
+
+    def test_clear_execstack(self):
+        self._setup_project(keep_execstack=False)
+        self.run_snapcraft('prime')
+
+        self._assert_execstack(is_set=False)
