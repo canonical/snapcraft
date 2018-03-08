@@ -182,13 +182,13 @@ It is possible to emulate an arm64 machine on an amd64 host, which is very usefu
     ```
 
 3. Download the latest UEFI firmware image QEMU_EFI.fd from https://releases.linaro.org/components/kernel/uefi-linaro/latest/release/qemu64/
-4. Create a cloud init file, replacing <user> and <launchpad-user-name> with your values:
+4. Create a cloud init file, replacing <launchpad-user-name> with your values:
 
     ```
     $ cat > cloud-data.yaml << EOF
     #cloud-config
     users:
-      - name: <user>
+      - name: $USER
         ssh-import-id: <launchpad-user-name>
         sudo: ['ALL=(ALL) NOPASSWD:ALL']
         groups: sudo
@@ -196,11 +196,11 @@ It is possible to emulate an arm64 machine on an amd64 host, which is very usefu
     EOF
     ```
 
-5. Create a cloud-config disk image:
+5. Create a cloud config disk image on the file `cloud-config.img`:
 
     ```
     $ sudo apt install --yes cloud-image-utils
-    $ cloud-localds --disk-format qcow2 cloud.img cloud-data.yaml
+    $ cloud-localds --disk-format qcow2 cloud-config.img cloud-data.yaml
     ```
 
 6. Run the image in qemu, replacing <ubuntu-image> with the path of the file you downloaded on step 1.
@@ -217,16 +217,19 @@ It is possible to emulate an arm64 machine on an amd64 host, which is very usefu
         -device virtio-blk-device,drive=image \
         -drive if=none,id=image,file=<ubuntu-image> \
         -device virtio-blk-device,drive=cloud \
-        -drive if=none,id=cloud,file=cloud.img \
+        -drive if=none,id=cloud,file=cloud-config.img \
         -device virtio-net-device,netdev=user0 \
         -netdev user,id=user0 \
         -redir tcp:2222::22
     ```
 
-7. ssh into the emulated machine, replacing <user> with the one you specified in step 4:
+This will show a few errors, and a weird screen while the machine boots.
+TODO: research how to make it nicer, but for now, just be patient until the login prompt appears.
+
+7. ssh into the emulated machine:
 
     ```
-    $ ssh -p 2222 <user>@localhost
+    $ ssh -p 2222 localhost
     ```
 
 (Source: https://gist.github.com/george-hawkins/16ee37063213f348a17717a7007d2c79)
