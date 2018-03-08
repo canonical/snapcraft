@@ -14,12 +14,12 @@ jobs:
     # Tests, only when not triggered by the daily cron.
     - stage: static
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh ubuntu:xenial static
+      script: sudo ./tools/travis/run_tests.sh static ubuntu:xenial
     - stage: unit
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests/unit
+      script: sudo ./tools/travis/run_tests.sh tests/unit ubuntu:xenial
     - if: type != cron
-      script: SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh tests/unit
+      script: SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh tests/unit ubuntu:xenial
     - stage: snap
       if: type != cron
       script: sudo ./tools/travis/build_snapcraft_snap.sh
