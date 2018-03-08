@@ -33,6 +33,7 @@ from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
 from snapcraft.internal.errors import (
     ContainerConnectionError,
+    InvalidContainerImageInfoError,
     SnapdError,
     SnapcraftEnvironmentError,
 )
@@ -179,6 +180,29 @@ class ContainerbuildTestCase(LXDTestCase):
                   'environment.SNAPCRAFT_BUILD_INFO',
                   'test_build_info_value']),
         ])
+
+    def test_image_info_merged(self):
+        test_image_info = '{"build_url": "test-build-url"}'
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                'SNAPCRAFT_IMAGE_INFO', test_image_info))
+        self.make_containerbuild().execute()
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'config', 'set', self.fake_lxd.name,
+                  'environment.SNAPCRAFT_IMAGE_INFO',
+                  '{"fingerprint": "test-fingerprint", '
+                  '"architecture": "test-architecture", '
+                  '"created_at": "test-created-at", '
+                  '"build_url": "test-build-url"}']),
+        ])
+
+    def test_image_info_invalid(self):
+        test_image_info = 'not-json'
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                'SNAPCRAFT_IMAGE_INFO', test_image_info))
+        self.assertRaises(InvalidContainerImageInfoError,
+                          self.make_containerbuild().execute)
 
     def test_wait_for_network_loops(self):
         self.fake_lxd.check_call_mock.side_effect = CalledProcessError(
