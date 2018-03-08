@@ -55,11 +55,7 @@ jobs:
       if: type != cron
       script: sudo ./tools/travis/run_tests.sh tests/integration/general ubuntu:trusty
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests.integration.plugins_catkin ubuntu:trusty
-    - if: type != cron
-      script:
-      - "travis_wait 20 sleep 1200 &"
-      - sudo ./tools/travis/run_tests.sh tests/integration/snapd ubuntu:trusty
+      script: sudo ./tools/travis/run_tests.sh tests/integration/store ubuntu:trusty
     # Trigger nightly tests, only in cron.
     - stage: nightly
     # Run spread tests for the snapcraft snap in edge.
