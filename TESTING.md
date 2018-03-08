@@ -189,7 +189,7 @@ It is possible to emulate an arm64 machine on an amd64 host, which is very usefu
     #cloud-config
     users:
       - name: <user>
-        ssh-import-id <launchpad-user-name>
+        ssh-import-id: <launchpad-user-name>
         sudo: ['ALL=(ALL) NOPASSWD:ALL']
         groups: sudo
         shell: /bin/bash
