@@ -54,18 +54,24 @@ from tests.subprocess_utils import (
 )
 
 
-class TempCWD(fixtures.TempDir):
+class TempCWD(fixtures.Fixture):
 
     def __init__(self, rootdir=None):
+        super().__init__()
         if rootdir is None and 'TMPDIR' in os.environ:
             rootdir = os.environ.get('TMPDIR')
-        super().__init__(rootdir)
+        self.rootdir = rootdir
 
     def setUp(self):
         """Create a temporary directory an cd into it for the test duration."""
         super().setUp()
+        self.path = tempfile.mkdtemp(dir=self.rootdir)
         current_dir = os.getcwd()
         self.addCleanup(os.chdir, current_dir)
+        if os.environ.get('SNAPCRAFT_TEST_KEEP_DATA'):
+            self.addCleanup(print, 'The test data is in {}'.format(self.path))
+        else:
+            self.addCleanup(shutil.rmtree, self.path, ignore_errors=True)
         os.chdir(self.path)
 
 

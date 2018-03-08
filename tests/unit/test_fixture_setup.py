@@ -22,7 +22,10 @@ import tempfile
 import urllib.parse
 
 import fixtures
-from testtools.matchers import Equals
+from testtools.matchers import (
+    DirExists,
+    Equals
+)
 
 from tests import (
     fixture_setup,
@@ -41,6 +44,17 @@ class TempCWDTestCase(unit.TestCase):
         self.assertThat(
             os.path.dirname(temp_cwd_fixture.path),
             Equals(test_tmp_dir))
+
+    def test_with_KEEP_DATA_env_var(self):
+        with tempfile.TemporaryDirectory() as test_tmp_dir:
+            with fixtures.EnvironmentVariable(
+                    'SNAPCRAFT_TEST_KEEP_DATA', test_tmp_dir):
+                temp_cwd_fixture = fixture_setup.TempCWD()
+                self.useFixture(temp_cwd_fixture)
+
+        self.assertThat(
+            os.path.dirname(temp_cwd_fixture.path),
+            DirExists())
 
 
 class TestFakeServer(http.server.HTTPServer):
