@@ -546,17 +546,18 @@ class StoreTestCase(TestCase):
         process.close()
         return process.exitstatus
 
-    # Do not change this prefix. If you use a different one, it will pollute
-    # KPIs, so always notify the store team if you need to use a different
-    # value.
-    def get_unique_name(self, prefix='test-snapcraft'):
+    def get_unique_name(self):
         """Return a unique snap name.
 
         It uses a UUIDv4 to create unique names and limits its full size
         to 40 chars (as defined in the snap specification).
         """
         unique_id = uuid.uuid4().int
-        return '{}-{}'.format(prefix, unique_id)[:40]
+        
+        # Do not change the test-snapcraft prefix. Ensure that you
+        # notify the store team if you need to use a different value when
+        # working with the production store.
+        return 'test-snapcraft-{}'.format(unique_id)[:40]
 
     def get_unique_version(self):
         """Return a unique snap version.
