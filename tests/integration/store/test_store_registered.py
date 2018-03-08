@@ -24,9 +24,9 @@ class RegisteredTestCase(integration.StoreTestCase):
 
         # Make sure 'snap_public' is listed before 'snap_private',
         # thus the 'a/b' suffixes (alphabetical order).
-        snap_public = self.get_unique_name('a')
+        snap_public = self.get_unique_name()
         self.register(snap_public)
-        snap_private = self.get_unique_name('b')
+        snap_private = self.get_unique_name()
         self.register(snap_private, private=True)
 
         expected_snaps = [
