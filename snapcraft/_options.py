@@ -224,22 +224,24 @@ class ProjectOptions:
         self._set_machine(target_deb_arch)
         self.__debug = debug
 
-    @property
-    def is_host_compatible_with_base(self):
+    def is_host_compatible_with_base(self, base):
         codename = None
         with suppress(errors.OsReleaseCodenameError):
             codename = OsRelease().version_codename()
             logger.debug('Running on {!r}'.format(codename))
 
-        # TODO support more bases
-        return codename == 'xenial' or codename == 'trusty'
+        # TODO do this more generically
+        if base == 'core18':
+            return codename in ('trusty', 'xenial', 'bionic')
+        else:
+            return codename in ('trusty', 'xenial')
 
-    def get_core_dynamic_linker(self):
+    def get_core_dynamic_linker(self, base):
         """Returns the dynamic linker used for the targeted core.
         If not found realpath for `/lib/ld-linux.so.2` is returned.
         However if core is not installed None will be returned.
         """
-        core_path = common.get_core_path()
+        core_path = common.get_core_path(base)
         dynamic_linker_path = os.path.join(
             core_path,
             self.__machine_info.get('core-dynamic-linker',

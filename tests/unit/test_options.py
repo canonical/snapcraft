@@ -131,9 +131,9 @@ class NativeOptionsTestCase(unit.TestCase):
             with mock.patch('os.path.islink') as mock_islink:
                 mock_islink.return_value = False
                 self.assertThat(
-                    options.get_core_dynamic_linker(),
+                    options.get_core_dynamic_linker('core'),
                     Equals(os.path.join(
-                        common.get_core_path(),
+                        common.get_core_path('core'),
                         self.expected_core_dynamic_linker)))
 
     @mock.patch('platform.architecture')
@@ -193,5 +193,5 @@ class TestHostIsCompatibleWithTargetBase(unit.TestCase):
         self.codename_mock.return_value = self.codename
 
         self.assertThat(
-            snapcraft.ProjectOptions().is_host_compatible_with_base,
+            snapcraft.ProjectOptions().is_host_compatible_with_base('core'),
             Equals(self.is_compatible))

@@ -37,6 +37,7 @@ class PartsConfig:
     def __init__(self, *, parts, project_options, validator,
                  build_snaps, build_tools, snapcraft_yaml):
         self._snap_name = parts['name']
+        self._base = parts.get('base', 'core')
         self._confinement = parts['confinement']
         self._soname_cache = elf.SonameCache()
         self._parts_data = parts.get('parts', {})
@@ -191,6 +192,7 @@ class PartsConfig:
             stage_packages_repo=stage_packages_repo,
             grammar_processor=grammar_processor,
             snap_base_path=path.join('/', 'snap', self._snap_name, 'current'),
+            base=self._base,
             confinement=self._confinement,
             soname_cache=self._soname_cache)
 
@@ -233,7 +235,8 @@ class PartsConfig:
             # same host. Failing to do so will cause Segmentation Faults.
             if (self._confinement == 'classic' and
                     self._project_options.is_host_compatible_with_base):
-                env += env_for_classic(self._project_options.arch_triplet)
+                env += env_for_classic(self._base,
+                                       self._project_options.arch_triplet)
             env.append('SNAPCRAFT_PART_INSTALL="{}"'.format(part.installdir))
             env.append('SNAPCRAFT_ARCH_TRIPLET="{}"'.format(
                 self._project_options.arch_triplet))
