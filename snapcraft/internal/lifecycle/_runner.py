@@ -59,6 +59,8 @@ def execute(step, project_options, part_names=None):
     :returns: A dict with the snap name, version, type and architectures.
     """
     config = project_loader.load_config(project_options)
+    if project_options.info.vendoring:
+        logger.warning('Vendoring should be used with a LXD container')
     installed_packages = repo.Repo.install_build_packages(
         config.build_tools)
     if installed_packages is None:

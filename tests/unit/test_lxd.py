@@ -31,6 +31,7 @@ from testtools.matchers import Contains, Equals
 
 from snapcraft import ProjectOptions
 from snapcraft.project._project_options import _get_deb_arch
+from snapcraft.project._project_info import ProjectInfo
 from snapcraft.internal import lxd
 from snapcraft.internal.errors import (
     ContainerConnectionError,
@@ -57,6 +58,11 @@ class LXDBaseTestCase(unit.TestCase):
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
         self.project_options = ProjectOptions(target_deb_arch=self.target_arch)
+        self.project_options.info = ProjectInfo({
+            'name': 'project',
+            'version': '0.1',
+            'confinement': 'strict',
+            })
 
 
 class LXDTestCase(LXDBaseTestCase):
@@ -111,6 +117,10 @@ class CleanbuilderTestCase(LXDTestCase):
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'config', 'set', container_name,
                   'environment.LC_ALL', 'C.UTF-8']),
+            call(['lxc', 'config', 'set', self.fake_lxd.name,
+                  'environment.http_proxy', '']),
+            call(['lxc', 'config', 'set', self.fake_lxd.name,
+                  'environment.https_proxy', '']),
             call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_IMAGE_INFO',
                   '{"fingerprint": "test-fingerprint", '
@@ -227,6 +237,11 @@ class ContainerbuildTestCase(LXDTestCase):
         self.fake_lxd.check_call_mock.side_effect = call_effect
 
         self.project_options = ProjectOptions(debug=True)
+        self.project_options.info = ProjectInfo({
+            'name': 'project',
+            'version': '0.1',
+            'confinement': 'strict',
+            })
         self.make_containerbuild().execute()
 
         self.fake_lxd.check_call_mock.assert_has_calls([
@@ -779,6 +794,43 @@ class LocalProjectTestCase(ContainerbuildTestCase):
         # Should not attempt to stop a container that wasn't started
         self.assertNotIn(call(['lxc', 'stop', '-f', self.fake_lxd.name]),
                          self.fake_lxd.check_call_mock.call_args_list)
+
+
+class VendoringTestCase(LXDBaseTestCase):
+
+    remote = 'local'
+    server = 'x86_64'
+    target_arch = None
+
+    def make_containerbuild(self):
+        return lxd.Cleanbuilder(output='snap.snap', source='project.tar',
+                                metadata={'name': 'project'},
+                                project_options=self.project_options,
+                                remote=self.remote)
+
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    def test_vendoring(self, mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        self.project_options.info.vendoring = [
+            'git.launchpad.net', 'archive.ubuntu.com']
+        self.make_containerbuild().execute()
+        self.assertIn(
+            'Vendoring snap to git.launchpad.net, archive.ubuntu.com\n',
+            self.fake_logger.output)
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'config', 'set', self.fake_lxd.name,
+                  'environment.http_proxy', 'http://localhost:3129']),
+            call(['lxc', 'config', 'set', self.fake_lxd.name,
+                  'environment.https_proxy', 'http://localhost:3129']),
+        ])
+        self.fake_lxd.check_output_mock.assert_has_calls([
+            call(['lxc', 'exec', self.fake_lxd.name, '--',
+                  'tee', '/etc/squid/squid.conf'], input=ANY),
+        ])
+        mock_container_run.assert_has_calls([
+            call(['apt-get', 'install', 'squid', '-y']),
+            call(['service', 'squid', 'reload']),
+        ])
 
 
 class FailedImageInfoTestCase(LXDBaseTestCase):

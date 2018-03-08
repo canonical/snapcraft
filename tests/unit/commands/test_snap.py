@@ -527,6 +527,10 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'config', 'set', container_name,
                   'environment.LC_ALL', 'C.UTF-8']),
             call(['lxc', 'config', 'set', container_name,
+                  'environment.http_proxy', '']),
+            call(['lxc', 'config', 'set', container_name,
+                  'environment.https_proxy', '']),
+            call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_IMAGE_INFO',
                   '{"fingerprint": "test-fingerprint", '
                   '"architecture": "test-architecture", '
@@ -625,6 +629,10 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'config', 'set', container_name,
                   'environment.LC_ALL', 'C.UTF-8']),
+            call(['lxc', 'config', 'set', container_name,
+                  'environment.http_proxy', '']),
+            call(['lxc', 'config', 'set', container_name,
+                  'environment.https_proxy', '']),
             call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_IMAGE_INFO',
                   '{"fingerprint": "test-fingerprint", '

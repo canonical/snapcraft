@@ -73,6 +73,7 @@ class ProjectInfoTestCase(YamlBaseTestCase):
         info = ProjectInfo({
             'name': 'foo', 'version': '1',
             'summary': 'bar', 'description': 'baz',
+            'vendoring': ['example.com'],
             'confinement': 'strict'
             })
         self.assertThat(info.name, Equals('foo'))
@@ -80,6 +81,7 @@ class ProjectInfoTestCase(YamlBaseTestCase):
         self.assertThat(info.summary, Equals('bar'))
         self.assertThat(info.description, Equals('baz'))
         self.assertThat(info.confinement, Equals('strict'))
+        self.assertThat(info.vendoring, Equals(['example.com']))
 
 
 class ProjectTestCase(YamlBaseTestCase):
@@ -105,6 +107,7 @@ version: "1"
 summary: bar
 description: baz
 confinement: strict
+vendoring: [example.com]
 
 parts:
   part1:
@@ -120,6 +123,8 @@ parts:
                         Equals(project.info.description))
         self.assertThat(c.data['confinement'],
                         Equals(project.info.confinement))
+        self.assertThat(c.data['vendoring'],
+                        Equals(project.info.vendoring))
 
         # API of both Project and ProjectOptions must be available
         self.assertTrue(isinstance(project,
@@ -199,6 +204,7 @@ parts:
         info = ProjectInfo({
             'name': 'foo', 'version': '1',
             'summary': 'bar', 'description': 'baz',
+            'vendoring': ['example.com'],
             'confinement': 'strict'
             })
         project.info = info
@@ -2503,6 +2509,36 @@ class InvalidTypesTestCase(ValidationBaseTestCase):
             "The 'type' property does not match the required "
             "schema: '{}' is not one of "
             "['app', 'base', 'gadget', 'kernel', 'os']").format(self.type_)
+        self.assertThat(raised.message, Equals(expected_message),
+                        message=data)
+
+
+class InvalidVendoringTestCase(ValidationBaseTestCase):
+
+    scenarios = [
+        ("not a list", dict(
+            hosts='example.com', instance='vendoring',
+            msg='a list of valid host names needs to be provided')),
+        ("leading hyphen", dict(
+            hosts=['-example.com'], instance='vendoring[0]',
+            msg='{value!r} is not a valid hostname')),
+        ("leading scheme", dict(
+            hosts=['http://example.com'], instance='vendoring[0]',
+            msg='{value!r} is not a valid hostname')),
+    ]
+
+    def test_invalid_hostnames(self):
+        data = self.data.copy()
+        data['vendoring'] = self.hosts
+
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            project_loader.Validator(data).validate)
+
+        expected_message = (
+            "The {!r} property does not match the required "
+            "schema: {!s}.").format(self.instance,
+                                    self.msg.format(value=self.hosts[0]))
         self.assertThat(raised.message, Equals(expected_message),
                         message=data)
 

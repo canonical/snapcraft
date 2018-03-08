@@ -142,6 +142,8 @@ class Containerbuild:
         subprocess.check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.LC_ALL', 'C.UTF-8'])
+        # Reset proxy if one was set previously
+        self._set_proxy('')
         self._set_image_info_env_var()
 
     def _set_image_info_env_var(self):
@@ -248,6 +250,44 @@ class Containerbuild:
                         'No network connection in the container.\n'
                         'If using a proxy, check its configuration.')
         logger.info('Network connection established')
+        self._setup_vendoring()
+
+    def _setup_vendoring(self):
+        vendoring = self._project_options.info.vendoring
+        if vendoring:
+            logger.info('Vendoring snap to {}'.format(', '.join(vendoring)))
+            # Configure a proxy that blocks access to any hosts which are not
+            # specified by vendoring in snapcraft.yaml.
+            # The rules below mean:
+            # Specify the port of the proxy server.
+            # Allow access to a whitelist on ports for http, https and git.
+            # Deny everything else.
+            self._container_run(['apt-get', 'install', 'squid', '-y'])
+            port = 3129
+            rules = dedent('''
+                http_port {port!s}
+                acl Safe_ports port 80 443 9418
+                http_access allow localhost whitelist Safe_ports
+                http_access deny all
+                '''.format(port=port))
+            # Prepend the whitelist here because the deny must come last
+            for host in vendoring:
+                rules = 'acl whitelist dstdomain {}\n'.format(host) + rules
+            subprocess.check_output([
+                'lxc', 'exec', self._container_name, '--',
+                'tee', '/etc/squid/squid.conf'],
+                input=rules.encode())
+            self._container_run(['service', 'squid', 'reload'])
+            self._set_proxy('http://localhost:{}'.format(port))
+
+    def _set_proxy(self, proxy: str):
+        # Enable/ disable proxy in the environment
+        subprocess.check_call([
+            'lxc', 'config', 'set', self._container_name,
+            'environment.http_proxy', proxy])
+        subprocess.check_call([
+            'lxc', 'config', 'set', self._container_name,
+            'environment.https_proxy', proxy])
 
     def _inject_snapcraft(self, *, new_container: bool):
         if common.is_snap():
