@@ -141,7 +141,68 @@ def _get_platform_architecture():
     return architecture
 
 
-class ProjectOptions:
+class ProjectInfo:
+    """Information gained from the snap's snapcraft.yaml file."""
+
+    def __init__(self, *,
+                 name: str, version: str,
+                 summary: str, description: str, confinement: str) -> None:
+        self.__name = name
+        self.__version = version
+        self.__summary = summary
+        self.__description = description
+        self.__confinement = confinement
+
+    @property
+    def name(self):
+        """Returns the name of the snap.
+        """
+        return self.__name
+
+    @property
+    def version(self):
+        """Returns the version of the snap.
+        """
+        return self.__version
+
+    @property
+    def summary(self):
+        """Returns the summary of the snap.
+        """
+        return self.__summary
+
+    @property
+    def description(self):
+        """Returns the description of the snap.
+        """
+        return self.__description
+
+    @property
+    def confinement(self):
+        """Returns the confinement type of the snap.
+        """
+        return self.__confinement
+
+
+class Project:
+    """All details around building a project concerning the build environment
+    and the snap being built."""
+
+    def __init__(self) -> None:
+        self.__info = None
+
+    @property
+    def info(self):
+        """Returns the project info.
+        """
+        return self.__info
+
+    @info.setter
+    def info(self, info):
+        self.__info = info
+
+
+class ProjectOptions(Project):
 
     @property
     def use_geoip(self):
@@ -240,6 +301,8 @@ class ProjectOptions:
         self.__parallel_builds = parallel_builds
         self._set_machine(target_deb_arch)
         self.__debug = debug
+
+        super().__init__()
 
     def is_host_compatible_with_base(self, base: str) -> bool:
         """Determines if the host is compatible with the GLIBC of the base.

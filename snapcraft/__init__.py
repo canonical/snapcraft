@@ -382,6 +382,8 @@ __version__ = _get_version()
 
 
 from snapcraft._baseplugin import BasePlugin        # noqa
+from snapcraft._options import Project              # noqa
+from snapcraft._options import ProjectInfo          # noqa
 from snapcraft._options import ProjectOptions       # noqa
 # FIXME LP: #1662658
 from snapcraft._store import (                      # noqa

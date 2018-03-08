@@ -106,6 +106,13 @@ class Config:
         _ensure_grade_default(snapcraft_yaml, self._validator.schema)
 
         self.data = self._expand_env(snapcraft_yaml)
+        self._project_options.info = snapcraft.ProjectInfo(
+            name=self.data['name'],
+            version=self.data['version'],
+            summary=self.data.get('summary', ''),
+            description=self.data.get('description', ''),
+            confinement=self.data['confinement'],
+            )
         self._ensure_no_duplicate_app_aliases()
 
         grammar_processor = grammar_processing.GlobalGrammarProcessor(
