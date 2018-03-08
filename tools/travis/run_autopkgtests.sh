@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -34,7 +34,7 @@ script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
 
 "$script_path/setup_lxd.sh"
-"$script_path/run_lxd_container.sh" test-runner
+"$script_path/run_lxd_container.sh" ubuntu:xenial test-runner
 $lxc file push --recursive $project_path test-runner/root/
 $lxc exec test-runner -- sh -c "apt remove --yes lxd lxd-client"
 # Ignore the core install error as a workaround for

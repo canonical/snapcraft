@@ -20,14 +20,13 @@
 
 set -ev
 
-if [ "$#" -ne 1 ] ; then
-    echo "Usage: "$0" <test>"
+if [ "$#" -lt 1 ] ; then
+    echo "Usage: "$0" <test> [<image>]"
     exit 1
 fi
 
 test="$1"
-
-pattern="$2"
+image="${2:-ubuntu:xenial}"
 
 if [ "$test" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
@@ -51,7 +50,7 @@ project_path="$(readlink -f "$script_path/../..")"
 lxc="/snap/bin/lxc"
 
 "$script_path/setup_lxd.sh"
-"$script_path/run_lxd_container.sh" test-runner
+"$script_path/run_lxd_container.sh" $image test-runner
 
 $lxc file push --recursive $project_path test-runner/root/
 $lxc exec test-runner -- sh -c "cd snapcraft && ./tools/travis/setup_lxd.sh"

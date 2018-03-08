@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -20,19 +20,20 @@
 
 set -ev
 
-if [ "$#" -lt 1 ]; then
-    echo "Usage: "$0" <name>"
+if [ "$#" -lt 2 ]; then
+    echo "Usage: "$0" <image> <name>"
     exit 1
 fi
 
 script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
 name="$1"
+image="$2"
 
 lxc="/snap/bin/lxc"
 
 echo "Starting the LXD container."
-$lxc launch --ephemeral --config security.nesting=true ubuntu:xenial "$name"
+$lxc launch --ephemeral --config security.nesting=true "$image" "$name"
 # This is likely needed to wait for systemd in the container to start and get
 # an IP, configure DNS. First boot is always a bit slow because cloud-init
 # needs to run too.
