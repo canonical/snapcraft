@@ -47,7 +47,7 @@ def main():
 def download_snapcraft_source(dest_dir):
     dest_file = os.path.join(dest_dir, 'snapcraft-0.1.tar.gz')
     branch_source = 'https://github.com/{}/archive/{}.tar.gz'.format(
-        os.environ.get('TRAVIS_REPO_SLUG'),
+        os.environ.get('TRAVIS_PULL_REQUEST_SLUG') or 'snapcore/snapcraft',
         os.environ.get('TRAVIS_PULL_REQUEST_BRANCH') or 'master')
     print('Downloading branch source from {}'.format(branch_source))
     urllib.request.urlretrieve(branch_source, dest_file)
