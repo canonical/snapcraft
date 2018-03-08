@@ -599,7 +599,7 @@ class RegisterTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
             errors.StoreRegistrationError,
-            self.client.register, 'test-too-fast')
+            self.client.register, 'test-snapcraft-fast')
         self.assertThat(
             str(raised),
             Equals('You must wait 177 seconds before trying to register your '
