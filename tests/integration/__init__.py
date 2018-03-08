@@ -553,7 +553,7 @@ class StoreTestCase(TestCase):
         to 40 chars (as defined in the snap specification).
         """
         unique_id = uuid.uuid4().int
-        
+
         # Do not change the test-snapcraft prefix. Ensure that you
         # notify the store team if you need to use a different value when
         # working with the production store.
