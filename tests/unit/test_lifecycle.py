@@ -1310,6 +1310,65 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 lifecycle.execute, 'prime', self.project_options)
         self.assertThat(raised.image_info, Equals('not-json'))
 
+    def test_prime_with_launchpad_build_info_records_manifest(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        test_launchpad_build_info = '{"build-url": "test-build-url"}'
+        self.useFixture(fixtures.EnvironmentVariable(
+            'LAUNCHPAD_BUILD_INFO', test_launchpad_build_info))
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                """))
+        lifecycle.execute('prime', self.project_options)
+
+        expected = textwrap.dedent("""\
+            name: test
+            version: 0
+            summary: test
+            description: test
+            confinement: strict
+            grade: stable
+            parts:
+              test-part:
+                build-packages: []
+                installed-packages:
+                - patchelf=0.9
+                installed-snaps: []
+                plugin: nil
+                prime: []
+                stage: []
+                stage-packages: []
+                uname: Linux test uname 4.10 x86_64
+            architectures:
+            - {}
+            build-info:
+              build-url: test-build-url
+            build-packages: []
+            build-snaps: []
+            """.format(self.project_options.deb_arch))
+        self.assertThat(
+            os.path.join('prime', 'snap', 'manifest.yaml'),
+            FileContains(expected))
+
+    def test_prime_with_invalid_launchpad_build_info_raises_exception(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_INFO', '1'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'LAUNCHPAD_BUILD_INFO', 'not-json'))
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                """))
+        raised = self.assertRaises(
+                errors.InvalidLaunchpadBuildInfoError,
+                lifecycle.execute, 'prime', self.project_options)
+        self.assertThat(raised.build_info, Equals('not-json'))
+
 
 class RecordManifestWithDeprecatedSnapKeywordTestCase(
         RecordManifestBaseTestCase):

@@ -183,6 +183,17 @@ class ContainerbuildTestCase(LXDTestCase):
                   'test_build_info_value']),
         ])
 
+    def test_launchpad_build_info_set(self):
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                'LAUNCHPAD_BUILD_INFO', 'test_build_info_value'))
+        self.make_containerbuild().execute()
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'config', 'set', self.fake_lxd.name,
+                  'environment.LAUNCHPAD_BUILD_INFO',
+                  'test_build_info_value']),
+        ])
+
     def test_wait_for_network_loops(self):
         self.fake_lxd.check_call_mock.side_effect = CalledProcessError(
             -1, ['my-cmd'])
