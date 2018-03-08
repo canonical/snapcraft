@@ -34,7 +34,7 @@ from snapcraft.internal.mangling import clear_execstack
 from ._build_attributes import BuildAttributes
 from ._metadata_extraction import extract_metadata
 from ._plugin_loader import load_plugin  # noqa
-from ._scriptlets import ScriptRunner
+from ._runner import Runner
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +94,11 @@ class PluginHandler:
 
         self._build_attributes = BuildAttributes(
             self._part_properties['build-attributes'])
+
+        self._runner = Runner(
+            part_properties=self._part_properties,
+            builddir=self.plugin.build_basedir,
+            default_build=self.plugin.build)
 
         self._migrate_state_file()
 
@@ -355,15 +360,9 @@ class PluginHandler:
         shutil.copytree(self.plugin.sourcedir, self.plugin.build_basedir,
                         symlinks=True, ignore=ignore)
 
-        script_runner = ScriptRunner(builddir=self.plugin.build_basedir)
-
-        script_runner.run(scriptlet=self._part_properties.get('prepare'))
-        build_scriptlet = self._part_properties.get('build')
-        if build_scriptlet:
-            script_runner.run(scriptlet=build_scriptlet)
-        else:
-            self.plugin.build()
-        script_runner.run(scriptlet=self._part_properties.get('install'))
+        self._runner.pre_build()
+        self._runner.build()
+        self._runner.post_build()
 
         self.mark_build_done()
 

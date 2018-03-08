@@ -1,0 +1,31 @@
+name: pre-build-scriptlet-test
+version: '0.1'
+summary: Runs the pre-build scriptlet for a part
+description: |
+  Runs the shell script defined in `pre-build` before the build takes place
+  creating a `Makefile` for the make plugin to execute on.
+
+grade: devel
+confinement: devmode
+
+parts:
+  pre-build-scriptlet-test:
+    source: .
+    plugin: make
+    pre-build: |
+      echo "all:" > Makefile
+      echo '\techo building' >> Makefile
+      echo "install:" >> Makefile
+      echo '\ttouch $(DESTDIR)/prepared' >> Makefile
+
+  pre-build-and-post-build:
+    source: .
+    plugin: make
+    pre-build: |
+      echo 'all:' > Makefile
+      echo '\ttouch built' >> Makefile
+      echo 'install:' >> Makefile
+      echo '\ttouch installed' >> Makefile
+    post-build: |
+      cp built $SNAPCRAFT_PART_INSTALL/
+      cp installed $SNAPCRAFT_PART_INSTALL/
