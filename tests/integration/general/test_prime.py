@@ -30,7 +30,7 @@ from testtools.matchers import (
     StartsWith,
 )
 
-from tests import integration
+from tests import integration, fixture_setup
 
 
 class PrimeTestCase(integration.TestCase):
@@ -74,6 +74,36 @@ class PrimeTestCase(integration.TestCase):
             self.patchelf_command, '--print-interpreter',
             staged_bin_path]).decode()
         self.assertThat(staged_interpreter, MatchesRegex(r'^/lib.*'))
+
+    def test_classic_confinement_patchelf_disabled(self):
+        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+            self.skipTest("The autopkgtest armhf runners can't install snaps")
+        project_dir = 'classic-build'
+
+        # Now we set the required environment variable
+        self.useFixture(fixtures.EnvironmentVariable(
+                'SNAPCRAFT_SETUP_CORE', '1'))
+
+        self.copy_project_to_cwd(project_dir)
+
+        # Create a new snapcraft.yaml
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(
+            self.path, confinement='classic')
+        snapcraft_yaml.update_part('hello', {
+            'source': '.',
+            'plugin': 'make',
+            'build-attributes': ['no-patchelf']
+        })
+        self.useFixture(snapcraft_yaml)
+
+        self.run_snapcraft('prime')
+
+        bin_path = os.path.join(self.prime_dir, 'bin', 'hello-classic')
+        self.assertThat(bin_path, FileExists())
+
+        interpreter = subprocess.check_output([
+            self.patchelf_command, '--print-interpreter', bin_path]).decode()
+        self.assertThat(interpreter, StartsWith('/lib'))
 
     def test_classic_confinement_with_existing_rpath(self):
         if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':

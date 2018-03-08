@@ -20,7 +20,13 @@ import tempfile
 from textwrap import dedent
 import sys
 
-from testtools.matchers import Contains, EndsWith, Equals, NotEquals
+from testtools.matchers import (
+    Contains,
+    EndsWith,
+    Equals,
+    NotEquals,
+    StartsWith,
+)
 from unittest import mock
 
 from snapcraft.internal import errors, elf, os_release
@@ -66,6 +72,13 @@ class TestElfFileSmoketest(unit.TestCase):
         elf_file = elf.ElfFile(path=sys.executable)
 
         self.assertThat(elf_file.path, Equals(sys.executable))
+
+        # The arch attribute will be a tuple of three strings
+        self.assertTrue(isinstance(elf_file.arch, tuple))
+        self.assertThat(len(elf_file.arch), Equals(3))
+        self.assertThat(elf_file.arch[0], StartsWith('ELFCLASS'))
+        self.assertThat(elf_file.arch[1], StartsWith('ELFDATA'))
+        self.assertThat(elf_file.arch[2], StartsWith('EM_'))
 
         # We expect Python to be a dynamic linked executable with an
         # ELF interpreter.
@@ -121,8 +134,9 @@ class TestGetLibraries(TestElfBase):
     def test_get_libraries_with_soname_cache(self):
         elf_file = self.fake_elf['fake_elf-2.23']
 
+        arch = ('ELFCLASS64', 'ELFDATA2LSB', 'EM_X86_64')
         soname_cache = elf.SonameCache()
-        soname_cache['bar.so.2'] = '/lib/bar.so.2'
+        soname_cache[arch, 'bar.so.2'] = '/lib/bar.so.2'
 
         libs = elf_file.load_dependencies(
             root_path=self.fake_elf.root_path,
@@ -322,6 +336,18 @@ class TestGetElfFiles(TestElfBase):
         self.assertThat(elf_files, Equals(set()))
 
 
+class TestGetElfFilesToPatch(TestElfBase):
+
+    def test_get_elf_files_to_patch(self):
+        elf_files = elf.get_elf_files(
+            self.fake_elf.root_path,
+            {'libc.so.6', 'libssl.so.1.0.0', 'fake_elf-shared-object',
+             'fake_elf-2.26'})
+        to_patch = elf.get_elf_files_to_patch(elf_files)
+        self.assertThat({os.path.basename(e.path) for e in to_patch},
+                        Equals({'fake_elf-shared-object', 'fake_elf-2.26'}))
+
+
 class TestGetRequiredGLIBC(TestElfBase):
 
     def setUp(self):
@@ -447,31 +473,55 @@ class TestSonameCache(unit.TestCase):
 
     def setUp(self):
         super().setUp()
+        self.arch = ('ELFCLASS64', 'ELFDATA2LSB', 'EM_X86_64')
         self.soname_cache = elf.SonameCache()
 
     def test_add_and_retrieve_soname_path(self):
-        self.soname_cache['soname.so'] = '/fake/path/soname.so'
-        self.assertThat(self.soname_cache['soname.so'],
+        self.soname_cache[self.arch, 'soname.so'] = '/fake/path/soname.so'
+        self.assertThat(self.soname_cache[self.arch, 'soname.so'],
                         Equals('/fake/path/soname.so'))
 
     def test_add_and_verify_soname_path(self):
-        self.soname_cache['soname.so'] = '/fake/path/soname.so'
-        self.assertTrue('soname.so' in self.soname_cache)
+        self.soname_cache[self.arch, 'soname.so'] = '/fake/path/soname.so'
+        self.assertTrue((self.arch, 'soname.so') in self.soname_cache)
 
     def test_reset_except_root(self):
-        self.soname_cache['soname.so'] = '/fake/path/soname.so'
-        self.soname_cache['soname2.so'] = '/keep/me/soname2.so'
-        self.soname_cache['notfound.so'] = None
+        self.soname_cache[self.arch, 'soname.so'] = '/fake/path/soname.so'
+        self.soname_cache[self.arch, 'soname2.so'] = '/keep/me/soname2.so'
+        self.soname_cache[self.arch, 'notfound.so'] = None
 
-        self.assertTrue('soname.so' in self.soname_cache)
-        self.assertTrue('soname2.so' in self.soname_cache)
-        self.assertTrue('notfound.so' in self.soname_cache)
+        self.assertTrue((self.arch, 'soname.so') in self.soname_cache)
+        self.assertTrue((self.arch, 'soname2.so') in self.soname_cache)
+        self.assertTrue((self.arch, 'notfound.so') in self.soname_cache)
 
         self.soname_cache.reset_except_root('/keep/me')
 
-        self.assertFalse('soname.so' in self.soname_cache)
-        self.assertFalse('notfound.so' in self.soname_cache)
-        self.assertTrue('soname2.so' in self.soname_cache)
+        self.assertFalse((self.arch, 'soname.so') in self.soname_cache)
+        self.assertFalse((self.arch, 'notfound.so') in self.soname_cache)
+        self.assertTrue((self.arch, 'soname2.so') in self.soname_cache)
+
+
+class TestSonameCacheErrors(unit.TestCase):
+
+    scenarios = (
+        ('invalid string key', dict(
+            key='soname.so',
+            partial_message='The key for')),
+        ('invalid first argument tuple', dict(
+            key=(('ELFCLASS64', 'ELFDATA2LSB'), 'soname.so'),
+            partial_message='The first element')),
+        ('invalid second argument type', dict(
+            key=(('ELFCLASS64', 'ELFDATA2LSB', 'EM_X86_64'), 1),
+            partial_message='The second element')),
+    )
+
+    def test_error(self):
+        soname_cache = elf.SonameCache()
+        raised = self.assertRaises(EnvironmentError,
+                                   soname_cache.__setitem__,
+                                   self.key, '/soname.so')
+
+        self.assertThat(str(raised), StartsWith(self.partial_message))
 
 
 # This is just a subset
