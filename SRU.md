@@ -10,7 +10,7 @@ Paste on the SRU bug and on this documet the list of tests to run. Then start a 
 
 Most of the testing can be done on LXD containers, except the ones that require GUI and the ones that require a real board. Ideally, similar scenarios for each test should be run on all the distro releases that will get the update, but that can take a long time, so use the available time wisely spreading the tests on the different machines, until you have enough confidence.
 
-These tests should not be fabricated, we have the snapd integration tests to build and run simple snaps. For these, use real projects that have something interesting and challenging for snapcraft, and will let you excercise the features in a real world context. There is a list of potential test subjects here: https://gist.github.com/elopio/54d11955039e97d2083227cd291af039
+These tests should not be fabricated, we have the snapd integration tests to build and run simple snaps. For these, use real projects that have something interesting and challenging for snapcraft, and will let you exercise the features in a real world context. There is a list of potential test subjects here: https://gist.github.com/elopio/54d11955039e97d2083227cd291af039
 
 Once you are confident with your testing, and the feedback from the call for testing is positive, mark the SRU bug as verified.
 
