@@ -7,6 +7,8 @@ These are tests for features that are not possible to automate, or that the comp
 
 We try very hard to automate as much as possible and to keep the manual test suite as small as possible. Please do not add a manual test before discussing it with the team, and make sure that there are very good reasons not to automate it.
 
+When running manual tests against the production store, make sure to use the test user email account and the well-known test prefixes, since theses snaps will pollute the store. To register a user, use an email address like snapcraft-test+<your-user-name>-<unique-id>@canonical.com (e.g., snapcraft-test+elopio-123@canonical.com). This will send the confirmation email and any notifications to the inbox of snapcraft-test@canonical.com, and the snapcraft team has the password to access that inbox. To register a snap or anything else that has a name, like tracks, keys, etc., prefix the name with test-snapcraft and your name (e.g., test-snapcraft-snap-elopio-123, test-snapcraft-track-elopio-111).
+
 ### Staging server
 
 Snapcraft has the ability to upload snaps for publication in the Snappy Store. If you're working on a feature that requires you to interact with the store, you might want to use the staging server instead of the production store. To do that, make sure you have an account on the [staging server](https://login.staging.ubuntu.com), then run:
@@ -119,9 +121,20 @@ or
 
     SNAPCRAFT_FROM_SNAP=1 ./runtests.sh tests/integration
 
+## Setting up the store test user
+
 The store tests by default will start fake servers that are configured to reply like the real store does. But you can run them also against the staging and production store servers. To do that, you will need to set the `TEST_STORE` environment variable to either `staging` or `production`, and you also have to pass credentials for a valid user in that store with the environment variable `TEST_USER_EMAIL` and `TEST_USER_PASSWORD`, like this:
 
     TEST_STORE=staging TEST_USER_EMAIL=test@example.com TEST_USER_PASSWORD=Hola123* ./runtests.sh tests/integration/store
+
+To prepare a user for testing, go to https://login.staging.ubuntu.com/ (or
+https://login.ubuntu.com/ for the production store) and create a new user. Then
+go to https://dashboard.staging.snapcraft.io/ (or
+https://dashboard.staging.snapcraft.io/ for the production store) to sign the
+developer agreement.
+
+Note that most testing should be done on the staging server. If multiple tests
+have to be executed on production, notify the store team before.
 
 ## Autopkgtests for the snapcraft deb
 

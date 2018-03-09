@@ -30,6 +30,6 @@ class ExportLoginTestCase(integration.StoreTestCase):
     def test_failed_export(self):
         self.export_login(
             'exported',
-            'u1test+snapcraft@canonical.com',
+            'snapcraft-test+user@canonical.com',
             'wrongpassword',
             expect_success=False)

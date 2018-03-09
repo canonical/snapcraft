@@ -471,7 +471,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             }).encode()
         elif (
                 name == 'test-snap' or
-                name.startswith('snapcrafttest')):
+                name.startswith('test-snapcraft')):
             payload = json.dumps({
                 'opened_channels': channels,
                 'channel_map': [
@@ -559,7 +559,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             return self._register_name_409_error('reserved_name')
         elif snap_name == 'test-already-owned-snap-name':
             return self._register_name_409_error('already_owned')
-        elif snap_name.startswith('test-too-fast'):
+        elif snap_name.startswith('test-snapcraft-fast'):
             return self._register_name_429_error('register_window')
         elif (
                 snap_name.startswith('test_invalid') or
