@@ -17,6 +17,7 @@
 import contextlib
 import logging
 import os
+import platform
 import stat
 from unittest import mock
 
@@ -144,12 +145,9 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_NO_PATCHELF', '1'))
 
-        machine = os.environ.get('SNAPCRAFT_TEST_MOCK_MACHINE', None)
-        if machine:
-            patcher = mock.patch('platform.machine')
-            self.mock_machine = patcher.start()
-            self.mock_machine.return_value = machine
-            self.addCleanup(patcher.stop)
+        machine = os.environ.get('SNAPCRAFT_TEST_MOCK_MACHINE',
+                                 platform.machine())
+        self.useFixture(fixture_setup.FakeArchitecture(machine=machine))
 
     def make_snapcraft_yaml(self, content, encoding='utf-8'):
         with contextlib.suppress(FileExistsError):

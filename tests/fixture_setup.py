@@ -1259,3 +1259,43 @@ class FakeElf(fixtures.Fixture):
         for root_library in self.root_libraries.values():
             with open(root_library, 'wb') as f:
                 f.write(b'\x7fELF')
+
+
+class FakeArchitecture(fixtures.Fixture):
+
+    _LINKER_FOR_ARCH = dict(
+        armv7l='lib/ld-linux-armhf.so.3',
+        aarch64='lib/ld-linux-aarch64.so.1',
+        i686='lib/ld-linux.so.2',
+        ppc64le='lib64/ld64.so.2',
+        ppc='lib/ld-linux.so.2',
+        x86_64='lib64/ld-linux-x86-64.so.2',
+        s390x='lib/ld64.so.1')
+
+    def __init__(self, *, machine):
+        super().__init__()
+        self._machine = machine
+
+    def _setUp(self):
+        super()._setUp()
+
+        patcher = mock.patch('platform.machine')
+        self.mock_machine = patcher.start()
+        self.mock_machine.return_value = self._machine
+        self.addCleanup(patcher.stop)
+
+        self.core_path = self.useFixture(fixtures.TempDir()).path
+        patcher = mock.patch('snapcraft.internal.common.get_core_path')
+        mock_core_path = patcher.start()
+        mock_core_path.return_value = self.core_path
+        self.addCleanup(patcher.stop)
+
+        # Create file to represent the linker so it is found
+        linker_path = os.path.join(self.core_path,
+                                   self._LINKER_FOR_ARCH[self._machine])
+        os.makedirs(os.path.dirname(linker_path), exist_ok=True)
+        real_linker = os.path.join(self.core_path, 'usr', 'lib', 'ld-2.23.so')
+        os.makedirs(os.path.dirname(real_linker), exist_ok=True)
+        open(real_linker, 'w').close()
+        os.symlink(os.path.relpath(
+            real_linker, os.path.dirname(linker_path)), linker_path)

@@ -258,7 +258,8 @@ class ProjectOptions:
 
             seen_paths.add(dynamic_linker_path)
             if not os.path.lexists(dynamic_linker_path):
-                return None
+                raise errors.SnapcraftMissingLinkerInBaseError(
+                    base=base, linker_path=dynamic_linker_path)
             if not os.path.islink(dynamic_linker_path):
                 return dynamic_linker_path
 
