@@ -110,6 +110,20 @@ class SnapcraftEnvironmentError(SnapcraftError):
         super().__init__(message=message)
 
 
+class SnapcraftMissingLinkerInBaseError(SnapcraftError):
+
+    fmt = (
+        'Cannot find the linker to use for the target base {base!r}.\n'
+        'Please verify that the linker exists at the expected path '
+        '{linker_path!r} and try again. If the linker does not exist '
+        'contact the author of the base (run `snap info {base}` to get '
+        'information for this base).'
+    )
+
+    def __init__(self, *, base, linker_path):
+        super().__init__(base=base, linker_path=linker_path)
+
+
 class ContainerError(SnapcraftError):
     fmt = '{message}'
 
