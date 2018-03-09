@@ -27,8 +27,8 @@ fi
 
 script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
-name="$1"
-image="$2"
+image="$1"
+name="$2"
 
 lxc="/snap/bin/lxc"
 
