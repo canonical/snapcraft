@@ -19,18 +19,24 @@ from tests import integration
 
 class RegisteredTestCase(integration.StoreTestCase):
 
-    def test_registered_status_and_privacy(self):
+    def test_registered_status_and_privacy_private(self):
         self.login()
 
-        # Make sure 'snap_public' is listed before 'snap_private',
-        # thus the 'a/b' suffixes (alphabetical order).
-        snap_public = self.get_unique_name('a')
-        self.register(snap_public)
-        snap_private = self.get_unique_name('b')
+        snap_private = self.get_unique_name()
         self.register(snap_private, private=True)
 
         expected_snaps = [
-            (snap_public, 'public', '-', '-'),
             (snap_private, 'private', '-', '-'),
+        ]
+        self.list_registered(expected_snaps)
+
+    def test_registered_status_and_privacy_public(self):
+        self.login()
+
+        snap_public = self.get_unique_name()
+        self.register(snap_public)
+
+        expected_snaps = [
+            (snap_public, 'public', '-', '-'),
         ]
         self.list_registered(expected_snaps)

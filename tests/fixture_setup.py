@@ -407,9 +407,12 @@ class TestStore(fixtures.Fixture):
             raise ValueError(
                 'Unknown test store option: {}'.format(test_store))
 
+        # Do not change this email address. If you use a different address, it
+        # will pollute KPIs, so always notify the store team if you need to use
+        # a different value.
         self.user_email = (
             os.getenv('TEST_USER_EMAIL') or
-            'u1test+snapcraft@canonical.com')
+            'snapcraft-test+user@canonical.com')
         self.test_track_snap = os.getenv(
             'TEST_SNAP_WITH_TRACKS', 'test-snapcraft-tracks')
         if test_store == 'fake':

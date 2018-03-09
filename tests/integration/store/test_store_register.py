@@ -104,7 +104,7 @@ class RegisterTestCase(integration.StoreTestCase):
 
         error = None
         for idx in range(self.test_store.register_count_limit + 1):
-            snap_name = self.get_unique_name('test-too-fast-{}'.format(idx))
+            snap_name = self.get_unique_name(prefix='fast-')
             try:
                 self.register(snap_name, wait=False)
             except integration.RegisterError as exc:

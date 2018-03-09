@@ -25,7 +25,7 @@ class LoginLogoutTestCase(integration.StoreTestCase):
 
     def test_failed_login(self):
         self.login(
-            'u1test+snapcraft@canonical.com',
+            'snapcraft-test+user@canonical.com',
             'wrongpassword',
             expect_success=False)
 
