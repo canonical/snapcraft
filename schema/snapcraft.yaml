@@ -404,6 +404,7 @@ properties:
                 - no-system-libraries
                 - no-install
                 - debug
+                - keep-execstack
             default: []
           organize:
             type: object

@@ -193,24 +193,6 @@ class PrimeTestCase(integration.TestCase):
         self.assertThat(
             self._prime_invalid_part(True), Contains("Traceback"))
 
-    def test_clear_execstack(self):
-        self.run_snapcraft('prime', 'execstack')
-
-        stage_bin_path = os.path.join('stage', 'bin', 'test')
-        stage_bin_query = subprocess.check_output([
-            self.execstack_command, '--query',
-            stage_bin_path]).decode().strip()
-        # 'X' means the executable stack is required. See `man 8 execstack`.
-        self.assertThat(stage_bin_query, Equals('X {}'.format(stage_bin_path)))
-
-        prime_bin_path = os.path.join('prime', 'bin', 'test')
-        prime_bin_query = subprocess.check_output([
-            self.execstack_command, '--query',
-            prime_bin_path]).decode().strip()
-        # '-' means the executable stack is not required.
-        # See `man 8 execstack`.
-        self.assertThat(prime_bin_query, Equals('- {}'.format(prime_bin_path)))
-
 
 class PrimedAssetsTestCase(testscenarios.WithScenarios,
                            integration.TestCase):
