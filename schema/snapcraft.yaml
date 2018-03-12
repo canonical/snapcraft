@@ -324,13 +324,27 @@ properties:
         special case, 'plugins' is also not a valid part name."
     patternProperties:
       ^(?!plugins$)[a-z0-9][a-z0-9+-\/]*$:
-        # Make sure snap/prime are mutually exclusive
         allOf:
+          # Make sure snap/prime are mutually exclusive
           - not:
               type: object
               required: [snap, prime]
               validation-failure:
                   "{.instance} cannot contain both 'snap' and 'prime' keywords."
+          # Make sure prepare/pre-build are mutually exclusive
+          - not:
+              type: object
+              required: [prepare, pre-build]
+              validation-failure:
+                  "{.instance} cannot contain both 'prepare' and 'pre-build'
+                  keywords. Use 'pre-build'."
+          # Make sure install/post-build are mutually exclusive
+          - not:
+              type: object
+              required: [install, post-build]
+              validation-failure:
+                  "{.instance} cannot contain both 'install' and 'post-build'
+                  keywords. Use 'post-build'."
         type: object
         minProperties: 1
         properties:
@@ -439,13 +453,21 @@ properties:
             items:
               type: string
             default: ['*']
+          # prepare and install are deprecated in favor of pre- and post-build,
+          # respectively.
+          prepare:
+            type: string
+            default: ''
           install:
             type: string
             default: ''
           build:
             type: string
             default: ''
-          prepare:
+          pre-build:
+            type: string
+            default: ''
+          post-build:
             type: string
             default: ''
           parse-info:

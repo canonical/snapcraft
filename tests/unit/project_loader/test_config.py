@@ -2098,6 +2098,32 @@ class ValidationTestCase(ValidationBaseTestCase):
             ".*The 'parts/part1' property does not match the required "
             "schema: .* cannot contain both 'snap' and 'prime' keywords.*"))
 
+    def test_both_prepare_and_pre_build_specified(self):
+        self.data['parts']['part1']['prepare'] = 'foo'
+        self.data['parts']['part1']['pre-build'] = 'bar'
+
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            project_loader.Validator(self.data).validate)
+
+        self.assertThat(str(raised), MatchesRegex(
+            ".*The 'parts/part1' property does not match the required "
+            "schema: .* cannot contain both 'prepare' and 'pre-build' "
+            "keywords. Use 'pre-build'.*"))
+
+    def test_both_install_and_post_build_specified(self):
+        self.data['parts']['part1']['install'] = 'foo'
+        self.data['parts']['part1']['post-build'] = 'bar'
+
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            project_loader.Validator(self.data).validate)
+
+        self.assertThat(str(raised), MatchesRegex(
+            ".*The 'parts/part1' property does not match the required "
+            "schema: .* cannot contain both 'install' and 'post-build' "
+            "keywords. Use 'post-build'.*"))
+
     def test_missing_required_property_and_missing_adopt_info(self):
         del self.data['summary']
         del self.data['adopt-info']

@@ -17,18 +17,18 @@
 import multiprocessing
 import os
 
-from testtools.matchers import FileContains, FileExists
+from testtools.matchers import Contains, FileContains, FileExists
 
 from tests import integration
 
 
 class ScriptletTestCase(integration.TestCase):
 
-    def test_prepare_scriptlet(self):
-        self.run_snapcraft('build', 'scriptlet-prepare')
+    def test_pre_build_scriptlet(self):
+        self.run_snapcraft('build', 'scriptlet-pre-build')
 
         installdir = os.path.join(
-            self.parts_dir, 'prepare-scriptlet-test', 'install')
+            self.parts_dir, 'pre-build-scriptlet-test', 'install')
         touch_file_path = os.path.join(installdir, 'prepared')
         self.assertThat(touch_file_path, FileExists())
 
@@ -47,8 +47,40 @@ class ScriptletTestCase(integration.TestCase):
         touch_file_path = os.path.join(installdir, 'build-install')
         self.assertThat(touch_file_path, FileExists())
 
-    def test_install_scriptlet(self):
-        self.run_snapcraft('build', 'scriptlet-install')
+    def test_post_build_scriptlet(self):
+        self.run_snapcraft('build', 'scriptlet-post-build')
+
+        installdir = os.path.join(
+            self.parts_dir, 'post-build-scriptlet-test', 'install')
+        touch_file_path = os.path.join(installdir, 'build-done')
+        self.assertThat(touch_file_path, FileExists())
+        echoed_file_path = os.path.join(installdir, 'config.ini')
+        self.assertThat(echoed_file_path, FileExists())
+        self.assertThat(echoed_file_path,
+                        FileContains('config-key=config-value\n'))
+        arch_triplet_file = os.path.join(installdir, 'lib',
+                                         self.arch_triplet, 'lib.so')
+        self.assertThat(arch_triplet_file, FileExists())
+
+
+class DeprecatedScriptletsTestCase(integration.TestCase):
+
+    def test_prepare_scriptlet_deprecated(self):
+        output = self.run_snapcraft('build', 'scriptlet-prepare')
+
+        installdir = os.path.join(
+            self.parts_dir, 'prepare-scriptlet-test', 'install')
+        touch_file_path = os.path.join(installdir, 'prepared')
+        self.assertThat(touch_file_path, FileExists())
+
+        # Verify that the `prepare` keyword is deprecated.
+        self.assertThat(
+            output, Contains(
+                "DEPRECATED: The 'prepare' keyword has been replaced by "
+                "'pre-build'"))
+
+    def test_install_scriptlet_deprecated(self):
+        output = self.run_snapcraft('build', 'scriptlet-install')
 
         installdir = os.path.join(
             self.parts_dir, 'install-scriptlet-test', 'install')
@@ -61,3 +93,9 @@ class ScriptletTestCase(integration.TestCase):
         arch_triplet_file = os.path.join(installdir, 'lib',
                                          self.arch_triplet, 'lib.so')
         self.assertThat(arch_triplet_file, FileExists())
+
+        # Verify that the `install` keyword is deprecated.
+        self.assertThat(
+            output, Contains(
+                "DEPRECATED: The 'install' keyword has been replaced by "
+                "'post-build'"))
