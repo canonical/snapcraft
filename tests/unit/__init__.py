@@ -17,7 +17,6 @@
 import contextlib
 import logging
 import os
-import platform
 import stat
 from unittest import mock
 
@@ -145,8 +144,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_NO_PATCHELF', '1'))
 
-        machine = os.environ.get('SNAPCRAFT_TEST_MOCK_MACHINE',
-                                 platform.machine())
+        machine = os.environ.get('SNAPCRAFT_TEST_MOCK_MACHINE', None)
         self.base_environment = fixture_setup.FakeBaseEnvironment(
             machine=machine)
         self.useFixture(self.base_environment)

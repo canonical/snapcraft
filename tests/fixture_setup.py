@@ -19,6 +19,7 @@ import contextlib
 import copy
 import io
 import os
+import platform
 import pkgutil
 import shutil
 import socketserver
@@ -1272,9 +1273,35 @@ class FakeBaseEnvironment(fixtures.Fixture):
         x86_64='lib64/ld-linux-x86-64.so.2',
         s390x='lib/ld64.so.1')
 
-    def __init__(self, *, machine):
+    _32BIT_USERSPACE_ARCHITECTURE = dict(
+        aarch64='armv7l',
+        armv8l='armv7l',
+        ppc64le='ppc',
+        x86_64='i686')
+
+    _WINDOWS_TRANSLATIONS = dict(AMD64='x86_64')
+
+    def _get_platform_architecture(self):
+        architecture = platform.machine()
+
+        # Translate the windows architectures we know of to architectures
+        # we can work with.
+        if sys.platform == 'win32':
+            architecture = self._WINDOWS_TRANSLATIONS[architecture]
+
+        if platform.architecture()[0] == '32bit':
+            userspace = self._32BIT_USERSPACE_ARCHITECTURE[architecture]
+            if userspace:
+                architecture = userspace
+
+        return architecture
+
+    def __init__(self, *, machine=None):
         super().__init__()
-        self._machine = machine
+        if machine is None:
+            self._machine = self._get_platform_architecture()
+        else:
+            self._machine = machine
 
     def _setUp(self):
         super()._setUp()
