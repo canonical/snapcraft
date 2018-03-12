@@ -68,10 +68,11 @@ class ProjectInfoTestCase(YamlBaseTestCase):
         self.useFixture(fake_logger)
 
     def test_properties(self):
-        info = snapcraft.ProjectInfo(
-            name='foo', version='1',
-            summary='bar', description='baz',
-            confinement='strict')
+        info = snapcraft.ProjectInfo({
+            'name': 'foo', 'version': '1',
+            'summary': 'bar', 'description': 'baz',
+            'confinement': 'strict'
+            })
         self.assertThat(info.name, Equals('foo'))
         self.assertThat(info.version, Equals('1'))
         self.assertThat(info.summary, Equals('bar'))
@@ -127,7 +128,7 @@ parts:
 
         c = _config.Config()
         project = c._project_options
-        self.assertThat(project.info.summary, Equals(''))
+        self.assertThat(project.info.summary, Equals(None))
 
     def test_project_from_config_without_description(self):
         self.make_snapcraft_yaml("""name: foo
@@ -143,7 +144,7 @@ parts:
 
         c = _config.Config()
         project = c._project_options
-        self.assertThat(project.info.description, Equals(''))
+        self.assertThat(project.info.description, Equals(None))
 
     def test_project_passed_to_config(self):
         self.make_snapcraft_yaml("""name: foo
@@ -167,11 +168,12 @@ parts:
 
     def test_set_info(self):
         project = snapcraft.Project()
-        info = snapcraft.ProjectInfo(
-            name='foo', version='1',
-            summary='bar', description='baz',
-            confinement='strict')
-        project.info = info
+        info = snapcraft.ProjectInfo({
+            'name': 'foo', 'version': '1',
+            'summary': 'bar', 'description': 'baz',
+            'confinement': 'strict'
+            })
+        project.set_info(info)
         self.assertThat(project.info, Equals(info))
 
 

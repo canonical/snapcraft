@@ -20,7 +20,7 @@ import os
 import platform
 import sys
 from contextlib import suppress
-from typing import List, Set  # noqa: F401
+from typing import List, Set, Union  # noqa: F401
 
 from snapcraft import file_utils
 from snapcraft.internal import common, errors, os_release
@@ -144,41 +144,39 @@ def _get_platform_architecture():
 class ProjectInfo:
     """Information gained from the snap's snapcraft.yaml file."""
 
-    def __init__(self, *,
-                 name: str, version: str,
-                 summary: str, description: str, confinement: str) -> None:
-        self.__name = name
-        self.__version = version
-        self.__summary = summary
-        self.__description = description
-        self.__confinement = confinement
+    def __init__(self, data) -> None:
+        self.__name = data['name']
+        self.__version = data['version']
+        self.__summary = data.get('summary')
+        self.__description = data.get('description')
+        self.__confinement = data['confinement']
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Returns the name of the snap.
         """
         return self.__name
 
     @property
-    def version(self):
+    def version(self) -> str:
         """Returns the version of the snap.
         """
         return self.__version
 
     @property
-    def summary(self):
-        """Returns the summary of the snap.
+    def summary(self) -> str:
+        """Returns the summary of the snap if set.
         """
         return self.__summary
 
     @property
-    def description(self):
-        """Returns the description of the snap.
+    def description(self) -> str:
+        """Returns the description of the snap if set.
         """
         return self.__description
 
     @property
-    def confinement(self):
+    def confinement(self) -> str:
         """Returns the confinement type of the snap.
         """
         return self.__confinement
@@ -189,16 +187,17 @@ class Project:
     and the snap being built."""
 
     def __init__(self) -> None:
-        self.__info = None
+        self.__info = None  # type: ProjectInfo
 
     @property
-    def info(self):
-        """Returns the project info.
+    def info(self) -> Union[ProjectInfo, None]:
+        """Returns the project info if set.
         """
         return self.__info
 
-    @info.setter
-    def info(self, info):
+    def set_info(self, info: ProjectInfo):
+        """Sets the project info.
+        """
         self.__info = info
 
 
