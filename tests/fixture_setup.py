@@ -1261,7 +1261,7 @@ class FakeElf(fixtures.Fixture):
                 f.write(b'\x7fELF')
 
 
-class FakeArchitecture(fixtures.Fixture):
+class FakeBaseEnvironment(fixtures.Fixture):
 
     _LINKER_FOR_ARCH = dict(
         armv7l='lib/ld-linux-armhf.so.3',

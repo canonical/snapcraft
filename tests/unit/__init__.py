@@ -147,7 +147,9 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
         machine = os.environ.get('SNAPCRAFT_TEST_MOCK_MACHINE',
                                  platform.machine())
-        self.useFixture(fixture_setup.FakeArchitecture(machine=machine))
+        self.base_environment = fixture_setup.FakeBaseEnvironment(
+            machine=machine)
+        self.useFixture(self.base_environment)
 
     def make_snapcraft_yaml(self, content, encoding='utf-8'):
         with contextlib.suppress(FileExistsError):
