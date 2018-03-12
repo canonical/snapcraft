@@ -546,11 +546,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'stop', '-f', container_name]),
         ])
         mock_container_run.assert_has_calls([
-            call(['python3', '-c', 'import sys; sys.excepthook = lambda t,e,b'
-                  ' : print("{}: {}".format(t.__name__, e));'
-                  'import urllib.request; urllib.request.urlopen('
-                  '"http://start.ubuntu.com/connectivity-check.html"'
-                  ', timeout=5)']),
+            call(['python3', '-c', mock.ANY]),
             call(['apt-get', 'update']),
             call(['apt-get', 'install', 'squashfuse', '-y']),
             call(['snapcraft', 'snap', '--output',
@@ -586,11 +582,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'stop', '-f', fake_lxd.name]),
         ])
         mock_container_run.assert_has_calls([
-            call(['python3', '-c', 'import sys; sys.excepthook = lambda t,e,b'
-                  ' : print("{}: {}".format(t.__name__, e));'
-                  'import urllib.request; urllib.request.urlopen('
-                  '"http://start.ubuntu.com/connectivity-check.html"'
-                  ', timeout=5)']),
+            call(['python3', '-c', mock.ANY]),
             call(['snapcraft', 'snap', '--output',
                   'snap-test_1.0_amd64.snap'],
                  cwd=project_folder, user='root'),
@@ -652,11 +644,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'stop', '-f', container_name]),
         ])
         mock_container_run.assert_has_calls([
-            call(['python3', '-c', 'import sys; sys.excepthook = lambda t,e,b'
-                  ' : print("{}: {}".format(t.__name__, e));'
-                  'import urllib.request; urllib.request.urlopen('
-                  '"http://start.ubuntu.com/connectivity-check.html"'
-                  ', timeout=5)']),
+            call(['python3', '-c', mock.ANY]),
             call(['snapcraft', 'snap', '--output',
                   'snap-test_1.0_amd64.snap'],
                  cwd=project_folder, user='root'),

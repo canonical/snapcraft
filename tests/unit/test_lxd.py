@@ -22,6 +22,7 @@ from subprocess import CalledProcessError
 from unittest.mock import (
     call,
     patch,
+    ANY,
 )
 
 import fixtures
@@ -117,11 +118,7 @@ class CleanbuilderTestCase(LXDTestCase):
                   '{}/root/build_project/project.tar'.format(container_name)]),
         ])
         mock_container_run.assert_has_calls([
-            call(['python3', '-c', 'import sys; sys.excepthook = lambda t,e,b'
-                  ' : print("{}: {}".format(t.__name__, e));'
-                  'import urllib.request; urllib.request.urlopen('
-                  '"http://start.ubuntu.com/connectivity-check.html"'
-                  ', timeout=5)']),
+            call(['python3', '-c', ANY]),
             call(['apt-get', 'update']),
             call(['apt-get', 'install', 'squashfuse', '-y']),
             call(['mkdir', project_folder]),
