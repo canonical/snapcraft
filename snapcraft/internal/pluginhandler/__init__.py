@@ -534,28 +534,36 @@ class PluginHandler:
         staged_patchelf_path = os.path.join(self.stagedir, 'bin', 'patchelf')
         if not os.path.exists(staged_patchelf_path):
             staged_patchelf_path = None
-        # We need to verify now that the GLIBC version would be compatible
-        # with that of the base.
-        # TODO the linker version depends on the chosen base, but that
-        # base may not be installed so we cannot depend on
-        # get_core_dynamic_linker to resolve the final path for which
-        # we resort to our only working base 16, ld-2.23.so.
-        linker = self._project_options.get_core_dynamic_linker(self._base)
-        linker_incompat = dict()  # type: Dict[str, str]
-        for elf_file in elf_files:
-            if not elf_file.is_linker_compatible(
-                    linker=os.path.basename(linker)):
-                linker_incompat[elf_file.path] = elf_file.get_required_glibc()
+
         # If libc6 is staged, to avoid symbol mixups we will resort to
         # glibc mangling.
         libc6_staged = 'libc6' in self._part_properties.get(
             'stage-packages', [])
         is_classic = self._confinement == 'classic'
+
         # classic confined snaps built on anything but a host supporting the
         # the target base will require glibc mangling.
         classic_mangling_needed = (
             is_classic and
             not self._project_options.is_host_compatible_with_base(self._base))
+
+        # We need to verify now that the GLIBC version would be compatible
+        # with that of the base.
+        # TODO we do not require the base to be installed when building,
+        #      it would only be required for classic, but not for glibc
+        #      mismatch checks.
+        linker_incompat = dict()  # type: Dict[str, str]
+        try:
+            linker = self._project_options.get_core_dynamic_linker(self._base)
+            for elf_file in elf_files:
+                if not elf_file.is_linker_compatible(
+                        linker=os.path.basename(linker)):
+                    linker_incompat[elf_file.path] = \
+                        elf_file.get_required_glibc()
+        except errors.SnapcraftMissingLinkerInBaseError as base_error:
+            if is_classic or classic_mangling_needed:
+                raise base_error
+
         if linker_incompat:
             formatted_items = ['- {} (requires GLIBC {})'.format(k, v)
                                for k, v in linker_incompat.items()]
