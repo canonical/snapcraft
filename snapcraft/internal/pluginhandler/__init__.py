@@ -554,23 +554,22 @@ class PluginHandler:
         #      mismatch checks.
         linker_incompat = dict()  # type: Dict[str, str]
         try:
-            linker = self._project_options.get_core_dynamic_linker(self._base)
+            linker = os.path.basename(
+                self._project_options.get_core_dynamic_linker(self._base))
             for elf_file in elf_files:
-                if not elf_file.is_linker_compatible(
-                        linker=os.path.basename(linker)):
+                if not elf_file.is_linker_compatible(linker=linker):
                     linker_incompat[elf_file.path] = \
                         elf_file.get_required_glibc()
+            if linker_incompat:
+                formatted_items = ['- {} (requires GLIBC {})'.format(k, v)
+                                   for k, v in linker_incompat.items()]
+                logger.warning(
+                    'The GLIBC version of the targeted core is {}. A newer '
+                    'libc will be required for the following files:'
+                    '\n{}'.format(linker, '\n'.join(formatted_items)))
         except errors.SnapcraftMissingLinkerInBaseError as base_error:
             if is_classic or classic_mangling_needed:
                 raise base_error
-
-        if linker_incompat:
-            formatted_items = ['- {} (requires GLIBC {})'.format(k, v)
-                               for k, v in linker_incompat.items()]
-            logger.warning(
-                'The GLIBC version of the targeted core is 2.23. A newer '
-                'libc will be required for the following files:\n{}'.format(
-                    '\n'.join(formatted_items)))
 
         dynamic_linker = None
         if linker_incompat or libc6_staged or classic_mangling_needed:
