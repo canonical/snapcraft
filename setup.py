@@ -137,6 +137,7 @@ else:
             'console_scripts': [
                 'snapcraft = snapcraft.cli.__main__:run',
                 'snapcraft-parser = snapcraft.internal.parser:main',
+                'snapcraftctl = snapcraft.cli.__main__:run_snapcraftctl',
             ],
         },
         data_files=[

@@ -100,6 +100,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             'SNAP', '/snap/snapcraft/current'))
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAP_NAME', 'snapcraft'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP_VERSION', 'devel'))
 
         self.make_snapcraft_yaml()
 

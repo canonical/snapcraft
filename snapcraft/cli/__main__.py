@@ -21,6 +21,7 @@ import os
 import subprocess
 
 from ._runner import run
+from .snapcraftctl._runner import run as run_snapcraftctl  # noqa
 from .echo import warning
 
 # If the locale ends up being ascii, Click will barf. Let's try to prevent that
@@ -40,4 +41,5 @@ if (codecs.lookup(locale.getpreferredencoding()).name == 'ascii' and
             os.environ['LANG'] = 'C.UTF-8'
             break
 
-run(prog_name='snapcraft')
+if __name__ == '__main__':
+    run(prog_name='snapcraft')

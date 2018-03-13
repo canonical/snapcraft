@@ -2414,3 +2414,26 @@ class CleanBuildTestCase(unit.TestCase):
 
         # Make sure the install directory is gone
         self.assertFalse(os.path.exists(handler.plugin.installdir))
+
+
+class ScripletTestCase(unit.TestCase):
+
+    def test_run_prepare_scriptlet(self):
+        handler = self.load_part(
+            'test-part', part_properties={'prepare': 'touch prepare'})
+
+        handler.build()
+
+        before_build_file_path = os.path.join(handler.plugin.build_basedir,
+                                              'prepare')
+        self.assertThat(before_build_file_path, FileExists())
+
+    def test_run_install_scriptlet(self):
+        handler = self.load_part(
+            'test-part', part_properties={'install': 'touch install'})
+
+        handler.build()
+
+        after_build_file_path = os.path.join(handler.plugin.build_basedir,
+                                             'install')
+        self.assertThat(after_build_file_path, FileExists())

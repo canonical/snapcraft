@@ -531,3 +531,21 @@ class InvalidExtractorValueError(MetadataExtractionError):
 
     def __init__(self, path: str, extractor_name: str) -> None:
         super().__init__(path=path, extractor_name=extractor_name)
+
+
+class ScriptletBaseError(SnapcraftError):
+    """Base class for all scriptlet-related exceptions.
+
+    :cvar fmt: A format string that daughter classes override
+
+    """
+
+
+class ScriptletRunError(ScriptletBaseError):
+    fmt = (
+        'Failed to run {scriptlet_name!r}: '
+        'Exit code was {code}.'
+    )
+
+    def __init__(self, scriptlet_name: str, code: int) -> None:
+        super().__init__(scriptlet_name=scriptlet_name, code=code)
