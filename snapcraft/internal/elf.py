@@ -606,10 +606,6 @@ def _get_system_libs() -> FrozenSet[str]:
     return _libraries
 
 
-def _is_dynamically_linked_elf(file_m: str) -> bool:
-    return file_m.startswith('ELF') and 'dynamically linked' in file_m
-
-
 def get_elf_files(root: str,
                   file_list: Sequence[str]) -> FrozenSet[ElfFile]:
     """Return a frozenset of elf files from file_list prepended with root.
