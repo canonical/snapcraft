@@ -86,7 +86,7 @@ def execute(step, project_options, part_names=None):
 
 
 def _setup_core(deb_arch, base):
-    core_path = common.get_core_path()
+    core_path = common.get_core_path(base)
     if os.path.exists(core_path) and os.listdir(core_path):
         logger.debug('{!r} already exists, skipping core setup'.format(
             core_path))
