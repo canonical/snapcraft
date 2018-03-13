@@ -47,13 +47,15 @@ $lxc config set "$name" environment.TEST_SNAP_WITH_TRACKS "$TEST_SNAP_WITH_TRACK
 $lxc config set "$name" environment.GITHUB_TEST_USER_NAME "$GITHUB_TEST_USER_NAME"
 $lxc config set "$name" environment.GITHUB_TEST_PASSWORD "$GITHUB_TEST_PASSWORD"
 $lxc config set "$name" environment.SNAPCRAFT_AUTOPKGTEST_SECRET "$SNAPCRAFT_AUTOPKGTEST_SECRET"
-$lxc config set "$name" environment.SNAPCRAFT_TEST_MOCK_MACHINE "$SNAPCRAFT_TEST_MOCK_MACHINE"
 $lxc config set "$name" environment.GH_TOKEN "$GH_TOKEN"
 $lxc config set "$name" environment.CODECOV_TOKEN "$CODECOV_TOKEN"
 $lxc config set "$name" environment.SNAPCRAFT_AUTOPKGTEST_COOKIE "$SNAPCRAFT_AUTOPKGTEST_COOKIE"
 $lxc config set "$name" environment.GH_TOKEN_PPA_AUTOPKGTEST_RESULTS "$GH_TOKEN_PPA_AUTOPKGTEST_RESULTS"
 $lxc config set "$name" environment.LC_ALL "C.UTF-8"
 $lxc config set "$name" environment.SNAPCRAFT_FROM_SNAP "1"
+if [ -n "$SNAPCRAFT_TEST_MOCK_MACHINE" ]; then
+    $lxc config set "$name" environment.SNAPCRAFT_TEST_MOCK_MACHINE "$SNAPCRAFT_TEST_MOCK_MACHINE"
+fi
 
 $lxc exec "$name" -- apt update
 
