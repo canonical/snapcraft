@@ -86,7 +86,7 @@ class Config:
 
     def __init__(self, project_options=None):
         if project_options is None:
-            project_options = snapcraft.ProjectOptions()
+            project_options = snapcraft.Project()
 
         self.build_snaps = set()
         self.build_tools = []
@@ -108,7 +108,7 @@ class Config:
         self.data = self._expand_env(snapcraft_yaml)
         # We need to set the ProjectInfo here because ProjectOptions is
         # created in the CLI.
-        self._project_options.set_info(snapcraft.ProjectInfo(self.data))
+        self._project_options.info = snapcraft.ProjectInfo(self.data)
         self._ensure_no_duplicate_app_aliases()
 
         grammar_processor = grammar_processing.GlobalGrammarProcessor(

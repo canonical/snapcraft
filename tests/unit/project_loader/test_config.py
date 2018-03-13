@@ -158,7 +158,7 @@ parts:
     plugin: go
 """)
 
-        project = snapcraft.ProjectOptions()
+        project = snapcraft.Project()
         c = _config.Config(project)
         self.assertThat(c._project_options, Equals(project))
 
@@ -173,7 +173,7 @@ parts:
             'summary': 'bar', 'description': 'baz',
             'confinement': 'strict'
             })
-        project.set_info(info)
+        project.info = info
         self.assertThat(project.info, Equals(info))
 
 

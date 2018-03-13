@@ -20,7 +20,7 @@ import os
 import platform
 import sys
 from contextlib import suppress
-from typing import List, Set, Union  # noqa: F401
+from typing import Any, Dict, List, Set, Union  # noqa: F401
 
 from snapcraft import file_utils
 from snapcraft.internal import common, errors, os_release
@@ -141,67 +141,7 @@ def _get_platform_architecture():
     return architecture
 
 
-class ProjectInfo:
-    """Information gained from the snap's snapcraft.yaml file."""
-
-    def __init__(self, data) -> None:
-        self.__name = data['name']
-        self.__version = data['version']
-        self.__summary = data.get('summary')
-        self.__description = data.get('description')
-        self.__confinement = data['confinement']
-
-    @property
-    def name(self) -> str:
-        """Returns the name of the snap.
-        """
-        return self.__name
-
-    @property
-    def version(self) -> str:
-        """Returns the version of the snap.
-        """
-        return self.__version
-
-    @property
-    def summary(self) -> str:
-        """Returns the summary of the snap if set.
-        """
-        return self.__summary
-
-    @property
-    def description(self) -> str:
-        """Returns the description of the snap if set.
-        """
-        return self.__description
-
-    @property
-    def confinement(self) -> str:
-        """Returns the confinement type of the snap.
-        """
-        return self.__confinement
-
-
-class Project:
-    """All details around building a project concerning the build environment
-    and the snap being built."""
-
-    def __init__(self) -> None:
-        self.__info = None  # type: ProjectInfo
-
-    @property
-    def info(self) -> Union[ProjectInfo, None]:
-        """Returns the project info if set.
-        """
-        return self.__info
-
-    def set_info(self, info: ProjectInfo):
-        """Sets the project info.
-        """
-        self.__info = info
-
-
-class ProjectOptions(Project):
+class ProjectOptions:
 
     @property
     def use_geoip(self):
@@ -395,6 +335,30 @@ class ProjectOptions(Project):
             logger.info('Setting target machine to {!r}'.format(
                 target_deb_arch))
         self.__machine_info = _ARCH_TRANSLATIONS[self.__target_machine]
+
+
+class ProjectInfo:
+    """Information gained from the snap's snapcraft.yaml file."""
+
+    def __init__(self, data: Dict[str, Any]) -> None:
+        self.name = data['name']
+        self.version = data['version']
+        self.summary = data.get('summary')
+        self.description = data.get('description')
+        self.confinement = data['confinement']
+
+
+class Project(ProjectOptions):
+    """All details around building a project concerning the build environment
+    and the snap being built."""
+
+    # Mirror ProjectOptions constructor here to guarantee order of arguments
+    # which would not be preserved with **kwargs
+    def __init__(self, use_geoip=False, parallel_builds=True,
+                 target_deb_arch=None, debug=False) -> None:
+        self.info = None  # type: ProjectInfo
+
+        super().__init__(use_geoip, parallel_builds, target_deb_arch, debug)
 
 
 def _get_deb_arch(machine):

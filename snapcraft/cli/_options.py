@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import click
 
-from snapcraft import ProjectOptions
+from snapcraft import Project
 
 
 class HiddenOption(click.Option):
@@ -65,4 +65,4 @@ def get_project_options(**kwargs):
         target_deb_arch=kwargs.pop('target_arch'),
     )
 
-    return ProjectOptions(**project_args)
+    return Project(**project_args)
