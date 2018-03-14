@@ -54,7 +54,7 @@ parts:
   patchelf:
     source: https://github.com/NixOS/patchelf
     source-type: git
-    source-commit: 29c085fd9d3fc972f75b3961905d6b4ecce7eb2b
+    source-commit: 1fa4d36fead44333528cbee4b5c04c207ce77ca4
     plugin: autotools
     stage:
         - bin/patchelf
