@@ -579,7 +579,8 @@ class PluginHandler:
                 root_path=self.primedir,
                 snap_base_path=self._snap_base_path)
         elif is_classic:
-            dynamic_linker = linker
+            dynamic_linker = self._project_options.get_core_dynamic_linker(
+                self._base, expand=False)
 
         if dynamic_linker and not self._build_attributes.no_patchelf():
             logger.warning(

@@ -20,6 +20,7 @@ import os
 import platform
 import sys
 from contextlib import suppress
+from typing import Set  # noqa: F401
 
 from snapcraft.internal import common, errors
 from snapcraft.internal.deprecations import handle_deprecation_notice
@@ -236,10 +237,19 @@ class ProjectOptions:
         else:
             return codename in ('trusty', 'xenial')
 
-    def get_core_dynamic_linker(self, base):
+    def get_core_dynamic_linker(self, base: str, expand: bool=True) -> str:
         """Returns the dynamic linker used for the targeted core.
-        If not found realpath for `/lib/ld-linux.so.2` is returned.
-        However if core is not installed None will be returned.
+
+        :param str base: the base core snap to search for linker.
+        :param bool expand: expand the linker to the actual linker if True,
+                            else the main entry point to the linker for the
+                            projects architecture.
+        :return: the absolute path to the linker
+        :rtype: str
+        :raises snapcraft.internal.errors.SnapcraftMissingLinkerInBaseError:
+            if the linker cannot be found in the base.
+        :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
+            if a loop is found while resolving the real path to the linker.
         """
         core_path = common.get_core_path(base)
         dynamic_linker_path = os.path.join(
@@ -247,10 +257,14 @@ class ProjectOptions:
             self.__machine_info.get('core-dynamic-linker',
                                     'lib/ld-linux.so.2'))
 
+        # return immediately if we do not need to expand
+        if not expand:
+            return dynamic_linker_path
+
         # We can't use os.path.realpath because any absolute symlinks
         # have to be interpreted relative to core_path, not the real
         # root.
-        seen_paths = set()
+        seen_paths = set()  # type: Set[str]
         while True:
             if dynamic_linker_path in seen_paths:
                 raise errors.SnapcraftEnvironmentError(
