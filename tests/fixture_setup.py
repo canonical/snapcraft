@@ -61,16 +61,19 @@ class TempCWD(fixtures.Fixture):
         if rootdir is None and 'TMPDIR' in os.environ:
             rootdir = os.environ.get('TMPDIR')
         self.rootdir = rootdir
+        self._data_path = os.getenv('SNAPCRAFT_TEST_KEEP_DATA_PATH', '')
 
     def setUp(self):
         """Create a temporary directory an cd into it for the test duration."""
         super().setUp()
-        self.path = tempfile.mkdtemp(dir=self.rootdir)
+        if self._data_path:
+            os.makedirs(self._data_path)
+            self.path = self._data_path
+        else:
+            self.path = tempfile.mkdtemp(dir=self.rootdir)
         current_dir = os.getcwd()
         self.addCleanup(os.chdir, current_dir)
-        if os.environ.get('SNAPCRAFT_TEST_KEEP_DATA'):
-            self.addCleanup(print, 'The test data is in {}'.format(self.path))
-        else:
+        if not self._data_path:
             self.addCleanup(shutil.rmtree, self.path, ignore_errors=True)
         os.chdir(self.path)
 
