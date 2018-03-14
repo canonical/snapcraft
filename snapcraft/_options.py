@@ -20,7 +20,7 @@ import os
 import platform
 import sys
 from contextlib import suppress
-from typing import Set  # noqa: F401
+from typing import List, Set  # noqa: F401
 
 from snapcraft.internal import common, errors
 from snapcraft.internal.deprecations import handle_deprecation_notice
@@ -106,6 +106,16 @@ _32BIT_USERSPACE_ARCHITECTURE = {
 
 _WINDOWS_TRANSLATIONS = {
     'AMD64': 'x86_64'
+}
+
+
+_HOST_CODENAME_FOR_BASE = {
+    'core18': 'bionic',
+    'core': 'xenial',
+}
+_HOST_COMPATIBILITY = {
+    'xenial': ['trusty', 'xenial'],
+    'bionic': ['trusty', 'xenial', 'bionic'],
 }
 
 
@@ -225,17 +235,29 @@ class ProjectOptions:
         self._set_machine(target_deb_arch)
         self.__debug = debug
 
-    def is_host_compatible_with_base(self, base):
-        codename = None
+    def is_host_compatible_with_base(self, base: str) -> bool:
+        """Determines if the host is compatible with the GLIBC of the base.
+
+        The system should warn early on when building using a host that does
+        not match the intended base, this mechanism here enables additional
+        logic when that is ignored to determine built projects will actually
+        run.
+
+        :param str base: the base core snap to search for linker.
+        :returns: True if there are no GLIBC incompatibilities with the chosen
+                  build host, else it returns False.
+        :rtype: bool
+        """
+        codename = None  # type: str
         with suppress(errors.OsReleaseCodenameError):
             codename = OsRelease().version_codename()
             logger.debug('Running on {!r}'.format(codename))
 
-        # TODO do this more generically
-        if base == 'core18':
-            return codename in ('trusty', 'xenial', 'bionic')
-        else:
-            return codename in ('trusty', 'xenial')
+        build_host_for_base = _HOST_CODENAME_FOR_BASE.get(
+            base)  # type: str
+        compatible_hosts = _HOST_COMPATIBILITY.get(
+            build_host_for_base, [])  # type: List[str]
+        return codename in compatible_hosts
 
     def get_core_dynamic_linker(self, base: str, expand: bool=True) -> str:
         """Returns the dynamic linker used for the targeted core.

@@ -177,9 +177,22 @@ class OptionsTestCase(unit.TestCase):
 class TestHostIsCompatibleWithTargetBase(unit.TestCase):
 
     scenarios = (
-        ('trusty', dict(codename='trusty', is_compatible=True)),
-        ('xenial', dict(codename='xenial', is_compatible=True)),
-        ('artful', dict(codename='bionic', is_compatible=False)),
+        ('trusty core',
+         dict(codename='trusty', base='core', is_compatible=True)),
+        ('xenial core',
+         dict(codename='xenial', base='core', is_compatible=True)),
+        ('bionic core',
+         dict(codename='bionic', base='core', is_compatible=False)),
+        ('trusty core18',
+         dict(codename='trusty', base='core18', is_compatible=True)),
+        ('xenial core18',
+         dict(codename='xenial', base='core18', is_compatible=True)),
+        ('bionic core18',
+         dict(codename='bionic', base='core18', is_compatible=True)),
+        ('Random codename core18',
+         dict(codename='random', base='core18', is_compatible=False)),
+        ('trusty unknown-base',
+         dict(codename='trusty', base='unknown', is_compatible=False)),
     )
 
     def setUp(self):
@@ -193,5 +206,5 @@ class TestHostIsCompatibleWithTargetBase(unit.TestCase):
         self.codename_mock.return_value = self.codename
 
         self.assertThat(
-            snapcraft.ProjectOptions().is_host_compatible_with_base('core'),
+            snapcraft.ProjectOptions().is_host_compatible_with_base(self.base),
             Equals(self.is_compatible))
