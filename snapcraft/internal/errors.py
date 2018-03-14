@@ -531,3 +531,17 @@ class InvalidExtractorValueError(MetadataExtractionError):
 
     def __init__(self, path: str, extractor_name: str) -> None:
         super().__init__(path=path, extractor_name=extractor_name)
+
+
+class SnapcraftPluginCommandError(SnapcraftError):
+    """Command excecuted by a plugin fails."""
+
+    fmt = (
+        'The command {command!r} run for the {part_name!r} part has failed.\n'
+        'Verify that the part is using the correct parameters and try again.'
+    )
+
+    def __init__(self, *, command, part_name):
+        if isinstance(command, list):
+            command = ' '.join(command)
+        super().__init__(command=command, part_name=part_name)

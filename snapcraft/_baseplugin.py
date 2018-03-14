@@ -17,8 +17,9 @@
 import contextlib
 import logging
 import os
+from subprocess import CalledProcessError
 
-from snapcraft.internal import common
+from snapcraft.internal import common, errors
 
 
 logger = logging.getLogger(__name__)
@@ -199,7 +200,11 @@ class BasePlugin:
             cwd = self.builddir
         print(' '.join(cmd))
         os.makedirs(cwd, exist_ok=True)
-        return common.run(cmd, cwd=cwd, **kwargs)
+        try:
+            return common.run(cmd, cwd=cwd, **kwargs)
+        except CalledProcessError:
+            raise errors.SnapcraftPluginCommandError(
+                command=cmd, part_name=self.name)
 
     def run_output(self, cmd, cwd=None, **kwargs):
         if not cwd:
