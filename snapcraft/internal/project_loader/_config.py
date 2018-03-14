@@ -23,6 +23,7 @@ import re
 import jsonschema
 import yaml
 import yaml.reader
+from typing import Set  # noqa
 
 
 import snapcraft
@@ -84,12 +85,12 @@ class Config:
             self._remote_parts_attr = remote_parts.get_remote_parts()
         return self._remote_parts_attr
 
-    def __init__(self, project_options=None):
+    def __init__(self, project_options: snapcraft.Project=None) -> None:
         if project_options is None:
             project_options = snapcraft.Project()
 
-        self.build_snaps = set()
-        self.build_tools = []
+        self.build_snaps = set()  # type: Set[str]
+        self.build_tools = set()  # type: Set[str]
         self._project_options = project_options
 
         self.snapcraft_yaml_path = get_snapcraft_yaml()

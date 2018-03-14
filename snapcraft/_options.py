@@ -352,10 +352,8 @@ class Project(ProjectOptions):
     """All details around building a project concerning the build environment
     and the snap being built."""
 
-    # Mirror ProjectOptions constructor here to guarantee order of arguments
-    # which would not be preserved with **kwargs
-    def __init__(self, use_geoip=False, parallel_builds=True,
-                 target_deb_arch=None, debug=False) -> None:
+    def __init__(self, *, use_geoip=False, parallel_builds=True,
+                 target_deb_arch: str=None, debug=False) -> None:
         self.info = None  # type: ProjectInfo
 
         super().__init__(use_geoip, parallel_builds, target_deb_arch, debug)

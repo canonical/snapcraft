@@ -88,6 +88,14 @@ class ProjectTestCase(YamlBaseTestCase):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)
 
+    def test_project_with_arguments(self):
+        project = snapcraft.Project(use_geoip=True, parallel_builds=False,
+                                    target_deb_arch='armhf', debug=True)
+        self.assertThat(project.use_geoip, Equals(True))
+        self.assertThat(project.parallel_builds, Equals(False))
+        self.assertThat(project.deb_arch, Equals('armhf'))
+        self.assertThat(project.debug, Equals(True))
+
     def test_project_from_config(self):
         self.make_snapcraft_yaml("""name: foo
 version: "1"
