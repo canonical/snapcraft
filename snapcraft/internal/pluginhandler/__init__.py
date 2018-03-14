@@ -57,7 +57,7 @@ class PluginHandler:
 
     def __init__(self, *, plugin, part_properties, project_options,
                  part_schema, definitions_schema, stage_packages_repo,
-                 grammar_processor, snap_base_path, confinement,
+                 grammar_processor, snap_base_path, base, confinement,
                  soname_cache):
         self.valid = False
         self.plugin = plugin
@@ -67,6 +67,7 @@ class PluginHandler:
         self._stage_packages_repo = stage_packages_repo
         self._grammar_processor = grammar_processor
         self._snap_base_path = snap_base_path
+        self._base = base
         self._confinement = confinement
         self._soname_cache = soname_cache
         self._source = grammar_processor.get_source()
@@ -513,7 +514,7 @@ class PluginHandler:
         elf_files = elf.get_elf_files(self.primedir, snap_files)
         all_dependencies = set()
         # TODO: base snap support
-        core_path = common.get_core_path()
+        core_path = common.get_core_path(self._base)
 
         # Clear the cache of all libs that aren't already in the primedir
         self._soname_cache.reset_except_root(self.primedir)
@@ -533,33 +534,42 @@ class PluginHandler:
         staged_patchelf_path = os.path.join(self.stagedir, 'bin', 'patchelf')
         if not os.path.exists(staged_patchelf_path):
             staged_patchelf_path = None
-        # We need to verify now that the GLIBC version would be compatible
-        # with that of the base.
-        # TODO the linker version depends on the chosen base, but that
-        # base may not be installed so we cannot depend on
-        # get_core_dynamic_linker to resolve the final path for which
-        # we resort to our only working base 16, ld-2.23.so.
-        linker_incompat = dict()  # type: Dict[str, str]
-        for elf_file in elf_files:
-            if not elf_file.is_linker_compatible(linker='ld-2.23.so'):
-                linker_incompat[elf_file.path] = elf_file.get_required_glibc()
+
         # If libc6 is staged, to avoid symbol mixups we will resort to
         # glibc mangling.
         libc6_staged = 'libc6' in self._part_properties.get(
             'stage-packages', [])
         is_classic = self._confinement == 'classic'
+
         # classic confined snaps built on anything but a host supporting the
         # the target base will require glibc mangling.
         classic_mangling_needed = (
             is_classic and
-            not self._project_options.is_host_compatible_with_base)
-        if linker_incompat:
-            formatted_items = ['- {} (requires GLIBC {})'.format(k, v)
-                               for k, v in linker_incompat.items()]
-            logger.warning(
-                'The GLIBC version of the targeted core is 2.23. A newer '
-                'libc will be required for the following files:\n{}'.format(
-                    '\n'.join(formatted_items)))
+            not self._project_options.is_host_compatible_with_base(self._base))
+
+        # We need to verify now that the GLIBC version would be compatible
+        # with that of the base.
+        # TODO we do not require the base to be installed when building,
+        #      it would only be required for classic, but not for glibc
+        #      mismatch checks.
+        linker_incompat = dict()  # type: Dict[str, str]
+        try:
+            linker = os.path.basename(
+                self._project_options.get_core_dynamic_linker(self._base))
+            for elf_file in elf_files:
+                if not elf_file.is_linker_compatible(linker=linker):
+                    linker_incompat[elf_file.path] = \
+                        elf_file.get_required_glibc()
+            if linker_incompat:
+                formatted_items = ['- {} (requires GLIBC {})'.format(k, v)
+                                   for k, v in linker_incompat.items()]
+                logger.warning(
+                    'The GLIBC version of the targeted core is {}. A newer '
+                    'libc will be required for the following files:'
+                    '\n{}'.format(linker, '\n'.join(formatted_items)))
+        except errors.SnapcraftMissingLinkerInBaseError as base_error:
+            if is_classic or classic_mangling_needed:
+                raise base_error
 
         dynamic_linker = None
         if linker_incompat or libc6_staged or classic_mangling_needed:
@@ -569,7 +579,8 @@ class PluginHandler:
                 root_path=self.primedir,
                 snap_base_path=self._snap_base_path)
         elif is_classic:
-            dynamic_linker = self._project_options.get_core_dynamic_linker()
+            dynamic_linker = self._project_options.get_core_dynamic_linker(
+                self._base, expand=False)
 
         if dynamic_linker and not self._build_attributes.no_patchelf():
             logger.warning(

@@ -82,6 +82,18 @@ class ErrorFormattingTestCase(unit.TestCase):
             'exception': errors.SnapcraftEnvironmentError,
             'kwargs': {'message': 'test-message'},
             'expected_message': 'test-message'}),
+        ('SnapcraftMissingLinkerInBaseError', {
+            'exception': errors.SnapcraftMissingLinkerInBaseError,
+            'kwargs': {
+                'base': 'core18',
+                'linker_path': '/snap/core18/current/lib64/ld-linux.so.2'},
+            'expected_message': (
+                "Cannot find the linker to use for the target base 'core18'.\n"
+                "Please verify that the linker exists at the expected path "
+                "'/snap/core18/current/lib64/ld-linux.so.2' and try again. If "
+                "the linker does not exist contact the author of the base "
+                "(run `snap info core18` to get information for this "
+                "base).")}),
         ('ContainerError', {
             'exception': errors.ContainerError,
             'kwargs': {'message': 'test-message'},

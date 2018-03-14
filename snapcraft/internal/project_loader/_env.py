@@ -19,11 +19,11 @@ from snapcraft.internal import common, elf
 from typing import List
 
 
-def env_for_classic(arch_triplet: str) -> List[str]:
+def env_for_classic(base: str, arch_triplet: str) -> List[str]:
     """Set the required environment variables for a classic confined build."""
     env = []
 
-    core_path = common.get_core_path()
+    core_path = common.get_core_path(base)
     paths = common.get_library_paths(core_path, arch_triplet,
                                      existing_only=False)
     env.append(formatting_utils.format_path_variable(

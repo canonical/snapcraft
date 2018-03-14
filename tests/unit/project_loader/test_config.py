@@ -1766,9 +1766,11 @@ parts:
         part = config.parts.get_part('part1')
         environment = config.parts.build_env_for_part(part, root_part=True)
         self.assertIn(
-            'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/snap/core/current/lib:'
-            '/snap/core/current/usr/lib:/snap/core/current/lib/{0}:'
-            '/snap/core/current/usr/lib/{0}"'.format(self.arch_triplet),
+            'LD_LIBRARY_PATH="$LD_LIBRARY_PATH:{base_core_path}/lib:'
+            '{base_core_path}/usr/lib:{base_core_path}/lib/{arch_triplet}:'
+            '{base_core_path}/usr/lib/{arch_triplet}"'.format(
+                base_core_path=self.base_environment.core_path,
+                arch_triplet=self.arch_triplet),
             environment)
 
     def test_config_stage_environment(self):

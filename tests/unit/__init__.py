@@ -145,11 +145,9 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             'SNAPCRAFT_NO_PATCHELF', '1'))
 
         machine = os.environ.get('SNAPCRAFT_TEST_MOCK_MACHINE', None)
-        if machine:
-            patcher = mock.patch('platform.machine')
-            self.mock_machine = patcher.start()
-            self.mock_machine.return_value = machine
-            self.addCleanup(patcher.stop)
+        self.base_environment = fixture_setup.FakeBaseEnvironment(
+            machine=machine)
+        self.useFixture(self.base_environment)
 
     def make_snapcraft_yaml(self, content, encoding='utf-8'):
         with contextlib.suppress(FileExistsError):
@@ -171,7 +169,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
     def load_part(self, part_name, plugin_name=None, part_properties=None,
                   project_options=None, stage_packages_repo=None,
-                  confinement='strict'):
+                  base='core', confinement='strict'):
         if not plugin_name:
             plugin_name = 'nil'
         properties = {'plugin': plugin_name}
@@ -208,6 +206,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             grammar_processor=grammar_processor,
             stage_packages_repo=stage_packages_repo,
             snap_base_path='/snap/fake-name/current',
+            base=base,
             confinement=confinement,
             soname_cache=elf.SonameCache())
 

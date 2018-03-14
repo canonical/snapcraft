@@ -81,9 +81,9 @@ def run_output(cmd, **kwargs):
             return output.decode('latin-1', 'surrogateescape').strip()
 
 
-def get_core_path():
-    """Returns the path to the core snap."""
-    return os.path.join(os.path.sep, 'snap', 'core', 'current')
+def get_core_path(base):
+    """Returns the path to the core base snap."""
+    return os.path.join(os.path.sep, 'snap', base, 'current')
 
 
 def format_snap_name(snap):
