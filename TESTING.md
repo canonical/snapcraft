@@ -37,8 +37,7 @@ The integration tests are a group of suites that exercise snapcraft as a black b
 
 These tests are in the `tests/integration` directory, with the `snapcraft.yamls` and other source files for the tests snaps in `tests/integration/snaps`.
 
-At any time, an integration test may fail and given the use of temporary directories it can be hard to inspect want went on. When working
-on a specific test case you can set the environment variable `SNAPCRAFT_TEST_KEEP_DATA_PATH` to a directory path for the sepecic test.
+At any time, an integration test may fail and given the use of temporary directories it can be hard to inspect what went on. When working on a specific test case you can set the environment variable `SNAPCRAFT_TEST_KEEP_DATA_PATH` to a directory path for the sepecic test.
 This mechanism will only work when working with individual tests and will fail to run with a batch of them.
 
 ### Slow tests
