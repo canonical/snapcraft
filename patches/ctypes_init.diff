@@ -15,7 +15,7 @@
 >         if _os.getenv('SNAP_NAME', '') == 'snapcraft':
 >             _name = _os.path.join(
 >                         _os.getenv('SNAP'), 'usr', 'lib',
->                         _ARCH_TRIPLET[_os.getenv('SNAP_ARCH')],
+>                         _ARCH_TRIPLET.get(_os.getenv('SNAP_ARCH')),
 >                         name)
 >             if _os.path.exists(_name):
 >                 name = _name
