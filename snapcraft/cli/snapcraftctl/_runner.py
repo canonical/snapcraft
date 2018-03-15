@@ -28,7 +28,7 @@ from snapcraft.internal import log
 
 
 @click.group()
-@click.option('--debug', '-d', is_flag=True)
+@click.option('--debug', '-d', is_flag=True, envvar='SNAPCRAFT_DEBUG')
 def run(debug):
     """snapcraftctl is how snapcraft.yaml can communicate with snapcraft"""
 
