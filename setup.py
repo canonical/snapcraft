@@ -45,6 +45,7 @@ packages = [
     'snapcraft.internal.repo',
     'snapcraft.internal.sources',
     'snapcraft.internal.states',
+    'snapcraft.project',
     'snapcraft.plugins',
     'snapcraft.plugins._ros',
     'snapcraft.plugins._python',

@@ -27,6 +27,7 @@ import fixtures
 from testtools.matchers import Contains, Equals, MatchesRegex, Not, StartsWith
 
 import snapcraft
+from snapcraft.project._project_info import ProjectInfo
 from snapcraft.internal import (
     dirs,
     project_loader,
@@ -68,7 +69,7 @@ class ProjectInfoTestCase(YamlBaseTestCase):
         self.useFixture(fake_logger)
 
     def test_properties(self):
-        info = snapcraft.ProjectInfo({
+        info = ProjectInfo({
             'name': 'foo', 'version': '1',
             'summary': 'bar', 'description': 'baz',
             'confinement': 'strict'
@@ -89,8 +90,9 @@ class ProjectTestCase(YamlBaseTestCase):
         self.useFixture(fake_logger)
 
     def test_project_with_arguments(self):
-        project = snapcraft.Project(use_geoip=True, parallel_builds=False,
-                                    target_deb_arch='armhf', debug=True)
+        project = snapcraft.project.Project(
+            use_geoip=True, parallel_builds=False,
+            target_deb_arch='armhf', debug=True)
         self.assertThat(project.use_geoip, Equals(True))
         self.assertThat(project.parallel_builds, Equals(False))
         self.assertThat(project.deb_arch, Equals('armhf'))
@@ -119,7 +121,8 @@ parts:
                         Equals(project.info.confinement))
 
         # API of both Project and ProjectOptions must be available
-        self.assertTrue(isinstance(project, snapcraft.Project))
+        self.assertTrue(isinstance(project,
+                        snapcraft.project.Project))
         self.assertTrue(isinstance(project, snapcraft.ProjectOptions))
 
     def test_project_from_config_without_summary(self):
@@ -166,17 +169,17 @@ parts:
     plugin: go
 """)
 
-        project = snapcraft.Project()
+        project = snapcraft.project.Project()
         c = _config.Config(project)
         self.assertThat(c._project_options, Equals(project))
 
     def test_no_info_set(self):
-        project = snapcraft.Project()
+        project = snapcraft.project.Project()
         self.assertThat(project.info, Equals(None))
 
     def test_set_info(self):
-        project = snapcraft.Project()
-        info = snapcraft.ProjectInfo({
+        project = snapcraft.project.Project()
+        info = ProjectInfo({
             'name': 'foo', 'version': '1',
             'summary': 'bar', 'description': 'baz',
             'confinement': 'strict'

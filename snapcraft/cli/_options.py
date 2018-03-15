@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import click
 
-from snapcraft import Project
+from snapcraft.project import Project
 
 
 class HiddenOption(click.Option):
