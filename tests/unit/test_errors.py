@@ -398,9 +398,8 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'part_name': 'make_test',
             },
             'expected_message': (
-                "The command 'make install' run for the 'make_test' part has "
-                "failed.\n"
-                'Exited with exit code -1.\n'
+                "Failed to run 'make install' for 'make_test': "
+                "Exited with code -1.\n"
                 "Verify that the part is using the correct parameters and try "
                 "again."
             )
@@ -413,9 +412,8 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'part_name': 'make_test',
             },
             'expected_message': (
-                "The command 'make install' run for the 'make_test' part has "
-                "failed.\n"
-                'Exited with exit code 2.\n'
+                "Failed to run 'make install' for 'make_test': "
+                "Exited with code 2.\n"
                 "Verify that the part is using the correct parameters and try "
                 "again."
             )

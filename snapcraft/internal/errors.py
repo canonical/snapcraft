@@ -538,8 +538,8 @@ class SnapcraftPluginCommandError(SnapcraftError):
     """Command executed by a plugin fails."""
 
     fmt = (
-        'The command {command!r} run for the {part_name!r} part has failed.\n'
-        'Exited with exit code {exit_code}.\n'
+        'Failed to run {command!r} for {part_name!r}: '
+        'Exited with code {exit_code}.\n'
         'Verify that the part is using the correct parameters and try again.'
     )
 
