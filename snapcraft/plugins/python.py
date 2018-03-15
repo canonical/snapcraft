@@ -57,7 +57,6 @@ import contextlib
 import os
 import re
 from shutil import which
-import subprocess
 from textwrap import dedent
 
 import requests
@@ -328,8 +327,7 @@ class PythonPlugin(snapcraft.BasePlugin):
                 # There is also a chance that this setup.py is distutils based
                 # in which case we will rely on the `pip install .` ran before
                 #  this.
-                with contextlib.suppress(subprocess.CalledProcessError,
-                                         SnapcraftPluginCommandError):
+                with contextlib.suppress(SnapcraftPluginCommandError):
                     self._setup_tools_install(setup_py_path)
 
         return self._pip.list()

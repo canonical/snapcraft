@@ -29,7 +29,6 @@ from typing import List, Set
 import snapcraft
 from snapcraft import file_utils
 from snapcraft.internal import mangling
-from snapcraft.internal.errors import SnapcraftPluginCommandError
 from ._python_finder import (
     get_python_command,
     get_python_headers,
@@ -197,8 +196,7 @@ class Pip:
             # Using _run_output here so stdout doesn't get printed to the
             # terminal.
             self._run_output([], stderr=subprocess.STDOUT)
-        except (subprocess.CalledProcessError,
-                SnapcraftPluginCommandError) as e:
+        except subprocess.CalledProcessError as e:
             output = e.output.decode(sys.getfilesystemencoding()).strip()
             if 'no module named pip' in output.lower():
                 return False
