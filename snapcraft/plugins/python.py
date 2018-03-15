@@ -65,6 +65,7 @@ import requests
 import snapcraft
 from snapcraft.common import isurl
 from snapcraft.internal import mangling
+from snapcraft.internal.errors import SnapcraftPluginCommandError
 from snapcraft.plugins import _python
 
 
@@ -327,7 +328,8 @@ class PythonPlugin(snapcraft.BasePlugin):
                 # There is also a chance that this setup.py is distutils based
                 # in which case we will rely on the `pip install .` ran before
                 #  this.
-                with contextlib.suppress(subprocess.CalledProcessError):
+                with contextlib.suppress(subprocess.CalledProcessError,
+                                         SnapcraftPluginCommandError):
                     self._setup_tools_install(setup_py_path)
 
         return self._pip.list()
