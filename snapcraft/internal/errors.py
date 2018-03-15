@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from typing import List, Union
 
 from snapcraft import formatting_utils
 
@@ -538,10 +539,13 @@ class SnapcraftPluginCommandError(SnapcraftError):
 
     fmt = (
         'The command {command!r} run for the {part_name!r} part has failed.\n'
+        'Exited with exit code {exit_code}.\n'
         'Verify that the part is using the correct parameters and try again.'
     )
 
-    def __init__(self, *, command, part_name):
+    def __init__(self, *, command: Union[List, str], part_name: str,
+                 exit_code: int) -> None:
         if isinstance(command, list):
             command = ' '.join(command)
-        super().__init__(command=command, part_name=part_name)
+        super().__init__(command=command, part_name=part_name,
+                         exit_code=exit_code)

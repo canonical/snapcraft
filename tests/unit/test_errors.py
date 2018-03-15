@@ -394,11 +394,13 @@ class ErrorFormattingTestCase(unit.TestCase):
             'exception': errors.SnapcraftPluginCommandError,
             'kwargs': {
                 'command': 'make install',
+                'exit_code': -1,
                 'part_name': 'make_test',
             },
             'expected_message': (
                 "The command 'make install' run for the 'make_test' part has "
                 "failed.\n"
+                'Exited with exit code -1.\n'
                 "Verify that the part is using the correct parameters and try "
                 "again."
             )
@@ -407,11 +409,13 @@ class ErrorFormattingTestCase(unit.TestCase):
             'exception': errors.SnapcraftPluginCommandError,
             'kwargs': {
                 'command': ['make', 'install'],
+                'exit_code': 2,
                 'part_name': 'make_test',
             },
             'expected_message': (
                 "The command 'make install' run for the 'make_test' part has "
                 "failed.\n"
+                'Exited with exit code 2.\n'
                 "Verify that the part is using the correct parameters and try "
                 "again."
             )
