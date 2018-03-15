@@ -205,7 +205,7 @@ class BasePlugin:
         except CalledProcessError as process_error:
             raise errors.SnapcraftPluginCommandError(
                 command=cmd, part_name=self.name,
-                exit_code=process_error.returncode)
+                exit_code=process_error.returncode) from process_error
 
     def run_output(self, cmd, cwd=None, **kwargs):
         if not cwd:
@@ -216,4 +216,4 @@ class BasePlugin:
         except CalledProcessError as process_error:
             raise errors.SnapcraftPluginCommandError(
                 command=cmd, part_name=self.name,
-                exit_code=process_error.returncode)
+                exit_code=process_error.returncode) from process_error
