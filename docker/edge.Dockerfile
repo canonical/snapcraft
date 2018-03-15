@@ -14,7 +14,4 @@ RUN apt-get update && \
 
 COPY bin/snapcraft-wrapper /snap/bin/snapcraft
 
-
-ENV SNAP=/snap/snapcraft/current
-ENV SNAP_NAME=snapcraft
 ENV PATH=/snap/bin:$PATH

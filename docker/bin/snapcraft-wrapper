@@ -1,3 +1,7 @@
 #!/bin/sh
-export SNAP_VERSION="$(awk '/^version:/{print $2}' '/snap/snapcraft/current/meta/snap.yaml')"
+export SNAP=/snap/snapcraft/current
+export SNAP_NAME="$(awk '/^name:/{print $2}' $SNAP/meta/snap.yaml)"
+export SNAP_VERSION="$(awk '/^version:/{print $2}' $SNAP/meta/snap.yaml)"
+export SNAP_ARCH=amd64
+
 exec $SNAP/usr/bin/python3 $SNAP/bin/snapcraft "$@"
