@@ -534,7 +534,7 @@ class InvalidExtractorValueError(MetadataExtractionError):
 
 
 class SnapcraftPluginCommandError(SnapcraftError):
-    """Command excecuted by a plugin fails."""
+    """Command executed by a plugin fails."""
 
     fmt = (
         'The command {command!r} run for the {part_name!r} part has failed.\n'
