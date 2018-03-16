@@ -371,9 +371,10 @@ def _retry_patch(f):
             # should eventually be removed once patchelf catches up.
             try:
                 elf_file_path = kwargs['elf_file_path']
-                logger.info('Failed to update {!r}. Retrying after stripping '
-                            'the .note.go.buildid from the elf file.'.format(
-                                elf_file_path))
+                logger.warning(
+                    'Failed to update {!r}. Retrying after stripping '
+                    'the .note.go.buildid from the elf file.'.format(
+                        elf_file_path))
                 subprocess.check_call([
                     'strip', '--remove-section', '.note.go.buildid',
                     elf_file_path])
