@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
-import fixtures
 import subprocess
 from unittest import mock
 
@@ -31,6 +30,7 @@ from snapcraft.storeapi.errors import (
     StoreUploadError
 )
 import tests
+from tests import fixture_setup
 from . import CommandBaseTestCase
 
 
@@ -84,10 +84,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
         mock_upload.assert_called_once_with('basic', self.snap_file)
 
     def test_push_a_snap_running_from_snap(self):
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAP', '/snap/snapcraft/current'))
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAP_NAME', 'snapcraft'))
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
 
         mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
         mock_tracker.track.return_value = {

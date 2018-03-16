@@ -1335,3 +1335,16 @@ class FakeBaseEnvironment(fixtures.Fixture):
         open(real_linker, 'w').close()
         os.symlink(os.path.relpath(
             real_linker, os.path.dirname(linker_path)), linker_path)
+
+
+class FakeSnapcraftIsASnap(fixtures.Fixture):
+
+    def _setUp(self):
+        super()._setUp()
+
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP', '/snap/snapcraft/current'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP_NAME', 'snapcraft'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP_VERSION', 'devel'))

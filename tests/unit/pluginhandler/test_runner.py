@@ -17,11 +17,15 @@
 import os
 from textwrap import dedent
 
-from testtools.matchers import FileExists
+from unittest import mock
+from testtools.matchers import FileContains, FileExists
 
 from snapcraft.internal import errors
 from snapcraft.internal.pluginhandler import _runner
-from tests import unit
+from tests import (
+    fixture_setup,
+    unit,
+)
 
 
 def _fake_build():
@@ -53,6 +57,28 @@ class RunnerTestCase(unit.TestCase):
         runner.prepare()
 
         self.assertThat(os.path.join('builddir', 'fake-build'), FileExists())
+
+    def test_snapcraftctl_alias_if_snap(self):
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
+
+        os.mkdir('builddir')
+
+        runner = _runner.Runner(
+                    part_properties={
+                        'prepare': 'alias snapcraftctl > definition'
+                    },
+                    builddir='builddir',
+                    builtin_functions={})
+
+        with mock.patch('os.path.exists', return_value=True):
+            runner.prepare()
+
+        expected_snapcrafctl = '/snap/snapcraft/current/bin/snapcraftctl'
+
+        self.assertThat(os.path.join('builddir', 'definition'), FileExists())
+        self.assertThat(
+            os.path.join('builddir', 'definition'),
+            FileContains('snapcraftctl={!r}\n'.format(expected_snapcrafctl)))
 
     def test_build(self):
         os.mkdir('builddir')
@@ -130,6 +156,16 @@ class RunnerFailureTestCase(unit.TestCase):
 
         runner = _runner.Runner(
                 part_properties={'build': script},
+                builddir='builddir',
+                builtin_functions={})
+
+        self.assertRaises(errors.ScriptletRunError, runner.build)
+
+    def test_snapcraftctl_no_alias_if_not_snap(self):
+        os.mkdir('builddir')
+
+        runner = _runner.Runner(
+                part_properties={'build': 'alias snapcraftctl 2> /dev/null'},
                 builddir='builddir',
                 builtin_functions={})
 

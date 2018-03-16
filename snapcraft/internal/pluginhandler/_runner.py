@@ -77,6 +77,17 @@ class Runner:
             feedback_fifo = _NonBlockingRWFifo(
                 os.path.join(tempdir, 'call_feedback'))
 
+            env = ''
+            if common.is_snap():
+                # Since the snap is classic, $SNAP/bin is not on the $PATH.
+                # Let's set an alias to make sure it's found (but only if it
+                # exists).
+                snapcraftctl_path = os.path.join(
+                    os.getenv('SNAP'), 'bin', 'snapcraftctl')
+                if os.path.exists(snapcraftctl_path):
+                    env += 'alias snapcraftctl="$SNAP/bin/snapcraftctl"\n'
+            env += common.assemble_env()
+
             script = textwrap.dedent("""\
                 export SNAPCRAFTCTL_CALL_FIFO={call_fifo}
                 export SNAPCRAFTCTL_FEEDBACK_FIFO={feedback_fifo}
@@ -84,7 +95,7 @@ class Runner:
                 {scriptlet}
             """.format(
                 call_fifo=call_fifo.path, feedback_fifo=feedback_fifo.path,
-                env=common.assemble_env(), scriptlet=scriptlet))
+                env=env, scriptlet=scriptlet))
 
             process = subprocess.Popen(
                 ['/bin/sh', '-e', '-c', script], cwd=self._builddir)
