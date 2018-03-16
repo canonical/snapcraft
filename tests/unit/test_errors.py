@@ -390,6 +390,34 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'occurred.\nPlease try again.'
             )
         }),
+        ('SnapcraftPluginCommandError string command', {
+            'exception': errors.SnapcraftPluginCommandError,
+            'kwargs': {
+                'command': 'make install',
+                'exit_code': -1,
+                'part_name': 'make_test',
+            },
+            'expected_message': (
+                "Failed to run 'make install' for 'make_test': "
+                "Exited with code -1.\n"
+                "Verify that the part is using the correct parameters and try "
+                "again."
+            )
+        }),
+        ('SnapcraftPluginCommandError list command', {
+            'exception': errors.SnapcraftPluginCommandError,
+            'kwargs': {
+                'command': ['make', 'install'],
+                'exit_code': 2,
+                'part_name': 'make_test',
+            },
+            'expected_message': (
+                "Failed to run 'make install' for 'make_test': "
+                "Exited with code 2.\n"
+                "Verify that the part is using the correct parameters and try "
+                "again."
+            )
+        })
     )
 
     def test_error_formatting(self):
