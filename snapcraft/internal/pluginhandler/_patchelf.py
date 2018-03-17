@@ -29,7 +29,13 @@ from snapcraft.internal import errors
 logger = logging.getLogger(__name__)
 
 
-def _is_go_based_plugin(plugin):
+def is_go_based_plugin(plugin):
+    """Returns True if plugin is a go based one.
+
+    :param plugin: the snapcraft plugin to inspect.
+    :returns: True if plugin is one that uses go.
+    :rtype: bool.
+    """
     # We iterate over the plugins suppressing as they may not be loaded.
     plugin_exceptions = []
     with contextlib.suppress(AttributeError):
@@ -40,6 +46,7 @@ def _is_go_based_plugin(plugin):
 
 
 class PartPatcher:
+    """Takes care of patching files in a part if necessary."""
 
     def __init__(self, *,
                  elf_files: FrozenSet[elf.ElfFile],
@@ -51,8 +58,26 @@ class PartPatcher:
                  stage_packages: List[str],
                  stagedir: str,
                  primedir: str) -> None:
+        """Initialize PartPatcher.
+
+        :param elf_files: the list of elf files to analyze.
+        :param plugin: the plugin the part is using.
+        :param project: the project instance from the part.
+        :param confinement: the confinement value the snapcraft project is
+                            using (i.e.; devmode, strict, classic).
+        :param core_base: the base the snap will use during runtime
+                          (e.g.; core, core18).
+        :param snap_base_path: the root path of the snap during runtime,
+                               necessary when using a in-snap libc6 provided
+                               as a stage-packages entry.
+        :param stage_packages: the stage-packages a part is set to use.
+        :param stagedir: the general stage directory for the snapcraft project.
+                         This is used to locate an alternate patchelf binary
+                         to use.
+        :param primedir: the general prime directory for the snapcraft project.
+        """
         self._elf_files = elf_files
-        self._is_go_based_plugin = _is_go_based_plugin(plugin)
+        self._is_go_based_plugin = is_go_based_plugin(plugin)
         self._project = project
         self._is_classic = confinement == 'classic'
         self._is_host_compat_with_base = project.is_host_compatible_with_base(
@@ -120,15 +145,32 @@ class PartPatcher:
             raise errors.StagePackageMissingError(package='libc6')
 
     def patch(self) -> None:
-        # Rules for verification
-        #   the host is not compatible with the selected base
+        """Executes the patching process for elf_files.
+
+        First it verifies there are no GLIBC mismatches, if any are found,
+        libc6 must be part of stage-packages. The verification is only
+        performed if the core base is not compatible with the host the
+        snapcraft build is taking place on (e.g.; building on 18.04 while
+        targeting 'core' as the core base).
+
+        If the snapcraft project is not a classic confined one and there
+        are no GLIBC mismatches, then this method returns with no modifications
+        to elf_files. However, if one of those cases are true, the
+        required dynamic linker is retrieved and the necessary elf files
+        in elf_files are patched to behave accordinginly in the environment by
+        means of setting the correct interpreter and rpaths (not runpaths).
+
+        :raises errors.SnapcraftMissingLinkerInBaseError:
+            if the linker within the core base cannot be found.
+        :raises errors.StagePackageMissingError:
+            if there are libc6 mismatches and libc6 is not in stage-packages.
+        :raises errors.SnapcraftEnvironementError:
+            if something is horribly wrong.
+        """
         logger.debug('Host compatible with base: {!r}'.format(
             self._is_host_compat_with_base))
         if not self._is_host_compat_with_base:
             self._verify_compat()
-        # Rules for patching:
-        #   if the confinement is classic
-        #   if libc6 is staged
         logger.debug('Is classic: {!r}'.format(self._is_classic))
         logger.debug('Is libc6 in stage-packages: {!r}'.format(
             self._is_libc6_staged))
@@ -144,7 +186,7 @@ class PartPatcher:
                 self._core_base, expand=False)
         else:
             raise errors.SnapcraftEnvironmentError(
-                'An unexpected error has occured while patching. '
+                'An unexpected error has occurred while patching. '
                 'Please log an issue against the snapcraft tool.')
 
         logger.debug('Dynamic linker set to {!r}'.format(dynamic_linker))
