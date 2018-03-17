@@ -104,7 +104,8 @@ class PartPatcher:
                     'An attempt to patch {!r} so that it would work '
                     'correctly in diverse environments was made and failed. '
                     'To disable this behavior set '
-                    '`build-attributes: [no-patchelf]` for the part.')
+                    '`build-attributes: [no-patchelf]` for the part.'.format(
+                        elf_file.path))
                 if not self._is_go_based_plugin:
                     raise patch_error
 
