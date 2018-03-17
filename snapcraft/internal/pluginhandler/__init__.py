@@ -532,11 +532,9 @@ class PluginHandler:
 
         if self._build_attributes.no_patchelf():
             logger.warning(
-                'The primed files for part {!r} files are not going to be '
-                'verified for correctness nor patched to work correctly '
-                'in the environment if required as '
-                '`build-attributes: [no-patchelf]` is set for the '
-                'part.'.format(self.name))
+                'The primed files for part {!r} will not be verified for '
+                'correctness or patched: build-attributes: [no-patchelf] '
+                'is set.'.format(self.name))
         else:
             part_patcher = PartPatcher(
                 elf_files=elf_files,
