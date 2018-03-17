@@ -142,8 +142,9 @@ class PartPatcher:
             dynamic_linker = self._project.get_core_dynamic_linker(
                 self._core_base, expand=False)
         else:
-            # This would be bad
-            pass
+            raise errors.SnapcraftEnvironmentError(
+                'An unexpected error has occured while patching. '
+                'Please log an issue against the snapcraft tool.')
 
         logger.debug('Dynamic linker set to {!r}'.format(dynamic_linker))
         self._patch(dynamic_linker)
