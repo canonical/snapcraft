@@ -52,9 +52,8 @@ parts:
         patch -d $SNAPCRAFT_PART_INSTALL/lib/python3.6/site-packages -p1 < $SNAPCRAFT_STAGE/pyyaml-support-high-codepoints.diff
     after: [python, apt]
   patchelf:
-    source: https://github.com/NixOS/patchelf
-    source-type: git
-    source-commit: 29c085fd9d3fc972f75b3961905d6b4ecce7eb2b
+    source: https://launchpad.net/ubuntu/+archive/primary/+files/patchelf_0.9.orig.tar.gz
+    source-checksum: sha384/88c97bfc417db32b61991b974055801b904e5a50b362a178a745e92c3d3479463a4470528aee1561139052ee95107ba5
     plugin: autotools
     stage:
         - bin/patchelf

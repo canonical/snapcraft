@@ -183,14 +183,8 @@ class ManifestRecordingBuildPackagesTestCase(
         dependencies.
 
         """
-        if (self.patchelf_command.startswith('/snap/snapcraft/current') or
-                self.deb_arch == 'armhf'):
-            expected_packages = [
+        expected_packages = [
                 'haskell-doc', 'haskell98-tutorial', 'haskell98-report']
-        else:
-            expected_packages = [
-                'haskell-doc', 'haskell98-tutorial', 'patchelf',
-                'haskell98-report']
         self.addCleanup(
             subprocess.call,
             ['sudo', 'apt', 'remove', '-y'] + expected_packages)
