@@ -24,7 +24,7 @@ import unittest.mock
 from textwrap import dedent
 
 import fixtures
-from testtools.matchers import Contains, Equals, MatchesRegex
+from testtools.matchers import Contains, Equals, MatchesRegex, Not, StartsWith
 
 import snapcraft
 from snapcraft.internal import (
@@ -1751,12 +1751,19 @@ parts:
                                 item))
 
     def test_config_stage_environment_confinement_classic(self):
+        patcher = unittest.mock.patch.object(
+            snapcraft.internal.os_release.OsRelease, 'version_codename',
+            return_value='xenial')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
         self.make_snapcraft_yaml("""name: test
 version: "1"
 summary: test
 description: test
 confinement: classic
 grade: stable
+base: core
 
 parts:
   part1:
@@ -1772,6 +1779,50 @@ parts:
                 base_core_path=self.base_environment.core_path,
                 arch_triplet=self.arch_triplet),
             environment)
+
+    def test_stage_environment_confinement_classic_with_incompat_host(self):
+        patcher = unittest.mock.patch.object(
+            snapcraft.internal.os_release.OsRelease, 'version_codename',
+            return_value='incompatible-fake')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: classic
+grade: stable
+base: core
+
+parts:
+  part1:
+    plugin: nil
+""")
+        config = _config.Config()
+        part = config.parts.get_part('part1')
+        environment = config.parts.build_env_for_part(part, root_part=True)
+        for env_item in environment:
+            self.assertThat(env_item, Not(StartsWith('LD_LIBRARY_PATH')))
+
+    def test_stage_environment_confinement_classic_with_incompat_base(self):
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: classic
+grade: stable
+base: fake-core
+
+parts:
+  part1:
+    plugin: nil
+""")
+        config = _config.Config()
+        part = config.parts.get_part('part1')
+        environment = config.parts.build_env_for_part(part, root_part=True)
+        for env_item in environment:
+            self.assertThat(env_item, Not(StartsWith('LD_LIBRARY_PATH')))
 
     def test_config_stage_environment(self):
         paths = [os.path.join(self.stage_dir, 'lib'),
