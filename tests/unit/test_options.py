@@ -21,7 +21,7 @@ import testtools
 from testtools.matchers import Equals
 
 import snapcraft
-from snapcraft.project._arch_mapping import (
+from snapcraft.project._project_options import (
     _get_platform_architecture,
     _32BIT_USERSPACE_ARCHITECTURE,
 )

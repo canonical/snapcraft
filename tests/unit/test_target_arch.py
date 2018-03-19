@@ -16,7 +16,7 @@
 
 from testtools.matchers import Equals
 
-from snapcraft.project._arch_mapping import _find_machine
+from snapcraft.project._project_options import _find_machine
 from tests import unit
 
 

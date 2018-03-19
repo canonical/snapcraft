@@ -39,7 +39,7 @@ from snapcraft.internal.errors import (
         ContainerSnapcraftCmdError,
         SnapdError,
 )
-from snapcraft.project._arch_mapping import _get_deb_arch
+from snapcraft.project._project_options import _get_deb_arch
 from snapcraft.internal.repo import snaps
 
 logger = logging.getLogger(__name__)
