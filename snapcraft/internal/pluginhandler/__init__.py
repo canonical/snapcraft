@@ -22,7 +22,7 @@ import os
 import shutil
 import sys
 from glob import glob, iglob
-from typing import Dict, Set  # noqa
+from typing import Dict, Set  # noqa: F401
 
 import yaml
 
@@ -35,6 +35,7 @@ from ._build_attributes import BuildAttributes
 from ._metadata_extraction import extract_metadata
 from ._plugin_loader import load_plugin  # noqa
 from ._scriptlets import ScriptRunner
+from ._patchelf import PartPatcher
 
 logger = logging.getLogger(__name__)
 
@@ -505,7 +506,7 @@ class PluginHandler:
 
         self.mark_cleaned('stage')
 
-    def prime(self, force=False) -> None:  # noqa: C901
+    def prime(self, force=False) -> None:
         self.makedirs()
         self.notify_part_progress('Priming')
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
@@ -529,79 +530,24 @@ class PluginHandler:
         if not self._build_attributes.keep_execstack():
             clear_execstack(elf_files=elf_files)
 
-        # TODO revisit if we need to support variations and permutations
-        #  of this
-        staged_patchelf_path = os.path.join(self.stagedir, 'bin', 'patchelf')
-        if not os.path.exists(staged_patchelf_path):
-            staged_patchelf_path = None
-
-        # If libc6 is staged, to avoid symbol mixups we will resort to
-        # glibc mangling.
-        libc6_staged = 'libc6' in self._part_properties.get(
-            'stage-packages', [])
-        is_classic = self._confinement == 'classic'
-
-        # classic confined snaps built on anything but a host supporting the
-        # the target base will require glibc mangling.
-        classic_mangling_needed = (
-            is_classic and
-            not self._project_options.is_host_compatible_with_base(self._base))
-
-        # We need to verify now that the GLIBC version would be compatible
-        # with that of the base.
-        # TODO we do not require the base to be installed when building,
-        #      it would only be required for classic, but not for glibc
-        #      mismatch checks.
-        linker_incompat = dict()  # type: Dict[str, str]
-        try:
-            linker = os.path.basename(
-                self._project_options.get_core_dynamic_linker(self._base))
-            for elf_file in elf_files:
-                if not elf_file.is_linker_compatible(linker=linker):
-                    linker_incompat[elf_file.path] = \
-                        elf_file.get_required_glibc()
-            if linker_incompat:
-                formatted_items = ['- {} (requires GLIBC {})'.format(k, v)
-                                   for k, v in linker_incompat.items()]
-                logger.warning(
-                    'The GLIBC version of the targeted core is {}. A newer '
-                    'libc will be required for the following files:'
-                    '\n{}'.format(linker, '\n'.join(formatted_items)))
-        except errors.SnapcraftMissingLinkerInBaseError as base_error:
-            if is_classic or classic_mangling_needed:
-                raise base_error
-
-        dynamic_linker = None
-        if linker_incompat or libc6_staged or classic_mangling_needed:
-            if not libc6_staged:
-                raise errors.StagePackageMissingError(package='libc6')
-            dynamic_linker = elf.find_linker(
-                root_path=self.primedir,
-                snap_base_path=self._snap_base_path)
-        elif is_classic:
-            dynamic_linker = self._project_options.get_core_dynamic_linker(
-                self._base, expand=False)
-
-        if dynamic_linker and not self._build_attributes.no_patchelf():
+        if self._build_attributes.no_patchelf():
             logger.warning(
-                'Files in this part are going to be patched to execute '
-                'correctly on diverse environments.\n'
-                'To disable this behavior set '
-                '`build-attributes: [no-patchelf]` for the part.')
-            elf_patcher = elf.Patcher(
-                dynamic_linker=dynamic_linker,
-                root_path=self.primedir,
-                preferred_patchelf_path=staged_patchelf_path)
-            files_to_patch = elf.get_elf_files_to_patch(elf_files)
-            for elf_file in files_to_patch:
-                elf_patcher.patch(elf_file=elf_file)
-        elif dynamic_linker and self._build_attributes.no_patchelf():
-            logger.warning(
-                'The following files are not going to be patched to work '
-                'correctly in the environment as '
-                '`build-attributes: [no-patchelf]` is set for the '
-                'part:\n{}'.format(
-                    ''.join(['- {}\n'.format(e.path) for e in elf_files])))
+                'The primed files for part {!r} will not be verified for '
+                'correctness or patched: build-attributes: [no-patchelf] '
+                'is set.'.format(self.name))
+        else:
+            part_patcher = PartPatcher(
+                elf_files=elf_files,
+                plugin=self.plugin,
+                project=self._project_options,
+                confinement=self._confinement,
+                core_base=self._base,
+                snap_base_path=self._snap_base_path,
+                stagedir=self.stagedir,
+                primedir=self.primedir,
+                stage_packages=self._part_properties.get(
+                    'stage-packages', []))
+            part_patcher.patch()
 
         self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
 
