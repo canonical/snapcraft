@@ -92,7 +92,6 @@ class Config:
             project_options = project.Project()
 
         self.build_snaps = set()  # type: Set[str]
-        self.build_tools = set()  # type: Set[str]
         self._project_options = project_options
 
         self.snapcraft_yaml_path = get_snapcraft_yaml()
