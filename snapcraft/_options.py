@@ -22,9 +22,8 @@ import sys
 from contextlib import suppress
 from typing import List, Set  # noqa: F401
 
-from snapcraft.internal import common, errors
+from snapcraft.internal import common, errors, os_release
 from snapcraft.internal.deprecations import handle_deprecation_notice
-from snapcraft.internal.os_release import OsRelease
 
 
 logger = logging.getLogger(__name__)
@@ -250,7 +249,7 @@ class ProjectOptions:
         """
         codename = None  # type: str
         with suppress(errors.OsReleaseCodenameError):
-            codename = OsRelease().version_codename()
+            codename = os_release.OsRelease().version_codename()
             logger.debug('Running on {!r}'.format(codename))
 
         build_host_for_base = _HOST_CODENAME_FOR_BASE.get(
