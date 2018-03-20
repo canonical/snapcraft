@@ -1,4 +1,4 @@
-snapcraft (2.40) xenial; urgency=medium
+snapcraft (2.40+18.04) bionic; urgency=medium
 
   [ Sergio Schvezov ]
   * elf: better debug messages (#1950)

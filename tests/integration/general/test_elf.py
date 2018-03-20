@@ -106,7 +106,7 @@ class ExecStackTestCase(integration.TestCase):
         snapcraft_yaml.update_part('test-part', {
             'plugin': 'nil',
             'build-attributes': attributes,
-            'build': ('/usr/sbin/execstack --set-execstack '
+            'build': ('/usr/bin/execstack --set-execstack '
                       '$SNAPCRAFT_PART_INSTALL/usr/bin/hello'),
             'prime': ['usr/bin/hello'],
             'build-packages': ['execstack'],
