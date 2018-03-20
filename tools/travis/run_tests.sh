@@ -20,14 +20,13 @@
 
 set -ev
 
-if [ "$#" -ne 1 ] ; then
-    echo "Usage: "$0" <test>"
+if [ "$#" -lt 1 ] ; then
+    echo "Usage: "$0" <test> [native|<image>]"
     exit 1
 fi
 
 test="$1"
-
-pattern="$2"
+image="${2:-ubuntu:xenial}"
 
 if [ "$test" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
@@ -48,20 +47,33 @@ fi
 script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
 
-lxc="/snap/bin/lxc"
-
-"$script_path/setup_lxd.sh"
-"$script_path/run_lxd_container.sh" test-runner
-
-$lxc file push --recursive $project_path test-runner/root/
-$lxc exec test-runner -- sh -c "cd snapcraft && ./tools/travis/setup_lxd.sh"
-$lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
-$lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test"
-
-if [ "$test" = "snapcraft/tests/unit" ]; then
-    # Report code coverage.
-    $lxc exec test-runner -- sh -c "cd snapcraft && python3 -m coverage xml"
-    $lxc exec test-runner -- sh -c "cd snapcraft && codecov --token=$CODECOV_TOKEN"
+if [ "$image" = "native" ]; then
+    if grep 14.04 /etc/os-release; then
+        sed -i 's/apt_1.1.0~beta1build1/apt_0.9.3.5ubuntu2/' requirements.txt
+        sudo add-apt-repository -y ppa:chris-lea/libsodium
+        sudo apt update
+    fi
+    run(){ sh -c "SNAPCRAFT_FROM_SNAP=1 $1"; }
+elif [ "$image" = "ubuntu:xenial" ]; then
+    lxc="/snap/bin/lxc"
+    "$script_path/setup_lxd.sh"
+    "$script_path/run_lxd_container.sh" test-runner
+    $lxc file push --recursive $project_path test-runner/root/
+    run(){ $lxc exec test-runner -- sh -c "cd snapcraft && $1"; }
+    run "./tools/travis/setup_lxd.sh"
+else
+    echo "Invalid image: $image"
+    exit 1
 fi
 
-$lxc stop test-runner
+run "$dependencies"
+run "./runtests.sh $test"
+if [ "$test" = "snapcraft/tests/unit" ]; then
+    # Report code coverage.
+    run "python3 -m coverage xml"
+    run "codecov --token=$CODECOV_TOKEN"
+fi
+
+if [ "$image" != "native" ]; then
+    $lxc stop test-runner
+fi
