@@ -20,26 +20,25 @@
 
 set -ev
 
-if [ "$#" -ne 1 ] ; then
-    echo "Usage: "$0" <test>"
+if [ "$#" -lt 1 ] ; then
+    echo "Usage: "$0" <test> [native|<image>]"
     exit 1
 fi
 
 test="$1"
-
-pattern="$2"
+image="${2:-ubuntu:xenial}"
 
 if [ "$test" = "static" ]; then
-    dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
+    dependencies="apt install -y python3-pip && python3 -m pip install --upgrade pip && python3 -m pip install -r requirements-devel.txt"
 elif [ "$test" = "tests/unit" ]; then
-    dependencies="apt install -y git bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov && apt install -y python3-coverage"
+    dependencies="apt install -y git bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install --upgrade pip && python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov && apt install -y python3-coverage"
 elif [[ "$test" = "tests/integration"* || "$test" = "tests.integration"* ]]; then
     # TODO remove the need to install the snapcraft dependencies due to nesting
     #      the tests in the snapcraft package
     # snap install core exits with this error message:
     # - Setup snap "core" (2462) security profiles (cannot reload udev rules: exit status 2
     # but the installation succeeds, so we just ingore it.
-    dependencies="apt install -y bzr git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev mercurial python3-pip subversion sudo snapd && python3 -m pip install -r requirements-devel.txt -r requirements.txt && (snap install core || echo 'ignored error') && ${SNAPCRAFT_INSTALL_COMMAND:-sudo snap install snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap --dangerous --classic}"
+    dependencies="apt install -y bzr git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev mercurial python3-pip subversion sudo snapd && python3 -m pip install --upgrade pip && python3 -m pip install -r requirements-devel.txt -r requirements.txt && (snap install core || echo 'ignored error') && ${SNAPCRAFT_INSTALL_COMMAND:-sudo snap install snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap --dangerous --classic}"
 else
     echo "Unknown test suite: $test"
     exit 1
@@ -48,20 +47,30 @@ fi
 script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
 
-lxc="/snap/bin/lxc"
-
-"$script_path/setup_lxd.sh"
-"$script_path/run_lxd_container.sh" test-runner
-
-$lxc file push --recursive $project_path test-runner/root/
-$lxc exec test-runner -- sh -c "cd snapcraft && ./tools/travis/setup_lxd.sh"
-$lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
-$lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test"
-
-if [ "$test" = "snapcraft/tests/unit" ]; then
-    # Report code coverage.
-    $lxc exec test-runner -- sh -c "cd snapcraft && python3 -m coverage xml"
-    $lxc exec test-runner -- sh -c "cd snapcraft && codecov --token=$CODECOV_TOKEN"
+if [ "$image" = "native" ]; then
+    grep 14.04 /etc/os-release && sudo add-apt-repository -y ppa:chris-lea/libsodium
+    sudo apt update
+    run(){ sh -c "$1"; }
+elif [ "$image" = "ubuntu:xenial" ]; then
+    lxc="/snap/bin/lxc"
+    "$script_path/setup_lxd.sh"
+    "$script_path/run_lxd_container.sh" test-runner
+    $lxc file push --recursive $project_path test-runner/root/
+    run(){ $lxc exec test-runner -- sh -c "cd snapcraft && $1"; }
+    run "./tools/travis/setup_lxd.sh"
+else
+    echo "Invalid image: $image"
+    exit 1
 fi
 
-$lxc stop test-runner
+run "$dependencies"
+run "./runtests.sh $test"
+if [ "$test" = "snapcraft/tests/unit" ]; then
+    # Report code coverage.
+    run "python3 -m coverage xml"
+    run "codecov --token=$CODECOV_TOKEN"
+fi
+
+if [ "$image" != "native" ]; then
+    $lxc stop test-runner
+fi
