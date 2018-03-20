@@ -59,7 +59,7 @@ class PluginHandler:
     def __init__(self, *, plugin, part_properties, project_options,
                  part_schema, definitions_schema, stage_packages_repo,
                  grammar_processor, snap_base_path, base, confinement,
-                 soname_cache):
+                 snap_type, soname_cache):
         self.valid = False
         self.plugin = plugin
         self._part_properties = _expand_part_properties(
@@ -70,6 +70,7 @@ class PluginHandler:
         self._snap_base_path = snap_base_path
         self._base = base
         self._confinement = confinement
+        self._snap_type = snap_type
         self._soname_cache = soname_cache
         self._source = grammar_processor.get_source()
         if not self._source:
@@ -530,12 +531,12 @@ class PluginHandler:
         if not self._build_attributes.keep_execstack():
             clear_execstack(elf_files=elf_files)
 
-        if self._build_attributes.no_patchelf():
+        if self._snap_type == 'app' and self._build_attributes.no_patchelf():
             logger.warning(
                 'The primed files for part {!r} will not be verified for '
                 'correctness or patched: build-attributes: [no-patchelf] '
                 'is set.'.format(self.name))
-        else:
+        elif self._snap_type == 'app':
             part_patcher = PartPatcher(
                 elf_files=elf_files,
                 plugin=self.plugin,
