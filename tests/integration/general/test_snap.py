@@ -84,7 +84,7 @@ class SnapTestCase(integration.TestCase):
                 summary: one line summary
                 description: a longer description
                 architectures:
-                - amd64
+                - {}
                 confinement: strict
                 grade: stable
                 apps:
@@ -98,7 +98,7 @@ class SnapTestCase(integration.TestCase):
                     command: subdir/binary3
                   binary2:
                     command: command-binary2.wrapper
-            """)))
+            """).format(self.deb_arch)))
 
     def test_snap_default(self):
         self.copy_project_to_cwd('assemble')
