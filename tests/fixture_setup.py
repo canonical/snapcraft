@@ -1286,7 +1286,9 @@ class FakeBaseEnvironment(fixtures.Fixture):
         aarch64='armv7l',
         armv8l='armv7l',
         ppc64le='ppc',
-        x86_64='i686')
+        x86_64='i686',
+        i686='i686',
+        armv7l='armv7l')
 
     _WINDOWS_TRANSLATIONS = dict(AMD64='x86_64')
 
