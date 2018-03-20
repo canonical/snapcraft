@@ -208,3 +208,32 @@ class TestHostIsCompatibleWithTargetBase(unit.TestCase):
         self.assertThat(
             snapcraft.ProjectOptions().is_host_compatible_with_base(self.base),
             Equals(self.is_compatible))
+
+
+class TestLinkerVersionForBase(unit.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        patcher = mock.patch(
+            'snapcraft.file_utils.get_linker_version_from_file')
+        self.get_linker_version_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_get_linker_version_for_core(self):
+        self.assertThat(
+            snapcraft.ProjectOptions()._get_linker_version_for_base('core'),
+            Equals('2.23'))
+        self.get_linker_version_mock.assert_not_called()
+
+    def test_get_linker_version_for_core18(self):
+        self.assertThat(
+            snapcraft.ProjectOptions()._get_linker_version_for_base('core18'),
+            Equals('2.27'))
+        self.get_linker_version_mock.assert_not_called()
+
+    def test_get_linker_version_for_random_core(self):
+        self.get_linker_version_mock.return_value = '4.10'
+        self.assertThat(
+            snapcraft.ProjectOptions()._get_linker_version_for_base('random'),
+            Equals('4.10'))
+        self.get_linker_version_mock.assert_called_once_with('ld-2.23.so')

@@ -360,20 +360,15 @@ class TestGetRequiredGLIBC(TestElfBase):
 
     def test_linker_version_greater_than_required_glibc(self):
         self.assertTrue(
-            self.elf_file.is_linker_compatible(linker='ld-2.26.so'))
+            self.elf_file.is_linker_compatible(linker_version='2.26'))
 
     def test_linker_version_equals_required_glibc(self):
         self.assertTrue(
-            self.elf_file.is_linker_compatible(linker='ld-2.23.so'))
+            self.elf_file.is_linker_compatible(linker_version='2.23'))
 
     def test_linker_version_less_than_required_glibc(self):
         self.assertFalse(
-            self.elf_file.is_linker_compatible(linker='ld-1.2.so'))
-
-    def test_bad_linker_raises_exception(self):
-        self.assertRaises(EnvironmentError,
-                          self.elf_file.is_linker_compatible,
-                          linker='lib64/ld-linux-x86-64.so.2')
+            self.elf_file.is_linker_compatible(linker_version='1.2'))
 
 
 class TestElfFileAttrs(TestElfBase):
