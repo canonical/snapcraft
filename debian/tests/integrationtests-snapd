@@ -3,4 +3,9 @@
 set -e
 
 script_path="$(dirname "$0")"
-SNAPCRAFT_SLOW_TESTS=0 SNAPCRAFT_AUTOPKGTEST_SUITES=tests/integration/snapd $script_path/integrationtests
+
+if [ "$(script_path/get-release-codename)" == "xenial" ]; then
+    SNAPCRAFT_SLOW_TESTS=0 SNAPCRAFT_AUTOPKGTEST_SUITES=tests/integration/snapd $script_path/integrationtests
+else
+    echo "These tests are only supported on xenial"
+fi
