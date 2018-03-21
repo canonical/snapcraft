@@ -7,6 +7,7 @@
 >     'powerpc': 'powerpc-linux-gnu',
 >     'amd64': 'x86_64-linux-gnu',
 >     's390x': 's390x-linux-gnu',
+>     'armhf': 'arm-linux-gnueabihf',
 > }
 > 
 > 
