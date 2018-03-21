@@ -28,6 +28,8 @@ fi
 test="$1"
 image="${2:-ubuntu:xenial}"
 
+PATH="$VIRTUAL_ENV/bin:$PATH"
+
 if [ "$test" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
 elif [ "$test" = "tests/unit" ]; then
@@ -49,7 +51,7 @@ project_path="$(readlink -f "$script_path/../..")"
 
 if [ "$image" = "native" ]; then
     if grep 14.04 /etc/os-release; then
-        sed -i 's/apt_1.1.0~beta1build1/apt_0.9.3.5ubuntu2/' requirements.txt
+        # libsodium-dev
         sudo add-apt-repository -y ppa:chris-lea/libsodium
         sudo apt update
     fi

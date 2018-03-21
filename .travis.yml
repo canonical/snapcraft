@@ -58,11 +58,11 @@ jobs:
     # Trusty
     - stage: integration-trusty
       if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests/integration/general native
+      script: sudo -E ./tools/travis/run_tests.sh tests/integration/general native
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests/integration/store native
+      script: sudo -E ./tools/travis/run_tests.sh tests/integration/store native
     - if: type != cron
-      script: sudo ./tools/travis/run_tests.sh tests/integration/plugins_catkin native
+      script: sudo -E ./tools/travis/run_tests.sh tests/integration/plugins_catkin native
     # Trigger nightly tests, only in cron.
     - stage: nightly
     # Run spread tests for the snapcraft snap in edge.
