@@ -30,6 +30,7 @@ url = 'https://github.com/snapcore/snapcraft'
 packages = [
     'snapcraft',
     'snapcraft.cli',
+    'snapcraft.cli.snapcraftctl',
     'snapcraft.extractors',
     'snapcraft.integrations',
     'snapcraft.internal',

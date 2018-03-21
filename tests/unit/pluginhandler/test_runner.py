@@ -73,7 +73,8 @@ class RunnerTestCase(unit.TestCase):
         with mock.patch('os.path.exists', return_value=True):
             runner.prepare()
 
-        expected_snapcrafctl = '/snap/snapcraft/current/bin/snapcraftctl'
+        expected_snapcrafctl = ('/snap/snapcraft/current/usr/bin/python3 '
+                                '/snap/snapcraft/current/bin/snapcraftctl')
 
         self.assertThat(os.path.join('builddir', 'definition'), FileExists())
         self.assertThat(
