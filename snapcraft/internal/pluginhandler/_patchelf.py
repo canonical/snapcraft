@@ -93,7 +93,8 @@ class PartPatcher:
     def _get_glibc_compatibility(self, linker_version: str) -> Dict[str, str]:
         linker_incompat = dict()  # type: Dict[str, str]
         for elf_file in self._elf_files:
-            if not elf_file.is_linker_compatible(linker=linker_version):
+            if not elf_file.is_linker_compatible(
+                    linker_version=linker_version):
                 linker_incompat[elf_file.path] = \
                     elf_file.get_required_glibc()
         if linker_incompat:
@@ -135,12 +136,12 @@ class PartPatcher:
                     raise patch_error
 
     def _verify_compat(self) -> None:
-        linker_version = os.path.basename(
-                self._project.get_core_dynamic_linker(self._core_base))
+        linker_version = self._project._get_linker_version_for_base(
+            self._core_base)
         linker_incompat = self._get_glibc_compatibility(linker_version)
+        logger.debug('List of files incompatible with {!r}: {!r}'.format(
+            linker_version, linker_incompat))
         # Even though we do this in patch, it does not hurt to check again
-        logger.debug('Is the {!r} incompatible: {!r}'.format(linker_version,
-                                                             linker_incompat))
         if linker_incompat and not self._is_libc6_staged:
             raise errors.StagePackageMissingError(package='libc6')
 

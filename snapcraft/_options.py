@@ -22,6 +22,7 @@ import sys
 from contextlib import suppress
 from typing import List, Set  # noqa: F401
 
+from snapcraft import file_utils
 from snapcraft.internal import common, errors, os_release
 from snapcraft.internal.deprecations import handle_deprecation_notice
 
@@ -115,6 +116,12 @@ _HOST_CODENAME_FOR_BASE = {
 _HOST_COMPATIBILITY = {
     'xenial': ['trusty', 'xenial'],
     'bionic': ['trusty', 'xenial', 'bionic'],
+}
+
+
+_LINKER_VERSION_FOR_BASE = {
+    'core18': '2.27',
+    'core': '2.23',
 }
 
 
@@ -257,6 +264,16 @@ class ProjectOptions:
         compatible_hosts = _HOST_COMPATIBILITY.get(
             build_host_for_base, [])  # type: List[str]
         return codename in compatible_hosts
+
+    # This is private to not make the API public given that base
+    # will be part of the new Project.
+    def _get_linker_version_for_base(self, base: str) -> str:
+        """Returns the linker version for base."""
+        try:
+            return _LINKER_VERSION_FOR_BASE[base]
+        except KeyError:
+            linker_file = os.path.basename(self.get_core_dynamic_linker(base))
+            return file_utils.get_linker_version_from_file(linker_file)
 
     def get_core_dynamic_linker(self, base: str, expand: bool=True) -> str:
         """Returns the dynamic linker used for the targeted core.

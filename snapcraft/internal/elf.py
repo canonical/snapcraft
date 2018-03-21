@@ -265,25 +265,13 @@ class ElfFile:
 
         return arch, interp, soname, libs, execstack_set
 
-    def is_linker_compatible(self, *, linker: str) -> bool:
-        """Determines if linker will work given the required glibc version.
-
-        The linker passed needs to be of the format <root>/ld-<X>.<Y>.so.
-        """
+    def is_linker_compatible(self, *, linker_version: str) -> bool:
+        """Determines if linker will work given the required glibc version."""
         version_required = self.get_required_glibc()
-        m = re.search(r'ld-(?P<linker_version>[\d.]+).so$',
-                      os.path.basename(linker))
-        if not m:
-            # This is a programmatic error, we don't want to be friendly
-            # about this.
-            raise EnvironmentError('The format for the linker should be of the'
-                                   'form <root>/ld-<X>.<Y>.so. {!r} does not '
-                                   'match that format.'.format(linker))
-        linker_version = m.group('linker_version')
         r = parse_version(version_required) <= parse_version(linker_version)
         logger.debug('Checking if linker {!r} will work with '
                      'GLIBC_{} required by {!r}: {!r}'.format(
-                         linker, version_required, self.path, r))
+                         linker_version, version_required, self.path, r))
         return r
 
     def get_required_glibc(self) -> str:

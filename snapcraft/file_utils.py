@@ -17,6 +17,7 @@
 from contextlib import contextmanager, suppress
 import hashlib
 import logging
+import re
 import os
 import shutil
 import subprocess
@@ -28,6 +29,7 @@ from snapcraft.internal.errors import (
     RequiredCommandFailure,
     RequiredCommandNotFound,
     RequiredPathDoesNotExist,
+    SnapcraftEnvironmentError,
 )
 
 if sys.version_info < (3, 6):
@@ -292,3 +294,29 @@ def _command_path_in_root(root, command_name):
         path = os.path.join(root, bin_directory, command_name)
         if os.path.exists(path):
             return path
+
+
+def get_linker_version_from_file(linker_file: str) -> str:
+    """Returns the version of the linker from linker_file.
+
+    linker_file must be of the format ld-(?P<linker_version>[\d.]+).so$
+
+    :param str linker_file: a valid file path or basename representing
+                            the linker from libc6 or related.
+    :returns: the version extracted from the linker file.
+    :rtype: string
+    :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
+       if linker_file is not of the expected format.
+    """
+    m = re.search(r'ld-(?P<linker_version>[\d.]+).so$', linker_file)
+    if not m:
+        # This is a programmatic error, we don't want to be friendly
+        # about this.
+        raise SnapcraftEnvironmentError(
+            'The format for the linker should be of the of the form '
+            '<root>/ld-<X>.<Y>.so. {!r} does not match that format. '
+            'Ensure you are targeting an appropriate base'.format(
+                linker_file))
+    linker_version = m.group('linker_version')
+
+    return linker_version
