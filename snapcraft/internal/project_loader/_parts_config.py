@@ -41,6 +41,7 @@ class PartsConfig:
         self._confinement = parts['confinement']
         self._soname_cache = elf.SonameCache()
         self._parts_data = parts.get('parts', {})
+        self._snap_type = parts.get('type', 'app')
         self._project_options = project_options
         self._validator = validator
         self.build_snaps = build_snaps
@@ -194,6 +195,7 @@ class PartsConfig:
             snap_base_path=path.join('/', 'snap', self._snap_name, 'current'),
             base=self._base,
             confinement=self._confinement,
+            snap_type=self._snap_type,
             soname_cache=self._soname_cache)
 
         self.build_snaps |= grammar_processor.get_build_snaps()
@@ -215,6 +217,8 @@ class PartsConfig:
 
         env = []
         stagedir = self._project_options.stage_dir
+        is_host_compat = self._project_options.is_host_compatible_with_base(
+            self._base)
 
         if root_part:
             # this has to come before any {}/usr/bin
@@ -233,8 +237,7 @@ class PartsConfig:
                 self._project_options.arch_triplet)
             # Only set the paths to the base snap if we are building on the
             # same host. Failing to do so will cause Segmentation Faults.
-            if (self._confinement == 'classic' and
-                    self._project_options.is_host_compatible_with_base):
+            if (self._confinement == 'classic' and is_host_compat):
                 env += env_for_classic(self._base,
                                        self._project_options.arch_triplet)
             env.append('SNAPCRAFT_PART_INSTALL="{}"'.format(part.installdir))

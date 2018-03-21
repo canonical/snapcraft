@@ -701,16 +701,15 @@ class CatkinPlugin(snapcraft.BasePlugin):
         # Fix all shebangs to use the in-snap python.
         mangling.rewrite_python_shebangs(self.installdir)
 
-        # Also replace the python usage in 10.ros.sh to use the in-snap python.
-        ros10_file = os.path.join(self.rosdir,
-                                  'etc/catkin/profile.d/10.ros.sh')
-        if os.path.isfile(ros10_file):
-            with open(ros10_file, 'r+') as f:
-                pattern = re.compile(r'/usr/bin/python')
-                replaced = pattern.sub(r'python', f.read())
-                f.seek(0)
-                f.truncate()
-                f.write(replaced)
+        # Also replace all the /usr/bin/python calls in etc/catkin/profile.d/
+        # files with the in-snap python
+        profile_d_path = os.path.join(
+            self.rosdir, 'etc', 'catkin', 'profile.d')
+        file_utils.replace_in_file(
+            profile_d_path,
+            re.compile(r''),
+            re.compile(r'/usr/bin/python'),
+            r'python')
 
     def _build_catkin_packages(self):
         # Nothing to do if no packages were specified

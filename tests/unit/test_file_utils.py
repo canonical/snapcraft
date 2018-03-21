@@ -27,6 +27,7 @@ from snapcraft.internal.errors import (
     RequiredCommandFailure,
     RequiredCommandNotFound,
     RequiredPathDoesNotExist,
+    SnapcraftEnvironmentError,
     SnapcraftError,
 )
 from tests import unit
@@ -315,3 +316,24 @@ class RequiresPathExistsTestCase(unit.TestCase):
             ).__enter__)
 
         self.assertThat(str(raised), Equals("what? 'foo'"))
+
+
+class TestGetLinkerFromFile(unit.TestCase):
+
+    def test_get_linker_version_from_basename(self):
+        self.assertThat(
+            file_utils.get_linker_version_from_file('ld-2.26.so'),
+            Equals('2.26'))
+
+    def test_get_linker_version_from_path(self):
+        self.assertThat(
+            file_utils.get_linker_version_from_file('/lib/x86/ld-2.23.so'),
+            Equals('2.23'))
+
+
+class TestGetLinkerFromFileErrors(unit.TestCase):
+
+    def test_bad_file_formatlinker_raises_exception(self):
+        self.assertRaises(SnapcraftEnvironmentError,
+                          file_utils.get_linker_version_from_file,
+                          linker_file='lib64/ld-linux-x86-64.so.2')

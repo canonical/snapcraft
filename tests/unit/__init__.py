@@ -171,7 +171,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
     def load_part(self, part_name, plugin_name=None, part_properties=None,
                   project_options=None, stage_packages_repo=None,
-                  base='core', confinement='strict'):
+                  base='core', confinement='strict', snap_type='app'):
         if not plugin_name:
             plugin_name = 'nil'
         properties = {'plugin': plugin_name}
@@ -210,6 +210,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             snap_base_path='/snap/fake-name/current',
             base=base,
             confinement=confinement,
+            snap_type=snap_type,
             soname_cache=elf.SonameCache())
 
 
