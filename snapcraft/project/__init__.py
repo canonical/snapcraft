@@ -14,4 +14,4 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ._project import Project                          # noqa
+from ._project import Project                          # noqa F401

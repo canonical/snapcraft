@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ._project_options import ProjectOptions           # noqa
-from ._project_info import ProjectInfo                 # noqa
+from ._project_options import ProjectOptions
+from ._project_info import ProjectInfo                 # noqa: F401
 
 
 class Project(ProjectOptions):

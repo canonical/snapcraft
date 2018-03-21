@@ -23,7 +23,7 @@ import re
 import jsonschema
 import yaml
 import yaml.reader
-from typing import Set  # noqa
+from typing import Set  # noqa: F401
 
 
 from snapcraft import project
