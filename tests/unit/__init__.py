@@ -149,6 +149,8 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             machine=machine)
         self.useFixture(self.base_environment)
 
+        # Make sure SNAPCRAFT_DEBUG is reset between tests
+        self.useFixture(fixtures.EnvironmentVariable('SNAPCRAFT_DEBUG'))
         self.useFixture(fixture_setup.FakeSnapcraftctl())
 
     def make_snapcraft_yaml(self, content, encoding='utf-8'):
