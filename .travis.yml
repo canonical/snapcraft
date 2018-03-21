@@ -6,6 +6,8 @@ services: [docker]
 language: python
 python:
  - "3.6"
+install:
+ - echo 'No installing of dependencies here'
 
 cache:
   directories:
