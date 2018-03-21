@@ -149,6 +149,8 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
             machine=machine)
         self.useFixture(self.base_environment)
 
+        self.useFixture(fixture_setup.FakeSnapcraftctl())
+
     def make_snapcraft_yaml(self, content, encoding='utf-8'):
         with contextlib.suppress(FileExistsError):
             os.mkdir('snap')
