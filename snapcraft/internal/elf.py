@@ -447,6 +447,17 @@ class Patcher:
         self._run_patchelf(patchelf_args=patchelf_args,
                            elf_file_path=elf_file.path)
 
+        # This needs to run separately (TODO: figure out why).
+        self.disable_default_libraries(elf_file=elf_file)
+
+    def disable_default_libraries(self, *, elf_file: ElfFile) -> None:
+        """Sets --no-default-lib for elf_file if it has dependencies."""
+        if not elf_file.dependencies:
+            return
+
+        self._run_patchelf(patchelf_args=['--no-default-lib'],
+                           elf_file_path=elf_file.path)
+
     @_retry_patch
     def _run_patchelf(self, *, patchelf_args: List[str],
                       elf_file_path: str) -> None:

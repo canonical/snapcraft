@@ -16,11 +16,12 @@
 
 import os
 import subprocess
+from glob import glob
 
 from testtools.matchers import (Annotate, Contains, DirExists, Equals,
                                 FileExists, MatchesRegex, Not)
 
-from tests import integration, fixture_setup
+from tests import integration, fixture_setup, skip
 
 
 class RpathTestCase(integration.TestCase):
@@ -87,6 +88,42 @@ class OriginRPATHTestCase(integration.TestCase):
                 seen,
                 Annotate('A duplicate rpath was found!', Not(Contains(i))))
             seen.add(i)
+
+    @skip.skip_unless_codename('xenial', 'test is designed for xenial only')
+    def test_nothing_outside_rpath_works(self):
+        # If this would be working incorrectly, libraries would be picked up by
+        # what is brough in by curl in build-packages.
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path,
+                                                     confinement='classic')
+        snapcraft_yaml.update_part('test-part', {
+            'plugin': 'nil',
+            'stage-packages': ['curl'],
+            'build-packages': ['curl'],
+        })
+        self.useFixture(snapcraft_yaml)
+
+        self.run_snapcraft('prime')
+
+        bin_path = os.path.join(self.prime_dir, 'usr', 'bin', 'curl')
+        self.assertThat(bin_path, FileExists())
+
+        interpreter = subprocess.check_output([
+            self.patchelf_command, '--print-interpreter',
+            bin_path]).decode().strip()
+        # Now use the interpreter to get the DT_NEEDED resolution, this
+        # should work.
+        subprocess.check_output([interpreter, '--list', bin_path])
+
+        # Remove one of the primed files
+        glob_pattern = '{}/usr/lib/*/libsqlite3.so*'.format(self.prime_dir)
+        for file_path in glob(glob_pattern):
+            os.unlink(file_path)
+
+        # And this should not
+        self.assertRaises(
+            subprocess.CalledProcessError,
+            subprocess.check_output,
+            [interpreter, '--list', bin_path])
 
 
 class ExecStackTestCase(integration.TestCase):

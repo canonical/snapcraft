@@ -134,6 +134,21 @@ class PartPatcher:
                         elf_file.path))
                 if not self._is_go_based_plugin:
                     raise patch_error
+        # All files need to have no-default-lib set to avoid them from
+        # referring to files from the host.
+        files_to_disable_default_libs = self._elf_files - files_to_patch
+        for elf_file in files_to_disable_default_libs:
+            try:
+                elf_patcher.disable_default_libraries(elf_file=elf_file)
+            except errors.PatcherError as patch_error:
+                logger.warning(
+                    'An attempt to patch {!r} so that it would work '
+                    'correctly in diverse environments was made and failed. '
+                    'To disable this behavior set '
+                    '`build-attributes: [no-patchelf]` for the part.'.format(
+                        elf_file.path))
+                if not self._is_go_based_plugin:
+                    raise patch_error
 
     def _verify_compat(self) -> None:
         linker_version = self._project._get_linker_version_for_base(
@@ -167,6 +182,8 @@ class PartPatcher:
             if there are libc6 mismatches and libc6 is not in stage-packages.
         :raises errors.SnapcraftEnvironementError:
             if something is horribly wrong.
+        :raises errors.PatcherError:
+            if patchelf fails to run for a given elf.ElfFile
         """
         logger.debug('Host compatible with base: {!r}'.format(
             self._is_host_compat_with_base))
