@@ -1,20 +1,37 @@
 #!/bin/sh
 #
-# This file exists because snapcraftctl must be run using python3 -E in order
-# for it to not be influenced by PYTHON* variables. This is required because
-# snapcraftctl is a python3 utility, but Snapcraft supports building python2
-# parts, where PYTHONPATH et. al. may be set for python2.
+# This file exists because snapcraftctl must be run using a clean environment
+# that is uninfluenced by the environment of the part using it. There are a few
+# reasons for this:
+#
+#   1. snapcraftctl is a python3 utility, but Snapcraft supports building python2
+#      parts, where PYTHONPATH et. al. are set for python2.
+#   2. snapcraftctl is part of snapcraft, which loads up various libraries that
+#      can be influenced with LD_LIBRARY_PATH, which is set for many parts.
+#
+# Not only this, but the only way snapcraftctl works reliably is if it's run
+# by exactly the same interpreter as snapcraft itself (otherwise it won't find
+# snapcraft). To that end, this script will use the interpreter defined within
+# the SNAPCRAFT_INTERPRETER environment variable.
 
-# Which python3 are we using? By default, the one from the PATH. But if we're
-# in the snap, we need to use the one in the snap.
-python3_command="python3"
-if [ -n "$SNAP" -a "$SNAP_NAME" = "snapcraft" ]; then
-	python3_command="$SNAP/usr/bin/python3"
-fi
+# Which python3 are we using? By default, the one from the PATH. If
+# SNAPCRAFT_INTERPRETER is specified, use that one instead.
+python3_command="${SNAPCRAFT_INTERPRETER:-$(which python3)}"
 
-exec "$python3_command" -E -c '
+snapcraftctl_command="""$python3_command"" -c '
 import snapcraft.cli.__main__
 
 # Click strips off the first arg by default, so the -c will not be passed
-snapcraft.cli.__main__.run_snapcraftctl(prog_name="snapcraftctl")
-' "$@"
+snapcraft.cli.__main__.run_snapcraftctl(prog_name=\"snapcraftctl\")
+' ""$@"
+
+
+# We don't actually want a 100% clean environment. Pass on the locale settings,
+# as well as the environment variables required by snapcraftctl itself.
+/usr/bin/env -i -- sh -<<END
+export LC_ALL="$LC_ALL"
+export LANG="$LANG"
+export SNAPCRAFTCTL_CALL_FIFO="$SNAPCRAFTCTL_CALL_FIFO"
+export SNAPCRAFTCTL_FEEDBACK_FIFO="$SNAPCRAFTCTL_FEEDBACK_FIFO"
+$snapcraftctl_command
+END

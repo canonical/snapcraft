@@ -140,7 +140,7 @@ else:
                 'snapcraft-parser = snapcraft.internal.parser:main',
             ],
         },
-        # This is not in console_scripts because we need to use python -E
+        # This is not in console_scripts because we need a clean environment
         scripts=['bin/snapcraftctl'],
         data_files=[
             ('share/snapcraft/schema',

@@ -1340,29 +1340,15 @@ class FakeBaseEnvironment(fixtures.Fixture):
             real_linker, os.path.dirname(linker_path)), linker_path)
 
 
-class FakeSnapcraftctl(fixtures.Fixture):
+class SnapcraftBinOnPath(fixtures.Fixture):
 
     def _setUp(self):
         super()._setUp()
 
-        tempdir = self.useFixture(fixtures.TempDir()).path
-        altered_path = '{}:{}'.format(tempdir, os.environ.get('PATH'))
+        bin_dir = os.path.realpath(os.path.join(__file__, '..', 'bin'))
+
+        altered_path = '{}:{}'.format(bin_dir, os.environ.get('PATH'))
         self.useFixture(fixtures.EnvironmentVariable('PATH', altered_path))
-
-        snapcraftctl_path = os.path.join(tempdir, 'snapcraftctl')
-        with open(snapcraftctl_path, 'w') as f:
-            f.write(textwrap.dedent("""\
-                #!/usr/bin/env python3
-
-                import snapcraft.cli.__main__
-
-                if __name__ == '__main__':
-                    snapcraft.cli.__main__.run_snapcraftctl(
-                        prog_name='snapcraftctl')
-            """))
-            f.flush()
-
-        os.chmod(snapcraftctl_path, 0o755)
 
 
 class FakeSnapcraftIsASnap(fixtures.Fixture):

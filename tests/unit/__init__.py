@@ -151,7 +151,9 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
 
         # Make sure SNAPCRAFT_DEBUG is reset between tests
         self.useFixture(fixtures.EnvironmentVariable('SNAPCRAFT_DEBUG'))
-        self.useFixture(fixture_setup.FakeSnapcraftctl())
+
+        # Added for access to snapcraftctl
+        self.useFixture(fixture_setup.SnapcraftBinOnPath())
 
     def make_snapcraft_yaml(self, content, encoding='utf-8'):
         with contextlib.suppress(FileExistsError):

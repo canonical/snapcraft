@@ -88,14 +88,19 @@ class Runner:
                     env += 'alias snapcraftctl="$SNAP/bin/snapcraftctl"\n'
             env += common.assemble_env()
 
+            # snapcraftctl only works consistently if it's using the exact same
+            # interpreter as that used by snapcraft itself, thus the definition
+            # of SNAPCRAFT_INTERPRETER.
             script = textwrap.dedent("""\
                 export SNAPCRAFTCTL_CALL_FIFO={call_fifo}
                 export SNAPCRAFTCTL_FEEDBACK_FIFO={feedback_fifo}
+                export SNAPCRAFT_INTERPRETER={interpreter}
                 {env}
                 {scriptlet}
             """.format(
-                call_fifo=call_fifo.path, feedback_fifo=feedback_fifo.path,
-                env=env, scriptlet=scriptlet))
+                interpreter=sys.executable, call_fifo=call_fifo.path,
+                feedback_fifo=feedback_fifo.path, env=env,
+                scriptlet=scriptlet))
 
             process = subprocess.Popen(
                 ['/bin/sh', '-e', '-c', script], cwd=self._builddir)
