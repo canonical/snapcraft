@@ -53,7 +53,11 @@ if [ "$image" = "native" ]; then
     if grep 14.04 /etc/os-release; then
         # libsodium-dev
         sudo add-apt-repository -y ppa:chris-lea/libsodium
-        sudo apt update
+        sudo apt-get update
+        # FIXME: Work-around for
+        # mksquashfs: error while loading shared libraries: liblz4.so.1
+        # This can be removed once 2.40.1 is out
+        sudo apt-get install liblz4-1
     fi
     run(){ sh -c "SNAPCRAFT_FROM_SNAP=1 $1"; }
 elif [ "$image" = "ubuntu:xenial" ]; then
