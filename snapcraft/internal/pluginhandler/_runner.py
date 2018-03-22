@@ -85,8 +85,7 @@ class Runner:
                 snapcraftctl_path = os.path.join(
                     os.getenv('SNAP'), 'bin', 'snapcraftctl')
                 if os.path.exists(snapcraftctl_path):
-                    env += ('alias snapcraftctl="$SNAP/usr/bin/python3 '
-                            '$SNAP/bin/snapcraftctl"\n')
+                    env += 'alias snapcraftctl="$SNAP/bin/snapcraftctl"\n'
             env += common.assemble_env()
 
             script = textwrap.dedent("""\

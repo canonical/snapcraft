@@ -1,0 +1,20 @@
+#!/bin/sh
+#
+# This file exists because snapcraftctl must be run using python3 -E in order
+# for it to not be influenced by PYTHON* variables. This is required because
+# snapcraftctl is a python3 utility, but Snapcraft supports building python2
+# parts, where PYTHONPATH et. al. may be set for python2.
+
+# Which python3 are we using? By default, the one from the PATH. But if we're
+# in the snap, we need to use the one in the snap.
+python3_command="python3"
+if [ -n "$SNAP" -a "$SNAP_NAME" = "snapcraft" ]; then
+	python3_command="$SNAP/usr/bin/python3"
+fi
+
+exec "$python3_command" -E -c '
+import snapcraft.cli.__main__
+
+# Click strips off the first arg by default, so the -c will not be passed
+snapcraft.cli.__main__.run_snapcraftctl(prog_name="snapcraftctl")
+' "$@"

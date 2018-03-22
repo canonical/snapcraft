@@ -138,9 +138,10 @@ else:
             'console_scripts': [
                 'snapcraft = snapcraft.cli.__main__:run',
                 'snapcraft-parser = snapcraft.internal.parser:main',
-                'snapcraftctl = snapcraft.cli.__main__:run_snapcraftctl',
             ],
         },
+        # This is not in console_scripts because we need to use python -E
+        scripts=['bin/snapcraftctl'],
         data_files=[
             ('share/snapcraft/schema',
              ['schema/' + x for x in os.listdir('schema')]),
