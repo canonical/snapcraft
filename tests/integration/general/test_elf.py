@@ -17,7 +17,8 @@
 import os
 import subprocess
 
-from testtools.matchers import Equals, DirExists, FileExists, MatchesRegex, Not
+from testtools.matchers import (Annotate, Contains, DirExists, Equals,
+                                FileExists, MatchesRegex, Not)
 
 from tests import integration, fixture_setup
 
@@ -54,10 +55,38 @@ class Libc6TestCase(integration.TestCase):
         bin_path = os.path.join(self.prime_dir, 'usr', 'bin', 'hello')
         self.assertThat(bin_path, FileExists())
 
+        # Verify that the correct interpreter that has been staged is used.
         interpreter = subprocess.check_output([
             self.patchelf_command, '--print-interpreter', bin_path]).decode()
         expected_interpreter = r'^/snap/test-snap/current/lib/.*'
         self.assertThat(interpreter, MatchesRegex(expected_interpreter))
+
+
+class OriginRPATHTestCase(integration.TestCase):
+
+    def test_origin(self):
+        # We stage libc6 for this to work on non xenial
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml.update_part('test-part', {
+            'plugin': 'nil',
+            'stage-packages': ['libc6', 'python3']
+        })
+        self.useFixture(snapcraft_yaml)
+
+        self.run_snapcraft('prime')
+
+        bin_path = os.path.join(self.prime_dir, 'usr', 'bin', 'python3')
+        self.assertThat(bin_path, FileExists())
+
+        # Verify there aren't any duplicate rpath entries
+        rpath = subprocess.check_output([
+            self.patchelf_command, '--print-rpath', bin_path]).decode().strip()
+        seen = set()
+        for i in rpath.split(':'):
+            self.assertThat(
+                seen,
+                Annotate('A duplicate rpath was found!', Not(Contains(i))))
+            seen.add(i)
 
 
 class ExecStackTestCase(integration.TestCase):

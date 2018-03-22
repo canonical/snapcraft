@@ -504,8 +504,10 @@ class Patcher:
                     rel_library_path_dir = os.path.dirname(rel_library_path)
                     # return the dirname, with the first .. replace
                     # with $ORIGIN
-                    origin_rpaths.append(rel_library_path_dir.replace(
-                        '..', '$ORIGIN', 1))
+                    origin_rpath = rel_library_path_dir.replace(
+                        '..', '$ORIGIN', 1)
+                    if origin_rpath not in origin_rpaths:
+                        origin_rpaths.append(origin_rpath)
 
         if existing_rpaths:
             # Only keep those that mention origin and are not already in our
