@@ -22,7 +22,7 @@ import os
 import shutil
 import sys
 from glob import glob, iglob
-from typing import Dict, Set  # noqa: F401
+from typing import Dict, Set, Sequence  # noqa: F401
 
 import yaml
 
@@ -513,6 +513,14 @@ class PluginHandler:
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 
+        if self._snap_type == 'app':
+            dependency_paths = self._handle_elf(snap_files)
+        else:
+            dependency_paths = set()
+
+        self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
+
+    def _handle_elf(self, snap_files: Sequence[str]) -> Set[str]:
         elf_files = elf.get_elf_files(self.primedir, snap_files)
         all_dependencies = set()
         # TODO: base snap support
@@ -531,12 +539,12 @@ class PluginHandler:
         if not self._build_attributes.keep_execstack():
             clear_execstack(elf_files=elf_files)
 
-        if self._snap_type == 'app' and self._build_attributes.no_patchelf():
+        if self._build_attributes.no_patchelf():
             logger.warning(
                 'The primed files for part {!r} will not be verified for '
                 'correctness or patched: build-attributes: [no-patchelf] '
                 'is set.'.format(self.name))
-        elif self._snap_type == 'app':
+        else:
             part_patcher = PartPatcher(
                 elf_files=elf_files,
                 plugin=self.plugin,
@@ -550,7 +558,7 @@ class PluginHandler:
                     'stage-packages', []))
             part_patcher.patch()
 
-        self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
+        return dependency_paths
 
     def mark_prime_done(self, snap_files, snap_dirs, dependency_paths):
         self.mark_done('prime', states.PrimeState(
