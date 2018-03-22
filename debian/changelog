@@ -1,3 +1,79 @@
+snapcraft (2.40+18.04) bionic; urgency=medium
+
+  [ Sergio Schvezov ]
+  * elf: better debug messages (#1950)
+  * elf: clear execstack by default (#1945)
+  * repo: silence deb caching when fetching packages (#1949)
+  * meta: make sure adapter does not propagate (#1955)
+  * store: stringify message for StoreDeltaApplicationError (#1962)
+  * python plugin: find setup.py when source-subdir is used (#1975)
+  * ci: switch to stable lxd and unconfined containers (#1978)
+  * project_loader: improve the logic to install patchelf as a build tool (#1967)
+  * demos: avoid use of the wrapper for java-hello-world (#1968)
+  * lifecycle: when priming dependencies need to be primed (#1977)
+  * pluginhandler: simplify logic when elf patching is required (#1979)
+  * pluginhandler: add option to disable patchelf for a part (#1987)
+  * schema: add keep-execstack (#1986)
+  * elf: remove dead code (#2000)
+  * core: initial support for bases (#1993)
+  * docker: export SNAP_ARCH into the environment (#1994)
+  * tests: add SNAPCRAFT_KEEP_DATA_PATH for integration (#1996)
+  * errros: add a specific error when running commands from plugins (#2004)
+  * pluginhandler: special case go patchelf failures for classic confinement (#2005)
+  * many: use packaging logic to get patchelf (#2006)
+  * project_loader: fix the host to base compatibility check (#2009)
+  * pluginhandler: only do elf checking and patching for type app (#2012)
+  * demos: use realpath in command entry for java-hello-world (#2016)
+  * many: optimize retrieval of the linker version (#2017)
+  * tests: minor fixes to autopkgtests (#2018)
+  * elf: avoid duplicating rpath entries (#2019)
+  * pluginhandler: only resort to elf mangling if the snap type is app (#2021)
+  * New upstream release (LP: #1756939)
+
+  [ Leo Arias ]
+  * tests: split the plugins tests in the same directory (#1944)
+  * tests: move test files out of the snapcraft dir (#1948)
+  * extractors: replace desktop file ids with paths (#1879)
+  * extractors: add support for common-id  (#1960)
+  * tests: remove ProjectOptions dependency from the integration suite (#1965)
+  * tests: remove dependency of internal repo from integration suite (#1971)
+  * tests: remove the internal os_release dependency (#1981)
+  * tests: remove _options dependency from integration suite (#1972)
+  * tests: update store tests user (#1984)
+  * tests: document arm testing setup (#1985)
+
+  [ Kyle Fazzari ]
+  * catkin plugin: extract Wstool into its own module (#1927)
+  * elf: remove all un-primed libs from soname cache (#1980)
+  * catkin plugin: support recursive rosinstall files (#1934)
+  * elf: only set rpaths to libs of the same arch (#1988)
+  * elf: don't parse elf more than necessary (#1989)
+  * catkin plugin: replace python calls in all profile.d scripts (#2007)
+  * docs: add execstack to HACKING.md's list of deb deps (#2015)
+  * integration tests: snap tests shouldn't be arch-specific (#2014)
+
+  [ Gustavo Silva ]
+  * cli: add version command (#1746)
+
+  [ John Lenton ]
+  * schema: improve the snap name's validator (#1957)
+  * snap: actually plug the completer in. (#1956)
+  * tests: adapt store tests with new snap name registration error messages
+    (#1964)
+
+  [ Christian Dywan ]
+  * project_loader: handle invalid unicode chars (#1941)
+  * lxd: initialize remote lazily (#1916)
+
+  [ Celso Providelo ]
+  * store: support for more granular store permissions (#1958)
+
+  [ James Henstridge ]
+  * elf: only consider regular files as possible ELF binaries (#1976)
+  * elf: only patch elf files that aren't referenced by DT_NEEDED (#1959)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Mon, 19 Mar 2018 12:40:43 +0000
+
 snapcraft (2.39.2) xenial; urgency=medium
 
   [ Sergio Schvezov ]

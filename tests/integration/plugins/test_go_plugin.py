@@ -49,7 +49,7 @@ class GoPluginTestCase(integration.TestCase):
 
         interpreter = subprocess.check_output([
             self.patchelf_command, '--print-interpreter', bin_path]).decode()
-        expected_interpreter = r'^/snap/core/current/.*'
+        expected_interpreter = r'^/snap/.*'
         self.assertThat(interpreter, MatchesRegex(expected_interpreter))
 
     def test_building_multiple_main_packages(self):

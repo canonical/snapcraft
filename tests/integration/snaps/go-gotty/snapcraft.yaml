@@ -16,6 +16,7 @@ parts:
     plugin: go
     go-importpath: github.com/yudai/gotty
     after: [go]
+    stage-packages: [libc6]
   go:
     source-tag: go1.9.2
     source-depth: 1
