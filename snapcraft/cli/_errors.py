@@ -79,7 +79,7 @@ def exception_handler(exception_type, exception, exception_traceback, *,
     # - a snapcraft handled error occurs, --debug not set so only the
     #   exception message is shown
     if is_raven_setup and not is_snapcraft_error:
-        is_env_send_data = os.environ.get(
+        is_env_send_data = os.getenv(
             'SNAPCRAFT_SEND_ERROR_DATA', 'n') == 'y'
         msg = _MSG_SEND_TO_SENTRY_TRACEBACK_CONFIRM
         click.echo(_MSG_SEND_TO_SENTRY_TRACEBACK)
