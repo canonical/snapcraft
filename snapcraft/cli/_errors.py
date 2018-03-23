@@ -52,32 +52,23 @@ def exception_handler(exception_type, exception, exception_traceback, *,
     """Catch all Snapcraft exceptions unless debugging.
 
     This function is the global excepthook, properly handling uncaught
-    exceptions. "Proper" being defined as:
+    exceptions and determine if they need to be reported.
 
-    When debug=False:
-        - If exception is a SnapcraftError, just display a nice error and exit
-          according to the exit code in the exception.
-        - If exception is NOT a SnapcraftError, show traceback and exit 1
+    These are the rules of engagement:
 
-    When debug=True:
-        - If exception is a SnapcraftError, show traceback and exit according
-          to the exit code in the exception.
-        - If exception is NOT a SnapcraftError, show traceback and exit 1
+        - a non snapcraft handled error occurs and raven is setup,
+          so we go over confirmation logic showing the relevant traceback
+        - a non snapcraft handled error occurs and raven is not setup,
+          so we just show the traceback
+        - a snapcraft handled error occurs, debug=True so a traceback
+          is shown
+        - a snapcraft handled error occurs, debug=False so only the
+          exception message is shown
     """
-
     exit_code = 1
     is_snapcraft_error = issubclass(exception_type, errors.SnapcraftError)
     is_raven_setup = RavenClient is not None
 
-    # The use cases:
-    # - a non snapcraft handled error occurs and raven is setup,
-    #   so we go over confirmation logic showing the relevant traceback
-    # - a non snapcraft handled error occurs and raven is not setup,
-    #   so we just show the traceback
-    # - a snapcraft handled error occurs, --debug is set so a traceback
-    #   is shown
-    # - a snapcraft handled error occurs, --debug not set so only the
-    #   exception message is shown
     if is_raven_setup and not is_snapcraft_error:
         is_env_send_data = os.getenv(
             'SNAPCRAFT_SEND_ERROR_DATA', 'n') == 'y'
