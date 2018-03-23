@@ -31,15 +31,14 @@ class ToStatement:
     For example:
     >>> import tempfile
     >>> from snapcraft import ProjectOptions
+    >>> from snapcraft.internal.project_loader import grammar
     >>> def checker(primitive):
     ...     return True
-    >>> with tempfile.TemporaryDirectory() as cache_dir:
-    ...     options = ProjectOptions(target_deb_arch='i386')
-    ...     clause = ToStatement(to='to armhf', body=['foo'],
-    ...                          project_options=options,
-    ...                          checker=checker)
-    ...     clause.add_else(['bar'])
-    ...     clause.process()
+    >>> options = ProjectOptions(target_deb_arch='i386')
+    >>> processor = grammar.GrammarProcessor(None, options, checker)
+    >>> clause = ToStatement(to='to armhf', body=['foo'], processor=processor)
+    >>> clause.add_else(['bar'])
+    >>> clause.process()
     {'bar'}
     """
 
@@ -71,33 +70,37 @@ class ToStatement:
 
         self._else_bodies.append(else_body)
 
-    def process(self):
+    def check(self):
+        target_arch = self._processor.project_options.deb_arch
+
+        # The only selector currently supported is the target arch. Since
+        # selectors are matched with an AND, not OR, there should only be one
+        # selector.
+        return (len(self.selectors) == 1) and (target_arch in self.selectors)
+
+    def process_body(self):
         """Process the clause.
 
         :return: Primitives as determined by evaluating the statement.
         :rtype: list
         """
 
+        return self._processor.process(grammar=self._body)
+
+    def process_else(self):
         primitives = set()
-        target_arch = self._processor.project_options.deb_arch
 
-        # The only selector currently supported is the target arch. Since
-        # selectors are matched with an AND, not OR, there should only be one
-        # selector.
-        if (len(self.selectors) == 1) and (target_arch in self.selectors):
-            primitives = self._processor.process(
-                active_statement=self, grammar=self._body)
-        else:
-            for else_body in self._else_bodies:
-                if not else_body:
-                    # Handle the 'else fail' case.
-                    raise UnsatisfiedStatementError(self)
+        for else_body in self._else_bodies:
+            if not else_body:
+                # Handle the 'else fail' case.
+                raise UnsatisfiedStatementError(self)
 
-                primitives = self._processor.process(grammar=else_body)
-                if primitives:
-                    break
+            primitives = self._processor.process(grammar=else_body)
+            if primitives:
+                break
 
         return primitives
+
 
     def __eq__(self, other):
         return self.selectors == other.selectors
