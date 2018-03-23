@@ -26,11 +26,21 @@ snapcraft.cli.__main__.run_snapcraftctl(prog_name=\"snapcraftctl\")
 ' ""$@"
 
 
-# We don't actually want a 100% clean environment. Pass on the locale settings,
-# as well as the environment variables required by snapcraftctl itself.
+# We don't actually want a 100% clean environment. Pass on the SNAP variables,
+# locale settings, and environment variables required by snapcraftctl itself.
 /usr/bin/env -i -- sh -<<END
+# Required for snapcraftctl to actually find snapcraft when snapped via
+# sitecustomize
+export SNAP="$SNAP"
+export SNAP_NAME="$SNAP_NAME"
+export SNAP_VERSION="$SNAP_VERSION"
+export SNAP_ARCH="$SNAP_ARCH"
+
+# Required so Click doesn't whine about lack of a locale
 export LC_ALL="$LC_ALL"
 export LANG="$LANG"
+
+# Required for snapcraftctl to work
 export SNAPCRAFTCTL_CALL_FIFO="$SNAPCRAFTCTL_CALL_FIFO"
 export SNAPCRAFTCTL_FEEDBACK_FIFO="$SNAPCRAFTCTL_FEEDBACK_FIFO"
 $snapcraftctl_command
