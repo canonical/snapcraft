@@ -90,7 +90,11 @@ def exception_handler(exception_type, exception, exception_traceback, *,
             exception_type, exception, exception_traceback)
     elif is_snapcraft_error and not debug:
         exit_code = exception.get_exit_code()
-        echo.error(str(exception))
+        # if the error comes from running snapcraft in the container, it
+        # has already been displayed so we should avoid that situation
+        # of a double error print
+        if exception_type != errors.ContainerSnapcraftCmdError:
+            echo.error(str(exception))
     else:
         click.echo('Unhandled error case')
         exit_code = -1
