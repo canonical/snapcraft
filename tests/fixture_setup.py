@@ -27,6 +27,7 @@ import string
 import subprocess
 import sys
 import tempfile
+import textwrap
 import threading
 import urllib.parse
 import uuid
@@ -1339,15 +1340,37 @@ class FakeBaseEnvironment(fixtures.Fixture):
             real_linker, os.path.dirname(linker_path)), linker_path)
 
 
-class SnapcraftBinOnPath(fixtures.Fixture):
+class FakeSnapcraftctl(fixtures.Fixture):
 
     def _setUp(self):
         super()._setUp()
 
-        bin_dir = os.path.realpath(os.path.join(__file__, '..', 'bin'))
+        snapcraft_path = os.path.realpath(
+            os.path.join(os.path.dirname(__file__), '..'))
 
-        altered_path = '{}:{}'.format(bin_dir, os.environ.get('PATH'))
+        tempdir = self.useFixture(fixtures.TempDir()).path
+        altered_path = '{}:{}'.format(tempdir, os.environ.get('PATH'))
         self.useFixture(fixtures.EnvironmentVariable('PATH', altered_path))
+
+        snapcraftctl_path = os.path.join(tempdir, 'snapcraftctl')
+        with open(snapcraftctl_path, 'w') as f:
+            f.write(textwrap.dedent("""\
+                #!/usr/bin/env python3
+
+                # Make sure we can find snapcraft, even if it's not installed
+                # (like in CI).
+                import sys
+                sys.path.append('{snapcraft_path!s}')
+
+                import snapcraft.cli.__main__
+
+                if __name__ == '__main__':
+                    snapcraft.cli.__main__.run_snapcraftctl(
+                        prog_name='snapcraftctl')
+            """.format(snapcraft_path=snapcraft_path)))
+            f.flush()
+
+        os.chmod(snapcraftctl_path, 0o755)
 
 
 class FakeSnapcraftIsASnap(fixtures.Fixture):
