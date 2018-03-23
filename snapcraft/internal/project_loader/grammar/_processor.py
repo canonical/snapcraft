@@ -54,13 +54,11 @@ class GrammarProcessor:
             # By default, no transformation
             self._transformer = lambda s, p, o: p
 
-    def process(self, *, grammar=None, active_statement=None):
+    def process(self, *, grammar=None):
         """Process grammar and extract desired primitives.
 
         :param list grammar: Unprocessed grammar (defaults to that set in
                              init).
-        :param active_statement: Currently-active statement (i.e. the one being
-                                 processed). Defaults to None.
 
         :return: Primitives selected
         :rtype: set
@@ -82,7 +80,7 @@ class GrammarProcessor:
                     _handle_else(statement, None)
                 else:
                     primitives.add(self._transformer(
-                        active_statement, section, self.project_options))
+                        None, section, self.project_options))
             elif isinstance(section, dict):
                 statement = self._parse_dict(
                     section, statement, statements)
@@ -193,9 +191,12 @@ class _StatementCollection:
         """
         primitives = set()
         for statement in self._statements:
-            statement_primitives = statement.process()
-            for primitive in statement_primitives:
-                primitives.add(self._transformer(
-                    statement, primitive, self._project_options))
+            if statement.check():
+                statement_primitives = statement.process_body()
+                for primitive in statement_primitives:
+                    primitives.add(self._transformer(
+                        statement, primitive, self._project_options))
+            else:
+                primitives |= statement.process_else()
 
         return primitives

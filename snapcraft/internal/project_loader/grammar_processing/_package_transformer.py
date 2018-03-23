@@ -18,7 +18,7 @@ from snapcraft.internal.project_loader.grammar import _to
 
 
 def package_transformer(statement, package_name, project_options):
-    if isinstance(statement, _to.ToStatement):
+    if statement and isinstance(statement, _to.ToStatement):
         if ':' not in package_name:
             # deb_arch is target arch or host arch if both are the same
             package_name += ':{}'.format(project_options.deb_arch)

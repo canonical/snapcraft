@@ -158,10 +158,10 @@ class OnStatementGrammarTestCase(GrammarBaseTestCase):
                                   platform_architecture_mock):
         platform_machine_mock.return_value = self.host_arch
         platform_architecture_mock.return_value = ('64bit', 'ELF')
-        options = snapcraft.ProjectOptions()
+        processor = grammar.GrammarProcessor(
+            None, snapcraft.ProjectOptions(), self.checker)
         statement = on.OnStatement(
-            on=self.on, body=self.body, project_options=options,
-            checker=self.checker)
+            on=self.on, body=self.body, processor=processor)
 
         for else_body in self.else_bodies:
             statement.add_else(else_body)
@@ -217,10 +217,10 @@ class OnStatementInvalidGrammarTestCase(GrammarBaseTestCase):
         with testtools.ExpectedException(
                 grammar.errors.OnStatementSyntaxError,
                 self.expected_exception):
-            options = snapcraft.ProjectOptions()
+            processor = grammar.GrammarProcessor(
+                None, snapcraft.ProjectOptions(), self.checker)
             statement = on.OnStatement(
-                on=self.on, body=self.body, project_options=options,
-                checker=self.checker)
+                on=self.on, body=self.body, processor=processor)
 
             for else_body in self.else_bodies:
                 statement.add_else(else_body)
@@ -237,10 +237,10 @@ class OnStatementElseFail(GrammarBaseTestCase):
         platform_machine_mock.return_value = 'x86_64'
         platform_architecture_mock.return_value = ('64bit', 'ELF')
 
-        options = snapcraft.ProjectOptions()
+        processor = grammar.GrammarProcessor(
+            None, snapcraft.ProjectOptions(), self.checker)
         statement = on.OnStatement(
-            on='on i386', body=['foo'], project_options=options,
-            checker=self.checker)
+            on='on i386', body=['foo'], processor=processor)
 
         statement.add_else(None)
 

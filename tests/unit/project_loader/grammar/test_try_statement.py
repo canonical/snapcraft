@@ -18,6 +18,7 @@ import doctest
 from testtools.matchers import Equals
 
 import snapcraft
+from snapcraft.internal.project_loader import grammar
 import snapcraft.internal.project_loader.grammar._try as _try
 
 from . import GrammarBaseTestCase
@@ -115,9 +116,9 @@ class TryStatementGrammarTestCase(GrammarBaseTestCase):
     ]
 
     def test_try_statement_grammar(self):
-        statement = _try.TryStatement(
-            body=self.body, project_options=snapcraft.ProjectOptions(),
-            checker=self.checker)
+        processor = grammar.GrammarProcessor(
+            None, snapcraft.ProjectOptions(), self.checker)
+        statement = _try.TryStatement(body=self.body, processor=processor)
 
         for else_body in self.else_bodies:
             statement.add_else(else_body)
