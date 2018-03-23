@@ -17,6 +17,7 @@
 import os
 import sys
 import traceback
+from textwrap import dedent
 
 from . import echo
 from snapcraft.internal import errors
@@ -29,8 +30,21 @@ try:
 except ImportError:
     RavenClient = None
 
-_MSG_INTERNAL_ERROR = 'Sorry, Snapcraft had an internal error.'
-_MSG_SEND_TO_SENTRY = 'To help us improve, would you like to send error data?'
+# TODO:
+# - annotate the part and lifecycle step in the message
+# - add link to privacy policy
+# - add Always option
+_MSG_SEND_TO_SENTRY_TRACEBACK = dedent("""\
+    Sorry, Snapcraft ran into an error when trying to running through its
+    lifecycle that generated the following traceback:""")
+_MSG_SEND_TO_SENTRY_TRACEBACK_CONFIRM = dedent("""\
+    You can anonymously report this issue to the snapcraft developers.
+    No other data than this traceback and the version of snapcraft in use will
+    be sent.
+    Would you like send this error data?""")
+_MSG_SEND_TO_SENTRY_ENV = dedent("""\
+    Sending error data: SNAPCRAFT_SEND_ERROR_DATA is set to 'y'.""")
+_MSG_SEND_TO_SENTRY_THANKS = 'Thank you for sending the report.'
 
 
 def exception_handler(exception_type, exception, exception_traceback, *,
@@ -58,15 +72,24 @@ def exception_handler(exception_type, exception, exception_traceback, *,
         traceback.print_exception(
             exception_type, exception, exception_traceback)
 
-    if not is_snapcraft_error:
-        echo.error('Sorry, Snapcraft had an internal error.')
-        if _is_send_error_data():
+    if RavenClient is not None and not is_snapcraft_error:
+        is_env_send_data = os.environ.get(
+            'SNAPCRAFT_SEND_ERROR_DATA', 'n') == 'y'
+        msg = _MSG_SEND_TO_SENTRY_TRACEBACK_CONFIRM
+        click.echo(_MSG_SEND_TO_SENTRY_TRACEBACK)
+        traceback.print_exception(
+            exception_type, exception, exception_traceback)
+        if is_env_send_data:
+            click.echo(_MSG_SEND_TO_SENTRY_ENV)
             _submit_trace(exception)
+            click.echo(_MSG_SEND_TO_SENTRY_THANKS)
+        elif click.confirm(msg):
+            _submit_trace(exception)
+            click.echo(_MSG_SEND_TO_SENTRY_THANKS)
+    else:
+        should_print_error = not debug and (
+            exception_type != errors.ContainerSnapcraftCmdError)
 
-    should_print_error = not debug and (
-        exception_type != errors.ContainerSnapcraftCmdError)
-
-    if is_snapcraft_error:
         exit_code = exception.get_exit_code()
         if should_print_error:
             echo.error(str(exception))
@@ -74,19 +97,12 @@ def exception_handler(exception_type, exception, exception_traceback, *,
     sys.exit(exit_code)
 
 
-def _is_send_error_data():
-    is_raven_client = RavenClient is not None
-    is_env_send_data = os.environ.get('SNAPCRAFT_SEND_ERROR_DATA', 'y') == 'y'
-    return is_env_send_data and is_raven_client
-
-
 def _submit_trace(exception):
     client = RavenClient(
         'https://b0fef3e0ced2443c92143ae0d038b0a4:'
         'b7c67d7fa4ee46caae12b29a80594c54@sentry.io/277754',
         transport=RequestsHTTPTransport)
-    if click.confirm(_MSG_SEND_TO_SENTRY):
-        try:
-            raise exception
-        except Exception:
-            client.captureException()
+    try:
+        raise exception
+    except Exception:
+        client.captureException()
