@@ -91,6 +91,11 @@ class OriginRPATHTestCase(integration.TestCase):
 
 class ExecStackTestCase(integration.TestCase):
 
+    def setUp(self):
+        super().setUp()
+        if self.deb_arch == 'arm64':
+            self.skipTest('architecture is not supported by execstack')
+
     def _setup_project(self, keep_execstack: bool):
         if keep_execstack:
             attributes = ['keep-execstack']
