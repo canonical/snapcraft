@@ -70,16 +70,30 @@ class ErrorsTestCase(unit.TestCase):
     @mock.patch('click.confirm', return_value=False)
     def test_handler_traceback_non_snapcraft_exceptions_no_debug(
             self, click_confirm_mock):
+        """
+        Verify that the traceback is printed given that raven is available.
+        """
         try:
             self.call_handler(RuntimeError('not a SnapcraftError'), False)
         except Exception:
             self.fail('Exception unexpectedly raised')
 
-        self.assert_no_exception_traceback_exit_1_without_debug()
+        self.assert_exception_traceback_exit_1_with_debug()
 
     @mock.patch('click.confirm', return_value=False)
     def test_handler_traceback_non_snapcraft_exceptions_debug(
             self, click_confirm_mock):
+        try:
+            self.call_handler(RuntimeError('not a SnapcraftError'), True)
+        except Exception:
+            self.fail('Exception unexpectedly raised')
+
+        self.assert_exception_traceback_exit_1_with_debug()
+
+    @mock.patch.object(snapcraft.cli._errors, 'RavenClient')
+    def test_handler_no_raven_traceback_non_snapcraft_exceptions_debug(
+            self, raven_client_mock):
+        snapcraft.cli._errors.RavenClient = None
         try:
             self.call_handler(RuntimeError('not a SnapcraftError'), True)
         except Exception:
