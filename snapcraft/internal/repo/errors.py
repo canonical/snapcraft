@@ -46,6 +46,14 @@ class BuildPackageNotFoundError(RepoError):
         super().__init__(package=package)
 
 
+class BuildPackagesNotInstalledError(RepoError):
+
+    fmt = "Could not install all requested build packages: {packages}"
+
+    def __init__(self, *, packages: List[str]) -> None:
+        super().__init__(packages=' '.join(packages))
+
+
 class PackageBrokenError(RepoError):
 
     fmt = "The package {package} has unmet dependencies: {deps}"

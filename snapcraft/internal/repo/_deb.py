@@ -26,7 +26,7 @@ import subprocess
 import sys
 import urllib
 import urllib.request
-from typing import Dict, Set, List  # noqa
+from typing import Dict, Set, List, Tuple  # noqa: F401
 
 import apt
 from xml.etree import ElementTree
@@ -218,13 +218,21 @@ class Ubuntu(BaseRepo):
         return packages
 
     @classmethod
-    def install_build_packages(cls, package_names):
-        """Install build packages on the building machine.
+    def install_build_packages(cls, package_names: List[str]) -> List[str]:
+        """Install packages on the host required to build.
 
+        :param package_names: a list of package names to install.
+        :type package_names: a list of strings.
         :return: a list with the packages installed and their versions.
-
+        :rtype: list of strings.
+        :raises snapcraft.repo.errors.BuildPackageNotFoundError:
+            if one of the packages was not found.
+        :raises snapcraft.repo.errors.PackageBrokenError:
+            if dependencies for one of the packages cannot be resolved.
+        :raises snapcraft.repo.errors.BuildPackagesNotInstalledError:
+            if installing the packages on the host failed.
         """
-        new_packages = []
+        new_packages = []  # type: List[Tuple[str, str]]
         with apt.Cache() as apt_cache:
             try:
                 cls._mark_install(apt_cache, package_names)
@@ -240,7 +248,8 @@ class Ubuntu(BaseRepo):
                 for package in new_packages]
 
     @classmethod
-    def _mark_install(cls, apt_cache, package_names):
+    def _mark_install(cls, apt_cache: apt.Cache,
+                      package_names: List[str]) -> None:
         for name in package_names:
             if name.endswith(':any'):
                 name = name[:-4]
@@ -252,7 +261,11 @@ class Ubuntu(BaseRepo):
             try:
                 if version:
                     _set_pkg_version(apt_cache[name_arch], version)
-                apt_cache[name_arch].mark_install()
+                # Disable automatic resolving of broken packages here
+                # because if that fails it raises a SystemError and the
+                # API doesn't expose enough information about he problem.
+                # Instead we let apt-get show a verbose error message later.
+                apt_cache[name_arch].mark_install(auto_fix=False)
                 cls._verify_marked_install(apt_cache[name_arch])
             except KeyError:
                 raise errors.PackageNotFoundError(name)
@@ -268,7 +281,7 @@ class Ubuntu(BaseRepo):
             raise errors.PackageBrokenError(package.name, broken_deps)
 
     @classmethod
-    def _install_new_build_packages(cls, package_names):
+    def _install_new_build_packages(cls, package_names: List[str]) -> None:
         package_names.sort()
         logger.info(
             'Installing build dependencies: %s', ' '.join(package_names))
@@ -284,7 +297,10 @@ class Ubuntu(BaseRepo):
             apt_command.extend(['-o', 'Dpkg::Progress-Fancy=1'])
         apt_command.append('install')
 
-        subprocess.check_call(apt_command + package_names, env=env)
+        try:
+            subprocess.check_call(apt_command + package_names, env=env)
+        except subprocess.CalledProcessError:
+            raise errors.BuildPackagesNotInstalledError(packages=package_names)
 
         try:
             subprocess.check_call(['sudo', 'apt-mark', 'auto'] +

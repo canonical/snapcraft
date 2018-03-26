@@ -22,6 +22,7 @@ import os
 import re
 import shutil
 import stat
+from typing import List
 
 from snapcraft import file_utils
 from snapcraft.internal import mangling
@@ -92,13 +93,28 @@ class BaseRepo:
         raise errors.NoNativeBackendError()
 
     @classmethod
-    def install_build_packages(cls, package_names):
+    def install_build_packages(cls, package_names: List[str]) -> List[str]:
         """Install packages on the host required to build.
+
+        This method needs to be implemented by using the appropriate method
+        to install packages on the system. If possible they should be marked
+        as automatically installed to allow for easy removal.
+        The method should return a list of the actually installed packages
+        in the form "package=version".
+
+        If one of the packages cannot be found
+        snapcraft.repo.errors.BuildPackageNotFoundError should be raised.
+        If dependencies for a package cannot be resolved
+        snapcraft.repo.errors.PackageBrokenError should be raised.
+        If installing a package on the host failed
+        snapcraft.repo.errors.BuildPackagesNotInstalledError should be raised.
 
         :param package_names: a list of package names to install.
         :type package_names: a list of strings.
-        :raises snapcraft.repo.errors.BuildPackageNotFoundError:
-            if one of the package_names cannot be installed.
+        :return: a list with the packages installed and their versions.
+        :rtype: list of strings.
+        :raises snapcraft.repo.errors.NoNativeBackendError:
+            if the method is not implemented in the subclass.
         """
         raise errors.NoNativeBackendError()
 

@@ -955,7 +955,7 @@ class FakeAptCachePackage():
         if version is not None:
             self.versions.update({version: self})
 
-    def mark_install(self):
+    def mark_install(self, *, auto_fix=True):
         if not self.installed:
             if len(self.dependencies):
                 return
