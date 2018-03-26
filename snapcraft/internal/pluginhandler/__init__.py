@@ -831,7 +831,9 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
 def _organize_filesets(fileset, base_dir):
     for key in sorted(fileset, key=lambda x: ['*' in x, x]):
         src = os.path.join(base_dir, key)
-        dst = os.path.join(base_dir, fileset[key])
+        # Remove the leading slash if there so os.path.join
+        # actually joins
+        dst = os.path.join(base_dir, fileset[key].lstrip('/'))
 
         sources = iglob(src, recursive=True)
 
