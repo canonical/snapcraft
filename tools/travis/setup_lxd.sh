@@ -28,14 +28,21 @@ done
 apt-get install --yes snapd
 apt-get remove --yes lxd lxd-client
 
-# Use edge because the feature to copy links to the container has not yet been
-# released to stable:
-# https://github.com/lxc/lxd/commit/004e7c361e1d914795d3ba7582654622e32ff193
+if [ ! -f $TRAVIS_BUILD_DIR/snaps-cache/downloaded ]; then
+    mkdir -p "$TRAVIS_BUILD_DIR/snaps-cache"
+    pushd "$TRAVIS_BUILD_DIR/snaps-cache"
+    snap download core
+    snap download lxd
+    touch downloaded
+    popd
+fi  
 # snap install core exits with this error message:
 # - Setup snap "core" (3604) security profiles (cannot reload udev rules: exit status 2)
 # but the installation succeeds, so we just ingore it.
-snap install core || echo 'ignored error'
-snap install lxd
+snap ack $TRAVIS_BUILD_DIR/snaps-cache/core_*.assert
+snap install $TRAVIS_BUILD_DIR/snaps-cache/core_*.snap || echo 'ignored error'
+snap ack $TRAVIS_BUILD_DIR/snaps-cache/lxd_*.assert
+snap install $TRAVIS_BUILD_DIR/snaps-cache/lxd_*.snap
 # Wait while LXD first generates its keys. In a low entropy environment this
 # can take a while.
 
