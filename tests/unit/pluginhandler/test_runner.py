@@ -14,11 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 from textwrap import dedent
 
+import fixtures
 from unittest import mock
-from testtools.matchers import FileContains, FileExists
+from testtools.matchers import Contains, FileContains, FileExists
 
 from snapcraft.internal import errors
 from snapcraft.internal.pluginhandler import _runner
@@ -170,3 +172,50 @@ class RunnerFailureTestCase(unit.TestCase):
                 builtin_functions={})
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
+
+
+class RunnerDeprecationTestCase(unit.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        os.mkdir('builddir')
+
+    def test_prepare_deprecation(self):
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        _runner.Runner(
+            part_properties={'prepare': 'foo'},
+            builddir='builddir',
+            builtin_functions={})
+
+        self.assertThat(self.fake_logger.output, Contains(
+            "DEPRECATED: The 'prepare' keyword has been replaced by "
+            "'override-build'"))
+
+    def test_build_deprecation(self):
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        _runner.Runner(
+            part_properties={'build': 'foo'},
+            builddir='builddir',
+            builtin_functions={})
+
+        self.assertThat(self.fake_logger.output, Contains(
+            "DEPRECATED: The 'build' keyword has been replaced by "
+            "'override-build'"))
+
+    def test_install_deprecation(self):
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        _runner.Runner(
+            part_properties={'install': 'foo'},
+            builddir='builddir',
+            builtin_functions={})
+
+        self.assertThat(self.fake_logger.output, Contains(
+            "DEPRECATED: The 'install' keyword has been replaced by "
+            "'override-build'"))

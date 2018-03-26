@@ -61,3 +61,13 @@ class ScriptletTestCase(integration.TestCase):
         arch_triplet_file = os.path.join(installdir, 'lib',
                                          self.arch_triplet, 'lib.so')
         self.assertThat(arch_triplet_file, FileExists())
+
+    def test_override_build(self):
+        self.run_snapcraft('build', 'scriptlet-override-build')
+
+        installdir = os.path.join(
+            self.parts_dir, 'override-build-scriptlet-test', 'install')
+
+        self.assertThat(os.path.join(installdir, 'file'), FileExists())
+        self.assertThat(os.path.join(installdir, 'before-build'), FileExists())
+        self.assertThat(os.path.join(installdir, 'after-build'), FileExists())

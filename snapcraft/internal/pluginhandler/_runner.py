@@ -26,6 +26,7 @@ from typing import Any, Callable, Dict  # noqa
 
 from snapcraft.internal import (
     common,
+    deprecations,
     errors,
 )
 
@@ -47,9 +48,20 @@ class Runner:
         self._builddir = builddir
         self._builtin_functions = builtin_functions
 
+        self._override_build_scriptlet = part_properties.get('override-build')
+
+        # These are all deprecated
         self._prepare_scriptlet = part_properties.get('prepare')
+        if self._prepare_scriptlet:
+            deprecations.handle_deprecation_notice('dn7')
+
         self._build_scriptlet = part_properties.get('build')
+        if self._build_scriptlet:
+            deprecations.handle_deprecation_notice('dn8')
+
         self._install_scriptlet = part_properties.get('install')
+        if self._install_scriptlet:
+            deprecations.handle_deprecation_notice('dn9')
 
     def prepare(self) -> None:
         """Run prepare scriptlet."""
@@ -58,10 +70,14 @@ class Runner:
                 'prepare', self._prepare_scriptlet, self._builddir)
 
     def build(self) -> None:
-        """Run build scriptlet."""
+        """Run override-build scriptlet."""
         if self._build_scriptlet:
             self._run_scriptlet(
                 'build', self._build_scriptlet, self._builddir)
+        elif self._override_build_scriptlet:
+            self._run_scriptlet(
+                'override-build', self._override_build_scriptlet,
+                self._builddir)
 
     def install(self) -> None:
         """Run install scriptlet."""
