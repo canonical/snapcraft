@@ -106,7 +106,15 @@ def _submit_trace(exception):
     client = RavenClient(
         'https://b0fef3e0ced2443c92143ae0d038b0a4:'
         'b7c67d7fa4ee46caae12b29a80594c54@sentry.io/277754',
-        transport=RequestsHTTPTransport)
+        transport=RequestsHTTPTransport,
+        # Should Raven automatically log frame stacks (including locals)
+        # for all calls as it would for exceptions.
+        auto_log_stacks=False,
+        # Removes all stacktrace context variables. This will cripple the
+        # functionality of Sentry, as you’ll only get raw tracebacks,
+        # but it will ensure no local scoped information is available to the
+        # server.
+        processors=('raven.processors.RemoveStackLocalsProcessor',))
     try:
         raise exception
     except Exception:
