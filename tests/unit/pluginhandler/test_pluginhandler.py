@@ -556,6 +556,12 @@ class OrganizeTestCase(unit.TestCase):
                 (['bar', 'basefoo', 'foo'], 'bin'),
             ]
         )),
+        ('leading_slash_in_value', dict(
+            setup_dirs=[],
+            setup_files=['foo'],
+            organize_set={'foo': '/bar'},
+            expected=[(['bar'], '')],
+        )),
         ('overwrite_existing_file', dict(
             setup_dirs=[],
             setup_files=['foo', 'bar'],
