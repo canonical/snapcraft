@@ -31,10 +31,18 @@ snapcraft.cli.__main__.run_snapcraftctl(prog_name=\"snapcraftctl\")
 /usr/bin/env -i -- sh -<<END
 # Required for snapcraftctl to actually find snapcraft when snapped via
 # sitecustomize
-export SNAP="$SNAP"
-export SNAP_NAME="$SNAP_NAME"
-export SNAP_VERSION="$SNAP_VERSION"
-export SNAP_ARCH="$SNAP_ARCH"
+if [ -n "$SNAP" ]; then
+    export SNAP="$SNAP"
+fi
+if [ -n "$SNAP_NAME" ]; then
+    export SNAP_NAME="$SNAP_NAME"
+fi
+if [ -n "$SNAP_VERSION" ]; then
+    export SNAP_VERSION="$SNAP_VERSION"
+fi
+if [ -n "$SNAP_ARCH" ]; then
+    export SNAP_ARCH="$SNAP_ARCH"
+fi
 
 # Required so Click doesn't whine about lack of a locale
 export LC_ALL="$LC_ALL"
