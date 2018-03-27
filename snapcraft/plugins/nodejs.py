@@ -35,6 +35,9 @@ Additionally, this plugin uses the following plugin-specific keywords:
       (list)
       A list of targets to `npm run`.
       These targets will be run in order, after `npm install`
+    - npm-flags:
+      (list)
+      A list of flags for npm.
     - node-package-manager
       (string; default: npm)
       The language package manager to use to drive installation
@@ -102,6 +105,15 @@ class NodePlugin(snapcraft.BasePlugin):
             },
             'default': []
         }
+        schema['properties']['npm-flags'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': False,
+            'items': {
+                'type': 'string'
+            },
+            'default': []
+        }
 
         if 'required' in schema:
             del schema['required']
@@ -112,7 +124,7 @@ class NodePlugin(snapcraft.BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['node-packages', 'npm-run']
+        return ['node-packages', 'npm-run', 'npm-flags']
 
     @classmethod
     def get_pull_properties(cls):
@@ -175,14 +187,15 @@ class NodePlugin(snapcraft.BasePlugin):
     def _npm_install(self, rootdir):
         self._nodejs_tar.provision(
             self.installdir, clean_target=False, keep_tarball=True)
-        npm_install = ['npm', '--cache-min=Infinity', 'install']
+        npm_cmd = ['npm'] + self.options.npm_flags
+        npm_install = npm_cmd + ['--cache-min=Infinity', 'install']
         for pkg in self.options.node_packages:
             self.run(npm_install + ['--global'] + [pkg], cwd=rootdir)
         if os.path.exists(os.path.join(rootdir, 'package.json')):
             self.run(npm_install, cwd=rootdir)
             self.run(npm_install + ['--global'], cwd=rootdir)
         for target in self.options.npm_run:
-            self.run(['npm', 'run', target], cwd=rootdir)
+            self.run(npm_cmd + ['run', target], cwd=rootdir)
         return self._get_installed_node_packages('npm', self.installdir)
 
     def _yarn_install(self, rootdir):
