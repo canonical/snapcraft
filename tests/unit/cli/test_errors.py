@@ -113,7 +113,8 @@ class ErrorsTestCase(unit.TestCase):
 
         self.assert_exception_traceback_exit_1_with_debug()
         raven_client_mock.assert_called_once_with(
-            mock.ANY, transport=raven_request_mock)
+            mock.ANY, transport=raven_request_mock, processors=mock.ANY,
+            auto_log_stacks=False)
 
     def test_handler_catches_snapcraft_exceptions_no_debug(self):
         try:
