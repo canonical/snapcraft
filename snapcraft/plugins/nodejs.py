@@ -204,6 +204,7 @@ class NodePlugin(snapcraft.BasePlugin):
         self._yarn_tar.provision(
             self._npm_dir, clean_target=False, keep_tarball=True)
         yarn_cmd = [os.path.join(self._npm_dir, 'bin', 'yarn')]
+        yarn_cmd.extend(self.options.npm_flags)
         if 'http_proxy' in os.environ:
             yarn_cmd.extend(['--proxy', os.environ['http_proxy']])
         if 'https_proxy' in os.environ:
