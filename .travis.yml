@@ -3,7 +3,11 @@ dist: trusty
 
 services: [docker]
 
-language: bash
+language: python
+python:
+ - "3.6"
+install:
+ - echo 'No installing of dependencies here'
 
 cache:
   directories:
@@ -51,6 +55,14 @@ jobs:
     # CLA check, only in pull requests, not coming from the bot.
     - if: type = pull_request AND sender != snappy-m-o
       script: ./tools/travis/run_cla_check.sh
+    # Trusty
+    - stage: integration-trusty
+      if: type != cron
+      script: sudo -E ./tools/travis/run_tests.sh tests/integration/general native
+    - if: type != cron
+      script: sudo -E ./tools/travis/run_tests.sh tests/integration/store native
+    - if: type != cron
+      script: sudo -E ./tools/travis/run_tests.sh tests/integration/plugins_catkin native
     # Trigger nightly tests, only in cron.
     - stage: nightly
     # Run spread tests for the snapcraft snap in edge.
