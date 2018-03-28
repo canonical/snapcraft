@@ -1,3 +1,16 @@
+snapcraft (2.40.1) xenial; urgency=medium
+
+  [ Evan Dandrea ]
+  * readme: polish the landing page (#2022)
+
+  [ Christian Dywan ]
+  * repo: catch error due to broken build packages (#2023)
+
+  [ Sergio Schvezov ]
+  * pluginhandler: organize correcly for targets with leading / (#2034)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Tue, 27 Mar 2018 21:09:24 +0000
+
 snapcraft (2.40) xenial; urgency=medium
 
   [ Sergio Schvezov ]
