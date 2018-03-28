@@ -178,16 +178,18 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             self.fake_logger.output, Equals(
                 'Preparing to pull part1 \n'
                 'Pulling part1 \n'
-                '\'part2\' has prerequisites that need to be staged: part1\n'
+                '\'part2\' has prerequisites that need to be primed: part1\n'
                 'Preparing to build part1 \n'
                 'Building part1 \n'
                 'Staging part1 \n'
+                'Priming part1 \n'
                 'Preparing to pull part2 \n'
                 'Pulling part2 \n'
-                '\'part3\' has prerequisites that need to be staged: part2\n'
+                '\'part3\' has prerequisites that need to be primed: part2\n'
                 'Preparing to build part2 \n'
                 'Building part2 \n'
                 'Staging part2 \n'
+                'Priming part2 \n'
                 'Preparing to pull part3 \n'
                 'Pulling part3 \n',
             ))
@@ -434,8 +436,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                     after: [part1]
                 """))
 
-        # Stage dependency
-        lifecycle.execute('stage', self.project_options, part_names=['part1'])
+        # Prime dependency
+        lifecycle.execute('prime', self.project_options, part_names=['part1'])
         # Build dependent
         lifecycle.execute('build', self.project_options, part_names=['part2'])
 
