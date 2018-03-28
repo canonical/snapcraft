@@ -197,12 +197,9 @@ class _Executor:
         common.reset_env()
         prereqs = self.parts_config.get_prereqs(part.name)
 
-        # Dependencies need to be primed to have paths to.
-        if step == 'prime':
-            required_step = 'prime'
-        # Or staged to be built with.
-        else:
-            required_step = 'stage'
+        # We need to prime dependencies so that paths are always found for
+        # them.
+        required_step = 'prime'
 
         step_prereqs = {p for p in prereqs
                         if required_step not in self._steps_run[p]}
