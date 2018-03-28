@@ -61,7 +61,19 @@ class ToStatement:
         self._body = body
         self._project_options = project_options
         self._checker = checker
+        self._prerequisites = []
         self._else_bodies = []
+
+    def add_prerequisite(self, prerequisite):
+        """Add a prerequisite statement that has to match.
+
+        :param object prerequisite: A prerequisite statement.
+
+        Prerequisite statements have to match in addition to this statement
+        for the purposes of an 'else' or 'else fail' clause.
+        """
+
+        self._prerequisites.append(prerequisite)
 
     def add_else(self, else_body):
         """Add an 'else' clause to the statement.
@@ -81,12 +93,7 @@ class ToStatement:
         """
 
         primitives = set()
-        target_arch = self._project_options.deb_arch
-
-        # The only selector currently supported is the target arch. Since
-        # selectors are matched with an AND, not OR, there should only be one
-        # selector.
-        if (len(self.selectors) == 1) and (target_arch in self.selectors):
+        if self.matches():
             primitives = process_grammar(
                 self._body, self._project_options, self._checker)
             # target arch is the default (not the host arch) in a to statement
@@ -102,6 +109,11 @@ class ToStatement:
             for else_body in self._else_bodies:
                 if not else_body:
                     # Handle the 'else fail' case.
+                    # Find the prerequisite that failed (if any)
+                    for prerequisite in self._prerequisites:
+                        if not prerequisite.matches():
+                            raise UnsatisfiedStatementError(prerequisite)
+                    # The failure is in this statement
                     raise UnsatisfiedStatementError(self)
 
                 primitives = process_grammar(
@@ -110,6 +122,24 @@ class ToStatement:
                     break
 
         return primitives
+
+    def matches(self) -> bool:
+        """Evaluates if the selectors match
+
+        :return str: True if the selectors match.
+        """
+
+        # All prerequisites (if any) have to match
+        for prerequisite in self._prerequisites:
+            if not prerequisite.matches():
+                return False
+
+        target_arch = self._project_options.deb_arch
+
+        # The only selector currently supported is the target arch. Since
+        # selectors are matched with an AND, not OR, there should only be one
+        # selector.
+        return ((len(self.selectors) == 1) and (target_arch in self.selectors))
 
     def __eq__(self, other):
         return self.selectors == other.selectors

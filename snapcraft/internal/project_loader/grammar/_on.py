@@ -87,14 +87,7 @@ class OnStatement:
         """
 
         primitives = set()
-        # A new ProjectOptions instance defaults to the host architecture
-        # whereas self._project_options would yield the target architecture
-        host_arch = snapcraft.ProjectOptions().deb_arch
-
-        # The only selector currently supported is the target arch. Since
-        # selectors are matched with an AND, not OR, there should only be one
-        # selector.
-        if (len(self.selectors) == 1) and (host_arch in self.selectors):
+        if self.matches():
             primitives = process_grammar(
                 self._body, self._project_options, self._checker)
         else:
@@ -109,6 +102,21 @@ class OnStatement:
                     break
 
         return primitives
+
+    def matches(self) -> bool:
+        """Evaluates if the selectors match
+
+        :return str: True if the selectors match.
+        """
+
+        # A new ProjectOptions instance defaults to the host architecture
+        # whereas self._project_options would yield the target architecture
+        host_arch = snapcraft.ProjectOptions().deb_arch
+
+        # The only selector currently supported is the host arch. Since
+        # selectors are matched with an AND, not OR, there should only be one
+        # selector.
+        return (len(self.selectors) == 1) and (host_arch in self.selectors)
 
     def __eq__(self, other):
         return self.selectors == other.selectors

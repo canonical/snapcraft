@@ -18,6 +18,7 @@ import re
 
 from .errors import GrammarSyntaxError
 
+_ON_TO_CLAUSE_PATTERN = re.compile(r'(\Aon\s+\S+)\s+(to\s+\S+\Z)')
 _ON_CLAUSE_PATTERN = re.compile(r'\Aon\s+')
 _TO_CLAUSE_PATTERN = re.compile(r'\Ato\s+')
 _TRY_CLAUSE_PATTERN = re.compile(r'\Atry\Z')
@@ -81,6 +82,22 @@ def _parse_dict(section, statement, statements, project_options,
         if not isinstance(value, list):
             value = {value}
 
+        if _ON_TO_CLAUSE_PATTERN.match(key):
+            # We've come across the beginning of a compound statement
+            # with both 'on' and 'to'.
+            # Those will be split into separate statements.
+
+            # Make this pass a 'to' statement
+            on, to = _ON_TO_CLAUSE_PATTERN.match(key).groups()
+            key = to
+
+            # Inject an additional 'on' statement
+            prerequisite = OnStatement(
+                on=on, body={}, project_options=project_options,
+                checker=checker)
+        else:
+            prerequisite = None
+
         if _ON_CLAUSE_PATTERN.match(key):
             # We've come across the beginning of an 'on' statement.
             # That means any previous statement we found is complete.
@@ -102,6 +119,9 @@ def _parse_dict(section, statement, statements, project_options,
             statement = ToStatement(
                 to=key, body=value, project_options=project_options,
                 checker=checker)
+            if prerequisite:
+                # When used as a compound statement, we'll have a prerequisite
+                statement.add_prerequisite(prerequisite)
 
         if _TRY_CLAUSE_PATTERN.match(key):
             # We've come across the beginning of a 'try' statement.

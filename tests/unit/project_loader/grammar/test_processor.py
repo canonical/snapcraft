@@ -93,6 +93,21 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
             'host_arch': 'i686',
             'expected_packages': {'bar'}
         }),
+        ('on amd64 to armhf', {
+            'grammar': [
+                {'on amd64 to armhf': ['foo']},
+            ],
+            'host_arch': 'x86_64',
+            'expected_packages': {'foo:armhf'}
+        }),
+        ('on i386 to armhf, used else', {
+            'grammar': [
+                {'on i386 to armhf': ['foo']},
+                {'else': ['bar']},
+            ],
+            'host_arch': 'x86_64',
+            'expected_packages': {'bar'}
+        }),
         ('ignored else', {
             'grammar': [
                 {'on amd64': ['foo']},
@@ -201,7 +216,7 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         platform_machine_mock.return_value = self.host_arch
         platform_architecture_mock.return_value = ('64bit', 'ELF')
 
-        options = snapcraft.ProjectOptions()
+        options = snapcraft.ProjectOptions(target_deb_arch='armhf')
         self.assertThat(
             grammar.process_grammar(self.grammar, options, self.checker),
             Equals(self.expected_packages))

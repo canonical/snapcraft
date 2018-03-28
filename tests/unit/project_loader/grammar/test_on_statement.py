@@ -150,6 +150,20 @@ class OnStatementGrammarTestCase(GrammarBaseTestCase):
             'host_arch': 'i686',
             'expected_packages': {'baz'}
         }),
+        ('with hyphen', {
+            'on': 'on other-arch',
+            'body': ['foo'],
+            'else_bodies': [],
+            'host_arch': 'x86_64',
+            'expected_packages': set()
+        }),
+        ('multiple selectors', {
+            'on': 'on amd64,i386',
+            'body': ['foo'],
+            'else_bodies': [],
+            'host_arch': 'x86_64',
+            'expected_packages': set()
+        }),
     ]
 
     @patch('platform.architecture')
