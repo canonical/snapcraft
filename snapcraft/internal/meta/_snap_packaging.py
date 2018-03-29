@@ -87,7 +87,8 @@ def create_snap_packaging(
         config_data: Dict[str, Any],
         parts_config: project_loader.PartsConfig,
         project_options: Project,
-        snapcraft_yaml_path: str) -> str:
+        snapcraft_yaml_path: str,
+        original_snapcraft_yaml: Dict[str, Any]) -> str:
     """Create snap.yaml and related assets in meta.
 
     Create the meta directory and provision it with snap.yaml in the snap dir
@@ -102,7 +103,8 @@ def create_snap_packaging(
     _update_yaml_with_extracted_metadata(config_data, parts_config)
 
     packaging = _SnapPackaging(
-        config_data, project_options, snapcraft_yaml_path)
+        config_data, project_options,
+        snapcraft_yaml_path, original_snapcraft_yaml)
     packaging.write_snap_yaml()
     packaging.setup_assets()
     packaging.generate_hook_wrappers()
@@ -229,9 +231,10 @@ class _SnapPackaging:
         return self._meta_dir
 
     def __init__(
-            self, config_data,
+            self, config_data: Dict[str, Any],
             project_options: Project,
-            snapcraft_yaml_path: str) -> None:
+            snapcraft_yaml_path: str,
+            original_snapcraft_yaml: Dict[str, Any]) -> None:
         self._snapcraft_yaml_path = snapcraft_yaml_path
         self._prime_dir = project_options.prime_dir
         self._parts_dir = project_options.parts_dir
@@ -240,6 +243,7 @@ class _SnapPackaging:
             project_options.is_host_compatible_with_base)
         self._meta_dir = os.path.join(self._prime_dir, 'meta')
         self._config_data = config_data.copy()
+        self._original_snapcraft_yaml = original_snapcraft_yaml
 
         os.makedirs(self._meta_dir, exist_ok=True)
 
@@ -398,7 +402,15 @@ class _SnapPackaging:
         if 'apps' in self._config_data:
             _verify_app_paths(basedir='prime', apps=self._config_data['apps'])
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
-            snap_yaml['apps'] = self._render_socket_modes(snap_yaml['apps'])
+            self._render_socket_modes(snap_yaml['apps'])
+            for app_name, app in snap_yaml['apps'].items():
+                self._apply_pass_through(
+                    app_name, app, app.pop('pass-through', {}),
+                    self._original_snapcraft_yaml['apps'][app_name])
+
+        self._apply_pass_through('snapcraft.yaml', snap_yaml,
+                                 self._config_data.get('pass-through', {}),
+                                 self._original_snapcraft_yaml)
 
         return snap_yaml
 
@@ -482,7 +494,7 @@ class _SnapPackaging:
 
         return os.path.relpath(wrappath, self._prime_dir)
 
-    def _wrap_apps(self, apps):
+    def _wrap_apps(self, apps: Dict[str, Any]) -> Dict[str, Any]:
         gui_dir = os.path.join(self.meta_dir, 'gui')
         if not os.path.exists(gui_dir):
             os.mkdir(gui_dir)
@@ -513,14 +525,29 @@ class _SnapPackaging:
             desktop_file.parse_and_reformat()
             desktop_file.write(gui_dir=os.path.join(self.meta_dir, 'gui'))
 
-    def _render_socket_modes(self, apps):
+    def _render_socket_modes(self, apps: Dict[str, Any]) -> None:
         for app in apps.values():
             sockets = app.get('sockets', {})
             for socket in sockets.values():
                 mode = socket.get('socket-mode')
                 if mode is not None:
                     socket['socket-mode'] = OctInt(mode)
-        return apps
+
+    def _apply_pass_through(self, location: str, this: Dict[str, Any],
+                            pass_through: Dict[str, Any],
+                            original: Dict[str, Any]) -> None:
+        # Look for properties defined in pass-through and add them to the
+        # given dictionary. Any value already in the original dictionary must
+        # not be specified in pass-through at the same time.
+        for key in pass_through:
+            if key in original:
+                raise meta_errors.AmbiguousPassThroughKeyError(key)
+            this[key] = pass_through[key]
+        if pass_through:
+            logger.warn('Pass-through is being used to add experimental '
+                        'properties to {!r} that have not been '
+                        'validated. The snap cannot be released to the store.'
+                        .format(location))
 
 
 def _find_bin(binary, basedir):

@@ -240,7 +240,8 @@ class _Executor:
             common.env = self.config.snap_env()
             meta.create_snap_packaging(
                 self.config.data, self.config.parts, self.project_options,
-                self.config.snapcraft_yaml_path)
+                self.config.snapcraft_yaml_path,
+                self.config.original_snapcraft_yaml)
 
     def _handle_dirty(self, part, step, dirty_report):
         if step not in constants.STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:

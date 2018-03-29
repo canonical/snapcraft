@@ -93,7 +93,8 @@ class CreateBaseTestCase(unit.TestCase):
                 part.build()
 
         _snap_packaging.create_snap_packaging(
-            self.config.data, self.config.parts, self.project_options, 'dummy')
+            self.config.data, self.config.parts, self.project_options, 'dummy',
+            self.config.original_snapcraft_yaml)
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
@@ -148,7 +149,8 @@ class CreateTestCase(CreateBaseTestCase):
         config = project_loader.load_config()
 
         _snap_packaging.create_snap_packaging(
-            self.config_data, config.parts, self.project_options, 'dummy')
+            self.config_data, config.parts, self.project_options, 'dummy',
+            config.original_snapcraft_yaml)
 
         expected_gadget = os.path.join(self.meta_dir, 'gadget.yaml')
         self.assertTrue(os.path.exists(expected_gadget))
@@ -170,7 +172,8 @@ class CreateTestCase(CreateBaseTestCase):
             self.config_data,
             config.parts,
             self.project_options,
-            'dummy'
+            'dummy',
+            config.original_snapcraft_yaml
         )
 
     def test_create_meta_with_declared_icon(self):
@@ -261,11 +264,13 @@ class CreateTestCase(CreateBaseTestCase):
         config = project_loader.load_config()
 
         _snap_packaging.create_snap_packaging(
-            self.config_data, config.parts, self.project_options, 'dummy')
+            self.config_data, config.parts, self.project_options, 'dummy',
+            config.original_snapcraft_yaml)
 
         # Running again should be good
         _snap_packaging.create_snap_packaging(
-            self.config_data, config.parts, self.project_options, 'dummy')
+            self.config_data, config.parts, self.project_options, 'dummy',
+            config.original_snapcraft_yaml)
 
     def test_create_meta_with_icon_in_setup(self):
         gui_path = os.path.join('setup', 'gui')
@@ -473,6 +478,98 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertThat(
             y['hooks']['bar'], Not(Contains('plugs')),
             "Expected generated 'bar' hook to not contain 'plugs'")
+
+
+class PassThroughTestCase(CreateBaseTestCase):
+
+    def test_add_new_key(self):
+        self.config_data['pass-through'] = {'spam': 'eggs'}
+        y = self.generate_meta_yaml()
+        self.assertThat(
+            y, Contains('spam'),
+            'Expected "spam" property to be propagated to snap.yaml')
+        self.assertThat(y['spam'], Equals('eggs'))
+
+    def test_override_key_with_different_type(self):
+        del self.config_data['architectures']
+        # This is normally an array of strings
+        self.config_data['pass-through'] = {'architectures': 'all'}
+        y = self.generate_meta_yaml()
+        self.assertThat(y['architectures'], Equals('all'))
+
+    def test_override_key_with_default(self):
+        del self.config_data['confinement']
+        self.config_data['pass-through'] = {'confinement': 'next-generation'}
+        y = self.generate_meta_yaml()
+        self.assertThat(y['confinement'], Equals('next-generation'))
+
+    def test_warning(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.config_data['pass-through'] = {'foo': 'bar', 'spam': 'eggs'}
+        self.generate_meta_yaml()
+        self.assertThat(
+            fake_logger.output,
+            Contains("Pass-through is being used to add experimental "
+                     "properties to 'snapcraft.yaml' that have not been "
+                     "validated. The snap cannot be released to the store.\n"))
+
+    def test_ambiguous_key_fails(self):
+        self.config_data['pass-through'] = {'confinement': 'next-generation'}
+        raised = self.assertRaises(
+            meta_errors.AmbiguousPassThroughKeyError,
+            self.generate_meta_yaml)
+        self.assertThat(raised.key, Equals('confinement'))
+
+    def test_app_add_new_key(self):
+        self.config_data['apps'] = {'foo': {
+            'command': 'echo',
+            'pass-through': {'spam': 'eggs'}}}
+        y = self.generate_meta_yaml()['apps']['foo']
+        self.assertThat(
+            y, Contains('spam'),
+            'Expected "spam" property to be propagated to snap.yaml')
+        self.assertThat(y['spam'], Equals('eggs'))
+
+    def test_app_key_with_different_type(self):
+        self.config_data['apps'] = {'foo': {
+            'command': 'echo',
+            # This is normally an array of strings
+            'pass-through': {'aliases': 'foo'}}}
+        y = self.generate_meta_yaml()['apps']['foo']
+        self.assertThat(
+            y, Contains('aliases'),
+            'Expected "aliases" property to be propagated to snap.yaml')
+        self.assertThat(y['aliases'], Equals('foo'))
+
+    def test_app_override_key_with_default(self):
+        # There are currently no keys with default values allowed in apps.
+        # This test case is a reminder in case we add one in the future.
+        pass
+
+    def test_app_warning(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.config_data['apps'] = {'foo': {
+            'command': 'echo',
+            'pass-through': {'foo': 'bar', 'spam': 'eggs'}}}
+        self.generate_meta_yaml()
+        self.assertThat(
+            fake_logger.output,
+            Contains("Pass-through is being used to add experimental "
+                     "properties to 'foo' that have not been "
+                     "validated. The snap cannot be released to the store.\n"))
+
+    def test_app_ambiguous_key_fails(self):
+        self.config_data['apps'] = {'foo': {
+            'command': 'echo', 'daemon': 'simple',
+            'pass-through': {'daemon': 'complex'}}}
+        raised = self.assertRaises(
+            meta_errors.AmbiguousPassThroughKeyError,
+            self.generate_meta_yaml)
+        self.assertThat(raised.key, Equals('daemon'))
 
 
 class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):
@@ -833,7 +930,8 @@ class WrapExeTestCase(unit.TestCase):
         self.packager = _snap_packaging._SnapPackaging(
             {'confinement': 'devmode'},
             ProjectOptions(),
-            'dummy'
+            'dummy',
+            {'confinement': 'devmode'}
         )
         self.packager._is_host_compatible_with_base = True
 
