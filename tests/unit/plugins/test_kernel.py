@@ -724,6 +724,10 @@ ACCEPT=n
 
         self.run_output_mock.side_effect = fake_output
 
+        # Set a path that doesn't contain '/sbin' so we can verify that it's
+        # added to the modprobe call.
+        self.useFixture(fixtures.EnvironmentVariable('PATH', '/usr/bin'))
+
         plugin.build()
 
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
