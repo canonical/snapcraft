@@ -16,7 +16,7 @@
 
 from testtools.matchers import Equals
 
-import snapcraft
+from snapcraft.project._project_options import _find_machine
 from tests import unit
 
 
@@ -59,5 +59,5 @@ class OptionsTestCase(unit.TestCase):
     ]
 
     def test_find_machine(self):
-        machine = snapcraft._options._find_machine(self.machine)
+        machine = _find_machine(self.machine)
         self.assertThat(machine, Equals(self.expected_machine))

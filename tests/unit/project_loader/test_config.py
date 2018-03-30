@@ -27,6 +27,7 @@ import fixtures
 from testtools.matchers import Contains, Equals, MatchesRegex, Not, StartsWith
 
 import snapcraft
+from snapcraft.project._project_info import ProjectInfo
 from snapcraft.internal import (
     dirs,
     project_loader,
@@ -57,6 +58,134 @@ class YamlBaseTestCase(unit.TestCase):
         self.part_schema = validator.part_schema
         self.definitions_schema = validator.definitions_schema
         self.deb_arch = snapcraft.ProjectOptions().deb_arch
+
+
+class ProjectInfoTestCase(YamlBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+    def test_properties(self):
+        info = ProjectInfo({
+            'name': 'foo', 'version': '1',
+            'summary': 'bar', 'description': 'baz',
+            'confinement': 'strict'
+            })
+        self.assertThat(info.name, Equals('foo'))
+        self.assertThat(info.version, Equals('1'))
+        self.assertThat(info.summary, Equals('bar'))
+        self.assertThat(info.description, Equals('baz'))
+        self.assertThat(info.confinement, Equals('strict'))
+
+
+class ProjectTestCase(YamlBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        fake_logger = fixtures.FakeLogger(level=logging.ERROR)
+        self.useFixture(fake_logger)
+
+    def test_project_with_arguments(self):
+        project = snapcraft.project.Project(
+            use_geoip=True, parallel_builds=False,
+            target_deb_arch='armhf', debug=True)
+        self.assertThat(project.use_geoip, Equals(True))
+        self.assertThat(project.parallel_builds, Equals(False))
+        self.assertThat(project.deb_arch, Equals('armhf'))
+        self.assertThat(project.debug, Equals(True))
+
+    def test_project_from_config(self):
+        self.make_snapcraft_yaml("""name: foo
+version: "1"
+summary: bar
+description: baz
+confinement: strict
+
+parts:
+  part1:
+    plugin: go
+""")
+
+        c = _config.Config()
+        project = c._project_options
+        self.assertThat(c.data['name'], Equals(project.info.name))
+        self.assertThat(c.data['version'], Equals(project.info.version))
+        self.assertThat(c.data['summary'], Equals(project.info.summary))
+        self.assertThat(c.data['description'],
+                        Equals(project.info.description))
+        self.assertThat(c.data['confinement'],
+                        Equals(project.info.confinement))
+
+        # API of both Project and ProjectOptions must be available
+        self.assertTrue(isinstance(project,
+                        snapcraft.project.Project))
+        self.assertTrue(isinstance(project, snapcraft.ProjectOptions))
+
+    def test_project_from_config_without_summary(self):
+        self.make_snapcraft_yaml("""name: foo
+version: "1"
+description: baz
+adopt-info: part1
+confinement: strict
+
+parts:
+  part1:
+    plugin: go
+""")
+
+        c = _config.Config()
+        project = c._project_options
+        self.assertThat(project.info.summary, Equals(None))
+
+    def test_project_from_config_without_description(self):
+        self.make_snapcraft_yaml("""name: foo
+version: "1"
+summary: bar
+adopt-info: part1
+confinement: strict
+
+parts:
+  part1:
+    plugin: go
+""")
+
+        c = _config.Config()
+        project = c._project_options
+        self.assertThat(project.info.description, Equals(None))
+
+    def test_project_passed_to_config(self):
+        self.make_snapcraft_yaml("""name: foo
+version: "1"
+summary: bar
+description: baz
+confinement: strict
+
+parts:
+  part1:
+    plugin: go
+""")
+
+        project = snapcraft.project.Project()
+        c = _config.Config(project)
+        self.assertThat(c._project_options, Equals(project))
+
+    def test_no_info_set(self):
+        project = snapcraft.project.Project()
+        self.assertThat(project.info, Equals(None))
+
+    def test_set_info(self):
+        project = snapcraft.project.Project()
+        info = ProjectInfo({
+            'name': 'foo', 'version': '1',
+            'summary': 'bar', 'description': 'baz',
+            'confinement': 'strict'
+            })
+        project.info = info
+        self.assertThat(project.info, Equals(info))
 
 
 class YamlTestCase(YamlBaseTestCase):

@@ -21,6 +21,10 @@ import testtools
 from testtools.matchers import Equals
 
 import snapcraft
+from snapcraft.project._project_options import (
+    _get_platform_architecture,
+    _32BIT_USERSPACE_ARCHITECTURE,
+)
 from snapcraft.internal import common
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from tests import unit
@@ -142,9 +146,8 @@ class NativeOptionsTestCase(unit.TestCase):
             self, mock_platform_machine, mock_platform_architecture):
         mock_platform_machine.return_value = self.machine
         mock_platform_architecture.return_value = self.architecture
-        platform_arch = snapcraft._options._get_platform_architecture()
-        userspace_conversions = \
-            snapcraft._options._32BIT_USERSPACE_ARCHITECTURE
+        platform_arch = _get_platform_architecture()
+        userspace_conversions = _32BIT_USERSPACE_ARCHITECTURE
 
         if self.architecture[0] == '32bit' and \
            self.machine in userspace_conversions:

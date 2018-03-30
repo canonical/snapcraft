@@ -31,12 +31,12 @@ import yaml
 
 from snapcraft import file_utils
 from snapcraft import shell_utils
+from snapcraft.project import Project
 from snapcraft.internal import (
     common,
     errors,
     project_loader,
 )
-from snapcraft import _options
 from snapcraft.extractors import _metadata
 from snapcraft.internal.deprecations import handle_deprecation_notice
 from snapcraft.internal.meta import (
@@ -86,7 +86,7 @@ yaml.add_representer(OctInt, oct_int_representer)
 def create_snap_packaging(
         config_data: Dict[str, Any],
         parts_config: project_loader.PartsConfig,
-        project_options: _options.ProjectOptions,
+        project_options: Project,
         snapcraft_yaml_path: str) -> str:
     """Create snap.yaml and related assets in meta.
 
@@ -230,7 +230,7 @@ class _SnapPackaging:
 
     def __init__(
             self, config_data,
-            project_options: _options.ProjectOptions,
+            project_options: Project,
             snapcraft_yaml_path: str) -> None:
         self._snapcraft_yaml_path = snapcraft_yaml_path
         self._prime_dir = project_options.prime_dir
