@@ -549,3 +549,21 @@ class SnapcraftPluginCommandError(SnapcraftError):
             command = ' '.join(command)
         super().__init__(command=command, part_name=part_name,
                          exit_code=exit_code)
+
+
+class ScriptletBaseError(SnapcraftError):
+    """Base class for all scriptlet-related exceptions.
+
+    :cvar fmt: A format string that daughter classes override
+
+    """
+
+
+class ScriptletRunError(ScriptletBaseError):
+    fmt = (
+        'Failed to run {scriptlet_name!r}: '
+        'Exit code was {code}.'
+    )
+
+    def __init__(self, scriptlet_name: str, code: int) -> None:
+        super().__init__(scriptlet_name=scriptlet_name, code=code)

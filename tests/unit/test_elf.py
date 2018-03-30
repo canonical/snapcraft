@@ -421,10 +421,8 @@ class TestPatcher(TestElfBase):
         elf_patcher.patch(elf_file=elf_file)
 
     def test_patchelf_from_snap_used_if_using_snap(self):
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAP', '/snap/snapcraft/current'))
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAP_NAME', 'snapcraft'))
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
+
         # The base_path does not matter here as there are not files to
         # be crawled for.
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',

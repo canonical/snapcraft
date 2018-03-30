@@ -96,10 +96,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
     @mock.patch('snapcraft.internal.lifecycle._packer._run_mksquashfs')
     def test_mksquashfs_from_snap_used_if_using_snap(self, mock_run_mksquashfs,
                                                      mock_check_command):
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAP', '/snap/snapcraft/current'))
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAP_NAME', 'snapcraft'))
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
 
         self.make_snapcraft_yaml()
 

@@ -33,6 +33,9 @@ _DEPRECATION_MESSAGES = {
            "in the snap.",
     'dn6': "Use of the 'snap' command with a directory has been deprecated "
            "in favour of the 'pack' command.",
+    'dn7': "The 'prepare' keyword has been replaced by 'override-build'",
+    'dn8': "The 'build' keyword has been replaced by 'override-build'",
+    'dn9': "The 'install' keyword has been replaced by 'override-build'",
 }
 
 _DEPRECATION_URL_FMT = 'http://snapcraft.io/docs/deprecation-notices/{id}'
