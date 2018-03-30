@@ -624,3 +624,11 @@ class SignBuildAssertionError(StoreError):
 
     def __init__(self, snap_name):
         super().__init__(snap_name=snap_name)
+
+
+class InvalidLoginConfig(StoreError):
+
+    fmt = 'Invalid login config: {error}'
+
+    def __init__(self, error):
+        super().__init__(error=error)

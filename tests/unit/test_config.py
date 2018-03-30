@@ -17,9 +17,10 @@
 import fixtures
 import os
 
-from testtools.matchers import Equals
+from testtools.matchers import Contains, Equals, FileContains
 
 from snapcraft import config
+from snapcraft.storeapi import errors
 from tests import unit
 
 
@@ -76,6 +77,41 @@ class TestConfig(unit.TestCase):
         # Picking behind the curtains
         self.assertThat(new_conf.parser.get('keep_me', 'foo'), Equals('bar'))
         self.assertTrue(conf.is_empty())
+
+    def test_save_encoded(self):
+        conf = config.Config()
+        conf.set('bar', 'baz')
+        conf.save(encode=True)
+        new_conf = config.Config()
+        self.assertThat(new_conf.get('bar'), Equals('baz'))
+
+    def test_save_encoded_to_file(self):
+        conf = config.Config()
+        conf.set('bar', 'baz')
+        with open('test-config', 'w') as f:
+            conf.save(config_fd=f, encode=True)
+            f.flush()
+
+        self.assertThat('test-config', FileContains(
+            'W2xvZ2luLnVidW50dS5jb21dCmJhciA9IGJhegoK'))
+
+        new_conf = config.Config()
+        with open('test-config', 'r') as f:
+            new_conf.load(config_fd=f)
+        self.assertThat(new_conf.get('bar'), Equals('baz'))
+
+    def test_load_invalid_config(self):
+        with open('test-config', 'w') as f:
+            f.write('invalid config')
+            f.flush()
+
+        conf = config.Config()
+        with open('test-config', 'r') as f:
+            raised = self.assertRaises(
+                errors.InvalidLoginConfig, conf.load, config_fd=f)
+
+        self.assertThat(str(raised), Contains(
+            'File contains no section headers'))
 
 
 class TestOptions(unit.TestCase):

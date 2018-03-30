@@ -341,19 +341,34 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str,
     # This is sensitive-- it should only be accessible by the owner
     private_open = functools.partial(os.open, mode=0o600)
 
-    # mypy doesn't have the opener arg in its stub. Ignore its warning
-    with open(login_file, 'w', opener=private_open) as f:  # type: ignore
-        store.conf.save(config_fd=f)
+    # Support a login_file of '-', which indicates a desire to print to stdout
+    if login_file.strip() == '-':
+        echo.info("\nExported login starts on next line:")
+        store.conf.save(config_fd=sys.stdout, encode=True)
+        print()
 
-    # Now that the file has been written, we can just make it owner-readable
-    os.chmod(login_file, stat.S_IRUSR)
+        login_location = 'and printed above'
+        login_action = 'echo "<login>" | snapcraft login --with -'
+    else:
+        # mypy doesn't have the opener arg in its stub. Ignore its warning
+        with open(login_file, 'w', opener=private_open) as f:  # type: ignore
+            store.conf.save(config_fd=f)
+
+        # Now that the file has been written, we can just make it
+        # owner-readable
+        os.chmod(login_file, stat.S_IRUSR)
+
+        login_location = 'to {0!r}'.format(login_file)
+        login_action = 'snapcraft login --with {0}'.format(login_file)
 
     print()
     echo.info(dedent("""\
-        Login successfully exported to {0!r}. This file can now be used with
-        'snapcraft login --with {0}' to log in to this account with no password
-        and have these capabilities:\n""".format(
-            login_file)))
+        Login successfully exported {}. This can now be used with
+
+            {}
+
+        to log in to this account with no password and have these
+        capabilities:\n""".format(login_location, login_action)))
     echo.info(_human_readable_acls(store))
     echo.warning(
         'This exported login is not encrypted. Do not commit it to version '
