@@ -323,7 +323,7 @@ class KernelPluginTestCase(unit.TestCase):
             mock.call(modprobe_cmd + ['vfat'], env=mock.ANY)])
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile(self):
         self.options.kconfigfile = 'config'
@@ -363,7 +363,7 @@ class KernelPluginTestCase(unit.TestCase):
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_verbose_with_kconfigfile(self):
         fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
@@ -421,7 +421,7 @@ class KernelPluginTestCase(unit.TestCase):
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_check_config(self):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
@@ -446,7 +446,7 @@ class KernelPluginTestCase(unit.TestCase):
             self.assertIn('CONFIG_{}'.format(warn), fake_logger.output)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_check_initrd(self):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
@@ -471,7 +471,7 @@ class KernelPluginTestCase(unit.TestCase):
                           fake_logger.output)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_kconfigs(self):
         self.options.kconfigfile = 'config'
@@ -524,7 +524,7 @@ ACCEPT=n
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_defconfig_and_kconfigs(self):
         self.options.kdefconfig = ['defconfig']
@@ -584,7 +584,7 @@ ACCEPT=n
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_two_defconfigs(self):
         self.options.kdefconfig = ['defconfig', 'defconfig2']
@@ -627,7 +627,7 @@ ACCEPT=n
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_dtbs(self):
         self.options.kconfigfile = 'config'
@@ -689,7 +689,7 @@ ACCEPT=n
             Equals("No match for dtb 'fake-dtb.dtb' was found"))
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_modules(self):
         self.options.kconfigfile = 'config'
@@ -773,7 +773,7 @@ ACCEPT=n
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_firmware(self):
         self.options.kconfigfile = 'config'
@@ -827,7 +827,7 @@ ACCEPT=n
             plugin.installdir, 'firmware', 'fake-fw-dir')))
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_no_firmware(self):
         self.options.kconfigfile = 'config'
@@ -861,7 +861,7 @@ ACCEPT=n
         self.assertTrue(os.path.exists(config_file))
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_kconfigflavour(self):
         arch = self.project_options.deb_arch
