@@ -23,10 +23,13 @@ import re
 import jsonschema
 import yaml
 import yaml.reader
+from typing import Set  # noqa: F401
 
 
-import snapcraft
+from snapcraft import project
+from snapcraft.project._project_info import ProjectInfo
 from snapcraft.internal import deprecations, remote_parts, states
+
 from ._schema import Validator
 from ._parts_config import PartsConfig
 from ._env import (
@@ -84,12 +87,11 @@ class Config:
             self._remote_parts_attr = remote_parts.get_remote_parts()
         return self._remote_parts_attr
 
-    def __init__(self, project_options=None):
+    def __init__(self, project_options: project.Project=None) -> None:
         if project_options is None:
-            project_options = snapcraft.ProjectOptions()
+            project_options = project.Project()
 
-        self.build_snaps = set()
-        self.build_tools = []
+        self.build_snaps = set()  # type: Set[str]
         self._project_options = project_options
 
         self.snapcraft_yaml_path = get_snapcraft_yaml()
@@ -106,6 +108,9 @@ class Config:
         _ensure_grade_default(snapcraft_yaml, self._validator.schema)
 
         self.data = self._expand_env(snapcraft_yaml)
+        # We need to set the ProjectInfo here because ProjectOptions is
+        # created in the CLI.
+        self._project_options.info = ProjectInfo(self.data)
         self._ensure_no_duplicate_app_aliases()
 
         grammar_processor = grammar_processing.GlobalGrammarProcessor(

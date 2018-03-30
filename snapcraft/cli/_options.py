@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import click
 
-from snapcraft import ProjectOptions
+from snapcraft.project import Project
 
 
 class HiddenOption(click.Option):
@@ -58,11 +58,9 @@ def get_project_options(**kwargs):
         if not kwargs.get(key):
             kwargs[key] = value
 
-    project_args = dict(
+    project = Project(
         debug=kwargs.pop('debug'),
         use_geoip=kwargs.pop('enable_geoip'),
         parallel_builds=not kwargs.pop('no_parallel_builds'),
-        target_deb_arch=kwargs.pop('target_arch'),
-    )
-
-    return ProjectOptions(**project_args)
+        target_deb_arch=kwargs.pop('target_arch'))
+    return project
