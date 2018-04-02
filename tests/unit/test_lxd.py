@@ -22,6 +22,7 @@ from subprocess import CalledProcessError
 from unittest.mock import (
     call,
     patch,
+    ANY,
 )
 
 import fixtures
@@ -32,7 +33,6 @@ from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
 from snapcraft.internal.errors import (
     ContainerConnectionError,
-    ContainerRunError,
     SnapdError,
     SnapcraftEnvironmentError,
 )
@@ -118,10 +118,7 @@ class CleanbuilderTestCase(LXDTestCase):
                   '{}/root/build_project/project.tar'.format(container_name)]),
         ])
         mock_container_run.assert_has_calls([
-            call(['python3', '-c', 'import urllib.request; ' +
-                  'urllib.request.urlopen(' +
-                  '"http://start.ubuntu.com/connectivity-check.html"' +
-                  ', timeout=5)']),
+            call(['python3', '-c', ANY]),
             call(['apt-get', 'update']),
             call(['apt-get', 'install', 'squashfuse', '-y']),
             call(['mkdir', project_folder]),
@@ -189,7 +186,7 @@ class ContainerbuildTestCase(LXDTestCase):
 
         builder = self.make_containerbuild()
 
-        self.assertRaises(ContainerRunError,
+        self.assertRaises(ContainerConnectionError,
                           builder._wait_for_network)
 
     def test_failed_build_with_debug(self):

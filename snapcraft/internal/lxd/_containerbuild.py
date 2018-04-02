@@ -29,6 +29,7 @@ from contextlib import contextmanager
 import subprocess
 import time
 from urllib import parse
+from textwrap import dedent
 from typing import List
 
 from snapcraft.internal import common
@@ -39,14 +40,23 @@ from snapcraft.internal.errors import (
         ContainerSnapcraftCmdError,
         SnapdError,
 )
-from snapcraft._options import _get_deb_arch
+from snapcraft.project._project_options import _get_deb_arch
 from snapcraft.internal.repo import snaps
 
 logger = logging.getLogger(__name__)
 
-_NETWORK_PROBE_COMMAND = \
-    'import urllib.request; urllib.request.urlopen("{}", timeout=5)'.format(
-        'http://start.ubuntu.com/connectivity-check.html')
+_NETWORK_PROBE_COMMAND = dedent('''
+    import urllib.request
+    import sys
+
+    check_url = "http://start.ubuntu.com/connectivity-check.html"
+    try:
+        urllib.request.urlopen(check_url, timeout=5)
+    except urllib.error.URLError as e:
+        sys.exit('Failed to open {!r}: {!s}'.format(check_url, e.reason))
+    except Exception as e:
+        sys.exit('Failed to open {!r}: {!s}'.format(check_url, e))
+    ''')
 _PROXY_KEYS = ['http_proxy', 'https_proxy', 'no_proxy', 'ftp_proxy']
 # Canonical store account key
 _STORE_KEY = (
@@ -220,7 +230,9 @@ class Containerbuild:
             except ContainerRunError as e:
                 retry_count -= 1
                 if retry_count == 0:
-                    raise e
+                    raise ContainerConnectionError(
+                        'No network connection in the container.\n'
+                        'If using a proxy, check its configuration.')
         logger.info('Network connection established')
 
     def _inject_snapcraft(self, *, new_container: bool):

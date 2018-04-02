@@ -128,6 +128,10 @@ class PluginLoaderTestCase(unit.TestCase):
                 self.osrepodir = 'osrepodir'
                 self.statedir = 'statedir'
                 self.sourcedir = 'sourcedir'
+                self.build_basedir = 'build_basedir'
+
+            def build(self):
+                pass
 
         plugin_mock.return_value = NonBaseOldPlugin
         local_load_mock.side_effect = ImportError()

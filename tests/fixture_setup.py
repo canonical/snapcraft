@@ -27,6 +27,7 @@ import string
 import subprocess
 import sys
 import tempfile
+import textwrap
 import threading
 import urllib.parse
 import uuid
@@ -134,13 +135,14 @@ class FakeProjectOptions(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft.ProjectOptions')
+        patcher = mock.patch('snapcraft.project.Project')
         patcher.start()
         self.addCleanup(patcher.stop)
 
         # Special handling is required as ProjectOptions attributes are
         # handled with the @property decorator.
-        project_options_t = type(snapcraft.ProjectOptions.return_value)
+        project_options_t = type(
+            snapcraft.project.Project.return_value)
         for key in self._kwargs:
             setattr(project_options_t, key, self._kwargs[key])
 
@@ -1337,3 +1339,49 @@ class FakeBaseEnvironment(fixtures.Fixture):
         open(real_linker, 'w').close()
         os.symlink(os.path.relpath(
             real_linker, os.path.dirname(linker_path)), linker_path)
+
+
+class FakeSnapcraftctl(fixtures.Fixture):
+
+    def _setUp(self):
+        super()._setUp()
+
+        snapcraft_path = os.path.realpath(
+            os.path.join(os.path.dirname(__file__), '..'))
+
+        tempdir = self.useFixture(fixtures.TempDir()).path
+        altered_path = '{}:{}'.format(tempdir, os.environ.get('PATH'))
+        self.useFixture(fixtures.EnvironmentVariable('PATH', altered_path))
+
+        snapcraftctl_path = os.path.join(tempdir, 'snapcraftctl')
+        with open(snapcraftctl_path, 'w') as f:
+            f.write(textwrap.dedent("""\
+                #!/usr/bin/env python3
+
+                # Make sure we can find snapcraft, even if it's not installed
+                # (like in CI).
+                import sys
+                sys.path.append('{snapcraft_path!s}')
+
+                import snapcraft.cli.__main__
+
+                if __name__ == '__main__':
+                    snapcraft.cli.__main__.run_snapcraftctl(
+                        prog_name='snapcraftctl')
+            """.format(snapcraft_path=snapcraft_path)))
+            f.flush()
+
+        os.chmod(snapcraftctl_path, 0o755)
+
+
+class FakeSnapcraftIsASnap(fixtures.Fixture):
+
+    def _setUp(self):
+        super()._setUp()
+
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP', '/snap/snapcraft/current'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP_NAME', 'snapcraft'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP_VERSION', 'devel'))

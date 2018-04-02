@@ -54,12 +54,16 @@ command_groups = [
                       version=snapcraft.__version__)
 @click.pass_context
 @add_build_options(hidden=True)
-@click.option('--debug', '-d', is_flag=True)
+@click.option('--debug', '-d', is_flag=True, envvar='SNAPCRAFT_DEBUG')
 def run(ctx, debug, catch_exceptions=False, **kwargs):
     """Snapcraft is a delightful packaging tool."""
 
     if debug:
         log_level = logging.DEBUG
+
+        # Setting this here so that tools run within this are also in debug
+        # mode (e.g. snapcraftctl)
+        os.environ['SNAPCRAFT_DEBUG'] = 'true'
         click.echo('Starting snapcraft {} from {}.'.format(
             snapcraft.__version__, os.path.dirname(__file__)))
     else:

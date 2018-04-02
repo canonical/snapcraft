@@ -382,7 +382,6 @@ __version__ = _get_version()
 
 
 from snapcraft._baseplugin import BasePlugin        # noqa
-from snapcraft._options import ProjectOptions       # noqa
 # FIXME LP: #1662658
 from snapcraft._store import (                      # noqa
     create_key,
@@ -409,6 +408,9 @@ from snapcraft import sources                       # noqa
 from snapcraft import file_utils                    # noqa
 from snapcraft import shell_utils                   # noqa
 from snapcraft.internal import repo                 # noqa
+from snapcraft.project._project_options import (    # noqa
+    ProjectOptions
+)
 
 
 # Setup yaml module globally
