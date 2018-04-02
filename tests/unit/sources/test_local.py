@@ -23,8 +23,11 @@ from testtools.matchers import (
     FileExists
 )
 
-from snapcraft.internal import common
-from snapcraft.internal import sources
+from snapcraft.internal import (
+    common,
+    errors,
+    sources,
+)
 from tests import unit
 
 
@@ -60,7 +63,7 @@ class TestLocal(unit.TestCase):
         self.assertGreater(
             os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
 
-    def test_pull_with_existing_source_link_creates_symlink(self):
+    def test_pull_with_existing_source_link_errors(self):
         os.makedirs(os.path.join('src', 'dir'))
         open(os.path.join('src', 'dir', 'file'), 'w').close()
 
@@ -68,12 +71,7 @@ class TestLocal(unit.TestCase):
         os.symlink('dummy', 'destination')
 
         local = sources.Local('src', 'destination')
-        local.pull()
-
-        self.assertFalse(os.path.islink('destination'))
-        self.assertFalse(os.path.islink(os.path.join('destination', 'dir')))
-        self.assertGreater(
-            os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
+        self.assertRaises(NotADirectoryError, local.pull)
 
     def test_pull_with_existing_source_file_wipes_and_creates_hardlinks(self):
         os.makedirs(os.path.join('src', 'dir'))
@@ -83,30 +81,19 @@ class TestLocal(unit.TestCase):
         open('destination', 'w').close()
 
         local = sources.Local('src', 'destination')
-        local.pull()
+        self.assertRaises(NotADirectoryError, local.pull)
 
-        self.assertFalse(os.path.isfile('destination'))
-        self.assertFalse(os.path.islink('destination'))
-        self.assertFalse(os.path.islink(os.path.join('destination', 'dir')))
-        self.assertGreater(
-            os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
-
-    def test_pulling_twice_with_existing_source_dir_recreates_hardlinks(self):
-        os.makedirs(os.path.join('src', 'dir'))
-        open(os.path.join('src', 'dir', 'file'), 'w').close()
+    def test_existing_file_should_error(self):
+        os.mkdir('src')
+        open(os.path.join('src', 'file'), 'w').close()
 
         os.mkdir('destination')
+        open(os.path.join('destination', 'file'), 'w').close()
 
         local = sources.Local('src', 'destination')
-        local.pull()
-        local.pull()
-
-        # Verify that the directories are not symlinks, but the file is a
-        # hardlink.
-        self.assertFalse(os.path.islink('destination'))
-        self.assertFalse(os.path.islink(os.path.join('destination', 'dir')))
-        self.assertGreater(
-            os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
+        raised = self.assertRaises(errors.FileAlreadyExistsError, local.pull)
+        self.assertThat(
+            raised.file, Equals(os.path.join('destination', 'file')))
 
     def test_pull_ignores_snapcraft_specific_data(self):
         # Make the snapcraft-specific directories

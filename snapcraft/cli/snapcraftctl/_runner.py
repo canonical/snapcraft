@@ -45,6 +45,12 @@ def run(debug):
 
 
 @run.command()
+def pull():
+    """Run the 'pull' step of the calling part's plugin"""
+    _call_function('pull')
+
+
+@run.command()
 def build():
     """Run the 'build' step of the calling part's plugin"""
     _call_function('build')

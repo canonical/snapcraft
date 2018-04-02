@@ -37,17 +37,21 @@ class Runner:
     # FIXME: Need to quote builtin_functions typing because of
     # https://github.com/python/typing/issues/259 which is fixed in Python
     # 3.5.3.
-    def __init__(self, *, part_properties: Dict[str, Any], builddir: str,
+    def __init__(self, *, part_properties: Dict[str, Any], sourcedir: str,
+                 builddir: str,
                  builtin_functions: 'Dict[str, Callable[..., None]]') -> None:
         """Create a new Runner.
         :param dict part_properties: YAML properties set for this part.
+        :param str sourcedir: The source directory for this part.
         :param str builddir: The build directory for this part.
         :param dict builtin_functions: Dict of builtin function names to
                                        actual callables.
         """
+        self._sourcedir = sourcedir
         self._builddir = builddir
         self._builtin_functions = builtin_functions
 
+        self._override_pull_scriptlet = part_properties.get('override-pull')
         self._override_build_scriptlet = part_properties.get('override-build')
 
         # These are all deprecated
@@ -62,6 +66,13 @@ class Runner:
         self._install_scriptlet = part_properties.get('install')
         if self._install_scriptlet:
             deprecations.handle_deprecation_notice('dn9')
+
+    def pull(self) -> None:
+        """Run override-pull scriptlet."""
+        if self._override_pull_scriptlet:
+            self._run_scriptlet(
+                'override-pull', self._override_pull_scriptlet,
+                self._sourcedir)
 
     def prepare(self) -> None:
         """Run prepare scriptlet."""
@@ -119,7 +130,7 @@ class Runner:
                 scriptlet=scriptlet))
 
             process = subprocess.Popen(
-                ['/bin/sh', '-e', '-c', script], cwd=self._builddir)
+                ['/bin/sh', '-e', '-c', script], cwd=workdir)
 
             status = None
             try:

@@ -17,7 +17,6 @@
 import copy
 import glob
 import os
-import shutil
 
 from snapcraft import file_utils
 from snapcraft.internal import common
@@ -27,11 +26,6 @@ from ._base import Base
 class Local(Base):
 
     def pull(self):
-        if os.path.islink(self.source_dir) or os.path.isfile(self.source_dir):
-            os.remove(self.source_dir)
-        elif os.path.isdir(self.source_dir):
-            shutil.rmtree(self.source_dir)
-
         current_dir = os.getcwd()
         source_abspath = os.path.abspath(self.source)
 
@@ -47,5 +41,5 @@ class Local(Base):
             else:
                 return []
 
-        shutil.copytree(source_abspath, self.source_dir, symlinks=True,
-                        copy_function=file_utils.link_or_copy, ignore=ignore)
+        file_utils.link_or_copy_tree(
+            source_abspath, self.source_dir, ignore=ignore)

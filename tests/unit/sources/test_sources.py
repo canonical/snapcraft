@@ -148,6 +148,7 @@ class SourceWithBranchAndTagTestCase(unit.TestCase):
 class GetSourceTestClass(unit.TestCase):
 
     def test_get(self):
+        open('file', 'w').close()
 
         class Options:
             source = '.'
@@ -155,3 +156,4 @@ class GetSourceTestClass(unit.TestCase):
         sources.get('src', 'useless-arg', Options())
 
         self.assertTrue(os.path.isdir('src'))
+        self.assertTrue(os.path.isfile(os.path.join('src', 'file')))

@@ -10,6 +10,8 @@ parts:
   override-build-scriptlet-test:
     plugin: dump
     override-build: |
-      touch $SNAPCRAFT_PART_INSTALL/before-build
+      touch before-build
+      touch $SNAPCRAFT_PART_INSTALL/before-install
       snapcraftctl build
-      touch $SNAPCRAFT_PART_INSTALL/after-build
+      touch after-build
+      touch $SNAPCRAFT_PART_INSTALL/after-install

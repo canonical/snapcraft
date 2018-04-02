@@ -419,7 +419,16 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "Verify that the part is using the correct parameters and try "
                 "again."
             )
-        })
+        }),
+        ('FileAlreadyExistsError', {
+            'exception': errors.FileAlreadyExistsError,
+            'kwargs': {
+                'file': 'test-file',
+            },
+            'expected_message': (
+                "'test-file' already exists; not overwriting"
+            )
+        }),
     )
 
     def test_error_formatting(self):

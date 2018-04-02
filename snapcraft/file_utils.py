@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import contextmanager, suppress
+import errno
 import hashlib
 import logging
 import re
@@ -23,9 +24,11 @@ import shutil
 import subprocess
 import sys
 from typing import Pattern, Callable, Generator
+from typing import Set  # noqa F401
 
 from snapcraft.internal import common
 from snapcraft.internal.errors import (
+    FileAlreadyExistsError,
     RequiredCommandFailure,
     RequiredCommandNotFound,
     RequiredPathDoesNotExist,
@@ -117,7 +120,10 @@ def link_or_copy(source: str, destination: str,
         # upstream-- we want this function to continue supporting NOT following
         # symlinks.
         os.link(source_path, destination, follow_symlinks=False)
-    except OSError:
+    except OSError as e:
+        if e.errno == errno.EEXIST and not os.path.isdir(destination):
+            raise FileAlreadyExistsError(destination)
+
         # If os.link raised an I/O error, it may have left a file behind.
         # Skip on OSError in case it doesn't exist or is a directory.
         with suppress(OSError):
@@ -133,7 +139,7 @@ def link_or_copy(source: str, destination: str,
                 destination=destination, error=e))
 
 
-def link_or_copy_tree(source_tree: str, destination_tree: str,
+def link_or_copy_tree(source_tree: str, destination_tree: str, ignore=None,
                       copy_function: Callable[..., None]
                       =link_or_copy) -> None:
     """Copy a source tree into a destination, hard-linking if possible.
@@ -142,6 +148,9 @@ def link_or_copy_tree(source_tree: str, destination_tree: str,
     :param str destination_tree: Destination directory. If this directory
                                  already exists, the files in `source_tree`
                                  will take precedence.
+    :param callable ignore: If given, called with two params, source dir and
+                            dir contents, for every dir copied. Should return
+                            list of contents to NOT copy.
     :param callable copy_function: Callable that actually copies.
     """
 
@@ -149,14 +158,31 @@ def link_or_copy_tree(source_tree: str, destination_tree: str,
         raise NotADirectoryError('{!r} is not a directory'.format(source_tree))
 
     if (not os.path.isdir(destination_tree) and
-            os.path.exists(destination_tree)):
+            (os.path.exists(destination_tree) or
+                os.path.islink(destination_tree))):
         raise NotADirectoryError(
             'Cannot overwrite non-directory {!r} with directory '
             '{!r}'.format(destination_tree, source_tree))
 
     create_similar_directory(source_tree, destination_tree)
 
-    for root, directories, files in os.walk(source_tree):
+    destination_basename = os.path.basename(destination_tree)
+
+    for root, directories, files in os.walk(source_tree, topdown=True):
+        ignored = set()  # type: Set[str]
+        if ignore is not None:
+            ignored = set(ignore(root, directories + files))
+
+        # Don't recurse into destination tree if it's a subdirectory of the
+        # source tree.
+        if os.path.relpath(destination_tree, root) == destination_basename:
+            ignored.add(destination_basename)
+
+        if ignored:
+            # Prune our search appropriately given an ignore list, i.e. don't
+            # walk into directories that are ignored.
+            directories[:] = [d for d in directories if d not in ignored]
+
         for directory in directories:
             source = os.path.join(root, directory)
             # os.walk doesn't by default follow symlinks (which is good), but
@@ -171,7 +197,7 @@ def link_or_copy_tree(source_tree: str, destination_tree: str,
 
             create_similar_directory(source, destination)
 
-        for file_name in files:
+        for file_name in (set(files) - ignored):
             source = os.path.join(root, file_name)
             destination = os.path.join(
                 destination_tree, os.path.relpath(source, source_tree))
