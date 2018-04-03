@@ -301,7 +301,9 @@ class ErrorFormattingTestCase(unit.TestCase):
             'exception': errors.InvalidContainerImageInfoError,
             'kwargs': {'image_info': 'test-image-info'},
             'expected_message': (
-                'Error parsing the container image info: test-image-info')}),
+                'Failed to parse container image info: '
+                'SNAPCRAFT_IMAGE_INFO is not a valid JSON string: '
+                'test-image-info')}),
         # meta errors.
         ('AdoptedPartMissingError', {
             'exception': meta_errors.AdoptedPartMissingError,
