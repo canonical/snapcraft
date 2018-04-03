@@ -83,6 +83,49 @@ class ExportLoginCommandTestCase(CommandBaseTestCase):
                        'get_account_information')
     @mock.patch.object(storeapi.StoreClient, 'login')
     @mock.patch.object(storeapi.StoreClient, 'acl')
+    def test_successful_export_stdout(
+            self, mock_acl, mock_login, mock_get_account_information):
+        self.mock_input.return_value = 'user@example.com'
+        mock_acl.return_value = {
+            'snap_ids': None,
+            'channels': None,
+            'permissions': None,
+            'expires': '2018-02-01T00:00:00',
+        }
+
+        result = self.run_command(['export-login', '-'])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output, Contains(
+            storeapi.constants.TWO_FACTOR_WARNING))
+        self.assertThat(
+            result.output, Contains('Exported login starts on next line'))
+        self.assertThat(
+            result.output, Contains(
+                'Login successfully exported and printed above'))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*snaps:.*?No restriction', re.DOTALL))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*channels:.*?No restriction', re.DOTALL))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*permissions:.*?No restriction', re.DOTALL))
+        self.assertThat(
+            result.output, MatchesRegex(
+                r'.*expires:.*?2018-02-01T00:00:00', re.DOTALL))
+
+        self.mock_input.assert_called_once_with('Email: ')
+        mock_login.assert_called_once_with(
+            'user@example.com', mock.ANY, acls=None, packages=None,
+            channels=None, expires=None, save=False, config_fd=None)
+        mock_acl.assert_called_once_with()
+
+    @mock.patch.object(storeapi._sca_client.SCAClient,
+                       'get_account_information')
+    @mock.patch.object(storeapi.StoreClient, 'login')
+    @mock.patch.object(storeapi.StoreClient, 'acl')
     def test_successful_export_expires(
             self, mock_acl, mock_login, mock_get_account_information):
         self.mock_input.return_value = 'user@example.com'
