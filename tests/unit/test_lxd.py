@@ -22,6 +22,7 @@ from subprocess import CalledProcessError
 from unittest.mock import (
     call,
     patch,
+    ANY,
 )
 
 import fixtures
@@ -32,7 +33,7 @@ from snapcraft import ProjectOptions
 from snapcraft.internal import lxd
 from snapcraft.internal.errors import (
     ContainerConnectionError,
-    ContainerRunError,
+    InvalidContainerImageInfoError,
     SnapdError,
     SnapcraftEnvironmentError,
 )
@@ -118,10 +119,7 @@ class CleanbuilderTestCase(LXDTestCase):
                   '{}/root/build_project/project.tar'.format(container_name)]),
         ])
         mock_container_run.assert_has_calls([
-            call(['python3', '-c', 'import urllib.request; ' +
-                  'urllib.request.urlopen(' +
-                  '"http://start.ubuntu.com/connectivity-check.html"' +
-                  ', timeout=5)']),
+            call(['python3', '-c', ANY]),
             call(['apt-get', 'update']),
             call(['apt-get', 'install', 'squashfuse', '-y']),
             call(['mkdir', project_folder]),
@@ -183,13 +181,36 @@ class ContainerbuildTestCase(LXDTestCase):
                   'test_build_info_value']),
         ])
 
+    def test_image_info_merged(self):
+        test_image_info = '{"build_url": "test-build-url"}'
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                'SNAPCRAFT_IMAGE_INFO', test_image_info))
+        self.make_containerbuild().execute()
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'config', 'set', self.fake_lxd.name,
+                  'environment.SNAPCRAFT_IMAGE_INFO',
+                  '{"fingerprint": "test-fingerprint", '
+                  '"architecture": "test-architecture", '
+                  '"created_at": "test-created-at", '
+                  '"build_url": "test-build-url"}']),
+        ])
+
+    def test_image_info_invalid(self):
+        test_image_info = 'not-json'
+        self.useFixture(
+            fixtures.EnvironmentVariable(
+                'SNAPCRAFT_IMAGE_INFO', test_image_info))
+        self.assertRaises(InvalidContainerImageInfoError,
+                          self.make_containerbuild().execute)
+
     def test_wait_for_network_loops(self):
         self.fake_lxd.check_call_mock.side_effect = CalledProcessError(
             -1, ['my-cmd'])
 
         builder = self.make_containerbuild()
 
-        self.assertRaises(ContainerRunError,
+        self.assertRaises(ContainerConnectionError,
                           builder._wait_for_network)
 
     def test_failed_build_with_debug(self):

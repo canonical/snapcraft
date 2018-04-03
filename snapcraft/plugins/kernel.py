@@ -178,6 +178,9 @@ class KernelPlugin(kbuild.KBuildPlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
+        # We need to be able to shell out to modprobe
+        self.build_packages.append('kmod')
+
         self._set_kernel_targets()
 
         self.os_snap = os.path.join(self.sourcedir, 'os.snap')
@@ -270,10 +273,15 @@ class KernelPlugin(kbuild.KBuildPlugin):
         initrd_unpacked_path = self._unpack_generic_initrd()
 
         modprobe_outs = []
+
+        # modprobe is typically in /sbin, which may not always be available on
+        # the PATH. Add it for this call.
+        env = os.environ.copy()
+        env['PATH'] += ':/sbin'
         for module in self.options.kernel_initrd_modules:
             modprobe_out = self.run_output([
                 'modprobe', '-n', '--show-depends', '-d', self.installdir,
-                '-S', self.kernel_release, module])
+                '-S', self.kernel_release, module], env=env)
             modprobe_outs.extend(modprobe_out.split(os.linesep))
 
         modprobe_outs = [_ for _ in modprobe_outs if _]
