@@ -41,6 +41,7 @@ class NodePluginBaseTestCase(unit.TestCase):
             node_packages = []
             node_engine = nodejs._NODEJS_VERSION
             npm_run = []
+            npm_flags = []
             node_package_manager = 'npm'
             source = '.'
         self.options = Options()
@@ -145,6 +146,61 @@ class NodePluginTestCase(NodePluginBaseTestCase):
             ]
         else:
             cmd = [os.path.join(plugin.partdir, 'npm', 'bin', 'yarn')]
+            if self.http_proxy is not None:
+                cmd.extend(['--proxy', self.http_proxy])
+            if self.https_proxy is not None:
+                cmd.extend(['--https-proxy', self.https_proxy])
+            expected_run_calls = [
+                mock.call(cmd +
+                          ['global', 'add',
+                           'file:{}'.format(plugin.builddir),
+                           '--offline', '--prod',
+                           '--global-folder', plugin.installdir,
+                           '--prefix', plugin.installdir],
+                          cwd=plugin.builddir)
+            ]
+            expected_tar_calls = [
+                mock.call(self.nodejs_url, plugin._npm_dir),
+                mock.call('https://yarnpkg.com/latest.tar.gz',
+                          plugin._npm_dir),
+                mock.call().provision(plugin.installdir, clean_target=False,
+                                      keep_tarball=True),
+                mock.call().provision(plugin._npm_dir,
+                                      clean_target=False, keep_tarball=True),
+            ]
+
+        self.run_mock.assert_has_calls(expected_run_calls)
+        self.tar_mock.assert_has_calls(expected_tar_calls)
+
+    def test_build_with_npm_flags(self):
+        self.options.node_package_manager = self.package_manager
+        self.options.npm_flags = ['--test-flag']
+
+        open('package.json', 'w').close()
+
+        plugin = nodejs.NodePlugin('test-part', self.options,
+                                   self.project_options)
+
+        os.makedirs(plugin.builddir)
+        open(os.path.join(plugin.builddir, 'package.json'), 'w').close()
+
+        plugin.build()
+
+        if self.package_manager == 'npm':
+            cmd = ['npm', '--test-flag', '--cache-min=Infinity', 'install']
+            expected_run_calls = [
+                mock.call(cmd, cwd=plugin.builddir),
+                mock.call(cmd + ['--global'], cwd=plugin.builddir),
+            ]
+            expected_tar_calls = [
+                mock.call(self.nodejs_url, plugin._npm_dir),
+                mock.call().provision(
+                    plugin.installdir, clean_target=False, keep_tarball=True),
+            ]
+        else:
+            cmd = [
+                os.path.join(plugin.partdir, 'npm', 'bin', 'yarn'),
+                '--test-flag']
             if self.http_proxy is not None:
                 cmd.extend(['--proxy', self.http_proxy])
             if self.https_proxy is not None:
@@ -325,7 +381,7 @@ class NodePluginTestCase(NodePluginBaseTestCase):
                         Equals('architecture not supported (fantasy-arch)'))
 
     def test_get_build_properties(self):
-        expected_build_properties = ['node-packages', 'npm-run']
+        expected_build_properties = ['node-packages', 'npm-run', 'npm-flags']
         resulting_build_properties = nodejs.NodePlugin.get_build_properties()
 
         self.assertThat(resulting_build_properties,

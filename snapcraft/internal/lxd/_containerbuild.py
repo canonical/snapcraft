@@ -38,6 +38,7 @@ from snapcraft.internal.errors import (
         ContainerError,
         ContainerRunError,
         ContainerSnapcraftCmdError,
+        InvalidContainerImageInfoError,
         SnapdError,
 )
 from snapcraft.project._project_options import _get_deb_arch
@@ -171,6 +172,15 @@ class Containerbuild:
         for field in ('fingerprint', 'architecture', 'created_at'):
             if field in image_info[0]:
                 edited_image_info[field] = image_info[0][field]
+
+        # Pick up existing image info if set
+        image_info_str = os.environ.get('SNAPCRAFT_IMAGE_INFO')
+        if image_info_str:
+            try:
+                edited_image_info.update(json.loads(image_info_str))
+            except json.decoder.JSONDecodeError as e:
+                raise InvalidContainerImageInfoError(image_info_str) from e
+
         # Pass the image info to the container so it can be used when recording
         # information about the build environment.
         subprocess.check_call([

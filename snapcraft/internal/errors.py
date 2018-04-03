@@ -438,9 +438,12 @@ class OsReleaseCodenameError(SnapcraftError):
 
 class InvalidContainerImageInfoError(SnapcraftError):
 
-    fmt = 'Error parsing the container image info: {image_info}'
+    fmt = (
+        'Failed to parse container image info: '
+        'SNAPCRAFT_IMAGE_INFO is not a valid JSON string: {image_info}'
+    )
 
-    def __init__(self, image_info):
+    def __init__(self, image_info: str) -> None:
         super().__init__(image_info=image_info)
 
 
