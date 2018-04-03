@@ -570,10 +570,3 @@ class ScriptletRunError(ScriptletBaseError):
 
     def __init__(self, scriptlet_name: str, code: int) -> None:
         super().__init__(scriptlet_name=scriptlet_name, code=code)
-
-
-class FileAlreadyExistsError(SnapcraftError):
-    fmt = '{file!r} already exists; not overwriting'
-
-    def __init__(self, file):
-        super().__init__(file=file)

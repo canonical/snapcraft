@@ -28,7 +28,6 @@ from typing import Set  # noqa F401
 
 from snapcraft.internal import common
 from snapcraft.internal.errors import (
-    FileAlreadyExistsError,
     RequiredCommandFailure,
     RequiredCommandNotFound,
     RequiredPathDoesNotExist,
@@ -122,21 +121,25 @@ def link_or_copy(source: str, destination: str,
         os.link(source_path, destination, follow_symlinks=False)
     except OSError as e:
         if e.errno == errno.EEXIST and not os.path.isdir(destination):
-            raise FileAlreadyExistsError(destination)
+            # os.link will fail if the destination already exists, so let's
+            # remove it and try again.
+            os.remove(destination)
+            link_or_copy(source_path, destination, follow_symlinks)
+        else:
+            # If os.link raised an I/O error, it may have left a file behind.
+            # Skip on OSError in case it doesn't exist or is a directory.
+            with suppress(OSError):
+                os.unlink(destination)
 
-        # If os.link raised an I/O error, it may have left a file behind.
-        # Skip on OSError in case it doesn't exist or is a directory.
-        with suppress(OSError):
-            os.unlink(destination)
-
-        shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
-        uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid
-        gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid
-        try:
-            os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
-        except PermissionError as e:
-            logger.debug('Unable to chown {destination}: {error}'.format(
-                destination=destination, error=e))
+            shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
+            uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid
+            gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid
+            try:
+                os.chown(destination, uid, gid,
+                         follow_symlinks=follow_symlinks)
+            except PermissionError as e:
+                logger.debug('Unable to chown {destination}: {error}'.format(
+                    destination=destination, error=e))
 
 
 def link_or_copy_tree(source_tree: str, destination_tree: str,
