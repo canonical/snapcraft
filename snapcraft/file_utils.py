@@ -23,7 +23,7 @@ import os
 import shutil
 import subprocess
 import sys
-from typing import Pattern, Callable, Generator
+from typing import Pattern, Callable, Generator, List
 from typing import Set  # noqa F401
 
 from snapcraft.internal import common
@@ -139,9 +139,9 @@ def link_or_copy(source: str, destination: str,
                 destination=destination, error=e))
 
 
-def link_or_copy_tree(source_tree: str, destination_tree: str, ignore=None,
-                      copy_function: Callable[..., None]
-                      =link_or_copy) -> None:
+def link_or_copy_tree(source_tree: str, destination_tree: str,
+                      ignore: Callable[[str, List[str]], List[str]]=None,
+                      copy_function: Callable[..., None]=link_or_copy) -> None:
     """Copy a source tree into a destination, hard-linking if possible.
 
     :param str source_tree: Source directory to be copied.
