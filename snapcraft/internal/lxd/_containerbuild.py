@@ -149,8 +149,12 @@ class Containerbuild:
             'Failed to get container image info: {}\n'
             'It will not be recorded in manifest.')
         try:
+            # This command takes the same image name as used to create a new
+            # container. But we must always use the form distro:series/arch
+            # here so that we get only the image we're actually using!
             image_info_command = [
-                'lxc', 'image', 'list', '--format=json', self._image]
+                'lxc', 'image', 'list', '--format=json',
+                '{}/{}'.format(self._image, self._get_container_arch())]
             image_info = json.loads(subprocess.check_output(
                 image_info_command).decode())
         except subprocess.CalledProcessError as e:

@@ -30,6 +30,7 @@ from testtools import ExpectedException
 from testtools.matchers import Contains, Equals
 
 from snapcraft import ProjectOptions
+from snapcraft.project._project_options import _get_deb_arch
 from snapcraft.internal import lxd
 from snapcraft.internal.errors import (
     ContainerConnectionError,
@@ -135,6 +136,10 @@ class CleanbuilderTestCase(LXDTestCase):
                   '{}{}/snap.snap'.format(container_name, project_folder),
                   'snap.snap']),
             call(['lxc', 'stop', '-f', container_name]),
+        ])
+        self.fake_lxd.check_output_mock.assert_has_calls([
+            call(['lxc', 'image', 'list', '--format=json',
+                  'ubuntu:xenial/{}'.format(_get_deb_arch(self.server))]),
         ])
 
     def test_failed_container_never_created(self):
@@ -788,7 +793,7 @@ class FailedImageInfoTestCase(LXDBaseTestCase):
             kwargs=dict(cmd='testcmd', returncode=1, output='test output'),
             expected_warn=(
                 "Failed to get container image info: "
-                "`lxc image list --format=json ubuntu:xenial` "
+                "`lxc image list --format=json ubuntu:xenial/amd64` "
                 "returned with exit code 1, output: test output\n"
                 "It will not be recorded in manifest.\n"))),
         ('JSONDecodeError', dict(
