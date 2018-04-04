@@ -62,12 +62,29 @@ class ScriptletTestCase(integration.TestCase):
                                          self.arch_triplet, 'lib.so')
         self.assertThat(arch_triplet_file, FileExists())
 
+    def test_override_pull(self):
+        self.run_snapcraft('pull', 'scriptlet-override-pull')
+
+        sourcedir = os.path.join(
+            self.parts_dir, 'override-pull-scriptlet-test', 'src')
+
+        self.assertThat(os.path.join(sourcedir, 'file'), FileExists())
+        self.assertThat(os.path.join(sourcedir, 'before-pull'), FileExists())
+        self.assertThat(os.path.join(sourcedir, 'after-pull'), FileExists())
+
     def test_override_build(self):
         self.run_snapcraft('build', 'scriptlet-override-build')
 
+        builddir = os.path.join(
+            self.parts_dir, 'override-build-scriptlet-test', 'build')
         installdir = os.path.join(
             self.parts_dir, 'override-build-scriptlet-test', 'install')
 
+        self.assertThat(os.path.join(builddir, 'file'), FileExists())
+        self.assertThat(os.path.join(builddir, 'before-build'), FileExists())
+        self.assertThat(os.path.join(builddir, 'after-build'), FileExists())
         self.assertThat(os.path.join(installdir, 'file'), FileExists())
-        self.assertThat(os.path.join(installdir, 'before-build'), FileExists())
-        self.assertThat(os.path.join(installdir, 'after-build'), FileExists())
+        self.assertThat(
+            os.path.join(installdir, 'before-install'), FileExists())
+        self.assertThat(
+            os.path.join(installdir, 'after-install'), FileExists())

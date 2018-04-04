@@ -1,0 +1,15 @@
+name: override-pull-scriptlet-test
+version: '0.1'
+summary: Runs the override-build scriptlet for a part
+description: |
+  Runs the shell script defined in `override-build` instead of plugin build.
+grade: devel
+confinement: devmode
+
+parts:
+  override-pull-scriptlet-test:
+    plugin: dump
+    override-pull: |
+      touch before-pull
+      snapcraftctl pull
+      touch after-pull

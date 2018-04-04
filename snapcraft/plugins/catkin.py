@@ -345,7 +345,11 @@ class CatkinPlugin(snapcraft.BasePlugin):
         env.append('PATH=$PATH:{}/usr/bin'.format(root))
 
         if self.options.underlay:
-            script = '. {}'.format(os.path.join(
+            script = textwrap.dedent("""
+                if [ -f {snapcraft_setup} ]; then
+                    . {snapcraft_setup}
+                fi
+            """).format(snapcraft_setup=os.path.join(
                 self.rosdir, 'snapcraft-setup.sh'))
         else:
             script = self._source_setup_sh(root, None)

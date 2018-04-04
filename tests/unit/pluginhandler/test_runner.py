@@ -30,17 +30,48 @@ from tests import (
 )
 
 
+def _fake_pull():
+    open(os.path.join('sourcedir', 'fake-pull'), 'w').close()
+
+
 def _fake_build():
     open(os.path.join('builddir', 'fake-build'), 'w').close()
 
 
 class RunnerTestCase(unit.TestCase):
 
+    def test_pull(self):
+        os.mkdir('sourcedir')
+
+        runner = _runner.Runner(
+                part_properties={'override-pull': 'touch pull'},
+                sourcedir='sourcedir',
+                builddir='builddir',
+                builtin_functions={})
+
+        runner.pull()
+
+        self.assertThat(os.path.join('sourcedir', 'pull'), FileExists())
+
+    def test_builtin_function_from_pull(self):
+        os.mkdir('sourcedir')
+
+        runner = _runner.Runner(
+                part_properties={'override-pull': 'snapcraftctl pull'},
+                sourcedir='sourcedir',
+                builddir='builddir',
+                builtin_functions={'pull': _fake_pull})
+
+        runner.pull()
+
+        self.assertThat(os.path.join('sourcedir', 'fake-pull'), FileExists())
+
     def test_prepare(self):
         os.mkdir('builddir')
 
         runner = _runner.Runner(
                 part_properties={'prepare': 'touch prepare'},
+                sourcedir='sourcedir',
                 builddir='builddir',
                 builtin_functions={})
 
@@ -53,6 +84,7 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
                 part_properties={'prepare': 'snapcraftctl build'},
+                sourcedir='sourcedir',
                 builddir='builddir',
                 builtin_functions={'build': _fake_build})
 
@@ -69,6 +101,7 @@ class RunnerTestCase(unit.TestCase):
                     part_properties={
                         'prepare': 'alias snapcraftctl > definition'
                     },
+                    sourcedir='sourcedir',
                     builddir='builddir',
                     builtin_functions={})
 
@@ -87,6 +120,7 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
                 part_properties={'build': 'touch build'},
+                sourcedir='sourcedir',
                 builddir='builddir',
                 builtin_functions={})
 
@@ -99,6 +133,7 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
                 part_properties={'build': 'snapcraftctl build'},
+                sourcedir='sourcedir',
                 builddir='builddir',
                 builtin_functions={'build': _fake_build})
 
@@ -111,6 +146,7 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
                 part_properties={'install': 'touch install'},
+                sourcedir='sourcedir',
                 builddir='builddir',
                 builtin_functions={})
 
@@ -123,6 +159,7 @@ class RunnerTestCase(unit.TestCase):
 
         runner = _runner.Runner(
                 part_properties={'install': 'snapcraftctl build'},
+                sourcedir='sourcedir',
                 builddir='builddir',
                 builtin_functions={'build': _fake_build})
 
@@ -143,6 +180,7 @@ class RunnerFailureTestCase(unit.TestCase):
 
         runner = _runner.Runner(
                 part_properties={'build': script},
+                sourcedir='sourcedir',
                 builddir='builddir',
                 builtin_functions={})
 
@@ -158,6 +196,7 @@ class RunnerFailureTestCase(unit.TestCase):
 
         runner = _runner.Runner(
                 part_properties={'build': script},
+                sourcedir='sourcedir',
                 builddir='builddir',
                 builtin_functions={})
 
@@ -168,6 +207,7 @@ class RunnerFailureTestCase(unit.TestCase):
 
         runner = _runner.Runner(
                 part_properties={'build': 'alias snapcraftctl 2> /dev/null'},
+                sourcedir='sourcedir',
                 builddir='builddir',
                 builtin_functions={})
 
@@ -187,6 +227,7 @@ class RunnerDeprecationTestCase(unit.TestCase):
 
         _runner.Runner(
             part_properties={'prepare': 'foo'},
+            sourcedir='sourcedir',
             builddir='builddir',
             builtin_functions={})
 
@@ -200,6 +241,7 @@ class RunnerDeprecationTestCase(unit.TestCase):
 
         _runner.Runner(
             part_properties={'build': 'foo'},
+            sourcedir='sourcedir',
             builddir='builddir',
             builtin_functions={})
 
@@ -213,6 +255,7 @@ class RunnerDeprecationTestCase(unit.TestCase):
 
         _runner.Runner(
             part_properties={'install': 'foo'},
+            sourcedir='sourcedir',
             builddir='builddir',
             builtin_functions={})
 

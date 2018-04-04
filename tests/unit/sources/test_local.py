@@ -60,7 +60,26 @@ class TestLocal(unit.TestCase):
         self.assertGreater(
             os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
 
-    def test_pull_with_existing_source_link_creates_symlink(self):
+    def test_pull_with_existing_source_tree_creates_hardlinks(self):
+        os.makedirs(os.path.join('src', 'dir'))
+        open(os.path.join('src', 'dir', 'file'), 'w').close()
+
+        os.mkdir('destination')
+        open(os.path.join('destination', 'existing-file'), 'w').close()
+
+        local = sources.Local('src', 'destination')
+        local.pull()
+
+        # Verify that the directories are not symlinks, but the file is a
+        # hardlink. Also verify that existing-file still exists.
+        self.assertFalse(os.path.islink('destination'))
+        self.assertFalse(os.path.islink(os.path.join('destination', 'dir')))
+        self.assertThat(
+            os.path.join('destination', 'existing-file'), FileExists())
+        self.assertGreater(
+            os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
+
+    def test_pull_with_existing_source_link_error(self):
         os.makedirs(os.path.join('src', 'dir'))
         open(os.path.join('src', 'dir', 'file'), 'w').close()
 
@@ -68,14 +87,9 @@ class TestLocal(unit.TestCase):
         os.symlink('dummy', 'destination')
 
         local = sources.Local('src', 'destination')
-        local.pull()
+        self.assertRaises(NotADirectoryError, local.pull)
 
-        self.assertFalse(os.path.islink('destination'))
-        self.assertFalse(os.path.islink(os.path.join('destination', 'dir')))
-        self.assertGreater(
-            os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
-
-    def test_pull_with_existing_source_file_wipes_and_creates_hardlinks(self):
+    def test_pull_with_existing_source_file_error(self):
         os.makedirs(os.path.join('src', 'dir'))
         open(os.path.join('src', 'dir', 'file'), 'w').close()
 
@@ -83,13 +97,7 @@ class TestLocal(unit.TestCase):
         open('destination', 'w').close()
 
         local = sources.Local('src', 'destination')
-        local.pull()
-
-        self.assertFalse(os.path.isfile('destination'))
-        self.assertFalse(os.path.islink('destination'))
-        self.assertFalse(os.path.islink(os.path.join('destination', 'dir')))
-        self.assertGreater(
-            os.stat(os.path.join('destination', 'dir', 'file')).st_nlink, 1)
+        self.assertRaises(NotADirectoryError, local.pull)
 
     def test_pulling_twice_with_existing_source_dir_recreates_hardlinks(self):
         os.makedirs(os.path.join('src', 'dir'))

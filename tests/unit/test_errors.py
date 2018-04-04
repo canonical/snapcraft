@@ -419,7 +419,7 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "Verify that the part is using the correct parameters and try "
                 "again."
             )
-        })
+        }),
     )
 
     def test_error_formatting(self):

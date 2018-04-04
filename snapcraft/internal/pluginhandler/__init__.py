@@ -100,9 +100,11 @@ class PluginHandler:
 
         self._runner = Runner(
             part_properties=self._part_properties,
+            sourcedir=self.plugin.sourcedir,
             builddir=self.plugin.build_basedir,
             builtin_functions={
                 'build': self.plugin.build,
+                'pull': self._do_pull,
             })
 
         self._migrate_state_file()
@@ -279,13 +281,24 @@ class PluginHandler:
         self._unpack_stage_packages()
 
     def pull(self, force=False):
+        # Ensure any previously-failed pull is cleared out before we try again
+        if (os.path.islink(self.plugin.sourcedir) or
+                os.path.isfile(self.plugin.sourcedir)):
+            os.remove(self.plugin.sourcedir)
+        elif os.path.isdir(self.plugin.sourcedir):
+            shutil.rmtree(self.plugin.sourcedir)
+
         self.makedirs()
         self.notify_part_progress('Pulling')
+
+        self._runner.pull()
+
+        self.mark_pull_done()
+
+    def _do_pull(self):
         if self.source_handler:
             self.source_handler.pull()
         self.plugin.pull()
-
-        self.mark_pull_done()
 
     def mark_pull_done(self):
         pull_properties = self.plugin.get_pull_properties()

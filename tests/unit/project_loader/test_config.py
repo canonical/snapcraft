@@ -25,6 +25,7 @@ from textwrap import dedent
 
 import fixtures
 from testtools.matchers import Contains, Equals, MatchesRegex, Not, StartsWith
+from testscenarios.scenarios import multiply_scenarios
 
 import snapcraft
 from snapcraft.project._project_info import ProjectInfo
@@ -2280,45 +2281,6 @@ class ValidationTestCase(ValidationBaseTestCase):
             ".*The 'parts/part1' property does not match the required "
             "schema: .* cannot contain both 'snap' and 'prime' keywords.*"))
 
-    def test_both_prepare_and_override_build_specified(self):
-        self.data['parts']['part1']['prepare'] = ['foo']
-        self.data['parts']['part1']['override-build'] = ['bar']
-
-        raised = self.assertRaises(
-            errors.YamlValidationError,
-            project_loader.Validator(self.data).validate)
-
-        self.assertThat(str(raised), MatchesRegex(
-            ".*The 'parts/part1' property does not match the required "
-            "schema: .* cannot contain both 'prepare' and 'override-build' "
-            "keywords.*"))
-
-    def test_both_build_and_override_build_specified(self):
-        self.data['parts']['part1']['build'] = ['foo']
-        self.data['parts']['part1']['override-build'] = ['bar']
-
-        raised = self.assertRaises(
-            errors.YamlValidationError,
-            project_loader.Validator(self.data).validate)
-
-        self.assertThat(str(raised), MatchesRegex(
-            ".*The 'parts/part1' property does not match the required "
-            "schema: .* cannot contain both 'build' and 'override-build' "
-            "keywords.*"))
-
-    def test_both_install_and_override_build_specified(self):
-        self.data['parts']['part1']['install'] = ['foo']
-        self.data['parts']['part1']['override-build'] = ['bar']
-
-        raised = self.assertRaises(
-            errors.YamlValidationError,
-            project_loader.Validator(self.data).validate)
-
-        self.assertThat(str(raised), MatchesRegex(
-            ".*The 'parts/part1' property does not match the required "
-            "schema: .* cannot contain both 'install' and 'override-build' "
-            "keywords.*"))
-
     def test_missing_required_property_and_missing_adopt_info(self):
         del self.data['summary']
         del self.data['adopt-info']
@@ -2332,6 +2294,52 @@ class ValidationTestCase(ValidationBaseTestCase):
             "property")
         self.assertThat(raised.message, Equals(expected_message),
                         message=self.data)
+
+
+class OldConflictsWithNewScriptletTestCase(ValidationTestCase):
+
+    old_scriptlet_scenarios = [
+        ('prepare', {
+            'old_keyword': 'prepare',
+            'old_value': ['test-prepare'],
+        }),
+        ('build', {
+            'old_keyword': 'build',
+            'old_value': ['test-build'],
+        }),
+        ('install', {
+            'old_keyword': 'install',
+            'old_value': ['test-install'],
+        }),
+    ]
+
+    new_scriptlet_scenarios = [
+        ('override-pull', {
+            'new_keyword': 'override-pull',
+            'new_value': ['test-override-pull'],
+        }),
+        ('override-build', {
+            'new_keyword': 'override-build',
+            'new_value': ['test-override-build'],
+        }),
+    ]
+
+    scenarios = multiply_scenarios(
+        old_scriptlet_scenarios, new_scriptlet_scenarios)
+
+    def test_both_old_and_new_keywords_specified(self):
+        self.data['parts']['part1'][self.old_keyword] = self.old_value
+        self.data['parts']['part1'][self.new_keyword] = self.new_value
+
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            project_loader.Validator(self.data).validate)
+
+        self.assertThat(str(raised), MatchesRegex(
+            (".*The 'parts/part1' property does not match the required "
+             "schema: Parts cannot contain both {0!r} and 'override-\*' "
+             "keywords. Use 'override-build' instead of {0!r}.*").format(
+                self.old_keyword)))
 
 
 class DaemonDependencyTestCase(ValidationBaseTestCase):

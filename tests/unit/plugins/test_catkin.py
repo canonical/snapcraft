@@ -717,8 +717,23 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
         environment = self._verify_run_environment(plugin)
 
-        self.assertThat(environment, Contains('. {}'.format(
-            os.path.join(plugin.rosdir, 'snapcraft-setup.sh'))))
+        setup_path = os.path.join(plugin.rosdir, 'snapcraft-setup.sh')
+        lines_of_interest = [
+            'if [ -f {} ]; then'.format(setup_path),
+            '. {}'.format(setup_path),
+            'fi',
+        ]
+        actual_lines = []
+
+        for line in environment:
+            line = line.strip()
+            if line in lines_of_interest:
+                actual_lines.append(line)
+
+        self.assertThat(
+            actual_lines, Equals(lines_of_interest),
+            'Expected snapcraft-setup.sh to be sourced after checking for its '
+            'existence')
 
     @mock.patch.object(catkin.CatkinPlugin, '_source_setup_sh',
                        return_value='test-source-setup.sh')

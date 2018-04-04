@@ -331,27 +331,50 @@ properties:
               required: [snap, prime]
               validation-failure:
                   "Parts cannot contain both 'snap' and 'prime' keywords."
+
           # Make sure prepare/override-build are mutually exclusive
           - not:
               type: object
               required: [prepare, override-build]
               validation-failure:
-                  "Parts cannot contain both 'prepare' and 'override-build'
-                  keywords. Use 'override-build'."
+                  "Parts cannot contain both 'prepare' and 'override-*'
+                  keywords. Use 'override-build' instead of 'prepare'."
           # Make sure build/override-build are mutually exclusive
           - not:
               type: object
               required: [build, override-build]
               validation-failure:
-                  "Parts cannot contain both 'build' and 'override-build'
-                  keywords. Use 'override-build'."
+                  "Parts cannot contain both 'build' and 'override-*'
+                  keywords. Use 'override-build' instead of 'build'."
           # Make sure install/override-build are mutually exclusive
           - not:
               type: object
               required: [install, override-build]
               validation-failure:
-                  "Parts cannot contain both 'install' and 'override-build'
-                  keywords. Use 'override-build'."
+                  "Parts cannot contain both 'install' and 'override-*'
+                  keywords. Use 'override-build' instead of 'install'."
+
+          # Make sure prepare/override-pull are mutually exclusive
+          - not:
+              type: object
+              required: [prepare, override-pull]
+              validation-failure:
+                  "Parts cannot contain both 'prepare' and 'override-*'
+                  keywords. Use 'override-build' instead of 'prepare'."
+          # Make sure build/override-pull are mutually exclusive
+          - not:
+              type: object
+              required: [build, override-pull]
+              validation-failure:
+                  "Parts cannot contain both 'build' and 'override-*'
+                  keywords. Use 'override-build' instead of 'build'."
+          # Make sure install/override-pull are mutually exclusive
+          - not:
+              type: object
+              required: [install, override-pull]
+              validation-failure:
+                  "Parts cannot contain both 'install' and 'override-*'
+                  keywords. Use 'override-build' instead of 'install'."
         type: object
         minProperties: 1
         properties:
@@ -469,6 +492,9 @@ properties:
           prepare:
             type: string
             default: ''
+          override-pull:
+            type: string
+            default: 'snapcraftctl pull'
           override-build:
             type: string
             default: 'snapcraftctl build'
