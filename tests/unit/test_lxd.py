@@ -815,7 +815,9 @@ class VendoringTestCase(LXDBaseTestCase):
             'git.launchpad.net', 'archive.ubuntu.com']
         self.make_containerbuild().execute()
         self.assertIn(
-            'Vendoring snap to git.launchpad.net, archive.ubuntu.com\n',
+            'Vendoring is set to git.launchpad.net, archive.ubuntu.com. '
+            'Access to external resources not specified here will be denied '
+            'during the build.\n',
             self.fake_logger.output)
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'config', 'set', self.fake_lxd.name,

@@ -255,7 +255,10 @@ class Containerbuild:
     def _setup_vendoring(self):
         vendoring = self._project_options.info.vendoring
         if vendoring:
-            logger.info('Vendoring snap to {}'.format(', '.join(vendoring)))
+            logger.info(
+                'Vendoring is set to {}. Access to external resources not '
+                'specified here will be denied during the build.'
+                .format(', '.join(vendoring)))
             # Configure a proxy that blocks access to any hosts which are not
             # specified by vendoring in snapcraft.yaml.
             # The rules below mean:
@@ -264,12 +267,12 @@ class Containerbuild:
             # Deny everything else.
             self._container_run(['apt-get', 'install', 'squid', '-y'])
             port = 3129
-            rules = dedent('''
+            rules = dedent("""
                 http_port {port!s}
                 acl Safe_ports port 80 443 9418
                 http_access allow localhost whitelist Safe_ports
                 http_access deny all
-                '''.format(port=port))
+                """.format(port=port))
             # Prepend the whitelist here because the deny must come last
             for host in vendoring:
                 rules = 'acl whitelist dstdomain {}\n'.format(host) + rules
