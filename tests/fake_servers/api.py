@@ -469,6 +469,16 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             payload = json.dumps({
                 'errors': 'Not a valid channel: alpha',
             }).encode()
+        elif 'no-permission' in channels:
+            response_code = 403
+            payload = json.dumps({
+                'error_list': [{
+                    'code': 'macaroon-permission-required',
+                    'message': 'Permission is required: channel'
+                }],
+                'permission': 'channel',
+                'channels': ['no-permission'],
+            }).encode()
         elif (
                 name == 'test-snap' or
                 name.startswith('test-snapcraft')):
