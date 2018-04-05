@@ -87,6 +87,23 @@ class StageTestCase(integration.TestCase):
         )
         self.assertThat(exception.output, Contains(expected_help))
 
+    def test_no_conflicts(self):
+        self.run_snapcraft(['stage'], 'organize-no-conflicts')
+        self.assertThat(os.path.join(self.stage_dir, 'file'), FileExists())
+        self.assertThat(os.path.join(self.stage_dir, 'file2'), FileExists())
+
+    def test_stage_twice(self):
+        """Test that snap that uses organize can be staged twice"""
+        self.run_snapcraft(['stage'], 'stage-twice')
+        self.assertThat(
+            os.path.join(self.stage_dir, 'dir', 'dir', 'file'), FileExists())
+
+        # Now clean, and stage again
+        self.run_snapcraft(['clean', '--step=stage'], 'stage-twice')
+        self.run_snapcraft(['stage'], 'stage-twice')
+        self.assertThat(
+            os.path.join(self.stage_dir, 'dir', 'dir', 'file'), FileExists())
+
     def test_classic_confinement(self):
         if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
             self.skipTest("The autopkgtest armhf runners can't install snaps")
