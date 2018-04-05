@@ -16,6 +16,7 @@
 import fixtures
 import logging
 import os
+import subprocess
 import tempfile
 from textwrap import dedent
 import sys
@@ -457,9 +458,84 @@ class TestPatcherErrors(TestElfBase):
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
                                   root_path='/fake')
 
-        self.assertRaises(errors.PatcherNewerPatchelfError,
-                          elf_patcher.patch,
-                          elf_file=elf_file)
+        with mock.patch('subprocess.check_call',
+                        wraps=subprocess.check_call) as mock_check_call:
+            self.assertRaises(errors.PatcherNewerPatchelfError,
+                              elf_patcher.patch,
+                              elf_file=elf_file)
+
+            # Test that .note.go.buildid is stripped off
+            mock_check_call.assert_has_calls([
+                mock.call([
+                    'patchelf', '--set-interpreter', '/lib/fake-ld',
+                    mock.ANY]),
+                mock.call([
+                    'strip', '--remove-section', '.note.go.buildid',
+                    mock.ANY]),
+                mock.call([
+                    'patchelf', '--set-interpreter', '/lib/fake-ld',
+                    mock.ANY]),
+            ])
+
+    def test_patch_uses_snapped_strip(self):
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
+        self.fake_elf = fixture_setup.FakeElf(root_path=self.path,
+                                              patchelf_version='0.8')
+        self.useFixture(self.fake_elf)
+
+        elf_file = self.fake_elf['fake_elf-bad-patchelf']
+        # The base_path does not matter here as there are not files to
+        # be crawled for.
+        elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
+                                  root_path='/fake')
+
+        real_check_call = subprocess.check_call
+        real_check_output = subprocess.check_output
+
+        def _fake_check_call(*args, **kwargs):
+            if 'patchelf' in args[0][0]:
+                self.assertThat(
+                    args[0][0], Equals('/snap/snapcraft/current/bin/patchelf'))
+                args[0][0] = 'patchelf'
+            elif 'strip' in args[0][0]:
+                self.assertThat(
+                    args[0][0], Equals(
+                        '/snap/snapcraft/current/usr/bin/strip'))
+                args[0][0] = 'strip'
+            real_check_call(*args, **kwargs)
+
+        def _fake_check_output(*args, **kwargs):
+            if 'patchelf' in args[0][0]:
+                self.assertThat(
+                    args[0][0], Equals('/snap/snapcraft/current/bin/patchelf'))
+                args[0][0] = 'patchelf'
+            elif 'strip' in args[0][0]:
+                self.assertThat(
+                    args[0][0], Equals(
+                        '/snap/snapcraft/current/usr/bin/strip'))
+                args[0][0] = 'strip'
+            return real_check_output(*args, **kwargs)
+
+        with mock.patch('subprocess.check_call') as mock_check_call:
+            with mock.patch('subprocess.check_output') as mock_check_output:
+                mock_check_call.side_effect = _fake_check_call
+                mock_check_output.side_effect = _fake_check_output
+                self.assertRaises(errors.PatcherNewerPatchelfError,
+                                  elf_patcher.patch,
+                                  elf_file=elf_file)
+
+                # Test that .note.go.buildid is stripped off
+                mock_check_call.assert_has_calls([
+                    mock.call([
+                        'patchelf', '--set-interpreter', '/lib/fake-ld',
+                        mock.ANY]),
+                    mock.call([
+                        'strip', '--remove-section', '.note.go.buildid',
+                        mock.ANY]),
+                    mock.call([
+                        'patchelf', '--set-interpreter', '/lib/fake-ld',
+                        mock.ANY]),
+                ])
 
 
 class TestSonameCache(unit.TestCase):
