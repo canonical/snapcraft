@@ -103,10 +103,12 @@ class PluginHandler:
             sourcedir=self.plugin.sourcedir,
             builddir=self.plugin.build_basedir,
             stagedir=self.stagedir,
+            primedir=self.primedir,
             builtin_functions={
                 'pull': self._do_pull,
                 'build': self.plugin.build,
                 'stage': self._do_stage,
+                'prime': self._do_prime,
             })
 
         self._migrate_state_file()
@@ -543,6 +545,14 @@ class PluginHandler:
     def prime(self, force=False) -> None:
         self.makedirs()
         self.notify_part_progress('Priming')
+        self._runner.prime()
+
+        # Only mark this step done if _do_prime() didn't run, in which case
+        # we have no files, directories, or dependency paths to track.
+        if self.is_clean('prime'):
+            self.mark_prime_done(set(), set(), set())
+
+    def _do_prime(self) -> None:
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 

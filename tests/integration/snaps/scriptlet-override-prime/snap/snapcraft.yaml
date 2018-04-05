@@ -1,0 +1,23 @@
+name: override-prime-scriptlet-test
+version: '0.1'
+summary: Runs the override-prime scriptlet for a part
+description: |
+  Runs the shell script defined in `override-prime` instead of normal prime.
+grade: devel
+confinement: devmode
+
+parts:
+  override-prime-scriptlet-test:
+    plugin: dump
+    source: part1/
+    override-prime: |
+      touch before-prime
+      snapcraftctl prime
+      touch after-prime
+
+  override-prime-do-nothing:
+    plugin: dump
+    source: part2/
+    override-prime: |
+      # Completely skip prime
+      exit 0
