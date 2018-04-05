@@ -384,6 +384,16 @@ class PluginHandler:
         self._runner.build()
         self._runner.install()
 
+        # Organize the installed files as requested. We do this in the build
+        # step for two reasons:
+        #
+        #   1. So cleaning and re-running the stage step works even if
+        #      `organize` is used
+        #   2. So collision detection takes organization into account, i.e. we
+        #      can use organization to get around file collisions between
+        #      parts when staging.
+        self._organize()
+
         self.mark_build_done()
 
     def mark_build_done(self):
@@ -489,7 +499,6 @@ class PluginHandler:
             self.mark_stage_done(set(), set())
 
     def _do_stage(self):
-        self._organize()
         snap_files, snap_dirs = self.migratable_fileset_for('stage')
 
         def fixup_func(file_path):
@@ -504,6 +513,7 @@ class PluginHandler:
                        self.stagedir, fixup_func=fixup_func)
         # TODO once `snappy try` is in place we will need to copy
         # dependencies here too
+
         self.mark_stage_done(snap_files, snap_dirs)
 
     def mark_stage_done(self, snap_files, snap_dirs):

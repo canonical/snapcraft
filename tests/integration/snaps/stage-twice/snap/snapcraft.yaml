@@ -1,0 +1,16 @@
+name: stage-twice
+version: '0.1'
+summary: A snap which should be able to be staged twice
+description: |
+  Snaps that organize should be able to be staged, clean the stage, and staged
+  again.
+
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: devmode # use 'strict' once you have the right plugs and slots
+
+parts:
+  my-part:
+    plugin: dump
+    source-subdir: dir/
+    organize:
+      '*': dir/dir/
