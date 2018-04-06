@@ -736,6 +736,18 @@ class PipListTestCase(PipCommandBaseTestCase):
         self.assertThat(
             str(raised), Contains("Pip packages output isn't valid json"))
 
+    def test_no_json_format(self):
+        self.mock_run.side_effect = [
+            subprocess.CalledProcessError(2, 'pip', 'no such option'),
+            'foo (1.0)',
+        ]
+        self.mock_run.return_value = '[{"name": "foo", "version": "1.0"}]'
+        self.assertThat(self.pip.list(), Equals({'foo': '1.0'}))
+        self.mock_run.assert_has_calls([
+            mock.call(['list', '--format=json'], runner=mock.ANY),
+            mock.call(['list'], runner=mock.ANY),
+        ])
+
 
 class _CheckPythonhomeEnv():
     def __init__(self, test, expected_pythonhome):
