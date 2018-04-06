@@ -61,10 +61,8 @@ def execute(step, project_options, part_names=None):
     config = project_loader.load_config(project_options)
     if project_options.info.vendoring:
         logger.warning(
-            'Vendoring is set to {} but it will not be enforced. '
-            'Snapcraft must build inside a LXD container to setup a proxy '
-            'that limits access to external resources to the specified '
-            'hosts. The build will proceed without restrictions.'.format(
+            'This snap uses vendoring but it cannot be enforced without '
+            'using cleanbuild. Proceeding without restriction.'.format(
                 ', '.join(project_options.info.vendoring)))
     installed_packages = repo.Repo.install_build_packages(
         config.build_tools)

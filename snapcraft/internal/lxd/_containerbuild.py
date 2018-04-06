@@ -256,8 +256,9 @@ class Containerbuild:
         vendoring = self._project_options.info.vendoring
         if vendoring:
             logger.info(
-                'Vendoring is set to {}. Access to external resources not '
-                'specified here will be denied during the build.'
+                'This snap uses vendoring. In order to enforce it, network '
+                'access to resources not on the following list will be denied:'
+                '\n\n{}'
                 .format(', '.join(vendoring)))
             # Configure a proxy that blocks access to any hosts which are not
             # specified by vendoring in snapcraft.yaml.
@@ -273,8 +274,12 @@ class Containerbuild:
                 http_access allow localhost whitelist Safe_ports
                 http_access deny all
                 """.format(port=port))
-            # Prepend the whitelist here because the deny must come last
+            # Prepend the whitelist here because the deny must come last.
             for host in vendoring:
+                # The schema enforces hosts of the form foo or example.com
+                # so we always have explicit domain names and no wildcards
+                # with a leading period like .spam.eggs will be used.
+                # See also: https://wiki.squid-cache.org/SquidFaq/SquidAcl
                 rules = 'acl whitelist dstdomain {}\n'.format(host) + rules
             subprocess.check_output([
                 'lxc', 'exec', self._container_name, '--',
