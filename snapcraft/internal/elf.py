@@ -26,6 +26,7 @@ from typing import Dict, FrozenSet, List, Set, Sequence, Tuple, Union  # noqa
 import elftools.elf.elffile
 from pkg_resources import parse_version
 
+from snapcraft import file_utils
 from snapcraft.internal import (
     common,
     errors,
@@ -361,40 +362,12 @@ class Patcher:
         self._dynamic_linker = dynamic_linker
         self._root_path = root_path
 
-        # We will first fallback to the preferred_patchelf_path,
-        # if that is not found we will look for the snap and finally,
-        # if we are running from the snap we want to use the patchelf
-        # bundled there as it would have the capability of working
-        # anywhere given the fixed ld it would have.
-        # If not found, resort to whatever is on the system brought
-        # in by packaging dependencies.
-        # The docker conditional will work if the docker image has the
-        # snaps unpacked in the corresponding locations.
         if preferred_patchelf_path:
             self._patchelf_cmd = preferred_patchelf_path
-        # We use the full path here as the path may not be set on
-        # build systems where the path is recently created and added
-        # to the environment
-        elif os.path.exists('/snap/bin/patchelf'):
-            self._patchelf_cmd = '/snap/bin/patchelf'
-        elif common.is_snap():
-            snap_dir = os.getenv('SNAP')
-            self._patchelf_cmd = os.path.join(snap_dir, 'bin', 'patchelf')
-        elif (common.is_docker_instance() and
-              os.path.exists('/snap/snapcraft/current/bin/patchelf')):
-            self._patchelf_cmd = '/snap/snapcraft/current/bin/patchelf'
         else:
-            self._patchelf_cmd = 'patchelf'
+            self._patchelf_cmd = file_utils.get_tool_path('patchelf')
 
-        docker_strip_path = os.path.join(
-            'snap', 'snapcraft', 'current', 'usr', 'bin', 'strip')
-        if common.is_snap():
-            snap_dir = os.getenv('SNAP')
-            self._strip_cmd = os.path.join(snap_dir, 'usr', 'bin', 'strip')
-        elif common.is_docker_instance() and os.path.exists(docker_strip_path):
-            self._strip_cmd = docker_strip_path
-        else:
-            self._strip_cmd = 'strip'
+        self._strip_cmd = file_utils.get_tool_path('strip')
 
     def patch(self, *, elf_file: ElfFile) -> None:
         """Patch elf_file with the Patcher instance configuration.

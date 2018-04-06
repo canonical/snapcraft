@@ -324,6 +324,8 @@ def _command_path_in_root(root, command_name):
         if os.path.exists(path):
             return path
 
+    return ''
+
 
 def get_linker_version_from_file(linker_file: str) -> str:
     """Returns the version of the linker from linker_file.
