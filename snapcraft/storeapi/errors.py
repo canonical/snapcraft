@@ -662,14 +662,21 @@ def _error_list_item_to_message(error_list_item, response_json):
     https://dashboard.snapcraft.io/docs/api/snap.html#codes
     """
     code = error_list_item['code']
+    message = ''
     if code == 'macaroon-permission-required':
-        return _handle_macaroon_permission_required(response_json)
+        message = _handle_macaroon_permission_required(response_json)
+
+    if message:
+        return message
     else:
         return error_list_item['message']
 
 
 def _handle_macaroon_permission_required(response_json):
-    if response_json['permission'] == 'channel':
-        channels = response_json['channels']
-        return 'Lacking permission to release to channel(s) {}'.format(
-            formatting_utils.humanize_list(channels, 'and'))
+    if 'permission' in response_json and 'channels' in response_json:
+        if response_json['permission'] == 'channel':
+            channels = response_json['channels']
+            return 'Lacking permission to release to channel(s) {}'.format(
+                formatting_utils.humanize_list(channels, 'and'))
+
+    return ''
