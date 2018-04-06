@@ -38,16 +38,21 @@ def _fake_build():
     open(os.path.join('builddir', 'fake-build'), 'w').close()
 
 
+def _fake_stage():
+    open(os.path.join('stagedir', 'fake-stage'), 'w').close()
+
+
 class RunnerTestCase(unit.TestCase):
 
     def test_pull(self):
         os.mkdir('sourcedir')
 
         runner = _runner.Runner(
-                part_properties={'override-pull': 'touch pull'},
-                sourcedir='sourcedir',
-                builddir='builddir',
-                builtin_functions={})
+            part_properties={'override-pull': 'touch pull'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={})
 
         runner.pull()
 
@@ -57,10 +62,11 @@ class RunnerTestCase(unit.TestCase):
         os.mkdir('sourcedir')
 
         runner = _runner.Runner(
-                part_properties={'override-pull': 'snapcraftctl pull'},
-                sourcedir='sourcedir',
-                builddir='builddir',
-                builtin_functions={'pull': _fake_pull})
+            part_properties={'override-pull': 'snapcraftctl pull'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={'pull': _fake_pull})
 
         runner.pull()
 
@@ -70,10 +76,11 @@ class RunnerTestCase(unit.TestCase):
         os.mkdir('builddir')
 
         runner = _runner.Runner(
-                part_properties={'prepare': 'touch prepare'},
-                sourcedir='sourcedir',
-                builddir='builddir',
-                builtin_functions={})
+            part_properties={'prepare': 'touch prepare'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={})
 
         runner.prepare()
 
@@ -83,10 +90,11 @@ class RunnerTestCase(unit.TestCase):
         os.mkdir('builddir')
 
         runner = _runner.Runner(
-                part_properties={'prepare': 'snapcraftctl build'},
-                sourcedir='sourcedir',
-                builddir='builddir',
-                builtin_functions={'build': _fake_build})
+            part_properties={'prepare': 'snapcraftctl build'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={'build': _fake_build})
 
         runner.prepare()
 
@@ -98,12 +106,13 @@ class RunnerTestCase(unit.TestCase):
         os.mkdir('builddir')
 
         runner = _runner.Runner(
-                    part_properties={
-                        'prepare': 'alias snapcraftctl > definition'
-                    },
-                    sourcedir='sourcedir',
-                    builddir='builddir',
-                    builtin_functions={})
+            part_properties={
+                'prepare': 'alias snapcraftctl > definition'
+            },
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={})
 
         with mock.patch('os.path.exists', return_value=True):
             runner.prepare()
@@ -115,14 +124,29 @@ class RunnerTestCase(unit.TestCase):
             os.path.join('builddir', 'definition'),
             FileContains('snapcraftctl={!r}\n'.format(expected_snapcrafctl)))
 
+    def test_old_build(self):
+        os.mkdir('builddir')
+
+        runner = _runner.Runner(
+            part_properties={'build': 'touch build'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={})
+
+        runner.build()
+
+        self.assertThat(os.path.join('builddir', 'build'), FileExists())
+
     def test_build(self):
         os.mkdir('builddir')
 
         runner = _runner.Runner(
-                part_properties={'build': 'touch build'},
-                sourcedir='sourcedir',
-                builddir='builddir',
-                builtin_functions={})
+            part_properties={'override-build': 'touch build'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={})
 
         runner.build()
 
@@ -132,10 +156,11 @@ class RunnerTestCase(unit.TestCase):
         os.mkdir('builddir')
 
         runner = _runner.Runner(
-                part_properties={'build': 'snapcraftctl build'},
-                sourcedir='sourcedir',
-                builddir='builddir',
-                builtin_functions={'build': _fake_build})
+            part_properties={'override-build': 'snapcraftctl build'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={'build': _fake_build})
 
         runner.build()
 
@@ -145,10 +170,11 @@ class RunnerTestCase(unit.TestCase):
         os.mkdir('builddir')
 
         runner = _runner.Runner(
-                part_properties={'install': 'touch install'},
-                sourcedir='sourcedir',
-                builddir='builddir',
-                builtin_functions={})
+            part_properties={'install': 'touch install'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={})
 
         runner.install()
 
@@ -158,14 +184,43 @@ class RunnerTestCase(unit.TestCase):
         os.mkdir('builddir')
 
         runner = _runner.Runner(
-                part_properties={'install': 'snapcraftctl build'},
-                sourcedir='sourcedir',
-                builddir='builddir',
-                builtin_functions={'build': _fake_build})
+            part_properties={'install': 'snapcraftctl build'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={'build': _fake_build})
 
         runner.install()
 
         self.assertThat(os.path.join('builddir', 'fake-build'), FileExists())
+
+    def test_stage(self):
+        os.mkdir('stagedir')
+
+        runner = _runner.Runner(
+            part_properties={'override-stage': 'touch stage'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={})
+
+        runner.stage()
+
+        self.assertThat(os.path.join('stagedir', 'stage'), FileExists())
+
+    def test_builtin_function_from_stage(self):
+        os.mkdir('stagedir')
+
+        runner = _runner.Runner(
+            part_properties={'override-stage': 'snapcraftctl stage'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={'stage': _fake_stage})
+
+        runner.stage()
+
+        self.assertThat(os.path.join('stagedir', 'fake-stage'), FileExists())
 
 
 class RunnerFailureTestCase(unit.TestCase):
@@ -179,10 +234,11 @@ class RunnerFailureTestCase(unit.TestCase):
         """)
 
         runner = _runner.Runner(
-                part_properties={'build': script},
-                sourcedir='sourcedir',
-                builddir='builddir',
-                builtin_functions={})
+            part_properties={'build': script},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={})
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
 
@@ -195,10 +251,11 @@ class RunnerFailureTestCase(unit.TestCase):
         """)
 
         runner = _runner.Runner(
-                part_properties={'build': script},
-                sourcedir='sourcedir',
-                builddir='builddir',
-                builtin_functions={})
+            part_properties={'build': script},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={})
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
 
@@ -206,10 +263,11 @@ class RunnerFailureTestCase(unit.TestCase):
         os.mkdir('builddir')
 
         runner = _runner.Runner(
-                part_properties={'build': 'alias snapcraftctl 2> /dev/null'},
-                sourcedir='sourcedir',
-                builddir='builddir',
-                builtin_functions={})
+            part_properties={'build': 'alias snapcraftctl 2> /dev/null'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            builtin_functions={})
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
 
@@ -229,6 +287,7 @@ class RunnerDeprecationTestCase(unit.TestCase):
             part_properties={'prepare': 'foo'},
             sourcedir='sourcedir',
             builddir='builddir',
+            stagedir='stagedir',
             builtin_functions={})
 
         self.assertThat(self.fake_logger.output, Contains(
@@ -243,6 +302,7 @@ class RunnerDeprecationTestCase(unit.TestCase):
             part_properties={'build': 'foo'},
             sourcedir='sourcedir',
             builddir='builddir',
+            stagedir='stagedir',
             builtin_functions={})
 
         self.assertThat(self.fake_logger.output, Contains(
@@ -257,6 +317,7 @@ class RunnerDeprecationTestCase(unit.TestCase):
             part_properties={'install': 'foo'},
             sourcedir='sourcedir',
             builddir='builddir',
+            stagedir='stagedir',
             builtin_functions={})
 
         self.assertThat(self.fake_logger.output, Contains(

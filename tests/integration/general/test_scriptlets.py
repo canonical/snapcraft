@@ -17,7 +17,7 @@
 import multiprocessing
 import os
 
-from testtools.matchers import FileContains, FileExists
+from testtools.matchers import FileContains, FileExists, Not
 
 from tests import integration
 
@@ -88,3 +88,32 @@ class ScriptletTestCase(integration.TestCase):
             os.path.join(installdir, 'before-install'), FileExists())
         self.assertThat(
             os.path.join(installdir, 'after-install'), FileExists())
+
+    def test_override_stage(self):
+        self.run_snapcraft('stage', 'scriptlet-override-stage')
+
+        installdir = os.path.join(
+            self.parts_dir, 'override-stage-scriptlet-test', 'install')
+
+        # Assert that the before/after stage files aren't placed in the
+        # installdir, although the file is.
+        self.assertThat(os.path.join(installdir, 'file'), FileExists())
+        self.assertThat(
+            os.path.join(installdir, 'before-stage'), Not(FileExists()))
+        self.assertThat(
+            os.path.join(installdir, 'after-stage'), Not(FileExists()))
+
+        self.assertThat(os.path.join(self.stage_dir, 'file'), FileExists())
+        self.assertThat(
+            os.path.join(self.stage_dir, 'before-stage'), FileExists())
+        self.assertThat(
+            os.path.join(self.stage_dir, 'after-stage'), FileExists())
+
+        # Also assert that, while file2 was installed, it wasn't staged
+        self.assertThat(
+            os.path.join(
+                self.parts_dir, 'override-stage-do-nothing', 'install',
+                'file2'),
+            FileExists())
+        self.assertThat(
+            os.path.join(self.stage_dir, 'file2'), Not(FileExists()))
