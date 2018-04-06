@@ -318,13 +318,16 @@ class StoreReviewError(StoreError):
 
     def __init__(self, result):
         self.fmt = self.__messages[result['code']]
+        additional = []
         errors = result.get('errors')
         if errors:
             for error in errors:
                 message = error.get('message')
                 if message:
-                    self.fmt = '{}\n  - {message}'.format(
-                        self.fmt, message=message)
+                    additional.append('  - {message}'.format(message=message))
+        if additional:
+            self.additional = '\n'.join(additional)
+            self.fmt += '\n{additional}'
         self.code = result['code']
         super().__init__()
 
@@ -441,7 +444,8 @@ class StoreMetadataError(StoreError):
             parts.append(
                 "You can repeat the push-metadata command with "
                 "--force to force the local values into the Store")
-            self.fmt = "\n".join(parts)
+            self.parts = "\n".join(parts)
+            self.fmt = '{parts}'
         elif 'error_list' in response_json:
             response_json['text'] = response_json['error_list'][0]['message']
 
