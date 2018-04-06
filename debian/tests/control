@@ -1,4 +1,5 @@
 Tests: integrationtests-general,
+       integrationtests-sources,
        integrationtests-store,
        integrationtests-plugins,
        integrationtests-plugins-python,
