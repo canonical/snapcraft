@@ -250,7 +250,6 @@ class Containerbuild:
                         'No network connection in the container.\n'
                         'If using a proxy, check its configuration.')
         logger.info('Network connection established')
-        self._setup_vendoring()
 
     def _setup_vendoring(self):
         vendoring = self._project_options.info.vendoring

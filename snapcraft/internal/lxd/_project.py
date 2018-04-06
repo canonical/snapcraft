@@ -73,7 +73,11 @@ class Project(Containerbuild):
             # Because of https://bugs.launchpad.net/snappy/+bug/1628289
             # Needed to run snapcraft as a snap and build-snaps
             self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
+        if self._remote != 'local':
+            # For remote mounts we will need sshfs.
+            self._container_run(['apt-get', 'install', 'sshfs', '-y'])
         self._inject_snapcraft(new_container=new_container)
+        self._setup_vendoring()
 
     def _configure_container(self):
         super()._configure_container()
@@ -129,7 +133,6 @@ class Project(Containerbuild):
                 )
 
         # Use sshfs in slave mode to reverse mount the destination
-        self._container_run(['apt-get', 'install', '-y', 'sshfs'])
         self._container_run(['mkdir', '-p', destination], user=self._user)
         self._background_process_run([
             'lxc', 'exec', self._container_name, '--',

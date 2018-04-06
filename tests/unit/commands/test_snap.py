@@ -203,7 +203,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         project_folder = '/home/user/build_snap-test'
         mock_container_run.assert_has_calls([
-            call(['apt-get', 'install', '-y', 'sshfs']),
+            call(['apt-get', 'install', 'sshfs', '-y']),
         ])
         fake_lxd.popen_mock.assert_has_calls([
             call(['/usr/lib/sftp-server'],

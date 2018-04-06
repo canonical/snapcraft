@@ -132,7 +132,16 @@ class CleanbuilderTestCase(LXDTestCase):
         mock_container_run.assert_has_calls([
             call(['python3', '-c', ANY]),
             call(['apt-get', 'update']),
-            call(['apt-get', 'install', 'squashfuse', '-y']),
+        ])
+
+        packages = ['squashfuse', 'sshfs']
+        if self.remote == 'local':
+            packages.remove('sshfs')
+        mock_container_run.assert_has_calls([
+            call(['apt-get', 'install', pkg, '-y']) for pkg in packages
+        ])
+
+        mock_container_run.assert_has_calls([
             call(['mkdir', project_folder]),
             call(['tar', 'xvf', 'project.tar'],
                  cwd=project_folder),
@@ -140,7 +149,8 @@ class CleanbuilderTestCase(LXDTestCase):
                  cwd=project_folder, user='root'),
         ])
         # Ensure there's no unexpected calls eg. two network checks
-        self.assertThat(mock_container_run.call_count, Equals(6))
+        self.assertThat(mock_container_run.call_count,
+                        Equals(5 + len(packages)))
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'file', 'pull',
                   '{}{}/snap.snap'.format(container_name, project_folder),
@@ -331,9 +341,11 @@ class ContainerbuildTestCase(LXDTestCase):
         builder = self.make_containerbuild()
         builder.execute()
 
+        packages = ['squashfuse', 'sshfs', 'snapcraft']
+        if self.remote == 'local':
+            packages.remove('sshfs')
         mock_container_run.assert_has_calls([
-            call(['apt-get', 'install', 'squashfuse', '-y']),
-            call(['apt-get', 'install', 'snapcraft', '-y']),
+            call(['apt-get', 'install', pkg, '-y']) for pkg in packages
         ])
 
     @patch('snapcraft.internal.common.is_snap')
@@ -421,8 +433,15 @@ class ContainerbuildTestCase(LXDTestCase):
                   os.path.join(tmp_dir, 'snapcraft_345.snap'),
                   '{}/run/snapcraft_345.snap'.format(self.fake_lxd.name)]),
         ])
+
+        packages = ['squashfuse', 'sshfs']
+        if self.remote == 'local':
+            packages.remove('sshfs')
         mock_container_run.assert_has_calls([
-            call(['apt-get', 'install', 'squashfuse', '-y']),
+            call(['apt-get', 'install', pkg, '-y']) for pkg in packages
+        ])
+
+        mock_container_run.assert_has_calls([
             call(['snap', 'ack', '/run/core_123.assert']),
             call(['snap', 'install', '/run/core_123.snap']),
             call(['snap', 'ack', '/run/snapcraft_345.assert']),
@@ -544,8 +563,15 @@ class ContainerbuildTestCase(LXDTestCase):
                   os.path.join(tmp_dir, 'snapcraft_123.snap'),
                   '{}/run/snapcraft_123.snap'.format(self.fake_lxd.name)]),
         ])
+
+        packages = ['squashfuse', 'sshfs']
+        if self.remote == 'local':
+            packages.remove('sshfs')
         mock_container_run.assert_has_calls([
-            call(['apt-get', 'install', 'squashfuse', '-y']),
+            call(['apt-get', 'install', pkg, '-y']) for pkg in packages
+        ])
+
+        mock_container_run.assert_has_calls([
             call(['snap', 'ack', '/run/snapcraft_123.assert']),
             call(['snap', 'install', '/run/snapcraft_123.snap', '--classic']),
         ])
