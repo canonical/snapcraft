@@ -42,6 +42,10 @@ def _fake_stage():
     open(os.path.join('stagedir', 'fake-stage'), 'w').close()
 
 
+def _fake_prime():
+    open(os.path.join('primedir', 'fake-prime'), 'w').close()
+
+
 class RunnerTestCase(unit.TestCase):
 
     def test_pull(self):
@@ -52,6 +56,7 @@ class RunnerTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={})
 
         runner.pull()
@@ -66,6 +71,7 @@ class RunnerTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={'pull': _fake_pull})
 
         runner.pull()
@@ -80,6 +86,7 @@ class RunnerTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={})
 
         runner.prepare()
@@ -94,6 +101,7 @@ class RunnerTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={'build': _fake_build})
 
         runner.prepare()
@@ -112,6 +120,7 @@ class RunnerTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={})
 
         with mock.patch('os.path.exists', return_value=True):
@@ -132,6 +141,7 @@ class RunnerTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={})
 
         runner.build()
@@ -146,6 +156,7 @@ class RunnerTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={})
 
         runner.build()
@@ -160,6 +171,7 @@ class RunnerTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={'build': _fake_build})
 
         runner.build()
@@ -174,6 +186,7 @@ class RunnerTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={})
 
         runner.install()
@@ -188,6 +201,7 @@ class RunnerTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={'build': _fake_build})
 
         runner.install()
@@ -202,6 +216,7 @@ class RunnerTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={})
 
         runner.stage()
@@ -216,11 +231,42 @@ class RunnerTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={'stage': _fake_stage})
 
         runner.stage()
 
         self.assertThat(os.path.join('stagedir', 'fake-stage'), FileExists())
+
+    def test_prime(self):
+        os.mkdir('primedir')
+
+        runner = _runner.Runner(
+            part_properties={'override-prime': 'touch prime'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            primedir='primedir',
+            builtin_functions={})
+
+        runner.prime()
+
+        self.assertThat(os.path.join('primedir', 'prime'), FileExists())
+
+    def test_builtin_function_from_prime(self):
+        os.mkdir('primedir')
+
+        runner = _runner.Runner(
+            part_properties={'override-prime': 'snapcraftctl prime'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            primedir='primedir',
+            builtin_functions={'prime': _fake_prime})
+
+        runner.prime()
+
+        self.assertThat(os.path.join('primedir', 'fake-prime'), FileExists())
 
 
 class RunnerFailureTestCase(unit.TestCase):
@@ -238,6 +284,7 @@ class RunnerFailureTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={})
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
@@ -255,6 +302,7 @@ class RunnerFailureTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={})
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
@@ -267,6 +315,7 @@ class RunnerFailureTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={})
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
@@ -288,6 +337,7 @@ class RunnerDeprecationTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={})
 
         self.assertThat(self.fake_logger.output, Contains(
@@ -303,6 +353,7 @@ class RunnerDeprecationTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={})
 
         self.assertThat(self.fake_logger.output, Contains(
@@ -318,6 +369,7 @@ class RunnerDeprecationTestCase(unit.TestCase):
             sourcedir='sourcedir',
             builddir='builddir',
             stagedir='stagedir',
+            primedir='primedir',
             builtin_functions={})
 
         self.assertThat(self.fake_logger.output, Contains(

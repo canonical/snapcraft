@@ -397,6 +397,28 @@ properties:
               validation-failure:
                   "Parts cannot contain both 'install' and 'override-*'
                   keywords. Use 'override-build' instead of 'install'."
+
+          # Make sure prepare/override-prime are mutually exclusive
+          - not:
+              type: object
+              required: [prepare, override-prime]
+              validation-failure:
+                  "Parts cannot contain both 'prepare' and 'override-*'
+                  keywords. Use 'override-build' instead of 'prepare'."
+          # Make sure build/override-prime are mutually exclusive
+          - not:
+              type: object
+              required: [build, override-prime]
+              validation-failure:
+                  "Parts cannot contain both 'build' and 'override-*'
+                  keywords. Use 'override-build' instead of 'build'."
+          # Make sure install/override-prime are mutually exclusive
+          - not:
+              type: object
+              required: [install, override-prime]
+              validation-failure:
+                  "Parts cannot contain both 'install' and 'override-*'
+                  keywords. Use 'override-build' instead of 'install'."
         type: object
         minProperties: 1
         properties:
@@ -523,6 +545,9 @@ properties:
           override-stage:
             type: string
             default: 'snapcraftctl stage'
+          override-prime:
+            type: string
+            default: 'snapcraftctl prime'
           parse-info:
             type: array
             minitems: 1

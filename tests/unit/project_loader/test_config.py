@@ -2326,6 +2326,10 @@ class OldConflictsWithNewScriptletTestCase(ValidationTestCase):
             'new_keyword': 'override-stage',
             'new_value': ['test-override-stage'],
         }),
+        ('override-prime', {
+            'new_keyword': 'override-prime',
+            'new_value': ['test-override-prime'],
+        }),
     ]
 
     scenarios = multiply_scenarios(
