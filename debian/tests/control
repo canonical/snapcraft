@@ -1,4 +1,5 @@
 Tests: integrationtests-general,
+       integrationtests-lifecycle,
        integrationtests-sources,
        integrationtests-store,
        integrationtests-plugins,
