@@ -19,6 +19,7 @@ from simplejson.scanner import JSONDecodeError
 from typing import List  # noqa
 
 from snapcraft.internal.errors import SnapcraftError
+from snapcraft import formatting_utils
 
 
 class StoreError(SnapcraftError):
@@ -330,6 +331,8 @@ class StoreReviewError(StoreError):
 
 class StoreReleaseError(StoreError):
 
+    fmt = '{message}'
+
     __FMT_NOT_REGISTERED = (
         'Sorry, try `snapcraft register {snap_name}` before trying to '
         'release or choose an existing revision.')
@@ -338,7 +341,7 @@ class StoreReleaseError(StoreError):
         '{code}: {message}\n')
 
     __FMT_UNAUTHORIZED_OR_FORBIDDEN = (
-        'Received {status_code!r}: {text!r}')
+        'Received {status_code!r}: {text}')
 
     def __init__(self, snap_name, response):
         self.fmt_errors = {
@@ -351,9 +354,8 @@ class StoreReleaseError(StoreError):
         fmt_error = self.fmt_errors.get(
             response.status_code, self.__fmt_error_unknown)
 
-        self.fmt = fmt_error(response)
-
-        super().__init__(snap_name=snap_name)
+        super().__init__(message=fmt_error(response).format(
+            snap_name=snap_name))
 
     def __to_json(self, response):
         try:
@@ -379,6 +381,11 @@ class StoreReleaseError(StoreError):
     def __fmt_error_401_or_403(self, response):
         try:
             text = response.text
+
+            with contextlib.suppress(AttributeError, JSONDecodeError):
+                response_json = response.json()
+                if 'error_list' in response_json:
+                    text = _error_list_to_message(response_json)
 
         except AttributeError:
             text = 'error while releasing'
@@ -632,3 +639,44 @@ class InvalidLoginConfig(StoreError):
 
     def __init__(self, error):
         super().__init__(error=error)
+
+
+def _error_list_to_message(response_json):
+    """Handle error list.
+
+    The error format is given here:
+    https://dashboard.snapcraft.io/docs/api/snap.html#format
+    """
+    messages = []
+    for error_list_item in response_json['error_list']:
+        messages.append(_error_list_item_to_message(
+            error_list_item, response_json))
+
+    return ', and '.join(messages)
+
+
+def _error_list_item_to_message(error_list_item, response_json):
+    """Handle error list item according to code.
+
+    The list of codes are here:
+    https://dashboard.snapcraft.io/docs/api/snap.html#codes
+    """
+    code = error_list_item['code']
+    message = ''
+    if code == 'macaroon-permission-required':
+        message = _handle_macaroon_permission_required(response_json)
+
+    if message:
+        return message
+    else:
+        return error_list_item['message']
+
+
+def _handle_macaroon_permission_required(response_json):
+    if 'permission' in response_json and 'channels' in response_json:
+        if response_json['permission'] == 'channel':
+            channels = response_json['channels']
+            return 'Lacking permission to release to channel(s) {}'.format(
+                formatting_utils.humanize_list(channels, 'and'))
+
+    return ''
