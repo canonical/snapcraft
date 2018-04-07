@@ -16,6 +16,7 @@
 import fixtures
 import logging
 import os
+import subprocess
 import tempfile
 from textwrap import dedent
 import sys
@@ -420,17 +421,32 @@ class TestPatcher(TestElfBase):
                                   root_path='/fake')
         elf_patcher.patch(elf_file=elf_file)
 
-    def test_patchelf_from_snap_used_if_using_snap(self):
+    def test_tools_from_snap_used_if_using_snap(self):
         self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
 
-        # The base_path does not matter here as there are not files to
-        # be crawled for.
-        elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
-                                  root_path='/fake')
+        real_exists = os.path.exists
+
+        def _fake_exists(path):
+            if path == '/snap/snapcraft/current/bin/patchelf':
+                return True
+            elif path == '/snap/snapcraft/current/usr/bin/strip':
+                return True
+            else:
+                return real_exists(path)
+
+        with mock.patch('os.path.exists', side_effect=_fake_exists):
+            # The base_path does not matter here as there are not files to
+            # be crawled for.
+            elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
+                                      root_path='/fake')
 
         expected_patchelf = os.path.join('/snap', 'snapcraft', 'current',
                                          'bin', 'patchelf')
         self.assertThat(elf_patcher._patchelf_cmd, Equals(expected_patchelf))
+
+        expected_strip = os.path.join('/snap', 'snapcraft', 'current',
+                                      'usr', 'bin', 'strip')
+        self.assertThat(elf_patcher._strip_cmd, Equals(expected_strip))
 
 
 class TestPatcherErrors(TestElfBase):
@@ -457,9 +473,95 @@ class TestPatcherErrors(TestElfBase):
         elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
                                   root_path='/fake')
 
-        self.assertRaises(errors.PatcherNewerPatchelfError,
-                          elf_patcher.patch,
-                          elf_file=elf_file)
+        with mock.patch('subprocess.check_call',
+                        wraps=subprocess.check_call) as mock_check_call:
+            self.assertRaises(errors.PatcherNewerPatchelfError,
+                              elf_patcher.patch,
+                              elf_file=elf_file)
+
+            # Test that .note.go.buildid is stripped off
+            mock_check_call.assert_has_calls([
+                mock.call([
+                    'patchelf', '--set-interpreter', '/lib/fake-ld',
+                    mock.ANY]),
+                mock.call([
+                    'strip', '--remove-section', '.note.go.buildid',
+                    mock.ANY]),
+                mock.call([
+                    'patchelf', '--set-interpreter', '/lib/fake-ld',
+                    mock.ANY]),
+            ])
+
+    def test_patch_uses_snapped_strip(self):
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
+        self.fake_elf = fixture_setup.FakeElf(root_path=self.path,
+                                              patchelf_version='0.8')
+        self.useFixture(self.fake_elf)
+
+        elf_file = self.fake_elf['fake_elf-bad-patchelf']
+
+        real_check_call = subprocess.check_call
+        real_check_output = subprocess.check_output
+        real_exists = os.path.exists
+
+        def _fake_check_call(*args, **kwargs):
+            if 'patchelf' in args[0][0]:
+                self.assertThat(
+                    args[0][0], Equals('/snap/snapcraft/current/bin/patchelf'))
+                args[0][0] = 'patchelf'
+            elif 'strip' in args[0][0]:
+                self.assertThat(
+                    args[0][0], Equals(
+                        '/snap/snapcraft/current/usr/bin/strip'))
+                args[0][0] = 'strip'
+            real_check_call(*args, **kwargs)
+
+        def _fake_check_output(*args, **kwargs):
+            if 'patchelf' in args[0][0]:
+                self.assertThat(
+                    args[0][0], Equals('/snap/snapcraft/current/bin/patchelf'))
+                args[0][0] = 'patchelf'
+            elif 'strip' in args[0][0]:
+                self.assertThat(
+                    args[0][0], Equals(
+                        '/snap/snapcraft/current/usr/bin/strip'))
+                args[0][0] = 'strip'
+            return real_check_output(*args, **kwargs)
+
+        def _fake_exists(path):
+            if path == '/snap/snapcraft/current/bin/patchelf':
+                return True
+            elif path == '/snap/snapcraft/current/usr/bin/strip':
+                return True
+            else:
+                return real_exists(path)
+
+        with mock.patch('subprocess.check_call') as mock_check_call:
+            with mock.patch('subprocess.check_output') as mock_check_output:
+                with mock.patch('os.path.exists', side_effect=_fake_exists):
+                    mock_check_call.side_effect = _fake_check_call
+                    mock_check_output.side_effect = _fake_check_output
+
+                    # The base_path does not matter here as there are not files
+                    # for which to crawl.
+                    elf_patcher = elf.Patcher(dynamic_linker='/lib/fake-ld',
+                                              root_path='/fake')
+                    self.assertRaises(errors.PatcherNewerPatchelfError,
+                                      elf_patcher.patch,
+                                      elf_file=elf_file)
+
+                    # Test that .note.go.buildid is stripped off
+                    mock_check_call.assert_has_calls([
+                        mock.call([
+                            'patchelf', '--set-interpreter', '/lib/fake-ld',
+                            mock.ANY]),
+                        mock.call([
+                            'strip', '--remove-section', '.note.go.buildid',
+                            mock.ANY]),
+                        mock.call([
+                            'patchelf', '--set-interpreter', '/lib/fake-ld',
+                            mock.ANY]),
+                    ])
 
 
 class TestSonameCache(unit.TestCase):
