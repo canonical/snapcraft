@@ -1,0 +1,23 @@
+name: override-stage-scriptlet-test
+version: '0.1'
+summary: Runs the override-stage scriptlet for a part
+description: |
+  Runs the shell script defined in `override-stage` instead of plugin stage.
+grade: devel
+confinement: devmode
+
+parts:
+  override-stage-scriptlet-test:
+    plugin: dump
+    source: part1/
+    override-stage: |
+      touch before-stage
+      snapcraftctl stage
+      touch after-stage
+
+  override-stage-do-nothing:
+    plugin: dump
+    source: part2/
+    override-stage: |
+      # Completely skip stage
+      exit 0

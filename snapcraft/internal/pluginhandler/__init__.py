@@ -102,9 +102,11 @@ class PluginHandler:
             part_properties=self._part_properties,
             sourcedir=self.plugin.sourcedir,
             builddir=self.plugin.build_basedir,
+            stagedir=self.stagedir,
             builtin_functions={
-                'build': self.plugin.build,
                 'pull': self._do_pull,
+                'build': self.plugin.build,
+                'stage': self._do_stage,
             })
 
         self._migrate_state_file()
@@ -489,6 +491,14 @@ class PluginHandler:
     def stage(self, force=False):
         self.makedirs()
         self.notify_part_progress('Staging')
+        self._runner.stage()
+
+        # Only mark this step done if _do_stage() didn't run, in which case
+        # we have no directories or files to track.
+        if self.is_clean('stage'):
+            self.mark_stage_done(set(), set())
+
+    def _do_stage(self):
         snap_files, snap_dirs = self.migratable_fileset_for('stage')
 
         def fixup_func(file_path):

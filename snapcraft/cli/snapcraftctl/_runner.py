@@ -56,6 +56,12 @@ def build():
     _call_function('build')
 
 
+@run.command()
+def stage():
+    """Run the 'stage' step of the calling part's plugin"""
+    _call_function('stage')
+
+
 def _call_function(function_name, args=None):
     if not args:
         args = {}
