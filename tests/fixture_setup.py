@@ -584,9 +584,23 @@ class FakeLXD(fixtures.Fixture):
         self.check_output_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
+        self._real_popen = subprocess.Popen
+
+        # Don't over-mock Popen, more things use it than just LXD.
+        def _fake_popen(*args, **kwargs):
+            if '/usr/lib/sftp-server' in args[0]:
+                return self._popen(args[0])
+            elif (args[0][:2] == ['lxc', 'exec'] and self.status and
+                    args[0][2] == self.name and args[0][8] == 'sshfs'):
+                self.files = ['foo', 'bar']
+                return self._popen(args[0])
+
+            # Fall back to the real deal
+            return self._real_popen(*args, **kwargs)
+
         patcher = mock.patch('subprocess.Popen')
         self.popen_mock = patcher.start()
-        self.popen_mock.side_effect = self.check_output_side_effect()
+        self.popen_mock.side_effect = _fake_popen
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('time.sleep', lambda _: None)
@@ -633,8 +647,6 @@ class FakeLXD(fixtures.Fixture):
                 '"created_at":"test-created-at"}]').encode('utf-8')
         elif args[0][0] == 'sha384sum':
             return 'deadbeef {}'.format(args[0][1]).encode('utf-8')
-        elif '/usr/lib/sftp-server' in args[0]:
-            return self._popen(args[0])
         else:
             return ''.encode('utf-8')
 
@@ -664,9 +676,6 @@ class FakeLXD(fixtures.Fixture):
             elif cmd == 'readlink':
                 if args[0][-1].endswith('/current'):
                     raise CalledProcessError(returncode=1, cmd=cmd)
-            elif cmd == 'sshfs':
-                self.files = ['foo', 'bar']
-                return self._popen(args[0])
             elif 'sha384sum' in args[0][-1]:
                 raise CalledProcessError(returncode=1, cmd=cmd)
 

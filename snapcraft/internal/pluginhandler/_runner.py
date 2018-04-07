@@ -38,21 +38,24 @@ class Runner:
     # https://github.com/python/typing/issues/259 which is fixed in Python
     # 3.5.3.
     def __init__(self, *, part_properties: Dict[str, Any], sourcedir: str,
-                 builddir: str,
+                 builddir: str, stagedir: str,
                  builtin_functions: 'Dict[str, Callable[..., None]]') -> None:
         """Create a new Runner.
         :param dict part_properties: YAML properties set for this part.
         :param str sourcedir: The source directory for this part.
         :param str builddir: The build directory for this part.
+        :param str stagedir: The staging area.
         :param dict builtin_functions: Dict of builtin function names to
                                        actual callables.
         """
         self._sourcedir = sourcedir
         self._builddir = builddir
+        self._stagedir = stagedir
         self._builtin_functions = builtin_functions
 
         self._override_pull_scriptlet = part_properties.get('override-pull')
         self._override_build_scriptlet = part_properties.get('override-build')
+        self._override_stage_scriptlet = part_properties.get('override-stage')
 
         # These are all deprecated
         self._prepare_scriptlet = part_properties.get('prepare')
@@ -95,6 +98,13 @@ class Runner:
         if self._install_scriptlet:
             self._run_scriptlet(
                 'install', self._install_scriptlet, self._builddir)
+
+    def stage(self) -> None:
+        """Run override-stage scriptlet."""
+        if self._override_stage_scriptlet:
+            self._run_scriptlet(
+                'override-stage', self._override_stage_scriptlet,
+                self._stagedir)
 
     def _run_scriptlet(self, scriptlet_name: str, scriptlet: str,
                        workdir: str) -> None:
