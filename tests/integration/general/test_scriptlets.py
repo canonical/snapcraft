@@ -117,3 +117,42 @@ class ScriptletTestCase(integration.TestCase):
             FileExists())
         self.assertThat(
             os.path.join(self.stage_dir, 'file2'), Not(FileExists()))
+
+    def test_override_prime(self):
+        self.run_snapcraft('prime', 'scriptlet-override-prime')
+
+        installdir = os.path.join(
+            self.parts_dir, 'override-prime-scriptlet-test', 'install')
+
+        # Assert that the before/after prime files aren't placed in the
+        # installdir, although the file is.
+        self.assertThat(os.path.join(installdir, 'file'), FileExists())
+        self.assertThat(
+            os.path.join(installdir, 'before-prime'), Not(FileExists()))
+        self.assertThat(
+            os.path.join(installdir, 'after-prime'), Not(FileExists()))
+
+        # Assert that the before/after prime files aren't placed in the
+        # stagedir, although the file is.
+        self.assertThat(os.path.join(self.stage_dir, 'file'), FileExists())
+        self.assertThat(
+            os.path.join(self.stage_dir, 'before-prime'), Not(FileExists()))
+        self.assertThat(
+            os.path.join(self.stage_dir, 'after-prime'), Not(FileExists()))
+
+        self.assertThat(os.path.join(self.prime_dir, 'file'), FileExists())
+        self.assertThat(
+            os.path.join(self.prime_dir, 'before-prime'), FileExists())
+        self.assertThat(
+            os.path.join(self.prime_dir, 'after-prime'), FileExists())
+
+        # Also assert that, while file2 was installed and staged, it wasn't
+        # primed
+        self.assertThat(
+            os.path.join(
+                self.parts_dir, 'override-prime-do-nothing', 'install',
+                'file2'),
+            FileExists())
+        self.assertThat(os.path.join(self.stage_dir, 'file2'), FileExists())
+        self.assertThat(
+            os.path.join(self.prime_dir, 'file2'), Not(FileExists()))

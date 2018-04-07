@@ -46,20 +46,26 @@ def run(debug):
 
 @run.command()
 def pull():
-    """Run the 'pull' step of the calling part's plugin"""
+    """Run the 'pull' step of the calling part's lifecycle"""
     _call_function('pull')
 
 
 @run.command()
 def build():
-    """Run the 'build' step of the calling part's plugin"""
+    """Run the 'build' step of the calling part's lifecycle"""
     _call_function('build')
 
 
 @run.command()
 def stage():
-    """Run the 'stage' step of the calling part's plugin"""
+    """Run the 'stage' step of the calling part's lifecycle"""
     _call_function('stage')
+
+
+@run.command()
+def prime():
+    """Run the 'prime' step of the calling part's lifecycle"""
+    _call_function('prime')
 
 
 def _call_function(function_name, args=None):
