@@ -14,10 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 import os
 
 from unittest import mock
-from testtools.matchers import Equals, HasLength
+from testtools.matchers import Equals, HasLength, Contains
 
 import snapcraft
 from snapcraft.plugins import go
@@ -25,6 +26,7 @@ from tests import (
     fixture_setup,
     unit
 )
+import fixtures
 
 
 class GoPluginCrossCompileTestCase(unit.TestCase):
@@ -101,6 +103,11 @@ class GoPluginTestCase(unit.TestCase):
 
         patcher = mock.patch('sys.stdout')
         patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.plugins.go.GoPlugin._get_go_command')
+        go_command_mock = patcher.start()
+        go_command_mock.return_value = 'go'
         self.addCleanup(patcher.stop)
 
     def test_schema(self):
@@ -535,3 +542,58 @@ class GoPluginTestCase(unit.TestCase):
             ['go', 'build', '-o', binary,
              '-tags=testbuildtag1,testbuildtag2', 'dir/pkg/main'],
             cwd=plugin._gopath_src, env=mock.ANY)
+
+
+class GoPluginCommandTestCase(unit.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.project_options = snapcraft.ProjectOptions()
+
+        class Options:
+            source = 'dir'
+            go_packages = []
+            go_importpath = ''
+
+        self.plugin = go.GoPlugin('test-part', Options(), self.project_options)
+
+        patcher = mock.patch('os.path.exists')
+        self.mock_exists = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
+        self.useFixture(self.fake_logger)
+
+    def test_go_command_from_build_package(self):
+        expected_go_command = 'go'
+        self.mock_exists.side_effect = lambda x: False
+        self.assertThat(self.plugin._get_go_command(),
+                        Equals(expected_go_command))
+        self.assertThat(self.fake_logger.output, Contains(expected_go_command))
+
+    def test_go_command_from_build_snap(self):
+        expected_go_command = os.path.join('/', 'snap', 'bin', 'go')
+        self.mock_exists.side_effect = lambda x: x == expected_go_command
+
+        self.assertThat(self.plugin._get_go_command(),
+                        Equals(expected_go_command))
+        self.assertThat(self.fake_logger.output, Contains(expected_go_command))
+
+    def test_go_command_from_stage_dir(self):
+        stage_bin = os.path.join(self.project_options.stage_dir, 'bin')
+        expected_go_command = os.path.join(stage_bin, 'go')
+        self.mock_exists.return_value = lambda x: x == expected_go_command
+
+        self.assertThat(self.plugin._get_go_command(),
+                        Equals(expected_go_command))
+        self.assertThat(self.fake_logger.output, Contains(expected_go_command))
+
+    def test_go_command_stagedir_preferred(self):
+        stage_bin = os.path.join(self.project_options.stage_dir, 'bin')
+        expected_go_command = os.path.join(stage_bin, 'go')
+        self.mock_exists.return_value = lambda x: True
+
+        self.assertThat(self.plugin._get_go_command(),
+                        Equals(expected_go_command))
+        self.assertThat(self.fake_logger.output, Contains(expected_go_command))
