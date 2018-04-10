@@ -483,7 +483,7 @@ class CreateTestCase(CreateBaseTestCase):
 class PassThroughTestCase(CreateBaseTestCase):
 
     def test_add_new_key(self):
-        self.config_data['pass-through'] = {'spam': 'eggs'}
+        self.config_data['passthrough'] = {'spam': 'eggs'}
         y = self.generate_meta_yaml()
         self.assertThat(
             y, Contains('spam'),
@@ -493,13 +493,13 @@ class PassThroughTestCase(CreateBaseTestCase):
     def test_override_key_with_different_type(self):
         del self.config_data['architectures']
         # This is normally an array of strings
-        self.config_data['pass-through'] = {'architectures': 'all'}
+        self.config_data['passthrough'] = {'architectures': 'all'}
         y = self.generate_meta_yaml()
         self.assertThat(y['architectures'], Equals('all'))
 
     def test_override_key_with_default(self):
         del self.config_data['confinement']
-        self.config_data['pass-through'] = {'confinement': 'next-generation'}
+        self.config_data['passthrough'] = {'confinement': 'next-generation'}
         y = self.generate_meta_yaml()
         self.assertThat(y['confinement'], Equals('next-generation'))
 
@@ -507,25 +507,25 @@ class PassThroughTestCase(CreateBaseTestCase):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
-        self.config_data['pass-through'] = {'foo': 'bar', 'spam': 'eggs'}
+        self.config_data['passthrough'] = {'foo': 'bar', 'spam': 'eggs'}
         self.generate_meta_yaml()
         self.assertThat(
             fake_logger.output,
-            Contains("Pass-through is being used to add experimental "
+            Contains("Passthrough is being used to add experimental "
                      "properties to 'snapcraft.yaml' that have not been "
                      "validated. The snap cannot be released to the store.\n"))
 
     def test_ambiguous_key_fails(self):
-        self.config_data['pass-through'] = {'confinement': 'next-generation'}
+        self.config_data['passthrough'] = {'confinement': 'next-generation'}
         raised = self.assertRaises(
-            meta_errors.AmbiguousPassThroughKeyError,
+            meta_errors.AmbiguousPassthroughKeyError,
             self.generate_meta_yaml)
         self.assertThat(raised.key, Equals('confinement'))
 
     def test_app_add_new_key(self):
         self.config_data['apps'] = {'foo': {
             'command': 'echo',
-            'pass-through': {'spam': 'eggs'}}}
+            'passthrough': {'spam': 'eggs'}}}
         y = self.generate_meta_yaml()['apps']['foo']
         self.assertThat(
             y, Contains('spam'),
@@ -536,7 +536,7 @@ class PassThroughTestCase(CreateBaseTestCase):
         self.config_data['apps'] = {'foo': {
             'command': 'echo',
             # This is normally an array of strings
-            'pass-through': {'aliases': 'foo'}}}
+            'passthrough': {'aliases': 'foo'}}}
         y = self.generate_meta_yaml()['apps']['foo']
         self.assertThat(
             y, Contains('aliases'),
@@ -554,20 +554,20 @@ class PassThroughTestCase(CreateBaseTestCase):
 
         self.config_data['apps'] = {'foo': {
             'command': 'echo',
-            'pass-through': {'foo': 'bar', 'spam': 'eggs'}}}
+            'passthrough': {'foo': 'bar', 'spam': 'eggs'}}}
         self.generate_meta_yaml()
         self.assertThat(
             fake_logger.output,
-            Contains("Pass-through is being used to add experimental "
+            Contains("Passthrough is being used to add experimental "
                      "properties to 'foo' that have not been "
                      "validated. The snap cannot be released to the store.\n"))
 
     def test_app_ambiguous_key_fails(self):
         self.config_data['apps'] = {'foo': {
             'command': 'echo', 'daemon': 'simple',
-            'pass-through': {'daemon': 'complex'}}}
+            'passthrough': {'daemon': 'complex'}}}
         raised = self.assertRaises(
-            meta_errors.AmbiguousPassThroughKeyError,
+            meta_errors.AmbiguousPassthroughKeyError,
             self.generate_meta_yaml)
         self.assertThat(raised.key, Equals('daemon'))
 

@@ -327,11 +327,11 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "Missing required key(s) in snapcraft.yaml: "
                 "'test-key1' and 'test-key2'. Either specify the missing "
                 "key(s), or use 'adopt-info' to get them from a part.")}),
-        ('AmbiguousPassThroughKeyError', {
-            'exception': meta_errors.AmbiguousPassThroughKeyError,
+        ('AmbiguousPassthroughKeyError', {
+            'exception': meta_errors.AmbiguousPassthroughKeyError,
             'kwargs': {'key': 'key'},
             'expected_message': (
-                "Failed to pass-through keys to snap metadata: "
+                "Failed to propagate keys to snap metadata: "
                 "'key' is specified as both a regular key and in "
                 "pass-through. Remove one of the keys."),
         }),

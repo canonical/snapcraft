@@ -404,13 +404,13 @@ class _SnapPackaging:
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
             self._render_socket_modes(snap_yaml['apps'])
             for app_name, app in snap_yaml['apps'].items():
-                self._apply_pass_through(
-                    app_name, app, app.pop('pass-through', {}),
+                self._apply_passthrough(
+                    app_name, app, app.pop('passthrough', {}),
                     self._original_snapcraft_yaml['apps'][app_name])
 
-        self._apply_pass_through('snapcraft.yaml', snap_yaml,
-                                 self._config_data.get('pass-through', {}),
-                                 self._original_snapcraft_yaml)
+        self._apply_passthrough('snapcraft.yaml', snap_yaml,
+                                self._config_data.get('passthrough', {}),
+                                self._original_snapcraft_yaml)
 
         return snap_yaml
 
@@ -533,18 +533,18 @@ class _SnapPackaging:
                 if mode is not None:
                     socket['socket-mode'] = OctInt(mode)
 
-    def _apply_pass_through(self, location: str, this: Dict[str, Any],
-                            pass_through: Dict[str, Any],
-                            original: Dict[str, Any]) -> None:
-        # Look for properties defined in pass-through and add them to the
+    def _apply_passthrough(self, location: str, section: Dict[str, Any],
+                           passthrough: Dict[str, Any],
+                           original: Dict[str, Any]) -> None:
+        # Look for properties defined in passthrough and add them to the
         # given dictionary. Any value already in the original dictionary must
-        # not be specified in pass-through at the same time.
-        for key in pass_through:
+        # not be specified in passthrough at the same time.
+        for key in passthrough:
             if key in original:
-                raise meta_errors.AmbiguousPassThroughKeyError(key)
-            this[key] = pass_through[key]
-        if pass_through:
-            logger.warn('Pass-through is being used to add experimental '
+                raise meta_errors.AmbiguousPassthroughKeyError(key)
+            section[key] = passthrough[key]
+        if passthrough:
+            logger.warn('Passthrough is being used to add experimental '
                         'properties to {!r} that have not been '
                         'validated. The snap cannot be released to the store.'
                         .format(location))

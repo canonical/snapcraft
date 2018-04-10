@@ -62,10 +62,10 @@ class AdoptedPartNotParsingInfo(SnapMetaGenerationError):
         super().__init__(part=part)
 
 
-class AmbiguousPassThroughKeyError(SnapMetaGenerationError):
+class AmbiguousPassthroughKeyError(SnapMetaGenerationError):
 
     fmt = (
-        "Failed to pass-through keys to snap metadata: "
+        "Failed to propagate keys to snap metadata: "
         "{key!r} is specified as both a regular key and in pass-through. "
         "Remove one of the keys."
     )
