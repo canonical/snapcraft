@@ -511,8 +511,8 @@ class PassThroughTestCase(CreateBaseTestCase):
         self.generate_meta_yaml()
         self.assertThat(
             fake_logger.output,
-            Contains("Passthrough is being used to add experimental "
-                     "properties to 'snapcraft.yaml' that have not been "
+            Contains("Passthrough is being used to propagate experimental "
+                     "properties to snap.yaml that have not been "
                      "validated. The snap cannot be released to the store.\n"))
 
     def test_ambiguous_key_fails(self):
@@ -520,7 +520,7 @@ class PassThroughTestCase(CreateBaseTestCase):
         raised = self.assertRaises(
             meta_errors.AmbiguousPassthroughKeyError,
             self.generate_meta_yaml)
-        self.assertThat(raised.key, Equals('confinement'))
+        self.assertThat(raised.keys, Equals('confinement'))
 
     def test_app_add_new_key(self):
         self.config_data['apps'] = {'foo': {
@@ -558,8 +558,8 @@ class PassThroughTestCase(CreateBaseTestCase):
         self.generate_meta_yaml()
         self.assertThat(
             fake_logger.output,
-            Contains("Passthrough is being used to add experimental "
-                     "properties to 'foo' that have not been "
+            Contains("Passthrough is being used to propagate experimental "
+                     "properties to snap.yaml that have not been "
                      "validated. The snap cannot be released to the store.\n"))
 
     def test_app_ambiguous_key_fails(self):
@@ -569,7 +569,22 @@ class PassThroughTestCase(CreateBaseTestCase):
         raised = self.assertRaises(
             meta_errors.AmbiguousPassthroughKeyError,
             self.generate_meta_yaml)
-        self.assertThat(raised.key, Equals('daemon'))
+        self.assertThat(raised.keys, Equals('daemon'))
+
+    def test_warn_once_only(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.config_data['passthrough'] = {'foo': 'bar', 'spam': 'eggs'}
+        self.config_data['apps'] = {'foo': {
+            'command': 'echo',
+            'passthrough': {'foo': 'bar', 'spam': 'eggs'}}}
+        self.generate_meta_yaml()
+        self.assertThat(
+            fake_logger.output,
+            Contains("Passthrough is being used to propagate experimental "
+                     "properties to snap.yaml that have not been "
+                     "validated. The snap cannot be released to the store.\n"))
 
 
 class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):

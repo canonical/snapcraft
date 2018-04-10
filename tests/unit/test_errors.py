@@ -329,11 +329,13 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "key(s), or use 'adopt-info' to get them from a part.")}),
         ('AmbiguousPassthroughKeyError', {
             'exception': meta_errors.AmbiguousPassthroughKeyError,
-            'kwargs': {'key': 'key'},
+            'kwargs': {'keys': ['key1', 'key2']},
             'expected_message': (
                 "Failed to propagate keys to snap metadata: "
-                "'key' is specified as both a regular key and in "
-                "pass-through. Remove one of the keys."),
+                "The following keys are specified as both regular keys and in "
+                "passthrough:\n"
+                "key1, key2\n\n"
+                "Remove duplicate keys."),
         }),
         ('MissingMetadataFileError', {
             'exception': errors.MissingMetadataFileError,

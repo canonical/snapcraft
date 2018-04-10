@@ -399,18 +399,27 @@ class _SnapPackaging:
             if key_name in self._config_data:
                 snap_yaml[key_name] = self._config_data[key_name]
 
+        passthrough_applied = False
+
         if 'apps' in self._config_data:
             _verify_app_paths(basedir='prime', apps=self._config_data['apps'])
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
             self._render_socket_modes(snap_yaml['apps'])
             for app_name, app in snap_yaml['apps'].items():
-                self._apply_passthrough(
-                    app_name, app, app.pop('passthrough', {}),
-                    self._original_snapcraft_yaml['apps'][app_name])
+                if self._apply_passthrough(
+                        app_name, app, app.pop('passthrough', {}),
+                        self._original_snapcraft_yaml['apps'][app_name]):
+                    passthrough_applied = True
 
-        self._apply_passthrough('snapcraft.yaml', snap_yaml,
-                                self._config_data.get('passthrough', {}),
-                                self._original_snapcraft_yaml)
+        if self._apply_passthrough('snapcraft.yaml', snap_yaml,
+                                   self._config_data.get('passthrough', {}),
+                                   self._original_snapcraft_yaml):
+            passthrough_applied = True
+
+        if passthrough_applied:
+            logger.warn('Passthrough is being used to propagate experimental '
+                        'properties to snap.yaml that have not been '
+                        'validated. The snap cannot be released to the store.')
 
         return snap_yaml
 
@@ -535,19 +544,14 @@ class _SnapPackaging:
 
     def _apply_passthrough(self, location: str, section: Dict[str, Any],
                            passthrough: Dict[str, Any],
-                           original: Dict[str, Any]) -> None:
-        # Look for properties defined in passthrough and add them to the
-        # given dictionary. Any value already in the original dictionary must
+                           original: Dict[str, Any]) -> bool:
+        # Any value already in the original dictionary must
         # not be specified in passthrough at the same time.
-        for key in passthrough:
-            if key in original:
-                raise meta_errors.AmbiguousPassthroughKeyError(key)
-            section[key] = passthrough[key]
-        if passthrough:
-            logger.warn('Passthrough is being used to add experimental '
-                        'properties to {!r} that have not been '
-                        'validated. The snap cannot be released to the store.'
-                        .format(location))
+        duplicates = set(original.keys() & passthrough.keys())
+        if duplicates:
+            raise meta_errors.AmbiguousPassthroughKeyError(duplicates)
+        section.update(passthrough)
+        return passthrough is not {}
 
 
 def _find_bin(binary, basedir):
