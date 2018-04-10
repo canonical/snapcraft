@@ -48,7 +48,8 @@ class PullState(PartState):
 
     def __init__(self, property_names, part_properties=None, project=None,
                  stage_packages=None, build_snaps=None, build_packages=None,
-                 source_details=None, metadata=None, metadata_files=None):
+                 source_details=None, metadata=None, metadata_files=None,
+                 scriptlet_metadata=None):
         # Save this off before calling super() since we'll need it
         # FIXME: for 3.x the name `schema_properties` is leaking
         #        implementation details from a higher layer.
@@ -60,6 +61,9 @@ class PullState(PartState):
             'source-details': source_details,
         }
 
+        if not scriptlet_metadata:
+            scriptlet_metadata = snapcraft.extractors.ExtractedMetadata()
+
         if not metadata:
             metadata = snapcraft.extractors.ExtractedMetadata()
 
@@ -70,6 +74,8 @@ class PullState(PartState):
             'metadata': metadata,
             'files': metadata_files
         }
+
+        self.scriptlet_metadata = scriptlet_metadata
 
         super().__init__(part_properties, project)
 

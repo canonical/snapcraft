@@ -781,6 +781,49 @@ class PluginMakedirsTestCase(unit.TestCase):
             self.assertTrue(os.path.exists(d), '{} does not exist'.format(d))
 
 
+class NextLastStepTestCase(unit.TestCase):
+    def setUp(self):
+        super().setUp()
+
+        self.handler = self.load_part('test_part')
+
+    def test_pull(self):
+        self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
+
+        self.handler.pull()
+
+        self.assertThat(self.handler.last_step(), Equals('pull'))
+        self.assertThat(self.handler.next_step(), Equals('build'))
+
+    def test_build(self):
+        self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
+
+        self.handler.build()
+
+        self.assertThat(self.handler.last_step(), Equals('build'))
+        self.assertThat(self.handler.next_step(), Equals('stage'))
+
+    def test_stage(self):
+        self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
+
+        self.handler.stage()
+
+        self.assertThat(self.handler.last_step(), Equals('stage'))
+        self.assertThat(self.handler.next_step(), Equals('prime'))
+
+    def test_prime(self):
+        self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
+
+        self.handler.prime()
+
+        self.assertThat(self.handler.last_step(), Equals('prime'))
+        self.assertThat(self.handler.next_step(), Equals(None))
+
+
 class StateBaseTestCase(unit.TestCase):
 
     def setUp(self):
@@ -830,11 +873,13 @@ class StateTestCase(StateBaseTestCase):
     @patch('snapcraft.internal.repo.Repo')
     def test_pull_state(self, repo_mock):
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
         repo_mock.get_installed_build_packages.return_value = []
 
         self.handler.pull()
 
         self.assertThat(self.handler.last_step(), Equals('pull'))
+        self.assertThat(self.handler.next_step(), Equals('build'))
         state = states.get_state(self.handler.plugin.statedir, 'pull')
 
         self.assertTrue(state, 'Expected pull to save state YAML')
@@ -872,11 +917,13 @@ class StateTestCase(StateBaseTestCase):
             'fake', _fake_extractor))
 
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
         repo_mock.get_installed_build_packages.return_value = []
 
         self.handler.pull()
 
         self.assertThat(self.handler.last_step(), Equals('pull'))
+        self.assertThat(self.handler.next_step(), Equals('build'))
         state = self.handler.get_pull_state()
 
         self.assertTrue(state, 'Expected pull to save state YAML')
@@ -906,16 +953,49 @@ class StateTestCase(StateBaseTestCase):
         files = state.extracted_metadata['files']
         self.assertThat(files, Equals(['metadata-file']))
 
+    @patch('snapcraft.internal.repo.Repo')
+    def test_pull_state_with_scriptlet_metadata(self, repo_mock):
+        self.handler = self.load_part('test_part', part_properties={
+            'override-pull': 'snapcraftctl set-version override-version'
+        })
+
+        self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
+        repo_mock.get_installed_build_packages.return_value = []
+
+        self.handler.pull()
+
+        self.assertThat(self.handler.last_step(), Equals('pull'))
+        self.assertThat(self.handler.next_step(), Equals('build'))
+        state = self.handler.get_pull_state()
+
+        self.assertTrue(state, 'Expected pull to save state YAML')
+        self.assertTrue(type(state) is states.PullState)
+        self.assertTrue(type(state.properties) is OrderedDict)
+        self.assertThat(len(state.properties), Equals(10))
+        for expected in ['source', 'source-branch', 'source-commit',
+                         'source-depth', 'source-subdir', 'source-tag',
+                         'source-type', 'plugin', 'stage-packages',
+                         'parse-info']:
+            self.assertThat(state.properties, Contains(expected))
+        self.assertTrue(type(state.project_options) is OrderedDict)
+        self.assertThat(state.project_options, Contains('deb_arch'))
+
+        metadata = state.scriptlet_metadata
+        self.assertThat(metadata.get_version(), Equals('override-version'))
+
     def test_pull_state_with_properties(self):
         self.get_pull_properties_mock.return_value = ['foo']
         self.handler.plugin.options.foo = 'bar'
         self.handler._part_properties = {'foo': 'bar'}
 
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
 
         self.handler.pull()
 
         self.assertThat(self.handler.last_step(), Equals('pull'))
+        self.assertThat(self.handler.next_step(), Equals('build'))
         state = states.get_state(self.handler.plugin.statedir, 'pull')
 
         self.assertTrue(state, 'Expected pull to save state YAML')
@@ -929,6 +1009,7 @@ class StateTestCase(StateBaseTestCase):
     @patch.object(nil.NilPlugin, 'clean_pull')
     def test_clean_pull_state(self, mock_clean_pull):
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
 
         self.handler.pull()
 
@@ -938,13 +1019,16 @@ class StateTestCase(StateBaseTestCase):
         mock_clean_pull.assert_called_once_with()
 
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
 
     def test_build_state(self):
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
 
         self.handler.build()
 
         self.assertThat(self.handler.last_step(), Equals('build'))
+        self.assertThat(self.handler.next_step(), Equals('stage'))
         state = states.get_state(self.handler.plugin.statedir, 'build')
 
         self.assertTrue(state, 'Expected build to save state YAML')
@@ -980,10 +1064,12 @@ class StateTestCase(StateBaseTestCase):
             'fake', _fake_extractor))
 
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
 
         self.handler.build()
 
         self.assertThat(self.handler.last_step(), Equals('build'))
+        self.assertThat(self.handler.next_step(), Equals('stage'))
         state = self.handler.get_build_state()
 
         self.assertTrue(state, 'Expected build to save state YAML')
@@ -1012,17 +1098,48 @@ class StateTestCase(StateBaseTestCase):
         files = state.extracted_metadata['files']
         self.assertThat(files, Equals(['metadata-file']))
 
+    def test_build_state_with_scriptlet_metadata(self):
+        self.handler = self.load_part('test_part', part_properties={
+            'override-build': 'snapcraftctl set-version override-version'
+        })
+
+        self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
+
+        self.handler.pull()
+        self.handler.build()
+
+        self.assertThat(self.handler.last_step(), Equals('build'))
+        self.assertThat(self.handler.next_step(), Equals('stage'))
+        state = self.handler.get_build_state()
+
+        self.assertTrue(state, 'Expected build to save state YAML')
+        self.assertTrue(type(state) is states.BuildState)
+        self.assertTrue(type(state.properties) is OrderedDict)
+        self.assertThat(len(state.properties), Equals(8))
+        for expected in ['after', 'build-attributes', 'build-packages',
+                         'disable-parallel', 'organize', 'prepare', 'build',
+                         'install']:
+            self.assertThat(state.properties, Contains(expected))
+        self.assertTrue(type(state.project_options) is OrderedDict)
+        self.assertThat(state.project_options, Contains('deb_arch'))
+
+        metadata = state.scriptlet_metadata
+        self.assertThat(metadata.get_version(), Equals('override-version'))
+
     def test_build_state_with_properties(self):
         self.get_build_properties_mock.return_value = ['foo']
         self.handler.plugin.options.foo = 'bar'
         self.handler._part_properties = {'foo': 'bar'}
 
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
 
         self.handler.build()
 
         self.assertThat(self.handler.last_step(), Equals('build'))
-        state = states.get_state(self.handler.plugin.statedir, 'build')
+        self.assertThat(self.handler.next_step(), Equals('stage'))
+        state = self.handler.get_build_state()
 
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
@@ -1045,9 +1162,11 @@ class StateTestCase(StateBaseTestCase):
         mock_clean_build.assert_called_once_with()
 
         self.assertThat(self.handler.last_step(), Equals('pull'))
+        self.assertThat(self.handler.next_step(), Equals('build'))
 
     def test_stage_state(self):
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')
         os.makedirs(bindir)
@@ -1058,7 +1177,8 @@ class StateTestCase(StateBaseTestCase):
         self.handler.stage()
 
         self.assertThat(self.handler.last_step(), Equals('stage'))
-        state = states.get_state(self.handler.plugin.statedir, 'stage')
+        self.assertThat(self.handler.next_step(), Equals('prime'))
+        state = self.handler.get_stage_state()
 
         self.assertTrue(state, 'Expected stage to save state YAML')
         self.assertTrue(type(state) is states.StageState)
@@ -1077,11 +1197,40 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
+    def test_stage_state_with_scriptlet_metadata(self):
+        self.handler = self.load_part('test_part', part_properties={
+            'override-stage': 'snapcraftctl set-version override-version'
+        })
+
+        self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
+
+        self.handler.pull()
+        self.handler.build()
+        self.handler.stage()
+
+        self.assertThat(self.handler.last_step(), Equals('stage'))
+        self.assertThat(self.handler.next_step(), Equals('prime'))
+        state = self.handler.get_stage_state()
+
+        self.assertTrue(state, 'Expected stage to save state YAML')
+        self.assertTrue(type(state) is states.StageState)
+        self.assertTrue(type(state.files) is set)
+        self.assertTrue(type(state.directories) is set)
+        self.assertTrue(type(state.properties) is OrderedDict)
+        self.assertThat(len(state.properties), Equals(2))
+        for expected in ['stage', 'filesets']:
+            self.assertThat(state.properties, Contains(expected))
+
+        metadata = state.scriptlet_metadata
+        self.assertThat(metadata.get_version(), Equals('override-version'))
+
     def test_stage_state_with_stage_keyword(self):
         self.handler.plugin.options.stage = ['bin/1']
         self.handler._part_properties = {'stage': ['bin/1']}
 
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')
         os.makedirs(bindir)
@@ -1092,7 +1241,8 @@ class StateTestCase(StateBaseTestCase):
         self.handler.stage()
 
         self.assertThat(self.handler.last_step(), Equals('stage'))
-        state = states.get_state(self.handler.plugin.statedir, 'stage')
+        self.assertThat(self.handler.next_step(), Equals('prime'))
+        state = self.handler.get_stage_state()
 
         self.assertTrue(state, 'Expected stage to save state YAML')
         self.assertTrue(type(state) is states.StageState)
@@ -1109,9 +1259,11 @@ class StateTestCase(StateBaseTestCase):
         self.assertThat(len(state.project_options), Equals(0))
 
         self.assertThat(self.handler.last_step(), Equals('stage'))
+        self.assertThat(self.handler.next_step(), Equals('prime'))
 
     def test_clean_stage_state(self):
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
         bindir = os.path.join(self.stage_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
@@ -1125,6 +1277,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.clean_stage({})
 
         self.assertThat(self.handler.last_step(), Equals('build'))
+        self.assertThat(self.handler.next_step(), Equals('stage'))
         self.assertFalse(os.path.exists(bindir))
 
     def test_clean_stage_state_multiple_parts(self):
@@ -1143,6 +1296,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.clean_stage({})
 
         self.assertThat(self.handler.last_step(), Equals('build'))
+        self.assertThat(self.handler.next_step(), Equals('stage'))
         self.assertFalse(os.path.exists(os.path.join(bindir, '1')))
         self.assertFalse(os.path.exists(os.path.join(bindir, '2')))
         self.assertTrue(
@@ -1166,6 +1320,7 @@ class StateTestCase(StateBaseTestCase):
         })
 
         self.assertThat(self.handler.last_step(), Equals('build'))
+        self.assertThat(self.handler.next_step(), Equals('stage'))
         self.assertFalse(os.path.exists(os.path.join(bindir, '1')))
         self.assertTrue(
             os.path.exists(os.path.join(bindir, '2')),
@@ -1182,6 +1337,7 @@ class StateTestCase(StateBaseTestCase):
     @patch('shutil.copy')
     def test_prime_state(self, mock_copy):
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')
         os.makedirs(bindir)
@@ -1193,11 +1349,12 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
+        self.assertThat(self.handler.next_step(), Equals(None))
         self.get_elf_files_mock.assert_called_once_with(self.handler.primedir,
                                                         {'bin/1', 'bin/2'})
         self.assertFalse(mock_copy.called)
 
-        state = states.get_state(self.handler.plugin.statedir, 'prime')
+        state = self.handler.get_prime_state()
 
         self.assertTrue(type(state) is states.PrimeState)
         self.assertTrue(type(state.files) is set)
@@ -1215,9 +1372,39 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(len(state.project_options), Equals(0))
 
+    def test_prime_state_with_scriptlet_metadata(self):
+        self.handler = self.load_part('test_part', part_properties={
+            'override-prime': 'snapcraftctl set-version override-version'
+        })
+
+        self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
+
+        self.handler.pull()
+        self.handler.build()
+        self.handler.stage()
+        self.handler.prime()
+
+        self.assertThat(self.handler.last_step(), Equals('prime'))
+        self.assertThat(self.handler.next_step(), Equals(None))
+        state = self.handler.get_prime_state()
+
+        self.assertTrue(state, 'Expected prime to save state YAML')
+        self.assertTrue(type(state) is states.PrimeState)
+        self.assertTrue(type(state.files) is set)
+        self.assertTrue(type(state.directories) is set)
+        self.assertTrue(type(state.dependency_paths) is set)
+        self.assertTrue(type(state.properties) is OrderedDict)
+        self.assertThat(len(state.properties), Equals(1))
+        self.assertThat(state.properties, Contains('prime'))
+
+        metadata = state.scriptlet_metadata
+        self.assertThat(metadata.get_version(), Equals('override-version'))
+
     @patch('shutil.copy')
     def test_prime_state_with_stuff_already_primed(self, mock_copy):
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')
         os.makedirs(bindir)
@@ -1231,6 +1418,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
+        self.assertThat(self.handler.next_step(), Equals(None))
         # bin/2 shouldn't be in this list as it was already primed by another
         # part.
         self.get_elf_files_mock.assert_called_once_with(self.handler.primedir,
@@ -1271,6 +1459,7 @@ class StateTestCase(StateBaseTestCase):
             elf.ElfFile(path=os.path.join(self.handler.primedir, 'bin', '2')),
         ])
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')
         os.makedirs(bindir)
@@ -1282,6 +1471,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
+        self.assertThat(self.handler.next_step(), Equals(None))
         self.get_elf_files_mock.assert_called_once_with(
             self.handler.primedir, {'bin/1', 'bin/2'})
         mock_migrate_files.assert_has_calls([
@@ -1336,6 +1526,7 @@ class StateTestCase(StateBaseTestCase):
         ])
 
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')
         os.makedirs(bindir)
@@ -1347,6 +1538,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
+        self.assertThat(self.handler.next_step(), Equals(None))
         self.get_elf_files_mock.assert_called_once_with(
             self.handler.primedir, {'bin/file'})
         # Verify that only the part's files were migrated-- not the system
@@ -1375,6 +1567,7 @@ class StateTestCase(StateBaseTestCase):
         self.get_elf_files_mock.return_value = frozenset([
             elf.ElfFile(path='bin/1')])
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')
         foobardir = os.path.join(self.handler.plugin.installdir, 'foo', 'bar')
@@ -1392,6 +1585,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
+        self.assertThat(self.handler.next_step(), Equals(None))
         self.get_elf_files_mock.assert_called_once_with(
             self.handler.primedir, {'bin/1', 'foo/bar/baz'})
         mock_migrate_files.assert_called_once_with(
@@ -1410,6 +1604,7 @@ class StateTestCase(StateBaseTestCase):
             'test_part', part_properties={'prime': ['bin/1']})
 
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
 
         bindir = os.path.join(self.handler.plugin.installdir, 'bin')
         os.makedirs(bindir)
@@ -1421,6 +1616,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.prime()
 
         self.assertThat(self.handler.last_step(), Equals('prime'))
+        self.assertThat(self.handler.next_step(), Equals(None))
         self.get_elf_files_mock.assert_called_once_with(self.handler.primedir,
                                                         {'bin/1'})
         self.assertFalse(mock_copy.called)
@@ -1444,6 +1640,7 @@ class StateTestCase(StateBaseTestCase):
 
     def test_clean_prime_state(self):
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
         bindir = os.path.join(self.prime_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
@@ -1457,10 +1654,12 @@ class StateTestCase(StateBaseTestCase):
         self.handler.clean_prime({})
 
         self.assertThat(self.handler.last_step(), Equals('stage'))
+        self.assertThat(self.handler.next_step(), Equals('prime'))
         self.assertFalse(os.path.exists(bindir))
 
     def test_clean_prime_state_multiple_parts(self):
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
         bindir = os.path.join(self.prime_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
@@ -1475,6 +1674,7 @@ class StateTestCase(StateBaseTestCase):
         self.handler.clean_prime({})
 
         self.assertThat(self.handler.last_step(), Equals('stage'))
+        self.assertThat(self.handler.next_step(), Equals('prime'))
         self.assertFalse(os.path.exists(os.path.join(bindir, '1')))
         self.assertFalse(os.path.exists(os.path.join(bindir, '2')))
         self.assertTrue(
@@ -1483,6 +1683,7 @@ class StateTestCase(StateBaseTestCase):
 
     def test_clean_prime_state_common_files(self):
         self.assertThat(self.handler.last_step(), Equals(None))
+        self.assertThat(self.handler.next_step(), Equals('pull'))
         bindir = os.path.join(self.prime_dir, 'bin')
         os.makedirs(bindir)
         open(os.path.join(bindir, '1'), 'w').close()
@@ -1498,6 +1699,7 @@ class StateTestCase(StateBaseTestCase):
         })
 
         self.assertThat(self.handler.last_step(), Equals('stage'))
+        self.assertThat(self.handler.next_step(), Equals('prime'))
         self.assertFalse(os.path.exists(os.path.join(bindir, '1')))
         self.assertTrue(
             os.path.exists(os.path.join(bindir, '2')),

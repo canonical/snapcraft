@@ -120,17 +120,35 @@ def _update_yaml_with_extracted_metadata(
         if not part:
             raise meta_errors.AdoptedPartMissingError(part_name)
 
-        # This would be caught since metadata would be missing, but we want
-        # to be clear about the issue here. This really should be caught by the
-        # schema, but it doesn't seem to support such dynamic behavior.
-        if 'parse-info' not in config_data['parts'][part_name]:
-            raise meta_errors.AdoptedPartNotParsingInfo(part_name)
+        pull_state = part.get_pull_state()
+        build_state = part.get_build_state()
+        stage_state = part.get_stage_state()
+        prime_state = part.get_prime_state()
 
-        # Get the metadata from the pull step first, then update it using the
-        # metadata from the build step (i.e. the data from the build step takes
-        # precedence over the pull step)
-        metadata = part.get_pull_state().extracted_metadata['metadata']
-        metadata.update(part.get_build_state().extracted_metadata['metadata'])
+        # Get the metadata from the pull step first, allowing metadata set via
+        # override-pull to override.
+        metadata = pull_state.extracted_metadata['metadata']
+        metadata.update(pull_state.scriptlet_metadata)
+
+        # Now update it using the metadata from the build step (i.e. the data
+        # from the build step takes precedence over the pull step), allowing
+        # metadata set via override-build to override.
+        metadata.update(build_state.extracted_metadata['metadata'])
+        metadata.update(build_state.scriptlet_metadata)
+
+        # Now make sure any scriptlet data in later steps are taken into
+        # account (later steps take precedence).
+        metadata.update(stage_state.scriptlet_metadata)
+        metadata.update(prime_state.scriptlet_metadata)
+
+        if not metadata:
+            # If we didn't end up with any metadata, let's ensure this part was
+            # actually supposed to parse info. If not, let's try to be very
+            # clear about what's happening, here. We do this after checking for
+            # metadata because metadata could be supplied by scriptlets, too.
+            if 'parse-info' not in config_data['parts'][part_name]:
+                raise meta_errors.AdoptedPartNotParsingInfo(part_name)
+
         _adopt_info(config_data, metadata)
 
     # Verify that all mandatory keys have been satisfied

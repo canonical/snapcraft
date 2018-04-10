@@ -213,15 +213,21 @@ class TestCase(testtools.TestCase):
                            my-part:
                              plugin: nil
                            '''),
-                       build_packages='[]'):
+                       build_packages='[]',
+                       adopt_info=None):
         snapcraft_yaml = {
             'name': name,
-            'version': version,
             'summary': summary,
             'description': description,
             'parts': yaml.load(parts),
             'build-packages': yaml.load(build_packages),
         }
+
+        if version:
+            snapcraft_yaml['version'] = version
+        if adopt_info:
+            snapcraft_yaml['adopt-info'] = adopt_info
+
         with open('snapcraft.yaml', 'w') as f:
             yaml.dump(snapcraft_yaml, f, default_flow_style=False)
 

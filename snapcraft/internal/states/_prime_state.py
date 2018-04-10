@@ -16,6 +16,7 @@
 
 import yaml
 
+import snapcraft.extractors
 from snapcraft.internal.states._state import PartState
 
 
@@ -31,12 +32,16 @@ class PrimeState(PartState):
     yaml_tag = u'!PrimeState'
 
     def __init__(self, files, directories, dependency_paths=None,
-                 part_properties=None, project=None):
+                 part_properties=None, project=None, scriptlet_metadata=None):
         super().__init__(part_properties, project)
+
+        if not scriptlet_metadata:
+            scriptlet_metadata = snapcraft.extractors.ExtractedMetadata()
 
         self.files = files
         self.directories = directories
         self.dependency_paths = set()
+        self.scriptlet_metadata = scriptlet_metadata
 
         if dependency_paths:
             self.dependency_paths = dependency_paths

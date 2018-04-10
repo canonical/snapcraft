@@ -570,3 +570,34 @@ class ScriptletRunError(ScriptletBaseError):
 
     def __init__(self, scriptlet_name: str, code: int) -> None:
         super().__init__(scriptlet_name=scriptlet_name, code=code)
+
+
+class ScriptletDuplicateDataError(ScriptletBaseError):
+    fmt = (
+        'Failed to save data from scriptlet into {step!r} state: '
+        'The {humanized_keys} key(s) were already saved in the {other_step!r} '
+        'step.'
+    )
+
+    def __init__(self, step: str, other_step: str, keys: List[str]) -> None:
+        self.keys = keys
+        super().__init__(
+            step=step, other_step=other_step,
+            humanized_keys=formatting_utils.humanize_list(keys, 'and'))
+
+
+class ScriptletDuplicateVersionError(ScriptletBaseError):
+    fmt = (
+        'Unable to set version: '
+        'it was already set in the {step!r} step.'
+    )
+
+    def __init__(self, step: str) -> None:
+        super().__init__(step=step)
+
+
+class SnapcraftctlError(ScriptletBaseError):
+    fmt = '{message}'
+
+    def __init__(self, message: str) -> None:
+        super().__init__(message=message)

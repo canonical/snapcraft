@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import collections
 import contextlib
 import copy
 import filecmp
@@ -98,6 +99,9 @@ class PluginHandler:
         self._build_attributes = BuildAttributes(
             self._part_properties['build-attributes'])
 
+        # Scriptlet data is a dict of dicts for each step
+        self._scriptlet_metadata = collections.defaultdict(
+            snapcraft.extractors.ExtractedMetadata)
         self._runner = Runner(
             part_properties=self._part_properties,
             sourcedir=self.plugin.sourcedir,
@@ -109,6 +113,7 @@ class PluginHandler:
                 'build': self.plugin.build,
                 'stage': self._do_stage,
                 'prime': self._do_prime,
+                'set-version': self._set_version,
             })
 
         self._migrate_state_file()
@@ -153,6 +158,31 @@ class PluginHandler:
 
         return source_handler
 
+    def _set_version(self, *, version):
+        try:
+            self._set_scriptlet_metadata(
+                snapcraft.extractors.ExtractedMetadata(version=version))
+        except errors.ScriptletDuplicateDataError as e:
+            raise errors.ScriptletDuplicateVersionError(e.other_step)
+
+    def _set_scriptlet_metadata(
+            self, metadata: snapcraft.extractors.ExtractedMetadata):
+        last_step = self.last_step()
+        step = self.next_step()
+        if last_step:
+            # Ensure the metadata from this step doesn't conflict with metadata
+            # from any other step. Doing so is an error.
+            index = common.COMMAND_ORDER.index(last_step)
+            for index in reversed(range(0, index+1)):
+                other_step = common.COMMAND_ORDER[index]
+                state = states.get_state(self.plugin.statedir, other_step)
+                conflicts = metadata.overlap(state.scriptlet_metadata)
+                if len(conflicts) > 0:
+                    raise errors.ScriptletDuplicateDataError(
+                        step, other_step, list(conflicts))
+
+        self._scriptlet_metadata[step].update(metadata)
+
     def makedirs(self):
         dirs = [
             self.plugin.sourcedir, self.plugin.builddir,
@@ -185,6 +215,16 @@ class PluginHandler:
                 return step
 
         return None
+
+    def next_step(self):
+        next_step = None
+        for step in reversed(common.COMMAND_ORDER):
+            if os.path.exists(
+                    states.get_step_state_file(self.plugin.statedir, step)):
+                break
+            next_step = step
+
+        return next_step
 
     def is_clean(self, step):
         """Return true if the given step hasn't run (or has been cleaned)."""
@@ -327,8 +367,8 @@ class PluginHandler:
             build_packages=part_build_packages,
             source_details=self.source_handler.source_details,
             metadata=metadata,
-            metadata_files=metadata_files
-        ))
+            metadata_files=metadata_files,
+            scriptlet_metadata=self._scriptlet_metadata['pull']))
 
     def clean_pull(self, hint=''):
         if self.is_clean('pull'):
@@ -436,7 +476,8 @@ class PluginHandler:
             plugin_assets=plugin_manifest,
             machine_assets=machine_manifest,
             metadata=metadata,
-            metadata_files=metadata_files))
+            metadata_files=metadata_files,
+            scriptlet_metadata=self._scriptlet_metadata['build']))
 
     def _get_machine_manifest(self):
         return {
@@ -521,7 +562,7 @@ class PluginHandler:
     def mark_stage_done(self, snap_files, snap_dirs):
         self.mark_done('stage', states.StageState(
             snap_files, snap_dirs, self._part_properties,
-            self._project_options))
+            self._project_options, self._scriptlet_metadata['stage']))
 
     def clean_stage(self, project_staged_state, hint=''):
         if self.is_clean('stage'):
@@ -606,7 +647,7 @@ class PluginHandler:
     def mark_prime_done(self, snap_files, snap_dirs, dependency_paths):
         self.mark_done('prime', states.PrimeState(
             snap_files, snap_dirs, dependency_paths, self._part_properties,
-            self._project_options))
+            self._project_options, self._scriptlet_metadata['prime']))
 
     def clean_prime(self, project_primed_state, hint=''):
         if self.is_clean('prime'):

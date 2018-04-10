@@ -158,6 +158,22 @@ parts:
         project = c._project_options
         self.assertThat(project.info.description, Equals(None))
 
+    def test_project_from_config_without_version(self):
+        self.make_snapcraft_yaml("""name: foo
+summary: bar
+description: baz
+adopt-info: part1
+confinement: strict
+
+parts:
+  part1:
+    plugin: go
+""")
+
+        c = _config.Config()
+        project = c._project_options
+        self.assertThat(project.info.version, Equals(None))
+
     def test_project_passed_to_config(self):
         self.make_snapcraft_yaml("""name: foo
 version: "1"
@@ -2382,7 +2398,7 @@ class DaemonDependencyTestCase(ValidationBaseTestCase):
 class RequiredPropertiesTestCase(ValidationBaseTestCase):
 
     scenarios = [(key, dict(key=key)) for
-                 key in ['name', 'version', 'parts']]
+                 key in ['name', 'parts']]
 
     def test_required_properties(self):
         data = self.data.copy()

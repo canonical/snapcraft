@@ -22,7 +22,7 @@ class ProjectInfo:
 
     def __init__(self, data: Dict[str, Any]) -> None:
         self.name = data['name']
-        self.version = data['version']
+        self.version = data.get('version')
         self.summary = data.get('summary')
         self.description = data.get('description')
         self.confinement = data['confinement']
