@@ -523,6 +523,12 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
         fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'init', 'ubuntu:xenial', container_name]),
             call(['lxc', 'config', 'set', container_name,
+                  'raw.idmap', 'both {} {}'.format(
+                    self.expected_idmap, '0')]),
+            call(['lxc', 'config', 'device', 'add', container_name,
+                  'fuse', 'unix-char', 'path=/dev/fuse']),
+            call(['lxc', 'start', container_name]),
+            call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'config', 'set', container_name,
                   'environment.LC_ALL', 'C.UTF-8']),
@@ -535,12 +541,6 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   '{"fingerprint": "test-fingerprint", '
                   '"architecture": "test-architecture", '
                   '"created_at": "test-created-at"}']),
-            call(['lxc', 'config', 'set', container_name,
-                  'raw.idmap', 'both {} {}'.format(
-                    self.expected_idmap, '0')]),
-            call(['lxc', 'config', 'device', 'add', container_name,
-                  'fuse', 'unix-char', 'path=/dev/fuse']),
-            call(['lxc', 'start', container_name]),
             call(['lxc', 'config', 'device', 'add', container_name,
                   project_folder, 'disk', 'source={}'.format(source),
                   'path={}'.format(project_folder)]),
@@ -626,6 +626,14 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
         project_folder = '/root/build_snap-test'
         fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'config', 'set', container_name,
+                  'raw.idmap', 'both {} {}'.format(
+                    self.expected_idmap, 0)]),
+            call(['lxc', 'config', 'device', 'remove', container_name,
+                  project_folder]),
+            call(['lxc', 'config', 'device', 'add', container_name,
+                  'fuse', 'unix-char', 'path=/dev/fuse']),
+            call(['lxc', 'start', container_name]),
+            call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'config', 'set', container_name,
                   'environment.LC_ALL', 'C.UTF-8']),
@@ -638,14 +646,6 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
                   '{"fingerprint": "test-fingerprint", '
                   '"architecture": "test-architecture", '
                   '"created_at": "test-created-at"}']),
-            call(['lxc', 'config', 'set', container_name,
-                  'raw.idmap', 'both {} {}'.format(
-                    self.expected_idmap, 0)]),
-            call(['lxc', 'config', 'device', 'remove', container_name,
-                  project_folder]),
-            call(['lxc', 'config', 'device', 'add', container_name,
-                  'fuse', 'unix-char', 'path=/dev/fuse']),
-            call(['lxc', 'start', container_name]),
             call(['lxc', 'stop', '-f', container_name]),
         ])
         mock_container_run.assert_has_calls([

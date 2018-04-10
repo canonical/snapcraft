@@ -53,7 +53,7 @@ class Project(Containerbuild):
             except subprocess.CalledProcessError as e:
                 raise ContainerConnectionError('Failed to setup container')
         if self._get_container_status()['status'] == 'Stopped':
-            self._configure_container()
+            self._configure_devices()
             try:
                 subprocess.check_call([
                     'lxc', 'start', self._container_name])
@@ -67,20 +67,9 @@ class Project(Containerbuild):
                             'remove any existing lines.'
                             '\nRestart lxd after making this change.')
                 raise ContainerConnectionError(msg)
-        self._wait_for_network()
-        if new_container:
-            self._container_run(['apt-get', 'update'])
-            # Because of https://bugs.launchpad.net/snappy/+bug/1628289
-            # Needed to run snapcraft as a snap and build-snaps
-            self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
-        if self._remote != 'local':
-            # For remote mounts we will need sshfs.
-            self._container_run(['apt-get', 'install', 'sshfs', '-y'])
-        self._inject_snapcraft(new_container=new_container)
-        self._setup_vendoring()
+        self._configure_container(new_container=new_container)
 
-    def _configure_container(self):
-        super()._configure_container()
+    def _configure_devices(self):
         if self._remote == 'local':
             # Map host user to root (0) inside container
             subprocess.check_call([

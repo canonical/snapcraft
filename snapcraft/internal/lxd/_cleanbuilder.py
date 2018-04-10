@@ -41,17 +41,7 @@ class Cleanbuilder(Containerbuild):
                 'lxc', 'launch', '-e', self._image, self._container_name])
         except subprocess.CalledProcessError as e:
             raise ContainerConnectionError('Failed to setup container')
-        self._configure_container()
-        self._wait_for_network()
-        self._container_run(['apt-get', 'update'])
-        # Because of https://bugs.launchpad.net/snappy/+bug/1628289
-        # Needed to run snapcraft as a snap and build-snaps
-        self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
-        if self._remote != 'local':
-            # For remote mounts we will need sshfs.
-            self._container_run(['apt-get', 'install', 'sshfs', '-y'])
-        self._inject_snapcraft(new_container=True)
-        self._setup_vendoring()
+        self._configure_container(new_container=True)
 
     def _setup_project(self):
         logger.info('Setting up container with project assets')

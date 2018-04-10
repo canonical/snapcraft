@@ -127,7 +127,7 @@ class Containerbuild:
             if container['name'] == self._container_name.split(':')[-1]:
                 return container
 
-    def _configure_container(self):
+    def _configure_container(self, *, new_container: bool):
         subprocess.check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.SNAPCRAFT_SETUP_CORE', '1'])
@@ -145,6 +145,17 @@ class Containerbuild:
         # Reset proxy if one was set previously
         self._set_proxy('')
         self._set_image_info_env_var()
+        self._wait_for_network()
+        if new_container:
+            self._container_run(['apt-get', 'update'])
+            # Because of https://bugs.launchpad.net/snappy/+bug/1628289
+            # Needed to run snapcraft as a snap and build-snaps
+            self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
+        if self._remote != 'local':
+            # For remote mounts we will need sshfs.
+            self._container_run(['apt-get', 'install', 'sshfs', '-y'])
+        self._inject_snapcraft(new_container=new_container)
+        self._setup_vendoring()
 
     def _set_image_info_env_var(self):
         FAILURE_WARNING_FORMAT = (
