@@ -374,7 +374,9 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
 
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
-        self.assertEqual(['python'], plugin.plugin_stage_packages)
+        self.assertThat(
+            plugin.plugin_stage_packages,
+            Equals(['python']))
 
     def test_plugin_stage_packages_python3_xenial(self):
         self.options.python_version = 'python3'
@@ -383,7 +385,9 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
 
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
-        self.assertEqual(['python3'], plugin.plugin_stage_packages)
+        self.assertThat(
+            plugin.plugin_stage_packages,
+            Equals(['python3']))
 
     def test_plugin_stage_packages_python2_bionic(self):
         self.options.python_version = 'python2'
@@ -392,8 +396,9 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
 
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
-        self.assertEqual(
-            ['python', 'python-distutils'], plugin.plugin_stage_packages)
+        self.assertThat(
+            plugin.plugin_stage_packages,
+            Equals(['python', 'python-distutils']))
 
     def test_plugin_stage_packages_python3_bionic(self):
         self.options.python_version = 'python3'
@@ -402,8 +407,9 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
 
         plugin = python.PythonPlugin('test-part', self.options,
                                      self.project_options)
-        self.assertEqual(
-            ['python3', 'python3-distutils'], plugin.plugin_stage_packages)
+        self.assertThat(
+            plugin.plugin_stage_packages,
+            Equals(['python3', 'python3-distutils']))
 
 
 class FileMissingPythonPluginTest(BasePythonPluginTestCase):
