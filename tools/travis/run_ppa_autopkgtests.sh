@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -24,7 +24,7 @@ script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
 
 "$script_path/setup_lxd.sh"
-"$script_path/run_lxd_container.sh" test-trigger
+"$script_path/run_lxd_container.sh" ubuntu:xenial test-trigger
 $lxc file push --recursive $project_path/tools test-trigger/root/
 $lxc exec test-trigger -- sh -c "apt install --yes python python-launchpadlib"
 $lxc exec test-trigger -- sh -c "/root/tools/run_ppa_autopkgtests.py"

@@ -24,7 +24,7 @@ project_path="$(readlink -f "$script_path/../..")"
 lxc="/snap/bin/lxc"
 
 "$script_path/setup_lxd.sh"
-"$script_path/run_lxd_container.sh" snap-builder
+"$script_path/run_lxd_container.sh" ubuntu:xenial snap-builder
 # Workaround for
 # - Setup snap "core" (2462) security profiles (cannot reload udev rules: exit status 2
 $lxc exec snap-builder -- sh -c "snap install core" || echo "ignored error"

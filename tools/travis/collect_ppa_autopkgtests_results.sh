@@ -33,7 +33,7 @@ script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
 
 "$script_path/setup_lxd.sh"
-"$script_path/run_lxd_container.sh" autopkgtest-results
+"$script_path/run_lxd_container.sh" ubuntu:xenial autopkgtest-results
 $lxc file push --recursive $project_path/tools autopkgtest-results/root/
 $lxc exec autopkgtest-results -- sh -c "apt update && apt install --yes squashfuse"
 # Ignore the core install error as a workaround for
