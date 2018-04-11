@@ -25,7 +25,7 @@ import shlex
 import shutil
 import stat
 import subprocess
-from typing import Any, Dict, List  # noqa
+from typing import Any, Dict, List, Set  # noqa
 
 import yaml
 
@@ -165,6 +165,21 @@ def _update_yaml_with_extracted_metadata(
 def _adopt_info(
         config_data: Dict[str, Any],
         extracted_metadata: _metadata.ExtractedMetadata):
+    ignored_keys = _adopt_keys(config_data, extracted_metadata)
+    if ignored_keys:
+        logger.warning(
+            'The {keys} {plural_property} {plural_is} specified in adopted '
+            'info as well as the YAML: taking the {plural_property} from the '
+            'YAML'.format(
+                keys=formatting_utils.humanize_list(list(ignored_keys), 'and'),
+                plural_property=formatting_utils.pluralize(
+                    ignored_keys, 'property', 'properties'),
+                plural_is=formatting_utils.pluralize(
+                    ignored_keys, 'is', 'are')))
+
+
+def _adopt_keys(config_data: Dict[str, Any],
+                extracted_metadata: _metadata.ExtractedMetadata) -> Set[str]:
     ignored_keys = set()
     metadata_dict = extracted_metadata.to_dict()
     for key, value in metadata_dict.items():
@@ -193,16 +208,7 @@ def _adopt_info(
                         desktop_file_path)
                     break
 
-    if ignored_keys:
-        logger.warning(
-            'The {keys} {plural_property} {plural_is} specified in adopted '
-            'info as well as the YAML: taking the {plural_property} from the '
-            'YAML'.format(
-                keys=formatting_utils.humanize_list(ignored_keys, 'and'),
-                plural_property=formatting_utils.pluralize(
-                    ignored_keys, 'property', 'properties'),
-                plural_is=formatting_utils.pluralize(
-                    ignored_keys, 'is', 'are')))
+    return ignored_keys
 
 
 def _icon_file_exists() -> bool:
