@@ -79,6 +79,10 @@ class BasePythonPluginTestCase(unit.TestCase):
         self.mock_setup_tools = patcher.start()
         self.addCleanup(patcher.stop)
 
+        patcher = mock.patch('snapcraft.internal.os_release.OsRelease')
+        self.mock_os_release = patcher.start()
+        self.addCleanup(patcher.stop)
+
 
 class PythonPluginTestCase(BasePythonPluginTestCase):
 
@@ -362,6 +366,50 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         self.assertThat(
             plugin.get_manifest()['constraints-contents'],
             Equals('testpackage1==1.0\ntestpackage2==1.2'))
+
+    def test_plugin_stage_packages_python2_xenial(self):
+        self.options.python_version = 'python2'
+        self.mock_os_release.return_value.version_codename.return_value = (
+            'xenial')
+
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+        self.assertThat(
+            plugin.plugin_stage_packages,
+            Equals(['python']))
+
+    def test_plugin_stage_packages_python3_xenial(self):
+        self.options.python_version = 'python3'
+        self.mock_os_release.return_value.version_codename.return_value = (
+            'xenial')
+
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+        self.assertThat(
+            plugin.plugin_stage_packages,
+            Equals(['python3']))
+
+    def test_plugin_stage_packages_python2_bionic(self):
+        self.options.python_version = 'python2'
+        self.mock_os_release.return_value.version_codename.return_value = (
+            'bionic')
+
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+        self.assertThat(
+            plugin.plugin_stage_packages,
+            Equals(['python', 'python-distutils']))
+
+    def test_plugin_stage_packages_python3_bionic(self):
+        self.options.python_version = 'python3'
+        self.mock_os_release.return_value.version_codename.return_value = (
+            'bionic')
+
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+        self.assertThat(
+            plugin.plugin_stage_packages,
+            Equals(['python3', 'python3-distutils']))
 
 
 class FileMissingPythonPluginTest(BasePythonPluginTestCase):

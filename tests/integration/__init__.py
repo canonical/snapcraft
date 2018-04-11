@@ -72,7 +72,7 @@ class TestCase(testtools.TestCase):
                 'as described in HACKING.md.')
 
         if os.getenv('SNAPCRAFT_FROM_SNAP', False):
-            self.patchelf_command = '/snap/snapcraft/current/bin/patchelf'
+            self.patchelf_command = '/snap/snapcraft/current/usr/bin/patchelf'
             self.execstack_command = (
                 '/snap/snapcraft/current/usr/sbin/execstack')
         else:
