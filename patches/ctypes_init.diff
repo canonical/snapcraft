@@ -1,20 +1,34 @@
-406a407,417
-> 
-> _ARCH_TRIPLET = {
->     'arm64': 'aarch64-linux-gnu',
->     'i386': 'i386-linux-gnu',
->     'ppc64el': 'powerpc64le-linux-gnu',
->     'powerpc': 'powerpc-linux-gnu',
->     'amd64': 'x86_64-linux-gnu',
->     's390x': 's390x-linux-gnu',
-> }
-> 
-> 
-421a433,439
->         if _os.getenv('SNAP_NAME', '') == 'snapcraft':
->             _name = _os.path.join(
->                         _os.getenv('SNAP'), 'usr', 'lib',
->                         _ARCH_TRIPLET.get(_os.getenv('SNAP_ARCH')),
->                         name)
->             if _os.path.exists(_name):
->                 name = _name
+--- __init__.py.orig	2018-04-10 15:40:17.061623054 -0300
++++ __init__.py	2018-04-10 15:41:40.150948367 -0300
+@@ -407,6 +407,17 @@
+         _func_flags_ = _FUNCFLAG_STDCALL
+         _func_restype_ = HRESULT
+ 
++
++_ARCH_TRIPLET = {
++    'arm64': 'aarch64-linux-gnu',
++    'i386': 'i386-linux-gnu',
++    'ppc64el': 'powerpc64le-linux-gnu',
++    'powerpc': 'powerpc-linux-gnu',
++    'amd64': 'x86_64-linux-gnu',
++    's390x': 's390x-linux-gnu',
++}
++
++
+ class LibraryLoader(object):
+     def __init__(self, dlltype):
+         self._dlltype = dlltype
+@@ -419,6 +430,13 @@
+         return dll
+ 
+     def __getitem__(self, name):
++        if _os.getenv('SNAP_NAME', '') == 'snapcraft':
++            _name = _os.path.join(
++                        _os.getenv('SNAP'), 'usr', 'lib',
++                        _ARCH_TRIPLET.get(_os.getenv('SNAP_ARCH')),
++                        name)
++            if _os.path.exists(_name):
++                name = _name
+         return getattr(self, name)
+ 
+     def LoadLibrary(self, name):
