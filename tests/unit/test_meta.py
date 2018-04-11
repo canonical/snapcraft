@@ -480,87 +480,34 @@ class CreateTestCase(CreateBaseTestCase):
             "Expected generated 'bar' hook to not contain 'plugs'")
 
 
-class PassThroughTestCase(CreateBaseTestCase):
+class PassthroughBaseTestCase(CreateBaseTestCase):
 
-    def test_add_new_key(self):
-        self.config_data['passthrough'] = {'spam': 'eggs'}
-        y = self.generate_meta_yaml()
-        self.assertThat(
-            y, Contains('spam'),
-            'Expected "spam" property to be propagated to snap.yaml')
-        self.assertThat(y['spam'], Equals('eggs'))
+    def setUp(self):
+        super().setUp()
 
-    def test_override_key_with_different_type(self):
-        del self.config_data['architectures']
-        # This is normally an array of strings
-        self.config_data['passthrough'] = {'architectures': 'all'}
-        y = self.generate_meta_yaml()
-        self.assertThat(y['architectures'], Equals('all'))
+        self.config_data = {
+            'name': 'my-package',
+            'version': '1.0',
+            'grade': 'stable',
+            'description': 'my description',
+            'summary': 'my summary',
+            'parts': {
+                'test-part': {
+                    'plugin': 'nil',
+                }
+            }
+        }
 
-    def test_override_key_with_default(self):
-        del self.config_data['confinement']
-        self.config_data['passthrough'] = {'confinement': 'next-generation'}
-        y = self.generate_meta_yaml()
-        self.assertThat(y['confinement'], Equals('next-generation'))
 
-    def test_warning(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-
-        self.config_data['passthrough'] = {'foo': 'bar', 'spam': 'eggs'}
-        self.generate_meta_yaml()
-        self.assertThat(
-            fake_logger.output,
-            Contains("Passthrough is being used to propagate experimental "
-                     "properties to snap.yaml that have not been "
-                     "validated. The snap cannot be released to the store.\n"))
+class PassthroughErrorTestCase(PassthroughBaseTestCase):
 
     def test_ambiguous_key_fails(self):
+        self.config_data['confinement'] = 'devmode'
         self.config_data['passthrough'] = {'confinement': 'next-generation'}
         raised = self.assertRaises(
             meta_errors.AmbiguousPassthroughKeyError,
             self.generate_meta_yaml)
-        self.assertThat(raised.keys, Equals('confinement'))
-
-    def test_app_add_new_key(self):
-        self.config_data['apps'] = {'foo': {
-            'command': 'echo',
-            'passthrough': {'spam': 'eggs'}}}
-        y = self.generate_meta_yaml()['apps']['foo']
-        self.assertThat(
-            y, Contains('spam'),
-            'Expected "spam" property to be propagated to snap.yaml')
-        self.assertThat(y['spam'], Equals('eggs'))
-
-    def test_app_key_with_different_type(self):
-        self.config_data['apps'] = {'foo': {
-            'command': 'echo',
-            # This is normally an array of strings
-            'passthrough': {'aliases': 'foo'}}}
-        y = self.generate_meta_yaml()['apps']['foo']
-        self.assertThat(
-            y, Contains('aliases'),
-            'Expected "aliases" property to be propagated to snap.yaml')
-        self.assertThat(y['aliases'], Equals('foo'))
-
-    def test_app_override_key_with_default(self):
-        # There are currently no keys with default values allowed in apps.
-        # This test case is a reminder in case we add one in the future.
-        pass
-
-    def test_app_warning(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-
-        self.config_data['apps'] = {'foo': {
-            'command': 'echo',
-            'passthrough': {'foo': 'bar', 'spam': 'eggs'}}}
-        self.generate_meta_yaml()
-        self.assertThat(
-            fake_logger.output,
-            Contains("Passthrough is being used to propagate experimental "
-                     "properties to snap.yaml that have not been "
-                     "validated. The snap cannot be released to the store.\n"))
+        self.assertThat(raised.keys, Equals("'confinement'"))
 
     def test_app_ambiguous_key_fails(self):
         self.config_data['apps'] = {'foo': {
@@ -569,21 +516,92 @@ class PassThroughTestCase(CreateBaseTestCase):
         raised = self.assertRaises(
             meta_errors.AmbiguousPassthroughKeyError,
             self.generate_meta_yaml)
-        self.assertThat(raised.keys, Equals('daemon'))
+        self.assertThat(raised.keys, Equals("'daemon'"))
+
+    def test_hook_ambiguous_key_fails(self):
+        self.config_data['hooks'] = {'foo': {
+            'plugs': ['network'],
+            'passthrough': {'plugs': ['network']}}}
+        raised = self.assertRaises(
+            meta_errors.AmbiguousPassthroughKeyError,
+            self.generate_meta_yaml)
+        self.assertThat(raised.keys, Equals("'plugs'"))
 
     def test_warn_once_only(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
 
+        self.config_data['confinement'] = 'devmode'
         self.config_data['passthrough'] = {'foo': 'bar', 'spam': 'eggs'}
         self.config_data['apps'] = {'foo': {
             'command': 'echo',
             'passthrough': {'foo': 'bar', 'spam': 'eggs'}}}
+        self.config_data['hooks'] = {'foo': {
+            'plugs': ['network'],
+            'passthrough': {'foo': 'bar', 'spam': 'eggs'}}}
         self.generate_meta_yaml()
         self.assertThat(
             fake_logger.output,
-            Contains("Passthrough is being used to propagate experimental "
-                     "properties to snap.yaml that have not been "
+            Equals("The 'passthrough' property is being used to propagate "
+                   "experimental properties to snap.yaml that have not been "
+                   "validated. The snap cannot be released to the store.\n"))
+
+
+class PassthroughPropagateTestCase(PassthroughBaseTestCase):
+
+    scenarios = [
+        ('new', dict(
+            snippet={'passthrough': {'spam': 'eggs'}},
+            section=None, key='spam', value='eggs')),
+        ('different type', dict(
+            # This is normally an array of strings
+            snippet={'passthrough': {'architectures': 'all'}},
+            section=None, key='architectures', value='all')),
+        ('with default', dict(
+            snippet={'passthrough': {'confinement': 'next-generation'}},
+            section=None, key='confinement', value='next-generation')),
+        ('app, new', dict(
+            snippet={'apps': {'foo': {
+                'command': 'echo',
+                'passthrough': {'spam': 'eggs'}}}},
+            section='apps', name='foo', key='spam', value='eggs')),
+        ('app, different type', dict(
+            snippet={'apps': {'foo': {
+                'command': 'echo',
+                # This is normally an array of strings
+                'passthrough': {'aliases': 'foo'}}}},
+            section='apps', name='foo', key='aliases', value='foo')),
+        # Note: There are currently no app properties with defaults
+        ('hook, new', dict(
+            snippet={'hooks': {'foo': {
+                'plugs': ['network'],
+                'passthrough': {'spam': 'eggs'}}}},
+            section='hooks', name='foo', key='spam', value='eggs')),
+        ('hook, different type', dict(
+            snippet={'hooks': {'foo': {
+                # This is normally an array of strings
+                'passthrough': {'plugs': 'network'}}}},
+            section='hooks', name='foo', key='plugs', value='network')),
+        # Note: There are currently no hook properties with defaults
+    ]
+
+    def test_propagate(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.config_data.update(self.snippet)
+        y = self.generate_meta_yaml()
+        if self.section:
+            y = y[self.section][self.name]
+        self.assertThat(
+            y, Contains(self.key),
+            'Expected {!r} property to be propagated to snap.yaml'
+            .format(self.key))
+        self.assertThat(y[self.key], Equals(self.value))
+        self.assertThat(
+            fake_logger.output,
+            Contains("The 'passthrough' property is being used to propagate "
+                     "experimental properties to snap.yaml that have not been "
                      "validated. The snap cannot be released to the store.\n"))
 
 

@@ -320,6 +320,9 @@ properties:
             uniqueItems: true
             items:
               type: string
+          passthrough:
+            type: object
+            description: properties to be passed into snap.yaml as-is
   parts:
     type: object
     minProperties: 1

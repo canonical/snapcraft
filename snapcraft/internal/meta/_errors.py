@@ -16,7 +16,7 @@
 
 from snapcraft import formatting_utils
 from snapcraft.internal import errors
-from typing import Set
+from typing import List
 
 
 class CommandError(errors.SnapcraftError):
@@ -66,12 +66,11 @@ class AdoptedPartNotParsingInfo(SnapMetaGenerationError):
 class AmbiguousPassthroughKeyError(SnapMetaGenerationError):
 
     fmt = (
-        "Failed to propagate keys to snap metadata: "
-        "The following keys are specified as both regular keys and in "
-        "passthrough:\n"
-        '{keys}\n\n'
+        "Failed to generate snap metadata: "
+        "The following keys are specified in their regular location "
+        "as well as in passthrough: {keys}. "
         "Remove duplicate keys."
     )
 
-    def __init__(self, keys: Set[str]) -> None:
-        super().__init__(keys=', '.join(keys))
+    def __init__(self, keys: List[str]) -> None:
+        super().__init__(keys=formatting_utils.humanize_list(keys, 'and'))
