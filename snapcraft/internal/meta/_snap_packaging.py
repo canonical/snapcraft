@@ -29,7 +29,7 @@ from typing import Any, Dict, List  # noqa
 
 import yaml
 
-from snapcraft import file_utils
+from snapcraft import file_utils, formatting_utils
 from snapcraft import shell_utils
 from snapcraft.project import Project
 from snapcraft.internal import (
@@ -163,17 +163,24 @@ def _update_yaml_with_extracted_metadata(
 def _adopt_info(
         config_data: Dict[str, Any],
         extracted_metadata: _metadata.ExtractedMetadata):
+    ignored_keys = set()
     metadata_dict = extracted_metadata.to_dict()
     for key, value in metadata_dict.items():
         # desktop_file_paths are a special case that will be handled
         # after all the top level snapcraft.yaml keys.
-        if key != 'desktop_file_paths' and key not in config_data:
+        if key == 'desktop_file_paths':
+            continue
+
+        if key not in config_data:
             if key == 'icon':
                 if _icon_file_exists() or not os.path.exists(
                         str(value)):
                     # Do not overwrite the icon file.
                     continue
             config_data[key] = value
+        else:
+            ignored_keys.add(key)
+
     if 'desktop_file_paths' in metadata_dict and 'common_id' in metadata_dict:
         app_name = _get_app_name_from_common_id(
             config_data, str(metadata_dict['common_id']))
@@ -183,6 +190,17 @@ def _adopt_info(
                     config_data['apps'][app_name]['desktop'] = (
                         desktop_file_path)
                     break
+
+    if ignored_keys:
+        logger.warning(
+            'The {keys} {plural_property} {plural_is} specified in adopted '
+            'info as well as the YAML: taking the {plural_property} from the '
+            'YAML'.format(
+                keys=formatting_utils.humanize_list(ignored_keys, 'and'),
+                plural_property=formatting_utils.pluralize(
+                    ignored_keys, 'property', 'properties'),
+                plural_is=formatting_utils.pluralize(
+                    ignored_keys, 'is', 'are')))
 
 
 def _icon_file_exists() -> bool:
