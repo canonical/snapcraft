@@ -7,7 +7,7 @@ grade: stable
 
 apps:
  hello:
-    command: usr/lib/jvm/default-java/bin/java oata.HelloWorld
+    command: usr/lib/jvm/java-8-openjdk-amd64/jre/bin/java oata.HelloWorld
     adapter: none
     environment:
        JAVA_HOME: $SNAP/usr/lib/jvm/default-java

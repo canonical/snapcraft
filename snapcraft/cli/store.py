@@ -298,7 +298,10 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str,
     """Save login configuration for a store account in FILE.
 
     This file can then be used to log in to the given account with the
-    specified permissions.
+    specified permissions. One can also request the login to be exported to
+    stdout instead of a file:
+
+        snapcraft export-login -
 
     For example, to limit access to the edge channel of any snap the account
     can access:
@@ -338,22 +341,37 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str,
                            save=False):
         sys.exit(1)
 
-    # This is sensitive-- it should only be accessible by the owner
-    private_open = functools.partial(os.open, mode=0o600)
+    # Support a login_file of '-', which indicates a desire to print to stdout
+    if login_file.strip() == '-':
+        echo.info("\nExported login starts on next line:")
+        store.conf.save(config_fd=sys.stdout, encode=True)
+        print()
 
-    # mypy doesn't have the opener arg in its stub. Ignore its warning
-    with open(login_file, 'w', opener=private_open) as f:  # type: ignore
-        store.conf.save(config_fd=f)
+        preamble = 'Login successfully exported and printed above'
+        login_action = 'echo "<login>" | snapcraft login --with -'
+    else:
+        # This is sensitive-- it should only be accessible by the owner
+        private_open = functools.partial(os.open, mode=0o600)
 
-    # Now that the file has been written, we can just make it owner-readable
-    os.chmod(login_file, stat.S_IRUSR)
+        # mypy doesn't have the opener arg in its stub. Ignore its warning
+        with open(login_file, 'w', opener=private_open) as f:  # type: ignore
+            store.conf.save(config_fd=f)
+
+        # Now that the file has been written, we can just make it
+        # owner-readable
+        os.chmod(login_file, stat.S_IRUSR)
+
+        preamble = 'Login successfully exported to {0!r}'.format(login_file)
+        login_action = 'snapcraft login --with {0}'.format(login_file)
 
     print()
     echo.info(dedent("""\
-        Login successfully exported to {0!r}. This file can now be used with
-        'snapcraft login --with {0}' to log in to this account with no password
-        and have these capabilities:\n""".format(
-            login_file)))
+        {}. This can now be used with
+
+            {}
+
+        to log in to this account with no password and have these
+        capabilities:\n""".format(preamble, login_action)))
     echo.info(_human_readable_acls(store))
     echo.warning(
         'This exported login is not encrypted. Do not commit it to version '

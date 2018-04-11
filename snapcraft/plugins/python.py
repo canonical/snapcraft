@@ -57,14 +57,14 @@ import contextlib
 import os
 import re
 from shutil import which
-import subprocess
 from textwrap import dedent
 
 import requests
 
 import snapcraft
 from snapcraft.common import isurl
-from snapcraft.internal import mangling
+from snapcraft.internal import mangling, os_release
+from snapcraft.internal.errors import SnapcraftPluginCommandError
 from snapcraft.plugins import _python
 
 
@@ -150,10 +150,20 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     @property
     def plugin_stage_packages(self):
-        if self.options.python_version == 'python3':
-            return ['python3']
-        elif self.options.python_version == 'python2':
-            return ['python']
+        release_codename = os_release.OsRelease().version_codename()
+        if self.options.python_version == 'python2':
+            python_base = 'python'
+        elif self.options.python_version == 'python3':
+            python_base = 'python3'
+        else:
+            return
+
+        stage_packages = [python_base]
+        if release_codename == 'bionic':
+            # In bionic, pip started requiring python-distutils to be
+            # installed.
+            stage_packages.append('{}-distutils'.format(python_base))
+        return stage_packages
 
     # ignore mypy error: Read-only property cannot override read-write property
     @property  # type: ignore
@@ -327,7 +337,7 @@ class PythonPlugin(snapcraft.BasePlugin):
                 # There is also a chance that this setup.py is distutils based
                 # in which case we will rely on the `pip install .` ran before
                 #  this.
-                with contextlib.suppress(subprocess.CalledProcessError):
+                with contextlib.suppress(SnapcraftPluginCommandError):
                     self._setup_tools_install(setup_py_path)
 
         return self._pip.list()

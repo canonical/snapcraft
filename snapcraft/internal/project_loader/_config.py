@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import contextlib
 import codecs
 import logging
 import os
@@ -24,11 +23,13 @@ import re
 import jsonschema
 import yaml
 import yaml.reader
+from typing import Set  # noqa: F401
 
 
-import snapcraft
-from snapcraft.internal import (common, deprecations, remote_parts, states,
-                                os_release)
+from snapcraft import project
+from snapcraft.project._project_info import ProjectInfo
+from snapcraft.internal import deprecations, remote_parts, states
+
 from ._schema import Validator
 from ._parts_config import PartsConfig
 from ._env import (
@@ -86,16 +87,16 @@ class Config:
             self._remote_parts_attr = remote_parts.get_remote_parts()
         return self._remote_parts_attr
 
-    def __init__(self, project_options=None):
+    def __init__(self, project_options: project.Project=None) -> None:
         if project_options is None:
-            project_options = snapcraft.ProjectOptions()
+            project_options = project.Project()
 
-        self.build_snaps = set()
-        self.build_tools = []
+        self.build_snaps = set()  # type: Set[str]
         self._project_options = project_options
 
         self.snapcraft_yaml_path = get_snapcraft_yaml()
         snapcraft_yaml = _snapcraft_yaml_load(self.snapcraft_yaml_path)
+        self.original_snapcraft_yaml = snapcraft_yaml.copy()
 
         self._validator = Validator(snapcraft_yaml)
         self._validator.validate()
@@ -108,6 +109,9 @@ class Config:
         _ensure_grade_default(snapcraft_yaml, self._validator.schema)
 
         self.data = self._expand_env(snapcraft_yaml)
+        # We need to set the ProjectInfo here because ProjectOptions is
+        # created in the CLI.
+        self._project_options.info = ProjectInfo(self.data)
         self._ensure_no_duplicate_app_aliases()
 
         grammar_processor = grammar_processing.GlobalGrammarProcessor(
@@ -116,9 +120,6 @@ class Config:
 
         self.build_tools = grammar_processor.get_build_packages()
         self.build_tools |= set(project_options.additional_build_packages)
-
-        if _patchelf_install_required(project_options):
-            self.build_tools.add('patchelf')
 
         self.parts = PartsConfig(parts=self.data,
                                  project_options=self._project_options,
@@ -254,20 +255,6 @@ class Config:
 
         snapcraft_yaml['parts'] = new_parts
         return snapcraft_yaml
-
-
-def _patchelf_install_required(project_options) -> bool:
-    is_xenial = False
-    with contextlib.suppress(os_release.errors.OsReleaseCodenameError):
-        release_codename = os_release.OsRelease().version_codename()
-        is_xenial = release_codename == 'xenial'
-
-    is_snap = common.is_snap()
-    is_environment = os.getenv('SNAPCRAFT_NO_PATCHELF')
-    is_arch_missing_xenial = project_options.deb_arch in ('armhf', 's390x')
-
-    return not (is_snap or is_environment or
-                (is_arch_missing_xenial and is_xenial))
 
 
 def _snapcraft_yaml_load(yaml_file):

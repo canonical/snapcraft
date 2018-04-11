@@ -20,10 +20,11 @@ import os
 import platform
 import sys
 from contextlib import suppress
+from typing import List, Set  # noqa: F401
 
-from snapcraft.internal import common, errors
+from snapcraft import file_utils
+from snapcraft.internal import common, errors, os_release
 from snapcraft.internal.deprecations import handle_deprecation_notice
-from snapcraft.internal.os_release import OsRelease
 
 
 logger = logging.getLogger(__name__)
@@ -105,6 +106,22 @@ _32BIT_USERSPACE_ARCHITECTURE = {
 
 _WINDOWS_TRANSLATIONS = {
     'AMD64': 'x86_64'
+}
+
+
+_HOST_CODENAME_FOR_BASE = {
+    'core18': 'bionic',
+    'core': 'xenial',
+}
+_HOST_COMPATIBILITY = {
+    'xenial': ['trusty', 'xenial'],
+    'bionic': ['trusty', 'xenial', 'bionic'],
+}
+
+
+_LINKER_VERSION_FOR_BASE = {
+    'core18': '2.27',
+    'core': '2.23',
 }
 
 
@@ -224,31 +241,68 @@ class ProjectOptions:
         self._set_machine(target_deb_arch)
         self.__debug = debug
 
-    @property
-    def is_host_compatible_with_base(self):
-        codename = None
+    def is_host_compatible_with_base(self, base: str) -> bool:
+        """Determines if the host is compatible with the GLIBC of the base.
+
+        The system should warn early on when building using a host that does
+        not match the intended base, this mechanism here enables additional
+        logic when that is ignored to determine built projects will actually
+        run.
+
+        :param str base: the base core snap to search for linker.
+        :returns: True if there are no GLIBC incompatibilities with the chosen
+                  build host, else it returns False.
+        :rtype: bool
+        """
+        codename = None  # type: str
         with suppress(errors.OsReleaseCodenameError):
-            codename = OsRelease().version_codename()
+            codename = os_release.OsRelease().version_codename()
             logger.debug('Running on {!r}'.format(codename))
 
-        # TODO support more bases
-        return codename == 'xenial' or codename == 'trusty'
+        build_host_for_base = _HOST_CODENAME_FOR_BASE.get(
+            base)  # type: str
+        compatible_hosts = _HOST_COMPATIBILITY.get(
+            build_host_for_base, [])  # type: List[str]
+        return codename in compatible_hosts
 
-    def get_core_dynamic_linker(self):
+    # This is private to not make the API public given that base
+    # will be part of the new Project.
+    def _get_linker_version_for_base(self, base: str) -> str:
+        """Returns the linker version for base."""
+        try:
+            return _LINKER_VERSION_FOR_BASE[base]
+        except KeyError:
+            linker_file = os.path.basename(self.get_core_dynamic_linker(base))
+            return file_utils.get_linker_version_from_file(linker_file)
+
+    def get_core_dynamic_linker(self, base: str, expand: bool=True) -> str:
         """Returns the dynamic linker used for the targeted core.
-        If not found realpath for `/lib/ld-linux.so.2` is returned.
-        However if core is not installed None will be returned.
+
+        :param str base: the base core snap to search for linker.
+        :param bool expand: expand the linker to the actual linker if True,
+                            else the main entry point to the linker for the
+                            projects architecture.
+        :return: the absolute path to the linker
+        :rtype: str
+        :raises snapcraft.internal.errors.SnapcraftMissingLinkerInBaseError:
+            if the linker cannot be found in the base.
+        :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
+            if a loop is found while resolving the real path to the linker.
         """
-        core_path = common.get_core_path()
+        core_path = common.get_core_path(base)
         dynamic_linker_path = os.path.join(
             core_path,
             self.__machine_info.get('core-dynamic-linker',
                                     'lib/ld-linux.so.2'))
 
+        # return immediately if we do not need to expand
+        if not expand:
+            return dynamic_linker_path
+
         # We can't use os.path.realpath because any absolute symlinks
         # have to be interpreted relative to core_path, not the real
         # root.
-        seen_paths = set()
+        seen_paths = set()  # type: Set[str]
         while True:
             if dynamic_linker_path in seen_paths:
                 raise errors.SnapcraftEnvironmentError(
@@ -256,7 +310,8 @@ class ProjectOptions:
 
             seen_paths.add(dynamic_linker_path)
             if not os.path.lexists(dynamic_linker_path):
-                return None
+                raise errors.SnapcraftMissingLinkerInBaseError(
+                    base=base, linker_path=dynamic_linker_path)
             if not os.path.islink(dynamic_linker_path):
                 return dynamic_linker_path
 

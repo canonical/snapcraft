@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from typing import List, Union
 
 from snapcraft import formatting_utils
 
@@ -108,6 +109,20 @@ class SnapcraftEnvironmentError(SnapcraftError):
 
     def __init__(self, message):
         super().__init__(message=message)
+
+
+class SnapcraftMissingLinkerInBaseError(SnapcraftError):
+
+    fmt = (
+        'Cannot find the linker to use for the target base {base!r}.\n'
+        'Please verify that the linker exists at the expected path '
+        '{linker_path!r} and try again. If the linker does not exist '
+        'contact the author of the base (run `snap info {base}` to get '
+        'information for this base).'
+    )
+
+    def __init__(self, *, base, linker_path):
+        super().__init__(base=base, linker_path=linker_path)
 
 
 class ContainerError(SnapcraftError):
@@ -423,9 +438,12 @@ class OsReleaseCodenameError(SnapcraftError):
 
 class InvalidContainerImageInfoError(SnapcraftError):
 
-    fmt = 'Error parsing the container image info: {image_info}'
+    fmt = (
+        'Failed to parse container image info: '
+        'SNAPCRAFT_IMAGE_INFO is not a valid JSON string: {image_info}'
+    )
 
-    def __init__(self, image_info):
+    def __init__(self, image_info: str) -> None:
         super().__init__(image_info=image_info)
 
 
@@ -517,3 +535,38 @@ class InvalidExtractorValueError(MetadataExtractionError):
 
     def __init__(self, path: str, extractor_name: str) -> None:
         super().__init__(path=path, extractor_name=extractor_name)
+
+
+class SnapcraftPluginCommandError(SnapcraftError):
+    """Command executed by a plugin fails."""
+
+    fmt = (
+        'Failed to run {command!r} for {part_name!r}: '
+        'Exited with code {exit_code}.\n'
+        'Verify that the part is using the correct parameters and try again.'
+    )
+
+    def __init__(self, *, command: Union[List, str], part_name: str,
+                 exit_code: int) -> None:
+        if isinstance(command, list):
+            command = ' '.join(command)
+        super().__init__(command=command, part_name=part_name,
+                         exit_code=exit_code)
+
+
+class ScriptletBaseError(SnapcraftError):
+    """Base class for all scriptlet-related exceptions.
+
+    :cvar fmt: A format string that daughter classes override
+
+    """
+
+
+class ScriptletRunError(ScriptletBaseError):
+    fmt = (
+        'Failed to run {scriptlet_name!r}: '
+        'Exit code was {code}.'
+    )
+
+    def __init__(self, scriptlet_name: str, code: int) -> None:
+        super().__init__(scriptlet_name=scriptlet_name, code=code)

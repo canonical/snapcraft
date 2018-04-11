@@ -19,6 +19,7 @@ import contextlib
 import copy
 import io
 import os
+import platform
 import pkgutil
 import shutil
 import socketserver
@@ -26,6 +27,7 @@ import string
 import subprocess
 import sys
 import tempfile
+import textwrap
 import threading
 import urllib.parse
 import uuid
@@ -54,18 +56,27 @@ from tests.subprocess_utils import (
 )
 
 
-class TempCWD(fixtures.TempDir):
+class TempCWD(fixtures.Fixture):
 
     def __init__(self, rootdir=None):
+        super().__init__()
         if rootdir is None and 'TMPDIR' in os.environ:
             rootdir = os.environ.get('TMPDIR')
-        super().__init__(rootdir)
+        self.rootdir = rootdir
+        self._data_path = os.getenv('SNAPCRAFT_TEST_KEEP_DATA_PATH', None)
 
     def setUp(self):
         """Create a temporary directory an cd into it for the test duration."""
         super().setUp()
+        if self._data_path:
+            os.makedirs(self._data_path)
+            self.path = self._data_path
+        else:
+            self.path = tempfile.mkdtemp(dir=self.rootdir)
         current_dir = os.getcwd()
         self.addCleanup(os.chdir, current_dir)
+        if not self._data_path:
+            self.addCleanup(shutil.rmtree, self.path, ignore_errors=True)
         os.chdir(self.path)
 
 
@@ -124,13 +135,14 @@ class FakeProjectOptions(fixtures.Fixture):
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft.ProjectOptions')
+        patcher = mock.patch('snapcraft.project.Project')
         patcher.start()
         self.addCleanup(patcher.stop)
 
         # Special handling is required as ProjectOptions attributes are
         # handled with the @property decorator.
-        project_options_t = type(snapcraft.ProjectOptions.return_value)
+        project_options_t = type(
+            snapcraft.project.Project.return_value)
         for key in self._kwargs:
             setattr(project_options_t, key, self._kwargs[key])
 
@@ -572,9 +584,23 @@ class FakeLXD(fixtures.Fixture):
         self.check_output_mock.side_effect = self.check_output_side_effect()
         self.addCleanup(patcher.stop)
 
+        self._real_popen = subprocess.Popen
+
+        # Don't over-mock Popen, more things use it than just LXD.
+        def _fake_popen(*args, **kwargs):
+            if '/usr/lib/sftp-server' in args[0]:
+                return self._popen(args[0])
+            elif (args[0][:2] == ['lxc', 'exec'] and self.status and
+                    args[0][2] == self.name and args[0][8] == 'sshfs'):
+                self.files = ['foo', 'bar']
+                return self._popen(args[0])
+
+            # Fall back to the real deal
+            return self._real_popen(*args, **kwargs)
+
         patcher = mock.patch('subprocess.Popen')
         self.popen_mock = patcher.start()
-        self.popen_mock.side_effect = self.check_output_side_effect()
+        self.popen_mock.side_effect = _fake_popen
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('time.sleep', lambda _: None)
@@ -621,8 +647,6 @@ class FakeLXD(fixtures.Fixture):
                 '"created_at":"test-created-at"}]').encode('utf-8')
         elif args[0][0] == 'sha384sum':
             return 'deadbeef {}'.format(args[0][1]).encode('utf-8')
-        elif '/usr/lib/sftp-server' in args[0]:
-            return self._popen(args[0])
         else:
             return ''.encode('utf-8')
 
@@ -652,9 +676,6 @@ class FakeLXD(fixtures.Fixture):
             elif cmd == 'readlink':
                 if args[0][-1].endswith('/current'):
                     raise CalledProcessError(returncode=1, cmd=cmd)
-            elif cmd == 'sshfs':
-                self.files = ['foo', 'bar']
-                return self._popen(args[0])
             elif 'sha384sum' in args[0][-1]:
                 raise CalledProcessError(returncode=1, cmd=cmd)
 
@@ -944,7 +965,7 @@ class FakeAptCachePackage():
         if version is not None:
             self.versions.update({version: self})
 
-    def mark_install(self):
+    def mark_install(self, *, auto_fix=True):
         if not self.installed:
             if len(self.dependencies):
                 return
@@ -1259,3 +1280,117 @@ class FakeElf(fixtures.Fixture):
         for root_library in self.root_libraries.values():
             with open(root_library, 'wb') as f:
                 f.write(b'\x7fELF')
+
+
+class FakeBaseEnvironment(fixtures.Fixture):
+
+    _LINKER_FOR_ARCH = dict(
+        armv7l='lib/ld-linux-armhf.so.3',
+        aarch64='lib/ld-linux-aarch64.so.1',
+        i686='lib/ld-linux.so.2',
+        ppc64le='lib64/ld64.so.2',
+        ppc='lib/ld-linux.so.2',
+        x86_64='lib64/ld-linux-x86-64.so.2',
+        s390x='lib/ld64.so.1')
+
+    _32BIT_USERSPACE_ARCHITECTURE = dict(
+        aarch64='armv7l',
+        armv8l='armv7l',
+        ppc64le='ppc',
+        x86_64='i686',
+        i686='i686',
+        armv7l='armv7l')
+
+    _WINDOWS_TRANSLATIONS = dict(AMD64='x86_64')
+
+    def _get_platform_architecture(self):
+        architecture = platform.machine()
+
+        # Translate the windows architectures we know of to architectures
+        # we can work with.
+        if sys.platform == 'win32':
+            architecture = self._WINDOWS_TRANSLATIONS[architecture]
+
+        if platform.architecture()[0] == '32bit':
+            userspace = self._32BIT_USERSPACE_ARCHITECTURE[architecture]
+            if userspace:
+                architecture = userspace
+
+        return architecture
+
+    def __init__(self, *, machine=None):
+        super().__init__()
+        if machine is None:
+            self._machine = self._get_platform_architecture()
+        else:
+            self._machine = machine
+
+    def _setUp(self):
+        super()._setUp()
+
+        patcher = mock.patch('platform.machine')
+        self.mock_machine = patcher.start()
+        self.mock_machine.return_value = self._machine
+        self.addCleanup(patcher.stop)
+
+        self.core_path = self.useFixture(fixtures.TempDir()).path
+        patcher = mock.patch('snapcraft.internal.common.get_core_path')
+        mock_core_path = patcher.start()
+        mock_core_path.return_value = self.core_path
+        self.addCleanup(patcher.stop)
+
+        # Create file to represent the linker so it is found
+        linker_path = os.path.join(self.core_path,
+                                   self._LINKER_FOR_ARCH[self._machine])
+        os.makedirs(os.path.dirname(linker_path), exist_ok=True)
+        real_linker = os.path.join(self.core_path, 'usr', 'lib', 'ld-2.23.so')
+        os.makedirs(os.path.dirname(real_linker), exist_ok=True)
+        open(real_linker, 'w').close()
+        os.symlink(os.path.relpath(
+            real_linker, os.path.dirname(linker_path)), linker_path)
+
+
+class FakeSnapcraftctl(fixtures.Fixture):
+
+    def _setUp(self):
+        super()._setUp()
+
+        snapcraft_path = os.path.realpath(
+            os.path.join(os.path.dirname(__file__), '..'))
+
+        tempdir = self.useFixture(fixtures.TempDir()).path
+        altered_path = '{}:{}'.format(tempdir, os.environ.get('PATH'))
+        self.useFixture(fixtures.EnvironmentVariable('PATH', altered_path))
+
+        snapcraftctl_path = os.path.join(tempdir, 'snapcraftctl')
+        with open(snapcraftctl_path, 'w') as f:
+            f.write(textwrap.dedent("""\
+                #!/usr/bin/env python3
+
+                # Make sure we can find snapcraft, even if it's not installed
+                # (like in CI).
+                import sys
+                sys.path.append('{snapcraft_path!s}')
+
+                import snapcraft.cli.__main__
+
+                if __name__ == '__main__':
+                    snapcraft.cli.__main__.run_snapcraftctl(
+                        prog_name='snapcraftctl')
+            """.format(snapcraft_path=snapcraft_path)))
+            f.flush()
+
+        os.chmod(snapcraftctl_path, 0o755)
+
+
+class FakeSnapcraftIsASnap(fixtures.Fixture):
+
+    def _setUp(self):
+        super()._setUp()
+
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP', '/snap/snapcraft/current'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP_NAME', 'snapcraft'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAP_VERSION', 'devel'))

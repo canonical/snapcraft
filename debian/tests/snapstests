@@ -4,6 +4,13 @@ set -e
 
 echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers.d/autopkgtest
 
+script_path="$(dirname "$0")"
+
+if [ "$($script_path/get-release-codename)" != "xenial" ]; then
+    echo "These tests are only supported on xenial"
+    exit 0
+fi
+
 snapd_config_dir=/etc/systemd/system/snapd.service.d
 mkdir -p $snapd_config_dir
 echo "[Service]\nEnvironment='http_proxy=$http_proxy'\nEnvironment='https_proxy=$https_proxy'\nEnvironment='ftp_proxy=$http_proxy'\nEnvironment='no_proxy=$no_proxy'\n" | tee $snapd_config_dir/snapd.env.conf > /dev/null

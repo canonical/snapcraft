@@ -93,7 +93,8 @@ class CreateBaseTestCase(unit.TestCase):
                 part.build()
 
         _snap_packaging.create_snap_packaging(
-            self.config.data, self.config.parts, self.project_options, 'dummy')
+            self.config.data, self.config.parts, self.project_options, 'dummy',
+            self.config.original_snapcraft_yaml)
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
@@ -148,7 +149,8 @@ class CreateTestCase(CreateBaseTestCase):
         config = project_loader.load_config()
 
         _snap_packaging.create_snap_packaging(
-            self.config_data, config.parts, self.project_options, 'dummy')
+            self.config_data, config.parts, self.project_options, 'dummy',
+            config.original_snapcraft_yaml)
 
         expected_gadget = os.path.join(self.meta_dir, 'gadget.yaml')
         self.assertTrue(os.path.exists(expected_gadget))
@@ -170,7 +172,8 @@ class CreateTestCase(CreateBaseTestCase):
             self.config_data,
             config.parts,
             self.project_options,
-            'dummy'
+            'dummy',
+            config.original_snapcraft_yaml
         )
 
     def test_create_meta_with_declared_icon(self):
@@ -261,11 +264,13 @@ class CreateTestCase(CreateBaseTestCase):
         config = project_loader.load_config()
 
         _snap_packaging.create_snap_packaging(
-            self.config_data, config.parts, self.project_options, 'dummy')
+            self.config_data, config.parts, self.project_options, 'dummy',
+            config.original_snapcraft_yaml)
 
         # Running again should be good
         _snap_packaging.create_snap_packaging(
-            self.config_data, config.parts, self.project_options, 'dummy')
+            self.config_data, config.parts, self.project_options, 'dummy',
+            config.original_snapcraft_yaml)
 
     def test_create_meta_with_icon_in_setup(self):
         gui_path = os.path.join('setup', 'gui')
@@ -473,6 +478,131 @@ class CreateTestCase(CreateBaseTestCase):
         self.assertThat(
             y['hooks']['bar'], Not(Contains('plugs')),
             "Expected generated 'bar' hook to not contain 'plugs'")
+
+
+class PassthroughBaseTestCase(CreateBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.config_data = {
+            'name': 'my-package',
+            'version': '1.0',
+            'grade': 'stable',
+            'description': 'my description',
+            'summary': 'my summary',
+            'parts': {
+                'test-part': {
+                    'plugin': 'nil',
+                }
+            }
+        }
+
+
+class PassthroughErrorTestCase(PassthroughBaseTestCase):
+
+    def test_ambiguous_key_fails(self):
+        self.config_data['confinement'] = 'devmode'
+        self.config_data['passthrough'] = {'confinement': 'next-generation'}
+        raised = self.assertRaises(
+            meta_errors.AmbiguousPassthroughKeyError,
+            self.generate_meta_yaml)
+        self.assertThat(raised.keys, Equals("'confinement'"))
+
+    def test_app_ambiguous_key_fails(self):
+        self.config_data['apps'] = {'foo': {
+            'command': 'echo', 'daemon': 'simple',
+            'passthrough': {'daemon': 'complex'}}}
+        raised = self.assertRaises(
+            meta_errors.AmbiguousPassthroughKeyError,
+            self.generate_meta_yaml)
+        self.assertThat(raised.keys, Equals("'daemon'"))
+
+    def test_hook_ambiguous_key_fails(self):
+        self.config_data['hooks'] = {'foo': {
+            'plugs': ['network'],
+            'passthrough': {'plugs': ['network']}}}
+        raised = self.assertRaises(
+            meta_errors.AmbiguousPassthroughKeyError,
+            self.generate_meta_yaml)
+        self.assertThat(raised.keys, Equals("'plugs'"))
+
+    def test_warn_once_only(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.config_data['confinement'] = 'devmode'
+        self.config_data['passthrough'] = {'foo': 'bar', 'spam': 'eggs'}
+        self.config_data['apps'] = {'foo': {
+            'command': 'echo',
+            'passthrough': {'foo': 'bar', 'spam': 'eggs'}}}
+        self.config_data['hooks'] = {'foo': {
+            'plugs': ['network'],
+            'passthrough': {'foo': 'bar', 'spam': 'eggs'}}}
+        self.generate_meta_yaml()
+        self.assertThat(
+            fake_logger.output,
+            Equals("The 'passthrough' property is being used to propagate "
+                   "experimental properties to snap.yaml that have not been "
+                   "validated. The snap cannot be released to the store.\n"))
+
+
+class PassthroughPropagateTestCase(PassthroughBaseTestCase):
+
+    scenarios = [
+        ('new', dict(
+            snippet={'passthrough': {'spam': 'eggs'}},
+            section=None, key='spam', value='eggs')),
+        ('different type', dict(
+            # This is normally an array of strings
+            snippet={'passthrough': {'architectures': 'all'}},
+            section=None, key='architectures', value='all')),
+        ('with default', dict(
+            snippet={'passthrough': {'confinement': 'next-generation'}},
+            section=None, key='confinement', value='next-generation')),
+        ('app, new', dict(
+            snippet={'apps': {'foo': {
+                'command': 'echo',
+                'passthrough': {'spam': 'eggs'}}}},
+            section='apps', name='foo', key='spam', value='eggs')),
+        ('app, different type', dict(
+            snippet={'apps': {'foo': {
+                'command': 'echo',
+                # This is normally an array of strings
+                'passthrough': {'aliases': 'foo'}}}},
+            section='apps', name='foo', key='aliases', value='foo')),
+        # Note: There are currently no app properties with defaults
+        ('hook, new', dict(
+            snippet={'hooks': {'foo': {
+                'plugs': ['network'],
+                'passthrough': {'spam': 'eggs'}}}},
+            section='hooks', name='foo', key='spam', value='eggs')),
+        ('hook, different type', dict(
+            snippet={'hooks': {'foo': {
+                # This is normally an array of strings
+                'passthrough': {'plugs': 'network'}}}},
+            section='hooks', name='foo', key='plugs', value='network')),
+        # Note: There are currently no hook properties with defaults
+    ]
+
+    def test_propagate(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.config_data.update(self.snippet)
+        y = self.generate_meta_yaml()
+        if self.section:
+            y = y[self.section][self.name]
+        self.assertThat(
+            y, Contains(self.key),
+            'Expected {!r} property to be propagated to snap.yaml'
+            .format(self.key))
+        self.assertThat(y[self.key], Equals(self.value))
+        self.assertThat(
+            fake_logger.output,
+            Contains("The 'passthrough' property is being used to propagate "
+                     "experimental properties to snap.yaml that have not been "
+                     "validated. The snap cannot be released to the store.\n"))
 
 
 class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):
@@ -833,7 +963,8 @@ class WrapExeTestCase(unit.TestCase):
         self.packager = _snap_packaging._SnapPackaging(
             {'confinement': 'devmode'},
             ProjectOptions(),
-            'dummy'
+            'dummy',
+            {'confinement': 'devmode'}
         )
         self.packager._is_host_compatible_with_base = True
 

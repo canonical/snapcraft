@@ -20,8 +20,7 @@ parts:
     source: patches
     plugin: dump
     prime:
-        - -ctypes_init.diff
-        - -pyyaml-support-high-codepoints.diff
+        - -*.diff
   bash-completion:
     source: debian
     plugin: dump
@@ -36,99 +35,67 @@ parts:
         - libffi-dev
         - libsodium-dev
         - liblzma-dev
+        - patch
     stage-packages:
+        - binutils
         - execstack
+        - gpgv
         - libffi6
         - libsodium18
+        - patchelf
         - squashfs-tools
         - xdelta3
-    prime:
-        - '*'
-        - '**/*.pyc'
     install: |
         TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
         LIBSODIUM=$(readlink -n $TRIPLET_PATH/libsodium.so.18)
         ln -s $LIBSODIUM $TRIPLET_PATH/libsodium.so
-        patch -d $SNAPCRAFT_PART_INSTALL/lib/python3.6/site-packages -p1 < $SNAPCRAFT_STAGE/pyyaml-support-high-codepoints.diff
-    after: [python, apt]
-  patchelf:
-    source: https://github.com/NixOS/patchelf
-    source-type: git
-    source-commit: 29c085fd9d3fc972f75b3961905d6b4ecce7eb2b
-    plugin: autotools
-    stage:
-        - bin/patchelf
-  python:
-    source: https://www.python.org/ftp/python/3.6.0/Python-3.6.0.tar.xz
-    plugin: autotools
-    configflags: [--prefix=/usr]
-    build-packages: [libssl-dev, patch]
-    prime:
-        - -usr/include
-    install: |
-        patch $SNAPCRAFT_PART_INSTALL/usr/lib/python3.6/ctypes/__init__.py $SNAPCRAFT_STAGE/ctypes_init.diff
-    after: [patches]
+        patch -d $SNAPCRAFT_PART_INSTALL/lib/python3.5/site-packages -p1 < $SNAPCRAFT_STAGE/pyyaml-support-high-codepoints.diff
+        patch $SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/ctypes/__init__.py $SNAPCRAFT_STAGE/ctypes_init.diff
+    after: [patches, apt]
   apt:
-    source: https://github.com/Debian/apt
-    source-type: git
-    source-tag: 1.2.19
-    source-depth: 1
-    plugin: autotools
-    prepare: |
-        make startup
-    build: |
-        mkdir apt-build
-        cd apt-build
-        ../configure
-        make
-    install: |
-        cd apt-build
-        install -d $SNAPCRAFT_PART_INSTALL/apt
-        cp -r bin/methods/* $SNAPCRAFT_PART_INSTALL/apt/
-        cp -r bin/methods/* $SNAPCRAFT_PART_INSTALL/apt/
-        install bin/apt-key $SNAPCRAFT_PART_INSTALL/apt/
-        install bin/apt-mark $SNAPCRAFT_PART_INSTALL/apt/
-        install bin/apt-internal-solver $SNAPCRAFT_PART_INSTALL/apt/
-        install bin/apt-helper $SNAPCRAFT_PART_INSTALL/apt/
-        install -d $SNAPCRAFT_PART_INSTALL/usr/lib
-        install bin/libapt-inst.so.2.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
-        install bin/libapt-pkg.so $SNAPCRAFT_PART_INSTALL/usr/lib/
-        install bin/libapt-pkg-5.0-0.symver $SNAPCRAFT_PART_INSTALL/usr/lib/
-        install bin/libapt-private.so $SNAPCRAFT_PART_INSTALL/usr/lib/
-        install bin/libapt-private-0.0-0.symver $SNAPCRAFT_PART_INSTALL/usr/lib/
-        install bin/libapt-private.so.0.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
-        install bin/libapt-inst.so.2.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
-        install bin/libapt-inst.so $SNAPCRAFT_PART_INSTALL/usr/lib/
-        install bin/libapt-pkg.so.5.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
-        install bin/libapt-inst-2.0-0.symver $SNAPCRAFT_PART_INSTALL/usr/lib/
-        install bin/libapt-pkg.so.5.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
-        install bin/libapt-private.so.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
-        install -d $SNAPCRAFT_PART_INSTALL/usr/include
-        cp -r include/* $SNAPCRAFT_PART_INSTALL/usr/include/
-    prime:
-        - -usr/include
-    build-packages:
-        - gettext
-        - libbz2-dev
-        - libcurl4-gnutls-dev
-        - libdb-dev
-        - liblz4-dev
-        - liblzma-dev
-        - zlib1g-dev
-    after: [python]
-  gpg:
-      source: https://gnupg.org/ftp/gcrypt/gnupg/gnupg-1.4.21.tar.bz2
+      source: https://github.com/Debian/apt
+      source-type: git
+      source-tag: 1.2.19
+      source-depth: 1
       plugin: autotools
-      configflags:
-        - --enable-minimal
-        - --disable-makeinfo
-        - --disable-ldap
-        - --disable-finger
-        - --disable-nls
       prepare: |
-        # This is fragile but we use a fixed tag
-        sed -i.bak -e 's/\(^ *g10 keyserver\) po doc ${checks}$/\1 ${checks}/' Makefile.am
-      build-packages:
-        - texinfo
+          make startup
+      build: |
+          mkdir apt-build
+          cd apt-build
+          ../configure
+          make
+      install: |
+          cd apt-build
+          install -d $SNAPCRAFT_PART_INSTALL/apt
+          cp -r bin/methods/* $SNAPCRAFT_PART_INSTALL/apt/
+          cp -r bin/methods/* $SNAPCRAFT_PART_INSTALL/apt/
+          install bin/apt-key $SNAPCRAFT_PART_INSTALL/apt/
+          install bin/apt-mark $SNAPCRAFT_PART_INSTALL/apt/
+          install bin/apt-internal-solver $SNAPCRAFT_PART_INSTALL/apt/
+          install bin/apt-helper $SNAPCRAFT_PART_INSTALL/apt/
+          install -d $SNAPCRAFT_PART_INSTALL/usr/lib
+          install bin/libapt-inst.so.2.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
+          install bin/libapt-pkg.so $SNAPCRAFT_PART_INSTALL/usr/lib/
+          install bin/libapt-pkg-5.0-0.symver $SNAPCRAFT_PART_INSTALL/usr/lib/
+          install bin/libapt-private.so $SNAPCRAFT_PART_INSTALL/usr/lib/
+          install bin/libapt-private-0.0-0.symver $SNAPCRAFT_PART_INSTALL/usr/lib/
+          install bin/libapt-private.so.0.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
+          install bin/libapt-inst.so.2.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
+          install bin/libapt-inst.so $SNAPCRAFT_PART_INSTALL/usr/lib/
+          install bin/libapt-pkg.so.5.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
+          install bin/libapt-inst-2.0-0.symver $SNAPCRAFT_PART_INSTALL/usr/lib/
+          install bin/libapt-pkg.so.5.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
+          install bin/libapt-private.so.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
+          install -d $SNAPCRAFT_PART_INSTALL/usr/include
+          cp -r include/* $SNAPCRAFT_PART_INSTALL/usr/include/
       prime:
-        - bin/gpgv
+          - -usr/include
+      build-packages:
+          - gettext
+          - libbz2-dev
+          - libcurl4-gnutls-dev
+          - libdb-dev
+          - liblz4-dev
+          - liblzma-dev
+          - zlib1g-dev

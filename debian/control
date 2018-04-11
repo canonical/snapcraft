@@ -11,6 +11,7 @@ Build-Depends: bash-completion,
                git,
                mercurial,
                p7zip-full,
+               patchelf (>= 0.9),
                pkg-config,
                python3 (>= 3.4),
                python3-apt,
@@ -49,7 +50,9 @@ Standards-Version: 3.9.8
 
 Package: snapcraft
 Architecture: all
-Depends: execstack,
+Depends: binutils,
+         execstack,
+         patchelf (>= 0.9),
          python3-apt,
          python3-debian,
          python3-click,

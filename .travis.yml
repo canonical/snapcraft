@@ -27,6 +27,10 @@ jobs:
       if: type != cron
       script: sudo ./tools/travis/run_tests.sh tests/integration/general
     - if: type != cron
+      script: sudo ./tools/travis/run_tests.sh tests/integration/lifecycle
+    - if: type != cron
+      script: sudo ./tools/travis/run_tests.sh tests/integration/sources
+    - if: type != cron
       script:
       - "travis_wait 30 sleep 1800 &"
       - sudo ./tools/travis/run_tests.sh tests/integration/plugins

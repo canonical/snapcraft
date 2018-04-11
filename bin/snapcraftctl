@@ -1,0 +1,55 @@
+#!/bin/sh
+#
+# This file exists because snapcraftctl must be run using a clean environment
+# that is uninfluenced by the environment of the part using it. There are a few
+# reasons for this:
+#
+#   1. snapcraftctl is a python3 utility, but Snapcraft supports building python2
+#      parts, where PYTHONPATH et. al. are set for python2.
+#   2. snapcraftctl is part of snapcraft, which loads up various libraries that
+#      can be influenced with LD_LIBRARY_PATH, which is set for many parts.
+#
+# Not only this, but the only way snapcraftctl works reliably is if it's run
+# by exactly the same interpreter as snapcraft itself (otherwise it won't find
+# snapcraft). To that end, this script will use the interpreter defined within
+# the SNAPCRAFT_INTERPRETER environment variable.
+
+# Which python3 are we using? By default, the one from the PATH. If
+# SNAPCRAFT_INTERPRETER is specified, use that one instead.
+python3_command="${SNAPCRAFT_INTERPRETER:-$(which python3)}"
+
+snapcraftctl_command="""$python3_command"" -c '
+import snapcraft.cli.__main__
+
+# Click strips off the first arg by default, so the -c will not be passed
+snapcraft.cli.__main__.run_snapcraftctl(prog_name=\"snapcraftctl\")
+' ""$@"
+
+
+# We don't actually want a 100% clean environment. Pass on the SNAP variables,
+# locale settings, and environment variables required by snapcraftctl itself.
+/usr/bin/env -i -- sh -<<END
+# Required for snapcraftctl to actually find snapcraft when snapped via
+# sitecustomize
+if [ -n "$SNAP" ]; then
+    export SNAP="$SNAP"
+fi
+if [ -n "$SNAP_NAME" ]; then
+    export SNAP_NAME="$SNAP_NAME"
+fi
+if [ -n "$SNAP_VERSION" ]; then
+    export SNAP_VERSION="$SNAP_VERSION"
+fi
+if [ -n "$SNAP_ARCH" ]; then
+    export SNAP_ARCH="$SNAP_ARCH"
+fi
+
+# Required so Click doesn't whine about lack of a locale
+export LC_ALL="$LC_ALL"
+export LANG="$LANG"
+
+# Required for snapcraftctl to work
+export SNAPCRAFTCTL_CALL_FIFO="$SNAPCRAFTCTL_CALL_FIFO"
+export SNAPCRAFTCTL_FEEDBACK_FIFO="$SNAPCRAFTCTL_FEEDBACK_FIFO"
+$snapcraftctl_command
+END

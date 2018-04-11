@@ -96,10 +96,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
     @mock.patch('snapcraft.internal.lifecycle._packer._run_mksquashfs')
     def test_mksquashfs_from_snap_used_if_using_snap(self, mock_run_mksquashfs,
                                                      mock_check_command):
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAP', '/snap/snapcraft/current'))
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAP_NAME', 'snapcraft'))
+        self.useFixture(fixture_setup.FakeSnapcraftIsASnap())
 
         self.make_snapcraft_yaml()
 
@@ -546,10 +543,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'stop', '-f', container_name]),
         ])
         mock_container_run.assert_has_calls([
-            call(['python3', '-c', 'import urllib.request; ' +
-                  'urllib.request.urlopen(' +
-                  '"http://start.ubuntu.com/connectivity-check.html"' +
-                  ', timeout=5)']),
+            call(['python3', '-c', mock.ANY]),
             call(['apt-get', 'update']),
             call(['apt-get', 'install', 'squashfuse', '-y']),
             call(['snapcraft', 'snap', '--output',
@@ -585,10 +579,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'stop', '-f', fake_lxd.name]),
         ])
         mock_container_run.assert_has_calls([
-            call(['python3', '-c', 'import urllib.request; ' +
-                  'urllib.request.urlopen(' +
-                  '"http://start.ubuntu.com/connectivity-check.html"' +
-                  ', timeout=5)']),
+            call(['python3', '-c', mock.ANY]),
             call(['snapcraft', 'snap', '--output',
                   'snap-test_1.0_amd64.snap'],
                  cwd=project_folder, user='root'),
@@ -650,13 +641,10 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             call(['lxc', 'stop', '-f', container_name]),
         ])
         mock_container_run.assert_has_calls([
-              call(['python3', '-c', 'import urllib.request; ' +
-                    'urllib.request.urlopen(' +
-                    '"http://start.ubuntu.com/connectivity-check.html"' +
-                    ', timeout=5)']),
-              call(['snapcraft', 'snap', '--output',
-                    'snap-test_1.0_amd64.snap'],
-                   cwd=project_folder, user='root'),
+            call(['python3', '-c', mock.ANY]),
+            call(['snapcraft', 'snap', '--output',
+                  'snap-test_1.0_amd64.snap'],
+                 cwd=project_folder, user='root'),
         ])
         # Ensure there's no unexpected calls eg. two network checks
         self.assertThat(mock_container_run.call_count, Equals(2))

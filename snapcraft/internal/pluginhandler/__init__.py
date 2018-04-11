@@ -22,7 +22,7 @@ import os
 import shutil
 import sys
 from glob import glob, iglob
-from typing import Dict, Set  # noqa
+from typing import Dict, Set, Sequence  # noqa: F401
 
 import yaml
 
@@ -34,7 +34,8 @@ from snapcraft.internal.mangling import clear_execstack
 from ._build_attributes import BuildAttributes
 from ._metadata_extraction import extract_metadata
 from ._plugin_loader import load_plugin  # noqa
-from ._scriptlets import ScriptRunner
+from ._runner import Runner
+from ._patchelf import PartPatcher
 
 logger = logging.getLogger(__name__)
 
@@ -57,8 +58,8 @@ class PluginHandler:
 
     def __init__(self, *, plugin, part_properties, project_options,
                  part_schema, definitions_schema, stage_packages_repo,
-                 grammar_processor, snap_base_path, confinement,
-                 soname_cache):
+                 grammar_processor, snap_base_path, base, confinement,
+                 snap_type, soname_cache):
         self.valid = False
         self.plugin = plugin
         self._part_properties = _expand_part_properties(
@@ -67,7 +68,9 @@ class PluginHandler:
         self._stage_packages_repo = stage_packages_repo
         self._grammar_processor = grammar_processor
         self._snap_base_path = snap_base_path
+        self._base = base
         self._confinement = confinement
+        self._snap_type = snap_type
         self._soname_cache = soname_cache
         self._source = grammar_processor.get_source()
         if not self._source:
@@ -94,6 +97,19 @@ class PluginHandler:
 
         self._build_attributes = BuildAttributes(
             self._part_properties['build-attributes'])
+
+        self._runner = Runner(
+            part_properties=self._part_properties,
+            sourcedir=self.plugin.sourcedir,
+            builddir=self.plugin.build_basedir,
+            stagedir=self.stagedir,
+            primedir=self.primedir,
+            builtin_functions={
+                'pull': self._do_pull,
+                'build': self.plugin.build,
+                'stage': self._do_stage,
+                'prime': self._do_prime,
+            })
 
         self._migrate_state_file()
 
@@ -269,13 +285,24 @@ class PluginHandler:
         self._unpack_stage_packages()
 
     def pull(self, force=False):
+        # Ensure any previously-failed pull is cleared out before we try again
+        if (os.path.islink(self.plugin.sourcedir) or
+                os.path.isfile(self.plugin.sourcedir)):
+            os.remove(self.plugin.sourcedir)
+        elif os.path.isdir(self.plugin.sourcedir):
+            shutil.rmtree(self.plugin.sourcedir)
+
         self.makedirs()
         self.notify_part_progress('Pulling')
+
+        self._runner.pull()
+
+        self.mark_pull_done()
+
+    def _do_pull(self):
         if self.source_handler:
             self.source_handler.pull()
         self.plugin.pull()
-
-        self.mark_pull_done()
 
     def mark_pull_done(self):
         pull_properties = self.plugin.get_pull_properties()
@@ -355,15 +382,19 @@ class PluginHandler:
         shutil.copytree(self.plugin.sourcedir, self.plugin.build_basedir,
                         symlinks=True, ignore=ignore)
 
-        script_runner = ScriptRunner(builddir=self.plugin.build_basedir)
+        self._runner.prepare()
+        self._runner.build()
+        self._runner.install()
 
-        script_runner.run(scriptlet=self._part_properties.get('prepare'))
-        build_scriptlet = self._part_properties.get('build')
-        if build_scriptlet:
-            script_runner.run(scriptlet=build_scriptlet)
-        else:
-            self.plugin.build()
-        script_runner.run(scriptlet=self._part_properties.get('install'))
+        # Organize the installed files as requested. We do this in the build
+        # step for two reasons:
+        #
+        #   1. So cleaning and re-running the stage step works even if
+        #      `organize` is used
+        #   2. So collision detection takes organization into account, i.e. we
+        #      can use organization to get around file collisions between
+        #      parts when staging.
+        self._organize()
 
         self.mark_build_done()
 
@@ -462,7 +493,14 @@ class PluginHandler:
     def stage(self, force=False):
         self.makedirs()
         self.notify_part_progress('Staging')
-        self._organize()
+        self._runner.stage()
+
+        # Only mark this step done if _do_stage() didn't run, in which case
+        # we have no directories or files to track.
+        if self.is_clean('stage'):
+            self.mark_stage_done(set(), set())
+
+    def _do_stage(self):
         snap_files, snap_dirs = self.migratable_fileset_for('stage')
 
         def fixup_func(file_path):
@@ -504,16 +542,32 @@ class PluginHandler:
 
         self.mark_cleaned('stage')
 
-    def prime(self, force=False) -> None:  # noqa: C901
+    def prime(self, force=False) -> None:
         self.makedirs()
         self.notify_part_progress('Priming')
+        self._runner.prime()
+
+        # Only mark this step done if _do_prime() didn't run, in which case
+        # we have no files, directories, or dependency paths to track.
+        if self.is_clean('prime'):
+            self.mark_prime_done(set(), set(), set())
+
+    def _do_prime(self) -> None:
         snap_files, snap_dirs = self.migratable_fileset_for('prime')
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 
+        if self._snap_type == 'app':
+            dependency_paths = self._handle_elf(snap_files)
+        else:
+            dependency_paths = set()
+
+        self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
+
+    def _handle_elf(self, snap_files: Sequence[str]) -> Set[str]:
         elf_files = elf.get_elf_files(self.primedir, snap_files)
         all_dependencies = set()
         # TODO: base snap support
-        core_path = common.get_core_path()
+        core_path = common.get_core_path(self._base)
 
         # Clear the cache of all libs that aren't already in the primedir
         self._soname_cache.reset_except_root(self.primedir)
@@ -528,71 +582,26 @@ class PluginHandler:
         if not self._build_attributes.keep_execstack():
             clear_execstack(elf_files=elf_files)
 
-        # TODO revisit if we need to support variations and permutations
-        #  of this
-        staged_patchelf_path = os.path.join(self.stagedir, 'bin', 'patchelf')
-        if not os.path.exists(staged_patchelf_path):
-            staged_patchelf_path = None
-        # We need to verify now that the GLIBC version would be compatible
-        # with that of the base.
-        # TODO the linker version depends on the chosen base, but that
-        # base may not be installed so we cannot depend on
-        # get_core_dynamic_linker to resolve the final path for which
-        # we resort to our only working base 16, ld-2.23.so.
-        linker_incompat = dict()  # type: Dict[str, str]
-        for elf_file in elf_files:
-            if not elf_file.is_linker_compatible(linker='ld-2.23.so'):
-                linker_incompat[elf_file.path] = elf_file.get_required_glibc()
-        # If libc6 is staged, to avoid symbol mixups we will resort to
-        # glibc mangling.
-        libc6_staged = 'libc6' in self._part_properties.get(
-            'stage-packages', [])
-        is_classic = self._confinement == 'classic'
-        # classic confined snaps built on anything but a host supporting the
-        # the target base will require glibc mangling.
-        classic_mangling_needed = (
-            is_classic and
-            not self._project_options.is_host_compatible_with_base)
-        if linker_incompat:
-            formatted_items = ['- {} (requires GLIBC {})'.format(k, v)
-                               for k, v in linker_incompat.items()]
+        if self._build_attributes.no_patchelf():
             logger.warning(
-                'The GLIBC version of the targeted core is 2.23. A newer '
-                'libc will be required for the following files:\n{}'.format(
-                    '\n'.join(formatted_items)))
+                'The primed files for part {!r} will not be verified for '
+                'correctness or patched: build-attributes: [no-patchelf] '
+                'is set.'.format(self.name))
+        else:
+            part_patcher = PartPatcher(
+                elf_files=elf_files,
+                plugin=self.plugin,
+                project=self._project_options,
+                confinement=self._confinement,
+                core_base=self._base,
+                snap_base_path=self._snap_base_path,
+                stagedir=self.stagedir,
+                primedir=self.primedir,
+                stage_packages=self._part_properties.get(
+                    'stage-packages', []))
+            part_patcher.patch()
 
-        dynamic_linker = None
-        if linker_incompat or libc6_staged or classic_mangling_needed:
-            if not libc6_staged:
-                raise errors.StagePackageMissingError(package='libc6')
-            dynamic_linker = elf.find_linker(
-                root_path=self.primedir,
-                snap_base_path=self._snap_base_path)
-        elif is_classic:
-            dynamic_linker = self._project_options.get_core_dynamic_linker()
-
-        if dynamic_linker and not self._build_attributes.no_patchelf():
-            logger.warning(
-                'Files in this part are going to be patched to execute '
-                'correctly on diverse environments.\n'
-                'To disable this behavior set '
-                '`build-attributes: [no-patchelf]` for the part.')
-            elf_patcher = elf.Patcher(
-                dynamic_linker=dynamic_linker,
-                root_path=self.primedir,
-                preferred_patchelf_path=staged_patchelf_path)
-            files_to_patch = elf.get_elf_files_to_patch(elf_files)
-            for elf_file in files_to_patch:
-                elf_patcher.patch(elf_file=elf_file)
-        elif dynamic_linker and self._build_attributes.no_patchelf():
-            logger.warning(
-                'The following files are not going to be patched to work '
-                'correctly in the environment as '
-                '`build-attributes: [no-patchelf]` is set for the '
-                'part:\n{}'.format(
-                    ''.join(['- {}\n'.format(e.path) for e in elf_files])))
-
-        self.mark_prime_done(snap_files, snap_dirs, dependency_paths)
+        return dependency_paths
 
     def mark_prime_done(self, snap_files, snap_dirs, dependency_paths):
         self.mark_done('prime', states.PrimeState(
@@ -865,7 +874,9 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
 def _organize_filesets(fileset, base_dir):
     for key in sorted(fileset, key=lambda x: ['*' in x, x]):
         src = os.path.join(base_dir, key)
-        dst = os.path.join(base_dir, fileset[key])
+        # Remove the leading slash if there so os.path.join
+        # actually joins
+        dst = os.path.join(base_dir, fileset[key].lstrip('/'))
 
         sources = iglob(src, recursive=True)
 

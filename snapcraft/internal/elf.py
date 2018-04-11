@@ -21,12 +21,12 @@ import re
 import shutil
 import subprocess
 import tempfile
-from functools import wraps
 from typing import Dict, FrozenSet, List, Set, Sequence, Tuple, Union  # noqa
 
 import elftools.elf.elffile
 from pkg_resources import parse_version
 
+from snapcraft import file_utils
 from snapcraft.internal import (
     common,
     errors,
@@ -265,25 +265,13 @@ class ElfFile:
 
         return arch, interp, soname, libs, execstack_set
 
-    def is_linker_compatible(self, *, linker: str) -> bool:
-        """Determines if linker will work given the required glibc version.
-
-        The linker passed needs to be of the format <root>/ld-<X>.<Y>.so.
-        """
+    def is_linker_compatible(self, *, linker_version: str) -> bool:
+        """Determines if linker will work given the required glibc version."""
         version_required = self.get_required_glibc()
-        m = re.search(r'ld-(?P<linker_version>[\d.]+).so$',
-                      os.path.basename(linker))
-        if not m:
-            # This is a programmatic error, we don't want to be friendly
-            # about this.
-            raise EnvironmentError('The format for the linker should be of the'
-                                   'form <root>/ld-<X>.<Y>.so. {!r} does not '
-                                   'match that format.'.format(linker))
-        linker_version = m.group('linker_version')
         r = parse_version(version_required) <= parse_version(linker_version)
         logger.debug('Checking if linker {!r} will work with '
                      'GLIBC_{} required by {!r}: {!r}'.format(
-                         linker, version_required, self.path, r))
+                         linker_version, version_required, self.path, r))
         return r
 
     def get_required_glibc(self) -> str:
@@ -357,34 +345,6 @@ class ElfFile:
         return library_paths
 
 
-def _retry_patch(f):
-    @wraps(f)
-    def wrapper(*args, **kwargs):
-        try:
-            return f(*args, **kwargs)
-        except errors.PatcherError as patch_error:
-            # This is needed for patchelf to properly work with
-            # go binaries (LP: #1736861).
-            # We do this here instead of the go plugin for two reasons, the
-            # first being that we do not want to blindly remove the section,
-            # only doing it when necessary, and the second, this logic
-            # should eventually be removed once patchelf catches up.
-            try:
-                elf_file_path = kwargs['elf_file_path']
-                logger.info('Failed to update {!r}. Retrying after stripping '
-                            'the .note.go.buildid from the elf file.'.format(
-                                elf_file_path))
-                subprocess.check_call([
-                    'strip', '--remove-section', '.note.go.buildid',
-                    elf_file_path])
-            except subprocess.CalledProcessError:
-                logger.warning('Could not properly strip .note.go.buildid '
-                               'from {!r}.'.format(elf_file_path))
-                raise patch_error
-            return f(*args, **kwargs)
-    return wrapper
-
-
 class Patcher:
     """Patcher holds the necessary logic to patch elf files."""
 
@@ -402,30 +362,12 @@ class Patcher:
         self._dynamic_linker = dynamic_linker
         self._root_path = root_path
 
-        # We will first fallback to the preferred_patchelf_path,
-        # if that is not found we will look for the snap and finally,
-        # if we are running from the snap we want to use the patchelf
-        # bundled there as it would have the capability of working
-        # anywhere given the fixed ld it would have.
-        # If not found, resort to whatever is on the system brought
-        # in by packaging dependencies.
-        # The docker conditional will work if the docker image has the
-        # snaps unpacked in the corresponding locations.
         if preferred_patchelf_path:
             self._patchelf_cmd = preferred_patchelf_path
-        # We use the full path here as the path may not be set on
-        # build systems where the path is recently created and added
-        # to the environment
-        elif os.path.exists('/snap/bin/patchelf'):
-            self._patchelf_cmd = '/snap/bin/patchelf'
-        elif common.is_snap():
-            snap_dir = os.getenv('SNAP')
-            self._patchelf_cmd = os.path.join(snap_dir, 'bin', 'patchelf')
-        elif (common.is_docker_instance() and
-              os.path.exists('/snap/snapcraft/current/bin/patchelf')):
-            self._patchelf_cmd = '/snap/snapcraft/current/bin/patchelf'
         else:
-            self._patchelf_cmd = 'patchelf'
+            self._patchelf_cmd = file_utils.get_tool_path('patchelf')
+
+        self._strip_cmd = file_utils.get_tool_path('strip')
 
     def patch(self, *, elf_file: ElfFile) -> None:
         """Patch elf_file with the Patcher instance configuration.
@@ -458,10 +400,35 @@ class Patcher:
         self._run_patchelf(patchelf_args=patchelf_args,
                            elf_file_path=elf_file.path)
 
-    @_retry_patch
     def _run_patchelf(self, *, patchelf_args: List[str],
                       elf_file_path: str) -> None:
+        try:
+            return self._do_run_patchelf(
+                patchelf_args=patchelf_args, elf_file_path=elf_file_path)
+        except errors.PatcherError as patch_error:
+            # This is needed for patchelf to properly work with
+            # go binaries (LP: #1736861).
+            # We do this here instead of the go plugin for two reasons, the
+            # first being that we do not want to blindly remove the section,
+            # only doing it when necessary, and the second, this logic
+            # should eventually be removed once patchelf catches up.
+            try:
+                logger.warning(
+                    'Failed to update {!r}. Retrying after stripping '
+                    'the .note.go.buildid from the elf file.'.format(
+                        elf_file_path))
+                subprocess.check_call([
+                    self._strip_cmd, '--remove-section', '.note.go.buildid',
+                    elf_file_path])
+            except subprocess.CalledProcessError:
+                logger.warning('Could not properly strip .note.go.buildid '
+                               'from {!r}.'.format(elf_file_path))
+                raise patch_error
+            return self._do_run_patchelf(
+                patchelf_args=patchelf_args, elf_file_path=elf_file_path)
 
+    def _do_run_patchelf(self, *, patchelf_args: List[str],
+                         elf_file_path: str) -> None:
         # Run patchelf on a copy of the primed file and replace it
         # after it is successful. This allows us to break the potential
         # hard link created when migrating the file across the steps of
@@ -515,8 +482,10 @@ class Patcher:
                     rel_library_path_dir = os.path.dirname(rel_library_path)
                     # return the dirname, with the first .. replace
                     # with $ORIGIN
-                    origin_rpaths.append(rel_library_path_dir.replace(
-                        '..', '$ORIGIN', 1))
+                    origin_rpath = rel_library_path_dir.replace(
+                        '..', '$ORIGIN', 1)
+                    if origin_rpath not in origin_rpaths:
+                        origin_rpaths.append(origin_rpath)
 
         if existing_rpaths:
             # Only keep those that mention origin and are not already in our
@@ -604,10 +573,6 @@ def _get_system_libs() -> FrozenSet[str]:
             _libraries = frozenset(fn.read().split())
 
     return _libraries
-
-
-def _is_dynamically_linked_elf(file_m: str) -> bool:
-    return file_m.startswith('ELF') and 'dynamically linked' in file_m
 
 
 def get_elf_files(root: str,

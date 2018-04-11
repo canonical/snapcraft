@@ -645,6 +645,27 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
                             'The absolute path to python was not replaced as '
                             'expected')
 
+    def test_use_in_snap_python_rewrites_1_ros_package_path_sh(self):
+        plugin = catkin.CatkinPlugin('test-part', self.properties,
+                                     self.project_options)
+        os.makedirs(os.path.join(plugin.rosdir, 'etc', 'catkin', 'profile.d'))
+
+        ros_profile = os.path.join(plugin.rosdir, 'etc', 'catkin', 'profile.d',
+                                   '1.ros_package_path.sh')
+
+        # Place 1.ros_package_path.sh with an absolute path to python
+        with open(ros_profile, 'w') as f:
+            f.write('/usr/bin/python foo')
+
+        plugin._use_in_snap_python()
+
+        # Verify that the absolute path in 1.ros_package_path.sh was rewritten
+        # correctly
+        with open(ros_profile, 'r') as f:
+            self.assertThat(f.read(), Equals('python foo'),
+                            'The absolute path to python was not replaced as '
+                            'expected')
+
     def _verify_run_environment(self, plugin):
         python_path = os.path.join(
             plugin.installdir, 'usr', 'lib', 'python2.7', 'dist-packages')
@@ -696,8 +717,23 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
 
         environment = self._verify_run_environment(plugin)
 
-        self.assertThat(environment, Contains('. {}'.format(
-            os.path.join(plugin.rosdir, 'snapcraft-setup.sh'))))
+        setup_path = os.path.join(plugin.rosdir, 'snapcraft-setup.sh')
+        lines_of_interest = [
+            'if [ -f {} ]; then'.format(setup_path),
+            '. {}'.format(setup_path),
+            'fi',
+        ]
+        actual_lines = []
+
+        for line in environment:
+            line = line.strip()
+            if line in lines_of_interest:
+                actual_lines.append(line)
+
+        self.assertThat(
+            actual_lines, Equals(lines_of_interest),
+            'Expected snapcraft-setup.sh to be sourced after checking for its '
+            'existence')
 
     @mock.patch.object(catkin.CatkinPlugin, '_source_setup_sh',
                        return_value='test-source-setup.sh')

@@ -21,6 +21,10 @@ import testtools
 from testtools.matchers import Equals
 
 import snapcraft
+from snapcraft.project._project_options import (
+    _get_platform_architecture,
+    _32BIT_USERSPACE_ARCHITECTURE,
+)
 from snapcraft.internal import common
 from snapcraft.internal.errors import SnapcraftEnvironmentError
 from tests import unit
@@ -131,9 +135,9 @@ class NativeOptionsTestCase(unit.TestCase):
             with mock.patch('os.path.islink') as mock_islink:
                 mock_islink.return_value = False
                 self.assertThat(
-                    options.get_core_dynamic_linker(),
+                    options.get_core_dynamic_linker('core'),
                     Equals(os.path.join(
-                        common.get_core_path(),
+                        common.get_core_path('core'),
                         self.expected_core_dynamic_linker)))
 
     @mock.patch('platform.architecture')
@@ -142,9 +146,8 @@ class NativeOptionsTestCase(unit.TestCase):
             self, mock_platform_machine, mock_platform_architecture):
         mock_platform_machine.return_value = self.machine
         mock_platform_architecture.return_value = self.architecture
-        platform_arch = snapcraft._options._get_platform_architecture()
-        userspace_conversions = \
-            snapcraft._options._32BIT_USERSPACE_ARCHITECTURE
+        platform_arch = _get_platform_architecture()
+        userspace_conversions = _32BIT_USERSPACE_ARCHITECTURE
 
         if self.architecture[0] == '32bit' and \
            self.machine in userspace_conversions:
@@ -177,9 +180,22 @@ class OptionsTestCase(unit.TestCase):
 class TestHostIsCompatibleWithTargetBase(unit.TestCase):
 
     scenarios = (
-        ('trusty', dict(codename='trusty', is_compatible=True)),
-        ('xenial', dict(codename='xenial', is_compatible=True)),
-        ('artful', dict(codename='bionic', is_compatible=False)),
+        ('trusty core',
+         dict(codename='trusty', base='core', is_compatible=True)),
+        ('xenial core',
+         dict(codename='xenial', base='core', is_compatible=True)),
+        ('bionic core',
+         dict(codename='bionic', base='core', is_compatible=False)),
+        ('trusty core18',
+         dict(codename='trusty', base='core18', is_compatible=True)),
+        ('xenial core18',
+         dict(codename='xenial', base='core18', is_compatible=True)),
+        ('bionic core18',
+         dict(codename='bionic', base='core18', is_compatible=True)),
+        ('Random codename core18',
+         dict(codename='random', base='core18', is_compatible=False)),
+        ('trusty unknown-base',
+         dict(codename='trusty', base='unknown', is_compatible=False)),
     )
 
     def setUp(self):
@@ -193,5 +209,34 @@ class TestHostIsCompatibleWithTargetBase(unit.TestCase):
         self.codename_mock.return_value = self.codename
 
         self.assertThat(
-            snapcraft.ProjectOptions().is_host_compatible_with_base,
+            snapcraft.ProjectOptions().is_host_compatible_with_base(self.base),
             Equals(self.is_compatible))
+
+
+class TestLinkerVersionForBase(unit.TestCase):
+
+    def setUp(self):
+        super().setUp()
+        patcher = mock.patch(
+            'snapcraft.file_utils.get_linker_version_from_file')
+        self.get_linker_version_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+    def test_get_linker_version_for_core(self):
+        self.assertThat(
+            snapcraft.ProjectOptions()._get_linker_version_for_base('core'),
+            Equals('2.23'))
+        self.get_linker_version_mock.assert_not_called()
+
+    def test_get_linker_version_for_core18(self):
+        self.assertThat(
+            snapcraft.ProjectOptions()._get_linker_version_for_base('core18'),
+            Equals('2.27'))
+        self.get_linker_version_mock.assert_not_called()
+
+    def test_get_linker_version_for_random_core(self):
+        self.get_linker_version_mock.return_value = '4.10'
+        self.assertThat(
+            snapcraft.ProjectOptions()._get_linker_version_for_base('random'),
+            Equals('4.10'))
+        self.get_linker_version_mock.assert_called_once_with('ld-2.23.so')

@@ -30,6 +30,7 @@ url = 'https://github.com/snapcore/snapcraft'
 packages = [
     'snapcraft',
     'snapcraft.cli',
+    'snapcraft.cli.snapcraftctl',
     'snapcraft.extractors',
     'snapcraft.integrations',
     'snapcraft.internal',
@@ -45,6 +46,7 @@ packages = [
     'snapcraft.internal.repo',
     'snapcraft.internal.sources',
     'snapcraft.internal.states',
+    'snapcraft.project',
     'snapcraft.plugins',
     'snapcraft.plugins._ros',
     'snapcraft.plugins._python',
@@ -139,6 +141,8 @@ else:
                 'snapcraft-parser = snapcraft.internal.parser:main',
             ],
         },
+        # This is not in console_scripts because we need a clean environment
+        scripts=['bin/snapcraftctl'],
         data_files=[
             ('share/snapcraft/schema',
              ['schema/' + x for x in os.listdir('schema')]),

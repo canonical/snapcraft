@@ -1,0 +1,17 @@
+name: override-build-scriptlet-test
+version: '0.1'
+summary: Runs the override-build scriptlet for a part
+description: |
+  Runs the shell script defined in `override-build` instead of plugin build.
+grade: devel
+confinement: devmode
+
+parts:
+  override-build-scriptlet-test:
+    plugin: dump
+    override-build: |
+      touch before-build
+      touch $SNAPCRAFT_PART_INSTALL/before-install
+      snapcraftctl build
+      touch after-build
+      touch $SNAPCRAFT_PART_INSTALL/after-install

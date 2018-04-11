@@ -336,3 +336,14 @@ class BuildPackagesTestCase(unit.TestCase):
             errors.PackageBrokenError,
             repo.Ubuntu.install_build_packages,
             ['package-not-installable'])
+
+    @patch('subprocess.check_call')
+    def test_broken_package_apt_install(self, mock_check_call):
+        mock_check_call.side_effect = CalledProcessError(100, 'apt-get')
+        self.fake_apt_cache.add_packages(('package-not-installable',))
+        raised = self.assertRaises(
+            errors.BuildPackagesNotInstalledError,
+            repo.Ubuntu.install_build_packages,
+            ['package-not-installable'])
+        self.assertThat(raised.packages,
+                        Equals('package-not-installable'))

@@ -21,7 +21,7 @@ import subprocess
 from unittest import mock
 
 import fixtures
-from testtools.matchers import Equals, FileContains, HasLength
+from testtools.matchers import Contains, Equals, FileContains, HasLength
 
 from textwrap import dedent
 
@@ -283,9 +283,9 @@ class KernelPluginTestCase(unit.TestCase):
         modprobe_cmd = ['modprobe', '-n', '--show-depends', '-d',
                         plugin.installdir, '-S', '4.4', ]
         self.run_output_mock.assert_has_calls([
-            mock.call(modprobe_cmd + ['squashfs'])])
+            mock.call(modprobe_cmd + ['squashfs'], env=mock.ANY)])
         self.run_output_mock.assert_has_calls([
-            mock.call(modprobe_cmd + ['vfat'])])
+            mock.call(modprobe_cmd + ['vfat'], env=mock.ANY)])
 
     def test_pack_initrd_modules_return_same_deps(self):
         self.options.kernel_initrd_modules = [
@@ -318,12 +318,12 @@ class KernelPluginTestCase(unit.TestCase):
         modprobe_cmd = ['modprobe', '-n', '--show-depends', '-d',
                         plugin.installdir, '-S', '4.4', ]
         self.run_output_mock.assert_has_calls([
-            mock.call(modprobe_cmd + ['squashfs'])])
+            mock.call(modprobe_cmd + ['squashfs'], env=mock.ANY)])
         self.run_output_mock.assert_has_calls([
-            mock.call(modprobe_cmd + ['vfat'])])
+            mock.call(modprobe_cmd + ['vfat'], env=mock.ANY)])
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile(self):
         self.options.kconfigfile = 'config'
@@ -363,7 +363,7 @@ class KernelPluginTestCase(unit.TestCase):
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_verbose_with_kconfigfile(self):
         fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
@@ -421,7 +421,7 @@ class KernelPluginTestCase(unit.TestCase):
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_check_config(self):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
@@ -446,7 +446,7 @@ class KernelPluginTestCase(unit.TestCase):
             self.assertIn('CONFIG_{}'.format(warn), fake_logger.output)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_check_initrd(self):
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
@@ -471,7 +471,7 @@ class KernelPluginTestCase(unit.TestCase):
                           fake_logger.output)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_kconfigs(self):
         self.options.kconfigfile = 'config'
@@ -524,7 +524,7 @@ ACCEPT=n
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_defconfig_and_kconfigs(self):
         self.options.kdefconfig = ['defconfig']
@@ -584,7 +584,7 @@ ACCEPT=n
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_two_defconfigs(self):
         self.options.kdefconfig = ['defconfig', 'defconfig2']
@@ -627,7 +627,7 @@ ACCEPT=n
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_dtbs(self):
         self.options.kconfigfile = 'config'
@@ -689,7 +689,7 @@ ACCEPT=n
             Equals("No match for dtb 'fake-dtb.dtb' was found"))
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_modules(self):
         self.options.kconfigfile = 'config'
@@ -724,6 +724,10 @@ ACCEPT=n
 
         self.run_output_mock.side_effect = fake_output
 
+        # Set a path that doesn't contain '/sbin' so we can verify that it's
+        # added to the modprobe call.
+        self.useFixture(fixtures.EnvironmentVariable('PATH', '/usr/bin'))
+
         plugin.build()
 
         self._assert_generic_check_call(plugin.builddir, plugin.installdir,
@@ -742,11 +746,22 @@ ACCEPT=n
                            plugin.installdir, 'lib', 'firmware'))])
         ])
 
+        class _check_env:
+            def __init__(self, test):
+                self.test = test
+
+            def __eq__(self, other):
+                self.test.assertThat(other, Contains('PATH'))
+                paths = other['PATH'].split(':')
+                self.test.assertThat(paths, Contains('/sbin'))
+                return True
+
         self.assertThat(self.run_output_mock.call_count, Equals(1))
         self.run_output_mock.assert_has_calls([
             mock.call([
                 'modprobe', '-n', '--show-depends', '-d',
-                plugin.installdir, '-S', '4.4.2', 'my-fake-module'])])
+                plugin.installdir, '-S', '4.4.2', 'my-fake-module'],
+                env=_check_env(self))])
 
         config_file = os.path.join(plugin.builddir, '.config')
         self.assertTrue(os.path.exists(config_file))
@@ -758,7 +773,7 @@ ACCEPT=n
         self._assert_common_assets(plugin.installdir)
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_firmware(self):
         self.options.kconfigfile = 'config'
@@ -812,7 +827,7 @@ ACCEPT=n
             plugin.installdir, 'firmware', 'fake-fw-dir')))
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_kconfigfile_and_no_firmware(self):
         self.options.kconfigfile = 'config'
@@ -846,7 +861,7 @@ ACCEPT=n
         self.assertTrue(os.path.exists(config_file))
 
     @mock.patch.object(
-        snapcraft._options.ProjectOptions,
+        snapcraft.ProjectOptions,
         'kernel_arch', new='not_arm')
     def test_build_with_kconfigflavour(self):
         arch = self.project_options.deb_arch

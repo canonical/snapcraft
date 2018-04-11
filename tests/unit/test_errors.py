@@ -82,6 +82,18 @@ class ErrorFormattingTestCase(unit.TestCase):
             'exception': errors.SnapcraftEnvironmentError,
             'kwargs': {'message': 'test-message'},
             'expected_message': 'test-message'}),
+        ('SnapcraftMissingLinkerInBaseError', {
+            'exception': errors.SnapcraftMissingLinkerInBaseError,
+            'kwargs': {
+                'base': 'core18',
+                'linker_path': '/snap/core18/current/lib64/ld-linux.so.2'},
+            'expected_message': (
+                "Cannot find the linker to use for the target base 'core18'.\n"
+                "Please verify that the linker exists at the expected path "
+                "'/snap/core18/current/lib64/ld-linux.so.2' and try again. If "
+                "the linker does not exist contact the author of the base "
+                "(run `snap info core18` to get information for this "
+                "base).")}),
         ('ContainerError', {
             'exception': errors.ContainerError,
             'kwargs': {'message': 'test-message'},
@@ -289,7 +301,9 @@ class ErrorFormattingTestCase(unit.TestCase):
             'exception': errors.InvalidContainerImageInfoError,
             'kwargs': {'image_info': 'test-image-info'},
             'expected_message': (
-                'Error parsing the container image info: test-image-info')}),
+                'Failed to parse container image info: '
+                'SNAPCRAFT_IMAGE_INFO is not a valid JSON string: '
+                'test-image-info')}),
         # meta errors.
         ('AdoptedPartMissingError', {
             'exception': meta_errors.AdoptedPartMissingError,
@@ -313,6 +327,15 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "Missing required key(s) in snapcraft.yaml: "
                 "'test-key1' and 'test-key2'. Either specify the missing "
                 "key(s), or use 'adopt-info' to get them from a part.")}),
+        ('AmbiguousPassthroughKeyError', {
+            'exception': meta_errors.AmbiguousPassthroughKeyError,
+            'kwargs': {'keys': ['key1', 'key2']},
+            'expected_message': (
+                "Failed to generate snap metadata: "
+                "The following keys are specified in their regular location "
+                "as well as in passthrough: 'key1' and 'key2'. "
+                "Remove duplicate keys."),
+        }),
         ('MissingMetadataFileError', {
             'exception': errors.MissingMetadataFileError,
             'kwargs': {'part_name': 'test-part', 'path': 'test/path'},
@@ -376,6 +399,34 @@ class ErrorFormattingTestCase(unit.TestCase):
             'expected_message': (
                 'Failed to update cache of remote parts: A Connection error '
                 'occurred.\nPlease try again.'
+            )
+        }),
+        ('SnapcraftPluginCommandError string command', {
+            'exception': errors.SnapcraftPluginCommandError,
+            'kwargs': {
+                'command': 'make install',
+                'exit_code': -1,
+                'part_name': 'make_test',
+            },
+            'expected_message': (
+                "Failed to run 'make install' for 'make_test': "
+                "Exited with code -1.\n"
+                "Verify that the part is using the correct parameters and try "
+                "again."
+            )
+        }),
+        ('SnapcraftPluginCommandError list command', {
+            'exception': errors.SnapcraftPluginCommandError,
+            'kwargs': {
+                'command': ['make', 'install'],
+                'exit_code': 2,
+                'part_name': 'make_test',
+            },
+            'expected_message': (
+                "Failed to run 'make install' for 'make_test': "
+                "Exited with code 2.\n"
+                "Verify that the part is using the correct parameters and try "
+                "again."
             )
         }),
     )

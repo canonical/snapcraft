@@ -15,19 +15,23 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from contextlib import contextmanager, suppress
+import errno
 import hashlib
 import logging
+import re
 import os
 import shutil
 import subprocess
 import sys
-from typing import Pattern, Callable, Generator
+from typing import Pattern, Callable, Generator, List
+from typing import Set  # noqa F401
 
 from snapcraft.internal import common
 from snapcraft.internal.errors import (
     RequiredCommandFailure,
     RequiredCommandNotFound,
     RequiredPathDoesNotExist,
+    SnapcraftEnvironmentError,
 )
 
 if sys.version_info < (3, 6):
@@ -115,31 +119,41 @@ def link_or_copy(source: str, destination: str,
         # upstream-- we want this function to continue supporting NOT following
         # symlinks.
         os.link(source_path, destination, follow_symlinks=False)
-    except OSError:
-        # If os.link raised an I/O error, it may have left a file behind.
-        # Skip on OSError in case it doesn't exist or is a directory.
-        with suppress(OSError):
-            os.unlink(destination)
+    except OSError as e:
+        if e.errno == errno.EEXIST and not os.path.isdir(destination):
+            # os.link will fail if the destination already exists, so let's
+            # remove it and try again.
+            os.remove(destination)
+            link_or_copy(source_path, destination, follow_symlinks)
+        else:
+            # If os.link raised an I/O error, it may have left a file behind.
+            # Skip on OSError in case it doesn't exist or is a directory.
+            with suppress(OSError):
+                os.unlink(destination)
 
-        shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
-        uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid
-        gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid
-        try:
-            os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
-        except PermissionError as e:
-            logger.debug('Unable to chown {destination}: {error}'.format(
-                destination=destination, error=e))
+            shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
+            uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid
+            gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid
+            try:
+                os.chown(destination, uid, gid,
+                         follow_symlinks=follow_symlinks)
+            except PermissionError as e:
+                logger.debug('Unable to chown {destination}: {error}'.format(
+                    destination=destination, error=e))
 
 
 def link_or_copy_tree(source_tree: str, destination_tree: str,
-                      copy_function: Callable[..., None]
-                      =link_or_copy) -> None:
+                      ignore: Callable[[str, List[str]], List[str]]=None,
+                      copy_function: Callable[..., None]=link_or_copy) -> None:
     """Copy a source tree into a destination, hard-linking if possible.
 
     :param str source_tree: Source directory to be copied.
     :param str destination_tree: Destination directory. If this directory
                                  already exists, the files in `source_tree`
                                  will take precedence.
+    :param callable ignore: If given, called with two params, source dir and
+                            dir contents, for every dir copied. Should return
+                            list of contents to NOT copy.
     :param callable copy_function: Callable that actually copies.
     """
 
@@ -147,14 +161,31 @@ def link_or_copy_tree(source_tree: str, destination_tree: str,
         raise NotADirectoryError('{!r} is not a directory'.format(source_tree))
 
     if (not os.path.isdir(destination_tree) and
-            os.path.exists(destination_tree)):
+            (os.path.exists(destination_tree) or
+                os.path.islink(destination_tree))):
         raise NotADirectoryError(
             'Cannot overwrite non-directory {!r} with directory '
             '{!r}'.format(destination_tree, source_tree))
 
     create_similar_directory(source_tree, destination_tree)
 
-    for root, directories, files in os.walk(source_tree):
+    destination_basename = os.path.basename(destination_tree)
+
+    for root, directories, files in os.walk(source_tree, topdown=True):
+        ignored = set()  # type: Set[str]
+        if ignore is not None:
+            ignored = set(ignore(root, directories + files))
+
+        # Don't recurse into destination tree if it's a subdirectory of the
+        # source tree.
+        if os.path.relpath(destination_tree, root) == destination_basename:
+            ignored.add(destination_basename)
+
+        if ignored:
+            # Prune our search appropriately given an ignore list, i.e. don't
+            # walk into directories that are ignored.
+            directories[:] = [d for d in directories if d not in ignored]
+
         for directory in directories:
             source = os.path.join(root, directory)
             # os.walk doesn't by default follow symlinks (which is good), but
@@ -169,7 +200,7 @@ def link_or_copy_tree(source_tree: str, destination_tree: str,
 
             create_similar_directory(source, destination)
 
-        for file_name in files:
+        for file_name in (set(files) - ignored):
             source = os.path.join(root, file_name)
             destination = os.path.join(
                 destination_tree, os.path.relpath(source, source_tree))
@@ -292,3 +323,31 @@ def _command_path_in_root(root, command_name):
         path = os.path.join(root, bin_directory, command_name)
         if os.path.exists(path):
             return path
+
+    return ''
+
+
+def get_linker_version_from_file(linker_file: str) -> str:
+    """Returns the version of the linker from linker_file.
+
+    linker_file must be of the format ld-(?P<linker_version>[\d.]+).so$
+
+    :param str linker_file: a valid file path or basename representing
+                            the linker from libc6 or related.
+    :returns: the version extracted from the linker file.
+    :rtype: string
+    :raises snapcraft.internal.errors.SnapcraftEnvironmentError:
+       if linker_file is not of the expected format.
+    """
+    m = re.search(r'ld-(?P<linker_version>[\d.]+).so$', linker_file)
+    if not m:
+        # This is a programmatic error, we don't want to be friendly
+        # about this.
+        raise SnapcraftEnvironmentError(
+            'The format for the linker should be of the of the form '
+            '<root>/ld-<X>.<Y>.so. {!r} does not match that format. '
+            'Ensure you are targeting an appropriate base'.format(
+                linker_file))
+    linker_version = m.group('linker_version')
+
+    return linker_version

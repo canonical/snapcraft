@@ -19,6 +19,7 @@ import re
 import subprocess
 
 from testtools.matchers import (
+    Contains,
     FileExists,
     MatchesRegex,
 )
@@ -63,3 +64,37 @@ class ReleaseTestCase(integration.StoreTestCase):
         output = self.run_snapcraft(['release', name, '1', 'edge'])
         expected = r'.*The \'edge\' channel is now open.*'
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
+
+    def test_release_to_channel_without_permission(self):
+        if not self.is_store_fake():
+            self.skipTest("The real store won't return the proper response")
+
+        self.addCleanup(self.logout)
+        self.login()
+
+        # Change to a random name and version.
+        name = self.get_unique_name()
+        version = self.get_unique_version()
+        self.copy_project_to_cwd('basic')
+        self.update_name_and_version(name, version)
+
+        self.run_snapcraft('snap')
+
+        # Register the snap
+        self.register(name)
+        # Upload the snap
+        snap_file_path = '{}_{}_{}.snap'.format(name, version, 'all')
+        self.assertThat(
+            os.path.join(snap_file_path), FileExists())
+
+        output = self.run_snapcraft(['push', snap_file_path])
+        expected = r'.*Ready to release!.*'.format(name)
+        self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
+
+        # Attempt to release it
+        error = self.assertRaises(
+            subprocess.CalledProcessError,
+            self.run_snapcraft, ['release', name, '1', 'no-permission'])
+        self.assertThat(error.output, Contains(
+            "Received 403: Lacking permission to release to channel(s) "
+            "'no-permission'"))
