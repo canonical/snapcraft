@@ -87,7 +87,8 @@ def create_snap_packaging(
         config_data: Dict[str, Any],
         parts_config: project_loader.PartsConfig,
         project_options: Project,
-        snapcraft_yaml_path: str) -> str:
+        snapcraft_yaml_path: str,
+        original_snapcraft_yaml: Dict[str, Any]) -> str:
     """Create snap.yaml and related assets in meta.
 
     Create the meta directory and provision it with snap.yaml in the snap dir
@@ -102,7 +103,8 @@ def create_snap_packaging(
     _update_yaml_with_extracted_metadata(config_data, parts_config)
 
     packaging = _SnapPackaging(
-        config_data, project_options, snapcraft_yaml_path)
+        config_data, project_options,
+        snapcraft_yaml_path, original_snapcraft_yaml)
     packaging.write_snap_yaml()
     packaging.setup_assets()
     packaging.generate_hook_wrappers()
@@ -264,9 +266,10 @@ class _SnapPackaging:
         return self._meta_dir
 
     def __init__(
-            self, config_data,
+            self, config_data: Dict[str, Any],
             project_options: Project,
-            snapcraft_yaml_path: str) -> None:
+            snapcraft_yaml_path: str,
+            original_snapcraft_yaml: Dict[str, Any]) -> None:
         self._snapcraft_yaml_path = snapcraft_yaml_path
         self._prime_dir = project_options.prime_dir
         self._parts_dir = project_options.parts_dir
@@ -275,6 +278,7 @@ class _SnapPackaging:
             project_options.is_host_compatible_with_base)
         self._meta_dir = os.path.join(self._prime_dir, 'meta')
         self._config_data = config_data.copy()
+        self._original_snapcraft_yaml = original_snapcraft_yaml
 
         os.makedirs(self._meta_dir, exist_ok=True)
 
@@ -433,7 +437,9 @@ class _SnapPackaging:
         if 'apps' in self._config_data:
             _verify_app_paths(basedir='prime', apps=self._config_data['apps'])
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
-            snap_yaml['apps'] = self._render_socket_modes(snap_yaml['apps'])
+            self._render_socket_modes(snap_yaml['apps'])
+
+        self._process_passthrough_properties(snap_yaml)
 
         return snap_yaml
 
@@ -517,7 +523,7 @@ class _SnapPackaging:
 
         return os.path.relpath(wrappath, self._prime_dir)
 
-    def _wrap_apps(self, apps):
+    def _wrap_apps(self, apps: Dict[str, Any]) -> Dict[str, Any]:
         gui_dir = os.path.join(self.meta_dir, 'gui')
         if not os.path.exists(gui_dir):
             os.mkdir(gui_dir)
@@ -548,14 +554,47 @@ class _SnapPackaging:
             desktop_file.parse_and_reformat()
             desktop_file.write(gui_dir=os.path.join(self.meta_dir, 'gui'))
 
-    def _render_socket_modes(self, apps):
+    def _render_socket_modes(self, apps: Dict[str, Any]) -> None:
         for app in apps.values():
             sockets = app.get('sockets', {})
             for socket in sockets.values():
                 mode = socket.get('socket-mode')
                 if mode is not None:
                     socket['socket-mode'] = OctInt(mode)
-        return apps
+
+    def _process_passthrough_properties(
+            self, snap_yaml: Dict[str, Any]) -> None:
+        passthrough_applied = False
+
+        for section in ['apps', 'hooks']:
+            if section in self._config_data:
+                for name, value in snap_yaml[section].items():
+                    if self._apply_passthrough(
+                            value, value.pop('passthrough', {}),
+                            self._original_snapcraft_yaml[section][name]):
+                        passthrough_applied = True
+
+        if self._apply_passthrough(snap_yaml,
+                                   self._config_data.get('passthrough', {}),
+                                   self._original_snapcraft_yaml):
+            passthrough_applied = True
+
+        if passthrough_applied:
+            logger.warn("The 'passthrough' property is being used to "
+                        "propagate experimental properties to snap.yaml "
+                        "that have not been validated. The snap cannot be "
+                        "released to the store.")
+
+    def _apply_passthrough(self, section: Dict[str, Any],
+                           passthrough: Dict[str, Any],
+                           original: Dict[str, Any]) -> bool:
+        # Any value already in the original dictionary must
+        # not be specified in passthrough at the same time.
+        duplicates = list(original.keys() & passthrough.keys())
+        if duplicates:
+            raise meta_errors.AmbiguousPassthroughKeyError(duplicates)
+        section.update(passthrough)
+        return bool(passthrough)
 
 
 def _find_bin(binary, basedir):

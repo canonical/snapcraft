@@ -183,6 +183,9 @@ properties:
         - type: string
           minLength: 1
         - type: number
+  passthrough:
+    type: object
+    description: properties to be passed into snap.yaml as-is
   apps:
     type: object
     additionalProperties: false
@@ -296,6 +299,9 @@ properties:
                         usage: "socket path, a string"
                   socket-mode:
                     type: integer
+          passthrough:
+            type: object
+            description: properties to be passed into snap.yaml as-is
   hooks:
     type: object
     additionalProperties: false
@@ -314,6 +320,9 @@ properties:
             uniqueItems: true
             items:
               type: string
+          passthrough:
+            type: object
+            description: properties to be passed into snap.yaml as-is
   parts:
     type: object
     minProperties: 1
