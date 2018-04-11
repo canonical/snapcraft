@@ -58,10 +58,10 @@ class MissingSnapcraftYamlError(ProjectLoaderError):
 
 class YamlValidationError(ProjectLoaderError):
 
-    fmt = 'Issues while validating {snapcraft_yaml}: {message}'
+    fmt = 'Issues while validating {source}: {message}'
 
     @classmethod
-    def from_validation_error(cls, error):
+    def from_validation_error(cls, error, *, source='snapcraft.yaml'):
         """Take a jsonschema.ValidationError and create a SnapcraftSchemaError.
 
         The validation errors coming from jsonschema are a nightmare. This
@@ -85,10 +85,10 @@ class YamlValidationError(ProjectLoaderError):
         else:
             messages.append(error.message)
 
-        return cls(' '.join(messages))
+        return cls(' '.join(messages), source)
 
-    def __init__(self, message, snapcraft_yaml='snapcraft.yaml'):
-        super().__init__(message=message, snapcraft_yaml=snapcraft_yaml)
+    def __init__(self, message, source='snapcraft.yaml'):
+        super().__init__(message=message, source=source)
 
 
 class SnapcraftLogicError(ProjectLoaderError):

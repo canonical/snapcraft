@@ -91,3 +91,34 @@ class ExtractedMetadataTestCase(unit.TestCase):
 
         # Ensure the metadata cannot be edited with its dict
         self.assertThat(metadata.get_summary(), Equals('summary'))
+
+
+class ExtractedMetadataGettersTestCase(unit.TestCase):
+
+    scenarios = [
+        ('common_id', {'property': 'common_id', 'value': 'test-value'}),
+        ('summary', {'property': 'summary', 'value': 'test-value'}),
+        ('description', {'property': 'description', 'value': 'test-value'}),
+        ('version', {'property': 'version', 'value': 'test-value'}),
+        ('grade', {'property': 'grade', 'value': 'test-value'}),
+        ('icon', {'property': 'icon', 'value': 'test-value'}),
+        ('desktop_file_paths', {
+            'property': 'desktop_file_paths', 'value': ['test-value']}),
+    ]
+
+    properties = ('common_id', 'summary', 'description', 'version', 'grade',
+                  'icon', 'desktop_file_paths')
+
+    def test_getters(self):
+        metadata = ExtractedMetadata(**{self.property: self.value})
+        for prop in self.properties:
+            gotten = getattr(metadata, 'get_{}'.format(prop))()
+            if prop == self.property:
+                self.assertThat(
+                    gotten, Equals(self.value),
+                    'Expected {!r} getter to return {}'.format(
+                        prop, self.value))
+            else:
+                self.assertThat(
+                    gotten, Equals(None),
+                    'Expected {!r} getter to return None'.format(prop))

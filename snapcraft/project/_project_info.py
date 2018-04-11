@@ -25,4 +25,4 @@ class ProjectInfo:
         self.version = data.get('version')
         self.summary = data.get('summary')
         self.description = data.get('description')
-        self.confinement = data['confinement']
+        self.confinement = data.get('confinement')

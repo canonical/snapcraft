@@ -209,6 +209,7 @@ class TestCase(testtools.TestCase):
     def construct_yaml(self, name='test', version='0.1',
                        summary='Simple test snap',
                        description='Something something',
+                       grade=None,
                        parts=dedent('''\
                            my-part:
                              plugin: nil
@@ -227,6 +228,8 @@ class TestCase(testtools.TestCase):
             snapcraft_yaml['version'] = version
         if adopt_info:
             snapcraft_yaml['adopt-info'] = adopt_info
+        if grade:
+            snapcraft_yaml['grade'] = grade
 
         with open('snapcraft.yaml', 'w') as f:
             yaml.dump(snapcraft_yaml, f, default_flow_style=False)

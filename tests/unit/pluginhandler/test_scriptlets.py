@@ -29,43 +29,53 @@ from snapcraft.internal import errors
 from tests import unit
 
 
-class ScriptletSetVersionTestCase(unit.TestCase):
-    def test_set_version_in_pull(self):
+class ScriptletSetterTestCase(unit.TestCase):
+
+    scenarios = [
+        ('set-version', {'setter': 'set-version', 'getter': 'get_version'}),
+        ('set-grade', {'setter': 'set-grade', 'getter': 'get_grade'}),
+    ]
+
+    def test_set_in_pull(self):
         handler = self.load_part('test_part', part_properties={
-            'override-pull': 'snapcraftctl set-version override-version'
+            'override-pull': 'snapcraftctl {} test-value'.format(
+                self.setter)
         })
 
         handler.pull()
         metadata = handler.get_pull_state().scriptlet_metadata
-        self.assertThat(metadata.get_version(), Equals('override-version'))
+        self.assertThat(getattr(metadata, self.getter)(), Equals('test-value'))
 
-    def test_set_version_in_build(self):
+    def test_set_in_build(self):
         handler = self.load_part('test_part', part_properties={
-            'override-build': 'snapcraftctl set-version override-version'
+            'override-build': 'snapcraftctl {} test-value'.format(
+                self.setter)
         })
 
         handler.pull()
         handler.build()
         metadata = handler.get_build_state().scriptlet_metadata
-        self.assertThat(metadata.get_version(), Equals('override-version'))
+        self.assertThat(getattr(metadata, self.getter)(), Equals('test-value'))
         self.assertFalse(handler.get_pull_state().scriptlet_metadata)
 
-    def test_set_version_in_stage(self):
+    def test_set_in_stage(self):
         handler = self.load_part('test_part', part_properties={
-            'override-stage': 'snapcraftctl set-version override-version'
+            'override-stage': 'snapcraftctl {} test-value'.format(
+                self.setter)
         })
 
         handler.pull()
         handler.build()
         handler.stage()
         metadata = handler.get_stage_state().scriptlet_metadata
-        self.assertThat(metadata.get_version(), Equals('override-version'))
+        self.assertThat(getattr(metadata, self.getter)(), Equals('test-value'))
         self.assertFalse(handler.get_pull_state().scriptlet_metadata)
         self.assertFalse(handler.get_build_state().scriptlet_metadata)
 
-    def test_set_version_in_prime(self):
+    def test_set_in_prime(self):
         handler = self.load_part('test_part', part_properties={
-            'override-prime': 'snapcraftctl set-version override-version'
+            'override-prime': 'snapcraftctl {} test-value'.format(
+                self.setter)
         })
 
         handler.pull()
@@ -73,33 +83,46 @@ class ScriptletSetVersionTestCase(unit.TestCase):
         handler.stage()
         handler.prime()
         metadata = handler.get_prime_state().scriptlet_metadata
-        self.assertThat(metadata.get_version(), Equals('override-version'))
+        self.assertThat(getattr(metadata, self.getter)(), Equals('test-value'))
         self.assertFalse(handler.get_pull_state().scriptlet_metadata)
         self.assertFalse(handler.get_build_state().scriptlet_metadata)
         self.assertFalse(handler.get_stage_state().scriptlet_metadata)
 
 
-class ScriptletSetVersionErrorTestCase(unit.TestCase):
+class ScriptletMultipleSettersErrorTestCase(unit.TestCase):
 
     scriptlet_scenarios = [
-        ('override-pull', {'override_pull': 'snapcraftctl set-version 1'}),
-        ('override-build', {'override_build': 'snapcraftctl set-version 2'}),
-        ('override-stage', {'override_stage': 'snapcraftctl set-version 3'}),
-        ('override-prime', {'override_prime': 'snapcraftctl set-version 4'}),
+        ('override-pull', {'override_pull': 'snapcraftctl {setter} 1'}),
+        ('override-build', {'override_build': 'snapcraftctl {setter} 2'}),
+        ('override-stage', {'override_stage': 'snapcraftctl {setter} 3'}),
+        ('override-prime', {'override_prime': 'snapcraftctl {setter} 4'}),
     ]
 
-    scenarios = multiply_scenarios(scriptlet_scenarios, scriptlet_scenarios)
+    multiple_setters_scenarios = multiply_scenarios(
+        scriptlet_scenarios, scriptlet_scenarios)
 
-    def test_set_version_multiple_times(self):
+    setter_scenarios = [
+        ('set-version', {'setter': 'set-version'}),
+        ('set-grade', {'setter': 'set-grade'}),
+    ]
+
+    scenarios = multiply_scenarios(
+        setter_scenarios, multiple_setters_scenarios)
+
+    def test_set_multiple_times(self):
         part_properties = {}
         with contextlib.suppress(AttributeError):
-            part_properties['override-pull'] = self.override_pull
+            part_properties['override-pull'] = self.override_pull.format(
+                setter=self.setter)
         with contextlib.suppress(AttributeError):
-            part_properties['override-build'] = self.override_build
+            part_properties['override-build'] = self.override_build.format(
+                setter=self.setter)
         with contextlib.suppress(AttributeError):
-            part_properties['override-stage'] = self.override_stage
+            part_properties['override-stage'] = self.override_stage.format(
+                setter=self.setter)
         with contextlib.suppress(AttributeError):
-            part_properties['override-prime'] = self.override_prime
+            part_properties['override-prime'] = self.override_prime.format(
+                setter=self.setter)
 
         # A few of these test cases result in only one of these scriptlets
         # being set. In that case, we actually want to double them up (i.e.
@@ -123,7 +146,8 @@ class ScriptletSetVersionErrorTestCase(unit.TestCase):
                 handler.prime()
 
 
-class ScripletTestCase(unit.TestCase):
+# These are deprecated
+class OldScripletTestCase(unit.TestCase):
 
     def test_run_prepare_scriptlet(self):
         handler = self.load_part(

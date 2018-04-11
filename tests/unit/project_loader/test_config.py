@@ -721,55 +721,6 @@ parts:
                    " only use ASCII lowercase letters, numbers, and hyphens,"
                    " and must have at least one letter."))
 
-    def test_yaml_missing_confinement_must_log(self):
-        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
-        self.useFixture(fake_logger)
-
-        self.make_snapcraft_yaml("""name: test
-version: "1"
-summary: test
-description: nothing
-
-parts:
-  part1:
-    plugin: go
-    stage-packages: [fswebcam]
-""")
-        c = _config.Config()
-
-        # Verify the default is "strict"
-        self.assertTrue('confinement' in c.data,
-                        'Expected "confinement" property to be in snap.yaml')
-        self.assertThat(c.data['confinement'], Equals('strict'))
-        self.assertTrue(
-            '"confinement" property not specified: defaulting to "strict"'
-            in fake_logger.output, 'Missing confinement hint in output')
-
-    def test_yaml_missing_grade_must_log(self):
-        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
-        self.useFixture(fake_logger)
-
-        self.make_snapcraft_yaml("""name: test
-version: "1"
-summary: test
-description: nothing
-confinement: strict
-
-parts:
-  part1:
-    plugin: go
-    stage-packages: [fswebcam]
-""")
-        c = _config.Config()
-
-        # Verify the default is "stable"
-        self.assertTrue('grade' in c.data,
-                        'Expected "grade" property to be in snap.yaml')
-        self.assertThat(c.data['grade'], Equals('stable'))
-        self.assertTrue(
-            '"grade" property not specified: defaulting to "stable"'
-            in fake_logger.output, 'Missing grade hint in output')
-
     def test_tab_in_yaml(self):
         fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(fake_logger)

@@ -61,11 +61,12 @@ class Validator:
             raise errors.YamlValidationError(
                 'snapcraft validation file is missing from installation path')
 
-    def validate(self):
+    def validate(self, *, source=None):
         format_check = jsonschema.FormatChecker()
         try:
             jsonschema.validate(
                 self._snapcraft, self._schema, format_checker=format_check)
         except jsonschema.ValidationError as e:
             from snapcraft.internal.project_loader import errors
-            raise errors.YamlValidationError.from_validation_error(e)
+            raise errors.YamlValidationError.from_validation_error(
+                e, source=source)

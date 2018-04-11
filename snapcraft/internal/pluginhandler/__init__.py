@@ -114,6 +114,7 @@ class PluginHandler:
                 'stage': self._do_stage,
                 'prime': self._do_prime,
                 'set-version': self._set_version,
+                'set-grade': self._set_grade,
             })
 
         self._migrate_state_file()
@@ -163,7 +164,14 @@ class PluginHandler:
             self._set_scriptlet_metadata(
                 snapcraft.extractors.ExtractedMetadata(version=version))
         except errors.ScriptletDuplicateDataError as e:
-            raise errors.ScriptletDuplicateVersionError(e.other_step)
+            raise errors.ScriptletDuplicateFieldError('version', e.other_step)
+
+    def _set_grade(self, *, grade):
+        try:
+            self._set_scriptlet_metadata(
+                snapcraft.extractors.ExtractedMetadata(grade=grade))
+        except errors.ScriptletDuplicateDataError as e:
+            raise errors.ScriptletDuplicateFieldError('grade', e.other_step)
 
     def _set_scriptlet_metadata(
             self, metadata: snapcraft.extractors.ExtractedMetadata):

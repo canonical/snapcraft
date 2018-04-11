@@ -38,7 +38,7 @@ class PartsConfig:
                  build_snaps, build_tools, snapcraft_yaml):
         self._snap_name = parts['name']
         self._base = parts.get('base', 'core')
-        self._confinement = parts['confinement']
+        self._confinement = parts.get('confinement')
         self._soname_cache = elf.SonameCache()
         self._parts_data = parts.get('parts', {})
         self._snap_type = parts.get('type', 'app')
