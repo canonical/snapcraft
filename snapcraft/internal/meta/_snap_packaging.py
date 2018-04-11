@@ -125,19 +125,18 @@ def _update_yaml_with_extracted_metadata(
         stage_state = part.get_stage_state()
         prime_state = part.get_prime_state()
 
-        # Get the metadata from the pull step first, allowing metadata set via
-        # override-pull to override.
+        # Get the metadata from the pull step first.
         metadata = pull_state.extracted_metadata['metadata']
-        metadata.update(pull_state.scriptlet_metadata)
 
         # Now update it using the metadata from the build step (i.e. the data
-        # from the build step takes precedence over the pull step), allowing
-        # metadata set via override-build to override.
+        # from the build step takes precedence over the pull step).
         metadata.update(build_state.extracted_metadata['metadata'])
-        metadata.update(build_state.scriptlet_metadata)
 
-        # Now make sure any scriptlet data in later steps are taken into
-        # account (later steps take precedence).
+        # Now make sure any scriptlet data are taken into account. Later steps
+        # take precedence, and scriptlet data (even in earlier steps) take
+        # precedence over extracted data.
+        metadata.update(pull_state.scriptlet_metadata)
+        metadata.update(build_state.scriptlet_metadata)
         metadata.update(stage_state.scriptlet_metadata)
         metadata.update(prime_state.scriptlet_metadata)
 

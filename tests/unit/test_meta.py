@@ -683,6 +683,22 @@ class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
 
         self.assertThat(generated['version'], Equals('override-version'))
 
+    def test_scriptlets_overwrite_extracted_metadata_regardless_of_order(self):
+        del self.config_data['version']
+
+        self.config_data['parts']['test-part']['override-pull'] = (
+            'snapcraftctl set-version override-version && snapcraftctl pull')
+
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(version='extracted-version')
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        generated = self.generate_meta_yaml(build=True)
+
+        self.assertThat(generated['version'], Equals('override-version'))
+
 
 class WriteSnapDirectoryTestCase(CreateBaseTestCase):
 

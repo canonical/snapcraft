@@ -167,11 +167,19 @@ class PluginHandler:
 
     def _set_scriptlet_metadata(
             self, metadata: snapcraft.extractors.ExtractedMetadata):
-        last_step = self.last_step()
         step = self.next_step()
+
+        # First, ensure the metadata set here doesn't conflict with metadata
+        # already set for this step
+        conflicts = metadata.overlap(self._scriptlet_metadata[step])
+        if len(conflicts) > 0:
+            raise errors.ScriptletDuplicateDataError(
+                step, step, list(conflicts))
+
+        last_step = self.last_step()
         if last_step:
-            # Ensure the metadata from this step doesn't conflict with metadata
-            # from any other step. Doing so is an error.
+            # Now ensure the metadata from this step doesn't conflict with
+            # metadata from any other step
             index = common.COMMAND_ORDER.index(last_step)
             for index in reversed(range(0, index+1)):
                 other_step = common.COMMAND_ORDER[index]

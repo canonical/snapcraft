@@ -15,10 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import subprocess
 import textwrap
 import yaml
 
-from testtools.matchers import Equals
+from testtools.matchers import Equals, Contains
 
 from tests import integration
 
@@ -55,3 +56,21 @@ class SnapcraftctlSetVersionTestCase(integration.TestCase):
             y = yaml.load(f)
 
         self.assertThat(y['version'], Equals('test-version'))
+
+    def test_set_version_twice_errors(self):
+        self.construct_yaml(
+            version=None, adopt_info='my-part', parts=textwrap.dedent("""\
+                my-part:
+                  plugin: nil
+                  override-pull: snapcraftctl set-version override-version
+                  override-prime: snapcraftctl set-version no-this-version
+                """))
+
+        raised = self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft, 'prime')
+        self.assertThat(
+            raised.output, Contains(
+                "Unable to set version: it was already set in the 'pull' "
+                "step"))
+        self.assertThat(
+            raised.output, Contains("Failed to run 'override-prime'"))
