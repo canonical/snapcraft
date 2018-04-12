@@ -1025,11 +1025,12 @@ class SnapcraftYaml(fixtures.Fixture):
         self.path = path
         self.data = {
             'name': name,
-            'version': version,
             'confinement': confinement,
             'parts': {},
             'apps': {}
         }
+        if version is not None:
+            self.data['version'] = version
         if summary is not None:
             self.data['summary'] = summary
         if description is not None:
