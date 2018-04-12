@@ -412,8 +412,9 @@ class StoreReleaseError(StoreError):
 
     def __fmt_error_500(self, response):
         response_json = self.__to_json(response)
-        message = ('The store encountered an internal error. Please report a '
-                   'bug if this continues.')
+        message = ('The store encountered an internal error. The status of '
+                   'store and associated services can be checked at:\n'
+                   'https://status.snapcraft.io/')
 
         if 'error_list' in response_json:
             message = _error_list_to_message(response_json)
