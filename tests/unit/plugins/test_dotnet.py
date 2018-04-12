@@ -95,6 +95,12 @@ class DotNetProjectBaseTestCase(unit.TestCase):
 
 class DotNetProjectTestCase(DotNetProjectBaseTestCase):
 
+    def test_sdk_in_path(self):
+        plugin = dotnet.DotNetPlugin(
+            'test-part', self.options, self.project)
+        self.assertThat(plugin.env(plugin.installdir), Contains(
+            'PATH={}:$PATH'.format(plugin._dotnet_sdk_dir)))
+
     def test_init_with_non_amd64_architecture(self):
         with mock.patch(
                 'snapcraft.ProjectOptions.deb_arch',
