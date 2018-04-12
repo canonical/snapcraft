@@ -378,26 +378,27 @@ class Pip:
             output = self._run_output(command)
             json_output = json.loads(
                     output, object_pairs_hook=collections.OrderedDict)
-            for package in json_output:
-                if 'name' not in package:
-                    raise errors.PipListMissingFieldError('name', output)
-                if 'version' not in package:
-                    raise errors.PipListMissingFieldError('version', output)
-                packages[package['name']] = package['version']
-        except json.decoder.JSONDecodeError as e:
-            raise errors.PipListInvalidJsonError(output) from e
         except subprocess.CalledProcessError:
+            # --format requires a newer pip, so fall back to legacy output
             command = ['list']
             if user:
                 command.append('--user')
             output = self._run_output(command)
-            # --format requires a newer pip, so fall back to legacy output
+            json_output = []  # type: List[Dict[str, str]]
             version_regex = re.compile('\((.+)\)')
             for line in output.splitlines():
                 line = line.split()
                 m = version_regex.search(line[1])
-                packages[line[0]] = m.group(1)
+                json_output.append({'name': line[0], 'version': m.group(1)})
+        except json.decoder.JSONDecodeError as e:
+            raise errors.PipListInvalidJsonError(output) from e
 
+        for package in json_output:
+            if 'name' not in package:
+                raise errors.PipListMissingFieldError('name', output)
+            if 'version' not in package:
+                raise errors.PipListMissingFieldError('version', output)
+            packages[package['name']] = package['version']
         return packages
 
     def clean_packages(self):
