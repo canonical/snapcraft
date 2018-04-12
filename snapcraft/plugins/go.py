@@ -101,11 +101,29 @@ class GoPlugin(snapcraft.BasePlugin):
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
+        self._go_command = None  # type: str
+        # The build package needs to be installed here. We will only decide
+        # which Go to use during pull however after dependencies have been
+        # staged and build snaps were installed.
         self.build_packages.append('golang-go')
         self._gopath = os.path.join(self.partdir, 'go')
         self._gopath_src = os.path.join(self._gopath, 'src')
         self._gopath_bin = os.path.join(self._gopath, 'bin')
         self._gopath_pkg = os.path.join(self._gopath, 'pkg')
+
+    def _get_go_command(self) -> str:
+        if not self._go_command:
+            # Look for Go in stage or a build snap
+            for path in [self.project.stage_dir, '/snap']:
+                command = os.path.join(path, 'bin', 'go')
+                if os.path.exists(command):
+                    self._go_command = command
+                    break
+            # Fallback to the command installed via build packages
+            if not self._go_command:
+                self._go_command = 'go'
+            logger.debug('Using Go from {!r}'.format(self._go_command))
+        return self._go_command
 
     def pull(self):
         # use -d to only download (build will happen later)
@@ -122,10 +140,12 @@ class GoPlugin(snapcraft.BasePlugin):
                 os.unlink(go_package_path)
             os.makedirs(os.path.dirname(go_package_path), exist_ok=True)
             os.symlink(self.sourcedir, go_package_path)
-            self._run(['go', 'get', '-t', '-d', './{}/...'.format(go_package)])
+            self._run([self._get_go_command(), 'get',
+                       '-t', '-d', './{}/...'.format(go_package)])
 
         for go_package in self.options.go_packages:
-            self._run(['go', 'get', '-t', '-d', go_package])
+            self._run([self._get_go_command(), 'get',
+                       '-t', '-d', go_package])
 
     def clean_pull(self):
         super().clean_pull()
@@ -146,8 +166,8 @@ class GoPlugin(snapcraft.BasePlugin):
 
     def _get_local_main_packages(self):
         search_path = './{}/...'.format(self._get_local_go_package())
-        packages = self._run_output(['go', 'list', '-f',
-                                     '{{.ImportPath}} {{.Name}}',
+        packages = self._run_output([self._get_go_command(), 'list',
+                                     '-f', '{{.ImportPath}} {{.Name}}',
                                      search_path])
         packages_split = [p.split() for p in packages.splitlines()]
         main_packages = [p[0] for p in packages_split if p[1] == 'main']
@@ -165,7 +185,8 @@ class GoPlugin(snapcraft.BasePlugin):
             packages = self._get_local_main_packages()
         for package in packages:
             binary = os.path.join(self._gopath_bin, self._binary_name(package))
-            self._run(['go', 'build', '-o', binary] + tags + [package])
+            self._run([self._get_go_command(), 'build',
+                       '-o', binary] + tags + [package])
 
         install_bin_path = os.path.join(self.installdir, 'bin')
         os.makedirs(install_bin_path, exist_ok=True)
