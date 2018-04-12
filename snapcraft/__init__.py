@@ -437,5 +437,8 @@ def str_presenter(dumper, data):
 
 
 yaml.add_representer(str, str_presenter)
+yaml.SafeDumper.add_representer(str, str_presenter)
 yaml.add_representer(OrderedDict, dict_representer)
+yaml.SafeDumper.add_representer(OrderedDict, dict_representer)
 yaml.add_constructor(_mapping_tag, dict_constructor)
+yaml.SafeLoader.add_constructor(_mapping_tag, dict_constructor)
