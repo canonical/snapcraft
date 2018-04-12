@@ -157,7 +157,7 @@ def _edit_developers(developers: List[Dict[str, str]]
             yaml.dump(developer_wrapper, stream=fw, default_flow_style=False)
         subprocess.check_call([editor_cmd, ft.name])
         with open(ft.name, 'r') as fr:
-            developers = yaml.load(fr).get('developers')
+            developers = yaml.safe_load(fr).get('developers')
     return developers
 
 

@@ -270,7 +270,7 @@ def _snapcraft_yaml_load(yaml_file):
 
     try:
         with open(yaml_file, encoding=encoding) as fp:
-            return yaml.load(fp)
+            return yaml.safe_load(fp)
     except yaml.scanner.ScannerError as e:
         raise errors.YamlValidationError('{} on line {} of {}'.format(
             e.problem, e.problem_mark.line + 1, yaml_file)) from e

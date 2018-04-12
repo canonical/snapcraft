@@ -61,7 +61,7 @@ def _get_data_from_snap_file(snap_path):
         with open(os.path.join(
                 temp_dir, 'squashfs-root', 'meta', 'snap.yaml')
         ) as yaml_file:
-            snap_yaml = yaml.load(yaml_file)
+            snap_yaml = yaml.safe_load(yaml_file)
     return snap_yaml
 
 

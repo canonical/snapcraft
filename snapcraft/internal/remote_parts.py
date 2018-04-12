@@ -124,7 +124,7 @@ class _Update(_Base):
             return None
 
         with open(self._headers_yaml) as headers_file:
-            return yaml.load(headers_file)
+            return yaml.safe_load(headers_file)
 
     def _save_headers(self):
         headers = {
@@ -143,7 +143,7 @@ class _RemoteParts(_Base):
             update()
 
         with open(self.parts_yaml) as parts_file:
-            self._parts = yaml.load(parts_file)
+            self._parts = yaml.safe_load(parts_file)
 
     def get_part(self, part_name, full=False):
         try:
