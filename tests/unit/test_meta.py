@@ -91,9 +91,12 @@ class CreateBaseTestCase(unit.TestCase):
             for part in self.config.parts.all_parts:
                 part.pull()
                 part.build()
+                part.stage()
+                part.prime()
 
         _snap_packaging.create_snap_packaging(
-            self.config.data, self.config.parts, self.project_options, 'dummy')
+            self.config.data, self.config.parts, self.project_options, 'dummy',
+            self.config.original_snapcraft_yaml)
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
@@ -148,7 +151,8 @@ class CreateTestCase(CreateBaseTestCase):
         config = project_loader.load_config()
 
         _snap_packaging.create_snap_packaging(
-            self.config_data, config.parts, self.project_options, 'dummy')
+            self.config_data, config.parts, self.project_options, 'dummy',
+            config.original_snapcraft_yaml)
 
         expected_gadget = os.path.join(self.meta_dir, 'gadget.yaml')
         self.assertTrue(os.path.exists(expected_gadget))
@@ -170,7 +174,8 @@ class CreateTestCase(CreateBaseTestCase):
             self.config_data,
             config.parts,
             self.project_options,
-            'dummy'
+            'dummy',
+            config.original_snapcraft_yaml
         )
 
     def test_create_meta_with_declared_icon(self):
@@ -261,11 +266,13 @@ class CreateTestCase(CreateBaseTestCase):
         config = project_loader.load_config()
 
         _snap_packaging.create_snap_packaging(
-            self.config_data, config.parts, self.project_options, 'dummy')
+            self.config_data, config.parts, self.project_options, 'dummy',
+            config.original_snapcraft_yaml)
 
         # Running again should be good
         _snap_packaging.create_snap_packaging(
-            self.config_data, config.parts, self.project_options, 'dummy')
+            self.config_data, config.parts, self.project_options, 'dummy',
+            config.original_snapcraft_yaml)
 
     def test_create_meta_with_icon_in_setup(self):
         gui_path = os.path.join('setup', 'gui')
@@ -475,6 +482,131 @@ class CreateTestCase(CreateBaseTestCase):
             "Expected generated 'bar' hook to not contain 'plugs'")
 
 
+class PassthroughBaseTestCase(CreateBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.config_data = {
+            'name': 'my-package',
+            'version': '1.0',
+            'grade': 'stable',
+            'description': 'my description',
+            'summary': 'my summary',
+            'parts': {
+                'test-part': {
+                    'plugin': 'nil',
+                }
+            }
+        }
+
+
+class PassthroughErrorTestCase(PassthroughBaseTestCase):
+
+    def test_ambiguous_key_fails(self):
+        self.config_data['confinement'] = 'devmode'
+        self.config_data['passthrough'] = {'confinement': 'next-generation'}
+        raised = self.assertRaises(
+            meta_errors.AmbiguousPassthroughKeyError,
+            self.generate_meta_yaml)
+        self.assertThat(raised.keys, Equals("'confinement'"))
+
+    def test_app_ambiguous_key_fails(self):
+        self.config_data['apps'] = {'foo': {
+            'command': 'echo', 'daemon': 'simple',
+            'passthrough': {'daemon': 'complex'}}}
+        raised = self.assertRaises(
+            meta_errors.AmbiguousPassthroughKeyError,
+            self.generate_meta_yaml)
+        self.assertThat(raised.keys, Equals("'daemon'"))
+
+    def test_hook_ambiguous_key_fails(self):
+        self.config_data['hooks'] = {'foo': {
+            'plugs': ['network'],
+            'passthrough': {'plugs': ['network']}}}
+        raised = self.assertRaises(
+            meta_errors.AmbiguousPassthroughKeyError,
+            self.generate_meta_yaml)
+        self.assertThat(raised.keys, Equals("'plugs'"))
+
+    def test_warn_once_only(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.config_data['confinement'] = 'devmode'
+        self.config_data['passthrough'] = {'foo': 'bar', 'spam': 'eggs'}
+        self.config_data['apps'] = {'foo': {
+            'command': 'echo',
+            'passthrough': {'foo': 'bar', 'spam': 'eggs'}}}
+        self.config_data['hooks'] = {'foo': {
+            'plugs': ['network'],
+            'passthrough': {'foo': 'bar', 'spam': 'eggs'}}}
+        self.generate_meta_yaml()
+        self.assertThat(
+            fake_logger.output,
+            Equals("The 'passthrough' property is being used to propagate "
+                   "experimental properties to snap.yaml that have not been "
+                   "validated. The snap cannot be released to the store.\n"))
+
+
+class PassthroughPropagateTestCase(PassthroughBaseTestCase):
+
+    scenarios = [
+        ('new', dict(
+            snippet={'passthrough': {'spam': 'eggs'}},
+            section=None, key='spam', value='eggs')),
+        ('different type', dict(
+            # This is normally an array of strings
+            snippet={'passthrough': {'architectures': 'all'}},
+            section=None, key='architectures', value='all')),
+        ('with default', dict(
+            snippet={'passthrough': {'confinement': 'next-generation'}},
+            section=None, key='confinement', value='next-generation')),
+        ('app, new', dict(
+            snippet={'apps': {'foo': {
+                'command': 'echo',
+                'passthrough': {'spam': 'eggs'}}}},
+            section='apps', name='foo', key='spam', value='eggs')),
+        ('app, different type', dict(
+            snippet={'apps': {'foo': {
+                'command': 'echo',
+                # This is normally an array of strings
+                'passthrough': {'aliases': 'foo'}}}},
+            section='apps', name='foo', key='aliases', value='foo')),
+        # Note: There are currently no app properties with defaults
+        ('hook, new', dict(
+            snippet={'hooks': {'foo': {
+                'plugs': ['network'],
+                'passthrough': {'spam': 'eggs'}}}},
+            section='hooks', name='foo', key='spam', value='eggs')),
+        ('hook, different type', dict(
+            snippet={'hooks': {'foo': {
+                # This is normally an array of strings
+                'passthrough': {'plugs': 'network'}}}},
+            section='hooks', name='foo', key='plugs', value='network')),
+        # Note: There are currently no hook properties with defaults
+    ]
+
+    def test_propagate(self):
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        self.config_data.update(self.snippet)
+        y = self.generate_meta_yaml()
+        if self.section:
+            y = y[self.section][self.name]
+        self.assertThat(
+            y, Contains(self.key),
+            'Expected {!r} property to be propagated to snap.yaml'
+            .format(self.key))
+        self.assertThat(y[self.key], Equals(self.value))
+        self.assertThat(
+            fake_logger.output,
+            Contains("The 'passthrough' property is being used to propagate "
+                     "experimental properties to snap.yaml that have not been "
+                     "validated. The snap cannot be released to the store.\n"))
+
+
 class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):
 
     def setUp(self):
@@ -501,15 +633,14 @@ class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):
         open('test-metadata-file', 'w').close()
 
 
-class CreateMetadataFromSourceErrorsTestCase(
-        CreateMetadataFromSourceBaseTestCase):
+class CreateMetadataFromSourceTestCase(CreateMetadataFromSourceBaseTestCase):
 
     def test_create_metadata_with_missing_parse_info(self):
         del self.config_data['summary']
         del self.config_data['parts']['test-part']['parse-info']
         raised = self.assertRaises(
             meta_errors.AdoptedPartNotParsingInfo,
-            self.generate_meta_yaml)
+            self.generate_meta_yaml, build=True)
         self.assertThat(raised.part, Equals('test-part'))
 
     def test_create_metadata_with_wrong_adopt_info(self):
@@ -520,6 +651,9 @@ class CreateMetadataFromSourceErrorsTestCase(
         self.assertThat(raised.part, Equals('wrong-part'))
 
     def test_metadata_doesnt_overwrite_specified(self):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
         def _fake_extractor(file_path):
             return extractors.ExtractedMetadata(
                 summary='extracted summary',
@@ -535,6 +669,13 @@ class CreateMetadataFromSourceErrorsTestCase(
         self.assertThat(y['summary'], Equals(self.config_data['summary']))
         self.assertThat(
             y['description'], Equals(self.config_data['description']))
+
+        # Verify that we warn that the YAML took precedence over the extracted
+        # metadata for summary and description
+        self.assertThat(fake_logger.output, Contains(
+            "The 'description' and 'summary' properties are specified in "
+            "adopted info as well as the YAML: taking the properties from the "
+            "YAML"))
 
     def test_metadata_with_unexisting_icon(self):
         def _fake_extractor(file_path):
@@ -643,6 +784,69 @@ class MetadataFromSourceWithDesktopFileTestCase(
         expected_desktop = os.path.join(
             self.meta_dir, 'gui', 'test-app.desktop')
         self.assertThat(expected_desktop, FileContains(desktop_content))
+
+
+class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
+
+    def test_scriptlets_satisfy_required_property(self):
+        del self.config_data['version']
+        del self.config_data['parts']['test-part']['parse-info']
+        self.config_data['parts']['test-part']['override-prime'] = (
+            'snapcraftctl set-version override-version')
+
+        generated = self.generate_meta_yaml(build=True)
+
+        self.assertThat(generated['version'], Equals('override-version'))
+
+    def test_scriptlets_no_overwrite_existing_property(self):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
+        del self.config_data['parts']['test-part']['parse-info']
+        self.config_data['parts']['test-part']['override-prime'] = (
+            'snapcraftctl set-version override-version')
+
+        generated = self.generate_meta_yaml(build=True)
+
+        self.assertThat(generated['version'], Equals('test-version'))
+
+        # Since the specified version took precedence over the scriptlet-set
+        # version, verify that we warned
+        self.assertThat(fake_logger.output, Contains(
+            "The 'version' property is specified in adopted info as well as "
+            "the YAML: taking the property from the YAML"))
+
+    def test_scriptlets_overwrite_extracted_metadata(self):
+        del self.config_data['version']
+
+        self.config_data['parts']['test-part']['override-build'] = (
+            'snapcraftctl build && snapcraftctl set-version override-version')
+
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(version='extracted-version')
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        generated = self.generate_meta_yaml(build=True)
+
+        self.assertThat(generated['version'], Equals('override-version'))
+
+    def test_scriptlets_overwrite_extracted_metadata_regardless_of_order(self):
+        del self.config_data['version']
+
+        self.config_data['parts']['test-part']['override-pull'] = (
+            'snapcraftctl set-version override-version && snapcraftctl pull')
+
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(version='extracted-version')
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        generated = self.generate_meta_yaml(build=True)
+
+        self.assertThat(generated['version'], Equals('override-version'))
 
 
 class WriteSnapDirectoryTestCase(CreateBaseTestCase):
@@ -833,7 +1037,8 @@ class WrapExeTestCase(unit.TestCase):
         self.packager = _snap_packaging._SnapPackaging(
             {'confinement': 'devmode'},
             ProjectOptions(),
-            'dummy'
+            'dummy',
+            {'confinement': 'devmode'}
         )
         self.packager._is_host_compatible_with_base = True
 

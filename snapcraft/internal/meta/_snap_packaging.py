@@ -25,11 +25,11 @@ import shlex
 import shutil
 import stat
 import subprocess
-from typing import Any, Dict, List  # noqa
+from typing import Any, Dict, List, Set  # noqa
 
 import yaml
 
-from snapcraft import file_utils
+from snapcraft import file_utils, formatting_utils
 from snapcraft import shell_utils
 from snapcraft.project import Project
 from snapcraft.internal import (
@@ -87,7 +87,8 @@ def create_snap_packaging(
         config_data: Dict[str, Any],
         parts_config: project_loader.PartsConfig,
         project_options: Project,
-        snapcraft_yaml_path: str) -> str:
+        snapcraft_yaml_path: str,
+        original_snapcraft_yaml: Dict[str, Any]) -> str:
     """Create snap.yaml and related assets in meta.
 
     Create the meta directory and provision it with snap.yaml in the snap dir
@@ -102,7 +103,8 @@ def create_snap_packaging(
     _update_yaml_with_extracted_metadata(config_data, parts_config)
 
     packaging = _SnapPackaging(
-        config_data, project_options, snapcraft_yaml_path)
+        config_data, project_options,
+        snapcraft_yaml_path, original_snapcraft_yaml)
     packaging.write_snap_yaml()
     packaging.setup_assets()
     packaging.generate_hook_wrappers()
@@ -120,17 +122,34 @@ def _update_yaml_with_extracted_metadata(
         if not part:
             raise meta_errors.AdoptedPartMissingError(part_name)
 
-        # This would be caught since metadata would be missing, but we want
-        # to be clear about the issue here. This really should be caught by the
-        # schema, but it doesn't seem to support such dynamic behavior.
-        if 'parse-info' not in config_data['parts'][part_name]:
-            raise meta_errors.AdoptedPartNotParsingInfo(part_name)
+        pull_state = part.get_pull_state()
+        build_state = part.get_build_state()
+        stage_state = part.get_stage_state()
+        prime_state = part.get_prime_state()
 
-        # Get the metadata from the pull step first, then update it using the
-        # metadata from the build step (i.e. the data from the build step takes
-        # precedence over the pull step)
-        metadata = part.get_pull_state().extracted_metadata['metadata']
-        metadata.update(part.get_build_state().extracted_metadata['metadata'])
+        # Get the metadata from the pull step first.
+        metadata = pull_state.extracted_metadata['metadata']
+
+        # Now update it using the metadata from the build step (i.e. the data
+        # from the build step takes precedence over the pull step).
+        metadata.update(build_state.extracted_metadata['metadata'])
+
+        # Now make sure any scriptlet data are taken into account. Later steps
+        # take precedence, and scriptlet data (even in earlier steps) take
+        # precedence over extracted data.
+        metadata.update(pull_state.scriptlet_metadata)
+        metadata.update(build_state.scriptlet_metadata)
+        metadata.update(stage_state.scriptlet_metadata)
+        metadata.update(prime_state.scriptlet_metadata)
+
+        if not metadata:
+            # If we didn't end up with any metadata, let's ensure this part was
+            # actually supposed to parse info. If not, let's try to be very
+            # clear about what's happening, here. We do this after checking for
+            # metadata because metadata could be supplied by scriptlets, too.
+            if 'parse-info' not in config_data['parts'][part_name]:
+                raise meta_errors.AdoptedPartNotParsingInfo(part_name)
+
         _adopt_info(config_data, metadata)
 
     # Verify that all mandatory keys have been satisfied
@@ -146,17 +165,39 @@ def _update_yaml_with_extracted_metadata(
 def _adopt_info(
         config_data: Dict[str, Any],
         extracted_metadata: _metadata.ExtractedMetadata):
+    ignored_keys = _adopt_keys(config_data, extracted_metadata)
+    if ignored_keys:
+        logger.warning(
+            'The {keys} {plural_property} {plural_is} specified in adopted '
+            'info as well as the YAML: taking the {plural_property} from the '
+            'YAML'.format(
+                keys=formatting_utils.humanize_list(list(ignored_keys), 'and'),
+                plural_property=formatting_utils.pluralize(
+                    ignored_keys, 'property', 'properties'),
+                plural_is=formatting_utils.pluralize(
+                    ignored_keys, 'is', 'are')))
+
+
+def _adopt_keys(config_data: Dict[str, Any],
+                extracted_metadata: _metadata.ExtractedMetadata) -> Set[str]:
+    ignored_keys = set()
     metadata_dict = extracted_metadata.to_dict()
     for key, value in metadata_dict.items():
         # desktop_file_paths are a special case that will be handled
         # after all the top level snapcraft.yaml keys.
-        if key != 'desktop_file_paths' and key not in config_data:
+        if key == 'desktop_file_paths':
+            continue
+
+        if key not in config_data:
             if key == 'icon':
                 if _icon_file_exists() or not os.path.exists(
                         str(value)):
                     # Do not overwrite the icon file.
                     continue
             config_data[key] = value
+        else:
+            ignored_keys.add(key)
+
     if 'desktop_file_paths' in metadata_dict and 'common_id' in metadata_dict:
         app_name = _get_app_name_from_common_id(
             config_data, str(metadata_dict['common_id']))
@@ -166,6 +207,8 @@ def _adopt_info(
                     config_data['apps'][app_name]['desktop'] = (
                         desktop_file_path)
                     break
+
+    return ignored_keys
 
 
 def _icon_file_exists() -> bool:
@@ -229,9 +272,10 @@ class _SnapPackaging:
         return self._meta_dir
 
     def __init__(
-            self, config_data,
+            self, config_data: Dict[str, Any],
             project_options: Project,
-            snapcraft_yaml_path: str) -> None:
+            snapcraft_yaml_path: str,
+            original_snapcraft_yaml: Dict[str, Any]) -> None:
         self._snapcraft_yaml_path = snapcraft_yaml_path
         self._prime_dir = project_options.prime_dir
         self._parts_dir = project_options.parts_dir
@@ -240,6 +284,7 @@ class _SnapPackaging:
             project_options.is_host_compatible_with_base)
         self._meta_dir = os.path.join(self._prime_dir, 'meta')
         self._config_data = config_data.copy()
+        self._original_snapcraft_yaml = original_snapcraft_yaml
 
         os.makedirs(self._meta_dir, exist_ok=True)
 
@@ -398,7 +443,9 @@ class _SnapPackaging:
         if 'apps' in self._config_data:
             _verify_app_paths(basedir='prime', apps=self._config_data['apps'])
             snap_yaml['apps'] = self._wrap_apps(self._config_data['apps'])
-            snap_yaml['apps'] = self._render_socket_modes(snap_yaml['apps'])
+            self._render_socket_modes(snap_yaml['apps'])
+
+        self._process_passthrough_properties(snap_yaml)
 
         return snap_yaml
 
@@ -482,7 +529,7 @@ class _SnapPackaging:
 
         return os.path.relpath(wrappath, self._prime_dir)
 
-    def _wrap_apps(self, apps):
+    def _wrap_apps(self, apps: Dict[str, Any]) -> Dict[str, Any]:
         gui_dir = os.path.join(self.meta_dir, 'gui')
         if not os.path.exists(gui_dir):
             os.mkdir(gui_dir)
@@ -513,14 +560,47 @@ class _SnapPackaging:
             desktop_file.parse_and_reformat()
             desktop_file.write(gui_dir=os.path.join(self.meta_dir, 'gui'))
 
-    def _render_socket_modes(self, apps):
+    def _render_socket_modes(self, apps: Dict[str, Any]) -> None:
         for app in apps.values():
             sockets = app.get('sockets', {})
             for socket in sockets.values():
                 mode = socket.get('socket-mode')
                 if mode is not None:
                     socket['socket-mode'] = OctInt(mode)
-        return apps
+
+    def _process_passthrough_properties(
+            self, snap_yaml: Dict[str, Any]) -> None:
+        passthrough_applied = False
+
+        for section in ['apps', 'hooks']:
+            if section in self._config_data:
+                for name, value in snap_yaml[section].items():
+                    if self._apply_passthrough(
+                            value, value.pop('passthrough', {}),
+                            self._original_snapcraft_yaml[section][name]):
+                        passthrough_applied = True
+
+        if self._apply_passthrough(snap_yaml,
+                                   self._config_data.get('passthrough', {}),
+                                   self._original_snapcraft_yaml):
+            passthrough_applied = True
+
+        if passthrough_applied:
+            logger.warn("The 'passthrough' property is being used to "
+                        "propagate experimental properties to snap.yaml "
+                        "that have not been validated. The snap cannot be "
+                        "released to the store.")
+
+    def _apply_passthrough(self, section: Dict[str, Any],
+                           passthrough: Dict[str, Any],
+                           original: Dict[str, Any]) -> bool:
+        # Any value already in the original dictionary must
+        # not be specified in passthrough at the same time.
+        duplicates = list(original.keys() & passthrough.keys())
+        if duplicates:
+            raise meta_errors.AmbiguousPassthroughKeyError(duplicates)
+        section.update(passthrough)
+        return bool(passthrough)
 
 
 def _find_bin(binary, basedir):

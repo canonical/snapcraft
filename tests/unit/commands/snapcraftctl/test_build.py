@@ -42,6 +42,17 @@ class BuildCommandTestCase(CommandBaseTestCase):
         self.assertThat(data['function'], Equals('build'))
         self.assertThat(data['args'], Equals({}))
 
+    def test_build_error(self):
+        # If there is a string in the feedback, it should be considered an
+        # error
+        with open(self.feedback_fifo, 'w') as f:
+            f.write('this is an error\n')
+
+        raised = self.assertRaises(
+            errors.SnapcraftctlError, self.run_command, ['build'])
+
+        self.assertThat(str(raised), Equals('this is an error'))
+
 
 class BuildCommandWithoutFifoTestCase(CommandBaseNoFifoTestCase):
 

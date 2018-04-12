@@ -327,6 +327,15 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "Missing required key(s) in snapcraft.yaml: "
                 "'test-key1' and 'test-key2'. Either specify the missing "
                 "key(s), or use 'adopt-info' to get them from a part.")}),
+        ('AmbiguousPassthroughKeyError', {
+            'exception': meta_errors.AmbiguousPassthroughKeyError,
+            'kwargs': {'keys': ['key1', 'key2']},
+            'expected_message': (
+                "Failed to generate snap metadata: "
+                "The following keys are specified in their regular location "
+                "as well as in passthrough: 'key1' and 'key2'. "
+                "Remove duplicate keys."),
+        }),
         ('MissingMetadataFileError', {
             'exception': errors.MissingMetadataFileError,
             'kwargs': {'part_name': 'test-part', 'path': 'test/path'},

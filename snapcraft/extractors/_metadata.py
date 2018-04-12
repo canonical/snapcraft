@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import yaml
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Set, Union
 
 
 class ExtractedMetadata(yaml.YAMLObject):
@@ -24,8 +24,8 @@ class ExtractedMetadata(yaml.YAMLObject):
     yaml_tag = u'!ExtractedMetadata'
 
     def __init__(
-            self, *, common_id: str='', summary: str='',
-            description: str='', icon: str='',
+            self, *, common_id: str='', summary: str='', description: str='',
+            version: str='', icon: str='',
             desktop_file_paths: List[str]=None) -> None:
         """Create a new ExtractedMetadata instance.
 
@@ -45,6 +45,8 @@ class ExtractedMetadata(yaml.YAMLObject):
             self._data['summary'] = summary
         if description:
             self._data['description'] = description
+        if version:
+            self._data['version'] = version
         if icon:
             self._data['icon'] = icon
         if desktop_file_paths:
@@ -87,6 +89,15 @@ class ExtractedMetadata(yaml.YAMLObject):
         description = self._data.get('description')
         return str(description) if description else None
 
+    def get_version(self) -> str:
+        """Return extracted version.
+
+        :returns: Extracted version
+        :rtype: str
+        """
+        version = self._data.get('version')
+        return str(version) if version else None
+
     def get_icon(self) -> str:
         """Return extracted icon.
 
@@ -113,8 +124,19 @@ class ExtractedMetadata(yaml.YAMLObject):
         """
         return self._data.copy()
 
+    def overlap(self, other: 'ExtractedMetadata') -> Set[str]:
+        """Return all overlapping keys between this and other.
+
+        :returns: All overlapping keys between this and other
+        :rtype: set
+        """
+        return set(self._data.keys() & other.to_dict().keys())
+
     def __eq__(self, other: Any) -> bool:
         if type(other) is type(self):
             return self._data == other._data
 
         return False
+
+    def __len__(self) -> int:
+        return self._data.__len__()

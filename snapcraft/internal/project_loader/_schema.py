@@ -55,7 +55,7 @@ class Validator:
             common.get_schemadir(), 'snapcraft.yaml'))
         try:
             with open(schema_file) as fp:
-                self._schema = yaml.load(fp)
+                self._schema = yaml.safe_load(fp)
         except FileNotFoundError:
             from snapcraft.internal.project_loader import errors
             raise errors.YamlValidationError(

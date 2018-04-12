@@ -96,6 +96,7 @@ class Config:
 
         self.snapcraft_yaml_path = get_snapcraft_yaml()
         snapcraft_yaml = _snapcraft_yaml_load(self.snapcraft_yaml_path)
+        self.original_snapcraft_yaml = snapcraft_yaml.copy()
 
         self._validator = Validator(snapcraft_yaml)
         self._validator.validate()
@@ -203,7 +204,8 @@ class Config:
         return [
             'SNAPCRAFT_STAGE="{}"'.format(self._project_options.stage_dir),
             'SNAPCRAFT_PROJECT_NAME="{}"'.format(self.data['name']),
-            'SNAPCRAFT_PROJECT_VERSION={}'.format(self.data['version']),
+            'SNAPCRAFT_PROJECT_VERSION={}'.format(
+                self.data.get('version', '')),
             'SNAPCRAFT_PROJECT_GRADE={}'.format(self.data['grade']),
         ]
 
@@ -216,7 +218,8 @@ class Config:
                 snapcraft_yaml[key],
                 [
                     ('$SNAPCRAFT_PROJECT_NAME', snapcraft_yaml['name']),
-                    ('$SNAPCRAFT_PROJECT_VERSION', snapcraft_yaml['version']),
+                    ('$SNAPCRAFT_PROJECT_VERSION', snapcraft_yaml.get(
+                        'version', '')),
                     ('$SNAPCRAFT_PROJECT_GRADE', snapcraft_yaml['grade']),
                     ('$SNAPCRAFT_STAGE', self._project_options.stage_dir),
                 ])
@@ -267,7 +270,7 @@ def _snapcraft_yaml_load(yaml_file):
 
     try:
         with open(yaml_file, encoding=encoding) as fp:
-            return yaml.load(fp)
+            return yaml.safe_load(fp)
     except yaml.scanner.ScannerError as e:
         raise errors.YamlValidationError('{} on line {} of {}'.format(
             e.problem, e.problem_mark.line + 1, yaml_file)) from e
