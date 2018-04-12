@@ -52,6 +52,7 @@ class PullStateTestCase(PullStateBaseTestCase):
 
     def test_properties_of_interest(self):
         self.part_properties.update({
+            'override-pull': 'touch override-pull',
             'plugin': 'test-plugin',
             'parse-info': 'test-parse-info',
             'stage-packages': ['test-stage-package'],
@@ -65,8 +66,10 @@ class PullStateTestCase(PullStateBaseTestCase):
         })
 
         properties = self.state.properties_of_interest(self.part_properties)
-        self.assertThat(len(properties), Equals(11))
+        self.assertThat(len(properties), Equals(12))
         self.assertThat(properties['foo'], Equals('bar'))
+        self.assertThat(
+            properties['override-pull'], Equals('touch override-pull'))
         self.assertThat(properties['plugin'], Equals('test-plugin'))
         self.assertThat(properties['parse-info'], Equals('test-parse-info'))
         self.assertThat(
