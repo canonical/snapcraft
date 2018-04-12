@@ -34,7 +34,7 @@ except ImportError:
 # - annotate the part and lifecycle step in the message
 # - add link to privacy policy
 # - add Always option
-_MSG_SEND_TO_SENTRY_TRACEBACK = dedent("""\
+_MSG_TRACEBACK = dedent("""\
     Sorry, Snapcraft ran into an error when trying to running through its
     lifecycle that generated the following traceback:""")
 _MSG_SEND_TO_SENTRY_TRACEBACK_CONFIRM = dedent("""\
@@ -68,20 +68,25 @@ def exception_handler(exception_type, exception, exception_traceback, *,
     exit_code = 1
     is_snapcraft_error = issubclass(exception_type, errors.SnapcraftError)
     is_raven_setup = RavenClient is not None
+    is_sentry_enabled = os.getenv('SNAPCRAFT_ENABLE_SENTRY') is not None
+    is_sentry_flag = os.getenv('SNAPCRAFT_SEND_ERROR_DATA', 'n') == 'y'
 
-    if is_raven_setup and not is_snapcraft_error:
-        is_env_send_data = os.getenv(
-            'SNAPCRAFT_SEND_ERROR_DATA', 'n') == 'y'
-        msg = _MSG_SEND_TO_SENTRY_TRACEBACK_CONFIRM
-        click.echo(_MSG_SEND_TO_SENTRY_TRACEBACK)
+    if is_sentry_enabled and not is_snapcraft_error:
+        click.echo(_MSG_TRACEBACK)
         traceback.print_exception(
             exception_type, exception, exception_traceback)
-        if is_env_send_data or click.confirm(msg):
-            if is_env_send_data:
+        msg = _MSG_SEND_TO_SENTRY_TRACEBACK_CONFIRM
+        if not is_raven_setup:
+            echo.warning(
+                'raven is not installed on this system, cannot send data '
+                'to sentry')
+        elif is_sentry_flag or click.confirm(msg):
+            if is_sentry_flag:
                 click.echo(_MSG_SEND_TO_SENTRY_ENV)
             _submit_trace(exception)
             click.echo(_MSG_SEND_TO_SENTRY_THANKS)
     elif not is_snapcraft_error:
+        click.echo(_MSG_TRACEBACK)
         traceback.print_exception(
             exception_type, exception, exception_traceback)
     elif is_snapcraft_error and debug:
