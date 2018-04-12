@@ -14,9 +14,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import json
 import os
 import subprocess
 import tarfile
+from textwrap import dedent
 from unittest import mock
 
 from testtools.matchers import (
@@ -48,13 +50,13 @@ class DotNetPluginTestCase(unit.TestCase):
         self.assertThat(schema, Not(Contains('required')))
 
     def test_get_pull_properties(self):
-        expected_pull_properties = []
+        expected_pull_properties = ['dotnet-runtime-version']
         self.assertThat(
             dotnet.DotNetPlugin.get_pull_properties(),
             Equals(expected_pull_properties))
 
     def test_get_build_properties(self):
-        expected_build_properties = []
+        expected_build_properties = ['dotnet-runtime-version']
         self.assertThat(
             dotnet.DotNetPlugin.get_build_properties(),
             Equals(expected_build_properties))
@@ -67,6 +69,7 @@ class DotNetProjectBaseTestCase(unit.TestCase):
 
         class Options:
             build_attributes = []
+            dotnet_runtime_version = dotnet._RUNTIME_DEFAULT
 
         self.options = Options()
         self.project = snapcraft.ProjectOptions()
@@ -77,6 +80,49 @@ class DotNetProjectBaseTestCase(unit.TestCase):
             new_callable=mock.PropertyMock,
             return_value='amd64')
         patcher.start()
+        self.addCleanup(patcher.stop)
+
+        def fake_urlopen(request):
+            return FakeResponse(request.full_url, checksum)
+
+        class FakeResponse:
+            def __init__(self, url: str, checksum: str) -> None:
+                self._url = url
+                self._checksum = checksum
+
+            def read(self):
+                if self._url.endswith('releases.json'):
+                    data = json.dumps([
+                        {'version-runtime': dotnet._RUNTIME_DEFAULT,
+                         'blob-sdk':
+                         'https://dotnetcli.blob.core.windows.net/dotnet/'
+                         'Sdk/2.1.4/',
+                         'sdk-linux-x64': 'dotnet-sdk-2.1.4-linux-x64.tar.gz',
+                         'checksums-sdk':
+                         'https://dotnetcli.blob.core.windows.net/dotnet/'
+                         'checksums/2.1.4-sdk-sha.txt'},
+                        {'version-sdk': '2.1.104'},
+                        ]).encode('utf-8')
+                else:
+                    # A checksum file with a list of checksums and archives.
+                    # We fill in the computed checksum used in the pull test.
+                    data = bytes(dedent("""\
+                        Hash: SHA512
+
+                        05fe90457a8b77ad5a5eb2f22348f53e962012a
+                        {} dotnet-sdk-2.1.4-linux-x64.tar.gz
+                        """).format(self._checksum), 'utf-8')
+                return data
+
+        with tarfile.open('test-sdk.tar', 'w') as test_sdk_tar:
+            open('test-sdk', 'w').close()
+            test_sdk_tar.add('test-sdk')
+        checksum = file_utils.calculate_hash(
+            'test-sdk.tar', algorithm='sha512')
+
+        patcher = mock.patch('urllib.request.urlopen')
+        urlopen_mock = patcher.start()
+        urlopen_mock.side_effect = fake_urlopen
         self.addCleanup(patcher.stop)
 
         original_check_call = subprocess.check_call
@@ -109,17 +155,8 @@ class DotNetProjectTestCase(DotNetProjectBaseTestCase):
             Equals("This plugin does not support architecture 'non-amd64'"))
 
     def test_pull_sdk(self):
-        with tarfile.open('test-sdk.tar', 'w') as test_sdk_tar:
-            open('test-sdk', 'w').close()
-            test_sdk_tar.add('test-sdk')
-        with mock.patch.dict(
-                    dotnet._SDKS_AMD64['2.0.0'],
-                    {'checksum': 'sha256/{}'.format(
-                        file_utils.calculate_hash(
-                            'test-sdk.tar', algorithm='sha256'))}):
-            plugin = dotnet.DotNetPlugin(
-                'test-part', self.options, self.project)
-
+        plugin = dotnet.DotNetPlugin(
+            'test-part', self.options, self.project)
         with mock.patch.object(
                 sources.Tar, 'download', return_value='test-sdk.tar'):
             plugin.pull()

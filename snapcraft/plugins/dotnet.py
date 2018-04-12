@@ -100,9 +100,11 @@ class DotNetPlugin(snapcraft.BasePlugin):
     def _get_sdk(self):
         sdk_arch = self.project.deb_arch
         if sdk_arch not in _SDK_ARCH:
+            # TODO: Add an exception class for this error
             raise NotImplementedError(
                 'This plugin does not support architecture '
-                '{}'.format(sdk_arch))
+                '{!r}'.format(sdk_arch))
+        # TODO: Make this a class that takes care of retrieving the infos
         sdk_info = self._get_sdk_info(self.options.dotnet_runtime_version)
 
         sdk_url = sdk_info['package_url']
@@ -152,7 +154,7 @@ class DotNetPlugin(snapcraft.BasePlugin):
 
     def _get_version_metadata(self, version):
         jsonData = self._get_dotnet_release_metadata()
-        package_data = list(filter(lambda x: x['version-runtime']
+        package_data = list(filter(lambda x: x.get('version-runtime')
                             == version, jsonData))
 
         if not package_data or len(package_data) < 1:
@@ -190,11 +192,12 @@ class DotNetPlugin(snapcraft.BasePlugin):
 
     def _get_package_checksum(self, checksum_url, filename):
         req = urllib.request.Request(checksum_url)
-        data = urllib.request.urlopen(req)
+        r = urllib.request.urlopen(req).read()
+        data = r.decode('utf-8').split('\n')
 
         checksum = []
         for line in data:
-            text = str(line, 'utf-8').split()
+            text = line.split()
             if len(text) == 2 and 'Hash' in text[0]:
                 hash = text[1]
 
