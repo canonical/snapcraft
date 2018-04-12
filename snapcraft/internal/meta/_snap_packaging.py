@@ -25,11 +25,11 @@ import shlex
 import shutil
 import stat
 import subprocess
-from typing import Any, Dict, List  # noqa
+from typing import Any, Dict, List, Set  # noqa
 
 import yaml
 
-from snapcraft import file_utils
+from snapcraft import file_utils, formatting_utils
 from snapcraft import shell_utils
 from snapcraft.project import Project
 from snapcraft.internal import (
@@ -122,17 +122,34 @@ def _update_yaml_with_extracted_metadata(
         if not part:
             raise meta_errors.AdoptedPartMissingError(part_name)
 
-        # This would be caught since metadata would be missing, but we want
-        # to be clear about the issue here. This really should be caught by the
-        # schema, but it doesn't seem to support such dynamic behavior.
-        if 'parse-info' not in config_data['parts'][part_name]:
-            raise meta_errors.AdoptedPartNotParsingInfo(part_name)
+        pull_state = part.get_pull_state()
+        build_state = part.get_build_state()
+        stage_state = part.get_stage_state()
+        prime_state = part.get_prime_state()
 
-        # Get the metadata from the pull step first, then update it using the
-        # metadata from the build step (i.e. the data from the build step takes
-        # precedence over the pull step)
-        metadata = part.get_pull_state().extracted_metadata['metadata']
-        metadata.update(part.get_build_state().extracted_metadata['metadata'])
+        # Get the metadata from the pull step first.
+        metadata = pull_state.extracted_metadata['metadata']
+
+        # Now update it using the metadata from the build step (i.e. the data
+        # from the build step takes precedence over the pull step).
+        metadata.update(build_state.extracted_metadata['metadata'])
+
+        # Now make sure any scriptlet data are taken into account. Later steps
+        # take precedence, and scriptlet data (even in earlier steps) take
+        # precedence over extracted data.
+        metadata.update(pull_state.scriptlet_metadata)
+        metadata.update(build_state.scriptlet_metadata)
+        metadata.update(stage_state.scriptlet_metadata)
+        metadata.update(prime_state.scriptlet_metadata)
+
+        if not metadata:
+            # If we didn't end up with any metadata, let's ensure this part was
+            # actually supposed to parse info. If not, let's try to be very
+            # clear about what's happening, here. We do this after checking for
+            # metadata because metadata could be supplied by scriptlets, too.
+            if 'parse-info' not in config_data['parts'][part_name]:
+                raise meta_errors.AdoptedPartNotParsingInfo(part_name)
+
         _adopt_info(config_data, metadata)
 
     # Verify that all mandatory keys have been satisfied
@@ -148,17 +165,39 @@ def _update_yaml_with_extracted_metadata(
 def _adopt_info(
         config_data: Dict[str, Any],
         extracted_metadata: _metadata.ExtractedMetadata):
+    ignored_keys = _adopt_keys(config_data, extracted_metadata)
+    if ignored_keys:
+        logger.warning(
+            'The {keys} {plural_property} {plural_is} specified in adopted '
+            'info as well as the YAML: taking the {plural_property} from the '
+            'YAML'.format(
+                keys=formatting_utils.humanize_list(list(ignored_keys), 'and'),
+                plural_property=formatting_utils.pluralize(
+                    ignored_keys, 'property', 'properties'),
+                plural_is=formatting_utils.pluralize(
+                    ignored_keys, 'is', 'are')))
+
+
+def _adopt_keys(config_data: Dict[str, Any],
+                extracted_metadata: _metadata.ExtractedMetadata) -> Set[str]:
+    ignored_keys = set()
     metadata_dict = extracted_metadata.to_dict()
     for key, value in metadata_dict.items():
         # desktop_file_paths are a special case that will be handled
         # after all the top level snapcraft.yaml keys.
-        if key != 'desktop_file_paths' and key not in config_data:
+        if key == 'desktop_file_paths':
+            continue
+
+        if key not in config_data:
             if key == 'icon':
                 if _icon_file_exists() or not os.path.exists(
                         str(value)):
                     # Do not overwrite the icon file.
                     continue
             config_data[key] = value
+        else:
+            ignored_keys.add(key)
+
     if 'desktop_file_paths' in metadata_dict and 'common_id' in metadata_dict:
         app_name = _get_app_name_from_common_id(
             config_data, str(metadata_dict['common_id']))
@@ -168,6 +207,8 @@ def _adopt_info(
                     config_data['apps'][app_name]['desktop'] = (
                         desktop_file_path)
                     break
+
+    return ignored_keys
 
 
 def _icon_file_exists() -> bool:

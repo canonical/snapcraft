@@ -22,7 +22,7 @@ import sys
 
 import click
 
-from snapcraft.internal.errors import SnapcraftEnvironmentError
+from snapcraft.internal import errors
 from snapcraft.cli._errors import exception_handler
 from snapcraft.internal import log
 
@@ -68,6 +68,13 @@ def prime():
     _call_function('prime')
 
 
+@run.command('set-version')
+@click.argument('version')
+def set_version(version):
+    """Set the version of the snap"""
+    _call_function('set-version', {'version': version})
+
+
 def _call_function(function_name, args=None):
     if not args:
         args = {}
@@ -85,7 +92,7 @@ def _call_function(function_name, args=None):
         call_fifo = os.environ['SNAPCRAFTCTL_CALL_FIFO']
         feedback_fifo = os.environ['SNAPCRAFTCTL_FEEDBACK_FIFO']
     except KeyError as e:
-        raise SnapcraftEnvironmentError(
+        raise errors.SnapcraftEnvironmentError(
             "{!s} environment variable must be defined. Note that this "
             "utility is only designed for use within a snapcraft.yaml".format(
                 e)) from e
@@ -95,4 +102,8 @@ def _call_function(function_name, args=None):
         f.flush()
 
     with open(feedback_fifo, 'r') as f:
-        f.readline()
+        feedback = f.readline().strip()
+
+    # Any feedback is considered a fatal error to be printed
+    if feedback:
+        raise errors.SnapcraftctlError(feedback)

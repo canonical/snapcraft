@@ -16,6 +16,7 @@
 
 import yaml
 
+import snapcraft.extractors
 from snapcraft.internal.states._state import PartState
 
 
@@ -30,11 +31,16 @@ yaml.add_constructor(u'!StageState', _stage_state_constructor)
 class StageState(PartState):
     yaml_tag = u'!StageState'
 
-    def __init__(self, files, directories, part_properties=None, project=None):
+    def __init__(self, files, directories, part_properties=None, project=None,
+                 scriptlet_metadata=None):
         super().__init__(part_properties, project)
+
+        if not scriptlet_metadata:
+            scriptlet_metadata = snapcraft.extractors.ExtractedMetadata()
 
         self.files = files
         self.directories = directories
+        self.scriptlet_metadata = scriptlet_metadata
 
     def properties_of_interest(self, part_properties):
         """Extract the properties concerning this step from part_properties.

@@ -45,6 +45,13 @@ class ExtractedMetadataTestCase(unit.TestCase):
         self.assertThat(metadata.get_summary(), Equals('summary'))
         self.assertThat(metadata.get_description(), Equals('new description'))
 
+    def test_overlap(self):
+        metadata = ExtractedMetadata(
+            summary='summary', description='description')
+        metadata2 = ExtractedMetadata(description='new description')
+
+        self.assertThat(metadata.overlap(metadata2), Equals({'description'}))
+
     def test_eq(self):
         metadata1 = ExtractedMetadata(summary='summary')
         metadata2 = ExtractedMetadata(summary='summary')
@@ -57,6 +64,13 @@ class ExtractedMetadataTestCase(unit.TestCase):
         metadata1 = ExtractedMetadata(summary='summary')
         metadata2 = ExtractedMetadata(description='description')
         self.assertThat(metadata1, Not(Equals(metadata2)))
+
+    def test_len(self):
+        metadata = ExtractedMetadata(version='version')
+        self.assertThat(len(metadata), Equals(1))
+
+        metadata = ExtractedMetadata(summary='summary', version='version')
+        self.assertThat(len(metadata), Equals(2))
 
     def test_to_dict_partial(self):
         metadata = ExtractedMetadata(summary='summary')

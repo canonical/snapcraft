@@ -16,7 +16,7 @@
 
 import yaml
 
-from snapcraft import extractors
+import snapcraft.extractors
 from snapcraft.internal.states._state import PartState
 
 
@@ -47,7 +47,7 @@ class BuildState(PartState):
     def __init__(
             self, property_names, part_properties=None, project=None,
             plugin_assets=None, machine_assets=None, metadata=None,
-            metadata_files=None):
+            metadata_files=None, scriptlet_metadata=None):
         # Save this off before calling super() since we'll need it
         # FIXME: for 3.x the name `schema_properties` is leaking
         #        implementation details from a higher layer.
@@ -59,8 +59,11 @@ class BuildState(PartState):
         if machine_assets:
             self.assets.update(machine_assets)
 
+        if not scriptlet_metadata:
+            scriptlet_metadata = snapcraft.extractors.ExtractedMetadata()
+
         if not metadata:
-            metadata = extractors.ExtractedMetadata()
+            metadata = snapcraft.extractors.ExtractedMetadata()
 
         if not metadata_files:
             metadata_files = []
@@ -69,6 +72,8 @@ class BuildState(PartState):
             'metadata': metadata,
             'files': metadata_files
         }
+
+        self.scriptlet_metadata = scriptlet_metadata
 
         super().__init__(part_properties, project)
 

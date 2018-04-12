@@ -157,11 +157,13 @@ class Runner:
                 while status is None:
                     function_call = call_fifo.read()
                     if function_call:
-                        self._handle_builtin_function(
-                            scriptlet_name, function_call.strip())
-                        # Let caller know that function call has been handled
-                        # (must contain at least a newline)
-                        feedback_fifo.write('\n')
+                        # Handle the function and let caller know that function
+                        # call has been handled (must contain at least a
+                        # newline, anything beyond is considered an error by
+                        # snapcraftctl)
+                        feedback_fifo.write('{}\n'.format(
+                            self._handle_builtin_function(
+                                scriptlet_name, function_call.strip())))
                     status = process.poll()
 
                     # Don't loop TOO busily
@@ -197,13 +199,22 @@ class Runner:
 
         try:
             function = self._builtin_functions[function_name]
-            function(**function_args)
         except KeyError as e:
             # This means a snapcraft developer messed up adding a new
             # snapcraftctl function. Should never be encountered in real life.
             raise ValueError(
                 '{!r} scriptlet called an undefined builtin function: '
                 '{}'.format(scriptlet_name, function_name)) from e
+
+        # Return the feedback for this function call. No feedback
+        # (empty string) is the success case, and feedback is an error case,
+        # in which case it should be printed and snapcraftctl should print the
+        # feedback and exit non-zero.
+        try:
+            function(**function_args)
+        except errors.ScriptletBaseError as e:
+            return e.__str__()
+        return ''
 
 
 class _NonBlockingRWFifo:

@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import functools
 import logging
 import os
+import subprocess
 from textwrap import dedent
 
 import fixtures
@@ -319,6 +321,30 @@ class RunnerFailureTestCase(unit.TestCase):
             builtin_functions={})
 
         self.assertRaises(errors.ScriptletRunError, runner.build)
+
+    def test_snapcraftctl_errors_on_exception(self):
+        os.mkdir('primedir')
+
+        class _TestException(errors.ScriptletBaseError):
+            fmt = "I'm an error"
+
+        def _raise():
+            raise _TestException()
+
+        runner = _runner.Runner(
+            part_properties={'override-prime': 'snapcraftctl prime'},
+            sourcedir='sourcedir',
+            builddir='builddir',
+            stagedir='stagedir',
+            primedir='primedir',
+            builtin_functions={'prime': _raise})
+
+        silent_popen = functools.partial(
+            subprocess.Popen, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL)
+
+        with mock.patch('subprocess.Popen', wraps=silent_popen):
+            self.assertRaises(errors.ScriptletRunError, runner.prime)
 
 
 class RunnerDeprecationTestCase(unit.TestCase):

@@ -91,6 +91,8 @@ class CreateBaseTestCase(unit.TestCase):
             for part in self.config.parts.all_parts:
                 part.pull()
                 part.build()
+                part.stage()
+                part.prime()
 
         _snap_packaging.create_snap_packaging(
             self.config.data, self.config.parts, self.project_options, 'dummy',
@@ -631,15 +633,14 @@ class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):
         open('test-metadata-file', 'w').close()
 
 
-class CreateMetadataFromSourceErrorsTestCase(
-        CreateMetadataFromSourceBaseTestCase):
+class CreateMetadataFromSourceTestCase(CreateMetadataFromSourceBaseTestCase):
 
     def test_create_metadata_with_missing_parse_info(self):
         del self.config_data['summary']
         del self.config_data['parts']['test-part']['parse-info']
         raised = self.assertRaises(
             meta_errors.AdoptedPartNotParsingInfo,
-            self.generate_meta_yaml)
+            self.generate_meta_yaml, build=True)
         self.assertThat(raised.part, Equals('test-part'))
 
     def test_create_metadata_with_wrong_adopt_info(self):
@@ -650,6 +651,9 @@ class CreateMetadataFromSourceErrorsTestCase(
         self.assertThat(raised.part, Equals('wrong-part'))
 
     def test_metadata_doesnt_overwrite_specified(self):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
         def _fake_extractor(file_path):
             return extractors.ExtractedMetadata(
                 summary='extracted summary',
@@ -665,6 +669,13 @@ class CreateMetadataFromSourceErrorsTestCase(
         self.assertThat(y['summary'], Equals(self.config_data['summary']))
         self.assertThat(
             y['description'], Equals(self.config_data['description']))
+
+        # Verify that we warn that the YAML took precedence over the extracted
+        # metadata for summary and description
+        self.assertThat(fake_logger.output, Contains(
+            "The 'description' and 'summary' properties are specified in "
+            "adopted info as well as the YAML: taking the properties from the "
+            "YAML"))
 
     def test_metadata_with_unexisting_icon(self):
         def _fake_extractor(file_path):
@@ -773,6 +784,69 @@ class MetadataFromSourceWithDesktopFileTestCase(
         expected_desktop = os.path.join(
             self.meta_dir, 'gui', 'test-app.desktop')
         self.assertThat(expected_desktop, FileContains(desktop_content))
+
+
+class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
+
+    def test_scriptlets_satisfy_required_property(self):
+        del self.config_data['version']
+        del self.config_data['parts']['test-part']['parse-info']
+        self.config_data['parts']['test-part']['override-prime'] = (
+            'snapcraftctl set-version override-version')
+
+        generated = self.generate_meta_yaml(build=True)
+
+        self.assertThat(generated['version'], Equals('override-version'))
+
+    def test_scriptlets_no_overwrite_existing_property(self):
+        fake_logger = fixtures.FakeLogger(level=logging.WARNING)
+        self.useFixture(fake_logger)
+
+        del self.config_data['parts']['test-part']['parse-info']
+        self.config_data['parts']['test-part']['override-prime'] = (
+            'snapcraftctl set-version override-version')
+
+        generated = self.generate_meta_yaml(build=True)
+
+        self.assertThat(generated['version'], Equals('test-version'))
+
+        # Since the specified version took precedence over the scriptlet-set
+        # version, verify that we warned
+        self.assertThat(fake_logger.output, Contains(
+            "The 'version' property is specified in adopted info as well as "
+            "the YAML: taking the property from the YAML"))
+
+    def test_scriptlets_overwrite_extracted_metadata(self):
+        del self.config_data['version']
+
+        self.config_data['parts']['test-part']['override-build'] = (
+            'snapcraftctl build && snapcraftctl set-version override-version')
+
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(version='extracted-version')
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        generated = self.generate_meta_yaml(build=True)
+
+        self.assertThat(generated['version'], Equals('override-version'))
+
+    def test_scriptlets_overwrite_extracted_metadata_regardless_of_order(self):
+        del self.config_data['version']
+
+        self.config_data['parts']['test-part']['override-pull'] = (
+            'snapcraftctl set-version override-version && snapcraftctl pull')
+
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(version='extracted-version')
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        generated = self.generate_meta_yaml(build=True)
+
+        self.assertThat(generated['version'], Equals('override-version'))
 
 
 class WriteSnapDirectoryTestCase(CreateBaseTestCase):

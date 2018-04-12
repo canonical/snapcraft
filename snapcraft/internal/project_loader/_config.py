@@ -204,7 +204,8 @@ class Config:
         return [
             'SNAPCRAFT_STAGE="{}"'.format(self._project_options.stage_dir),
             'SNAPCRAFT_PROJECT_NAME="{}"'.format(self.data['name']),
-            'SNAPCRAFT_PROJECT_VERSION={}'.format(self.data['version']),
+            'SNAPCRAFT_PROJECT_VERSION={}'.format(
+                self.data.get('version', '')),
             'SNAPCRAFT_PROJECT_GRADE={}'.format(self.data['grade']),
         ]
 
@@ -217,7 +218,8 @@ class Config:
                 snapcraft_yaml[key],
                 [
                     ('$SNAPCRAFT_PROJECT_NAME', snapcraft_yaml['name']),
-                    ('$SNAPCRAFT_PROJECT_VERSION', snapcraft_yaml['version']),
+                    ('$SNAPCRAFT_PROJECT_VERSION', snapcraft_yaml.get(
+                        'version', '')),
                     ('$SNAPCRAFT_PROJECT_GRADE', snapcraft_yaml['grade']),
                     ('$SNAPCRAFT_STAGE', self._project_options.stage_dir),
                 ])
