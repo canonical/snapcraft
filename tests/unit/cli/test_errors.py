@@ -117,7 +117,7 @@ class ErrorsTestCase(unit.TestCase):
     def test_handler_traceback_send_traceback_to_sentry(
             self, click_confirm_mock, raven_request_mock, raven_client_mock):
         self.useFixture(fixtures.EnvironmentVariable(
-            'SNAPCRAFT_ENABLE_SENTRY', ''))
+            'SNAPCRAFT_ENABLE_SENTRY', 'yes'))
         try:
             self.call_handler(RuntimeError('not a SnapcraftError'), True)
         except Exception:

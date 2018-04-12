@@ -68,8 +68,10 @@ def exception_handler(exception_type, exception, exception_traceback, *,
     exit_code = 1
     is_snapcraft_error = issubclass(exception_type, errors.SnapcraftError)
     is_raven_setup = RavenClient is not None
-    is_sentry_enabled = os.getenv('SNAPCRAFT_ENABLE_SENTRY') is not None
-    is_sentry_flag = os.getenv('SNAPCRAFT_SEND_ERROR_DATA', 'n') == 'y'
+    is_sentry_enabled = distutils.util.strtobool(
+        os.getenv('SNAPCRAFT_ENABLE_SENTRY', 'n')) == 1
+    is_sentry_flag = distutils.util.strtobool(
+        os.getenv('SNAPCRAFT_SEND_ERROR_DATA', 'n')) == 1
 
     if is_sentry_enabled and not is_snapcraft_error:
         click.echo(_MSG_TRACEBACK)
