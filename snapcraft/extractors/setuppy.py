@@ -16,11 +16,15 @@
 
 import os
 import importlib.util
+import logging
 from typing import Dict  # noqa: F401
 from unittest.mock import patch
 
 from ._metadata import ExtractedMetadata
 from snapcraft.extractors import _errors
+
+
+logger = logging.getLogger(__name__)
 
 
 def extract(path: str) -> ExtractedMetadata:
@@ -36,9 +40,19 @@ def extract(path: str) -> ExtractedMetadata:
         nonlocal params
         params = kwargs
 
-    with patch('setuptools.setup') as setup_mock:
-        setup_mock.side_effect = _fake_setup
-        spec.loader.exec_module(setuppy)
+    with patch('setuptools.setup') as setuptools_mock:
+        with patch('distutils.core.setup') as distutils_mock:
+            setuptools_mock.side_effect = _fake_setup
+            distutils_mock.side_effect = _fake_setup
+            # This would really fail during the use of the plugin
+            # but let's be cautios and add the proper guards.
+            try:
+                spec.loader.exec_module(setuppy)
+            except SystemExit as e:
+                raise _errors.SetupPyFileParseError(path=path)
+            except ImportError as e:
+                raise _errors.SetupPyImportError(
+                    path=path, error=str(e)) from e
 
     version = params.get('version')
     description = params.get('description')

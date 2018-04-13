@@ -18,6 +18,7 @@ from textwrap import dedent
 
 from snapcraft.extractors import setuppy, ExtractedMetadata
 
+from testscenarios import multiply_scenarios
 from testtools.matchers import Equals
 
 from snapcraft.extractors import _errors
@@ -26,7 +27,7 @@ from tests import unit
 
 class SetupPyTestCase(unit.TestCase):
 
-    scenarios = [
+    metadata = [
         ('description', dict(params=dict(
             version=None,
             description='test-description'))),
@@ -38,24 +39,46 @@ class SetupPyTestCase(unit.TestCase):
             version='test-version')))
     ]
 
+    tools = [
+        ('setuptools', dict(
+            import_statement='import setuptools',
+            method='setuptools.setup')),
+        ('from setuptools', dict(
+            import_statement='from setuptools import setup',
+            method='setup')),
+        ('distutils', dict(
+            import_statement='import distutils.core',
+            method='distutils.core.setup')),
+        ('from distutils.core', dict(
+            import_statement='from distutils.core import setup',
+            method='setup')),
+    ]
+
+    scenarios = multiply_scenarios(metadata, tools)
+
     def setUp(self):
         super().setUp()
 
         params = ['    {}="{}",'.format(k, v)
                   for k, v in self.params.items() if v]
 
+        fmt = dict(
+            params='\n'.join(params),
+            import_statement=self.import_statement,
+            method=self.method,
+        )
+
         with open('setup.py', 'w') as setup_file:
             print(dedent("""\
-                import setuptools
+                {import_statement}
 
-                setuptools.setup(
+                {method}(
                     name='hello-world',
-                {}
+                {params}
                     author='Canonical LTD',
                     author_email='snapcraft@lists.snapcraft.io',
-                    scripts=['hello']
                 )
-            """).format('\n'.join(params)), file=setup_file)
+            """).format(**fmt), file=setup_file)
 
     def test_info_extraction(self):
         expected = ExtractedMetadata(**self.params)
@@ -64,7 +87,7 @@ class SetupPyTestCase(unit.TestCase):
         self.assertThat(actual, Equals(expected))
 
 
-class SetupPyUnhandledFileTestCase(unit.TestCase):
+class SetupPyErrorsTestCase(unit.TestCase):
 
     def test_unhandled_file_test_case(self):
         raised = self.assertRaises(
@@ -73,3 +96,25 @@ class SetupPyUnhandledFileTestCase(unit.TestCase):
 
         self.assertThat(raised.path, Equals('unhandled-file'))
         self.assertThat(raised.extractor_name, Equals('setup.py'))
+
+    def test_bad_import(self):
+        with open('setup.py', 'w') as setup_file:
+            print('import bad_module', file=setup_file)
+
+        self.assertRaises(
+            _errors.SetupPyImportError, setuppy.extract,
+            'setup.py')
+
+    def test_unsupported_setup(self):
+        with open('setup.py', 'w') as setup_file:
+            print(dedent("""\
+                def setup(**kwargs):
+                    # Raise what setuptools and distutils raise
+                    raise SystemExit()
+
+                setup(name='name', version='version')
+                """), file=setup_file)
+
+        self.assertRaises(
+            _errors.SetupPyFileParseError, setuppy.extract,
+            'setup.py')
