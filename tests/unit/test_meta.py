@@ -874,6 +874,54 @@ class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
         self.assertThat(generated[self.keyword], Equals(self.value))
 
 
+class InvalidMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
+
+    scenarios = [
+        ('version', {
+            'keyword': 'version',
+            'setter': 'set-version',
+            'value': '.invalid-'}),
+        ('grade', {
+            'keyword': 'grade',
+            'setter': 'set-grade',
+            'value': 'invalid'}),
+    ]
+
+    def test_invalid_scriptlet_metadata(self):
+        with contextlib.suppress(KeyError):
+            del self.config_data[self.keyword]
+
+        del self.config_data['parts']['test-part']['parse-info']
+
+        self.config_data['parts']['test-part']['override-prime'] = (
+            'snapcraftctl {} {}'.format(self.setter, self.value))
+
+        raised = self.assertRaises(
+            project_loader.errors.YamlValidationError, self.generate_meta_yaml,
+            build=True)
+        self.assertThat(str(raised), Contains(
+            'Issues while validating properties: The {!r} property does not '
+            'match the required schema'.format(self.keyword)))
+
+    def test_invalid_extracted_metadata(self):
+        with contextlib.suppress(KeyError):
+            del self.config_data[self.keyword]
+
+        def _fake_extractor(file_path):
+            return extractors.ExtractedMetadata(
+                **{self.keyword: self.value})
+
+        self.useFixture(fixture_setup.FakeMetadataExtractor(
+            'fake', _fake_extractor))
+
+        raised = self.assertRaises(
+            project_loader.errors.YamlValidationError, self.generate_meta_yaml,
+            build=True)
+        self.assertThat(str(raised), Contains(
+            'Issues while validating properties: The {!r} property does not '
+            'match the required schema'.format(self.keyword)))
+
+
 class WriteSnapDirectoryTestCase(CreateBaseTestCase):
 
     def test_write_snap_directory(self):

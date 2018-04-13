@@ -103,6 +103,11 @@ def create_snap_packaging(
     # Update config_data using metadata extracted from the project
     _update_yaml_with_extracted_metadata(config_data, parts_config)
 
+    # Now that we've updated config_data with random stuff extracted from
+    # parts, re-validate it to ensure the it still conforms with the schema.
+    validator = project_loader.Validator(config_data)
+    validator.validate(source='properties')
+
     # Update default values
     _update_yaml_with_defaults(config_data, snapcraft_schema)
 
@@ -182,9 +187,9 @@ def _adopt_keys(config_data: Dict[str, Any],
     ignored_keys = set()
     metadata_dict = extracted_metadata.to_dict()
     for key, value in metadata_dict.items():
-        # desktop_file_paths are a special case that will be handled
-        # after all the top level snapcraft.yaml keys.
-        if key == 'desktop_file_paths':
+        # desktop_file_paths and common_ids are special cases that will be
+        # handled after all the top level snapcraft.yaml keys.
+        if key == 'desktop_file_paths' or key == 'common_id':
             continue
 
         if key not in config_data:
