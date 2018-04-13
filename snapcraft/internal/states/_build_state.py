@@ -37,6 +37,7 @@ def _schema_properties():
         'disable-parallel',
         'install',
         'organize',
+        'override-build',
         'prepare',
     }
 

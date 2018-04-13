@@ -885,11 +885,11 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, 'Expected pull to save state YAML')
         self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(10))
+        self.assertThat(len(state.properties), Equals(11))
         for expected in ['source', 'source-branch', 'source-commit',
                          'source-depth', 'source-subdir', 'source-tag',
                          'source-type', 'plugin', 'stage-packages',
-                         'parse-info']:
+                         'parse-info', 'override-pull']:
             self.assertTrue(expected in state.properties)
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
@@ -929,11 +929,11 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, 'Expected pull to save state YAML')
         self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(10))
+        self.assertThat(len(state.properties), Equals(11))
         for expected in ['source', 'source-branch', 'source-commit',
                          'source-depth', 'source-subdir', 'source-tag',
                          'source-type', 'plugin', 'stage-packages',
-                         'parse-info']:
+                         'parse-info', 'override-pull']:
             self.assertThat(state.properties, Contains(expected))
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(state.project_options, Contains('deb_arch'))
@@ -972,14 +972,15 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, 'Expected pull to save state YAML')
         self.assertTrue(type(state) is states.PullState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(10))
+        self.assertThat(len(state.properties), Equals(11))
         for expected in ['source', 'source-branch', 'source-commit',
                          'source-depth', 'source-subdir', 'source-tag',
                          'source-type', 'plugin', 'stage-packages',
-                         'parse-info']:
+                         'parse-info', 'override-pull']:
             self.assertThat(state.properties, Contains(expected))
-        self.assertTrue(type(state.project_options) is OrderedDict)
-        self.assertThat(state.project_options, Contains('deb_arch'))
+        self.assertThat(
+            state.properties['override-pull'],
+            Equals('snapcraftctl set-version override-version'))
 
         metadata = state.scriptlet_metadata
         self.assertThat(metadata.get_version(), Equals('override-version'))
@@ -1034,10 +1035,10 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(8))
+        self.assertThat(len(state.properties), Equals(9))
         for expected in ['after', 'build-attributes', 'build-packages',
                          'disable-parallel', 'organize', 'prepare', 'build',
-                         'install']:
+                         'install', 'override-build']:
             self.assertTrue(expected in state.properties)
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertTrue('deb_arch' in state.project_options)
@@ -1075,10 +1076,10 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(8))
+        self.assertThat(len(state.properties), Equals(9))
         for expected in ['after', 'build-attributes', 'build-packages',
                          'disable-parallel', 'organize', 'prepare', 'build',
-                         'install']:
+                         'install', 'override-build']:
             self.assertThat(state.properties, Contains(expected))
         self.assertTrue(type(state.project_options) is OrderedDict)
         self.assertThat(state.project_options, Contains('deb_arch'))
@@ -1116,13 +1117,14 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(state, 'Expected build to save state YAML')
         self.assertTrue(type(state) is states.BuildState)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(8))
+        self.assertThat(len(state.properties), Equals(9))
         for expected in ['after', 'build-attributes', 'build-packages',
                          'disable-parallel', 'organize', 'prepare', 'build',
-                         'install']:
+                         'install', 'override-build']:
             self.assertThat(state.properties, Contains(expected))
-        self.assertTrue(type(state.project_options) is OrderedDict)
-        self.assertThat(state.project_options, Contains('deb_arch'))
+        self.assertThat(
+            state.properties['override-build'],
+            Equals('snapcraftctl set-version override-version'))
 
         metadata = state.scriptlet_metadata
         self.assertThat(metadata.get_version(), Equals('override-version'))
@@ -1218,9 +1220,12 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.files) is set)
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(2))
-        for expected in ['stage', 'filesets']:
+        self.assertThat(len(state.properties), Equals(3))
+        for expected in ['stage', 'filesets', 'override-stage']:
             self.assertThat(state.properties, Contains(expected))
+        self.assertThat(
+            state.properties['override-stage'],
+            Equals('snapcraftctl set-version override-version'))
 
         metadata = state.scriptlet_metadata
         self.assertThat(metadata.get_version(), Equals('override-version'))
@@ -1395,8 +1400,12 @@ class StateTestCase(StateBaseTestCase):
         self.assertTrue(type(state.directories) is set)
         self.assertTrue(type(state.dependency_paths) is set)
         self.assertTrue(type(state.properties) is OrderedDict)
-        self.assertThat(len(state.properties), Equals(1))
-        self.assertThat(state.properties, Contains('prime'))
+        self.assertThat(len(state.properties), Equals(2))
+        for expected in ['prime', 'override-prime']:
+            self.assertThat(state.properties, Contains(expected))
+        self.assertThat(
+            state.properties['override-prime'],
+            Equals('snapcraftctl set-version override-version'))
 
         metadata = state.scriptlet_metadata
         self.assertThat(metadata.get_version(), Equals('override-version'))

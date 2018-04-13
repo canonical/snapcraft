@@ -30,6 +30,7 @@ yaml.add_constructor(u'!PullState', _pull_state_constructor)
 
 def _schema_properties():
     return {
+        'override-pull',
         'parse-info',
         'plugin',
         'source',
