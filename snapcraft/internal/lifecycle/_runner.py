@@ -80,7 +80,7 @@ def execute(step, project_options, part_names=None):
     _Executor(config, project_options).run(step, part_names)
 
     return {'name': config.data['name'],
-            'version': config.data['version'],
+            'version': config.data.get('version'),
             'arch': config.data['architectures'],
             'type': config.data.get('type', '')}
 
