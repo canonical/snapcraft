@@ -66,6 +66,23 @@ definitions:
 title: snapcraft schema
 type: object
 properties:
+  vendoring:
+    type: array
+    validation-failure:
+      "a list of valid host names needs to be provided."
+    description: external sources available to resolve dependencies
+    minItems: 1
+    uniqueItems: true
+    items:
+      - type: string
+        validation-failure:
+          "{.instance!r} is not a valid hostname."
+        # This format accepts hosts of the form foo or example.com valid.
+        # We don't allow wildcards like .foo or *.example.com because that
+        # would include unwanted resources as for example in the case of
+        # *.launchpad.net which includes ppa.launchpad.net as opposed to being
+        # explicit with [launchpad.net, git.launchpad.net] instead.
+        format: hostname
   build-packages:
     $ref: "#/definitions/grammar-array"
     description: top level build packages.

@@ -127,7 +127,7 @@ class Containerbuild:
             if container['name'] == self._container_name.split(':')[-1]:
                 return container
 
-    def _configure_container(self):
+    def _configure_container(self, *, new_container: bool):
         subprocess.check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.SNAPCRAFT_SETUP_CORE', '1'])
@@ -142,7 +142,20 @@ class Containerbuild:
         subprocess.check_call([
             'lxc', 'config', 'set', self._container_name,
             'environment.LC_ALL', 'C.UTF-8'])
+        # Reset proxy if one was set previously
+        self._set_proxy('')
         self._set_image_info_env_var()
+        self._wait_for_network()
+        if new_container:
+            self._container_run(['apt-get', 'update'])
+            # Because of https://bugs.launchpad.net/snappy/+bug/1628289
+            # Needed to run snapcraft as a snap and build-snaps
+            self._container_run(['apt-get', 'install', 'squashfuse', '-y'])
+        if self._remote != 'local':
+            # For remote mounts we will need sshfs.
+            self._container_run(['apt-get', 'install', 'sshfs', '-y'])
+        self._inject_snapcraft(new_container=new_container)
+        self._setup_vendoring()
 
     def _set_image_info_env_var(self):
         FAILURE_WARNING_FORMAT = (
@@ -248,6 +261,51 @@ class Containerbuild:
                         'No network connection in the container.\n'
                         'If using a proxy, check its configuration.')
         logger.info('Network connection established')
+
+    def _setup_vendoring(self):
+        vendoring = self._project_options.info.vendoring
+        if vendoring:
+            logger.info(
+                'This snap uses vendoring. In order to enforce it, network '
+                'access to resources not on the following list will be denied:'
+                '\n\n{}'
+                .format(', '.join(vendoring)))
+            # Configure a proxy that blocks access to any hosts which are not
+            # specified by vendoring in snapcraft.yaml.
+            # The rules below mean:
+            # Specify the port of the proxy server.
+            # Allow access to a whitelist on ports for http, https and git.
+            # Deny everything else.
+            self._container_run(['apt-get', 'install', 'squid', '-y'])
+            port = 3129
+            rules = dedent("""
+                http_port {port!s}
+                acl Safe_ports port 80 443 9418
+                http_access allow localhost whitelist Safe_ports
+                http_access deny all
+                """.format(port=port))
+            # Prepend the whitelist here because the deny must come last.
+            for host in vendoring:
+                # The schema enforces hosts of the form foo or example.com
+                # so we always have explicit domain names and no wildcards
+                # with a leading period like .spam.eggs will be used.
+                # See also: https://wiki.squid-cache.org/SquidFaq/SquidAcl
+                rules = 'acl whitelist dstdomain {}\n'.format(host) + rules
+            subprocess.check_output([
+                'lxc', 'exec', self._container_name, '--',
+                'tee', '/etc/squid/squid.conf'],
+                input=rules.encode())
+            self._container_run(['service', 'squid', 'reload'])
+            self._set_proxy('http://localhost:{}'.format(port))
+
+    def _set_proxy(self, proxy: str):
+        # Enable/ disable proxy in the environment
+        subprocess.check_call([
+            'lxc', 'config', 'set', self._container_name,
+            'environment.http_proxy', proxy])
+        subprocess.check_call([
+            'lxc', 'config', 'set', self._container_name,
+            'environment.https_proxy', proxy])
 
     def _inject_snapcraft(self, *, new_container: bool):
         if common.is_snap():

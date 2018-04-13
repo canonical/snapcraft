@@ -31,6 +31,7 @@ from testtools.matchers import Contains, Equals
 
 from snapcraft import ProjectOptions
 from snapcraft.project._project_options import _get_deb_arch
+from snapcraft.project._project_info import ProjectInfo
 from snapcraft.internal import lxd
 from snapcraft.internal.errors import (
     ContainerConnectionError,
@@ -57,6 +58,11 @@ class LXDBaseTestCase(unit.TestCase):
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
         self.project_options = ProjectOptions(target_deb_arch=self.target_arch)
+        self.project_options.info = ProjectInfo({
+            'name': 'project',
+            'version': '0.1',
+            'confinement': 'strict',
+            })
 
 
 class LXDTestCase(LXDBaseTestCase):
@@ -111,6 +117,10 @@ class CleanbuilderTestCase(LXDTestCase):
                   'environment.SNAPCRAFT_SETUP_CORE', '1']),
             call(['lxc', 'config', 'set', container_name,
                   'environment.LC_ALL', 'C.UTF-8']),
+            call(['lxc', 'config', 'set', self.fake_lxd.name,
+                  'environment.http_proxy', '']),
+            call(['lxc', 'config', 'set', self.fake_lxd.name,
+                  'environment.https_proxy', '']),
             call(['lxc', 'config', 'set', container_name,
                   'environment.SNAPCRAFT_IMAGE_INFO',
                   '{"fingerprint": "test-fingerprint", '
@@ -122,7 +132,16 @@ class CleanbuilderTestCase(LXDTestCase):
         mock_container_run.assert_has_calls([
             call(['python3', '-c', ANY]),
             call(['apt-get', 'update']),
-            call(['apt-get', 'install', 'squashfuse', '-y']),
+        ])
+
+        packages = ['squashfuse', 'sshfs']
+        if self.remote == 'local':
+            packages.remove('sshfs')
+        mock_container_run.assert_has_calls([
+            call(['apt-get', 'install', pkg, '-y']) for pkg in packages
+        ])
+
+        mock_container_run.assert_has_calls([
             call(['mkdir', project_folder]),
             call(['tar', 'xvf', 'project.tar'],
                  cwd=project_folder),
@@ -130,7 +149,8 @@ class CleanbuilderTestCase(LXDTestCase):
                  cwd=project_folder, user='root'),
         ])
         # Ensure there's no unexpected calls eg. two network checks
-        self.assertThat(mock_container_run.call_count, Equals(6))
+        self.assertThat(mock_container_run.call_count,
+                        Equals(5 + len(packages)))
         self.fake_lxd.check_call_mock.assert_has_calls([
             call(['lxc', 'file', 'pull',
                   '{}{}/snap.snap'.format(container_name, project_folder),
@@ -227,6 +247,11 @@ class ContainerbuildTestCase(LXDTestCase):
         self.fake_lxd.check_call_mock.side_effect = call_effect
 
         self.project_options = ProjectOptions(debug=True)
+        self.project_options.info = ProjectInfo({
+            'name': 'project',
+            'version': '0.1',
+            'confinement': 'strict',
+            })
         self.make_containerbuild().execute()
 
         self.fake_lxd.check_call_mock.assert_has_calls([
@@ -316,9 +341,11 @@ class ContainerbuildTestCase(LXDTestCase):
         builder = self.make_containerbuild()
         builder.execute()
 
+        packages = ['squashfuse', 'sshfs', 'snapcraft']
+        if self.remote == 'local':
+            packages.remove('sshfs')
         mock_container_run.assert_has_calls([
-            call(['apt-get', 'install', 'squashfuse', '-y']),
-            call(['apt-get', 'install', 'snapcraft', '-y']),
+            call(['apt-get', 'install', pkg, '-y']) for pkg in packages
         ])
 
     @patch('snapcraft.internal.common.is_snap')
@@ -406,8 +433,15 @@ class ContainerbuildTestCase(LXDTestCase):
                   os.path.join(tmp_dir, 'snapcraft_345.snap'),
                   '{}/run/snapcraft_345.snap'.format(self.fake_lxd.name)]),
         ])
+
+        packages = ['squashfuse', 'sshfs']
+        if self.remote == 'local':
+            packages.remove('sshfs')
         mock_container_run.assert_has_calls([
-            call(['apt-get', 'install', 'squashfuse', '-y']),
+            call(['apt-get', 'install', pkg, '-y']) for pkg in packages
+        ])
+
+        mock_container_run.assert_has_calls([
             call(['snap', 'ack', '/run/core_123.assert']),
             call(['snap', 'install', '/run/core_123.snap']),
             call(['snap', 'ack', '/run/snapcraft_345.assert']),
@@ -529,8 +563,15 @@ class ContainerbuildTestCase(LXDTestCase):
                   os.path.join(tmp_dir, 'snapcraft_123.snap'),
                   '{}/run/snapcraft_123.snap'.format(self.fake_lxd.name)]),
         ])
+
+        packages = ['squashfuse', 'sshfs']
+        if self.remote == 'local':
+            packages.remove('sshfs')
         mock_container_run.assert_has_calls([
-            call(['apt-get', 'install', 'squashfuse', '-y']),
+            call(['apt-get', 'install', pkg, '-y']) for pkg in packages
+        ])
+
+        mock_container_run.assert_has_calls([
             call(['snap', 'ack', '/run/snapcraft_123.assert']),
             call(['snap', 'install', '/run/snapcraft_123.snap', '--classic']),
         ])
@@ -779,6 +820,45 @@ class LocalProjectTestCase(ContainerbuildTestCase):
         # Should not attempt to stop a container that wasn't started
         self.assertNotIn(call(['lxc', 'stop', '-f', self.fake_lxd.name]),
                          self.fake_lxd.check_call_mock.call_args_list)
+
+
+class VendoringTestCase(LXDBaseTestCase):
+
+    remote = 'local'
+    server = 'x86_64'
+    target_arch = None
+
+    def make_containerbuild(self):
+        return lxd.Cleanbuilder(output='snap.snap', source='project.tar',
+                                metadata={'name': 'project'},
+                                project_options=self.project_options,
+                                remote=self.remote)
+
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    def test_vendoring(self, mock_container_run):
+        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
+        self.project_options.info.vendoring = [
+            'git.launchpad.net', 'archive.ubuntu.com']
+        self.make_containerbuild().execute()
+        self.assertIn(
+            'This snap uses vendoring. In order to enforce it, network '
+            'access to resources not on the following list will be denied:\n\n'
+            'git.launchpad.net, archive.ubuntu.com\n',
+            self.fake_logger.output)
+        self.fake_lxd.check_call_mock.assert_has_calls([
+            call(['lxc', 'config', 'set', self.fake_lxd.name,
+                  'environment.http_proxy', 'http://localhost:3129']),
+            call(['lxc', 'config', 'set', self.fake_lxd.name,
+                  'environment.https_proxy', 'http://localhost:3129']),
+        ])
+        self.fake_lxd.check_output_mock.assert_has_calls([
+            call(['lxc', 'exec', self.fake_lxd.name, '--',
+                  'tee', '/etc/squid/squid.conf'], input=ANY),
+        ])
+        mock_container_run.assert_has_calls([
+            call(['apt-get', 'install', 'squid', '-y']),
+            call(['service', 'squid', 'reload']),
+        ])
 
 
 class FailedImageInfoTestCase(LXDBaseTestCase):

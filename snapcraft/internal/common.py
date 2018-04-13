@@ -41,6 +41,7 @@ _DEFAULT_LIBRARIESDIR = os.path.join(sys.prefix, 'share', 'snapcraft',
                                      'libraries')
 _librariesdir = _DEFAULT_LIBRARIESDIR
 _DOCKERENV_FILE = '/.dockerenv'
+_LXD_HOST_SOCKET = '/dev/lxd/sock'
 
 MAX_CHARACTERS_WRAP = 120
 
@@ -109,6 +110,10 @@ def is_snap() -> bool:
 
 def is_docker_instance() -> bool:
     return os.path.exists(_DOCKERENV_FILE)
+
+
+def is_lxd_container() -> bool:
+    return os.path.exists(_LXD_HOST_SOCKET)
 
 
 def set_plugindir(plugindir):

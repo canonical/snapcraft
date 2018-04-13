@@ -59,6 +59,11 @@ def execute(step, project_options, part_names=None):
     :returns: A dict with the snap name, version, type and architectures.
     """
     config = project_loader.load_config(project_options)
+    if project_options.info.vendoring and not common.is_lxd_container():
+        logger.warning(
+            'This snap uses vendoring but it cannot be enforced without '
+            'using cleanbuild. Proceeding without restriction.'.format(
+                ', '.join(project_options.info.vendoring)))
     installed_packages = repo.Repo.install_build_packages(
         config.build_tools)
     if installed_packages is None:
