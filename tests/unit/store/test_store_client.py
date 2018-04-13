@@ -1018,13 +1018,20 @@ class CloseChannelsTestCase(StoreTestCase):
         self.assertThat(
             str(raised),
             Equals('Could not close channel: 200 OK'))
-        self.assertThat(
-            self.fake_logger.output.splitlines()[-3:],
-            Equals([
-                'Invalid response from the server on channel closing:',
-                '200 OK',
-                'b\'plain data\'',
-            ]))
+
+        expected_lines = [
+            'Invalid response from the server on channel closing:',
+            '200 OK',
+            'b\'plain data\'',
+        ]
+
+        actual_lines = []
+        for line in self.fake_logger.output.splitlines():
+            line = line.strip()
+            if line in expected_lines:
+                actual_lines.append(line)
+
+        self.assertThat(actual_lines, Equals(expected_lines))
 
     def test_close_broken_store_json(self):
         self.client.login('dummy', 'test correct password')
@@ -1034,13 +1041,20 @@ class CloseChannelsTestCase(StoreTestCase):
         self.assertThat(
             str(raised),
             Equals('Could not close channel: 200 OK'))
-        self.assertThat(
-            self.fake_logger.output.splitlines()[-3:],
-            Equals([
-                'Invalid response from the server on channel closing:',
-                '200 OK',
-                'b\'{"closed_channels": ["broken-json"]}\'',
-            ]))
+
+        expected_lines = [
+            'Invalid response from the server on channel closing:',
+            '200 OK',
+            'b\'{"closed_channels": ["broken-json"]}\'',
+        ]
+
+        actual_lines = []
+        for line in self.fake_logger.output.splitlines():
+            line = line.strip()
+            if line in expected_lines:
+                actual_lines.append(line)
+
+        self.assertThat(actual_lines, Equals(expected_lines))
 
     def test_close_successfully(self):
         # Successfully closing a channels returns 'closed_channels'
