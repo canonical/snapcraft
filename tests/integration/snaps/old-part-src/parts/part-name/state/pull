@@ -11,4 +11,5 @@ properties:
   source-tag: ''
   source-type: ''
   stage-packages: []
+  override-pull: 'snapcraftctl pull'
 schema_properties: []

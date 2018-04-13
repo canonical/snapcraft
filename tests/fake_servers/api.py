@@ -481,6 +481,9 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                 'permission': 'channel',
                 'channels': ['no-permission'],
             }).encode()
+        elif 'bad-channel' in channels:
+            response_code = 500
+            payload = json.dumps({}).encode()
         elif (
                 name == 'test-snap' or
                 name.startswith('test-snapcraft')):

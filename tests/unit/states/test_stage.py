@@ -32,7 +32,11 @@ class StageStateBaseTestCase(unit.TestCase):
         self.project = Project()
         self.files = {'foo'}
         self.directories = {'bar'}
-        self.part_properties = {'stage': ['baz'], 'filesets': {'qux': 'quux'}}
+        self.part_properties = {
+            'filesets': {'qux': 'quux'},
+            'override-stage': 'touch override-stage',
+            'stage': ['baz'],
+        }
 
         self.state = snapcraft.internal.states.StageState(
             self.files, self.directories, self.part_properties, self.project)
@@ -52,9 +56,11 @@ class StateStageTestCase(StageStateBaseTestCase):
 
     def test_properties_of_interest(self):
         properties = self.state.properties_of_interest(self.part_properties)
-        self.assertThat(len(properties), Equals(2))
-        self.assertThat(properties['stage'], Equals(['baz']))
+        self.assertThat(len(properties), Equals(3))
         self.assertThat(properties['filesets'], Equals({'qux': 'quux'}))
+        self.assertThat(
+            properties['override-stage'], Equals('touch override-stage'))
+        self.assertThat(properties['stage'], Equals(['baz']))
 
     def test_project_options_of_interest(self):
         self.assertFalse(self.state.project_options_of_interest(self.project))

@@ -15,11 +15,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+import logging
 from simplejson.scanner import JSONDecodeError
 from typing import List  # noqa
 
 from snapcraft.internal.errors import SnapcraftError
 from snapcraft import formatting_utils
+
+
+logger = logging.getLogger(__name__)
 
 
 class StoreError(SnapcraftError):
@@ -28,6 +32,12 @@ class StoreError(SnapcraftError):
     :cvar fmt: A format string that daughter classes override
 
     """
+
+    def __init__(self, **kwargs):
+        with contextlib.suppress(KeyError, AttributeError):
+            logger.debug('Store error response: {}'.format(
+                kwargs['response'].__dict__))
+        super().__init__(**kwargs)
 
 
 class InvalidCredentialsError(StoreError):
@@ -109,7 +119,7 @@ class StoreAuthenticationError(StoreError):
             if extra_error_message:
                 message += ': {}'.format(extra_error_message)
 
-        super().__init__(message=message)
+        super().__init__(response=response, message=message)
 
 
 class StoreTwoFactorAuthenticationRequired(StoreAuthenticationError):
@@ -131,7 +141,8 @@ class DeveloperAgreementSignError(StoreError):
         'Text: {text!r}')
 
     def __init__(self, response):
-        super().__init__(reason=response.reason, text=response.text)
+        super().__init__(
+            response=response, reason=response.reason, text=response.text)
 
 
 class NeedTermsSignedError(StoreError):
@@ -161,7 +172,7 @@ class StoreAccountInformationError(StoreError):
                         'error_list'] if 'extra' in error]
         except JSONDecodeError:
             pass
-        super().__init__(error=error, extra=extra)
+        super().__init__(response=response, error=error, extra=extra)
 
 
 class StoreKeyRegistrationError(StoreError):
@@ -177,7 +188,7 @@ class StoreKeyRegistrationError(StoreError):
                     error['message'] for error in response_json['error_list'])
         except JSONDecodeError:
             pass
-        super().__init__(error=error)
+        super().__init__(response=response, error=error)
 
 
 class StoreRegistrationError(StoreError):
@@ -262,7 +273,8 @@ class StoreUploadError(StoreError):
         'Text: {text!r}')
 
     def __init__(self, response):
-        super().__init__(reason=response.reason, text=response.text)
+        super().__init__(
+            response=response, reason=response.reason, text=response.text)
 
 
 class StorePushError(StoreError):
@@ -288,8 +300,9 @@ class StorePushError(StoreError):
             except AttributeError:
                 response_json['text'] = 'error while pushing'
 
-        super().__init__(snap_name=snap_name, status_code=response.status_code,
-                         **response_json)
+        super().__init__(
+            response=response, snap_name=snap_name,
+            status_code=response.status_code, **response_json)
 
 
 class StoreReviewError(StoreError):
@@ -352,12 +365,13 @@ class StoreReleaseError(StoreError):
             401: self.__fmt_error_401_or_403,
             403: self.__fmt_error_401_or_403,
             404: self.__fmt_error_404,
+            500: self.__fmt_error_500,
         }
 
         fmt_error = self.fmt_errors.get(
             response.status_code, self.__fmt_error_unknown)
 
-        super().__init__(message=fmt_error(response).format(
+        super().__init__(response=response, message=fmt_error(response).format(
             snap_name=snap_name))
 
     def __to_json(self, response):
@@ -398,6 +412,17 @@ class StoreReleaseError(StoreError):
 
     def __fmt_error_404(self, response):
         return self.__FMT_NOT_REGISTERED
+
+    def __fmt_error_500(self, response):
+        response_json = self.__to_json(response)
+        message = ('The store encountered an internal error. The status of '
+                   'store and associated services can be checked at:\n'
+                   'https://status.snapcraft.io/')
+
+        if 'error_list' in response_json:
+            message = _error_list_to_message(response_json)
+
+        return message
 
     def __fmt_error_unknown(self, response):
         response_json = self.__to_json(response)
@@ -449,8 +474,9 @@ class StoreMetadataError(StoreError):
         elif 'error_list' in response_json:
             response_json['text'] = response_json['error_list'][0]['message']
 
-        super().__init__(snap_name=snap_name, status_code=response.status_code,
-                         **response_json)
+        super().__init__(
+            response=response, snap_name=snap_name,
+            status_code=response.status_code, **response_json)
 
 
 class StoreValidationError(StoreError):
@@ -466,7 +492,7 @@ class StoreValidationError(StoreError):
         except (AttributeError, JSONDecodeError):
             response_json = {'text': message or response}
 
-        super().__init__(status_code=response.status_code,
+        super().__init__(response=response, status_code=response.status_code,
                          **response_json)
 
 
@@ -484,7 +510,7 @@ class StoreSnapBuildError(StoreError):
         except JSONDecodeError:
             pass
 
-        super().__init__(error=error)
+        super().__init__(response=response, error=error)
 
 
 class StoreSnapRevisionsError(StoreError):
@@ -504,7 +530,7 @@ class StoreSnapRevisionsError(StoreError):
             pass
 
         super().__init__(
-            snap_id=snap_id, arch=arch or 'any arch',
+            response=response, snap_id=snap_id, arch=arch or 'any arch',
             series=series or 'any', error=error)
 
 
@@ -535,7 +561,7 @@ class StoreChannelClosingError(StoreError):
             error = '{} {}'.format(
                 response.status_code, response.reason)
 
-        super().__init__(error=error)
+        super().__init__(response=response, error=error)
 
 
 class StoreChannelClosingPermissionError(StoreError):
