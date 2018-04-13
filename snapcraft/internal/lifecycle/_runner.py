@@ -73,7 +73,7 @@ def execute(step, project_options, part_names=None):
         state_file.write(yaml.dump(
             states.GlobalState(installed_packages, installed_snaps)))
 
-    if _should_get_core(config.data['confinement']):
+    if _should_get_core(config.data.get('confinement')):
         _setup_core(project_options.deb_arch,
                     config.data.get('base', 'core'))
 
@@ -241,7 +241,8 @@ class _Executor:
             meta.create_snap_packaging(
                 self.config.data, self.config.parts, self.project_options,
                 self.config.snapcraft_yaml_path,
-                self.config.original_snapcraft_yaml)
+                self.config.original_snapcraft_yaml,
+                self.config.validator.schema)
 
     def _handle_dirty(self, part, step, dirty_report):
         if step not in constants.STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:

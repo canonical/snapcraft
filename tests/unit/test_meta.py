@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import configparser
+import contextlib
 import logging
 import os
 from unittest.mock import patch
@@ -96,7 +97,7 @@ class CreateBaseTestCase(unit.TestCase):
 
         _snap_packaging.create_snap_packaging(
             self.config.data, self.config.parts, self.project_options, 'dummy',
-            self.config.original_snapcraft_yaml)
+            self.config.original_snapcraft_yaml, self.config.validator.schema)
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
@@ -152,7 +153,7 @@ class CreateTestCase(CreateBaseTestCase):
 
         _snap_packaging.create_snap_packaging(
             self.config_data, config.parts, self.project_options, 'dummy',
-            config.original_snapcraft_yaml)
+            config.original_snapcraft_yaml, config.validator.schema)
 
         expected_gadget = os.path.join(self.meta_dir, 'gadget.yaml')
         self.assertTrue(os.path.exists(expected_gadget))
@@ -175,7 +176,8 @@ class CreateTestCase(CreateBaseTestCase):
             config.parts,
             self.project_options,
             'dummy',
-            config.original_snapcraft_yaml
+            config.original_snapcraft_yaml,
+            config.validator.schema
         )
 
     def test_create_meta_with_declared_icon(self):
@@ -267,12 +269,12 @@ class CreateTestCase(CreateBaseTestCase):
 
         _snap_packaging.create_snap_packaging(
             self.config_data, config.parts, self.project_options, 'dummy',
-            config.original_snapcraft_yaml)
+            config.original_snapcraft_yaml, config.validator.schema)
 
         # Running again should be good
         _snap_packaging.create_snap_packaging(
             self.config_data, config.parts, self.project_options, 'dummy',
-            config.original_snapcraft_yaml)
+            config.original_snapcraft_yaml, config.validator.schema)
 
     def test_create_meta_with_icon_in_setup(self):
         gui_path = os.path.join('setup', 'gui')
@@ -788,65 +790,88 @@ class MetadataFromSourceWithDesktopFileTestCase(
 
 class ScriptletsMetadataTestCase(CreateMetadataFromSourceBaseTestCase):
 
+    scenarios = [
+        ('set-version', {
+            'keyword': 'version',
+            'original': 'original-version',
+            'value': 'test-version',
+            'setter': 'set-version'}),
+        ('set-grade', {
+            'keyword': 'grade',
+            'original': 'stable',
+            'value': 'devel',
+            'setter': 'set-grade'}),
+    ]
+
     def test_scriptlets_satisfy_required_property(self):
-        del self.config_data['version']
+        with contextlib.suppress(KeyError):
+            del self.config_data[self.keyword]
+
         del self.config_data['parts']['test-part']['parse-info']
         self.config_data['parts']['test-part']['override-prime'] = (
-            'snapcraftctl set-version override-version')
+            'snapcraftctl {} {}'.format(self.setter, self.value))
 
         generated = self.generate_meta_yaml(build=True)
 
-        self.assertThat(generated['version'], Equals('override-version'))
+        self.assertThat(generated[self.keyword], Equals(self.value))
 
     def test_scriptlets_no_overwrite_existing_property(self):
+        self.config_data[self.keyword] = self.original
         fake_logger = fixtures.FakeLogger(level=logging.WARNING)
         self.useFixture(fake_logger)
 
         del self.config_data['parts']['test-part']['parse-info']
         self.config_data['parts']['test-part']['override-prime'] = (
-            'snapcraftctl set-version override-version')
+            'snapcraftctl {} {}'.format(self.setter, self.value))
 
         generated = self.generate_meta_yaml(build=True)
 
-        self.assertThat(generated['version'], Equals('test-version'))
+        self.assertThat(generated[self.keyword], Equals(self.original))
 
         # Since the specified version took precedence over the scriptlet-set
         # version, verify that we warned
         self.assertThat(fake_logger.output, Contains(
-            "The 'version' property is specified in adopted info as well as "
-            "the YAML: taking the property from the YAML"))
+            "The {!r} property is specified in adopted info as well as "
+            "the YAML: taking the property from the YAML".format(
+                self.keyword)))
 
     def test_scriptlets_overwrite_extracted_metadata(self):
-        del self.config_data['version']
+        with contextlib.suppress(KeyError):
+            del self.config_data[self.keyword]
 
         self.config_data['parts']['test-part']['override-build'] = (
-            'snapcraftctl build && snapcraftctl set-version override-version')
+            'snapcraftctl build && snapcraftctl {} {}'.format(
+                self.setter, self.value))
 
         def _fake_extractor(file_path):
-            return extractors.ExtractedMetadata(version='extracted-version')
+            return extractors.ExtractedMetadata(
+                **{self.keyword: 'extracted-value'})
 
         self.useFixture(fixture_setup.FakeMetadataExtractor(
             'fake', _fake_extractor))
 
         generated = self.generate_meta_yaml(build=True)
 
-        self.assertThat(generated['version'], Equals('override-version'))
+        self.assertThat(generated[self.keyword], Equals(self.value))
 
     def test_scriptlets_overwrite_extracted_metadata_regardless_of_order(self):
-        del self.config_data['version']
+        with contextlib.suppress(KeyError):
+            del self.config_data[self.keyword]
 
         self.config_data['parts']['test-part']['override-pull'] = (
-            'snapcraftctl set-version override-version && snapcraftctl pull')
+            'snapcraftctl {} {} && snapcraftctl pull'.format(
+                self.setter, self.value))
 
         def _fake_extractor(file_path):
-            return extractors.ExtractedMetadata(version='extracted-version')
+            return extractors.ExtractedMetadata(
+                **{self.keyword: 'extracted-value'})
 
         self.useFixture(fixture_setup.FakeMetadataExtractor(
             'fake', _fake_extractor))
 
         generated = self.generate_meta_yaml(build=True)
 
-        self.assertThat(generated['version'], Equals('override-version'))
+        self.assertThat(generated[self.keyword], Equals(self.value))
 
 
 class WriteSnapDirectoryTestCase(CreateBaseTestCase):
@@ -950,16 +975,31 @@ class GenerateHookWrappersTestCase(CreateBaseTestCase):
 class CreateWithConfinementTestCase(CreateBaseTestCase):
 
     scenarios = [(confinement, dict(confinement=confinement)) for
-                 confinement in ['strict', 'devmode', 'classic']]
+                 confinement in ['', 'strict', 'devmode', 'classic']]
 
     def test_create_meta_with_confinement(self):
-        self.config_data['confinement'] = self.confinement
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        if self.confinement:
+            self.config_data['confinement'] = self.confinement
+        else:
+            del self.config_data['confinement']
 
         y = self.generate_meta_yaml()
         self.assertTrue(
             'confinement' in y,
             'Expected "confinement" property to be in snap.yaml')
-        self.assertThat(y['confinement'], Equals(self.confinement))
+
+        if self.confinement:
+            self.assertThat(y['confinement'], Equals(self.confinement))
+        else:
+            # Ensure confinement defaults to strict if not specified. Also
+            # verify that a warning is printed
+            self.assertThat(y['confinement'], Equals('strict'))
+            self.assertThat(fake_logger.output, Contains(
+                "'confinement' property not specified: defaulting to "
+                "'strict'"))
 
 
 class EnsureFilePathsTestCase(CreateBaseTestCase):
@@ -1015,16 +1055,28 @@ class EnsureFilePathsTestCaseFails(CreateBaseTestCase):
 class CreateWithGradeTestCase(CreateBaseTestCase):
 
     scenarios = [(grade, dict(grade=grade)) for
-                 grade in ['stable', 'devel']]
+                 grade in ['', 'stable', 'devel']]
 
     def test_create_meta_with_grade(self):
-        self.config_data['grade'] = self.grade
+        fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(fake_logger)
+
+        if self.grade:
+            self.config_data['grade'] = self.grade
 
         y = self.generate_meta_yaml()
         self.assertTrue(
             'grade' in y,
             'Expected "grade" property to be in snap.yaml')
-        self.assertThat(y['grade'], Equals(self.grade))
+
+        if self.grade:
+            self.assertThat(y['grade'], Equals(self.grade))
+        else:
+            # Ensure that grade always defaults to stable, even if not
+            # specified. Also verify that a warning is printed
+            self.assertThat(y['grade'], Equals('stable'))
+            self.assertThat(fake_logger.output, Contains(
+                "'grade' property not specified: defaulting to 'stable'"))
 
 
 # TODO this needs more tests.

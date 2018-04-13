@@ -98,15 +98,11 @@ class Config:
         snapcraft_yaml = _snapcraft_yaml_load(self.snapcraft_yaml_path)
         self.original_snapcraft_yaml = snapcraft_yaml.copy()
 
-        self._validator = Validator(snapcraft_yaml)
-        self._validator.validate()
+        self.validator = Validator(snapcraft_yaml)
+        self.validator.validate()
 
         snapcraft_yaml = self._process_remote_parts(snapcraft_yaml)
         snapcraft_yaml = self._expand_filesets(snapcraft_yaml)
-
-        # both confinement type and build quality are optionals
-        _ensure_confinement_default(snapcraft_yaml, self._validator.schema)
-        _ensure_grade_default(snapcraft_yaml, self._validator.schema)
 
         self.data = self._expand_env(snapcraft_yaml)
         # We need to set the ProjectInfo here because ProjectOptions is
@@ -123,7 +119,7 @@ class Config:
 
         self.parts = PartsConfig(parts=self.data,
                                  project_options=self._project_options,
-                                 validator=self._validator,
+                                 validator=self.validator,
                                  build_snaps=self.build_snaps,
                                  build_tools=self.build_tools,
                                  snapcraft_yaml=self.snapcraft_yaml_path)
@@ -206,7 +202,7 @@ class Config:
             'SNAPCRAFT_PROJECT_NAME="{}"'.format(self.data['name']),
             'SNAPCRAFT_PROJECT_VERSION={}'.format(
                 self.data.get('version', '')),
-            'SNAPCRAFT_PROJECT_GRADE={}'.format(self.data['grade']),
+            'SNAPCRAFT_PROJECT_GRADE={}'.format(self.data.get('grade', '')),
         ]
 
     def _expand_env(self, snapcraft_yaml):
@@ -220,7 +216,8 @@ class Config:
                     ('$SNAPCRAFT_PROJECT_NAME', snapcraft_yaml['name']),
                     ('$SNAPCRAFT_PROJECT_VERSION', snapcraft_yaml.get(
                         'version', '')),
-                    ('$SNAPCRAFT_PROJECT_GRADE', snapcraft_yaml['grade']),
+                    ('$SNAPCRAFT_PROJECT_GRADE', snapcraft_yaml.get(
+                        'grade', '')),
                     ('$SNAPCRAFT_STAGE', self._project_options.stage_dir),
                 ])
         return snapcraft_yaml
@@ -278,24 +275,6 @@ def _snapcraft_yaml_load(yaml_file):
         raise errors.YamlValidationError(
             'Invalid character {!r} at position {} of {}: {}'.format(
                 chr(e.character), e.position + 1, yaml_file, e.reason)) from e
-
-
-def _ensure_confinement_default(yaml_data, schema):
-    # Provide hint if the confinement property is missing, and add the
-    # default. We use the schema here so we don't have to hard-code defaults.
-    if 'confinement' not in yaml_data:
-        logger.warning('"confinement" property not specified: defaulting '
-                       'to "strict"')
-        yaml_data['confinement'] = schema['confinement']['default']
-
-
-def _ensure_grade_default(yaml_data, schema):
-    # Provide hint if the grade property is missing, and add the
-    # default. We use the schema here so we don't have to hard-code defaults.
-    if 'grade' not in yaml_data:
-        logger.warning('"grade" property not specified: defaulting '
-                       'to "stable"')
-        yaml_data['grade'] = schema['grade']['default']
 
 
 def _expand_filesets_for(step, properties):

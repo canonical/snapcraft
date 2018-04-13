@@ -88,7 +88,8 @@ def create_snap_packaging(
         parts_config: project_loader.PartsConfig,
         project_options: Project,
         snapcraft_yaml_path: str,
-        original_snapcraft_yaml: Dict[str, Any]) -> str:
+        original_snapcraft_yaml: Dict[str, Any],
+        snapcraft_schema: Dict[str, Any]) -> str:
     """Create snap.yaml and related assets in meta.
 
     Create the meta directory and provision it with snap.yaml in the snap dir
@@ -101,6 +102,13 @@ def create_snap_packaging(
 
     # Update config_data using metadata extracted from the project
     _update_yaml_with_extracted_metadata(config_data, parts_config)
+
+    # Update default values
+    _update_yaml_with_defaults(config_data, snapcraft_schema)
+
+    # Ensure the YAML contains all required keywords before continuing to
+    # use it to generate the snap.yaml.
+    _ensure_required_keywords(config_data)
 
     packaging = _SnapPackaging(
         config_data, project_options,
@@ -151,15 +159,6 @@ def _update_yaml_with_extracted_metadata(
                 raise meta_errors.AdoptedPartNotParsingInfo(part_name)
 
         _adopt_info(config_data, metadata)
-
-    # Verify that all mandatory keys have been satisfied
-    missing_keys = []  # type: List[str]
-    for key in _MANDATORY_PACKAGE_KEYS:
-        if key not in config_data:
-            missing_keys.append(key)
-
-    if missing_keys:
-        raise meta_errors.MissingSnapcraftYamlKeysError(keys=missing_keys)
 
 
 def _adopt_info(
@@ -263,6 +262,32 @@ def _desktop_file_exists(app_name: str) -> bool:
             return True
     else:
         return False
+
+
+def _update_yaml_with_defaults(config_data, schema):
+    # Ensure that grade and confinement have their defaults applied, if
+    # necessary. Defaults are taken from the schema. Technically these are the
+    # only two optional keywords currently WITH defaults, but we don't want to
+    # risk setting something that we add later on accident.
+    for key in ('confinement', 'grade'):
+        if key not in config_data:
+            with contextlib.suppress(KeyError):
+                default = schema[key]['default']
+                config_data[key] = default
+                logger.warn(
+                    '{!r} property not specified: defaulting to {!r}'.format(
+                        key, default))
+
+
+def _ensure_required_keywords(config_data):
+    # Verify that all mandatory keys have been satisfied
+    missing_keys = []  # type: List[str]
+    for key in _MANDATORY_PACKAGE_KEYS:
+        if key not in config_data:
+            missing_keys.append(key)
+
+    if missing_keys:
+        raise meta_errors.MissingSnapcraftYamlKeysError(keys=missing_keys)
 
 
 class _SnapPackaging:
