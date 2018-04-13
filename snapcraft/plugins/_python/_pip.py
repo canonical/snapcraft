@@ -369,20 +369,17 @@ class Pip:
         :return: Dict of installed python packages and their versions
         :rtype: dict
         """
-        command = ['list', '--format=json']
+        command = ['list']
         if user:
             command.append('--user')
 
         packages = collections.OrderedDict()
         try:
-            output = self._run_output(command)
+            output = self._run_output(command + ['--format=json'])
             json_output = json.loads(
                     output, object_pairs_hook=collections.OrderedDict)
         except subprocess.CalledProcessError:
             # --format requires a newer pip, so fall back to legacy output
-            command = ['list']
-            if user:
-                command.append('--user')
             output = self._run_output(command)
             json_output = []  # type: List[Dict[str, str]]
             version_regex = re.compile('\((.+)\)')

@@ -713,7 +713,7 @@ class PipListTestCase(PipCommandBaseTestCase):
         self.mock_run.return_value = '[{"name": "foo", "version": "1.0"}]'
         self.assertThat(self.pip.list(user=True), Equals({'foo': '1.0'}))
         self.mock_run.assert_called_once_with(
-            ['list', '--format=json', '--user'], runner=mock.ANY)
+            ['list', '--user', '--format=json'], runner=mock.ANY)
 
     def test_missing_name(self):
         self.mock_run.return_value = '[{"version": "1.0"}]'
@@ -741,7 +741,6 @@ class PipListTestCase(PipCommandBaseTestCase):
             subprocess.CalledProcessError(2, 'pip', 'no such option'),
             'foo (1.0)',
         ]
-        self.mock_run.return_value = '[{"name": "foo", "version": "1.0"}]'
         self.assertThat(self.pip.list(), Equals({'foo': '1.0'}))
         self.mock_run.assert_has_calls([
             mock.call(['list', '--format=json'], runner=mock.ANY),
