@@ -17,6 +17,8 @@
 import sys
 from unittest import mock
 
+import fixtures
+
 import snapcraft.internal.errors
 from snapcraft.cli._errors import exception_handler
 from tests import unit
@@ -101,11 +103,21 @@ class ErrorsTestCase(unit.TestCase):
 
         self.assert_exception_traceback_exit_1_with_debug()
 
+    def test_handler_raven_but_no_sentry_feature_flag(self):
+        try:
+            self.call_handler(RuntimeError('not a SnapcraftError'), True)
+        except Exception:
+            self.fail('Exception unexpectedly raised')
+
+        self.assert_exception_traceback_exit_1_with_debug()
+
     @mock.patch('snapcraft.cli._errors.RavenClient')
     @mock.patch('snapcraft.cli._errors.RequestsHTTPTransport')
     @mock.patch('click.confirm', return_value=True)
     def test_handler_traceback_send_traceback_to_sentry(
             self, click_confirm_mock, raven_request_mock, raven_client_mock):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_ENABLE_SENTRY', 'yes'))
         try:
             self.call_handler(RuntimeError('not a SnapcraftError'), True)
         except Exception:
