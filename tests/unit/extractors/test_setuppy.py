@@ -14,12 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 from textwrap import dedent
 
 from snapcraft.extractors import setuppy, ExtractedMetadata
 
-import testscenarios
 from testtools.matchers import Equals
 
 from snapcraft.extractors import _errors
@@ -32,10 +30,10 @@ class SetupPyTestCase(unit.TestCase):
         ('description', dict(params=dict(
             version=None,
             description='test-description'))),
-         ('version', dict(params=dict(
+        ('version', dict(params=dict(
             version='test-version',
             description=None))),
-         ('key and version', dict(params=dict(
+        ('key and version', dict(params=dict(
             description='test-description',
             version='test-version')))
     ]

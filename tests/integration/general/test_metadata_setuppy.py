@@ -15,17 +15,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
-import shutil
 import yaml
 from textwrap import dedent
 
-from testtools.matchers import Equals, FileExists
+from testtools.matchers import Equals
 
-import tests
-from tests import (
-    fixture_setup,
-    integration
-)
+from tests import integration, fixture_setup
 
 
 class SetupPyMetadataTestCase(integration.TestCase):

@@ -16,7 +16,7 @@
 
 import os
 import importlib.util
-from typing import Dict
+from typing import Dict  # noqa: F401
 from unittest.mock import patch
 
 from ._metadata import ExtractedMetadata
@@ -31,6 +31,7 @@ def extract(path: str) -> ExtractedMetadata:
     setuppy = importlib.util.module_from_spec(spec)
 
     params = dict()  # type: Dict[str, str]
+
     def _fake_setup(*args, **kwargs):
         nonlocal params
         params = kwargs
@@ -39,7 +40,6 @@ def extract(path: str) -> ExtractedMetadata:
         setup_mock.side_effect = _fake_setup
         spec.loader.exec_module(setuppy)
 
-    # mypy is confused by the use of global
     version = params.get('version')
     description = params.get('description')
 
