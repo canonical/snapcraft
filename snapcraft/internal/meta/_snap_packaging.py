@@ -186,12 +186,13 @@ def _adopt_keys(config_data: Dict[str, Any],
                 extracted_metadata: _metadata.ExtractedMetadata) -> Set[str]:
     ignored_keys = set()
     metadata_dict = extracted_metadata.to_dict()
-    for key, value in metadata_dict.items():
-        # desktop_file_paths and common_ids are special cases that will be
-        # handled after all the top level snapcraft.yaml keys.
-        if key == 'desktop_file_paths' or key == 'common_id':
-            continue
 
+    # desktop_file_paths and common_ids are special cases that will be handled
+    # after all the top level snapcraft.yaml keys.
+    ignore = ('desktop_file_paths', 'common_id')
+    overrides = ((k, v) for k, v in metadata_dict.items() if k not in ignore)
+
+    for key, value in overrides:
         if key not in config_data:
             if key == 'icon':
                 if _icon_file_exists() or not os.path.exists(
