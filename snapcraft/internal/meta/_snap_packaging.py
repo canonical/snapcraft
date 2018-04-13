@@ -104,7 +104,7 @@ def create_snap_packaging(
     _update_yaml_with_extracted_metadata(config_data, parts_config)
 
     # Now that we've updated config_data with random stuff extracted from
-    # parts, re-validate it to ensure the it still conform with the schema.
+    # parts, re-validate it to ensure the it still conforms with the schema.
     validator = project_loader.Validator(config_data)
     validator.validate(source='properties')
 
@@ -266,9 +266,11 @@ def _desktop_file_exists(app_name: str) -> bool:
 
 
 def _update_yaml_with_defaults(config_data, schema):
-    # Verify that all optional keys have their defaults (taken from the schema)
-    # applied
-    for key in _OPTIONAL_PACKAGE_KEYS:
+    # Ensure that grade and confinement have their defaults applied, if
+    # necessary. Defaults are taken from the schema. Technically these are the
+    # only two optional keywords currently WITH defaults, but we don't want to
+    # risk setting something that we add later on accident.
+    for key in ('confinement', 'grade'):
         if key not in config_data:
             with contextlib.suppress(KeyError):
                 default = schema[key]['default']
