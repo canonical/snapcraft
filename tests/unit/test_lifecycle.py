@@ -683,6 +683,19 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             os.path.join('prime', 'snap', '.snapcraft'),
             Not(DirExists()))
 
+    def test_non_prime_and_no_version(self):
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(
+            self.path, version=None)
+        snapcraft_yaml.data['adopt-info'] = 'test-part'
+        snapcraft_yaml.update_part(
+            'test-part', {
+                'plugin': 'nil',
+                'override-build': 'snapcraftctl set-version 1.0'})
+        self.useFixture(snapcraft_yaml)
+
+        # This should not fail
+        lifecycle.execute('pull', self.project_options)
+
 
 class DirtyBuildScriptletTestCase(BaseLifecycleTestCase):
 
