@@ -31,7 +31,7 @@ class SnapcraftctlSetGradeTestCase(integration.TestCase):
             grade=None, adopt_info='my-part', parts=textwrap.dedent("""\
                 my-part:
                   plugin: nil
-                  override-pull: snapcraftctl set-grade override-grade
+                  override-pull: snapcraftctl set-grade devel
                 """))
 
         self.run_snapcraft('prime')
@@ -39,7 +39,7 @@ class SnapcraftctlSetGradeTestCase(integration.TestCase):
         with open(os.path.join('prime', 'meta', 'snap.yaml')) as f:
             y = yaml.load(f)
 
-        self.assertThat(y['grade'], Equals('override-grade'))
+        self.assertThat(y['grade'], Equals('devel'))
 
     def test_set_grade_no_overwrite(self):
         self.construct_yaml(
@@ -47,7 +47,7 @@ class SnapcraftctlSetGradeTestCase(integration.TestCase):
             parts=textwrap.dedent("""\
                 my-part:
                   plugin: nil
-                  override-pull: snapcraftctl set-grade override-grade
+                  override-pull: snapcraftctl set-grade stable
                 """))
 
         self.run_snapcraft('prime')
@@ -62,8 +62,8 @@ class SnapcraftctlSetGradeTestCase(integration.TestCase):
             grade=None, adopt_info='my-part', parts=textwrap.dedent("""\
                 my-part:
                   plugin: nil
-                  override-pull: snapcraftctl set-grade override-grade
-                  override-prime: snapcraftctl set-grade no-this-grade
+                  override-pull: snapcraftctl set-grade stable
+                  override-prime: snapcraftctl set-grade devel
                 """))
 
         raised = self.assertRaises(
