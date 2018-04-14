@@ -145,6 +145,9 @@ class ExtractedMetadata(yaml.YAMLObject):
         """
         return set(self._data.keys() & other.to_dict().keys())
 
+    def __str__(self) -> str:
+        return str(self._data)
+
     def __eq__(self, other: Any) -> bool:
         if type(other) is type(self):
             return self._data == other._data

@@ -36,3 +36,26 @@ class AppstreamFileParseError(MetadataExtractionError):
 
     def __init__(self, path: str) -> None:
         super().__init__(path=path)
+
+
+class SetupPyFileParseError(MetadataExtractionError):
+
+    fmt = (
+        "Failed to extract metadata from {path!r}: "
+        "the logic in setup.py is currently not handled."
+    )
+
+    def __init__(self, path: str) -> None:
+        super().__init__(path=path)
+
+
+class SetupPyImportError(MetadataExtractionError):
+
+    fmt = (
+        "Failed to extract metadata from {path!r}: "
+        "some packages or modules used could not be imported: "
+        "{error}"
+    )
+
+    def __init__(self, path: str, error: str) -> None:
+        super().__init__(path=path, error=error)
