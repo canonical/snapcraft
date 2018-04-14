@@ -1,10 +1,9 @@
---- __init__.py.orig	2018-04-10 15:40:17.061623054 -0300
-+++ __init__.py	2018-04-10 15:41:40.150948367 -0300
-@@ -407,6 +407,17 @@
-         _func_flags_ = _FUNCFLAG_STDCALL
-         _func_restype_ = HRESULT
+--- __init__.py.orig	2018-04-14 14:46:40.222772831 -0300
++++ __init__.py	2018-04-14 14:47:29.835488413 -0300
+@@ -311,6 +311,16 @@
+ ################################################################
  
-+
+ 
 +_ARCH_TRIPLET = {
 +    'arm64': 'aarch64-linux-gnu',
 +    'i386': 'i386-linux-gnu',
@@ -15,10 +14,35 @@
 +}
 +
 +
+ class CDLL(object):
+     """An instance of this class represents a loaded dll/shared
+     library, exporting functions using the standard C calling
+@@ -344,7 +354,15 @@
+         self._FuncPtr = _FuncPtr
+ 
+         if handle is None:
+-            self._handle = _dlopen(self._name, mode)
++            name = self._name
++            if name is not None and _os.getenv('SNAP_NAME', '') == 'snapcraft':
++                _name = _os.path.join(
++                    _os.getenv('SNAP'), 'usr', 'lib',
++                    _ARCH_TRIPLET.get(_os.getenv('SNAP_ARCH')),
++                    name)
++                if _os.path.exists(_name):
++                    name = _name
++            self._handle = _dlopen(name, mode)
+         else:
+             self._handle = handle
+ 
+@@ -407,6 +425,7 @@
+         _func_flags_ = _FUNCFLAG_STDCALL
+         _func_restype_ = HRESULT
+ 
++
  class LibraryLoader(object):
      def __init__(self, dlltype):
          self._dlltype = dlltype
-@@ -419,6 +430,13 @@
+@@ -419,6 +438,13 @@
          return dll
  
      def __getitem__(self, name):
