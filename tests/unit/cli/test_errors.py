@@ -111,11 +111,22 @@ class ErrorsTestCase(unit.TestCase):
 
         self.assert_exception_traceback_exit_1_with_debug()
 
-    @mock.patch('snapcraft.cli._errors.RavenClient')
-    @mock.patch('snapcraft.cli._errors.RequestsHTTPTransport')
     @mock.patch('click.confirm', return_value=True)
     def test_handler_traceback_send_traceback_to_sentry(
-            self, click_confirm_mock, raven_request_mock, raven_client_mock):
+            self, click_confirm_mock):
+        try:
+            import raven  # noqa: F401
+        except ImportError:
+            self.skipTest('raven needs to be installed for this test.')
+
+        # Only patch after checking for the availability of raven
+        patcher = mock.patch('snapcraft.cli._errors.RequestsHTTPTransport')
+        raven_request_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+        patcher = mock.patch('snapcraft.cli._errors.RavenClient')
+        raven_client_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_ENABLE_SENTRY', 'yes'))
         try:
