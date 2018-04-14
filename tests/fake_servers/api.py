@@ -435,6 +435,8 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                 details_path = 'details/upload-id/review-snap'
             elif name == 'test-duplicate-snap':
                 details_path = 'details/upload-id/duplicate-snap'
+            elif name == 'test-scan-error-with-braces':
+                details_path = 'details/upload-id/scan-error-with-braces'
             else:
                 details_path = 'details/upload-id/good-snap'
             if not request.json_body.get('dry_run', False):
@@ -715,8 +717,12 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                 # POST, return error
                 error_list = []
                 for name, value in request.json_body.items():
+                    if name == 'test-conflict-with-braces':
+                        message = 'value with {braces}'
+                    else:
+                        message = value + '-changed'
                     error_list.append({
-                        'message': value + '-changed',
+                        'message': message,
                         'code': 'conflict',
                         'extra': {'name': name},
                     })
@@ -752,6 +758,9 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                            for e in info])
             conflict = any([e.get('filename', '').endswith('conflict')
                            for e in info])
+            conflict_with_braces = any(
+                [e.get('filename', '').endswith('conflict-with-braces')
+                 for e in info])
             if invalid:
                 err = {'error_list': [{
                     'message': 'Invalid field: icon',
@@ -763,6 +772,15 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                 # POST, return error
                 error_list = [{
                     'message': 'original-icon',
+                    'code': 'conflict',
+                    'extra': {'name': 'icon'},
+                }]
+                payload = json.dumps({'error_list': error_list}).encode('utf8')
+                response_code = 409
+            elif conflict_with_braces and request.method == 'POST':
+                # POST, return error
+                error_list = [{
+                    'message': 'original icon with {braces}',
                     'code': 'conflict',
                     'extra': {'name': 'icon'},
                 }]
@@ -794,6 +812,18 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                 'processed': True,
                 'errors': [
                     {'message': 'Duplicate snap already uploaded'},
+                ]
+            }).encode()
+        elif snap == 'scan-error-with-braces':
+            logger.debug('Handling request for scan error with braces')
+            payload = json.dumps({
+                'code': 'processing_error',
+                'url': '/dev/click-apps/5349/rev/1',
+                'can_release': False,
+                'revision': '1',
+                'processed': True,
+                'errors': [
+                    {'message': 'Error message with {braces}'},
                 ]
             }).encode()
         else:
