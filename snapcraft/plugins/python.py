@@ -327,7 +327,8 @@ class PythonPlugin(snapcraft.BasePlugin):
             constraints=constraints, requirements=requirements,
             process_dependency_links=self.options.process_dependency_links)
 
-        self._install_wheels(wheels)
+        if wheels:
+            self._install_wheels(wheels)
 
         if setup_py_dir is not None:
             setup_py_path = os.path.join(setup_py_dir, 'setup.py')

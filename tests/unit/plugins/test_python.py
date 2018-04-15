@@ -28,7 +28,7 @@ from tests import (
 )
 
 
-def setup_directories(plugin, python_version):
+def setup_directories(plugin, python_version, create_setup_py=True):
     version = '2.7' if python_version == 'python2' else '3.5'
     os.makedirs(plugin.sourcedir)
     os.makedirs(plugin.builddir)
@@ -39,7 +39,8 @@ def setup_directories(plugin, python_version):
 
     os.makedirs(os.path.join(python_lib_path, 'dist-packages'))
     os.makedirs(python_include_path)
-    open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
+    if create_setup_py:
+        open(os.path.join(plugin.sourcedir, 'setup.py'), 'w').close()
 
     site_path = os.path.join(plugin.installdir, 'lib', 'python' + version,
                              'site-packages')
@@ -410,6 +411,34 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
         self.assertThat(
             plugin.plugin_stage_packages,
             Equals(['python3', 'python3-distutils']))
+
+    def test_no_python_packages_does_nothing(self):
+        # This should be an error but given that we default to
+        # 'source: .' and now that pip 10 has been released
+        # we run into the need of fixing this situation.
+        self.mock_pip.return_value.list.return_value = dict()
+
+        self.useFixture(fixture_setup.CleanEnvironment())
+        plugin = python.PythonPlugin('test-part', self.options,
+                                     self.project_options)
+        setup_directories(plugin, self.options.python_version,
+                          create_setup_py=False)
+
+        pip_wheel = self.mock_pip.return_value.wheel
+        pip_wheel.return_value = []
+
+        plugin.build()
+
+        # Pip should not attempt to download again in build (only pull)
+        pip_download = self.mock_pip.return_value.download
+        pip_download.assert_not_called()
+
+        pip_wheel.assert_called_once_with(
+            [], constraints=None, process_dependency_links=False,
+            requirements=None, setup_py_dir=None)
+
+        pip_install = self.mock_pip.return_value.install
+        pip_install.assert_not_called()
 
 
 class FileMissingPythonPluginTest(BasePythonPluginTestCase):
