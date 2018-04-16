@@ -15,3 +15,4 @@ parts:
   python-part:
     source: .
     plugin: python
+    stage-packages: [libc6]

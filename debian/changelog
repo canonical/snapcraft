@@ -1,4 +1,4 @@
-snapcraft (2.41) xenial; urgency=medium
+snapcraft (2.41+18.04) bionic; urgency=medium
 
   [ Sergio Schvezov ]
   * package: ensure all relevant files are in for sdist (#2060)
