@@ -50,8 +50,9 @@ class StageState(PartState):
         """
 
         return {
-            'stage': part_properties.get('stage', ['*']) or ['*'],
             'filesets': part_properties.get('filesets', {}) or {},
+            'override-stage': part_properties.get('override-stage'),
+            'stage': part_properties.get('stage', ['*']) or ['*'],
         }
 
     def project_options_of_interest(self, project):

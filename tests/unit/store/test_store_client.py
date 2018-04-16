@@ -866,6 +866,35 @@ class UploadTestCase(StoreTestCase):
             Equals('The store was unable to accept this snap.\n'
                    '  - Duplicate snap already uploaded'))
 
+    def test_braces_in_error_messages_are_literals(self):
+        self.client.login('dummy', 'test correct password')
+        self.client.register('test-scan-error-with-braces')
+        tracker = self.client.upload(
+            'test-scan-error-with-braces', self.snap_path)
+        self.assertTrue(isinstance(tracker, storeapi._status_tracker.
+                        StatusTracker))
+        result = tracker.track()
+        expected_result = {
+            'code': 'processing_error',
+            'revision': '1',
+            'url': '/dev/click-apps/5349/rev/1',
+            'can_release': False,
+            'processed': True,
+            'errors': [
+                {'message': 'Error message with {braces}'},
+            ]
+        }
+        self.assertThat(result, Equals(expected_result))
+
+        raised = self.assertRaises(
+            errors.StoreReviewError,
+            tracker.raise_for_code)
+
+        self.assertThat(
+            str(raised),
+            Equals('The store was unable to accept this snap.\n'
+                   '  - Error message with {braces}'))
+
     def test_push_unregistered_snap(self):
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
@@ -1018,13 +1047,20 @@ class CloseChannelsTestCase(StoreTestCase):
         self.assertThat(
             str(raised),
             Equals('Could not close channel: 200 OK'))
-        self.assertThat(
-            self.fake_logger.output.splitlines()[-3:],
-            Equals([
-                'Invalid response from the server on channel closing:',
-                '200 OK',
-                'b\'plain data\'',
-            ]))
+
+        expected_lines = [
+            'Invalid response from the server on channel closing:',
+            '200 OK',
+            'b\'plain data\'',
+        ]
+
+        actual_lines = []
+        for line in self.fake_logger.output.splitlines():
+            line = line.strip()
+            if line in expected_lines:
+                actual_lines.append(line)
+
+        self.assertThat(actual_lines, Equals(expected_lines))
 
     def test_close_broken_store_json(self):
         self.client.login('dummy', 'test correct password')
@@ -1034,13 +1070,20 @@ class CloseChannelsTestCase(StoreTestCase):
         self.assertThat(
             str(raised),
             Equals('Could not close channel: 200 OK'))
-        self.assertThat(
-            self.fake_logger.output.splitlines()[-3:],
-            Equals([
-                'Invalid response from the server on channel closing:',
-                '200 OK',
-                'b\'{"closed_channels": ["broken-json"]}\'',
-            ]))
+
+        expected_lines = [
+            'Invalid response from the server on channel closing:',
+            '200 OK',
+            'b\'{"closed_channels": ["broken-json"]}\'',
+        ]
+
+        actual_lines = []
+        for line in self.fake_logger.output.splitlines():
+            line = line.strip()
+            if line in expected_lines:
+                actual_lines.append(line)
+
+        self.assertThat(actual_lines, Equals(expected_lines))
 
     def test_close_successfully(self):
         # Successfully closing a channels returns 'closed_channels'
@@ -1457,6 +1500,21 @@ class PushMetadataTestCase(StoreTestCase):
         result = self.client.push_metadata('basic', metadata, True)
         self.assertIsNone(result)
 
+    def test_braces_in_error_messages_are_literals(self):
+        self._setup_snap()
+        metadata = {'test-conflict-with-braces': 'value'}
+        raised = self.assertRaises(
+            errors.StoreMetadataError,
+            self.client.push_metadata, 'basic', metadata, False)
+        should = """
+            Metadata not pushed!
+            Conflict in 'test-conflict-with-braces' field:
+                In snapcraft.yaml: 'value'
+                In the Store:      'value with {braces}'
+            You can repeat the push-metadata command with --force to force the local values into the Store
+        """  # NOQA
+        self.assertThat(str(raised), Equals(dedent(should).strip()))
+
 
 class PushBinaryMetadataTestCase(StoreTestCase):
 
@@ -1531,6 +1589,23 @@ class PushBinaryMetadataTestCase(StoreTestCase):
             # force the update, even on conflicts!
             result = self.client.push_binary_metadata('basic', metadata, True)
         self.assertIsNone(result)
+
+    def test_braces_in_error_messages_are_literals(self):
+        self._setup_snap()
+        with tempfile.NamedTemporaryFile(suffix='conflict-with-braces') as f:
+            filename = os.path.basename(f.name)
+            metadata = {'icon': f}
+            raised = self.assertRaises(
+                errors.StoreMetadataError,
+                self.client.push_binary_metadata, 'basic', metadata, False)
+        should = """
+            Metadata not pushed!
+            Conflict in 'icon' field:
+                In snapcraft.yaml: '{}'
+                In the Store:      'original icon with {{braces}}'
+            You can repeat the push-metadata command with --force to force the local values into the Store
+        """.format(filename) # NOQA
+        self.assertThat(str(raised), Equals(dedent(should).strip()))
 
 
 class SnapNotFoundTestCase(StoreTestCase):

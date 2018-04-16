@@ -92,6 +92,10 @@ class TestCase(testtools.TestCase):
             'XDG_DATA_HOME', os.path.join(self.path, 'data')))
         self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
 
+        # Do not send crash reports
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_SEND_ERROR_DATA', 'n'))
+
         patcher = mock.patch(
             'xdg.BaseDirectory.xdg_config_home',
             new=os.path.join(self.path, '.config'))
@@ -209,6 +213,7 @@ class TestCase(testtools.TestCase):
     def construct_yaml(self, name='test', version='0.1',
                        summary='Simple test snap',
                        description='Something something',
+                       grade=None,
                        parts=dedent('''\
                            my-part:
                              plugin: nil
@@ -227,6 +232,8 @@ class TestCase(testtools.TestCase):
             snapcraft_yaml['version'] = version
         if adopt_info:
             snapcraft_yaml['adopt-info'] = adopt_info
+        if grade:
+            snapcraft_yaml['grade'] = grade
 
         with open('snapcraft.yaml', 'w') as f:
             yaml.dump(snapcraft_yaml, f, default_flow_style=False)

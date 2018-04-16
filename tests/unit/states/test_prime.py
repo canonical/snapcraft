@@ -33,7 +33,10 @@ class PrimeStateBaseTestCase(unit.TestCase):
         self.files = {'foo'}
         self.directories = {'bar'}
         self.dependency_paths = {'baz'}
-        self.part_properties = {'prime': ['qux']}
+        self.part_properties = {
+            'override-prime': 'touch override-prime',
+            'prime': ['qux'],
+        }
 
         self.state = snapcraft.internal.states.PrimeState(
             self.files, self.directories, self.dependency_paths,
@@ -55,7 +58,9 @@ class PrimeStateTestCase(PrimeStateBaseTestCase):
 
     def test_properties_of_interest(self):
         properties = self.state.properties_of_interest(self.part_properties)
-        self.assertThat(len(properties), Equals(1))
+        self.assertThat(len(properties), Equals(2))
+        self.assertThat(
+            properties['override-prime'], Equals('touch override-prime'))
         self.assertThat(properties['prime'], Equals(['qux']))
 
     def test_project_options_of_interest(self):

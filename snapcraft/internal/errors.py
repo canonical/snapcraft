@@ -586,14 +586,14 @@ class ScriptletDuplicateDataError(ScriptletBaseError):
             humanized_keys=formatting_utils.humanize_list(keys, 'and'))
 
 
-class ScriptletDuplicateVersionError(ScriptletBaseError):
+class ScriptletDuplicateFieldError(ScriptletBaseError):
     fmt = (
-        'Unable to set version: '
+        'Unable to set {field}: '
         'it was already set in the {step!r} step.'
     )
 
-    def __init__(self, step: str) -> None:
-        super().__init__(step=step)
+    def __init__(self, field: str, step: str) -> None:
+        super().__init__(field=field, step=step)
 
 
 class SnapcraftctlError(ScriptletBaseError):

@@ -75,6 +75,13 @@ def set_version(version):
     _call_function('set-version', {'version': version})
 
 
+@run.command('set-grade')
+@click.argument('grade')
+def set_grade(grade):
+    """Set the grade of the snap"""
+    _call_function('set-grade', {'grade': grade})
+
+
 def _call_function(function_name, args=None):
     if not args:
         args = {}

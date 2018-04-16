@@ -28,11 +28,13 @@ fi
 script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
 name="$1"
+image="$LXD_IMAGE"
+[ -z "$image" ] && image="ubuntu:xenial"
 
 lxc="/snap/bin/lxc"
 
 echo "Starting the LXD container."
-$lxc launch --ephemeral --config security.nesting=true ubuntu:xenial "$name"
+$lxc launch --ephemeral --config security.nesting=true "$image" "$name"
 # This is likely needed to wait for systemd in the container to start and get
 # an IP, configure DNS. First boot is always a bit slow because cloud-init
 # needs to run too.

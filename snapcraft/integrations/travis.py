@@ -216,7 +216,7 @@ def enable():
         'Configuring "deploy" phase to build and release the snap in the '
         'Store.')
     with open(TRAVIS_CONFIG_FILENAME, 'r+') as fd:
-        travis_conf = yaml.load(fd)
+        travis_conf = yaml.safe_load(fd)
         # Enable 'sudo' capability and 'docker' service.
         travis_conf['sudo'] = 'required'
         services = travis_conf.setdefault('services', [])

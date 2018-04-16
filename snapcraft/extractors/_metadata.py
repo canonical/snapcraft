@@ -25,7 +25,7 @@ class ExtractedMetadata(yaml.YAMLObject):
 
     def __init__(
             self, *, common_id: str='', summary: str='', description: str='',
-            version: str='', icon: str='',
+            version: str='', grade: str='', icon: str='',
             desktop_file_paths: List[str]=None) -> None:
         """Create a new ExtractedMetadata instance.
 
@@ -33,6 +33,8 @@ class ExtractedMetadata(yaml.YAMLObject):
             formats
         :param str summary: Extracted summary
         :param str description: Extracted description
+        :param str version: Extracted version
+        :param str grade: Extracted grade
         :param str icon: Extracted icon
         :param list desktop_file_paths: Extracted desktop file paths
         """  # noqa
@@ -47,6 +49,8 @@ class ExtractedMetadata(yaml.YAMLObject):
             self._data['description'] = description
         if version:
             self._data['version'] = version
+        if grade:
+            self._data['grade'] = grade
         if icon:
             self._data['icon'] = icon
         if desktop_file_paths:
@@ -98,6 +102,15 @@ class ExtractedMetadata(yaml.YAMLObject):
         version = self._data.get('version')
         return str(version) if version else None
 
+    def get_grade(self) -> str:
+        """Return extracted grade.
+
+        :returns: Extracted grade
+        :rtype: str
+        """
+        grade = self._data.get('grade')
+        return str(grade) if grade else None
+
     def get_icon(self) -> str:
         """Return extracted icon.
 
@@ -131,6 +144,9 @@ class ExtractedMetadata(yaml.YAMLObject):
         :rtype: set
         """
         return set(self._data.keys() & other.to_dict().keys())
+
+    def __str__(self) -> str:
+        return str(self._data)
 
     def __eq__(self, other: Any) -> bool:
         if type(other) is type(self):

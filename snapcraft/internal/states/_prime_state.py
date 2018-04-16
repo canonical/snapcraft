@@ -53,7 +53,10 @@ class PrimeState(PartState):
         used to filter out files with a white or blacklist.
         """
 
-        return {'prime': part_properties.get('prime', ['*']) or ['*']}
+        return {
+            'override-prime': part_properties.get('override-prime'),
+            'prime': part_properties.get('prime', ['*']) or ['*'],
+        }
 
     def project_options_of_interest(self, project):
         """Extract the options concerning this step from the project.

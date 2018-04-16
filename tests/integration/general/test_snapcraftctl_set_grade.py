@@ -3,7 +3,7 @@
 # Copyright (C) 2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License version 3 as
+# it under the terms of the GNU General Public License grade 3 as
 # published by the Free Software Foundation.
 #
 # This program is distributed in the hope that it will be useful,
@@ -24,14 +24,14 @@ from testtools.matchers import Equals, Contains
 from tests import integration
 
 
-class SnapcraftctlSetVersionTestCase(integration.TestCase):
+class SnapcraftctlSetGradeTestCase(integration.TestCase):
 
-    def test_set_version(self):
+    def test_set_grade(self):
         self.construct_yaml(
-            version=None, adopt_info='my-part', parts=textwrap.dedent("""\
+            grade=None, adopt_info='my-part', parts=textwrap.dedent("""\
                 my-part:
                   plugin: nil
-                  override-pull: snapcraftctl set-version override-version
+                  override-pull: snapcraftctl set-grade devel
                 """))
 
         self.run_snapcraft('prime')
@@ -39,15 +39,15 @@ class SnapcraftctlSetVersionTestCase(integration.TestCase):
         with open(os.path.join('prime', 'meta', 'snap.yaml')) as f:
             y = yaml.load(f)
 
-        self.assertThat(y['version'], Equals('override-version'))
+        self.assertThat(y['grade'], Equals('devel'))
 
-    def test_set_version_no_overwrite(self):
+    def test_set_grade_no_overwrite(self):
         self.construct_yaml(
-            version='test-version', adopt_info='my-part',
+            grade='devel', adopt_info='my-part',
             parts=textwrap.dedent("""\
                 my-part:
                   plugin: nil
-                  override-pull: snapcraftctl set-version override-version
+                  override-pull: snapcraftctl set-grade stable
                 """))
 
         self.run_snapcraft('prime')
@@ -55,22 +55,22 @@ class SnapcraftctlSetVersionTestCase(integration.TestCase):
         with open(os.path.join('prime', 'meta', 'snap.yaml')) as f:
             y = yaml.load(f)
 
-        self.assertThat(y['version'], Equals('test-version'))
+        self.assertThat(y['grade'], Equals('devel'))
 
-    def test_set_version_twice_errors(self):
+    def test_set_grade_twice_errors(self):
         self.construct_yaml(
-            version=None, adopt_info='my-part', parts=textwrap.dedent("""\
+            grade=None, adopt_info='my-part', parts=textwrap.dedent("""\
                 my-part:
                   plugin: nil
-                  override-pull: snapcraftctl set-version override-version
-                  override-prime: snapcraftctl set-version no-this-version
+                  override-pull: snapcraftctl set-grade stable
+                  override-prime: snapcraftctl set-grade devel
                 """))
 
         raised = self.assertRaises(
             subprocess.CalledProcessError, self.run_snapcraft, 'prime')
         self.assertThat(
             raised.output, Contains(
-                "Unable to set version: it was already set in the 'pull' "
+                "Unable to set grade: it was already set in the 'pull' "
                 "step"))
         self.assertThat(
             raised.output, Contains("Failed to run 'override-prime'"))
