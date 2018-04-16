@@ -38,6 +38,18 @@ class NoNativeBackendError(RepoError):
         super().__init__(distro=distro)
 
 
+class CacheUpdateFailedError(RepoError):
+
+    fmt = (
+        "Failed to update the package cache: "
+        "Some files could not be downloaded. "
+        "Check that the sources on your host are configured correctly."
+    )
+
+    def __init__(self):
+        super().__init__()
+
+
 class BuildPackageNotFoundError(RepoError):
 
     fmt = "Could not find a required package in 'build-packages': {package}"

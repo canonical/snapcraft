@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import apt
 import os
 from subprocess import CalledProcessError
 from unittest.mock import ANY, call, patch, MagicMock
@@ -51,6 +52,16 @@ class UbuntuTestCase(RepoBaseTestCase):
         self.mock_package.candidate.fetch_binary.side_effect = _fetch_binary
         self.mock_cache.return_value.get_changes.return_value = [
             self.mock_package]
+
+    def test_cache_update_failed(self):
+        self.mock_cache().update.side_effect = apt.cache.FetchFailedException()
+        project_options = snapcraft.ProjectOptions(
+            use_geoip=False)
+        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        self.assertRaises(
+            errors.CacheUpdateFailedError,
+            ubuntu.get,
+            ['fake-package'])
 
     def test_get_pkg_name_parts_name_only(self):
         name, version = repo.get_pkg_name_parts('hello')

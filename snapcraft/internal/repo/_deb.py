@@ -122,8 +122,11 @@ class _AptCache:
                 "Cannot find 'dpkg' command needed to support multiarch")
 
         apt_cache = apt.Cache(rootdir=cache_dir, memonly=True)
-        apt_cache.update(fetch_progress=self.progress,
-                         sources_list=sources_list_file)
+        try:
+            apt_cache.update(fetch_progress=self.progress,
+                             sources_list=sources_list_file)
+        except apt.cache.FetchFailedException:
+            raise errors.CacheUpdateFailedError()
 
         return apt_cache
 
