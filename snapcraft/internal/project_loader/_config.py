@@ -407,18 +407,18 @@ def _expand_filesets_for(step, properties):
 
 class _Architecture:
     def __init__(self, *, build_on, run_on=None):
-        self.build_on = build_on
         if isinstance(build_on, str):
             self.build_on = [build_on]
-
-        self.run_on = run_on
-        if isinstance(run_on, str):
-            self.run_on = [run_on]
+        else:
+            self.build_on = build_on
 
         # If there is no run_on, it defaults to the value of build_on
         if not run_on:
             self.run_on = self.build_on
-
+        elif isinstance(run_on, str):
+            self.run_on = [run_on]
+        else:
+            self.run_on = run_on
 
 def _get_architecture_list(architectures, current_arch):
     if not architectures:
