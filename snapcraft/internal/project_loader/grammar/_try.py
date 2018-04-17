@@ -14,25 +14,31 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from . import process_grammar
-
 
 class TryStatement:
     """Process a 'try' statement in the grammar.
 
     For example:
     >>> from snapcraft import ProjectOptions
+    >>> from ._processor import GrammarProcessor
     >>> def checker(primitive):
     ...     return 'invalid' not in primitive
     >>> options = ProjectOptions()
-    >>> clause = TryStatement(body=['invalid'], project_options=options,
-    ...                       checker=checker)
+    >>> processor = GrammarProcessor(None, options, checker)
+    >>> clause = TryStatement(body=['invalid'], processor=processor)
     >>> clause.add_else(['valid'])
     >>> clause.process()
     {'valid'}
     """
 
-    def __init__(self, *, body, project_options, checker):
+    @property
+    def _primitives(self):
+        if self.__primitives is None:
+            self.__primitives = self._processor.process(grammar=self._body)
+
+        return self.__primitives
+
+    def __init__(self, *, body, processor):
         """Create an _OnStatement instance.
 
         :param list body: The body of the 'try' clause.
@@ -45,9 +51,10 @@ class TryStatement:
         """
 
         self._body = body
-        self._project_options = project_options
-        self._checker = checker
+        self._processor = processor
         self._else_bodies = []
+
+        self.__primitives = None
 
     def add_else(self, else_body):
         """Add an 'else' clause to the statement.
@@ -59,35 +66,32 @@ class TryStatement:
 
         self._else_bodies.append(else_body)
 
-    def process(self):
+    def check(self):
+        return _all_primitives_valid(self._primitives, self._processor.checker)
+
+    def process_body(self):
         """Process the clause.
 
         :return: Primitives as determined by evaluating the statement.
         :rtype: list
         """
 
-        primitives = process_grammar(
-            self._body, self._project_options, self._checker)
+        return self._primitives
 
-        # If some of the primitives in the 'try' were invalid, then we need to
-        # process the 'else' clauses.
-        if not _all_primitives_valid(primitives, self._checker):
-            if not self._else_bodies:
-                # If there are no 'else' statements, the 'try' was considered
-                # optional and it failed, which means it doesn't resolve to
-                # any primitives.
-                return set()
+    def process_else(self):
+        primitives = set()
 
-            for else_body in self._else_bodies:
-                if not else_body:
-                    continue
+        # If there are no 'else' statements, the 'try' was considered optional
+        # and it failed, which means it doesn't resolve to any primitives.
+        for else_body in self._else_bodies:
+            if not else_body:
+                continue
 
-                primitives = process_grammar(
-                    else_body, self._project_options, self._checker)
+            primitives = self._processor.process(grammar=else_body)
 
-                # Stop once an 'else' clause gives us valid primitives
-                if _all_primitives_valid(primitives, self._checker):
-                    break
+            # Stop once an 'else' clause gives us valid primitives
+            if _all_primitives_valid(primitives, self._processor.checker):
+                break
 
         return primitives
 

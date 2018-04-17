@@ -20,6 +20,7 @@ from unittest.mock import patch
 
 import snapcraft
 from snapcraft.internal.project_loader import grammar
+import snapcraft.internal.project_loader.grammar._to as _to
 
 from . import GrammarBaseTestCase
 
@@ -46,8 +47,9 @@ class GrammarOnDuplicatesTestCase(GrammarBaseTestCase):
                 grammar.errors.GrammarSyntaxError,
                 "Invalid grammar syntax: found duplicate 'on amd64,i386' "
                 'statements. These should be merged.'):
-            grammar.process_grammar(
+            processor = grammar.GrammarProcessor(
                 self.grammar, snapcraft.ProjectOptions(), self.checker)
+            processor.process()
 
 
 class BasicGrammarTestCase(GrammarBaseTestCase):
@@ -201,10 +203,87 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         platform_machine_mock.return_value = self.host_arch
         platform_architecture_mock.return_value = ('64bit', 'ELF')
 
-        options = snapcraft.ProjectOptions()
+        processor = grammar.GrammarProcessor(
+                self.grammar, snapcraft.ProjectOptions(), self.checker)
         self.assertThat(
-            grammar.process_grammar(self.grammar, options, self.checker),
-            Equals(self.expected_packages))
+            processor.process(), Equals(self.expected_packages))
+
+
+class TransformerGrammarTestCase(GrammarBaseTestCase):
+
+    scenarios = [
+        ('unconditional', {
+            'grammar': [
+                'foo',
+                'bar',
+            ],
+            'host_arch': 'x86_64',
+            'expected_packages': {'foo', 'bar'}
+        }),
+        ('mixed including', {
+            'grammar': [
+                'foo',
+                {'on i386': ['bar']}
+            ],
+            'host_arch': 'i686',
+            'expected_packages': {'foo', 'bar'}
+        }),
+        ('mixed excluding', {
+            'grammar': [
+                'foo',
+                {'on i386': ['bar']}
+            ],
+            'host_arch': 'x86_64',
+            'expected_packages': {'foo'}
+        }),
+        ('to', {
+            'grammar': [
+                {'to i386': ['foo']},
+            ],
+            'host_arch': 'x86_64',
+            'expected_packages': {'foo:i386'}
+        }),
+        ('transform applies to nested', {
+            'grammar': [
+                {'to i386': [
+                    {'on amd64': ['foo']}
+                ]},
+            ],
+            'host_arch': 'x86_64',
+            'expected_packages': {'foo:i386'}
+        }),
+        ('not to', {
+            'grammar': [
+                {'to amd64': ['foo']},
+                {'else': ['bar']}
+            ],
+            'host_arch': 'x86_64',
+            'expected_packages': {'bar'}
+        }),
+    ]
+
+    @patch('platform.architecture')
+    @patch('platform.machine')
+    def test_grammar_with_transformer(self, platform_machine_mock,
+                                      platform_architecture_mock):
+        platform_machine_mock.return_value = self.host_arch
+        platform_architecture_mock.return_value = ('64bit', 'ELF')
+
+        # Transform all 'to' statements to include arch
+        def _transformer(statement, package_name, project_options):
+            if statement and isinstance(statement, _to.ToStatement):
+                if ':' not in package_name:
+                    package_name += ':{}'.format(project_options.deb_arch)
+
+            return package_name
+
+        processor = grammar.GrammarProcessor(
+            self.grammar, snapcraft.ProjectOptions(
+                target_deb_arch='i386'), self.checker,
+            transformer=_transformer)
+
+        self.assertThat(
+            processor.process(), Equals(self.expected_packages))
 
 
 class InvalidGrammarTestCase(GrammarBaseTestCase):
@@ -234,5 +313,6 @@ class InvalidGrammarTestCase(GrammarBaseTestCase):
         with testtools.ExpectedException(
                 grammar.errors.GrammarSyntaxError,
                 self.expected_exception):
-            grammar.process_grammar(
+            processor = grammar.GrammarProcessor(
                 self.grammar, snapcraft.ProjectOptions(), self.checker)
+            processor.process()
