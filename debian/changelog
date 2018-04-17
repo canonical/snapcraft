@@ -54,7 +54,7 @@ snapcraft (2.41+18.04) bionic; urgency=medium
   [ Colin Watson ]
   * storeapi: fix formatting of some store errors (#2056)
 
- -- <sergio.schvezov@ubuntu.com>  Sat, 14 Apr 2018 12:13:35 +0000
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Sat, 14 Apr 2018 12:13:35 +0000
 
 snapcraft (2.40.1) xenial; urgency=medium
 
