@@ -136,7 +136,11 @@ def _determine_cause(error):
             key = contextual_error.schema_path.popleft()
             if key not in contextual_messages:
                 contextual_messages[key] = []
-            contextual_messages[key].append(contextual_error.message)
+            message = contextual_error.message
+            if message:
+                # Sure it starts lower-case (not all messages do)
+                contextual_messages[key].append(
+                    message[0].lower() + message[1:])
 
         oneOf_messages = []  # type: List[str]
         for key, value in contextual_messages.items():

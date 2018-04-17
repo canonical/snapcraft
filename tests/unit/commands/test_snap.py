@@ -43,7 +43,9 @@ class SnapCommandBaseTestCase(CommandBaseTestCase):
         version: 1.0
         summary: test snapping
         description: if snap is successful a snap package will be available
-        architectures: ['amd64']
+        architectures:
+          - build-on: all
+            run-on: 'amd64'
         type: {}
         confinement: strict
         grade: stable

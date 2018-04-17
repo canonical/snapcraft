@@ -515,7 +515,9 @@ parts:
 version: "1"
 summary: test
 description: nothing
-architectures: ['amd64']
+architectures:
+  - build-on: all
+    run-on: amd64
 confinement: strict
 grade: stable
 
@@ -1574,6 +1576,127 @@ parts:
             "followed by an optional asterisk\)")
 
 
+class ValidArchitecturesYamlTestCase(YamlBaseTestCase):
+
+    yaml_scenarios = [
+        ('none', {
+            'expected_amd64': ['amd64'],
+            'expected_i386': ['i386'],
+            'expected_armhf': ['armhf'],
+            'yaml': None,
+        }),
+        ('single string list', {
+            'expected_amd64': ['amd64'],
+            'expected_i386': ['i386'],
+            'expected_armhf': ['armhf'],
+            'yaml': '[amd64]',
+        }),
+        ('multiple string list', {
+            'expected_amd64': ['amd64', 'i386'],
+            'expected_i386': ['amd64', 'i386'],
+            'expected_armhf': ['armhf'],
+            'yaml': '[amd64, i386]',
+        }),
+        ('single object list', {
+            'expected_amd64': ['amd64'],
+            'expected_i386': ['i386'],
+            'expected_armhf': ['armhf'],
+            'yaml': dedent("""
+                - build-on: [amd64]
+                  run-on: [amd64]
+            """),
+        }),
+        ('multiple object list', {
+            'expected_amd64': ['amd64'],
+            'expected_i386': ['i386'],
+            'expected_armhf': ['armhf', 'arm64'],
+            'yaml': dedent("""
+                - build-on: [amd64]
+                  run-on: [amd64]
+                - build-on: [i386]
+                  run-on: [i386]
+                - build-on: [armhf]
+                  run-on: [armhf, arm64]
+            """),
+        }),
+        ('omit run-on', {
+            'expected_amd64': ['amd64'],
+            'expected_i386': ['i386'],
+            'expected_armhf': ['armhf'],
+            'yaml': dedent("""
+                - build-on: [amd64]
+            """),
+        }),
+        ('single build-on string, no list', {
+            'expected_amd64': ['amd64'],
+            'expected_i386': ['i386'],
+            'expected_armhf': ['armhf'],
+            'yaml': dedent("""
+                - build-on: amd64
+            """),
+        }),
+        ('build- and run-on string, no lists', {
+            'expected_amd64': ['amd64'],
+            'expected_i386': ['amd64'],
+            'expected_armhf': ['armhf'],
+            'yaml': dedent("""
+                - build-on: i386
+                  run-on: amd64
+            """),
+        }),
+        ('build on all', {
+            'expected_amd64': ['amd64'],
+            'expected_i386': ['amd64'],
+            'expected_armhf': ['amd64'],
+            'yaml': dedent("""
+                - build-on: [all]
+                  run-on: [amd64]
+            """),
+        }),
+        ('run on all', {
+            'expected_amd64': ['all'],
+            'expected_i386': ['i386'],
+            'expected_armhf': ['armhf'],
+            'yaml': dedent("""
+                - build-on: [amd64]
+                  run-on: [all]
+            """),
+        }),
+    ]
+
+    arch_scenarios = [
+        ('amd64', {'deb_arch': 'amd64'}),
+        ('i386', {'deb_arch': 'i386'}),
+        ('armhf', {'deb_arch': 'armhf'}),
+    ]
+
+    scenarios = multiply_scenarios(yaml_scenarios, arch_scenarios)
+
+    def test_architectures(self):
+        snippet = ''
+        if self.yaml:
+            snippet = 'architectures: {}'.format(self.yaml)
+        self.make_snapcraft_yaml(dedent("""\
+            name: test
+            version: "1"
+            summary: test
+            description: test
+            {}
+            parts:
+              my-part:
+                plugin: nil
+        """).format(snippet))
+
+        try:
+            c = _config.Config(
+                snapcraft.project.Project(target_deb_arch=self.deb_arch))
+
+            expected = getattr(self, 'expected_{}'.format(self.deb_arch))
+            self.assertThat(c.data['architectures'], Equals(expected))
+        except errors.YamlValidationError as e:
+            self.fail('Expected YAML to be valid, got an error: {}'.format(e))
+
+
 class InitTestCase(unit.TestCase):
 
     def test_config_raises_on_missing_snapcraft_yaml(self):
@@ -2542,6 +2665,108 @@ class InvalidPartNamesTestCase(ValidationBaseTestCase):
             "name.").format(self.name)
         self.assertThat(raised.message, Equals(expected_message),
                         message=data)
+
+
+class InvalidArchitecturesTestCase(ValidationBaseTestCase):
+
+    scenarios = [
+        ('single string', {
+            'architectures': 'amd64',
+            'message': "'amd64' is not of type 'array'",
+        }),
+        ('unknown object properties', {
+            'architectures': [{'builds-on': ['amd64'], 'runs-on': ['amd64']}],
+            'message': "'build-on' is a required property and additional "
+                       "properties are not allowed",
+        }),
+        ('omit build-on', {
+            'architectures': [{'run-on': ['amd64']}],
+            'message': "'build-on' is a required property",
+        }),
+        ('build on all and others', {
+            'architectures': [{'build-on': ['amd64', 'all']}],
+            'message': "'all' can only be used within 'build-on' by itself, "
+                       "not with other architectures",
+        }),
+        ('run on all and others', {
+            'architectures': [
+                {'build-on': ['amd64'], 'run-on': ['amd64', 'all']}],
+            'message': "'all' can only be used within 'run-on' by itself, "
+                       "not with other architectures",
+        }),
+        ('run on all and more objects', {
+            'architectures': [
+                {'build-on': ['amd64'], 'run-on': ['all']},
+                {'build-on': ['i396'], 'run-on': ['i386']},
+            ],
+            'message': "one of the items has 'all' in 'run-on', but there are "
+                       "2 items: upon release they will conflict. 'all' "
+                       "should only be used if there is a single item",
+        }),
+        ('build on all and more objects', {
+            'architectures': [
+                {'build-on': ['all']},
+                {'build-on': ['i396']},
+            ],
+            'message': "one of the items has 'all' in 'build-on', but there "
+                       "are 2 items: snapcraft doesn't know which one to use. "
+                       "'all' should only be used if there is a single item",
+        }),
+        ('multiple builds run on same arch', {
+            'architectures': [
+                {'build-on': ['amd64'], 'run-on': ['amd64']},
+                {'build-on': ['i396'], 'run-on': ['amd64', 'i386']},
+            ],
+            'message': "multiple items will build snaps that claim to run on "
+                       "'amd64'",
+        }),
+        ('multiple builds run on same arch with implicit run-on', {
+            'architectures': [
+                {'build-on': ['amd64']},
+                {'build-on': ['i396'], 'run-on': ['amd64', 'i386']},
+            ],
+            'message': "multiple items will build snaps that claim to run on "
+                       "'amd64'",
+        }),
+        ('mixing forms', {
+            'architectures': [
+                'amd64',
+                {'build-on': ['i386'], 'run-on': ['amd64', 'i386']},
+            ],
+            'message': 'every item must either be a string or an object',
+        }),
+        ('build on all run on specific', {
+            'architectures': [
+                {'build-on': ['all'], 'run-on': ['amd64']},
+                {'build-on': ['all'], 'run-on': ['i386']},
+            ],
+            'message': "one of the items has 'all' in 'build-on', but there "
+                       "are 2 items: snapcraft doesn't know which one to use. "
+                       "'all' should only be used if there is a single item",
+        }),
+        ('build on overlap', {
+            'architectures': [
+                {'build-on': ['amd64', 'i386'], 'run-on': ['i386']},
+                {'build-on': ['amd64'], 'run-on': ['amd64']},
+            ],
+            'message': "'amd64' is present in the 'build-on' of multiple "
+                       "items, which means snapcraft doesn't know which "
+                       "'run-on' to use when building on that architecture",
+        }),
+    ]
+
+    def test_invalid_architectures(self):
+        data = self.data.copy()
+        data['architectures'] = self.architectures
+
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            project_loader.Validator(data).validate)
+
+        self.assertThat(
+            raised.message, MatchesRegex(
+                "The 'architectures.*?' property does not match the required "
+                "schema: {}".format(self.message)), message=data)
 
 
 class TestPluginLoadingProperties(unit.TestCase):

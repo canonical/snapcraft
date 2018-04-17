@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import codecs
+import collections
 import logging
 import os
 import os.path
@@ -26,7 +27,7 @@ import yaml.reader
 from typing import Set  # noqa: F401
 
 
-from snapcraft import project
+from snapcraft import project, formatting_utils
 from snapcraft.project._project_info import ProjectInfo
 from snapcraft.internal import deprecations, remote_parts, states
 
@@ -69,6 +70,114 @@ def _validate_epoch(instance):
         raise errors.InvalidEpochError()
 
     return True
+
+
+@jsonschema.FormatChecker.cls_checks('architectures')
+def _validate_architectures(instance):
+    standalone_build_ons = collections.Counter()
+    build_ons = collections.Counter()
+    run_ons = collections.Counter()
+
+    saw_strings = False
+    saw_dicts = False
+
+    for item in instance:
+        # This could either be a dict or a string. In the latter case, the
+        # schema will take care of it. We just need to further validate the
+        # dict.
+        if isinstance(item, str):
+            saw_strings = True
+        elif isinstance(item, dict):
+            saw_dicts = True
+            build_on = _get_architectures_set(item, 'build-on')
+            build_ons.update(build_on)
+
+            # Add to the list of run-ons. However, if no run-on is specified,
+            # we know it's implicitly the value of build-on, so use that
+            # for validation instead.
+            run_on = _get_architectures_set(item, 'run-on')
+            if run_on:
+                run_ons.update(run_on)
+            else:
+                standalone_build_ons.update(build_on)
+
+    # Architectures can either be a list of strings, or a list of objects.
+    # Mixing the two forms is unsupported.
+    if saw_strings and saw_dicts:
+        raise jsonschema.exceptions.ValidationError(
+            'every item must either be a string or an object',
+            path=['architectures'], instance=instance)
+
+    # At this point, individual build-ons and run-ons have been validated,
+    # we just need to validate them across each other.
+
+    # First of all, if we have a `run-on: [all]` (or a standalone
+    # `build-on: [all]`) then we should only have one item in the instance,
+    # otherwise we know we'll have multiple snaps claiming they run on the same
+    # architectures (i.e. all and something else).
+    number_of_snaps = len(instance)
+    if 'all' in run_ons and number_of_snaps > 1:
+        raise jsonschema.exceptions.ValidationError(
+            "one of the items has 'all' in 'run-on', but there are {} "
+            "items: upon release they will conflict. 'all' should only be "
+            "used if there is a single item".format(
+                number_of_snaps),
+            path=['architectures'], instance=instance)
+    if 'all' in build_ons and number_of_snaps > 1:
+        raise jsonschema.exceptions.ValidationError(
+            "one of the items has 'all' in 'build-on', but there are {} "
+            "items: snapcraft doesn't know which one to use. 'all' should "
+            "only be used if there is a single item".format(
+                number_of_snaps),
+            path=['architectures'], instance=instance)
+
+    # We want to ensure that multiple `run-on`s (or standalone `build-on`s)
+    # don't incude the same arch, or they'll clash with each other when
+    # releasing.
+    all_run_ons = run_ons + standalone_build_ons
+    duplicates = {arch for (arch, count) in all_run_ons.items() if count > 1}
+    if duplicates:
+        raise jsonschema.exceptions.ValidationError(
+            'multiple items will build snaps that claim to run on {}'.format(
+                formatting_utils.humanize_list(duplicates, 'and')),
+            path=['architectures'], instance=instance)
+
+    # Finally, ensure that multiple `build-on`s don't include the same arch
+    # or Snapcraft has no way of knowing which one to use.
+    duplicates = {arch for (arch, count) in build_ons.items() if count > 1}
+    if duplicates:
+        raise jsonschema.exceptions.ValidationError(
+            "{} {} present in the 'build-on' of multiple items, which means "
+            "snapcraft doesn't know which 'run-on' to use when building on "
+            "{} {}".format(
+                formatting_utils.humanize_list(duplicates, 'and'),
+                formatting_utils.pluralize(duplicates, 'is', 'are'),
+                formatting_utils.pluralize(duplicates, 'that', 'those'),
+                formatting_utils.pluralize(
+                    duplicates, 'architecture', 'architectures')),
+            path=['architectures'], instance=instance)
+
+    return True
+
+
+def _get_architectures_set(item, name):
+    value = item.get(name, set())
+    if isinstance(value, str):
+        value_set = {value}
+    else:
+        value_set = set(value)
+
+    _validate_architectures_set(value_set, name)
+
+    return value_set
+
+
+def _validate_architectures_set(architectures_set, name):
+    if 'all' in architectures_set and len(architectures_set) > 1:
+        raise jsonschema.exceptions.ValidationError(
+            "'all' can only be used within {!r} by itself, "
+            "not with other architectures".format(name),
+            path=['architectures'], instance=architectures_set)
 
 
 class Config:
@@ -124,8 +233,8 @@ class Config:
                                  build_tools=self.build_tools,
                                  snapcraft_yaml=self.snapcraft_yaml_path)
 
-        if 'architectures' not in self.data:
-            self.data['architectures'] = [self._project_options.deb_arch]
+        self.data['architectures'] = _process_architectures(
+            self.data.get('architectures'), self._project_options.deb_arch)
 
     def get_metadata(self):
         return {'name': self.data['name'],
@@ -294,3 +403,50 @@ def _expand_filesets_for(step, properties):
             new_step_set.append(item)
 
     return new_step_set
+
+
+class _Architecture:
+    def __init__(self, *, build_on, run_on=None):
+        if isinstance(build_on, str):
+            self.build_on = [build_on]
+        else:
+            self.build_on = build_on
+
+        # If there is no run_on, it defaults to the value of build_on
+        if not run_on:
+            self.run_on = self.build_on
+        elif isinstance(run_on, str):
+            self.run_on = [run_on]
+        else:
+            self.run_on = run_on
+
+
+def _create_architecture_list(architectures, current_arch):
+    if not architectures:
+        return [_Architecture(build_on=[current_arch])]
+
+    build_architectures = []  # type: List[str]
+    architecture_list = []  # type: List[_Architecture]
+    for item in architectures:
+        if isinstance(item, str):
+            build_architectures.append(item)
+        if isinstance(item, dict):
+            architecture_list.append(_Architecture(
+                build_on=item.get('build-on'),
+                run_on=item.get('run-on')))
+
+    if build_architectures:
+        architecture_list.append(_Architecture(build_on=build_architectures))
+
+    return architecture_list
+
+
+def _process_architectures(architectures, current_arch):
+    architecture_list = _create_architecture_list(architectures, current_arch)
+
+    for architecture in architecture_list:
+        if (current_arch in architecture.build_on or
+                'all' in architecture.build_on):
+            return architecture.run_on
+
+    return [current_arch]
