@@ -118,25 +118,27 @@ def _validate_architectures(instance):
     number_of_snaps = len(instance)
     if 'all' in run_ons and number_of_snaps > 1:
         raise jsonschema.exceptions.ValidationError(
-            "one of the items has 'all' in 'run-on', which only makes "
-            "sense if it's the only item, and there are {}".format(
+            "one of the items has 'all' in 'run-on', but there are {} "
+            "items: upon release they will conflict. 'all' should only be "
+            "used if there is a single item".format(
                 number_of_snaps),
             path=['architectures'], instance=instance)
     if 'all' in build_ons and number_of_snaps > 1:
         raise jsonschema.exceptions.ValidationError(
-            "one of the items has 'all' in 'build-on', which only makes "
-            "sense if it's the only item, and there are {}".format(
+            "one of the items has 'all' in 'build-on', but there are {} "
+            "items: snapcraft doesn't know which one to use. 'all' should "
+            "only be used if there is a single item".format(
                 number_of_snaps),
             path=['architectures'], instance=instance)
 
     # We want to ensure that multiple `run-on`s (or standalone `build-on`s)
     # don't incude the same arch, or they'll clash with each other when
     # releasing.
-    all_ons = run_ons + standalone_build_ons
-    duplicates = {arch for (arch, count) in all_ons.items() if count > 1}
+    all_run_ons = run_ons + standalone_build_ons
+    duplicates = {arch for (arch, count) in all_run_ons.items() if count > 1}
     if duplicates:
         raise jsonschema.exceptions.ValidationError(
-            'multiple items will build snaps that claim they run on {}'.format(
+            'multiple items will build snaps that claim to run on {}'.format(
                 formatting_utils.humanize_list(duplicates, 'and')),
             path=['architectures'], instance=instance)
 
@@ -145,8 +147,14 @@ def _validate_architectures(instance):
     duplicates = {arch for (arch, count) in build_ons.items() if count > 1}
     if duplicates:
         raise jsonschema.exceptions.ValidationError(
-            'ambiguous run-ons when building on {}'.format(
-                formatting_utils.humanize_list(duplicates, 'or')),
+            "{} {} present in the 'build-on' of multiple items, which means "
+            "snapcraft doesn't know which 'run-on' to use when building on "
+            "{} {}".format(
+                formatting_utils.humanize_list(duplicates, 'and'),
+                formatting_utils.pluralize(duplicates, 'is', 'are'),
+                formatting_utils.pluralize(duplicates, 'that', 'those'),
+                formatting_utils.pluralize(
+                    duplicates, 'architecture', 'architectures')),
             path=['architectures'], instance=instance)
 
     return True

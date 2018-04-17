@@ -2702,32 +2702,34 @@ class InvalidArchitecturesTestCase(ValidationBaseTestCase):
                 {'build-on': ['amd64'], 'run-on': ['all']},
                 {'build-on': ['i396'], 'run-on': ['i386']},
             ],
-            'message': "one of the items has 'all' in 'run-on', which only "
-                       "makes sense if it's the only item, and there are 2",
+            'message': "one of the items has 'all' in 'run-on', but there are "
+                       "2 items: upon release they will conflict. 'all' "
+                       "should only be used if there is a single item",
         }),
         ('build on all and more objects', {
             'architectures': [
                 {'build-on': ['all']},
                 {'build-on': ['i396']},
             ],
-            'message': "one of the items has 'all' in 'build-on', which only "
-                       "makes sense if it's the only item, and there are 2",
+            'message': "one of the items has 'all' in 'build-on', but there "
+                       "are 2 items: snapcraft doesn't know which one to use. "
+                       "'all' should only be used if there is a single item",
         }),
         ('multiple builds run on same arch', {
             'architectures': [
                 {'build-on': ['amd64'], 'run-on': ['amd64']},
                 {'build-on': ['i396'], 'run-on': ['amd64', 'i386']},
             ],
-            'message': "multiple items will build snaps that claim they run "
-                       "on 'amd64'",
+            'message': "multiple items will build snaps that claim to run on "
+                       "'amd64'",
         }),
         ('multiple builds run on same arch with implicit run-on', {
             'architectures': [
                 {'build-on': ['amd64']},
                 {'build-on': ['i396'], 'run-on': ['amd64', 'i386']},
             ],
-            'message': "multiple items will build snaps that claim they run "
-                       "on 'amd64'",
+            'message': "multiple items will build snaps that claim to run on "
+                       "'amd64'",
         }),
         ('mixing forms', {
             'architectures': [
@@ -2741,15 +2743,18 @@ class InvalidArchitecturesTestCase(ValidationBaseTestCase):
                 {'build-on': ['all'], 'run-on': ['amd64']},
                 {'build-on': ['all'], 'run-on': ['i386']},
             ],
-            'message': "one of the items has 'all' in 'build-on', which only "
-                       "makes sense if it's the only item, and there are 2",
+            'message': "one of the items has 'all' in 'build-on', but there "
+                       "are 2 items: snapcraft doesn't know which one to use. "
+                       "'all' should only be used if there is a single item",
         }),
         ('build on overlap', {
             'architectures': [
                 {'build-on': ['amd64', 'i386'], 'run-on': ['i386']},
                 {'build-on': ['amd64'], 'run-on': ['amd64']},
             ],
-            'message': "ambiguous run-ons when building on 'amd64'",
+            'message': "'amd64' is present in the 'build-on' of multiple "
+                       "items, which means snapcraft doesn't know which "
+                       "'run-on' to use when building on that architecture",
         }),
     ]
 
