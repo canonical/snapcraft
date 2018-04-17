@@ -81,21 +81,21 @@ def _validate_architectures(instance):
     saw_strings = False
     saw_dicts = False
 
-    for mapping in instance:
+    for item in instance:
         # This could either be a dict or a string. In the latter case, the
         # schema will take care of it. We just need to further validate the
         # dict.
-        if isinstance(mapping, str):
+        if isinstance(item, str):
             saw_strings = True
-        elif isinstance(mapping, dict):
+        elif isinstance(item, dict):
             saw_dicts = True
-            build_on = _get_architectures_list(mapping, 'build-on')
+            build_on = _get_architectures_set(item, 'build-on')
             build_ons.update(build_on)
 
             # Add to the list of run-ons. However, if no run-on is specified,
             # we know it's implicitly the value of build-on, so use that
             # for validation instead.
-            run_on = _get_architectures_list(mapping, 'run-on')
+            run_on = _get_architectures_set(item, 'run-on')
             if run_on:
                 run_ons.update(run_on)
             else:
@@ -106,7 +106,7 @@ def _validate_architectures(instance):
     if saw_strings and saw_dicts:
         raise jsonschema.exceptions.ValidationError(
             'every item must either be a string or an object',
-            path=['architectures'], instance=mapping)
+            path=['architectures'], instance=instance)
 
     # At this point, individual build-ons and run-ons have been validated,
     # we just need to validate them across each other.
@@ -160,24 +160,24 @@ def _validate_architectures(instance):
     return True
 
 
-def _get_architectures_list(mapping, name):
-    value = mapping.get(name, set())
+def _get_architectures_set(item, name):
+    value = item.get(name, set())
     if isinstance(value, str):
         value_set = {value}
     else:
         value_set = set(value)
 
-    _validate_architectures_list(value_set, name)
+    _validate_architectures_set(value_set, name)
 
     return value_set
 
 
-def _validate_architectures_list(architectures_list, name):
-    if 'all' in architectures_list and len(architectures_list) > 1:
+def _validate_architectures_set(architectures_set, name):
+    if 'all' in architectures_set and len(architectures_set) > 1:
         raise jsonschema.exceptions.ValidationError(
             "'all' can only be used within {!r} by itself, "
             "not with other architectures".format(name),
-            path=['architectures'], instance=architectures_list)
+            path=['architectures'], instance=architectures_set)
 
 
 class Config:
@@ -420,7 +420,8 @@ class _Architecture:
         else:
             self.run_on = run_on
 
-def _get_architecture_list(architectures, current_arch):
+
+def _create_architecture_list(architectures, current_arch):
     if not architectures:
         return [_Architecture(build_on=[current_arch])]
 
@@ -441,7 +442,7 @@ def _get_architecture_list(architectures, current_arch):
 
 
 def _process_architectures(architectures, current_arch):
-    architecture_list = _get_architecture_list(architectures, current_arch)
+    architecture_list = _create_architecture_list(architectures, current_arch)
 
     for architecture in architecture_list:
         if (current_arch in architecture.build_on or
