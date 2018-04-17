@@ -234,7 +234,7 @@ class Config:
                                  snapcraft_yaml=self.snapcraft_yaml_path)
 
         self.data['architectures'] = _process_architectures(
-            self.data.get('architectures'), self._project_options)
+            self.data.get('architectures'), self._project_options.deb_arch)
 
     def get_metadata(self):
         return {'name': self.data['name'],
@@ -440,8 +440,7 @@ def _get_architecture_list(architectures, current_arch):
     return architecture_list
 
 
-def _process_architectures(architectures, project):
-    current_arch = project.deb_arch
+def _process_architectures(architectures, current_arch):
     architecture_list = _get_architecture_list(architectures, current_arch)
 
     for architecture in architecture_list:
