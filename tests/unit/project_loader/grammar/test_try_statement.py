@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import doctest
+import testtools
 from testtools.matchers import Equals
 
 import snapcraft
@@ -103,16 +104,6 @@ class TryStatementGrammarTestCase(GrammarBaseTestCase):
             ],
             'expected_packages': {'invalid3'}
         }),
-        ('empty else', {
-            'body': ['invalid'],
-            'else_bodies': [[]],
-            'expected_packages': {'invalid'}
-        }),
-        ('empty else followed by else', {
-            'body': ['invalid'],
-            'else_bodies': [[], ['valid']],
-            'expected_packages': {'valid'}
-        }),
     ]
 
     def test_try_statement_grammar(self):
@@ -124,3 +115,18 @@ class TryStatementGrammarTestCase(GrammarBaseTestCase):
             statement.add_else(else_body)
 
         self.assertThat(statement.process(), Equals(self.expected_packages))
+
+
+class TryStatementElseFail(GrammarBaseTestCase):
+
+    def test_else_fail(self):
+        processor = grammar.GrammarProcessor(
+            None, snapcraft.ProjectOptions(), self.checker)
+        statement = _try.TryStatement(body=['invalid'], processor=processor)
+
+        statement.add_else(None)
+
+        with testtools.ExpectedException(
+                grammar.errors.UnsatisfiedStatementError,
+                "Unable to satisfy 'try', failure forced"):
+            statement.process()

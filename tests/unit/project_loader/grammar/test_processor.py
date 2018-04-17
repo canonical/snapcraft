@@ -270,8 +270,8 @@ class TransformerGrammarTestCase(GrammarBaseTestCase):
         platform_architecture_mock.return_value = ('64bit', 'ELF')
 
         # Transform all 'to' statements to include arch
-        def _transformer(statement, package_name, project_options):
-            if statement and isinstance(statement, _to.ToStatement):
+        def _transformer(call_stack, package_name, project_options):
+            if any(isinstance(s, _to.ToStatement) for s in call_stack):
                 if ':' not in package_name:
                     package_name += ':{}'.format(project_options.deb_arch)
 

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017, 2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,16 +16,15 @@
 
 import re
 
-from .errors import (
-    ToStatementSyntaxError,
-    UnsatisfiedStatementError,
-)
+from .errors import ToStatementSyntaxError
+
+from ._statement import Statement
 
 _SELECTOR_PATTERN = re.compile(r'\Ato\s+([^,\s](?:,?[^,]+)*)\Z')
 _WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
 
 
-class ToStatement:
+class ToStatement(Statement):
     """Process a 'to' statement in the grammar.
 
     For example:
@@ -42,65 +41,25 @@ class ToStatement:
     {'bar'}
     """
 
-    def __init__(self, *, to, body, processor):
-        """Create an _ToStatement instance.
+    def __init__(self, *, to, body, processor, call_stack=None):
+        """Create an ToStatement instance.
 
         :param str to: The 'to <selectors>' part of the clause.
         :param list body: The body of the 'to' clause.
-        :param project_options: Instance of ProjectOptions to use to process
-                                clause.
-        :type project_options: snapcraft.ProjectOptions
-        :param checker: callable accepting a single primitive, returning
-                        true if it is valid
-        :type checker: callable
+        :param GrammarProcessor processor: Grammar processor to use
+        :param list call_stack: Call stack leading to this statement
         """
+        super().__init__(body=body, processor=processor, call_stack=call_stack)
 
         self.selectors = _extract_to_clause_selectors(to)
-        self._body = body
-        self._processor = processor
-        self._else_bodies = []
 
-    def add_else(self, else_body):
-        """Add an 'else' clause to the statement.
-
-        :param list else_body: The body of an 'else' clause.
-
-        The 'else' clauses will be processed in the order they are added.
-        """
-
-        self._else_bodies.append(else_body)
-
-    def check(self):
+    def _check(self):
         target_arch = self._processor.project_options.deb_arch
 
         # The only selector currently supported is the target arch. Since
         # selectors are matched with an AND, not OR, there should only be one
         # selector.
         return (len(self.selectors) == 1) and (target_arch in self.selectors)
-
-    def process_body(self):
-        """Process the clause.
-
-        :return: Primitives as determined by evaluating the statement.
-        :rtype: list
-        """
-
-        return self._processor.process(grammar=self._body)
-
-    def process_else(self):
-        primitives = set()
-
-        for else_body in self._else_bodies:
-            if not else_body:
-                # Handle the 'else fail' case.
-                raise UnsatisfiedStatementError(self)
-
-            primitives = self._processor.process(grammar=else_body)
-            if primitives:
-                break
-
-        return primitives
-
 
     def __eq__(self, other):
         return self.selectors == other.selectors

@@ -54,11 +54,13 @@ class GrammarProcessor:
             # By default, no transformation
             self._transformer = lambda s, p, o: p
 
-    def process(self, *, grammar=None):
+    def process(self, *, grammar=None, call_stack=None):
         """Process grammar and extract desired primitives.
 
         :param list grammar: Unprocessed grammar (defaults to that set in
                              init).
+        :param active_statement: Currently-active statement (i.e. the one being
+                                 processed). Defaults to None.
 
         :return: Primitives selected
         :rtype: set
@@ -66,6 +68,9 @@ class GrammarProcessor:
 
         if grammar is None:
             grammar = self._grammar
+
+        if call_stack is None:
+            call_stack = []
 
         primitives = set()
         statements = _StatementCollection(
@@ -80,10 +85,10 @@ class GrammarProcessor:
                     _handle_else(statement, None)
                 else:
                     primitives.add(self._transformer(
-                        None, section, self.project_options))
+                        call_stack, section, self.project_options))
             elif isinstance(section, dict):
                 statement = self._parse_dict(
-                    section, statement, statements)
+                    section, statement, statements, call_stack)
             else:
                 # jsonschema should never let us get here.
                 raise GrammarSyntaxError(
@@ -96,7 +101,7 @@ class GrammarProcessor:
 
         return primitives
 
-    def _parse_dict(self, section, statement, statements):
+    def _parse_dict(self, section, statement, statements, call_stack):
         for key, value in section.items():
             # Grammar is always written as a list of selectors but the value
             # can be a list or a string. In the latter case we wrap it so no
@@ -112,7 +117,8 @@ class GrammarProcessor:
                 # collection will ignore it.
                 statements.add(statement)
 
-                statement = OnStatement(on=key, body=value, processor=self)
+                statement = OnStatement(
+                    on=key, body=value, processor=self, call_stack=call_stack)
 
             if _TO_CLAUSE_PATTERN.match(key):
                 # We've come across the beginning of a 'to' statement.
@@ -121,7 +127,8 @@ class GrammarProcessor:
                 # collection will ignore it.
                 statements.add(statement)
 
-                statement = ToStatement(to=key, body=value, processor=self)
+                statement = ToStatement(
+                    to=key, body=value, processor=self, call_stack=call_stack)
 
             if _TRY_CLAUSE_PATTERN.match(key):
                 # We've come across the beginning of a 'try' statement.
@@ -130,7 +137,8 @@ class GrammarProcessor:
                 # collection will ignore it.
                 statements.add(statement)
 
-                statement = TryStatement(body=value, processor=self)
+                statement = TryStatement(
+                    body=value, processor=self, call_stack=call_stack)
 
             if _ELSE_CLAUSE_PATTERN.match(key):
                 _handle_else(statement, value)
@@ -191,12 +199,6 @@ class _StatementCollection:
         """
         primitives = set()
         for statement in self._statements:
-            if statement.check():
-                statement_primitives = statement.process_body()
-                for primitive in statement_primitives:
-                    primitives.add(self._transformer(
-                        statement, primitive, self._project_options))
-            else:
-                primitives |= statement.process_else()
+            primitives |= statement.process()
 
         return primitives

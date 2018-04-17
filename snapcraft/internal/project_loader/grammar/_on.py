@@ -18,16 +18,15 @@ import re
 
 import snapcraft
 
-from .errors import (
-    OnStatementSyntaxError,
-    UnsatisfiedStatementError,
-)
+from .errors import OnStatementSyntaxError
+
+from ._statement import Statement
 
 _SELECTOR_PATTERN = re.compile(r'\Aon\s+([^,\s](?:,?[^,]+)*)\Z')
 _WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
 
 
-class OnStatement:
+class OnStatement(Statement):
     """Process an 'on' statement in the grammar.
 
     For example:
@@ -49,8 +48,8 @@ class OnStatement:
     {'bar'}
     """
 
-    def __init__(self, *, on, body, processor):
-        """Create an _OnStatement instance.
+    def __init__(self, *, on, body, processor, call_stack=None):
+        """Create an OnStatement instance.
 
         :param str on: The 'on <selectors>' part of the clause.
         :param list body: The body of the 'on' clause.
@@ -61,23 +60,11 @@ class OnStatement:
                         true if it is valid
         :type checker: callable
         """
+        super().__init__(body=body, processor=processor, call_stack=call_stack)
 
         self.selectors = _extract_on_clause_selectors(on)
-        self._body = body
-        self._processor = processor
-        self._else_bodies = []
 
-    def add_else(self, else_body):
-        """Add an 'else' clause to the statement.
-
-        :param list else_body: The body of an 'else' clause.
-
-        The 'else' clauses will be processed in the order they are added.
-        """
-
-        self._else_bodies.append(else_body)
-
-    def check(self):
+    def _check(self):
         # A new ProjectOptions instance defaults to the host architecture
         # whereas self._project_options would yield the target architecture
         host_arch = snapcraft.ProjectOptions().deb_arch
@@ -86,30 +73,6 @@ class OnStatement:
         # selectors are matched with an AND, not OR, there should only be one
         # selector.
         return (len(self.selectors) == 1) and (host_arch in self.selectors)
-
-    def process_body(self):
-        """Process the clause.
-
-        :return: Primitives as determined by evaluating the statement.
-        :rtype: list
-        """
-
-        return self._processor.process(grammar=self._body)
-
-    def process_else(self):
-        primitives = set()
-
-        for else_body in self._else_bodies:
-            if not else_body:
-                # Handle the 'else fail' case.
-                raise UnsatisfiedStatementError(self)
-
-            primitives = self._processor.process(grammar=else_body)
-            if primitives:
-                break
-
-        return primitives
-
 
     def __eq__(self, other):
         return self.selectors == other.selectors
