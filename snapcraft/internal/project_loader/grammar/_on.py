@@ -18,30 +18,28 @@ import re
 
 import snapcraft
 
-from . import process_grammar
-from .errors import (
-    OnStatementSyntaxError,
-    UnsatisfiedStatementError,
-)
+from .errors import OnStatementSyntaxError
+
+from ._statement import Statement
 
 _SELECTOR_PATTERN = re.compile(r'\Aon\s+([^,\s](?:,?[^,]+)*)\Z')
 _WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
 
 
-class OnStatement:
+class OnStatement(Statement):
     """Process an 'on' statement in the grammar.
 
     For example:
     >>> from snapcraft import ProjectOptions
+    >>> from snapcraft.internal.project_loader import grammar
     >>> from unittest import mock
     >>>
     >>> def checker(primitive):
     ...     return True
     >>> options = ProjectOptions()
+    >>> processor = grammar.GrammarProcessor(None, options, checker)
     >>>
-    >>> clause = OnStatement(on='on amd64', body=['foo'],
-    ...                      project_options=options,
-    ...                      checker=checker)
+    >>> clause = OnStatement(on='on amd64', body=['foo'], processor=processor)
     >>> clause.add_else(['bar'])
     >>> with mock.patch('platform.machine') as mock_machine:
     ...     # Pretend this machine is an i686, not amd64
@@ -50,8 +48,8 @@ class OnStatement:
     {'bar'}
     """
 
-    def __init__(self, *, on, body, project_options, checker):
-        """Create an _OnStatement instance.
+    def __init__(self, *, on, body, processor, call_stack=None):
+        """Create an OnStatement instance.
 
         :param str on: The 'on <selectors>' part of the clause.
         :param list body: The body of the 'on' clause.
@@ -62,53 +60,19 @@ class OnStatement:
                         true if it is valid
         :type checker: callable
         """
+        super().__init__(body=body, processor=processor, call_stack=call_stack)
 
         self.selectors = _extract_on_clause_selectors(on)
-        self._body = body
-        self._project_options = project_options
-        self._checker = checker
-        self._else_bodies = []
 
-    def add_else(self, else_body):
-        """Add an 'else' clause to the statement.
-
-        :param list else_body: The body of an 'else' clause.
-
-        The 'else' clauses will be processed in the order they are added.
-        """
-
-        self._else_bodies.append(else_body)
-
-    def process(self):
-        """Process the clause.
-
-        :return: Primitives as determined by evaluating the statement.
-        :rtype: list
-        """
-
-        primitives = set()
+    def _check(self):
         # A new ProjectOptions instance defaults to the host architecture
         # whereas self._project_options would yield the target architecture
         host_arch = snapcraft.ProjectOptions().deb_arch
 
-        # The only selector currently supported is the target arch. Since
+        # The only selector currently supported is the host arch. Since
         # selectors are matched with an AND, not OR, there should only be one
         # selector.
-        if (len(self.selectors) == 1) and (host_arch in self.selectors):
-            primitives = process_grammar(
-                self._body, self._project_options, self._checker)
-        else:
-            for else_body in self._else_bodies:
-                if not else_body:
-                    # Handle the 'else fail' case.
-                    raise UnsatisfiedStatementError(self)
-
-                primitives = process_grammar(
-                    else_body, self._project_options, self._checker)
-                if primitives:
-                    break
-
-        return primitives
+        return (len(self.selectors) == 1) and (host_arch in self.selectors)
 
     def __eq__(self, other):
         return self.selectors == other.selectors

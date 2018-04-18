@@ -39,14 +39,14 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
             'body': ['foo'],
             'else_bodies': [],
             'target_arch': None,
-            'expected_packages': {'foo:amd64'}
+            'expected_packages': {'foo'}
         }),
         ('amd64 to armhf', {
             'to': 'to armhf',
             'body': ['foo'],
             'else_bodies': [],
             'target_arch': 'armhf',
-            'expected_packages': {'foo:armhf'}
+            'expected_packages': {'foo'}
         }),
         ('amd64 to armhf, arch specified', {
             'to': 'to armhf',
@@ -69,7 +69,7 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
                 ['bar']
             ],
             'target_arch': 'armhf',
-            'expected_packages': {'foo:armhf'}
+            'expected_packages': {'foo'}
         }),
         ('used else', {
             'to': 'to armhf',
@@ -117,7 +117,7 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
             ],
             'else_bodies': [],
             'target_arch': 'armhf',
-            'expected_packages': {'foo:armhf'}
+            'expected_packages': {'foo'}
         }),
         ('nested i386', {
             'to': 'to i386',
@@ -127,7 +127,7 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
             ],
             'else_bodies': [],
             'target_arch': 'i386',
-            'expected_packages': {'bar:i386'}
+            'expected_packages': {'bar'}
         }),
         ('nested body ignored else', {
             'to': 'to armhf',
@@ -137,7 +137,7 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
             ],
             'else_bodies': [],
             'target_arch': 'armhf',
-            'expected_packages': {'foo:armhf'}
+            'expected_packages': {'foo'}
         }),
         ('nested body used else', {
             'to': 'to i386',
@@ -147,7 +147,7 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
             ],
             'else_bodies': [],
             'target_arch': 'i386',
-            'expected_packages': {'bar:i386'}
+            'expected_packages': {'bar'}
         }),
         ('nested else ignored else', {
             'to': 'to i386',
@@ -159,7 +159,7 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
                 ],
             ],
             'target_arch': 'armhf',
-            'expected_packages': {'bar:armhf'}
+            'expected_packages': {'bar'}
         }),
         ('nested else used else', {
             'to': 'to armhf',
@@ -181,10 +181,11 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
                                   platform_architecture_mock):
         platform_machine_mock.return_value = 'x86_64'
         platform_architecture_mock.return_value = ('64bit', 'ELF')
-        options = snapcraft.ProjectOptions(target_deb_arch=self.target_arch)
+        processor = grammar.GrammarProcessor(
+                None, snapcraft.ProjectOptions(
+                    target_deb_arch=self.target_arch), self.checker)
         statement = to.ToStatement(
-            to=self.to, body=self.body, project_options=options,
-            checker=self.checker)
+            to=self.to, body=self.body, processor=processor)
 
         for else_body in self.else_bodies:
             statement.add_else(else_body)
@@ -246,11 +247,11 @@ class ToStatementInvalidGrammarTestCase(GrammarBaseTestCase):
         with testtools.ExpectedException(
                 grammar.errors.ToStatementSyntaxError,
                 self.expected_exception):
-            options = snapcraft.ProjectOptions(
-                target_deb_arch=self.target_arch)
+            processor = grammar.GrammarProcessor(
+                None, snapcraft.ProjectOptions(
+                    target_deb_arch=self.target_arch), self.checker)
             statement = to.ToStatement(
-                to=self.to, body=self.body, project_options=options,
-                checker=self.checker)
+                to=self.to, body=self.body, processor=processor)
 
             for else_body in self.else_bodies:
                 statement.add_else(else_body)
@@ -266,11 +267,11 @@ class ToStatementElseFail(GrammarBaseTestCase):
                        platform_architecture_mock):
         platform_machine_mock.return_value = 'x86_64'
         platform_architecture_mock.return_value = ('64bit', 'ELF')
-        options = snapcraft.ProjectOptions(
-            target_deb_arch='i386')
+        processor = grammar.GrammarProcessor(
+            None, snapcraft.ProjectOptions(
+                target_deb_arch='i386'), self.checker)
         statement = to.ToStatement(
-            to='to armhf', body=['foo'], project_options=options,
-            checker=self.checker)
+            to='to armhf', body=['foo'], processor=processor)
 
         statement.add_else(None)
 

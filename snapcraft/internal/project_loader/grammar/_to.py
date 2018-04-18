@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017, 2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -16,100 +16,50 @@
 
 import re
 
-from . import process_grammar
-from .errors import (
-    ToStatementSyntaxError,
-    UnsatisfiedStatementError,
-)
+from .errors import ToStatementSyntaxError
+
+from ._statement import Statement
 
 _SELECTOR_PATTERN = re.compile(r'\Ato\s+([^,\s](?:,?[^,]+)*)\Z')
 _WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
 
 
-class ToStatement:
+class ToStatement(Statement):
     """Process a 'to' statement in the grammar.
 
     For example:
     >>> import tempfile
     >>> from snapcraft import ProjectOptions
+    >>> from snapcraft.internal.project_loader import grammar
     >>> def checker(primitive):
     ...     return True
-    >>> with tempfile.TemporaryDirectory() as cache_dir:
-    ...     options = ProjectOptions(target_deb_arch='i386')
-    ...     clause = ToStatement(to='to armhf', body=['foo'],
-    ...                          project_options=options,
-    ...                          checker=checker)
-    ...     clause.add_else(['bar'])
-    ...     clause.process()
+    >>> options = ProjectOptions(target_deb_arch='i386')
+    >>> processor = grammar.GrammarProcessor(None, options, checker)
+    >>> clause = ToStatement(to='to armhf', body=['foo'], processor=processor)
+    >>> clause.add_else(['bar'])
+    >>> clause.process()
     {'bar'}
     """
 
-    def __init__(self, *, to, body, project_options, checker):
-        """Create an _ToStatement instance.
+    def __init__(self, *, to, body, processor, call_stack=None):
+        """Create an ToStatement instance.
 
         :param str to: The 'to <selectors>' part of the clause.
         :param list body: The body of the 'to' clause.
-        :param project_options: Instance of ProjectOptions to use to process
-                                clause.
-        :type project_options: snapcraft.ProjectOptions
-        :param checker: callable accepting a single primitive, returning
-                        true if it is valid
-        :type checker: callable
+        :param GrammarProcessor processor: Grammar processor to use
+        :param list call_stack: Call stack leading to this statement
         """
+        super().__init__(body=body, processor=processor, call_stack=call_stack)
 
         self.selectors = _extract_to_clause_selectors(to)
-        self._body = body
-        self._project_options = project_options
-        self._checker = checker
-        self._else_bodies = []
 
-    def add_else(self, else_body):
-        """Add an 'else' clause to the statement.
-
-        :param list else_body: The body of an 'else' clause.
-
-        The 'else' clauses will be processed in the order they are added.
-        """
-
-        self._else_bodies.append(else_body)
-
-    def process(self):
-        """Process the clause.
-
-        :return: Primitives as determined by evaluating the statement.
-        :rtype: list
-        """
-
-        primitives = set()
-        target_arch = self._project_options.deb_arch
+    def _check(self):
+        target_arch = self._processor.project_options.deb_arch
 
         # The only selector currently supported is the target arch. Since
         # selectors are matched with an AND, not OR, there should only be one
         # selector.
-        if (len(self.selectors) == 1) and (target_arch in self.selectors):
-            primitives = process_grammar(
-                self._body, self._project_options, self._checker)
-            # target arch is the default (not the host arch) in a to statement
-            new_primitives = set()
-            for primitive in primitives:
-                if ':' not in primitive:
-                    # deb_arch is target arch or host arch if both are the same
-                    primitive += ':{}'.format(
-                        self._project_options.deb_arch)
-                new_primitives.add(primitive)
-            primitives = new_primitives
-        else:
-            for else_body in self._else_bodies:
-                if not else_body:
-                    # Handle the 'else fail' case.
-                    raise UnsatisfiedStatementError(self)
-
-                primitives = process_grammar(
-                    else_body, self._project_options, self._checker)
-                if primitives:
-                    break
-
-        return primitives
+        return (len(self.selectors) == 1) and (target_arch in self.selectors)
 
     def __eq__(self, other):
         return self.selectors == other.selectors
