@@ -64,6 +64,7 @@ jobs:
     - if: type = pull_request AND sender != snappy-m-o
       script: ./tools/travis/run_cla_check.sh
     - stage: osx-integration-store
+      os: osx
       script: SNAPCRAFT_FROM_BREW=1 ./tools/travis/run_tests.sh tests.integration.store.test_store_login_logout use-run
     # Trigger nightly tests, only in cron.
     - stage: nightly
