@@ -384,13 +384,17 @@ class Patcher:
         if elf_file.interp:
             patchelf_args.extend(['--set-interpreter',  self._dynamic_linker])
         if elf_file.dependencies:
+            rpath = self._get_rpath(elf_file)
+            # Due to https://github.com/NixOS/patchelf/issues/94 we need
+            # to first clear the current rpath
+            self._run_patchelf(patchelf_args=['--remove-rpath'],
+                               elf_file_path=elf_file.path)
             # Parameters:
             # --force-rpath: use RPATH instead of RUNPATH.
             # --shrink-rpath: will remove unneeded entries, with the
             #                 side effect of preferring host libraries
             #                 so we simply do not use it.
             # --set-rpath: set the RPATH to the colon separated argument.
-            rpath = self._get_rpath(elf_file)
             patchelf_args.extend(['--force-rpath', '--set-rpath', rpath])
 
         # no patchelf_args means there is nothing to do.
