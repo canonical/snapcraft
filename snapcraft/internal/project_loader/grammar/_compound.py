@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017, 2018 Canonical Ltd
+# Copyright (C) 2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import TYPE_CHECKING
+from typing import List, TYPE_CHECKING
 
 from ._statement import Statement, GrammarType, CallStackType
 
@@ -23,47 +23,46 @@ if TYPE_CHECKING:
     from ._processor import GrammarProcessor  # noqa: F401
 
 
-class TryStatement(Statement):
-    """Process a 'try' statement in the grammar.
+class CompoundStatement(Statement):
+    """Multiple statements that need to be treated as a group."""
 
-    For example:
-    >>> from snapcraft import ProjectOptions
-    >>> from ._processor import GrammarProcessor
-    >>> def checker(primitive):
-    ...     return 'invalid' not in primitive
-    >>> options = ProjectOptions()
-    >>> processor = GrammarProcessor(None, options, checker)
-    >>> clause = TryStatement(body=['invalid'], processor=processor)
-    >>> clause.add_else(['valid'])
-    >>> clause.process()
-    {'valid'}
-    """
-
-    def __init__(self, *, body: GrammarType,
+    def __init__(self, *, statements: List[Statement], body: GrammarType,
                  processor: 'GrammarProcessor',
                  call_stack: CallStackType=None) -> None:
-        """Create an TryStatement instance.
+        """Create an CompoundStatement instance.
 
+        :param list statements: List of compound statements
         :param list body: The body of the clause.
         :param GrammarProcessor process: GrammarProcessor to use for processing
                                          this statement.
         :param list call_stack: Call stack leading to this statement.
         """
-        super().__init__(
-            body=body, processor=processor, call_stack=call_stack,
-            check_primitives=True)
+        super().__init__(body=body, processor=processor, call_stack=call_stack)
+
+        self.statements = statements
 
     def _check(self) -> bool:
-        """Check if a statement main body should be processed.
+        """Check if each statement checks True, in order
 
-        :return: True if main body should be processed, False if elses should
-                 be processed.
+        :return: True if each statement agrees that they should be processed,
+                 False if elses should be processed.
         :rtype: bool
         """
-        return self._validate_primitives(self._process_body())
+        for statement in self.statements:
+            if not statement._check():
+                return False
+
+        return True
 
     def __eq__(self, other) -> bool:
+        if type(other) is type(self):
+            return self.statements == other.statements
+
         return False
 
     def __str__(self) -> str:
-        return 'try'
+        representation = ''
+        for statement in self.statements:
+            representation += '{!s} '.format(statement)
+
+        return representation.strip()

@@ -128,6 +128,19 @@ class PartGrammarSourceTestCase(unit.TestCase):
             'expected_i386': 'bar',
             'expected_armhf': 'foo',
         }),
+        ('on amd64 to armhf', {
+            'properties': {'source': [{'on amd64 to armhf': 'foo'}]},
+            'expected_amd64': '',
+            'expected_i386': '',
+            'expected_armhf': 'foo',
+        }),
+        ('on amd64 to armhf with else', {
+            'properties': {'source': [
+                {'on amd64 to armhf': 'foo'}, {'else': 'bar'}]},
+            'expected_amd64': 'bar',
+            'expected_i386': 'bar',
+            'expected_armhf': 'foo',
+        }),
     ]
 
     arch_scenarios = [
@@ -197,6 +210,12 @@ class PartGrammarBuildSnapsTestCase(unit.TestCase):
             'expected_i386': set(),
             'expected_armhf': {'foo'},
         }),
+        ('on amd64 to armhf', {
+            'build_snaps': [{'on amd64 to armhf': 'foo'}],
+            'expected_amd64': set(),
+            'expected_i386': set(),
+            'expected_armhf': {'foo'},
+        }),
     ]
 
     arch_scenarios = [
@@ -255,6 +274,12 @@ class PartGrammarBuildAndStagePackagesTestCase(unit.TestCase):
         }),
         ('to armhf', {
             'packages': [{'to armhf': ['foo']}],
+            'expected_amd64': set(),
+            'expected_i386': set(),
+            'expected_armhf': {'foo:armhf'},
+        }),
+        ('on amd64 to armhf', {
+            'packages': [{'on amd64 to armhf': 'foo'}],
             'expected_amd64': set(),
             'expected_i386': set(),
             'expected_armhf': {'foo:armhf'},

@@ -9,7 +9,7 @@ definitions:
         items:
           minitems: 1
           uniqueItems: true
-          anyOf:
+          oneOf:
             - type: object
               usage: "on <selector>[,<selector>...]:"
               additionalProperties: false
@@ -41,7 +41,7 @@ definitions:
     minitems: 1
     uniqueItems: true
     items:
-      anyOf:
+      oneOf:
         - type: string
           usage: "<string>"
         - type: object

@@ -15,5 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ._processor import GrammarProcessor  # noqa
+from ._statement import Statement  # noqa
 from ._to import ToStatement  # noqa
+from ._compound import CompoundStatement  # noqa
 from ._statement import CallStackType  # noqa

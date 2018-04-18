@@ -144,6 +144,9 @@ class Statement:
         else:
             return self.__call_stack
 
+    def __repr__(self):
+        return '{!r}'.format(self.__str__())
+
     def _check(self) -> bool:
         """Check if a statement main body should be processed.
 
@@ -156,5 +159,5 @@ class Statement:
     def __eq__(self, other) -> bool:
         raise NotImplementedError('this must be implemented by child classes')
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         raise NotImplementedError('this must be implemented by child classes')

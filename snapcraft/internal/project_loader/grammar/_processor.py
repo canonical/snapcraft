@@ -23,7 +23,9 @@ from ._statement import Statement, GrammarType, CallStackType
 from ._on import OnStatement
 from ._to import ToStatement
 from ._try import TryStatement
+from ._compound import CompoundStatement
 
+_ON_TO_CLAUSE_PATTERN = re.compile(r'(\Aon\s+\S+)\s+(to\s+\S+\Z)')
 _ON_CLAUSE_PATTERN = re.compile(r'\Aon\s+')
 _TO_CLAUSE_PATTERN = re.compile(r'\Ato\s+')
 _TRY_CLAUSE_PATTERN = re.compile(r'\Atry\Z')
@@ -118,7 +120,28 @@ class GrammarProcessor:
             if not isinstance(value, list):
                 value = {value}
 
-            if _ON_CLAUSE_PATTERN.match(key):
+            if _ON_TO_CLAUSE_PATTERN.match(key):
+                # We've come across the beginning of a compound statement
+                # with both 'on' and 'to'.
+
+                # First, extract each statement's part of the string
+                on, to = _ON_TO_CLAUSE_PATTERN.match(key).groups()
+
+                # Now create a list of statements, in order
+                compound_statements = [
+                    OnStatement(
+                        on=on, body=None, processor=self,
+                        call_stack=call_stack),
+                    ToStatement(
+                        to=to, body=None, processor=self,
+                        call_stack=call_stack)]
+
+                # Now our statement is a compound statement
+                statement = CompoundStatement(
+                    statements=compound_statements, body=value,
+                    processor=self, call_stack=call_stack)
+
+            elif _ON_CLAUSE_PATTERN.match(key):
                 # We've come across the beginning of an 'on' statement.
                 # That means any previous statement we found is complete.
                 # The first time through this may be None, but the
@@ -128,7 +151,7 @@ class GrammarProcessor:
                 statement = OnStatement(
                     on=key, body=value, processor=self, call_stack=call_stack)
 
-            if _TO_CLAUSE_PATTERN.match(key):
+            elif _TO_CLAUSE_PATTERN.match(key):
                 # We've come across the beginning of a 'to' statement.
                 # That means any previous statement we found is complete.
                 # The first time through this may be None, but the
@@ -138,7 +161,7 @@ class GrammarProcessor:
                 statement = ToStatement(
                     to=key, body=value, processor=self, call_stack=call_stack)
 
-            if _TRY_CLAUSE_PATTERN.match(key):
+            elif _TRY_CLAUSE_PATTERN.match(key):
                 # We've come across the beginning of a 'try' statement.
                 # That means any previous statement we found is complete.
                 # The first time through this may be None, but the
@@ -148,7 +171,7 @@ class GrammarProcessor:
                 statement = TryStatement(
                     body=value, processor=self, call_stack=call_stack)
 
-            if _ELSE_CLAUSE_PATTERN.match(key):
+            elif _ELSE_CLAUSE_PATTERN.match(key):
                 _handle_else(statement, value)
 
         return statement

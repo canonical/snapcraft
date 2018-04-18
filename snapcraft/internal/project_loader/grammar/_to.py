@@ -80,8 +80,8 @@ class ToStatement(Statement):
 
         return False
 
-    def __repr__(self) -> str:
-        return "'to {}'".format(','.join(sorted(self.selectors)))
+    def __str__(self) -> str:
+        return 'to {}'.format(','.join(sorted(self.selectors)))
 
 
 def _extract_to_clause_selectors(to: str) -> Set[str]:
