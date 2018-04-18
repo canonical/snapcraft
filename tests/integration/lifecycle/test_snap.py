@@ -28,11 +28,12 @@ from testtools.matchers import (
     Not,
 )
 
-from tests import integration
+from tests import integration, skip
 
 
 class SnapTestCase(integration.TestCase):
 
+    @skip.skip_unless_codename('xenial', 'test designed for xenial')
     def test_snap(self):
         self.copy_project_to_cwd('assemble')
         self.run_snapcraft('snap')

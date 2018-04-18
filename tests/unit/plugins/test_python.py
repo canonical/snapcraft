@@ -399,7 +399,7 @@ class PythonPluginTestCase(BasePythonPluginTestCase):
                                      self.project_options)
         self.assertThat(
             plugin.plugin_stage_packages,
-            Equals(['python', 'python-distutils']))
+            Equals(['python']))
 
     def test_plugin_stage_packages_python3_bionic(self):
         self.options.python_version = 'python3'

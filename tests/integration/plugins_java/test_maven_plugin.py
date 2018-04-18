@@ -14,11 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from tests import integration
+from tests import integration, skip
 
 
 class MavenPluginTestCase(integration.TestCase):
 
+    @skip.skip_unless_codename('xenial', 'LP: #1764406')
     def test_build_maven_plugin(self):
         if self.deb_arch == 'armhf':
             # https://bugs.launchpad.net/snapcraft/+bug/1647405
