@@ -41,14 +41,15 @@ class ToStatement(Statement):
     {'bar'}
     """
 
-    def __init__(self, *, to, body, processor):
+    def __init__(self, *, to, body, processor, call_stack=None):
         """Create an ToStatement instance.
 
         :param str to: The 'to <selectors>' part of the clause.
         :param list body: The body of the 'to' clause.
         :param GrammarProcessor processor: Grammar processor to use
+        :param list call_stack: Call stack leading to this statement
         """
-        super().__init__(body=body, processor=processor)
+        super().__init__(body=body, processor=processor, call_stack=call_stack)
 
         self.selectors = _extract_to_clause_selectors(to)
 

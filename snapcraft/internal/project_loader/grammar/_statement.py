@@ -25,11 +25,15 @@ _WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
 class Statement:
     """Base class for all grammar statements"""
 
-    def __init__(self, *, body, processor, check_primitives=False):
+    def __init__(self, *, body, processor, call_stack, check_primitives=False):
         """Create an Statement instance.
 
         :param list call_stack: Call stack leading to this statement
         """
+        if call_stack:
+            self.__call_stack = call_stack
+        else:
+            self.__call_stack = []
 
         self._body = body
         self._processor = processor
@@ -62,7 +66,9 @@ class Statement:
 
     def _process_body(self):
         if self.__processed_body is None:
-            self.__processed_body = self._processor.process(grammar=self._body)
+            self.__processed_body = self._processor.process(
+                grammar=self._body,
+                call_stack=self._call_stack(include_self=True))
 
         return self.__processed_body
 
@@ -75,7 +81,8 @@ class Statement:
                     raise UnsatisfiedStatementError(self)
 
                 self.__processed_else = self._processor.process(
-                    grammar=else_body)
+                    grammar=else_body,
+                    call_stack=self._call_stack())
                 if self.__processed_else:
                     if (not self._check_primitives or
                             self._validate_primitives(self.__processed_else)):
@@ -107,6 +114,12 @@ class Statement:
             if not self._processor.checker(primitive):
                 return False
         return True
+
+    def _call_stack(self, *, include_self=False):
+        if include_self:
+            return self.__call_stack + [self]
+        else:
+            return self.__call_stack
 
     def _check(self):
         """Check if a statement main body should be processed.

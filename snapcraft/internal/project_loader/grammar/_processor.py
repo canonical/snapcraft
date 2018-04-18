@@ -31,7 +31,7 @@ _ELSE_FAIL_PATTERN = re.compile(r'\Aelse\s+fail\Z')
 class GrammarProcessor:
     """The GrammarProcessor extracts desired primitives from grammar."""
 
-    def __init__(self, grammar, project_options, checker):
+    def __init__(self, grammar, project_options, checker, *, transformer=None):
         """Create a new GrammarProcessor.
 
         :param list grammar: Unprocessed grammar.
@@ -40,16 +40,27 @@ class GrammarProcessor:
         :type project_options: snapcraft.ProjectOptions
         :param callable checker: callable accepting a single primitive,
                                  returning true if it is valid.
+        :param callable transformer: callable accepting a statement, single
+                                     primitive, and project options, and
+                                     returning a transformed primitive.
         """
         self._grammar = grammar
         self.project_options = project_options
         self.checker = checker
 
-    def process(self, *, grammar=None):
+        if transformer:
+            self._transformer = transformer
+        else:
+            # By default, no transformation
+            self._transformer = lambda s, p, o: p
+
+    def process(self, *, grammar=None, call_stack=None):
         """Process grammar and extract desired primitives.
 
         :param list grammar: Unprocessed grammar (defaults to that set in
                              init).
+        :param active_statement: Currently-active statement (i.e. the one being
+                                 processed). Defaults to None.
 
         :return: Primitives selected
         :rtype: set
@@ -58,8 +69,12 @@ class GrammarProcessor:
         if grammar is None:
             grammar = self._grammar
 
+        if call_stack is None:
+            call_stack = []
+
         primitives = set()
-        statements = _StatementCollection(self.project_options)
+        statements = _StatementCollection(
+            self._transformer, self.project_options)
         statement = None
 
         for section in grammar:
@@ -69,9 +84,11 @@ class GrammarProcessor:
                 if _ELSE_FAIL_PATTERN.match(section):
                     _handle_else(statement, None)
                 else:
-                    primitives.add(section)
+                    primitives.add(self._transformer(
+                        call_stack, section, self.project_options))
             elif isinstance(section, dict):
-                statement = self._parse_dict(section, statement, statements)
+                statement = self._parse_dict(
+                    section, statement, statements, call_stack)
             else:
                 # jsonschema should never let us get here.
                 raise GrammarSyntaxError(
@@ -84,7 +101,7 @@ class GrammarProcessor:
 
         return primitives
 
-    def _parse_dict(self, section, statement, statements):
+    def _parse_dict(self, section, statement, statements, call_stack):
         for key, value in section.items():
             # Grammar is always written as a list of selectors but the value
             # can be a list or a string. In the latter case we wrap it so no
@@ -101,7 +118,7 @@ class GrammarProcessor:
                 statements.add(statement)
 
                 statement = OnStatement(
-                    on=key, body=value, processor=self)
+                    on=key, body=value, processor=self, call_stack=call_stack)
 
             if _TO_CLAUSE_PATTERN.match(key):
                 # We've come across the beginning of a 'to' statement.
@@ -111,7 +128,7 @@ class GrammarProcessor:
                 statements.add(statement)
 
                 statement = ToStatement(
-                    to=key, body=value, processor=self)
+                    to=key, body=value, processor=self, call_stack=call_stack)
 
             if _TRY_CLAUSE_PATTERN.match(key):
                 # We've come across the beginning of a 'try' statement.
@@ -121,7 +138,7 @@ class GrammarProcessor:
                 statements.add(statement)
 
                 statement = TryStatement(
-                    body=value, processor=self)
+                    body=value, processor=self, call_stack=call_stack)
 
             if _ELSE_CLAUSE_PATTERN.match(key):
                 _handle_else(statement, value)
@@ -151,8 +168,9 @@ def _handle_else(statement, else_body):
 class _StatementCollection:
     """Unique collection of statements to run at a later time."""
 
-    def __init__(self, project_options):
+    def __init__(self, transformer, project_options):
         self._statements = []
+        self._transformer = transformer
         self._project_options = project_options
 
     def add(self, statement):

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017-2018 Canonical Ltd
+# Copyright (C) 2017, 2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -90,6 +90,42 @@ class PartGrammarSourceTestCase(unit.TestCase):
             'properties': {'source': [{'try': 'foo'}]},
             'expected_amd64': 'foo',
             'expected_i386': 'foo',
+            'expected_armhf': 'foo',
+        }),
+        ('to amd64', {
+            'properties': {'source': [{'to amd64': 'foo'}]},
+            'expected_amd64': 'foo',
+            'expected_i386': '',
+            'expected_armhf': '',
+        }),
+        ('to i386', {
+            'properties': {'source': [{'to i386': 'foo'}]},
+            'expected_amd64': '',
+            'expected_i386': 'foo',
+            'expected_armhf': '',
+        }),
+        ('to armhf', {
+            'properties': {'source': [{'to armhf': 'foo'}]},
+            'expected_amd64': '',
+            'expected_i386': '',
+            'expected_armhf': 'foo',
+        }),
+        ('to amd64 with else', {
+            'properties': {'source': [{'to amd64': 'foo'}, {'else': 'bar'}]},
+            'expected_amd64': 'foo',
+            'expected_i386': 'bar',
+            'expected_armhf': 'bar',
+        }),
+        ('to i386 with else', {
+            'properties': {'source': [{'to i386': 'foo'}, {'else': 'bar'}]},
+            'expected_amd64': 'bar',
+            'expected_i386': 'foo',
+            'expected_armhf': 'bar',
+        }),
+        ('to armhf with else', {
+            'properties': {'source': [{'to armhf': 'foo'}, {'else': 'bar'}]},
+            'expected_amd64': 'bar',
+            'expected_i386': 'bar',
             'expected_armhf': 'foo',
         }),
     ]
@@ -223,7 +259,7 @@ class PartGrammarBuildAndStagePackagesTestCase(unit.TestCase):
             'packages': [{'to armhf': ['foo']}],
             'expected_amd64': set(),
             'expected_i386': set(),
-            'expected_armhf': {'foo'},
+            'expected_armhf': {'foo:armhf'},
         }),
     ]
 

@@ -48,7 +48,7 @@ class OnStatement(Statement):
     {'bar'}
     """
 
-    def __init__(self, *, on, body, processor):
+    def __init__(self, *, on, body, processor, call_stack=None):
         """Create an OnStatement instance.
 
         :param str on: The 'on <selectors>' part of the clause.
@@ -60,7 +60,7 @@ class OnStatement(Statement):
                         true if it is valid
         :type checker: callable
         """
-        super().__init__(body=body, processor=processor)
+        super().__init__(body=body, processor=processor, call_stack=call_stack)
 
         self.selectors = _extract_on_clause_selectors(on)
 

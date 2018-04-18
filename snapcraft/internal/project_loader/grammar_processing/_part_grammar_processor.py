@@ -17,6 +17,8 @@
 from snapcraft.internal.project_loader import grammar
 from snapcraft.internal import repo
 
+from ._package_transformer import package_transformer
+
 
 class PartGrammarProcessor:
     """Process part properties that support grammar.
@@ -110,7 +112,8 @@ class PartGrammarProcessor:
         if not self.__build_packages:
             processor = grammar.GrammarProcessor(
                 self._build_package_grammar, self._project_options,
-                self._repo.build_package_is_valid)
+                self._repo.build_package_is_valid,
+                transformer=package_transformer)
             self.__build_packages = processor.process()
 
         return self.__build_packages
@@ -119,7 +122,8 @@ class PartGrammarProcessor:
         if not self.__stage_packages:
             processor = grammar.GrammarProcessor(
                 self._stage_package_grammar, self._project_options,
-                self._repo.is_valid)
+                self._repo.is_valid,
+                transformer=package_transformer)
             self.__stage_packages = processor.process()
 
         return self.__stage_packages

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017, 2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -33,7 +33,7 @@ class TryStatement(Statement):
     {'valid'}
     """
 
-    def __init__(self, *, body, processor):
+    def __init__(self, *, body, processor, call_stack=None):
         """Create an TryStatement instance.
 
         :param list body: The body of the 'try' clause.
@@ -45,7 +45,8 @@ class TryStatement(Statement):
         :type checker: callable
         """
         super().__init__(
-            body=body, processor=processor, check_primitives=True)
+            body=body, processor=processor, call_stack=call_stack,
+            check_primitives=True)
 
     def _check(self):
         return self._validate_primitives(self._process_body())
