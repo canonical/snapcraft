@@ -214,6 +214,7 @@ class TestCase(testtools.TestCase):
                        summary='Simple test snap',
                        description='Something something',
                        grade=None,
+                       architectures=None,
                        parts=dedent('''\
                            my-part:
                              plugin: nil
@@ -234,6 +235,8 @@ class TestCase(testtools.TestCase):
             snapcraft_yaml['adopt-info'] = adopt_info
         if grade:
             snapcraft_yaml['grade'] = grade
+        if architectures:
+            snapcraft_yaml['architectures'] = architectures
 
         with open('snapcraft.yaml', 'w') as f:
             yaml.dump(snapcraft_yaml, f, default_flow_style=False)

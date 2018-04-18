@@ -50,7 +50,7 @@ class CreateBaseTestCase(unit.TestCase):
         super().setUp()
 
         self.config_data = {
-            'architectures': ['amd64'],
+            'architectures': [{'build-on': 'all', 'run-on': 'amd64'}],
             'name': 'my-package',
             'version': '1.0',
             'description': 'my description',
@@ -112,6 +112,22 @@ class CreateTestCase(CreateBaseTestCase):
         y = self.generate_meta_yaml()
 
         expected = {'architectures': ['amd64'],
+                    'confinement': 'devmode',
+                    'grade': 'stable',
+                    'description': 'my description',
+                    'environment': {'GLOBAL': 'y'},
+                    'summary': 'my summary',
+                    'name': 'my-package',
+                    'version': '1.0'}
+
+        self.assertThat(y, Equals(expected))
+
+    def test_create_meta_default_architecture(self):
+        del self.config_data['architectures']
+
+        y = self.generate_meta_yaml()
+
+        expected = {'architectures': [self.project_options.deb_arch],
                     'confinement': 'devmode',
                     'grade': 'stable',
                     'description': 'my description',
