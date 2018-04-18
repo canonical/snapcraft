@@ -29,6 +29,17 @@ test="$1"
 
 pattern="$2"
 
+
+if [ "$TRAVIS_OS_NAME" = "osx" ] && [ -z "$SNAPCRAFT_FROM_BREW" ]; then
+    echo "osx tests require snapcraft from brew to be setup"
+    exit 0
+fi
+
+if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+    brew upgrade python
+    python3 ./tools/brew_install_from_source.py
+fi
+
 if [ "$test" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
 elif [ "$test" = "tests/unit" ]; then
