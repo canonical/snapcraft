@@ -121,8 +121,11 @@ class PartPatcher:
             dynamic_linker=dynamic_linker,
             root_path=self._primedir,
             preferred_patchelf_path=preferred_patchelf_path)
-        files_to_patch = elf.get_elf_files_to_patch(self._elf_files)
-        for elf_file in files_to_patch:
+
+        # Patching all files instead of a subset of them to ensure the
+        # environment is consistent and the chain of dlopens that may
+        # happen remains sane.
+        for elf_file in self._elf_files:
             try:
                 elf_patcher.patch(elf_file=elf_file)
             except errors.PatcherError as patch_error:
