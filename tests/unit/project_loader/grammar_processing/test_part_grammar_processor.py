@@ -20,7 +20,7 @@ from unittest import mock
 from testtools.matchers import Equals
 from testscenarios import multiply_scenarios
 
-import snapcraft
+from snapcraft import project
 from snapcraft.internal.project_loader.grammar_processing import (
     PartGrammarProcessor,
     _part_grammar_processor as processor
@@ -29,7 +29,7 @@ from tests import unit
 
 
 def load_tests(loader, tests, ignore):
-    if snapcraft.ProjectOptions().deb_arch == 'amd64':
+    if project.Project().deb_arch == 'amd64':
         tests.addTests(doctest.DocTestSuite(processor))
     return tests
 
@@ -151,8 +151,7 @@ class PartGrammarSourceTestCase(unit.TestCase):
         self.assertThat(PartGrammarProcessor(
             plugin=plugin,
             properties=plugin.properties,
-            project_options=snapcraft.ProjectOptions(
-                target_deb_arch=self.target_arch),
+            project=project.Project(target_deb_arch=self.target_arch),
             repo=repo).get_source(),
                         Equals(expected))
         # Verify that the original properties haven't changed
@@ -222,8 +221,7 @@ class PartGrammarBuildSnapsTestCase(unit.TestCase):
         self.assertThat(PartGrammarProcessor(
             plugin=plugin,
             properties={},
-            project_options=snapcraft.ProjectOptions(
-                target_deb_arch=self.target_arch),
+            project=project.Project(target_deb_arch=self.target_arch),
             repo=repo).get_build_snaps(),
                         Equals(expected))
 
@@ -285,8 +283,7 @@ class PartGrammarBuildAndStagePackagesTestCase(unit.TestCase):
         processor = PartGrammarProcessor(
             plugin=plugin,
             properties={},
-            project_options=snapcraft.ProjectOptions(
-                target_deb_arch=self.target_arch),
+            project=project.Project(target_deb_arch=self.target_arch),
             repo=repo)
         self.assertThat(processor.get_build_packages(), Equals(expected))
         self.assertThat(processor.get_stage_packages(), Equals(expected))

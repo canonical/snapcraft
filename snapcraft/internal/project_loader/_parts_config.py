@@ -181,7 +181,7 @@ class PartsConfig:
         grammar_processor = grammar_processing.PartGrammarProcessor(
             plugin=plugin,
             properties=part_properties,
-            project_options=self._project_options,
+            project=self._project_options,
             repo=stage_packages_repo)
 
         part = pluginhandler.PluginHandler(

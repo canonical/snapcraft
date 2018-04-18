@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Any, Dict, Set
+
+from snapcraft import project
 from snapcraft.internal import repo
 from snapcraft.internal.project_loader import grammar
 
@@ -28,21 +31,22 @@ class GlobalGrammarProcessor:
     >>> from snapcraft import repo
     >>> processor = GlobalGrammarProcessor(
     ...    properties={'build-packages': [{'try': ['hello']}]},
-    ...    project_options=snapcraft.ProjectOptions())
+    ...    project=snapcraft.project.Project())
     >>> processor.get_build_packages()
     {'hello'}
     """
 
-    def __init__(self, *, properties, project_options):
-        self._project_options = project_options
+    def __init__(self, *, properties: Dict[str, Any],
+                 project: project.Project) -> None:
+        self._project = project
 
         self._build_package_grammar = properties.get('build-packages', [])
-        self.__build_packages = set()
+        self.__build_packages = set()  # type: Set[str]
 
-    def get_build_packages(self):
+    def get_build_packages(self) -> Set[str]:
         if not self.__build_packages:
             processor = grammar.GrammarProcessor(
-                self._build_package_grammar, self._project_options,
+                self._build_package_grammar, self._project,
                 repo.Repo.build_package_is_valid,
                 transformer=package_transformer)
             self.__build_packages = processor.process()

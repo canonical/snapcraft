@@ -15,12 +15,16 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from typing import Set, TYPE_CHECKING
 
 import snapcraft
 
 from .errors import OnStatementSyntaxError
+from ._statement import Statement, GrammarType, CallStackType
 
-from ._statement import Statement
+# Don't use circular imports unless type checking
+if TYPE_CHECKING:
+    from ._processor import GrammarProcessor  # noqa: F401
 
 _SELECTOR_PATTERN = re.compile(r'\Aon\s+([^,\s](?:,?[^,]+)*)\Z')
 _WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
@@ -48,23 +52,28 @@ class OnStatement(Statement):
     {'bar'}
     """
 
-    def __init__(self, *, on, body, processor, call_stack=None):
+    def __init__(self, *, on: str, body: GrammarType,
+                 processor: 'GrammarProcessor',
+                 call_stack: CallStackType=None) -> None:
         """Create an OnStatement instance.
 
         :param str on: The 'on <selectors>' part of the clause.
-        :param list body: The body of the 'on' clause.
-        :param project_options: Instance of ProjectOptions to use to process
-                                clause.
-        :type project_options: snapcraft.ProjectOptions
-        :param checker: callable accepting a single primitive, returning
-                        true if it is valid
-        :type checker: callable
+        :param list body: The body of the clause.
+        :param GrammarProcessor process: GrammarProcessor to use for processing
+                                         this statement.
+        :param list call_stack: Call stack leading to this statement.
         """
         super().__init__(body=body, processor=processor, call_stack=call_stack)
 
         self.selectors = _extract_on_clause_selectors(on)
 
-    def _check(self):
+    def _check(self) -> bool:
+        """Check if a statement main body should be processed.
+
+        :return: True if main body should be processed, False if elses should
+                 be processed.
+        :rtype: bool
+        """
         # A new ProjectOptions instance defaults to the host architecture
         # whereas self._project_options would yield the target architecture
         host_arch = snapcraft.ProjectOptions().deb_arch
@@ -74,17 +83,20 @@ class OnStatement(Statement):
         # selector.
         return (len(self.selectors) == 1) and (host_arch in self.selectors)
 
-    def __eq__(self, other):
-        return self.selectors == other.selectors
+    def __eq__(self, other) -> bool:
+        if type(other) is type(self):
+            return self.selectors == other.selectors
 
-    def __repr__(self):
+        return False
+
+    def __repr__(self) -> str:
         return "'on {}'".format(','.join(sorted(self.selectors)))
 
 
-def _extract_on_clause_selectors(on):
+def _extract_on_clause_selectors(on: str) -> Set[str]:
     """Extract the list of selectors within an on clause.
 
-    :param str on: The 'on <selector' part of the 'on' clause.
+    :param str on: The 'on <selector>' part of the 'on' clause.
 
     :return: Selectors found within the 'on' clause.
     :rtype: set

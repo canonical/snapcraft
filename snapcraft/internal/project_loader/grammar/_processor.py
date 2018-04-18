@@ -15,8 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+from typing import Any, Callable, Dict, List, Set
 
+from snapcraft import project
 from .errors import GrammarSyntaxError
+from ._statement import Statement, GrammarType, CallStackType
 from ._on import OnStatement
 from ._to import ToStatement
 from ._try import TryStatement
@@ -31,21 +34,25 @@ _ELSE_FAIL_PATTERN = re.compile(r'\Aelse\s+fail\Z')
 class GrammarProcessor:
     """The GrammarProcessor extracts desired primitives from grammar."""
 
-    def __init__(self, grammar, project_options, checker, *, transformer=None):
+    def __init__(self, grammar: GrammarType, project: project.Project,
+                 checker: Callable[[str], bool], *,
+                 transformer: Callable[[List[Statement],
+                                        str,
+                                        project.Project], str]=None) -> None:
         """Create a new GrammarProcessor.
 
         :param list grammar: Unprocessed grammar.
-        :param project_options: Instance of ProjectOptions to use to determine
-                                appropriate primitives.
-        :type project_options: snapcraft.ProjectOptions
+        :param project: Instance of Project to use to determine appropriate
+                        primitives.
+        :type project: snapcraft.project.Project
         :param callable checker: callable accepting a single primitive,
                                  returning true if it is valid.
-        :param callable transformer: callable accepting a statement, single
-                                     primitive, and project options, and
-                                     returning a transformed primitive.
+        :param callable transformer: callable accepting a call stack, single
+                                     primitive, and project, and returning a
+                                     transformed primitive.
         """
         self._grammar = grammar
-        self.project_options = project_options
+        self.project = project
         self.checker = checker
 
         if transformer:
@@ -54,13 +61,13 @@ class GrammarProcessor:
             # By default, no transformation
             self._transformer = lambda s, p, o: p
 
-    def process(self, *, grammar=None, call_stack=None):
+    def process(self, *, grammar: GrammarType=None,
+                call_stack: CallStackType=None):
         """Process grammar and extract desired primitives.
 
         :param list grammar: Unprocessed grammar (defaults to that set in
                              init).
-        :param active_statement: Currently-active statement (i.e. the one being
-                                 processed). Defaults to None.
+        :param list call_stack: Call stack of statements leading to now.
 
         :return: Primitives selected
         :rtype: set
@@ -72,10 +79,9 @@ class GrammarProcessor:
         if call_stack is None:
             call_stack = []
 
-        primitives = set()
-        statements = _StatementCollection(
-            self._transformer, self.project_options)
-        statement = None
+        primitives = set()  # type: Set[str]
+        statements = _StatementCollection()
+        statement = None  # type: Statement
 
         for section in grammar:
             if isinstance(section, str):
@@ -85,7 +91,7 @@ class GrammarProcessor:
                     _handle_else(statement, None)
                 else:
                     primitives.add(self._transformer(
-                        call_stack, section, self.project_options))
+                        call_stack, section, self.project))
             elif isinstance(section, dict):
                 statement = self._parse_dict(
                     section, statement, statements, call_stack)
@@ -101,7 +107,9 @@ class GrammarProcessor:
 
         return primitives
 
-    def _parse_dict(self, section, statement, statements, call_stack):
+    def _parse_dict(self, section: Dict[str, Any], statement: Statement,
+                    statements: '_StatementCollection',
+                    call_stack: CallStackType):
         for key, value in section.items():
             # Grammar is always written as a list of selectors but the value
             # can be a list or a string. In the latter case we wrap it so no
@@ -146,7 +154,7 @@ class GrammarProcessor:
         return statement
 
 
-def _handle_else(statement, else_body):
+def _handle_else(statement: Statement, else_body: GrammarType):
     """Add else body to current statement.
 
     :param statement: The currently-active statement. If None it will be
@@ -168,12 +176,10 @@ def _handle_else(statement, else_body):
 class _StatementCollection:
     """Unique collection of statements to run at a later time."""
 
-    def __init__(self, transformer, project_options):
-        self._statements = []
-        self._transformer = transformer
-        self._project_options = project_options
+    def __init__(self) -> None:
+        self._statements = []  # type: List[Statement]
 
-    def add(self, statement):
+    def add(self, statement: Statement) -> None:
         """Add new statement to collection.
 
         :param statement: New statement.
@@ -191,13 +197,13 @@ class _StatementCollection:
 
         self._statements.append(statement)
 
-    def process_all(self):
+    def process_all(self) -> Set[str]:
         """Process all statements in collection.
 
         :return: Selected primitives as judged by all statements in collection.
         :rtype: set
         """
-        primitives = set()
+        primitives = set()  # type: Set[str]
         for statement in self._statements:
             primitives |= statement.process()
 

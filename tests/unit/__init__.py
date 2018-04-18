@@ -198,7 +198,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         grammar_processor = grammar_processing.PartGrammarProcessor(
             plugin=plugin,
             properties=properties,
-            project_options=project_options,
+            project=project_options,
             repo=stage_packages_repo)
 
         return snapcraft.internal.pluginhandler.PluginHandler(

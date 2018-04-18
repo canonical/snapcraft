@@ -14,7 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ._statement import Statement
+from typing import TYPE_CHECKING
+
+from ._statement import Statement, GrammarType, CallStackType
+
+# Don't use circular imports unless type checking
+if TYPE_CHECKING:
+    from ._processor import GrammarProcessor  # noqa: F401
 
 
 class TryStatement(Statement):
@@ -33,26 +39,31 @@ class TryStatement(Statement):
     {'valid'}
     """
 
-    def __init__(self, *, body, processor, call_stack=None):
+    def __init__(self, *, body: GrammarType,
+                 processor: 'GrammarProcessor',
+                 call_stack: CallStackType=None) -> None:
         """Create an TryStatement instance.
 
-        :param list body: The body of the 'try' clause.
-        :param project_options: Instance of ProjectOptions to use to process
-                                clause.
-        :type project_options: snapcraft.ProjectOptions
-        :param checker: callable accepting a single primitive, returning
-                        true if it is valid
-        :type checker: callable
+        :param list body: The body of the clause.
+        :param GrammarProcessor process: GrammarProcessor to use for processing
+                                         this statement.
+        :param list call_stack: Call stack leading to this statement.
         """
         super().__init__(
             body=body, processor=processor, call_stack=call_stack,
             check_primitives=True)
 
-    def _check(self):
+    def _check(self) -> bool:
+        """Check if a statement main body should be processed.
+
+        :return: True if main body should be processed, False if elses should
+                 be processed.
+        :rtype: bool
+        """
         return self._validate_primitives(self._process_body())
 
-    def __repr__(self):
-        return "'try'"
-
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return False
+
+    def __repr__(self) -> str:
+        return "'try'"
