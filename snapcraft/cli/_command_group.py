@@ -61,7 +61,7 @@ class SnapcraftGroup(click.Group):
         # Let's keep edit-collaborators hidden until we get the green light
         # from the store.
         commands.pop(commands.index('edit-collaborators'))
-        container_config = env.get_container_config()
-        if not container_config.use_container:
+        build_environment = env.BuilderEnvironmentConfig()
+        if build_environment.provider == 'host':
             commands.pop(commands.index('refresh'))
         return commands

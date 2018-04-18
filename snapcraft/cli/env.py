@@ -15,41 +15,38 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 from distutils import util
-from snapcraft.internal import errors, lxd
+
+from . import echo
+from snapcraft.internal import errors
 
 
-class ContainerConfig:
+class BuilderEnvironmentConfig:
+    """Handle the chosen build provider."""
 
-    def __init__(self):
-        """
-        Determines if a container should be used and which remote to choose
+    def __init__(self) -> None:
+        use_lxd = None
+        container_builds = os.environ.get('SNAPCRAFT_CONTAINER_BUILDS')
+        if container_builds:
+            echo.warning(
+                'The flag SNAPCRAFT_CONTAINER_BUILDS has been deprecated. '
+                'Use SNAPCRAFT_BUILD_ENVIRONMENT=lxd instead.')
+            try:
+                use_lxd = util.strtobool(container_builds)
+            except ValueError:
+                raise errors.SnapcraftEnvironmentError(
+                    'The experimental feature of using lxd remotes other '
+                    'that cleanbuild has been dropped.')
 
-        Checks the environment variable SNAPCRAFT_CONTAINER_BUILDS:
-          1. SNAPCRAFT_CONTAINER_BUILDS=1 enables local containers
-          2. SNAPCRAFT_CONTAINER_BUILDS=foobar uses the value as a remote
-          3. SNAPCRAFT_CONTAINER_BUILDS=0 or unset, no container is used
-        """
+        build_provider = os.environ.get('SNAPCRAFT_BUILD_ENVIRONMENT')
+        if use_lxd:
+            build_provider = 'lxd'
+        elif not build_provider:
+            echo.warning('Using the host as the build environment.')
+            build_provider = 'host'
+        # TODO add multipass
+        elif build_provider not in ['host', 'multipass', 'lxd']:
+            raise errors.SnapcraftEnvironmentError(
+                'SNAPCRAFT_BUILD_ENVIRONMENT must be one of: host or lxd.')
 
-        container_builds = os.environ.get('SNAPCRAFT_CONTAINER_BUILDS', '0')
-        # Default remote if it's a truthy value - otherwise it's a remote name
-        try:
-            self._use_container = util.strtobool(container_builds)
-            self._remote = None
-        except ValueError:
-            self._use_container = True
-            # Verbatim name of a remote
-            if not lxd._remote_is_valid(container_builds):
-                raise errors.InvalidContainerRemoteError(container_builds)
-            self._remote = container_builds
-
-    @property
-    def use_container(self):
-        return self._use_container
-
-    @property
-    def remote(self):
-        return self._remote
-
-
-def get_container_config():
-    return ContainerConfig()
+        self.provider = build_provider
+        self.is_host = build_provider == 'host'

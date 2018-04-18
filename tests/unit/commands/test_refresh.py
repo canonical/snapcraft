@@ -62,7 +62,6 @@ class RefreshCommandTestCase(RefreshCommandBaseTestCase):
 
     scenarios = [
          ('local', dict(snapcraft_container_builds='1', remote='local')),
-         ('remote', dict(snapcraft_container_builds='foo', remote='foo')),
     ]
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
@@ -73,7 +72,7 @@ class RefreshCommandTestCase(RefreshCommandBaseTestCase):
         fake_filesystem = fixture_setup.FakeFilesystem()
         self.useFixture(fake_filesystem)
         self.useFixture(fixtures.EnvironmentVariable(
-            'SNAPCRAFT_CONTAINER_BUILDS', self.snapcraft_container_builds))
+            'SNAPCRAFT_BUILD_ENVIRONMENT', 'lxd'))
         self.make_snapcraft_yaml()
 
         self.run_command(['refresh'])
@@ -83,8 +82,7 @@ class RefreshCommandTestCase(RefreshCommandBaseTestCase):
             call(['apt-get', 'upgrade', '-y']),
             call(['snap', 'refresh']),
         ])
-        self.assertThat(fake_lxd.name,
-                        Equals('{}:snapcraft-snap-test'.format(self.remote)))
+        self.assertThat(fake_lxd.name, Equals('local:snapcraft-snap-test'))
 
 
 class RefreshCommandErrorsTestCase(RefreshCommandBaseTestCase):
