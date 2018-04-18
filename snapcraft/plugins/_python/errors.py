@@ -49,6 +49,18 @@ class MissingSitePyError(PythonPluginError):
         super().__init__(site_py_glob=site_py_glob)
 
 
+class PipListInvalidLegacyFormatError(PythonPluginError):
+
+    fmt = (
+        "Failed to parse Python package list: "
+        "The returned output is not in the expected format:\n"
+        "{output}"
+    )
+
+    def __init__(self, output):
+        super().__init__(output=output)
+
+
 class PipListInvalidJsonError(PythonPluginError):
 
     fmt = "Pip packages output isn't valid json: {json!r}"

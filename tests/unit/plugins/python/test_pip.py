@@ -747,6 +747,15 @@ class PipListTestCase(PipCommandBaseTestCase):
             mock.call(['list'], runner=mock.ANY),
         ])
 
+    def test_no_json_format_invalid_result(self):
+        self.mock_run.side_effect = [
+            subprocess.CalledProcessError(2, 'pip', 'no such option'),
+            'foo 1.0',
+        ]
+        raised = self.assertRaises(errors.PipListInvalidLegacyFormatError,
+                                   self.pip.list)
+        self.assertThat(raised.output, Equals('foo 1.0'))
+
 
 class _CheckPythonhomeEnv():
     def __init__(self, test, expected_pythonhome):

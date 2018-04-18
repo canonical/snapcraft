@@ -386,6 +386,8 @@ class Pip:
             for line in output.splitlines():
                 line = line.split()
                 m = version_regex.search(line[1])
+                if not m:
+                    raise errors.PipListInvalidLegacyFormatError(output)
                 json_output.append({'name': line[0], 'version': m.group(1)})
         except json.decoder.JSONDecodeError as e:
             raise errors.PipListInvalidJsonError(output) from e
