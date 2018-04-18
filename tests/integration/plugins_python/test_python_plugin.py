@@ -26,10 +26,21 @@ from testtools.matchers import (
     FileExists
 )
 
-from tests import integration
+from tests import integration, fixture_setup
 
 
 class PythonPluginTestCase(integration.TestCase):
+
+    def test_use_staged_pip(self):
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml.update_part('test-part', {
+            'plugin': 'python',
+            'source': '.',
+            'stage-packages': ['python3-pip']
+        })
+        self.useFixture(snapcraft_yaml)
+
+        self.run_snapcraft('pull')
 
     def test_pull_with_pip_requirements_file(self):
         self.run_snapcraft('build', 'pip-requirements-file')

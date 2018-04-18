@@ -19,6 +19,7 @@ import contextlib
 import json
 import logging
 import os
+import re
 import shutil
 import stat
 import subprocess
@@ -368,15 +369,26 @@ class Pip:
         :return: Dict of installed python packages and their versions
         :rtype: dict
         """
-        command = ['list', '--format=json']
+        command = ['list']
         if user:
             command.append('--user')
 
-        output = self._run_output(command)
         packages = collections.OrderedDict()
         try:
+            output = self._run_output(command + ['--format=json'])
             json_output = json.loads(
                     output, object_pairs_hook=collections.OrderedDict)
+        except subprocess.CalledProcessError:
+            # --format requires a newer pip, so fall back to legacy output
+            output = self._run_output(command)
+            json_output = []  # type: List[Dict[str, str]]
+            version_regex = re.compile('\((.+)\)')
+            for line in output.splitlines():
+                line = line.split()
+                m = version_regex.search(line[1])
+                if not m:
+                    raise errors.PipListInvalidLegacyFormatError(output)
+                json_output.append({'name': line[0], 'version': m.group(1)})
         except json.decoder.JSONDecodeError as e:
             raise errors.PipListInvalidJsonError(output) from e
 
