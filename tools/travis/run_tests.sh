@@ -46,7 +46,14 @@ else
 fi
 
 script_path="$(dirname "$0")"
-project_path="$(readlink -f "$script_path/../..")"
+
+if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+    # readlink -f doesn't work on osx.
+    brew install coreutils
+    project_path="$(greadlink -f "$script_path/../..")"
+else
+    project_path="$(readlink -f "$script_path/../..")"
+fi
 
 lxc="/snap/bin/lxc"
 
