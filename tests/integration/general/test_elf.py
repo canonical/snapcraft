@@ -20,7 +20,7 @@ import subprocess
 from testtools.matchers import (Annotate, Contains, DirExists, Equals,
                                 FileExists, MatchesRegex, Not)
 
-from tests import integration, fixture_setup
+from tests import integration, fixture_setup, skip
 
 
 class RpathTestCase(integration.TestCase):
@@ -87,6 +87,41 @@ class OriginRPATHTestCase(integration.TestCase):
                 seen,
                 Annotate('A duplicate rpath was found!', Not(Contains(i))))
             seen.add(i)
+
+    @skip.skip_unless_codename('xenial', 'we currently only have core')
+    def test_origin_runpath_migrated_to_rpath(self):
+        # We stage libc6 for this to work on non xenial
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(
+            self.path, confinement='classic')
+        snapcraft_yaml.update_part('test-part', {
+            'plugin': 'nil',
+            'build-packages': ['patchelf'],
+            'stage-packages': ['hello'],
+            # Without --force-rpath this is essentially a RUNPATH
+            'override-build': (
+                "patchelf --set-rpath '$ORIGIN/foobar' "
+                "$SNAPCRAFT_PART_INSTALL/usr/bin/hello")
+        })
+        self.useFixture(snapcraft_yaml)
+
+        self.run_snapcraft('prime')
+
+        bin_path = os.path.join(self.prime_dir, 'usr', 'bin', 'hello')
+        self.assertThat(bin_path, FileExists())
+
+        # Verify there aren't any duplicate rpath entries
+        readelf_d = subprocess.check_output([
+            'readelf', '-d', bin_path]).decode().strip()
+        lines_with_runpath = [l for l in readelf_d.splitlines()
+                              if 'RUNPATH' in l]
+        lines_with_rpath = [l for l in readelf_d.splitlines()
+                            if 'RPATH' in l]
+        self.assertThat(
+            len(lines_with_runpath),
+            Annotate('Expected no RUNPATH entries', Equals(0)))
+        self.assertThat(
+            len(lines_with_rpath),
+            Annotate('Expected one RPATH entry', Equals(1)))
 
 
 class ExecStackTestCase(integration.TestCase):
