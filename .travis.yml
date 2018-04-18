@@ -1,5 +1,7 @@
 language: bash
 
+services: [docker]
+
 matrix:
   include:
     - os: osx
