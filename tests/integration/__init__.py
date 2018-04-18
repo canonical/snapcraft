@@ -31,6 +31,7 @@ from typing import Callable, List, Union
 
 import fixtures
 import pexpect
+from pexpect import popen_spawn
 import requests
 import testtools
 import yaml
@@ -429,6 +430,8 @@ class StoreTestCase(TestCase):
         super().setUp()
         self.test_store = fixture_setup.TestStore()
         self.useFixture(self.test_store)
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_TEST_INPUT', '1'))
 
     def is_store_fake(self):
         return (os.getenv('TEST_STORE') or 'fake') == 'fake'
@@ -438,9 +441,9 @@ class StoreTestCase(TestCase):
 
     def _conduct_login(self, process, email, password, expect_success) -> None:
         process.expect_exact(
-            'Enter your Ubuntu One e-mail address and password.\r\n'
+            'Enter your Ubuntu One e-mail address and password.\n'
             'If you do not have an Ubuntu One account, you can create one at '
-            'https://dashboard.snapcraft.io/openid/login\r\n'
+            'https://dashboard.snapcraft.io/openid/login\n'
             'Email: ')
         process.sendline(email)
         process.expect_exact('Password: ')
@@ -469,7 +472,8 @@ class StoreTestCase(TestCase):
         email = email or self.test_store.user_email
         password = password or self.test_store.user_password
 
-        process = pexpect.spawn(self.snapcraft_command, ['login'])
+        process = popen_spawn.PopenSpawn(
+            '{} login'.format(self.snapcraft_command))
         self._conduct_login(process, email, password, expect_success)
 
         if expect_success:

@@ -181,7 +181,10 @@ def login(*, store: storeapi.StoreClient = None,
               'If you do not have an Ubuntu One account, you can create one '
               'at https://dashboard.snapcraft.io/openid/login')
         email = input('Email: ')
-        password = getpass.getpass('Password: ')
+        if os.environ.get('SNAPCRAFT_TEST_INPUT'):
+            password = input('Password: ')
+        else:
+            password = getpass.getpass('Password: ')
 
     try:
         _try_login(email, password, store=store, packages=packages, acls=acls,
