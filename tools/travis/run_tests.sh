@@ -25,9 +25,8 @@ if [ "$#" -ne 1 ] ; then
     exit 1
 fi
 
-test="$1"
-
-pattern="$2"
+test_suite="$1"
+use_run="$2"
 
 
 if [ "$TRAVIS_OS_NAME" = "osx" ] && [ -z "$SNAPCRAFT_FROM_BREW" ]; then
@@ -40,11 +39,11 @@ if [ "$TRAVIS_OS_NAME" = "osx" ]; then
     python3 ./tools/brew_install_from_source.py
 fi
 
-if [ "$test" = "static" ]; then
+if [ "$test_suite" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
-elif [ "$test" = "tests/unit" ]; then
+elif [ "$test_suite" = "tests/unit" ]; then
     dependencies="apt install -y git bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov && apt install -y python3-coverage"
-elif [[ "$test" = "tests/integration"* || "$test" = "tests.integration"* ]]; then
+elif [[ "$test_suite" = "tests/integration"* || "$test_suite" = "tests.integration"* ]]; then
     # TODO remove the need to install the snapcraft dependencies due to nesting
     #      the tests in the snapcraft package
     # snap install core exits with this error message:
@@ -74,9 +73,9 @@ lxc="/snap/bin/lxc"
 $lxc file push --recursive $project_path test-runner/root/
 $lxc exec test-runner -- sh -c "cd snapcraft && ./tools/travis/setup_lxd.sh"
 $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
-$lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test"
+$lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test $use_run"
 
-if [ "$test" = "snapcraft/tests/unit" ]; then
+if [ "$test_suite" = "snapcraft/tests/unit" ]; then
     # Report code coverage.
     $lxc exec test-runner -- sh -c "cd snapcraft && python3 -m coverage xml"
     $lxc exec test-runner -- sh -c "cd snapcraft && codecov --token=$CODECOV_TOKEN"
