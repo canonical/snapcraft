@@ -89,33 +89,37 @@ class PartGrammarProcessor:
         if not self.__source:
             # The grammar is array-based, even though we only support a single
             # source.
-            source_array = grammar.process_grammar(
+            processor = grammar.GrammarProcessor(
                 self._source_grammar, self._project_options,
                 lambda s: True)
+            source_array = processor.process()
             if len(source_array) > 0:
                 self.__source = source_array.pop()
         return self.__source
 
     def get_build_snaps(self):
         if not self.__build_snaps:
-            self.__build_snaps = grammar.process_grammar(
+            processor = grammar.GrammarProcessor(
                 self._build_snap_grammar, self._project_options,
                 repo.snaps.SnapPackage.is_valid_snap)
+            self.__build_snaps = processor.process()
 
         return self.__build_snaps
 
     def get_build_packages(self):
         if not self.__build_packages:
-            self.__build_packages = grammar.process_grammar(
+            processor = grammar.GrammarProcessor(
                 self._build_package_grammar, self._project_options,
                 self._repo.build_package_is_valid)
+            self.__build_packages = processor.process()
 
         return self.__build_packages
 
     def get_stage_packages(self):
         if not self.__stage_packages:
-            self.__stage_packages = grammar.process_grammar(
+            processor = grammar.GrammarProcessor(
                 self._stage_package_grammar, self._project_options,
                 self._repo.is_valid)
+            self.__stage_packages = processor.process()
 
         return self.__stage_packages

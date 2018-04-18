@@ -181,10 +181,11 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
                                   platform_architecture_mock):
         platform_machine_mock.return_value = 'x86_64'
         platform_architecture_mock.return_value = ('64bit', 'ELF')
-        options = snapcraft.ProjectOptions(target_deb_arch=self.target_arch)
+        processor = grammar.GrammarProcessor(
+                None, snapcraft.ProjectOptions(
+                    target_deb_arch=self.target_arch), self.checker)
         statement = to.ToStatement(
-            to=self.to, body=self.body, project_options=options,
-            checker=self.checker)
+            to=self.to, body=self.body, processor=processor)
 
         for else_body in self.else_bodies:
             statement.add_else(else_body)
@@ -246,11 +247,11 @@ class ToStatementInvalidGrammarTestCase(GrammarBaseTestCase):
         with testtools.ExpectedException(
                 grammar.errors.ToStatementSyntaxError,
                 self.expected_exception):
-            options = snapcraft.ProjectOptions(
-                target_deb_arch=self.target_arch)
+            processor = grammar.GrammarProcessor(
+                None, snapcraft.ProjectOptions(
+                    target_deb_arch=self.target_arch), self.checker)
             statement = to.ToStatement(
-                to=self.to, body=self.body, project_options=options,
-                checker=self.checker)
+                to=self.to, body=self.body, processor=processor)
 
             for else_body in self.else_bodies:
                 statement.add_else(else_body)
@@ -266,11 +267,11 @@ class ToStatementElseFail(GrammarBaseTestCase):
                        platform_architecture_mock):
         platform_machine_mock.return_value = 'x86_64'
         platform_architecture_mock.return_value = ('64bit', 'ELF')
-        options = snapcraft.ProjectOptions(
-            target_deb_arch='i386')
+        processor = grammar.GrammarProcessor(
+            None, snapcraft.ProjectOptions(
+                target_deb_arch='i386'), self.checker)
         statement = to.ToStatement(
-            to='to armhf', body=['foo'], project_options=options,
-            checker=self.checker)
+            to='to armhf', body=['foo'], processor=processor)
 
         statement.add_else(None)
 

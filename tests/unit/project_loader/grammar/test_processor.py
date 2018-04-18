@@ -46,8 +46,9 @@ class GrammarOnDuplicatesTestCase(GrammarBaseTestCase):
                 grammar.errors.GrammarSyntaxError,
                 "Invalid grammar syntax: found duplicate 'on amd64,i386' "
                 'statements. These should be merged.'):
-            grammar.process_grammar(
+            processor = grammar.GrammarProcessor(
                 self.grammar, snapcraft.ProjectOptions(), self.checker)
+            processor.process()
 
 
 class BasicGrammarTestCase(GrammarBaseTestCase):
@@ -201,10 +202,10 @@ class BasicGrammarTestCase(GrammarBaseTestCase):
         platform_machine_mock.return_value = self.host_arch
         platform_architecture_mock.return_value = ('64bit', 'ELF')
 
-        options = snapcraft.ProjectOptions()
+        processor = grammar.GrammarProcessor(
+                self.grammar, snapcraft.ProjectOptions(), self.checker)
         self.assertThat(
-            grammar.process_grammar(self.grammar, options, self.checker),
-            Equals(self.expected_packages))
+            processor.process(), Equals(self.expected_packages))
 
 
 class InvalidGrammarTestCase(GrammarBaseTestCase):
@@ -234,5 +235,6 @@ class InvalidGrammarTestCase(GrammarBaseTestCase):
         with testtools.ExpectedException(
                 grammar.errors.GrammarSyntaxError,
                 self.expected_exception):
-            grammar.process_grammar(
+            processor = grammar.GrammarProcessor(
                 self.grammar, snapcraft.ProjectOptions(), self.checker)
+            processor.process()

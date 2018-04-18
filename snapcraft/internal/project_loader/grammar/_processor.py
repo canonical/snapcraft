@@ -17,6 +17,9 @@
 import re
 
 from .errors import GrammarSyntaxError
+from ._on import OnStatement
+from ._to import ToStatement
+from ._try import TryStatement
 
 _ON_CLAUSE_PATTERN = re.compile(r'\Aon\s+')
 _TO_CLAUSE_PATTERN = re.compile(r'\Ato\s+')
@@ -25,99 +28,103 @@ _ELSE_CLAUSE_PATTERN = re.compile(r'\Aelse\Z')
 _ELSE_FAIL_PATTERN = re.compile(r'\Aelse\s+fail\Z')
 
 
-def process_grammar(grammar, project_options, checker):
-    """Process grammar and extract desired primitives.
+class GrammarProcessor:
+    """The GrammarProcessor extracts desired primitives from grammar."""
 
-    :param list grammar: Unprocessed grammar.
-    :param project_options: Instance of ProjectOptions to use to determine
-                            appropriate primitives.
-    :type project_options: snapcraft.ProjectOptions
-    :param checker: callable accepting a single primitive, returning
-                    true if it is valid
-    :type checker: callable
+    def __init__(self, grammar, project_options, checker):
+        """Create a new GrammarProcessor.
 
-    :return: Primitives selected
-    :rtype: set
-    """
+        :param list grammar: Unprocessed grammar.
+        :param project_options: Instance of ProjectOptions to use to determine
+                                appropriate primitives.
+        :type project_options: snapcraft.ProjectOptions
+        :param callable checker: callable accepting a single primitive,
+                                 returning true if it is valid.
+        """
+        self._grammar = grammar
+        self.project_options = project_options
+        self.checker = checker
 
-    primitives = set()
-    statements = _StatementCollection()
-    statement = None
+    def process(self, *, grammar=None):
+        """Process grammar and extract desired primitives.
 
-    for section in grammar:
-        if isinstance(section, str):
-            # If the secion is just a string, it's either "else fail" or a
-            # primitive name.
-            if _ELSE_FAIL_PATTERN.match(section):
-                _handle_else(statement, None)
+        :param list grammar: Unprocessed grammar (defaults to that set in
+                             init).
+
+        :return: Primitives selected
+        :rtype: set
+        """
+
+        if grammar is None:
+            grammar = self._grammar
+
+        primitives = set()
+        statements = _StatementCollection(self.project_options)
+        statement = None
+
+        for section in grammar:
+            if isinstance(section, str):
+                # If the secion is just a string, it's either "else fail" or a
+                # primitive name.
+                if _ELSE_FAIL_PATTERN.match(section):
+                    _handle_else(statement, None)
+                else:
+                    primitives.add(section)
+            elif isinstance(section, dict):
+                statement = self._parse_dict(
+                    section, statement, statements)
             else:
-                primitives.add(section)
-        elif isinstance(section, dict):
-            statement = _parse_dict(
-                section, statement, statements, project_options, checker)
-        else:
-            # jsonschema should never let us get here.
-            raise GrammarSyntaxError(
-                "expected grammar section to be either of type 'str' or "
-                "type 'dict', but got {!r}".format(type(section)))
+                # jsonschema should never let us get here.
+                raise GrammarSyntaxError(
+                    "expected grammar section to be either of type 'str' or "
+                    "type 'dict', but got {!r}".format(type(section)))
 
-    # We've parsed the entire grammar, time to process it.
-    statements.add(statement)
-    primitives |= statements.process_all()
+        # We've parsed the entire grammar, time to process it.
+        statements.add(statement)
+        primitives |= statements.process_all()
 
-    return primitives
+        return primitives
 
+    def _parse_dict(self, section, statement, statements):
+        for key, value in section.items():
+            # Grammar is always written as a list of selectors but the value
+            # can be a list or a string. In the latter case we wrap it so no
+            # special care needs to be taken when fetching the result from the
+            # primitive.
+            if not isinstance(value, list):
+                value = {value}
 
-def _parse_dict(section, statement, statements, project_options,
-                checker):
-    from ._on import OnStatement
-    from ._to import ToStatement
-    from ._try import TryStatement
+            if _ON_CLAUSE_PATTERN.match(key):
+                # We've come across the beginning of an 'on' statement.
+                # That means any previous statement we found is complete.
+                # The first time through this may be None, but the
+                # collection will ignore it.
+                statements.add(statement)
 
-    for key, value in section.items():
-        # Grammar is always written as a list of selectors but the value can
-        # be a list or a string, in the latter case we wrap it so no special
-        # care needs to be taken when fetching the result from the primitive
-        if not isinstance(value, list):
-            value = {value}
+                statement = OnStatement(on=key, body=value, processor=self)
 
-        if _ON_CLAUSE_PATTERN.match(key):
-            # We've come across the beginning of an 'on' statement.
-            # That means any previous statement we found is complete.
-            # The first time through this may be None, but the
-            # collection will ignore it.
-            statements.add(statement)
+            if _TO_CLAUSE_PATTERN.match(key):
+                # We've come across the beginning of a 'to' statement.
+                # That means any previous statement we found is complete.
+                # The first time through this may be None, but the
+                # collection will ignore it.
+                statements.add(statement)
 
-            statement = OnStatement(
-                on=key, body=value, project_options=project_options,
-                checker=checker)
+                statement = ToStatement(to=key, body=value, processor=self)
 
-        if _TO_CLAUSE_PATTERN.match(key):
-            # We've come across the beginning of a 'to' statement.
-            # That means any previous statement we found is complete.
-            # The first time through this may be None, but the
-            # collection will ignore it.
-            statements.add(statement)
+            if _TRY_CLAUSE_PATTERN.match(key):
+                # We've come across the beginning of a 'try' statement.
+                # That means any previous statement we found is complete.
+                # The first time through this may be None, but the
+                # collection will ignore it.
+                statements.add(statement)
 
-            statement = ToStatement(
-                to=key, body=value, project_options=project_options,
-                checker=checker)
+                statement = TryStatement(body=value, processor=self)
 
-        if _TRY_CLAUSE_PATTERN.match(key):
-            # We've come across the beginning of a 'try' statement.
-            # That means any previous statement we found is complete.
-            # The first time through this may be None, but the
-            # collection will ignore it.
-            statements.add(statement)
+            if _ELSE_CLAUSE_PATTERN.match(key):
+                _handle_else(statement, value)
 
-            statement = TryStatement(
-                body=value, project_options=project_options,
-                checker=checker)
-
-        if _ELSE_CLAUSE_PATTERN.match(key):
-            _handle_else(statement, value)
-
-    return statement
+        return statement
 
 
 def _handle_else(statement, else_body):
@@ -142,8 +149,9 @@ def _handle_else(statement, else_body):
 class _StatementCollection:
     """Unique collection of statements to run at a later time."""
 
-    def __init__(self):
+    def __init__(self, project_options):
         self._statements = []
+        self._project_options = project_options
 
     def add(self, statement):
         """Add new statement to collection.

@@ -39,8 +39,9 @@ class GlobalGrammarProcessor:
 
     def get_build_packages(self):
         if not self.__build_packages:
-            self.__build_packages = grammar.process_grammar(
+            processor = grammar.GrammarProcessor(
                 self._build_package_grammar, self._project_options,
                 repo.Repo.build_package_is_valid)
+            self.__build_packages = processor.process()
 
         return self.__build_packages
