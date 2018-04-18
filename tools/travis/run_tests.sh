@@ -51,7 +51,7 @@ elif [[ "$test_suite" = "tests/integration"* || "$test_suite" = "tests.integrati
     # but the installation succeeds, so we just ingore it.
     dependencies="apt install -y bzr git libnacl-dev libsodium-dev libffi-dev libapt-pkg-dev mercurial python3-pip subversion sudo snapd && python3 -m pip install -r requirements-devel.txt -r requirements.txt && (snap install core || echo 'ignored error') && ${SNAPCRAFT_INSTALL_COMMAND:-sudo snap install snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap --dangerous --classic}"
 else
-    echo "Unknown test suite: $test"
+    echo "Unknown test suite: $test_suite"
     exit 1
 fi
 
@@ -73,7 +73,7 @@ lxc="/snap/bin/lxc"
 $lxc file push --recursive $project_path test-runner/root/
 $lxc exec test-runner -- sh -c "cd snapcraft && ./tools/travis/setup_lxd.sh"
 $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
-$lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test $use_run"
+$lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test_suite $use_run"
 
 if [ "$test_suite" = "snapcraft/tests/unit" ]; then
     # Report code coverage.
