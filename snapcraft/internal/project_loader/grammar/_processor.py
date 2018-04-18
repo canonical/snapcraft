@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017, 2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -71,8 +71,7 @@ class GrammarProcessor:
                 else:
                     primitives.add(section)
             elif isinstance(section, dict):
-                statement = self._parse_dict(
-                    section, statement, statements)
+                statement = self._parse_dict(section, statement, statements)
             else:
                 # jsonschema should never let us get here.
                 raise GrammarSyntaxError(
@@ -101,7 +100,8 @@ class GrammarProcessor:
                 # collection will ignore it.
                 statements.add(statement)
 
-                statement = OnStatement(on=key, body=value, processor=self)
+                statement = OnStatement(
+                    on=key, body=value, processor=self)
 
             if _TO_CLAUSE_PATTERN.match(key):
                 # We've come across the beginning of a 'to' statement.
@@ -110,7 +110,8 @@ class GrammarProcessor:
                 # collection will ignore it.
                 statements.add(statement)
 
-                statement = ToStatement(to=key, body=value, processor=self)
+                statement = ToStatement(
+                    to=key, body=value, processor=self)
 
             if _TRY_CLAUSE_PATTERN.match(key):
                 # We've come across the beginning of a 'try' statement.
@@ -119,7 +120,8 @@ class GrammarProcessor:
                 # collection will ignore it.
                 statements.add(statement)
 
-                statement = TryStatement(body=value, processor=self)
+                statement = TryStatement(
+                    body=value, processor=self)
 
             if _ELSE_CLAUSE_PATTERN.match(key):
                 _handle_else(statement, value)

@@ -160,7 +160,7 @@ class PartGrammarBuildSnapsTestCase(unit.TestCase):
             'build_snaps': [{'to armhf': ['foo']}],
             'expected_amd64': set(),
             'expected_i386': set(),
-            'expected_armhf': {'foo:armhf'},
+            'expected_armhf': {'foo'},
         }),
     ]
 
@@ -223,7 +223,7 @@ class PartGrammarBuildAndStagePackagesTestCase(unit.TestCase):
             'packages': [{'to armhf': ['foo']}],
             'expected_amd64': set(),
             'expected_i386': set(),
-            'expected_armhf': {'foo:armhf'},
+            'expected_armhf': {'foo'},
         }),
     ]
 

@@ -39,14 +39,14 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
             'body': ['foo'],
             'else_bodies': [],
             'target_arch': None,
-            'expected_packages': {'foo:amd64'}
+            'expected_packages': {'foo'}
         }),
         ('amd64 to armhf', {
             'to': 'to armhf',
             'body': ['foo'],
             'else_bodies': [],
             'target_arch': 'armhf',
-            'expected_packages': {'foo:armhf'}
+            'expected_packages': {'foo'}
         }),
         ('amd64 to armhf, arch specified', {
             'to': 'to armhf',
@@ -69,7 +69,7 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
                 ['bar']
             ],
             'target_arch': 'armhf',
-            'expected_packages': {'foo:armhf'}
+            'expected_packages': {'foo'}
         }),
         ('used else', {
             'to': 'to armhf',
@@ -117,7 +117,7 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
             ],
             'else_bodies': [],
             'target_arch': 'armhf',
-            'expected_packages': {'foo:armhf'}
+            'expected_packages': {'foo'}
         }),
         ('nested i386', {
             'to': 'to i386',
@@ -127,7 +127,7 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
             ],
             'else_bodies': [],
             'target_arch': 'i386',
-            'expected_packages': {'bar:i386'}
+            'expected_packages': {'bar'}
         }),
         ('nested body ignored else', {
             'to': 'to armhf',
@@ -137,7 +137,7 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
             ],
             'else_bodies': [],
             'target_arch': 'armhf',
-            'expected_packages': {'foo:armhf'}
+            'expected_packages': {'foo'}
         }),
         ('nested body used else', {
             'to': 'to i386',
@@ -147,7 +147,7 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
             ],
             'else_bodies': [],
             'target_arch': 'i386',
-            'expected_packages': {'bar:i386'}
+            'expected_packages': {'bar'}
         }),
         ('nested else ignored else', {
             'to': 'to i386',
@@ -159,7 +159,7 @@ class ToStatementGrammarTestCase(GrammarBaseTestCase):
                 ],
             ],
             'target_arch': 'armhf',
-            'expected_packages': {'bar:armhf'}
+            'expected_packages': {'bar'}
         }),
         ('nested else used else', {
             'to': 'to armhf',
