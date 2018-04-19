@@ -173,24 +173,9 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
-    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
-    @mock.patch('os.pipe')
-    @mock.patch('os.geteuid')
-    def test_snap_containerized_remote_fails(
-            self, mock_geteuid, mock_pipe, mock_container_run):
-        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
-        mock_pipe.return_value = (9, 9)
-        mock_geteuid.return_value = 1234
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-        fake_filesystem = fixture_setup.FakeFilesystem()
-        self.useFixture(fake_filesystem)
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
+    def test_snap_containerized_remote_fails(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_CONTAINER_BUILDS', 'myremote'))
-        self.useFixture(
-            fixtures.EnvironmentVariable('USER', 'user'))
         self.make_snapcraft_yaml()
 
         raised = self.assertRaises(
