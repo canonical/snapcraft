@@ -619,7 +619,7 @@ class _SnapPackaging:
         if passthrough_applied:
             logger.warn("The 'passthrough' property is being used to "
                         "propagate experimental properties to snap.yaml "
-                        "that have not been validated")
+                        "that have not been validated.")
 
     def _apply_passthrough(self, section: Dict[str, Any],
                            passthrough: Dict[str, Any],
