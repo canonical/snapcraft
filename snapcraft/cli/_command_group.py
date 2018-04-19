@@ -62,6 +62,6 @@ class SnapcraftGroup(click.Group):
         # from the store.
         commands.pop(commands.index('edit-collaborators'))
         build_environment = env.BuilderEnvironmentConfig()
-        if build_environment.provider == 'host':
+        if build_environment.is_host:
             commands.pop(commands.index('refresh'))
         return commands
