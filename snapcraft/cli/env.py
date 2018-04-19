@@ -38,6 +38,12 @@ class BuilderEnvironmentConfig:
                     'with SNAPCRAFT_CONTAINER_BUILDS has been dropped.')
 
         build_provider = os.environ.get('SNAPCRAFT_BUILD_ENVIRONMENT')
+        if build_provider and use_lxd:
+            raise errors.SnapcraftEnvironmentError(
+                'SNAPCRAFT_BUILD_ENVIRONMENT and SNAPCRAFT_CONTAINER_BUILDS '
+                'cannot be used together.\n'
+                'Unset one of them from the environment and try again.')
+
         if use_lxd:
             build_provider = 'lxd'
         elif not build_provider:

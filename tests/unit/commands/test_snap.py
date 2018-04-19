@@ -201,6 +201,22 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             'The experimental feature of using non-local LXD remotes '
             'with SNAPCRAFT_CONTAINER_BUILDS has been dropped.'))
 
+    def test_use_of_both_build_env_affecting_vars_fails(self):
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_CONTAINER_BUILDS', 'on'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_ENVIRONMENT', 'host'))
+        self.make_snapcraft_yaml()
+
+        raised = self.assertRaises(
+            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            self.run_command, ['snap'])
+
+        self.assertThat(str(raised), Contains(
+            'SNAPCRAFT_BUILD_ENVIRONMENT and SNAPCRAFT_CONTAINER_BUILDS '
+            'cannot be used together.\n'
+            'Unset one of them from the environment and try again.'))
+
     def test_snap_type_os_does_not_use_all_root(self):
         self.make_snapcraft_yaml(snap_type='os')
 
