@@ -21,7 +21,22 @@ from snapcraft.internal import errors
 
 
 class BuilderEnvironmentConfig:
-    """Handle the chosen build provider."""
+    """Handle the chosen build provider.
+
+    To determine the build environment, SNAPCRAFT_BUILD_ENVIRONMENT is
+    retrieved from the environment and used to determine the build
+    provider. If it is not set, a value of `host` is assumed.
+
+    Valid values are:
+
+    - host: the host will drive the build.
+    - lxd: the host will setup a container to drive the build.
+
+    Use of the lxd value is equivalent to setting the now deprecated
+    SNAPCRAFT_CONTAINER_BUILDS environment variable to a value of True.
+    Setting this variable to a value that resolves to a non boolean
+    results in an error.
+    """
 
     def __init__(self) -> None:
         use_lxd = None
