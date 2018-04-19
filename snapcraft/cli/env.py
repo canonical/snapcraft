@@ -44,7 +44,7 @@ class BuilderEnvironmentConfig:
             echo.warning('Using the host as the build environment.')
             build_provider = 'host'
         # TODO add multipass
-        elif build_provider not in ['host', 'multipass', 'lxd']:
+        elif build_provider not in ['host', 'lxd']:
             raise errors.SnapcraftEnvironmentError(
                 'SNAPCRAFT_BUILD_ENVIRONMENT must be one of: host or lxd.')
 
