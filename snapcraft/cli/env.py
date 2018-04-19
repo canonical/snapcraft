@@ -34,8 +34,8 @@ class BuilderEnvironmentConfig:
                 use_lxd = util.strtobool(container_builds)
             except ValueError:
                 raise errors.SnapcraftEnvironmentError(
-                    'The experimental feature of using lxd remotes other '
-                    'that cleanbuild has been dropped.')
+                    'The experimental feature of using non-local LXD remotes '
+                    'with SNAPCRAFT_CONTAINER_BUILDS has been dropped.')
 
         build_provider = os.environ.get('SNAPCRAFT_BUILD_ENVIRONMENT')
         if use_lxd:

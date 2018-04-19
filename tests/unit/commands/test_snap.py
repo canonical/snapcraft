@@ -198,8 +198,8 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             self.run_command, ['snap'])
 
         self.assertThat(str(raised), Contains(
-            'The experimental feature of using lxd remotes other that '
-            'cleanbuild has been dropped'))
+            'The experimental feature of using non-local LXD remotes '
+            'with SNAPCRAFT_CONTAINER_BUILDS has been dropped.'))
 
     def test_snap_type_os_does_not_use_all_root(self):
         self.make_snapcraft_yaml(snap_type='os')
