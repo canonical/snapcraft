@@ -20,8 +20,9 @@
 
 set -ev
 
-if [ "$#" -ne 1 ] ; then
-    echo "Usage: "$0" <test>"
+argc="$#"
+if [ "$argc" -gt 2 ]; then
+    echo "Usage: "$0" <test> [<use-run>]"
     exit 1
 fi
 
