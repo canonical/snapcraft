@@ -253,6 +253,24 @@ properties:
               - forking
               - oneshot
               - notify
+          refresh-mode:
+              type: string
+              description: controls if the app should be restarted at all
+              enum:
+                - endure
+                - restart
+          stop-mode:
+              type: string
+              description: controls how the daemon should be stopped
+              enum:
+                - sigterm
+                - sigterm-all
+                - sighup
+                - sighup-all
+                - sigusr1
+                - sigusr1-all
+                - sigusr2
+                - sigusr2-all
           restart-condition:
               type: string
               enum:
