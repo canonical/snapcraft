@@ -564,7 +564,7 @@ class PassthroughErrorTestCase(PassthroughBaseTestCase):
             fake_logger.output,
             Equals("The 'passthrough' property is being used to propagate "
                    "experimental properties to snap.yaml that have not been "
-                   "validated. The snap cannot be released to the store.\n"))
+                   "validated\n"))
 
 
 class PassthroughPropagateTestCase(PassthroughBaseTestCase):
@@ -622,7 +622,7 @@ class PassthroughPropagateTestCase(PassthroughBaseTestCase):
             fake_logger.output,
             Contains("The 'passthrough' property is being used to propagate "
                      "experimental properties to snap.yaml that have not been "
-                     "validated. The snap cannot be released to the store.\n"))
+                     "validated\n"))
 
 
 class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):
