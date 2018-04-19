@@ -79,7 +79,7 @@ def _run_mksquashfs(mksquashfs_command, *, directory, snap_name, snap_type,
     # http://bazaar.launchpad.net/~click-reviewers/click-reviewers-tools/trunk/view/head:/clickreviews/common.py#L38
     mksquashfs_args = ['-noappend', '-comp', 'xz', '-no-xattrs',
                        '-no-fragments']
-    if snap_type != 'os':
+    if snap_type not in ('os', 'base'):
         mksquashfs_args.append('-all-root')
 
     complete_command = [

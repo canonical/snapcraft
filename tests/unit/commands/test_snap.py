@@ -279,6 +279,22 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.assertThat('snap-test_1.0_amd64.snap', FileExists())
 
+    def test_snap_type_base_does_not_use_all_root(self):
+        self.make_snapcraft_yaml(snap_type='base')
+
+        result = self.run_command(['snap'])
+
+        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(result.output,
+                        Contains('\nSnapped snap-test_1.0_amd64.snap\n'))
+
+        self.popen_spy.assert_called_once_with([
+            'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments'],
+            stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
+
+        self.assertThat('snap-test_1.0_amd64.snap', FileExists())
+
     def test_snap_defaults_with_parts_in_prime(self):
         fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(fake_logger)
