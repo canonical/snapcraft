@@ -58,7 +58,8 @@ class BuilderEnvironmentConfig:
             raise errors.SnapcraftEnvironmentError(
                 'SNAPCRAFT_BUILD_ENVIRONMENT and SNAPCRAFT_CONTAINER_BUILDS '
                 'cannot be used together.\n'
-                'Unset one of them from the environment and try again.')
+                'Given that SNAPCRAFT_BUILD_ENVIRONMENT is deprecated, '
+                'unset that variable from the environment and try again.')
 
         if use_lxd:
             build_provider = 'lxd'
