@@ -33,7 +33,8 @@ class BuilderEnvironmentConfig:
     - lxd: the host will setup a container to drive the build.
 
     Use of the lxd value is equivalent to setting the now deprecated
-    SNAPCRAFT_CONTAINER_BUILDS environment variable to a value of True.
+    SNAPCRAFT_CONTAINER_BUILDS environment variable to a value that
+    would evaluate to True.
     Setting this variable to a value that resolves to a non boolean
     results in an error.
     """
