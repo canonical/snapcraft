@@ -16,6 +16,7 @@
 
 import contextlib
 import logging
+from requests.packages import urllib3
 from simplejson.scanner import JSONDecodeError
 from typing import List  # noqa
 
@@ -24,6 +25,8 @@ from snapcraft import formatting_utils
 
 
 logger = logging.getLogger(__name__)
+
+_STORE_STATUS_URL = 'https://status.snapcraft.io/'
 
 
 class StoreError(SnapcraftError):
@@ -60,12 +63,21 @@ class LoginRequiredError(StoreError):
         super().__init__(message=message)
 
 
-class StoreRetryError(StoreError):
+class StoreNetworkError(StoreError):
 
-    fmt = 'There seems to be a network error: {error}'
+    fmt = 'There seems to be a network error: {message}'
 
     def __init__(self, exception):
-        super().__init__(error=str(exception))
+        message = str(exception)
+        with contextlib.suppress(IndexError):
+            underlying_exception = exception.args[0]
+            if isinstance(underlying_exception,
+                          urllib3.exceptions.MaxRetryError):
+                message = (
+                    'max retries exceeded trying to reach the store\n'
+                    'Check your network connection, and check the store '
+                    'status at {}'.format(_STORE_STATUS_URL))
+        super().__init__(message=message)
 
 
 class SnapNotFoundError(StoreError):
@@ -417,7 +429,7 @@ class StoreReleaseError(StoreError):
         response_json = self.__to_json(response)
         message = ('The store encountered an internal error. The status of '
                    'store and associated services can be checked at:\n'
-                   'https://status.snapcraft.io/')
+                   '{}'.format(_STORE_STATUS_URL))
 
         if 'error_list' in response_json:
             message = _error_list_to_message(response_json)
