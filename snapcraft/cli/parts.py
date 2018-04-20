@@ -31,10 +31,10 @@ def partscli(ctx):
 def update(ctx, **kwargs):
     """Updates the parts listing from the cloud."""
     # Update in the container so that it will use the parts at build time
-    container_config = env.get_container_config()
-    if container_config.use_container:
+    build_environment = env.BuilderEnvironmentConfig()
+    if not build_environment.is_host:
         project_options = get_project_options(**kwargs)
-        lifecycle.containerbuild('update', project_options, container_config)
+        lifecycle.containerbuild('update', project_options)
 
     # Parts can be defined and searched from any folder on the host, so
     # regardless of using containers we always update these as well

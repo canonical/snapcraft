@@ -25,12 +25,11 @@ from . import env
 
 def _execute(command, parts, **kwargs):
     project_options = get_project_options(**kwargs)
-    container_config = env.get_container_config()
-    if container_config.use_container:
-        lifecycle.containerbuild(command, project_options,
-                                 container_config, parts)
-    else:
+    build_environment = env.BuilderEnvironmentConfig()
+    if build_environment.is_host:
         lifecycle.execute(command, project_options, parts)
+    else:
+        lifecycle.containerbuild(command, project_options, parts)
     return project_options
 
 
@@ -130,14 +129,13 @@ def snap(directory, output, **kwargs):
         deprecations.handle_deprecation_notice('dn6')
 
     project_options = get_project_options(**kwargs)
-    container_config = env.get_container_config()
-    if container_config.use_container:
-        lifecycle.containerbuild('snap', project_options,
-                                 container_config, output, directory)
-    else:
+    build_environment = env.BuilderEnvironmentConfig()
+    if build_environment.is_host:
         snap_name = lifecycle.snap(
             project_options, directory=directory, output=output)
         echo.info('Snapped {}'.format(snap_name))
+    else:
+        lifecycle.containerbuild('snap', project_options, output, directory)
 
 
 @lifecyclecli.command()
@@ -175,20 +173,19 @@ def clean(parts, step, **kwargs):
         snapcraft clean my-part --step build
     """
     project_options = get_project_options(**kwargs)
-    container_config = env.get_container_config()
-    if container_config.use_container:
-        config = project_loader.load_config(project_options)
-        lxd.Project(project_options=project_options,
-                    remote=container_config.remote,
-                    output=None, source=os.path.curdir,
-                    metadata=config.get_metadata()).clean(parts, step)
-    else:
+    build_environment = env.BuilderEnvironmentConfig()
+    if build_environment.is_host:
         step = step or 'pull'
         if step == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '
                          'as the step to clean')
             step = 'prime'
         lifecycle.clean(project_options, parts, step)
+    else:
+        config = project_loader.load_config(project_options)
+        lxd.Project(project_options=project_options,
+                    output=None, source=os.path.curdir,
+                    metadata=config.get_metadata()).clean(parts, step)
 
 
 @lifecyclecli.command()

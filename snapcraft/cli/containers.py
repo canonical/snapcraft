@@ -41,11 +41,11 @@ def refresh(debug, **kwargs):
     as needed as well as refreshing snaps.
     """
 
-    container_config = env.get_container_config()
-    if not container_config.use_container:
+    build_environment = env.BuilderEnvironmentConfig()
+    if build_environment.is_host:
         raise errors.SnapcraftEnvironmentError(
             "The 'refresh' command only applies to LXD containers but "
-            "SNAPCRAFT_CONTAINER_BUILDS is not set or 0.\n"
+            "SNAPCRAFT_BUILD_ENVIRONMENT is not set or set to host.\n"
             "Maybe you meant to update the parts cache instead? "
             "You can do that with the following command:\n\n"
             "snapcraft update")
@@ -53,6 +53,5 @@ def refresh(debug, **kwargs):
     project_options = get_project_options(**kwargs, debug=debug)
     config = project_loader.load_config(project_options)
     lxd.Project(project_options=project_options,
-                remote=container_config.remote,
                 output=None, source=os.path.curdir,
                 metadata=config.get_metadata()).refresh()
