@@ -37,6 +37,8 @@ fi
 
 if [ "$TRAVIS_OS_NAME" = "osx" ]; then
     brew upgrade python
+    # readlink -f doesn't work on osx.
+    brew upgrade coreutils || brew install coreutils
     python3 ./tools/brew_install_from_source.py
 fi
 
@@ -58,28 +60,27 @@ fi
 
 script_path="$(dirname "$0")"
 
+echo "Going to run $test_stuite on $TRAVIS_OS_NAME"
 if [ "$TRAVIS_OS_NAME" = "osx" ]; then
-    # readlink -f doesn't work on osx.
-    brew install coreutils
     project_path="$(greadlink -f "$script_path/../..")"
+    ./runtests.sh "$test_suite" "$use_run"
 else
     project_path="$(readlink -f "$script_path/../..")"
+    lxc="/snap/bin/lxc"
+
+    "$script_path/setup_lxd.sh"
+    "$script_path/run_lxd_container.sh" test-runner
+
+    $lxc file push --recursive $project_path test-runner/root/
+    $lxc exec test-runner -- sh -c "cd snapcraft && ./tools/travis/setup_lxd.sh"
+    $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
+    $lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test_suite $use_run"
+
+    if [ "$test_suite" = "snapcraft/tests/unit" ]; then
+        # Report code coverage.
+        $lxc exec test-runner -- sh -c "cd snapcraft && python3 -m coverage xml"
+        $lxc exec test-runner -- sh -c "cd snapcraft && codecov --token=$CODECOV_TOKEN"
+    fi
+
+    $lxc stop test-runner
 fi
-
-lxc="/snap/bin/lxc"
-
-"$script_path/setup_lxd.sh"
-"$script_path/run_lxd_container.sh" test-runner
-
-$lxc file push --recursive $project_path test-runner/root/
-$lxc exec test-runner -- sh -c "cd snapcraft && ./tools/travis/setup_lxd.sh"
-$lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
-$lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test_suite $use_run"
-
-if [ "$test_suite" = "snapcraft/tests/unit" ]; then
-    # Report code coverage.
-    $lxc exec test-runner -- sh -c "cd snapcraft && python3 -m coverage xml"
-    $lxc exec test-runner -- sh -c "cd snapcraft && codecov --token=$CODECOV_TOKEN"
-fi
-
-$lxc stop test-runner
