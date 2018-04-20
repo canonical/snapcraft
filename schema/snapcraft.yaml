@@ -218,9 +218,11 @@ properties:
         required:
           - command
         dependencies:
-          stop-command: ["daemon"]
-          post-stop-command: ["daemon"]
-          reload-command: ["daemon"]
+          refresh-mode: [daemon]
+          stop-mode: [daemon]
+          stop-command: [daemon]
+          post-stop-command: [daemon]
+          reload-command: [daemon]
         additionalProperties: false
         properties:
           common-id:

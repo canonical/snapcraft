@@ -2613,6 +2613,18 @@ class RefreshModeTestCase(ValidationBaseTestCase):
         }
         project_loader.Validator(self.data).validate()
 
+    def test_daemon_missing_errors(self):
+        self.data['apps'] = {
+            'service1': {
+                'command': 'binary1',
+                'refresh-mode': self.mode,
+            }
+        }
+
+        self.assertRaises(
+            errors.YamlValidationError,
+            project_loader.Validator(self.data).validate)
+
 
 class StopModeTestCase(ValidationBaseTestCase):
 
@@ -2629,6 +2641,18 @@ class StopModeTestCase(ValidationBaseTestCase):
             }
         }
         project_loader.Validator(self.data).validate()
+
+    def test_daemon_missing_errors(self):
+        self.data['apps'] = {
+            'service1': {
+                'command': 'binary1',
+                'stop-mode': self.mode,
+            }
+        }
+
+        self.assertRaises(
+            errors.YamlValidationError,
+            project_loader.Validator(self.data).validate)
 
 
 class InvalidStopRefreshModesTestCase(ValidationBaseTestCase):
