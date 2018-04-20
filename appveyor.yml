@@ -7,7 +7,7 @@ cache:
 - '%LOCALAPPDATA%\pip\Cache\wheels'
 build: off
 before_test:
-- cmd: >-
+- cmd: |
     %PYTHON%\\python.exe -m venv venv
     venv\\Scripts\\activate.bat
     python -c "import sys; print(sys.executable)"
