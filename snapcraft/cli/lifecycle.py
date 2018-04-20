@@ -195,12 +195,12 @@ def clean(parts, step, **kwargs):
 @click.option('--debug', is_flag=True,
               help='Shells into the environment if the build fails.')
 def cleanbuild(remote, debug, **kwargs):
-    """Create a snap using a clean environment managed by lxd.
+    """Create a snap using a clean environment managed by a build provider.
 
     \b
     Examples:
         snapcraft cleanbuild
-        snapcraft cleanbuild --output
+        snapcraft cleanbuild --use-multipass
 
     The cleanbuild command requires a properly setup lxd environment that
     can connect to external networks. Refer to the "Ubuntu Desktop and
@@ -211,8 +211,18 @@ def cleanbuild(remote, debug, **kwargs):
     If using a remote, a prior setup is required which is described on:
     https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
     """
+    build_environment = env.BuilderEnvironmentConfig(
+        additional_providers=['multipass'])
+    # cleanbuild is a special snow flake, while all the other commands
+    # would work with the host as the build_provider it makes little
+    # sense in this scenario, so change it back to the default of lxd.
+    if build_environment.is_host:
+        build_environment.provider = 'lxd'
     project_options = get_project_options(**kwargs, debug=debug)
-    lifecycle.cleanbuild(project_options, remote)
+    lifecycle.cleanbuild(project=project_options,
+                         echoer=echo,
+                         remote=remote,
+                         build_environment=build_environment)
 
 
 if __name__ == '__main__':

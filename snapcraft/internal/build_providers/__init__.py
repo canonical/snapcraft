@@ -14,5 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ._project import Project                          # noqa F401
-from ._project_info import ProjectInfo                 # noqa F401
+from . import errors                    # noqa: F401
+from ._factory import get_provider_for  # noqa: F401
+from ._multipass import Multipass       # noqa: F401

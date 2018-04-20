@@ -17,7 +17,7 @@ import logging
 import os
 import tarfile
 
-from snapcraft.internal import errors, lxd, project_loader
+from snapcraft.internal import build_providers, errors, lxd, project_loader
 
 
 logger = logging.getLogger(__name__)
@@ -45,16 +45,34 @@ def containerbuild(step, project_options, output=None, args=[]):
                 metadata=config.get_metadata()).execute(step, args)
 
 
-def cleanbuild(project_options, remote=''):
+def cleanbuild(*, project, echoer, build_environment, remote='') -> None:
+    config = project_loader.load_config(project)
+    tar_filename = _create_tar_file(project.info.name)
+
+    if build_environment.is_lxd:
+        _deprecated_cleanbuild(project, remote, config, tar_filename)
+        return
+
+    build_provider_class = build_providers.get_provider_for('multipass')
+    build_provider = build_provider_class(project=project, echoer=echoer)
+    with build_provider.new_instance(keep=False) as instance:
+        instance.provision_project(tar_filename)
+        instance.build_project()
+        instance.retrieve_snap()
+
+
+def _create_tar_file(project_name: str) -> str:
+    tar_filename = '{}_source.tar.bz2'.format(project_name)
+    with tarfile.open(tar_filename, 'w:bz2') as t:
+        t.add(os.path.curdir, filter=_create_tar_filter(tar_filename))
+
+    return tar_filename
+
+
+def _deprecated_cleanbuild(project_options, remote, config, tar_filename):
     if remote and not lxd._remote_is_valid(remote):
         raise errors.InvalidContainerRemoteError(remote)
 
-    config = project_loader.load_config(project_options)
-    tar_filename = '{}_{}_source.tar.bz2'.format(
-        config.data['name'], config.data['version'])
-
-    with tarfile.open(tar_filename, 'w:bz2') as t:
-        t.add(os.path.curdir, filter=_create_tar_filter(tar_filename))
     lxd.Cleanbuilder(source=tar_filename,
                      project_options=project_options,
                      metadata=config.get_metadata(), remote=remote).execute()

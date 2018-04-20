@@ -14,5 +14,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ._project import Project                          # noqa F401
-from ._project_info import ProjectInfo                 # noqa F401
+from typing import Union, Type
+
+from . import errors
+from ._multipass import Multipass
+
+
+def get_provider_for(provider_name: str) -> Union[Type[Multipass]]:
+    """Returns a Type that can build with provider_name."""
+    if provider_name == 'multipass':
+        return Multipass
+    else:
+        raise errors.ProviderNotSupported(provider=provider_name)
