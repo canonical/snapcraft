@@ -504,7 +504,7 @@ class StopModeTestCase(CreateBaseTestCase):
 
     stop_modes = ['sigterm', 'sigterm-all', 'sighup', 'sighup-all', 'sigusr1',
                   'sigusr1-all', 'sigusr2', 'sigusr2-all']
-    
+
     scenarios = [(mode, dict(mode=mode)) for mode in stop_modes]
 
     def test_valid(self):
