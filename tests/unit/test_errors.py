@@ -14,12 +14,14 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import requests.exceptions
+from requests.packages import urllib3
 from subprocess import CalledProcessError
 
 from testtools.matchers import Equals
 
 from snapcraft.internal import errors
 from snapcraft.internal.meta import _errors as meta_errors
+from snapcraft.storeapi import errors as store_errors
 from tests import unit
 
 
@@ -427,6 +429,29 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "Exited with code 2.\n"
                 "Verify that the part is using the correct parameters and try "
                 "again."
+            )
+        }),
+        ('StoreNetworkError generic error', {
+            'exception': store_errors.StoreNetworkError,
+            'kwargs': {
+                'exception': requests.exceptions.ConnectionError('bad error'),
+            },
+            'expected_message': (
+                'There seems to be a network error: bad error'
+            )
+        }),
+        ('StoreNetworkError max retry error', {
+            'exception': store_errors.StoreNetworkError,
+            'kwargs': {
+                'exception': requests.exceptions.ConnectionError(
+                    urllib3.exceptions.MaxRetryError(
+                        pool='test-pool', url='test-url')),
+            },
+            'expected_message': (
+                'There seems to be a network error: max retries exceeded '
+                'trying to reach the store\n'
+                'Check your network connection, and check the store status at '
+                'https://status.snapcraft.io/'
             )
         }),
     )

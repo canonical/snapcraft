@@ -18,7 +18,6 @@ import requests
 from requests import exceptions
 from requests.packages import urllib3
 
-from testtools.matchers import Contains
 from unittest import mock
 
 from snapcraft.storeapi import _client
@@ -37,16 +36,14 @@ class ClientTestCase(unit.TestCase):
     @mock.patch.object(requests.Session, 'request')
     def test_generic_network_error(self, mock_request):
         mock_request.side_effect = exceptions.ConnectionError('naughty error')
-        raised = self.assertRaises(
+        self.assertRaises(
             errors.StoreNetworkError, self.client.request, 'GET',
             'test-url')
-        self.assertThat(str(raised), Contains('naughty error'))
 
     @mock.patch.object(requests.Session, 'request')
     def test_max_retries_error(self, mock_request):
         mock_request.side_effect = exceptions.ConnectionError(
             urllib3.exceptions.MaxRetryError(pool='test-pool', url='test-url'))
-        raised = self.assertRaises(
+        self.assertRaises(
             errors.StoreNetworkError, self.client.request, 'GET',
             'test-url')
-        self.assertThat(str(raised), Contains('max retries exceeded'))

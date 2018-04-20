@@ -701,10 +701,10 @@ class ValidationsTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
 
         err = self.assertRaises(
-            errors.StoreRetryError,
+            errors.StoreNetworkError,
             self.client.get_assertion, 'err', 'validations')
 
-        expected = ('too many 503 error responses')
+        expected = ('max retries exceeded')
         self.assertThat(str(err), Contains(expected))
 
     def test_push_success(self):
