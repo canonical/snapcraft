@@ -500,44 +500,44 @@ class CreateTestCase(CreateBaseTestCase):
             "Expected generated 'bar' hook to not contain 'plugs'")
 
 
-class RefreshStopTestCase(CreateBaseTestCase):
-
-    refresh_modes = ['endure', 'restart']
-    refresh_scenarios = [('refresh-mode {}'.format(mode), dict(
-        key='refresh-mode', mode=mode)) for mode in refresh_modes]
+class StopModeTestCase(CreateBaseTestCase):
 
     stop_modes = ['sigterm', 'sigterm-all', 'sighup', 'sighup-all', 'sigusr1',
                   'sigusr1-all', 'sigusr2', 'sigusr2-all']
-    stop_scenarios = [('stop-mode {}'.format(mode), dict(
-        key='stop-mode', mode=mode)) for mode in stop_modes]
+    
+    scenarios = [(mode, dict(mode=mode)) for mode in stop_modes]
 
-    scenarios = refresh_scenarios + stop_scenarios
-
-    def setUp(self):
-        super().setUp()
-
-        self.config_data = {
-            'name': 'my-package',
-            'version': '1.0',
-            'grade': 'stable',
-            'description': 'my description',
-            'summary': 'my summary',
-            'apps': {
-                'app1': {
-                    'command': 'sh',
-                    self.key: self.mode,
-                }
-            },
-            'parts': {
-                'test-part': {
-                    'plugin': 'nil',
-                }
+    def test_valid(self):
+        self.config_data['apps'] = {
+            'app1': {
+                'command': 'sh',
+                'daemon': 'simple',
+                'stop-mode': self.mode,
             }
         }
 
-    def test_modes(self):
         y = self.generate_meta_yaml()
-        self.assertThat(y['apps']['app1'][self.key], Equals(self.mode))
+
+        self.assertThat(y['apps']['app1']['stop-mode'], Equals(self.mode))
+
+
+class RefreshModeTestCase(CreateBaseTestCase):
+
+    refresh_modes = ['endure', 'restart']
+    scenarios = [(mode, dict(mode=mode)) for mode in refresh_modes]
+
+    def test_valid(self):
+        self.config_data['apps'] = {
+            'app1': {
+                'command': 'sh',
+                'daemon': 'simple',
+                'refresh-mode': self.mode,
+            }
+        }
+
+        y = self.generate_meta_yaml()
+
+        self.assertThat(y['apps']['app1']['refresh-mode'], Equals(self.mode))
 
 
 class PassthroughBaseTestCase(CreateBaseTestCase):
