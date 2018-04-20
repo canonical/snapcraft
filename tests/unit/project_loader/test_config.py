@@ -2598,25 +2598,34 @@ class ValidRestartConditionsTestCase(ValidationBaseTestCase):
         project_loader.Validator(self.data).validate()
 
 
-class ValidStopRefreshModesTestCase(ValidationBaseTestCase):
+class RefreshModeTestCase(ValidationBaseTestCase):
 
     refresh_modes = ['endure', 'restart']
-    refresh_scenarios = [('refresh-mode {}'.format(mode), dict(
-        key='refresh-mode', mode=mode)) for mode in refresh_modes]
-
-    stop_modes = ['sigterm', 'sigterm-all', 'sighup', 'sighup-all', 'sigusr1',
-                  'sigusr1-all', 'sigusr2', 'sigusr2-all']
-    stop_scenarios = [('stop-mode {}'.format(mode), dict(
-        key='stop-mode', mode=mode)) for mode in stop_modes]
-
-    scenarios = refresh_scenarios + stop_scenarios
+    scenarios = [(mode, dict(mode=mode)) for mode in refresh_modes]
 
     def test_valid_modes(self):
         self.data['apps'] = {
             'service1': {
                 'command': 'binary1',
                 'daemon': 'simple',
-                self.key: self.mode,
+                'refresh-mode': self.mode,
+            }
+        }
+        project_loader.Validator(self.data).validate()
+
+
+class StopModeTestCase(ValidationBaseTestCase):
+
+    stop_modes = ['sigterm', 'sigterm-all', 'sighup', 'sighup-all', 'sigusr1',
+                  'sigusr1-all', 'sigusr2', 'sigusr2-all']
+    scenarios = [(mode, dict(mode=mode)) for mode in stop_modes]
+
+    def test_valid_modes(self):
+        self.data['apps'] = {
+            'service1': {
+                'command': 'binary1',
+                'daemon': 'simple',
+                'stop-mode': self.mode,
             }
         }
         project_loader.Validator(self.data).validate()
