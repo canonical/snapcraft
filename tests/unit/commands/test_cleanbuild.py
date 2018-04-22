@@ -157,3 +157,16 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
             InvalidContainerRemoteError,
             self.run_command, ['cleanbuild', '--remote', 'foo/bar'])
         self.assertThat(exception.remote, Equals('foo/bar'))
+
+    def test_lxd_profile(self):
+        fake_lxd = fixture_setup.FakeLXD()
+        self.useFixture(fake_lxd)
+        result = self.run_command(['cleanbuild', '--profile', 'foo'])
+        self.assertThat(result.exit_code, Equals(0))
+        call_list = fake_lxd.check_call_mock.call_args_list
+        # call() wraps a tuple of a list, so we need the first tuple of the
+        # first item of the call_list here.
+        call = call_list[0][0][0]
+        # Casting to string makes sublist searching easier.
+        string_call = ' '.join(call)
+        self.assertTrue('-p foo' in string_call)
