@@ -25,6 +25,7 @@ import requests_unixsocket
 import shutil
 import sys
 import tempfile
+import contextlib
 from contextlib import contextmanager
 import subprocess
 import time
@@ -253,6 +254,10 @@ class Containerbuild:
         if common.is_snap():
             with tempfile.TemporaryDirectory(
                     prefix='snapcraft', dir=self._lxd_common_dir) as tmp_dir:
+                # Wait for any on-going refreshes to finish.
+                # If there are no changes an error will be returned.
+                with contextlib.suppress(ContainerRunError):
+                    self._container_run(['snap', 'watch', '--last=refresh'])
                 self._inject_snap('core', tmp_dir)
                 self._inject_snap('snapcraft', tmp_dir)
         elif new_container:
