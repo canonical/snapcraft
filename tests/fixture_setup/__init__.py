@@ -1,8 +1,8 @@
 import socket
 
 if hasattr(socket, "AF_UNIX"):
-    from ._unix import FakeSnapd  # noqa
-from ._fixtures import (  # noqa
+    from ._unix import FakeSnapd  # noqa: F401
+from ._fixtures import (  # noqa: F401
     BzrRepo,
     CleanEnvironment,
     GitRepo,
