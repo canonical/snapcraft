@@ -125,60 +125,6 @@ class SnapcraftMissingLinkerInBaseError(SnapcraftError):
         super().__init__(base=base, linker_path=linker_path)
 
 
-class ContainerError(SnapcraftError):
-    fmt = '{message}'
-
-    def __init__(self, message):
-        super().__init__(message=message)
-
-
-class ContainerConnectionError(ContainerError):
-    # FIXME this exception is too generic.
-    # https://bugs.launchpad.net/snapcraft/+bug/1734233
-    # --elopio - 20171123
-
-    fmt = ('{message}\n'
-           'Refer to the documentation at '
-           'https://linuxcontainers.org/lxd/getting-started-cli.')
-
-
-class ContainerRunError(SnapcraftError):
-
-    fmt = (
-        'The following command failed to run: '
-        '{command!r} exited with {exit_code}\n'
-    )
-
-    def __init__(self, *, command, exit_code):
-        if isinstance(command, list):
-            command = ' '.join(command)
-        super().__init__(command=command, exit_code=exit_code)
-
-
-class ContainerSnapcraftCmdError(ContainerRunError):
-
-    fmt = (
-        'Snapcraft command failed in the container: '
-        '{command!r} exited with {exit_code}\n'
-    )
-
-    def __init__(self, *, command, exit_code):
-        if isinstance(command, list):
-            command = ' '.join(command)
-        super().__init__(command=command, exit_code=exit_code)
-
-
-class SnapdError(SnapcraftError):
-    # FIXME this exception is too generic.
-    # https://bugs.launchpad.net/snapcraft/+bug/1734235
-    # --elopio - 20171123
-
-    fmt = '{message}'
-
-    def __init__(self, message):
-        super().__init__(message=message)
-
-
 class PrimeFileConflictError(SnapcraftError):
 
     fmt = (

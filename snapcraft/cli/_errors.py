@@ -22,6 +22,7 @@ from textwrap import dedent
 
 from . import echo
 from snapcraft.internal import errors
+from snapcraft.internal.lxd import _errors as lxd_errors
 
 import click
 # raven is not available on 16.04
@@ -101,7 +102,7 @@ def exception_handler(exception_type, exception, exception_traceback, *,
         # if the error comes from running snapcraft in the container, it
         # has already been displayed so we should avoid that situation
         # of a double error print
-        if exception_type != errors.ContainerSnapcraftCmdError:
+        if exception_type != lxd_errors.ContainerSnapcraftCmdError:
             echo.error(str(exception))
     else:
         click.echo('Unhandled error case')

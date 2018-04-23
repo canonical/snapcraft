@@ -20,8 +20,9 @@ import os
 import subprocess
 from typing import List
 
+from . import _errors as errors
 from ._containerbuild import Containerbuild
-from snapcraft.internal import errors, lifecycle
+from snapcraft.internal import lifecycle
 from snapcraft.cli import echo
 
 logger = logging.getLogger(__name__)
@@ -44,23 +45,14 @@ class Project(Containerbuild):
                 subprocess.check_call([
                     'lxc', 'init', self._image, self._container_name])
             except subprocess.CalledProcessError as e:
-                raise errors.ContainerConnectionError(
-                    'Failed to setup container')
+                raise errors.ContainerCreationFailedError() from e
         if self._get_container_status()['status'] == 'Stopped':
             self._configure_container()
             try:
                 subprocess.check_call([
                     'lxc', 'start', self._container_name])
             except subprocess.CalledProcessError:
-                msg = 'The container could not be started.'
-                if self._remote == 'local':
-                    msg += ('\nThe files /etc/subuid and /etc/subgid need to '
-                            'contain this line for mounting the local folder:'
-                            '\n    root:1000:1'
-                            '\nNote: Add the line to both files, do not '
-                            'remove any existing lines.'
-                            '\nRestart lxd after making this change.')
-                raise errors.ContainerConnectionError(msg)
+                raise errors.ContainerStartFailedError()
         self._wait_for_network()
         if new_container:
             self._container_run(['apt-get', 'update'])

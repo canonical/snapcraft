@@ -25,7 +25,7 @@ import requests_unixsocket
 import shutil
 import sys
 import tempfile
-from contextlib import contextmanager
+import contextlib
 import subprocess
 import time
 from urllib import parse
@@ -33,13 +33,9 @@ from textwrap import dedent
 from typing import List
 
 from snapcraft.internal import common
+from . import _errors as errors
 from snapcraft.internal.errors import (
-        ContainerConnectionError,
-        ContainerError,
-        ContainerRunError,
-        ContainerSnapcraftCmdError,
         InvalidContainerImageInfoError,
-        SnapdError,
 )
 from snapcraft.project._project_options import _get_deb_arch
 from snapcraft.internal.repo import snaps
@@ -85,12 +81,12 @@ class Containerbuild:
             os.path.join('~', 'snap', 'lxd', 'common'))
         os.makedirs(self._lxd_common_dir, exist_ok=True)
 
-    @contextmanager
+    @contextlib.contextmanager
     def _container_running(self):
         with self._ensure_started():
             try:
                 yield
-            except ContainerRunError as e:
+            except errors.ContainerRunError as e:
                 if self._project_options.debug:
                     logger.info('Debug mode enabled, dropping into a shell')
                     self._container_run(['bash', '-i'])
@@ -106,7 +102,7 @@ class Containerbuild:
         self._container_name = '{}:{}'.format(self._remote,
                                               self._container_name)
 
-    @contextmanager
+    @contextlib.contextmanager
     def _ensure_started(self):
         self._ensure_remote()
         try:
@@ -226,11 +222,11 @@ class Containerbuild:
                 **kwargs)
         except subprocess.CalledProcessError as e:
             if original_cmd[0] == 'snapcraft':
-                raise ContainerSnapcraftCmdError(command=original_cmd,
-                                                 exit_code=e.returncode)
+                raise errors.ContainerSnapcraftCmdError(command=original_cmd,
+                                                        exit_code=e.returncode)
             else:
-                raise ContainerRunError(command=original_cmd,
-                                        exit_code=e.returncode)
+                raise errors.ContainerRunError(command=original_cmd,
+                                               exit_code=e.returncode)
 
     def _wait_for_network(self):
         logger.info('Waiting for a network connection...')
@@ -241,12 +237,10 @@ class Containerbuild:
             try:
                 self._container_run(['python3', '-c', _NETWORK_PROBE_COMMAND])
                 not_connected = False
-            except ContainerRunError as e:
+            except errors.ContainerRunError as e:
                 retry_count -= 1
                 if retry_count == 0:
-                    raise ContainerConnectionError(
-                        'No network connection in the container.\n'
-                        'If using a proxy, check its configuration.')
+                    raise errors.ContainerNetworkError('start.ubuntu.com')
         logger.info('Network connection established')
 
     def _inject_snapcraft(self, *, new_container: bool):
@@ -267,12 +261,9 @@ class Containerbuild:
         try:
             json = session.request('GET', api).json()
         except requests.exceptions.ConnectionError as e:
-            raise SnapdError(
-                'Error connecting to {}'.format(api)) from e
+            raise errors.SnapdConnectionError(api) from e
         if json['type'] == 'error':
-            raise SnapdError(
-                'Error querying {!r} snap: {}'.format(
-                    name, json['result']['message']))
+            raise errors.SnapdQueryError(name, json['result']['message'])
         id = json['result']['id']
         # Lookup confinement to know if we need to --classic when installing
         is_classic = json['result']['confinement'] == 'classic'
@@ -326,8 +317,9 @@ class Containerbuild:
             'lxc', 'info', self._container_name]).decode('utf-8')
         for line in info.splitlines():
             if line.startswith("Architecture:"):
-                return _get_deb_arch(line.split(None, 1)[1].strip())
-        raise ContainerError("Could not find architecture for container")
+                with contextlib.suppress(IndexError, KeyError):
+                    return _get_deb_arch(line.split(None, 1)[1].strip())
+        raise errors.ContainerArchitectureError(info)
 
     def _pull_file(self, src, dst):
         subprocess.check_call(['lxc', 'file', 'pull',
@@ -406,11 +398,9 @@ def _get_default_remote():
         default_remote = subprocess.check_output(
             ['lxc', 'remote', 'get-default'])
     except FileNotFoundError:
-        raise ContainerConnectionError(
-            'You must have LXD installed in order to use cleanbuild.')
+        raise errors.ContainerLXDNotInstalledError()
     except subprocess.CalledProcessError:
-        raise ContainerConnectionError(
-            'Something seems to be wrong with your installation of LXD.')
+        raise errors.ContainerLXDSetupError()
     return default_remote.decode(sys.getfilesystemencoding()).strip()
 
 
@@ -437,11 +427,6 @@ def _verify_remote(remote):
     try:
         subprocess.check_output(['lxc', 'list', '{}:'.format(remote)])
     except FileNotFoundError:
-        raise ContainerConnectionError(
-            'You must have LXD installed in order to use cleanbuild.')
+        raise errors.ContainerLXDNotInstalledError()
     except subprocess.CalledProcessError as e:
-        raise ContainerConnectionError(
-            'There are either no permissions or the remote {!r} '
-            'does not exist.\n'
-            'Verify the existing remotes by running `lxc remote list`\n'
-            .format(remote)) from e
+        raise errors.ContainerLXDRemoteNotFoundError(remote) from e
