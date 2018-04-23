@@ -10,11 +10,23 @@ before_test:
 - cmd: |
     %PYTHON%\\python.exe -m venv venv
     venv\\Scripts\\activate.bat
+    ECHO %VIRTUAL_ENV%
     python -c "import sys; print(sys.executable)"
     python -m pip install -r requirements.txt
     python -m pip install -r requirements-devel.txt
+    python setup.py install
+test_script:
+- cmd: |
+    venv\\Scripts\\activate.bat
+    ECHO %VIRTUAL_ENV%
+    SET PATH=C:\Program Files\snapcraft;%PATH%
+    ECHO %PATH%
+    WHERE snapcraft
     python -m unittest discover -b -v -s "tests/integration/store" -t .
 after_test:
-- cmd: '%PYTHON%\\python.exe setup.py sdist'
+- cmd: |
+    venv\\Scripts\\activate.bat
+    ECHO %VIRTUAL_ENV%
+    python setup.py sdist
 artifacts:
 - path: dist\*
