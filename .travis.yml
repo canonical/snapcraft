@@ -24,6 +24,9 @@ jobs:
       script: sudo ./tools/travis/run_tests.sh tests/unit
     - if: type != cron
       script: SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh tests/unit
+    - stage: osx-integration-store
+      os: osx
+      script: SNAPCRAFT_FROM_BREW=1 ./tools/travis/run_tests.sh tests.integration.store.test_store_login_logout use-run
     - stage: snap
       if: type != cron
       script: sudo ./tools/travis/build_snapcraft_snap.sh
@@ -63,9 +66,6 @@ jobs:
     # CLA check, only in pull requests, not coming from the bot.
     - if: type = pull_request AND sender != snappy-m-o
       script: ./tools/travis/run_cla_check.sh
-    - stage: osx-integration-store
-      os: osx
-      script: SNAPCRAFT_FROM_BREW=1 ./tools/travis/run_tests.sh tests.integration.store.test_store_login_logout use-run
     # Trigger nightly tests, only in cron.
     - stage: nightly
     # Run spread tests for the snapcraft snap in edge.
