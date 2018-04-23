@@ -90,8 +90,6 @@ class TestCase(testtools.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'XDG_CONFIG_HOME', os.path.join(self.path, '.config')))
         self.useFixture(fixtures.EnvironmentVariable(
-            'XDG_CACHE_HOME', os.path.join(self.path, '.cache')))
-        self.useFixture(fixtures.EnvironmentVariable(
             'XDG_DATA_HOME', os.path.join(self.path, 'data')))
         self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
 
@@ -107,11 +105,6 @@ class TestCase(testtools.TestCase):
         patcher = mock.patch(
             'xdg.BaseDirectory.xdg_data_home',
             new=os.path.join(self.path, 'data'))
-        patcher.start()
-        self.addCleanup(patcher.stop)
-        patcher = mock.patch(
-            'xdg.BaseDirectory.xdg_cache_home',
-            new=os.path.join(self.path, '.cache'))
         patcher.start()
         self.addCleanup(patcher.stop)
 
