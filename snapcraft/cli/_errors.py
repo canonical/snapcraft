@@ -43,8 +43,6 @@ _MSG_SEND_TO_SENTRY_TRACEBACK_CONFIRM = dedent("""\
     No other data than this traceback and the version of snapcraft in use will
     be sent.
     Would you like send this error data?""")
-_MSG_SEND_TO_SENTRY_ENV = dedent("""\
-    Sending error data: SNAPCRAFT_SEND_ERROR_DATA is set to 'y'.""")
 _MSG_SEND_TO_SENTRY_THANKS = 'Thank you for sending the report.'
 
 
@@ -71,8 +69,6 @@ def exception_handler(exception_type, exception, exception_traceback, *,
     is_raven_setup = RavenClient is not None
     is_sentry_enabled = distutils.util.strtobool(
         os.getenv('SNAPCRAFT_ENABLE_SENTRY', 'n')) == 1
-    is_sentry_flag = distutils.util.strtobool(
-        os.getenv('SNAPCRAFT_SEND_ERROR_DATA', 'n')) == 1
 
     if is_sentry_enabled and not is_snapcraft_error:
         click.echo(_MSG_TRACEBACK)
@@ -83,9 +79,7 @@ def exception_handler(exception_type, exception, exception_traceback, *,
             echo.warning(
                 'raven is not installed on this system, cannot send data '
                 'to sentry')
-        elif is_sentry_flag or click.confirm(msg):
-            if is_sentry_flag:
-                click.echo(_MSG_SEND_TO_SENTRY_ENV)
+        elif click.confirm(msg):
             _submit_trace(exception)
             click.echo(_MSG_SEND_TO_SENTRY_THANKS)
     elif not is_snapcraft_error:
