@@ -14,7 +14,17 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import Dict  # noqa: 401
+import contextlib
 import platform
+
+
+_ID_TO_UBUNTU_CODENAME = {
+    '17.10': 'artful',
+    '17.04': 'zesty',
+    '16.04': 'xenial',
+    '14.04': 'trusty',
+}
 
 
 _32BIT_USERSPACE_ARCHITECTURE = {
@@ -56,6 +66,21 @@ _ARCH_TRANSLATIONS = {
         'triplet': 's390x-linux-gnu',
     }
 }
+
+
+def get_version_codename() -> str:
+    with contextlib.suppress(FileNotFoundError):
+        os_release = {}  # type: Dict[str, str]
+        with open('/etc/os-release') as f:
+            for line in f:
+                entry = line.rstrip().split('=')
+                if len(entry) == 2:
+                    os_release[entry[0]] = entry[1].strip('"')
+        with contextlib.suppress(KeyError):
+            return os_release['VERSION_CODENAME']
+        with contextlib.suppress(KeyError):
+            return _ID_TO_UBUNTU_CODENAME[os_release['VERSION_ID']]
+        return 'unknown'
 
 
 def get_deb_arch():
