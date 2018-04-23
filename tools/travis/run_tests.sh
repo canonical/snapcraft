@@ -40,6 +40,7 @@ if [ "$TRAVIS_OS_NAME" = "osx" ]; then
     # readlink -f doesn't work on osx.
     brew upgrade coreutils || brew install coreutils
     python3 ./tools/brew_install_from_source.py
+    python3 -m pip install -r requirements-devel.txt
 elif [ "$test_suite" = "static" ]; then
     dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
 elif [ "$test_suite" = "tests/unit" ]; then
