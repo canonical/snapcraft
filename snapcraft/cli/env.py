@@ -42,9 +42,12 @@ class BuilderEnvironmentConfig:
     results in an error.
     """
 
-    def __init__(self, *, additional_providers: List[str]=None) -> None:
+    def __init__(self, *, default='host',
+                 additional_providers: List[str]=None) -> None:
         """Instantiate a BuildEnvironmentConfig.
 
+        :param str default: the default provider to use among the list of valid
+                            ones.
         :param str additional_providers: Additional providers allowed in the
                                          environment.
         """
@@ -76,7 +79,7 @@ class BuilderEnvironmentConfig:
         if use_lxd:
             build_provider = 'lxd'
         elif not build_provider:
-            build_provider = 'host'
+            build_provider = default
         elif build_provider not in valid_providers:
             raise errors.SnapcraftEnvironmentError(
                 'SNAPCRAFT_BUILD_ENVIRONMENT must be one of: {}.'.format(

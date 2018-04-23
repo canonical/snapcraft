@@ -211,13 +211,11 @@ def cleanbuild(remote, debug, **kwargs):
     If using a remote, a prior setup is required which is described on:
     https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
     """
-    build_environment = env.BuilderEnvironmentConfig(
-        additional_providers=['multipass'])
     # cleanbuild is a special snow flake, while all the other commands
     # would work with the host as the build_provider it makes little
-    # sense in this scenario, so change it back to the default of lxd.
-    if build_environment.is_host:
-        build_environment.provider = 'lxd'
+    # sense in this scenario.
+    build_environment = env.BuilderEnvironmentConfig(
+        default='lxd', additional_providers=['multipass'])
     project_options = get_project_options(**kwargs, debug=debug)
     lifecycle.cleanbuild(project=project_options,
                          echoer=echo,
