@@ -40,6 +40,7 @@ from testtools.matchers import MatchesRegex
 
 from tests import (
     fixture_setup,
+    os_release,
     subprocess_utils
 )
 from tests.integration import platform
@@ -133,7 +134,7 @@ class TestCase(testtools.TestCase):
         self.deb_arch = platform.get_deb_arch()
         self.arch_triplet = platform.get_arch_triplet()
 
-        self.distro_series = platform.get_version_codename()
+        self.distro_series = os_release.get_version_codename()
 
     def run_snapcraft(
             self, command: Union[str, List[str]] = None,
