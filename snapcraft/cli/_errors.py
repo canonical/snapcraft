@@ -21,6 +21,7 @@ import traceback
 from textwrap import dedent
 
 from . import echo
+from snapcraft.config import CLIConfig as _CLIConfig
 from snapcraft.internal import errors
 
 import click
@@ -38,12 +39,16 @@ except ImportError:
 _MSG_TRACEBACK = dedent("""\
     Sorry, Snapcraft ran into an error when trying to running through its
     lifecycle that generated the following traceback:""")
-_MSG_SEND_TO_SENTRY_TRACEBACK_CONFIRM = dedent("""\
+_MSG_SEND_TO_SENTRY_TRACEBACK_PROMPT = dedent("""\
     You can anonymously report this issue to the snapcraft developers.
     No other data than this traceback and the version of snapcraft in use will
     be sent.
-    Would you like send this error data?""")
+    Would you like send this error data? (Yes/No/Always)""")
 _MSG_SEND_TO_SENTRY_THANKS = 'Thank you for sending the report.'
+
+_YES_VALUES = ['yes', 'y']
+_NO_VALUES = ['no', 'n']
+_ALWAYS_VALUES = ['always', 'a']
 
 
 def exception_handler(exception_type, exception, exception_traceback, *,
@@ -74,12 +79,12 @@ def exception_handler(exception_type, exception, exception_traceback, *,
         click.echo(_MSG_TRACEBACK)
         traceback.print_exception(
             exception_type, exception, exception_traceback)
-        msg = _MSG_SEND_TO_SENTRY_TRACEBACK_CONFIRM
         if not is_raven_setup:
             echo.warning(
                 'raven is not installed on this system, cannot send data '
                 'to sentry')
-        elif click.confirm(msg):
+        elif _is_send_to_sentry():
+            echo.info('Sending this error report.')
             _submit_trace(exception)
             click.echo(_MSG_SEND_TO_SENTRY_THANKS)
     elif not is_snapcraft_error:
@@ -102,6 +107,56 @@ def exception_handler(exception_type, exception, exception_traceback, *,
         exit_code = -1
 
     sys.exit(exit_code)
+
+
+def _is_send_to_sentry() -> bool:
+    # If ALWAYS has already been selected from before do not even bother to
+    # prompt again.
+    config_errors = None
+    try:
+        with _CLIConfig(read_only=True) as cli_config:
+            if cli_config.get_sentry_send_always():
+                return True
+    except errors.SnapcraftInvalidCLIConfigError as config_error:
+        echo.warning('There was an issue while trying to retrieve '
+                     'configuration data: {!s}'.format(config_error))
+        config_errors = config_error
+
+    # Either ALWAYS has not been selected in a previous run or the
+    # configuration for where that value is stored cannot be read, so
+    # resort to prompting.
+    response = _prompt_sentry()
+    if response in _YES_VALUES:
+        return True
+    elif response in _NO_VALUES:
+        return False
+    elif response in _ALWAYS_VALUES:
+        if config_errors is not None:
+            echo.warning(
+                'Not saving choice to always send data to Sentry as '
+                'the configuration file is corrupted.\n'
+                'Please edit and fix or alternatively remove the '
+                'configuration file {!r} from disk.'.format(
+                    config_errors.config_file))  # type: ignore
+        else:
+            click.echo('Saving choice to always send data to Sentry')
+            with _CLIConfig() as cli_config:
+                cli_config.set_sentry_send_always(True)
+        return True
+    else:
+        echo.warning('Could not determine choice, assuming no.')
+        return False
+
+
+def _prompt_sentry():
+    msg = _MSG_SEND_TO_SENTRY_TRACEBACK_PROMPT
+    all_valid = _YES_VALUES + _NO_VALUES + _ALWAYS_VALUES
+
+    def validate(value):
+        if value.lower() in all_valid:
+            return value
+        raise click.BadParameter('Please choose a valid answer.')
+    return click.prompt(msg, default='no', value_proc=validate).lower()
 
 
 def _submit_trace(exception):

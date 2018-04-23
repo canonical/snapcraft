@@ -20,6 +20,7 @@ import os
 from testtools.matchers import Contains, Equals, FileContains
 
 from snapcraft import config
+from snapcraft.internal.errors import SnapcraftInvalidCLIConfigError
 from snapcraft.storeapi import errors
 from tests import unit
 
@@ -28,6 +29,60 @@ def create_config_from_string(content):
     path = config.Config.save_path()
     with open(path, 'w') as f:
         f.write(content)
+
+
+class TestCLIConfig(unit.TestCase):
+
+    def test_non_existing_file_succeeds(self):
+        conf = config.CLIConfig()
+        self.assertThat(conf.parser.sections(), Equals([]))
+
+    def test_set_and_get_sentry_send_always_with_contextmanager(self):
+        with config.CLIConfig() as cli_config:
+            cli_config.set_sentry_send_always(True)
+
+        with config.CLIConfig() as cli_config:
+            self.assertThat(cli_config.get_sentry_send_always(), Equals(True))
+
+    def test_set_and_get_sentry_send_always(self):
+        cli_config = config.CLIConfig()
+        cli_config.set_sentry_send_always(True)
+        cli_config.save()
+
+        new_cli_config = config.CLIConfig()
+        new_cli_config.load()
+        self.assertThat(new_cli_config.get_sentry_send_always(), Equals(True))
+
+    def test_set_when_read_only(self):
+        cli_config = config.CLIConfig(read_only=True)
+
+        self.assertRaises(RuntimeError,
+                          cli_config.set_sentry_send_always, True)
+
+    def test_save_when_read_only(self):
+        cli_config = config.CLIConfig(read_only=True)
+
+        self.assertRaises(RuntimeError, cli_config.save)
+
+    def test_contextmanager_with_read_only(self):
+        with config.CLIConfig(read_only=True) as cli_config:
+            # This should be False
+            self.assertThat(cli_config.get_sentry_send_always(), Equals(False))
+
+    def test_load_invalid_config(self):
+        # The test setup should take care of giving us the proper
+        # xdg directory, but there is nothing wrong with caution.
+        config_dir = os.path.join('.config', 'snapcraft')
+        config_path = os.path.join(config_dir, 'cli.cfg')
+
+        os.makedirs(config_dir)
+        with open(config_path, 'w') as f:
+            f.write('invalid config')
+
+        cli_config = config.CLIConfig()
+
+        self.assertRaises(SnapcraftInvalidCLIConfigError,
+                          cli_config.load)
 
 
 class TestConfig(unit.TestCase):
