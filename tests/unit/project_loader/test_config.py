@@ -24,7 +24,8 @@ import unittest.mock
 from textwrap import dedent
 
 import fixtures
-from testtools.matchers import Contains, Equals, MatchesRegex, Not, StartsWith
+from testtools.matchers import (Contains, Equals, Is, MatchesRegex, Not,
+                                StartsWith)
 from testscenarios.scenarios import multiply_scenarios
 
 import snapcraft
@@ -530,6 +531,29 @@ parts:
         metadata = config.get_metadata()
         self.assertThat(metadata['name'], Equals('test'))
         self.assertThat(metadata['version'], Equals('1'))
+        self.assertThat(metadata['arch'], Equals(['amd64']))
+
+    def test_get_metadata_version_adopted(self):
+        self.make_snapcraft_yaml(dedent("""\
+            name: test
+            summary: test
+            description: nothing
+            architectures:
+              - build-on: all
+                run-on: amd64
+            confinement: strict
+            grade: stable
+            adopt-info: part1
+
+            parts:
+              part1:
+                plugin: go
+                stage-packages: [fswebcam]
+            """))
+        config = project_loader.load_config()
+        metadata = config.get_metadata()
+        self.assertThat(metadata['name'], Equals('test'))
+        self.assertThat(metadata['version'], Is(None))
         self.assertThat(metadata['arch'], Equals(['amd64']))
 
     def test_version_script(self):
@@ -2596,6 +2620,101 @@ class ValidRestartConditionsTestCase(ValidationBaseTestCase):
         }
         self.data['apps']['service1']['restart-condition'] = self.condition
         project_loader.Validator(self.data).validate()
+
+
+class RefreshModeTestCase(ValidationBaseTestCase):
+
+    refresh_modes = ['endure', 'restart']
+    scenarios = [(mode, dict(mode=mode)) for mode in refresh_modes]
+
+    def test_valid_modes(self):
+        self.data['apps'] = {
+            'service1': {
+                'command': 'binary1',
+                'daemon': 'simple',
+                'refresh-mode': self.mode,
+            }
+        }
+        project_loader.Validator(self.data).validate()
+
+    def test_daemon_missing_errors(self):
+        self.data['apps'] = {
+            'service1': {
+                'command': 'binary1',
+                'refresh-mode': self.mode,
+            }
+        }
+
+        self.assertRaises(
+            errors.YamlValidationError,
+            project_loader.Validator(self.data).validate)
+
+
+class StopModeTestCase(ValidationBaseTestCase):
+
+    stop_modes = ['sigterm', 'sigterm-all', 'sighup', 'sighup-all', 'sigusr1',
+                  'sigusr1-all', 'sigusr2', 'sigusr2-all']
+    scenarios = [(mode, dict(mode=mode)) for mode in stop_modes]
+
+    def test_valid_modes(self):
+        self.data['apps'] = {
+            'service1': {
+                'command': 'binary1',
+                'daemon': 'simple',
+                'stop-mode': self.mode,
+            }
+        }
+        project_loader.Validator(self.data).validate()
+
+    def test_daemon_missing_errors(self):
+        self.data['apps'] = {
+            'service1': {
+                'command': 'binary1',
+                'stop-mode': self.mode,
+            }
+        }
+
+        self.assertRaises(
+            errors.YamlValidationError,
+            project_loader.Validator(self.data).validate)
+
+
+class InvalidStopRefreshModesTestCase(ValidationBaseTestCase):
+
+    bad_values = [(mode, dict(mode=mode)) for
+                  mode in ['sigterm-bad', '123', '-----']]
+    keys = [(k, dict(key=k)) for k in ['stop-mode', 'refresh-mode']]
+
+    scenarios = multiply_scenarios(keys, bad_values)
+
+    def setUp(self):
+        super().setUp()
+        self.valid_modes = {
+            'stop-mode': (
+                "['sigterm', 'sigterm-all', 'sighup', 'sighup-all', "
+                "'sigusr1', 'sigusr1-all', 'sigusr2', 'sigusr2-all']"
+            ),
+            'refresh-mode': "['endure', 'restart']"
+        }
+
+    def test_invalid_modes(self):
+        self.data['apps'] = {
+            'service1': {
+                'command': 'binary1',
+                'daemon': 'simple',
+                self.key: self.mode
+            }
+        }
+        raised = self.assertRaises(
+            errors.YamlValidationError,
+            project_loader.Validator(self.data).validate)
+
+        expected_message = (
+            "The 'apps/service1/{}' property does not match the "
+            "required schema: '{}' is not one of {}"
+        ).format(self.key, self.mode, self.valid_modes[self.key])
+        self.assertThat(raised.message, Equals(expected_message),
+                        message=self.data)
 
 
 class InvalidAppNamesTestCase(ValidationBaseTestCase):

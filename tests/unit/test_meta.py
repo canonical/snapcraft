@@ -500,6 +500,46 @@ class CreateTestCase(CreateBaseTestCase):
             "Expected generated 'bar' hook to not contain 'plugs'")
 
 
+class StopModeTestCase(CreateBaseTestCase):
+
+    stop_modes = ['sigterm', 'sigterm-all', 'sighup', 'sighup-all', 'sigusr1',
+                  'sigusr1-all', 'sigusr2', 'sigusr2-all']
+
+    scenarios = [(mode, dict(mode=mode)) for mode in stop_modes]
+
+    def test_valid(self):
+        self.config_data['apps'] = {
+            'app1': {
+                'command': 'sh',
+                'daemon': 'simple',
+                'stop-mode': self.mode,
+            }
+        }
+
+        y = self.generate_meta_yaml()
+
+        self.assertThat(y['apps']['app1']['stop-mode'], Equals(self.mode))
+
+
+class RefreshModeTestCase(CreateBaseTestCase):
+
+    refresh_modes = ['endure', 'restart']
+    scenarios = [(mode, dict(mode=mode)) for mode in refresh_modes]
+
+    def test_valid(self):
+        self.config_data['apps'] = {
+            'app1': {
+                'command': 'sh',
+                'daemon': 'simple',
+                'refresh-mode': self.mode,
+            }
+        }
+
+        y = self.generate_meta_yaml()
+
+        self.assertThat(y['apps']['app1']['refresh-mode'], Equals(self.mode))
+
+
 class PassthroughBaseTestCase(CreateBaseTestCase):
 
     def setUp(self):
@@ -564,7 +604,7 @@ class PassthroughErrorTestCase(PassthroughBaseTestCase):
             fake_logger.output,
             Equals("The 'passthrough' property is being used to propagate "
                    "experimental properties to snap.yaml that have not been "
-                   "validated. The snap cannot be released to the store.\n"))
+                   "validated.\n"))
 
 
 class PassthroughPropagateTestCase(PassthroughBaseTestCase):
@@ -622,7 +662,7 @@ class PassthroughPropagateTestCase(PassthroughBaseTestCase):
             fake_logger.output,
             Contains("The 'passthrough' property is being used to propagate "
                      "experimental properties to snap.yaml that have not been "
-                     "validated. The snap cannot be released to the store.\n"))
+                     "validated.\n"))
 
 
 class CreateMetadataFromSourceBaseTestCase(CreateBaseTestCase):

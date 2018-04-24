@@ -237,7 +237,7 @@ class Config:
 
     def get_metadata(self):
         return {'name': self.data['name'],
-                'version': self.data['version'],
+                'version': self.data.get('version', None),
                 'arch': self.data['architectures']}
 
     def _ensure_no_duplicate_app_aliases(self):

@@ -66,10 +66,11 @@ _STORE_KEY = (
 
 class Containerbuild:
 
-    def __init__(self, *, output, source, project_options,
-                 metadata, container_name, remote=None):
-        if not output:
-            output = common.format_snap_name(metadata)
+    def __init__(self, *, source, project_options, metadata,
+                 container_name, output=None, remote=None):
+        if output is None:
+            output = common.format_snap_name(
+                metadata, allow_empty_version=True)
         self._snap_output = output
         self._source = os.path.realpath(source)
         self._project_options = project_options

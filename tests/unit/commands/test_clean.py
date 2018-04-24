@@ -105,7 +105,6 @@ class ContainerizedCleanCommandTestCase(CleanCommandBaseTestCase):
 
     scenarios = [
         ('local', dict(snapcraft_container_builds='1', remote='local')),
-        ('remote', dict(snapcraft_container_builds='foo', remote='foo')),
     ]
 
     def test_clean_containerized_noop(self):

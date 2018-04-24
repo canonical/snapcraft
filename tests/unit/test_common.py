@@ -116,3 +116,45 @@ class FormatInColumnsTestCase(unit.TestCase):
                                             max_width=60,
                                             num_col_spaces=1),
             Equals(expected))
+
+
+class FormatSnapFileNameTest(unit.TestCase):
+
+    scenarios = [
+        ('all info', dict(snap=dict(name='name', version='version',
+                                    architectures=['amd64']),
+                          expected='name_version_amd64.snap')),
+        ('missing version', dict(snap=dict(name='name',
+                                 architectures=['amd64']),
+                                 allow_empty_version=True,
+                                 expected='name_amd64.snap')),
+        ('no arch', dict(snap=dict(name='name', version='version'),
+                         expected='name_version_all.snap')),
+        ('multi', dict(snap=dict(name='name', version='version',
+                                 architectures=['amd64', 'i386']),
+                       expected='name_version_multi.snap')),
+        ('pack', dict(snap=dict(name='name', version='version',
+                                arch=['amd64']),
+                      expected='name_version_amd64.snap')),
+        ('pack multi', dict(snap=dict(name='name', version='version',
+                                      arch=['amd64', 'i386']),
+                            expected='name_version_multi.snap')),
+    ]
+
+    def test_filename(self):
+        if hasattr(self, 'allow_empty_version'):
+            snap_name = common.format_snap_name(
+                self.snap, allow_empty_version=self.allow_empty_version)
+        else:
+            snap_name = common.format_snap_name(self.snap)
+
+        self.assertThat(snap_name, Equals(self.expected))
+
+
+class FormatSnapFileNameErrorTest(unit.TestCase):
+
+    def test_version_missing_and_not_allowed_is_error(self):
+        # This is to not experience unexpected results given the
+        # fact that version is not allowed.
+        snap = dict(name='name')
+        self.assertRaises(KeyError, common.format_snap_name, snap)
