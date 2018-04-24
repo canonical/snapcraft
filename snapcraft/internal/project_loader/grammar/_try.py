@@ -42,7 +42,7 @@ class TryStatement(Statement):
     def __init__(self, *, body: GrammarType,
                  processor: 'GrammarProcessor',
                  call_stack: CallStackType=None) -> None:
-        """Create an TryStatement instance.
+        """Create a TryStatement instance.
 
         :param list body: The body of the clause.
         :param GrammarProcessor process: GrammarProcessor to use for processing

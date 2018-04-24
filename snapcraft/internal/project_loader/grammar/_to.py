@@ -48,7 +48,7 @@ class ToStatement(Statement):
     def __init__(self, *, to: str, body: GrammarType,
                  processor: 'GrammarProcessor',
                  call_stack: CallStackType=None) -> None:
-        """Create an ToStatement instance.
+        """Create a ToStatement instance.
 
         :param str to: The 'to <selectors>' part of the clause.
         :param list body: The body of the clause.

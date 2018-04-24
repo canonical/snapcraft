@@ -87,7 +87,7 @@ class GrammarProcessor:
 
         for section in grammar:
             if isinstance(section, str):
-                # If the secion is just a string, it's either "else fail" or a
+                # If the section is just a string, it's either "else fail" or a
                 # primitive name.
                 if _ELSE_FAIL_PATTERN.match(section):
                     _handle_else(statement, None)
