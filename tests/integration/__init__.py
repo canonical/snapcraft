@@ -38,9 +38,9 @@ from unittest import mock
 from testtools import content
 from testtools.matchers import MatchesRegex
 
-from snapcraft.internal.os_release import OsRelease
 from tests import (
     fixture_setup,
+    os_release,
     subprocess_utils
 )
 from tests.integration import platform
@@ -134,8 +134,7 @@ class TestCase(testtools.TestCase):
         self.deb_arch = platform.get_deb_arch()
         self.arch_triplet = platform.get_arch_triplet()
 
-        release = OsRelease()
-        self.distro_series = release.version_codename()
+        self.distro_series = os_release.get_version_codename()
 
     def run_snapcraft(
             self, command: Union[str, List[str]] = None,
