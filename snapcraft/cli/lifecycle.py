@@ -200,7 +200,6 @@ def cleanbuild(remote, debug, **kwargs):
     \b
     Examples:
         snapcraft cleanbuild
-        snapcraft cleanbuild --use-multipass
 
     The cleanbuild command requires a properly setup lxd environment that
     can connect to external networks. Refer to the "Ubuntu Desktop and
