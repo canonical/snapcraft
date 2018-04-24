@@ -60,9 +60,9 @@ class TestCase(testtools.TestCase):
         elif os.getenv('SNAPCRAFT_FROM_DEB', False):
             self.snapcraft_command = '/usr/bin/snapcraft'
             self.snapcraft_parser_command = '/usr/bin/snapcraft-parser'
-        elif sys.platform == 'win32':
-            self.snapcraft_command = os.path.join(
-                'c:\\', 'Program Files', 'snapcraft', 'snapcraft.exe')
+        elif os.getenv('VIRTUAL_ENV') and sys.platform == 'win32':
+            self.snapcraft_command = [
+                'python', '-m', 'snapcraft.cli.__main__']
         elif os.getenv('VIRTUAL_ENV'):
             self.snapcraft_command = os.path.join(
                 os.getenv('VIRTUAL_ENV'), 'bin', 'snapcraft')
@@ -152,7 +152,9 @@ class TestCase(testtools.TestCase):
             command = []
         if isinstance(command, str):
             command = [command]
-        snapcraft_command = [self.snapcraft_command]
+        snapcraft_command = self.snapcraft_command
+        if isinstance(snapcraft_command, str):
+            snapcraft_command = [snapcraft_command]
         if debug:
             snapcraft_command.append('-d')
         try:
@@ -163,14 +165,29 @@ class TestCase(testtools.TestCase):
                 env=env)
         except subprocess.CalledProcessError as e:
             self.addDetail('command', content.text_content(
-                self.snapcraft_command))
+                str(self.snapcraft_command)))
             self.addDetail('output', content.text_content(e.output))
+            raise
+        except FileNotFoundError:
+            self.addDetail('command', content.text_content(
+                str(self.snapcraft_command)))
             raise
 
         if not os.getenv('SNAPCRAFT_IGNORE_APT_AUTOREMOVE', False):
             self.addCleanup(self.run_apt_autoremove)
 
         return snapcraft_output
+
+    def spawn_snapcraft(self, command: Union[str, List[str]]):
+        snapcraft_command = self.snapcraft_command
+        if isinstance(snapcraft_command, str):
+            snapcraft_command = [snapcraft_command]
+        try:
+            return popen_spawn.PopenSpawn(
+                ' '.join(snapcraft_command + command))
+        except FileNotFoundError:
+            self.addDetail(
+                'command', content.text_content(str(snapcraft_command)))
 
     def run_snapcraft_parser(self, arguments):
         try:
@@ -183,6 +200,9 @@ class TestCase(testtools.TestCase):
         return snapcraft_output
 
     def run_apt_autoremove(self):
+        if sys.platform == 'win32':
+            return
+
         deb_env = os.environ.copy()
         deb_env.update({
             'DEBIAN_FRONTEND': 'noninteractive',
@@ -196,6 +216,9 @@ class TestCase(testtools.TestCase):
             self.addDetail(
                 'apt-get autoremove output',
                 content.text_content(autoremove_output.decode('utf-8')))
+        except FileNotFoundError as e:
+            self.addDetail(
+                'apt-get autoremove error', content.text_content(str(e)))
         except subprocess.CalledProcessError as e:
             self.addDetail(
                 'apt-get autoremove error', content.text_content(str(e)))
@@ -444,9 +467,11 @@ class StoreTestCase(TestCase):
 
     def _conduct_login(self, process, email, password, expect_success) -> None:
         process.expect_exact(
-            'Enter your Ubuntu One e-mail address and password.\n'
+            'Enter your Ubuntu One e-mail address and password.' + os.linesep)
+        process.expect_exact(
             'If you do not have an Ubuntu One account, you can create one at '
-            'https://dashboard.snapcraft.io/openid/login\n'
+            'https://dashboard.snapcraft.io/openid/login' + os.linesep)
+        process.expect_exact(
             'Email: ')
         process.sendline(email)
         process.expect_exact('Password: ')
@@ -461,8 +486,7 @@ class StoreTestCase(TestCase):
         email = email or self.test_store.user_email
         password = password or self.test_store.user_password
 
-        process = pexpect.spawn(
-            self.snapcraft_command, ['export-login', export_path])
+        process = self.spawn_snapcraft(['export-login', export_path])
         self._conduct_login(process, email, password, expect_success)
 
         if expect_success:
@@ -475,8 +499,7 @@ class StoreTestCase(TestCase):
         email = email or self.test_store.user_email
         password = password or self.test_store.user_password
 
-        process = popen_spawn.PopenSpawn(
-            '{} login'.format(self.snapcraft_command))
+        process = self.spawn_snapcraft(['login'])
         self._conduct_login(process, email, password, expect_success)
 
         if expect_success:
@@ -494,7 +517,7 @@ class StoreTestCase(TestCase):
         command = ['register', snap_name]
         if private:
             command.append('--private')
-        process = pexpect.spawn(self.snapcraft_command, command)
+        process = self.spawn_snapcraft(command)
         process.expect(r'.*\[y/N\]: ')
         process.sendline('y')
         try:
@@ -520,13 +543,14 @@ class StoreTestCase(TestCase):
         email = email or self.test_store.user_email
         password = password or self.test_store.user_password
 
-        process = pexpect.spawn(
-            self.snapcraft_command, ['register-key', key_name])
+        process = self.spawn_snapcraft(['register-key', key_name])
 
         process.expect_exact(
-            'Enter your Ubuntu One e-mail address and password.\r\n'
+            'Enter your Ubuntu One e-mail address and password.' + os.linesep)
+        process.expect_exact(
             'If you do not have an Ubuntu One account, you can create one at '
-            'https://dashboard.snapcraft.io/openid/login\r\n'
+            'https://dashboard.snapcraft.io/openid/login' + os.linesep)
+        process.expect_exact(
             'Email: ')
         process.sendline(email)
         process.expect_exact('Password: ')
@@ -542,21 +566,19 @@ class StoreTestCase(TestCase):
                 'Cannot continue without logging in successfully: '
                 'Authentication error: Failed to get unbound discharge')
         process.expect(pexpect.EOF)
-        process.close()
-        return process.exitstatus
+        return process.wait()
 
     def list_keys(self, expected_keys):
-        process = pexpect.spawn(self.snapcraft_command, ['list-keys'])
+        process = self.spawn_snapcraft(['list-keys'])
 
         for enabled, key_name, key_id in expected_keys:
             process.expect('{} *{} *{}'.format(
                 '\*' if enabled else '-', key_name, key_id))
         process.expect(pexpect.EOF)
-        process.close()
-        return process.exitstatus
+        return process.wait()
 
     def list_registered(self, expected_snaps):
-        process = pexpect.spawn(self.snapcraft_command, ['list-registered'])
+        process = self.spawn_snapcraft(['list-registered'])
 
         for name, visibility, price, notes in expected_snaps:
             # Ignores 'since' to avoid confusion on fake and actual stores.
@@ -565,8 +587,7 @@ class StoreTestCase(TestCase):
                     name, visibility, price, notes))
 
         process.expect(pexpect.EOF)
-        process.close()
-        return process.exitstatus
+        return process.wait()
 
     def get_unique_name(self, prefix=''):
         """Return a unique snap name.
@@ -624,7 +645,7 @@ class StoreTestCase(TestCase):
                 print(line)
 
     def gated(self, snap_name, expected_validations=[], expected_output=None):
-        process = pexpect.spawn(self.snapcraft_command, ['gated', snap_name])
+        process = self.spawn_snapcraft(['gated', snap_name])
 
         if expected_output:
             process.expect(expected_output)
@@ -632,12 +653,10 @@ class StoreTestCase(TestCase):
             for name, revision in expected_validations:
                 process.expect('{} *{}'.format(name, revision))
         process.expect(pexpect.EOF)
-        process.close()
-        return process.exitstatus
+        return process.wait()
 
     def validate(self, snap_name, validations, expected_error=None):
-        process = pexpect.spawn(self.snapcraft_command,
-                                ['validate', snap_name] + validations)
+        process = self.spawn_snapcraft(['validate', snap_name] + validations)
         if expected_error:
             process.expect(expected_error)
         else:
@@ -645,8 +664,7 @@ class StoreTestCase(TestCase):
                 process.expect(
                     'Signing validations assertion for {}'.format(v))
         process.expect(pexpect.EOF)
-        process.close()
-        return process.exitstatus
+        return process.wait()
 
     def sign_build(self, snap_filename, key_name='default', local=False,
                    expect_success=True):
@@ -654,7 +672,7 @@ class StoreTestCase(TestCase):
         if local:
             # only sign it, no pushing
             cmd.append('--local')
-        process = pexpect.spawn(self.snapcraft_command, cmd)
+        process = self.spawn_snapcraft(cmd)
         if expect_success:
             if local:
                 process.expect(
@@ -665,30 +683,25 @@ class StoreTestCase(TestCase):
                     'Build assertion .*{}-build pushed.'.format(snap_filename))
 
         process.expect(pexpect.EOF)
-        process.close()
-        return process.exitstatus
+        return process.wait()
 
     def close(self, *args, **kwargs):
-        process = pexpect.spawn(
-            self.snapcraft_command, ['close'] + list(args))
+        process = self.spawn_snapcraft(['close'] + list(args))
         expected = kwargs.get('expected')
         if expected is not None:
             process.expect(expected)
         process.expect(pexpect.EOF)
-        process.close()
-        return process.exitstatus
+        return process.wait()
 
     def push(self, snap, release=None, expected=None):
         actions = ['push', snap]
         if release is not None:
             actions += ['--release', release]
-        process = pexpect.spawn(
-            self.snapcraft_command, actions)
+        process = self.spawn_snapcraft(actions)
         if expected is not None:
             process.expect(expected)
         process.expect(pexpect.EOF)
-        process.close()
-        return process.exitstatus
+        return process.wait()
 
 
 class SnapdIntegrationTestCase(TestCase):

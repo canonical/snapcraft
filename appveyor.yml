@@ -14,15 +14,12 @@ before_test:
     python -c "import sys; print(sys.executable)"
     python -m pip install -r requirements.txt
     python -m pip install -r requirements-devel.txt
-    python setup.py install
+    python -m pip install --prefix %VIRTUAL_ENV% -e .
 test_script:
 - cmd: |
     venv\\Scripts\\activate.bat
     ECHO %VIRTUAL_ENV%
-    SET PATH=C:\Program Files\snapcraft;%PATH%
-    ECHO %PATH%
-    WHERE snapcraft
-    python -m unittest discover -b -v -s "tests/integration/store" -t .
+    python -m unittest run tests.integration.store.test_store_login_logout -v
 after_test:
 - cmd: |
     venv\\Scripts\\activate.bat
