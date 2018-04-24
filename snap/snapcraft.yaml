@@ -6,7 +6,8 @@ description: |
     a single toolset, but instead is a collection of tools that enable the
     natural workflow of an upstream to be extended with a simple release step
     into Snappy.
-adopt-info: snapcraft
+
+grade: stable
 confinement: classic
 
 apps:
@@ -44,10 +45,6 @@ parts:
         - patchelf
         - squashfs-tools
         - xdelta3
-    override-pull: |
-        [ -n "$SNAPCRAFT_PROJECT_VERSION" ] && grade=devel || grade=stable
-        snapcraftctl set-grade "$grade"
-        snapcraftctl pull
     override-build: |
         snapcraftctl build
         TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
