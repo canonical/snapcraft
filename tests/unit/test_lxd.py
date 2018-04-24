@@ -313,7 +313,7 @@ class ContainerbuildTestCase(LXDTestCase):
         mock_is_snap.return_value = True
 
         def call_effect(*args, **kwargs):
-            if args[0][-3:] == ['snap', 'watch', '--last=refresh']:
+            if args[0][-3:] == ['snap', 'watch', '--last=auto-refresh']:
                 raise CalledProcessError(returncode=1, cmd=args[0])
             return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
 
@@ -497,7 +497,7 @@ class ContainerbuildTestCase(LXDTestCase):
         ])
         mock_container_run.assert_has_calls([
             call(['apt-get', 'install', 'squashfuse', '-y']),
-            call(['snap', 'watch', '--last=refresh']),
+            call(['snap', 'watch', '--last=auto-refresh']),
             call(['snap', 'ack', '/run/core_123.assert']),
             call(['snap', 'install', '/run/core_123.snap']),
             call(['snap', 'ack', '/run/snapcraft_345.assert']),
@@ -621,7 +621,7 @@ class ContainerbuildTestCase(LXDTestCase):
         ])
         mock_container_run.assert_has_calls([
             call(['apt-get', 'install', 'squashfuse', '-y']),
-            call(['snap', 'watch', '--last=refresh']),
+            call(['snap', 'watch', '--last=auto-refresh']),
             call(['snap', 'ack', '/run/snapcraft_123.assert']),
             call(['snap', 'install', '/run/snapcraft_123.snap', '--classic']),
         ])

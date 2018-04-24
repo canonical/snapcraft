@@ -257,7 +257,8 @@ class Containerbuild:
                 # Wait for any on-going refreshes to finish.
                 # If there are no changes an error will be returned.
                 with contextlib.suppress(ContainerRunError):
-                    self._container_run(['snap', 'watch', '--last=refresh'])
+                    self._container_run([
+                        'snap', 'watch', '--last=auto-refresh'])
                 self._inject_snap('core', tmp_dir)
                 self._inject_snap('snapcraft', tmp_dir)
         elif new_container:
