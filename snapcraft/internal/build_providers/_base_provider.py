@@ -25,6 +25,8 @@ class BaseProvider:
     def __init__(self, *, project, executor, echoer) -> None:
         self.project = project
         self.echoer = echoer
+        # Once https://github.com/CanonicalLtd/multipass/issues/220 is
+        # closed we can prepend snapcraft- again.
         self.instance_name = petname.Generate(2, '-')
         self.project_dir = shlex.quote(project.info.name)
         self._exec = executor
