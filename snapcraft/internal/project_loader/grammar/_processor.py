@@ -19,7 +19,8 @@ from typing import Any, Callable, Dict, List, Set
 
 from snapcraft import project
 from .errors import GrammarSyntaxError
-from ._statement import Statement, GrammarType, CallStackType
+from . import typing
+from ._statement import Statement
 from ._on import OnStatement
 from ._to import ToStatement
 from ._try import TryStatement
@@ -36,7 +37,7 @@ _ELSE_FAIL_PATTERN = re.compile(r'\Aelse\s+fail\Z')
 class GrammarProcessor:
     """The GrammarProcessor extracts desired primitives from grammar."""
 
-    def __init__(self, grammar: GrammarType, project: project.Project,
+    def __init__(self, grammar: typing.Grammar, project: project.Project,
                  checker: Callable[[str], bool], *,
                  transformer: Callable[[List[Statement],
                                         str,
@@ -63,8 +64,8 @@ class GrammarProcessor:
             # By default, no transformation
             self._transformer = lambda s, p, o: p
 
-    def process(self, *, grammar: GrammarType=None,
-                call_stack: CallStackType=None):
+    def process(self, *, grammar: typing.Grammar=None,
+                call_stack: typing.CallStack=None):
         """Process grammar and extract desired primitives.
 
         :param list grammar: Unprocessed grammar (defaults to that set in
@@ -111,7 +112,7 @@ class GrammarProcessor:
 
     def _parse_dict(self, section: Dict[str, Any], statement: Statement,
                     statements: '_StatementCollection',
-                    call_stack: CallStackType):
+                    call_stack: typing.CallStack):
         for key, value in section.items():
             # Grammar is always written as a list of selectors but the value
             # can be a list or a string. In the latter case we wrap it so no
@@ -177,7 +178,7 @@ class GrammarProcessor:
         return statement
 
 
-def _handle_else(statement: Statement, else_body: GrammarType):
+def _handle_else(statement: Statement, else_body: typing.Grammar):
     """Add else body to current statement.
 
     :param statement: The currently-active statement. If None it will be

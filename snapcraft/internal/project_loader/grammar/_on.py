@@ -20,7 +20,8 @@ from typing import Set, TYPE_CHECKING
 import snapcraft
 
 from .errors import OnStatementSyntaxError
-from ._statement import Statement, GrammarType, CallStackType
+from . import typing
+from ._statement import Statement
 
 # Don't use circular imports unless type checking
 if TYPE_CHECKING:
@@ -52,9 +53,9 @@ class OnStatement(Statement):
     {'bar'}
     """
 
-    def __init__(self, *, on: str, body: GrammarType,
+    def __init__(self, *, on: str, body: typing.Grammar,
                  processor: 'GrammarProcessor',
-                 call_stack: CallStackType=None) -> None:
+                 call_stack: typing.CallStack=None) -> None:
         """Create an OnStatement instance.
 
         :param str on: The 'on <selectors>' part of the clause.

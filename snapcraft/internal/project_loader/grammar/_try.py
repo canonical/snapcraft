@@ -16,7 +16,8 @@
 
 from typing import TYPE_CHECKING
 
-from ._statement import Statement, GrammarType, CallStackType
+from . import typing
+from ._statement import Statement
 
 # Don't use circular imports unless type checking
 if TYPE_CHECKING:
@@ -39,9 +40,9 @@ class TryStatement(Statement):
     {'valid'}
     """
 
-    def __init__(self, *, body: GrammarType,
+    def __init__(self, *, body: typing.Grammar,
                  processor: 'GrammarProcessor',
-                 call_stack: CallStackType=None) -> None:
+                 call_stack: typing.CallStack=None) -> None:
         """Create a TryStatement instance.
 
         :param list body: The body of the clause.

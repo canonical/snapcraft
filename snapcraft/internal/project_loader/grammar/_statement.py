@@ -15,8 +15,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
-from typing import Any, Dict, Iterable, List, Set, TYPE_CHECKING, Union
+from typing import Iterable, List, Set, TYPE_CHECKING
 
+from . import typing
 from .errors import UnsatisfiedStatementError
 
 # Don't use circular imports unless type checking
@@ -26,16 +27,13 @@ if TYPE_CHECKING:
 _SELECTOR_PATTERN = re.compile(r'\Aon\s+([^,\s](?:,?[^,]+)*)\Z')
 _WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
 
-GrammarType = List[Union[str, Dict[str, Any]]]
-CallStackType = List['Statement']
-
 
 class Statement:
     """Base class for all grammar statements"""
 
-    def __init__(self, *, body: GrammarType,
+    def __init__(self, *, body: typing.Grammar,
                  processor: 'GrammarProcessor',
-                 call_stack: CallStackType,
+                 call_stack: typing.CallStack,
                  check_primitives: bool=False) -> None:
         """Create an Statement instance.
 
@@ -55,12 +53,12 @@ class Statement:
         self._body = body
         self._processor = processor
         self._check_primitives = check_primitives
-        self._else_bodies = []  # type: List[GrammarType]
+        self._else_bodies = []  # type: List[typing.Grammar]
 
         self.__processed_body = None  # type: Set[str]
         self.__processed_else = None  # type: Set[str]
 
-    def add_else(self, else_body: GrammarType) -> None:
+    def add_else(self, else_body: typing.Grammar) -> None:
         """Add an 'else' clause to the statement.
 
         :param list else_body: The body of an 'else' clause.

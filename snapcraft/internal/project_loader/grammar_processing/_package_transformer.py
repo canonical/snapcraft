@@ -16,10 +16,10 @@
 
 from snapcraft import project
 from snapcraft.internal.project_loader.grammar import (
-    CallStackType,
     CompoundStatement,
     Statement,
     ToStatement,
+    typing,
 )
 
 
@@ -36,7 +36,7 @@ def _is_or_contains_to_statement(statement: Statement) -> bool:
     return False
 
 
-def package_transformer(call_stack: CallStackType,
+def package_transformer(call_stack: typing.CallStack,
                         package_name: str,
                         project: project.Project) -> str:
     if any(_is_or_contains_to_statement(s) for s in call_stack):
