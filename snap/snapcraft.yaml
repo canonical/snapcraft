@@ -73,7 +73,6 @@ parts:
           cd apt-build
           ../configure
           make
-          cd apt-build
           install -d $SNAPCRAFT_PART_INSTALL/apt
           cp -r bin/methods/* $SNAPCRAFT_PART_INSTALL/apt/
           cp -r bin/methods/* $SNAPCRAFT_PART_INSTALL/apt/
