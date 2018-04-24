@@ -19,21 +19,12 @@ import subprocess
 
 from testtools.matchers import MatchesRegex
 
-from tests import (
-    fixture_setup,
-    integration,
-    skip,
-)
+from tests import fixture_setup, integration, skip
 
 
 class CatkinToolsTestCase(integration.SnapdIntegrationTestCase):
 
     slow_test = True
-
-    def setUp(self) -> None:
-        super().setUp()
-        # Share the cache in all ROS-based tests
-        self.useFixture(fixture_setup.SharedCache('ros'))
 
     @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
     def test_install_and_execution(self) -> None:
