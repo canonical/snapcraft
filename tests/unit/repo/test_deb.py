@@ -17,7 +17,7 @@
 import apt
 import os
 from subprocess import CalledProcessError
-from unittest.mock import ANY, call, patch, MagicMock
+from unittest.mock import ANY, DEFAULT, call, patch, MagicMock
 
 from testtools.matchers import (
     Contains,
@@ -53,7 +53,13 @@ class UbuntuTestCase(RepoBaseTestCase):
         self.mock_cache.return_value.get_changes.return_value = [
             self.mock_package]
 
-    def test_cache_update_failed(self):
+    @patch('snapcraft.internal.repo._deb._AptCache.fetch_binary')
+    @patch('snapcraft.internal.repo._deb.apt.apt_pkg')
+    def test_cache_update_failed(self, mock_apt_pkg, mock_fetch_binary):
+        fake_package_path = os.path.join(self.path, 'fake-package.deb')
+        open(fake_package_path, 'w').close()
+        mock_fetch_binary.return_value = fake_package_path
+        self.mock_cache().is_virtual_package.return_value = False
         self.mock_cache().update.side_effect = apt.cache.FetchFailedException()
         project_options = snapcraft.ProjectOptions(
             use_geoip=False)
@@ -62,6 +68,25 @@ class UbuntuTestCase(RepoBaseTestCase):
             errors.CacheUpdateFailedError,
             ubuntu.get,
             ['fake-package'])
+
+    @patch('shutil.rmtree')
+    @patch('snapcraft.internal.repo._deb._AptCache.fetch_binary')
+    @patch('snapcraft.internal.repo._deb.apt.apt_pkg')
+    def test_cache_hashsum_mismatch(self, mock_apt_pkg, mock_fetch_binary,
+                                    mock_rmtree):
+        fake_package_path = os.path.join(self.path, 'fake-package.deb')
+        open(fake_package_path, 'w').close()
+        mock_fetch_binary.return_value = fake_package_path
+        self.mock_cache().is_virtual_package.return_value = False
+        self.mock_cache().update.side_effect = [
+            apt.cache.FetchFailedException(
+                'E:Failed to fetch copy:foo Hash Sum mismatch'),
+            DEFAULT,
+        ]
+        project_options = snapcraft.ProjectOptions(
+            use_geoip=False)
+        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu.get(['fake-package'])
 
     def test_get_pkg_name_parts_name_only(self):
         name, version = repo.get_pkg_name_parts('hello')

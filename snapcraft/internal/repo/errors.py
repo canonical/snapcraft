@@ -42,12 +42,16 @@ class CacheUpdateFailedError(RepoError):
 
     fmt = (
         "Failed to update the package cache: "
-        "Some files could not be downloaded. "
+        "Some files could not be downloaded:{errors}"
         "Check that the sources on your host are configured correctly."
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, errors: str) -> None:
+        if errors:
+            errors = '\n\n{}\n\n'.format(errors.replace(', ', '\n'))
+        else:
+            errors = ' '
+        super().__init__(errors=errors)
 
 
 class BuildPackageNotFoundError(RepoError):

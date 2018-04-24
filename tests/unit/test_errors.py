@@ -432,10 +432,19 @@ class ErrorFormattingTestCase(unit.TestCase):
         }),
         ('CacheUpdateFailedError', {
             'exception': repo_errors.CacheUpdateFailedError,
-            'kwargs': {},
+            'kwargs': {'errors': ''},
             'expected_message': (
                 "Failed to update the package cache: "
-                "Some files could not be downloaded. "
+                "Some files could not be downloaded: "
+                "Check that the sources on your host are configured correctly."
+            )
+        }),
+        ('CacheUpdateFailedError', {
+            'exception': repo_errors.CacheUpdateFailedError,
+            'kwargs': {'errors': 'foo, bar'},
+            'expected_message': (
+                "Failed to update the package cache: "
+                "Some files could not be downloaded:\n\nfoo\nbar\n\n"
                 "Check that the sources on your host are configured correctly."
             )
         }),
