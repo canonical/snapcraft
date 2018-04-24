@@ -56,7 +56,7 @@ deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
 _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 _library_list = dict()  # type: Dict[str, Set[str]]
 _HASHSUM_MISMATCH_PATTERN = re.compile(
-    r'(E:Failed to fetch copy.+Hash Sum mismatch)+')
+    r'(E:Failed to fetch.+Hash Sum mismatch)+')
 
 
 class _AptCache:
