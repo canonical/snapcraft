@@ -56,6 +56,10 @@ parts:
         ln -s $LIBSODIUM $TRIPLET_PATH/libsodium.so
         patch -d $SNAPCRAFT_PART_INSTALL/lib/python3.5/site-packages -p1 < $SNAPCRAFT_STAGE/pyyaml-support-high-codepoints.diff
         patch $SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/ctypes/__init__.py $SNAPCRAFT_STAGE/ctypes_init.diff
+    override-prime: |
+        # This is the last step, let's now compile all our pyc files.
+        snapcraftctl prime
+        ./usr/bin/python3 -m compileall .
     after: [patches, apt]
   apt:
       source: https://github.com/Debian/apt
