@@ -1,4 +1,5 @@
 name: snapcraft
+version: git
 summary: easily create snaps
 description: |
     Snapcraft aims to make upstream developers' lives easier and as such is not
@@ -44,9 +45,7 @@ parts:
         - squashfs-tools
         - xdelta3
     override-pull: |
-        version=$(git describe --dirty)
-        [ -n "$(echo $version | grep +git)" ] && grade=devel || grade=stable
-        snapcraftctl set-version "$version"
+        [ -n "$SNAPCRAFT_PROJECT_VERSION" ] && grade=devel || grade=stable
         snapcraftctl set-grade "$grade"
         snapcraftctl pull
     override-build: |
