@@ -909,7 +909,7 @@ class FakeAptCache(fixtures.Fixture):
         # Add all the packages in the manifest.
         with open(os.path.abspath(
                 os.path.join(
-                    __file__, '..', '..', 'snapcraft',
+                    __file__, '..', '..', '..', 'snapcraft',
                     'internal', 'repo', 'manifest.txt'))) as manifest_file:
             self.add_packages([line.strip() for line in manifest_file])
 
