@@ -23,26 +23,30 @@ export PYTHONPATH=$(pwd)${PYTHONPATH:+:$PYTHONPATH}
 printhelp(){
     echo "Usage: "
     echo "    ./runtests.sh static"
-    echo "    ./runtests.sh tests/unit"
+    echo "    ./runtests.sh tests/unit [<use-run>]"
     echo "    ./runtests.sh tests/integration[/<test-suite>]"
     echo "    ./runtests.sh snaps"
     echo ""
     echo "<test-suite> can be: $(ls tests/integration| grep '^[a-z].*' | tr '\n' ' ')"
+    echo "<use-run> makes use of run instead of discover to run the tests"
 }
+
+test_suite="$1"
+use_run="$2"
 
 parseargs(){
     if [[ "$#" -eq 0 ]]; then
         printhelp
 	exit 1
     else
-        if [ "$1" == "static" ] ; then
+        if [ "$test_suite" == "static" ] ; then
             run_static_tests
-        elif [ "$1" == "snaps" ] ; then
+        elif [ "$test_suite" == "snaps" ] ; then
             # shift to remove the test suite name and be able to pass the rest
             # to the snaps suite.
             shift
             run_snaps "$@"
-        elif [ "$1" == "spread" ] ; then
+        elif [ "$test_suite" == "spread" ] ; then
             run_spread
         else
             run_snapcraft_tests "$@"
@@ -60,11 +64,13 @@ run_static_tests(){
 }
 
 run_snapcraft_tests(){
-    if [[ ! -z "$coverage" ]] && [[ "$1" == "tests/unit"* ]]; then
+    if [[ ! -z "$use_run" ]]; then
+        python3 -m unittest -b -v run "$test_suite"
+    elif [[ ! -z "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
         python3 -m coverage erase
-        python3 -m coverage run --branch --source snapcraft -m unittest discover -b -v -s "$1" -t .
+        python3 -m coverage run --branch --source snapcraft -m unittest discover -b -v -s "$test_suite" -t .
     else
-        python3 -m unittest discover -b -v -s "$1" -t .
+        python3 -m unittest discover -b -v -s "$test_suite" -t .
     fi
 }
 
@@ -81,14 +87,14 @@ run_spread(){
     spread -v linode:
 }
 
-if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+if [ "$test_suite" == "-h" ] || [ "$test_suite" == "--help" ]; then
     printhelp
     exit 0
 fi
 
 parseargs "$@"
 
-if [[ ! -z "$coverage" ]] && [[ "$1" == "tests/unit"* ]]; then
+if [[ ! -z "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
     python3 -m coverage report
 
     echo

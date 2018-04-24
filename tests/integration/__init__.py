@@ -38,9 +38,9 @@ from unittest import mock
 from testtools import content
 from testtools.matchers import MatchesRegex
 
-from snapcraft.internal.os_release import OsRelease
 from tests import (
     fixture_setup,
+    os_release,
     subprocess_utils
 )
 from tests.integration import platform
@@ -64,12 +64,15 @@ class TestCase(testtools.TestCase):
                 os.getenv('VIRTUAL_ENV'), 'bin', 'snapcraft')
             self.snapcraft_parser_command = os.path.join(
                 os.getenv('VIRTUAL_ENV'), 'bin', 'snapcraft-parser')
+        elif os.getenv('SNAPCRAFT_FROM_BREW', False):
+            self.snapcraft_command = '/usr/local/bin/snapcraft'
         else:
             raise EnvironmentError(
                 'snapcraft is not setup correctly for testing. Either set '
-                'SNAPCRAFT_FROM_SNAP or SNAPCRAFT_FROM_DEB to run from either '
-                'the snap or deb, or make sure your venv is properly setup '
-                'as described in HACKING.md.')
+                'SNAPCRAFT_FROM_SNAP, SNAPCRAFT_FROM_DEB or '
+                'SNAPCRAFT_FROM_BREW to run from either the snap, deb or '
+                'brew, or make sure your venv is properly setup as described '
+                'in HACKING.md.')
 
         if os.getenv('SNAPCRAFT_FROM_SNAP', False):
             self.patchelf_command = '/snap/snapcraft/current/usr/bin/patchelf'
@@ -87,8 +90,6 @@ class TestCase(testtools.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'XDG_CONFIG_HOME', os.path.join(self.path, '.config')))
         self.useFixture(fixtures.EnvironmentVariable(
-            'XDG_CACHE_HOME', os.path.join(self.path, '.cache')))
-        self.useFixture(fixtures.EnvironmentVariable(
             'XDG_DATA_HOME', os.path.join(self.path, 'data')))
         self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
 
@@ -104,11 +105,6 @@ class TestCase(testtools.TestCase):
         patcher = mock.patch(
             'xdg.BaseDirectory.xdg_data_home',
             new=os.path.join(self.path, 'data'))
-        patcher.start()
-        self.addCleanup(patcher.stop)
-        patcher = mock.patch(
-            'xdg.BaseDirectory.xdg_cache_home',
-            new=os.path.join(self.path, '.cache'))
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -134,8 +130,7 @@ class TestCase(testtools.TestCase):
         self.deb_arch = platform.get_deb_arch()
         self.arch_triplet = platform.get_arch_triplet()
 
-        release = OsRelease()
-        self.distro_series = release.version_codename()
+        self.distro_series = os_release.get_version_codename()
 
     def run_snapcraft(
             self, command: Union[str, List[str]] = None,
