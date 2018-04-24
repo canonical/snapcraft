@@ -44,7 +44,7 @@ parts:
         - squashfs-tools
         - xdelta3
     override-pull: |
-        version=$(git-describe --dirty)
+        version=$(git describe --dirty)
         [ -n "$(echo $version | grep +git)" ] && grade=devel || grade=stable
         snapcraftctl set-version "$version"
         snapcraftctl set-grade "$grade"
