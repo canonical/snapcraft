@@ -663,3 +663,23 @@ class FailedImageInfoTestCase(LXDBaseTestCase):
 
         self.make_containerbuild().execute()
         self.assertEqual(self.fake_logger.output, self.expected_warn)
+
+
+class SnapOutputTestCase(unit.TestCase):
+
+    scenarios = [
+        ('all info', dict(snap=dict(name='name', version='version',
+                                    architectures=['amd64']),
+                          expected='name_version_amd64.snap')),
+        ('missing version', dict(snap=dict(name='name',
+                                 architectures=['amd64']),
+                                 expected='name_amd64.snap')),
+    ]
+
+    def test_output_set_correctly(self):
+        project = ProjectOptions()
+        instance = lxd.Containerbuild(project_options=project,
+                                      source='tarball.tgz',
+                                      metadata=self.snap,
+                                      container_name='name')
+        self.assertThat(instance._snap_output, Equals(self.expected))
