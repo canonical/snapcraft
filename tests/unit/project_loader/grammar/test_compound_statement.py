@@ -46,7 +46,6 @@ class CompoundStatementGrammarTestCase(GrammarBaseTestCase):
             'host_arch': 'i686',
             'expected_packages': set()
         }),
-        # The fact that this doesn't pass is probably a bug
         ('ignored else', {
             'on': 'on amd64',
             'to': 'to armhf',
