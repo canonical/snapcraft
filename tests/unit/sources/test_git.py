@@ -153,51 +153,48 @@ class TestGit(unit.sources.SourceTestCase):  # type: ignore
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceIncompatibleOptionsError,
             sources.Git,
             'git://mysource', 'source_dir',
             source_tag='tag', source_branch='branch')
 
-        expected_message = \
-            'can\'t specify both source-tag and source-branch for a git source'
-        self.assertThat(raised.message, Equals(expected_message))
+        self.assertThat(raised.source_type, Equals('git'))
+        self.assertThat(raised.options,
+                        Equals(['source-tag', 'source-branch']))
 
     def test_init_with_source_branch_and_commit_raises_exception(self):
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceIncompatibleOptionsError,
             sources.Git,
             'git://mysource', 'source_dir',
             source_commit='2514f9533ec9b45d07883e10a561b248497a8e3c',
             source_branch='branch')
 
-        expected_message = \
-            'can\'t specify both source-branch and source-commit for ' \
-            'a git source'
-        self.assertThat(raised.message, Equals(expected_message))
+        self.assertThat(raised.source_type, Equals('git'))
+        self.assertThat(raised.options,
+                        Equals(['source-branch', 'source-commit']))
 
     def test_init_with_source_tag_and_commit_raises_exception(self):
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceIncompatibleOptionsError,
             sources.Git,
             'git://mysource', 'source_dir',
             source_commit='2514f9533ec9b45d07883e10a561b248497a8e3c',
             source_tag='tag')
 
-        expected_message = \
-            'can\'t specify both source-tag and source-commit for ' \
-            'a git source'
-        self.assertThat(raised.message, Equals(expected_message))
+        self.assertThat(raised.source_type, Equals('git'))
+        self.assertThat(raised.options,
+                        Equals(['source-tag', 'source-commit']))
 
     def test_source_checksum_raises_exception(self):
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceInvalidOptionError,
             sources.Git,
             'git://mysource', 'source_dir',
             source_checksum="md5/d9210476aac5f367b14e513bdefdee08")
 
-        expected_message = (
-            "can't specify a source-checksum for a git source")
-        self.assertThat(raised.message, Equals(expected_message))
+        self.assertThat(raised.source_type, Equals('git'))
+        self.assertThat(raised.option, Equals('source-checksum'))
 
     def test_has_source_handler_entry(self):
         self.assertTrue(sources._source_handler['git'] is sources.Git)

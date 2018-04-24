@@ -29,18 +29,17 @@ class Bazaar(Base):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth, source_checksum,  'bzr')
         if source_branch:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a bzr source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'bzr', 'source-branch')
         if source_depth:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify source-depth for a bzr source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'bzr', 'source-depth')
         if source_tag and source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-tag and source-commit for '
-                'a bzr source')
+            raise errors.SnapcraftSourceIncompatibleOptionsError(
+                'bzr', ['source-tag', 'source-commit'])
         if source_checksum:
-            raise errors.IncompatibleOptionsError(
-                "can't specify a source-checksum for a bzr source")
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'bzr', 'source-checksum')
 
         self._call_kwargs = {}
         if silent:

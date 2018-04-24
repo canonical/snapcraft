@@ -80,20 +80,17 @@ class Git(Base):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth, source_checksum, 'git')
         if source_tag and source_branch:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-tag and source-branch for '
-                'a git source')
+            raise errors.SnapcraftSourceIncompatibleOptionsError(
+                'git', ['source-tag', 'source-branch'])
         if source_tag and source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-tag and source-commit for '
-                'a git source')
+            raise errors.SnapcraftSourceIncompatibleOptionsError(
+                'git', ['source-tag', 'source-commit'])
         if source_branch and source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-branch and source-commit for '
-                'a git source')
+            raise errors.SnapcraftSourceIncompatibleOptionsError(
+                'git', ['source-branch', 'source-commit'])
         if source_checksum:
-            raise errors.IncompatibleOptionsError(
-                "can't specify a source-checksum for a git source")
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'git', 'source-checksum')
         self._call_kwargs = {}
         if silent:
             self._call_kwargs['stdout'] = subprocess.DEVNULL

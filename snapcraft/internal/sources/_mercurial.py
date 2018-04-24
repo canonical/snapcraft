@@ -29,23 +29,20 @@ class Mercurial(Base):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth, source_checksum, 'hg')
         if source_tag and source_branch:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-tag and source-branch for a '
-                'mercurial source')
+            raise errors.SnapcraftSourceIncompatibleOptionsError(
+                'mercurial', ['source-tag', 'source-branch'])
         if source_tag and source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-tag and source-commit for a '
-                'mercurial source')
+            raise errors.SnapcraftSourceIncompatibleOptionsError(
+                'mercurial', ['source-tag', 'source-commit'])
         if source_branch and source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify both source-branch and source-commit for a '
-                'mercurial source')
+            raise errors.SnapcraftSourceIncompatibleOptionsError(
+                'mercurial', ['source-branch', 'source-commit'])
         if source_depth:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify source-depth for a mercurial source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'mercurial', 'source-depth')
         if source_checksum:
-            raise errors.IncompatibleOptionsError(
-                "can't specify a source-checksum for a mercurial source")
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'mercurial', 'source-checksum')
 
         self._call_kwargs = {}
         if silent:
