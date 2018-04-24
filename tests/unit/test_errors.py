@@ -448,8 +448,8 @@ class ErrorFormattingTestCase(unit.TestCase):
                         pool='test-pool', url='test-url')),
             },
             'expected_message': (
-                'There seems to be a network error: max retries exceeded '
-                'trying to reach the store\n'
+                'There seems to be a network error: maximum retries exceeded '
+                'trying to reach the store.\n'
                 'Check your network connection, and check the store status at '
                 'https://status.snapcraft.io/'
             )

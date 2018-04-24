@@ -74,7 +74,7 @@ class StoreNetworkError(StoreError):
             if isinstance(underlying_exception,
                           urllib3.exceptions.MaxRetryError):
                 message = (
-                    'max retries exceeded trying to reach the store\n'
+                    'maximum retries exceeded trying to reach the store.\n'
                     'Check your network connection, and check the store '
                     'status at {}'.format(_STORE_STATUS_URL))
         super().__init__(message=message)

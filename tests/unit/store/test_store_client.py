@@ -704,7 +704,7 @@ class ValidationsTestCase(StoreTestCase):
             errors.StoreNetworkError,
             self.client.get_assertion, 'err', 'validations')
 
-        expected = ('max retries exceeded')
+        expected = ('maximum retries exceeded')
         self.assertThat(str(err), Contains(expected))
 
     def test_push_success(self):
