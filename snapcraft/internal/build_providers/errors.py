@@ -35,8 +35,8 @@ class ProviderNotSupportedError(_SnapcraftError):
 class ProviderCommandNotFound(_SnapcraftError):
 
     fmt = (
-        'The {command!r} command is necessary to be able to build in this '
-        'environment.\n'
+        '{command!r} command not found: this command is necessary to build in '
+        'this environment.\n'
         'Install {command!r} or if already installed, ensure it is '
         'on the system PATH, and try again.'
     )

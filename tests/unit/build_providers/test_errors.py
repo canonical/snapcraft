@@ -33,8 +33,8 @@ class ErrorFormattingTest(unit.TestCase):
             exception=errors.ProviderCommandNotFound,
             kwargs=dict(command='multipass'),
             expected_message=(
-                "The 'multipass' command is necessary to be able to build in "
-                "this environment.\n"
+                "'multipass' command not found: this command is necessary to "
+                "build in this environment.\n"
                 "Install 'multipass' or if already installed, ensure it is "
                 "on the system PATH, and try again."))),
         ('ProviderLaunchError', dict(
