@@ -21,14 +21,15 @@ from testtools.matchers import FileExists
 
 from snapcraft.internal import sources
 from tests import unit
+from tests.file_utils import get_snapcraft_path
 
 
 class TestRpm(unit.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.rpm_file_path = os.path.realpath(os.path.join(
-            __file__, '..', '..', '..', 'integration', 'snaps',
+        self.rpm_file_path = (os.path.join(
+            get_snapcraft_path(), 'tests', 'integration', 'snaps',
             'rpm-hello', 'small-0.1-1.noarch.rpm'))
 
         self.dest_dir = 'dst'
