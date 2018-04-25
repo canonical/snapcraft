@@ -39,51 +39,57 @@ class ErrorFormattingTest(unit.TestCase):
                 "on the system PATH, and try again."))),
         ('ProviderLaunchError', dict(
             exception=errors.ProviderLaunchError,
-            kwargs=dict(provider_name='multipass'),
+            kwargs=dict(provider_name='multipass', exit_code=1),
             expected_message=(
-                "An error occurred when trying to launch the instance with "
-                "'multipass'."))),
+                "An error occurred when trying to launch the instance "
+                "with 'multipass': returned exit code 1.\n"
+                "Ensure that 'multipass' is setup correctly and try "
+                "again."))),
         ('ProviderStopError', dict(
             exception=errors.ProviderStopError,
-            kwargs=dict(provider_name='multipass'),
+            kwargs=dict(provider_name='multipass', exit_code=1),
             expected_message=(
-                "An error occurred when trying to stop the instance with "
-                "'multipass'."))),
+                "An error occurred when trying to stop the instance "
+                "with 'multipass': returned exit code 1.\n"
+                "Ensure that 'multipass' is setup correctly and try "
+                "again."))),
         ('ProviderDeleteError', dict(
             exception=errors.ProviderDeleteError,
-            kwargs=dict(provider_name='multipass'),
+            kwargs=dict(provider_name='multipass', exit_code=1),
             expected_message=(
-                "An error occurred when trying to delete the instance with "
-                "'multipass'."))),
+                "An error occurred when trying to delete the instance "
+                "with 'multipass': returned exit code 1.\n"
+                "Ensure that 'multipass' is setup correctly and try "
+                "again."))),
         ('ProviderExecError', dict(
             exception=errors.ProviderExecError,
             kwargs=dict(provider_name='multipass',
-                        command=['snap', 'install', 'snapcraft', '--classic']),
+                        command=['snap', 'install', 'snapcraft', '--classic'],
+                        exit_code=1),
             expected_message=(
                 "An error occurred when trying to execute "
-                "'snap install snapcraft --classic' with 'multipass'."))),
+                "'snap install snapcraft --classic' with 'multipass': "
+                "returned exit code 1."))),
         ('ProviderFileCopyError', dict(
             exception=errors.ProviderFileCopyError,
-            kwargs=dict(provider_name='multipass'),
+            kwargs=dict(provider_name='multipass', exit_code=1),
             expected_message=(
                 "An error occurred when trying to copy files using "
-                "'multipass'."
-            ))),
+                "'multipass': returned exit code 1."))),
         ('ProviderInfoError', dict(
             exception=errors.ProviderInfoError,
-            kwargs=dict(provider_name='multipass'),
+            kwargs=dict(provider_name='multipass', exit_code=1),
             expected_message=(
                 "An error occurred when using 'multipass' to query the status "
-                "of the instance."
-            ))),
+                "of the instance: returned exit code 1."))),
         ('ProviderInfoDataKeyError', dict(
             exception=errors.ProviderInfoDataKeyError,
             kwargs=dict(provider_name='multipass',
-                        key_info='instance-name',
+                        missing_key='instance-name',
                         data=dict(info=dict(another_instance='data'))),
             expected_message=(
                 "The data returned by 'multipass' was not expected. It is "
-                "missing some key data "
+                "missing a required key "
                 "'instance-name' in {'info': {'another_instance': 'data'}}."
             ))),
         ('ProviderBadDataError', dict(

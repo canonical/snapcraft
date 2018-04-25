@@ -181,7 +181,7 @@ class MultipassTest(BaseProviderBaseTest):
     def test_instance_does_not_exist_on_destroy(self):
         # An error is raised if the queried image does not exist
         self.multipass_cmd_mock().info.side_effect = errors.ProviderInfoError(
-            provider_name=self.instance_name)
+            provider_name=self.instance_name, exit_code=2)
 
         multipass = Multipass(project=self.project, echoer=self.echoer_mock)
 

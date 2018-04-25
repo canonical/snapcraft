@@ -50,7 +50,7 @@ class InstanceInfo:
         except KeyError as missing_key:
             raise errors.ProviderInfoDataKeyError(
                 provider_name='multipass',
-                key_info=str(missing_key),
+                missing_key=str(missing_key),
                 data=json_data) from missing_key
         try:
             return cls(name=instance_name,
@@ -59,7 +59,7 @@ class InstanceInfo:
         except KeyError as missing_key:
             raise errors.ProviderInfoDataKeyError(
                 provider_name='multipass',
-                key_info=str(missing_key),
+                missing_key=str(missing_key),
                 data=instance_info) from missing_key
 
     def __init__(self, *, name: str, state: str, image_release: str) -> None:

@@ -45,83 +45,83 @@ class ProviderCommandNotFound(_SnapcraftError):
         super().__init__(command=command)
 
 
-class ProviderLaunchError(_SnapcraftError):
+class _GenericProviderError(_SnapcraftError):
 
     fmt = (
-        'An error occurred when trying to launch the instance with '
-        '{provider_name!r}.'
+        'An error occurred when trying to {action} the instance with '
+        '{provider_name!r}: returned exit code {exit_code!r}.\n'
+        'Ensure that {provider_name!r} is setup correctly and try again.'
     )
 
-    def __init__(self, *, provider_name: str) -> None:
-        super().__init__(provider_name=provider_name)
+
+class ProviderLaunchError(_GenericProviderError):
+
+    def __init__(self, *, provider_name: str, exit_code: int) -> None:
+        super().__init__(action='launch', provider_name=provider_name,
+                         exit_code=exit_code)
 
 
-class ProviderStopError(_SnapcraftError):
+class ProviderStopError(_GenericProviderError):
 
-    fmt = (
-        'An error occurred when trying to stop the instance with '
-        '{provider_name!r}.'
-    )
-
-    def __init__(self, *, provider_name: str) -> None:
-        super().__init__(provider_name=provider_name)
+    def __init__(self, *, provider_name: str, exit_code: int) -> None:
+        super().__init__(action='stop', provider_name=provider_name,
+                         exit_code=exit_code)
 
 
-class ProviderDeleteError(_SnapcraftError):
+class ProviderDeleteError(_GenericProviderError):
 
-    fmt = (
-        'An error occurred when trying to delete the instance with '
-        '{provider_name!r}.'
-    )
-
-    def __init__(self, *, provider_name: str) -> None:
-        super().__init__(provider_name=provider_name)
+    def __init__(self, *, provider_name: str, exit_code: int) -> None:
+        super().__init__(action='delete', provider_name=provider_name,
+                         exit_code=exit_code)
 
 
 class ProviderExecError(_SnapcraftError):
 
     fmt = (
         'An error occurred when trying to execute {command_string!r} with '
-        '{provider_name!r}.'
+        '{provider_name!r}: returned exit code {exit_code!r}.'
     )
 
-    def __init__(self, *, provider_name: str, command: Sequence[str]) -> None:
+    def __init__(self, *, provider_name: str, command: Sequence[str],
+                 exit_code: int) -> None:
         command_string = ' '.join(shlex.quote(i) for i in command)
         super().__init__(provider_name=provider_name, command=command,
-                         command_string=command_string)
+                         command_string=command_string,
+                         exit_code=exit_code)
 
 
 class ProviderFileCopyError(_SnapcraftError):
 
     fmt = (
-        'An error occurred when trying to copy files using {provider_name!r}.'
+        'An error occurred when trying to copy files using {provider_name!r}: '
+        'returned exit code {exit_code!r}.'
     )
 
-    def __init__(self, *, provider_name: str) -> None:
-        super().__init__(provider_name=provider_name)
+    def __init__(self, *, provider_name: str, exit_code: int) -> None:
+        super().__init__(provider_name=provider_name, exit_code=exit_code)
 
 
 class ProviderInfoError(_SnapcraftError):
 
     fmt = (
         'An error occurred when using {provider_name!r} to '
-        'query the status of the instance.'
+        'query the status of the instance: returned exit code {exit_code!r}.'
     )
 
-    def __init__(self, *, provider_name: str) -> None:
-        super().__init__(provider_name=provider_name)
+    def __init__(self, *, provider_name: str, exit_code: int) -> None:
+        super().__init__(provider_name=provider_name, exit_code=exit_code)
 
 
 class ProviderInfoDataKeyError(_SnapcraftError):
 
     fmt = (
         'The data returned by {provider_name!r} was not expected. '
-        'It is missing some key data {key_info!r} in {data!r}.'
+        'It is missing a required key {missing_key!r} in {data!r}.'
     )
 
-    def __init__(self, *, provider_name: str, key_info: str,
+    def __init__(self, *, provider_name: str, missing_key: str,
                  data: Dict[str, Any]) -> None:
-        super().__init__(provider_name=provider_name, key_info=key_info,
+        super().__init__(provider_name=provider_name, missing_key=missing_key,
                          data=data)
 
 

@@ -77,7 +77,8 @@ class MultipassCommand:
             _run(cmd)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderLaunchError(
-                provider_name=self.provider_name) from process_error
+                provider_name=self.provider_name,
+                exit_code=process_error.returncode) from process_error
 
     def stop(self, *, instance_name: str) -> None:
         """Passthrough for running multipass stop.
@@ -89,7 +90,8 @@ class MultipassCommand:
             _run(cmd)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderStopError(
-                provider_name=self.provider_name) from process_error
+                provider_name=self.provider_name,
+                exit_code=process_error.returncode) from process_error
 
     def delete(self, *, instance_name: str, purge=True) -> None:
         """Passthrough for running multipass delete.
@@ -104,7 +106,8 @@ class MultipassCommand:
             _run(cmd)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderDeleteError(
-                provider_name=self.provider_name) from process_error
+                provider_name=self.provider_name,
+                exit_code=process_error.returncode) from process_error
 
     def execute(self, *, command: List[str], instance_name: str) -> None:
         """Passthrough for running multipass exec.
@@ -118,7 +121,8 @@ class MultipassCommand:
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderExecError(
                 provider_name=self.provider_name,
-                command=command) from process_error
+                command=command,
+                exit_code=process_error.returncode) from process_error
 
     def copy_files(self, *, source: str, destination: str):
         """Passthrough for running multipass copy-files.
@@ -133,7 +137,8 @@ class MultipassCommand:
             _run(cmd)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderFileCopyError(
-                provider_name=self.provider_name) from process_error
+                provider_name=self.provider_name,
+                exit_code=process_error.returncode) from process_error
 
     def info(self, *, instance_name: str, output_format: str=None) -> bytes:
         """Passthrough for running multipass info."""
@@ -144,4 +149,5 @@ class MultipassCommand:
             return _run_output(cmd)
         except subprocess.CalledProcessError as process_error:
             raise errors.ProviderInfoError(
-                provider_name=self.provider_name) from process_error
+                provider_name=self.provider_name,
+                exit_code=process_error.returncode) from process_error

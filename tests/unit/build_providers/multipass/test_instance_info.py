@@ -97,7 +97,7 @@ class InstanceInfoFromJSONTest(unit.TestCase):
                                    instance_name='wrong-name',
                                    json_info=self.json_string)
         self.assertThat(raised.provider_name, Equals('multipass'))
-        self.assertThat(raised.key_info, Equals("'wrong-name'"))
+        self.assertThat(raised.missing_key, Equals("'wrong-name'"))
 
     def test_new_instance_from_unmarshalled_json_empty_fails(self):
         raised = self.assertRaises(errors.ProviderBadDataError,
