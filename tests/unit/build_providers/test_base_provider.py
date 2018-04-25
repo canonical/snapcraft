@@ -30,13 +30,11 @@ class ProviderImpl(Provider):
         self.launch_mock = mock.Mock()
         self.run_mock = mock.Mock()
 
-    @property
-    def run(self):
-        return self.run_mock
+    def _run(self, command):
+        self.run_mock(command)
 
-    @property
-    def launch(self):
-        return self.launch_mock
+    def _launch(self):
+        self.launch_mock()
 
 
 class BaseProviderTest(BaseProviderBaseTest):
