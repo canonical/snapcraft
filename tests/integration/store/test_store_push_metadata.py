@@ -64,7 +64,7 @@ class PushMetadataTestCase(integration.StoreTestCase):
         expected = "The metadata has been pushed"
         self.assertThat(output, Contains(expected))
 
-    def test_need_push_first(self):
+    def test_no_push_needed_first(self):
         self.addCleanup(self.logout)
         self.login()
 
@@ -72,9 +72,9 @@ class PushMetadataTestCase(integration.StoreTestCase):
         name, snap_file_path = self._build_snap()
         self.register(name)
 
-        # Push the metadata withouth pusing the binary first
-        error = self.assertRaises(
-            subprocess.CalledProcessError,
-            self.run_snapcraft, ['push-metadata', snap_file_path])
-        expected = "Sorry, updating the information on the store has failed"
-        self.assertThat(str(error.output), Contains(expected))
+        # Now push the metadata
+        output = self.run_snapcraft(['push-metadata', snap_file_path])
+        expected = "Pushing metadata to the Store (force=False)"
+        self.assertThat(output, Contains(expected))
+        expected = "The metadata has been pushed"
+        self.assertThat(output, Contains(expected))

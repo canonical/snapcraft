@@ -686,17 +686,6 @@ class FakeStoreAPIServer(base.BaseFakeServer):
 
     def snap_metadata(self, request):
         logger.debug('Handling metadata request')
-        snap_id = request.matchdict['snap_id']
-
-        # check if snap was previously pushed
-        if snap_id not in self.pushed_snaps:
-            err = {'error_list': [
-                {'message': 'Snap not found', 'code': 'not-found'}]}
-            payload = json.dumps(err).encode('utf8')
-            response_code = 404
-            content_type = 'application/json'
-            return response.Response(
-                payload, response_code, [('Content-Type', content_type)])
 
         if 'invalid' in request.json_body:
             err = {'error_list': [{
