@@ -83,7 +83,7 @@ class InstanceInfoFromJSONTest(unit.TestCase):
         self.instance_name = 'announceable-rodney'
 
     def test_new_instance_from_unmarshalled_json(self):
-        instance_info = InstanceInfo.new_instance_info_from_json(
+        instance_info = InstanceInfo.from_json(
             instance_name=self.instance_name,
             json_info=self.json_string)
 
@@ -93,7 +93,7 @@ class InstanceInfoFromJSONTest(unit.TestCase):
 
     def test_new_instance_from_unmarshalled_json_wrong_instance_fails(self):
         raised = self.assertRaises(errors.ProviderInfoDataKeyError,
-                                   InstanceInfo.new_instance_info_from_json,
+                                   InstanceInfo.from_json,
                                    instance_name='wrong-name',
                                    json_info=self.json_string)
         self.assertThat(raised.provider_name, Equals('multipass'))
@@ -101,7 +101,7 @@ class InstanceInfoFromJSONTest(unit.TestCase):
 
     def test_new_instance_from_unmarshalled_json_empty_fails(self):
         raised = self.assertRaises(errors.ProviderBadDataError,
-                                   InstanceInfo.new_instance_info_from_json,
+                                   InstanceInfo.from_json,
                                    instance_name=self.instance_name,
                                    json_info='bad-json')
         self.assertThat(raised.provider_name, Equals('multipass'))

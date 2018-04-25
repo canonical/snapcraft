@@ -23,9 +23,8 @@ from snapcraft.internal.build_providers import errors
 class InstanceInfo:
 
     @classmethod
-    def new_instance_info_from_json(cls: Type['InstanceInfo'], *,
-                                    instance_name: str,
-                                    json_info: str) -> 'InstanceInfo':
+    def from_json(cls: Type['InstanceInfo'], *, instance_name: str,
+                  json_info: str) -> 'InstanceInfo':
         """Create an InstanceInfo from json_info retrieved from multipass.
 
         :param str instance_name: the name of the instance.

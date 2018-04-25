@@ -102,6 +102,5 @@ class Multipass(BaseProvider):
     def _get_instance_info(self):
         instance_info_raw = self._multipass_cmd.info(
             instance_name=self.instance_name, output_format='json')
-        return InstanceInfo.new_instance_info_from_json(
-            instance_name=self.instance_name,
-            json_info=instance_info_raw.decode())
+        return InstanceInfo.from_json(instance_name=self.instance_name,
+                                      json_info=instance_info_raw.decode())
