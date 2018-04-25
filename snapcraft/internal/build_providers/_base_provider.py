@@ -16,7 +16,7 @@
 
 import abc
 import shlex
-from typing import Callable
+from typing import List
 
 import petname
 
@@ -45,28 +45,22 @@ class Provider():
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.destroy()
 
-    @property
     @abc.abstractmethod
-    def run(self) -> Callable[[str], None]:
-        """Return a callable to run commands on the the instance.
-
-        :returns: a callable which takes one argument, a list, with the
-                  command to run.
-        """
-
-    @property
-    @abc.abstractmethod
-    def launch(self) -> Callable[[], None]:
-        """Return a callable that can be used to launch an instance."""
+    def _run(self, command: List) -> None:
+        """Run a command on the instance."""
 
     @abc.abstractmethod
-    def create(self):
+    def _launch(self):
+        """Launch the instance."""
+
+    @abc.abstractmethod
+    def create(self) -> None:
         """Provider steps needed to create a fully functioning environemnt."""
 
     @abc.abstractmethod
-    def destroy(self):
+    def destroy(self) -> None:
         """Provider steps needed to ensure the instance is destroyed.
-        
+
         This method should be safe to call multiple times and do nothing
         if the instance to destroy is already destroyed.
         """
@@ -83,15 +77,18 @@ class Provider():
     def retrieve_snap(self) -> str:
         """
         Provider steps needed to retrieve the built snap from the instance.
+
+        :returns: the filename of the retrieved snap.
+        :rtype: str
         """
 
-    def launch_instance(self):
+    def launch_instance(self) -> None:
         self.echoer.info('Creating a build environment named {!r}'.format(
             self.instance_name))
-        self.launch()
+        self._launch()
 
-    def setup_snapcraft(self):
+    def setup_snapcraft(self) -> None:
         self.echoer.info('Setting up snapcraft in {!r}'.format(
             self.instance_name))
         install_cmd = ['sudo', 'snap', 'install', 'snapcraft', '--classic']
-        self.run(install_cmd)
+        self._run(install_cmd)

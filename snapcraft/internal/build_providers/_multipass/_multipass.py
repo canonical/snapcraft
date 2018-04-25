@@ -15,9 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import shlex
-from typing import Callable
 
-from .. import errors
 from .._base_provider import Provider
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
@@ -26,46 +24,33 @@ from ._multipass_command import MultipassCommand
 class Multipass(Provider):
     """A multipass provider for snapcraft to execute its lifecycle."""
 
-    @property
-    def run(self) -> Callable[[str], None]:
-        def runner(command):
-            self._multipass_cmd.execute(instance_name=self.instance_name,
-                                        command=command)
-        return runner
+    def _run(self, command) -> None:
+        self._multipass_cmd.execute(instance_name=self.instance_name,
+                                    command=command)
 
-    @property
-    def launch(self) -> Callable[[], None]:
-        def launcher() -> None:
-            self._multipass_cmd.launch(instance_name=self.instance_name,
-                                       image='16.04')
-        return launcher
+    def _launch(self) -> None:
+        self._multipass_cmd.launch(instance_name=self.instance_name,
+                                   image='16.04')
 
     def __init__(self, *, project, echoer) -> None:
         super().__init__(project=project, echoer=echoer)
         self._multipass_cmd = MultipassCommand()
-        self._instance_info = None
+        self._instance_info = None  # type: InstanceInfo
 
-    def create(self):
+    def create(self) -> None:
         """Create the multipass instance and setup the build environment."""
         self.launch_instance()
         self._instance_info = self._get_instance_info()
         self.setup_snapcraft()
 
-    def destroy(self):
+    def destroy(self) -> None:
         """Destroy the instance, trying to stop it first."""
         if self._instance_info is None:
             return
 
-        try:
-            if not self._instance_info.is_stopped():
-                self._multipass_cmd.stop(instance_name=self.instance_name)
-            self._multipass_cmd.delete(instance_name=self.instance_name)
-        except errors.ProviderStopError as stop_error:
-            self.echoer.warning('Could not stop {!r}: {}.'.format(
-                self.instance_name, stop_error))
-        except errors.ProviderDeleteError as stop_error:
-            self.echoer.warning('Could not stop {!r}: {}.'.format(
-                self.instance_name, stop_error))
+        if not self._instance_info.is_stopped():
+            self._multipass_cmd.stop(instance_name=self.instance_name)
+        self._multipass_cmd.delete(instance_name=self.instance_name)
 
     def provision_project(self, tarball: str) -> None:
         """Provision the multipass instance with the project to work with."""
