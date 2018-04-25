@@ -313,7 +313,7 @@ class FakeStore(fixtures.Fixture):
             'no_proxy', 'localhost,127.0.0.1'))
 
 
-class _FakeServerRunning(fixtures.Fixture):
+class FakeServerRunning(fixtures.Fixture):
     # fake_server needs to be set by implementing classes
 
     def setUp(self):
@@ -334,46 +334,46 @@ class _FakeServerRunning(fixtures.Fixture):
         thread.join()
 
 
-class FakePartsWikiOriginRunning(_FakeServerRunning):
+class FakePartsWikiOriginRunning(FakeServerRunning):
 
     fake_server = fake_servers.FakePartsWikiOriginServer
 
 
-class FakePartsWikiRunning(_FakeServerRunning):
+class FakePartsWikiRunning(FakeServerRunning):
 
     fake_server = fake_servers.FakePartsWikiServer
 
 
-class FakePartsWikiWithSlashesRunning(_FakeServerRunning):
+class FakePartsWikiWithSlashesRunning(FakeServerRunning):
 
     fake_server = fake_servers.FakePartsWikiWithSlashesServer
 
 
-class FakePartsServerRunning(_FakeServerRunning):
+class FakePartsServerRunning(FakeServerRunning):
 
     fake_server = fake_servers.FakePartsServer
 
 
-class FakeSSOServerRunning(_FakeServerRunning):
+class FakeSSOServerRunning(FakeServerRunning):
 
     def __init__(self, fake_store):
         super().__init__()
         self.fake_server = partial(fake_servers.FakeSSOServer, fake_store)
 
 
-class FakeStoreUploadServerRunning(_FakeServerRunning):
+class FakeStoreUploadServerRunning(FakeServerRunning):
 
     fake_server = upload.FakeStoreUploadServer
 
 
-class FakeStoreAPIServerRunning(_FakeServerRunning):
+class FakeStoreAPIServerRunning(FakeServerRunning):
 
     def __init__(self, fake_store):
         super().__init__()
         self.fake_server = partial(api.FakeStoreAPIServer, fake_store)
 
 
-class FakeStoreSearchServerRunning(_FakeServerRunning):
+class FakeStoreSearchServerRunning(FakeServerRunning):
 
     fake_server = search.FakeStoreSearchServer
 

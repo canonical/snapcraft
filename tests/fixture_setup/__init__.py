@@ -25,6 +25,7 @@ from ._fixtures import (  # noqa: F401
     FakePartsWikiOriginRunning,
     FakePartsWikiRunning,
     FakePlugin,
+    FakeServerRunning,
     FakeSnapcraftctl,
     FakeSnapcraftIsASnap,
     FakeSSOServerRunning,
