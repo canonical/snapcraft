@@ -19,57 +19,62 @@ from unittest import mock
 from testtools.matchers import Equals
 
 from . import BaseProviderBaseTest
-from snapcraft.internal.build_providers._base_provider import BaseProvider
+from snapcraft.internal.build_providers._base_provider import Provider
+
+
+class ProviderImpl(Provider):
+
+    def __init__(self, *, project, echoer):
+        super().__init__(project=project, echoer=echoer)
+
+        self.launch_mock = mock.Mock()
+        self.run_mock = mock.Mock()
+
+    @property
+    def run(self):
+        return self.run_mock
+
+    @property
+    def launch(self):
+        return self.launch_mock
 
 
 class BaseProviderTest(BaseProviderBaseTest):
 
     def test_initialize(self):
-        base_provider = BaseProvider(project=self.project,
-                                     executor=self.executor_mock,
-                                     echoer=self.echoer_mock)
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
 
-        self.assertThat(base_provider.project, Equals(self.project))
-        self.assertThat(base_provider.instance_name,
+        self.assertThat(provider.project, Equals(self.project))
+        self.assertThat(provider.instance_name,
                         Equals(self.instance_name))
-        self.assertThat(base_provider.project_dir, Equals('project-name'))
-        self.assertThat(base_provider.snap_filename, Equals(
+        self.assertThat(provider.project_dir, Equals('project-name'))
+        self.assertThat(provider.snap_filename, Equals(
             'project-name_{}.snap'.format(self.project.deb_arch)))
 
     def test_initialize_snap_filename_with_version(self):
         self.project.info.version = 'test-version'
 
-        base_provider = BaseProvider(project=self.project,
-                                     executor=self.executor_mock,
-                                     echoer=self.echoer_mock)
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
 
-        self.assertThat(base_provider.snap_filename, Equals(
+        self.assertThat(provider.snap_filename, Equals(
             'project-name_test-version_{}.snap'.format(self.project.deb_arch)))
 
     def test_launch_instance(self):
-        launch_mock = mock.Mock()
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.launch_instance()
 
-        base_provider = BaseProvider(project=self.project,
-                                     executor=self.executor_mock,
-                                     echoer=self.echoer_mock)
-        base_provider.launch_instance(method=launch_mock,
-                                      command=['multipass', 'launch'])
-
-        launch_mock.assert_called_once_with(command=['multipass', 'launch'],
-                                            instance_name=self.instance_name)
+        provider.launch_mock.assert_any_call()
+        provider.run_mock.assert_not_called()
         self.echoer_mock.info.assert_called_once_with(
             'Creating a build environment named '
             '{!r}'.format(self.instance_name))
 
     def test_setup_snapcraft(self):
-        base_provider = BaseProvider(project=self.project,
-                                     executor=self.executor_mock,
-                                     echoer=self.echoer_mock)
-        base_provider.setup_snapcraft()
+        provider = ProviderImpl(project=self.project, echoer=self.echoer_mock)
+        provider.setup_snapcraft()
 
-        self.executor_mock.assert_called_once_with(
-            command=['sudo', 'snap', 'install', 'snapcraft', '--classic'],
-            instance_name=self.instance_name,
-        )
+        provider.launch_mock.assert_not_called()
+        provider.run_mock.assert_called_once_with(
+            ['sudo', 'snap', 'install', 'snapcraft', '--classic'])
         self.echoer_mock.info.assert_called_once_with(
             'Setting up snapcraft in {!r}'.format(self.instance_name))

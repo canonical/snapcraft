@@ -37,4 +37,3 @@ class BaseProviderBaseTest(unit.TestCase):
         self.project.info = ProjectInfo(dict(name='project-name'))
 
         self.echoer_mock = mock.Mock()
-        self.executor_mock = mock.Mock()

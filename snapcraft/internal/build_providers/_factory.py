@@ -14,13 +14,18 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Union, Type
+from typing import TYPE_CHECKING
 
 from . import errors
 from ._multipass import Multipass
 
+if TYPE_CHECKING:
+    from typing import Type                   # noqa: F401
 
-def get_provider_for(provider_name: str) -> Union[Type[Multipass]]:
+    from ._base_provider import Provider  # noqa: F401
+
+
+def get_provider_for(provider_name: str) -> 'Type[Provider]':
     """Returns a Type that can build with provider_name."""
     if provider_name == 'multipass':
         return Multipass

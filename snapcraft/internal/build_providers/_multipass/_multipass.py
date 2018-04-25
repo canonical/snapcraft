@@ -15,31 +15,38 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import shlex
+from typing import Callable
 
 from .. import errors
-from .._base_provider import BaseProvider
+from .._base_provider import Provider
 from ._instance_info import InstanceInfo
 from ._multipass_command import MultipassCommand
 
 
-class Multipass(BaseProvider):
+class Multipass(Provider):
     """A multipass provider for snapcraft to execute its lifecycle."""
 
+    @property
+    def run(self) -> Callable[[str], None]:
+        def runner(command):
+            self._multipass_cmd.execute(instance_name=self.instance_name,
+                                        command=command)
+        return runner
+
+    @property
+    def launch(self) -> Callable[[], None]:
+        def launcher() -> None:
+            self._multipass_cmd.launch(instance_name=self.instance_name,
+                                       image='16.04')
+        return launcher
+
     def __init__(self, *, project, echoer) -> None:
+        super().__init__(project=project, echoer=echoer)
         self._multipass_cmd = MultipassCommand()
-        super().__init__(project=project, echoer=echoer,
-                         executor=self._multipass_cmd.execute)
-
-    def __enter__(self):
-        self.create()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.destroy()
 
     def create(self):
         """Create the multipass instance and setup the build environment."""
-        self.launch_instance(self._multipass_cmd.launch, image='16.04')
+        self.launch_instance()
         self.setup_snapcraft()
 
     def destroy(self):

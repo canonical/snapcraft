@@ -14,22 +14,22 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import abc
 import shlex
+from typing import Callable
 
 import petname
 
 
-# This class is a mix of a parent and a mixin.
-class BaseProvider:
+class Provider():
 
-    def __init__(self, *, project, executor, echoer) -> None:
+    def __init__(self, *, project, echoer) -> None:
         self.project = project
         self.echoer = echoer
         # Once https://github.com/CanonicalLtd/multipass/issues/220 is
         # closed we can prepend snapcraft- again.
         self.instance_name = petname.Generate(2, '-')
         self.project_dir = shlex.quote(project.info.name)
-        self._exec = executor
 
         if project.info.version:
             self.snap_filename = '{}_{}_{}.snap'.format(
@@ -38,13 +38,56 @@ class BaseProvider:
             self.snap_filename = '{}_{}.snap'.format(
                 project.info.name, project.deb_arch)
 
-    def launch_instance(self, method, **kwargs):
+    def __enter__(self):
+        self.create()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.destroy()
+
+    @property
+    @abc.abstractmethod
+    def run(self) -> Callable[[str], None]:
+        """Return a callable to run commands on the the instance.
+
+        :returns: a callable which takes one argument, a list, with the
+                  command to run.
+        """
+
+    @property
+    @abc.abstractmethod
+    def launch(self) -> Callable[[], None]:
+        """Return a callable that can be used to launch an instance."""
+
+    @abc.abstractmethod
+    def create(self):
+        """Provider steps needed to create a fully functioning environemnt."""
+
+    @abc.abstractmethod
+    def destroy(self):
+        """Provider steps needed to ensure the instance is destroyed."""
+
+    @abc.abstractmethod
+    def provision_project(self, tarball: str) -> None:
+        """Provider steps needed to copy project assests to the instance."""
+
+    @abc.abstractmethod
+    def build_project(self) -> None:
+        """Provider steps needed build the project on the instance."""
+
+    @abc.abstractmethod
+    def retrieve_snap(self) -> str:
+        """
+        Provider steps needed to retrieve the built snap from the instance.
+        """
+
+    def launch_instance(self):
         self.echoer.info('Creating a build environment named {!r}'.format(
             self.instance_name))
-        method(instance_name=self.instance_name, **kwargs)
+        self.launch()
 
     def setup_snapcraft(self):
         self.echoer.info('Setting up snapcraft in {!r}'.format(
             self.instance_name))
         install_cmd = ['sudo', 'snap', 'install', 'snapcraft', '--classic']
-        self._exec(command=install_cmd, instance_name=self.instance_name)
+        self.run(install_cmd)
