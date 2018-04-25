@@ -23,7 +23,7 @@ from ._multipass_command import MultipassCommand
 
 
 class Multipass(BaseProvider):
-    """A multipass provider for snapcraft execute its lifecycle."""
+    """A multipass provider for snapcraft to execute its lifecycle."""
 
     def __init__(self, *, project, echoer) -> None:
         self._multipass_cmd = MultipassCommand()
