@@ -230,3 +230,10 @@ class DotNetPlugin(snapcraft.BasePlugin):
             raise DotNetBadReleaseDataError(version)
 
         return '{}/{}'.format(hash.lower(), checksum)
+
+    def env(self, root):
+        # Update the PATH only during the Build and Install step
+        if root == self.installdir:
+            return ['PATH={}:$PATH'.format(self._dotnet_sdk_dir)]
+        else:
+            return []

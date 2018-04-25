@@ -99,12 +99,31 @@ properties:
           "{.instance!r} is not a valid snap name. Snap names cannot have two
           hyphens in a row."
   architectures:
+    description: architectures on which to build, and on which the resulting snap runs
     type: array
-    description: architectures to override with
     minItems: 1
     uniqueItems: true
+    format: architectures
     items:
-      - type: string
+      anyOf:
+        - type: string
+        - type: object
+          additionalProperties: false
+          required:
+            - build-on
+          properties:
+            build-on:
+              anyOf:
+                - type: string
+                - type: array
+                  minItems: 1
+                  uniqueItems: true
+            run-on:
+              anyOf:
+                - type: string
+                - type: array
+                  minItems: 1
+                  uniqueItems: true
   version:
     # python's defaul yaml loading code loads 1.0 as an int
     # type: string
@@ -199,9 +218,11 @@ properties:
         required:
           - command
         dependencies:
-          stop-command: ["daemon"]
-          post-stop-command: ["daemon"]
-          reload-command: ["daemon"]
+          refresh-mode: [daemon]
+          stop-mode: [daemon]
+          stop-command: [daemon]
+          post-stop-command: [daemon]
+          reload-command: [daemon]
         additionalProperties: false
         properties:
           common-id:
@@ -234,6 +255,24 @@ properties:
               - forking
               - oneshot
               - notify
+          refresh-mode:
+              type: string
+              description: controls if the app should be restarted at all
+              enum:
+                - endure
+                - restart
+          stop-mode:
+              type: string
+              description: controls how the daemon should be stopped
+              enum:
+                - sigterm
+                - sigterm-all
+                - sighup
+                - sighup-all
+                - sigusr1
+                - sigusr1-all
+                - sigusr2
+                - sigusr2-all
           restart-condition:
               type: string
               enum:

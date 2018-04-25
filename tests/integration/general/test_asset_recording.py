@@ -25,7 +25,7 @@ import fixtures
 import testscenarios
 from testtools.matchers import Contains, Equals
 
-from snapcraft.internal.repo import snaps
+from tests.integration import repo
 from tests import (
     integration,
     fixture_setup
@@ -102,8 +102,7 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
             recorded_yaml = yaml.load(recorded_yaml_file)
 
         expected_package = 'core={}'.format(
-            snaps.SnapPackage(
-                'core').get_local_snap_info()['revision'])
+            repo.get_local_snap_info('core')['revision'])
         self.assertThat(
             recorded_yaml['parts']['dummy-part']['installed-snaps'],
             Contains(expected_package))
@@ -155,8 +154,7 @@ class ManifestRecordingTestCase(AssetRecordingBaseTestCase):
 
         self.run_snapcraft('prime')
 
-        expected_revision = snaps.SnapPackage(
-            'hello').get_local_snap_info()['revision']
+        expected_revision = repo.get_local_snap_info('hello')['revision']
         recorded_yaml_path = os.path.join(
             self.prime_dir, 'snap', 'manifest.yaml')
         with open(recorded_yaml_path) as recorded_yaml_file:

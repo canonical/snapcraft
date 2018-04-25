@@ -384,13 +384,17 @@ class Patcher:
         if elf_file.interp:
             patchelf_args.extend(['--set-interpreter',  self._dynamic_linker])
         if elf_file.dependencies:
+            rpath = self._get_rpath(elf_file)
+            # Due to https://github.com/NixOS/patchelf/issues/94 we need
+            # to first clear the current rpath
+            self._run_patchelf(patchelf_args=['--remove-rpath'],
+                               elf_file_path=elf_file.path)
             # Parameters:
             # --force-rpath: use RPATH instead of RUNPATH.
             # --shrink-rpath: will remove unneeded entries, with the
             #                 side effect of preferring host libraries
             #                 so we simply do not use it.
             # --set-rpath: set the RPATH to the colon separated argument.
-            rpath = self._get_rpath(elf_file)
             patchelf_args.extend(['--force-rpath', '--set-rpath', rpath])
 
         # no patchelf_args means there is nothing to do.
@@ -604,20 +608,6 @@ def get_elf_files(root: str,
                 elf_files.add(elf_file)
 
     return frozenset(elf_files)
-
-
-def get_elf_files_to_patch(elf_files):
-    # type: (FrozenSet[ElfFile]) -> FrozenSet[ElfFile]
-    """Return a frozenset of elf files that need patching."""
-    sonames = {(elf.arch, elf.soname): elf for elf in elf_files
-               if elf.soname != ''}
-    referenced_libraries = set()
-    for elf in elf_files:
-        for soname in elf.needed:
-            lib = sonames.get((elf.arch, soname))
-            if lib is not None:
-                referenced_libraries.add(lib)
-    return elf_files - referenced_libraries
 
 
 def _get_dynamic_linker(library_list: List[str]) -> str:

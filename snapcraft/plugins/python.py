@@ -159,9 +159,9 @@ class PythonPlugin(snapcraft.BasePlugin):
             return
 
         stage_packages = [python_base]
-        if release_codename == 'bionic':
-            # In bionic, pip started requiring python-distutils to be
-            # installed.
+        # In bionic, python3's pip started requiring python-distutils
+        # to be installed.
+        if python_base == 'python3' and release_codename == 'bionic':
             stage_packages.append('{}-distutils'.format(python_base))
         return stage_packages
 

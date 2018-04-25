@@ -16,12 +16,7 @@
 
 import os
 
-from testtools.matchers import (
-    DirExists,
-    Equals,
-    FileExists,
-    Not
-)
+from testtools.matchers import Contains, DirExists, FileExists, Not
 
 from tests import integration
 
@@ -113,12 +108,11 @@ class CleanPullStepPrimedTestCase(integration.TestCase):
 
         # Assert that the priming and staging areas were removed wholesale, not
         # a part at a time (since we didn't specify any parts).
-        output = output.strip().split('\n')
-        self.expectThat(output, Equals([
-            'Cleaning up priming area',
-            'Cleaning up staging area',
-            'Cleaning up parts directory'
-        ]))
+        output = output.strip()
+        self.expectThat(output, Contains(
+            'Cleaning up priming area\n'
+            'Cleaning up staging area\n'
+            'Cleaning up parts directory'))
 
         # Now try to prime again
         self.run_snapcraft('prime')

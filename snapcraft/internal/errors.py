@@ -601,3 +601,16 @@ class SnapcraftctlError(ScriptletBaseError):
 
     def __init__(self, message: str) -> None:
         super().__init__(message=message)
+
+
+class SnapcraftInvalidCLIConfigError(SnapcraftError):
+
+    fmt = (
+        'The cli configuration file {config_file!r} has invalid '
+        'data: {error!r}.'
+    )
+
+    def __init__(self, *, config_file: str, error: str) -> None:
+        super().__init__(config_file=config_file, error=error)
+        # This is to keep mypy happy
+        self.config_file = config_file

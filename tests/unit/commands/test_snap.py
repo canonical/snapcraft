@@ -43,7 +43,9 @@ class SnapCommandBaseTestCase(CommandBaseTestCase):
         version: 1.0
         summary: test snapping
         description: if snap is successful a snap package will be available
-        architectures: ['amd64']
+        architectures:
+          - build-on: all
+            run-on: 'amd64'
         type: {}
         confinement: strict
         grade: stable
@@ -171,81 +173,38 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
             '-all-root'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
-    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
-    @mock.patch('os.pipe')
-    @mock.patch('os.geteuid')
-    def test_snap_containerized_remote(self,
-                                       mock_geteuid,
-                                       mock_pipe,
-                                       mock_container_run):
-        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
-        mock_pipe.return_value = (9, 9)
-        mock_geteuid.return_value = 1234
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-        fake_filesystem = fixture_setup.FakeFilesystem()
-        self.useFixture(fake_filesystem)
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
+    def test_snap_containerized_remote_fails(self):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_CONTAINER_BUILDS', 'myremote'))
-        self.useFixture(
-            fixtures.EnvironmentVariable('USER', 'user'))
         self.make_snapcraft_yaml()
 
-        result = self.run_command(['--debug', 'snap'])
+        raised = self.assertRaises(
+            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            self.run_command, ['snap'])
 
-        self.assertThat(result.exit_code, Equals(0))
+        self.assertThat(str(raised), Contains(
+            'The experimental feature of using non-local LXD remotes '
+            'with SNAPCRAFT_CONTAINER_BUILDS has been dropped.'))
 
-        source = os.path.realpath(os.path.curdir)
-        self.assertThat(fake_logger.output, Contains(
-            "Using LXD remote 'myremote' from SNAPCRAFT_CONTAINER_BUILDS"))
-
-        project_folder = '/home/user/build_snap-test'
-        mock_container_run.assert_has_calls([
-            call(['apt-get', 'install', '-y', 'sshfs']),
-        ])
-        fake_lxd.popen_mock.assert_has_calls([
-            call(['/usr/lib/sftp-server'],
-                 stdin=9, stdout=9),
-            call(['lxc', 'exec', fake_lxd.name, '--',
-                  'sudo', '-H', '-u', 'user',
-                  'sshfs', '-o', 'slave', '-o', 'nonempty',
-                  ':{}'.format(source), project_folder],
-                 stdin=9, stdout=9),
-        ])
-
-    @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
-    @mock.patch('shutil.rmtree')
-    @mock.patch('os.makedirs')
-    @mock.patch('snapcraft.internal.lxd.open')
-    def test_snap_containerized_invalid_remote(self,
-                                               mock_open,
-                                               mock_makedirs,
-                                               mock_rmtree,
-                                               mock_container_run):
-        mock_container_run.side_effect = lambda cmd, **kwargs: cmd
-        mock_open.return_value = mock.MagicMock(spec=open)
-        fake_lxd = fixture_setup.FakeLXD()
-        self.useFixture(fake_lxd)
-
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
+    def test_use_of_both_build_env_affecting_vars_fails(self):
         self.useFixture(fixtures.EnvironmentVariable(
-            'SNAPCRAFT_CONTAINER_BUILDS', 'foo/bar'))
+            'SNAPCRAFT_CONTAINER_BUILDS', 'on'))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_BUILD_ENVIRONMENT', 'host'))
         self.make_snapcraft_yaml()
 
-        exception = self.assertRaises(
-            snapcraft.internal.errors.InvalidContainerRemoteError,
-            self.run_command, ['--debug', 'snap'])
-        self.assertThat(exception.remote, Equals('foo/bar'))
+        raised = self.assertRaises(
+            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            self.run_command, ['snap'])
 
-    def test_snap_defaults_on_a_tty(self):
-        fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(fake_logger)
-        self.useFixture(fixture_setup.FakeTerminal())
+        self.assertThat(str(raised), Contains(
+            'SNAPCRAFT_BUILD_ENVIRONMENT and SNAPCRAFT_CONTAINER_BUILDS '
+            'cannot be used together.\n'
+            'Given that SNAPCRAFT_BUILD_ENVIRONMENT is deprecated, '
+            'unset that variable from the environment and try again.'))
 
-        self.make_snapcraft_yaml()
+    def test_snap_type_os_does_not_use_all_root(self):
+        self.make_snapcraft_yaml(snap_type='os')
 
         result = self.run_command(['snap'])
 
@@ -255,14 +214,13 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
-            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments',
-            '-all-root'],
+            '-noappend', '-comp', 'xz', '-no-xattrs', '-no-fragments'],
             stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
 
         self.assertThat('snap-test_1.0_amd64.snap', FileExists())
 
-    def test_snap_type_os_does_not_use_all_root(self):
-        self.make_snapcraft_yaml(snap_type='os')
+    def test_snap_type_base_does_not_use_all_root(self):
+        self.make_snapcraft_yaml(snap_type='base')
 
         result = self.run_command(['snap'])
 
@@ -510,13 +468,10 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
 
         source = os.path.realpath(os.path.curdir)
-        self.assertIn(
-            'Using default LXD remote because '
-            'SNAPCRAFT_CONTAINER_BUILDS is set to 1\n'
+        self.assertThat(fake_logger.output, Contains(
             'Waiting for a network connection...\n'
             'Network connection established\n'
-            'Mounting {} into container\n'.format(source),
-            fake_logger.output)
+            'Mounting {} into container\n'.format(source)))
 
         container_name = 'local:snapcraft-snap-test'
         project_folder = '/root/build_snap-test'

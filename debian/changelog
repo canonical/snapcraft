@@ -1,3 +1,61 @@
+snapcraft (2.41) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * package: ensure all relevant files are in for sdist (#2060)
+  * errors: enable sending tracebacks to sentry (#1961)
+  * errors: improve the UX for sending error data (#2024)
+  * errors: remove stack data when sending to sentry (#2036)
+  * errors: feature flag error reports (#2066)
+  * packaging: simplify snapcraft.yaml (#2062)
+  * many: update the yaml loading logic (#2065)
+  * extractors: support for setup.py (#2070)
+  * lifecycle: handle missing version correctly (#2072)
+  * python plugin: do not invoke wheel install if empty (#2077)
+  * patches: improve ctypes patch for python 3.5
+  * ci: enable subset of integration tests on bionic
+  * errors: skip the sentry test if raven is no installed (#2075)
+  * New upstream release (LP: #1763934)
+
+  [ Kyle Fazzari ]
+  * many: add snapcraftctl command for scriptlets (#2002)
+  * kernel plugin: add kmod as build-package (#2041)
+  * cli: support exporting login to stdout (#2043)
+  * many: add override-pull scriptlet (#2045)
+  * pluginhandler: organize in build instead of stage (#2047)
+  * tests: extract sources suite from general suite (#2054)
+  * many: add override-stage scriptlet (#2049)
+  * tests: extract lifecycle suite from general suite (#2057)
+  * many: add override-prime scriptlet (#2052)
+  * elf: use snapped strip (#2051)
+  * storeapi: properly handle lacking permission for channel (#2050)
+  * many: add snapcraftctl set-version (#2063)
+  * storeapi: handle 500 error response when releasing snap (#2059)
+  * states: track override scriptlets (#2068)
+  * many: add snapcraftctl set-grade (#2067)
+  * meta: validate extracted and scriptlet metadata (#2073)
+
+  [ Christian Dywan ]
+  * options: introduce Project and ProjectInfo (#1995)
+  * lxd: friendly error with suggestions if network is broken (#1930)
+  * lxd: merge existing image info contents when using containerbuilds (#1997)
+  * lxd: specify arch in lxc image list command (#2046)
+  * meta: implement passthrough of properties to snap.yaml (#2053)
+
+  [ Guilhem Lettron ]
+  * nodejs plugin: add option for setting npm flags (#2038)
+
+  [ Bjorn Tillenius ]
+  * python plugin: install python-distutils when run on bionic (#2058)
+
+  [ Rakesh Singh ]
+  * dotnet plugin: add support enable configurable runtime version for
+    .NET Core applications (#1911)
+
+  [ Colin Watson ]
+  * storeapi: fix formatting of some store errors (#2056)
+
+ -- <sergio.schvezov@ubuntu.com>  Sat, 14 Apr 2018 12:13:35 +0000
+
 snapcraft (2.40.1) xenial; urgency=medium
 
   [ Evan Dandrea ]

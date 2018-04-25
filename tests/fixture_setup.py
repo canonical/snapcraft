@@ -1122,26 +1122,6 @@ class FakeSnapd(fixtures.Fixture):
         thread.join()
 
 
-class SharedCache(fixtures.Fixture):
-
-    def __init__(self, name) -> None:
-        super().__init__()
-        self.name = name
-
-    def setUp(self) -> None:
-        super().setUp()
-        shared_cache_dir = os.path.join(
-            tempfile.gettempdir(), 'snapcraft_test_cache_{}'.format(self.name))
-        os.makedirs(shared_cache_dir, exist_ok=True)
-        self.useFixture(fixtures.EnvironmentVariable(
-            'XDG_CACHE_HOME', shared_cache_dir))
-        patcher = mock.patch(
-            'xdg.BaseDirectory.xdg_cache_home',
-            new=os.path.join(shared_cache_dir))
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-
 def _fake_elffile_extract(self, path):
     arch = ('ELFCLASS64', 'ELFDATA2LSB', 'EM_X86_64')
     name = os.path.basename(path)

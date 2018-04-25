@@ -150,8 +150,6 @@ class UpdateCommandTestCase(CommandBaseTestCase, unit.TestWithFakeRemoteParts):
         result = self.run_command(['update'])
         self.assertThat(result.exit_code, Equals(0))
 
-        self.assertThat(result.output, Equals(''))
-
     def test_update_with_no_content_length_is_supported(self):
         self.useFixture(fixtures.EnvironmentVariable('NO_CONTENT_LENGTH', '1'))
         result = self.run_command(['update'])
