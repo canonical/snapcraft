@@ -15,18 +15,17 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import json
-from typing import TypeVar, Type
+from typing import Type
 
 from snapcraft.internal.build_providers import errors
-
-T = TypeVar('T', bound='InstanceInfo')
 
 
 class InstanceInfo:
 
     @classmethod
-    def new_instance_info_from_json(cls: Type[T], *, instance_name: str,
-                                    json_info: str) -> T:
+    def new_instance_info_from_json(cls: Type['InstanceInfo'], *,
+                                    instance_name: str,
+                                    json_info: str) -> 'InstanceInfo':
         """Create an InstanceInfo from json_info retrieved from multipass.
 
         :param str instance_name: the name of the instance.
