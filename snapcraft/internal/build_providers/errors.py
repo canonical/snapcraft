@@ -21,7 +21,7 @@ from typing import Sequence  # noqa: F401
 from snapcraft.internal.errors import SnapcraftError as _SnapcraftError
 
 
-class ProviderNotSupported(_SnapcraftError):
+class ProviderNotSupportedError(_SnapcraftError):
 
     fmt = (
         'The {provider!r} provider is not supported, please choose a '

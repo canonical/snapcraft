@@ -23,8 +23,8 @@ from tests import unit
 class ErrorFormattingTest(unit.TestCase):
 
     scenarios = [
-        ('ProviderNotSupported', dict(
-            exception=errors.ProviderNotSupported,
+        ('ProviderNotSupportedError', dict(
+            exception=errors.ProviderNotSupportedError,
             kwargs=dict(provider='docker'),
             expected_message=(
                 "The 'docker' provider is not supported, please choose a "

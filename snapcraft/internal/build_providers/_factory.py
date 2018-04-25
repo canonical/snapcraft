@@ -25,4 +25,4 @@ def get_provider_for(provider_name: str) -> Union[Type[Multipass]]:
     if provider_name == 'multipass':
         return Multipass
     else:
-        raise errors.ProviderNotSupported(provider=provider_name)
+        raise errors.ProviderNotSupportedError(provider=provider_name)
