@@ -65,7 +65,11 @@ class Provider():
 
     @abc.abstractmethod
     def destroy(self):
-        """Provider steps needed to ensure the instance is destroyed."""
+        """Provider steps needed to ensure the instance is destroyed.
+        
+        This method should be safe to call multiple times and do nothing
+        if the instance to destroy is already destroyed.
+        """
 
     @abc.abstractmethod
     def provision_project(self, tarball: str) -> None:

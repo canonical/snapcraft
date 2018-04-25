@@ -43,24 +43,21 @@ class Multipass(Provider):
     def __init__(self, *, project, echoer) -> None:
         super().__init__(project=project, echoer=echoer)
         self._multipass_cmd = MultipassCommand()
+        self._instance_info = None
 
     def create(self):
         """Create the multipass instance and setup the build environment."""
         self.launch_instance()
+        self._instance_info = self._get_instance_info()
         self.setup_snapcraft()
 
     def destroy(self):
         """Destroy the instance, trying to stop it first."""
-        try:
-            instance_info = self._get_instance_info()
-        except errors.ProviderInfoError as info_error:
-            self.echoer.warning(
-                'Failed to obtain the status of {!r} when trying to '
-                'delete: {}'.format(self.instance_name, info_error))
+        if self._instance_info is None:
             return
 
         try:
-            if not instance_info.is_stopped():
+            if not self._instance_info.is_stopped():
                 self._multipass_cmd.stop(instance_name=self.instance_name)
             self._multipass_cmd.delete(instance_name=self.instance_name)
         except errors.ProviderStopError as stop_error:
