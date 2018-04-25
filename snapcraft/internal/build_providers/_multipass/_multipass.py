@@ -15,8 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import shlex
-from contextlib import contextmanager
-from typing import Generator
 
 from .. import errors
 from .._base_provider import BaseProvider
@@ -32,38 +30,42 @@ class Multipass(BaseProvider):
         super().__init__(project=project, echoer=echoer,
                          executor=self._multipass_cmd.execute)
 
-    @contextmanager
-    def new_instance(self, keep=True) -> Generator:
-        """Create the multipass instance."""
-        try:
-            self.launch_instance(self._multipass_cmd.launch, image='16.04')
-            self.setup_snapcraft()
-            yield self
-        finally:
-            try:
-                self._try_stop_and_delete(keep=keep)
-            except errors.ProviderStopError as stop_error:
-                self.echoer.warning('Could not stop {!r}: {}.'.format(
-                    self.instance_name, stop_error))
-            except errors.ProviderDeleteError as delete_error:
-                self.echoer.warning('Could not stop {!r}: {}.'.format(
-                    self.instance_name, delete_error))
+    def __enter__(self):
+        self.create()
+        return self
 
-    def _try_stop_and_delete(self, *, keep: bool) -> None:
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.destroy()
+
+    def create(self):
+        """Create the multipass instance and setup the build environment."""
+        self.launch_instance(self._multipass_cmd.launch, image='16.04')
+        self.setup_snapcraft()
+
+    def destroy(self):
+        """Destroy the instance, trying to stop it first."""
         try:
             instance_info = self._get_instance_info()
         except errors.ProviderInfoError as info_error:
-            # An error here means this instance may not exist
+            self.echoer.warning(
+                'Failed to obtain the status of {!r} when trying to '
+                'delete: {}'.format(self.instance_name, info_error))
             return
 
-        if instance_info.is_stopped():
-            return
-        self._multipass_cmd.stop(instance_name=self.instance_name)
-        if not keep:
+        try:
+            if not instance_info.is_stopped():
+                self._multipass_cmd.stop(instance_name=self.instance_name)
             self._multipass_cmd.delete(instance_name=self.instance_name)
+        except errors.ProviderStopError as stop_error:
+            self.echoer.warning('Could not stop {!r}: {}.'.format(
+                self.instance_name, stop_error))
+        except errors.ProviderDeleteError as stop_error:
+            self.echoer.warning('Could not stop {!r}: {}.'.format(
+                self.instance_name, stop_error))
 
     def provision_project(self, tarball: str) -> None:
         """Provision the multipass instance with the project to work with."""
+        # TODO add instance check.
         # Step 0, sanitize the input
         tarball = shlex.quote(tarball)
 
@@ -81,6 +83,7 @@ class Multipass(BaseProvider):
                                     instance_name=self.instance_name)
 
     def build_project(self) -> None:
+        # TODO add instance check.
         # Use the full path as /snap/bin is not in PATH.
         snapcraft_cmd = 'cd {}; /snap/bin/snapcraft snap --output {}'.format(
             self.project_dir, self.snap_filename)
@@ -88,6 +91,7 @@ class Multipass(BaseProvider):
                                     instance_name=self.instance_name)
 
     def retrieve_snap(self) -> str:
+        # TODO add instance check.
         source = '{}:{}/{}'.format(self.instance_name,
                                    self.project_dir,
                                    self.snap_filename)

@@ -54,8 +54,7 @@ def cleanbuild(*, project, echoer, build_environment, remote='') -> None:
         return
 
     build_provider_class = build_providers.get_provider_for('multipass')
-    build_provider = build_provider_class(project=project, echoer=echoer)
-    with build_provider.new_instance(keep=False) as instance:
+    with build_provider_class(project=project, echoer=echoer) as instance:
         instance.provision_project(tar_filename)
         instance.build_project()
         instance.retrieve_snap()

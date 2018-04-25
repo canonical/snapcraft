@@ -18,27 +18,11 @@ from unittest import mock
 
 from testtools.matchers import Equals
 
-from snapcraft.project import Project, ProjectInfo
+from . import BaseProviderBaseTest
 from snapcraft.internal.build_providers._base_provider import BaseProvider
-from tests import unit
 
 
-class BaseProviderTest(unit.TestCase):
-
-    def setUp(self):
-        super().setUp()
-
-        self.instance_name = 'ridicoulus-hours'
-        patcher = mock.patch('petname.Generate',
-                             return_value=self.instance_name)
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        self.project = Project()
-        self.project.info = ProjectInfo(dict(name='project-name'))
-
-        self.echoer_mock = mock.Mock()
-        self.executor_mock = mock.Mock()
+class BaseProviderTest(BaseProviderBaseTest):
 
     def test_initialize(self):
         base_provider = BaseProvider(project=self.project,
