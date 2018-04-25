@@ -124,7 +124,7 @@ class MultipassCommand:
                 command=command,
                 exit_code=process_error.returncode) from process_error
 
-    def copy_files(self, *, source: str, destination: str):
+    def copy_files(self, *, source: str, destination: str) -> None:
         """Passthrough for running multipass copy-files.
 
         :param str source: the source file to copy, using syntax expected
