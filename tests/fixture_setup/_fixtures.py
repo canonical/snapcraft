@@ -48,6 +48,7 @@ from tests.fake_servers import (
     search,
     upload
 )
+from tests.file_utils import get_snapcraft_path
 from tests.subprocess_utils import (
     call,
     call_with_output,
@@ -907,10 +908,9 @@ class FakeAptCache(fixtures.Fixture):
         self.addCleanup(patcher.stop)
 
         # Add all the packages in the manifest.
-        with open(os.path.abspath(
-                os.path.join(
-                    __file__, '..', '..', '..', 'snapcraft',
-                    'internal', 'repo', 'manifest.txt'))) as manifest_file:
+        with open(os.path.join(
+                    get_snapcraft_path(), 'snapcraft', 'internal', 'repo',
+                    'manifest.txt')) as manifest_file:
             self.add_packages([line.strip() for line in manifest_file])
 
     def add_package(self, package):
@@ -1133,8 +1133,8 @@ class FakeElf(fixtures.Fixture):
 
         self.core_base_path = self.useFixture(fixtures.TempDir()).path
 
-        binaries_path = os.path.abspath(os.path.join(
-            __file__, '..', 'bin', 'elf'))
+        binaries_path = os.path.join(get_snapcraft_path(),
+                                     'tests', 'bin', 'elf')
 
         new_binaries_path = self.useFixture(fixtures.TempDir()).path
         current_path = os.environ.get('PATH')
@@ -1284,8 +1284,7 @@ class FakeSnapcraftctl(fixtures.Fixture):
     def _setUp(self):
         super()._setUp()
 
-        snapcraft_path = os.path.realpath(
-            os.path.join(os.path.dirname(__file__), '..'))
+        snapcraft_path = get_snapcraft_path()
 
         tempdir = self.useFixture(fixtures.TempDir()).path
         altered_path = '{}:{}'.format(tempdir, os.environ.get('PATH'))

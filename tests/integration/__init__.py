@@ -63,6 +63,8 @@ class TestCase(testtools.TestCase):
         elif os.getenv('VIRTUAL_ENV') and sys.platform == 'win32':
             self.snapcraft_command = [
                 'python', '-m', 'snapcraft.cli.__main__']
+            self.snapcraft_parser_command = os.path.join(
+                os.getenv('VIRTUAL_ENV'), 'bin', 'snapcraft-parser')
         elif os.getenv('VIRTUAL_ENV'):
             self.snapcraft_command = os.path.join(
                 os.getenv('VIRTUAL_ENV'), 'bin', 'snapcraft')
