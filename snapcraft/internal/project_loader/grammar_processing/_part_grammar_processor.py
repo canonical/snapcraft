@@ -14,18 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, Set, TYPE_CHECKING
+from typing import Any, Dict, Set
 
 from snapcraft import project
 from snapcraft.internal.project_loader import grammar
-from snapcraft.internal import pluginhandler
+from snapcraft.internal import pluginhandler, repo
 
 from ._package_transformer import package_transformer
-
-# Don't import repo unless type checking (other platforms bust if we use
-# repo.Ubuntu).
-if TYPE_CHECKING:
-    from snapcraft.internal import repo  # noqa: F401
 
 
 class PartGrammarProcessor:
