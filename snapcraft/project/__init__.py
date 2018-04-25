@@ -15,4 +15,3 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ._project import Project                          # noqa F401
-from ._project_info import ProjectInfo                 # noqa F401
