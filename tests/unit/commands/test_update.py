@@ -118,6 +118,23 @@ class UpdateCommandTestCase(CommandBaseTestCase, unit.TestWithFakeRemoteParts):
         p['description'] = 'this is a multiline description\n' * 3
         p['maintainer'] = 'none'
 
+        expected_parts['alsa'] = p = OrderedDict()
+        p['plugin'] = 'nil'
+        p['description'] = 'this part depends on a part with after'
+        p['maintainer'] = 'none'
+        p['after'] = ['alsa-plugins']
+
+        expected_parts['alsa-plugins'] = p = OrderedDict()
+        p['plugin'] = 'nil'
+        p['description'] = 'this part depends on a part'
+        p['maintainer'] = 'none'
+        p['after'] = ['alsa-lib']
+
+        expected_parts['alsa-lib'] = p = OrderedDict()
+        p['plugin'] = 'nil'
+        p['description'] = 'this part is used by alsa-plugins'
+        p['maintainer'] = 'none'
+
         expected_headers = {
             'If-Modified-Since': 'Thu, 07 Jul 2016 10:00:20 GMT',
         }

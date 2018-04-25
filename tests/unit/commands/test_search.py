@@ -40,6 +40,9 @@ class SearchCommandTestCase(CommandBaseTestCase, TestWithFakeRemoteParts):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(dedent("""\
             PART NAME            DESCRIPTION
+            alsa                 this part depends on a part with after
+            alsa-lib             this part is used by alsa-plugins
+            alsa-plugins         this part depends on a part
             curl                 test entry for curl
             long-described-part  this is a repetitive description this is a repetitive de...
             multiline-part       this is a multiline description
