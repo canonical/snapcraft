@@ -1,12 +1,18 @@
+import logging
 import requests
 from requests.adapters import HTTPAdapter
-from requests.exceptions import RetryError
+from requests.exceptions import ConnectionError, RetryError
 from requests.packages.urllib3.util.retry import Retry
 import urllib.parse
 import os
 
 from . import _agent
 from . import errors
+
+# Set urllib3's logger to only emit errors, not warnings. Otherwise even
+# retries are printed, and they're nasty.
+logging.getLogger(requests.packages.urllib3.__package__).setLevel(
+    logging.ERROR)
 
 
 class Client():
@@ -59,8 +65,8 @@ class Client():
             response = self.session.request(
                 method, final_url, headers=headers,
                 params=params, **kwargs)
-        except RetryError as e:
-            raise errors.StoreRetryError(e) from e
+        except (ConnectionError, RetryError) as e:
+            raise errors.StoreNetworkError(e) from e
 
         return response
 
