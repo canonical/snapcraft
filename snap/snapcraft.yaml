@@ -45,12 +45,17 @@ parts:
         - patchelf
         - squashfs-tools
         - xdelta3
-    install: |
+    override-build: |
+        snapcraftctl build
         TRIPLET_PATH="$SNAPCRAFT_PART_INSTALL/usr/lib/$(gcc -print-multiarch)"
         LIBSODIUM=$(readlink -n $TRIPLET_PATH/libsodium.so.18)
         ln -s $LIBSODIUM $TRIPLET_PATH/libsodium.so
         patch -d $SNAPCRAFT_PART_INSTALL/lib/python3.5/site-packages -p1 < $SNAPCRAFT_STAGE/pyyaml-support-high-codepoints.diff
         patch $SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/ctypes/__init__.py $SNAPCRAFT_STAGE/ctypes_init.diff
+    override-prime: |
+        # This is the last step, let's now compile all our pyc files.
+        snapcraftctl prime
+        ./usr/bin/python3 -m compileall .
     after: [patches, apt]
   apt:
       source: https://github.com/Debian/apt
@@ -58,15 +63,12 @@ parts:
       source-tag: 1.2.19
       source-depth: 1
       plugin: autotools
-      prepare: |
+      override-build: |
           make startup
-      build: |
           mkdir apt-build
           cd apt-build
           ../configure
           make
-      install: |
-          cd apt-build
           install -d $SNAPCRAFT_PART_INSTALL/apt
           cp -r bin/methods/* $SNAPCRAFT_PART_INSTALL/apt/
           cp -r bin/methods/* $SNAPCRAFT_PART_INSTALL/apt/

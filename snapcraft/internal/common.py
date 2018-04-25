@@ -86,7 +86,18 @@ def get_core_path(base):
     return os.path.join(os.path.sep, 'snap', base, 'current')
 
 
-def format_snap_name(snap):
+def format_snap_name(snap, *, allow_empty_version: bool=False) -> str:
+    """Return a filename representing the snap depending on snap attributes.
+
+    :param dict snap: a dictionary of keys containing name, version and arch.
+    :param bool allow_empty_version: if set a filename without a version is
+                                     allowed.
+    """
+    if allow_empty_version and snap.get('version') is None:
+        template = '{name}_{arch}.snap'
+    else:
+        template = '{name}_{version}_{arch}.snap'
+
     if 'arch' not in snap:
         snap['arch'] = snap.get('architectures', None)
     if not snap['arch']:
@@ -96,7 +107,7 @@ def format_snap_name(snap):
     else:
         snap['arch'] = 'multi'
 
-    return '{name}_{version}_{arch}.snap'.format(**snap)
+    return template.format(**snap)
 
 
 def is_snap() -> bool:

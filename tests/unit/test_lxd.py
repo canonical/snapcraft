@@ -306,6 +306,57 @@ class ContainerbuildTestCase(LXDTestCase):
                       '--classic']),
             ])
 
+    @patch('snapcraft.internal.lxd.Containerbuild._container_run')
+    @patch('snapcraft.internal.common.is_snap')
+    def test_inject_snap_no_refresh_running(
+            self, mock_is_snap, mock_container_run):
+        mock_is_snap.return_value = True
+
+        def call_effect(*args, **kwargs):
+            if args[0][-3:] == ['snap', 'watch', '--last=auto-refresh']:
+                raise CalledProcessError(returncode=1, cmd=args[0])
+            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
+
+        self.fake_lxd.check_call_mock.side_effect = call_effect
+
+        fake_snapd = fixture_setup.FakeSnapd()
+        self.useFixture(fake_snapd)
+        fake_snapd.snaps_result = [
+            {'name': 'core',
+             'confinement': 'strict',
+             'id': '2kkitQurgOkL3foImG4wDwn9CIANuHlt',
+             'channel': 'stable',
+             'revision': '123'},
+            {'name': 'snapcraft',
+             'confinement': 'classic',
+             'id': '3lljuRvshPlM4gpJnH5xExo0DJBOvImu',
+             'channel': 'edge',
+             'revision': '345'},
+        ]
+        # Container was created before, and isn't running
+        self.fake_lxd.name = 'myremote:snapcraft-project'
+        self.fake_lxd.status = 'Stopped'
+
+        self.make_containerbuild().execute()
+
+        if hasattr(self, 'cross') and self.cross:
+            mock_container_run.assert_has_calls([
+                call(['snap', 'install', 'core', '--channel', 'stable']),
+                call(['snap', 'refresh', 'core', '--channel', 'stable']),
+                call(['snap', 'install', 'snapcraft', '--channel', 'edge',
+                      '--classic']),
+                call(['snap', 'refresh', 'snapcraft', '--channel', 'edge',
+                      '--classic']),
+            ])
+        else:
+            mock_container_run.assert_has_calls([
+                call(['snap', 'ack', '/run/core_123.assert']),
+                call(['snap', 'install', '/run/core_123.snap']),
+                call(['snap', 'ack', '/run/snapcraft_345.assert']),
+                call(['snap', 'install', '/run/snapcraft_345.snap',
+                      '--classic']),
+            ])
+
     @patch('snapcraft.internal.common.is_snap')
     def test_parallel_invocation(self, mock_is_snap):
         mock_is_snap.side_effect = lambda: False
@@ -446,6 +497,7 @@ class ContainerbuildTestCase(LXDTestCase):
         ])
         mock_container_run.assert_has_calls([
             call(['apt-get', 'install', 'squashfuse', '-y']),
+            call(['snap', 'watch', '--last=auto-refresh']),
             call(['snap', 'ack', '/run/core_123.assert']),
             call(['snap', 'install', '/run/core_123.snap']),
             call(['snap', 'ack', '/run/snapcraft_345.assert']),
@@ -569,6 +621,7 @@ class ContainerbuildTestCase(LXDTestCase):
         ])
         mock_container_run.assert_has_calls([
             call(['apt-get', 'install', 'squashfuse', '-y']),
+            call(['snap', 'watch', '--last=auto-refresh']),
             call(['snap', 'ack', '/run/snapcraft_123.assert']),
             call(['snap', 'install', '/run/snapcraft_123.snap', '--classic']),
         ])
@@ -663,3 +716,23 @@ class FailedImageInfoTestCase(LXDBaseTestCase):
 
         self.make_containerbuild().execute()
         self.assertEqual(self.fake_logger.output, self.expected_warn)
+
+
+class SnapOutputTestCase(unit.TestCase):
+
+    scenarios = [
+        ('all info', dict(snap=dict(name='name', version='version',
+                                    architectures=['amd64']),
+                          expected='name_version_amd64.snap')),
+        ('missing version', dict(snap=dict(name='name',
+                                 architectures=['amd64']),
+                                 expected='name_amd64.snap')),
+    ]
+
+    def test_output_set_correctly(self):
+        project = ProjectOptions()
+        instance = lxd.Containerbuild(project_options=project,
+                                      source='tarball.tgz',
+                                      metadata=self.snap,
+                                      container_name='name')
+        self.assertThat(instance._snap_output, Equals(self.expected))

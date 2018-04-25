@@ -24,7 +24,8 @@ import unittest.mock
 from textwrap import dedent
 
 import fixtures
-from testtools.matchers import Contains, Equals, MatchesRegex, Not, StartsWith
+from testtools.matchers import (Contains, Equals, Is, MatchesRegex, Not,
+                                StartsWith)
 from testscenarios.scenarios import multiply_scenarios
 
 import snapcraft
@@ -530,6 +531,29 @@ parts:
         metadata = config.get_metadata()
         self.assertThat(metadata['name'], Equals('test'))
         self.assertThat(metadata['version'], Equals('1'))
+        self.assertThat(metadata['arch'], Equals(['amd64']))
+
+    def test_get_metadata_version_adopted(self):
+        self.make_snapcraft_yaml(dedent("""\
+            name: test
+            summary: test
+            description: nothing
+            architectures:
+              - build-on: all
+                run-on: amd64
+            confinement: strict
+            grade: stable
+            adopt-info: part1
+
+            parts:
+              part1:
+                plugin: go
+                stage-packages: [fswebcam]
+            """))
+        config = project_loader.load_config()
+        metadata = config.get_metadata()
+        self.assertThat(metadata['name'], Equals('test'))
+        self.assertThat(metadata['version'], Is(None))
         self.assertThat(metadata['arch'], Equals(['amd64']))
 
     def test_version_script(self):

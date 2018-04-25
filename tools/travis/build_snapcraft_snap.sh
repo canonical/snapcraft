@@ -18,6 +18,11 @@
 
 set -ev
 
+if [ "$TRAVIS_OS_NAME" = "osx" ]; then
+    echo "We do not build the snapcraft snap on osx"
+    exit 0
+fi
+
 script_path="$(dirname "$0")"
 project_path="$(readlink -f "$script_path/../..")"
 
