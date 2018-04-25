@@ -71,13 +71,6 @@ class TestParserWikis(testscenarios.WithScenarios, ParserTestCase):
         self.useFixture(temp_cwd_fixture)
         super().setUp()
 
-        # Since we're running in a temporary directory use
-        # the original source tree version of snapcraft-parser
-        if not os.getenv('SNAPCRAFT_FROM_DEB', False):
-            self.snapcraft_parser_command = os.path.join(
-                os.path.dirname(__file__), '..', '..', '..', '..',
-                'bin', 'snapcraft-parser')
-
     def _read_file(self, filename):
         content = ''
         with open(filename) as fp:

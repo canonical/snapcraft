@@ -38,7 +38,7 @@ class JHBuildPluginTestCase(integration.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.fake_server_fixture = fixture_setup._FakeServerRunning()
+        self.fake_server_fixture = fixture_setup.FakeServerRunning()
         self.fake_server_fixture.fake_server = TestFakeServer
 
     def start_fake_server(self):

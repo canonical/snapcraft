@@ -1,0 +1,29 @@
+environment:
+  matrix:
+  - PYTHON: C:\\Python35-x64
+clone_depth: 1
+cache:
+- '%LOCALAPPDATA%\pip\Cache\http'
+- '%LOCALAPPDATA%\pip\Cache\wheels'
+build: off
+before_test:
+- cmd: |
+    %PYTHON%\\python.exe -m venv venv
+    venv\\Scripts\\activate.bat
+    ECHO %VIRTUAL_ENV%
+    python -c "import sys; print(sys.executable)"
+    python -m pip install -r requirements.txt
+    python -m pip install -r requirements-devel.txt
+    python -m pip install --prefix %VIRTUAL_ENV% -e .
+test_script:
+- cmd: |
+    venv\\Scripts\\activate.bat
+    ECHO %VIRTUAL_ENV%
+    python -m unittest run tests.integration.store.test_store_login_logout -v
+after_test:
+- cmd: |
+    venv\\Scripts\\activate.bat
+    ECHO %VIRTUAL_ENV%
+    python setup.py sdist
+artifacts:
+- path: dist\*
