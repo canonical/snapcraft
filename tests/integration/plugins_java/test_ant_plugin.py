@@ -22,6 +22,6 @@ from tests import integration
 class AntPluginTestCase(integration.TestCase):
 
     def test_build_ant_plugin(self):
-        self.run_snapcraft('prime', 'ant-with-options')
-        jar_path = os.path.join(self.prime_dir, 'jar', 'foo.jar')
+        self.run_snapcraft('stage', 'ant-with-options')
+        jar_path = os.path.join(self.stage_dir, 'jar', 'foo.jar')
         self.assertTrue(os.path.exists(jar_path))

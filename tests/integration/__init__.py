@@ -742,3 +742,18 @@ def get_package_version(package_name, series, deb_arch):
     package = query.text.strip().split('\n')[-1]
     package_status = [i.strip() for i in package.strip().split('|')]
     return package_status[1]
+
+
+def add_stage_packages(*, part_name: str, stage_packages: List[str],
+                       snapcraft_yaml_file=None):
+    if snapcraft_yaml_file is None:
+        snapcraft_yaml_file = os.path.join('snap', 'snapcraft.yaml')
+
+    with open(snapcraft_yaml_file) as file_read:
+        y = yaml.load(file_read)
+        if 'stage-packages' in y['parts'][part_name]:
+            y['parts'][part_name]['stage-packages'].extend(stage_packages)
+        else:
+            y['parts'][part_name]['stage-packages'] = stage_packages
+    with open(snapcraft_yaml_file, 'w') as file_write:
+        yaml.dump(y, file_write)

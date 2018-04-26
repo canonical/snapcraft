@@ -18,17 +18,19 @@ import subprocess
 
 from testtools.matchers import Equals
 
-from tests import (
-    fixture_setup,
-    integration
-)
+from tests import fixture_setup, integration, os_release
 
 
 class PythonTestCase(integration.SnapdIntegrationTestCase):
 
     def test_install_and_execution(self):
+        self.copy_project_to_cwd('python-hello')
+        if os_release.get_version_codename() != 'xenial':
+            integration.add_stage_packages(part_name='python-part',
+                                           stage_packages=['libc6'])
+
         with fixture_setup.WithoutSnapInstalled('python-hello'):
-            self.run_snapcraft(project_dir='python-hello')
+            self.run_snapcraft()
             self.install_snap()
             self.assertThat(
                 subprocess.check_output(

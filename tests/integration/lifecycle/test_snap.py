@@ -28,11 +28,12 @@ from testtools.matchers import (
     Not,
 )
 
-from tests import integration
+from tests import integration, skip
 
 
 class SnapTestCase(integration.TestCase):
 
+    @skip.skip_unless_codename('xenial', 'test designed for xenial')
     def test_snap(self):
         self.copy_project_to_cwd('assemble')
         self.run_snapcraft('snap')
@@ -156,6 +157,7 @@ class SnapTestCase(integration.TestCase):
             "inexistent-package\n")
         self.assertThat(exception.output, EndsWith(expected))
 
+    @skip.skip_unless_codename('xenial', 'test designed for xenial')
     def test_snap_with_exposed_files(self):
         self.copy_project_to_cwd('nil-plugin-pkgfilter')
         self.run_snapcraft('stage')
