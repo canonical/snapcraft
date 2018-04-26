@@ -1689,9 +1689,9 @@ class ValidArchitecturesYamlTestCase(YamlBaseTestCase):
     ]
 
     arch_scenarios = [
-        ('amd64', {'deb_arch': 'amd64'}),
-        ('i386', {'deb_arch': 'i386'}),
-        ('armhf', {'deb_arch': 'armhf'}),
+        ('amd64', {'target_arch': 'amd64'}),
+        ('i386', {'target_arch': 'i386'}),
+        ('armhf', {'target_arch': 'armhf'}),
     ]
 
     scenarios = multiply_scenarios(yaml_scenarios, arch_scenarios)
@@ -1713,9 +1713,9 @@ class ValidArchitecturesYamlTestCase(YamlBaseTestCase):
 
         try:
             c = _config.Config(
-                snapcraft.project.Project(target_deb_arch=self.deb_arch))
+                snapcraft.project.Project(target_deb_arch=self.target_arch))
 
-            expected = getattr(self, 'expected_{}'.format(self.deb_arch))
+            expected = getattr(self, 'expected_{}'.format(self.target_arch))
             self.assertThat(c.data['architectures'], Equals(expected))
         except errors.YamlValidationError as e:
             self.fail('Expected YAML to be valid, got an error: {}'.format(e))
