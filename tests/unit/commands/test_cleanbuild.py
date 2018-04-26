@@ -95,7 +95,7 @@ class CleanBuildCommandTestCase(CleanBuildCommandBaseTestCase):
             'Retrieved snap-test_1.0_amd64.snap\n',
             self.fake_logger.output)
 
-        with tarfile.open('snap-test_1.0_source.tar.bz2') as tar:
+        with tarfile.open('snap-test_source.tar.bz2') as tar:
             tar_members = tar.getnames()
 
         for f in self.files_no_tar:
