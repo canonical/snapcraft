@@ -24,6 +24,8 @@ jobs:
       script: sudo ./tools/travis/run_tests.sh tests/unit
     - if: type != cron
       script: SNAPCRAFT_TEST_MOCK_MACHINE=armv7l sudo ./tools/travis/run_tests.sh tests/unit
+    - if: type != cron
+      script: SNAPCRAFT_TEST_MOCK_MACHINE=aarch64 sudo ./tools/travis/run_tests.sh tests/unit
     - stage: osx-integration-store
       os: osx
       script: SNAPCRAFT_FROM_BREW=1 ./tools/travis/run_tests.sh tests.integration.store.test_store_login_logout use-run
