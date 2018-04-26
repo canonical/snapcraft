@@ -81,7 +81,8 @@ class VersionScriptTestCase(testscenarios.WithScenarios,
         self.run_snapcraft('snap')
 
         self.assertThat(
-            'version-script-test_{}_amd64.snap'.format(self.expected_version),
+            'version-script-test_{}_{}.snap'.format(
+                self.expected_version, self.deb_arch),
             FileExists())
 
 
