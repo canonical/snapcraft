@@ -26,6 +26,7 @@ from snapcraft.internal.project_loader.grammar_processing import (
     _part_grammar_processor as processor
 )
 from tests import unit
+from tests.fixture_setup import FakeSnapd
 
 
 def load_tests(loader, tests, ignore):
@@ -225,6 +226,15 @@ class PartGrammarBuildSnapsTestCase(unit.TestCase):
     ]
 
     scenarios = multiply_scenarios(source_scenarios, arch_scenarios)
+
+    def setUp(self):
+        super().setUp()
+
+        fake_snapd = FakeSnapd()
+        fake_snapd.find_result = [{
+            'hello': {'channels': {
+                'latest/stable': {'confinement': 'devmode'}}}}]
+        self.useFixture(fake_snapd)
 
     @mock.patch('platform.architecture')
     @mock.patch('platform.machine')
