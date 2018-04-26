@@ -21,7 +21,7 @@ import yaml
 from testtools.matchers import (Equals, FileContains, FileExists, MatchesRegex,
                                 Not)
 
-from tests import integration
+from tests import integration, os_release
 from tests.matchers import HasArchitecture
 
 
@@ -41,7 +41,16 @@ class GoPluginTestCase(integration.TestCase):
         if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
             self.skipTest("The autopkgtest armhf runners can't install snaps")
 
-        self.run_snapcraft('prime', 'go-gotty')
+        self.copy_project_to_cwd('go-gotty')
+        if os_release.get_version_codename() != 'xenial':
+            snapcraft_yaml_file = 'snapcraft.yaml'
+            with open(snapcraft_yaml_file) as f:
+                snapcraft_yaml = yaml.load(f)
+                snapcraft_yaml['parts']['gotty']['stage-packages'] = ['libc6']
+            with open(snapcraft_yaml_file, 'w') as f:
+                yaml.dump(snapcraft_yaml, f)
+
+        self.run_snapcraft('prime')
 
         bin_path = os.path.join(self.prime_dir, 'bin', 'gotty')
 
@@ -49,7 +58,11 @@ class GoPluginTestCase(integration.TestCase):
 
         interpreter = subprocess.check_output([
             self.patchelf_command, '--print-interpreter', bin_path]).decode()
-        expected_interpreter = r'^/snap/core/current/.*'
+        # On anything greater than xenial we will have a libc6 discrepancy
+        if os_release.get_version_codename() == 'xenial':
+            expected_interpreter = r'^/snap/core/current/.*'
+        else:
+            expected_interpreter = r'^/snap/gotty/current/.*'
         self.assertThat(interpreter, MatchesRegex(expected_interpreter))
 
     def test_building_multiple_main_packages(self):
