@@ -107,9 +107,9 @@ class NodePluginTestCase(NodePluginBaseTestCase):
         else:
             expected_tar_calls = [
                 mock.call(self.nodejs_url, plugin._npm_dir),
+                mock.call().download(),
                 mock.call('https://yarnpkg.com/latest.tar.gz',
                           plugin._npm_dir),
-                mock.call().download(),
                 mock.call().download(),
                 mock.call().provision(plugin.installdir, clean_target=False,
                                       keep_tarball=True),
@@ -161,10 +161,10 @@ class NodePluginTestCase(NodePluginBaseTestCase):
             ]
             expected_tar_calls = [
                 mock.call(self.nodejs_url, plugin._npm_dir),
-                mock.call('https://yarnpkg.com/latest.tar.gz',
-                          plugin._npm_dir),
                 mock.call().provision(plugin.installdir, clean_target=False,
                                       keep_tarball=True),
+                mock.call('https://yarnpkg.com/latest.tar.gz',
+                          plugin._npm_dir),
                 mock.call().provision(plugin._npm_dir,
                                       clean_target=False, keep_tarball=True),
             ]
@@ -216,10 +216,10 @@ class NodePluginTestCase(NodePluginBaseTestCase):
             ]
             expected_tar_calls = [
                 mock.call(self.nodejs_url, plugin._npm_dir),
-                mock.call('https://yarnpkg.com/latest.tar.gz',
-                          plugin._npm_dir),
                 mock.call().provision(plugin.installdir, clean_target=False,
                                       keep_tarball=True),
+                mock.call('https://yarnpkg.com/latest.tar.gz',
+                          plugin._npm_dir),
                 mock.call().provision(plugin._npm_dir,
                                       clean_target=False, keep_tarball=True),
             ]
@@ -270,9 +270,9 @@ class NodePluginTestCase(NodePluginBaseTestCase):
             ]
             expected_tar_calls = [
                 mock.call(self.nodejs_url, plugin._npm_dir),
+                mock.call().download(),
                 mock.call('https://yarnpkg.com/latest.tar.gz',
                           plugin._npm_dir),
-                mock.call().download(),
                 mock.call().download(),
                 mock.call().provision(plugin.installdir, clean_target=False,
                                       keep_tarball=True),
