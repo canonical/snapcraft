@@ -26,17 +26,21 @@ from testtools.matchers import (
     FileExists
 )
 
-from tests import integration, fixture_setup
+from tests import integration, fixture_setup, os_release
 
 
 class PythonPluginTestCase(integration.TestCase):
 
     def test_use_staged_pip(self):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        stage_packages = ['python3-pip']
+        # bionic (and potentially future releases) require python3-distutils.
+        if os_release.get_version_codename() not in ('xenial', 'artful'):
+            stage_packages.append('python3-distutils')
         snapcraft_yaml.update_part('test-part', {
             'plugin': 'python',
             'source': '.',
-            'stage-packages': ['python3-pip']
+            'stage-packages': stage_packages
         })
         self.useFixture(snapcraft_yaml)
 
