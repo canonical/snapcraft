@@ -20,20 +20,17 @@ import json
 import logging
 import os
 import pipes
-import requests
-import requests_unixsocket
 import shutil
 import sys
 import tempfile
 import contextlib
 import subprocess
 import time
-from urllib import parse
 from textwrap import dedent
 from typing import List
 
 from snapcraft.internal import common
-from . import _errors as errors
+from . import errors
 from snapcraft.internal.errors import (
         InvalidContainerImageInfoError,
 )
@@ -259,29 +256,22 @@ class Containerbuild:
             self._container_run(['apt-get', 'install', 'snapcraft', '-y'])
 
     def _inject_snap(self, name: str, tmp_dir: str):
-        session = requests_unixsocket.Session()
-        # Cf. https://github.com/snapcore/snapd/wiki/REST-API#get-v2snapsname
-        # TODO use get_local_snap info from the snaps module.
-        slug = 'snaps/{}'.format(parse.quote(name, safe=''))
-        api = snaps.get_snapd_socket_path_template().format(slug)
-        try:
-            json = session.request('GET', api).json()
-        except requests.exceptions.ConnectionError as e:
-            raise errors.SnapdConnectionError(api) from e
-        if json['type'] == 'error':
-            raise errors.SnapdQueryError(name, json['result']['message'])
-        id = json['result']['id']
+        snap = snaps.SnapPackage(name)
+        if not snap.installed:
+            raise errors.ContainerSnapNotFoundError(name)
+        snap_info = snap.get_local_snap_info()
+        id = snap_info['id']
         # Lookup confinement to know if we need to --classic when installing
-        is_classic = json['result']['confinement'] == 'classic'
+        is_classic = snap_info['confinement'] == 'classic'
 
         # If the server has a different arch we can't inject local snaps
         target_arch = self._project_options.target_arch
         if (target_arch and target_arch != self._get_container_arch()):
-            channel = json['result']['channel']
+            channel = snap_info['channel']
             return self._install_snap(name, channel, is_classic=is_classic)
 
         # Revisions are unique, so we don't need to know the channel
-        rev = json['result']['revision']
+        rev = snap_info['revision']
 
         # https://github.com/snapcore/snapd/blob/master/snap/info.go
         # MountFile

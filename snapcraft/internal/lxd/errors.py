@@ -46,8 +46,8 @@ class ContainerLXDNotInstalledError(ContainerError):
 
     fmt = (
         "Failed to initialize container: "
-        "LXD could not be found. "
-        "You must have LXD installed in order to use cleanbuild.\n"
+        "LXD could not be found.\n"
+        "You must have LXD installed in order to use cleanbuild. "
         "Refer to the documentation at "
         "https://linuxcontainers.org/lxd/getting-started-cli."
     )
@@ -60,9 +60,9 @@ class ContainerLXDRemoteNotFoundError(ContainerError):
 
     fmt = (
         "Failed to initialize container: "
-        "There are either no permissions or the remote {remote!r} "
-        "does not exist. "
-        "Verify the existing remotes by running `lxc remote list`.\n"
+        "there are either no permissions or the remote {remote!r} "
+        "does not exist.\n"
+        "Verify the existing remotes by running `lxc remote list`. "
         "Refer to the documentation at "
         "https://linuxcontainers.org/lxd/getting-started-cli."
     )
@@ -75,7 +75,7 @@ class ContainerLXDSetupError(ContainerError):
 
     fmt = (
         "Failed to initialize container: "
-        "Something seems to be wrong with your installation of LXD.\n"
+        "something seems to be wrong with your installation of LXD.\n"
         "Refer to the documentation at "
         "https://linuxcontainers.org/lxd/getting-started-cli."
     )
@@ -88,13 +88,12 @@ class ContainerStartFailedError(ContainerError):
 
     fmt = (
         "Failed to start container: "
-        "The local folder could not be mounted into the container. "
+        "the local folder could not be mounted into the container.\n"
         "The files /etc/subuid and /etc/subgid need to "
         "contain this line for mounting the local folder:\n"
         "    root:1000:1\n"
-        "Note: Add the line to both files, do not "
-        "remove any existing lines.\n"
-        "Restart LXD after making this change.\n"
+        "Note: Add the line to both files, do not remove any existing lines. "
+        "Restart LXD after making this change."
     )
 
     def __init__(self):
@@ -105,7 +104,7 @@ class ContainerCreationFailedError(ContainerError):
 
     fmt = (
         "Failed to create container: "
-        "A new LXD container could not be created.\n"
+        "a new LXD container could not be created.\n"
         "Refer to the documentation at "
         "https://linuxcontainers.org/lxd/getting-started-cli."
     )
@@ -118,8 +117,8 @@ class ContainerNetworkError(ContainerError):
 
     fmt = (
         "Failed to get a network connection in the container: "
-        "Could not successfully ping {url!r}. "
-        "If using a proxy, check its configuration.\n"
+        "could not successfully ping {url!r}.\n"
+        "If using a proxy, check its configuration. "
         "Refer to the documentation at "
         "https://linuxcontainers.org/lxd/getting-started-cli."
     )
@@ -145,7 +144,7 @@ class ContainerSnapcraftCmdError(ContainerRunError):
 
     fmt = (
         'Snapcraft command failed in the container: '
-        '{command!r} exited with {exit_code}\n'
+        '{command!r} exited with {exit_code}'
     )
 
     def __init__(self, *, command, exit_code):
@@ -154,23 +153,12 @@ class ContainerSnapcraftCmdError(ContainerRunError):
         super().__init__(command=command, exit_code=exit_code)
 
 
-class SnapdQueryError(ContainerError):
+class ContainerSnapNotFoundError(ContainerError):
 
     fmt = (
-        "Failed to get snap in container: "
-        "Error querying {snap!r} snap: {message}"
+        "Failed to install {snap_name!r} snap in container: "
+        "the snap is not installed on the host."
     )
 
-    def __init__(self, snap, message):
-        super().__init__(snap=snap, message=message)
-
-
-class SnapdConnectionError(ContainerError):
-
-    fmt = (
-        "Failed to get snap in container: "
-        "Could not connect to {api!r}."
-    )
-
-    def __init__(self, api):
-        super().__init__(api=api)
+    def __init__(self, snap_name: str) -> None:
+        super().__init__(snap_name=snap_name)

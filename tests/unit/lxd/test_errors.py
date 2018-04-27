@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 from testtools.matchers import Equals
 
-from snapcraft.internal.lxd import _errors as errors
+from snapcraft.internal.lxd import errors
 from tests import unit
 
 
@@ -27,8 +27,8 @@ class ErrorFormattingTestCase(unit.TestCase):
             'kwargs': {'url': 'test'},
             'expected_message': (
                 "Failed to get a network connection in the container: "
-                "Could not successfully ping 'test'. "
-                "If using a proxy, check its configuration.\n"
+                "could not successfully ping 'test'.\n"
+                "If using a proxy, check its configuration. "
                 "Refer to the documentation at "
                 "https://linuxcontainers.org/lxd/getting-started-cli.")}),
         ('ContainerArchitectureError', {
@@ -42,8 +42,8 @@ class ErrorFormattingTestCase(unit.TestCase):
             'kwargs': {},
             'expected_message': (
                 "Failed to initialize container: "
-                "LXD could not be found. "
-                "You must have LXD installed in order to use cleanbuild.\n"
+                "LXD could not be found.\n"
+                "You must have LXD installed in order to use cleanbuild. "
                 "Refer to the documentation at "
                 "https://linuxcontainers.org/lxd/getting-started-cli.")}),
         ('ContainerLXDSetupError', {
@@ -51,7 +51,7 @@ class ErrorFormattingTestCase(unit.TestCase):
             'kwargs': {},
             'expected_message': (
                 "Failed to initialize container: "
-                "Something seems to be wrong with your installation of LXD.\n"
+                "something seems to be wrong with your installation of LXD.\n"
                 "Refer to the documentation at "
                 "https://linuxcontainers.org/lxd/getting-started-cli.")}),
         ('ContainerLXDRemoteNotFoundError', {
@@ -59,9 +59,9 @@ class ErrorFormattingTestCase(unit.TestCase):
             'kwargs': {'remote': 'test'},
             'expected_message': (
                 "Failed to initialize container: "
-                "There are either no permissions or the remote 'test' "
-                "does not exist. "
-                "Verify the existing remotes by running `lxc remote list`.\n"
+                "there are either no permissions or the remote 'test' "
+                "does not exist.\n"
+                "Verify the existing remotes by running `lxc remote list`. "
                 "Refer to the documentation at "
                 "https://linuxcontainers.org/lxd/getting-started-cli.")}),
         ('ContainerStartFailedError', {
@@ -69,19 +69,19 @@ class ErrorFormattingTestCase(unit.TestCase):
             'kwargs': {},
             'expected_message': (
                 "Failed to start container: "
-                "The local folder could not be mounted into the container. "
+                "the local folder could not be mounted into the container.\n"
                 "The files /etc/subuid and /etc/subgid need to "
                 "contain this line for mounting the local folder:\n"
                 "    root:1000:1\n"
                 "Note: Add the line to both files, do not "
-                "remove any existing lines.\n"
-                "Restart LXD after making this change.\n")}),
+                "remove any existing lines. "
+                "Restart LXD after making this change.")}),
         ('ContainerCreationFailedError', {
             'exception': errors.ContainerCreationFailedError,
             'kwargs': {},
             'expected_message': (
                 "Failed to create container: "
-                "A new LXD container could not be created.\n"
+                "a new LXD container could not be created.\n"
                 "Refer to the documentation at "
                 "https://linuxcontainers.org/lxd/getting-started-cli.")}),
         ('ContainerRunError string', {
@@ -110,7 +110,7 @@ class ErrorFormattingTestCase(unit.TestCase):
             },
             'expected_message': (
                 "Snapcraft command failed in the container: "
-                "'test-command' exited with 1\n")}),
+                "'test-command' exited with 1")}),
         ('ContainerSnapcraftCmdError list', {
             'exception': errors.ContainerSnapcraftCmdError,
             'kwargs': {
@@ -119,20 +119,13 @@ class ErrorFormattingTestCase(unit.TestCase):
             },
             'expected_message': (
                 "Snapcraft command failed in the container: "
-                "'test-command test-argument' exited with 1\n")}),
-        ('SnapdQueryError', {
-            'exception': errors.SnapdQueryError,
-            'kwargs': {'snap': 'test', 'message': 'foo'},
+                "'test-command test-argument' exited with 1")}),
+        ('ContainerSnapNotFoundError', {
+            'exception': errors.ContainerSnapNotFoundError,
+            'kwargs': {'snap_name': 'test'},
             'expected_message': (
-                "Failed to get snap in container: "
-                "Error querying 'test' snap: foo"
-                )}),
-        ('SnapdConnectionError', {
-            'exception': errors.SnapdConnectionError,
-            'kwargs': {'api': 'test'},
-            'expected_message': (
-                "Failed to get snap in container: "
-                "Could not connect to 'test'.")}),
+                "Failed to install 'test' snap in container: "
+                "the snap is not installed on the host.")}),
     )
 
     def test_error_formatting(self):

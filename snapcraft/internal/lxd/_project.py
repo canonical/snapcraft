@@ -20,7 +20,7 @@ import os
 import subprocess
 from typing import List
 
-from . import _errors as errors
+from . import errors
 from ._containerbuild import Containerbuild
 from snapcraft.internal import lifecycle
 from snapcraft.cli import echo

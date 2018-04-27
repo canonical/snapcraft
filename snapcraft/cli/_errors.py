@@ -23,7 +23,7 @@ from textwrap import dedent
 from . import echo
 from snapcraft.config import CLIConfig as _CLIConfig
 from snapcraft.internal import errors
-from snapcraft.internal.lxd import _errors as lxd_errors
+from snapcraft.internal.lxd import errors as lxd_errors
 
 import click
 # raven is not available on 16.04
