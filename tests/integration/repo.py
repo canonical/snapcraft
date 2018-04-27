@@ -23,10 +23,14 @@ from requests import exceptions
 
 
 def is_snap_installed(snap):
+    return get_local_snap_info(snap) is not None
+
+
+def get_local_snap_info(snap):
     local_snap_info = None
     with contextlib.suppress(exceptions.HTTPError):
         local_snap_info = _get_local_snap_info(_get_parsed_snap(snap)[0])
-    return local_snap_info is not None
+    return local_snap_info
 
 
 def _get_parsed_snap(snap):

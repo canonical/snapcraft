@@ -31,6 +31,7 @@ import snapcraft
 from snapcraft.internal import common, elf
 from snapcraft.internal.project_loader import grammar_processing
 from tests import fake_servers, fixture_setup
+from tests.file_utils import get_snapcraft_path
 
 
 class ContainsList(list):
@@ -117,8 +118,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.addCleanup(common.set_schemadir, common.get_schemadir())
         self.addCleanup(common.set_librariesdir, common.get_librariesdir())
         self.addCleanup(common.reset_env)
-        common.set_schemadir(
-                os.path.join(__file__, '..', '..', '..', 'schema'))
+        common.set_schemadir(os.path.join(get_snapcraft_path(), 'schema'))
         self.fake_logger = fixtures.FakeLogger(level=logging.ERROR)
         self.useFixture(self.fake_logger)
 
@@ -198,7 +198,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         grammar_processor = grammar_processing.PartGrammarProcessor(
             plugin=plugin,
             properties=properties,
-            project_options=project_options,
+            project=project_options,
             repo=stage_packages_repo)
 
         return snapcraft.internal.pluginhandler.PluginHandler(

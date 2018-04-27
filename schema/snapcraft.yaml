@@ -9,12 +9,18 @@ definitions:
         items:
           minitems: 1
           uniqueItems: true
-          anyOf:
+          oneOf:
             - type: object
               usage: "on <selector>[,<selector>...]:"
               additionalProperties: false
               patternProperties:
                 ^on\s+.+$:
+                  $ref: "#/definitions/grammar-string"
+            - type: object
+              usage: "to <selector>[,<selector>...]:"
+              additionalProperties: false
+              patternProperties:
+                ^to\s+.+$:
                   $ref: "#/definitions/grammar-string"
             - type: object
               usage: "try:"
@@ -35,7 +41,7 @@ definitions:
     minitems: 1
     uniqueItems: true
     items:
-      anyOf:
+      oneOf:
         - type: string
           usage: "<string>"
         - type: object

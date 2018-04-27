@@ -18,24 +18,12 @@ import os
 import subprocess
 import tempfile
 
-from testtools.matchers import (
-    FileContains,
-    FileExists,
-)
+from testtools.matchers import FileContains, FileExists
 
-from tests import (
-    fixture_setup,
-    integration,
-    skip
-)
+from tests import integration, skip
 
 
 class CatkinTestCase(integration.TestCase):
-
-    def setUp(self):
-        super().setUp()
-        # share the cache in all tests.
-        self.useFixture(fixture_setup.SharedCache('ros'))
 
     @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
     def test_shared_ros_builds_without_catkin_in_underlay(self):

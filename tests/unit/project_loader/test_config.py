@@ -24,7 +24,8 @@ import unittest.mock
 from textwrap import dedent
 
 import fixtures
-from testtools.matchers import Contains, Equals, MatchesRegex, Not, StartsWith
+from testtools.matchers import (Contains, Equals, Is, MatchesRegex, Not,
+                                StartsWith)
 from testscenarios.scenarios import multiply_scenarios
 
 import snapcraft
@@ -530,6 +531,29 @@ parts:
         metadata = config.get_metadata()
         self.assertThat(metadata['name'], Equals('test'))
         self.assertThat(metadata['version'], Equals('1'))
+        self.assertThat(metadata['arch'], Equals(['amd64']))
+
+    def test_get_metadata_version_adopted(self):
+        self.make_snapcraft_yaml(dedent("""\
+            name: test
+            summary: test
+            description: nothing
+            architectures:
+              - build-on: all
+                run-on: amd64
+            confinement: strict
+            grade: stable
+            adopt-info: part1
+
+            parts:
+              part1:
+                plugin: go
+                stage-packages: [fswebcam]
+            """))
+        config = project_loader.load_config()
+        metadata = config.get_metadata()
+        self.assertThat(metadata['name'], Equals('test'))
+        self.assertThat(metadata['version'], Is(None))
         self.assertThat(metadata['arch'], Equals(['amd64']))
 
     def test_version_script(self):
@@ -1665,9 +1689,9 @@ class ValidArchitecturesYamlTestCase(YamlBaseTestCase):
     ]
 
     arch_scenarios = [
-        ('amd64', {'deb_arch': 'amd64'}),
-        ('i386', {'deb_arch': 'i386'}),
-        ('armhf', {'deb_arch': 'armhf'}),
+        ('amd64', {'target_arch': 'amd64'}),
+        ('i386', {'target_arch': 'i386'}),
+        ('armhf', {'target_arch': 'armhf'}),
     ]
 
     scenarios = multiply_scenarios(yaml_scenarios, arch_scenarios)
@@ -1689,9 +1713,9 @@ class ValidArchitecturesYamlTestCase(YamlBaseTestCase):
 
         try:
             c = _config.Config(
-                snapcraft.project.Project(target_deb_arch=self.deb_arch))
+                snapcraft.project.Project(target_deb_arch=self.target_arch))
 
-            expected = getattr(self, 'expected_{}'.format(self.deb_arch))
+            expected = getattr(self, 'expected_{}'.format(self.target_arch))
             self.assertThat(c.data['architectures'], Equals(expected))
         except errors.YamlValidationError as e:
             self.fail('Expected YAML to be valid, got an error: {}'.format(e))

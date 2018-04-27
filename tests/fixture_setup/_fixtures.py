@@ -22,7 +22,6 @@ import os
 import platform
 import pkgutil
 import shutil
-import socketserver
 import string
 import subprocess
 import sys
@@ -47,9 +46,9 @@ from tests import fake_servers
 from tests.fake_servers import (
     api,
     search,
-    snapd,
     upload
 )
+from tests.file_utils import get_snapcraft_path
 from tests.subprocess_utils import (
     call,
     call_with_output,
@@ -314,7 +313,7 @@ class FakeStore(fixtures.Fixture):
             'no_proxy', 'localhost,127.0.0.1'))
 
 
-class _FakeServerRunning(fixtures.Fixture):
+class FakeServerRunning(fixtures.Fixture):
     # fake_server needs to be set by implementing classes
 
     def setUp(self):
@@ -335,46 +334,46 @@ class _FakeServerRunning(fixtures.Fixture):
         thread.join()
 
 
-class FakePartsWikiOriginRunning(_FakeServerRunning):
+class FakePartsWikiOriginRunning(FakeServerRunning):
 
     fake_server = fake_servers.FakePartsWikiOriginServer
 
 
-class FakePartsWikiRunning(_FakeServerRunning):
+class FakePartsWikiRunning(FakeServerRunning):
 
     fake_server = fake_servers.FakePartsWikiServer
 
 
-class FakePartsWikiWithSlashesRunning(_FakeServerRunning):
+class FakePartsWikiWithSlashesRunning(FakeServerRunning):
 
     fake_server = fake_servers.FakePartsWikiWithSlashesServer
 
 
-class FakePartsServerRunning(_FakeServerRunning):
+class FakePartsServerRunning(FakeServerRunning):
 
     fake_server = fake_servers.FakePartsServer
 
 
-class FakeSSOServerRunning(_FakeServerRunning):
+class FakeSSOServerRunning(FakeServerRunning):
 
     def __init__(self, fake_store):
         super().__init__()
         self.fake_server = partial(fake_servers.FakeSSOServer, fake_store)
 
 
-class FakeStoreUploadServerRunning(_FakeServerRunning):
+class FakeStoreUploadServerRunning(FakeServerRunning):
 
     fake_server = upload.FakeStoreUploadServer
 
 
-class FakeStoreAPIServerRunning(_FakeServerRunning):
+class FakeStoreAPIServerRunning(FakeServerRunning):
 
     def __init__(self, fake_store):
         super().__init__()
         self.fake_server = partial(api.FakeStoreAPIServer, fake_store)
 
 
-class FakeStoreSearchServerRunning(_FakeServerRunning):
+class FakeStoreSearchServerRunning(FakeServerRunning):
 
     fake_server = search.FakeStoreSearchServer
 
@@ -909,10 +908,9 @@ class FakeAptCache(fixtures.Fixture):
         self.addCleanup(patcher.stop)
 
         # Add all the packages in the manifest.
-        with open(os.path.abspath(
-                os.path.join(
-                    __file__, '..', '..', 'snapcraft',
-                    'internal', 'repo', 'manifest.txt'))) as manifest_file:
+        with open(os.path.join(
+                    get_snapcraft_path(), 'snapcraft', 'internal', 'repo',
+                    'manifest.txt')) as manifest_file:
             self.add_packages([line.strip() for line in manifest_file])
 
     def add_package(self, package):
@@ -1052,76 +1050,6 @@ class SnapcraftYaml(fixtures.Fixture):
             yaml.dump(self.data, snapcraft_yaml_file)
 
 
-class UnixHTTPServer(socketserver.UnixStreamServer):
-
-    def get_request(self):
-        request, client_address = self.socket.accept()
-        # BaseHTTPRequestHandler expects a tuple with the client address at
-        # index 0, so we fake one
-        if len(client_address) == 0:
-            client_address = (self.server_address,)
-        return (request, client_address)
-
-
-class FakeSnapd(fixtures.Fixture):
-
-    @property
-    def snaps_result(self):
-        self.request_handler.snaps_result
-
-    @snaps_result.setter
-    def snaps_result(self, value):
-        self.request_handler.snaps_result = value
-
-    @property
-    def snap_details_func(self):
-        self.request_handler.snap_details_func
-
-    @snap_details_func.setter
-    def snap_details_func(self, value):
-        self.request_handler.snap_details_func = value
-
-    @property
-    def find_result(self):
-        self.request_handler.find_result
-
-    @find_result.setter
-    def find_result(self, value):
-        self.request_handler.find_result = value
-
-    def __init__(self):
-        super().__init__()
-        self.request_handler = snapd.FakeSnapdRequestHandler
-        self.snaps_result = []
-        self.find_result = []
-        self.snap_details_func = None
-
-    def setUp(self):
-        super().setUp()
-        snapd_fake_socket_path = tempfile.mkstemp()[1]
-        os.unlink(snapd_fake_socket_path)
-
-        socket_path_patcher = mock.patch(
-            'snapcraft.internal.repo.snaps.get_snapd_socket_path_template')
-        mock_socket_path = socket_path_patcher.start()
-        mock_socket_path.return_value = 'http+unix://{}/v2/{{}}'.format(
-            snapd_fake_socket_path.replace('/', '%2F'))
-        self.addCleanup(socket_path_patcher.stop)
-
-        self._start_fake_server(snapd_fake_socket_path)
-
-    def _start_fake_server(self, socket):
-        self.server = UnixHTTPServer(socket, self.request_handler)
-        server_thread = threading.Thread(target=self.server.serve_forever)
-        server_thread.start()
-        self.addCleanup(self._stop_fake_server, server_thread)
-
-    def _stop_fake_server(self, thread):
-        self.server.shutdown()
-        self.server.socket.close()
-        thread.join()
-
-
 class SharedCache(fixtures.Fixture):
 
     def __init__(self, name) -> None:
@@ -1205,8 +1133,8 @@ class FakeElf(fixtures.Fixture):
 
         self.core_base_path = self.useFixture(fixtures.TempDir()).path
 
-        binaries_path = os.path.abspath(os.path.join(
-            __file__, '..', 'bin', 'elf'))
+        binaries_path = os.path.join(get_snapcraft_path(),
+                                     'tests', 'bin', 'elf')
 
         new_binaries_path = self.useFixture(fixtures.TempDir()).path
         current_path = os.environ.get('PATH')
@@ -1356,8 +1284,7 @@ class FakeSnapcraftctl(fixtures.Fixture):
     def _setUp(self):
         super()._setUp()
 
-        snapcraft_path = os.path.realpath(
-            os.path.join(os.path.dirname(__file__), '..'))
+        snapcraft_path = get_snapcraft_path()
 
         tempdir = self.useFixture(fixtures.TempDir()).path
         altered_path = '{}:{}'.format(tempdir, os.environ.get('PATH'))

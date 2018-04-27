@@ -19,7 +19,7 @@ import subprocess
 import shutil
 from textwrap import dedent
 
-from testtools.matchers import Contains, Equals, FileExists
+from testtools.matchers import Equals, FileExists
 
 from tests import integration
 
@@ -126,7 +126,6 @@ class GitGenerateVersionTestCase(integration.GitSourceBaseTestCase):
                 version: git
                 summary: test git generated version
                 description: test git generated version with git hint
-                architectures: [amd64]
                 parts:
                     nil:
                         plugin: nil
@@ -138,7 +137,8 @@ class GitGenerateVersionTestCase(integration.GitSourceBaseTestCase):
     def test_tag(self):
         self.tag('2.0')
         self.run_snapcraft('snap')
-        self.assertThat('git-test_2.0_amd64.snap', FileExists())
+        self.assertThat(
+            'git-test_2.0_{}.snap'.format(self.deb_arch), FileExists())
 
     def test_tag_with_commits_ahead(self):
         self.tag('2.0')
@@ -147,21 +147,21 @@ class GitGenerateVersionTestCase(integration.GitSourceBaseTestCase):
         self.commit('new stub file')
         self.run_snapcraft('snap')
         revno = self.get_revno()[:7]
-        expected_file = 'git-test_2.0+git1.{}_amd64.snap'.format(revno)
+        expected_file = 'git-test_2.0+git1.{}_{}.snap'.format(
+            revno, self.deb_arch)
         self.assertThat(expected_file, FileExists())
 
     def test_no_tag(self):
         self.run_snapcraft('snap')
         revno = self.get_revno()[:7]
-        expected_file = 'git-test_0+git.{}_amd64.snap'.format(revno)
+        expected_file = 'git-test_0+git.{}_{}.snap'.format(
+            revno, self.deb_arch)
         self.assertThat(expected_file, FileExists())
 
     def test_no_git(self):
         shutil.rmtree('.git')
 
-        exception = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft, ['snap'])
-        self.assertThat(
-            exception.output,
-            Contains('fatal: Not a git repository (or any of the parent '
-                     'directories): .git'))
+        # Do not check the output as it is dependent on the tool used (git)
+        # and it has changed across releases.
+        self.assertRaises(subprocess.CalledProcessError,
+                          self.run_snapcraft, ['snap'])

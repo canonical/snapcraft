@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import platform
+import sys
 
 
 _32BIT_USERSPACE_ARCHITECTURE = {
@@ -58,6 +59,11 @@ _ARCH_TRANSLATIONS = {
 }
 
 
+_WINDOWS_TRANSLATIONS = {
+    'AMD64': 'x86_64'
+}
+
+
 def get_deb_arch():
     return _ARCH_TRANSLATIONS[_get_platform_architecture()]['deb']
 
@@ -68,6 +74,11 @@ def get_arch_triplet():
 
 def _get_platform_architecture():
     architecture = platform.machine()
+
+    # Translate the windows architectures we know of to architectures
+    # we can work with.
+    if sys.platform == 'win32':
+        architecture = _WINDOWS_TRANSLATIONS.get(architecture)
 
     if platform.architecture()[0] == '32bit':
         userspace = _32BIT_USERSPACE_ARCHITECTURE.get(architecture)

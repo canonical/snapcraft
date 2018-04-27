@@ -162,3 +162,71 @@ class BuildPackageGrammarTestCase(integration.TestCase):
             '''))
         self.run_snapcraft(['pull'])
         self.assertTrue(self._hello_is_installed())
+
+    def test_on_to_other_arch(self):
+        """Test that 'on to' fetches nothing when building for another arch."""
+
+        self.construct_yaml(parts=dedent('''\
+            my-part:
+              plugin: nil
+              build-packages:
+              - on i386 to other-arch:
+                - hello
+            '''))
+        self.run_snapcraft(['pull'])
+        self.assertFalse(self._hello_is_installed())
+
+    def test_on_to_other_arch_else(self):
+        """Test that 'on to' moves to the 'else' branch if on other arch."""
+
+        self.construct_yaml(parts=dedent('''\
+            my-part:
+              plugin: nil
+              build-packages:
+              - on i386 to other-arch:
+                - foo
+              - else:
+                - hello
+            '''))
+        self.run_snapcraft(['pull'])
+        self.assertTrue(self._hello_is_installed())
+
+    def test_on_to_other_arch_else_fail_on(self):
+        self.construct_yaml(parts=dedent('''\
+            my-part:
+              plugin: nil
+              build-packages:
+              - on i386 to other-arch:
+                - foo
+              - else fail
+            '''))
+        self.assertThat(self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft,
+            ['pull']).output, Contains(
+                "Unable to satisfy 'on i386 to other-arch', failure forced"))
+
+    def test_on_to_other_arch_else_fail_to(self):
+        self.construct_yaml(parts=dedent('''\
+            my-part:
+              plugin: nil
+              build-packages:
+              - on amd64 to other-arch:
+                - foo
+              - else fail
+            '''))
+        self.assertThat(self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft,
+            ['pull']).output, Contains(
+                "Unable to satisfy 'on amd64 to other-arch', failure forced"))
+
+    def test_global_build_package_on_to_other_arch_else(self):
+        """Test that on..to works in global build packages as well."""
+
+        self.construct_yaml(build_packages=dedent('''\
+            - on i386 to other-arch:
+              - foo
+            - else:
+              - hello
+            '''))
+        self.run_snapcraft(['pull'])
+        self.assertTrue(self._hello_is_installed())

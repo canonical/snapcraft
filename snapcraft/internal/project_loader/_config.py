@@ -220,8 +220,7 @@ class Config:
         self._ensure_no_duplicate_app_aliases()
 
         grammar_processor = grammar_processing.GlobalGrammarProcessor(
-            properties=self.data,
-            project_options=project_options)
+            properties=self.data, project=project_options)
 
         self.build_tools = grammar_processor.get_build_packages()
         self.build_tools |= set(project_options.additional_build_packages)
@@ -238,7 +237,7 @@ class Config:
 
     def get_metadata(self):
         return {'name': self.data['name'],
-                'version': self.data['version'],
+                'version': self.data.get('version', None),
                 'arch': self.data['architectures']}
 
     def _ensure_no_duplicate_app_aliases(self):

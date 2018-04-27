@@ -15,9 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 from distutils import util
+from typing import List
 
 from . import echo
 from snapcraft.internal import errors
+from snapcraft.formatting_utils import humanize_list
 
 
 class BuilderEnvironmentConfig:
@@ -31,6 +33,7 @@ class BuilderEnvironmentConfig:
 
     - host: the host will drive the build.
     - lxd: the host will setup a container to drive the build.
+    - multipass: a vm driven by multipass will be created to drive the build.
 
     Use of the lxd value is equivalent to setting the now deprecated
     SNAPCRAFT_CONTAINER_BUILDS environment variable to a value that
@@ -39,7 +42,19 @@ class BuilderEnvironmentConfig:
     results in an error.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, default='host',
+                 additional_providers: List[str]=None) -> None:
+        """Instantiate a BuildEnvironmentConfig.
+
+        :param str default: the default provider to use among the list of valid
+                            ones.
+        :param str additional_providers: Additional providers allowed in the
+                                         environment.
+        """
+        valid_providers = ['host', 'lxd']
+        if additional_providers is not None:
+            valid_providers.extend(additional_providers)
+
         use_lxd = None
         container_builds = os.environ.get('SNAPCRAFT_CONTAINER_BUILDS')
         if container_builds:
@@ -64,12 +79,12 @@ class BuilderEnvironmentConfig:
         if use_lxd:
             build_provider = 'lxd'
         elif not build_provider:
-            echo.warning('Using the host as the build environment.')
-            build_provider = 'host'
-        # TODO add multipass
-        elif build_provider not in ['host', 'lxd']:
+            build_provider = default
+        elif build_provider not in valid_providers:
             raise errors.SnapcraftEnvironmentError(
-                'SNAPCRAFT_BUILD_ENVIRONMENT must be one of: host or lxd.')
+                'SNAPCRAFT_BUILD_ENVIRONMENT must be one of: {}.'.format(
+                    humanize_list(items=valid_providers, conjunction='or')))
 
         self.provider = build_provider
         self.is_host = build_provider == 'host'
+        self.is_lxd = build_provider == 'lxd'

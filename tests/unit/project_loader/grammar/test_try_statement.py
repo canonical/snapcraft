@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017, 2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -15,9 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import doctest
+import testtools
 from testtools.matchers import Equals
 
 import snapcraft
+from snapcraft.internal.project_loader import grammar
 import snapcraft.internal.project_loader.grammar._try as _try
 
 from . import GrammarBaseTestCase
@@ -102,24 +104,29 @@ class TryStatementGrammarTestCase(GrammarBaseTestCase):
             ],
             'expected_packages': {'invalid3'}
         }),
-        ('empty else', {
-            'body': ['invalid'],
-            'else_bodies': [[]],
-            'expected_packages': {'invalid'}
-        }),
-        ('empty else followed by else', {
-            'body': ['invalid'],
-            'else_bodies': [[], ['valid']],
-            'expected_packages': {'valid'}
-        }),
     ]
 
     def test_try_statement_grammar(self):
-        statement = _try.TryStatement(
-            body=self.body, project_options=snapcraft.ProjectOptions(),
-            checker=self.checker)
+        processor = grammar.GrammarProcessor(
+            None, snapcraft.ProjectOptions(), self.checker)
+        statement = _try.TryStatement(body=self.body, processor=processor)
 
         for else_body in self.else_bodies:
             statement.add_else(else_body)
 
         self.assertThat(statement.process(), Equals(self.expected_packages))
+
+
+class TryStatementElseFail(GrammarBaseTestCase):
+
+    def test_else_fail(self):
+        processor = grammar.GrammarProcessor(
+            None, snapcraft.ProjectOptions(), self.checker)
+        statement = _try.TryStatement(body=['invalid'], processor=processor)
+
+        statement.add_else(None)
+
+        with testtools.ExpectedException(
+                grammar.errors.UnsatisfiedStatementError,
+                "Unable to satisfy 'try', failure forced"):
+            statement.process()

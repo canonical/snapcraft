@@ -20,7 +20,7 @@ import subprocess
 
 
 import testscenarios
-from testtools.matchers import Equals
+from testtools.matchers import FileExists, Not
 
 from tests import (
     fixture_setup,
@@ -48,7 +48,10 @@ class ParserTestCase(integration.TestCase):
                 subprocess.CalledProcessError,
                 self.run_snapcraft_parser, args)
 
-        self.assertThat(os.path.exists(part_file), Equals(expect_output))
+        if expect_output:
+            self.assertThat(part_file, FileExists())
+        else:
+            self.assertThat(part_file, Not(FileExists()))
 
 
 class TestParser(ParserTestCase):
@@ -70,13 +73,8 @@ class TestParserWikis(testscenarios.WithScenarios, ParserTestCase):
         temp_cwd_fixture = fixture_setup.TempCWD()
         self.useFixture(temp_cwd_fixture)
         super().setUp()
-
-        # Since we're running in a temporary directory use
-        # the original source tree version of snapcraft-parser
-        if not os.getenv('SNAPCRAFT_FROM_DEB', False):
-            self.snapcraft_parser_command = os.path.join(
-                os.path.dirname(__file__), '..', '..', '..', '..',
-                'bin', 'snapcraft-parser')
+        self.useFixture(fixtures.EnvironmentVariable(
+            'XDG_CACHE_HOME', os.path.join(self.path, '.cache')))
 
     def _read_file(self, filename):
         content = ''

@@ -132,24 +132,35 @@ class NodePlugin(snapcraft.BasePlugin):
         # change in the YAML Snapcraft will consider the build step dirty.
         return ['node-engine', 'node-package-manager']
 
+    @property
+    def _nodejs_tar(self):
+        if self._nodejs_tar_handle is None:
+            self._nodejs_tar_handle = sources.Tar(self._nodejs_release_uri,
+                                                  self._npm_dir)
+        return self._nodejs_tar_handle
+
+    @property
+    def _yarn_tar(self):
+        if self._yarn_tar_handle is None:
+            self._yarn_tar_handle = sources.Tar(_YARN_URL, self._npm_dir)
+        return self._yarn_tar_handle
+
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self._source_package_json = os.path.join(
             os.path.abspath(self.options.source), 'package.json')
         self._npm_dir = os.path.join(self.partdir, 'npm')
-        self._nodejs_tar = sources.Tar(get_nodejs_release(
-            self.options.node_engine, self.project.deb_arch), self._npm_dir)
-        if self.options.node_package_manager == 'yarn':
-            logger.warning(
-                'EXPERIMENTAL: use of yarn to manage packages is experimental')
-            self._yarn_tar = sources.Tar(_YARN_URL, self._npm_dir)
         self._manifest = collections.OrderedDict()
+        self._nodejs_release_uri = get_nodejs_release(
+            self.options.node_engine, self.project.deb_arch)
+        self._nodejs_tar_handle = None
+        self._yarn_tar_handle = None
 
     def pull(self):
         super().pull()
         os.makedirs(self._npm_dir, exist_ok=True)
         self._nodejs_tar.download()
-        if hasattr(self, '_yarn_tar'):
+        if self.options.node_package_manager == 'yarn':
             self._yarn_tar.download()
         # do the install in the pull phase to download all dependencies.
         if self.options.node_package_manager == 'npm':

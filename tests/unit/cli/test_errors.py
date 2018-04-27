@@ -14,10 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import sys
+from textwrap import dedent
 from unittest import mock
 
 import fixtures
+from testtools.matchers import FileContains
 
 import snapcraft.internal.errors
 from snapcraft.cli._errors import exception_handler
@@ -35,7 +38,7 @@ class TestSnapcraftError(snapcraft.internal.errors.SnapcraftError):
         return 123
 
 
-class ErrorsTestCase(unit.TestCase):
+class ErrorsBaseTestCase(unit.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -69,24 +72,18 @@ class ErrorsTestCase(unit.TestCase):
         self.exit_mock.assert_called_once_with(1)
         self.print_exception_mock.assert_not_called()
 
-    @mock.patch('click.confirm', return_value=False)
-    def test_handler_traceback_non_snapcraft_exceptions_no_debug(
-            self, click_confirm_mock):
+
+class ErrorsTestCase(ErrorsBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+
+    def test_handler_traceback_non_snapcraft_exceptions_no_debug(self):
         """
-        Verify that the traceback is printed given that raven is available.
+        Verify that the traceback is printed only as sentry is disabled.
         """
         try:
             self.call_handler(RuntimeError('not a SnapcraftError'), False)
-        except Exception:
-            self.fail('Exception unexpectedly raised')
-
-        self.assert_exception_traceback_exit_1_with_debug()
-
-    @mock.patch('click.confirm', return_value=False)
-    def test_handler_traceback_non_snapcraft_exceptions_debug(
-            self, click_confirm_mock):
-        try:
-            self.call_handler(RuntimeError('not a SnapcraftError'), True)
         except Exception:
             self.fail('Exception unexpectedly raised')
 
@@ -111,34 +108,6 @@ class ErrorsTestCase(unit.TestCase):
 
         self.assert_exception_traceback_exit_1_with_debug()
 
-    @mock.patch('click.confirm', return_value=True)
-    def test_handler_traceback_send_traceback_to_sentry(
-            self, click_confirm_mock):
-        try:
-            import raven  # noqa: F401
-        except ImportError:
-            self.skipTest('raven needs to be installed for this test.')
-
-        # Only patch after checking for the availability of raven
-        patcher = mock.patch('snapcraft.cli._errors.RequestsHTTPTransport')
-        raven_request_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-        patcher = mock.patch('snapcraft.cli._errors.RavenClient')
-        raven_client_mock = patcher.start()
-        self.addCleanup(patcher.stop)
-
-        self.useFixture(fixtures.EnvironmentVariable(
-            'SNAPCRAFT_ENABLE_SENTRY', 'yes'))
-        try:
-            self.call_handler(RuntimeError('not a SnapcraftError'), True)
-        except Exception:
-            self.fail('Exception unexpectedly raised')
-
-        self.assert_exception_traceback_exit_1_with_debug()
-        raven_client_mock.assert_called_once_with(
-            mock.ANY, transport=raven_request_mock, processors=mock.ANY,
-            auto_log_stacks=False)
-
     def test_handler_catches_snapcraft_exceptions_no_debug(self):
         try:
             self.call_handler(TestSnapcraftError('is a SnapcraftError'), False)
@@ -159,3 +128,135 @@ class ErrorsTestCase(unit.TestCase):
         self.exit_mock.assert_not_called
         self.print_exception_mock.assert_called_once_with(
             TestSnapcraftError, mock.ANY, mock.ANY)
+
+
+class SendToSentryBaseTest(ErrorsBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        try:
+            import raven  # noqa: F401
+        except ImportError:
+            self.skipTest('raven needs to be installed for this test.')
+
+        patcher = mock.patch('click.prompt')
+        self.prompt_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.cli._errors.RequestsHTTPTransport')
+        self.raven_request_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        patcher = mock.patch('snapcraft.cli._errors.RavenClient')
+        self.raven_client_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_ENABLE_SENTRY', 'yes'))
+
+
+class SendToSentryIsYesTest(SendToSentryBaseTest):
+
+    scenarios = [(answer, dict(answer=answer)) for answer in
+                 ['y', 'Y', 'YES', 'yes', 'Yes']]
+
+    def test_send(self):
+        self.prompt_mock.return_value = self.answer
+
+        try:
+            self.call_handler(RuntimeError('not a SnapcraftError'), True)
+        except Exception:
+            self.fail('Exception unexpectedly raised')
+
+        self.assert_exception_traceback_exit_1_with_debug()
+        self.raven_client_mock.assert_called_once_with(
+            mock.ANY, transport=self.raven_request_mock, processors=mock.ANY,
+            auto_log_stacks=False)
+
+
+class SendToSentryIsNoTest(SendToSentryBaseTest):
+
+    scenarios = [(answer, dict(answer=answer)) for answer in
+                 ['n', 'N', 'NO', 'no', 'No']]
+
+    def test_no_send(self):
+        self.prompt_mock.return_value = self.answer
+
+        try:
+            self.call_handler(RuntimeError('not a SnapcraftError'), True)
+        except Exception:
+            self.fail('Exception unexpectedly raised')
+
+        self.assert_exception_traceback_exit_1_with_debug()
+        self.raven_client_mock.assert_not_called()
+
+
+class SendToSentryIsAlwaysTest(SendToSentryBaseTest):
+
+    scenarios = [(answer, dict(answer=answer)) for answer in
+                 ['a', 'A', 'ALWAYS', 'always', 'Always']]
+
+    def test_send_and_set_to_always(self):
+        self.prompt_mock.return_value = self.answer
+
+        try:
+            self.call_handler(RuntimeError('not a SnapcraftError'), True)
+        except Exception:
+            self.fail('Exception unexpectedly raised')
+
+        self.assert_exception_traceback_exit_1_with_debug()
+        self.raven_client_mock.assert_called_once_with(
+            mock.ANY, transport=self.raven_request_mock, processors=mock.ANY,
+            auto_log_stacks=False)
+        config_path = os.path.join('.config', 'snapcraft', 'cli.cfg')
+        self.assertThat(config_path, FileContains(dedent("""\
+            [Sentry]
+            always_send = true
+
+            """)))
+
+
+class SendToSentryAlreadyAlwaysTest(SendToSentryBaseTest):
+
+    def test_send_as_always(self):
+        config_path = os.path.join('.config', 'snapcraft', 'cli.cfg')
+        os.makedirs(os.path.dirname(config_path))
+        with open(config_path, 'w') as f:
+            f.write(dedent("""\
+                [Sentry]
+                always_send = true
+
+                """))
+
+        try:
+            self.call_handler(RuntimeError('not a SnapcraftError'), True)
+        except Exception:
+            self.fail('Exception unexpectedly raised')
+
+        self.assert_exception_traceback_exit_1_with_debug()
+        self.raven_client_mock.assert_called_once_with(
+            mock.ANY, transport=self.raven_request_mock, processors=mock.ANY,
+            auto_log_stacks=False)
+        self.prompt_mock.assert_not_called()
+
+    def test_send_with_config_error_does_not_save_always(self):
+        self.prompt_mock.return_value = 'ALWAYS'
+
+        config_path = os.path.join('.config', 'snapcraft', 'cli.cfg')
+        os.makedirs(os.path.dirname(config_path))
+        with open(config_path, 'w') as f:
+            f.write('bad data')
+
+        try:
+            self.call_handler(RuntimeError('not a SnapcraftError'), True)
+        except Exception:
+            self.fail('Exception unexpectedly raised')
+
+        self.assert_exception_traceback_exit_1_with_debug()
+        self.raven_client_mock.assert_called_once_with(
+            mock.ANY, transport=self.raven_request_mock, processors=mock.ANY,
+            auto_log_stacks=False)
+
+        # Given the corruption, ensure it hasn't been written to
+        self.assertThat(config_path, FileContains('bad data'))

@@ -1,3 +1,55 @@
+snapcraft (2.42) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * elf: patch everything instead of a subset of elf files (#2081)
+  * elf: clear the current runpath before setting the rpath (#2085)
+  * python plugin: properly handle distutils on bionic
+  * ci: add the python integration tests on bionic for travis
+  * many: remove support for remote lxd per project containers (#2089)
+  * schema: allow refresh-mode and stop-mode (#2092)
+  * packaging: include changelog for setup.py's version detection (#2097)
+  * ci: enable OSX testing on travis (#2084)
+  * tests: use a common cache for the integration tests
+  * tests: remove the SharedCache fixture and uses of it
+  * many: allow building in containers with no version in project (#2104)
+  * errors: remove logic for SNAPCRAFT_SEND_ERROR_DATA
+  * errors: implement the always option to sent to sentry
+  * package: make use of snapcraftctl snapcraft features (#2103)
+  * nodejs plugin: lazy load the required tarballs (#2106)
+  * build_providers: new build provider using multipass (#2100)
+  * tests: use FakeSnapd for grammar tests
+  * tests: adapt the integration suite to work for all releases
+  * New upstream release (LP: #1767016)
+
+  [ Kyle Fazzari ]
+  * project_loader: support architectures for CI (#2080)
+  * meta: soften warning about using passthrough (#2091)
+  * storeapi: better handle network errors and retries (#2094)
+  * grammar: support compound on..to statement (#2088)
+  * tests: fix arch-specific integration tests
+
+  [ Christian Dywan ]
+  * python: bring back support for older versions of pip (#2055)
+  * tests: don't use os_release and repo from snapcraft (#2096)
+  * lxd: wait for on-going refreshes to finish (#2098)
+  * ci: setup AppVeyor (#2087)
+  * repo: catch error updating the package cache (#2079)
+  * tests: do not shadow deb_arch in architecture scenarios
+  * tests: parser tests need the cache
+  * tests: don't hard-code expected arch in VersionScriptTestCase
+
+  [ Rakesh Singh ]
+  * dotnet plugin: add dotnet command to path for step overriding (#1909)
+
+  [ Michael Vogt ]
+  * lifecycle: skip -all-root for base snaps (#2090)
+
+  [ Matias Bordese ]
+  * tests: update metadata store integration test, no previous push 
+    required (#2086)
+
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Thu, 26 Apr 2018 01:58:29 +0000
+
 snapcraft (2.41) xenial; urgency=medium
 
   [ Sergio Schvezov ]
@@ -54,7 +106,7 @@ snapcraft (2.41) xenial; urgency=medium
   [ Colin Watson ]
   * storeapi: fix formatting of some store errors (#2056)
 
- -- <sergio.schvezov@ubuntu.com>  Sat, 14 Apr 2018 12:13:35 +0000
+ -- Sergio Schvezov <sergio.schvezov@ubuntu.com>  Sat, 14 Apr 2018 12:13:35 +0000
 
 snapcraft (2.40.1) xenial; urgency=medium
 

@@ -19,6 +19,7 @@ import glob
 import hashlib
 import logging
 import os
+import re
 import shutil
 import stat
 import string
@@ -54,6 +55,8 @@ deb http://${security}.ubuntu.com/${suffix} ${release}-security multiverse
 '''
 _GEOIP_SERVER = "http://geoip.ubuntu.com/lookup"
 _library_list = dict()  # type: Dict[str, Set[str]]
+_HASHSUM_MISMATCH_PATTERN = re.compile(
+    r'(E:Failed to fetch.+Hash Sum mismatch)+')
 
 
 class _AptCache:
@@ -121,10 +124,28 @@ class _AptCache:
             logger.warning(
                 "Cannot find 'dpkg' command needed to support multiarch")
 
-        apt_cache = apt.Cache(rootdir=cache_dir, memonly=True)
-        apt_cache.update(fetch_progress=self.progress,
-                         sources_list=sources_list_file)
+        return self._create_cache(cache_dir, sources_list_file)
 
+    def _create_cache(self, cache_dir: str,
+                      sources_list_file: str) -> apt.Cache:
+        apt_cache = apt.Cache(rootdir=cache_dir, memonly=True)
+        try:
+            apt_cache.update(fetch_progress=self.progress,
+                             sources_list=sources_list_file)
+        except apt.cache.FetchFailedException as e:
+            # In case of a hashsum mismatch, clear the index and try again.
+            # Re-raise the error if that failed.
+            if re.match(_HASHSUM_MISMATCH_PATTERN, str(e)):
+                try:
+                    index = apt.apt_pkg.config.find_dir('Dir::State::Lists')
+                    shutil.rmtree(index)
+                    apt_cache = apt.Cache(rootdir=cache_dir, memonly=True)
+                    apt_cache.update(fetch_progress=self.progress,
+                                     sources_list=sources_list_file)
+                except apt.cache.FetchFailedException as retry:
+                    raise errors.CacheUpdateFailedError(str(retry))
+            else:
+                raise errors.CacheUpdateFailedError(str(e))
         return apt_cache
 
     @contextlib.contextmanager

@@ -62,10 +62,11 @@ _STORE_KEY = (
 
 class Containerbuild:
 
-    def __init__(self, *, output, source, project_options,
-                 metadata, container_name, remote=None):
-        if not output:
-            output = common.format_snap_name(metadata)
+    def __init__(self, *, source, project_options, metadata,
+                 container_name, output=None, remote=None):
+        if output is None:
+            output = common.format_snap_name(
+                metadata, allow_empty_version=True)
         self._snap_output = output
         self._source = os.path.realpath(source)
         self._project_options = project_options
@@ -247,6 +248,11 @@ class Containerbuild:
         if common.is_snap():
             with tempfile.TemporaryDirectory(
                     prefix='snapcraft', dir=self._lxd_common_dir) as tmp_dir:
+                # Wait for any on-going refreshes to finish.
+                # If there are no changes an error will be returned.
+                with contextlib.suppress(errors.ContainerRunError):
+                    self._container_run([
+                        'snap', 'watch', '--last=auto-refresh'])
                 self._inject_snap('core', tmp_dir)
                 self._inject_snap('snapcraft', tmp_dir)
         elif new_container:
