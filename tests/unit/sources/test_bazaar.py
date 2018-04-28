@@ -90,45 +90,42 @@ class TestBazaar(unit.sources.SourceTestCase):  # type: ignore
 
     def test_init_with_source_branch_raises_exception(self):
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceInvalidOptionError,
             sources.Bazaar,
             'lp:mysource', 'source_dir', source_branch='branch')
 
-        expected_message = 'can\'t specify a source-branch for a bzr source'
-        self.assertThat(raised.message, Equals(expected_message))
+        self.assertThat(raised.source_type, Equals('bzr'))
+        self.assertThat(raised.option, Equals('source-branch'))
 
     def test_init_with_source_depth_raises_exception(self):
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceInvalidOptionError,
             sources.Bazaar,
             'lp://mysource', 'source_dir', source_depth=2)
 
-        expected_message = (
-            'can\'t specify source-depth for a bzr source')
-        self.assertThat(raised.message, Equals(expected_message))
+        self.assertThat(raised.source_type, Equals('bzr'))
+        self.assertThat(raised.option, Equals('source-depth'))
 
     def test_init_with_source_tag_and_commit_raises_exception(self):
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceIncompatibleOptionsError,
             sources.Bazaar,
             'lp://mysource', 'source_dir', source_tag="tag",
             source_commit="2")
 
-        expected_message = (
-            'can\'t specify both source-tag and source-commit for '
-            'a bzr source')
-        self.assertThat(raised.message, Equals(expected_message))
+        self.assertThat(raised.source_type, Equals('bzr'))
+        self.assertThat(raised.options,
+                        Equals(['source-tag', 'source-commit']))
 
     def test_source_checksum_raises_exception(self):
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceInvalidOptionError,
             sources.Bazaar,
             'lp://mysource', 'source_dir',
             source_checksum="md5/d9210476aac5f367b14e513bdefdee08")
 
-        expected_message = (
-            "can't specify a source-checksum for a bzr source")
-        self.assertThat(raised.message, Equals(expected_message))
+        self.assertThat(raised.source_type, Equals('bzr'))
+        self.assertThat(raised.option, Equals('source-checksum'))
 
     def test_has_source_handler_entry(self):
         self.assertTrue(sources._source_handler['bzr'] is sources.Bazaar)
