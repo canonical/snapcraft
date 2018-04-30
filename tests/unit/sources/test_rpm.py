@@ -17,6 +17,7 @@
 import os
 import sys
 
+from unittest import mock
 from testtools.matchers import FileExists
 
 from snapcraft.internal import sources
@@ -41,6 +42,15 @@ class TestRpm(unit.TestCase):
 
         self.assertThat(os.path.join(self.dest_dir, 'bin', 'hello'),
                         FileExists())
+
+    @mock.patch.object(sources.Rpm, 'provision')
+    def test_pull_rpm_must_not_clean_targets(self, mock_provision):
+        rpm_source = sources.Rpm(self.rpm_file_path, self.dest_dir)
+        rpm_source.pull()
+
+        mock_provision.assert_called_once_with(
+            self.dest_dir, clean_target=False, src=os.path.join(
+                self.dest_dir, 'small-0.1-1.noarch.rpm'))
 
     def test_has_source_handler_entry_on_linux(self):
         if sys.platform == 'linux':
