@@ -18,7 +18,7 @@ import os
 import stat
 from textwrap import dedent
 
-from testtools.matchers import Equals, FileContains
+from testtools.matchers import Equals, FileContains, FileExists, Not
 
 from snapcraft.internal import errors
 from snapcraft.internal.repo import check_for_command
@@ -153,7 +153,7 @@ class FixShebangTestCase(RepoBaseTestCase):
         ('opt/bin dir',  {
             'file_path': os.path.join('root', 'opt', 'bin', 'e'),
             'content': '#!/usr/bin/python\nraise Exception()',
-            'expected': '#!/usr/bin/python\nraise Exception()',
+            'expected': '#!/usr/bin/env python\nraise Exception()',
         }),
     ]
 
@@ -166,6 +166,40 @@ class FixShebangTestCase(RepoBaseTestCase):
 
         with open(self.file_path, 'r') as fd:
             self.assertThat(fd.read(), Equals(self.expected))
+
+
+class RemoveUselessFilesTestCase(RepoBaseTestCase):
+
+    scenarios = [
+        ('python3 sitecustomize', {
+            'file_path': os.path.join(
+                'usr', 'lib', 'python3.5', 'sitecustomize.py'),
+            'matcher': Not(FileExists()),
+        }),
+        ('python2 sitecustomize', {
+            'file_path': os.path.join(
+                'usr', 'lib', 'python2.7', 'sitecustomize.py'),
+            'matcher': Not(FileExists()),
+        }),
+        ('unversioned sitecustomize', {
+            'file_path': os.path.join(
+                'usr', 'lib', 'python', 'sitecustomize.py'),
+            'matcher': Not(FileExists()),
+        }),
+        ('random sitecustomize', {
+            'file_path': os.path.join('opt', 'python3.5', 'sitecustomize.py'),
+            'matcher': FileExists(),
+        }),
+    ]
+
+    def test_remove_useless_files(self):
+        path = os.path.join('root', self.file_path)
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        open(path, 'w').close()
+
+        BaseRepo('root').normalize('root')
+
+        self.assertThat(path, self.matcher)
 
 
 class FixPkgConfigTestCase(RepoBaseTestCase):
