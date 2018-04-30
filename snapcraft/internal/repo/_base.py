@@ -16,6 +16,7 @@
 
 import contextlib
 import fileinput
+import glob
 import itertools
 import logging
 import os
@@ -27,13 +28,6 @@ from typing import List
 from snapcraft import file_utils
 from snapcraft.internal import mangling
 from . import errors
-
-_BIN_PATHS = (
-    'bin',
-    'sbin',
-    'usr/bin',
-    'usr/sbin',
-)
 
 
 logger = logging.getLogger(__name__)
@@ -193,9 +187,17 @@ class BaseRepo:
 
         :param str unpackdir: directory where files where unpacked.
         """
+        self._remove_useless_files(unpackdir)
         self._fix_artifacts(unpackdir)
         self._fix_xml_tools(unpackdir)
         self._fix_shebangs(unpackdir)
+
+    def _remove_useless_files(self, unpackdir):
+        """Remove files that aren't useful or will clash with other parts."""
+        sitecustomize_files = glob.glob(os.path.join(
+            unpackdir, 'usr', 'lib', 'python*', 'sitecustomize.py'))
+        for sitecustomize_file in sitecustomize_files:
+            os.remove(sitecustomize_file)
 
     def _fix_artifacts(self, unpackdir):
         """Perform various modifications to unpacked artifacts.
@@ -251,11 +253,8 @@ class BaseRepo:
         os.symlink(os.path.relpath(target, root), path)
 
     def _fix_shebangs(self, unpackdir):
-        """Changes hard coded shebangs for files in _BIN_PATHS to use env."""
-        paths = [p for p in _BIN_PATHS
-                 if os.path.exists(os.path.join(unpackdir, p))]
-        for p in [os.path.join(unpackdir, p) for p in paths]:
-            mangling.rewrite_python_shebangs(p)
+        """Change hard-coded shebangs in unpacked files to use env."""
+        mangling.rewrite_python_shebangs(unpackdir)
 
 
 class DummyRepo(BaseRepo):
