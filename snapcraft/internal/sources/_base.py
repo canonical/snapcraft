@@ -64,8 +64,9 @@ class FileBase(Base):
         if self.source_checksum:
             verify_checksum(self.source_checksum, source_file)
 
-        # We finally provision
-        self.provision(self.source_dir, src=source_file)
+        # We finally provision, but we don't clean the target so override-pull
+        # can actually have meaning when using these sources.
+        self.provision(self.source_dir, src=source_file, clean_target=False)
 
     def download(self):
         # First check if we already have the source file cached.
