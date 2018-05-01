@@ -376,8 +376,12 @@ class _SnapPackaging:
         # First migrate the snap directory. It will overwrite any conflicting
         # files.
         for root, directories, files in os.walk('snap'):
-            if '.snapcraft' in directories:
+            with contextlib.suppress(ValueError):
                 directories.remove('.snapcraft')
+            with contextlib.suppress(ValueError):
+                # The snapcraft.yaml is migrated later
+                files.remove('snapcraft.yaml')
+
             for directory in directories:
                 source = os.path.join(root, directory)
                 destination = os.path.join(self._prime_dir, source)
