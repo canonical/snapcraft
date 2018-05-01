@@ -79,6 +79,19 @@ class StatusTestCase(integration.StoreTestCase):
             '                 edge       1.0-i386   3'))
         self.assertThat(output, Contains(expected))
 
+    def test_status_no_id(self):
+        if not self.is_store_fake():
+            self.skipTest('This test only works in the fake store')
+
+        self.addCleanup(self.logout)
+        self.login()
+
+        error = self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft,
+            ['status', 'no-id'])
+        self.assertThat(error.output, Contains(
+            "Unable to get snap ID for snap 'no-id'"))
+
     def test_status_staging_store(self):
         if not self.is_store_staging():
             self.skipTest('This test only works in the staging store')

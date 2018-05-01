@@ -172,6 +172,9 @@ class StoreClient():
         except KeyError:
             raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
 
+        if not snap_id:
+            raise errors.NoSnapIdError(snap_name)
+
         response = self._refresh_if_necessary(
             self.sca.snap_revisions, snap_id, series, arch)
 
@@ -189,6 +192,9 @@ class StoreClient():
             snap_id = account_info['snaps'][series][snap_name]['snap-id']
         except KeyError:
             raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        if not snap_id:
+            raise errors.NoSnapIdError(snap_name)
 
         response = self._refresh_if_necessary(
             self.sca.snap_status, snap_id, series, arch)
@@ -296,6 +302,9 @@ class StoreClient():
         except KeyError:
             raise errors.SnapNotFoundError(snap_name, series=series)
 
+        if not snap_id:
+            raise errors.NoSnapIdError(snap_name)
+
         return self._refresh_if_necessary(
             self.sca.push_metadata, snap_id, snap_name, metadata, force)
 
@@ -307,6 +316,9 @@ class StoreClient():
             snap_id = account_info['snaps'][series][snap_name]['snap-id']
         except KeyError:
             raise errors.SnapNotFoundError(snap_name, series=series)
+
+        if not snap_id:
+            raise errors.NoSnapIdError(snap_name)
 
         return self._refresh_if_necessary(
             self.sca.push_binary_metadata, snap_id, snap_name, metadata,
