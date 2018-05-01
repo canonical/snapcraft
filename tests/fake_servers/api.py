@@ -1043,7 +1043,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             response_code = 200
         elif snap_id == 'err':
             payload = json.dumps({
-                'error_list': [{'message': 'error'}]
+                'error_list': [{'code': 'test-code', 'message': 'test-error'}]
             }).encode()
             response_code = 503
         content_type = 'application/json'
@@ -1093,7 +1093,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             response_code = 200
         elif snap_id == 'err':
             payload = json.dumps({
-                'error_list': [{'message': 'error'}]
+                'error_list': [{'code': 'test-code', 'message': 'test-error'}]
             }).encode()
             response_code = 501
         elif snap_id == 'bad':

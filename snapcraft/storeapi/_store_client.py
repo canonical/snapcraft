@@ -221,7 +221,7 @@ class StoreClient():
             logger.info('Already downloaded {} at {}'.format(
                 name, download_path))
             return
-        logger.info('Downloading {}'.format(name, download_path))
+        logger.info('Downloading {}'.format(name))
 
         # we only resume when redirected to our CDN since we use internap's
         # special sauce.

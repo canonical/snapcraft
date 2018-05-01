@@ -357,6 +357,28 @@ class StoreReviewError(StoreError):
         super().__init__()
 
 
+class StoreInternalError(StoreError):
+
+    fmt = '{what}: {why}\n{action}'
+
+    def __init__(self, response):
+        what = 'The store encountered an internal error'
+        why = None
+        action = ('The status of the store and associated services can be '
+                  'checked at {}'.format(_STORE_STATUS_URL))
+
+        # If this response includes an error list, try to make some sense of it
+        with contextlib.suppress(AttributeError, JSONDecodeError):
+            response_json = response.json()
+            if 'error_list' in response_json:
+                why = _error_list_to_message(response_json)
+
+        if not why:
+            self.fmt = '{what}. {action}'
+
+        super().__init__(response=response, what=what, why=why, action=action)
+
+
 class StoreReleaseError(StoreError):
 
     fmt = '{message}'
@@ -377,7 +399,6 @@ class StoreReleaseError(StoreError):
             401: self.__fmt_error_401_or_403,
             403: self.__fmt_error_401_or_403,
             404: self.__fmt_error_404,
-            500: self.__fmt_error_500,
         }
 
         fmt_error = self.fmt_errors.get(
@@ -424,17 +445,6 @@ class StoreReleaseError(StoreError):
 
     def __fmt_error_404(self, response):
         return self.__FMT_NOT_REGISTERED
-
-    def __fmt_error_500(self, response):
-        response_json = self.__to_json(response)
-        message = ('The store encountered an internal error. The status of '
-                   'store and associated services can be checked at:\n'
-                   '{}'.format(_STORE_STATUS_URL))
-
-        if 'error_list' in response_json:
-            message = _error_list_to_message(response_json)
-
-        return message
 
     def __fmt_error_unknown(self, response):
         response_json = self.__to_json(response)
