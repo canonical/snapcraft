@@ -50,7 +50,8 @@ class TestTar(unit.FakeFileHTTPServerBasedTestCase):
         tar_source.pull()
 
         source_file = os.path.join(dest_dir, tar_file_name)
-        mock_prov.assert_called_once_with(dest_dir, src=source_file)
+        mock_prov.assert_called_once_with(
+            dest_dir, src=source_file, clean_target=False)
         with open(os.path.join(dest_dir, tar_file_name), 'r') as tar_file:
             self.assertThat(tar_file.read(), Equals('Test fake file'))
 

@@ -31,17 +31,17 @@ class Tar(FileBase):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth, source_checksum)
         if source_tag:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-tag for a tar source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'tar', 'source-tag')
         elif source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-commit for a tar source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'tar', 'source-commit')
         elif source_branch:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a tar source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'tar', 'source-branch')
         if source_depth:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-depth for a tar source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'tar', 'source-depth')
 
     def provision(self, dst, clean_target=True, keep_tarball=False, src=None):
         # TODO add unit tests.

@@ -32,14 +32,14 @@ class Rpm(FileBase):
                          source_branch, source_depth, source_checksum,
                          'rpm2cpio')
         if source_tag:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-tag for a rpm source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'rpm', 'source-tag')
         elif source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-commit for a rpm source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'rpm', 'source-commit')
         elif source_branch:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a rpm source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'rpm', 'source-branch')
 
     def provision(self, dst, clean_target=True, keep_rpm=False, src=None):
         if src:

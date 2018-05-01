@@ -14,7 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from snapcraft import formatting_utils
 from snapcraft.internal import errors
+
+from typing import List
 
 
 class VCSError(errors.SnapcraftError):
@@ -33,12 +36,31 @@ class SnapcraftSourceUnhandledError(errors.SnapcraftError):
         super().__init__(source=source)
 
 
-class IncompatibleOptionsError(errors.SnapcraftError):
+class SnapcraftSourceInvalidOptionError(errors.SnapcraftError):
 
-    fmt = '{message}'
+    fmt = (
+        "Failed to pull source: "
+        "{option!r} cannot be used with a {source_type} source.\n"
+        "See `snapcraft help sources` for more information."
+    )
 
-    def __init__(self, message):
-        super().__init__(message=message)
+    def __init__(self, source_type: str, option: str) -> None:
+        super().__init__(source_type=source_type, option=option)
+
+
+class SnapcraftSourceIncompatibleOptionsError(errors.SnapcraftError):
+
+    fmt = (
+        "Failed to pull source: "
+        "cannot specify both {humanized_options} for a {source_type} source.\n"
+        "See `snapcraft help sources` for more information."
+    )
+
+    def __init__(self, source_type: str, options: List[str]) -> None:
+        self.options = options
+        super().__init__(
+            source_type=source_type,
+            humanized_options=formatting_utils.humanize_list(options, 'and'))
 
 
 class DigestDoesNotMatchError(errors.SnapcraftError):

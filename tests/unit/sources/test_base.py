@@ -39,7 +39,7 @@ class TestFileBase(unit.TestCase):
 
         mock_download.assert_called_once_with()
         file_src.provision.assert_called_once_with(
-            file_src.source_dir, src='dir')
+            file_src.source_dir, src='dir', clean_target=False)
 
     @mock.patch('shutil.copy2')
     def test_pull_copy(self, mock_shutil_copy2):
@@ -50,7 +50,7 @@ class TestFileBase(unit.TestCase):
         mock_shutil_copy2.assert_called_once_with(
             file_src.source, expected)
         file_src.provision.assert_called_once_with(
-            file_src.source_dir, src=expected)
+            file_src.source_dir, src=expected, clean_target=False)
 
     @mock.patch('snapcraft.internal.sources._base.requests')
     @mock.patch(

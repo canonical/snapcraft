@@ -113,60 +113,55 @@ class TestMercurial(unit.sources.SourceTestCase):  # type: ignore
 
     def test_init_with_source_branch_and_tag_raises_exception(self):
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceIncompatibleOptionsError,
             sources.Mercurial,
             'hg://mysource', 'source_dir', source_tag='tag',
             source_branch='branch')
 
-        expected_message = (
-            'can\'t specify both source-tag and source-branch for a mercurial '
-            'source')
-        self.assertThat(raised.message, Equals(expected_message))
+        self.assertThat(raised.source_type, Equals('mercurial'))
+        self.assertThat(raised.options,
+                        Equals(['source-tag', 'source-branch']))
 
     def test_init_with_source_commit_and_tag_raises_exception(self):
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceIncompatibleOptionsError,
             sources.Mercurial,
             'hg://mysource', 'source_dir', source_commit='2',
             source_tag='tag')
 
-        expected_message = (
-            'can\'t specify both source-tag and source-commit for a mercurial '
-            'source')
-        self.assertThat(raised.message, Equals(expected_message))
+        self.assertThat(raised.source_type, Equals('mercurial'))
+        self.assertThat(raised.options,
+                        Equals(['source-tag', 'source-commit']))
 
     def test_init_with_source_commit_and_branch_raises_exception(self):
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceIncompatibleOptionsError,
             sources.Mercurial,
             'hg://mysource', 'source_dir', source_commit='2',
             source_branch='branch')
 
-        expected_message = (
-            'can\'t specify both source-branch and source-commit for '
-            'a mercurial source')
-        self.assertThat(raised.message, Equals(expected_message))
+        self.assertThat(raised.source_type, Equals('mercurial'))
+        self.assertThat(raised.options,
+                        Equals(['source-branch', 'source-commit']))
 
     def test_init_with_source_depth_raises_exception(self):
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceInvalidOptionError,
             sources.Mercurial,
             'hg://mysource', 'source_dir', source_depth=2)
 
-        expected_message = (
-            'can\'t specify source-depth for a mercurial source')
-        self.assertThat(raised.message, Equals(expected_message))
+        self.assertThat(raised.source_type, Equals('mercurial'))
+        self.assertThat(raised.option, Equals('source-depth'))
 
     def test_source_checksum_raises_exception(self):
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceInvalidOptionError,
             sources.Mercurial,
             'hg://mysource', 'source_dir',
             source_checksum="md5/d9210476aac5f367b14e513bdefdee08")
 
-        expected_message = (
-            "can't specify a source-checksum for a mercurial source")
-        self.assertThat(raised.message, Equals(expected_message))
+        self.assertThat(raised.source_type, Equals('mercurial'))
+        self.assertThat(raised.option, Equals('source-checksum'))
 
     def test_has_source_handler_entry(self):
         self.assertTrue(sources._source_handler['mercurial'] is

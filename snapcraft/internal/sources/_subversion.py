@@ -29,22 +29,17 @@ class Subversion(Base):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth, source_checksum, 'svn')
         if source_tag:
-            if source_branch:
-                raise errors.IncompatibleOptionsError(
-                    "Can't specify source-tag OR source-branch for a "
-                    "Subversion source")
-            else:
-                raise errors.IncompatibleOptionsError(
-                    "Can't specify source-tag for a Subversion source")
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'svn', 'source-tag')
         elif source_branch:
-            raise errors.IncompatibleOptionsError(
-                "Can't specify source-branch for a Subversion source")
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'svn', 'source-branch')
         if source_depth:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify source-depth for a Subversion source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'svn', 'source-depth')
         if source_checksum:
-            raise errors.IncompatibleOptionsError(
-                "can't specify a source-checksum for a Subversion source")
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'svn', 'source-checksum')
 
         self._call_kwargs = {}
         if silent:

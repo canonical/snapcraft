@@ -99,7 +99,7 @@ class SourceWithBranchTestCase(unit.TestCase):
         handler = sources.get_source_handler('https://source.com',
                                              source_type=self.source_type)
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceInvalidOptionError,
             handler,
             'https://source.com',
             source_dir='.',
@@ -107,10 +107,8 @@ class SourceWithBranchTestCase(unit.TestCase):
             source_tag=self.source_tag,
             source_commit=self.source_commit)
 
-        self.assertThat(
-            str(raised),
-            Equals('can\'t specify a {} for a {} source'.format(
-                self.error, self.source_type)))
+        self.assertThat(raised.source_type, Equals(self.source_type))
+        self.assertThat(raised.option, Equals(self.error))
 
 
 class SourceWithBranchAndTagTestCase(unit.TestCase):
@@ -132,17 +130,16 @@ class SourceWithBranchAndTagTestCase(unit.TestCase):
         handler = sources.get_source_handler('https://source.com',
                                              source_type=self.source_type)
         raised = self.assertRaises(
-            sources.errors.IncompatibleOptionsError,
+            sources.errors.SnapcraftSourceIncompatibleOptionsError,
             handler,
             'https://source.com',
             source_dir='.',
             source_branch=self.source_branch,
             source_tag=self.source_tag)
 
-        self.assertThat(
-            str(raised),
-            Equals('can\'t specify both source-tag and source-branch for a {} '
-                   'source'.format(self.source_type)))
+        self.assertThat(raised.source_type, Equals(self.source_type))
+        self.assertThat(raised.options,
+                        Equals(['source-tag', 'source-branch']))
 
 
 class GetSourceTestClass(unit.TestCase):

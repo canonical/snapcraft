@@ -31,14 +31,14 @@ class Deb(FileBase):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth, source_checksum)
         if source_tag:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-tag for a deb source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'deb', 'source-tag')
         elif source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-commit for a deb source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'deb', 'source-commit')
         elif source_branch:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a deb source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'deb', 'source-branch')
 
     def provision(self, dst, clean_target=True, keep_deb=False, src=None):
         if src:

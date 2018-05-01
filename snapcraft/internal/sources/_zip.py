@@ -29,14 +29,14 @@ class Zip(FileBase):
         super().__init__(source, source_dir, source_tag, source_commit,
                          source_branch, source_depth, source_checksum)
         if source_tag:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-tag for a zip source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'zip', 'source-tag')
         elif source_branch:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a zip source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'zip', 'source-branch')
         if source_depth:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-depth for a zip source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                'zip', 'source-depth')
 
     def provision(self, dst, clean_target=True, keep_zip=False, src=None):
         if src:

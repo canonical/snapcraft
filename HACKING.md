@@ -1,5 +1,22 @@
 # Snapcraft
 
+## Evaluating pull requests
+
+Oftentimes all you want to do is see if a given pull request solves the issue you were having (you reported that bug, right?). You can always run that pull request from source if you want (see below), but there's an easier way: use `snapcraft-pr`. First of all, you need it installed:
+
+    sudo snap install --classic snapcraft-pr
+
+Every pull request on github has an associated ID, which is used across the project to refer to it in comments, etc. It's clearly displayed on each pull request, but you can also determine it from the URL, for example, the ID of `https://github.com/snapcore/snapcraft/pull/2094` is `2094`.
+
+Once you've determined the pull request ID, you can tell `snapcraft-pr` that you want to use it by running:
+
+    snapcraft-pr.init <pull request id>
+
+Once that has completed, you can now use that version of snapcraft almost exactly like how you would normally use the `snapcraft` command, but instead of using `snapcraft`, use `snapcraft-pr <pull request id>`. For example, if you would normally run `snapcraft cleanbuild`, run `snapcraft-pr <pull request id> cleanbuild`.
+
+If the pull request gets updated after you've already done this, you can update your version by simply running `snapcraft-pr.init <pull request id>` again.
+
+
 ## Installing from pip
 
 First install a few dependencies:

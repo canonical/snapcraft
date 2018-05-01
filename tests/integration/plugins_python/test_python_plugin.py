@@ -16,7 +16,7 @@
 
 import os
 from glob import glob
-from subprocess import check_output
+import subprocess
 from textwrap import dedent
 
 from testtools.matchers import (
@@ -105,14 +105,15 @@ class PythonPluginTestCase(integration.TestCase):
         def pre_func():
             for python_dir in ['python2', 'python3']:
                 d = os.path.join(self.path, python_dir)
-                check_output(['git', 'init'], cwd=d)
-                check_output(
+                subprocess.check_output(['git', 'init'], cwd=d)
+                subprocess.check_output(
                     ['git', 'config', 'user.name', 'Test User'], cwd=d)
-                check_output(
+                subprocess.check_output(
                     ['git', 'config', 'user.email', '<test.user@example.com'],
                     cwd=d)
-                check_output(['git', 'add', '.'], cwd=d)
-                check_output(['git', 'commit', '-m', 'initial'], cwd=d)
+                subprocess.check_output(['git', 'add', '.'], cwd=d)
+                subprocess.check_output(
+                    ['git', 'commit', '-m', 'initial'], cwd=d)
 
         self.run_snapcraft('stage', 'python-pbr', pre_func=pre_func)
 
@@ -236,3 +237,22 @@ class PythonPluginTestCase(integration.TestCase):
 
         self.assertThat(os.path.join(self.stage_dir, 'bin', 'hello'),
                         FileExists())
+
+    def test_plugin_plays_nice_with_stage_packages(self):
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml.update_part('python-from-archive', {
+            'plugin': 'nil',
+            'source': '.',
+            'stage-packages': ['python3-yaml']
+        })
+        snapcraft_yaml.update_part('python-plugin', {
+            'plugin': 'python',
+            'source': '.',
+            'python-packages': ['bitstring']
+        })
+        self.useFixture(snapcraft_yaml)
+
+        try:
+            self.run_snapcraft('stage')
+        except subprocess.CalledProcessError:
+            self.fail('These parts should not have conflicted')

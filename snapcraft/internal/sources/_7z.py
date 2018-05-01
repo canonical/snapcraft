@@ -32,14 +32,14 @@ class SevenZip(FileBase):
                          source_branch, source_depth, source_checksum,
                          '7zip')
         if source_tag:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-tag for a 7z source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                '7z', 'source-tag')
         elif source_commit:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-commit for a 7z source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                '7z', 'source-commit')
         elif source_branch:
-            raise errors.IncompatibleOptionsError(
-                'can\'t specify a source-branch for a 7z source')
+            raise errors.SnapcraftSourceInvalidOptionError(
+                '7z', 'source-branch')
 
     def provision(self, dst, clean_target=True, keep_7z=False, src=None):
         if src:
