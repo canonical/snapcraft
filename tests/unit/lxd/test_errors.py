@@ -92,7 +92,7 @@ class ErrorFormattingTestCase(unit.TestCase):
             },
             'expected_message': (
                 "The following command failed to run: "
-                "'test-command' exited with 1\n")}),
+                "'test-command' exited with 1")}),
         ('ContainerRunError list', {
             'exception': errors.ContainerRunError,
             'kwargs': {
@@ -101,7 +101,7 @@ class ErrorFormattingTestCase(unit.TestCase):
             },
             'expected_message': (
                 "The following command failed to run: "
-                "'test-command test-argument' exited with 1\n")}),
+                "'test-command test-argument' exited with 1")}),
         ('ContainerSnapcraftCmdError string', {
             'exception': errors.ContainerSnapcraftCmdError,
             'kwargs': {

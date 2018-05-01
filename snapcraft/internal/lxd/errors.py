@@ -131,7 +131,7 @@ class ContainerRunError(ContainerError):
 
     fmt = (
         'The following command failed to run: '
-        '{command!r} exited with {exit_code}\n'
+        '{command!r} exited with {exit_code}'
     )
 
     def __init__(self, *, command, exit_code):
