@@ -26,13 +26,11 @@ from unittest.mock import (
 )
 
 import fixtures
-from testtools import ExpectedException
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Equals
 
 from snapcraft import ProjectOptions
 from snapcraft.project._project_options import _get_deb_arch
-from snapcraft.internal import lxd
-from snapcraft.internal import errors
+from snapcraft.internal import errors, lxd, repo
 from tests import fixture_setup, unit
 
 
@@ -142,12 +140,11 @@ class CleanbuilderTestCase(LXDTestCase):
 
         self.fake_lxd.check_call_mock.side_effect = call_effect
 
-        raised = self.assertRaises(
-            errors.ContainerConnectionError,
+        self.assertRaises(
+            lxd.errors.ContainerCreationFailedError,
             self.make_containerbuild().execute)
         self.assertThat(self.fake_lxd.status, Equals(None))
         # lxc launch should fail and no further commands should come after that
-        self.assertThat(str(raised), Contains('Failed to setup container'))
 
 
 class ContainerbuildTestCase(LXDTestCase):
@@ -201,13 +198,46 @@ class ContainerbuildTestCase(LXDTestCase):
         self.assertRaises(errors.InvalidContainerImageInfoError,
                           self.make_containerbuild().execute)
 
+    def test_architecture_syntax_raises_error(self):
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['lxc', 'info']:
+                return 'Architecture:foo'.encode('utf-8')
+            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
+
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.assertRaises(lxd.errors.ContainerArchitectureError,
+                          self.make_containerbuild()._get_container_arch)
+
+    def test_architecture_missing_raises_error(self):
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['lxc', 'info']:
+                return 'Status: Stopped'.encode('utf-8')
+            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
+
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.assertRaises(lxd.errors.ContainerArchitectureError,
+                          self.make_containerbuild()._get_container_arch)
+
+    def test_architecture_unknown_raises_error(self):
+        def call_effect(*args, **kwargs):
+            if args[0][:2] == ['lxc', 'info']:
+                return 'Architecture: invalid'.encode('utf-8')
+            return self.fake_lxd.check_output_side_effect()(*args, **kwargs)
+
+        self.fake_lxd.check_output_mock.side_effect = call_effect
+
+        self.assertRaises(lxd.errors.ContainerArchitectureError,
+                          self.make_containerbuild()._get_container_arch)
+
     def test_wait_for_network_loops(self):
         self.fake_lxd.check_call_mock.side_effect = CalledProcessError(
             -1, ['my-cmd'])
 
         builder = self.make_containerbuild()
 
-        self.assertRaises(errors.ContainerConnectionError,
+        self.assertRaises(lxd.errors.ContainerNetworkError,
                           builder._wait_for_network)
 
     def test_failed_build_with_debug(self):
@@ -246,21 +276,19 @@ class ContainerbuildTestCase(LXDTestCase):
     def test_lxc_check_fails(self, mock_run):
         self.fake_lxd.check_output_mock.side_effect = FileNotFoundError('lxc')
 
-        with ExpectedException(
-                errors.ContainerConnectionError,
-                'You must have LXD installed in order to use cleanbuild.\n'
-                'Refer to the documentation at '
-                'https://linuxcontainers.org/lxd/getting-started-cli.'):
-            self.make_containerbuild().execute()
+        self.assertRaises(
+            lxd.errors.ContainerLXDNotInstalledError,
+            self.make_containerbuild().execute)
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_remote_does_not_exist(self, mock_run):
         self.fake_lxd.check_output_mock.side_effect = CalledProcessError(
             255, ['lxd', 'list', self.remote])
 
-        with ExpectedException(errors.ContainerConnectionError,
-                               'There are either.*{}.*'.format(self.remote)):
-            self.make_containerbuild().execute()
+        raised = self.assertRaises(
+            lxd.errors.ContainerLXDRemoteNotFoundError,
+            self.make_containerbuild().execute)
+        self.assertThat(raised.remote, Equals(self.remote))
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @patch('snapcraft.internal.common.is_snap')
@@ -424,8 +452,9 @@ class ContainerbuildTestCase(LXDTestCase):
 
         builder = self.make_containerbuild()
 
-        raised = self.assertRaises(errors.SnapdError, builder.execute)
-        self.assertThat(str(raised), Contains('Error connecting to'))
+        raised = self.assertRaises(repo.errors.SnapdConnectionError,
+                                   builder.execute)
+        self.assertThat(raised.snap_name, Equals('core'))
 
     @patch('snapcraft.internal.common.is_snap')
     def test_inject_snap_api_error(self,
@@ -438,10 +467,9 @@ class ContainerbuildTestCase(LXDTestCase):
 
         builder = self.make_containerbuild()
 
-        raised = self.assertRaises(errors.SnapdError, builder.execute)
-        self.assertThat(
-            str(raised),
-            Contains('Error querying \'core\' snap: not found'))
+        raised = self.assertRaises(lxd.errors.ContainerSnapNotFoundError,
+                                   builder.execute)
+        self.assertThat(raised.snap_name, Equals('core'))
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @patch('snapcraft.internal.common.is_snap')
@@ -642,11 +670,10 @@ class LocalProjectTestCase(LXDTestCase):
 
         self.fake_lxd.check_call_mock.side_effect = call_effect
 
-        raised = self.assertRaises(errors.ContainerConnectionError,
-                                   self.make_containerbuild().execute)
+        self.assertRaises(lxd.errors.ContainerCreationFailedError,
+                          self.make_containerbuild().execute)
         self.assertThat(self.fake_lxd.status, Equals(None))
         # lxc launch should fail and no further commands should come after that
-        self.assertThat(str(raised), Contains('Failed to setup container'))
 
     @patch('snapcraft.internal.lxd.Containerbuild._container_run')
     def test_start_failed(self, mock_container_run):
@@ -661,13 +688,9 @@ class LocalProjectTestCase(LXDTestCase):
         d = self.fake_lxd.check_call_mock.side_effect
         self.fake_lxd.check_call_mock.side_effect = call_effect
 
-        raised = self.assertRaises(
-                errors.ContainerConnectionError,
-                self.make_containerbuild().execute)
-        self.assertThat(str(raised), Contains(
-            'The container could not be started.\n'
-            'The files /etc/subuid and /etc/subgid need to contain this line'))
-
+        self.assertRaises(
+            lxd.errors.ContainerStartFailedError,
+            self.make_containerbuild().execute)
         # Should not attempt to stop a container that wasn't started
         self.assertNotIn(call(['lxc', 'stop', '-f', self.fake_lxd.name]),
                          self.fake_lxd.check_call_mock.call_args_list)

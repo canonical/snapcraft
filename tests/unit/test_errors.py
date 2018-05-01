@@ -97,57 +97,6 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "the linker does not exist contact the author of the base "
                 "(run `snap info core18` to get information for this "
                 "base).")}),
-        ('ContainerError', {
-            'exception': errors.ContainerError,
-            'kwargs': {'message': 'test-message'},
-            'expected_message': 'test-message'}),
-        ('ContainerConnectionError', {
-            'exception': errors.ContainerConnectionError,
-            'kwargs': {'message': 'test-message'},
-            'expected_message': (
-                'test-message\n'
-                'Refer to the documentation at '
-                'https://linuxcontainers.org/lxd/getting-started-cli.')}),
-        ('ContainerRunError string', {
-            'exception': errors.ContainerRunError,
-            'kwargs': {
-                'command': 'test-command',
-                'exit_code': '1'
-            },
-            'expected_message': (
-                "The following command failed to run: "
-                "'test-command' exited with 1\n")}),
-        ('ContainerRunError list', {
-            'exception': errors.ContainerRunError,
-            'kwargs': {
-                'command': ['test-command', 'test-argument'],
-                'exit_code': '1'
-            },
-            'expected_message': (
-                "The following command failed to run: "
-                "'test-command test-argument' exited with 1\n")}),
-        ('ContainerSnapcraftCmdError string', {
-            'exception': errors.ContainerSnapcraftCmdError,
-            'kwargs': {
-                'command': 'test-command',
-                'exit_code': '1'
-            },
-            'expected_message': (
-                "Snapcraft command failed in the container: "
-                "'test-command' exited with 1\n")}),
-        ('ContainerSnapcraftCmdError list', {
-            'exception': errors.ContainerSnapcraftCmdError,
-            'kwargs': {
-                'command': ['test-command', 'test-argument'],
-                'exit_code': '1'
-            },
-            'expected_message': (
-                "Snapcraft command failed in the container: "
-                "'test-command test-argument' exited with 1\n")}),
-        ('SnapdError', {
-            'exception': errors.SnapdError,
-            'kwargs': {'message': 'test-message'},
-            'expected_message': 'test-message'}),
         ('PrimeFileConflictError', {
             'exception': errors.PrimeFileConflictError,
             'kwargs': {'fileset': {'test-file'}},

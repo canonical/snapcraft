@@ -258,7 +258,10 @@ def _get_local_snap_info(snap_name):
     slug = 'snaps/{}'.format(parse.quote(snap_name, safe=''))
     url = get_snapd_socket_path_template().format(slug)
     with requests_unixsocket.Session() as session:
-        snap_info = session.get(url)
+        try:
+            snap_info = session.get(url)
+        except exceptions.ConnectionError as e:
+            raise errors.SnapdConnectionError(snap_name, url) from e
     snap_info.raise_for_status()
     return snap_info.json()['result']
 
