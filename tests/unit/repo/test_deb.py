@@ -23,6 +23,7 @@ from testtools.matchers import (
     Contains,
     Equals,
     FileExists,
+    Not,
 )
 
 import snapcraft
@@ -280,6 +281,55 @@ class UbuntuTestCaseWithFakeAptCache(RepoBaseTestCase):
         self.assertThat(
             repo.Repo.get_installed_packages(),
             Equals(['test-installed-package=test-installed-package-version']))
+
+
+class AutokeepTestCase(RepoBaseTestCase):
+
+    def test_autokeep(self):
+        self.fake_apt_cache = fixture_setup.FakeAptCache()
+        self.useFixture(self.fake_apt_cache)
+        self.test_packages = (
+            'main-package', 'dependency', 'sub-dependency',
+            'conflicting-dependency')
+        self.fake_apt_cache.add_packages(self.test_packages)
+        self.fake_apt_cache.cache['main-package'].dependencies = [
+            [
+                fixture_setup.FakeAptBaseDependency(
+                    'dependency', [self.fake_apt_cache.cache['dependency']]),
+                fixture_setup.FakeAptBaseDependency(
+                    'conflicting-dependency',
+                    [self.fake_apt_cache.cache['conflicting-dependency']]),
+            ]
+        ]
+        self.fake_apt_cache.cache['dependency'].dependencies = [
+            [
+                fixture_setup.FakeAptBaseDependency(
+                    'sub-dependency',
+                    [self.fake_apt_cache.cache['sub-dependency']]),
+            ]
+        ]
+        self.fake_apt_cache.cache['conflicting-dependency'].conflicts = [
+            self.fake_apt_cache.cache['dependency']]
+
+        project_options = snapcraft.ProjectOptions()
+        ubuntu = repo.Ubuntu(self.tempdir, project_options=project_options)
+        ubuntu.get(['main-package', 'conflicting-dependency'])
+
+        # Verify that the package was actually fetched and copied into the
+        # requested location.
+        self.assertThat(
+            os.path.join(self.tempdir, 'download', 'main-package.deb'),
+            FileExists())
+        self.assertThat(
+            os.path.join(
+                self.tempdir, 'download', 'conflicting-dependency.deb'),
+            FileExists())
+        self.assertThat(
+            os.path.join(self.tempdir, 'download', 'dependency.deb'),
+            Not(FileExists()), 'Dependency should not have been fetched')
+        self.assertThat(
+            os.path.join(self.tempdir, 'download', 'sub-dependency.deb'),
+            Not(FileExists()), 'Sub-dependency should not have been fetched')
 
 
 class BuildPackagesTestCase(unit.TestCase):

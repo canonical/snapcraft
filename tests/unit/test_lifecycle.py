@@ -831,6 +831,17 @@ class RecordManifestBaseTestCase(BaseLifecycleTestCase):
         check_output_patcher.start()
         self.addCleanup(check_output_patcher.stop)
 
+        original_check_call = subprocess.check_call
+
+        def _fake_dpkg_deb(command, *args, **kwargs):
+            if 'dpkg-deb' not in command:
+                return original_check_call(command, *args, **kwargs)
+
+        check_call_patcher = mock.patch(
+            'subprocess.check_call', side_effect=_fake_dpkg_deb)
+        check_call_patcher.start()
+        self.addCleanup(check_call_patcher.stop)
+
         self.fake_apt_cache = fixture_setup.FakeAptCache()
         self.useFixture(self.fake_apt_cache)
         self.fake_apt_cache.add_package(
