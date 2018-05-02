@@ -90,7 +90,7 @@ class StatusTestCase(integration.StoreTestCase):
             subprocess.CalledProcessError, self.run_snapcraft,
             ['status', 'no-id'])
         self.assertThat(error.output, Contains(
-            "Unable to get snap ID for snap 'no-id'"))
+            "Failed to get snap ID for snap 'no-id'"))
 
     def test_status_staging_store(self):
         if not self.is_store_staging():
