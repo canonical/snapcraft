@@ -143,11 +143,10 @@ class Runner:
                 export SNAPCRAFTCTL_FEEDBACK_FIFO={feedback_fifo}
                 export SNAPCRAFT_INTERPRETER={interpreter}
                 {env}
-                {scriptlet}
-            """.format(
-                interpreter=sys.executable, call_fifo=call_fifo.path,
-                feedback_fifo=feedback_fifo.path, env=env,
-                scriptlet=scriptlet))
+                {scriptlet}""").format(
+                    interpreter=sys.executable, call_fifo=call_fifo.path,
+                    feedback_fifo=feedback_fifo.path, env=env,
+                    scriptlet=scriptlet)
 
             process = subprocess.Popen(
                 ['/bin/sh', '-e', '-c', script], cwd=workdir)
