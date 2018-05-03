@@ -254,4 +254,13 @@ class PartsConfig:
             env += dep_part.env(stagedir)
             env += self.build_env_for_part(dep_part, root_part=False)
 
-        return env
+        # LP: #1767625
+        # Remove duplicates from using the same plugin in dependent parts.
+        seen = dict()
+        deduped_env = list()
+        for e in env:
+            if e not in seen:
+                deduped_env.append(e)
+                seen[e] = e
+
+        return deduped_env

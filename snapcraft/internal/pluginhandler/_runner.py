@@ -116,6 +116,20 @@ class Runner:
                 'override-prime', self._override_prime_scriptlet,
                 self._primedir)
 
+    def _get_env(self):
+        env = ''
+        if common.is_snap():
+            # Since the snap is classic, $SNAP/bin is not on the $PATH.
+            # Let's set an alias to make sure it's found (but only if it
+            # exists).
+            snapcraftctl_path = os.path.join(
+                os.getenv('SNAP'), 'bin', 'snapcraftctl')
+            if os.path.exists(snapcraftctl_path):
+                env += 'alias snapcraftctl="$SNAP/bin/snapcraftctl"\n'
+        env += common.assemble_env()
+
+        return env
+
     def _run_scriptlet(self, scriptlet_name: str, scriptlet: str,
                        workdir: str) -> None:
         with tempfile.TemporaryDirectory() as tempdir:
@@ -124,17 +138,6 @@ class Runner:
             feedback_fifo = _NonBlockingRWFifo(
                 os.path.join(tempdir, 'call_feedback'))
 
-            env = ''
-            if common.is_snap():
-                # Since the snap is classic, $SNAP/bin is not on the $PATH.
-                # Let's set an alias to make sure it's found (but only if it
-                # exists).
-                snapcraftctl_path = os.path.join(
-                    os.getenv('SNAP'), 'bin', 'snapcraftctl')
-                if os.path.exists(snapcraftctl_path):
-                    env += 'alias snapcraftctl="$SNAP/bin/snapcraftctl"\n'
-            env += common.assemble_env()
-
             # snapcraftctl only works consistently if it's using the exact same
             # interpreter as that used by snapcraft itself, thus the definition
             # of SNAPCRAFT_INTERPRETER.
@@ -142,14 +145,20 @@ class Runner:
                 export SNAPCRAFTCTL_CALL_FIFO={call_fifo}
                 export SNAPCRAFTCTL_FEEDBACK_FIFO={feedback_fifo}
                 export SNAPCRAFT_INTERPRETER={interpreter}
-                {env}
                 {scriptlet}""").format(
                     interpreter=sys.executable, call_fifo=call_fifo.path,
-                    feedback_fifo=feedback_fifo.path, env=env,
-                    scriptlet=scriptlet)
+                    feedback_fifo=feedback_fifo.path, scriptlet=scriptlet)
 
-            process = subprocess.Popen(
-                ['/bin/sh', '-e', '-c', script], cwd=workdir)
+            # We write to a file as the script may be to long and hit the
+            # argument list limit.
+            run_script = os.path.join(tempdir, 'run_script')
+            with open(run_script, 'w+') as script_file:
+                print('set -e', file=script_file)
+                print(self._get_env(), file=script_file)
+                print(script, file=script_file)
+
+            process = subprocess.Popen(['/bin/sh', script_file.name],
+                                       cwd=workdir)
 
             status = None
             try:
