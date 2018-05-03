@@ -185,6 +185,40 @@ class SnapcraftPartMissingError(SnapcraftError):
     )
 
 
+class NoSuchFileError(SnapcraftError):
+
+    fmt = (
+        "Failed to find part that provided path: {path!r} does not "
+        "exist.\n"
+        "Check the file path and try again."
+    )
+
+    def __init__(self, path):
+        super().__init__(path=path)
+
+
+class ProvidesInvalidFilePathError(SnapcraftError):
+
+    fmt = (
+        "Failed to find part that provides path: {path!r} is not in the "
+        "staging or priming area.\n"
+        "Ensure the path is in the staging or priming area and try again."
+    )
+
+    def __init__(self, path):
+        super().__init__(path=path)
+
+
+class UntrackedFileError(SnapcraftError):
+
+    fmt = (
+        "No known parts provided {path!r}. It may have been provided " "by a scriptlet."
+    )
+
+    def __init__(self, path):
+        super().__init__(path=path)
+
+
 class RemotePartsError(SnapcraftError):
     pass
 
