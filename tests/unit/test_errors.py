@@ -422,6 +422,39 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'https://status.snapcraft.io/'
             )
         }),
+        ('NoSuchFileError', {
+            'exception': errors.NoSuchFileError,
+            'kwargs': {
+                'path': 'test-path'
+            },
+            'expected_message': (
+                "Failed to find part that provided path: 'test-path' does not "
+                'exist.\n'
+                'Check the file path and try again.'
+            )
+        }),
+        ('ProvidesInvalidFilePathError', {
+            'exception': errors.ProvidesInvalidFilePathError,
+            'kwargs': {
+                'path': 'test-path'
+            },
+            'expected_message': (
+                "Failed to find part that provides path: 'test-path' is not "
+                'in the staging or priming area.\n'
+                'Ensure the path is in the staging or priming area and try '
+                'again.'
+            )
+        }),
+        ('UntrackedFileError', {
+            'exception': errors.UntrackedFileError,
+            'kwargs': {
+                'path': 'test-path'
+            },
+            'expected_message': (
+                "No known parts provided 'test-path'. It may have been "
+                'provided by a scriptlet.'
+            )
+        }),
     )
 
     def test_error_formatting(self):
