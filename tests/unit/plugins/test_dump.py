@@ -19,7 +19,7 @@ import os
 from testtools.matchers import Equals
 
 import snapcraft
-from snapcraft.plugins.dump import DumpPlugin
+from snapcraft.plugins.dump import DumpInvalidSymlinkError, DumpPlugin
 from tests import unit
 
 
@@ -213,12 +213,11 @@ class DumpPluginTestCase(unit.TestCase):
 
         plugin.pull()
 
-        raised = self.assertRaises(FileNotFoundError, plugin.build)
+        raised = self.assertRaises(DumpInvalidSymlinkError, plugin.build)
 
         self.assertThat(
-            str(raised),
-            Equals('{!r} is a broken symlink pointing outside the snap'.format(
-                os.path.join(plugin.builddir, 'src', 'bad_relative'))))
+            raised.path, Equals(os.path.join(
+                plugin.builddir, 'src', 'bad_relative')))
 
     def test_dump_enable_cross_compilation(self):
         plugin = DumpPlugin('dump', self.options, self.project_options)
