@@ -15,7 +15,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+from typing import cast, Dict, List, Union
 
+from ._env import (  # noqa
+    environment_to_replacements,
+    snapcraft_global_environment,
+    snapcraft_part_environment,
+)
 from ._schema import Validator  # noqa
 from ._parts_config import PartsConfig  # noqa
 
@@ -25,16 +31,18 @@ def load_config(project_options=None):
     return Config(project_options)
 
 
-def replace_attr(attr, replacements):
+def replace_attr(
+        attr: Union[List[str], Dict[str, str], str],
+        replacements: Dict[str, str]) -> Union[List[str], Dict[str, str], str]:
     if isinstance(attr, str):
-        for replacement in replacements:
-            attr = attr.replace(replacement[0], str(replacement[1]))
+        for replacement, value in replacements.items():
+            attr = attr.replace(replacement, str(value))
         return attr
     elif isinstance(attr, list) or isinstance(attr, tuple):
-        return [replace_attr(i, replacements)
+        return [cast(str, replace_attr(i, replacements))
                 for i in attr]
     elif isinstance(attr, dict):
-        return {k: replace_attr(attr[k], replacements)
+        return {k: cast(str, replace_attr(attr[k], replacements))
                 for k in attr}
 
     return attr

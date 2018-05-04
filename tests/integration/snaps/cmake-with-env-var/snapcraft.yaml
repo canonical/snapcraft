@@ -11,5 +11,8 @@ build-packages: [gcc, libc6-dev]
 parts:
   cmake-project:
     plugin: cmake
-    configflags: ['-DPART_INSTALL="$SNAPCRAFT_PART_INSTALL"']
+    configflags:
+      - '-DPART_SRC="$SNAPCRAFT_PART_SRC"'
+      - '-DPART_BUILD="$SNAPCRAFT_PART_BUILD"'
+      - '-DPART_INSTALL="$SNAPCRAFT_PART_INSTALL"'
     source: .

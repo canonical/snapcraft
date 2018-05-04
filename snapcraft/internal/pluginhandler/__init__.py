@@ -54,6 +54,14 @@ class PluginHandler:
         return self.plugin.name
 
     @property
+    def sourcedir(self):
+        return self.plugin.sourcedir
+
+    @property
+    def builddir(self):
+        return self.plugin.builddir
+
+    @property
     def installdir(self):
         return self.plugin.installdir
 

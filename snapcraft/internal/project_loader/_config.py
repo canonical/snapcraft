@@ -36,6 +36,8 @@ from ._parts_config import PartsConfig
 from ._env import (
     build_env_for_stage,
     runtime_env,
+    snapcraft_global_environment,
+    environment_to_replacements,
 )
 from . import (
     errors,
@@ -213,10 +215,10 @@ class Config:
         snapcraft_yaml = self._process_remote_parts(snapcraft_yaml)
         snapcraft_yaml = self._expand_filesets(snapcraft_yaml)
 
-        self.data = self._expand_env(snapcraft_yaml)
         # We need to set the ProjectInfo here because ProjectOptions is
         # created in the CLI.
-        self._project_options.info = ProjectInfo(self.data)
+        self._project_options.info = ProjectInfo(snapcraft_yaml)
+        self.data = self._expand_env(snapcraft_yaml)
         self._ensure_no_duplicate_app_aliases()
 
         grammar_processor = grammar_processing.GlobalGrammarProcessor(
@@ -306,11 +308,8 @@ class Config:
 
     def project_env(self):
         return [
-            'SNAPCRAFT_STAGE="{}"'.format(self._project_options.stage_dir),
-            'SNAPCRAFT_PROJECT_NAME="{}"'.format(self.data['name']),
-            'SNAPCRAFT_PROJECT_VERSION={}'.format(
-                self.data.get('version', '')),
-            'SNAPCRAFT_PROJECT_GRADE={}'.format(self.data.get('grade', '')),
+            '{}="{}"'.format(variable, value) for variable, value in
+            snapcraft_global_environment(self._project_options).items()
         ]
 
     def _expand_env(self, snapcraft_yaml):
@@ -318,16 +317,12 @@ class Config:
         for key in snapcraft_yaml:
             if any((key == env_key for env_key in environment_keys)):
                 continue
+
+            replacements = environment_to_replacements(
+                snapcraft_global_environment(self._project_options))
+
             snapcraft_yaml[key] = replace_attr(
-                snapcraft_yaml[key],
-                [
-                    ('$SNAPCRAFT_PROJECT_NAME', snapcraft_yaml['name']),
-                    ('$SNAPCRAFT_PROJECT_VERSION', snapcraft_yaml.get(
-                        'version', '')),
-                    ('$SNAPCRAFT_PROJECT_GRADE', snapcraft_yaml.get(
-                        'grade', '')),
-                    ('$SNAPCRAFT_STAGE', self._project_options.stage_dir),
-                ])
+                snapcraft_yaml[key], replacements)
         return snapcraft_yaml
 
     def _expand_filesets(self, snapcraft_yaml):

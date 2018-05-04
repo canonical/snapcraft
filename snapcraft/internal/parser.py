@@ -123,10 +123,10 @@ def _process_entry_parts(entry_parts, parts, origin, maintainer, description,
                 'DEPRECATED: Found a "/" in the name of the {!r} part'.format(
                     part_name))
         source_part = parts.get(part_name)
-        replacements = [
-            ('$SNAPCRAFT_PROJECT_NAME', origin_name),
-            ('$SNAPCRAFT_PROJECT_VERSION', origin_version),
-        ]
+        replacements = project_loader.environment_to_replacements({
+            'SNAPCRAFT_PROJECT_NAME': origin_name,
+            'SNAPCRAFT_PROJECT_VERSION': origin_version,
+        })
 
         source_part = project_loader.replace_attr(source_part, replacements)
 

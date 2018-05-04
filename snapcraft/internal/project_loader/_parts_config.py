@@ -13,6 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from collections import ChainMap
 import logging
 from os import path
 from typing import List
@@ -25,6 +27,8 @@ from ._env import (
     build_env,
     build_env_for_stage,
     runtime_env,
+    snapcraft_global_environment,
+    snapcraft_part_environment
 )
 from . import (
     errors,
@@ -242,11 +246,11 @@ class PartsConfig:
             if (self._confinement == 'classic' and is_host_compat):
                 env += env_for_classic(self._base,
                                        self._project_options.arch_triplet)
-            env.append('SNAPCRAFT_PART_INSTALL="{}"'.format(part.installdir))
-            env.append('SNAPCRAFT_ARCH_TRIPLET="{}"'.format(
-                self._project_options.arch_triplet))
-            env.append('SNAPCRAFT_PARALLEL_BUILD_COUNT={}'.format(
-                       self._project_options.parallel_build_count))
+
+            global_env = snapcraft_global_environment(self._project_options)
+            part_env = snapcraft_part_environment(part)
+            for variable, value in ChainMap(part_env, global_env).items():
+                env.append('{}="{}"'.format(variable, value))
         else:
             env += part.env(stagedir)
             env += runtime_env(
