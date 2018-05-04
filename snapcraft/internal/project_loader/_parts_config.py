@@ -15,6 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
 from os import path
+from typing import List
+from typing import Set  # noqa: F401
 
 import snapcraft
 from snapcraft.internal import deprecations, elf, pluginhandler, repo
@@ -212,10 +214,10 @@ class PartsConfig:
 
         return part
 
-    def build_env_for_part(self, part, root_part=True):
+    def build_env_for_part(self, part, root_part=True) -> List[str]:
         """Return a build env of all the part's dependencies."""
 
-        env = []
+        env = []  # type: List[str]
         stagedir = self._project_options.stage_dir
         is_host_compat = self._project_options.is_host_compatible_with_base(
             self._base)
@@ -256,11 +258,11 @@ class PartsConfig:
 
         # LP: #1767625
         # Remove duplicates from using the same plugin in dependent parts.
-        seen = dict()
-        deduped_env = list()
+        seen = set()  # type: Set[str]
+        deduped_env = list()  # type: List[str]
         for e in env:
             if e not in seen:
                 deduped_env.append(e)
-                seen[e] = e
+                seen.add(e)
 
         return deduped_env
