@@ -138,11 +138,10 @@ class Runner:
                     feedback_fifo=feedback_fifo.path, scriptlet=scriptlet,
                     env=_get_env())
 
-            # We write to a file as the script may be to long and hit the
-            # argument list limit.
-            run_script = os.path.join(tempdir, 'run_script')
-            with open(run_script, 'w+') as script_file:
+            with tempfile.TemporaryFile(mode='w+') as script_file:
                 print(script, file=script_file)
+                script_file.flush()
+                script_file.seek(0)
 
                 process = subprocess.Popen(['/bin/sh'], stdin=script_file,
                                            cwd=workdir)
