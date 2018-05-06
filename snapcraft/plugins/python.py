@@ -64,7 +64,7 @@ import requests
 import snapcraft
 from snapcraft.common import isurl
 from snapcraft.internal import mangling, os_release
-from snapcraft.internal.errors import SnapcraftPluginCommandError
+from snapcraft.internal.errors import OsReleaseCodenameError, SnapcraftPluginCommandError
 from snapcraft.plugins import _python
 
 
@@ -150,7 +150,8 @@ class PythonPlugin(snapcraft.BasePlugin):
 
     @property
     def plugin_stage_packages(self):
-        release_codename = os_release.OsRelease().version_codename()
+        with contextlib.suppress('OsReleaseCodenameError'):
+            release_codename = os_release.OsRelease().version_codename()
         if self.options.python_version == 'python2':
             python_base = 'python'
         elif self.options.python_version == 'python3':
