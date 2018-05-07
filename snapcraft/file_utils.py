@@ -32,6 +32,7 @@ from snapcraft.internal.errors import (
     RequiredCommandNotFound,
     RequiredPathDoesNotExist,
     SnapcraftEnvironmentError,
+    SnapcraftCopyFileNotFoundError
 )
 
 if sys.version_info < (3, 6):
@@ -105,41 +106,55 @@ def link_or_copy(source: str, destination: str,
     """
 
     try:
-        # Note that follow_symlinks doesn't seem to work for os.link, so we'll
-        # implement this logic ourselves using realpath.
-        source_path = source
-        if follow_symlinks:
-            source_path = os.path.realpath(source)
-
-        if not os.path.exists(os.path.dirname(destination)):
-            create_similar_directory(
-                os.path.dirname(source_path),
-                os.path.dirname(destination))
-        # Setting follow_symlinks=False in case this bug is ever fixed
-        # upstream-- we want this function to continue supporting NOT following
-        # symlinks.
-        os.link(source_path, destination, follow_symlinks=False)
+        _link(source, destination, follow_symlinks)
     except OSError as e:
         if e.errno == errno.EEXIST and not os.path.isdir(destination):
             # os.link will fail if the destination already exists, so let's
             # remove it and try again.
             os.remove(destination)
-            link_or_copy(source_path, destination, follow_symlinks)
+            link_or_copy(source, destination, follow_symlinks)
         else:
-            # If os.link raised an I/O error, it may have left a file behind.
-            # Skip on OSError in case it doesn't exist or is a directory.
-            with suppress(OSError):
-                os.unlink(destination)
+            _copy(source, destination, follow_symlinks)
 
-            shutil.copy2(source, destination, follow_symlinks=follow_symlinks)
-            uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid
-            gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid
-            try:
-                os.chown(destination, uid, gid,
-                         follow_symlinks=follow_symlinks)
-            except PermissionError as e:
-                logger.debug('Unable to chown {destination}: {error}'.format(
-                    destination=destination, error=e))
+
+def _link(source: str, destination: str, follow_symlinks: bool=False) -> None:
+    # Note that follow_symlinks doesn't seem to work for os.link, so we'll
+    # implement this logic ourselves using realpath.
+    source_path = source
+    if follow_symlinks:
+        source_path = os.path.realpath(source)
+
+    if not os.path.exists(os.path.dirname(destination)):
+        create_similar_directory(
+            os.path.dirname(source_path),
+            os.path.dirname(destination))
+    # Setting follow_symlinks=False in case this bug is ever fixed
+    # upstream-- we want this function to continue supporting NOT following
+    # symlinks.
+    try:
+        os.link(source_path, destination, follow_symlinks=False)
+    except FileNotFoundError:
+        raise SnapcraftCopyFileNotFoundError(source)
+
+
+def _copy(source: str, destination: str, follow_symlinks: bool=False) -> None:
+    # If os.link raised an I/O error, it may have left a file behind. Skip on
+    # OSError in case it doesn't exist or is a directory.
+    with suppress(OSError):
+        os.unlink(destination)
+
+    try:
+        shutil.copy2(
+            source, destination, follow_symlinks=follow_symlinks)
+    except FileNotFoundError:
+        raise SnapcraftCopyFileNotFoundError(source)
+    uid = os.stat(source, follow_symlinks=follow_symlinks).st_uid
+    gid = os.stat(source, follow_symlinks=follow_symlinks).st_gid
+    try:
+        os.chown(destination, uid, gid, follow_symlinks=follow_symlinks)
+    except PermissionError as e:
+        logger.debug('Unable to chown {destination}: {error}'.format(
+            destination=destination, error=e))
 
 
 def link_or_copy_tree(source_tree: str, destination_tree: str,
