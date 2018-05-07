@@ -15,6 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import contextlib
+from http.client import responses
 import logging
 from requests.packages import urllib3
 from simplejson.scanner import JSONDecodeError
@@ -357,26 +358,20 @@ class StoreReviewError(StoreError):
         super().__init__()
 
 
-class StoreInternalError(StoreError):
+class StoreServerError(StoreError):
 
-    fmt = '{what}: {why}\n{action}'
+    fmt = '{what}: {error_text} (code {error_code}).\n{action}'
 
     def __init__(self, response):
-        what = 'The store encountered an internal error'
-        why = None
+        what = 'The store encountered a server error'
+        error_text = responses[response.status_code].lower()
+        error_code = response.status_code
         action = ('The status of the store and associated services can be '
                   'checked at {}'.format(_STORE_STATUS_URL))
 
-        # If this response includes an error list, try to make some sense of it
-        with contextlib.suppress(AttributeError, JSONDecodeError):
-            response_json = response.json()
-            if 'error_list' in response_json:
-                why = _error_list_to_message(response_json)
-
-        if not why:
-            self.fmt = '{what}. {action}'
-
-        super().__init__(response=response, what=what, why=why, action=action)
+        super().__init__(
+            response=response, what=what, error_text=error_text,
+            error_code=error_code, action=action)
 
 
 class StoreReleaseError(StoreError):

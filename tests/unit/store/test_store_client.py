@@ -305,10 +305,9 @@ class PushSnapBuildTestCase(StoreTestCase):
         # will get a descriptive error message.
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
-            errors.StoreInternalError,
+            errors.StoreServerError,
             self.client.push_snap_build, 'snap-id', 'test-not-implemented')
-        self.assertThat(raised.why, Contains(
-            'The snap-build assertions are currently disabled'))
+        self.assertThat(raised.error_code, Equals(501))
 
     def test_push_snap_build_invalid_data(self):
         self.client.login('dummy', 'test correct password')
@@ -325,9 +324,9 @@ class PushSnapBuildTestCase(StoreTestCase):
         # might happen in the internet, so we are a little defensive.
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
-            errors.StoreInternalError,
+            errors.StoreServerError,
             self.client.push_snap_build, 'snap-id', 'test-unexpected-data')
-        self.assertFalse(raised.why)
+        self.assertThat(raised.error_code, Equals(500))
 
     def test_push_snap_build_successfully(self):
         self.client.login('dummy', 'test correct password')
@@ -512,9 +511,9 @@ class RegisterKeyTestCase(StoreTestCase):
         # will get a 501 Not Implemented response.
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
-            errors.StoreInternalError,
+            errors.StoreServerError,
             self.client.register_key, 'test-not-implemented')
-        self.assertFalse(raised.why)
+        self.assertThat(raised.error_code, Equals(501))
 
     def test_invalid_data(self):
         self.client.login('dummy', 'test correct password')
@@ -728,9 +727,9 @@ class ValidationsTestCase(StoreTestCase):
         assertion = json.dumps({'foo': 'bar'}).encode('utf-8')
 
         err = self.assertRaises(
-            errors.StoreInternalError,
+            errors.StoreServerError,
             self.client.push_assertion, 'err', assertion, 'validations')
-        self.assertThat(err.why, Contains('test-error'))
+        self.assertThat(err.error_code, Equals(501))
 
 
 class UploadTestCase(StoreTestCase):
@@ -801,9 +800,9 @@ class UploadTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
 
         raised = self.assertRaises(
-            errors.StoreInternalError,
+            errors.StoreServerError,
             self.client.upload, 'test-snap', self.snap_path)
-        self.assertFalse(raised.why)
+        self.assertThat(raised.error_code, Equals(500))
 
     def test_upload_snap_requires_review(self):
         self.client.login('dummy', 'test correct password')
@@ -955,7 +954,7 @@ class ReleaseTestCase(StoreTestCase):
     def test_release_snap_to_bad_channel(self):
         self.client.login('dummy', 'test correct password')
         self.assertRaises(
-            errors.StoreInternalError,
+            errors.StoreServerError,
             self.client.release, 'test-snap', '19', ['bad-channel'])
 
     def test_release_unregistered_snap(self):
@@ -1024,9 +1023,9 @@ class CloseChannelsTestCase(StoreTestCase):
         # might happen in the internet, so we are a little defensive.
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
-            errors.StoreInternalError,
+            errors.StoreServerError,
             self.client.close_channels, 'snap-id', ['unexpected'])
-        self.assertFalse(raised.why)
+        self.assertThat(raised.error_code, Equals(500))
 
     def test_close_broken_store_plain(self):
         # If the contract is broken by the Store, users will be have additional
@@ -1395,10 +1394,10 @@ class SignDeveloperAgreementTestCase(StoreTestCase):
         self.useFixture(fixtures.EnvironmentVariable('STORE_DOWN', '1'))
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
-            errors.StoreInternalError,
+            errors.StoreServerError,
             self.client.sign_developer_agreement,
             latest_tos_accepted=True)
-        self.assertFalse(raised.why)
+        self.assertThat(raised.error_code, Equals(500))
 
 
 class PushMetadataTestCase(StoreTestCase):

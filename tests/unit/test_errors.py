@@ -27,17 +27,9 @@ from snapcraft.storeapi import errors as store_errors
 from tests import unit
 
 
-def _fake_error_response(*, error_list):
+def _fake_error_response(status_code):
     response = mock.Mock()
-
-    if error_list:
-        # Create a fake error response corresponding to this format:
-        # https://dashboard.snapcraft.io/docs/api/snap.html#format
-        response.json.return_value = {'error_list': [
-            {'code': 'test-error-code', 'message': 'this is a test error'}
-        ]}
-    else:
-        response.json.return_value = {}
+    response.status_code = status_code
     return response
 
 
@@ -437,26 +429,26 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'https://status.snapcraft.io/'
             )
         }),
-        ('StoreInternalError no error list', {
-            'exception': store_errors.StoreInternalError,
+        ('StoreServerError 500', {
+            'exception': store_errors.StoreServerError,
             'kwargs': {
-                'response': _fake_error_response(error_list=False)
+                'response': _fake_error_response(500)
             },
             'expected_message': (
-                'The store encountered an internal error. The status of the '
-                'store and associated services can be checked at '
-                'https://status.snapcraft.io/'
+                'The store encountered a server error: internal server error '
+                '(code 500).\nThe status of the store and associated services '
+                'can be checked at https://status.snapcraft.io/'
             )
         }),
-        ('StoreInternalError with error list', {
-            'exception': store_errors.StoreInternalError,
+        ('StoreServerError 501', {
+            'exception': store_errors.StoreServerError,
             'kwargs': {
-                'response': _fake_error_response(error_list=True)
+                'response': _fake_error_response(501)
             },
             'expected_message': (
-                'The store encountered an internal error: this is a test '
-                'error\nThe status of the store and associated services can '
-                'be checked at https://status.snapcraft.io/'
+                'The store encountered a server error: not implemented '
+                '(code 501).\nThe status of the store and associated services '
+                'can be checked at https://status.snapcraft.io/'
             )
         }),
     )

@@ -71,7 +71,7 @@ class Client():
         # Handle 5XX responses generically right here, so the callers don't
         # need to worry about it.
         if response.status_code >= 500:
-            raise errors.StoreInternalError(response)
+            raise errors.StoreServerError(response)
 
         return response
 
