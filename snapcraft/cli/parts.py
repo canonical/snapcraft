@@ -14,10 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import click
+import os
 
-from snapcraft.internal import remote_parts, lifecycle
+from snapcraft import formatting_utils
+from snapcraft.internal import errors, remote_parts, lifecycle, project_loader
 from ._options import get_project_options
-from . import env
+from . import env, echo
 
 
 @click.group(context_settings={})
@@ -67,3 +69,61 @@ def search(ctx, query):
 
     """
     remote_parts.search(' '.join(query))
+
+
+# Implemented as a generator since loading up the state could be heavy
+def _part_states_for_step(step, parts_config):
+    for part in parts_config.all_parts:
+        state = part.get_state(step)
+        if state:
+            yield (part.name, state)
+
+
+@partscli.command()
+@click.argument('path', metavar='<path>')
+def provides(*, path, **kwargs):
+    """Show the part that provided <path>.
+
+    <path> can be an absolute path, or relative to the current working
+    directory. It must point to a file either in the staging or the priming
+    area.
+    """
+    # First of all, ensure the file actually exists before doing any work
+    if not os.path.exists(path):
+        raise errors.NoSuchFileError(path)
+
+    project = get_project_options(**kwargs)
+    config = project_loader.load_config(project)
+
+    # Convert file path into absolute path
+    absolute_file_path = os.path.abspath(path)
+
+    # Which step are we operating on? We'll know by where the file_path is:
+    # the staging area, or the priming area?
+    if absolute_file_path.startswith(project.stage_dir):
+        step = 'stage'
+        relative_file_path = os.path.relpath(
+            absolute_file_path, start=project.stage_dir)
+    elif absolute_file_path.startswith(project.prime_dir):
+        step = 'prime'
+        relative_file_path = os.path.relpath(
+            absolute_file_path, start=project.prime_dir)
+    else:
+        raise errors.ProvidesInvalidFilePathError(path)
+
+    is_dir = os.path.isdir(absolute_file_path)
+    is_file = os.path.isfile(absolute_file_path)
+
+    providing_parts = set()  # type: Set[str]
+    for part_name, state in _part_states_for_step(step, config.parts):
+        if is_dir and relative_file_path in state.directories:
+                providing_parts.add(part_name)
+        elif is_file and relative_file_path in state.files:
+                providing_parts.add(part_name)
+
+    if not providing_parts:
+        raise errors.UntrackedFileError(path)
+
+    echo.info('This path was provided by the following {}:'.format(
+        formatting_utils.pluralize(providing_parts, 'part', 'parts')))
+    echo.info('\n'.join(providing_parts))

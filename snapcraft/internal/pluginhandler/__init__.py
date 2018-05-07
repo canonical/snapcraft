@@ -23,7 +23,7 @@ import os
 import shutil
 import sys
 from glob import glob, iglob
-from typing import Dict, Set, Sequence  # noqa: F401
+from typing import cast, Dict, Set, Sequence  # noqa: F401
 
 import yaml
 
@@ -121,23 +121,29 @@ class PluginHandler:
 
     def get_pull_state(self) -> states.PullState:
         if not self._pull_state:
-            self._pull_state = states.get_state(self.plugin.statedir, 'pull')
+            self._pull_state = cast(states.PullState, self.get_state('pull'))
         return self._pull_state
 
     def get_build_state(self) -> states.BuildState:
         if not self._build_state:
-            self._build_state = states.get_state(self.plugin.statedir, 'build')
+            self._build_state = cast(
+                states.BuildState, self.get_state('build'))
         return self._build_state
 
     def get_stage_state(self) -> states.StageState:
         if not self._stage_state:
-            self._stage_state = states.get_state(self.plugin.statedir, 'stage')
+            self._stage_state = cast(
+                states.StageState, self.get_state('stage'))
         return self._stage_state
 
     def get_prime_state(self) -> states.PrimeState:
         if not self._prime_state:
-            self._prime_state = states.get_state(self.plugin.statedir, 'prime')
+            self._prime_state = cast(
+                states.PrimeState, self.get_state('prime'))
         return self._prime_state
+
+    def get_state(self, step) -> states.PartState:
+        return states.get_state(self.plugin.statedir, step)
 
     def _get_source_handler(self, properties):
         """Returns a source_handler for the source in properties."""
