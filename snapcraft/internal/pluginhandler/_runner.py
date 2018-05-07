@@ -124,32 +124,27 @@ class Runner:
             feedback_fifo = _NonBlockingRWFifo(
                 os.path.join(tempdir, 'call_feedback'))
 
-            env = ''
-            if common.is_snap():
-                # Since the snap is classic, $SNAP/bin is not on the $PATH.
-                # Let's set an alias to make sure it's found (but only if it
-                # exists).
-                snapcraftctl_path = os.path.join(
-                    os.getenv('SNAP'), 'bin', 'snapcraftctl')
-                if os.path.exists(snapcraftctl_path):
-                    env += 'alias snapcraftctl="$SNAP/bin/snapcraftctl"\n'
-            env += common.assemble_env()
-
             # snapcraftctl only works consistently if it's using the exact same
             # interpreter as that used by snapcraft itself, thus the definition
             # of SNAPCRAFT_INTERPRETER.
             script = textwrap.dedent("""\
+                set -e
                 export SNAPCRAFTCTL_CALL_FIFO={call_fifo}
                 export SNAPCRAFTCTL_FEEDBACK_FIFO={feedback_fifo}
                 export SNAPCRAFT_INTERPRETER={interpreter}
                 {env}
                 {scriptlet}""").format(
                     interpreter=sys.executable, call_fifo=call_fifo.path,
-                    feedback_fifo=feedback_fifo.path, env=env,
-                    scriptlet=scriptlet)
+                    feedback_fifo=feedback_fifo.path, scriptlet=scriptlet,
+                    env=_get_env())
 
-            process = subprocess.Popen(
-                ['/bin/sh', '-e', '-c', script], cwd=workdir)
+            with tempfile.TemporaryFile(mode='w+') as script_file:
+                print(script, file=script_file)
+                script_file.flush()
+                script_file.seek(0)
+
+                process = subprocess.Popen(['/bin/sh'], stdin=script_file,
+                                           cwd=workdir)
 
             status = None
             try:
@@ -242,3 +237,18 @@ class _NonBlockingRWFifo:
     def close(self) -> None:
         if self._fd is not None:
             os.close(self._fd)
+
+
+def _get_env():
+    env = ''
+    if common.is_snap():
+        # Since the snap is classic, $SNAP/bin is not on the $PATH.
+        # Let's set an alias to make sure it's found (but only if it
+        # exists).
+        snapcraftctl_path = os.path.join(
+            os.getenv('SNAP'), 'bin', 'snapcraftctl')
+        if os.path.exists(snapcraftctl_path):
+            env += 'alias snapcraftctl="$SNAP/bin/snapcraftctl"\n'
+    env += common.assemble_env()
+
+    return env

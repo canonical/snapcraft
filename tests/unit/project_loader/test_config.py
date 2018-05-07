@@ -1994,6 +1994,50 @@ parts:
                             'Expected LD_LIBRARY_PATH to include "{}"'.format(
                                 item))
 
+    def test_config_env_dedup(self):
+        """Regression test for LP: #1767625.
+        Verify that the use of after with multiple parts does not produce
+        duplicate exports.
+        """
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+grade: stable
+
+parts:
+  main:
+    plugin: nil
+    after: [part1, part2, part3]
+  part1:
+    plugin: nil
+  part2:
+    plugin: nil
+  part3:
+    plugin: nil
+""")
+        config = _config.Config()
+        part = config.parts.get_part('main')
+        environment = config.parts.build_env_for_part(part, root_part=True)
+        # We sort here for equality checking but they should not be sorted
+        # for a real case scenario.
+        environment.sort()
+        self.assertThat(environment, Equals([
+            ('PATH="{0}/parts/main/install/usr/sbin:'
+             '{0}/parts/main/install/usr/bin:'
+             '{0}/parts/main/install/sbin:'
+             '{0}/parts/main/install/bin:$PATH"').format(self.path),
+            ('PATH="{0}/stage/usr/sbin:'
+             '{0}/stage/usr/bin:'
+             '{0}/stage/sbin:'
+             '{0}/stage/bin:$PATH"').format(self.path),
+            'PERL5LIB="{0}/stage/usr/share/perl5/"'.format(self.path),
+            'SNAPCRAFT_ARCH_TRIPLET="{}"'.format(self.arch_triplet),
+            'SNAPCRAFT_PARALLEL_BUILD_COUNT=2',
+            'SNAPCRAFT_PART_INSTALL="{}/parts/main/install"'.format(self.path),
+        ]))
+
     def test_config_stage_environment_confinement_classic(self):
         patcher = unittest.mock.patch.object(
             snapcraft.internal.os_release.OsRelease, 'version_codename',
@@ -2222,10 +2266,6 @@ parts:
             get_envvar('LD_LIBRARY_PATH'), Equals(
                 '/user-provided:'
                 '{parts_dir}/part2/install/lib:'
-                '{stage_dir}/lib:'
-                '{stage_dir}/usr/lib:'
-                '{stage_dir}/lib/{arch_triplet}:'
-                '{stage_dir}/usr/lib/{arch_triplet}:'
                 '{stage_dir}/lib:'
                 '{stage_dir}/usr/lib:'
                 '{stage_dir}/lib/{arch_triplet}:'
