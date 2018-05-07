@@ -560,3 +560,13 @@ class SnapcraftInvalidCLIConfigError(SnapcraftError):
         super().__init__(config_file=config_file, error=error)
         # This is to keep mypy happy
         self.config_file = config_file
+
+
+class SnapcraftCopyFileNotFoundError(SnapcraftError):
+    fmt = (
+        'Failed to copy {path!r}: no such file or directory.\n'
+        'Check the path and try again.'
+    )
+
+    def __init__(self, path):
+        super().__init__(path=path)

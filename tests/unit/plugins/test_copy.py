@@ -64,12 +64,9 @@ class TestCopyPlugin(unit.TestCase):
         c = CopyPlugin('copy', self.mock_options, self.project_options)
         c.pull()
 
-        raised = self.assertRaises(FileNotFoundError, c.build)
-
-        self.assertThat(
-            str(raised),
-            Equals("[Errno 2] No such file or directory: '{}/src'".format(
-                c.builddir)))
+        raised = self.assertRaises(
+            errors.SnapcraftCopyFileNotFoundError, c.build)
+        self.assertThat(raised.path, Equals(os.path.join(c.builddir, 'src')))
 
     def test_copy_glob_does_not_match_anything(self):
         # ensure that a bad file causes a warning and fails the build even

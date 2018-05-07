@@ -58,7 +58,7 @@ parts:
         ./usr/bin/python3 -m compileall .
     after: [patches, apt]
   apt:
-      source: https://github.com/Debian/apt
+      source: https://salsa.debian.org/apt-team/apt.git
       source-type: git
       source-tag: 1.2.19
       source-depth: 1

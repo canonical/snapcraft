@@ -26,6 +26,7 @@ import testtools
 import yaml
 from testtools.matchers import (
     Contains,
+    DirExists,
     Equals,
     FileContains,
     FileExists,
@@ -1000,6 +1001,17 @@ class WriteSnapDirectoryTestCase(CreateBaseTestCase):
         # no wrapper is generated (i.e. that hook is copied to both locations).
         self.assertThat(
             os.path.join(self.hooks_dir, 'test-hook'), FileContains(''))
+
+    def test_nothing_to_write(self):
+        # Setup a snap directory containing just a snapcraft.yaml, nothing else
+        _create_file(os.path.join(self.snap_dir, 'snapcraft.yaml'))
+
+        # Now generate the metadata, and verify that no snap directory was
+        # created
+        self.generate_meta_yaml()
+        self.assertThat(
+            os.path.join(self.prime_dir, 'snap'), Not(DirExists()),
+            'Expected snap directory to NOT be created')
 
     def test_snap_hooks_overwrite_part_hooks(self):
         # Setup a prime/snap directory containing a hook.
