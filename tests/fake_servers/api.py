@@ -868,6 +868,9 @@ class FakeStoreAPIServer(base.BaseFakeServer):
             'no-revoked': {'snap-id': 'no-revoked', 'status': 'Approved',
                            'private': False, 'price': None,
                            'since': '2016-12-12T01:01:01Z'},
+            'no-id': {'snap-id': None, 'status': 'Approved',
+                      'private': False, 'price': None,
+                      'since': '2016-12-12T01:01:01Z'},
             }
         snaps.update({
             name: {'snap-id': snap_data['snap_id'], 'status': 'Approved',

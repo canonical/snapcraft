@@ -172,6 +172,9 @@ class StoreClient():
         except KeyError:
             raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
 
+        if snap_id is None:
+            raise errors.NoSnapIdError(snap_name)
+
         response = self._refresh_if_necessary(
             self.sca.snap_revisions, snap_id, series, arch)
 
@@ -189,6 +192,9 @@ class StoreClient():
             snap_id = account_info['snaps'][series][snap_name]['snap-id']
         except KeyError:
             raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
+
+        if snap_id is None:
+            raise errors.NoSnapIdError(snap_name)
 
         response = self._refresh_if_necessary(
             self.sca.snap_status, snap_id, series, arch)
@@ -221,7 +227,7 @@ class StoreClient():
             logger.info('Already downloaded {} at {}'.format(
                 name, download_path))
             return
-        logger.info('Downloading {}'.format(name, download_path))
+        logger.info('Downloading {}'.format(name))
 
         # we only resume when redirected to our CDN since we use internap's
         # special sauce.
@@ -296,6 +302,9 @@ class StoreClient():
         except KeyError:
             raise errors.SnapNotFoundError(snap_name, series=series)
 
+        if snap_id is None:
+            raise errors.NoSnapIdError(snap_name)
+
         return self._refresh_if_necessary(
             self.sca.push_metadata, snap_id, snap_name, metadata, force)
 
@@ -307,6 +316,9 @@ class StoreClient():
             snap_id = account_info['snaps'][series][snap_name]['snap-id']
         except KeyError:
             raise errors.SnapNotFoundError(snap_name, series=series)
+
+        if snap_id is None:
+            raise errors.NoSnapIdError(snap_name)
 
         return self._refresh_if_necessary(
             self.sca.push_binary_metadata, snap_id, snap_name, metadata,
