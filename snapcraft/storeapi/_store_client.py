@@ -172,7 +172,7 @@ class StoreClient():
         except KeyError:
             raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
 
-        if not snap_id:
+        if snap_id is None:
             raise errors.NoSnapIdError(snap_name)
 
         response = self._refresh_if_necessary(
@@ -193,7 +193,7 @@ class StoreClient():
         except KeyError:
             raise errors.SnapNotFoundError(snap_name, series=series, arch=arch)
 
-        if not snap_id:
+        if snap_id is None:
             raise errors.NoSnapIdError(snap_name)
 
         response = self._refresh_if_necessary(
@@ -227,7 +227,7 @@ class StoreClient():
             logger.info('Already downloaded {} at {}'.format(
                 name, download_path))
             return
-        logger.info('Downloading {}'.format(name, download_path))
+        logger.info('Downloading {}'.format(name))
 
         # we only resume when redirected to our CDN since we use internap's
         # special sauce.
@@ -302,7 +302,7 @@ class StoreClient():
         except KeyError:
             raise errors.SnapNotFoundError(snap_name, series=series)
 
-        if not snap_id:
+        if snap_id is None:
             raise errors.NoSnapIdError(snap_name)
 
         return self._refresh_if_necessary(
@@ -317,7 +317,7 @@ class StoreClient():
         except KeyError:
             raise errors.SnapNotFoundError(snap_name, series=series)
 
-        if not snap_id:
+        if snap_id is None:
             raise errors.NoSnapIdError(snap_name)
 
         return self._refresh_if_necessary(
