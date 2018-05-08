@@ -130,6 +130,6 @@ class ReleaseTestCase(integration.StoreTestCase):
             subprocess.CalledProcessError,
             self.run_snapcraft, ['release', name, '1', 'bad-channel'])
         self.assertThat(error.output, Contains(
-            'store encountered an internal error. The status of the store and '
-            'associated services can be checked at '
-            'https://status.snapcraft.io/'))
+            'store encountered a server error: internal server error (code '
+            '500).\nThe status of the store and associated services can be '
+            'checked at https://status.snapcraft.io/'))
