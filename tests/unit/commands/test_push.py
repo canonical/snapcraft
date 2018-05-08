@@ -40,7 +40,7 @@ class PushCommandBaseTestCase(CommandBaseTestCase):
         super().setUp()
 
         patcher = mock.patch('snapcraft.storeapi.StoreClient.push_precheck')
-        patcher.start()
+        self.mock_precheck = patcher.start()
         self.addCleanup(patcher.stop)
 
         self.snap_file = os.path.join(
@@ -159,10 +159,7 @@ class PushCommandTestCase(PushCommandBaseTestCase):
             error_list = [{'code': 'resource-not-found',
                            'message': 'Snap not found for name=basic'}]
 
-        patcher = mock.patch.object(storeapi.StoreClient, 'push_precheck')
-        mock_precheck = patcher.start()
-        self.addCleanup(patcher.stop)
-        mock_precheck.side_effect = StorePushError(
+        self.mock_precheck.side_effect = StorePushError(
             'basic', MockResponse())
 
         raised = self.assertRaises(
@@ -365,20 +362,11 @@ class PushCommandTestCase(PushCommandBaseTestCase):
 
 class PushCommandDeltasTestCase(PushCommandBaseTestCase):
 
-    scenarios = [
-        ('with deltas', dict(enable_deltas=True)),
-        ('without deltas', dict(enable_deltas=False)),
-    ]
-
     def setUp(self):
         super().setUp()
 
         self.latest_snap_revision = 8
         self.new_snap_revision = self.latest_snap_revision + 1
-
-        patcher = mock.patch('snapcraft.storeapi.StoreClient.push_precheck')
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
         mock_tracker = mock.Mock(storeapi._status_tracker.StatusTracker)
         mock_tracker.track.return_value = {
@@ -534,10 +522,6 @@ class PushCommandDeltasWithPruneTestCase(PushCommandBaseTestCase):
 
     def test_push_revision_prune_snap_cache(self):
         snap_revision = 9
-
-        patcher = mock.patch('snapcraft.storeapi.StoreClient.push_precheck')
-        patcher.start()
-        self.addCleanup(patcher.stop)
 
         patcher = mock.patch.object(storeapi.StoreClient, 'get_snap_revisions')
         mock_release = patcher.start()

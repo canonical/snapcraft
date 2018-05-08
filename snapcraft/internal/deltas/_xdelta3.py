@@ -14,11 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import logging
-import shutil
 import subprocess
 
-from snapcraft.internal.deltas._deltas import BaseDeltasGenerator
-
+from ._deltas import BaseDeltasGenerator
+from snapcraft import file_utils
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ class XDelta3Generator(BaseDeltasGenerator):
 
     def __init__(self, *, source_path, target_path):
         delta_format = 'xdelta3'
-        delta_tool_path = shutil.which(delta_format)
+        delta_tool_path = file_utils.get_tool_path('xdelta3')
         super().__init__(source_path=source_path,
                          target_path=target_path,
                          delta_file_extname='xdelta3',

@@ -22,18 +22,14 @@ import shutil
 from unittest import mock
 
 from progressbar import AnimatedMarker, ProgressBar
-from testtools import TestCase
 from testtools import matchers as m
 
 from snapcraft import file_utils
 from snapcraft.internal import deltas  # noqa
-from tests import (
-    fixture_setup,
-    unit
-)
+from tests import fixture_setup, unit
 
 
-class XDelta3TestCase(TestCase):
+class XDelta3TestCase(unit.TestCase):
 
     def setUp(self):
         super().setUp()
@@ -41,12 +37,7 @@ class XDelta3TestCase(TestCase):
         self.fake_logger = fixtures.FakeLogger(level=logging.DEBUG)
         self.useFixture(self.fake_logger)
 
-        # patch the ProgressBar to avoid mess up the test output
-        patcher = mock.patch(
-            'tests.unit.test_deltas_xdelta3.ProgressBar',
-            new=unit.SilentProgressBar)
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        self.patch(file_utils, 'executable_exists', lambda a: True)
 
         self.workdir = self.useFixture(fixtures.TempDir()).path
         self.source_file = os.path.join(self.workdir, 'source.snap')
@@ -93,12 +84,10 @@ class XDelta3TestCase(TestCase):
                 source_path=self.source_file, target_path=self.target_file),
             m.raises(deltas.errors.DeltaToolError)
         )
-        exception = self.assertRaises(deltas.errors.DeltaToolError,
-                                      deltas.XDelta3Generator,
-                                      source_path=self.source_file,
-                                      target_path=self.target_file)
-        expected = 'delta_tool_path must be set in subclass!'
-        self.assertThat(str(exception), m.Equals(expected))
+        self.assertRaises(deltas.errors.DeltaToolError,
+                          deltas.XDelta3Generator,
+                          source_path=self.source_file,
+                          target_path=self.target_file)
 
     def test_xdelta3(self):
         self.generate_snap_pair()
