@@ -422,6 +422,16 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'https://status.snapcraft.io/'
             )
         }),
+        ('SnapcraftCopyFileNotFoundError', {
+            'exception': errors.SnapcraftCopyFileNotFoundError,
+            'kwargs': {
+                'path': 'test-path',
+            },
+            'expected_message': (
+                "Failed to copy 'test-path': no such file or directory.\n"
+                'Check the path and try again.'
+            )
+        }),
     )
 
     def test_error_formatting(self):
