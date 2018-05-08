@@ -28,6 +28,7 @@ from snapcraft import formatting_utils
 logger = logging.getLogger(__name__)
 
 _STORE_STATUS_URL = 'https://status.snapcraft.io/'
+_FORUM_URL = 'https://forum.snapcraft.io/c/store'
 
 
 class StoreError(SnapcraftError):
@@ -104,6 +105,17 @@ class SnapNotFoundError(StoreError):
             self.fmt = self.__FMT_SERIES
 
         super().__init__(name=name, channel=channel, arch=arch, series=series)
+
+
+class NoSnapIdError(StoreError):
+
+    fmt = (
+        'Failed to get snap ID for snap {snap_name!r}. This is an error in '
+        "the store, please open a new topic in the 'store' category in the "
+        'forum: {forum_url}')
+
+    def __init__(self, snap_name):
+        super().__init__(snap_name=snap_name, forum_url=_FORUM_URL)
 
 
 class SHAMismatchError(StoreError):

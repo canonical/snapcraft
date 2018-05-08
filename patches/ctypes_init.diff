@@ -1,11 +1,12 @@
---- __init__.py.orig	2018-04-14 14:46:40.222772831 -0300
-+++ __init__.py	2018-04-14 14:47:29.835488413 -0300
-@@ -311,6 +311,16 @@
+--- __init__.py.orig	2017-11-28 16:50:46.000000000 +0000
++++ __init__.py	2018-05-08 16:11:29.225765139 +0000
+@@ -311,6 +311,17 @@
  ################################################################
  
  
 +_ARCH_TRIPLET = {
 +    'arm64': 'aarch64-linux-gnu',
++    'armhf': 'arm-linux-gnueabihf',
 +    'i386': 'i386-linux-gnu',
 +    'ppc64el': 'powerpc64le-linux-gnu',
 +    'powerpc': 'powerpc-linux-gnu',
@@ -17,7 +18,7 @@
  class CDLL(object):
      """An instance of this class represents a loaded dll/shared
      library, exporting functions using the standard C calling
-@@ -344,7 +354,15 @@
+@@ -344,7 +355,15 @@
          self._FuncPtr = _FuncPtr
  
          if handle is None:
@@ -34,7 +35,7 @@
          else:
              self._handle = handle
  
-@@ -407,6 +425,7 @@
+@@ -407,6 +426,7 @@
          _func_flags_ = _FUNCFLAG_STDCALL
          _func_restype_ = HRESULT
  
@@ -42,7 +43,7 @@
  class LibraryLoader(object):
      def __init__(self, dlltype):
          self._dlltype = dlltype
-@@ -419,6 +438,13 @@
+@@ -419,6 +439,13 @@
          return dll
  
      def __getitem__(self, name):

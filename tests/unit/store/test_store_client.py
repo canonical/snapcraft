@@ -406,6 +406,13 @@ class GetAccountInformationTestCase(StoreTestCase):
                             'snap-id': 'test-snap-id-with-no-validations',
                             'status': 'Approved'
                         },
+                        'no-id': {
+                            'snap-id': None,
+                            'status': 'Approved',
+                            'private': False,
+                            'price': None,
+                            'since': '2016-12-12T01:01:01Z'
+                        },
                     }
                 }
             }))
@@ -475,6 +482,13 @@ class GetAccountInformationTestCase(StoreTestCase):
                             'since': '2016-12-12T01:01:01Z',
                             'snap-id': 'test-snap-id-with-no-validations',
                             'status': 'Approved'
+                        },
+                        'no-id': {
+                            'snap-id': None,
+                            'status': 'Approved',
+                            'private': False,
+                            'price': None,
+                            'since': '2016-12-12T01:01:01Z'
                         },
                     }
                 }
@@ -1332,6 +1346,13 @@ class GetSnapStatusTestCase(StoreTestCase):
             str(e),
             Equals(
                 "Snap 'basic' for 'somearch' was not found in '16' series."))
+
+    def test_get_snap_status_no_id(self):
+        self.client.login('dummy', 'test correct password')
+        e = self.assertRaises(
+            storeapi.errors.NoSnapIdError,
+            self.client.get_snap_status, 'no-id')
+        self.assertThat(e.snap_name, Equals('no-id'))
 
     def test_get_snap_status_refreshes_macaroon(self):
         self.client.login('dummy', 'test correct password')
