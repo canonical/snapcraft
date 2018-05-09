@@ -17,6 +17,7 @@
 
 import logging
 import os
+import shutil
 import subprocess
 import time
 
@@ -84,7 +85,9 @@ class BaseDeltasGenerator:
 
     def _check_delta_gen_tool(self):
         """Check if the delta generation tool exists"""
-        if not file_utils.executable_exists(self.delta_tool_path):
+        path_exists = file_utils.executable_exists(self.delta_tool_path)
+        on_system = shutil.which(self.delta_tool_path)
+        if not (path_exists or on_system):
             raise DeltaToolError(delta_tool=self.delta_tool_path)
 
     def _check_delta_size_constraint(self, delta_path):
