@@ -28,6 +28,17 @@ such as: `filesets`, `stage`, `snap` and `organize`.
 import os
 
 import snapcraft
+from snapcraft.internal import errors
+
+
+class DumpInvalidSymlinkError(errors.SnapcraftError):
+    fmt = (
+        "Failed to copy {path!r}: it's a symlink pointing outside the snap.\n"
+        'Fix it to be valid when snapped and try again.'
+    )
+
+    def __init__(self, path):
+        super().__init__(path=path)
 
 
 class DumpPlugin(snapcraft.BasePlugin):
@@ -63,7 +74,5 @@ def _link_or_copy(source, destination, boundary):
     try:
         snapcraft.file_utils.link_or_copy(source, destination,
                                           follow_symlinks=follow_symlinks)
-    except FileNotFoundError:
-        raise FileNotFoundError(
-            '{!r} is a broken symlink pointing outside the snap'.format(
-                source))
+    except errors.SnapcraftCopyFileNotFoundError:
+        raise DumpInvalidSymlinkError(source)
