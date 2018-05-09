@@ -1098,23 +1098,27 @@ def _paths_collide(path1: str, path2: str) -> bool:
     path2_is_dir = os.path.isdir(path2)
     path1_is_link = os.path.islink(path1)
     path2_is_link = os.path.islink(path2)
-    collide = False
 
+    # Paths collide if they're both symlinks, but pointing to different places
     if path1_is_link and path2_is_link:
-        # They're both symlinks; verify they're pointing to the
-        # same place.
-        if os.readlink(path1) != os.readlink(path2):
-            collide = True
-    elif path1_is_link or path2_is_link:
-        collide = True
-    elif path1_is_dir and path2_is_dir:
-        collide = False
-    elif path1_is_dir != path2_is_dir:
-        collide = True
-    elif _file_collides(path1, path2):
-        collide = True
+        return os.readlink(path1) != os.readlink(path2)
 
-    return collide
+    # Paths collide if one is a symlink, but not the other
+    elif path1_is_link or path2_is_link:
+        return True
+
+    # Paths collide if one is a directory, but not the other
+    elif path1_is_dir != path2_is_dir:
+        return True
+
+    # Paths collide if neither path is a directory, and the files have
+    # different contents
+    elif not (path1_is_dir and path2_is_dir) and _file_collides(path1, path2):
+        return True
+
+    # Otherwise, paths do not conflict
+    else:
+        return False
 
 
 def _get_includes(fileset):
