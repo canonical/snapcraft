@@ -17,6 +17,7 @@ import requests.exceptions
 from requests.packages import urllib3
 from subprocess import CalledProcessError
 
+from unittest import mock
 from testtools.matchers import Equals
 
 from snapcraft.internal import errors
@@ -24,6 +25,12 @@ from snapcraft.internal.meta import _errors as meta_errors
 from snapcraft.internal.repo import errors as repo_errors
 from snapcraft.storeapi import errors as store_errors
 from tests import unit
+
+
+def _fake_error_response(status_code):
+    response = mock.Mock()
+    response.status_code = status_code
+    return response
 
 
 class ErrorFormattingTestCase(unit.TestCase):
@@ -430,6 +437,30 @@ class ErrorFormattingTestCase(unit.TestCase):
             'expected_message': (
                 "Failed to copy 'test-path': no such file or directory.\n"
                 'Check the path and try again.'
+            )
+        }),
+        ('StoreServerError 500', {
+            'exception': store_errors.StoreServerError,
+            'kwargs': {
+                'response': _fake_error_response(500)
+            },
+            'expected_message': (
+                'The Snap Store encountered an error while processing your '
+                'request: internal server error (code 500).\nThe operational '
+                'status of the Snap Store can be checked at '
+                'https://status.snapcraft.io/'
+            )
+        }),
+        ('StoreServerError 501', {
+            'exception': store_errors.StoreServerError,
+            'kwargs': {
+                'response': _fake_error_response(501)
+            },
+            'expected_message': (
+                'The Snap Store encountered an error while processing your '
+                'request: not implemented (code 501).\nThe operational '
+                'status of the Snap Store can be checked at '
+                'https://status.snapcraft.io/'
             )
         }),
     )

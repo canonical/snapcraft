@@ -57,7 +57,7 @@ class ReleaseTestCase(integration.StoreTestCase):
             os.path.join(snap_file_path), FileExists())
 
         output = self.run_snapcraft(['upload', snap_file_path])
-        expected = r'.*Ready to release!.*'.format(name)
+        expected = r'.*Ready to release!.*'
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
         # Release it
@@ -88,7 +88,7 @@ class ReleaseTestCase(integration.StoreTestCase):
             os.path.join(snap_file_path), FileExists())
 
         output = self.run_snapcraft(['push', snap_file_path])
-        expected = r'.*Ready to release!.*'.format(name)
+        expected = r'.*Ready to release!.*'
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
         # Attempt to release it
@@ -122,7 +122,7 @@ class ReleaseTestCase(integration.StoreTestCase):
             os.path.join(snap_file_path), FileExists())
 
         output = self.run_snapcraft(['push', snap_file_path])
-        expected = r'.*Ready to release!.*'.format(name)
+        expected = r'.*Ready to release!.*'
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
         # Attempt to release it
@@ -130,6 +130,6 @@ class ReleaseTestCase(integration.StoreTestCase):
             subprocess.CalledProcessError,
             self.run_snapcraft, ['release', name, '1', 'bad-channel'])
         self.assertThat(error.output, Contains(
-            'store encountered an internal error. The status of store and '
-            'associated services can be checked at:\n'
-            'https://status.snapcraft.io/'))
+            'Snap Store encountered an error while processing your request: '
+            'internal server error (code 500).\nThe operational status of the '
+            'Snap Store can be checked at https://status.snapcraft.io/'))

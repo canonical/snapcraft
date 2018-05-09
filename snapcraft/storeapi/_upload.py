@@ -67,11 +67,6 @@ def upload_files(binary_filename, updown_client):
 
         # Make sure progress bar shows 100% complete
         progress_bar.finish()
-
-    except Exception as err:
-        raise RuntimeError(
-            'An unexpected error was found while uploading '
-            'files: {!r}.'.format(err))
     finally:
         # Close the open file
         binary_file.close()

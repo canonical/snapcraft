@@ -305,12 +305,9 @@ class PushSnapBuildTestCase(StoreTestCase):
         # will get a descriptive error message.
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
-            errors.StoreSnapBuildError,
+            errors.StoreServerError,
             self.client.push_snap_build, 'snap-id', 'test-not-implemented')
-        self.assertThat(
-            str(raised),
-            Equals('Could not assert build: The snap-build assertions are '
-                   'currently disabled.'))
+        self.assertThat(raised.error_code, Equals(501))
 
     def test_push_snap_build_invalid_data(self):
         self.client.login('dummy', 'test correct password')
@@ -327,11 +324,9 @@ class PushSnapBuildTestCase(StoreTestCase):
         # might happen in the internet, so we are a little defensive.
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
-            errors.StoreSnapBuildError,
+            errors.StoreServerError,
             self.client.push_snap_build, 'snap-id', 'test-unexpected-data')
-        self.assertThat(
-            str(raised),
-            Equals('Could not assert build: 500 Internal Server Error'))
+        self.assertThat(raised.error_code, Equals(500))
 
     def test_push_snap_build_successfully(self):
         self.client.login('dummy', 'test correct password')
@@ -530,11 +525,9 @@ class RegisterKeyTestCase(StoreTestCase):
         # will get a 501 Not Implemented response.
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
-            errors.StoreKeyRegistrationError,
+            errors.StoreServerError,
             self.client.register_key, 'test-not-implemented')
-        self.assertThat(
-            str(raised),
-            Equals('Key registration failed: 501 Not Implemented'))
+        self.assertThat(raised.error_code, Equals(501))
 
     def test_invalid_data(self):
         self.client.login('dummy', 'test correct password')
@@ -748,11 +741,9 @@ class ValidationsTestCase(StoreTestCase):
         assertion = json.dumps({'foo': 'bar'}).encode('utf-8')
 
         err = self.assertRaises(
-            errors.StoreValidationError,
+            errors.StoreServerError,
             self.client.push_assertion, 'err', assertion, 'validations')
-
-        expected = ("Received error 501: 'error'")
-        self.assertThat(str(err), Equals(expected))
+        self.assertThat(err.error_code, Equals(501))
 
 
 class UploadTestCase(StoreTestCase):
@@ -823,14 +814,9 @@ class UploadTestCase(StoreTestCase):
         self.client.login('dummy', 'test correct password')
 
         raised = self.assertRaises(
-            errors.StoreUploadError,
+            errors.StoreServerError,
             self.client.upload, 'test-snap', self.snap_path)
-
-        self.assertThat(
-            str(raised),
-            Equals('There was an error uploading the package.\n'
-                   'Reason: \'Internal Server Error\'\n'
-                   'Text: \'Broken\''))
+        self.assertThat(raised.error_code, Equals(500))
 
     def test_upload_snap_requires_review(self):
         self.client.login('dummy', 'test correct password')
@@ -979,6 +965,12 @@ class ReleaseTestCase(StoreTestCase):
             str(raised),
             Equals('Not a valid channel: alpha'))
 
+    def test_release_snap_to_bad_channel(self):
+        self.client.login('dummy', 'test correct password')
+        self.assertRaises(
+            errors.StoreServerError,
+            self.client.release, 'test-snap', '19', ['bad-channel'])
+
     def test_release_unregistered_snap(self):
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
@@ -1045,11 +1037,9 @@ class CloseChannelsTestCase(StoreTestCase):
         # might happen in the internet, so we are a little defensive.
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
-            errors.StoreChannelClosingError,
+            errors.StoreServerError,
             self.client.close_channels, 'snap-id', ['unexpected'])
-        self.assertThat(
-            str(raised),
-            Equals('Could not close channel: 500 Internal Server Error'))
+        self.assertThat(raised.error_code, Equals(500))
 
     def test_close_broken_store_plain(self):
         # If the contract is broken by the Store, users will be have additional
@@ -1425,14 +1415,10 @@ class SignDeveloperAgreementTestCase(StoreTestCase):
         self.useFixture(fixtures.EnvironmentVariable('STORE_DOWN', '1'))
         self.client.login('dummy', 'test correct password')
         raised = self.assertRaises(
-            errors.DeveloperAgreementSignError,
+            errors.StoreServerError,
             self.client.sign_developer_agreement,
             latest_tos_accepted=True)
-        self.assertThat(
-            str(raised),
-            Equals('There was an error while signing developer agreement.\n'
-                   'Reason: \'Internal Server Error\'\n'
-                   'Text: \'Broken\''))
+        self.assertThat(raised.error_code, Equals(500))
 
 
 class PushMetadataTestCase(StoreTestCase):
