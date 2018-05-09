@@ -2396,10 +2396,26 @@ class CollisionTestCase(unit.TestCase):
             f.write('prefix={}\n'.format(part4.installdir))
             f.write('Name: ConflictFile\n')
 
+        # Create a new part with a symlink that collides with part1's
+        # non-symlink.
+        part5 = self.load_part('part5')
+        part5.plugin.installdir = os.path.join(tmpdir, 'install5')
+        os.makedirs(part5.installdir)
+        os.symlink('foo', os.path.join(part5.installdir, 'a'))
+
+        # Create a new part with a symlink that points to a different place
+        # than part5's symlink.
+        part6 = self.load_part('part6')
+        part6.plugin.installdir = os.path.join(tmpdir, 'install6')
+        os.makedirs(part6.installdir)
+        os.symlink('bar', os.path.join(part6.installdir, 'a'))
+
         self.part1 = part1
         self.part2 = part2
         self.part3 = part3
         self.part4 = part4
+        self.part5 = part5
+        self.part6 = part6
 
     def test_no_collisions(self):
         """No exception is expected as there are no collisions."""
@@ -2414,6 +2430,30 @@ class CollisionTestCase(unit.TestCase):
         self.assertThat(raised.other_part_name, Equals('part2'))
         self.assertThat(raised.part_name, Equals('part3'))
         self.assertThat(raised.file_paths, Equals('    1\n    a/2'))
+
+    def test_collisions_checks_symlinks(self):
+        raised = self.assertRaises(
+            errors.SnapcraftPartConflictError,
+            pluginhandler.check_for_collisions,
+            [self.part5, self.part6])
+
+        self.assertThat(
+            str(raised),
+            Contains(
+                "Parts 'part5' and 'part6' have the following files, but with "
+                "different contents:\n    a"))
+
+    def test_collisions_not_both_symlinks(self):
+        raised = self.assertRaises(
+            errors.SnapcraftPartConflictError,
+            pluginhandler.check_for_collisions,
+            [self.part1, self.part5])
+
+        self.assertThat(
+            str(raised),
+            Contains(
+                "Parts 'part1' and 'part5' have the following files, but with "
+                "different contents:\n    a"))
 
     def test_collisions_between_two_parts_pc_files(self):
         raised = self.assertRaises(
