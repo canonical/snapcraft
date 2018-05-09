@@ -375,11 +375,12 @@ class StoreServerError(StoreError):
     fmt = '{what}: {error_text} (code {error_code}).\n{action}'
 
     def __init__(self, response):
-        what = 'The store encountered a server error'
-        error_text = responses[response.status_code].lower()
+        what = ('The Snap Store encountered an error while processing your '
+                'request')
         error_code = response.status_code
-        action = ('The status of the store and associated services can be '
-                  'checked at {}'.format(_STORE_STATUS_URL))
+        error_text = responses[error_code].lower()
+        action = ('The operational status of the Snap Store can be checked at '
+                  '{}'.format(_STORE_STATUS_URL))
 
         super().__init__(
             response=response, what=what, error_text=error_text,

@@ -445,9 +445,10 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'response': _fake_error_response(500)
             },
             'expected_message': (
-                'The store encountered a server error: internal server error '
-                '(code 500).\nThe status of the store and associated services '
-                'can be checked at https://status.snapcraft.io/'
+                'The Snap Store encountered an error while processing your '
+                'request: internal server error (code 500).\nThe operational '
+                'status of the Snap Store can be checked at '
+                'https://status.snapcraft.io/'
             )
         }),
         ('StoreServerError 501', {
@@ -456,9 +457,10 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'response': _fake_error_response(501)
             },
             'expected_message': (
-                'The store encountered a server error: not implemented '
-                '(code 501).\nThe status of the store and associated services '
-                'can be checked at https://status.snapcraft.io/'
+                'The Snap Store encountered an error while processing your '
+                'request: not implemented (code 501).\nThe operational '
+                'status of the Snap Store can be checked at '
+                'https://status.snapcraft.io/'
             )
         }),
     )
