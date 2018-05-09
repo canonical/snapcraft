@@ -23,7 +23,6 @@ from typing import Set  # noqa: F401
 import snapcraft
 from snapcraft.internal import deprecations, elf, pluginhandler, repo
 from ._env import (
-    env_for_classic,
     build_env,
     build_env_for_stage,
     runtime_env,
@@ -223,8 +222,6 @@ class PartsConfig:
 
         env = []  # type: List[str]
         stagedir = self._project_options.stage_dir
-        is_host_compat = self._project_options.is_host_compatible_with_base(
-            self._base)
 
         if root_part:
             # this has to come before any {}/usr/bin
@@ -241,11 +238,6 @@ class PartsConfig:
                 stagedir,
                 self._snap_name,
                 self._project_options.arch_triplet)
-            # Only set the paths to the base snap if we are building on the
-            # same host. Failing to do so will cause Segmentation Faults.
-            if (self._confinement == 'classic' and is_host_compat):
-                env += env_for_classic(self._base,
-                                       self._project_options.arch_triplet)
 
             global_env = snapcraft_global_environment(self._project_options)
             part_env = snapcraft_part_environment(part)
