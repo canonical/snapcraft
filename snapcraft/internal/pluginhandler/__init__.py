@@ -53,18 +53,6 @@ class PluginHandler:
     def name(self):
         return self.plugin.name
 
-    @property
-    def sourcedir(self):
-        return self.plugin.sourcedir
-
-    @property
-    def builddir(self):
-        return self.plugin.builddir
-
-    @property
-    def installdir(self):
-        return self.plugin.installdir
-
     def __init__(self, *, plugin, part_properties, project_options,
                  part_schema, definitions_schema, stage_packages_repo,
                  grammar_processor, snap_base_path, base, confinement,
@@ -339,8 +327,8 @@ class PluginHandler:
         stage_packages = self._grammar_processor.get_stage_packages()
         if stage_packages:
             logger.debug('Unpacking stage-packages to {!r}'.format(
-                self.installdir))
-            self._stage_packages_repo.unpack(self.installdir)
+                self.plugin.installdir))
+            self._stage_packages_repo.unpack(self.plugin.installdir)
 
     def prepare_pull(self, force=False):
         self.makedirs()
@@ -522,8 +510,8 @@ class PluginHandler:
         if os.path.exists(self.plugin.build_basedir):
             shutil.rmtree(self.plugin.build_basedir)
 
-        if os.path.exists(self.installdir):
-            shutil.rmtree(self.installdir)
+        if os.path.exists(self.plugin.installdir):
+            shutil.rmtree(self.plugin.installdir)
 
         self.plugin.clean_build()
         self.mark_cleaned('build')
@@ -717,7 +705,8 @@ class PluginHandler:
         # already been primed by other means, and migrating them again could
         # potentially override the `stage` or `snap` filtering.
         (in_part, staged, primed, system) = _split_dependencies(
-            all_dependencies, self.installdir, self.stagedir, self.primedir)
+            all_dependencies, self.plugin.installdir, self.stagedir,
+            self.primedir)
         part_dependency_paths = {os.path.dirname(d) for d in in_part}
         staged_dependency_paths = {os.path.dirname(d) for d in staged}
         dependency_paths = part_dependency_paths | staged_dependency_paths
@@ -1078,7 +1067,7 @@ def check_for_collisions(parts):
             common = part_files & parts_files[other_part_name]['files']
             conflict_files = []
             for f in common:
-                this = os.path.join(part.installdir, f)
+                this = os.path.join(part.plugin.installdir, f)
                 other = os.path.join(
                     parts_files[other_part_name]['installdir'],
                     f)
@@ -1096,7 +1085,7 @@ def check_for_collisions(parts):
 
         # And add our files to the list
         parts_files[part.name] = {'files': part_files,
-                                  'installdir': part.installdir}
+                                  'installdir': part.plugin.installdir}
 
 
 def _get_includes(fileset):

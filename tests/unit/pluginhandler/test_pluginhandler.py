@@ -1460,7 +1460,7 @@ class StateTestCase(StateBaseTestCase):
                                            mock_get_symbols):
         mock_load_dependencies.return_value = {
             '/foo/bar/baz',
-            '{}/lib1/installed'.format(self.handler.installdir),
+            '{}/lib1/installed'.format(self.handler.plugin.installdir),
             '{}/lib2/staged'.format(self.handler.stagedir),
         }
         self.get_elf_files_mock.return_value = frozenset([
@@ -1530,7 +1530,7 @@ class StateTestCase(StateBaseTestCase):
         # dependency.
         mock_load_dependencies.return_value = set([
             '/foo/bar/baz',
-            '{}/lib1/installed'.format(self.handler.installdir),
+            '{}/lib1/installed'.format(self.handler.plugin.installdir),
             '{}/lib2/staged'.format(self.handler.stagedir),
         ])
 
@@ -2361,39 +2361,39 @@ class CollisionTestCase(unit.TestCase):
 
         part1 = self.load_part('part1')
         part1.plugin.installdir = tmpdir + '/install1'
-        os.makedirs(part1.installdir + '/a')
-        open(part1.installdir + '/a/1', mode='w').close()
-        with open(part1.installdir + '/file.pc', mode='w') as f:
-            f.write('prefix={}\n'.format(part1.installdir))
+        os.makedirs(part1.plugin.installdir + '/a')
+        open(part1.plugin.installdir + '/a/1', mode='w').close()
+        with open(part1.plugin.installdir + '/file.pc', mode='w') as f:
+            f.write('prefix={}\n'.format(part1.plugin.installdir))
             f.write('Name: File\n')
 
         part2 = self.load_part('part2')
         part2.plugin.installdir = tmpdir + '/install2'
-        os.makedirs(part2.installdir + '/a')
-        with open(part2.installdir + '/1', mode='w') as f:
+        os.makedirs(part2.plugin.installdir + '/a')
+        with open(part2.plugin.installdir + '/1', mode='w') as f:
             f.write('1')
-        open(part2.installdir + '/2', mode='w').close()
-        with open(part2.installdir + '/a/2', mode='w') as f:
+        open(part2.plugin.installdir + '/2', mode='w').close()
+        with open(part2.plugin.installdir + '/a/2', mode='w') as f:
             f.write('a/2')
-        with open(part2.installdir + '/file.pc', mode='w') as f:
-            f.write('prefix={}\n'.format(part2.installdir))
+        with open(part2.plugin.installdir + '/file.pc', mode='w') as f:
+            f.write('prefix={}\n'.format(part2.plugin.installdir))
             f.write('Name: File\n')
 
         part3 = self.load_part('part3')
         part3.plugin.installdir = tmpdir + '/install3'
-        os.makedirs(part3.installdir + '/a')
-        os.makedirs(part3.installdir + '/b')
-        with open(part3.installdir + '/1', mode='w') as f:
+        os.makedirs(part3.plugin.installdir + '/a')
+        os.makedirs(part3.plugin.installdir + '/b')
+        with open(part3.plugin.installdir + '/1', mode='w') as f:
             f.write('2')
-        with open(part2.installdir + '/2', mode='w') as f:
+        with open(part2.plugin.installdir + '/2', mode='w') as f:
             f.write('1')
-        open(part3.installdir + '/a/2', mode='w').close()
+        open(part3.plugin.installdir + '/a/2', mode='w').close()
 
         part4 = self.load_part('part4')
         part4.plugin.installdir = tmpdir + '/install4'
-        os.makedirs(part4.installdir)
-        with open(part4.installdir + '/file.pc', mode='w') as f:
-            f.write('prefix={}\n'.format(part4.installdir))
+        os.makedirs(part4.plugin.installdir)
+        with open(part4.plugin.installdir + '/file.pc', mode='w') as f:
+            f.write('prefix={}\n'.format(part4.plugin.installdir))
             f.write('Name: ConflictFile\n')
 
         self.part1 = part1
@@ -2430,8 +2430,9 @@ class CollisionTestCase(unit.TestCase):
             'part_built', part_properties={'stage': ['collision']})
         part_built.plugin.installdir = 'part_built_install'
         # a part built has the stage file in the installdir.
-        os.makedirs(part_built.installdir)
-        open(os.path.join(part_built.installdir, 'collision'), 'w').close()
+        os.makedirs(part_built.plugin.installdir)
+        open(os.path.join(
+            part_built.plugin.installdir, 'collision'), 'w').close()
         part_not_built = self.load_part(
             'part_not_built', part_properties={'stage': ['collision']})
         part_not_built.plugin.installdir = 'part_not_built_install'

@@ -121,9 +121,9 @@ def snapcraft_global_environment(project: project.Project) -> Dict[str, str]:
 def snapcraft_part_environment(
         part: pluginhandler.PluginHandler) -> Dict[str, str]:
     return {
-        'SNAPCRAFT_PART_SRC': part.sourcedir,
-        'SNAPCRAFT_PART_BUILD': part.builddir,
-        'SNAPCRAFT_PART_INSTALL': part.installdir,
+        'SNAPCRAFT_PART_SRC': part.plugin.sourcedir,
+        'SNAPCRAFT_PART_BUILD': part.plugin.builddir,
+        'SNAPCRAFT_PART_INSTALL': part.plugin.installdir,
     }
 
 

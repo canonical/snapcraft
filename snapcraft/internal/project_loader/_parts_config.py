@@ -228,13 +228,13 @@ class PartsConfig:
 
         if root_part:
             # this has to come before any {}/usr/bin
-            env += part.env(part.installdir)
+            env += part.env(part.plugin.installdir)
             env += runtime_env(
-                part.installdir, self._project_options.arch_triplet)
+                part.plugin.installdir, self._project_options.arch_triplet)
             env += runtime_env(
                 stagedir, self._project_options.arch_triplet)
             env += build_env(
-                part.installdir,
+                part.plugin.installdir,
                 self._snap_name,
                 self._project_options.arch_triplet)
             env += build_env_for_stage(

@@ -83,14 +83,13 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         class Plugin:
             def __init__(self):
                 self.options = Options()
+                self.sourcedir = '/tmp'
+                self.builddir = '/tmp'
                 self.installdir = '/tmp'
 
         class Part:
             def __init__(self):
                 self.plugin = Plugin()
-                self.sourcedir = '/tmp'
-                self.builddir = '/tmp'
-                self.installdir = '/tmp'
 
         part = Part()
         new_part = _replace_in_part(part)
