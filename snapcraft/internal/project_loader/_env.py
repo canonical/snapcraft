@@ -13,10 +13,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from snapcraft import formatting_utils
-from snapcraft.internal import common, elf
+from snapcraft import formatting_utils, project
+from snapcraft.internal import common, elf, pluginhandler
 
-from typing import List
+from typing import Dict, List
 
 
 def env_for_classic(base: str, arch_triplet: str) -> List[str]:
@@ -89,3 +89,49 @@ def build_env_for_stage(stagedir: str, snap_name: str,
     env.append('PERL5LIB="{0}/usr/share/perl5/"'.format(stagedir))
 
     return env
+
+
+def snapcraft_global_environment(project: project.Project) -> Dict[str, str]:
+    if project.info.name:
+        name = project.info.name
+    else:
+        name = ''
+
+    if project.info.version:
+        version = project.info.version
+    else:
+        version = ''
+
+    if project.info.grade:
+        grade = project.info.grade
+    else:
+        grade = ''
+
+    return {
+        'SNAPCRAFT_ARCH_TRIPLET': project.arch_triplet,
+        'SNAPCRAFT_PARALLEL_BUILD_COUNT': project.parallel_build_count,
+        'SNAPCRAFT_PROJECT_NAME': name,
+        'SNAPCRAFT_PROJECT_VERSION': version,
+        'SNAPCRAFT_PROJECT_GRADE': grade,
+        'SNAPCRAFT_STAGE': project.stage_dir,
+        'SNAPCRAFT_PRIME': project.prime_dir,
+    }
+
+
+def snapcraft_part_environment(
+        part: pluginhandler.PluginHandler) -> Dict[str, str]:
+    return {
+        'SNAPCRAFT_PART_SRC': part.plugin.sourcedir,
+        'SNAPCRAFT_PART_BUILD': part.plugin.builddir,
+        'SNAPCRAFT_PART_INSTALL': part.plugin.installdir,
+    }
+
+
+def environment_to_replacements(environment: Dict[str, str]) -> Dict[str, str]:
+    replacements = {}  # type: Dict[str, str]
+    for variable, value in environment.items():
+        # Support both $VAR and ${VAR} syntax
+        replacements['${}'.format(variable)] = value
+        replacements['${{{}}}'.format(variable)] = value
+
+    return replacements

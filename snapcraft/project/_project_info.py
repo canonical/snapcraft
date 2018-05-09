@@ -26,3 +26,4 @@ class ProjectInfo:
         self.summary = data.get('summary')
         self.description = data.get('description')
         self.confinement = data.get('confinement')
+        self.grade = data.get('grade')

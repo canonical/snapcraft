@@ -2034,8 +2034,15 @@ parts:
              '{0}/stage/bin:$PATH"').format(self.path),
             'PERL5LIB="{0}/stage/usr/share/perl5/"'.format(self.path),
             'SNAPCRAFT_ARCH_TRIPLET="{}"'.format(self.arch_triplet),
-            'SNAPCRAFT_PARALLEL_BUILD_COUNT=2',
+            'SNAPCRAFT_PARALLEL_BUILD_COUNT="2"',
+            'SNAPCRAFT_PART_BUILD="{}/parts/main/build"'.format(self.path),
             'SNAPCRAFT_PART_INSTALL="{}/parts/main/install"'.format(self.path),
+            'SNAPCRAFT_PART_SRC="{}/parts/main/src"'.format(self.path),
+            'SNAPCRAFT_PRIME="{}/prime"'.format(self.path),
+            'SNAPCRAFT_PROJECT_GRADE="stable"',
+            'SNAPCRAFT_PROJECT_NAME="test"',
+            'SNAPCRAFT_PROJECT_VERSION="1"',
+            'SNAPCRAFT_STAGE="{}/stage"'.format(self.path),
         ]))
 
     def test_config_stage_environment_confinement_classic(self):
@@ -2292,7 +2299,7 @@ parts:
         part1 = [part for part in
                  config.parts.all_parts if part.name == 'part1'][0]
         env = config.parts.build_env_for_part(part1)
-        self.assertIn('SNAPCRAFT_PARALLEL_BUILD_COUNT=fortytwo', env)
+        self.assertIn('SNAPCRAFT_PARALLEL_BUILD_COUNT="fortytwo"', env)
 
 
 class ValidationBaseTestCase(unit.TestCase):
@@ -3023,10 +3030,11 @@ class SnapcraftEnvTestCase(unit.TestCase):
 
         for test_name, subject, expected in replacements:
             self.assertThat(project_loader.replace_attr(
-                subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
-                          ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
-                          ('$SNAPCRAFT_STAGE', self.stage_dir)]),
-                            Equals(expected))
+                subject, {
+                    '$SNAPCRAFT_PROJECT_NAME': 'project_name',
+                    '$SNAPCRAFT_PROJECT_VERSION': 'version',
+                    '$SNAPCRAFT_STAGE': self.stage_dir,
+                }), Equals(expected))
 
     def test_lists_with_string_replacements(self):
         replacements = (
@@ -3067,10 +3075,11 @@ class SnapcraftEnvTestCase(unit.TestCase):
 
         for test_name, subject, expected in replacements:
             self.assertThat(project_loader.replace_attr(
-                subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
-                          ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
-                          ('$SNAPCRAFT_STAGE', self.stage_dir)]),
-                            Equals(expected))
+                subject, {
+                    '$SNAPCRAFT_PROJECT_NAME': 'project_name',
+                    '$SNAPCRAFT_PROJECT_VERSION': 'version',
+                    '$SNAPCRAFT_STAGE': self.stage_dir,
+                }), Equals(expected))
 
     def test_tuples_with_string_replacements(self):
         replacements = (
@@ -3111,10 +3120,11 @@ class SnapcraftEnvTestCase(unit.TestCase):
 
         for test_name, subject, expected in replacements:
             self.assertThat(project_loader.replace_attr(
-                subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
-                          ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
-                          ('$SNAPCRAFT_STAGE', self.stage_dir)]),
-                            Equals(expected))
+                subject, {
+                    '$SNAPCRAFT_PROJECT_NAME': 'project_name',
+                    '$SNAPCRAFT_PROJECT_VERSION': 'version',
+                    '$SNAPCRAFT_STAGE': self.stage_dir,
+                }), Equals(expected))
 
     def test_dict_with_string_replacements(self):
         replacements = (
@@ -3155,10 +3165,11 @@ class SnapcraftEnvTestCase(unit.TestCase):
 
         for test_name, subject, expected in replacements:
             self.assertThat(project_loader.replace_attr(
-                subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
-                          ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
-                          ('$SNAPCRAFT_STAGE', self.stage_dir)]),
-                            Equals(expected))
+                subject, {
+                    '$SNAPCRAFT_PROJECT_NAME': 'project_name',
+                    '$SNAPCRAFT_PROJECT_VERSION': 'version',
+                    '$SNAPCRAFT_STAGE': self.stage_dir,
+                }), Equals(expected))
 
     def test_string_replacement_with_complex_data(self):
         subject = {
@@ -3190,7 +3201,8 @@ class SnapcraftEnvTestCase(unit.TestCase):
         }
 
         self.assertThat(project_loader.replace_attr(
-            subject, [('$SNAPCRAFT_PROJECT_NAME', 'project_name'),
-                      ('$SNAPCRAFT_PROJECT_VERSION', 'version'),
-                      ('$SNAPCRAFT_STAGE', self.stage_dir)]),
-                        Equals(expected))
+            subject, {
+                '$SNAPCRAFT_PROJECT_NAME': 'project_name',
+                '$SNAPCRAFT_PROJECT_VERSION': 'version',
+                '$SNAPCRAFT_STAGE': self.stage_dir,
+            }), Equals(expected))

@@ -75,7 +75,7 @@ class BaseLifecycleTestCase(unit.TestCase):
 
 class ExecutionTestCase(BaseLifecycleTestCase):
 
-    def test__replace_in_parts(self):
+    def test_replace_in_parts(self):
         class Options:
             def __init__(self):
                 self.source = '$SNAPCRAFT_PART_INSTALL'
@@ -83,6 +83,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         class Plugin:
             def __init__(self):
                 self.options = Options()
+                self.sourcedir = '/tmp'
+                self.builddir = '/tmp'
                 self.installdir = '/tmp'
 
         class Part:

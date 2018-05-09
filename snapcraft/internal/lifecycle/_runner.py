@@ -24,15 +24,14 @@ import yaml
 import snapcraft
 from snapcraft.internal import (
     common,
+    errors,
     meta,
     pluginhandler,
     project_loader,
     repo,
     states,
 )
-from snapcraft.internal import errors
 from snapcraft.internal.cache import SnapCache
-from snapcraft.internal.project_loader import replace_attr
 from . import constants
 
 
@@ -137,9 +136,10 @@ def _should_get_core(confinement: str) -> bool:
 
 def _replace_in_part(part):
     for key, value in part.plugin.options.__dict__.items():
-        value = replace_attr(value, [
-            ('$SNAPCRAFT_PART_INSTALL', part.plugin.installdir),
-        ])
+        replacements = project_loader.environment_to_replacements(
+            project_loader.snapcraft_part_environment(part))
+
+        value = project_loader.replace_attr(value, replacements)
         setattr(part.plugin.options, key, value)
 
     return part
