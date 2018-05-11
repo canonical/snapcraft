@@ -19,6 +19,7 @@ import glob
 import logging
 import math
 import os
+import shlex
 import shutil
 import subprocess
 import sys
@@ -53,32 +54,35 @@ def assemble_env():
     return '\n'.join(['export ' + e for e in env])
 
 
-def run(cmd, **kwargs):
+def _run(cmd: List[str], caller, **kwargs):
     assert isinstance(cmd, list), 'run command must be a list'
+    cmd_string = ' '.join([shlex.quote(c) for c in cmd])
     # FIXME: This is gross to keep writing this, even when env is the same
-    with tempfile.NamedTemporaryFile(mode='w+') as f:
-        f.write(assemble_env())
-        f.write('\n')
-        f.write('exec "$@"')
-        f.flush()
-        subprocess.check_call(['/bin/sh', f.name] + cmd, **kwargs)
-
-
-def run_output(cmd, **kwargs):
-    assert isinstance(cmd, list), 'run command must be a list'
-    # FIXME: This is gross to keep writing this, even when env is the same
-    with tempfile.NamedTemporaryFile(mode='w+') as f:
-        f.write(assemble_env())
-        f.write('\n')
-        f.write('exec "$@"')
-        f.flush()
-        output = subprocess.check_output(['/bin/sh', f.name] + cmd, **kwargs)
+    with tempfile.TemporaryFile(mode='w+') as run_file:
+        print(assemble_env(), file=run_file)
+        print('exec {}'.format(cmd_string), file=run_file)
+        run_file.flush()
+        run_file.seek(0)
         try:
-            return output.decode(sys.getfilesystemencoding()).strip()
-        except UnicodeEncodeError:
-            logger.warning('Could not decode output for {!r} correctly'.format(
-                cmd))
-            return output.decode('latin-1', 'surrogateescape').strip()
+            return caller(['/bin/sh'], stdin=run_file, **kwargs)
+        except subprocess.CalledProcessError as call_error:
+            raise errors.SnapcraftCommandError(
+                command=cmd_string,
+                call_error=call_error) from call_error
+
+
+def run(cmd: List[str], **kwargs) -> None:
+    _run(cmd, subprocess.check_call, **kwargs)
+
+
+def run_output(cmd: List[str], **kwargs) -> str:
+    output = _run(cmd, subprocess.check_output, **kwargs)
+    try:
+        return output.decode(sys.getfilesystemencoding()).strip()
+    except UnicodeEncodeError:
+        logger.warning('Could not decode output for {!r} correctly'.format(
+            cmd))
+        return output.decode('latin-1', 'surrogateescape').strip()
 
 
 def get_core_path(base):
