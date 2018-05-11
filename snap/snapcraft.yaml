@@ -36,6 +36,7 @@ parts:
         - libsodium-dev
         - liblzma-dev
         - patch
+        - sed
     stage-packages:
         - binutils
         - execstack
@@ -53,8 +54,11 @@ parts:
         patch -d $SNAPCRAFT_PART_INSTALL/lib/python3.5/site-packages -p1 < $SNAPCRAFT_STAGE/pyyaml-support-high-codepoints.diff
         patch $SNAPCRAFT_PART_INSTALL/usr/lib/python3.5/ctypes/__init__.py $SNAPCRAFT_STAGE/ctypes_init.diff
     override-prime: |
-        # This is the last step, let's now compile all our pyc files.
         snapcraftctl prime
+        # Now that everything is built, let's disable user site-packages
+        # as stated in PEP-0370
+        sed -i usr/lib/python3.5/site.py -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
+        # This is the last step, let's now compile all our pyc files.
         ./usr/bin/python3 -m compileall .
     after: [patches, apt]
   apt:
