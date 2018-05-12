@@ -104,7 +104,7 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
             basedir = 'war'
             jarfiles = warfiles
         else:
-            raise RuntimeError("Could not find any built jar files for part")
+            raise RuntimeError("Could not find any built jar files for part in: " + src)
 
         snapcraft.file_utils.link_or_copy_tree(
             src, os.path.join(self.installdir, basedir),
