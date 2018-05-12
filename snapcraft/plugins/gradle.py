@@ -72,7 +72,7 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
             'items': {
                 'type': 'string',
             },
-            'default': [jar],
+            'default': ['jar'],
         }
         schema['properties']['gradle-output-dir'] = {
             'type': 'string',
