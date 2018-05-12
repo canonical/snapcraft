@@ -28,7 +28,10 @@ Additionally, this plugin uses the following plugin-specific keywords:
     - gradle-options:
       (list of strings)
       Flags to pass to the build using the gradle semantics for parameters.
-      The 'jar' option is always passed in as the last parameter.
+	
+    - gradle-tasks:
+      (list of strings, default: 'jar')
+      List of gradle tasks to execute. The 'jar' task is the default if this keyword isn't specified.
 
     - gradle-output-dir:
       (string; default: 'build/libs')
@@ -62,6 +65,15 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
             },
             'default': [],
         }
+        schema['properties']['gradle-tasks'] = {
+            'type': 'array',
+            'minitems': 1,
+            'uniqueItems': True,
+            'items': {
+                'type': 'string',
+            },
+            'default': [jar],
+        }
         schema['properties']['gradle-output-dir'] = {
             'type': 'string',
             'default': 'build/libs',
@@ -81,6 +93,7 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         return super().get_build_properties() + ['gradle-options',
+                                                 'gradle-tasks',
                                                  'gradle-output-dir']
 
     def build(self):
@@ -92,7 +105,8 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
             gradle_cmd = ['gradle']
         self.run(gradle_cmd +
                  self._get_proxy_options() +
-                 self.options.gradle_options + ['jar'])
+                 self.options.gradle_options +
+				 self.options.gradle_tasks)
 
         src = os.path.join(self.builddir, self.options.gradle_output_dir)
         jarfiles = glob.glob(os.path.join(src, '*.jar'))
@@ -104,7 +118,7 @@ class GradlePlugin(snapcraft.plugins.jdk.JdkPlugin):
             basedir = 'war'
             jarfiles = warfiles
         else:
-            raise RuntimeError("Could not find any built jar files for part in: " + src)
+            raise RuntimeError("Could not find any built jar files in the part directory:" + src)
 
         snapcraft.file_utils.link_or_copy_tree(
             src, os.path.join(self.installdir, basedir),
