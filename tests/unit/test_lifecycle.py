@@ -21,8 +21,6 @@ import logging
 import os
 import re
 import shutil
-import subprocess
-import sys
 import textwrap
 from unittest import mock
 
@@ -820,16 +818,15 @@ class RecordManifestBaseTestCase(BaseLifecycleTestCase):
 
     def setUp(self):
         super().setUp()
-        original_check_output = subprocess.check_output
+        original_run_output = snapcraft.internal.common.run_output
 
         def fake_uname(cmd, *args, **kwargs):
             if 'uname' in cmd:
-                return 'Linux test uname 4.10 x86_64'.encode(
-                    sys.getfilesystemencoding())
+                return 'Linux test uname 4.10 x86_64'
             else:
-                return original_check_output(cmd, *args, **kwargs)
+                return original_run_output(cmd, *args, **kwargs)
         check_output_patcher = mock.patch(
-            'subprocess.check_output', side_effect=fake_uname)
+            'snapcraft.internal.common.run_output', side_effect=fake_uname)
         check_output_patcher.start()
         self.addCleanup(check_output_patcher.stop)
 
