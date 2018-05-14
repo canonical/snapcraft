@@ -26,7 +26,7 @@ import sys
 import tempfile
 import urllib
 from contextlib import suppress
-from typing import List  # noqa
+from typing import Callable, List
 
 from snapcraft.internal import errors
 
@@ -54,7 +54,7 @@ def assemble_env():
     return '\n'.join(['export ' + e for e in env])
 
 
-def _run(cmd: List[str], caller, **kwargs):
+def _run(cmd: List[str], runner: Callable, **kwargs):
     assert isinstance(cmd, list), 'run command must be a list'
     cmd_string = ' '.join([shlex.quote(c) for c in cmd])
     # FIXME: This is gross to keep writing this, even when env is the same
@@ -64,7 +64,7 @@ def _run(cmd: List[str], caller, **kwargs):
         run_file.flush()
         run_file.seek(0)
         try:
-            return caller(['/bin/sh'], stdin=run_file, **kwargs)
+            return runner(['/bin/sh'], stdin=run_file, **kwargs)
         except subprocess.CalledProcessError as call_error:
             raise errors.SnapcraftCommandError(
                 command=cmd_string,
