@@ -500,11 +500,11 @@ class SnapcraftCommandError(SnapcraftError, CalledProcessError):
     def __init__(self, *, command: str,
                  call_error: CalledProcessError) -> None:
         super().__init__(command=command, exit_code=call_error.returncode)
-        self.output = call_error.output
-        self.stdout = call_error.stdout
-        self.stderr = call_error.stderr
-        self.cmd = call_error.cmd
-        self.returncode = call_error.returncode
+        CalledProcessError.__init__(self,
+                                    returncode=call_error.returncode,
+                                    cmd=call_error.cmd,
+                                    output=call_error.output,
+                                    stderr=call_error.stderr)
 
 
 class SnapcraftPluginCommandError(SnapcraftError):
