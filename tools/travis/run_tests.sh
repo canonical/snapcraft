@@ -76,7 +76,9 @@ else
     $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
     $lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test_suite $use_run"
 
-    if [ "$test_suite" = "snapcraft/tests/unit" ]; then
+    # By checking for SNAPCRAFT_TEST_MOCK_MACHINE we ensure coverage results are uploaded
+    # only once.
+    if [ "$test_suite" = "tests/unit" ] && [ -z "$SNAPCRAFT_TEST_MOCK_MACHINE" ]; then
         # Report code coverage.
         $lxc exec test-runner -- sh -c "cd snapcraft && python3 -m coverage xml"
         $lxc exec test-runner -- sh -c "cd snapcraft && codecov --token=$CODECOV_TOKEN"
