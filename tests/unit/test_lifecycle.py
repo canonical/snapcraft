@@ -21,6 +21,7 @@ import logging
 import os
 import re
 import shutil
+import subprocess
 import textwrap
 from unittest import mock
 
