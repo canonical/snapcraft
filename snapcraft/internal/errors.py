@@ -13,6 +13,7 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+from subprocess import CalledProcessError
 from typing import List, Union
 
 from snapcraft import formatting_utils
@@ -481,6 +482,29 @@ class InvalidExtractorValueError(MetadataExtractionError):
 
     def __init__(self, path: str, extractor_name: str) -> None:
         super().__init__(path=path, extractor_name=extractor_name)
+
+
+class SnapcraftCommandError(SnapcraftError, CalledProcessError):
+    """Exception for generic command errors.
+
+    Processes should capture this error for specific messaging.
+    This exception carries the signature of CalledProcessError for backwards
+    compatibility.
+    """
+
+    fmt = (
+            'Failed to run {command!r}: '
+            'Exited with code {exit_code}.'
+    )
+
+    def __init__(self, *, command: str,
+                 call_error: CalledProcessError) -> None:
+        super().__init__(command=command, exit_code=call_error.returncode)
+        CalledProcessError.__init__(self,
+                                    returncode=call_error.returncode,
+                                    cmd=call_error.cmd,
+                                    output=call_error.output,
+                                    stderr=call_error.stderr)
 
 
 class SnapcraftPluginCommandError(SnapcraftError):

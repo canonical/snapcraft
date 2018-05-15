@@ -16,7 +16,6 @@
 
 import json
 import os
-import subprocess
 import tarfile
 from textwrap import dedent
 from unittest import mock
@@ -125,13 +124,13 @@ class DotNetProjectBaseTestCase(unit.TestCase):
         urlopen_mock.side_effect = fake_urlopen
         self.addCleanup(patcher.stop)
 
-        original_check_call = subprocess.check_call
-        patcher = mock.patch('subprocess.check_call')
+        original_check_call = snapcraft.internal.common.run
+        patcher = mock.patch('snapcraft.internal.common.run')
         self.mock_check_call = patcher.start()
         self.addCleanup(patcher.stop)
 
         def side_effect(cmd, *args, **kwargs):
-            if cmd[2].endswith('dotnet'):
+            if cmd[0].endswith('dotnet'):
                 pass
             else:
                 original_check_call(cmd, *args, **kwargs)
@@ -240,10 +239,10 @@ class DotNetProjectBuildCommandsTestCase(DotNetProjectBaseTestCase):
         self.assertThat(
             self.mock_check_call.mock_calls, Equals([
                 mock.call([
-                    mock.ANY, mock.ANY, dotnet_command,
+                    dotnet_command,
                     'build', '-c', self.configuration], cwd=mock.ANY),
                 mock.call([
-                    mock.ANY, mock.ANY, dotnet_command,
+                    dotnet_command,
                     'publish', '-c', self.configuration,
                     '-o', plugin.installdir,
                     '--self-contained', '-r', 'linux-x64'], cwd=mock.ANY)]))
