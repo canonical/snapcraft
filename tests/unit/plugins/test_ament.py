@@ -108,8 +108,8 @@ class AmentPluginTestCase(unit.TestCase):
         mock_clean = self.bootstrapper_mock.return_value.clean
         mock_clean.assert_called_once_with()
 
-    @mock.patch('subprocess.check_call')
-    def test_build_builds_ros2_underlay(self, mock_check_call):
+    @mock.patch('snapcraft.internal.common.run')
+    def test_build_builds_ros2_underlay(self, mock_run):
         plugin = ament.AmentPlugin('test-part', self.properties, self.project)
 
         self.bootstrapper_mock.return_value.build.return_value = 'bootstrap'
@@ -137,8 +137,8 @@ class AmentPluginTestCase(unit.TestCase):
 
         # Verify that the source space was built as expected, and that the
         # system's PYTHONPATH was included while building
-        mock_check_call.assert_called_once_with([
-            mock.ANY, mock.ANY, 'ament', 'build', plugin.sourcedir,
+        mock_run.assert_called_once_with([
+            'ament', 'build', plugin.sourcedir,
             '--build-space', plugin.builddir, '--install-space',
             plugin.installdir, '--cmake-args', '-DCMAKE_BUILD_TYPE=Release'],
             cwd=mock.ANY, env=check_env())
