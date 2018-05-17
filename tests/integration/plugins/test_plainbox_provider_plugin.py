@@ -58,3 +58,9 @@ class PlainboxProviderPluginTestCase(integration.TestCase):
         # provider in this project
         self.assertRaises(subprocess.CalledProcessError, self.run_snapcraft,
                           'prime', project_dir)
+
+    def test_python_stage_pkg_mix(self):
+        project_dir = 'plainbox-provider-python-stage-pkg-mix'
+        self.run_snapcraft('snap', project_dir)
+        # Tests bug where snap would fail to build with error:
+        # "Failed building wheel for bitstring"

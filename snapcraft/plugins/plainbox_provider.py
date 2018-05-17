@@ -40,6 +40,8 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.build_packages.extend(['intltool'])
+        self.stage_packages.extend(['python3-pip', 'python3-wheel',
+                                    'python3-setuptools'])
 
     def build(self):
         super().build()
