@@ -61,6 +61,6 @@ class PlainboxProviderPluginTestCase(integration.TestCase):
 
     def test_python_stage_pkg_mix(self):
         project_dir = 'plainbox-provider-python-stage-pkg-mix'
-        self.run_snapcraft('snap', project_dir)
+        self.run_snapcraft('stage', project_dir)
         # Tests bug where snap would fail to build with error:
         # "Failed building wheel for bitstring"
