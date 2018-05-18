@@ -1,3 +1,42 @@
+snapcraft (2.42.1) xenial; urgency=medium
+
+  [ Sergio Schvezov ]
+  * repo: rollback to using dpkg-deb for deb extraction (#2111)
+  * pluginhandler: correctly dedent the run script (#2117)
+  * many: dedup environment entries (#2120)
+  * packaging: load the correct libraries on armhf (#2126)
+  * delta: properly search for in-snap xdelta3 (#2127)
+  * package: disable user site-packages for snapcraft (#2131)
+  * tests: remove obsolete env var (#2130)
+  * errors: generic exception for common.run[_output] (#2132)
+  * tests: add subprocess to lifecycle tests
+  * ci: resurrect codecov (#2138)
+  * ci: remove unused cron tests (#2139)
+  * tests: generalize the plainbox-provider tests
+  * New upstream release (LP: #1771915)
+
+  [ Kyle Fazzari ]
+  * HACKING: suggest snapcraft-pr for evaluating PRs (#2108)
+  * repo: fix all python shebangs in stage-packages (#2112)
+  * sources: don't clean target for FileBase sources (#2113)
+  * meta: stop creating empty snap directory in prime (#2114)
+  * snapcraft.yaml: update apt repo location (#2124)
+  * file_utils: don't let FileNotFoundError escape (#2123)
+  * storeapi: ensure snap ID is sane before using it (#2115)
+  * pluginhandler: collide with directories and symlinks (#1064)
+  * storeapi: handle 5xx error codes for all store endpoints (#2116)
+  * many: introduce variables for part src and build (#2122)
+  * repo: automatically prune unneeded stage-packages (#2119)
+
+  [ Christian Dywan ]
+  * sources: clean up IncompatibleOptionsError (#2109)
+  * lxd: proper error classes for container errors (#2095)
+
+  [ Jonathan Cave ]
+  * plainbox-provider plugin: include pip, setuptools and wheel as stage-packages (#2140)
+
+ -- Segio Schvezov <sergio.schvezov@ubuntu.com>  Fri, 18 May 2018 02:28:55 +0000
+
 snapcraft (2.42) xenial; urgency=medium
 
   [ Sergio Schvezov ]
