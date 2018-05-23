@@ -53,6 +53,27 @@ class TestCLIConfig(unit.TestCase):
         new_cli_config.load()
         self.assertThat(new_cli_config.get_sentry_send_always(), Equals(True))
 
+    def test_set_and_get_outdated_step_action_with_contextmanager(self):
+        with config.CLIConfig() as cli_config:
+            cli_config.set_outdated_step_action(
+                config.OutdatedStepAction.CLEAN)
+
+        with config.CLIConfig() as cli_config:
+            self.assertThat(
+                cli_config.get_outdated_step_action(),
+                Equals(config.OutdatedStepAction.CLEAN))
+
+    def test_set_and_get_outdated_step_action(self):
+        cli_config = config.CLIConfig()
+        cli_config.set_outdated_step_action(config.OutdatedStepAction.CLEAN)
+        cli_config.save()
+
+        new_cli_config = config.CLIConfig()
+        new_cli_config.load()
+        self.assertThat(
+            new_cli_config.get_outdated_step_action(),
+            Equals(config.OutdatedStepAction.CLEAN))
+
     def test_set_when_read_only(self):
         cli_config = config.CLIConfig(read_only=True)
 

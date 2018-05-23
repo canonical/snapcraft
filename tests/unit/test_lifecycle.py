@@ -37,7 +37,7 @@ from testtools.matchers import (
 )
 
 import snapcraft
-from snapcraft import storeapi
+from snapcraft import config, storeapi
 from snapcraft.file_utils import calculate_sha3_384
 from snapcraft.internal import errors, pluginhandler, lifecycle
 from snapcraft.internal.lifecycle._runner import _replace_in_part
@@ -475,6 +475,76 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             Equals(
                 "The 'stage' step for 'part1' needs to be run again, but "
                 "'part2' depends on it.\n"))
+
+    def test_dirty_steps_can_be_automatically_cleaned(self):
+        # Set the option to automatically clean dirty steps
+        with config.CLIConfig() as cli_config:
+            cli_config.set_outdated_step_action(
+                config.OutdatedStepAction.CLEAN)
+
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                  part2:
+                    plugin: nil
+                    after: [part1]
+                """))
+
+        # Stage dependency
+        lifecycle.execute('stage', self.project_options, part_names=['part1'])
+        # Build dependent
+        lifecycle.execute('build', self.project_options, part_names=['part2'])
+
+        # Reset logging since we only care about the following
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        def _fake_dirty_report(self, step):
+            if step == 'stage':
+                return pluginhandler.DirtyReport({'foo'}, {'bar'})
+            return None
+
+        # Should raise a RuntimeError about the fact that stage is dirty but
+        # it has dependents that need it.
+        with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
+                               _fake_dirty_report):
+            try:
+                lifecycle.execute(
+                    'stage', self.project_options, part_names=['part1'])
+            except errors.StepOutdatedError:
+                self.fail('Expected the step to automatically be cleaned')
+
+        output = self.fake_logger.output.split('\n')
+        part1_output = [line.strip() for line in output if 'part1' in line]
+        part2_output = [line.strip() for line in output if 'part2' in line]
+
+        self.assertThat(
+            part1_output,
+            Equals([
+                'Skipping pull part1 (already ran)',
+                'Skipping build part1 (already ran)',
+                'Skipping cleaning priming area for part1 (out of date) '
+                '(already clean)',
+                'Cleaning staging area for part1 (out of date)',
+                'Staging part1',
+            ]))
+
+        self.assertThat(
+            part2_output,
+            Equals([
+                'Skipping cleaning priming area for part2 (out of date) '
+                '(already clean)',
+                'Skipping cleaning staging area for part2 (out of date) '
+                '(already clean)',
+                'Cleaning build for part2 (out of date)',
+                'Skipping pull part2 (already ran)',
+                'Skipping cleaning priming area for part2 (out of date) '
+                '(already clean)',
+                'Skipping cleaning staging area for part2 (out of date) '
+                '(already clean)',
+            ]))
 
     def test_dirty_stage_part_with_unbuilt_dependent(self):
         self.make_snapcraft_yaml(
