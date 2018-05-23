@@ -594,3 +594,21 @@ class SnapcraftCopyFileNotFoundError(SnapcraftError):
 
     def __init__(self, path):
         super().__init__(path=path)
+
+
+class MountPointNotFoundError(SnapcraftError):
+    fmt = (
+        'Nothing is mounted at {mount_point!r}'
+    )
+
+    def __init__(self, mount_point):
+        super().__init__(mount_point=mount_point)
+
+
+class RootNotMountedError(SnapcraftError):
+    fmt = (
+        '{root!r} is not mounted'
+    )
+
+    def __init__(self, root):
+        super().__init__(root=root)
