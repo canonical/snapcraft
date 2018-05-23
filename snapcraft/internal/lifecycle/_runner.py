@@ -207,15 +207,7 @@ class _Executor:
         step_prereqs = {p for p in prereqs
                         if required_step not in self._steps_run[p]}
 
-        if step_prereqs and not step_prereqs.issubset(part_names):
-            missing_parts = [part_name for part_name in self.config.part_names
-                             if part_name in step_prereqs]
-            if missing_parts:
-                raise RuntimeError(
-                    'Requested {!r} of {!r} but there are unsatisfied '
-                    'prerequisites: {!r}'.format(
-                        step, part.name, ' '.join(missing_parts)))
-        elif step_prereqs:
+        if step_prereqs:
             # prerequisites need to build all the way to the staging
             # step to be able to share the common assets that make them
             # a dependency.
