@@ -21,7 +21,7 @@ import unittest.mock
 from textwrap import dedent
 
 import fixtures
-from testtools.matchers import Contains, Equals
+from testtools.matchers import Contains, Equals, HasLength
 
 import snapcraft
 from snapcraft.internal import (
@@ -138,3 +138,71 @@ class PartsWithDummyRepoTestCase(unit.TestCase):
         # Ensure the dummy repo returns an empty set for required
         # build tools.
         project_loader.load_config()
+
+
+class PartOrderTestCase(unit.TestCase):
+
+    scenarios = [
+        ('part1 then part2', {
+            'contents': dedent("""\
+                name: test
+                version: "1"
+                summary: test
+                description: test
+                confinement: strict
+
+                parts:
+                  part1:
+                    plugin: nil
+                  part2:
+                    plugin: nil
+                """),
+            'expected_order': ['part1', 'part2'],
+        }),
+        ('part2 then part1', {
+            'contents': dedent("""\
+                name: test
+                version: "1"
+                summary: test
+                description: test
+                confinement: strict
+
+                parts:
+                  part2:
+                    plugin: nil
+                  part1:
+                    plugin: nil
+                """),
+            'expected_order': ['part1', 'part2'],
+        }),
+        ('after', {
+            'contents': dedent("""\
+                name: test
+                version: "1"
+                summary: test
+                description: test
+                confinement: strict
+
+                parts:
+                  part2:
+                    plugin: nil
+                    after: [part3]
+                  part1:
+                    plugin: nil
+                    after: [part3]
+                  part3:
+                    plugin: nil
+                """),
+            'expected_order': ['part3', 'part1', 'part2'],
+        }),
+    ]
+
+    def test_part_order_consistency(self):
+        """Test that parts are always processed in the same order."""
+
+        self.make_snapcraft_yaml(self.contents)
+        config = project_loader.load_config()
+        self.assertThat(config.all_parts, HasLength(len(self.expected_order)))
+
+        for part, expected_name in zip(config.all_parts, self.expected_order):
+            self.expectThat(part.name, Equals(expected_name))
