@@ -1,0 +1,35 @@
+name: plainbox-provider-python-stage-pkg-mix
+summary: test the python plugin
+version: '1'
+description: |
+  This is a snap with parts in some cases using python stage-packages
+  and other python-packages. It is required to test
+  https://bugs.launchpad.net/snapcraft/+bug/1768233
+confinement: strict
+grade: devel
+
+parts:
+  checkbox-ng-local:
+    plugin: python
+    python-packages:
+      - checkbox-ng
+      - requests-oauthlib
+    stage-packages:
+      - python3-requests-unixsocket
+    build-packages:
+      - libxml2-dev
+      - libxslt1-dev
+      - zlib1g-dev
+      - build-essential
+  simple-plainbox-provider-with-stage-pkg:
+    plugin: plainbox-provider
+    source: ./com.example_simple
+    after: [checkbox-ng-local]
+    stage-packages:
+      - python3-yaml
+  part-with-python-pkg:
+    plugin: python
+    python-packages:
+      - bitstring
+    after:
+      - simple-plainbox-provider-with-stage-pkg

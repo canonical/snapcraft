@@ -286,7 +286,16 @@ class Ubuntu(BaseRepo):
                 # because if that fails it raises a SystemError and the
                 # API doesn't expose enough information about he problem.
                 # Instead we let apt-get show a verbose error message later.
-                apt_cache[name_arch].mark_install(auto_fix=False)
+                # Also, make sure this package is marked as auto-installed,
+                # which will propagate to its dependencies.
+                apt_cache[name_arch].mark_install(
+                    auto_fix=False, from_user=False)
+
+                # Now mark this package as NOT automatically installed, which
+                # will leave its dependencies marked as auto-installed, which
+                # allows us to clean them up if necessary.
+                apt_cache[name_arch].mark_auto(False)
+
                 cls._verify_marked_install(apt_cache[name_arch])
             except KeyError:
                 raise errors.PackageNotFoundError(name)
@@ -374,7 +383,13 @@ class Ubuntu(BaseRepo):
         with self._apt.archive(self._cache.base_dir) as apt_cache:
             self._mark_install(apt_cache, package_names)
             self._filter_base_packages(apt_cache, package_names)
+            self._autokeep_packages(apt_cache)
             return self._get(apt_cache)
+
+    def _autokeep_packages(self, apt_cache):
+        for package in apt_cache.get_changes():
+            if package.is_auto_removable:
+                package.mark_keep()
 
     def _filter_base_packages(self, apt_cache, package_names):
         manifest_dep_names = self._manifest_dep_names(apt_cache)

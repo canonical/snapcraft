@@ -183,7 +183,7 @@ class RubyPluginTestCase(unit.TestCase):
                 plugin,
                 _ruby_tar=mock.DEFAULT,
                 _gem_install=mock.DEFAULT) as mocks:
-            with mock.patch('subprocess.check_call') as mock_check_call:
+            with mock.patch('snapcraft.internal.common.run') as mock_run:
                 plugin.pull()
 
         ruby_expected_dir = os.path.join(
@@ -191,18 +191,15 @@ class RubyPluginTestCase(unit.TestCase):
         mocks['_ruby_tar'].provision.assert_called_with(
             ruby_expected_dir,
             clean_target=False, keep_tarball=True)
-        mock_check_call.assert_has_calls([
+        mock_run.assert_has_calls([
             mock.call(
-                [mock.ANY, mock.ANY,
-                 './configure', '--disable-install-rdoc', '--prefix=/'],
+                ['./configure', '--disable-install-rdoc', '--prefix=/'],
                 cwd=ruby_expected_dir, env=mock.ANY),
             mock.call(
-                [mock.ANY, mock.ANY,
-                 'make', '-j{}'.format(plugin.parallel_build_count)],
+                ['make', '-j{}'.format(plugin.parallel_build_count)],
                 cwd=ruby_expected_dir, env=mock.ANY),
             mock.call(
-                [mock.ANY, mock.ANY,
-                 'make', 'install', 'DESTDIR={}'.format(plugin.installdir)],
+                ['make', 'install', 'DESTDIR={}'.format(plugin.installdir)],
                 cwd=ruby_expected_dir, env=mock.ANY)
         ])
 
@@ -212,13 +209,12 @@ class RubyPluginTestCase(unit.TestCase):
             'test-part', self.options, self.project_options)
         with mock.patch.multiple(
                 plugin, _ruby_tar=mock.DEFAULT, _ruby_install=mock.DEFAULT):
-            with mock.patch('subprocess.check_call') as mock_check_call:
+            with mock.patch('snapcraft.internal.common.run') as mock_run:
                 plugin.pull()
 
         test_part_dir = os.path.join(self.path, 'parts', 'test-part')
-        mock_check_call.assert_called_with(
-            [mock.ANY, mock.ANY,
-             os.path.join(test_part_dir, 'install', 'bin', 'ruby'),
+        mock_run.assert_called_with(
+            [os.path.join(test_part_dir, 'install', 'bin', 'ruby'),
              os.path.join(test_part_dir,  'install', 'bin', 'gem'),
              'install', '--env-shebang', 'test-gem-1', 'test-gem-2'],
             cwd=os.path.join(test_part_dir, 'build'),
@@ -232,21 +228,19 @@ class RubyPluginTestCase(unit.TestCase):
 
         with mock.patch.multiple(
                 plugin, _ruby_tar=mock.DEFAULT, _ruby_install=mock.DEFAULT):
-            with mock.patch('subprocess.check_call') as mock_check_call:
+            with mock.patch('snapcraft.internal.common.run') as mock_run:
                 plugin.pull()
         test_part_dir = os.path.join(self.path, 'parts', 'test-part')
-        mock_check_call.assert_has_calls([
+        mock_run.assert_has_calls([
             mock.call(
-                [mock.ANY, mock.ANY,
-                 os.path.join(test_part_dir, 'install', 'bin', 'ruby'),
+                [os.path.join(test_part_dir, 'install', 'bin', 'ruby'),
                  os.path.join(test_part_dir,  'install', 'bin', 'gem'),
                  'install', '--env-shebang',
                  'test-gem-1', 'test-gem-2', 'bundler'],
                 cwd=os.path.join(test_part_dir, 'build'),
                 env=mock.ANY),
             mock.call(
-                [mock.ANY, mock.ANY,
-                 os.path.join(test_part_dir, 'install', 'bin', 'ruby'),
+                [os.path.join(test_part_dir, 'install', 'bin', 'ruby'),
                  os.path.join(test_part_dir,  'install', 'bin', 'bundle'),
                  'install'],
                 cwd=os.path.join(test_part_dir, 'build'),
