@@ -11,8 +11,6 @@ parts:
         plugin: python
         source: git://git.launchpad.net/checkbox-ng
         source-type: git
-        stage-packages:
-            - libc6
         build-packages:
             - libxml2-dev
             - libxslt1-dev

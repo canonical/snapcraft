@@ -898,7 +898,8 @@ class FakeAptCache(fixtures.Fixture):
             self.add_package(FakeAptCachePackage(package, version))
 
         def fetch_binary(package_candidate, destination):
-            path = os.path.join(self.path, package_candidate.name)
+            path = os.path.join(
+                self.path, '{}.deb'.format(package_candidate.name))
             open(path, 'w').close()
             return path
 
@@ -936,6 +937,7 @@ class FakeAptCachePackage():
         self.version = version
         self.candidate = self
         self.dependencies = []
+        self.conflicts = []
         self.provides = provides if provides else []
         if installed:
             # XXX The installed attribute requires some values that the fake
@@ -946,6 +948,7 @@ class FakeAptCachePackage():
             self.installed = None
         self.priority = priority
         self.marked_install = False
+        self.is_auto_installed = False
 
     def __str__(self):
         if '=' in self.name:
@@ -957,20 +960,41 @@ class FakeAptCachePackage():
     def version(self):
         return self._version
 
+    @property
+    def is_auto_removable(self):
+        return self.marked_install and self.is_auto_installed
+
     @version.setter
     def version(self, version):
         self._version = version
         if version is not None:
             self.versions.update({version: self})
 
-    def mark_install(self, *, auto_fix=True):
+    def mark_install(self, *, auto_fix=True, from_user=True):
         if not self.installed:
-            if len(self.dependencies):
-                return
+            # First, verify dependencies are valid. If not, bail.
+            for or_set in self.dependencies:
+                for dep in or_set:
+                    if 'broken' in dep.name:
+                        return
+
+            for or_set in self.dependencies:
+                if or_set and or_set[0].target_versions:
+                    # Install the first target version of the first OR
+                    or_set[0].target_versions[0].mark_install(
+                            auto_fix=auto_fix, from_user=from_user)
+            for conflict in self.conflicts:
+                conflict.mark_keep()
+
             self.marked_install = True
+            self.is_auto_installed = not from_user
+
+    def mark_auto(self, auto=True):
+        self.is_auto_installed = auto
 
     def mark_keep(self):
-        pass
+        self.marked_install = False
+        self.is_auto_installed = False
 
     def get_dependencies(self, _):
         return []

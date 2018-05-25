@@ -360,6 +360,17 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'occurred.\nPlease try again.'
             )
         }),
+        ('SnapcraftCommandError', {
+            'exception': errors.SnapcraftCommandError,
+            'kwargs': {
+                    'command': 'pip install foo',
+                    'call_error': CalledProcessError(
+                        cmd=['/bin/sh'], returncode=1, output='failed')},
+            'expected_message': (
+                "Failed to run 'pip install foo': "
+                "Exited with code 1."
+            )
+        }),
         ('SnapcraftPluginCommandError string command', {
             'exception': errors.SnapcraftPluginCommandError,
             'kwargs': {
