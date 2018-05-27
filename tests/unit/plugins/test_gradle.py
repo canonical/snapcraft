@@ -48,6 +48,7 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
         schema = gradle.GradlePlugin.schema()
 
         properties = schema['properties']
+
         self.assertTrue('gradle-options' in properties,
                         'Expected "gradle-options" to be included in '
                         'properties')
@@ -75,16 +76,46 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
             gradle_options['uniqueItems'],
             'Expected "gradle-options" "uniqueItems" to be "True"')
 
+
+		# gradle-tasks schema checks
+        self.assertTrue('gradle-tasks' in properties,
+                        'Expected "gradle-tasks" to be included in '
+                        'properties')
+
+        gradle_options = properties['gradle-tasks']
+
+        self.assertTrue(
+            'type' in gradle_options,
+            'Expected "type" to be included in "gradle-tasks"')
+        self.assertThat(gradle_options['type'], Equals('array'),
+                        'Expected "gradle-tasks" "type" to be "array", but '
+                        'it was "{}"'.format(gradle_options['type']))
+
+        self.assertTrue(
+            'minitems' in gradle_tasks,
+            'Expected "minitems" to be included in "gradle-tasks"')
+        self.assertThat(gradle_tasks['minitems'], Equals(1),
+                        'Expected "gradle-tasks" "minitems" to be 1, but '
+                        'it was "{}"'.format(gradle_tasks['minitems']))
+
+        self.assertTrue(
+            'uniqueItems' in gradle_tasks,
+            'Expected "uniqueItems" to be included in "gradle-tasks"')
+        self.assertTrue(
+            gradle_tasks['uniqueItems'],
+            'Expected "gradle-tasks" "uniqueItems" to be "True"')
+
+		# schema checks for gradel-output-dir
         output_dir = properties['gradle-output-dir']
         self.assertTrue(
             'type' in output_dir,
-            'Expected "type" to be included in "gradle-options"')
+            'Expected "type" to be included in "gradle-output-dir"')
         self.assertThat(output_dir['type'], Equals('string'),
-                        'Expected "gradle-options" "type" to be "string", '
+                        'Expected "gradle-output-dir" "type" to be "string", '
                         'but it was "{}"'.format(output_dir['type']))
 
     def test_get_build_properties(self):
-        expected_build_properties = ['gradle-options', 'gradle-output-dir']
+        expected_build_properties = ['gradle-options', 'gradle-tasks', 'gradle-output-dir']
         resulting_build_properties = gradle.GradlePlugin.get_build_properties()
 
         self.assertThat(resulting_build_properties,
@@ -153,7 +184,7 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
         plugin.build()
 
         run_mock.assert_has_calls([
-            mock.call(['gradle', 'jar']),
+            mock.call(['gradle', 'war']),
         ])
 
     @mock.patch.object(gradle.GradlePlugin, 'run')
@@ -176,7 +207,7 @@ class GradlePluginTestCase(BaseGradlePluginTestCase):
         plugin.build()
 
         run_mock.assert_has_calls([
-            mock.call(['./gradlew', 'jar']),
+            mock.call(['./gradlew', 'war']),
         ])
 
     @mock.patch.object(gradle.GradlePlugin, 'run')
@@ -256,7 +287,7 @@ class GradleProxyTestCase(BaseGradlePluginTestCase):
         plugin.build()
 
         run_mock.assert_has_calls([
-            mock.call(['gradle'] + self.expected_args + ['jar'])
+            mock.call(['gradle'] + self.expected_args + ['war'])
         ])
 
     @mock.patch.object(gradle.GradlePlugin, 'run')
@@ -281,5 +312,5 @@ class GradleProxyTestCase(BaseGradlePluginTestCase):
         plugin.build()
 
         run_mock.assert_has_calls([
-            mock.call(['./gradlew'] + self.expected_args + ['jar'])
+            mock.call(['./gradlew'] + self.expected_args + ['war'])
         ])
