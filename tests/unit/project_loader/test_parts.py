@@ -175,7 +175,26 @@ class PartOrderTestCase(unit.TestCase):
                 """),
             'expected_order': ['part1', 'part2'],
         }),
-        ('after', {
+        ('single after', {
+            'contents': dedent("""\
+                name: test
+                version: "1"
+                summary: test
+                description: test
+                confinement: strict
+
+                parts:
+                  part2:
+                    plugin: nil
+                    after: [part3]
+                  part1:
+                    plugin: nil
+                  part3:
+                    plugin: nil
+                """),
+            'expected_order': ['part1', 'part3', 'part2'],
+        }),
+        ('multiple after', {
             'contents': dedent("""\
                 name: test
                 version: "1"
