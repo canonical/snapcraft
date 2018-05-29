@@ -397,6 +397,61 @@ parts:
         remote_parts.update()
         _config.Config()
 
+    def test_remote_part_with_after(self):
+        """Test to verify we can load remote parts which pull in other remote
+           parts using "after".
+        """
+        self.useFixture(fixture_setup.FakeParts())
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+grade: stable
+
+parts:
+  part1:
+    plugin: nil
+    after: [alsa]
+""")
+        remote_parts.update()
+        config = _config.Config()
+
+        self.assertThat(config.parts.after_requests, Equals({
+            'alsa-plugins': ['alsa-lib'],
+            'alsa': ['alsa-plugins'],
+            'part1': ['alsa']}))
+
+    def test_remote_part_with_after_local_override(self):
+        """Test to verify we can override remote parts with "after".
+        """
+        self.useFixture(fixture_setup.FakeParts())
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+grade: stable
+
+parts:
+  part1:
+    plugin: nil
+    after: [alsa]
+
+  alsa-plugins:
+    after: [alsa-extras]
+
+  alsa-extras:
+    plugin: nil
+""")
+        remote_parts.update()
+        config = _config.Config()
+
+        self.assertThat(config.parts.after_requests, Equals({
+            'alsa-plugins': ['alsa-extras'],
+            'alsa': ['alsa-plugins'],
+            'part1': ['alsa']}))
+
     def test_config_composes_with_a_non_existent_remote_part(self):
         self.useFixture(fixture_setup.FakeParts())
         self.make_snapcraft_yaml("""name: test

@@ -112,6 +112,23 @@ class FakePartsRequestHandler(BaseHTTPRequestHandler):
                     ('description', 'this is a multiline description\n' * 3),
                     ('maintainer', 'none'),
                 ))),
+                ('alsa', OrderedDict((
+                    ('plugin', 'nil'),
+                    ('description', 'this part depends on a part with after'),
+                    ('maintainer', 'none'),
+                    ('after', ['alsa-plugins']),
+                ))),
+                ('alsa-plugins', OrderedDict((
+                    ('plugin', 'nil'),
+                    ('description', 'this part depends on a part'),
+                    ('maintainer', 'none'),
+                    ('after', ['alsa-lib']),
+                ))),
+                ('alsa-lib', OrderedDict((
+                    ('plugin', 'nil'),
+                    ('description', 'this part is used by alsa-plugins'),
+                    ('maintainer', 'none'),
+                ))),
             ))
         self.send_header('Content-Type', 'text/plain')
         if 'NO_CONTENT_LENGTH' not in os.environ:

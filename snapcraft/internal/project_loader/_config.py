@@ -24,6 +24,7 @@ import re
 import jsonschema
 import yaml
 import yaml.reader
+from typing import Any, Dict
 from typing import Set  # noqa: F401
 
 
@@ -348,15 +349,23 @@ class Config:
             else:
                 new_parts[part_name] = parts[part_name].copy()
 
-            after_parts = parts[part_name].get('after', [])
-            after_remote_parts = [p for p in after_parts if p not in parts]
-
-            for after_part in after_remote_parts:
-                properties = self._remote_parts.get_part(after_part)
-                new_parts[after_part] = properties
+            self._process_remote_after_parts(
+                new_parts, parts, new_parts[part_name])
 
         snapcraft_yaml['parts'] = new_parts
         return snapcraft_yaml
+
+    def _process_remote_after_parts(
+            self, new_parts: Dict[str, Any], parts: Dict[str, Any],
+            part: Dict[str, Any]) -> None:
+        after_parts = part.get('after', [])
+        after_remote_parts = [p for p in after_parts if p not in parts]
+
+        for after_part in after_remote_parts:
+            properties = self._remote_parts.get_part(after_part)
+            new_parts[after_part] = properties
+            # Process the newly added part which may have 'after' as well.
+            self._process_remote_after_parts(new_parts, parts, properties)
 
 
 def _snapcraft_yaml_load(yaml_file):
