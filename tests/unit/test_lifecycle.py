@@ -96,7 +96,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         self.assertThat(
             new_part.plugin.options.source, Equals(part.plugin.installdir))
 
-    def test_exception_when_dependency_is_required(self):
+    def test_dependency_is_staged_when_required(self):
         self.make_snapcraft_yaml(
             textwrap.dedent("""\
                 parts:
@@ -108,16 +108,18 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                       - part1
                 """))
 
-        raised = self.assertRaises(
-            RuntimeError,
-            lifecycle.execute,
-            'pull', self.project_options,
-            part_names=['part2'])
+        lifecycle.execute('pull', self.project_options, part_names=['part2'])
 
         self.assertThat(
-            raised.__str__(),
-            Equals("Requested 'pull' of 'part2' but there are unsatisfied "
-                   "prerequisites: 'part1'"))
+            self.fake_logger.output,
+            Equals("'part2' has prerequisites that need to be staged: part1\n"
+                   'Preparing to pull part1 \n'
+                   'Pulling part1 \n'
+                   'Preparing to build part1 \n'
+                   'Building part1 \n'
+                   'Staging part1 \n'
+                   'Preparing to pull part2 \n'
+                   'Pulling part2 \n'))
 
     def test_no_exception_when_dependency_is_required_but_already_staged(self):
         self.make_snapcraft_yaml(
