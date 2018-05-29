@@ -16,6 +16,7 @@
 
 import base64
 import configparser
+import enum
 import io
 import logging
 import os
@@ -31,6 +32,13 @@ from snapcraft.storeapi import constants, errors
 LOCAL_CONFIG_FILENAME = '.snapcraft/snapcraft.cfg'
 
 logger = logging.getLogger(__name__)
+
+
+@enum.unique
+class OutdatedStepAction(enum.Enum):
+    # Would like to use enum.auto(), but it's only available in >= 3.6
+    ERROR = 1
+    CLEAN = 2
 
 
 class CLIConfig:
@@ -127,6 +135,27 @@ class CLIConfig:
         string_value = self._get_option('Sentry', 'always_send')
         # Anything but "true" for string_value is considered False.
         return string_value == 'true'
+
+    def set_outdated_step_action(self, action: OutdatedStepAction) -> None:
+        """Setter to define action to take if outdated step is encountered.
+
+        :param OutdatedStepAction value: The action to take
+        """
+        self._set_option(
+            'Lifecycle', 'outdated_step_action', action.name.lower())
+
+    def get_outdated_step_action(self) -> OutdatedStepAction:
+        """Getter to define action to take if outdated step is encountered.
+
+        :returns: The action to take
+        :rtype: OutdatedStepAction.
+        """
+        action = self._get_option('Lifecycle', 'outdated_step_action')
+        if action:
+            return OutdatedStepAction[action.upper()]
+        else:
+            # Error by default
+            return OutdatedStepAction.ERROR
 
 
 class Config(object):
