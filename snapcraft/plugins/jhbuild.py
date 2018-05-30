@@ -57,12 +57,9 @@ Advice:
     as possible.
 """
 
-import glob
 import logging
 import os
-import subprocess
 import snapcraft
-from snapcraft.internal import common
 
 BUILD_PACKAGES = {
     'apt-file',
@@ -99,59 +96,6 @@ BUILD_PACKAGES = {
 
 logger = logging.getLogger(__name__)
 jhbuild_repository = 'https://git.gnome.org/browse/jhbuild'
-
-
-def _get_or_create_jhbuild_user():
-    """Discover the User ID of the jhbuild user or create one
-    :return: The user ID
-    :rtype: int"""
-    uid = _get_jhbuild_user()
-    if uid == 0:
-        _create_jhbuild_user()
-        uid = _get_jhbuild_user()
-
-    return uid
-
-
-def _get_jhbuild_user():
-    """Discover the User ID of the jhbuild user"""
-    uid = os.getuid()
-    if uid != 0:
-        return uid
-
-    try:
-        uid = common.run_output(['id', '-u', 'jhbuild'])
-    except subprocess.CalledProcessError:
-        uid = 0
-    return uid
-
-
-def _create_jhbuild_user():
-    """Create the jhbuild user"""
-    if os.geteuid() == 0:
-        common.run(['adduser', '--shell', '/bin/bash',
-                    '--disabled-password', '--system', '--quiet',
-                    '--home', os.sep + os.path.join('home', 'jhbuild'),
-                    'jhbuild'])
-
-
-def _get_jhbuild_group():
-    """Discover the Group ID of the jhbuild user
-    This is required because we add the user ourselves with a
-    non-deterministic ID
-    :return: The group ID
-    :rtype: int"""
-    uid = os.getuid()
-    gid = os.getgid()
-    if uid != 0:
-        return gid or 65534
-
-    try:
-        gid = common.run_output(['id', '-g', 'jhbuild'])
-    except subprocess.CalledProcessError:
-        gid = os.getgid()
-
-    return gid or 65534
 
 
 class JHBuildPlugin(snapcraft.BasePlugin):
@@ -258,16 +202,12 @@ class JHBuildPlugin(snapcraft.BasePlugin):
         self._setup_jhbuild()
 
         logger.info('Building modules')
-        self.run_jhbuild(['build'] + self.modules,
-                         cwd=self.builddir, output=False)
+        self.run_jhbuild(['build'] + self.modules, output=False)
 
         logger.info('Fixing symbolic links')
         self.run(['symlinks', '-c', '-d', '-r', '-s', '-v', self.installdir])
 
     def _setup_jhbuild(self):
-        jhbuild_user = int(_get_or_create_jhbuild_user())
-        jhbuild_group = int(_get_jhbuild_group())
-
         if not os.path.isfile(self.jhbuildrc_path):
             self._write_jhbuildrc()
 
@@ -280,14 +220,6 @@ class JHBuildPlugin(snapcraft.BasePlugin):
 
         for folder in make_paths:
             os.makedirs(folder, exist_ok=True)
-
-        if jhbuild_user != os.getuid():
-            chmod_path = os.path.dirname(os.path.dirname(self.partdir))
-            for filename in glob.iglob('{path!s}/**'.format(path=chmod_path),
-                                       recursive=True):
-                if not os.path.exists(filename):
-                    continue
-                os.chown(filename, jhbuild_user, jhbuild_group)
 
         if not os.path.exists(self.jhbuild_program):
             logger.info('Building JHBuild')
@@ -324,8 +256,8 @@ cflags = {cflags!r}
 '''
 
             extra_prefixes = [os.path.join(self.project.stage_dir, 'usr'),
-                              os.path.join(self.project.stage_dir, 'usr',
-                                           'local')]
+                              os.path.join(self.project.stage_dir,
+                                           'usr', 'local')]
 
             jhbuildrc_file.write(
                 config.format(module_set=self.options.module_set,
@@ -362,14 +294,9 @@ cflags = {cflags!r}
     def maybe_sudo(self, args, output=True, **kwargs):
         """Run a command with sudo if we're root to drop privileges"""
         cwd = kwargs.pop('cwd', os.getcwd())
-        sudo = []
-        if os.getuid() == 0:
-            envvars = []
-            envtmpl = '''{key!s}={value!s}'''
-            for var in ['https_proxy', 'http_proxy', 'GIT_PROXY_COMMAND']:
-                if os.environ.get(var) is not None:
-                    envvars += [envtmpl.format(key=var, value=os.environ[var])]
-            sudo = ['sudo'] + envvars + ['-H', '-u', 'jhbuild', '--']
+
+        env = os.environ.copy()
+        env['JHBUILD_RUN_AS_ROOT'] = '1'
 
         run = self.run_output if output else self.run
-        return run(sudo + args, cwd=cwd, **kwargs)
+        return run(args, cwd=cwd, env=env, **kwargs)

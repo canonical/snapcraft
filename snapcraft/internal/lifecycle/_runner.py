@@ -22,6 +22,7 @@ from tempfile import TemporaryDirectory
 import yaml
 
 import snapcraft
+from snapcraft import config
 from snapcraft.internal import (
     common,
     errors,
@@ -158,14 +159,16 @@ class _Executor:
 
         for part in self.config.all_parts:
             steps_run[part.name] = set()
-            for step in common.COMMAND_ORDER:
-                dirty_report = part.get_dirty_report(step)
-                if dirty_report:
-                    self._handle_dirty(part, step, dirty_report)
-                elif not (part.should_step_run(step)):
-                    steps_run[part.name].add(step)
-                    part.notify_part_progress('Skipping {}'.format(step),
-                                              '(already ran)')
+            with config.CLIConfig() as cli_config:
+                for step in common.COMMAND_ORDER:
+                    dirty_report = part.get_dirty_report(step)
+                    if dirty_report:
+                        self._handle_dirty(
+                            part, step, dirty_report, cli_config)
+                    elif not (part.should_step_run(step)):
+                        steps_run[part.name].add(step)
+                        part.notify_part_progress('Skipping {}'.format(step),
+                                                  '(already ran)')
 
         return steps_run
 
@@ -207,15 +210,7 @@ class _Executor:
         step_prereqs = {p for p in prereqs
                         if required_step not in self._steps_run[p]}
 
-        if step_prereqs and not step_prereqs.issubset(part_names):
-            missing_parts = [part_name for part_name in self.config.part_names
-                             if part_name in step_prereqs]
-            if missing_parts:
-                raise RuntimeError(
-                    'Requested {!r} of {!r} but there are unsatisfied '
-                    'prerequisites: {!r}'.format(
-                        step, part.name, ' '.join(missing_parts)))
-        elif step_prereqs:
+        if step_prereqs:
             # prerequisites need to build all the way to the staging
             # step to be able to share the common assets that make them
             # a dependency.
@@ -244,19 +239,22 @@ class _Executor:
                 self.config.original_snapcraft_yaml,
                 self.config.validator.schema)
 
-    def _handle_dirty(self, part, step, dirty_report):
+    def _handle_dirty(self, part, step, dirty_report, cli_config):
+        dirty_action = cli_config.get_outdated_step_action()
         if step not in constants.STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
-            raise errors.StepOutdatedError(
-                step=step, part=part.name,
-                dirty_properties=dirty_report.dirty_properties,
-                dirty_project_options=dirty_report.dirty_project_options)
+            if dirty_action == config.OutdatedStepAction.ERROR:
+                raise errors.StepOutdatedError(
+                    step=step, part=part.name,
+                    dirty_properties=dirty_report.dirty_properties,
+                    dirty_project_options=dirty_report.dirty_project_options)
 
         staged_state = self.config.get_project_state('stage')
         primed_state = self.config.get_project_state('prime')
 
         # We need to clean this step, but if it involves cleaning the stage
-        # step and it has dependents that have been built, we need to ask for
-        # them to first be cleaned (at least back to the build step).
+        # step and it has dependents that have been built, the dependents need
+        # to first be cleaned (at least back to the build step). Do it
+        # automatically if configured to do so.
         index = common.COMMAND_ORDER.index(step)
         dependents = self.parts_config.get_dependents(part.name)
         if (index <= common.COMMAND_ORDER.index('stage') and
@@ -264,7 +262,12 @@ class _Executor:
             for dependent in self.config.all_parts:
                 if (dependent.name in dependents and
                         not dependent.is_clean('build')):
-                    raise errors.StepOutdatedError(step=step, part=part.name,
-                                                   dependents=dependents)
+                    if dirty_action == config.OutdatedStepAction.ERROR:
+                        raise errors.StepOutdatedError(
+                            step=step, part=part.name, dependents=dependents)
+                    else:
+                        dependent.clean(
+                            staged_state, primed_state, 'build',
+                            '(out of date)')
 
         part.clean(staged_state, primed_state, step, '(out of date)')
