@@ -14,8 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import logging
 from textwrap import dedent
 
+import fixtures
 from testtools.matchers import Equals, HasLength
 
 from snapcraft.internal import (
@@ -112,3 +114,15 @@ class MountInfoTestCase(unit.TestCase):
             errors.MountPointNotFoundError, mounts.for_mount_point,
             'test-root')
         self.assertThat(raised.mount_point, Equals('test-root'))
+
+    def test_invalid_mountinfo(self):
+        self.fake_logger = fixtures.FakeLogger(level=logging.WARN)
+        self.useFixture(self.fake_logger)
+
+        mountinfo.MountInfo(mountinfo_file=self._write_mountinfo(
+            dedent("I'm invalid")))
+
+        # Assert that a warning was logged
+        self.assertThat(
+            self.fake_logger.output, Equals(
+                "Unable to parse mountinfo row: I'm invalid\n"))

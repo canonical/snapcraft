@@ -612,3 +612,12 @@ class RootNotMountedError(SnapcraftError):
 
     def __init__(self, root):
         super().__init__(root=root)
+
+
+class InvalidMountinfoFormat(SnapcraftError):
+    fmt = (
+        'Unable to parse mountinfo row: {row}'
+    )
+
+    def __init__(self, row):
+        super().__init__(row=row)
