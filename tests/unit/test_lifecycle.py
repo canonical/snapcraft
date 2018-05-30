@@ -41,10 +41,8 @@ from snapcraft import config, storeapi
 from snapcraft.file_utils import calculate_sha3_384
 from snapcraft.internal import errors, pluginhandler, lifecycle
 from snapcraft.internal.lifecycle._runner import _replace_in_part
-from tests import (
-    fixture_setup,
-    unit
-)
+from tests import fixture_setup, unit
+from tests.fixture_setup.os_release import FakeOsRelease
 
 
 class BaseLifecycleTestCase(unit.TestCase):
@@ -929,6 +927,8 @@ class RecordManifestBaseTestCase(BaseLifecycleTestCase):
         self.useFixture(self.fake_snapd)
         self.fake_snapd.snaps_result = []
 
+        self.useFixture(FakeOsRelease())
+
 
 class RecordManifestTestCase(RecordManifestBaseTestCase):
 
@@ -945,6 +945,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -991,6 +993,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1038,6 +1042,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1086,6 +1092,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1135,6 +1143,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1184,6 +1194,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1236,6 +1248,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1285,6 +1299,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1329,6 +1345,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1375,6 +1393,8 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1443,6 +1463,8 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
