@@ -46,5 +46,3 @@ for i in $(seq 12); do
 done
 
 /snap/bin/lxd init --auto
-/snap/bin/lxc network create testbr0
-/snap/bin/lxc network attach-profile testbr0 default eth0
