@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import contextlib
 import os
 import json
 from collections import OrderedDict
@@ -21,6 +22,7 @@ from typing import Any, Dict  # noqa: F401
 
 import snapcraft
 from snapcraft.internal import errors
+from snapcraft.internal import os_release
 from snapcraft.internal.states import (
     get_global_state,
     get_state
@@ -30,6 +32,13 @@ from snapcraft.internal.states import (
 def annotate_snapcraft(data, parts_dir: str):
     manifest = OrderedDict()  # type: Dict[str, Any]
     manifest['snapcraft-version'] = snapcraft._get_version()
+
+    release = os_release.OsRelease()
+    with contextlib.suppress(errors.OsReleaseIdError):
+        manifest['snapcraft-os-release-id'] = release.id()
+    with contextlib.suppress(errors.OsReleaseVersionIdError):
+        manifest['snapcraft-os-release-version-id'] = release.version_id()
+
     for k, v in data.items():
         manifest[k] = v
     image_info = os.environ.get('SNAPCRAFT_IMAGE_INFO')
