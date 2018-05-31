@@ -891,6 +891,11 @@ class RecordManifestBaseTestCase(BaseLifecycleTestCase):
 
     def setUp(self):
         super().setUp()
+
+        patcher = mock.patch('snapcraft._get_version', return_value='3.0')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
         original_run_output = snapcraft.internal.common.run_output
 
         def fake_uname(cmd, *args, **kwargs):
@@ -939,6 +944,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
             name: test
             version: 0
             summary: test
@@ -984,6 +990,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
             name: test
             version: 0
             summary: test
@@ -1030,6 +1037,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
             name: test
             version: 0
             summary: test
@@ -1077,6 +1085,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
             name: test
             version: 0
             summary: test
@@ -1125,6 +1134,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
             name: test
             version: 0
             summary: test
@@ -1173,6 +1183,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
             name: test
             version: 0
             summary: test
@@ -1224,6 +1235,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
             name: test
             version: 0
             summary: test
@@ -1272,6 +1284,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
             name: test
             version: 0
             summary: test
@@ -1315,6 +1328,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
             name: test
             version: 0
             summary: test
@@ -1360,6 +1374,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
             name: test
             version: 0
             summary: test
@@ -1427,6 +1442,7 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
             name: test
             version: 0
             summary: test
