@@ -341,6 +341,9 @@ class Config:
         new_parts = {}
 
         for part_name in parts:
+            if not parts[part_name]:
+                parts[part_name] = dict()
+
             if 'plugin' not in parts[part_name]:
                 properties = self._remote_parts.compose(part_name,
                                                         parts[part_name])
