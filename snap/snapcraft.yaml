@@ -33,6 +33,7 @@ parts:
     build-packages:
         - build-essential
         - libffi-dev
+        - libssl-dev
         - libsodium-dev
         - liblzma-dev
         - patch
