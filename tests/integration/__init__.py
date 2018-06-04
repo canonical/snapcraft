@@ -99,6 +99,11 @@ class TestCase(testtools.TestCase):
             'XDG_DATA_HOME', os.path.join(self.path, 'data')))
         self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
 
+        # Disable Sentry reporting for tests, otherwise they'll hang waiting
+        # for input
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_ENABLE_SENTRY', 'false'))
+
         patcher = mock.patch(
             'xdg.BaseDirectory.xdg_config_home',
             new=os.path.join(self.path, '.config'))

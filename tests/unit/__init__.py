@@ -144,6 +144,11 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_NO_PATCHELF', '1'))
 
+        # Disable Sentry reporting for tests, otherwise they'll hang waiting
+        # for input
+        self.useFixture(fixtures.EnvironmentVariable(
+            'SNAPCRAFT_ENABLE_SENTRY', 'false'))
+
         machine = os.environ.get('SNAPCRAFT_TEST_MOCK_MACHINE', None)
         self.base_environment = fixture_setup.FakeBaseEnvironment(
             machine=machine)
