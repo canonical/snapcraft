@@ -342,6 +342,26 @@ grade: stable
 
 parts:
   part1:
+""")
+
+        remote_parts.update()
+        _config.Config()
+
+        self.mock_load_part.assert_called_with('part1', 'go', {
+            'source': 'http://source.tar.gz', 'plugin': 'go', 'stage': [],
+            'prime': []})
+
+    def test_config_composes_with_modified_remote_parts(self):
+        self.useFixture(fixture_setup.FakeParts())
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+grade: stable
+
+parts:
+  part1:
     stage-packages: [fswebcam]
 """)
 
