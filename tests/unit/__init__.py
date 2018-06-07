@@ -28,7 +28,7 @@ import testscenarios
 import testtools
 
 import snapcraft
-from snapcraft.internal import common, elf
+from snapcraft.internal import common, elf, steps
 from snapcraft.internal.project_loader import grammar_processing
 from tests import fake_servers, fixture_setup
 from tests.file_utils import get_snapcraft_path
@@ -165,16 +165,15 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         with open(snapcraft_yaml, 'w', encoding=encoding) as fp:
             fp.write(content)
 
-    def verify_state(self, part_name, state_dir, expected_step):
+    def verify_state(self, part_name, state_dir, expected_step_name):
         self.assertTrue(os.path.isdir(state_dir),
                         'Expected state directory for {}'.format(part_name))
 
         # Expect every step up to and including the specified one to be run
-        index = common.COMMAND_ORDER.index(expected_step)
-        for step in common.COMMAND_ORDER[:index+1]:
-            self.assertTrue(os.path.exists(os.path.join(state_dir, step)),
+        for step in steps.steps_required_for(steps.Step(expected_step_name)):
+            self.assertTrue(os.path.exists(os.path.join(state_dir, step.name)),
                             'Expected {!r} to be run for {}'.format(
-                                step, part_name))
+                                step.name, part_name))
 
     def load_part(self, part_name, plugin_name=None, part_properties=None,
                   project_options=None, stage_packages_repo=None,

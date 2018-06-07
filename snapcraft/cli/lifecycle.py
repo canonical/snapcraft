@@ -17,7 +17,13 @@
 import click
 import os
 
-from snapcraft.internal import deprecations, lifecycle, lxd, project_loader
+from snapcraft.internal import (
+    deprecations,
+    lifecycle,
+    lxd,
+    project_loader,
+    steps,
+)
 from ._options import add_build_options, get_project_options
 from . import echo
 from . import env
@@ -62,7 +68,7 @@ def pull(ctx, parts, **kwargs):
         snapcraft pull my-part1 my-part2
 
     """
-    _execute('pull', parts, **kwargs)
+    _execute(steps.PULL, parts, **kwargs)
 
 
 @lifecyclecli.command()
@@ -77,7 +83,7 @@ def build(parts, **kwargs):
         snapcraft build my-part1 my-part2
 
     """
-    _execute('build', parts, **kwargs)
+    _execute(steps.BUILD, parts, **kwargs)
 
 
 @lifecyclecli.command()
@@ -92,7 +98,7 @@ def stage(parts, **kwargs):
         snapcraft stage my-part1 my-part2
 
     """
-    _execute('stage', parts, **kwargs)
+    _execute(steps.STAGE, parts, **kwargs)
 
 
 @lifecyclecli.command()
@@ -107,7 +113,7 @@ def prime(parts, **kwargs):
         snapcraft prime my-part1 my-part2
 
     """
-    _execute('prime', parts, **kwargs)
+    _execute(steps.PRIME, parts, **kwargs)
 
 
 @lifecyclecli.command()
@@ -175,12 +181,12 @@ def clean(parts, step, **kwargs):
     project_options = get_project_options(**kwargs)
     build_environment = env.BuilderEnvironmentConfig()
     if build_environment.is_host:
-        step = step or 'pull'
+        step = step or steps.next_step(step).name
         if step == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '
                          'as the step to clean')
-            step = 'prime'
-        lifecycle.clean(project_options, parts, step)
+            step = steps.PRIME.name
+        lifecycle.clean(project_options, parts, steps.Step(step))
     else:
         config = project_loader.load_config(project_options)
         lxd.Project(project_options=project_options,

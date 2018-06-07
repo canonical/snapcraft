@@ -31,6 +31,7 @@ from snapcraft.internal import (
     project_loader,
     repo,
     states,
+    steps,
 )
 from snapcraft.internal.cache import SnapCache
 from . import constants
@@ -160,15 +161,15 @@ class _Executor:
         for part in self.config.all_parts:
             steps_run[part.name] = set()
             with config.CLIConfig() as cli_config:
-                for step in common.COMMAND_ORDER:
+                for step in steps.STEPS:
                     dirty_report = part.get_dirty_report(step)
                     if dirty_report:
                         self._handle_dirty(
                             part, step, dirty_report, cli_config)
                     elif not (part.should_step_run(step)):
                         steps_run[part.name].add(step)
-                        part.notify_part_progress('Skipping {}'.format(step),
-                                                  '(already ran)')
+                        part.notify_part_progress(
+                            'Skipping {}'.format(step.name), '(already ran)')
 
         return steps_run
 
@@ -182,17 +183,15 @@ class _Executor:
             parts = self.config.all_parts
             part_names = self.config.part_names
 
-        step_index = common.COMMAND_ORDER.index(step) + 1
-
-        for step in common.COMMAND_ORDER[0:step_index]:
-            if step == 'stage':
+        for current_step in steps.steps_required_for(step):
+            if current_step == steps.STAGE:
                 # XXX check only for collisions on the parts that have already
                 # been built --elopio - 20170713
                 pluginhandler.check_for_collisions(self.config.all_parts)
             for part in parts:
-                if step not in self._steps_run[part.name]:
-                    self._run_step(step, part, part_names)
-                    self._steps_run[part.name].add(step)
+                if current_step not in self._steps_run[part.name]:
+                    self._run_step(current_step, part, part_names)
+                    self._steps_run[part.name].add(current_step)
 
         self._create_meta(step, part_names)
 
@@ -201,11 +200,11 @@ class _Executor:
         prereqs = self.parts_config.get_prereqs(part.name)
 
         # Dependencies need to be primed to have paths to.
-        if step == 'prime':
-            required_step = 'prime'
+        if step == steps.PRIME:
+            required_step = steps.PRIME
         # Or staged to be built with.
         else:
-            required_step = 'stage'
+            required_step = steps.STAGE
 
         step_prereqs = {p for p in prereqs
                         if required_step not in self._steps_run[p]}
@@ -216,22 +215,23 @@ class _Executor:
             # a dependency.
             logger.info(
                 '{!r} has prerequisites that need to be {}d: '
-                '{}'.format(part.name, required_step, ' '.join(step_prereqs)))
+                '{}'.format(
+                    part.name, required_step.name, ' '.join(step_prereqs)))
             self.run(required_step, step_prereqs)
 
         # Run the preparation function for this step (if implemented)
         with contextlib.suppress(AttributeError):
-            getattr(part, 'prepare_{}'.format(step))()
+            getattr(part, 'prepare_{}'.format(step.name))()
 
         common.env = self.parts_config.build_env_for_part(part)
         common.env.extend(self.config.project_env())
 
         part = _replace_in_part(part)
 
-        getattr(part, step)()
+        getattr(part, step.name)()
 
     def _create_meta(self, step, part_names):
-        if step == 'prime' and part_names == self.config.part_names:
+        if step == steps.PRIME and part_names == self.config.part_names:
             common.env = self.config.snap_env()
             meta.create_snap_packaging(
                 self.config.data, self.config.parts, self.project_options,
@@ -248,26 +248,25 @@ class _Executor:
                     dirty_properties=dirty_report.dirty_properties,
                     dirty_project_options=dirty_report.dirty_project_options)
 
-        staged_state = self.config.get_project_state('stage')
-        primed_state = self.config.get_project_state('prime')
+        staged_state = self.config.get_project_state(steps.STAGE)
+        primed_state = self.config.get_project_state(steps.PRIME)
 
         # We need to clean this step, but if it involves cleaning the stage
         # step and it has dependents that have been built, the dependents need
         # to first be cleaned (at least back to the build step). Do it
         # automatically if configured to do so.
-        index = common.COMMAND_ORDER.index(step)
         dependents = self.parts_config.get_dependents(part.name)
-        if (index <= common.COMMAND_ORDER.index('stage') and
-                not part.is_clean('stage') and dependents):
+        if (step <= steps.STAGE and not part.is_clean(steps.STAGE)
+                and dependents):
             for dependent in self.config.all_parts:
                 if (dependent.name in dependents and
-                        not dependent.is_clean('build')):
+                        not dependent.is_clean(steps.BUILD)):
                     if dirty_action == config.OutdatedStepAction.ERROR:
                         raise errors.StepOutdatedError(
                             step=step, part=part.name, dependents=dependents)
                     else:
                         dependent.clean(
-                            staged_state, primed_state, 'build',
+                            staged_state, primed_state, steps.BUILD,
                             '(out of date)')
 
         part.clean(staged_state, primed_state, step, '(out of date)')

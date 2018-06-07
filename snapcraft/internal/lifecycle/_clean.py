@@ -19,7 +19,7 @@ import os
 import shutil
 
 from snapcraft import formatting_utils
-from snapcraft.internal import common, errors, project_loader, mountinfo
+from snapcraft.internal import errors, project_loader, mountinfo, steps
 from . import constants
 
 
@@ -93,27 +93,24 @@ def _remove_directory_if_empty(directory):
 
 
 def _cleanup_common_directories(config, project_options):
-    max_index = -1
+    max_step = None
     for part in config.all_parts:
-        step = part.last_step()
-        if step:
-            index = common.COMMAND_ORDER.index(step)
-            if index > max_index:
-                max_index = index
+        with contextlib.suppress(errors.NoLatestStepError):
+            step = part.latest_step()
+            if not max_step or step > max_step:
+                    max_step = step
 
-    with contextlib.suppress(IndexError):
-        _cleanup_common_directories_for_step(
-            common.COMMAND_ORDER[max_index+1], project_options)
+    with contextlib.suppress(errors.NoNextStepError):
+        next_step = steps.next_step(max_step)
+        _cleanup_common_directories_for_step(next_step, project_options)
 
 
 def _cleanup_common_directories_for_step(step, project_options, parts=None):
     if not parts:
         parts = []
 
-    index = common.COMMAND_ORDER.index(step)
-
     being_tried = False
-    if index <= common.COMMAND_ORDER.index('prime'):
+    if step <= steps.PRIME:
         # Remove the priming area. Only remove the actual 'prime' directory if
         # it's NOT being used in 'snap try'. We'll know that if it's
         # bind-mounted somewhere.
@@ -129,16 +126,16 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
                        "use by 'snap try'")
             being_tried = True
         _cleanup_common(
-            project_options.prime_dir, 'prime', message, parts,
+            project_options.prime_dir, steps.PRIME, message, parts,
             remove_dir=remove_dir)
 
-    if index <= common.COMMAND_ORDER.index('stage'):
+    if step <= steps.STAGE:
         # Remove the staging area.
         _cleanup_common(
-            project_options.stage_dir, 'stage', 'Cleaning up staging area',
+            project_options.stage_dir, steps.STAGE, 'Cleaning up staging area',
             parts)
 
-    if index <= common.COMMAND_ORDER.index('pull'):
+    if step <= steps.PULL:
         # Remove the parts directory (but leave local plugins alone).
         _cleanup_parts_dir(
             project_options.parts_dir, project_options.local_plugins_dir,
@@ -178,8 +175,8 @@ def _cleanup_parts_dir(parts_dir, local_plugins_dir, parts):
                 except NotADirectoryError:
                     os.remove(path)
     for part in parts:
-        part.mark_cleaned('build')
-        part.mark_cleaned('pull')
+        part.mark_cleaned(steps.BUILD)
+        part.mark_cleaned(steps.PULL)
 
 
 def _cleanup_internal_snapcraft_dir():
@@ -191,15 +188,15 @@ def clean(project_options, parts, step=None):
     # step defaults to None because that's how it comes from docopt when it's
     # not set.
     if not step:
-        step = 'pull'
+        step = steps.PULL
 
-    if not parts and step == 'pull':
+    if not parts and step == steps.PULL:
         _cleanup_common_directories_for_step(step, project_options)
         return
 
     config = project_loader.load_config()
 
-    if not parts and (step == 'stage' or step == 'prime'):
+    if not parts and (step == steps.STAGE or step == steps.PRIME):
         # If we've been asked to clean stage or prime without being given
         # specific parts, just blow away those directories instead of
         # doing it per part.
@@ -212,8 +209,8 @@ def clean(project_options, parts, step=None):
     else:
         parts = [part.name for part in config.all_parts]
 
-    staged_state = config.get_project_state('stage')
-    primed_state = config.get_project_state('prime')
+    staged_state = config.get_project_state(steps.STAGE)
+    primed_state = config.get_project_state(steps.PRIME)
 
     _clean_parts(parts, step, config, staged_state, primed_state)
 

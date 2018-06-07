@@ -29,7 +29,15 @@ import yaml
 
 import snapcraft.extractors
 from snapcraft import file_utils
-from snapcraft.internal import common, elf, errors, repo, sources, states
+from snapcraft.internal import (
+    common,
+    elf,
+    errors,
+    repo,
+    sources,
+    states,
+    steps,
+)
 from snapcraft.internal.mangling import clear_execstack
 
 from ._build_attributes import BuildAttributes
@@ -105,10 +113,10 @@ class PluginHandler:
             stagedir=self.stagedir,
             primedir=self.primedir,
             builtin_functions={
-                'pull': self._do_pull,
-                'build': self.plugin.build,
-                'stage': self._do_stage,
-                'prime': self._do_prime,
+                steps.PULL.name: self._do_pull,
+                steps.BUILD.name: self.plugin.build,
+                steps.STAGE.name: self._do_stage,
+                steps.PRIME.name: self._do_prime,
                 'set-version': self._set_version,
                 'set-grade': self._set_grade,
             })
@@ -117,22 +125,26 @@ class PluginHandler:
 
     def get_pull_state(self) -> states.PullState:
         if not self._pull_state:
-            self._pull_state = states.get_state(self.plugin.statedir, 'pull')
+            self._pull_state = states.get_state(
+                self.plugin.statedir, steps.PULL)
         return self._pull_state
 
     def get_build_state(self) -> states.BuildState:
         if not self._build_state:
-            self._build_state = states.get_state(self.plugin.statedir, 'build')
+            self._build_state = states.get_state(
+                self.plugin.statedir, steps.BUILD)
         return self._build_state
 
     def get_stage_state(self) -> states.StageState:
         if not self._stage_state:
-            self._stage_state = states.get_state(self.plugin.statedir, 'stage')
+            self._stage_state = states.get_state(
+                self.plugin.statedir, steps.STAGE)
         return self._stage_state
 
     def get_prime_state(self) -> states.PrimeState:
         if not self._prime_state:
-            self._prime_state = states.get_state(self.plugin.statedir, 'prime')
+            self._prime_state = states.get_state(
+                self.plugin.statedir, steps.PRIME)
         return self._prime_state
 
     def _get_source_handler(self, properties):
@@ -180,13 +192,11 @@ class PluginHandler:
             raise errors.ScriptletDuplicateDataError(
                 step, step, list(conflicts))
 
-        last_step = self.last_step()
-        if last_step:
-            # Now ensure the metadata from this step doesn't conflict with
-            # metadata from any other step
-            index = common.COMMAND_ORDER.index(last_step)
-            for index in reversed(range(0, index+1)):
-                other_step = common.COMMAND_ORDER[index]
+        # Now ensure the metadata from this step doesn't conflict with
+        # metadata from any other step (if any)
+        with contextlib.suppress(errors.NoLatestStepError):
+            latest_step = self.latest_step()
+            for other_step in reversed(steps.steps_required_for(latest_step)):
                 state = states.get_state(self.plugin.statedir, other_step)
                 conflicts = metadata.overlap(state.scriptlet_metadata)
                 if len(conflicts) > 0:
@@ -215,38 +225,33 @@ class PluginHandler:
             if step:
                 os.remove(self.plugin.statedir)
                 os.makedirs(self.plugin.statedir)
-                self.mark_done(step)
+                self.mark_done(steps.Step(step))
 
     def notify_part_progress(self, progress, hint=''):
         logger.info('%s %s %s', progress, self.name, hint)
 
-    def last_step(self):
-        for step in reversed(common.COMMAND_ORDER):
+    def latest_step(self):
+        for step in reversed(steps.STEPS):
             if os.path.exists(
                     states.get_step_state_file(self.plugin.statedir, step)):
                 return step
 
-        return None
+        raise errors.NoLatestStepError(self.name)
 
     def next_step(self):
-        next_step = None
-        for step in reversed(common.COMMAND_ORDER):
-            if os.path.exists(
-                    states.get_step_state_file(self.plugin.statedir, step)):
-                break
-            next_step = step
-
-        return next_step
+        latest_step = None
+        with contextlib.suppress(errors.NoLatestStepError):
+            latest_step = self.latest_step()
+        return steps.next_step(latest_step)
 
     def is_clean(self, step):
         """Return true if the given step hasn't run (or has been cleaned)."""
 
-        last_step = self.last_step()
-        if last_step:
-            return (common.COMMAND_ORDER.index(step) >
-                    common.COMMAND_ORDER.index(last_step))
-
-        return True
+        try:
+            latest_step = self.latest_step()
+            return step > latest_step
+        except errors.NoLatestStepError:
+            return True
 
     def is_dirty(self, step):
         """Return true if the given step needs to run again."""
@@ -292,17 +297,14 @@ class PluginHandler:
         if not state:
             state = {}
 
-        index = common.COMMAND_ORDER.index(step)
-
         with open(states.get_step_state_file(
                 self.plugin.statedir, step), 'w') as f:
             f.write(yaml.dump(state))
 
         # We know we've only just completed this step, so make sure any later
         # steps don't have a saved state.
-        if index+1 != len(common.COMMAND_ORDER):
-            for command in common.COMMAND_ORDER[index+1:]:
-                self.mark_cleaned(command)
+        for step in steps.steps_following(step):
+                self.mark_cleaned(step)
 
     def mark_cleaned(self, step):
         state_file = states.get_step_state_file(self.plugin.statedir, step)
@@ -372,7 +374,7 @@ class PluginHandler:
                 metadata.update(extract_metadata(self.name, file_path))
                 metadata_files.append(path)
 
-        self.mark_done('pull', states.PullState(
+        self.mark_done(steps.PULL, states.PullState(
             pull_properties, part_properties=self._part_properties,
             project=self._project_options, stage_packages=self.stage_packages,
             build_snaps=part_build_snaps,
@@ -380,10 +382,10 @@ class PluginHandler:
             source_details=self.source_handler.source_details,
             metadata=metadata,
             metadata_files=metadata_files,
-            scriptlet_metadata=self._scriptlet_metadata['pull']))
+            scriptlet_metadata=self._scriptlet_metadata[steps.PULL]))
 
     def clean_pull(self, hint=''):
-        if self.is_clean('pull'):
+        if self.is_clean(steps.PULL):
             hint = '{} {}'.format(hint, '(already clean)').strip()
             self.notify_part_progress('Skipping cleaning pulled source for',
                                       hint)
@@ -401,7 +403,7 @@ class PluginHandler:
                 shutil.rmtree(self.plugin.sourcedir)
 
         self.plugin.clean_pull()
-        self.mark_cleaned('pull')
+        self.mark_cleaned(steps.PULL)
 
     def prepare_build(self, force=False):
         self.makedirs()
@@ -481,7 +483,7 @@ class PluginHandler:
                 if not state or path not in state.extracted_metadata['files']:
                     raise errors.MissingMetadataFileError(self.name, path)
 
-        self.mark_done('build', states.BuildState(
+        self.mark_done(steps.BUILD, states.BuildState(
             property_names=build_properties,
             part_properties=self._part_properties,
             project=self._project_options,
@@ -489,7 +491,7 @@ class PluginHandler:
             machine_assets=machine_manifest,
             metadata=metadata,
             metadata_files=metadata_files,
-            scriptlet_metadata=self._scriptlet_metadata['build']))
+            scriptlet_metadata=self._scriptlet_metadata[steps.BUILD]))
 
     def _get_machine_manifest(self):
         return {
@@ -499,7 +501,7 @@ class PluginHandler:
         }
 
     def clean_build(self, hint=''):
-        if self.is_clean('build'):
+        if self.is_clean(steps.BUILD):
             hint = '{} {}'.format(hint, '(already clean)').strip()
             self.notify_part_progress('Skipping cleaning build for',
                                       hint)
@@ -514,17 +516,17 @@ class PluginHandler:
             shutil.rmtree(self.plugin.installdir)
 
         self.plugin.clean_build()
-        self.mark_cleaned('build')
+        self.mark_cleaned(steps.BUILD)
 
     def migratable_fileset_for(self, step):
         plugin_fileset = self.plugin.snap_fileset()
-        fileset = self._get_fileset(step).copy()
+        fileset = self._get_fileset(step.name).copy()
         includes = _get_includes(fileset)
         # If we're priming and we don't have an explicit set of files to prime
         # include the files from the stage step
-        if step == 'prime' and (fileset == ['*'] or
-                                len(includes) == 0):
-            stage_fileset = self._get_fileset('stage').copy()
+        if step == steps.PRIME and (fileset == ['*'] or
+                                    len(includes) == 0):
+            stage_fileset = self._get_fileset(steps.STAGE.name).copy()
             fileset = _combine_filesets(stage_fileset, fileset)
 
         fileset.extend(plugin_fileset)
@@ -550,11 +552,11 @@ class PluginHandler:
 
         # Only mark this step done if _do_stage() didn't run, in which case
         # we have no directories or files to track.
-        if self.is_clean('stage'):
+        if self.is_clean(steps.STAGE):
             self.mark_stage_done(set(), set())
 
     def _do_stage(self):
-        snap_files, snap_dirs = self.migratable_fileset_for('stage')
+        snap_files, snap_dirs = self.migratable_fileset_for(steps.STAGE)
 
         def fixup_func(file_path):
             if os.path.islink(file_path):
@@ -572,12 +574,12 @@ class PluginHandler:
         self.mark_stage_done(snap_files, snap_dirs)
 
     def mark_stage_done(self, snap_files, snap_dirs):
-        self.mark_done('stage', states.StageState(
+        self.mark_done(steps.STAGE, states.StageState(
             snap_files, snap_dirs, self._part_properties,
-            self._project_options, self._scriptlet_metadata['stage']))
+            self._project_options, self._scriptlet_metadata[steps.STAGE]))
 
     def clean_stage(self, project_staged_state, hint=''):
-        if self.is_clean('stage'):
+        if self.is_clean(steps.STAGE):
             hint = '{} {}'.format(hint, '(already clean)').strip()
             self.notify_part_progress('Skipping cleaning staging area for',
                                       hint)
@@ -585,15 +587,15 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning staging area for', hint)
 
-        state = states.get_state(self.plugin.statedir, 'stage')
+        state = states.get_state(self.plugin.statedir, steps.STAGE)
 
         try:
             self._clean_shared_area(self.stagedir, state,
                                     project_staged_state)
         except AttributeError:
-            raise errors.MissingStateCleanError('stage')
+            raise errors.MissingStateCleanError(steps.STAGE)
 
-        self.mark_cleaned('stage')
+        self.mark_cleaned(steps.STAGE)
 
     def prime(self, force=False) -> None:
         self.makedirs()
@@ -602,11 +604,11 @@ class PluginHandler:
 
         # Only mark this step done if _do_prime() didn't run, in which case
         # we have no files, directories, or dependency paths to track.
-        if self.is_clean('prime'):
+        if self.is_clean(steps.PRIME):
             self.mark_prime_done(set(), set(), set())
 
     def _do_prime(self) -> None:
-        snap_files, snap_dirs = self.migratable_fileset_for('prime')
+        snap_files, snap_dirs = self.migratable_fileset_for(steps.PRIME)
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 
         if self._snap_type == 'app':
@@ -657,12 +659,12 @@ class PluginHandler:
         return dependency_paths
 
     def mark_prime_done(self, snap_files, snap_dirs, dependency_paths):
-        self.mark_done('prime', states.PrimeState(
+        self.mark_done(steps.PRIME, states.PrimeState(
             snap_files, snap_dirs, dependency_paths, self._part_properties,
-            self._project_options, self._scriptlet_metadata['prime']))
+            self._project_options, self._scriptlet_metadata[steps.PRIME]))
 
     def clean_prime(self, project_primed_state, hint=''):
-        if self.is_clean('prime'):
+        if self.is_clean(steps.PRIME):
             hint = '{} {}'.format(hint, '(already clean)').strip()
             self.notify_part_progress('Skipping cleaning priming area for',
                                       hint)
@@ -670,15 +672,15 @@ class PluginHandler:
 
         self.notify_part_progress('Cleaning priming area for', hint)
 
-        state = states.get_state(self.plugin.statedir, 'prime')
+        state = self.get_prime_state()
 
         try:
             self._clean_shared_area(self.primedir, state,
                                     project_primed_state)
         except AttributeError:
-            raise errors.MissingStateCleanError('prime')
+            raise errors.MissingStateCleanError(steps.PRIME)
 
-        self.mark_cleaned('prime')
+        self.mark_cleaned(steps.PRIME)
 
     def _clean_shared_area(self, shared_directory, part_state, project_state):
         primed_files = part_state.files
@@ -734,7 +736,7 @@ class PluginHandler:
 
     def get_primed_dependency_paths(self):
         dependency_paths = set()
-        state = states.get_state(self.plugin.statedir, 'prime')
+        state = self.get_prime_state()
         if state:
             for path in state.dependency_paths:
                 dependency_paths.add(
@@ -777,25 +779,22 @@ class PluginHandler:
 
     def _clean_steps(self, project_staged_state, project_primed_state,
                      step=None, hint=None):
-        index = None
         if step:
-            if step not in common.COMMAND_ORDER:
+            if step not in steps.STEPS:
                 raise RuntimeError(
                     '{!r} is not a valid step for part {!r}'.format(
                         step, self.name))
 
-            index = common.COMMAND_ORDER.index(step)
-
-        if not index or index <= common.COMMAND_ORDER.index('prime'):
+        if not step or step <= steps.PRIME:
             self.clean_prime(project_primed_state, hint)
 
-        if not index or index <= common.COMMAND_ORDER.index('stage'):
+        if not step or step <= steps.STAGE:
             self.clean_stage(project_staged_state, hint)
 
-        if not index or index <= common.COMMAND_ORDER.index('build'):
+        if not step or step <= steps.BUILD:
             self.clean_build(hint)
 
-        if not index or index <= common.COMMAND_ORDER.index('pull'):
+        if not step or step <= steps.PULL:
             self.clean_pull(hint)
 
 
@@ -1060,7 +1059,7 @@ def check_for_collisions(parts):
     parts_files = {}
     for part in parts:
         # Gather our own files up
-        part_files, part_directories = part.migratable_fileset_for('stage')
+        part_files, part_directories = part.migratable_fileset_for(steps.STAGE)
         part_contents = part_files | part_directories
 
         # Scan previous parts for collisions

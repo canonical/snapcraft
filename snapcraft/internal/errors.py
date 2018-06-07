@@ -42,7 +42,7 @@ class SnapcraftError(Exception):
 class MissingStateCleanError(SnapcraftError):
     fmt = (
         "Failed to clean: "
-        "Missing state for {step!r}. "
+        "Missing state for {step.name!r}. "
         "To clean the project, run `snapcraft clean`."
     )
 
@@ -54,10 +54,10 @@ class StepOutdatedError(SnapcraftError):
 
     fmt = (
         'Failed to reuse files from previous build: '
-        'The {step!r} step of {part!r} is out of date:\n'
+        'The {step.name!r} step of {part!r} is out of date:\n'
         '{report}'
-        'To continue, clean that part\'s {step!r} step, run '
-        '`snapcraft clean {parts_names} -s {step}`.'
+        'To continue, clean that part\'s {step.name!r} step, run '
+        '`snapcraft clean {parts_names} -s {step.name}`.'
     )
 
     def __init__(self, *, step, part,
@@ -89,7 +89,7 @@ class StepOutdatedError(SnapcraftError):
                 dependents, "depends", "depend")
             messages.append('The {0!r} step for {1!r} needs to be run again, '
                             'but {2} {3} on it.\n'.format(
-                                step,
+                                step.name,
                                 part,
                                 humanized_dependents,
                                 pluralized_dependents))
@@ -594,6 +594,20 @@ class SnapcraftCopyFileNotFoundError(SnapcraftError):
 
     def __init__(self, path):
         super().__init__(path=path)
+
+
+class NoLatestStepError(SnapcraftError):
+    fmt = "The {part_name!r} part hasn't run any steps"
+
+    def __init__(self, part_name):
+        super().__init__(part_name=part_name)
+
+
+class NoNextStepError(SnapcraftError):
+    fmt = '{step.name!r} is the final step'
+
+    def __init__(self, step):
+        super().__init__(step=step)
 
 
 class MountPointNotFoundError(SnapcraftError):

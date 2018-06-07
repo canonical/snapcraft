@@ -15,5 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
+from snapcraft.internal import steps
+
 SNAPCRAFT_INTERNAL_DIR = os.path.join('snap', '.snapcraft')
-STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
+STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {steps.STAGE, steps.PRIME}
