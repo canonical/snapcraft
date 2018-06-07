@@ -835,6 +835,20 @@ class CleanTestCase(BaseLifecycleTestCase):
             os.path.join('snap', '.snapcraft'),
             Not(DirExists()))
 
+    @mock.patch('snapcraft.internal.mountinfo.MountInfo.for_root')
+    def test_clean_leaves_prime_alone_for_tried(self, mock_for_root):
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                """))
+        lifecycle.execute('prime', self.project_options)
+        lifecycle.clean(self.project_options, parts=None)
+        self.assertThat(
+            'prime', DirExists(),
+            'Expected prime directory to remain after cleaning for tried snap')
+
 
 class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
 

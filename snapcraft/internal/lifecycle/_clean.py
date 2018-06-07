@@ -19,7 +19,7 @@ import os
 import shutil
 
 from snapcraft import formatting_utils
-from snapcraft.internal import common, project_loader
+from snapcraft.internal import common, errors, project_loader, mountinfo
 from . import constants
 
 
@@ -112,11 +112,25 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
 
     index = common.COMMAND_ORDER.index(step)
 
+    being_tried = False
     if index <= common.COMMAND_ORDER.index('prime'):
-        # Remove the priming area.
+        # Remove the priming area. Only remove the actual 'prime' directory if
+        # it's NOT being used in 'snap try'. We'll know that if it's
+        # bind-mounted somewhere.
+        mounts = mountinfo.MountInfo()
+        try:
+            mounts.for_root(project_options.prime_dir)
+        except errors.RootNotMountedError:
+            remove_dir = True
+            message = 'Cleaning up priming area'
+        else:
+            remove_dir = False
+            message = ("Cleaning up priming area, but not removing as it's in "
+                       "use by 'snap try'")
+            being_tried = True
         _cleanup_common(
-            project_options.prime_dir, 'prime', 'Cleaning up priming area',
-            parts)
+            project_options.prime_dir, 'prime', message, parts,
+            remove_dir=remove_dir)
 
     if index <= common.COMMAND_ORDER.index('stage'):
         # Remove the staging area.
@@ -131,15 +145,24 @@ def _cleanup_common_directories_for_step(step, project_options, parts=None):
             parts)
         _cleanup_internal_snapcraft_dir()
 
-    _remove_directory_if_empty(project_options.prime_dir)
+    if not being_tried:
+        _remove_directory_if_empty(project_options.prime_dir)
     _remove_directory_if_empty(project_options.stage_dir)
     _remove_directory_if_empty(project_options.parts_dir)
 
 
-def _cleanup_common(directory, step, message, parts):
+def _cleanup_common(directory, step, message, parts, *, remove_dir=True):
     if os.path.isdir(directory):
         logger.info(message)
-        shutil.rmtree(directory)
+        if remove_dir:
+            shutil.rmtree(directory)
+        else:
+            # Don't delete the parent directory, but delete its contents
+            for f in os.scandir(directory):
+                if f.is_dir(follow_symlinks=False):
+                    shutil.rmtree(f.path)
+                elif f.is_file(follow_symlinks=False):
+                    os.remove(f.path)
     for part in parts:
         part.mark_cleaned(step)
 
