@@ -38,10 +38,8 @@ from snapcraft.internal import (
 from snapcraft.internal.project_loader import errors
 import snapcraft.internal.project_loader._config as _config
 
-from tests import (
-    fixture_setup,
-    unit
-)
+from tests import fixture_setup, unit
+from tests.fixture_setup.os_release import FakeOsRelease
 
 
 class YamlBaseTestCase(unit.TestCase):
@@ -334,6 +332,26 @@ parts:
         })
 
     def test_config_composes_with_remote_parts(self):
+        self.useFixture(fixture_setup.FakeParts())
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+grade: stable
+
+parts:
+  part1:
+""")
+
+        remote_parts.update()
+        _config.Config()
+
+        self.mock_load_part.assert_called_with('part1', 'go', {
+            'source': 'http://source.tar.gz', 'plugin': 'go', 'stage': [],
+            'prime': []})
+
+    def test_config_composes_with_modified_remote_parts(self):
         self.useFixture(fixture_setup.FakeParts())
         self.make_snapcraft_yaml("""name: test
 version: "1"
@@ -2046,11 +2064,7 @@ parts:
         ]))
 
     def test_config_stage_environment_confinement_classic(self):
-        patcher = unittest.mock.patch.object(
-            snapcraft.internal.os_release.OsRelease, 'version_codename',
-            return_value='xenial')
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        self.useFixture(FakeOsRelease())
 
         self.make_snapcraft_yaml("""name: test
 version: "1"
@@ -2076,11 +2090,7 @@ parts:
             environment)
 
     def test_stage_environment_confinement_classic_with_incompat_host(self):
-        patcher = unittest.mock.patch.object(
-            snapcraft.internal.os_release.OsRelease, 'version_codename',
-            return_value='incompatible-fake')
-        patcher.start()
-        self.addCleanup(patcher.stop)
+        self.useFixture(FakeOsRelease(version_codename='incompatible-fake'))
 
         self.make_snapcraft_yaml("""name: test
 version: "1"

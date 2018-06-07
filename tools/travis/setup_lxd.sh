@@ -35,7 +35,7 @@ apt-get remove --yes lxd lxd-client
 # - Setup snap "core" (3604) security profiles (cannot reload udev rules: exit status 2)
 # but the installation succeeds, so we just ingore it.
 snap install core || echo 'ignored error'
-snap install lxd
+snap install lxd --channel=3.0/stable
 # Wait while LXD first generates its keys. In a low entropy environment this
 # can take a while.
 
@@ -46,5 +46,3 @@ for i in $(seq 12); do
 done
 
 /snap/bin/lxd init --auto
-/snap/bin/lxc network create testbr0
-/snap/bin/lxc network attach-profile testbr0 default eth0

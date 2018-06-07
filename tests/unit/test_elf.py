@@ -18,7 +18,6 @@ import logging
 import os
 import subprocess
 import tempfile
-from textwrap import dedent
 import sys
 
 from testtools.matchers import (
@@ -30,8 +29,9 @@ from testtools.matchers import (
 )
 from unittest import mock
 
-from snapcraft.internal import errors, elf, os_release
+from snapcraft.internal import errors, elf
 from tests import unit, fixture_setup
+from tests.fixture_setup.os_release import FakeOsRelease
 
 
 class TestElfBase(unit.TestCase):
@@ -207,30 +207,7 @@ class TestSystemLibsOnNewRelease(TestElfBase):
 
     def setUp(self):
         super().setUp()
-
-        with open('os-release', 'w') as f:
-            f.write(dedent("""\
-                NAME="Ubuntu"
-                VERSION="16.04.3 LTS (Xenial Xerus)"
-                ID=ubuntu
-                ID_LIKE=debian
-                PRETTY_NAME="Ubuntu 16.04.3 LTS"
-                VERSION_ID="16.04"
-                HOME_URL="http://www.ubuntu.com/"
-                SUPPORT_URL="http://help.ubuntu.com/"
-                BUG_REPORT_URL="http://bugs.launchpad.net/ubuntu/"
-                UBUNTU_CODENAME=xenial
-            """))
-        release = os_release.OsRelease(os_release_file='os-release')
-
-        def _create_os_release(*args, **kwargs):
-            return release
-
-        patcher = mock.patch(
-            'snapcraft.internal.os_release.OsRelease',
-            wraps=_create_os_release)
-        self.os_release_mock = patcher.start()
-        self.addCleanup(patcher.stop)
+        self.useFixture(FakeOsRelease())
 
     def test_fail_gracefully_if_system_libs_not_found(self):
         elf_file = self.fake_elf['fake_elf-2.23']
@@ -245,26 +222,7 @@ class TestSystemLibsOnReleasesWithNoVersionId(unit.TestCase):
         super().setUp()
 
         elf._libraries = None
-
-        with open('os-release', 'w') as f:
-            f.write(dedent("""\
-                NAME="Gentoo"
-                ID=gentoo
-                PRETTY_NAME="Gentoo/Linux"
-                HOME_URL="http://www.gentoo.org/"
-                SUPPORT_URL="http://www.gentoo.org/main/en/support.xml"
-                BUG_REPORT_URL="https://bugs.gentoo.org/"
-            """))
-        release = os_release.OsRelease(os_release_file='os-release')
-
-        def _create_os_release(*args, **kwargs):
-            return release
-
-        patcher = mock.patch(
-            'snapcraft.internal.os_release.OsRelease',
-            wraps=_create_os_release)
-        self.os_release_mock = patcher.start()
-        self.addCleanup(patcher.stop)
+        self.useFixture(FakeOsRelease(version_id=None))
 
     @mock.patch('snapcraft.internal.elf.repo.Repo.get_package_libraries',
                 return_value=['/usr/lib/libc.so.6', '/lib/libpthreads.so.6'])

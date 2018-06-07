@@ -473,7 +473,7 @@ properties:
               validation-failure:
                   "Parts cannot contain both 'install' and 'override-*'
                   keywords. Use 'override-build' instead of 'install'."
-        type: object
+        type: [object, 'null']
         minProperties: 1
         properties:
           plugin:
