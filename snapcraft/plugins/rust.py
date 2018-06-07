@@ -97,10 +97,23 @@ class RustPlugin(snapcraft.BasePlugin):
         self._rustup = os.path.join(self._rustpath, "rustup.sh")
         self._manifest = collections.OrderedDict()
 
+    def _test(self):
+        if self.project.is_cross_compiling:
+            return
+
+        cmd = [self._cargo, 'test',
+               '-j{}'.format(self.parallel_build_count)]
+        if self.options.rust_features:
+            cmd.append("--features")
+            cmd.append(' '.join(self.options.rust_features))
+        self.run(cmd, env=self._build_env())
+
     def build(self):
         super().build()
 
         self._write_cross_compile_config()
+
+        self._test()
 
         cmd = [self._cargo, 'install',
                '-j{}'.format(self.parallel_build_count),
@@ -224,4 +237,5 @@ class RustPlugin(snapcraft.BasePlugin):
 
         self.run([self._cargo, 'fetch',
                   '--manifest-path',
-                  os.path.join(sourcedir, 'Cargo.toml')])
+                  os.path.join(sourcedir, 'Cargo.toml')],
+                 env=self._build_env())
