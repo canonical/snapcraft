@@ -24,21 +24,21 @@ class StepsTestCase(unit.TestCase):
 
     def test_step_order(self):
         step = steps.PULL
-        step = step.next_step
+        step = step.next_step()
         self.expectThat(step, Equals(steps.BUILD))
-        step = step.next_step
+        step = step.next_step()
         self.expectThat(step, Equals(steps.STAGE))
-        step = step.next_step
+        step = step.next_step()
         self.expectThat(step, Equals(steps.PRIME))
-        self.assertIsNone(step.next_step)
+        self.assertIsNone(step.next_step())
 
-        step = step.previous_step
+        step = step.previous_step()
         self.expectThat(step, Equals(steps.STAGE))
-        step = step.previous_step
+        step = step.previous_step()
         self.expectThat(step, Equals(steps.BUILD))
-        step = step.previous_step
+        step = step.previous_step()
         self.expectThat(step, Equals(steps.PULL))
-        self.assertIsNone(step.previous_step)
+        self.assertIsNone(step.previous_step())
 
     def test_next_step_handles_none(self):
         self.assertThat(steps.next_step(None), Equals(steps.PULL))

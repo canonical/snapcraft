@@ -20,34 +20,41 @@ from typing import List
 class Step:
     def __init__(self, name: str) -> None:
         self.name = name
-        self.previous_step = None  # type: Step
-        self.next_step = None  # type: Step
+        self.__order = None  # type: int
 
-    def previous_steps(self):
-        steps = []
-        previous_step = self.previous_step
-        while previous_step:
-            steps.insert(0, previous_step)
-            previous_step = previous_step.previous_step
-        return steps
+    @property
+    def _order(self) -> int:
+        if self.__order is None:
+            self.__order = STEPS.index(self)
+        return self.__order
 
-    def next_steps(self):
-        steps = []
-        next_step = self.next_step
-        while next_step:
-            steps.append(next_step)
-            next_step = next_step.next_step
-        return steps
+    def previous_step(self) -> 'Step':
+        if self._order > 0:
+            return STEPS[self._order-1]
+        else:
+            return None
+
+    def next_step(self) -> 'Step':
+        try:
+            return STEPS[self._order+1]
+        except IndexError:
+            return None
+
+    def previous_steps(self) -> List['Step']:
+        return STEPS[:self._order]
+
+    def next_steps(self) -> List['Step']:
+        return STEPS[self._order+1:]
 
     def __lt__(self, other) -> bool:
         if type(other) is type(self):
-            return other in self.next_steps()
+            return self._order < other._order
 
         return NotImplemented
 
     def __le__(self, other) -> bool:
         if type(other) is type(self):
-            return other == self or other in self.next_steps()
+            return self._order <= other._order
 
         return NotImplemented
 
@@ -59,13 +66,13 @@ class Step:
 
     def __gt__(self, other) -> bool:
         if type(other) is type(self):
-            return other in self.previous_steps()
+            return self._order > other._order
 
         return NotImplemented
 
     def __ge__(self, other) -> bool:
         if type(other) is type(self):
-            return other == self or other in self.previous_steps()
+            return self._order >= other._order
 
         return NotImplemented
 
@@ -76,33 +83,19 @@ class Step:
         return 'snapcraft.internal.steps.Step({!r})'.format(self.name)
 
 
-def _setup_step_order(steps: List[Step]):
-    for index, step in enumerate(steps):
-        if 0 <= index < len(steps)-1:
-            step.next_step = steps[index+1]
-        if index > 0:
-            step.previous_step = steps[index-1]
-
-
 # Step names and order are now maintained in a single place: right here. If
-# another step is needed, add it here and to the _setup_step_order call in the
-# proper order.
+# another step is needed, add it here, and insert it into STEPS in the proper
+# order.
 PULL = Step('pull')
 BUILD = Step('build')
 STAGE = Step('stage')
 PRIME = Step('prime')
 
-FIRST_STEP = PULL
-
-_setup_step_order([PULL, BUILD, STAGE, PRIME])
+STEPS = [PULL, BUILD, STAGE, PRIME]
 
 
 def next_step(step):
     if step:
-        return step.next_step
+        return step.next_step()
     else:
-        return FIRST_STEP
-
-
-def ordered_steps():
-    return [FIRST_STEP] + FIRST_STEP.next_steps()
+        return STEPS[0]

@@ -161,7 +161,7 @@ class _Executor:
         for part in self.config.all_parts:
             steps_run[part.name] = set()
             with config.CLIConfig() as cli_config:
-                for step in steps.ordered_steps():
+                for step in steps.STEPS:
                     dirty_report = part.get_dirty_report(step)
                     if dirty_report:
                         self._handle_dirty(

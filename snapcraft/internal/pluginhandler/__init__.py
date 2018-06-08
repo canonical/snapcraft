@@ -232,7 +232,7 @@ class PluginHandler:
         logger.info('%s %s %s', progress, self.name, hint)
 
     def latest_step(self):
-        for step in reversed(steps.ordered_steps()):
+        for step in reversed(steps.STEPS):
             if os.path.exists(
                     states.get_step_state_file(self.plugin.statedir, step)):
                 return step
@@ -784,7 +784,7 @@ class PluginHandler:
     def _clean_steps(self, project_staged_state, project_primed_state,
                      step=None, hint=None):
         if step:
-            if step not in steps.ordered_steps():
+            if step not in steps.STEPS:
                 raise RuntimeError(
                     '{!r} is not a valid step for part {!r}'.format(
                         step, self.name))

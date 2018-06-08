@@ -854,7 +854,7 @@ class StateBaseTestCase(unit.TestCase):
 class StateTestCase(StateBaseTestCase):
 
     def test_mark_done_clears_later_steps(self):
-        for step in steps.ordered_steps():
+        for step in steps.STEPS:
             shutil.rmtree(self.parts_dir)
             handler = self.load_part('foo')
             handler.makedirs()
@@ -1727,7 +1727,7 @@ class StateTestCase(StateBaseTestCase):
 class StateFileMigrationTestCase(StateBaseTestCase):
 
     scenarios = [(step.name, dict(step=step))
-                 for step in steps.ordered_steps()]
+                 for step in steps.STEPS]
 
     def test_state_file_migration(self):
         part_name = 'foo'
