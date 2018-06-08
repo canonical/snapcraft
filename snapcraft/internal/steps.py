@@ -18,8 +18,9 @@ from typing import List
 
 
 class Step:
-    def __init__(self, name: str) -> None:
+    def __init__(self, name: str, clean_if_dirty: bool) -> None:
         self.name = name
+        self.clean_if_dirty = clean_if_dirty
         self.__order = None  # type: int
 
     @property
@@ -86,10 +87,10 @@ class Step:
 # Step names and order are now maintained in a single place: right here. If
 # another step is needed, add it here, and insert it into STEPS in the proper
 # order.
-PULL = Step('pull')
-BUILD = Step('build')
-STAGE = Step('stage')
-PRIME = Step('prime')
+PULL = Step('pull', False)
+BUILD = Step('build', False)
+STAGE = Step('stage', True)
+PRIME = Step('prime', True)
 
 STEPS = [PULL, BUILD, STAGE, PRIME]
 

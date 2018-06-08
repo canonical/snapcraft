@@ -241,7 +241,7 @@ class _Executor:
 
     def _handle_dirty(self, part, step, dirty_report, cli_config):
         dirty_action = cli_config.get_outdated_step_action()
-        if step not in constants.STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY:
+        if not step.clean_if_dirty:
             if dirty_action == config.OutdatedStepAction.ERROR:
                 raise errors.StepOutdatedError(
                     step=step, part=part.name,
