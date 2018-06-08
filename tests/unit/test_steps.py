@@ -16,70 +16,35 @@
 
 from testtools.matchers import Equals
 
-from snapcraft.internal import (
-    errors,
-    steps,
-)
+from snapcraft.internal import steps
 from tests import unit
 
 
 class StepsTestCase(unit.TestCase):
 
-    def test_no_next_step_raises(self):
-        raised = self.assertRaises(
-            errors.NoNextStepError, steps.next_step, steps.PRIME)
-        self.assertThat(raised.step, Equals(steps.PRIME))
+    def test_step_order(self):
+        step = steps.PULL
+        step = step.next_step
+        self.expectThat(step, Equals(steps.BUILD))
+        step = step.next_step
+        self.expectThat(step, Equals(steps.STAGE))
+        step = step.next_step
+        self.expectThat(step, Equals(steps.PRIME))
+        self.assertIsNone(step.next_step)
+
+        step = step.previous_step
+        self.expectThat(step, Equals(steps.STAGE))
+        step = step.previous_step
+        self.expectThat(step, Equals(steps.BUILD))
+        step = step.previous_step
+        self.expectThat(step, Equals(steps.PULL))
+        self.assertIsNone(step.previous_step)
+
+    def test_next_step_handles_none(self):
+        self.assertThat(steps.next_step(None), Equals(steps.PULL))
 
 
-class NextStepTestCase(unit.TestCase):
-
-    scenarios = [
-        ('pull', {
-            'step': steps.PULL,
-            'expected_step': steps.BUILD,
-        }),
-        ('build', {
-            'step': steps.BUILD,
-            'expected_step': steps.STAGE,
-        }),
-        ('stage', {
-            'step': steps.STAGE,
-            'expected_step': steps.PRIME,
-        }),
-    ]
-
-    def test_steps_required_for(self):
-        self.assertThat(steps.next_step(self.step), Equals(self.expected_step))
-
-
-class StepsRequiredForTestCase(unit.TestCase):
-
-    scenarios = [
-        ('pull', {
-            'step': steps.PULL,
-            'expected_steps': [steps.PULL],
-        }),
-        ('build', {
-            'step': steps.BUILD,
-            'expected_steps': [steps.PULL, steps.BUILD],
-        }),
-        ('stage', {
-            'step': steps.STAGE,
-            'expected_steps': [steps.PULL, steps.BUILD, steps.STAGE],
-        }),
-        ('prime', {
-            'step': steps.PRIME,
-            'expected_steps': [
-                steps.PULL, steps.BUILD, steps.STAGE, steps.PRIME],
-        }),
-    ]
-
-    def test_steps_required_for(self):
-        self.assertThat(steps.steps_required_for(
-            self.step), Equals(self.expected_steps))
-
-
-class StepsFollowingTestCase(unit.TestCase):
+class NextStepsTestCase(unit.TestCase):
 
     scenarios = [
         ('pull', {
@@ -100,6 +65,31 @@ class StepsFollowingTestCase(unit.TestCase):
         }),
     ]
 
-    def test_steps_following(self):
-        self.assertThat(steps.steps_following(
-            self.step), Equals(self.expected_steps))
+    def test_next_steps(self):
+        self.assertThat(self.step.next_steps(), Equals(self.expected_steps))
+
+
+class PreviousStepsTestCase(unit.TestCase):
+
+    scenarios = [
+        ('pull', {
+            'step': steps.PULL,
+            'expected_steps': [],
+        }),
+        ('build', {
+            'step': steps.BUILD,
+            'expected_steps': [steps.PULL],
+        }),
+        ('stage', {
+            'step': steps.STAGE,
+            'expected_steps': [steps.PULL, steps.BUILD],
+        }),
+        ('prime', {
+            'step': steps.PRIME,
+            'expected_steps': [steps.PULL, steps.BUILD, steps.STAGE],
+        }),
+    ]
+
+    def test_previous_steps(self):
+        self.assertThat(
+            self.step.previous_steps(), Equals(self.expected_steps))

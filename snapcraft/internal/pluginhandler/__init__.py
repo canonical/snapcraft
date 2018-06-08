@@ -196,7 +196,8 @@ class PluginHandler:
         # metadata from any other step (if any)
         with contextlib.suppress(errors.NoLatestStepError):
             latest_step = self.latest_step()
-            for other_step in reversed(steps.steps_required_for(latest_step)):
+            required_steps = latest_step.previous_steps() + [latest_step]
+            for other_step in reversed(required_steps):
                 state = states.get_state(self.plugin.statedir, other_step)
                 conflicts = metadata.overlap(state.scriptlet_metadata)
                 if len(conflicts) > 0:
@@ -231,7 +232,7 @@ class PluginHandler:
         logger.info('%s %s %s', progress, self.name, hint)
 
     def latest_step(self):
-        for step in reversed(steps.STEPS):
+        for step in reversed(steps.ordered_steps()):
             if os.path.exists(
                     states.get_step_state_file(self.plugin.statedir, step)):
                 return step
@@ -242,7 +243,10 @@ class PluginHandler:
         latest_step = None
         with contextlib.suppress(errors.NoLatestStepError):
             latest_step = self.latest_step()
-        return steps.next_step(latest_step)
+        next_step = steps.next_step(latest_step)
+        if not next_step:
+            raise errors.NoNextStepError(self.name)
+        return next_step
 
     def is_clean(self, step):
         """Return true if the given step hasn't run (or has been cleaned)."""
@@ -303,7 +307,7 @@ class PluginHandler:
 
         # We know we've only just completed this step, so make sure any later
         # steps don't have a saved state.
-        for step in steps.steps_following(step):
+        for step in step.next_steps():
                 self.mark_cleaned(step)
 
     def mark_cleaned(self, step):
@@ -780,7 +784,7 @@ class PluginHandler:
     def _clean_steps(self, project_staged_state, project_primed_state,
                      step=None, hint=None):
         if step:
-            if step not in steps.STEPS:
+            if step not in steps.ordered_steps():
                 raise RuntimeError(
                     '{!r} is not a valid step for part {!r}'.format(
                         step, self.name))

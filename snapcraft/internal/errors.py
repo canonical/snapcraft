@@ -604,10 +604,10 @@ class NoLatestStepError(SnapcraftError):
 
 
 class NoNextStepError(SnapcraftError):
-    fmt = '{step.name!r} is the final step'
+    fmt = "The {part_name!r} part has run through its entire lifecycle"
 
-    def __init__(self, step):
-        super().__init__(step=step)
+    def __init__(self, part_name):
+        super().__init__(part_name=part_name)
 
 
 class MountPointNotFoundError(SnapcraftError):

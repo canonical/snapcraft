@@ -14,35 +14,40 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from snapcraft.internal import errors
+from typing import List
 
 
 class Step:
     def __init__(self, name: str) -> None:
         self.name = name
-        self.__order = None  # type: int
+        self.previous_step = None  # type: Step
+        self.next_step = None  # type: Step
 
-    @property
-    def _order(self) -> int:
-        if self.__order is None:
-            self.__order = STEPS.index(self)
-        return self.__order
+    def previous_steps(self):
+        steps = []
+        previous_step = self.previous_step
+        while previous_step:
+            steps.insert(0, previous_step)
+            previous_step = previous_step.previous_step
+        return steps
 
-    def next_step(self) -> 'Step':
-        try:
-            return STEPS[self._order+1]
-        except IndexError as e:
-            raise errors.NoNextStepError(self) from e
+    def next_steps(self):
+        steps = []
+        next_step = self.next_step
+        while next_step:
+            steps.append(next_step)
+            next_step = next_step.next_step
+        return steps
 
     def __lt__(self, other) -> bool:
         if type(other) is type(self):
-            return self._order < other._order
+            return other in self.next_steps()
 
         return NotImplemented
 
     def __le__(self, other) -> bool:
         if type(other) is type(self):
-            return self._order <= other._order
+            return other == self or other in self.next_steps()
 
         return NotImplemented
 
@@ -54,13 +59,13 @@ class Step:
 
     def __gt__(self, other) -> bool:
         if type(other) is type(self):
-            return self._order > other._order
+            return other in self.previous_steps()
 
         return NotImplemented
 
     def __ge__(self, other) -> bool:
         if type(other) is type(self):
-            return self._order >= other._order
+            return other == self or other in self.previous_steps()
 
         return NotImplemented
 
@@ -71,27 +76,33 @@ class Step:
         return 'snapcraft.internal.steps.Step({!r})'.format(self.name)
 
 
+def _setup_step_order(steps: List[Step]):
+    for index, step in enumerate(steps):
+        if 0 <= index < len(steps)-1:
+            step.next_step = steps[index+1]
+        if index > 0:
+            step.previous_step = steps[index-1]
+
+
 # Step names and order are now maintained in a single place: right here. If
-# another step is needed, add it here, and insert it into STEPS in the proper
-# order.
+# another step is needed, add it here and to the _setup_step_order call in the
+# proper order.
 PULL = Step('pull')
 BUILD = Step('build')
 STAGE = Step('stage')
 PRIME = Step('prime')
 
-STEPS = [PULL, BUILD, STAGE, PRIME]
+FIRST_STEP = PULL
+
+_setup_step_order([PULL, BUILD, STAGE, PRIME])
 
 
 def next_step(step):
     if step:
-        return step.next_step()
+        return step.next_step
     else:
-        return STEPS[0]
+        return FIRST_STEP
 
 
-def steps_required_for(step):
-    return [s for s in STEPS if s <= step]
-
-
-def steps_following(step):
-    return [s for s in STEPS if s > step]
+def ordered_steps():
+    return [FIRST_STEP] + FIRST_STEP.next_steps()

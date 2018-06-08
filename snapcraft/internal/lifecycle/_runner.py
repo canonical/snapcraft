@@ -161,7 +161,7 @@ class _Executor:
         for part in self.config.all_parts:
             steps_run[part.name] = set()
             with config.CLIConfig() as cli_config:
-                for step in steps.STEPS:
+                for step in steps.ordered_steps():
                     dirty_report = part.get_dirty_report(step)
                     if dirty_report:
                         self._handle_dirty(
@@ -183,7 +183,7 @@ class _Executor:
             parts = self.config.all_parts
             part_names = self.config.part_names
 
-        for current_step in steps.steps_required_for(step):
+        for current_step in step.previous_steps() + [step]:
             if current_step == steps.STAGE:
                 # XXX check only for collisions on the parts that have already
                 # been built --elopio - 20170713

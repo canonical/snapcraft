@@ -510,10 +510,11 @@ class ErrorFormattingTestCase(unit.TestCase):
         ('NoNextStepError', {
             'exception': errors.NoNextStepError,
             'kwargs': {
-                'step': steps.PULL,
+                'part_name': 'test-part-name',
             },
             'expected_message': (
-                "'pull' is the final step"
+                "The 'test-part-name' part has run through its entire "
+                "lifecycle"
             )
         }),
     )

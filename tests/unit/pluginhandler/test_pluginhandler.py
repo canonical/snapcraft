@@ -854,18 +854,18 @@ class StateBaseTestCase(unit.TestCase):
 class StateTestCase(StateBaseTestCase):
 
     def test_mark_done_clears_later_steps(self):
-        for step in steps.STEPS:
+        for step in steps.ordered_steps():
             shutil.rmtree(self.parts_dir)
             handler = self.load_part('foo')
             handler.makedirs()
 
-            for later_step in steps.steps_following(step):
+            for later_step in step.next_steps():
                 open(states.get_step_state_file(
                     handler.plugin.statedir, later_step), 'w').close()
 
             handler.mark_done(step)
 
-            for later_step in steps.steps_following(step):
+            for later_step in step.next_steps():
                 self.assertFalse(
                     os.path.exists(states.get_step_state_file(
                         handler.plugin.statedir, later_step)),
@@ -1726,7 +1726,8 @@ class StateTestCase(StateBaseTestCase):
 
 class StateFileMigrationTestCase(StateBaseTestCase):
 
-    scenarios = [(step.name, dict(step=step)) for step in steps.STEPS]
+    scenarios = [(step.name, dict(step=step))
+                 for step in steps.ordered_steps()]
 
     def test_state_file_migration(self):
         part_name = 'foo'

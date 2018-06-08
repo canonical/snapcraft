@@ -170,7 +170,8 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
                         'Expected state directory for {}'.format(part_name))
 
         # Expect every step up to and including the specified one to be run
-        for step in steps.steps_required_for(steps.Step(expected_step_name)):
+        step = steps.Step(expected_step_name)
+        for step in step.previous_steps + [step]:
             self.assertTrue(os.path.exists(os.path.join(state_dir, step.name)),
                             'Expected {!r} to be run for {}'.format(
                                 step.name, part_name))
