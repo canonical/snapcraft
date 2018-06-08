@@ -37,14 +37,12 @@ from testtools.matchers import (
 )
 
 import snapcraft
-from snapcraft import storeapi
+from snapcraft import config, storeapi
 from snapcraft.file_utils import calculate_sha3_384
 from snapcraft.internal import errors, pluginhandler, lifecycle
 from snapcraft.internal.lifecycle._runner import _replace_in_part
-from tests import (
-    fixture_setup,
-    unit
-)
+from tests import fixture_setup, unit
+from tests.fixture_setup.os_release import FakeOsRelease
 
 
 class BaseLifecycleTestCase(unit.TestCase):
@@ -96,7 +94,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         self.assertThat(
             new_part.plugin.options.source, Equals(part.plugin.installdir))
 
-    def test_exception_when_dependency_is_required(self):
+    def test_dependency_is_staged_when_required(self):
         self.make_snapcraft_yaml(
             textwrap.dedent("""\
                 parts:
@@ -108,16 +106,18 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                       - part1
                 """))
 
-        raised = self.assertRaises(
-            RuntimeError,
-            lifecycle.execute,
-            'pull', self.project_options,
-            part_names=['part2'])
+        lifecycle.execute('pull', self.project_options, part_names=['part2'])
 
         self.assertThat(
-            raised.__str__(),
-            Equals("Requested 'pull' of 'part2' but there are unsatisfied "
-                   "prerequisites: 'part1'"))
+            self.fake_logger.output,
+            Equals("'part2' has prerequisites that need to be staged: part1\n"
+                   'Preparing to pull part1 \n'
+                   'Pulling part1 \n'
+                   'Preparing to build part1 \n'
+                   'Building part1 \n'
+                   'Staging part1 \n'
+                   'Preparing to pull part2 \n'
+                   'Pulling part2 \n'))
 
     def test_no_exception_when_dependency_is_required_but_already_staged(self):
         self.make_snapcraft_yaml(
@@ -476,6 +476,76 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 "The 'stage' step for 'part1' needs to be run again, but "
                 "'part2' depends on it.\n"))
 
+    def test_dirty_steps_can_be_automatically_cleaned(self):
+        # Set the option to automatically clean dirty steps
+        with config.CLIConfig() as cli_config:
+            cli_config.set_outdated_step_action(
+                config.OutdatedStepAction.CLEAN)
+
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  part1:
+                    plugin: nil
+                  part2:
+                    plugin: nil
+                    after: [part1]
+                """))
+
+        # Stage dependency
+        lifecycle.execute('stage', self.project_options, part_names=['part1'])
+        # Build dependent
+        lifecycle.execute('build', self.project_options, part_names=['part2'])
+
+        # Reset logging since we only care about the following
+        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
+        self.useFixture(self.fake_logger)
+
+        def _fake_dirty_report(self, step):
+            if step == 'stage':
+                return pluginhandler.DirtyReport({'foo'}, {'bar'})
+            return None
+
+        # Should raise a RuntimeError about the fact that stage is dirty but
+        # it has dependents that need it.
+        with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
+                               _fake_dirty_report):
+            try:
+                lifecycle.execute(
+                    'stage', self.project_options, part_names=['part1'])
+            except errors.StepOutdatedError:
+                self.fail('Expected the step to automatically be cleaned')
+
+        output = self.fake_logger.output.split('\n')
+        part1_output = [line.strip() for line in output if 'part1' in line]
+        part2_output = [line.strip() for line in output if 'part2' in line]
+
+        self.assertThat(
+            part1_output,
+            Equals([
+                'Skipping pull part1 (already ran)',
+                'Skipping build part1 (already ran)',
+                'Skipping cleaning priming area for part1 (out of date) '
+                '(already clean)',
+                'Cleaning staging area for part1 (out of date)',
+                'Staging part1',
+            ]))
+
+        self.assertThat(
+            part2_output,
+            Equals([
+                'Skipping cleaning priming area for part2 (out of date) '
+                '(already clean)',
+                'Skipping cleaning staging area for part2 (out of date) '
+                '(already clean)',
+                'Cleaning build for part2 (out of date)',
+                'Skipping pull part2 (already ran)',
+                'Skipping cleaning priming area for part2 (out of date) '
+                '(already clean)',
+                'Skipping cleaning staging area for part2 (out of date) '
+                '(already clean)',
+            ]))
+
     def test_dirty_stage_part_with_unbuilt_dependent(self):
         self.make_snapcraft_yaml(
             textwrap.dedent("""\
@@ -765,6 +835,20 @@ class CleanTestCase(BaseLifecycleTestCase):
             os.path.join('snap', '.snapcraft'),
             Not(DirExists()))
 
+    @mock.patch('snapcraft.internal.mountinfo.MountInfo.for_root')
+    def test_clean_leaves_prime_alone_for_tried(self, mock_for_root):
+        self.make_snapcraft_yaml(
+            textwrap.dedent("""\
+                parts:
+                  test-part:
+                    plugin: nil
+                """))
+        lifecycle.execute('prime', self.project_options)
+        lifecycle.clean(self.project_options, parts=None)
+        self.assertThat(
+            'prime', DirExists(),
+            'Expected prime directory to remain after cleaning for tried snap')
+
 
 class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
 
@@ -819,6 +903,11 @@ class RecordManifestBaseTestCase(BaseLifecycleTestCase):
 
     def setUp(self):
         super().setUp()
+
+        patcher = mock.patch('snapcraft._get_version', return_value='3.0')
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
         original_run_output = snapcraft.internal.common.run_output
 
         def fake_uname(cmd, *args, **kwargs):
@@ -852,6 +941,8 @@ class RecordManifestBaseTestCase(BaseLifecycleTestCase):
         self.useFixture(self.fake_snapd)
         self.fake_snapd.snaps_result = []
 
+        self.useFixture(FakeOsRelease())
+
 
 class RecordManifestTestCase(RecordManifestBaseTestCase):
 
@@ -867,6 +958,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -912,6 +1006,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -958,6 +1055,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1005,6 +1105,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1053,6 +1156,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1101,6 +1207,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1152,6 +1261,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1200,6 +1312,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1243,6 +1358,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1288,6 +1406,9 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test
@@ -1355,6 +1476,9 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(
         lifecycle.execute('prime', self.project_options)
 
         expected = textwrap.dedent("""\
+            snapcraft-version: '3.0'
+            snapcraft-os-release-id: ubuntu
+            snapcraft-os-release-version-id: '16.04'
             name: test
             version: 0
             summary: test

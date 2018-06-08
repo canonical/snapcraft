@@ -73,16 +73,18 @@ class _AptCache:
         # Methods and solvers dir for when in the SNAP
         if common.is_snap():
             snap_dir = os.getenv('SNAP')
-            apt_dir = os.path.join(snap_dir, 'apt')
+            apt_dir = os.path.join(snap_dir, 'usr', 'lib', 'apt')
             apt.apt_pkg.config.set('Dir', apt_dir)
             # yes apt is broken like that we need to append os.path.sep
+            methods_dir = os.path.join(apt_dir, 'methods')
             apt.apt_pkg.config.set('Dir::Bin::methods',
-                                   apt_dir + os.path.sep)
+                                   methods_dir + os.path.sep)
+            solvers_dir = os.path.join(apt_dir, 'solvers')
             apt.apt_pkg.config.set('Dir::Bin::solvers::',
-                                   apt_dir + os.path.sep)
-            apt_key_path = os.path.join(apt_dir, 'apt-key')
+                                   solvers_dir + os.path.sep)
+            apt_key_path = os.path.join(snap_dir, 'usr', 'bin', 'apt-key')
             apt.apt_pkg.config.set('Dir::Bin::apt-key', apt_key_path)
-            gpgv_path = os.path.join(snap_dir, 'bin', 'gpgv')
+            gpgv_path = os.path.join(snap_dir, 'usr', 'bin', 'gpgv')
             apt.apt_pkg.config.set('Apt::Key::gpgvcommand', gpgv_path)
             apt.apt_pkg.config.set('Dir::Etc::Trusted',
                                    '/etc/apt/trusted.gpg')

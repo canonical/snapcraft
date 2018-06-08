@@ -474,6 +474,33 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'https://status.snapcraft.io/'
             )
         }),
+        ('MountPointNotFoundError', {
+            'exception': errors.MountPointNotFoundError,
+            'kwargs': {
+                'mount_point': 'test-mount-point',
+            },
+            'expected_message': (
+                "Nothing is mounted at 'test-mount-point'"
+            )
+        }),
+        ('RootNotMountedError', {
+            'exception': errors.RootNotMountedError,
+            'kwargs': {
+                'root': 'test-root',
+            },
+            'expected_message': (
+                "'test-root' is not mounted"
+            )
+        }),
+        ('InvalidMountinfoFormat', {
+            'exception': errors.InvalidMountinfoFormat,
+            'kwargs': {
+                'row': [1, 2, 3],
+            },
+            'expected_message': (
+                'Unable to parse mountinfo row: [1, 2, 3]'
+            )
+        }),
     )
 
     def test_error_formatting(self):

@@ -107,6 +107,11 @@ class PartsConfig:
         '''Performs an inneficient but easy to follow sorting of parts.'''
         sorted_parts = []
 
+        # We want to process parts in a consistent order between runs. The
+        # simplest way to do this is to sort them by name.
+        self.all_parts = sorted(
+            self.all_parts, key=lambda part: part.name, reverse=True)
+
         while self.all_parts:
             top_part = None
             for part in self.all_parts:

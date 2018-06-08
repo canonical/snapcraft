@@ -45,10 +45,8 @@ class PlainboxProviderPluginStageTestCase(testscenarios.WithScenarios,
 class PlainboxProviderPluginTestCase(integration.TestCase):
 
     def test_snap_provider_with_deps(self):
-        if self.deb_arch == 'armhf':
-            self.skipTest("No patchelf deb for armhf")
         project_dir = 'plainbox-provider-with-deps'
-        self.run_snapcraft('prime', project_dir)
+        self.run_snapcraft('stage', project_dir)
         # No assertion required as the project will fail to complete to the
         # prime step if validation fails
 
@@ -58,3 +56,9 @@ class PlainboxProviderPluginTestCase(integration.TestCase):
         # provider in this project
         self.assertRaises(subprocess.CalledProcessError, self.run_snapcraft,
                           'prime', project_dir)
+
+    def test_python_stage_pkg_mix(self):
+        project_dir = 'plainbox-provider-python-stage-pkg-mix'
+        self.run_snapcraft('stage', project_dir)
+        # Tests bug where snap would fail to build with error:
+        # "Failed building wheel for bitstring"
