@@ -166,11 +166,11 @@ def pack(directory, output, **kwargs):
 @lifecyclecli.command()
 @add_build_options()
 @click.argument('parts', nargs=-1, metavar='<part>...', required=False)
-@click.option('--step', '-s',
+@click.option('--step', '-s', 'step_name',
               type=click.Choice(['pull', 'build', 'stage', 'prime', 'strip']),
               help='only clean the specified step and those that '
                    'depend on it.')
-def clean(parts, step, **kwargs):
+def clean(parts, step_name, **kwargs):
     """Remove content - cleans downloads, builds or install artifacts.
 
     \b
@@ -181,12 +181,13 @@ def clean(parts, step, **kwargs):
     project_options = get_project_options(**kwargs)
     build_environment = env.BuilderEnvironmentConfig()
 
-    if step:
-        if step == 'strip':
+    step = None
+    if step_name:
+        if step_name == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '
                          'as the step to clean')
-            step = 'prime'
-        step = steps.get_step_by_name(step)
+            step_name = 'prime'
+        step = steps.get_step_by_name(step_name)
 
     if build_environment.is_host:
         lifecycle.clean(project_options, parts, step)
