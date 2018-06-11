@@ -86,7 +86,7 @@ class Step:
         return hash(self.name)
 
     def __repr__(self):
-        return 'snapcraft.internal.steps.Step({!r})'.format(self.name)
+        return 'Step({!r})'.format(self.name)
 
 
 # Step names and order are now maintained in a single place: right here. If
