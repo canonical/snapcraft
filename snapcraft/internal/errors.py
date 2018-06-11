@@ -54,15 +54,15 @@ class MissingStateCleanError(SnapcraftError):
 class StepOutdatedError(SnapcraftError):
 
     fmt = (
-        'Failed to reuse files from previous build: '
+        'Failed to reuse files from previous run: '
         'The {step.name!r} step of {part!r} is out of date:\n'
         '{report}'
-        'To continue, clean that part\'s {step.name!r} step, run '
+        'To continue, clean that part\'s {step.name!r} step by running '
         '`snapcraft clean {parts_names} -s {step.name}`.'
     )
 
-    def __init__(self, *, step, part,
-                 dirty_properties=None, dirty_project_options=None,
+    def __init__(self, *, step, part, dirty_properties=None,
+                 dirty_project_options=None, changed_dependencies=None,
                  dependents=None):
         messages = []
         if dirty_properties:
@@ -83,6 +83,14 @@ class StepOutdatedError(SnapcraftError):
             messages.append(
                 'The {} project {} to have changed.\n'.format(
                     humanized_options, pluralized_connection))
+        if changed_dependencies:
+            dependencies = [
+                d['name'] for d in changed_dependencies]
+            messages.append('{} changed: {}\n'.format(
+                formatting_utils.pluralize(
+                    dependencies, 'A dependency has',
+                    'Some dependencies have'),
+                formatting_utils.humanize_list(dependencies, 'and')))
         if dependents:
             humanized_dependents = formatting_utils.humanize_list(
                 dependents, 'and')

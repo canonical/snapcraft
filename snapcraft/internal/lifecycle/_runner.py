@@ -13,16 +13,17 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import contextlib
+import collections
 import logging
 import os
 from subprocess import check_call
 from tempfile import TemporaryDirectory
 
 import yaml
+from tabulate import tabulate
 
 import snapcraft
-from snapcraft import config
+from snapcraft import config, formatting_utils
 from snapcraft.internal import (
     common,
     errors,
@@ -35,12 +36,13 @@ from snapcraft.internal import (
 )
 from snapcraft.internal.cache import SnapCache
 from . import constants
+from ._clean import mark_dependents_dirty
 
 
 logger = logging.getLogger(__name__)
 
 
-def execute(step, project_options, part_names=None):
+def execute(step: steps.Step, project_options, part_names=None):
     """Execute until step in the lifecycle for part_names or all parts.
 
     Lifecycle execution will happen for each step iterating over all
@@ -78,7 +80,12 @@ def execute(step, project_options, part_names=None):
         _setup_core(project_options.deb_arch,
                     config.data.get('base', 'core'))
 
-    _Executor(config, project_options).run(step, part_names)
+    executor = _Executor(config, project_options)
+    executor.run(step, part_names)
+    if not executor.steps_were_run:
+        logger.warn(
+            'The requested action has already been taken. Consider\n'
+            'specifying parts, or clean the steps you want to run again.')
 
     return {'name': config.data['name'],
             'version': config.data.get('version'),
@@ -153,82 +160,171 @@ class _Executor:
         self.config = config
         self.project_options = project_options
         self.parts_config = config.parts
-        self._steps_run = self._init_run_states()
+        self.steps_were_run = False
+        self._steps_run = collections.defaultdict(set)
+        self._dirty_reports = collections.defaultdict(dict)
+        summary = []
 
-    def _init_run_states(self):
-        steps_run = {}
-
+        # Initialize steps run and dirty reports, so we only need to fetch
+        # them once
         for part in self.config.all_parts:
-            steps_run[part.name] = set()
-            with config.CLIConfig() as cli_config:
-                for step in steps.STEPS:
-                    dirty_report = part.get_dirty_report(step)
-                    if dirty_report:
-                        self._handle_dirty(
-                            part, step, dirty_report, cli_config)
-                    elif not (part.should_step_run(step)):
-                        steps_run[part.name].add(step)
-                        part.notify_part_progress(
-                            'Skipping {}'.format(step.name), '(already ran)')
+            part_summary = {'part': part.name}
+            for step in steps.STEPS:
+                part_summary[step] = None
+                self._dirty_reports[part.name][step] = part.get_dirty_report(
+                    step)
+                if not part.should_step_run(step):
+                    self._steps_run[part.name].add(step)
+                    part_summary[step] = 'complete'
+                if self._dirty_reports[part.name][step]:
+                    part_summary[step] = 'dirty'
+            summary.append(part_summary)
 
-        return steps_run
+        # Print summary in debug mode
+        logger.debug(tabulate(summary, headers="keys"))
 
-    def run(self, step, part_names=None):
+    def run(self, step: steps.Step, part_names=None):
         if part_names:
             self.parts_config.validate(part_names)
             # self.config.all_parts is already ordered, let's not lose that
             # and keep using a list.
             parts = [p for p in self.config.all_parts if p.name in part_names]
+            processed_part_names = part_names
         else:
             parts = self.config.all_parts
-            part_names = self.config.part_names
+            processed_part_names = self.config.part_names
 
-        for current_step in step.previous_steps() + [step]:
-            if current_step == steps.STAGE:
-                # XXX check only for collisions on the parts that have already
-                # been built --elopio - 20170713
-                pluginhandler.check_for_collisions(self.config.all_parts)
-            for part in parts:
-                if current_step not in self._steps_run[part.name]:
-                    self._run_step(current_step, part, part_names)
-                    self._steps_run[part.name].add(current_step)
+        with config.CLIConfig() as cli_config:
+            for current_step in step.previous_steps() + [step]:
+                if current_step == steps.STAGE:
+                    # XXX check only for collisions on the parts that have
+                    # already been built --elopio - 20170713
+                    pluginhandler.check_for_collisions(self.config.all_parts)
+                for part in parts:
+                    if self._dirty_reports[part.name][current_step]:
+                        self._handle_dirty(
+                            part, current_step,
+                            self._dirty_reports[part.name][current_step],
+                            cli_config)
+                    elif current_step in self._steps_run[part.name]:
+                        # By default, if a step has already run, don't run it
+                        # again. However, automatically clean and re-run the
+                        # step if all the following conditions apply:
+                        #
+                        #   1. The step is the exact step that was requested
+                        #      (not an earlier one)
+                        #   2. The part was explicitly specified
+                        if (part_names and current_step == step and
+                                part.name in part_names):
+                            getattr(self, '_re{}'.format(
+                                current_step.name))(part)
+                        else:
+                            notify_part_progress(
+                                part,
+                                'Skipping {}'.format(current_step.name),
+                                '(already ran)')
+                    else:
+                        getattr(self, '_run_{}'.format(
+                            current_step.name))(part)
+                        self._steps_run[part.name].add(current_step)
 
-        self._create_meta(step, part_names)
+        self._create_meta(step, processed_part_names)
 
-    def _run_step(self, step, part, part_names):
+    def _run_pull(self, part):
+        self._run_step(step=steps.PULL, part=part, progress='Pulling')
+
+    def _repull(self, part, hint=''):
+        self._rerun_step(
+            step=steps.PULL, part=part,
+            progress='Cleaning later steps and re-pulling', hint=hint)
+
+    def _run_build(self, part):
+        self._run_step(step=steps.BUILD, part=part, progress='Building')
+
+    def _rebuild(self, part, hint=''):
+        self._rerun_step(
+            step=steps.BUILD, part=part,
+            progress='Cleaning later steps and re-building', hint=hint)
+
+    def _run_stage(self, part):
+        self._run_step(step=steps.STAGE, part=part, progress='Staging')
+
+    def _restage(self, part, hint=''):
+        self._rerun_step(
+            step=steps.STAGE, part=part,
+            progress='Cleaning later steps and re-staging', hint=hint)
+
+    def _run_prime(self, part):
+        self._run_step(
+            step=steps.PRIME, part=part, progress='Priming',
+            prerequisite_step=steps.PRIME)
+
+    def _reprime(self, part, hint=''):
+        self._rerun_step(
+            step=steps.PRIME, part=part, progress='Re-priming', hint=hint,
+            prerequisite_step=steps.PRIME)
+
+    def _run_step(self, *, step: steps.Step, part, progress, hint='',
+                  prerequisite_step: steps.Step=steps.STAGE):
         common.reset_env()
         prereqs = self.parts_config.get_prereqs(part.name)
 
-        # Dependencies need to be primed to have paths to.
-        if step == steps.PRIME:
-            required_step = steps.PRIME
-        # Or staged to be built with.
-        else:
-            required_step = steps.STAGE
-
         step_prereqs = {p for p in prereqs
-                        if required_step not in self._steps_run[p]}
+                        if prerequisite_step not in self._steps_run[p]}
 
         if step_prereqs:
-            # prerequisites need to build all the way to the staging
-            # step to be able to share the common assets that make them
-            # a dependency.
+            # prerequisites need to go all the way to the prerequisite step to
+            # be able to share the common assets that make them a dependency.
             logger.info(
-                '{!r} has prerequisites that need to be {}d: '
-                '{}'.format(
-                    part.name, required_step.name, ' '.join(step_prereqs)))
-            self.run(required_step, step_prereqs)
+                '{!r} has prerequisites that need to be {}d: {}'.format(
+                    part.name, prerequisite_step.name, ' '.join(step_prereqs)))
+            self.run(prerequisite_step, step_prereqs)
 
         # Run the preparation function for this step (if implemented)
-        with contextlib.suppress(AttributeError):
-            getattr(part, 'prepare_{}'.format(step.name))()
+        preparation_function = getattr(
+            part, 'prepare_{}'.format(step.name), None)
+        if preparation_function:
+            notify_part_progress(
+                part, 'Preparing to {}'.format(step.name), debug=True)
+            preparation_function()
 
         common.env = self.parts_config.build_env_for_part(part)
         common.env.extend(self.config.project_env())
 
         part = _replace_in_part(part)
 
+        notify_part_progress(part, progress, hint)
         getattr(part, step.name)()
+        self._steps_run[part.name].add(step)
+        self.steps_were_run = True
+
+    def _rerun_step(self, *, step: steps.Step, part, progress, hint='',
+                    prerequisite_step: steps.Step=steps.STAGE):
+        staged_state = self.config.get_project_state(steps.STAGE)
+        primed_state = self.config.get_project_state(steps.PRIME)
+
+        # We need to clean this step, but if it involves cleaning any steps
+        # upon which other parts depend, those parts need to be marked as dirty
+        # so they can run again, taking advantage of the new dependency.
+        dirty_parts = mark_dependents_dirty(part.name, step, self.config)
+
+        # First clean the step, then run it again
+        part.clean(staged_state, primed_state, step)
+
+        for current_step in [step] + step.next_steps():
+            self._dirty_reports[part.name][current_step] = None
+            self._steps_run[part.name].discard(current_step)
+
+        self._run_step(
+            step=step, part=part, progress=progress, hint=hint,
+            prerequisite_step=prerequisite_step)
+
+        if dirty_parts:
+            logger.warning(
+                'The following {} now out of date: {}'.format(
+                    formatting_utils.pluralize(
+                        dirty_parts, 'part is', 'parts are'),
+                    formatting_utils.humanize_list(dirty_parts, 'and')))
 
     def _create_meta(self, step, part_names):
         if step == steps.PRIME and part_names == self.config.part_names:
@@ -246,27 +342,14 @@ class _Executor:
                 raise errors.StepOutdatedError(
                     step=step, part=part.name,
                     dirty_properties=dirty_report.dirty_properties,
-                    dirty_project_options=dirty_report.dirty_project_options)
+                    dirty_project_options=dirty_report.dirty_project_options,
+                    changed_dependencies=dirty_report.changed_dependencies)
 
-        staged_state = self.config.get_project_state(steps.STAGE)
-        primed_state = self.config.get_project_state(steps.PRIME)
+        getattr(self, '_re{}'.format(step.name))(part, hint='(out of date)')
 
-        # We need to clean this step, but if it involves cleaning the stage
-        # step and it has dependents that have been built, the dependents need
-        # to first be cleaned (at least back to the build step). Do it
-        # automatically if configured to do so.
-        dependents = self.parts_config.get_dependents(part.name)
-        if (step <= steps.STAGE and not part.is_clean(steps.STAGE)
-                and dependents):
-            for dependent in self.config.all_parts:
-                if (dependent.name in dependents and
-                        not dependent.is_clean(steps.BUILD)):
-                    if dirty_action == config.OutdatedStepAction.ERROR:
-                        raise errors.StepOutdatedError(
-                            step=step, part=part.name, dependents=dependents)
-                    else:
-                        dependent.clean(
-                            staged_state, primed_state, steps.BUILD,
-                            '(out of date)')
 
-        part.clean(staged_state, primed_state, step, '(out of date)')
+def notify_part_progress(part, progress, hint='', debug=False):
+    if debug:
+        logger.debug('%s %s %s', progress, part.name, hint)
+    else:
+        logger.info('%s %s %s', progress, part.name, hint)

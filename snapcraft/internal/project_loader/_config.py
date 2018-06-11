@@ -29,7 +29,7 @@ from typing import Set  # noqa: F401
 
 from snapcraft import project, formatting_utils
 from snapcraft.project._project_info import ProjectInfo
-from snapcraft.internal import deprecations, remote_parts, states
+from snapcraft.internal import deprecations, remote_parts, states, steps
 
 from ._schema import Validator
 from ._parts_config import PartsConfig
@@ -261,7 +261,7 @@ class Config:
         if duplicates:
             raise errors.DuplicateAliasError(aliases=duplicates)
 
-    def get_project_state(self, step):
+    def get_project_state(self, step: steps.Step):
         """Returns a dict of states for the given step of each part."""
 
         state = {}

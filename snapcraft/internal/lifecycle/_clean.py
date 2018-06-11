@@ -36,55 +36,50 @@ def _reverse_dependency_tree(config, part_name):
     return dependents
 
 
-def _clean_part_and_all_dependents(part_name, step, config, staged_state,
-                                   primed_state):
-    # Obtain the reverse dependency tree for this part. Make sure all
-    # dependents are cleaned.
+def _clean_part(part_name, step, config, staged_state, primed_state):
+    if step.next_step() is None:
+        template = 'Cleaning {step} step for {part}'
+    else:
+        template = 'Cleaning {step} step (and all subsequent steps) for {part}'
+
+    logger.info(template.format(step=step.name, part=part_name))
+    config.parts.clean_part(part_name, staged_state, primed_state, step)
+
+    # If we just cleaned the root of a dependency tree, we need to mark all
+    # its dependents as dirty so they require cleaning
+    return mark_dependents_dirty(part_name, step, config)
+
+
+def mark_dependents_dirty(part_name, cleaned_step, config):
     dependents = _reverse_dependency_tree(config, part_name)
     dependent_parts = {p for p in config.all_parts
                        if p.name in dependents}
-    for dependent_part in dependent_parts:
-        dependent_part.clean(staged_state, primed_state, step)
 
-    # Finally, clean the part in question
-    config.parts.clean_part(part_name, staged_state, primed_state, step)
+    dirty_part_names = set()
+    for part in dependent_parts:
+        if part.mark_dependency_change(part_name, cleaned_step):
+            dirty_part_names.add(part.name)
 
-
-def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
-                                       config):
-    # Get the name of the parts that depend upon this one
-    dependents = config.parts.get_dependents(part_name)
-    additional_dependents = []
-
-    # Verify that they're either already clean, or that they will be cleaned.
-    if not dependents.issubset(clean_part_names):
-        for part in config.all_parts:
-            if part.name in dependents and not part.is_clean(step):
-                humanized_parts = formatting_utils.humanize_list(
-                    dependents, 'and')
-                additional_dependents.append(part_name)
-
-                logger.warning(
-                    'Requested clean of {!r} which requires also cleaning '
-                    'the part{} {}'.format(part_name,
-                                           '' if len(dependents) == 1 else 's',
-                                           humanized_parts))
+    return dirty_part_names
 
 
 def _clean_parts(part_names, step, config, staged_state, primed_state):
     if not step:
-        step = 'pull'
+        step = steps.next_step(None)
 
-    # Before doing anything, verify that we weren't asked to clean only the
-    # root of a dependency tree and hint that more parts would be cleaned
-    # if not.
     for part_name in part_names:
-        _verify_dependents_will_be_cleaned(part_name, part_names, step, config)
-
-    # Now we can actually clean.
-    for part_name in part_names:
-        _clean_part_and_all_dependents(
+        resulting_dirty_parts = _clean_part(
             part_name, step, config, staged_state, primed_state)
+
+        parts_not_being_cleaned = resulting_dirty_parts.difference(part_names)
+        if parts_not_being_cleaned:
+            logger.warning(
+                'Cleaned {!r}, which makes the following {} out of date: '
+                '{}'.format(
+                    part_name, formatting_utils.pluralize(
+                        parts_not_being_cleaned, 'part', 'parts'),
+                    formatting_utils.humanize_list(
+                        parts_not_being_cleaned, 'and')))
 
 
 def _remove_directory_if_empty(directory):
@@ -196,6 +191,7 @@ def clean(project_options, parts, step=None):
 
     config = project_loader.load_config()
 
+    # FIXME: SHOULDN'T THIS DO THE SAME IF STEP < stage?
     if not parts and (step == steps.STAGE or step == steps.PRIME):
         # If we've been asked to clean stage or prime without being given
         # specific parts, just blow away those directories instead of
