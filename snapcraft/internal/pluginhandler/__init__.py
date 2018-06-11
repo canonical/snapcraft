@@ -226,7 +226,7 @@ class PluginHandler:
             if step:
                 os.remove(self.plugin.statedir)
                 os.makedirs(self.plugin.statedir)
-                self.mark_done(steps.Step(step))
+                self.mark_done(steps.get_step_by_name(step))
 
     def notify_part_progress(self, progress, hint=''):
         logger.info('%s %s %s', progress, self.name, hint)

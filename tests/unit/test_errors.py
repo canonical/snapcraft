@@ -498,6 +498,15 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'Unable to parse mountinfo row: [1, 2, 3]'
             )
         }),
+        ('InvalidStepError', {
+            'exception': errors.InvalidStepError,
+            'kwargs': {
+                'step_name': 'test-step-name',
+            },
+            'expected_message': (
+                "'test-step-name' is not a valid lifecycle step"
+            )
+        }),
         ('NoLatestStepError', {
             'exception': errors.NoLatestStepError,
             'kwargs': {

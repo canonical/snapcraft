@@ -16,6 +16,8 @@
 
 from typing import List
 
+from snapcraft.internal import errors
+
 
 class Step:
     def __init__(self, name: str, clean_if_dirty: bool) -> None:
@@ -26,7 +28,10 @@ class Step:
     @property
     def _order(self) -> int:
         if self.__order is None:
-            self.__order = STEPS.index(self)
+            try:
+                self.__order = STEPS.index(self)
+            except ValueError:
+                raise errors.InvalidStepError(self.name)
         return self.__order
 
     def previous_step(self) -> 'Step':
@@ -96,7 +101,31 @@ STEPS = [PULL, BUILD, STAGE, PRIME]
 
 
 def next_step(step):
+    """Get the next step of the lifecycle
+
+    :param Step step: The current step. If None, the next step is the first
+                      step in the lifecycle.
+    :return: The next step in the lifecycle
+    :rtype: Step
+    """
     if step:
         return step.next_step()
+    else:
+        return STEPS[0]
+
+
+def get_step_by_name(step_name):
+    """Get the lifecycle step that has the given name.
+
+    :param str step_name: Name of the step in question.
+    :return: The Step in the lifecycle that has the given name.
+    :rtype: Step
+    :raises: errors.InvalidStepError if there is no step with the given name.
+    """
+    if step_name:
+        for step in STEPS:
+            if step.name == step_name:
+                return step
+        raise errors.InvalidStepError(step_name)
     else:
         return STEPS[0]

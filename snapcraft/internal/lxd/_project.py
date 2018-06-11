@@ -23,7 +23,6 @@ from typing import List
 from . import errors
 from ._containerbuild import Containerbuild
 from snapcraft.internal import lifecycle, steps
-from snapcraft.cli import echo
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +102,7 @@ class Project(Containerbuild):
             self._container_run(['apt-get', 'upgrade', '-y'])
             self._container_run(['snap', 'refresh'])
 
-    def clean(self, parts: List[str], step: str):
+    def clean(self, parts: List[str], step: steps.Step):
         # clean with no parts deletes the container
         if not step:
             if not parts:
@@ -112,10 +111,6 @@ class Project(Containerbuild):
                     print('Deleting {}'.format(self._container_name))
                     subprocess.check_call([
                         'lxc', 'delete', '-f', self._container_name])
-            step = steps.PULL.name
-        # clean normally, without involving the container
-        if step == 'strip':
-            echo.warning('DEPRECATED: Use `prime` instead of `strip` '
-                         'as the step to clean')
-            step = steps.PRIME.name
-        lifecycle.clean(self._project_options, parts, steps.Step(step))
+            step = steps.PULL
+
+        lifecycle.clean(self._project_options, parts, step)

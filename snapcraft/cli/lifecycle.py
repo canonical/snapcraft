@@ -180,13 +180,16 @@ def clean(parts, step, **kwargs):
     """
     project_options = get_project_options(**kwargs)
     build_environment = env.BuilderEnvironmentConfig()
-    if build_environment.is_host:
-        step = step or steps.next_step(step).name
+
+    if step:
         if step == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '
                          'as the step to clean')
-            step = steps.PRIME.name
-        lifecycle.clean(project_options, parts, steps.Step(step))
+            step = 'prime'
+        step = steps.get_step_by_name(step)
+
+    if build_environment.is_host:
+        lifecycle.clean(project_options, parts, step)
     else:
         config = project_loader.load_config(project_options)
         lxd.Project(project_options=project_options,

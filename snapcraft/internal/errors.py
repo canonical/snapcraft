@@ -596,6 +596,13 @@ class SnapcraftCopyFileNotFoundError(SnapcraftError):
         super().__init__(path=path)
 
 
+class InvalidStepError(SnapcraftError):
+    fmt = "{step_name!r} is not a valid lifecycle step"
+
+    def __init__(self, step_name):
+        super().__init__(step_name=step_name)
+
+
 class NoLatestStepError(SnapcraftError):
     fmt = "The {part_name!r} part hasn't run any steps"
 

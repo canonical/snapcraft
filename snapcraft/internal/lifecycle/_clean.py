@@ -100,8 +100,8 @@ def _cleanup_common_directories(config, project_options):
             if not max_step or step > max_step:
                     max_step = step
 
-    with contextlib.suppress(errors.NoNextStepError):
-        next_step = steps.next_step(max_step)
+    next_step = steps.next_step(max_step)
+    if next_step:
         _cleanup_common_directories_for_step(next_step, project_options)
 
 
