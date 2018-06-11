@@ -526,6 +526,16 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "lifecycle"
             )
         }),
+        ('ScriptletDuplicateFieldError', {
+            'exception': errors.ScriptletDuplicateFieldError,
+            'kwargs': {
+                'field': 'foo',
+                'step': steps.PULL,
+            },
+            'expected_message': (
+                "Unable to set foo: it was already set in the 'pull' step."
+            )
+        }),
     )
 
     def test_error_formatting(self):

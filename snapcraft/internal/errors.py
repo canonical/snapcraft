@@ -17,6 +17,7 @@ from subprocess import CalledProcessError
 from typing import List, Union
 
 from snapcraft import formatting_utils
+from snapcraft.internal import steps
 
 
 class SnapcraftError(Exception):
@@ -544,12 +545,13 @@ class ScriptletRunError(ScriptletBaseError):
 
 class ScriptletDuplicateDataError(ScriptletBaseError):
     fmt = (
-        'Failed to save data from scriptlet into {step!r} state: '
-        'The {humanized_keys} key(s) were already saved in the {other_step!r} '
-        'step.'
+        'Failed to save data from scriptlet into {step.name!r} state: '
+        'The {humanized_keys} key(s) were already saved in the '
+        '{other_step.name!r} step.'
     )
 
-    def __init__(self, step: str, other_step: str, keys: List[str]) -> None:
+    def __init__(self, step: steps.Step, other_step: steps.Step,
+                 keys: List[str]) -> None:
         self.keys = keys
         super().__init__(
             step=step, other_step=other_step,
@@ -559,10 +561,10 @@ class ScriptletDuplicateDataError(ScriptletBaseError):
 class ScriptletDuplicateFieldError(ScriptletBaseError):
     fmt = (
         'Unable to set {field}: '
-        'it was already set in the {step!r} step.'
+        'it was already set in the {step.name!r} step.'
     )
 
-    def __init__(self, field: str, step: str) -> None:
+    def __init__(self, field: str, step: steps.Step) -> None:
         super().__init__(field=field, step=step)
 
 
