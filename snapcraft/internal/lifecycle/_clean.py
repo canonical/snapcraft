@@ -26,16 +26,6 @@ from . import constants
 logger = logging.getLogger(__name__)
 
 
-def _reverse_dependency_tree(config, part_name):
-    dependents = config.parts.get_dependents(part_name)
-    for dependent in dependents.copy():
-        # No need to worry about infinite recursion due to circular
-        # dependencies since the YAML validation won't allow it.
-        dependents |= _reverse_dependency_tree(config, dependent)
-
-    return dependents
-
-
 def _clean_part(part_name, step, config, staged_state, primed_state):
     if step.next_step() is None:
         template = 'Cleaning {step} step for {part}'
@@ -46,14 +36,14 @@ def _clean_part(part_name, step, config, staged_state, primed_state):
     config.parts.clean_part(part_name, staged_state, primed_state, step)
 
     # If we just cleaned the root of a dependency tree, we need to mark all
-    # its dependents as dirty so they require cleaning
+    # its dependents as dirty so they require cleaning.
     return mark_dependents_dirty(part_name, step, config)
 
 
 def mark_dependents_dirty(part_name, cleaned_step, config):
-    dependents = _reverse_dependency_tree(config, part_name)
+    dependent_part_names = config.parts.get_reverse_dependencies(part_name)
     dependent_parts = {p for p in config.all_parts
-                       if p.name in dependents}
+                       if p.name in dependent_part_names}
 
     dirty_part_names = set()
     for part in dependent_parts:
@@ -191,14 +181,16 @@ def clean(project_options, parts, step=None):
 
     config = project_loader.load_config()
 
-    # FIXME: SHOULDN'T THIS DO THE SAME IF STEP < stage?
-    if not parts and (step == steps.STAGE or step == steps.PRIME):
+    if not parts and step <= steps.PRIME:
         # If we've been asked to clean stage or prime without being given
         # specific parts, just blow away those directories instead of
-        # doing it per part.
+        # doing it per part (it would just be a waste of time).
         _cleanup_common_directories_for_step(
             step, project_options, parts=config.all_parts)
-        return
+
+        # No need to continue if that's all that was required
+        if step >= steps.STAGE:
+            return
 
     if parts:
         config.parts.validate(parts)

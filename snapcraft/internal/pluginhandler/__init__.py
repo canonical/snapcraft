@@ -269,34 +269,27 @@ class PluginHandler:
 
         # Retrieve the stored state for this step (assuming it has already run)
         state = states.get_state(self.plugin.statedir, step)
-        differing_properties = set()
-        differing_options = set()
-        changed_dependencies = set()
-
-        with contextlib.suppress(AttributeError):
+        if state:
             # state.properties contains the old YAML that this step cares
             # about, and we're comparing it to those same keys in the current
             # YAML (self._part_properties). If they've changed, then this step
             # is dirty and needs to run again.
-            differing_properties = state.diff_properties_of_interest(
+            properties = state.diff_properties_of_interest(
                 self._part_properties)
 
-        with contextlib.suppress(AttributeError):
             # state.project_options contains the old project options that this
             # step cares about, and we're comparing it to those same options in
             # the current project. If they've changed, then this step is dirty
             # and needs to run again.
-            differing_options = state.diff_project_options_of_interest(
+            options = state.diff_project_options_of_interest(
                 self._project_options)
 
-        with contextlib.suppress(AttributeError):
             # If dependencies have changed since this step ran, then it's dirty
             # and needs to run again.
-            changed_dependencies = state.changed_dependencies
+            dependencies = state.changed_dependencies
 
-        if differing_properties or differing_options or changed_dependencies:
-            return DirtyReport(
-                differing_properties, differing_options, changed_dependencies)
+            if properties or options or dependencies:
+                return DirtyReport(properties, options, dependencies)
 
         return None
 
