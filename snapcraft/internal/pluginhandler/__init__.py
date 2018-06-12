@@ -50,9 +50,11 @@ logger = logging.getLogger(__name__)
 
 
 class DirtyReport:
-    def __init__(self, dirty_properties, dirty_project_options):
+    def __init__(self, dirty_properties, dirty_project_options,
+                 changed_dependencies):
         self.dirty_properties = dirty_properties
         self.dirty_project_options = dirty_project_options
+        self.changed_dependencies = changed_dependencies
 
 
 class PluginHandler:
@@ -228,9 +230,6 @@ class PluginHandler:
                 os.makedirs(self.plugin.statedir)
                 self.mark_done(steps.get_step_by_name(step))
 
-    def notify_part_progress(self, progress, hint=''):
-        logger.info('%s %s %s', progress, self.name, hint)
-
     def latest_step(self):
         for step in reversed(steps.STEPS):
             if os.path.exists(
@@ -270,27 +269,27 @@ class PluginHandler:
 
         # Retrieve the stored state for this step (assuming it has already run)
         state = states.get_state(self.plugin.statedir, step)
-        differing_properties = set()
-        differing_options = set()
-
-        with contextlib.suppress(AttributeError):
+        if state:
             # state.properties contains the old YAML that this step cares
             # about, and we're comparing it to those same keys in the current
             # YAML (self._part_properties). If they've changed, then this step
             # is dirty and needs to run again.
-            differing_properties = state.diff_properties_of_interest(
+            properties = state.diff_properties_of_interest(
                 self._part_properties)
 
-        with contextlib.suppress(AttributeError):
             # state.project_options contains the old project options that this
             # step cares about, and we're comparing it to those same options in
             # the current project. If they've changed, then this step is dirty
             # and needs to run again.
-            differing_options = state.diff_project_options_of_interest(
+            options = state.diff_project_options_of_interest(
                 self._project_options)
 
-        if differing_properties or differing_options:
-            return DirtyReport(differing_properties, differing_options)
+            # If dependencies have changed since this step ran, then it's dirty
+            # and needs to run again.
+            dependencies = state.changed_dependencies
+
+            if properties or options or dependencies:
+                return DirtyReport(properties, options, dependencies)
 
         return None
 
@@ -309,6 +308,20 @@ class PluginHandler:
         # steps don't have a saved state.
         for step in step.next_steps():
                 self.mark_cleaned(step)
+
+    def mark_dependency_change(self, dependency_name, changed_step):
+        if changed_step <= steps.STAGE:
+            dirty_step = steps.next_step(None)
+        else:
+            dirty_step = changed_step
+
+        state = states.get_state(self.plugin.statedir, dirty_step)
+        if state:
+            state.changed_dependencies.append(
+                {'name': dependency_name, 'step': changed_step.name})
+            self.mark_done(dirty_step, state)
+            return True
+        return False
 
     def mark_cleaned(self, step):
         state_file = states.get_step_state_file(self.plugin.statedir, step)
@@ -338,7 +351,6 @@ class PluginHandler:
 
     def prepare_pull(self, force=False):
         self.makedirs()
-        self.notify_part_progress('Preparing to pull')
         self._fetch_stage_packages()
         self._unpack_stage_packages()
 
@@ -351,10 +363,7 @@ class PluginHandler:
             shutil.rmtree(self.plugin.sourcedir)
 
         self.makedirs()
-        self.notify_part_progress('Pulling')
-
         self._runner.pull()
-
         self.mark_pull_done()
 
     def _do_pull(self):
@@ -388,14 +397,10 @@ class PluginHandler:
             metadata_files=metadata_files,
             scriptlet_metadata=self._scriptlet_metadata[steps.PULL]))
 
-    def clean_pull(self, hint=''):
+    def clean_pull(self):
         if self.is_clean(steps.PULL):
-            hint = '{} {}'.format(hint, '(already clean)').strip()
-            self.notify_part_progress('Skipping cleaning pulled source for',
-                                      hint)
             return
 
-        self.notify_part_progress('Cleaning pulled source for', hint)
         # Remove ubuntu cache (where stage packages are fetched)
         if os.path.exists(self.plugin.osrepodir):
             shutil.rmtree(self.plugin.osrepodir)
@@ -411,14 +416,12 @@ class PluginHandler:
 
     def prepare_build(self, force=False):
         self.makedirs()
-        self.notify_part_progress('Preparing to build')
         # Stage packages are fetched and unpacked in the pull step, but we'll
         # unpack again here just in case the build step has been cleaned.
         self._unpack_stage_packages()
 
     def build(self, force=False):
         self.makedirs()
-        self.notify_part_progress('Building')
 
         if os.path.exists(self.plugin.build_basedir):
             shutil.rmtree(self.plugin.build_basedir)
@@ -504,14 +507,9 @@ class PluginHandler:
             'installed-snaps': repo.snaps.get_installed_snaps()
         }
 
-    def clean_build(self, hint=''):
+    def clean_build(self):
         if self.is_clean(steps.BUILD):
-            hint = '{} {}'.format(hint, '(already clean)').strip()
-            self.notify_part_progress('Skipping cleaning build for',
-                                      hint)
             return
-
-        self.notify_part_progress('Cleaning build for', hint)
 
         if os.path.exists(self.plugin.build_basedir):
             shutil.rmtree(self.plugin.build_basedir)
@@ -551,7 +549,6 @@ class PluginHandler:
 
     def stage(self, force=False):
         self.makedirs()
-        self.notify_part_progress('Staging')
         self._runner.stage()
 
         # Only mark this step done if _do_stage() didn't run, in which case
@@ -582,14 +579,9 @@ class PluginHandler:
             snap_files, snap_dirs, self._part_properties,
             self._project_options, self._scriptlet_metadata[steps.STAGE]))
 
-    def clean_stage(self, project_staged_state, hint=''):
+    def clean_stage(self, project_staged_state):
         if self.is_clean(steps.STAGE):
-            hint = '{} {}'.format(hint, '(already clean)').strip()
-            self.notify_part_progress('Skipping cleaning staging area for',
-                                      hint)
             return
-
-        self.notify_part_progress('Cleaning staging area for', hint)
 
         state = states.get_state(self.plugin.statedir, steps.STAGE)
 
@@ -603,7 +595,6 @@ class PluginHandler:
 
     def prime(self, force=False) -> None:
         self.makedirs()
-        self.notify_part_progress('Priming')
         self._runner.prime()
 
         # Only mark this step done if _do_prime() didn't run, in which case
@@ -669,12 +660,7 @@ class PluginHandler:
 
     def clean_prime(self, project_primed_state, hint=''):
         if self.is_clean(steps.PRIME):
-            hint = '{} {}'.format(hint, '(already clean)').strip()
-            self.notify_part_progress('Skipping cleaning priming area for',
-                                      hint)
             return
-
-        self.notify_part_progress('Cleaning priming area for', hint)
 
         state = self.get_prime_state()
 
@@ -752,7 +738,7 @@ class PluginHandler:
         return self.plugin.env(root)
 
     def clean(self, project_staged_state=None, project_primed_state=None,
-              step=None, hint=''):
+              step=None):
         if not project_staged_state:
             project_staged_state = {}
 
@@ -760,8 +746,8 @@ class PluginHandler:
             project_primed_state = {}
 
         try:
-            self._clean_steps(project_staged_state, project_primed_state,
-                              step, hint)
+            self._clean_steps(
+                project_staged_state, project_primed_state, step)
         except errors.MissingStateCleanError:
             # If one of the step cleaning rules is missing state, it must be
             # running on the output of an old Snapcraft. In that case, if we
@@ -782,7 +768,7 @@ class PluginHandler:
             os.rmdir(self.plugin.partdir)
 
     def _clean_steps(self, project_staged_state, project_primed_state,
-                     step=None, hint=None):
+                     step=None):
         if step:
             if step not in steps.STEPS:
                 raise RuntimeError(
@@ -790,16 +776,16 @@ class PluginHandler:
                         step, self.name))
 
         if not step or step <= steps.PRIME:
-            self.clean_prime(project_primed_state, hint)
+            self.clean_prime(project_primed_state)
 
         if not step or step <= steps.STAGE:
-            self.clean_stage(project_staged_state, hint)
+            self.clean_stage(project_staged_state)
 
         if not step or step <= steps.BUILD:
-            self.clean_build(hint)
+            self.clean_build()
 
         if not step or step <= steps.PULL:
-            self.clean_pull(hint)
+            self.clean_pull()
 
 
 def _split_dependencies(dependencies, installdir, stagedir, primedir):

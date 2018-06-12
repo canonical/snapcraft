@@ -2296,28 +2296,16 @@ class PerStepCleanTestCase(unit.TestCase):
 
         self.handler = self.load_part('test_part')
 
-    def test_clean_with_hint(self):
-        self.handler.clean(step=steps.PULL, hint='foo')
-
-        # Verify the step cleaning order
-        self.assertThat(len(self.manager_mock.mock_calls), Equals(4))
-        self.manager_mock.assert_has_calls([
-            call.clean_prime({}, 'foo'),
-            call.clean_stage({}, 'foo'),
-            call.clean_build('foo'),
-            call.clean_pull('foo'),
-        ])
-
     def test_clean_pull_order(self):
         self.handler.clean(step=steps.PULL)
 
         # Verify the step cleaning order
         self.assertThat(len(self.manager_mock.mock_calls), Equals(4))
         self.manager_mock.assert_has_calls([
-            call.clean_prime({}, ''),
-            call.clean_stage({}, ''),
-            call.clean_build(''),
-            call.clean_pull(''),
+            call.clean_prime({}),
+            call.clean_stage({}),
+            call.clean_build(),
+            call.clean_pull(),
         ])
 
     def test_clean_build_order(self):
@@ -2326,9 +2314,9 @@ class PerStepCleanTestCase(unit.TestCase):
         # Verify the step cleaning order
         self.assertThat(len(self.manager_mock.mock_calls), Equals(3))
         self.manager_mock.assert_has_calls([
-            call.clean_prime({}, ''),
-            call.clean_stage({}, ''),
-            call.clean_build(''),
+            call.clean_prime({}),
+            call.clean_stage({}),
+            call.clean_build(),
         ])
 
     def test_clean_stage_order(self):
@@ -2337,8 +2325,8 @@ class PerStepCleanTestCase(unit.TestCase):
         # Verify the step cleaning order
         self.assertThat(len(self.manager_mock.mock_calls), Equals(2))
         self.manager_mock.assert_has_calls([
-            call.clean_prime({}, ''),
-            call.clean_stage({}, ''),
+            call.clean_prime({}),
+            call.clean_stage({}),
         ])
 
     def test_clean_prime_order(self):
@@ -2347,7 +2335,7 @@ class PerStepCleanTestCase(unit.TestCase):
         # Verify the step cleaning order
         self.assertThat(len(self.manager_mock.mock_calls), Equals(1))
         self.manager_mock.assert_has_calls([
-            call.clean_prime({}, ''),
+            call.clean_prime({}),
         ])
 
 

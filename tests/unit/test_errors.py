@@ -52,11 +52,11 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'dependents': ['test-dependent']
             },
             'expected_message': (
-                "Failed to reuse files from previous build: "
+                "Failed to reuse files from previous run: "
                 "The 'pull' step of 'test-part' is out of date:\n"
                 "The 'pull' step for 'test-part' needs to be run again, "
                 "but 'test-dependent' depends on it.\n"
-                "To continue, clean that part's 'pull' step, run "
+                "To continue, clean that part's 'pull' step by running "
                 "`snapcraft clean test-dependent -s pull`.")}),
         ('StepOutdatedError dirty_properties', {
             'exception': errors.StepOutdatedError,
@@ -66,11 +66,11 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'dirty_properties': ['test-property1', 'test-property2']
             },
             'expected_message': (
-                "Failed to reuse files from previous build: "
+                "Failed to reuse files from previous run: "
                 "The 'pull' step of 'test-part' is out of date:\n"
                 "The 'test-property1' and 'test-property2' part properties "
                 "appear to have changed.\n"
-                "To continue, clean that part's 'pull' step, run "
+                "To continue, clean that part's 'pull' step by running "
                 "`snapcraft clean test-part -s pull`.")}),
         ('StepOutdatedError dirty_project_options', {
             'exception': errors.StepOutdatedError,
@@ -80,10 +80,43 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'dirty_project_options': ['test-option']
             },
             'expected_message': (
-                "Failed to reuse files from previous build: "
+                "Failed to reuse files from previous run: "
                 "The 'pull' step of 'test-part' is out of date:\n"
                 "The 'test-option' project option appears to have changed.\n"
-                "To continue, clean that part's 'pull' step, run "
+                "To continue, clean that part's 'pull' step by running "
+                "`snapcraft clean test-part -s pull`.")}),
+        ('StepOutdatedError changed_dependencies', {
+            'exception': errors.StepOutdatedError,
+            'kwargs': {
+                'step': steps.PULL,
+                'part': 'test-part',
+                'changed_dependencies': [
+                    {'name': 'another-part', 'step': 'another-step'}]
+            },
+            'expected_message': (
+                "Failed to reuse files from previous run: "
+                "The 'pull' step of 'test-part' is out of date:\n"
+                "A dependency has changed: 'another-part'\n"
+                "To continue, clean that part's "
+                "'pull' step by running "
+                "`snapcraft clean test-part -s pull`.")}),
+        ('StepOutdatedError multiple changed_dependencies', {
+            'exception': errors.StepOutdatedError,
+            'kwargs': {
+                'step': steps.PULL,
+                'part': 'test-part',
+                'changed_dependencies': [
+                    {'name': 'another-part1', 'step': 'another-step1'},
+                    {'name': 'another-part2', 'step': 'another-step2'},
+                ]
+            },
+            'expected_message': (
+                "Failed to reuse files from previous run: "
+                "The 'pull' step of 'test-part' is out of date:\n"
+                "Some dependencies have changed: 'another-part1' and "
+                "'another-part2'\n"
+                "To continue, clean that part's "
+                "'pull' step by running "
                 "`snapcraft clean test-part -s pull`.")}),
         ('SnapcraftEnvironmentError', {
             'exception': errors.SnapcraftEnvironmentError,

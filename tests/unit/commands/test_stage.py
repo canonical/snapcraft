@@ -72,9 +72,7 @@ class StageCommandTestCase(LifecycleCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
             fake_logger.output,
-            Equals('Preparing to pull stage0 \n'
-                   'Pulling stage0 \n'
-                   'Preparing to build stage0 \n'
+            Equals('Pulling stage0 \n'
                    'Building stage0 \n'
                    'Staging stage0 \n'))
 
@@ -95,4 +93,7 @@ class StageCommandTestCase(LifecycleCommandsBaseTestCase):
             Equals(
                 'Skipping pull stage0 (already ran)\n'
                 'Skipping build stage0 (already ran)\n'
-                'Skipping stage stage0 (already ran)\n'))
+                'Skipping stage stage0 (already ran)\n'
+                'The requested action has already been taken. Consider\n'
+                'specifying parts, or clean the steps you want to run again.\n'
+            ))

@@ -146,6 +146,17 @@ class PartsConfig:
 
         return dependents
 
+    def get_reverse_dependencies(self, part_name):
+        """Returns all parts that recursively depend upon part_name."""
+
+        dependents = self.get_dependents(part_name)
+        for dependent in dependents.copy():
+            # No need to worry about infinite recursion due to circular
+            # dependencies since the YAML validation won't allow it.
+            dependents |= self.get_reverse_dependencies(dependent)
+
+        return dependents
+
     def get_part(self, part_name):
         for part in self.all_parts:
             if part.name == part_name:

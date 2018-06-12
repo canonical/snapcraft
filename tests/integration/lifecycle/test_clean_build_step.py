@@ -72,14 +72,10 @@ class CleanBuildStepBuiltTestCase(integration.TestCase):
         part1_output = [line.strip() for line in output if 'part1' in line]
         part2_output = [line.strip() for line in output if 'part2' in line]
         self.expectThat(part1_output, Equals([
-            'Skipping cleaning priming area for part1 (already clean)',
-            'Skipping cleaning staging area for part1 (already clean)',
-            'Cleaning build for part1'
+            'Cleaning build step (and all subsequent steps) for part1'
         ]))
         self.expectThat(part2_output, Equals([
-            'Skipping cleaning priming area for part2 (already clean)',
-            'Skipping cleaning staging area for part2 (already clean)',
-            'Cleaning build for part2'
+            'Cleaning build step (and all subsequent steps) for part2'
         ]))
 
         # Now try to build again
