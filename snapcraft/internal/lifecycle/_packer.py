@@ -22,7 +22,7 @@ import yaml
 from progressbar import AnimatedMarker, ProgressBar
 
 from snapcraft import file_utils
-from snapcraft.internal import common, repo
+from snapcraft.internal import common, repo, steps
 from snapcraft.internal.indicators import is_dumb_terminal
 from ._runner import execute
 
@@ -43,7 +43,7 @@ def _snap_data_from_dir(directory):
 def snap(project_options, directory=None, output=None):
     if not directory:
         directory = project_options.prime_dir
-        execute('prime', project_options)
+        execute(steps.PRIME, project_options)
 
     return pack(directory, output)
 

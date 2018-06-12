@@ -39,7 +39,7 @@ from testtools.matchers import (
 import snapcraft
 from snapcraft import config, storeapi
 from snapcraft.file_utils import calculate_sha3_384
-from snapcraft.internal import errors, pluginhandler, lifecycle
+from snapcraft.internal import errors, pluginhandler, lifecycle, steps
 from snapcraft.internal.lifecycle._runner import _replace_in_part
 from tests import fixture_setup, unit
 from tests.fixture_setup.os_release import FakeOsRelease
@@ -106,7 +106,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                       - part1
                 """))
 
-        lifecycle.execute('pull', self.project_options, part_names=['part2'])
+        lifecycle.execute(
+            steps.PULL, self.project_options, part_names=['part2'])
 
         self.assertThat(
             self.fake_logger.output,
@@ -137,7 +138,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         with mock.patch.object(pluginhandler.PluginHandler,
                                'should_step_run',
                                _fake_should_step_run):
-            lifecycle.execute('pull', self.project_options,
+            lifecycle.execute(steps.PULL, self.project_options,
                               part_names=['part2'])
 
         self.assertThat(
@@ -165,7 +166,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                       - part2
                 """))
 
-        snap_info = lifecycle.execute('pull', self.project_options)
+        snap_info = lifecycle.execute(steps.PULL, self.project_options)
 
         expected_snap_info = {
             'name': 'test',
@@ -206,7 +207,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 """),
             'type: os')
 
-        snap_info = lifecycle.execute('pull', self.project_options)
+        snap_info = lifecycle.execute(steps.PULL, self.project_options)
 
         expected_snap_info = {
             'name': 'test',
@@ -227,14 +228,14 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 """))
 
         # Strip it.
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
         def _fake_dirty_report(self, step):
-            if self.name == 'part1' and step == 'prime':
+            if self.name == 'part1' and step == steps.PRIME:
                 return pluginhandler.DirtyReport({'foo'}, {'bar'})
             return None
 
@@ -242,7 +243,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         # for the part.
         with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
                                _fake_dirty_report):
-            lifecycle.execute('prime', self.project_options)
+            lifecycle.execute(steps.PRIME, self.project_options)
 
         output = self.fake_logger.output.split('\n')
         part1_output = [line.strip() for line in output if 'part1' in line]
@@ -278,14 +279,14 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 """))
 
         # Strip it.
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
         def _fake_dirty_report(self, step):
-            if step == 'prime':
+            if step == steps.PRIME:
                 return pluginhandler.DirtyReport({'foo'}, {'bar'})
             return None
 
@@ -293,7 +294,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         # for the part.
         with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
                                _fake_dirty_report):
-            lifecycle.execute('prime', self.project_options)
+            lifecycle.execute(steps.PRIME, self.project_options)
 
         output = self.fake_logger.output.split('\n')
         part1_output = [line.strip() for line in output if 'part1' in line]
@@ -330,14 +331,14 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 """))
 
         # Stage it.
-        lifecycle.execute('stage', self.project_options)
+        lifecycle.execute(steps.STAGE, self.project_options)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
         def _fake_dirty_report(self, step):
-            if self.name == 'part1' and step == 'stage':
+            if self.name == 'part1' and step == steps.STAGE:
                 return pluginhandler.DirtyReport({'foo'}, {'bar'})
             return None
 
@@ -345,7 +346,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         # for the part.
         with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
                                _fake_dirty_report):
-            lifecycle.execute('stage', self.project_options)
+            lifecycle.execute(steps.STAGE, self.project_options)
 
         output = self.fake_logger.output.split('\n')
         part1_output = [line.strip() for line in output if 'part1' in line]
@@ -381,14 +382,14 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 """))
 
         # Stage it.
-        lifecycle.execute('stage', self.project_options)
+        lifecycle.execute(steps.STAGE, self.project_options)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
         def _fake_dirty_report(self, step):
-            if step == 'stage':
+            if step == steps.STAGE:
                 return pluginhandler.DirtyReport({'foo'}, {'bar'})
             return None
 
@@ -396,7 +397,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         # for the part.
         with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
                                _fake_dirty_report):
-            lifecycle.execute('stage', self.project_options)
+            lifecycle.execute(steps.STAGE, self.project_options)
 
         output = self.fake_logger.output.split('\n')
         part1_output = [line.strip() for line in output if 'part1' in line]
@@ -436,16 +437,18 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 """))
 
         # Stage dependency
-        lifecycle.execute('stage', self.project_options, part_names=['part1'])
+        lifecycle.execute(
+            steps.STAGE, self.project_options, part_names=['part1'])
         # Build dependent
-        lifecycle.execute('build', self.project_options, part_names=['part2'])
+        lifecycle.execute(
+            steps.BUILD, self.project_options, part_names=['part2'])
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
         def _fake_dirty_report(self, step):
-            if step == 'stage':
+            if step == steps.STAGE:
                 return pluginhandler.DirtyReport({'foo'}, {'bar'})
             return None
 
@@ -456,7 +459,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             raised = self.assertRaises(
                 errors.StepOutdatedError,
                 lifecycle.execute,
-                'stage', self.project_options,
+                steps.STAGE, self.project_options,
                 part_names=['part1'])
 
         output = self.fake_logger.output.split('\n')
@@ -468,7 +471,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 'Skipping build part1 (already ran)',
             ]))
 
-        self.assertThat(raised.step, Equals('stage'))
+        self.assertThat(raised.step, Equals(steps.STAGE))
         self.assertThat(raised.part, Equals('part1'))
         self.assertThat(
             raised.report,
@@ -493,16 +496,18 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 """))
 
         # Stage dependency
-        lifecycle.execute('stage', self.project_options, part_names=['part1'])
+        lifecycle.execute(
+            steps.STAGE, self.project_options, part_names=['part1'])
         # Build dependent
-        lifecycle.execute('build', self.project_options, part_names=['part2'])
+        lifecycle.execute(
+            steps.BUILD, self.project_options, part_names=['part2'])
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
         def _fake_dirty_report(self, step):
-            if step == 'stage':
+            if step == steps.STAGE:
                 return pluginhandler.DirtyReport({'foo'}, {'bar'})
             return None
 
@@ -512,7 +517,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                                _fake_dirty_report):
             try:
                 lifecycle.execute(
-                    'stage', self.project_options, part_names=['part1'])
+                    steps.STAGE, self.project_options, part_names=['part1'])
             except errors.StepOutdatedError:
                 self.fail('Expected the step to automatically be cleaned')
 
@@ -558,14 +563,15 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 """))
 
         # Stage dependency (dependent is unbuilt)
-        lifecycle.execute('stage', self.project_options, part_names=['part1'])
+        lifecycle.execute(
+            steps.STAGE, self.project_options, part_names=['part1'])
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
         def _fake_dirty_report(self, step):
-            if step == 'stage':
+            if step == steps.STAGE:
                 return pluginhandler.DirtyReport({'foo'}, {'bar'})
             return None
 
@@ -573,7 +579,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         # for the part.
         with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
                                _fake_dirty_report):
-            lifecycle.execute('stage', self.project_options,
+            lifecycle.execute(steps.STAGE, self.project_options,
                               part_names=['part1'])
 
         self.assertThat(
@@ -598,14 +604,14 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 """))
 
         # Strip it.
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
         def _fake_dirty_report(self, step):
-            if step == 'stage':
+            if step == steps.STAGE:
                 return pluginhandler.DirtyReport({'foo'}, {'bar'})
             return None
 
@@ -613,7 +619,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         # for the part.
         with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
                                _fake_dirty_report):
-            lifecycle.execute('prime', self.project_options)
+            lifecycle.execute(steps.PRIME, self.project_options)
 
         self.assertThat(
             self.fake_logger.output, Equals(
@@ -633,14 +639,14 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 """))
 
         # Build it.
-        lifecycle.execute('build', self.project_options)
+        lifecycle.execute(steps.BUILD, self.project_options)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
         def _fake_dirty_report(self, step):
-            if step == 'build':
+            if step == steps.BUILD:
                 return pluginhandler.DirtyReport({'foo', 'bar'}, set())
             return None
 
@@ -650,13 +656,13 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             raised = self.assertRaises(
                 errors.StepOutdatedError,
                 lifecycle.execute,
-                'build', self.project_options)
+                steps.BUILD, self.project_options)
 
         self.assertThat(
             self.fake_logger.output,
             Equals('Skipping pull part1 (already ran)\n'))
 
-        self.assertThat(raised.step, Equals('build'))
+        self.assertThat(raised.step, Equals(steps.BUILD))
         self.assertThat(raised.part, Equals('part1'))
         self.assertThat(
             raised.report, Equals(
@@ -673,14 +679,14 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 """))
 
         # Pull it.
-        lifecycle.execute('pull', self.project_options)
+        lifecycle.execute(steps.PULL, self.project_options)
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
         self.useFixture(self.fake_logger)
 
         def _fake_dirty_report(self, step):
-            if step == 'pull':
+            if step == steps.PULL:
                 return pluginhandler.DirtyReport(set(), {'foo', 'bar'})
             return None
 
@@ -690,11 +696,11 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             raised = self.assertRaises(
                 errors.StepOutdatedError,
                 lifecycle.execute,
-                'pull', self.project_options)
+                steps.PULL, self.project_options)
 
         self.assertThat(self.fake_logger.output, Equals(''))
 
-        self.assertThat(raised.step, Equals('pull'))
+        self.assertThat(raised.step, Equals(steps.PULL))
         self.assertThat(raised.part, Equals('part1'))
         self.assertThat(
             raised.report,
@@ -715,7 +721,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 """))
 
         # Pull it with amd64
-        lifecycle.execute('pull', snapcraft.ProjectOptions(
+        lifecycle.execute(steps.PULL, snapcraft.ProjectOptions(
             target_deb_arch='amd64'))
 
         # Reset logging since we only care about the following
@@ -728,14 +734,14 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         raised = self.assertRaises(
             errors.StepOutdatedError,
             lifecycle.execute,
-            'pull', snapcraft.ProjectOptions(
+            steps.PULL, snapcraft.ProjectOptions(
                 target_deb_arch='armhf'))
 
         self.assertThat(
             self.fake_logger.output,
             Equals("Setting target machine to 'armhf'\n"))
 
-        self.assertThat(raised.step, Equals('pull'))
+        self.assertThat(raised.step, Equals(steps.PULL))
         self.assertThat(raised.part, Equals('part1'))
         self.assertThat(
             raised.report,
@@ -749,9 +755,9 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                   test-part:
                     plugin: nil
                 """))
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
         self.assertThat(
-            os.path.join('prime', 'snap', '.snapcraft'),
+            os.path.join(steps.PRIME.name, 'snap', '.snapcraft'),
             Not(DirExists()))
 
     def test_non_prime_and_no_version(self):
@@ -765,7 +771,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         self.useFixture(snapcraft_yaml)
 
         # This should not fail
-        lifecycle.execute('pull', self.project_options)
+        lifecycle.execute(steps.PULL, self.project_options)
 
 
 class DirtyBuildScriptletTestCase(BaseLifecycleTestCase):
@@ -790,7 +796,7 @@ class DirtyBuildScriptletTestCase(BaseLifecycleTestCase):
                 """).format(self.scriptlet))
 
         # Build it
-        lifecycle.execute('build', snapcraft.ProjectOptions())
+        lifecycle.execute(steps.BUILD, snapcraft.ProjectOptions())
 
         # Reset logging since we only care about the following
         self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
@@ -809,9 +815,9 @@ class DirtyBuildScriptletTestCase(BaseLifecycleTestCase):
         # to be rebuilt.
         raised = self.assertRaises(
             errors.StepOutdatedError,
-            lifecycle.execute, 'build', snapcraft.ProjectOptions())
+            lifecycle.execute, steps.BUILD, snapcraft.ProjectOptions())
 
-        self.assertThat(raised.step, Equals('build'))
+        self.assertThat(raised.step, Equals(steps.BUILD))
         self.assertThat(raised.part, Equals('part1'))
         self.assertThat(
             raised.report,
@@ -829,7 +835,7 @@ class CleanTestCase(BaseLifecycleTestCase):
                   test-part:
                     plugin: nil
                 """))
-        lifecycle.execute('pull', self.project_options)
+        lifecycle.execute(steps.PULL, self.project_options)
         lifecycle.clean(self.project_options, parts=None)
         self.assertThat(
             os.path.join('snap', '.snapcraft'),
@@ -843,10 +849,10 @@ class CleanTestCase(BaseLifecycleTestCase):
                   test-part:
                     plugin: nil
                 """))
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
         lifecycle.clean(self.project_options, parts=None)
         self.assertThat(
-            'prime', DirExists(),
+            steps.PRIME.name, DirExists(),
             'Expected prime directory to remain after cleaning for tried snap')
 
 
@@ -861,10 +867,10 @@ class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
                   test-part:
                     plugin: nil
                 """))
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
         for file_name in ('snapcraft.yaml', 'manifest.yaml'):
             self.assertThat(
-                os.path.join('prime', 'snap', file_name),
+                os.path.join(steps.PRIME.name, 'snap', file_name),
                 Not(FileExists()))
 
     def test_prime_with_build_info_records_snapcraft_yaml(self):
@@ -877,7 +883,7 @@ class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
                     plugin: nil
                 """),
             snap_type='type: app')
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         expected = textwrap.dedent("""\
             name: test
@@ -895,7 +901,7 @@ class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
             """)
 
         self.assertThat(
-            os.path.join('prime', 'snap', 'snapcraft.yaml'),
+            os.path.join(steps.PRIME.name, 'snap', 'snapcraft.yaml'),
             FileContains(expected))
 
 
@@ -955,7 +961,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                   test-part:
                     plugin: nil
                 """))
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
@@ -984,7 +990,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-snaps: []
             """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'manifest.yaml'),
+            os.path.join(steps.PRIME.name, 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     def test_prime_with_installed_snaps(self):
@@ -1003,7 +1009,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                   test-part:
                     plugin: nil
                 """))
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
@@ -1034,7 +1040,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-snaps: []
             """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'manifest.yaml'),
+            os.path.join(steps.PRIME.name, 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     def test_prime_with_installed_packages(self):
@@ -1052,7 +1058,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                   test-part:
                     plugin: nil
                 """))
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
@@ -1083,7 +1089,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-snaps: []
             """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'manifest.yaml'),
+            os.path.join(steps.PRIME.name, 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     def test_prime_with_stage_packages(self):
@@ -1102,7 +1108,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                     stage-packages: [test-package1=test-version1, test-package2]
                 """))  # NOQA
 
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
@@ -1133,7 +1139,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-snaps: []
             """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'manifest.yaml'),
+            os.path.join(steps.PRIME.name, 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     @mock.patch('subprocess.check_call')
@@ -1153,7 +1159,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                     plugin: nil
                 """))
 
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
@@ -1184,7 +1190,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-snaps: []
             """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'manifest.yaml'),
+            os.path.join(steps.PRIME.name, 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     @mock.patch('subprocess.check_call')
@@ -1204,7 +1210,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                     source-commit: test-commit
                 """))
 
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
@@ -1240,7 +1246,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-snaps: []
             """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'manifest.yaml'),
+            os.path.join(steps.PRIME.name, 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     @mock.patch('subprocess.check_call')
@@ -1258,7 +1264,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                     build-packages: ['test-package:any']
                 """))
 
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
@@ -1289,7 +1295,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-snaps: []
             """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'manifest.yaml'),
+            os.path.join(steps.PRIME.name, 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     @mock.patch('subprocess.check_call')
@@ -1309,7 +1315,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                     build-packages: ['test-virtual-package']
                 """))
 
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
@@ -1340,7 +1346,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-snaps: []
             """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'manifest.yaml'),
+            os.path.join(steps.PRIME.name, 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     @mock.patch('snapcraft.plugins.nil.NilPlugin.get_manifest')
@@ -1355,7 +1361,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                   test-part:
                     plugin: nil
                 """))
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
@@ -1385,7 +1391,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-snaps: []
             """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'manifest.yaml'),
+            os.path.join(steps.PRIME.name, 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     def test_prime_with_image_info_records_manifest(self):
@@ -1403,7 +1409,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                   test-part:
                     plugin: nil
                 """))
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
@@ -1436,7 +1442,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
             build-snaps: []
             """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'manifest.yaml'),
+            os.path.join(steps.PRIME.name, 'snap', 'manifest.yaml'),
             FileContains(expected))
 
     def test_prime_with_invalid_image_info_raises_exception(self):
@@ -1452,7 +1458,7 @@ class RecordManifestTestCase(RecordManifestBaseTestCase):
                 """))
         raised = self.assertRaises(
                 errors.InvalidContainerImageInfoError,
-                lifecycle.execute, 'prime', self.project_options)
+                lifecycle.execute, steps.PRIME, self.project_options)
         self.assertThat(raised.image_info, Equals('not-json'))
 
 
@@ -1473,7 +1479,7 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(
     {}: [-*]
 """)
         self.make_snapcraft_yaml(parts.format(self.keyword))
-        lifecycle.execute('prime', self.project_options)
+        lifecycle.execute(steps.PRIME, self.project_options)
 
         expected = textwrap.dedent("""\
             snapcraft-version: '3.0'
@@ -1503,7 +1509,7 @@ class RecordManifestWithDeprecatedSnapKeywordTestCase(
             build-snaps: []
             """.format(self.project_options.deb_arch))
         self.assertThat(
-            os.path.join('prime', 'snap', 'manifest.yaml'),
+            os.path.join(steps.PRIME.name, 'snap', 'manifest.yaml'),
             FileContains(expected))
 
 
@@ -1558,7 +1564,7 @@ class CoreSetupTestCase(unit.TestCase):
             core_snap)
 
         self._create_classic_confined_snapcraft_yaml()
-        lifecycle.execute('pull', self.project_options)
+        lifecycle.execute(steps.PULL, self.project_options)
 
         regex = (
             '.*'
@@ -1590,7 +1596,7 @@ class CoreSetupTestCase(unit.TestCase):
             core_snap)
 
         self._create_classic_confined_snapcraft_yaml()
-        lifecycle.execute('pull', self.project_options)
+        lifecycle.execute(steps.PULL, self.project_options)
 
         regex = (
             '.*'
@@ -1612,7 +1618,7 @@ class CoreSetupTestCase(unit.TestCase):
             'SNAPCRAFT_SETUP_CORE', '1'))
 
         lifecycle.init()
-        lifecycle.execute('pull', self.project_options)
+        lifecycle.execute(steps.PULL, self.project_options)
 
         self.assertThat(self.witness_path, Not(FileExists()))
 
@@ -1621,7 +1627,7 @@ class CoreSetupTestCase(unit.TestCase):
         open(os.path.join(self.core_path, 'fake-content'), 'w').close()
 
         self._create_classic_confined_snapcraft_yaml()
-        lifecycle.execute('pull', self.project_options)
+        lifecycle.execute(steps.PULL, self.project_options)
 
     def _create_classic_confined_snapcraft_yaml(self):
         snapcraft_yaml_path = lifecycle.init()

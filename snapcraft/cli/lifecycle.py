@@ -17,7 +17,13 @@
 import click
 import os
 
-from snapcraft.internal import deprecations, lifecycle, lxd, project_loader
+from snapcraft.internal import (
+    deprecations,
+    lifecycle,
+    lxd,
+    project_loader,
+    steps,
+)
 from ._options import add_build_options, get_project_options
 from . import echo
 from . import env
@@ -62,7 +68,7 @@ def pull(ctx, parts, **kwargs):
         snapcraft pull my-part1 my-part2
 
     """
-    _execute('pull', parts, **kwargs)
+    _execute(steps.PULL, parts, **kwargs)
 
 
 @lifecyclecli.command()
@@ -77,7 +83,7 @@ def build(parts, **kwargs):
         snapcraft build my-part1 my-part2
 
     """
-    _execute('build', parts, **kwargs)
+    _execute(steps.BUILD, parts, **kwargs)
 
 
 @lifecyclecli.command()
@@ -92,7 +98,7 @@ def stage(parts, **kwargs):
         snapcraft stage my-part1 my-part2
 
     """
-    _execute('stage', parts, **kwargs)
+    _execute(steps.STAGE, parts, **kwargs)
 
 
 @lifecyclecli.command()
@@ -107,7 +113,7 @@ def prime(parts, **kwargs):
         snapcraft prime my-part1 my-part2
 
     """
-    _execute('prime', parts, **kwargs)
+    _execute(steps.PRIME, parts, **kwargs)
 
 
 @lifecyclecli.command()
@@ -160,11 +166,11 @@ def pack(directory, output, **kwargs):
 @lifecyclecli.command()
 @add_build_options()
 @click.argument('parts', nargs=-1, metavar='<part>...', required=False)
-@click.option('--step', '-s',
+@click.option('--step', '-s', 'step_name',
               type=click.Choice(['pull', 'build', 'stage', 'prime', 'strip']),
               help='only clean the specified step and those that '
                    'depend on it.')
-def clean(parts, step, **kwargs):
+def clean(parts, step_name, **kwargs):
     """Remove content - cleans downloads, builds or install artifacts.
 
     \b
@@ -174,12 +180,16 @@ def clean(parts, step, **kwargs):
     """
     project_options = get_project_options(**kwargs)
     build_environment = env.BuilderEnvironmentConfig()
-    if build_environment.is_host:
-        step = step or 'pull'
-        if step == 'strip':
+
+    step = None
+    if step_name:
+        if step_name == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '
                          'as the step to clean')
-            step = 'prime'
+            step_name = 'prime'
+        step = steps.get_step_by_name(step_name)
+
+    if build_environment.is_host:
         lifecycle.clean(project_options, parts, step)
     else:
         config = project_loader.load_config(project_options)

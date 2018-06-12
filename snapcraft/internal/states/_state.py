@@ -17,6 +17,8 @@
 import os
 import yaml
 
+from snapcraft.internal import steps
+
 
 class State(yaml.YAMLObject):
 
@@ -91,7 +93,7 @@ def get_global_state():
         return yaml.load(state_file)
 
 
-def get_state(state_dir, step):
+def get_state(state_dir: str, step: steps.Step):
     state = None
     state_file = get_step_state_file(state_dir, step)
     if os.path.isfile(state_file):
@@ -101,5 +103,5 @@ def get_state(state_dir, step):
     return state
 
 
-def get_step_state_file(state_dir: str, step: str) -> str:
-    return os.path.join(state_dir, step)
+def get_step_state_file(state_dir: str, step: steps.Step) -> str:
+    return os.path.join(state_dir, step.name)

@@ -20,7 +20,11 @@ from unittest.mock import call, patch, ANY
 
 from testtools.matchers import Contains, Equals, DirExists, FileExists, Not
 
-import snapcraft.internal.errors
+import snapcraft
+from snapcraft.internal import (
+    errors,
+    steps,
+)
 from tests import fixture_setup
 from . import CommandBaseTestCase
 
@@ -68,8 +72,8 @@ parts:
                 open(os.path.join(
                     handler.plugin.installdir, part_name), 'w').close()
 
-                handler.mark_done('pull')
-                handler.mark_done('build')
+                handler.mark_done(steps.PULL)
+                handler.mark_done(steps.BUILD)
 
                 handler.stage()
                 handler.prime()
@@ -83,7 +87,7 @@ class CleanCommandTestCase(CleanCommandBaseTestCase):
         self.make_snapcraft_yaml(n=3)
 
         raised = self.assertRaises(
-            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            errors.SnapcraftEnvironmentError,
             self.run_command, ['clean', 'no-clean'])
 
         self.assertThat(str(raised), Equals(
@@ -142,7 +146,7 @@ class ContainerizedCleanCommandTestCase(CleanCommandBaseTestCase):
         self.assertThat(fake_lxd.check_call_mock.call_count, Equals(1))
         # clean should be called normally, outside of the container
         mock_lifecycle_clean.assert_has_calls([
-            call(ANY, (), 'pull')])
+            call(ANY, (), steps.PULL)])
 
     @patch('snapcraft.internal.lifecycle.clean')
     def test_clean_containerized_pull_retains_container(
@@ -163,7 +167,7 @@ class ContainerizedCleanCommandTestCase(CleanCommandBaseTestCase):
         fake_lxd.check_call_mock.assert_not_called()
         # clean should be called normally, outside of the container
         mock_lifecycle_clean.assert_has_calls([
-            call(ANY, (), 'pull')])
+            call(ANY, (), steps.PULL)])
 
     def test_clean_containerized_with_part(self):
         fake_lxd = fixture_setup.FakeLXD()

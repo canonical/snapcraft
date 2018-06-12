@@ -16,4 +16,3 @@
 import os
 
 SNAPCRAFT_INTERNAL_DIR = os.path.join('snap', '.snapcraft')
-STEPS_TO_AUTOMATICALLY_CLEAN_IF_DIRTY = {'stage', 'prime'}
