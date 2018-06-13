@@ -62,7 +62,7 @@ class QemuDriverPassthroughBaseTest(QemuDriverBaseTest):
 
         patcher = mock.patch('socket.socket', spec=socket.socket)
         self.socket_mock = patcher.start()
-        self.socket_mock().connect_ex.return_value = 0
+        self.socket_mock().__enter__().connect_ex.return_value = 0
         self.addCleanup(patcher.stop)
 
         patcher = mock.patch('telnetlib.Telnet', spec=telnetlib.Telnet)
@@ -110,7 +110,8 @@ class QemuDriverLaunchTest(QemuDriverPassthroughBaseTest):
             '-netdev', 'user,id=net0,hostfwd=tcp::{}-:22'.format(
                 self.qemu_driver._ssh_port),
             '-drive', 'file=cloudlocal.qcow2,if=virtio,format=qcow2',
-            '-enable-kvm']),
+            '-enable-kvm'],
+            stdout=mock.ANY, stderr=mock.ANY),
             mock.call().poll()])
 
     def test_launch_no_kvm(self):
@@ -131,7 +132,8 @@ class QemuDriverLaunchTest(QemuDriverPassthroughBaseTest):
             '-device', 'e1000,netdev=net0',
             '-netdev', 'user,id=net0,hostfwd=tcp::{}-:22'.format(
                 self.qemu_driver._ssh_port),
-            '-drive', 'file=cloudlocal.qcow2,if=virtio,format=qcow2']),
+            '-drive', 'file=cloudlocal.qcow2,if=virtio,format=qcow2'],
+            stdout=mock.ANY, stderr=mock.ANY),
             mock.call().poll()])
 
     def test_launch_waits_for_ssh(self):
@@ -140,7 +142,7 @@ class QemuDriverLaunchTest(QemuDriverPassthroughBaseTest):
                                 project_9p_dev='/snapcraft-project',
                                 ram='1')
 
-        self.socket_mock().connect_ex.assert_called_once_with(
+        self.socket_mock().__enter__().connect_ex.assert_called_once_with(
             ('localhost', self.qemu_driver._ssh_port))
         self.sshclient_mock().connect.assert_called_once_with(
             'localhost',
