@@ -34,9 +34,9 @@ logger = logging.getLogger(__name__)
 logging.getLogger('paramiko').setLevel(logging.CRITICAL)
 
 
-def _popen(command: List) -> subprocess.Popen:
+def _popen(command: List[str], **kwargs) -> subprocess.Popen:
     logger.debug('Running {}'.format(' '.join(command)))
-    return subprocess.Popen(command)
+    return subprocess.Popen(command, **kwargs)
 
 
 def _get_qemu_command() -> str:
@@ -52,7 +52,7 @@ class QemuDriver:
     _PROJECT_MOUNT = 'project_mount'
 
     def __init__(self, *, ssh_username: str, ssh_key_file: str) -> None:
-        """Initialize a QemuCommand instance.
+        """Initialize a QemuDriver instance.
 
         :raises errors.ProviderCommandNotFound:
             if the relevant qemu command is not found.
@@ -68,8 +68,8 @@ class QemuDriver:
         self._ssh_username = ssh_username
         self._ssh_key_file = ssh_key_file
         self._qemu_proc = None  # type: subprocess.Popen
-        self._ssh_handle = paramiko.SSHClient()
-        self._ssh_handle.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        self._ssh_client = paramiko.SSHClient()
+        self._ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
     def launch(self, *, hda: str, qcow2_drives: Sequence,
                project_9p_dev: str, ram: str=None,
@@ -97,7 +97,10 @@ class QemuDriver:
 
         # TODO we might want to spawn another thread here to keep an eye on
         #      the process. This is good enough for now.
-        self._qemu_proc = _popen(cmd)
+        # TODO better encapsulation on setting the log file is needed.
+        with open('.vm-builder.log', 'w') as vm_builder_log:
+            self._qemu_proc = _popen(cmd, stdout=vm_builder_log,
+                                     stderr=vm_builder_log)
         # Check the immediate return code to make sure things haven't gone
         # wrong.
         proc_poll = self._qemu_proc.poll()
@@ -108,7 +111,7 @@ class QemuDriver:
         self._wait_for_ssh()
 
     def stop(self) -> None:
-        self._ssh_handle.close()
+        self._ssh_client.close()
         try:
             telnet = telnetlib.Telnet(host='localhost', port=self._telnet_port)
         except socket.gaierror as telnet_error:
@@ -129,7 +132,7 @@ class QemuDriver:
         # Properly quote and join the command
         command_string = ' '.join([shlex.quote(c) for c in command])
 
-        channel = self._ssh_handle.get_transport().open_session()
+        channel = self._ssh_client.get_transport().open_session()
         channel.get_pty()
         channel.exec_command(command_string)
         channel.settimeout(0.0)
@@ -151,25 +154,22 @@ class QemuDriver:
                 exit_code=exit_code)
 
     def _wait_for_ssh(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        ssh_port_listening = False
-        while not ssh_port_listening:
-            time.sleep(1)
-            result = sock.connect_ex(('localhost', self._ssh_port))
-            logger.debug('Pinging for ssh availability: port check {}'.format(
-                result))
-            if result == 0:
-                sock.close()
-                ssh_port_listening = True
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            while True:
+                time.sleep(1)
+                result = sock.connect_ex(('localhost', self._ssh_port))
+                logger.debug('Pinging for ssh availability: port check '
+                             '{}'.format(result))
+                if result == 0:
+                    break
 
-        ssh_service_ready = False
-        while not ssh_service_ready:
+        while True:
             time.sleep(1)
             try:
-                self._ssh_handle.connect('localhost',
+                self._ssh_client.connect('localhost',
                                          port=self._ssh_port,
                                          username=self._ssh_username,
                                          key_filename=self._ssh_key_file)
-                ssh_service_ready = True
+                break
             except paramiko.SSHException as ssh_error:
                 logger.debug('Pinging for ssh: {}'.format(str(ssh_error)))
