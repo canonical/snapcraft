@@ -132,30 +132,43 @@ class PartsConfig:
 
         return sorted_parts
 
-    def get_prereqs(self, part_name):
-        """Returns a set with all of part_names' prerequisites."""
-        return set(self.after_requests.get(part_name, []))
+    def get_dependencies(self, part_name, *, recursive=False):
+        # type: (str, bool) -> Set[pluginhandler.PluginHandler]
+        """Returns a set of all the parts upon which part_name depends."""
 
-    def get_dependents(self, part_name):
-        """Returns a set of all the parts that depend upon part_name."""
+        dependency_names = set(self.after_requests.get(part_name, []))
+        dependencies = {p for p in self.all_parts
+                        if p.name in dependency_names}
 
-        dependents = set()
-        for part, prerequisites in self.after_requests.items():
-            if part_name in prerequisites:
-                dependents.add(part)
-
-        return dependents
-
-    def get_reverse_dependencies(self, part_name):
-        """Returns all parts that recursively depend upon part_name."""
-
-        dependents = self.get_dependents(part_name)
-        for dependent in dependents.copy():
+        if recursive:
             # No need to worry about infinite recursion due to circular
             # dependencies since the YAML validation won't allow it.
-            dependents |= self.get_reverse_dependencies(dependent)
+            for dependency_name in dependency_names:
+                dependencies |= self.get_dependencies(
+                    dependency_name, recursive=recursive)
 
-        return dependents
+        return dependencies
+
+    def get_reverse_dependencies(self, part_name, *, recursive=False):
+        # type: (str, bool) -> Set[pluginhandler.PluginHandler]
+        """Returns a set of all the parts that depend upon part_name."""
+
+        reverse_dependency_names = set()
+        for part, dependencies in self.after_requests.items():
+            if part_name in dependencies:
+                reverse_dependency_names.add(part)
+
+        reverse_dependencies = {p for p in self.all_parts
+                                if p.name in reverse_dependency_names}
+
+        if recursive:
+            # No need to worry about infinite recursion due to circular
+            # dependencies since the YAML validation won't allow it.
+            for reverse_dependency_name in reverse_dependency_names:
+                reverse_dependencies |= self.get_reverse_dependencies(
+                    reverse_dependency_name, recursive=recursive)
+
+        return reverse_dependencies
 
     def get_part(self, part_name):
         for part in self.all_parts:

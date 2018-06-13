@@ -204,6 +204,73 @@ parts:
         self.assertThat(project.info, Equals(info))
 
 
+class DependenciesTestCase(YamlBaseTestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.make_snapcraft_yaml("""name: test
+version: "1"
+summary: test
+description: test
+confinement: strict
+grade: stable
+
+parts:
+  main:
+    plugin: nil
+
+  dependent:
+    plugin: nil
+    after: [main]
+
+  nested-dependent:
+    plugin: nil
+    after: [dependent]
+""")
+        self.config = _config.Config()
+
+    def assert_part_names(self, part_names, parts):
+        self.assertThat({p.name for p in parts}, Equals(part_names))
+
+    def test_get_dependencies(self):
+        self.assertFalse(self.config.parts.get_dependencies('main'))
+        self.assert_part_names(
+            {'main'}, self.config.parts.get_dependencies('dependent'))
+        self.assert_part_names(
+            {'dependent'}, self.config.parts.get_dependencies(
+                'nested-dependent'))
+
+    def test_get_dependencies_recursive(self):
+        self.assertFalse(self.config.parts.get_dependencies(
+            'main', recursive=True))
+        self.assert_part_names(
+            {'main'}, self.config.parts.get_dependencies(
+                'dependent', recursive=True))
+        self.assert_part_names(
+            {'main', 'dependent'}, self.config.parts.get_dependencies(
+                'nested-dependent', recursive=True))
+
+    def test_get_reverse_dependencies(self):
+        self.assertFalse(self.config.parts.get_reverse_dependencies(
+            'nested-dependent'))
+        self.assert_part_names(
+            {'nested-dependent'}, self.config.parts.get_reverse_dependencies(
+                'dependent'))
+        self.assert_part_names(
+            {'dependent'}, self.config.parts.get_reverse_dependencies('main'))
+
+    def test_get_reverse_dependencies_recursive(self):
+        self.assertFalse(self.config.parts.get_reverse_dependencies(
+            'nested-dependent', recursive=True))
+        self.assert_part_names(
+            {'nested-dependent'}, self.config.parts.get_reverse_dependencies(
+                'dependent', recursive=True))
+        self.assert_part_names(
+            {'dependent', 'nested-dependent'},
+            self.config.parts.get_reverse_dependencies('main', recursive=True))
+
+
 class YamlTestCase(YamlBaseTestCase):
 
     def setUp(self):
@@ -870,52 +937,6 @@ parts:
             'plugin': 'go', 'stage-packages': ['fswebcam'],
             'stage': ['/usr/lib/wget.so', '/usr/bin/wget', '/usr/lib/wget.a'],
         })
-
-    def test_get_prereqs(self):
-        self.make_snapcraft_yaml("""name: test
-version: "1"
-summary: test
-description: test
-confinement: strict
-grade: stable
-
-parts:
-  main:
-    plugin: nil
-
-  dependent:
-    plugin: nil
-    after: [main]
-""")
-        config = _config.Config()
-
-        self.assertFalse(config.parts.get_prereqs('main'))
-        self.assertThat(
-            config.parts.get_prereqs('dependent'),
-            Equals({'main'}))
-
-    def test_get_dependents(self):
-        self.make_snapcraft_yaml("""name: test
-version: "1"
-summary: test
-description: test
-confinement: strict
-grade: stable
-
-parts:
-  main:
-    plugin: nil
-
-  dependent:
-    plugin: nil
-    after: [main]
-""")
-        config = _config.Config()
-
-        self.assertFalse(config.parts.get_dependents('dependent'))
-        self.assertThat(
-            config.parts.get_dependents('main'),
-            Equals({'dependent'}))
 
     def test_replace_snapcraft_variables(self):
         self.make_snapcraft_yaml("""name: project-name

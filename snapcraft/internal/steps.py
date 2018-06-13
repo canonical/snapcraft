@@ -129,3 +129,17 @@ def get_step_by_name(step_name):
         raise errors.InvalidStepError(step_name)
     else:
         return STEPS[0]
+
+
+def get_dependency_prerequisite_step(step):
+    if step <= STAGE:
+        return STAGE
+    else:
+        return step
+
+
+def dirty_step_if_dependency_changes(changed_step):
+    if changed_step <= STAGE:
+        return STEPS[0]
+    else:
+        return changed_step

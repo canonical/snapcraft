@@ -59,7 +59,7 @@ python3 -m coverage 1>/dev/null 2>&1 && coverage="true"
 run_static_tests(){
     SRC_PATHS="bin external_snaps_tests setup.py snapcraft snaps_tests tests"
     python3 -m flake8 --max-complexity=10 $SRC_PATHS
-    codespell -S "*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,./.git,changelog" -q4
+    codespell -S "*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,./.git,changelog,./.mypy_cache" -q4
     mypy --ignore-missing-imports --follow-imports=silent -p snapcraft
 }
 
