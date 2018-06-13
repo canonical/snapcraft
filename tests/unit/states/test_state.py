@@ -55,7 +55,7 @@ class StateTestCase(unit.TestCase):
         self.project = _TestProject(self.old)
         self.part_properties = self.old
 
-        self.state = _TestState(self.part_properties, self.project, [])
+        self.state = _TestState(self.part_properties, self.project)
         self.state.properties = self.old
         self.state.project_options = self.old
 

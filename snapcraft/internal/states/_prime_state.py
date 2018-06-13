@@ -32,9 +32,8 @@ class PrimeState(PartState):
     yaml_tag = u'!PrimeState'
 
     def __init__(self, files, directories, dependency_paths=None,
-                 part_properties=None, project=None, scriptlet_metadata=None,
-                 changed_dependencies=None):
-        super().__init__(part_properties, project, changed_dependencies)
+                 part_properties=None, project=None, scriptlet_metadata=None):
+        super().__init__(part_properties, project)
 
         if not scriptlet_metadata:
             scriptlet_metadata = snapcraft.extractors.ExtractedMetadata()

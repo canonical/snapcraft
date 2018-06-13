@@ -61,36 +61,12 @@ class StepOutdatedError(SnapcraftError):
         '`snapcraft clean {parts_names} -s {step.name}`.'
     )
 
-    def __init__(self, *, step, part, dirty_properties=None,
-                 dirty_project_options=None, changed_dependencies=None,
-                 dependents=None):
+    def __init__(self, *, step, part, dirty_report=None, dependents=None):
         messages = []
-        if dirty_properties:
-            humanized_properties = formatting_utils.humanize_list(
-                dirty_properties, 'and')
-            pluralized_connection = formatting_utils.pluralize(
-                dirty_properties, 'property appears',
-                'properties appear')
-            messages.append(
-                'The {} part {} to have changed.\n'.format(
-                    humanized_properties, pluralized_connection))
-        if dirty_project_options:
-            humanized_options = formatting_utils.humanize_list(
-                dirty_project_options, 'and')
-            pluralized_connection = formatting_utils.pluralize(
-                dirty_project_options, 'option appears',
-                'options appear')
-            messages.append(
-                'The {} project {} to have changed.\n'.format(
-                    humanized_options, pluralized_connection))
-        if changed_dependencies:
-            dependencies = [
-                d['name'] for d in changed_dependencies]
-            messages.append('{} changed: {}\n'.format(
-                formatting_utils.pluralize(
-                    dependencies, 'A dependency has',
-                    'Some dependencies have'),
-                formatting_utils.humanize_list(dependencies, 'and')))
+
+        if dirty_report:
+            messages.append(dirty_report.report())
+
         if dependents:
             humanized_dependents = formatting_utils.humanize_list(
                 dependents, 'and')
@@ -105,6 +81,7 @@ class StepOutdatedError(SnapcraftError):
             parts_names = ['{!s}'.format(d) for d in sorted(dependents)]
         else:
             parts_names = [part]
+
         super().__init__(step=step, part=part,
                          report=''.join(messages),
                          parts_names=' '.join(parts_names))
@@ -607,10 +584,17 @@ class SnapcraftCopyFileNotFoundError(SnapcraftError):
 
 
 class InvalidStepError(SnapcraftError):
-    fmt = "{step_name!r} is not a valid lifecycle step"
+    fmt = '{step_name!r} is not a valid lifecycle step'
 
     def __init__(self, step_name):
         super().__init__(step_name=step_name)
+
+
+class StepHasNotRunError(SnapcraftError):
+    fmt = 'The {part_name!r} part has not yet run the {step.name!r} step'
+
+    def __init__(self, part_name, step):
+        super().__init__(part_name=part_name, step=step)
 
 
 class NoLatestStepError(SnapcraftError):

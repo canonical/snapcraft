@@ -156,7 +156,8 @@ class ExecutionTestCase(LifecycleTestBase):
 
         def _fake_dirty_report(self, step):
             if step == steps.STAGE:
-                return pluginhandler.DirtyReport({'foo'}, {'bar'}, [])
+                return pluginhandler.DirtyReport(
+                    dirty_properties={'foo'}, dirty_project_options={'bar'})
             return None
 
         # Should stage no problem
@@ -204,7 +205,8 @@ class ExecutionTestCase(LifecycleTestBase):
 
         def _fake_dirty_report(self, step):
             if step == steps.BUILD:
-                return pluginhandler.DirtyReport({'foo', 'bar'}, set(), [])
+                return pluginhandler.DirtyReport(
+                    dirty_properties={'foo', 'bar'})
             return None
 
         # Should catch that the part needs to be rebuilt and raise an error.
@@ -244,7 +246,8 @@ class ExecutionTestCase(LifecycleTestBase):
 
         def _fake_dirty_report(self, step):
             if step == steps.PULL:
-                return pluginhandler.DirtyReport(set(), {'foo', 'bar'}, [])
+                return pluginhandler.DirtyReport(
+                    dirty_project_options={'foo', 'bar'})
             return None
 
         # Should catch that the part needs to be re-pulled and raise an error.

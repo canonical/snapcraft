@@ -160,10 +160,11 @@ class OrderTestBase(LifecycleTestBase):
         return sorted(actual_order, key=lambda k: k['timestamp'])
 
     def assert_parts_dirty(self, expected_parts, hint):
+        cache = lifecycle.StatusCache(self.project_config)
         dirty_parts = []
         for part in self.project_config.parts.all_parts:
             for step in steps.STEPS:
-                if part.get_dirty_report(step):
+                if cache.get_dirty_report(part, step):
                     dirty_parts.append(dict(part=part.name, step=step))
         self.assertThat(dirty_parts, HasLength(len(expected_parts)), hint)
         for expected in expected_parts:
@@ -294,24 +295,21 @@ class MainTest(ReStepOrderTestBase):
             'test_parts': ['main'],
             'test_step': steps.PULL,
             'expected_initial': pull_order(),
-            'expected_test': [
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-            ] + pull_order('main'),
+            'expected_test': pull_order('main'),
             'expected_test_cleaned': [
                 dict(part='main', step=steps.BUILD),
                 dict(part='main', step=steps.STAGE),
-                dict(part='dependent', step=steps.BUILD),
-                dict(part='dependent', step=steps.STAGE),
             ],
             'expected_final': [
-                # These two are pulled, but they should both be dirty.
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PULL),
             ] + pull_order('main'),
             'expected_dirty': [
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PULL),
             ],
         }),
@@ -321,26 +319,24 @@ class MainTest(ReStepOrderTestBase):
             'test_parts': ['main'],
             'test_step': steps.PULL,
             'expected_initial': build_order(),
-            'expected_test': [
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-            ] + pull_order('main'),
+            'expected_test': pull_order('main'),
             'expected_test_cleaned': [
                 dict(part='main', step=steps.BUILD),
                 dict(part='main', step=steps.STAGE),
-                dict(part='dependent', step=steps.BUILD),
-                dict(part='dependent', step=steps.STAGE),
-                dict(part='nested-dependent', step=steps.BUILD),
             ],
             'expected_final': [
-                # These two are pulled, but they should both be dirty.
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
             ] + pull_order('main'),
             'expected_dirty': [
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
             ],
         }),
         ('all stage -> repull', {
@@ -349,27 +345,26 @@ class MainTest(ReStepOrderTestBase):
             'test_parts': ['main'],
             'test_step': steps.PULL,
             'expected_initial': stage_order(),
-            'expected_test': [
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-            ] + pull_order('main'),
+            'expected_test': pull_order('main'),
             'expected_test_cleaned': [
                 dict(part='main', step=steps.BUILD),
                 dict(part='main', step=steps.STAGE),
-                dict(part='dependent', step=steps.BUILD),
-                dict(part='dependent', step=steps.STAGE),
-                dict(part='nested-dependent', step=steps.BUILD),
-                dict(part='nested-dependent', step=steps.STAGE),
             ],
             'expected_final': [
-                # These two are pulled, but they should both be dirty.
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
             ] + pull_order('main'),
             'expected_dirty': [
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
             ],
         }),
         ('all prime -> repull', {
@@ -378,30 +373,31 @@ class MainTest(ReStepOrderTestBase):
             'test_parts': ['main'],
             'test_step': steps.PULL,
             'expected_initial': prime_order(),
-            'expected_test': [
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-            ] + pull_order('main'),
+            'expected_test': pull_order('main'),
             'expected_test_cleaned': [
                 dict(part='main', step=steps.BUILD),
                 dict(part='main', step=steps.STAGE),
                 dict(part='main', step=steps.PRIME),
-                dict(part='dependent', step=steps.BUILD),
-                dict(part='dependent', step=steps.STAGE),
-                dict(part='dependent', step=steps.PRIME),
-                dict(part='nested-dependent', step=steps.BUILD),
-                dict(part='nested-dependent', step=steps.STAGE),
-                dict(part='nested-dependent', step=steps.PRIME),
             ],
             'expected_final': [
-                # These two are pulled, but they should both be dirty.
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='dependent', step=steps.PRIME),
+                dict(part='nested-dependent', step=steps.PRIME),
             ] + pull_order('main'),
             'expected_dirty': [
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
+                dict(part='dependent', step=steps.PRIME),
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='nested-dependent', step=steps.PRIME),
             ],
         }),
 
@@ -459,30 +455,28 @@ class MainTest(ReStepOrderTestBase):
             'test_step': steps.BUILD,
             'expected_initial': build_order(),
             'expected_test': [
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='main', step=steps.BUILD),
             ],
             'expected_test_cleaned': [
                 dict(part='main', step=steps.STAGE),
-                dict(part='dependent', step=steps.BUILD),
-                dict(part='dependent', step=steps.STAGE),
-                dict(part='nested-dependent', step=steps.BUILD),
             ],
             'expected_final': [
                 dict(part='main', step=steps.PULL),
 
-                # These two are pulled, but they should both be dirty.
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
 
                 dict(part='main', step=steps.BUILD),
             ],
             'expected_dirty': [
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
             ],
         }),
         ('all stage -> rebuild', {
@@ -492,31 +486,30 @@ class MainTest(ReStepOrderTestBase):
             'test_step': steps.BUILD,
             'expected_initial': stage_order(),
             'expected_test': [
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='main', step=steps.BUILD),
             ],
             'expected_test_cleaned': [
                 dict(part='main', step=steps.STAGE),
-                dict(part='dependent', step=steps.BUILD),
-                dict(part='dependent', step=steps.STAGE),
-                dict(part='nested-dependent', step=steps.BUILD),
-                dict(part='nested-dependent', step=steps.STAGE),
             ],
             'expected_final': [
                 dict(part='main', step=steps.PULL),
 
-                # These two are pulled, but they should both be dirty.
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
 
                 dict(part='main', step=steps.BUILD),
             ],
             'expected_dirty': [
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
             ],
         }),
         ('all prime -> rebuild', {
@@ -526,34 +519,35 @@ class MainTest(ReStepOrderTestBase):
             'test_step': steps.BUILD,
             'expected_initial': prime_order(),
             'expected_test': [
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='main', step=steps.BUILD),
             ],
             'expected_test_cleaned': [
                 dict(part='main', step=steps.STAGE),
                 dict(part='main', step=steps.PRIME),
-                dict(part='dependent', step=steps.BUILD),
-                dict(part='dependent', step=steps.STAGE),
-                dict(part='dependent', step=steps.PRIME),
-                dict(part='nested-dependent', step=steps.BUILD),
-                dict(part='nested-dependent', step=steps.STAGE),
-                dict(part='nested-dependent', step=steps.PRIME),
             ],
             'expected_final': [
                 dict(part='main', step=steps.PULL),
 
-                # These two are pulled, but they should both be dirty.
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='dependent', step=steps.PRIME),
+                dict(part='nested-dependent', step=steps.PRIME),
 
                 dict(part='main', step=steps.BUILD),
             ],
             'expected_dirty': [
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
+                dict(part='dependent', step=steps.PRIME),
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='nested-dependent', step=steps.PRIME),
             ],
         }),
 
@@ -595,28 +589,25 @@ class MainTest(ReStepOrderTestBase):
             'test_step': steps.STAGE,
             'expected_initial': stage_order(),
             'expected_test': [
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='main', step=steps.STAGE),
             ],
-            'expected_test_cleaned': [
+            'expected_test_cleaned': [],
+            'expected_final': build_order('main') + [
+                dict(part='dependent', step=steps.PULL),
                 dict(part='dependent', step=steps.BUILD),
                 dict(part='dependent', step=steps.STAGE),
+                dict(part='nested-dependent', step=steps.PULL),
                 dict(part='nested-dependent', step=steps.BUILD),
                 dict(part='nested-dependent', step=steps.STAGE),
-            ],
-            'expected_final': build_order('main') + [
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='main', step=steps.STAGE),
             ],
             'expected_dirty': [
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
             ],
         }),
         ('all prime -> restage', {
@@ -626,31 +617,31 @@ class MainTest(ReStepOrderTestBase):
             'test_step': steps.STAGE,
             'expected_initial': prime_order(),
             'expected_test': [
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='main', step=steps.STAGE),
             ],
             'expected_test_cleaned': [
                 dict(part='main', step=steps.PRIME),
-                dict(part='dependent', step=steps.BUILD),
-                dict(part='dependent', step=steps.STAGE),
-                dict(part='dependent', step=steps.PRIME),
-                dict(part='nested-dependent', step=steps.BUILD),
-                dict(part='nested-dependent', step=steps.STAGE),
-                dict(part='nested-dependent', step=steps.PRIME),
             ],
             'expected_final': build_order('main') + [
-                # These two are pulled, but they should both be dirty.
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PULL),
-
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='dependent', step=steps.PRIME),
+                dict(part='nested-dependent', step=steps.PRIME),
                 dict(part='main', step=steps.STAGE),
             ],
             'expected_dirty': [
                 dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
+                dict(part='dependent', step=steps.STAGE),
+                dict(part='dependent', step=steps.PRIME),
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='nested-dependent', step=steps.PRIME),
             ],
         }),
 
@@ -677,18 +668,12 @@ class MainTest(ReStepOrderTestBase):
             'test_step': steps.PRIME,
             'expected_initial': prime_order(),
             'expected_test': [
-                # These two are primed, but they should both be dirty.
-                dict(part='dependent', step=steps.PRIME),
-                dict(part='nested-dependent', step=steps.PRIME),
-
                 dict(part='main', step=steps.PRIME),
             ],
             'expected_test_cleaned': [],
             'expected_final': stage_order() + [
-                # These two are primed, but they should both be dirty.
                 dict(part='dependent', step=steps.PRIME),
                 dict(part='nested-dependent', step=steps.PRIME),
-
                 dict(part='main', step=steps.PRIME),
             ],
             'expected_dirty': [
@@ -778,9 +763,6 @@ class DependentTest(ReStepOrderTestBase):
             'test_step': steps.PULL,
             'expected_initial': pull_order(),
             'expected_test': [
-                # This is still pulled, but it should be dirty
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.PULL),
             ],
             'expected_test_cleaned': [
@@ -788,9 +770,7 @@ class DependentTest(ReStepOrderTestBase):
                 dict(part='dependent', step=steps.STAGE),
             ],
             'expected_final': stage_order('main') + [
-                # This is still pulled, but it should be dirty
                 dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.PULL),
             ],
             'expected_dirty': [
@@ -804,24 +784,20 @@ class DependentTest(ReStepOrderTestBase):
             'test_step': steps.PULL,
             'expected_initial': build_order(),
             'expected_test': [
-                # This is still pulled, but it should be dirty
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.PULL),
             ],
             'expected_test_cleaned': [
                 dict(part='dependent', step=steps.BUILD),
                 dict(part='dependent', step=steps.STAGE),
-                dict(part='nested-dependent', step=steps.BUILD)
             ],
             'expected_final': stage_order('main') + [
-                # This is still pulled, but it should be dirty
                 dict(part='nested-dependent', step=steps.PULL),
-
+                dict(part='nested-dependent', step=steps.BUILD),
                 dict(part='dependent', step=steps.PULL),
             ],
             'expected_dirty': [
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
             ],
         }),
         ('all stage -> repull', {
@@ -831,25 +807,22 @@ class DependentTest(ReStepOrderTestBase):
             'test_step': steps.PULL,
             'expected_initial': stage_order(),
             'expected_test': [
-                # This is still pulled, but it should be dirty
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.PULL),
             ],
             'expected_test_cleaned': [
                 dict(part='dependent', step=steps.BUILD),
                 dict(part='dependent', step=steps.STAGE),
-                dict(part='nested-dependent', step=steps.BUILD),
-                dict(part='nested-dependent', step=steps.STAGE),
             ],
             'expected_final': stage_order('main') + [
-                # This is still pulled, but it should be dirty
                 dict(part='nested-dependent', step=steps.PULL),
-
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
                 dict(part='dependent', step=steps.PULL),
             ],
             'expected_dirty': [
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
             ],
         }),
         ('all prime -> repull', {
@@ -859,27 +832,26 @@ class DependentTest(ReStepOrderTestBase):
             'test_step': steps.PULL,
             'expected_initial': prime_order(),
             'expected_test': [
-                # This is still pulled, but it should be dirty
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.PULL),
             ],
             'expected_test_cleaned': [
                 dict(part='dependent', step=steps.BUILD),
                 dict(part='dependent', step=steps.STAGE),
                 dict(part='dependent', step=steps.PRIME),
+            ],
+            'expected_final': stage_order('main') + [
+                dict(part='nested-dependent', step=steps.PULL),
                 dict(part='nested-dependent', step=steps.BUILD),
                 dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='main', step=steps.PRIME),
                 dict(part='nested-dependent', step=steps.PRIME),
-            ],
-            'expected_final': prime_order('main') + [
-                # This is still pulled, but it should be dirty
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.PULL),
             ],
             'expected_dirty': [
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='nested-dependent', step=steps.PRIME),
             ],
         }),
 
@@ -940,27 +912,20 @@ class DependentTest(ReStepOrderTestBase):
             'test_step': steps.BUILD,
             'expected_initial': build_order(),
             'expected_test': [
-                # This is still pulled and built, but both steps should be
-                # dirty.
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.BUILD),
             ],
             'expected_test_cleaned': [
                 dict(part='dependent', step=steps.STAGE),
-                dict(part='nested-dependent', step=steps.BUILD),
             ],
             'expected_final': stage_order('main') + [
                 dict(part='dependent', step=steps.PULL),
-
-                # This is still pulled and built, but both steps should be
-                # dirty.
                 dict(part='nested-dependent', step=steps.PULL),
-
+                dict(part='nested-dependent', step=steps.BUILD),
                 dict(part='dependent', step=steps.BUILD),
             ],
             'expected_dirty': [
-                dict(part='nested-dependent', step=steps.PULL)
+                dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
             ],
         }),
         ('all stage -> rebuild', {
@@ -970,26 +935,22 @@ class DependentTest(ReStepOrderTestBase):
             'test_step': steps.BUILD,
             'expected_initial': stage_order(),
             'expected_test': [
-                # This is still pulled, but it should be dirty
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.BUILD),
             ],
             'expected_test_cleaned': [
                 dict(part='dependent', step=steps.STAGE),
-                dict(part='nested-dependent', step=steps.BUILD),
-                dict(part='nested-dependent', step=steps.STAGE),
             ],
             'expected_final': stage_order('main') + [
                 dict(part='dependent', step=steps.PULL),
-
-                # This is still pulled, but it should be dirty
                 dict(part='nested-dependent', step=steps.PULL),
-
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
                 dict(part='dependent', step=steps.BUILD),
             ],
             'expected_dirty': [
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
             ],
         }),
         ('all prime -> rebuild', {
@@ -999,28 +960,25 @@ class DependentTest(ReStepOrderTestBase):
             'test_step': steps.BUILD,
             'expected_initial': prime_order(),
             'expected_test': [
-                # This is still pulled, but it should be dirty
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.BUILD),
             ],
             'expected_test_cleaned': [
                 dict(part='dependent', step=steps.STAGE),
                 dict(part='dependent', step=steps.PRIME),
-                dict(part='nested-dependent', step=steps.BUILD),
-                dict(part='nested-dependent', step=steps.STAGE),
-                dict(part='nested-dependent', step=steps.PRIME),
             ],
             'expected_final': pull_order('dependent') + [
-                dict(part='main', step=steps.PRIME),
-
-                # This is still pulled, but it should be dirty
                 dict(part='nested-dependent', step=steps.PULL),
-
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='main', step=steps.PRIME),
+                dict(part='nested-dependent', step=steps.PRIME),
                 dict(part='dependent', step=steps.BUILD),
             ],
             'expected_dirty': [
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='nested-dependent', step=steps.PRIME),
             ],
         }),
 
@@ -1065,23 +1023,19 @@ class DependentTest(ReStepOrderTestBase):
             'test_step': steps.STAGE,
             'expected_initial': stage_order(),
             'expected_test': [
-                # This is still pulled, but it should be dirty
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.STAGE),
             ],
-            'expected_test_cleaned': [
+            'expected_test_cleaned': [],
+            'expected_final': build_order('dependent') + [
+                dict(part='nested-dependent', step=steps.PULL),
                 dict(part='nested-dependent', step=steps.BUILD),
                 dict(part='nested-dependent', step=steps.STAGE),
-            ],
-            'expected_final': build_order('dependent') + [
-                # This is still pulled, but it should be dirty
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.STAGE),
             ],
             'expected_dirty': [
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
             ],
         }),
         ('all prime -> restage', {
@@ -1091,27 +1045,24 @@ class DependentTest(ReStepOrderTestBase):
             'test_step': steps.STAGE,
             'expected_initial': prime_order(),
             'expected_test': [
-                # This is still pulled, but it should be dirty
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.STAGE),
             ],
             'expected_test_cleaned': [
                 dict(part='dependent', step=steps.PRIME),
-                dict(part='nested-dependent', step=steps.BUILD),
-                dict(part='nested-dependent', step=steps.STAGE),
-                dict(part='nested-dependent', step=steps.PRIME),
             ],
             'expected_final': build_order('dependent') + [
-                dict(part='main', step=steps.PRIME),
-
-                # This is still pulled, but it should be dirty
                 dict(part='nested-dependent', step=steps.PULL),
-
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='main', step=steps.PRIME),
+                dict(part='nested-dependent', step=steps.PRIME),
                 dict(part='dependent', step=steps.STAGE),
             ],
             'expected_dirty': [
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='nested-dependent', step=steps.PRIME),
             ],
         }),
 
@@ -1138,18 +1089,12 @@ class DependentTest(ReStepOrderTestBase):
             'test_step': steps.PRIME,
             'expected_initial': prime_order(),
             'expected_test': [
-                # This is still primed, but it should be dirty
-                dict(part='nested-dependent', step=steps.PRIME),
-
                 dict(part='dependent', step=steps.PRIME),
             ],
             'expected_test_cleaned': [],
             'expected_final': stage_order('nested-dependent') + [
                 dict(part='main', step=steps.PRIME),
-
-                # This is still primed, but it should be dirty
                 dict(part='nested-dependent', step=steps.PRIME),
-
                 dict(part='dependent', step=steps.PRIME),
             ],
             'expected_dirty': [
@@ -1340,122 +1285,55 @@ class DirtyTest(OrderTestBase):
         ('main pull dirty', {
             'test_dirty_parts': [dict(part='main', step=steps.PULL)],
             'expected_initial': prime_order(),
-            'expected_test': [
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-            ] + prime_order('main'),
-            'expected_test_cleaned': [
-                dict(part='dependent', step=steps.BUILD),
-                dict(part='dependent', step=steps.STAGE),
-                dict(part='dependent', step=steps.PRIME),
-                dict(part='nested-dependent', step=steps.BUILD),
-                dict(part='nested-dependent', step=steps.STAGE),
-                dict(part='nested-dependent', step=steps.PRIME),
-            ],
-            'expected_final': [
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-            ] + prime_order('main'),
-            'expected_dirty': [
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-            ],
+            'expected_test': prime_order(),
+            'expected_final': prime_order(),
         }),
         ('main build dirty', {
             'test_dirty_parts': [dict(part='main', step=steps.BUILD)],
             'expected_initial': prime_order(),
             'expected_test': [
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='main', step=steps.BUILD),
                 dict(part='main', step=steps.STAGE),
-                dict(part='main', step=steps.PRIME),
-            ],
-            'expected_test_cleaned': [
+                dict(part='dependent', step=steps.PULL),
                 dict(part='dependent', step=steps.BUILD),
                 dict(part='dependent', step=steps.STAGE),
-                dict(part='dependent', step=steps.PRIME),
+                dict(part='nested-dependent', step=steps.PULL),
                 dict(part='nested-dependent', step=steps.BUILD),
                 dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='main', step=steps.PRIME),
+                dict(part='dependent', step=steps.PRIME),
                 dict(part='nested-dependent', step=steps.PRIME),
             ],
-            'expected_final': [
-                dict(part='main', step=steps.PULL),
-
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-
-                dict(part='main', step=steps.BUILD),
-                dict(part='main', step=steps.STAGE),
-                dict(part='main', step=steps.PRIME),
-            ],
-            'expected_dirty': [
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-            ],
+            'expected_final': prime_order(),
         }),
         ('main stage dirty', {
             'test_dirty_parts': [dict(part='main', step=steps.STAGE)],
             'expected_initial': prime_order(),
             'expected_test': [
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='main', step=steps.STAGE),
-                dict(part='main', step=steps.PRIME),
-            ],
-            'expected_test_cleaned': [
+                dict(part='dependent', step=steps.PULL),
                 dict(part='dependent', step=steps.BUILD),
                 dict(part='dependent', step=steps.STAGE),
-                dict(part='dependent', step=steps.PRIME),
+                dict(part='nested-dependent', step=steps.PULL),
                 dict(part='nested-dependent', step=steps.BUILD),
                 dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='main', step=steps.PRIME),
+                dict(part='dependent', step=steps.PRIME),
                 dict(part='nested-dependent', step=steps.PRIME),
             ],
-            'expected_final': [
-                dict(part='main', step=steps.PULL),
-                dict(part='main', step=steps.BUILD),
-
-                # These two are pulled, but they should both be dirty.
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-
-                dict(part='main', step=steps.STAGE),
-                dict(part='main', step=steps.PRIME),
-            ],
-            'expected_dirty': [
-                dict(part='dependent', step=steps.PULL),
-                dict(part='nested-dependent', step=steps.PULL),
-            ],
+            'expected_test_cleaned': [],
+            'expected_final': prime_order(),
         }),
         ('main prime dirty', {
             'test_dirty_parts': [dict(part='main', step=steps.PRIME)],
             'expected_initial': prime_order(),
             'expected_test': [
-                # These two are primed, but they should both be dirty.
+                dict(part='main', step=steps.PRIME),
                 dict(part='dependent', step=steps.PRIME),
                 dict(part='nested-dependent', step=steps.PRIME),
-
-                dict(part='main', step=steps.PRIME),
             ],
             'expected_test_cleaned': [],
-            'expected_final': stage_order() + [
-                # These two are primed, but they should both be dirty.
-                dict(part='dependent', step=steps.PRIME),
-                dict(part='nested-dependent', step=steps.PRIME),
-
-                dict(part='main', step=steps.PRIME),
-            ],
-            'expected_dirty': [
-                dict(part='dependent', step=steps.PRIME),
-                dict(part='nested-dependent', step=steps.PRIME),
-            ],
+            'expected_final': prime_order(),
         }),
 
         # dependent tests
@@ -1463,110 +1341,81 @@ class DirtyTest(OrderTestBase):
             'test_dirty_parts': [dict(part='dependent', step=steps.PULL)],
             'expected_initial': prime_order(),
             'expected_test': [
-                # This is pulled, but it should be dirty.
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.PULL),
                 dict(part='dependent', step=steps.BUILD),
                 dict(part='dependent', step=steps.STAGE),
-                dict(part='dependent', step=steps.PRIME),
-            ],
-            'expected_test_cleaned': [
+                dict(part='nested-dependent', step=steps.PULL),
                 dict(part='nested-dependent', step=steps.BUILD),
                 dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='dependent', step=steps.PRIME),
                 dict(part='nested-dependent', step=steps.PRIME),
             ],
             'expected_final': prime_order('main') + [
-                # This is pulled, but it should be dirty.
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.PULL),
                 dict(part='dependent', step=steps.BUILD),
                 dict(part='dependent', step=steps.STAGE),
-                dict(part='dependent', step=steps.PRIME),
-            ],
-            'expected_dirty': [
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='dependent', step=steps.PRIME),
+                dict(part='nested-dependent', step=steps.PRIME),
             ],
         }),
         ('dependent build dirty', {
             'test_dirty_parts': [dict(part='dependent', step=steps.BUILD)],
             'expected_initial': prime_order(),
             'expected_test': [
-                # This is pulled, but it should be dirty.
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.BUILD),
                 dict(part='dependent', step=steps.STAGE),
-                dict(part='dependent', step=steps.PRIME),
-            ],
-            'expected_test_cleaned': [
+                dict(part='nested-dependent', step=steps.PULL),
                 dict(part='nested-dependent', step=steps.BUILD),
                 dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='dependent', step=steps.PRIME),
                 dict(part='nested-dependent', step=steps.PRIME),
             ],
-            'expected_final': pull_order('dependent') + [
+            'expected_final': stage_order('main') + [
+                dict(part='dependent', step=steps.PULL),
                 dict(part='main', step=steps.PRIME),
-
-                # This is pulled, but it should be dirty.
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.BUILD),
                 dict(part='dependent', step=steps.STAGE),
-                dict(part='dependent', step=steps.PRIME),
-            ],
-            'expected_dirty': [
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='dependent', step=steps.PRIME),
+                dict(part='nested-dependent', step=steps.PRIME),
             ],
         }),
         ('dependent stage dirty', {
             'test_dirty_parts': [dict(part='dependent', step=steps.STAGE)],
             'expected_initial': prime_order(),
             'expected_test': [
-                # This is pulled, but it should be dirty.
-                dict(part='nested-dependent', step=steps.PULL),
-
                 dict(part='dependent', step=steps.STAGE),
-                dict(part='dependent', step=steps.PRIME),
-            ],
-            'expected_test_cleaned': [
+                dict(part='nested-dependent', step=steps.PULL),
                 dict(part='nested-dependent', step=steps.BUILD),
                 dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='dependent', step=steps.PRIME),
                 dict(part='nested-dependent', step=steps.PRIME),
             ],
-            'expected_final': build_order('dependent') + [
+            'expected_final': stage_order('main') + [
+                dict(part='dependent', step=steps.PULL),
+                dict(part='dependent', step=steps.BUILD),
                 dict(part='main', step=steps.PRIME),
-
-                # This is pulled, but it should be dirty.
-                dict(part='nested-dependent', step=steps.PULL),
                 dict(part='dependent', step=steps.STAGE),
-                dict(part='dependent', step=steps.PRIME),
-            ],
-            'expected_dirty': [
                 dict(part='nested-dependent', step=steps.PULL),
+                dict(part='nested-dependent', step=steps.BUILD),
+                dict(part='nested-dependent', step=steps.STAGE),
+                dict(part='dependent', step=steps.PRIME),
+                dict(part='nested-dependent', step=steps.PRIME),
             ],
         }),
         ('dependent prime dirty', {
             'test_dirty_parts': [dict(part='dependent', step=steps.PRIME)],
             'expected_initial': prime_order(),
             'expected_test': [
-                # This is primed, but it should be dirty.
-                dict(part='nested-dependent', step=steps.PRIME),
-
                 dict(part='dependent', step=steps.PRIME),
-            ],
-            'expected_test_cleaned': [],
-            'expected_final': stage_order('nested-dependent') + [
-                dict(part='main', step=steps.PRIME),
-
-                # This is primed, but it should be dirty.
-                dict(part='nested-dependent', step=steps.PRIME),
-
-                dict(part='dependent', step=steps.PRIME),
-            ],
-            'expected_dirty': [
                 dict(part='nested-dependent', step=steps.PRIME),
             ],
+            'expected_final': prime_order(),
         }),
 
         # nested dependent tests
@@ -1580,14 +1429,12 @@ class DirtyTest(OrderTestBase):
                 dict(part='nested-dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PRIME),
             ],
-            'expected_test_cleaned': [],
             'expected_final': prime_order('dependent') + [
                 dict(part='nested-dependent', step=steps.PULL),
                 dict(part='nested-dependent', step=steps.BUILD),
                 dict(part='nested-dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PRIME),
             ],
-            'expected_dirty': [],
         }),
         ('nested dependent build dirty', {
             'test_dirty_parts': [
@@ -1598,7 +1445,6 @@ class DirtyTest(OrderTestBase):
                 dict(part='nested-dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PRIME),
             ],
-            'expected_test_cleaned': [],
             'expected_final': pull_order('nested-dependent') + [
                 dict(part='main', step=steps.PRIME),
                 dict(part='dependent', step=steps.PRIME),
@@ -1606,7 +1452,6 @@ class DirtyTest(OrderTestBase):
                 dict(part='nested-dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PRIME),
             ],
-            'expected_dirty': [],
         }),
         ('nested dependent stage dirty', {
             'test_dirty_parts': [
@@ -1616,14 +1461,12 @@ class DirtyTest(OrderTestBase):
                 dict(part='nested-dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PRIME),
             ],
-            'expected_test_cleaned': [],
             'expected_final': build_order('nested-dependent') + [
                 dict(part='main', step=steps.PRIME),
                 dict(part='dependent', step=steps.PRIME),
                 dict(part='nested-dependent', step=steps.STAGE),
                 dict(part='nested-dependent', step=steps.PRIME),
             ],
-            'expected_dirty': [],
         }),
         ('nested dependent prime dirty', {
             'test_dirty_parts': [
@@ -1632,9 +1475,7 @@ class DirtyTest(OrderTestBase):
             'expected_test': [
                 dict(part='nested-dependent', step=steps.PRIME),
             ],
-            'expected_test_cleaned': [],
             'expected_final': prime_order('nested-dependent'),
-            'expected_dirty': [],
         }),
     ]
 
@@ -1649,7 +1490,7 @@ class DirtyTest(OrderTestBase):
         def _fake_dirty_report(self, step):
             nonlocal dirty_parts
             if dict(part=self.name, step=step) in dirty_parts:
-                return pluginhandler.DirtyReport({'forced'}, set(), [])
+                return pluginhandler.DirtyReport(dirty_properties={'forced'})
             return original_dirty_report(self, step)
 
         patcher = mock.patch.object(
@@ -1689,10 +1530,9 @@ class DirtyTest(OrderTestBase):
         self.assert_run_order_equal(test_order, self.expected_test, '(test)')
 
         self.assert_parts_cleaned(
-            initial_order, current_order, self.expected_test_cleaned,
-            '(cleaned)')
+            initial_order, current_order, [], '(cleaned)')
 
         self.assert_run_order_equal(
             self.get_run_order(), self.expected_final, '(final)')
 
-        self.assert_parts_dirty(self.expected_dirty, '(dirty)')
+        self.assert_parts_dirty([], '(dirty)')
