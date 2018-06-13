@@ -20,7 +20,11 @@ from unittest.mock import call, patch, ANY
 
 from testtools.matchers import Contains, Equals, DirExists, FileExists, Not
 
-import snapcraft.internal.errors
+import snapcraft
+from snapcraft.internal import (
+    errors,
+    steps,
+)
 from tests import fixture_setup
 from . import CommandBaseTestCase
 
@@ -68,8 +72,8 @@ parts:
                 open(os.path.join(
                     handler.plugin.installdir, part_name), 'w').close()
 
-                handler.mark_done('pull')
-                handler.mark_done('build')
+                handler.mark_done(steps.PULL)
+                handler.mark_done(steps.BUILD)
 
                 handler.stage()
                 handler.prime()
@@ -83,7 +87,7 @@ class CleanCommandTestCase(CleanCommandBaseTestCase):
         self.make_snapcraft_yaml(n=3)
 
         raised = self.assertRaises(
-            snapcraft.internal.errors.SnapcraftEnvironmentError,
+            errors.SnapcraftEnvironmentError,
             self.run_command, ['clean', 'no-clean'])
 
         self.assertThat(str(raised), Equals(
@@ -142,7 +146,7 @@ class ContainerizedCleanCommandTestCase(CleanCommandBaseTestCase):
         self.assertThat(fake_lxd.check_call_mock.call_count, Equals(1))
         # clean should be called normally, outside of the container
         mock_lifecycle_clean.assert_has_calls([
-            call(ANY, (), 'pull')])
+            call(ANY, (), steps.PULL)])
 
     @patch('snapcraft.internal.lifecycle.clean')
     def test_clean_containerized_pull_retains_container(
@@ -163,7 +167,7 @@ class ContainerizedCleanCommandTestCase(CleanCommandBaseTestCase):
         fake_lxd.check_call_mock.assert_not_called()
         # clean should be called normally, outside of the container
         mock_lifecycle_clean.assert_has_calls([
-            call(ANY, (), 'pull')])
+            call(ANY, (), steps.PULL)])
 
     def test_clean_containerized_with_part(self):
         fake_lxd = fixture_setup.FakeLXD()
@@ -278,23 +282,28 @@ parts:
         self.part_dirs = {}
         for part in ['main', 'dependent', 'nested-dependent']:
             self.part_dirs[part] = os.path.join(self.parts_dir, part)
-            os.makedirs(os.path.join(self.part_dirs[part], 'state'))
-            open(os.path.join(self.part_dirs[part], 'state', 'pull'),
-                 'w').close()
 
-        os.makedirs(self.stage_dir)
-        os.makedirs(self.prime_dir)
+        result = self.run_command(['pull'])
+        self.assertThat(result.exit_code, Equals(0))
 
     def assert_clean(self, parts):
         for part in parts:
-            self.assertThat(self.part_dirs[part], Not(DirExists()))
+            self.assertThat(
+                os.path.join(self.part_dirs[part], 'state'), Not(DirExists()),
+                '{!r} is not clean!'.format(part))
+
+    def assert_not_clean(self, parts):
+        for part in parts:
+            self.assertThat(
+                os.path.join(self.part_dirs[part], 'state'), DirExists(),
+                '{!r} is clean!'.format(part))
 
     def test_clean_dependent_parts(self):
         result = self.run_command(['clean', 'dependent', 'nested-dependent'])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assert_clean(['dependent', 'nested-dependent'])
-        self.assertThat(self.part_dirs['main'], DirExists())
+        self.assert_not_clean(['main'])
 
     def test_clean_part_with_clean_dependent(self):
         result = self.run_command(['clean', 'nested-dependent'])
@@ -310,15 +319,16 @@ parts:
         self.assert_clean(['dependent', 'nested-dependent'])
 
     def test_clean_part_unspecified_uncleaned_dependent_notifies(self):
-        # Not specifying nested-dependent here should result in clean raising
-        # an exception, saying that it has dependents.
+        # Not specifying nested-dependent here should result in clean notifying
+        # that its dependents are now out-of-date
         result = self.run_command(['clean', 'dependent'])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
-            "Requested clean of 'dependent' which requires also cleaning the "
-            "part 'nested-dependent'"))
-        self.assert_clean(['dependent', 'nested-dependent'])
+            "Cleaned 'dependent', which makes the following part out of date: "
+            "'nested-dependent'"))
+        self.assert_clean(['dependent'])
+        self.assert_not_clean(['nested-dependent'])
 
     def test_clean_nested_dependent_parts(self):
         result = self.run_command([
@@ -350,23 +360,25 @@ parts:
         self.assert_clean(['main', 'dependent', 'nested-dependent'])
 
     def test_clean_part_unspecified_uncleaned_dependent_nested_notifies(self):
-        # Not specifying dependent here should result in clean raising
-        # an exception, saying that it has dependents.
+        # Not specifying dependent here should result in clean notifying that
+        # its dependents are now dirty. It should NOT clean them, though.
         result = self.run_command(['clean', 'main'])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
-            "Requested clean of 'main' which requires also cleaning the "
-            "part 'dependent'"))
-        self.assert_clean(['main', 'dependent'])
+            "Cleaned 'main', which makes the following parts out of date: "
+            "'dependent' and 'nested-dependent'"))
+        self.assert_clean(['main'])
+        self.assert_not_clean(['dependent', 'nested-dependent'])
 
     def test_clean_part_unspecified_uncleaned_nested_dependent_notifies(self):
-        # Not specifying nested-dependent here should result in clean raising
-        # an exception, saying that it has dependents.
+        # Not specifying the nested-dependent here should result in clean
+        # notifying that it's now dirty. It should NOT clean it, though.
         result = self.run_command(['clean', 'main', 'dependent'])
 
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(result.output, Contains(
-            "Requested clean of 'dependent' which requires also cleaning the "
-            "part 'nested-dependent'"))
-        self.assert_clean(['main', 'dependent', 'nested-dependent'])
+            "Cleaned 'dependent', which makes the following part out of date: "
+            "'nested-dependent'"))
+        self.assert_clean(['main', 'dependent'])
+        self.assert_not_clean(['nested-dependent'])

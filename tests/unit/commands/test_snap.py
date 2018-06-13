@@ -256,7 +256,10 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                 'Skipping pull part1 (already ran)\n'
                 'Skipping build part1 (already ran)\n'
                 'Skipping stage part1 (already ran)\n'
-                'Skipping prime part1 (already ran)\n'))
+                'Skipping prime part1 (already ran)\n'
+                'The requested action has already been taken. Consider\n'
+                'specifying parts, or clean the steps you want to run again.\n'
+            ))
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
@@ -356,9 +359,7 @@ type: os
             'Snapped mysnap.snap\n'))
 
         self.assertThat(fake_logger.output, Equals(
-            'Preparing to pull part1 \n'
             'Pulling part1 \n'
-            'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
             'Priming part1 \n'))
@@ -414,9 +415,7 @@ type: os
         self.assertThat(
             fake_logger.output.splitlines(),
             Equals([
-                'Preparing to pull part1 ',
                 'Pulling part1 ',
-                'Preparing to build part1 ',
                 'Building part1 ',
                 'Staging part1 ',
                 'Priming part1 ',

@@ -17,6 +17,7 @@ from subprocess import CalledProcessError
 from typing import List, Union
 
 from snapcraft import formatting_utils
+from snapcraft.internal import steps
 
 
 class SnapcraftError(Exception):
@@ -42,7 +43,7 @@ class SnapcraftError(Exception):
 class MissingStateCleanError(SnapcraftError):
     fmt = (
         "Failed to clean: "
-        "Missing state for {step!r}. "
+        "Missing state for {step.name!r}. "
         "To clean the project, run `snapcraft clean`."
     )
 
@@ -53,15 +54,15 @@ class MissingStateCleanError(SnapcraftError):
 class StepOutdatedError(SnapcraftError):
 
     fmt = (
-        'Failed to reuse files from previous build: '
-        'The {step!r} step of {part!r} is out of date:\n'
+        'Failed to reuse files from previous run: '
+        'The {step.name!r} step of {part!r} is out of date:\n'
         '{report}'
-        'To continue, clean that part\'s {step!r} step, run '
-        '`snapcraft clean {parts_names} -s {step}`.'
+        'To continue, clean that part\'s {step.name!r} step by running '
+        '`snapcraft clean {parts_names} -s {step.name}`.'
     )
 
-    def __init__(self, *, step, part,
-                 dirty_properties=None, dirty_project_options=None,
+    def __init__(self, *, step, part, dirty_properties=None,
+                 dirty_project_options=None, changed_dependencies=None,
                  dependents=None):
         messages = []
         if dirty_properties:
@@ -82,6 +83,14 @@ class StepOutdatedError(SnapcraftError):
             messages.append(
                 'The {} project {} to have changed.\n'.format(
                     humanized_options, pluralized_connection))
+        if changed_dependencies:
+            dependencies = [
+                d['name'] for d in changed_dependencies]
+            messages.append('{} changed: {}\n'.format(
+                formatting_utils.pluralize(
+                    dependencies, 'A dependency has',
+                    'Some dependencies have'),
+                formatting_utils.humanize_list(dependencies, 'and')))
         if dependents:
             humanized_dependents = formatting_utils.humanize_list(
                 dependents, 'and')
@@ -89,7 +98,7 @@ class StepOutdatedError(SnapcraftError):
                 dependents, "depends", "depend")
             messages.append('The {0!r} step for {1!r} needs to be run again, '
                             'but {2} {3} on it.\n'.format(
-                                step,
+                                step.name,
                                 part,
                                 humanized_dependents,
                                 pluralized_dependents))
@@ -544,12 +553,13 @@ class ScriptletRunError(ScriptletBaseError):
 
 class ScriptletDuplicateDataError(ScriptletBaseError):
     fmt = (
-        'Failed to save data from scriptlet into {step!r} state: '
-        'The {humanized_keys} key(s) were already saved in the {other_step!r} '
-        'step.'
+        'Failed to save data from scriptlet into {step.name!r} state: '
+        'The {humanized_keys} key(s) were already saved in the '
+        '{other_step.name!r} step.'
     )
 
-    def __init__(self, step: str, other_step: str, keys: List[str]) -> None:
+    def __init__(self, step: steps.Step, other_step: steps.Step,
+                 keys: List[str]) -> None:
         self.keys = keys
         super().__init__(
             step=step, other_step=other_step,
@@ -559,10 +569,10 @@ class ScriptletDuplicateDataError(ScriptletBaseError):
 class ScriptletDuplicateFieldError(ScriptletBaseError):
     fmt = (
         'Unable to set {field}: '
-        'it was already set in the {step!r} step.'
+        'it was already set in the {step.name!r} step.'
     )
 
-    def __init__(self, field: str, step: str) -> None:
+    def __init__(self, field: str, step: steps.Step) -> None:
         super().__init__(field=field, step=step)
 
 
@@ -594,3 +604,51 @@ class SnapcraftCopyFileNotFoundError(SnapcraftError):
 
     def __init__(self, path):
         super().__init__(path=path)
+
+
+class InvalidStepError(SnapcraftError):
+    fmt = "{step_name!r} is not a valid lifecycle step"
+
+    def __init__(self, step_name):
+        super().__init__(step_name=step_name)
+
+
+class NoLatestStepError(SnapcraftError):
+    fmt = "The {part_name!r} part hasn't run any steps"
+
+    def __init__(self, part_name):
+        super().__init__(part_name=part_name)
+
+
+class NoNextStepError(SnapcraftError):
+    fmt = "The {part_name!r} part has run through its entire lifecycle"
+
+    def __init__(self, part_name):
+        super().__init__(part_name=part_name)
+
+
+class MountPointNotFoundError(SnapcraftError):
+    fmt = (
+        'Nothing is mounted at {mount_point!r}'
+    )
+
+    def __init__(self, mount_point):
+        super().__init__(mount_point=mount_point)
+
+
+class RootNotMountedError(SnapcraftError):
+    fmt = (
+        '{root!r} is not mounted'
+    )
+
+    def __init__(self, root):
+        super().__init__(root=root)
+
+
+class InvalidMountinfoFormat(SnapcraftError):
+    fmt = (
+        'Unable to parse mountinfo row: {row}'
+    )
+
+    def __init__(self, row):
+        super().__init__(row=row)

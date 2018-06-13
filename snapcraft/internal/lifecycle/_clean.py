@@ -19,72 +19,57 @@ import os
 import shutil
 
 from snapcraft import formatting_utils
-from snapcraft.internal import common, project_loader
+from snapcraft.internal import errors, project_loader, mountinfo, steps
 from . import constants
 
 
 logger = logging.getLogger(__name__)
 
 
-def _reverse_dependency_tree(config, part_name):
-    dependents = config.parts.get_dependents(part_name)
-    for dependent in dependents.copy():
-        # No need to worry about infinite recursion due to circular
-        # dependencies since the YAML validation won't allow it.
-        dependents |= _reverse_dependency_tree(config, dependent)
+def _clean_part(part_name, step, config, staged_state, primed_state):
+    if step.next_step() is None:
+        template = 'Cleaning {step} step for {part}'
+    else:
+        template = 'Cleaning {step} step (and all subsequent steps) for {part}'
 
-    return dependents
-
-
-def _clean_part_and_all_dependents(part_name, step, config, staged_state,
-                                   primed_state):
-    # Obtain the reverse dependency tree for this part. Make sure all
-    # dependents are cleaned.
-    dependents = _reverse_dependency_tree(config, part_name)
-    dependent_parts = {p for p in config.all_parts
-                       if p.name in dependents}
-    for dependent_part in dependent_parts:
-        dependent_part.clean(staged_state, primed_state, step)
-
-    # Finally, clean the part in question
+    logger.info(template.format(step=step.name, part=part_name))
     config.parts.clean_part(part_name, staged_state, primed_state, step)
 
+    # If we just cleaned the root of a dependency tree, we need to mark all
+    # its dependents as dirty so they require cleaning.
+    return mark_dependents_dirty(part_name, step, config)
 
-def _verify_dependents_will_be_cleaned(part_name, clean_part_names, step,
-                                       config):
-    # Get the name of the parts that depend upon this one
-    dependents = config.parts.get_dependents(part_name)
-    additional_dependents = []
 
-    # Verify that they're either already clean, or that they will be cleaned.
-    if not dependents.issubset(clean_part_names):
-        for part in config.all_parts:
-            if part.name in dependents and not part.is_clean(step):
-                humanized_parts = formatting_utils.humanize_list(
-                    dependents, 'and')
-                additional_dependents.append(part_name)
+def mark_dependents_dirty(part_name, cleaned_step, config):
+    dependent_part_names = config.parts.get_reverse_dependencies(part_name)
+    dependent_parts = {p for p in config.all_parts
+                       if p.name in dependent_part_names}
 
-                logger.warning(
-                    'Requested clean of {!r} which requires also cleaning '
-                    'the part{} {}'.format(part_name,
-                                           '' if len(dependents) == 1 else 's',
-                                           humanized_parts))
+    dirty_part_names = set()
+    for part in dependent_parts:
+        if part.mark_dependency_change(part_name, cleaned_step):
+            dirty_part_names.add(part.name)
+
+    return dirty_part_names
 
 
 def _clean_parts(part_names, step, config, staged_state, primed_state):
     if not step:
-        step = 'pull'
+        step = steps.next_step(None)
 
-    # Before doing anything, verify that we weren't asked to clean only the
-    # root of a dependency tree and hint that more parts would be cleaned
-    # if not.
     for part_name in part_names:
-        _verify_dependents_will_be_cleaned(part_name, part_names, step, config)
-
-    # Now we can actually clean.
-    for part_name in part_names:
-        _clean_part_and_all_dependents(
+        resulting_dirty_parts = _clean_part(
             part_name, step, config, staged_state, primed_state)
+
+        parts_not_being_cleaned = resulting_dirty_parts.difference(part_names)
+        if parts_not_being_cleaned:
+            logger.warning(
+                'Cleaned {!r}, which makes the following {} out of date: '
+                '{}'.format(
+                    part_name, formatting_utils.pluralize(
+                        parts_not_being_cleaned, 'part', 'parts'),
+                    formatting_utils.humanize_list(
+                        parts_not_being_cleaned, 'and')))
 
 
 def _remove_directory_if_empty(directory):
@@ -93,53 +78,73 @@ def _remove_directory_if_empty(directory):
 
 
 def _cleanup_common_directories(config, project_options):
-    max_index = -1
+    max_step = None
     for part in config.all_parts:
-        step = part.last_step()
-        if step:
-            index = common.COMMAND_ORDER.index(step)
-            if index > max_index:
-                max_index = index
+        with contextlib.suppress(errors.NoLatestStepError):
+            step = part.latest_step()
+            if not max_step or step > max_step:
+                    max_step = step
 
-    with contextlib.suppress(IndexError):
-        _cleanup_common_directories_for_step(
-            common.COMMAND_ORDER[max_index+1], project_options)
+    next_step = steps.next_step(max_step)
+    if next_step:
+        _cleanup_common_directories_for_step(next_step, project_options)
 
 
 def _cleanup_common_directories_for_step(step, project_options, parts=None):
     if not parts:
         parts = []
 
-    index = common.COMMAND_ORDER.index(step)
-
-    if index <= common.COMMAND_ORDER.index('prime'):
-        # Remove the priming area.
+    being_tried = False
+    if step <= steps.PRIME:
+        # Remove the priming area. Only remove the actual 'prime' directory if
+        # it's NOT being used in 'snap try'. We'll know that if it's
+        # bind-mounted somewhere.
+        mounts = mountinfo.MountInfo()
+        try:
+            mounts.for_root(project_options.prime_dir)
+        except errors.RootNotMountedError:
+            remove_dir = True
+            message = 'Cleaning up priming area'
+        else:
+            remove_dir = False
+            message = ("Cleaning up priming area, but not removing as it's in "
+                       "use by 'snap try'")
+            being_tried = True
         _cleanup_common(
-            project_options.prime_dir, 'prime', 'Cleaning up priming area',
-            parts)
+            project_options.prime_dir, steps.PRIME, message, parts,
+            remove_dir=remove_dir)
 
-    if index <= common.COMMAND_ORDER.index('stage'):
+    if step <= steps.STAGE:
         # Remove the staging area.
         _cleanup_common(
-            project_options.stage_dir, 'stage', 'Cleaning up staging area',
+            project_options.stage_dir, steps.STAGE, 'Cleaning up staging area',
             parts)
 
-    if index <= common.COMMAND_ORDER.index('pull'):
+    if step <= steps.PULL:
         # Remove the parts directory (but leave local plugins alone).
         _cleanup_parts_dir(
             project_options.parts_dir, project_options.local_plugins_dir,
             parts)
         _cleanup_internal_snapcraft_dir()
 
-    _remove_directory_if_empty(project_options.prime_dir)
+    if not being_tried:
+        _remove_directory_if_empty(project_options.prime_dir)
     _remove_directory_if_empty(project_options.stage_dir)
     _remove_directory_if_empty(project_options.parts_dir)
 
 
-def _cleanup_common(directory, step, message, parts):
+def _cleanup_common(directory, step, message, parts, *, remove_dir=True):
     if os.path.isdir(directory):
         logger.info(message)
-        shutil.rmtree(directory)
+        if remove_dir:
+            shutil.rmtree(directory)
+        else:
+            # Don't delete the parent directory, but delete its contents
+            for f in os.scandir(directory):
+                if f.is_dir(follow_symlinks=False):
+                    shutil.rmtree(f.path)
+                elif f.is_file(follow_symlinks=False):
+                    os.remove(f.path)
     for part in parts:
         part.mark_cleaned(step)
 
@@ -155,8 +160,8 @@ def _cleanup_parts_dir(parts_dir, local_plugins_dir, parts):
                 except NotADirectoryError:
                     os.remove(path)
     for part in parts:
-        part.mark_cleaned('build')
-        part.mark_cleaned('pull')
+        part.mark_cleaned(steps.BUILD)
+        part.mark_cleaned(steps.PULL)
 
 
 def _cleanup_internal_snapcraft_dir():
@@ -168,29 +173,32 @@ def clean(project_options, parts, step=None):
     # step defaults to None because that's how it comes from docopt when it's
     # not set.
     if not step:
-        step = 'pull'
+        step = steps.PULL
 
-    if not parts and step == 'pull':
+    if not parts and step == steps.PULL:
         _cleanup_common_directories_for_step(step, project_options)
         return
 
     config = project_loader.load_config()
 
-    if not parts and (step == 'stage' or step == 'prime'):
+    if not parts and step <= steps.PRIME:
         # If we've been asked to clean stage or prime without being given
         # specific parts, just blow away those directories instead of
-        # doing it per part.
+        # doing it per part (it would just be a waste of time).
         _cleanup_common_directories_for_step(
             step, project_options, parts=config.all_parts)
-        return
+
+        # No need to continue if that's all that was required
+        if step >= steps.STAGE:
+            return
 
     if parts:
         config.parts.validate(parts)
     else:
         parts = [part.name for part in config.all_parts]
 
-    staged_state = config.get_project_state('stage')
-    primed_state = config.get_project_state('prime')
+    staged_state = config.get_project_state(steps.STAGE)
+    primed_state = config.get_project_state(steps.PRIME)
 
     _clean_parts(parts, step, config, staged_state, primed_state)
 

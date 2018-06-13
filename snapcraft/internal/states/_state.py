@@ -17,6 +17,8 @@
 import os
 import yaml
 
+from snapcraft.internal import steps
+
 
 class State(yaml.YAMLObject):
 
@@ -36,13 +38,18 @@ class State(yaml.YAMLObject):
 
 class PartState(State):
 
-    def __init__(self, part_properties, project):
+    def __init__(self, part_properties, project, changed_dependencies):
         super().__init__()
         if not part_properties:
             part_properties = {}
 
         self.properties = self.properties_of_interest(part_properties)
         self.project_options = self.project_options_of_interest(project)
+
+        if changed_dependencies:
+            self.changed_dependencies = changed_dependencies
+        else:
+            self.changed_dependencies = []
 
     def properties_of_interest(self, part_properties):
         """Extract the properties concerning this step from the options.
@@ -91,7 +98,7 @@ def get_global_state():
         return yaml.load(state_file)
 
 
-def get_state(state_dir, step):
+def get_state(state_dir: str, step: steps.Step):
     state = None
     state_file = get_step_state_file(state_dir, step)
     if os.path.isfile(state_file):
@@ -101,5 +108,5 @@ def get_state(state_dir, step):
     return state
 
 
-def get_step_state_file(state_dir: str, step: str) -> str:
-    return os.path.join(state_dir, step)
+def get_step_state_file(state_dir: str, step: steps.Step) -> str:
+    return os.path.join(state_dir, step.name)

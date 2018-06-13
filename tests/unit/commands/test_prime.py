@@ -72,9 +72,7 @@ class PrimeCommandTestCase(LifecycleCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
             fake_logger.output,
-            Equals('Preparing to pull prime0 \n'
-                   'Pulling prime0 \n'
-                   'Preparing to build prime0 \n'
+            Equals('Pulling prime0 \n'
                    'Building prime0 \n'
                    'Staging prime0 \n'
                    'Priming prime0 \n'))
@@ -96,4 +94,7 @@ class PrimeCommandTestCase(LifecycleCommandsBaseTestCase):
             Equals('Skipping pull prime0 (already ran)\n'
                    'Skipping build prime0 (already ran)\n'
                    'Skipping stage prime0 (already ran)\n'
-                   'Skipping prime prime0 (already ran)\n'))
+                   'Skipping prime prime0 (already ran)\n'
+                   'The requested action has already been taken. Consider\n'
+                   'specifying parts, or clean the steps you want to run '
+                   'again.\n'))

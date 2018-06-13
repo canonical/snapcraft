@@ -48,7 +48,8 @@ class BuildState(PartState):
     def __init__(
             self, property_names, part_properties=None, project=None,
             plugin_assets=None, machine_assets=None, metadata=None,
-            metadata_files=None, scriptlet_metadata=None):
+            metadata_files=None, scriptlet_metadata=None,
+            changed_dependencies=None):
         # Save this off before calling super() since we'll need it
         # FIXME: for 3.x the name `schema_properties` is leaking
         #        implementation details from a higher layer.
@@ -76,7 +77,7 @@ class BuildState(PartState):
 
         self.scriptlet_metadata = scriptlet_metadata
 
-        super().__init__(part_properties, project)
+        super().__init__(part_properties, project, changed_dependencies)
 
     def properties_of_interest(self, part_properties):
         """Extract the properties concerning this step from part_properties."""
