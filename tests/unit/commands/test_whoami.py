@@ -16,6 +16,8 @@
 
 import os
 import re
+import xdg
+
 from unittest import mock
 
 import fixtures
@@ -33,9 +35,9 @@ class WhoamiCommandBaseTestCase(commands.CommandBaseTestCase):
             self, mock_get_account_information):
         mock_get_account_information.return_value = {}
         self.useFixture(fixtures.EnvironmentVariable('HOME', self.path))
+
         config_file_path = os.path.join(
-            self.path, '.config', 'snapcraft', 'snapcraft.cfg')
-        os.makedirs(os.path.dirname(config_file_path))
+            xdg.BaseDirectory.save_config_path('snapcraft'), 'snapcraft.cfg')
         with open(config_file_path, 'w') as config_file:
             config_file.write('[login.ubuntu.com]\n')
             config_file.write('account_id = test_account_id\n')
@@ -56,8 +58,7 @@ class WhoamiCommandBaseTestCase(commands.CommandBaseTestCase):
         mock_get_account_information.return_value = {}
         self.useFixture(fixtures.EnvironmentVariable('HOME', self.path))
         config_file_path = os.path.join(
-            self.path, '.config', 'snapcraft', 'snapcraft.cfg')
-        os.makedirs(os.path.dirname(config_file_path))
+            xdg.BaseDirectory.save_config_path('snapcraft'), 'snapcraft.cfg')
         with open(config_file_path, 'w') as config_file:
             config_file.write('[login.ubuntu.com]\n')
             config_file.write('email = test@example.com\n')

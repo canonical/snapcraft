@@ -61,11 +61,15 @@ class StepOutdatedError(SnapcraftError):
         '`snapcraft clean {parts_names} -s {step.name}`.'
     )
 
-    def __init__(self, *, step, part, dirty_report=None, dependents=None):
+    def __init__(self, *, step, part, dirty_report=None, outdated_report=None,
+                 dependents=None):
         messages = []
 
         if dirty_report:
             messages.append(dirty_report.get_report())
+
+        if outdated_report:
+            messages.append(outdated_report.get_report())
 
         if dependents:
             humanized_dependents = formatting_utils.humanize_list(

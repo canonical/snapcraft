@@ -106,7 +106,7 @@ def link_or_copy(source: str, destination: str,
     """
 
     try:
-        _link(source, destination, follow_symlinks)
+        link(source, destination, follow_symlinks)
     except OSError as e:
         if e.errno == errno.EEXIST and not os.path.isdir(destination):
             # os.link will fail if the destination already exists, so let's
@@ -114,10 +114,10 @@ def link_or_copy(source: str, destination: str,
             os.remove(destination)
             link_or_copy(source, destination, follow_symlinks)
         else:
-            _copy(source, destination, follow_symlinks)
+            copy(source, destination, follow_symlinks)
 
 
-def _link(source: str, destination: str, follow_symlinks: bool=False) -> None:
+def link(source: str, destination: str, follow_symlinks: bool=False) -> None:
     # Note that follow_symlinks doesn't seem to work for os.link, so we'll
     # implement this logic ourselves using realpath.
     source_path = source
@@ -137,7 +137,7 @@ def _link(source: str, destination: str, follow_symlinks: bool=False) -> None:
         raise SnapcraftCopyFileNotFoundError(source)
 
 
-def _copy(source: str, destination: str, follow_symlinks: bool=False) -> None:
+def copy(source: str, destination: str, follow_symlinks: bool=False) -> None:
     # If os.link raised an I/O error, it may have left a file behind. Skip on
     # OSError in case it doesn't exist or is a directory.
     with suppress(OSError):

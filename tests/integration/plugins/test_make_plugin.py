@@ -15,8 +15,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import os
+import shutil
+import xdg
 
 from testtools.matchers import (
+    Contains,
     DirExists,
     Equals,
     Not
@@ -58,3 +61,37 @@ class MakePluginTestCase(integration.TestCase):
         binary_output = self.get_output_ignoring_non_zero_exit(
             os.path.join(self.stage_dir, 'test'))
         self.assertThat(binary_output, Equals('Hello World!\n'))
+
+    def test_make_can_rebuild(self):
+        # Flip the config switch to automatically update
+        config_path = os.path.join(
+            xdg.BaseDirectory.save_config_path('snapcraft'), 'cli.cfg')
+        with open(config_path, 'w') as f:
+            f.write('[Lifecycle]\noutdated_step_action = clean')
+
+        self.copy_project_to_cwd('make-with-lib')
+        output = self.run_snapcraft('prime')
+
+        # Assert that make actually built from scratch
+        self.assertThat(output, Contains('Building foo'))
+        self.assertThat(output, Contains('Building usefoo'))
+
+        binary_output = self.get_output_ignoring_non_zero_exit(
+            os.path.join(self.prime_dir, 'bin', 'usefoo'))
+        self.assertThat(binary_output, Equals("foo\n"))
+
+        # Modify the source code
+        source_file_path = os.path.join('src', 'main.cpp')
+        shutil.copy('new_main.cpp', source_file_path)
+
+        # Prime again. This should rebuild
+        output = self.run_snapcraft('prime')
+
+        # Assert that make did not start from scratch, and reused everything it
+        # could
+        self.assertThat(output, Not(Contains('Building foo')))
+        self.assertThat(output, Contains('Building usefoo'))
+
+        binary_output = self.get_output_ignoring_non_zero_exit(
+            os.path.join(self.prime_dir, 'bin', 'usefoo'))
+        self.assertThat(binary_output, Equals("new foo\n"))

@@ -24,7 +24,6 @@ import subprocess
 import sys
 import time
 import uuid
-import xdg
 from distutils import dir_util
 from textwrap import dedent
 from typing import Callable, List, Union
@@ -35,7 +34,6 @@ from pexpect import popen_spawn
 import requests
 import testtools
 import yaml
-from unittest import mock
 from testtools import content
 from testtools.matchers import MatchesRegex
 
@@ -93,39 +91,18 @@ class TestCase(testtools.TestCase):
         self.useFixture(temp_cwd_fixture)
         self.path = temp_cwd_fixture.path
 
-        self.useFixture(fixtures.EnvironmentVariable(
-            'XDG_CONFIG_HOME', os.path.join(self.path, '.config')))
-        self.useFixture(fixtures.EnvironmentVariable(
-            'XDG_DATA_HOME', os.path.join(self.path, 'data')))
+        # Use a separate path for XDG dirs, or changes there may be detected as
+        # source changes.
+        self.xdg_path = self.useFixture(fixtures.TempDir()).path
+        self.useFixture(fixture_setup.TempXDG(self.xdg_path))
+
+        # Use a dumb terminal for tests
         self.useFixture(fixtures.EnvironmentVariable('TERM', 'dumb'))
 
         # Disable Sentry reporting for tests, otherwise they'll hang waiting
         # for input
         self.useFixture(fixtures.EnvironmentVariable(
             'SNAPCRAFT_ENABLE_SENTRY', 'false'))
-
-        patcher = mock.patch(
-            'xdg.BaseDirectory.xdg_config_home',
-            new=os.path.join(self.path, '.config'))
-        patcher.start()
-        self.addCleanup(patcher.stop)
-        patcher = mock.patch(
-            'xdg.BaseDirectory.xdg_data_home',
-            new=os.path.join(self.path, 'data'))
-        patcher.start()
-        self.addCleanup(patcher.stop)
-
-        patcher_dirs = mock.patch(
-            'xdg.BaseDirectory.xdg_config_dirs',
-            new=[xdg.BaseDirectory.xdg_config_home])
-        patcher_dirs.start()
-        self.addCleanup(patcher_dirs.stop)
-
-        patcher_dirs = mock.patch(
-            'xdg.BaseDirectory.xdg_data_dirs',
-            new=[xdg.BaseDirectory.xdg_data_home])
-        patcher_dirs.start()
-        self.addCleanup(patcher_dirs.stop)
 
         # Note that these directories won't exist when the test starts,
         # they might be created after calling the snapcraft command on the

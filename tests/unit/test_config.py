@@ -16,6 +16,7 @@
 
 import fixtures
 import os
+import xdg
 
 from testtools.matchers import Contains, Equals, FileContains
 
@@ -91,12 +92,8 @@ class TestCLIConfig(unit.TestCase):
             self.assertThat(cli_config.get_sentry_send_always(), Equals(False))
 
     def test_load_invalid_config(self):
-        # The test setup should take care of giving us the proper
-        # xdg directory, but there is nothing wrong with caution.
-        config_dir = os.path.join('.config', 'snapcraft')
-        config_path = os.path.join(config_dir, 'cli.cfg')
-
-        os.makedirs(config_dir)
+        config_path = os.path.join(
+            xdg.BaseDirectory.save_config_path('snapcraft'), 'cli.cfg')
         with open(config_path, 'w') as f:
             f.write('invalid config')
 

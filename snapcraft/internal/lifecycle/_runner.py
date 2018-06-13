@@ -202,10 +202,17 @@ class _Executor:
                             getattr(self, '_re{}'.format(
                                 current_step.name))(part)
                         else:
-                            notify_part_progress(
-                                part,
-                                'Skipping {}'.format(current_step.name),
-                                '(already ran)')
+                            outdated_report = self._cache.get_outdated_report(
+                                part, current_step)
+                            if outdated_report:
+                                self._handle_outdated(
+                                    part, current_step, outdated_report,
+                                    cli_config)
+                            else:
+                                notify_part_progress(
+                                    part,
+                                    'Skipping {}'.format(current_step.name),
+                                    '(already ran)')
                     else:
                         getattr(self, '_run_{}'.format(
                             current_step.name))(part)
@@ -244,7 +251,8 @@ class _Executor:
         self._rerun_step(
             step=steps.PRIME, part=part, progress='Re-priming', hint=hint)
 
-    def _run_step(self, *, step: steps.Step, part, progress, hint=''):
+    def _prepare_to_run(self, *, step: steps.Step,
+                        part: pluginhandler.PluginHandler):
         common.reset_env()
         all_dependencies = self.parts_config.get_dependencies(part.name)
 
@@ -277,11 +285,18 @@ class _Executor:
 
         part = _replace_in_part(part)
 
+    def _run_step(self, *, step: steps.Step, part, progress, hint=''):
+        self._prepare_to_run(step=step, part=part)
+
         notify_part_progress(part, progress, hint)
         getattr(part, step.name)()
 
         # We know we just ran this step, so rather than check, manually twiddle
         # the cache
+        self._step_complete(part, step)
+
+    def _step_complete(self, part, step):
+        self._cache.clear_step(part, step)
         self._cache.add_step_run(part, step)
         self.steps_were_run = True
 
@@ -315,6 +330,28 @@ class _Executor:
 
         getattr(self, '_re{}'.format(step.name))(part, hint='({})'.format(
             dirty_report.get_summary()))
+
+    def _handle_outdated(self, part, step, outdated_report, cli_config):
+        dirty_action = cli_config.get_outdated_step_action()
+        if not step.clean_if_dirty:
+            if dirty_action == config.OutdatedStepAction.ERROR:
+                raise errors.StepOutdatedError(
+                    step=step, part=part.name, outdated_report=outdated_report)
+
+        update_function = getattr(part, 'update_{}'.format(step.name), None)
+        if update_function:
+            self._prepare_to_run(step=step, part=part)
+            notify_part_progress(
+                part, 'Updating {} step for'.format(step.name), '({})'.format(
+                    outdated_report.get_summary()))
+            update_function()
+
+            # We know we just ran this step, so rather than check, manually
+            # twiddle the cache
+            self._step_complete(part, step)
+        else:
+            getattr(self, '_re{}'.format(step.name))(part, '({})'.format(
+                outdated_report.get_summary()))
 
 
 def notify_part_progress(part, progress, hint='', debug=False):

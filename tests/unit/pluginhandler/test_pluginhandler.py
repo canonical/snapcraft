@@ -860,24 +860,6 @@ class StateBaseTestCase(unit.TestCase):
 
 class StateTestCase(StateBaseTestCase):
 
-    def test_mark_done_clears_later_steps(self):
-        for step in steps.STEPS:
-            shutil.rmtree(self.parts_dir)
-            handler = self.load_part('foo')
-            handler.makedirs()
-
-            for later_step in step.next_steps():
-                open(states.get_step_state_file(
-                    handler.plugin.statedir, later_step), 'w').close()
-
-            handler.mark_done(step)
-
-            for later_step in step.next_steps():
-                self.assertFalse(
-                    os.path.exists(states.get_step_state_file(
-                        handler.plugin.statedir, later_step)),
-                    'Expected later step states to be cleared')
-
     @patch('snapcraft.internal.repo.Repo')
     def test_pull_state(self, repo_mock):
         self.assertRaises(errors.NoLatestStepError, self.handler.latest_step)
@@ -1900,6 +1882,89 @@ class IsDirtyTestCase(unit.TestCase):
         self.assertFalse(
             self.handler.is_dirty(steps.PULL),
             'Expected vanilla handler to not have a dirty pull step')
+
+
+class IsOutdatedTest(unit.TestCase):
+
+    def setUp(self):
+        super().setUp()
+
+        self.handler = self.load_part('test-part')
+        self.handler.makedirs()
+
+    def set_modified_time_later(self, target, reference):
+        access_time = os.stat(reference).st_atime
+        modified_time = os.stat(reference).st_atime
+        os.utime(target, (access_time, modified_time+1))
+
+    def test_prime_is_outdated(self):
+        self.handler.mark_prime_done(set(), set(), set())
+        self.assertFalse(self.handler.is_outdated(steps.PRIME),
+                         'Prime step was unexpectedly outdated')
+
+        # Now mark the stage state as done, but ensure it has a later
+        # timestamp, thereby making the prime step out of date.
+        prime_state_path = states.get_step_state_file(
+            self.handler.plugin.statedir, steps.PRIME)
+        stage_state_path = states.get_step_state_file(
+            self.handler.plugin.statedir, steps.STAGE)
+        open(stage_state_path, 'w').close()
+        self.set_modified_time_later(stage_state_path, prime_state_path)
+
+        self.assertTrue(self.handler.is_outdated(steps.PRIME),
+                        'Expected prime step to be outdated')
+
+    def test_stage_is_outdated(self):
+        self.handler.mark_stage_done(set(), set())
+
+        self.assertFalse(self.handler.is_outdated(steps.STAGE),
+                         'Stage step was unexpectedly outdated')
+
+        # Now mark the build state as done, but ensure it has a later
+        # timestamp, thereby making the stage step out of date.
+        stage_state_path = states.get_step_state_file(
+            self.handler.plugin.statedir, steps.STAGE)
+        build_state_path = states.get_step_state_file(
+            self.handler.plugin.statedir, steps.BUILD)
+        open(build_state_path, 'w').close()
+        self.set_modified_time_later(build_state_path, stage_state_path)
+
+        self.assertTrue(self.handler.is_outdated(steps.STAGE),
+                        'Expected stage step to be outdated')
+
+    def test_build_is_outdated(self):
+        self.handler.mark_build_done()
+
+        self.assertFalse(self.handler.is_outdated(steps.BUILD),
+                         'Build step was unexpectedly outdated')
+
+        # Now mark the pull state as done, but ensure it has a later
+        # timestamp, thereby making the build step out of date.
+        build_state_path = states.get_step_state_file(
+            self.handler.plugin.statedir, steps.BUILD)
+        pull_state_path = states.get_step_state_file(
+            self.handler.plugin.statedir, steps.PULL)
+        open(pull_state_path, 'w').close()
+        self.set_modified_time_later(pull_state_path, build_state_path)
+
+        self.assertTrue(self.handler.is_outdated(steps.BUILD),
+                        'Expected build step to be outdated')
+
+    def test_pull_is_outdated(self):
+        self.handler.mark_pull_done()
+
+        self.assertFalse(self.handler.is_outdated(steps.PULL),
+                         'Pull step was unexpectedly outdated')
+
+        # Now update the source on disk, ensuring it has a later timestamp,
+        # thereby making the pull step out of date.
+        open('new_file', 'w').close()
+        pull_state_path = states.get_step_state_file(
+            self.handler.plugin.statedir, steps.PULL)
+        self.set_modified_time_later('new_file', pull_state_path)
+
+        self.assertTrue(self.handler.is_outdated(steps.PULL),
+                        'Expected pull step to be outdated')
 
 
 class CleanBaseTestCase(unit.TestCase):

@@ -34,6 +34,7 @@ class StatusCache:
         """
         self.config = config
         self._steps_run = dict()  # type: Dict[str, Set[steps.Step]]
+        self._outdated_reports = collections.defaultdict(dict)  # type: _Report
         self._dirty_reports = collections.defaultdict(dict)  # type: _Report
 
     def should_step_run(self, part: pluginhandler.PluginHandler,
@@ -48,9 +49,12 @@ class StatusCache:
         A given step should run if it:
             1. Hasn't yet run
             2. Is dirty
-            3. Either (1) or (2) apply to any earlier steps in its lifecycle
+            3. Is outdated
+            4. Either (1), (2), or (3) apply to any earlier steps in the part's
+               lifecycle
         """
         if (not self.has_step_run(part, step) or
+                self.get_outdated_report(part, step) is not None or
                 self.get_dirty_report(part, step) is not None):
             return True
 
@@ -82,6 +86,17 @@ class StatusCache:
         self._ensure_steps_run(part)
         return step in self._steps_run[part.name]
 
+    def get_outdated_report(self, part, step):
+        """Obtain the outdated report for a given step of the given part.
+
+        :param pluginhandler.PluginHandler part: Part in question.
+        :param steps.Step step: Step in question.
+        :return: Outdated report (could be None)
+        :rtype: pluginhandler.OutdatedReport
+        """
+        self._ensure_outdated_report(part, step)
+        return self._outdated_reports[part.name][step]
+
     def get_dirty_report(self, part: pluginhandler.PluginHandler,
                          step: steps.Step) -> pluginhandler.DirtyReport:
         """Obtain the dirty report for a given step of the given part.
@@ -107,6 +122,9 @@ class StatusCache:
             _remove_key(self._steps_run[part.name], step)
             if not self._steps_run[part.name]:
                 _del_key(self._steps_run, part.name)
+        _del_key(self._outdated_reports[part.name], step)
+        if not self._outdated_reports[part.name]:
+            _del_key(self._outdated_reports, part.name)
         _del_key(self._dirty_reports[part.name], step)
         if not self._dirty_reports[part.name]:
             _del_key(self._dirty_reports, part.name)
@@ -114,6 +132,12 @@ class StatusCache:
     def _ensure_steps_run(self, part: pluginhandler.PluginHandler) -> None:
         if part.name not in self._steps_run:
             self._steps_run[part.name] = _get_steps_run(part)
+
+    def _ensure_outdated_report(self, part: pluginhandler.PluginHandler,
+                                step: steps.Step) -> None:
+        if step not in self._outdated_reports[part.name]:
+            self._outdated_reports[part.name][step] = part.get_outdated_report(
+                step)
 
     def _ensure_dirty_report(self, part: pluginhandler.PluginHandler,
                              step: steps.Step) -> None:

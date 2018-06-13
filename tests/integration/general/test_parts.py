@@ -17,6 +17,7 @@
 import hashlib
 import os
 import sys
+import xdg
 
 import yaml
 from testtools.matchers import Contains, Equals
@@ -29,7 +30,7 @@ class PartsTestCase(integration.TestCase):
     def _parts_dir(self):
         parts_uri = 'https://parts.snapcraft.io/v1/parts.yaml'
         return os.path.join(
-            'data', 'snapcraft',
+            xdg.BaseDirectory.save_data_path('snapcraft'),
             hashlib.sha384(parts_uri.encode(
                 sys.getfilesystemencoding())).hexdigest())
 

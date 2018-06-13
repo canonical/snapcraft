@@ -46,6 +46,7 @@ from ._plugin_loader import load_plugin  # noqa
 from ._runner import Runner
 from ._patchelf import PartPatcher
 from ._dirty_report import Dependency, DirtyReport  # noqa
+from ._outdated_report import OutdatedReport
 
 logger = logging.getLogger(__name__)
 
@@ -249,6 +250,32 @@ class PluginHandler:
         except errors.NoLatestStepError:
             return True
 
+    def is_outdated(self, step):
+        """Return true if the given step needs to be updated (no cleaning)."""
+
+        return self.get_outdated_report(step) is not None
+
+    def get_outdated_report(self, step: steps.Step):
+        """Return an OutdatedReport class describing why step is outdated.
+
+        Returns None if step is not outdated.
+        """
+
+        try:
+            return getattr(self, 'check_{}'.format(step.name))()
+        except AttributeError:
+            with contextlib.suppress(errors.StepHasNotRunError):
+                timestamp = self.step_timestamp(step)
+
+                for previous_step in reversed(step.previous_steps()):
+                    # Has a previous step run since this one ran? Then this
+                    # step needs to be updated.
+                    with contextlib.suppress(errors.StepHasNotRunError):
+                        if timestamp < self.step_timestamp(previous_step):
+                            return OutdatedReport(
+                                previous_step_modified=previous_step)
+            return None
+
     def is_dirty(self, step):
         """Return true if the given step needs to be cleaned and run again."""
 
@@ -301,11 +328,6 @@ class PluginHandler:
                 self.plugin.statedir, step), 'w') as f:
             f.write(yaml.dump(state))
 
-        # We know we've only just completed this step, so make sure any later
-        # steps don't have a saved state.
-        for step in step.next_steps():
-                self.mark_cleaned(step)
-
     def mark_cleaned(self, step):
         state_file = states.get_step_state_file(self.plugin.statedir, step)
         if os.path.exists(state_file):
@@ -347,6 +369,21 @@ class PluginHandler:
 
         self.makedirs()
         self._runner.pull()
+        self.mark_pull_done()
+
+    def check_pull(self):
+        # Check to see if pull needs to be updated
+        state_file = states.get_step_state_file(
+            self.plugin.statedir, steps.PULL)
+
+        # Not all sources support checking for updates
+        with contextlib.suppress(NotImplementedError):
+            if self.source_handler.check(state_file):
+                return OutdatedReport(source_updated=True)
+        return None
+
+    def update_pull(self):
+        self.source_handler.update()
         self.mark_pull_done()
 
     def _do_pull(self):
@@ -406,28 +443,48 @@ class PluginHandler:
     def build(self, force=False):
         self.makedirs()
 
-        if os.path.exists(self.plugin.build_basedir):
-            shutil.rmtree(self.plugin.build_basedir)
+        if not self.plugin.out_of_source_build:
+            if os.path.exists(self.plugin.build_basedir):
+                shutil.rmtree(self.plugin.build_basedir)
 
-        # FIXME: It's not necessary to ignore here anymore since it's now done
-        # in the Local source. However, it's left here so that it continues to
-        # work on old snapcraft trees that still have src symlinks.
-        def ignore(directory, files):
-            if directory == self.plugin.sourcedir:
-                snaps = glob(os.path.join(directory, '*.snap'))
-                if snaps:
-                    snaps = [os.path.basename(s) for s in snaps]
-                    return common.SNAPCRAFT_FILES + snaps
+            # FIXME: It's not necessary to ignore here anymore since it's now
+            # done in the Local source. However, it's left here so that it
+            # continues to work on old snapcraft trees that still have src
+            # symlinks.
+            def ignore(directory, files):
+                if directory == self.plugin.sourcedir:
+                    snaps = glob(os.path.join(directory, '*.snap'))
+                    if snaps:
+                        snaps = [os.path.basename(s) for s in snaps]
+                        return common.SNAPCRAFT_FILES + snaps
+                    else:
+                        return common.SNAPCRAFT_FILES
                 else:
-                    return common.SNAPCRAFT_FILES
-            else:
-                return []
+                    return []
 
-        # No hard-links being used here in case the build process modifies
-        # these files.
-        shutil.copytree(self.plugin.sourcedir, self.plugin.build_basedir,
-                        symlinks=True, ignore=ignore)
+            # No hard-links being used here in case the build process modifies
+            # these files.
+            shutil.copytree(self.plugin.sourcedir, self.plugin.build_basedir,
+                            symlinks=True, ignore=ignore)
 
+        self._do_build()
+
+    def update_build(self):
+        if not self.plugin.out_of_source_build:
+            # Use the local source to update. It's important to use
+            # file_utils.copy instead of link_or_copy, as the build process
+            # may modify these files
+            source = sources.Local(
+                self.plugin.sourcedir, self.plugin.build_basedir,
+                copy_function=file_utils.copy)
+            if not source.check(states.get_step_state_file(
+                    self.plugin.statedir, steps.BUILD)):
+                return
+            source.update()
+
+        self._do_build()
+
+    def _do_build(self):
         self._runner.prepare()
         self._runner.build()
         self._runner.install()

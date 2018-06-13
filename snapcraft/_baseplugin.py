@@ -120,6 +120,10 @@ class BasePlugin:
         else:
             self.builddir = self.build_basedir
 
+        # By default, snapcraft does an in-source build. Set this property to
+        # True if that's not desired.
+        self.out_of_source_build = False
+
     # The API
     def pull(self):
         """Pull the source code and/or internal prereqs to build the part."""

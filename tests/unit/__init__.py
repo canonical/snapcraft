@@ -107,7 +107,11 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         temp_cwd_fixture = fixture_setup.TempCWD()
         self.useFixture(temp_cwd_fixture)
         self.path = temp_cwd_fixture.path
-        self.useFixture(fixture_setup.TempXDG(self.path))
+
+        # Use a separate path for XDG dirs, or changes there may be detected as
+        # source changes.
+        self.xdg_path = self.useFixture(fixtures.TempDir()).path
+        self.useFixture(fixture_setup.TempXDG(self.xdg_path))
         self.fake_terminal = fixture_setup.FakeTerminal()
         self.useFixture(self.fake_terminal)
         self.useFixture(fixture_setup.SilentSnapProgress())

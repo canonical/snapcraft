@@ -16,6 +16,8 @@
 
 import os
 import sys
+import xdg
+
 from textwrap import dedent
 from unittest import mock
 
@@ -209,7 +211,8 @@ class SendToSentryIsAlwaysTest(SendToSentryBaseTest):
         self.raven_client_mock.assert_called_once_with(
             mock.ANY, transport=self.raven_request_mock, processors=mock.ANY,
             auto_log_stacks=False)
-        config_path = os.path.join('.config', 'snapcraft', 'cli.cfg')
+        config_path = os.path.join(
+            xdg.BaseDirectory.save_config_path('snapcraft'), 'cli.cfg')
         self.assertThat(config_path, FileContains(dedent("""\
             [Sentry]
             always_send = true
@@ -220,8 +223,8 @@ class SendToSentryIsAlwaysTest(SendToSentryBaseTest):
 class SendToSentryAlreadyAlwaysTest(SendToSentryBaseTest):
 
     def test_send_as_always(self):
-        config_path = os.path.join('.config', 'snapcraft', 'cli.cfg')
-        os.makedirs(os.path.dirname(config_path))
+        config_path = os.path.join(
+            xdg.BaseDirectory.save_config_path('snapcraft'), 'cli.cfg')
         with open(config_path, 'w') as f:
             f.write(dedent("""\
                 [Sentry]
@@ -243,8 +246,8 @@ class SendToSentryAlreadyAlwaysTest(SendToSentryBaseTest):
     def test_send_with_config_error_does_not_save_always(self):
         self.prompt_mock.return_value = 'ALWAYS'
 
-        config_path = os.path.join('.config', 'snapcraft', 'cli.cfg')
-        os.makedirs(os.path.dirname(config_path))
+        config_path = os.path.join(
+            xdg.BaseDirectory.save_config_path('snapcraft'), 'cli.cfg')
         with open(config_path, 'w') as f:
             f.write('bad data')
 

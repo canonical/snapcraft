@@ -16,11 +16,14 @@
 
 import copy
 import os
+import shutil
+
 from unittest import mock
 from testtools.matchers import (
     DirExists,
     Equals,
-    FileExists
+    FileContains,
+    FileExists,
 )
 
 from snapcraft.internal import common
@@ -216,3 +219,122 @@ class TestLocalIgnores(unit.TestCase):
         self.assertTrue(
             os.path.basename(subdir) in os.listdir(
                 os.path.join(subdir, source_dir, os.path.dirname(subdir))))
+
+
+class TestLocalUpdate(unit.TestCase):
+    """Verify that the local source can detect changes and update."""
+
+    def test_file_modified(self):
+        source = 'source'
+        destination = 'destination'
+        os.mkdir(source)
+        os.mkdir(destination)
+
+        with open(os.path.join(source, 'file'), 'w') as f:
+            f.write('1')
+
+        # Now make a reference file with a timestamp later than the file was
+        # created. We'll ensure this by setting it ourselves
+        shutil.copy2(os.path.join(source, 'file'), 'reference')
+        access_time = os.stat('reference').st_atime
+        modify_time = os.stat('reference').st_mtime
+        os.utime('reference', (access_time, modify_time+1))
+
+        local = sources.Local(source, destination)
+        local.pull()
+        self.assertFalse(
+            local.check('reference'), 'Expected no updates to be available')
+        self.assertThat(os.path.join(destination, 'file'), FileContains('1'))
+
+        # Now update the file in source, and make sure it has a timestamp
+        # later than our reference (this whole test happens too fast)
+        with open(os.path.join(source, 'file'), 'w') as f:
+            f.write('2')
+
+        access_time = os.stat('reference').st_atime
+        modify_time = os.stat('reference').st_mtime
+        os.utime(os.path.join(source, 'file'), (access_time, modify_time+1))
+
+        self.assertTrue(
+            local.check('reference'), 'Expected update to be available')
+
+        local.update()
+        self.assertThat(os.path.join(destination, 'file'), FileContains('2'))
+
+    def test_file_added(self):
+        source = 'source'
+        destination = 'destination'
+        os.mkdir(source)
+        os.mkdir(destination)
+
+        with open(os.path.join(source, 'file1'), 'w') as f:
+            f.write('1')
+
+        # Now make a reference file with a timestamp later than the file was
+        # created. We'll ensure this by setting it ourselves
+        shutil.copy2(os.path.join(source, 'file1'), 'reference')
+        access_time = os.stat('reference').st_atime
+        modify_time = os.stat('reference').st_mtime
+        os.utime('reference', (access_time, modify_time+1))
+
+        local = sources.Local(source, destination)
+        local.pull()
+        self.assertFalse(
+            local.check('reference'), 'Expected no updates to be available')
+        self.assertThat(os.path.join(destination, 'file1'), FileExists())
+
+        # Now add a new file, and make sure it has a timestamp
+        # later than our reference (this whole test happens too fast)
+        with open(os.path.join(source, 'file2'), 'w') as f:
+            f.write('2')
+
+        access_time = os.stat('reference').st_atime
+        modify_time = os.stat('reference').st_mtime
+        os.utime(os.path.join(source, 'file2'), (access_time, modify_time+1))
+
+        self.assertTrue(
+            local.check('reference'), 'Expected update to be available')
+
+        local.update()
+        self.assertThat(os.path.join(destination, 'file2'), FileExists())
+
+    def test_directory_modified(self):
+        source = 'source'
+        source_dir = os.path.join(source, 'dir')
+        destination = 'destination'
+        os.makedirs(source_dir)
+        os.mkdir(destination)
+
+        with open(os.path.join(source_dir, 'file1'), 'w') as f:
+            f.write('1')
+
+        # Now make a reference file with a timestamp later than the file was
+        # created. We'll ensure this by setting it ourselves
+        shutil.copy2(os.path.join(source_dir, 'file1'), 'reference')
+        access_time = os.stat('reference').st_atime
+        modify_time = os.stat('reference').st_mtime
+        os.utime('reference', (access_time, modify_time+1))
+
+        local = sources.Local(source, destination)
+        local.pull()
+        self.assertFalse(
+            local.check('reference'), 'Expected no updates to be available')
+        self.assertThat(
+            os.path.join(destination, 'dir', 'file1'), FileExists())
+
+        # Now add a new file to the directory, and make sure it has a timestamp
+        # later than our reference (this whole test happens too fast)
+        with open(os.path.join(source_dir, 'file2'), 'w') as f:
+            f.write('2')
+
+        access_time = os.stat('reference').st_atime
+        modify_time = os.stat('reference').st_mtime
+        os.utime(
+            os.path.join(source_dir, 'file2'), (access_time, modify_time+1))
+
+        self.assertTrue(
+            local.check('reference'), 'Expected update to be available')
+
+        local.update()
+        self.assertThat(
+            os.path.join(destination, 'dir', 'file2'), FileExists())
