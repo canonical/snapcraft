@@ -18,7 +18,7 @@ import click
 import os
 
 from snapcraft.internal import errors, lxd, project_loader
-from ._options import get_project_options
+from ._options import get_project
 from . import env
 
 
@@ -50,8 +50,8 @@ def refresh(debug, **kwargs):
             "You can do that with the following command:\n\n"
             "snapcraft update")
 
-    project_options = get_project_options(**kwargs, debug=debug)
-    config = project_loader.load_config(project_options)
-    lxd.Project(project_options=project_options,
+    project = get_project(**kwargs, debug=debug)
+    config = project_loader.load_config(project)
+    lxd.Project(project_options=project,
                 output=None, source=os.path.curdir,
                 metadata=config.get_metadata()).refresh()

@@ -443,6 +443,13 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             'expected_idmap': 'test_getuid'}),
     )
 
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('snapcraft.internal.lifecycle.pack')
+        self.pack_mock = patcher.start()
+        self.addCleanup(patcher.stop)
+
     @mock.patch('os.getuid')
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('snapcraft.internal.lxd.Containerbuild._inject_snapcraft')
@@ -500,10 +507,9 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             call(['python3', '-c', mock.ANY]),
             call(['apt-get', 'update']),
             call(['apt-get', 'install', 'squashfuse', '-y']),
-            call(['snapcraft', 'snap', '--output',
-                  'snap-test_1.0_amd64.snap'],
-                 cwd=project_folder, user='root'),
         ])
+
+        self.pack_mock.assert_called_once_with(self.prime_dir, None)
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('os.getuid')
@@ -534,10 +540,9 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
         ])
         mock_container_run.assert_has_calls([
             call(['python3', '-c', mock.ANY]),
-            call(['snapcraft', 'snap', '--output',
-                  'snap-test_1.0_amd64.snap'],
-                 cwd=project_folder, user='root'),
         ])
+
+        self.pack_mock.assert_called_once_with(self.prime_dir, None)
 
     @mock.patch('os.getuid')
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
@@ -596,12 +601,11 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
         ])
         mock_container_run.assert_has_calls([
             call(['python3', '-c', mock.ANY]),
-            call(['snapcraft', 'snap', '--output',
-                  'snap-test_1.0_amd64.snap'],
-                 cwd=project_folder, user='root'),
         ])
         # Ensure there's no unexpected calls eg. two network checks
         self.assertThat(mock_container_run.call_count, Equals(2))
+
+        self.pack_mock.assert_called_once_with(self.prime_dir, None)
 
 
 class SnapCommandAsDefaultTestCase(SnapCommandBaseTestCase):

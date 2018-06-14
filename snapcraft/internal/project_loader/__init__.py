@@ -14,21 +14,24 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 from typing import cast, Dict, List, Union
+from typing import TYPE_CHECKING
 
-from ._env import (  # noqa
+from ._env import (                        # noqa: F401
     environment_to_replacements,
     snapcraft_global_environment,
     snapcraft_part_environment,
 )
-from ._schema import Validator  # noqa
-from ._parts_config import PartsConfig  # noqa
+from ._schema import Validator             # noqa: F401
+from ._parts_config import PartsConfig     # noqa: F401
+
+if TYPE_CHECKING:
+    from snapcraft.project import Project  # noqa: F401
 
 
-def load_config(project_options=None):
+def load_config(project: 'Project'):
     from ._config import Config
-    return Config(project_options)
+    return Config(project)
 
 
 def replace_attr(
@@ -46,28 +49,3 @@ def replace_attr(
                 for k in attr}
 
     return attr
-
-
-def get_snapcraft_yaml(base_dir=None):
-    possible_yamls = [
-        os.path.join('snap', 'snapcraft.yaml'),
-        'snapcraft.yaml',
-        '.snapcraft.yaml',
-    ]
-
-    if base_dir:
-        possible_yamls = [os.path.join(base_dir, x) for x in possible_yamls]
-
-    snapcraft_yamls = [y for y in possible_yamls if os.path.exists(y)]
-
-    import snapcraft.internal.errors
-    from snapcraft.internal.project_loader import errors
-    if not snapcraft_yamls:
-        raise errors.MissingSnapcraftYamlError(
-            snapcraft_yaml='snap/snapcraft.yaml')
-    elif len(snapcraft_yamls) > 1:
-        raise snapcraft.internal.errors.SnapcraftEnvironmentError(
-            'Found a {!r} and a {!r}, please remove one.'.format(
-                snapcraft_yamls[0], snapcraft_yamls[1]))
-
-    return snapcraft_yamls[0]

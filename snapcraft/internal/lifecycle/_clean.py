@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -179,7 +179,7 @@ def clean(project_options, parts, step=None):
         _cleanup_common_directories_for_step(step, project_options)
         return
 
-    config = project_loader.load_config()
+    config = project_loader.load_config(project_options)
 
     if not parts and step <= steps.PRIME:
         # If we've been asked to clean stage or prime without being given

@@ -14,12 +14,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from collections import OrderedDict
 import copy
 import os
 import shutil
 import stat
 import tempfile
+from collections import OrderedDict
+from textwrap import dedent
 from unittest.mock import (
     call,
     Mock,
@@ -37,6 +38,7 @@ from snapcraft.internal import (
     errors,
     lifecycle,
     pluginhandler,
+    project_loader,
     repo,
     states,
     steps,
@@ -45,6 +47,7 @@ from snapcraft.internal.sources.errors import (
     SnapcraftSourceUnhandledError,
 )
 from snapcraft.plugins import nil
+from snapcraft.project import Project
 from tests import (
     fixture_setup,
     unit
@@ -646,19 +649,21 @@ class OrganizeTestCase(unit.TestCase):
 
 class RealStageTestCase(unit.TestCase):
 
-    def setUp(self):
-        super().setUp()
-        self.make_snapcraft_yaml("""name: pc-file-test
-version: 1.0
-summary: test pkg-config .pc
-description: when the .pc files reach stage the should be reprefixed
-confinement: strict
-grade: stable
+    def make_snapcraft_project(self):
+        snapcraft_yaml_file_path = self.make_snapcraft_yaml(dedent("""\
+            name: pc-file-test
+            version: 1.0
+            summary: test pkg-config .pc
+            description: when the .pc files reach stage the should be reprefixed
+            confinement: strict
+            grade: stable
 
-parts:
-    stage-pc:
-        plugin: nil
-""")
+            parts:
+                stage-pc:
+                    plugin: nil
+        """))  # noqa: E501
+        project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
+        return project_loader.load_config(project)
 
     def test_pc_files_correctly_prefixed(self):
         pc_file = os.path.join('usr', 'lib', 'pkgconfig', 'granite.pc')
@@ -667,7 +672,8 @@ parts:
         stage_pc_stage = os.path.join(self.stage_dir, pc_file)
 
         # Run build
-        lifecycle.execute(steps.BUILD, snapcraft.ProjectOptions())
+        project_config = self.make_snapcraft_project()
+        lifecycle.execute(steps.BUILD, project_config)
 
         # Simulate a .pc file was installed
         os.makedirs(os.path.dirname(stage_pc_install))
@@ -686,7 +692,7 @@ parts:
                     'gobject-2.0\n')
 
         # Now we stage
-        lifecycle.execute(steps.STAGE, snapcraft.ProjectOptions())
+        lifecycle.execute(steps.STAGE, project_config)
 
         with open(stage_pc_stage) as f:
             pc_file_content = f.read()
@@ -713,7 +719,8 @@ Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
         stage_pc_stage = os.path.join(self.stage_dir, pc_file)
 
         # Run build
-        lifecycle.execute(steps.BUILD, snapcraft.ProjectOptions())
+        project_config = self.make_snapcraft_project()
+        lifecycle.execute(steps.BUILD, project_config)
 
         # Simulate a .pc file was installed
         os.makedirs(os.path.dirname(stage_pc_install))
@@ -732,7 +739,7 @@ Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
                     'gobject-2.0\n')
 
         # Now we stage
-        lifecycle.execute(steps.STAGE, snapcraft.ProjectOptions())
+        lifecycle.execute(steps.STAGE, project_config)
 
         with open(stage_pc_stage) as f:
             pc_file_content = f.read()

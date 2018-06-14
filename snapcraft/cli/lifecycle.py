@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,26 +17,24 @@
 import click
 import os
 
-from snapcraft.internal import (
-    deprecations,
-    lifecycle,
-    lxd,
-    project_loader,
-    steps,
-)
-from ._options import add_build_options, get_project_options
 from . import echo
 from . import env
+from ._options import add_build_options, get_project
+from snapcraft.internal import (deprecations, lifecycle, lxd, project_loader,
+                                steps)
+from snapcraft.project.errors import YamlValidationError
 
 
 def _execute(command, parts, **kwargs):
-    project_options = get_project_options(**kwargs)
+    project = get_project(**kwargs)
+    project_config = project_loader.load_config(project)
     build_environment = env.BuilderEnvironmentConfig()
+
     if build_environment.is_host:
-        lifecycle.execute(command, project_options, parts)
+        lifecycle.execute(command, project_config, parts)
     else:
-        lifecycle.containerbuild(command, project_options, parts)
-    return project_options
+        lifecycle.containerbuild(command, project_config, parts)
+    return project
 
 
 @click.group()
@@ -133,15 +131,12 @@ def snap(directory, output, **kwargs):
     """
     if directory:
         deprecations.handle_deprecation_notice('dn6')
-
-    project_options = get_project_options(**kwargs)
-    build_environment = env.BuilderEnvironmentConfig()
-    if build_environment.is_host:
-        snap_name = lifecycle.snap(
-            project_options, directory=directory, output=output)
-        echo.info('Snapped {}'.format(snap_name))
     else:
-        lifecycle.containerbuild('snap', project_options, output, directory)
+        project = _execute(steps.PRIME, parts=[], **kwargs)
+        directory = project.prime_dir
+
+    snap_name = lifecycle.pack(directory, output)
+    echo.info('Snapped {}'.format(snap_name))
 
 
 @lifecyclecli.command()
@@ -178,7 +173,11 @@ def clean(parts, step_name, **kwargs):
         snapcraft clean
         snapcraft clean my-part --step build
     """
-    project_options = get_project_options(**kwargs)
+    try:
+        project = get_project(**kwargs)
+    except YamlValidationError:
+        # We need to be able to clean invalid projects too.
+        project = get_project(skip_snapcraft_yaml=True, **kwargs)
     build_environment = env.BuilderEnvironmentConfig()
 
     step = None
@@ -190,12 +189,12 @@ def clean(parts, step_name, **kwargs):
         step = steps.get_step_by_name(step_name)
 
     if build_environment.is_host:
-        lifecycle.clean(project_options, parts, step)
+        lifecycle.clean(project, parts, step)
     else:
-        config = project_loader.load_config(project_options)
-        lxd.Project(project_options=project_options,
+        project_config = project_loader.load_config(project)
+        lxd.Project(project_options=project,
                     output=None, source=os.path.curdir,
-                    metadata=config.get_metadata()).clean(parts, step)
+                    metadata=project_config.get_metadata()).clean(parts, step)
 
 
 @lifecyclecli.command()
@@ -220,13 +219,16 @@ def cleanbuild(remote, debug, **kwargs):
     If using a remote, a prior setup is required which is described on:
     https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
     """
+    project = get_project(**kwargs, debug=debug)
+    project_config = project_loader.load_config(project)
     # cleanbuild is a special snow flake, while all the other commands
     # would work with the host as the build_provider it makes little
     # sense in this scenario.
     build_environment = env.BuilderEnvironmentConfig(
         default='lxd', additional_providers=['multipass'])
-    project_options = get_project_options(**kwargs, debug=debug)
-    lifecycle.cleanbuild(project=project_options,
+
+    lifecycle.cleanbuild(project=project,
+                         project_config=project_config,
                          echoer=echo,
                          remote=remote,
                          build_environment=build_environment)

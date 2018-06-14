@@ -164,6 +164,7 @@ class TestCase(testscenarios.WithScenarios, testtools.TestCase):
         snapcraft_yaml = os.path.join('snap', 'snapcraft.yaml')
         with open(snapcraft_yaml, 'w', encoding=encoding) as fp:
             fp.write(content)
+        return snapcraft_yaml
 
     def verify_state(self, part_name, state_dir, expected_step_name):
         self.assertTrue(os.path.isdir(state_dir),

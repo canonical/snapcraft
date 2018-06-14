@@ -30,6 +30,7 @@ from snapcraft.internal.errors import (
     RequiredCommandNotFound,
     RequiredPathDoesNotExist,
 )
+from snapcraft.project import Project
 import tests
 from tests import unit
 
@@ -178,10 +179,13 @@ class TravisSuccessfulTestCase(unit.TestCase):
 
         mock_check_call.side_effect = [None, None]
         mock_check_output.side_effect = [None]
-        self.make_snapcraft_yaml(test_snapcraft_yaml)
+        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
+            test_snapcraft_yaml)
+        project = Project(
+            snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         self.make_travis_yml('after_success: ["<travis-cli-decrypt>"]')
 
-        travis.enable()
+        travis.enable(project)
 
         # Attenuated credentials requested from the Store.
         mock_login.assert_called_with(
@@ -253,10 +257,13 @@ class TravisSuccessfulTestCase(unit.TestCase):
 
         mock_check_call.side_effect = [None, None]
         mock_check_output.side_effect = [None]
-        self.make_snapcraft_yaml(test_snapcraft_yaml)
+        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
+            test_snapcraft_yaml)
+        project = Project(
+            snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         self.make_travis_yml('after_success: ["<travis-cli-decrypt>"]')
 
-        travis.refresh()
+        travis.refresh(project)
 
         # Attenuated credentials requested from the Store.
         mock_login.assert_called_with(

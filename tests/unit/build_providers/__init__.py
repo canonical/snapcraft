@@ -14,10 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from textwrap import dedent
 from unittest import mock
 
 from snapcraft.project import Project
-from snapcraft.project._project_info import ProjectInfo
 
 from tests import unit
 
@@ -33,7 +33,10 @@ class BaseProviderBaseTest(unit.TestCase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        self.project = Project()
-        self.project.info = ProjectInfo(dict(name='project-name'))
+        snapcraft_yaml_file_path = self.make_snapcraft_yaml(dedent("""\
+            name: project-name
+        """))
+        self.project = Project(
+            snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
         self.echoer_mock = mock.Mock()

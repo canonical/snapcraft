@@ -38,7 +38,8 @@ from snapcraft.internal.meta import (
     _errors as meta_errors,
     _snap_packaging
 )
-from snapcraft import ProjectOptions, extractors
+from snapcraft import extractors
+from snapcraft.project import Project
 from snapcraft.internal import common
 from snapcraft.internal import errors
 from snapcraft.internal import project_loader
@@ -67,28 +68,23 @@ class CreateBaseTestCase(unit.TestCase):
             }
         }
 
-        patcher = patch(
-            'snapcraft.internal.project_loader.get_snapcraft_yaml')
-        self.mock_get_yaml = patcher.start()
-        self.mock_get_yaml.return_value = os.path.join(
-            'snap', 'snapcraft.yaml')
-        self.addCleanup(patcher.stop)
-
+        self.snapcraft_yaml_file_path = os.path.join('snap', 'snapcraft.yaml')
         # Ensure the ensure snapcraft.yaml method has something to copy.
-        _create_file(os.path.join('snap', 'snapcraft.yaml'))
-
-        self.meta_dir = os.path.join(self.prime_dir, 'meta')
-        self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
-        self.snap_yaml = os.path.join(self.meta_dir, 'snap.yaml')
-
-        self.project_options = ProjectOptions()
+        _create_file(self.snapcraft_yaml_file_path)
 
     def generate_meta_yaml(self, *, build=False):
         os.makedirs('snap', exist_ok=True)
-        with open(os.path.join('snap', 'snapcraft.yaml'), 'w') as f:
+        with open(self.snapcraft_yaml_file_path, 'w') as f:
             f.write(yaml.dump(self.config_data))
 
-        self.config = project_loader.load_config()
+        self.project = Project(
+            snapcraft_yaml_file_path=self.snapcraft_yaml_file_path)
+
+        self.meta_dir = os.path.join(self.project.prime_dir, 'meta')
+        self.hooks_dir = os.path.join(self.meta_dir, 'hooks')
+        self.snap_yaml = os.path.join(self.meta_dir, 'snap.yaml')
+
+        self.config = project_loader.load_config(project=self.project)
         if build:
             for part in self.config.parts.all_parts:
                 part.pull()
@@ -97,8 +93,8 @@ class CreateBaseTestCase(unit.TestCase):
                 part.prime()
 
         _snap_packaging.create_snap_packaging(
-            self.config.data, self.config.parts, self.project_options, 'dummy',
-            self.config.original_snapcraft_yaml, self.config.validator.schema)
+            self.config.data, self.config.parts, self.project,
+            self.config.validator.schema)
 
         self.assertTrue(
             os.path.exists(self.snap_yaml), 'snap.yaml was not created')
@@ -128,7 +124,7 @@ class CreateTestCase(CreateBaseTestCase):
 
         y = self.generate_meta_yaml()
 
-        expected = {'architectures': [self.project_options.deb_arch],
+        expected = {'architectures': [self.project.deb_arch],
                     'confinement': 'devmode',
                     'grade': 'stable',
                     'description': 'my description',
@@ -162,15 +158,8 @@ class CreateTestCase(CreateBaseTestCase):
         _create_file('gadget.yaml', content=gadget_yaml)
 
         self.config_data['type'] = 'gadget'
-        os.makedirs('snap', exist_ok=True)
-        with open(os.path.join('snap', 'snapcraft.yaml'), 'w') as f:
-            f.write(yaml.dump(self.config_data))
 
-        config = project_loader.load_config()
-
-        _snap_packaging.create_snap_packaging(
-            self.config_data, config.parts, self.project_options, 'dummy',
-            config.original_snapcraft_yaml, config.validator.schema)
+        self.generate_meta_yaml()
 
         expected_gadget = os.path.join(self.meta_dir, 'gadget.yaml')
         self.assertTrue(os.path.exists(expected_gadget))
@@ -180,22 +169,9 @@ class CreateTestCase(CreateBaseTestCase):
     def test_create_gadget_meta_with_missing_gadget_yaml_raises_error(self):
         self.config_data['type'] = 'gadget'
 
-        os.makedirs('snap', exist_ok=True)
-        with open(os.path.join('snap', 'snapcraft.yaml'), 'w') as f:
-            f.write(yaml.dump(self.config_data))
-
-        config = project_loader.load_config()
-
         self.assertRaises(
             errors.MissingGadgetError,
-            _snap_packaging.create_snap_packaging,
-            self.config_data,
-            config.parts,
-            self.project_options,
-            'dummy',
-            config.original_snapcraft_yaml,
-            config.validator.schema
-        )
+            self.generate_meta_yaml)
 
     def test_create_meta_with_declared_icon(self):
         _create_file(os.path.join(os.curdir, 'my-icon.png'))
@@ -278,20 +254,12 @@ class CreateTestCase(CreateBaseTestCase):
         _create_file('my-icon.png')
         self.config_data['icon'] = 'my-icon.png'
 
-        os.makedirs('snap', exist_ok=True)
-        with open(os.path.join('snap', 'snapcraft.yaml'), 'w') as f:
-            f.write(yaml.dump(self.config_data))
-
-        config = project_loader.load_config()
-
-        _snap_packaging.create_snap_packaging(
-            self.config_data, config.parts, self.project_options, 'dummy',
-            config.original_snapcraft_yaml, config.validator.schema)
+        self.generate_meta_yaml()
 
         # Running again should be good
         _snap_packaging.create_snap_packaging(
-            self.config_data, config.parts, self.project_options, 'dummy',
-            config.original_snapcraft_yaml, config.validator.schema)
+            self.config_data, self.config.parts, self.project,
+            self.config.validator.schema)
 
     def test_create_meta_with_icon_in_setup(self):
         gui_path = os.path.join('setup', 'gui')
@@ -1201,13 +1169,14 @@ class WrapExeTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
 
+        snapcraft_yaml_file_path = 'snapcraft.yaml'
+        snapcraft_yaml = dict(name='fake', confinement='devmode')
+        with open(snapcraft_yaml_file_path, 'w') as snapcraft_file:
+            yaml.dump(snapcraft_yaml, stream=snapcraft_file)
+        project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
         # TODO move to use outer interface
         self.packager = _snap_packaging._SnapPackaging(
-            {'confinement': 'devmode'},
-            ProjectOptions(),
-            'dummy',
-            {'confinement': 'devmode'}
-        )
+            snapcraft_yaml, project)
         self.packager._is_host_compatible_with_base = True
 
     @patch('snapcraft.internal.common.assemble_env')

@@ -17,6 +17,8 @@ import importlib
 
 import click
 
+from ._options import get_project
+
 
 _SUPPORTED_CI_SYSTEMS = (
     'travis',
@@ -39,8 +41,9 @@ def enableci(ci_system, refresh):
     module = importlib.import_module(
         'snapcraft.integrations.{}'.format(ci_system))
 
+    project = get_project()
     if refresh:
-        module.refresh()
+        module.refresh(project)
     else:
         if click.confirm(module.__doc__):
-            module.enable()
+            module.enable(project)

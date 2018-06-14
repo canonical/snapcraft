@@ -49,13 +49,6 @@ class DuplicateAliasError(ProjectLoaderError):
         return super().__str__()
 
 
-class MissingSnapcraftYamlError(ProjectLoaderError):
-
-    fmt = ('Could not find {snapcraft_yaml}. Are you sure you are in the '
-           'right directory?\n'
-           'To start a new project, use `snapcraft init`')
-
-
 class YamlValidationError(ProjectLoaderError):
 
     fmt = 'Issues while validating {source}: {message}'
