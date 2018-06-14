@@ -54,6 +54,17 @@ class _GenericProviderError(_SnapcraftError):
     )
 
 
+class ProviderCommunicationError(_SnapcraftError):
+
+    fmt = (
+        'An error occurred when trying to communicate with the instance '
+        'using {protocol!r} over port {port}: {error}.'
+    )
+
+    def __init__(self, *, protocol: str, port: int, error: str) -> None:
+        super().__init__(protocol=protocol, port=port, error=error)
+
+
 class ProviderLaunchError(_GenericProviderError):
 
     def __init__(self, *, provider_name: str, exit_code: int) -> None:

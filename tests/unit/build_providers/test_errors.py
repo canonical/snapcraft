@@ -100,6 +100,15 @@ class ErrorFormattingTest(unit.TestCase):
                 "The data returned by 'multipass' was not expected or in the "
                 "wrong format: 'bad-json'."
             ))),
+        ('ProviderCommunicationError', dict(
+            exception=errors.ProviderCommunicationError,
+            kwargs=dict(protocol='telnet',
+                        port=7232,
+                        error='unknown host'),
+            expected_message=(
+                "An error occurred when trying to communicate with the "
+                "instance using 'telnet' over port 7232: unknown host."
+            ))),
     ]
 
     def test_error_formatting(self):
