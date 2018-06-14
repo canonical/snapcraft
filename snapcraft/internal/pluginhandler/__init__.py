@@ -45,16 +45,9 @@ from ._metadata_extraction import extract_metadata
 from ._plugin_loader import load_plugin  # noqa
 from ._runner import Runner
 from ._patchelf import PartPatcher
+from ._dirty_report import DirtyReport
 
 logger = logging.getLogger(__name__)
-
-
-class DirtyReport:
-    def __init__(self, dirty_properties, dirty_project_options,
-                 changed_dependencies):
-        self.dirty_properties = dirty_properties
-        self.dirty_project_options = dirty_project_options
-        self.changed_dependencies = changed_dependencies
 
 
 class PluginHandler:
@@ -257,7 +250,7 @@ class PluginHandler:
             return True
 
     def is_dirty(self, step):
-        """Return true if the given step needs to run again."""
+        """Return true if the given step needs to be cleaned and run again."""
 
         return self.get_dirty_report(step) is not None
 
@@ -284,17 +277,22 @@ class PluginHandler:
             options = state.diff_project_options_of_interest(
                 self._project_options)
 
-            # If dependencies have changed since this step ran, then it's dirty
-            # and needs to run again.
-            dependencies = state.changed_dependencies
-
-            if properties or options or dependencies:
-                return DirtyReport(properties, options, dependencies)
+            if properties or options:
+                return DirtyReport(
+                    dirty_properties=properties, dirty_project_options=options)
 
         return None
 
     def should_step_run(self, step, force=False):
         return force or self.is_clean(step)
+
+    def step_timestamp(self, step):
+        try:
+            return os.stat(
+                states.get_step_state_file(
+                    self.plugin.statedir, step)).st_mtime
+        except FileNotFoundError as e:
+            raise errors.StepHasNotRunError(self.name, step) from e
 
     def mark_done(self, step, state=None):
         if not state:
@@ -308,20 +306,6 @@ class PluginHandler:
         # steps don't have a saved state.
         for step in step.next_steps():
                 self.mark_cleaned(step)
-
-    def mark_dependency_change(self, dependency_name, changed_step):
-        if changed_step <= steps.STAGE:
-            dirty_step = steps.next_step(None)
-        else:
-            dirty_step = changed_step
-
-        state = states.get_state(self.plugin.statedir, dirty_step)
-        if state:
-            state.changed_dependencies.append(
-                {'name': dependency_name, 'step': changed_step.name})
-            self.mark_done(dirty_step, state)
-            return True
-        return False
 
     def mark_cleaned(self, step):
         state_file = states.get_step_state_file(self.plugin.statedir, step)
@@ -440,6 +424,8 @@ class PluginHandler:
             else:
                 return []
 
+        # No hard-links being used here in case the build process modifies
+        # these files.
         shutil.copytree(self.plugin.sourcedir, self.plugin.build_basedir,
                         symlinks=True, ignore=ignore)
 

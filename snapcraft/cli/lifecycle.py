@@ -16,6 +16,7 @@
 
 import click
 import os
+from tabulate import tabulate
 
 from snapcraft.internal import (
     deprecations,
@@ -161,6 +162,30 @@ def pack(directory, output, **kwargs):
     """
     snap_name = lifecycle.pack(directory, output)
     echo.info('Snapped {}'.format(snap_name))
+
+
+@lifecyclecli.command('lifecycle-status')
+def lifecycle_status(**kwargs):
+    """Check the status of the lifecycle: what steps are dirty, etc."""
+
+    project_options = get_project_options(**kwargs)
+    config = project_loader.load_config(project_options)
+    cache = lifecycle.StatusCache(config)
+
+    summary = []
+    for part in config.all_parts:
+        part_summary = {'part': part.name}
+        for step in steps.STEPS:
+            part_summary[step.name] = None
+            if cache.step_has_run(part, step):
+                part_summary[step.name] = 'complete'
+
+            dirty_report = cache.get_dirty_report(part, step)
+            if dirty_report:
+                part_summary[step.name] = 'dirty ({})'.format(
+                    dirty_report.summary())
+        summary.append(part_summary)
+    print(tabulate(summary, headers="keys"))
 
 
 @lifecyclecli.command()

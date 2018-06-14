@@ -20,7 +20,7 @@ from subprocess import CalledProcessError
 from unittest import mock
 from testtools.matchers import Equals
 
-from snapcraft.internal import errors, steps
+from snapcraft.internal import errors, pluginhandler, steps
 from snapcraft.internal.meta import _errors as meta_errors
 from snapcraft.internal.repo import errors as repo_errors
 from snapcraft.storeapi import errors as store_errors
@@ -63,7 +63,8 @@ class ErrorFormattingTestCase(unit.TestCase):
             'kwargs': {
                 'step': steps.PULL,
                 'part': 'test-part',
-                'dirty_properties': ['test-property1', 'test-property2']
+                'dirty_report': pluginhandler.DirtyReport(
+                    dirty_properties=['test-property1', 'test-property2'])
             },
             'expected_message': (
                 "Failed to reuse files from previous run: "
@@ -77,7 +78,8 @@ class ErrorFormattingTestCase(unit.TestCase):
             'kwargs': {
                 'step': steps.PULL,
                 'part': 'test-part',
-                'dirty_project_options': ['test-option']
+                'dirty_report': pluginhandler.DirtyReport(
+                    dirty_project_options=['test-option'])
             },
             'expected_message': (
                 "Failed to reuse files from previous run: "
@@ -90,8 +92,9 @@ class ErrorFormattingTestCase(unit.TestCase):
             'kwargs': {
                 'step': steps.PULL,
                 'part': 'test-part',
-                'changed_dependencies': [
-                    {'name': 'another-part', 'step': 'another-step'}]
+                'dirty_report': pluginhandler.DirtyReport(
+                    changed_dependencies=[
+                        {'name': 'another-part', 'step': 'another-step'}])
             },
             'expected_message': (
                 "Failed to reuse files from previous run: "
@@ -105,10 +108,10 @@ class ErrorFormattingTestCase(unit.TestCase):
             'kwargs': {
                 'step': steps.PULL,
                 'part': 'test-part',
-                'changed_dependencies': [
-                    {'name': 'another-part1', 'step': 'another-step1'},
-                    {'name': 'another-part2', 'step': 'another-step2'},
-                ]
+                'dirty_report': pluginhandler.DirtyReport(
+                    changed_dependencies=[
+                        {'name': 'another-part1', 'step': 'another-step1'},
+                        {'name': 'another-part2', 'step': 'another-step2'}])
             },
             'expected_message': (
                 "Failed to reuse files from previous run: "

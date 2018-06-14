@@ -13,14 +13,13 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-import collections
+
 import logging
 import os
 from subprocess import check_call
 from tempfile import TemporaryDirectory
 
 import yaml
-from tabulate import tabulate
 
 import snapcraft
 from snapcraft import config, formatting_utils
@@ -36,7 +35,8 @@ from snapcraft.internal import (
 )
 from snapcraft.internal.cache import SnapCache
 from . import constants
-from ._clean import mark_dependents_dirty
+from ._status_cache import StatusCache
+from ._clean import get_dirty_reverse_dependencies
 
 
 logger = logging.getLogger(__name__)
@@ -161,27 +161,8 @@ class _Executor:
         self.project_options = project_options
         self.parts_config = config.parts
         self.steps_were_run = False
-        self._steps_run = collections.defaultdict(set)
-        self._dirty_reports = collections.defaultdict(dict)
-        summary = []
 
-        # Initialize steps run and dirty reports, so we only need to fetch
-        # them once
-        for part in self.config.all_parts:
-            part_summary = {'part': part.name}
-            for step in steps.STEPS:
-                part_summary[step] = None
-                self._dirty_reports[part.name][step] = part.get_dirty_report(
-                    step)
-                if not part.should_step_run(step):
-                    self._steps_run[part.name].add(step)
-                    part_summary[step] = 'complete'
-                if self._dirty_reports[part.name][step]:
-                    part_summary[step] = 'dirty'
-            summary.append(part_summary)
-
-        # Print summary in debug mode
-        logger.debug(tabulate(summary, headers="keys"))
+        self._cache = StatusCache(config)
 
     def run(self, step: steps.Step, part_names=None):
         if part_names:
@@ -201,12 +182,12 @@ class _Executor:
                     # already been built --elopio - 20170713
                     pluginhandler.check_for_collisions(self.config.all_parts)
                 for part in parts:
-                    if self._dirty_reports[part.name][current_step]:
+                    dirty_report = self._cache.get_dirty_report(
+                        part, current_step)
+                    if dirty_report:
                         self._handle_dirty(
-                            part, current_step,
-                            self._dirty_reports[part.name][current_step],
-                            cli_config)
-                    elif current_step in self._steps_run[part.name]:
+                            part, current_step, dirty_report, cli_config)
+                    elif self._cache.step_has_run(part, current_step):
                         # By default, if a step has already run, don't run it
                         # again. However, automatically clean and re-run the
                         # step if all the following conditions apply:
@@ -226,7 +207,7 @@ class _Executor:
                     else:
                         getattr(self, '_run_{}'.format(
                             current_step.name))(part)
-                        self._steps_run[part.name].add(current_step)
+                        self._cache.add_step_run(part, current_step)
 
         self._create_meta(step, processed_part_names)
 
@@ -256,29 +237,28 @@ class _Executor:
 
     def _run_prime(self, part):
         self._run_step(
-            step=steps.PRIME, part=part, progress='Priming',
-            prerequisite_step=steps.PRIME)
+            step=steps.PRIME, part=part, progress='Priming')
 
     def _reprime(self, part, hint=''):
         self._rerun_step(
-            step=steps.PRIME, part=part, progress='Re-priming', hint=hint,
-            prerequisite_step=steps.PRIME)
+            step=steps.PRIME, part=part, progress='Re-priming', hint=hint)
 
-    def _run_step(self, *, step: steps.Step, part, progress, hint='',
-                  prerequisite_step: steps.Step=steps.STAGE):
+    def _run_step(self, *, step: steps.Step, part, progress, hint=''):
         common.reset_env()
-        prereqs = self.parts_config.get_prereqs(part.name)
+        prereq_parts = self.parts_config.get_dependencies(part.name)
 
-        step_prereqs = {p for p in prereqs
-                        if prerequisite_step not in self._steps_run[p]}
+        prerequisite_step = steps.get_dependency_prerequisite_step(step)
+        step_prereqs = {p for p in prereq_parts
+                        if self._cache.step_should_run(p, prerequisite_step)}
 
         if step_prereqs:
+            prereq_names = {p.name for p in step_prereqs}
             # prerequisites need to go all the way to the prerequisite step to
             # be able to share the common assets that make them a dependency.
             logger.info(
                 '{!r} has prerequisites that need to be {}d: {}'.format(
-                    part.name, prerequisite_step.name, ' '.join(step_prereqs)))
-            self.run(prerequisite_step, step_prereqs)
+                    part.name, prerequisite_step.name, ' '.join(prereq_names)))
+            self.run(prerequisite_step, prereq_names)
 
         # Run the preparation function for this step (if implemented)
         preparation_function = getattr(
@@ -295,36 +275,22 @@ class _Executor:
 
         notify_part_progress(part, progress, hint)
         getattr(part, step.name)()
-        self._steps_run[part.name].add(step)
+        self._cache.add_step_run(part, step)
         self.steps_were_run = True
 
-    def _rerun_step(self, *, step: steps.Step, part, progress, hint='',
-                    prerequisite_step: steps.Step=steps.STAGE):
+    def _rerun_step(self, *, step: steps.Step, part, progress, hint=''):
         staged_state = self.config.get_project_state(steps.STAGE)
         primed_state = self.config.get_project_state(steps.PRIME)
-
-        # We need to clean this step, but if it involves cleaning any steps
-        # upon which other parts depend, those parts need to be marked as dirty
-        # so they can run again, taking advantage of the new dependency.
-        dirty_parts = mark_dependents_dirty(part.name, step, self.config)
 
         # First clean the step, then run it again
         part.clean(staged_state, primed_state, step)
 
         for current_step in [step] + step.next_steps():
-            self._dirty_reports[part.name][current_step] = None
-            self._steps_run[part.name].discard(current_step)
+            self._cache.clear_step(part, current_step)
 
-        self._run_step(
-            step=step, part=part, progress=progress, hint=hint,
-            prerequisite_step=prerequisite_step)
+        self._run_step(step=step, part=part, progress=progress, hint=hint)
 
-        if dirty_parts:
-            logger.warning(
-                'The following {} now out of date: {}'.format(
-                    formatting_utils.pluralize(
-                        dirty_parts, 'part is', 'parts are'),
-                    formatting_utils.humanize_list(dirty_parts, 'and')))
+        self._uncache_dirty_dependents(part, step)
 
     def _create_meta(self, step, part_names):
         if step == steps.PRIME and part_names == self.config.part_names:
@@ -335,17 +301,31 @@ class _Executor:
                 self.config.original_snapcraft_yaml,
                 self.config.validator.schema)
 
+    def _uncache_dirty_dependents(self, part, step):
+        # If other parts are depending on this part, their state needs to be
+        # removed from the cache so it can be re-evaluated
+        dirty_reverse_dependencies = get_dirty_reverse_dependencies(
+            part.name, step, self.config)
+        for reverse_dependency in dirty_reverse_dependencies:
+            self._cache.clear_part(reverse_dependency)
+
+        if dirty_reverse_dependencies:
+            dirty_part_names = {p.name for p in dirty_reverse_dependencies}
+            logger.warning(
+                'The following {} now out of date: {}'.format(
+                    formatting_utils.pluralize(
+                        dirty_part_names, 'part is', 'parts are'),
+                    formatting_utils.humanize_list(dirty_part_names, 'and')))
+
     def _handle_dirty(self, part, step, dirty_report, cli_config):
         dirty_action = cli_config.get_outdated_step_action()
         if not step.clean_if_dirty:
             if dirty_action == config.OutdatedStepAction.ERROR:
                 raise errors.StepOutdatedError(
-                    step=step, part=part.name,
-                    dirty_properties=dirty_report.dirty_properties,
-                    dirty_project_options=dirty_report.dirty_project_options,
-                    changed_dependencies=dirty_report.changed_dependencies)
+                    step=step, part=part.name, dirty_report=dirty_report)
 
-        getattr(self, '_re{}'.format(step.name))(part, hint='(out of date)')
+        getattr(self, '_re{}'.format(step.name))(part, hint='({})'.format(
+            dirty_report.summary()))
 
 
 def notify_part_progress(part, progress, hint='', debug=False):

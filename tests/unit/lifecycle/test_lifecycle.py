@@ -43,31 +43,7 @@ from snapcraft.internal import errors, pluginhandler, lifecycle, steps
 from snapcraft.internal.lifecycle._runner import _replace_in_part
 from tests import fixture_setup, unit
 from tests.fixture_setup.os_release import FakeOsRelease
-
-
-class BaseLifecycleTestCase(unit.TestCase):
-
-    def setUp(self):
-        super().setUp()
-
-        self.fake_logger = fixtures.FakeLogger(level=logging.INFO)
-        self.useFixture(self.fake_logger)
-        self.project_options = snapcraft.ProjectOptions()
-
-    def make_snapcraft_yaml(self, parts, snap_type=''):
-        yaml = textwrap.dedent("""\
-            name: test
-            version: 0
-            summary: test
-            description: test
-            confinement: strict
-            grade: stable
-            {type}
-
-            {parts}
-            """)
-
-        super().make_snapcraft_yaml(yaml.format(parts=parts, type=snap_type))
+from . import BaseLifecycleTestCase
 
 
 class ExecutionTestCase(BaseLifecycleTestCase):
@@ -223,7 +199,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
 
         def _fake_dirty_report(self, step):
             if self.name == 'part1' and step == steps.PRIME:
-                return pluginhandler.DirtyReport({'foo'}, {'bar'}, [])
+                return pluginhandler.DirtyReport(
+                    dirty_properties={'foo'}, dirty_project_options={'bar'})
             return None
 
         # Should automatically clean and re-prime if that step is dirty
@@ -251,7 +228,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 'Skipping pull part1 (already ran)',
                 'Skipping build part1 (already ran)',
                 'Skipping stage part1 (already ran)',
-                'Re-priming part1 (out of date)',
+                'Re-priming part1 (options and properties changed)',
             ]))
 
     def test_dirty_prime_reprimes_multiple_part(self):
@@ -273,7 +250,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
 
         def _fake_dirty_report(self, step):
             if step == steps.PRIME:
-                return pluginhandler.DirtyReport({'foo'}, {'bar'}, [])
+                return pluginhandler.DirtyReport(
+                    dirty_properties={'foo'}, dirty_project_options={'bar'})
             return None
 
         # Should automatically clean and re-prime if that step is dirty
@@ -292,7 +270,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 'Skipping pull part2 (already ran)',
                 'Skipping build part2 (already ran)',
                 'Skipping stage part2 (already ran)',
-                'Re-priming part2 (out of date)',
+                'Re-priming part2 (options and properties changed)',
             ]))
 
         self.assertThat(
@@ -301,7 +279,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
                 'Skipping pull part1 (already ran)',
                 'Skipping build part1 (already ran)',
                 'Skipping stage part1 (already ran)',
-                'Re-priming part1 (out of date)',
+                'Re-priming part1 (options and properties changed)',
             ]))
 
     def test_dirty_stage_restages_single_part(self):
@@ -323,7 +301,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
 
         def _fake_dirty_report(self, step):
             if self.name == 'part1' and step == steps.STAGE:
-                return pluginhandler.DirtyReport({'foo'}, {'bar'}, [])
+                return pluginhandler.DirtyReport(
+                    dirty_properties={'foo'}, dirty_project_options={'bar'})
             return None
 
         # Should automatically clean and re-stage if that step is dirty
@@ -349,7 +328,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             Equals([
                 'Skipping pull part1 (already ran)',
                 'Skipping build part1 (already ran)',
-                'Cleaning later steps and re-staging part1 (out of date)',
+                'Cleaning later steps and re-staging part1 (options and '
+                'properties changed)',
             ]))
 
     def test_dirty_stage_restages_multiple_parts(self):
@@ -371,7 +351,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
 
         def _fake_dirty_report(self, step):
             if step == steps.STAGE:
-                return pluginhandler.DirtyReport({'foo'}, {'bar'}, [])
+                return pluginhandler.DirtyReport(
+                    dirty_properties={'foo'}, dirty_project_options={'bar'})
             return None
 
         # Should automatically clean and re-stage if that step is dirty
@@ -389,7 +370,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             Equals([
                 'Skipping pull part2 (already ran)',
                 'Skipping build part2 (already ran)',
-                'Cleaning later steps and re-staging part2 (out of date)',
+                'Cleaning later steps and re-staging part2 (options and '
+                'properties changed)',
             ]))
 
         self.assertThat(
@@ -397,7 +379,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             Equals([
                 'Skipping pull part1 (already ran)',
                 'Skipping build part1 (already ran)',
-                'Cleaning later steps and re-staging part1 (out of date)',
+                'Cleaning later steps and re-staging part1 (options and '
+                'properties changed)',
             ]))
 
     def test_dirty_stage_part_with_built_dependent_raises(self):
@@ -420,7 +403,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
 
         def _fake_dirty_report(self, step):
             if step == steps.STAGE:
-                return pluginhandler.DirtyReport({'foo'}, {'bar'}, [])
+                return pluginhandler.DirtyReport(
+                    dirty_properties={'foo'}, dirty_project_options={'bar'})
             return None
 
         # Should stage no problem
@@ -480,7 +464,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
 
         def _fake_dirty_report(self, step):
             if step == steps.STAGE:
-                return pluginhandler.DirtyReport({'foo'}, {'bar'}, [])
+                return pluginhandler.DirtyReport(
+                    dirty_properties={'foo'}, dirty_project_options={'bar'})
             return None
 
         with mock.patch.object(pluginhandler.PluginHandler, 'get_dirty_report',
@@ -500,7 +485,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             Equals([
                 'Skipping pull part1 (already ran)',
                 'Skipping build part1 (already ran)',
-                'Cleaning later steps and re-staging part1 (out of date)',
+                'Cleaning later steps and re-staging part1 (options and '
+                'properties changed)',
             ]))
 
         self.assertThat(
@@ -530,7 +516,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
 
         def _fake_dirty_report(self, step):
             if step == steps.STAGE:
-                return pluginhandler.DirtyReport({'foo'}, {'bar'}, [])
+                return pluginhandler.DirtyReport(
+                    dirty_properties={'foo'}, dirty_project_options={'bar'})
             return None
 
         # Should automatically clean and re-stage if that step is dirty
@@ -544,7 +531,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             self.fake_logger.output, Equals(
                 'Skipping pull part1 (already ran)\n'
                 'Skipping build part1 (already ran)\n'
-                'Cleaning later steps and re-staging part1 (out of date)\n'))
+                'Cleaning later steps and re-staging part1 (options and '
+                'properties changed)\n'))
 
     def test_dirty_stage_reprimes(self):
         self.make_snapcraft_yaml(
@@ -563,7 +551,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
 
         def _fake_dirty_report(self, step):
             if step == steps.STAGE:
-                return pluginhandler.DirtyReport({'foo'}, {'bar'}, [])
+                return pluginhandler.DirtyReport(
+                    dirty_properties={'foo'}, dirty_project_options={'bar'})
             return None
 
         # Should automatically clean and re-stage if that step is dirty
@@ -576,7 +565,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
             self.fake_logger.output, Equals(
                 'Skipping pull part1 (already ran)\n'
                 'Skipping build part1 (already ran)\n'
-                'Cleaning later steps and re-staging part1 (out of date)\n'
+                'Cleaning later steps and re-staging part1 (options and '
+                'properties changed)\n'
                 'Priming part1 \n'))
 
     def test_dirty_build_raises(self):
@@ -596,7 +586,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
 
         def _fake_dirty_report(self, step):
             if step == steps.BUILD:
-                return pluginhandler.DirtyReport({'foo', 'bar'}, set(), [])
+                return pluginhandler.DirtyReport(
+                    dirty_properties={'foo', 'bar'})
             return None
 
         # Should catch that the part needs to be rebuilt and raise an error.
@@ -636,7 +627,8 @@ class ExecutionTestCase(BaseLifecycleTestCase):
 
         def _fake_dirty_report(self, step):
             if step == steps.PULL:
-                return pluginhandler.DirtyReport(set(), {'foo', 'bar'}, [])
+                return pluginhandler.DirtyReport(
+                    dirty_project_options={'foo', 'bar'})
             return None
 
         # Should catch that the part needs to be re-pulled and raise an error.
