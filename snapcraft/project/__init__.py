@@ -15,4 +15,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 from ._project import Project                          # noqa F401
-from ._project_info import get_snapcraft_yaml          # noqa F401
+from ._get_snapcraft import get_snapcraft_yaml         # noqa F401

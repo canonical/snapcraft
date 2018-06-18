@@ -52,8 +52,7 @@ def add_build_options(hidden=False):
     return _add_build_options
 
 
-def get_project(**kwargs):
-    skip_snapcraft_yaml = kwargs.pop('skip_snapcraft_yaml', False)
+def get_project(*, skip_snapcraft_yaml: bool=False, **kwargs):
     if skip_snapcraft_yaml:
         snapcraft_yaml_file_path = None
     else:

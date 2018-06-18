@@ -15,7 +15,6 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import codecs
-import os
 from collections import OrderedDict
 from copy import deepcopy
 
@@ -29,7 +28,7 @@ class ProjectInfo:
     """Information gained from the snap's snapcraft.yaml file."""
 
     def __init__(self, *, snapcraft_yaml_file_path) -> None:
-        self.snapcraft_yaml_file_path = get_snapcraft_yaml()
+        self.snapcraft_yaml_file_path = snapcraft_yaml_file_path
         self.__raw_snapcraft = _load_yaml(
             yaml_file_path=snapcraft_yaml_file_path)
 
@@ -74,26 +73,3 @@ def _load_yaml(*, yaml_file_path: str) -> OrderedDict:
                 e.reason)) from e
 
     return yaml_contents
-
-
-def get_snapcraft_yaml(base_dir=None):
-    possible_yamls = [
-        os.path.join('snap', 'snapcraft.yaml'),
-        'snapcraft.yaml',
-        '.snapcraft.yaml',
-    ]
-
-    if base_dir:
-        possible_yamls = [os.path.join(base_dir, x) for x in possible_yamls]
-
-    snapcraft_yamls = [y for y in possible_yamls if os.path.exists(y)]
-
-    if not snapcraft_yamls:
-        raise errors.MissingSnapcraftYamlError(
-            snapcraft_yaml_file_path='snap/snapcraft.yaml')
-    elif len(snapcraft_yamls) > 1:
-        raise errors.DuplicateSnapcraftYamlError(
-            snapcraft_yaml_file_path=snapcraft_yamls[0],
-            other_snapcraft_yaml_file_path=snapcraft_yamls[1])
-
-    return snapcraft_yamls[0]

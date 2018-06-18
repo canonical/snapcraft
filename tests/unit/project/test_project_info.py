@@ -14,13 +14,12 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import os
 from tests import unit
 from textwrap import dedent
 
 from testtools.matchers import Equals, Is
 
-from snapcraft.project._project_info import ProjectInfo, get_snapcraft_yaml
+from snapcraft.project._project_info import ProjectInfo
 from snapcraft.project import errors
 
 
@@ -148,60 +147,6 @@ class InvalidYamlTest(unit.TestCase):
         self.assertThat(raised.message, Equals(
             "Invalid character '\\uffff' at position 40 "
             "of snap/snapcraft.yaml: special characters are not allowed"))
-
-
-class GetSnapcraftYamlTest(unit.TestCase):
-
-    scenarios = [
-        ('snapcraft.yaml',
-         dict(file_path='snapcraft.yaml')),
-        ('snap/snapcraft.yaml',
-         dict(file_path=os.path.join('snap', 'snapcraft.yaml'))),
-        ('.snapcraft.yaml',
-         dict(file_path='.snapcraft.yaml'))
-    ]
-
-    def test_get(self):
-        if os.path.dirname(self.file_path):
-            os.makedirs(os.path.dirname(self.file_path))
-        open(self.file_path, 'w').close()
-        self.assertThat(get_snapcraft_yaml(), Equals(self.file_path))
-
-
-class GetSnapcraftYamlMissingErrorsTest(unit.TestCase):
-
-    def test_config_raises_on_missing_snapcraft_yaml(self):
-        """Test that an error is raised if snap/snapcraft.yaml is missing"""
-
-        self.assertRaises(errors.MissingSnapcraftYamlError,
-                          get_snapcraft_yaml)
-
-
-class GetSnapcraftYamlDuplicateErrorsTest(unit.TestCase):
-
-    scenarios = [
-        ('snapcraft.yaml and .snapcraft.yaml',
-         dict(file_path1='snapcraft.yaml',
-              file_path2='.snapcraft.yaml')),
-        ('snapcraft.yaml and snap/snapcraft.yaml',
-         dict(file_path1='snapcraft.yaml',
-              file_path2=os.path.join('snap', 'snapcraft.yaml'))),
-        ('.snapcraft.yaml and snap/snapcraft.yaml',
-         dict(file_path1='.snapcraft.yaml',
-              file_path2=os.path.join('snap', 'snapcraft.yaml'))),
-    ]
-
-    def test_duplicates(self):
-        if os.path.dirname(self.file_path1):
-            os.makedirs(os.path.dirname(self.file_path1))
-        open(self.file_path1, 'w').close()
-
-        if os.path.dirname(self.file_path2):
-            os.makedirs(os.path.dirname(self.file_path2))
-        open(self.file_path2, 'w').close()
-
-        self.assertRaises(errors.DuplicateSnapcraftYamlError,
-                          get_snapcraft_yaml)
 
 
 class YamlEncodingsTest(unit.TestCase):
