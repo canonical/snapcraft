@@ -19,7 +19,7 @@ import os
 from testtools.matchers import Equals
 
 from snapcraft.project import (get_snapcraft_yaml, errors)
-from snapcraft.tests import unit
+from tests import unit
 
 
 class GetSnapcraftYamlTest(unit.TestCase):
