@@ -49,9 +49,6 @@ elif [ "$test_suite" = "tests/unit" ]; then
 elif [[ "$test_suite" = "tests/integration"* || "$test_suite" = "tests.integration"* ]]; then
     # TODO remove the need to install the snapcraft dependencies due to nesting
     #      the tests in the snapcraft package
-    # snap install core exits with this error message:
-    # - Setup snap "core" (2462) security profiles (cannot reload udev rules: exit status 2
-    # but the installation succeeds, so we just ingore it.
     dependencies="apt install -y bzr git libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev mercurial python3-pip subversion sudo snapd && python3 -m pip install -r requirements-devel.txt -r requirements.txt && (snap install core || echo 'ignored error') && ${SNAPCRAFT_INSTALL_COMMAND:-sudo snap install snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap --dangerous --classic}"
 else
     echo "Unknown test suite: $test_suite"

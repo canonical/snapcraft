@@ -134,7 +134,7 @@ def _validate_architectures(instance):
             path=['architectures'], instance=instance)
 
     # We want to ensure that multiple `run-on`s (or standalone `build-on`s)
-    # don't incude the same arch, or they'll clash with each other when
+    # don't include the same arch, or they'll clash with each other when
     # releasing.
     all_run_ons = run_ons + standalone_build_ons
     duplicates = {arch for (arch, count) in all_run_ons.items() if count > 1}
