@@ -23,7 +23,7 @@ from snapcraft.internal import project_loader
 from tests import unit
 
 
-class BaseLifecycleTestCase(unit.TestCase):
+class LifecycleTestBase(unit.TestCase):
 
     def setUp(self):
         super().setUp()

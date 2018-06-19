@@ -44,10 +44,10 @@ from snapcraft.internal.lifecycle._runner import _replace_in_part
 from snapcraft.project import Project
 from tests import fixture_setup, unit
 from tests.fixture_setup.os_release import FakeOsRelease
-from . import BaseLifecycleTestCase
+from . import LifecycleTestBase
 
 
-class ExecutionTestCase(BaseLifecycleTestCase):
+class ExecutionTestCase(LifecycleTestBase):
 
     def test_replace_in_parts(self):
         class Options:
@@ -341,7 +341,7 @@ class ExecutionTestCase(BaseLifecycleTestCase):
         lifecycle.execute(steps.PULL, project_config)
 
 
-class DirtyBuildScriptletTestCase(BaseLifecycleTestCase):
+class DirtyBuildScriptletTestCase(LifecycleTestBase):
 
     scenarios = (
         ('prepare scriptlet', {'scriptlet': 'prepare'}),
@@ -393,7 +393,7 @@ class DirtyBuildScriptletTestCase(BaseLifecycleTestCase):
                     self.scriptlet)))
 
 
-class CleanTestCase(BaseLifecycleTestCase):
+class CleanTestCase(LifecycleTestBase):
 
     def test_clean_removes_global_state(self):
         project_config = self.make_snapcraft_project(
@@ -423,7 +423,7 @@ class CleanTestCase(BaseLifecycleTestCase):
             'Expected prime directory to remain after cleaning for tried snap')
 
 
-class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
+class RecordSnapcraftYamlTestCase(LifecycleTestBase):
 
     def test_prime_without_build_info_does_not_record(self):
         self.useFixture(fixtures.EnvironmentVariable(
@@ -472,7 +472,7 @@ class RecordSnapcraftYamlTestCase(BaseLifecycleTestCase):
             FileContains(expected))
 
 
-class RecordManifestBaseTestCase(BaseLifecycleTestCase):
+class RecordManifestBaseTestCase(LifecycleTestBase):
 
     def setUp(self):
         super().setUp()
@@ -1230,7 +1230,7 @@ class CoreSetupTestCase(unit.TestCase):
         return lifecycle.pack(directory=core_path)
 
 
-class SnapErrorsTestCase(BaseLifecycleTestCase):
+class SnapErrorsTestCase(LifecycleTestBase):
 
     def test_mksquashfs_missing(self):
         with mock.patch('shutil.which') as which_mock:

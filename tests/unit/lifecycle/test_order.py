@@ -24,7 +24,7 @@ from testtools.matchers import Contains, Equals, HasLength
 import snapcraft
 from snapcraft.internal import lifecycle, pluginhandler, steps
 
-from . import BaseLifecycleTestCase
+from . import LifecycleTestBase
 
 
 def pull_order(part_name=None):
@@ -120,7 +120,7 @@ def prime_order(part_name=None):
     return events
 
 
-class OrderBaseTestCase(BaseLifecycleTestCase):
+class OrderTestBase(LifecycleTestBase):
 
     def setUp(self):
         super().setUp()
@@ -200,7 +200,7 @@ class OrderBaseTestCase(BaseLifecycleTestCase):
                 'expected {} {}'.format(expected_tuple, hint))
 
 
-class ReStepOrderTestCase(OrderBaseTestCase):
+class ReStepOrderTestBase(OrderTestBase):
 
     def run_test(self):
         lifecycle.execute(
@@ -229,7 +229,7 @@ class ReStepOrderTestCase(OrderBaseTestCase):
         self.assert_parts_dirty(self.expected_dirty, '(dirty)')
 
 
-class MainTestCase(ReStepOrderTestCase):
+class MainTest(ReStepOrderTestBase):
 
     scenarios = [
         # Re-pull tests
@@ -702,7 +702,7 @@ class MainTestCase(ReStepOrderTestCase):
         self.run_test()
 
 
-class DependentTestCase(ReStepOrderTestCase):
+class DependentTest(ReStepOrderTestBase):
 
     scenarios = [
         # Re-pull tests
@@ -1162,7 +1162,7 @@ class DependentTestCase(ReStepOrderTestCase):
         self.run_test()
 
 
-class NestedDependentTestCase(ReStepOrderTestCase):
+class NestedDependentTest(ReStepOrderTestBase):
 
     scenarios = [
         # Re-pull tests
@@ -1334,7 +1334,7 @@ class NestedDependentTestCase(ReStepOrderTestCase):
         self.run_test()
 
 
-class DirtyTestCase(OrderBaseTestCase):
+class DirtyTest(OrderTestBase):
     scenarios = [
         # main tests
         ('main pull dirty', {
