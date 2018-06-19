@@ -182,9 +182,9 @@ def requires_travis_preconditions():
 
 
 @requires_travis_preconditions()
-def refresh():
+def refresh(project):
     series = storeapi.constants.DEFAULT_SERIES
-    project_config = project_loader.load_config()
+    project_config = project_loader.load_config(project)
     snap_name = project_config.data['name']
     logger.info(
         'Refreshing credentials to push and release "{}" snaps '
@@ -200,9 +200,9 @@ def refresh():
 
 
 @requires_travis_preconditions()
-def enable():
+def enable(project):
     series = storeapi.constants.DEFAULT_SERIES
-    project_config = project_loader.load_config()
+    project_config = project_loader.load_config(project)
     snap_name = project_config.data['name']
     logger.info(
         'Enabling Travis testbeds to push and release {!r} snaps '

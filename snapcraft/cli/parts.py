@@ -15,8 +15,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import click
 
-from snapcraft.internal import remote_parts, lifecycle
-from ._options import get_project_options
+from snapcraft.internal import project_loader, remote_parts, lifecycle
+from ._options import get_project
 from . import env
 
 
@@ -33,8 +33,9 @@ def update(ctx, **kwargs):
     # Update in the container so that it will use the parts at build time
     build_environment = env.BuilderEnvironmentConfig()
     if not build_environment.is_host:
-        project_options = get_project_options(**kwargs)
-        lifecycle.containerbuild('update', project_options)
+        project = get_project(**kwargs)
+        project_config = project_loader.load_config(project)
+        lifecycle.containerbuild('update', project_config)
 
     # Parts can be defined and searched from any folder on the host, so
     # regardless of using containers we always update these as well

@@ -14,16 +14,62 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import Any, Dict
+import codecs
+from collections import OrderedDict
+from copy import deepcopy
+
+import yaml
+import yaml.reader
+
+from . import errors
 
 
 class ProjectInfo:
     """Information gained from the snap's snapcraft.yaml file."""
 
-    def __init__(self, data: Dict[str, Any]) -> None:
-        self.name = data['name']
-        self.version = data.get('version')
-        self.summary = data.get('summary')
-        self.description = data.get('description')
-        self.confinement = data.get('confinement')
-        self.grade = data.get('grade')
+    def __init__(self, *, snapcraft_yaml_file_path) -> None:
+        self.snapcraft_yaml_file_path = snapcraft_yaml_file_path
+        self.__raw_snapcraft = _load_yaml(
+            yaml_file_path=snapcraft_yaml_file_path)
+
+        try:
+            self.name = self.__raw_snapcraft['name']
+        except KeyError as key_error:
+            raise errors.YamlValidationError(
+                "'name' is a required property in {!r}".format(
+                    snapcraft_yaml_file_path)) from key_error
+        self.version = self.__raw_snapcraft.get('version')
+        self.summary = self.__raw_snapcraft.get('summary')
+        self.description = self.__raw_snapcraft.get('description')
+        self.confinement = self.__raw_snapcraft.get('confinement')
+        self.grade = self.__raw_snapcraft.get('grade')
+        self.base = self.__raw_snapcraft.get('base')
+
+    def get_raw_snapcraft(self):
+        # TODO this should be a MappingProxyType, but ordered writing
+        #      depends on reading in the current code base.
+        return deepcopy(self.__raw_snapcraft)
+
+
+def _load_yaml(*, yaml_file_path: str) -> OrderedDict:
+    with open(yaml_file_path, 'rb') as fp:
+        bs = fp.read(2)
+
+    if bs == codecs.BOM_UTF16_LE or bs == codecs.BOM_UTF16_BE:
+        encoding = 'utf-16'
+    else:
+        encoding = 'utf-8'
+
+    try:
+        with open(yaml_file_path, encoding=encoding) as fp:  # type: ignore
+            yaml_contents = yaml.safe_load(fp)               # type: ignore
+    except yaml.scanner.ScannerError as e:
+        raise errors.YamlValidationError('{} on line {} of {}'.format(
+            e.problem, e.problem_mark.line + 1, yaml_file_path)) from e
+    except yaml.reader.ReaderError as e:
+        raise errors.YamlValidationError(
+            'Invalid character {!r} at position {} of {}: {}'.format(
+                chr(e.character), e.position + 1, yaml_file_path,
+                e.reason)) from e
+
+    return yaml_contents

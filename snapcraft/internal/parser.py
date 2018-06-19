@@ -51,6 +51,7 @@ from docopt import docopt
 from collections import OrderedDict
 
 import snapcraft
+from snapcraft import project
 from snapcraft.internal import errors, log, project_loader, repo, sources
 
 logger = logging.getLogger(__name__)
@@ -85,7 +86,7 @@ def main(argv=None):
 def _get_origin_data(origin_dir):
     origin_data = {}
 
-    yaml_file = project_loader.get_snapcraft_yaml(base_dir=origin_dir)
+    yaml_file = project.get_snapcraft_yaml(base_dir=origin_dir)
     try:
         with open(yaml_file) as fp:
             origin_data = yaml.safe_load(fp)
@@ -189,7 +190,7 @@ def _process_entry(data):
 
     try:
         origin_data = _get_origin_data(origin_dir)
-    except project_loader.errors.MissingSnapcraftYamlError as e:
+    except project.errors.MissingSnapcraftYamlError as e:
         raise errors.InvalidWikiEntryError(
             'Origin {origin!r} is missing a snapcraft.yaml file.'.format(
                 origin=origin)) from e

@@ -233,8 +233,7 @@ class ProjectOptions:
 
     def __init__(self, use_geoip=False, parallel_builds=True,
                  target_deb_arch=None, debug=False):
-        # TODO: allow setting a different project dir and check for
-        #       snapcraft.yaml
+        # TODO: allow setting a different project dir
         self.__project_dir = os.getcwd()
         self.__use_geoip = use_geoip
         self.__parallel_builds = parallel_builds

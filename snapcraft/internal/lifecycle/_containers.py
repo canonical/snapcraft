@@ -17,7 +17,7 @@ import logging
 import os
 import tarfile
 
-from snapcraft.internal import build_providers, errors, lxd, project_loader
+from snapcraft.internal import build_providers, errors, lxd
 
 
 logger = logging.getLogger(__name__)
@@ -38,19 +38,21 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
-def containerbuild(step, project_options, output=None, args=[]):
-    config = project_loader.load_config(project_options)
+def containerbuild(command, project_config, output=None, args=None):
+    if args is None:
+        args = []
+
     lxd.Project(output=output, source=os.path.curdir,
-                project_options=project_options,
-                metadata=config.get_metadata()).execute(step, args)
+                project_options=project_config.project,
+                metadata=project_config.get_metadata()).execute(command, args)
 
 
-def cleanbuild(*, project, echoer, build_environment, remote='') -> None:
-    config = project_loader.load_config(project)
+def cleanbuild(*, project, project_config, echoer, build_environment,
+               remote='') -> None:
     tar_filename = _create_tar_file(project.info.name)
 
     if build_environment.is_lxd:
-        _deprecated_cleanbuild(project, remote, config, tar_filename)
+        _deprecated_cleanbuild(project, remote, project_config, tar_filename)
         return
 
     build_provider_class = build_providers.get_provider_for('multipass')

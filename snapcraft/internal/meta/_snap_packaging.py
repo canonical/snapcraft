@@ -86,9 +86,7 @@ yaml.add_representer(OctInt, oct_int_representer)
 def create_snap_packaging(
         config_data: Dict[str, Any],
         parts_config: project_loader.PartsConfig,
-        project_options: Project,
-        snapcraft_yaml_path: str,
-        original_snapcraft_yaml: Dict[str, Any],
+        project: Project,
         snapcraft_schema: Dict[str, Any]) -> str:
     """Create snap.yaml and related assets in meta.
 
@@ -115,9 +113,7 @@ def create_snap_packaging(
     # use it to generate the snap.yaml.
     _ensure_required_keywords(config_data)
 
-    packaging = _SnapPackaging(
-        config_data, project_options,
-        snapcraft_yaml_path, original_snapcraft_yaml)
+    packaging = _SnapPackaging(config_data, project)
     packaging.write_snap_yaml()
     packaging.setup_assets()
     packaging.generate_hook_wrappers()
@@ -302,20 +298,16 @@ class _SnapPackaging:
     def meta_dir(self) -> str:
         return self._meta_dir
 
-    def __init__(
-            self, config_data: Dict[str, Any],
-            project_options: Project,
-            snapcraft_yaml_path: str,
-            original_snapcraft_yaml: Dict[str, Any]) -> None:
-        self._snapcraft_yaml_path = snapcraft_yaml_path
-        self._prime_dir = project_options.prime_dir
-        self._parts_dir = project_options.parts_dir
-        self._arch_triplet = project_options.arch_triplet
+    def __init__(self, config_data: Dict[str, Any], project: Project) -> None:
+        self._snapcraft_yaml_path = project.info.snapcraft_yaml_file_path
+        self._prime_dir = project.prime_dir
+        self._parts_dir = project.parts_dir
+        self._arch_triplet = project.arch_triplet
         self._is_host_compatible_with_base = (
-            project_options.is_host_compatible_with_base)
+            project.is_host_compatible_with_base)
         self._meta_dir = os.path.join(self._prime_dir, 'meta')
         self._config_data = config_data.copy()
-        self._original_snapcraft_yaml = original_snapcraft_yaml
+        self._original_snapcraft_yaml = project.info.get_raw_snapcraft()
 
         os.makedirs(self._meta_dir, exist_ok=True)
 
@@ -627,7 +619,7 @@ class _SnapPackaging:
 
     def _apply_passthrough(self, section: Dict[str, Any],
                            passthrough: Dict[str, Any],
-                           original: Dict[str, Any]) -> bool:
+                           original: collections.OrderedDict) -> bool:
         # Any value already in the original dictionary must
         # not be specified in passthrough at the same time.
         duplicates = list(original.keys() & passthrough.keys())

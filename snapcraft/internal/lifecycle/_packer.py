@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -22,9 +22,8 @@ import yaml
 from progressbar import AnimatedMarker, ProgressBar
 
 from snapcraft import file_utils
-from snapcraft.internal import common, repo, steps
+from snapcraft.internal import common, repo
 from snapcraft.internal.indicators import is_dumb_terminal
-from ._runner import execute
 
 
 logger = logging.getLogger(__name__)
@@ -38,14 +37,6 @@ def _snap_data_from_dir(directory):
             'version': snap['version'],
             'arch': snap.get('architectures', []),
             'type': snap.get('type', '')}
-
-
-def snap(project_options, directory=None, output=None):
-    if not directory:
-        directory = project_options.prime_dir
-        execute(steps.PRIME, project_options)
-
-    return pack(directory, output)
 
 
 def pack(directory, output=None):
