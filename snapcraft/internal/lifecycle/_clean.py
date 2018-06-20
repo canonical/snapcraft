@@ -42,8 +42,10 @@ def _clean_part(part_name, step, config, staged_state, primed_state):
 
 def mark_dependents_dirty(part_name, cleaned_step, config):
     dependent_part_names = config.parts.get_reverse_dependencies(part_name)
-    dependent_parts = {p for p in config.all_parts
-                       if p.name in dependent_part_names}
+
+    # Keep ordering
+    dependent_parts = [p for p in config.all_parts
+                       if p.name in dependent_part_names]
 
     dirty_part_names = set()
     for part in dependent_parts:
