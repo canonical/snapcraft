@@ -55,7 +55,7 @@ class Provider():
 
     @abc.abstractmethod
     def create(self) -> None:
-        """Provider steps needed to create a fully functioning environemnt."""
+        """Provider steps needed to create a fully functioning environment."""
 
     @abc.abstractmethod
     def destroy(self) -> None:
