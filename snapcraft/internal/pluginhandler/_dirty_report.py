@@ -14,18 +14,38 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+from typing import List, Set, Union
 from snapcraft import formatting_utils
+
+# Ideally we'd just use Collection from typing, but that wasn't introduced
+# until 3.6
+StrCollection = Union[List[str], Set[str]]
+DependencyCollection = Union[List['Dependency'], Set['Dependency']]
+
+
+class Dependency:
+    def __init__(self, *, part_name, step):
+        self.part_name = part_name
+        self.step = step
 
 
 class DirtyReport:
-    def __init__(self, *, dirty_properties=None, dirty_project_options=None,
-                 changed_dependencies=None):
+    """The DirtyReport class explains why a given step is dirty."""
+
+    def __init__(self, *, dirty_properties: StrCollection=None,
+                 dirty_project_options: StrCollection=None,
+                 changed_dependencies: DependencyCollection=None) -> None:
         self.dirty_properties = dirty_properties
         self.dirty_project_options = dirty_project_options
         self.changed_dependencies = changed_dependencies
 
-    def report(self):
-        messages = []
+    def get_report(self) -> str:
+        """Get verbose report.
+
+        :return: Report why the part is dirty.
+        :rtype: str
+        """
+        messages = []  # type: List[str]
 
         if self.dirty_properties:
             humanized_properties = formatting_utils.humanize_list(
@@ -49,7 +69,7 @@ class DirtyReport:
 
         if self.changed_dependencies:
             dependencies = [
-                d['name'] for d in self.changed_dependencies]
+                d.part_name for d in self.changed_dependencies]
             messages.append('{} changed: {}\n'.format(
                 formatting_utils.pluralize(
                     dependencies, 'A dependency has',
@@ -58,20 +78,25 @@ class DirtyReport:
 
         return ''.join(messages)
 
-    def summary(self):
+    def get_summary(self) -> str:
+        """Get summarized report.
+
+        :return: Short summary of why the part is dirty.
+        :rtype: str
+        """
         reasons = []
 
-        reason_count = 0
+        reasons_count = 0
         if self.dirty_properties:
-            reason_count += 1
+            reasons_count += 1
         if self.dirty_project_options:
-            reason_count += 1
+            reasons_count += 1
         if self.changed_dependencies:
-            reason_count += 1
+            reasons_count += 1
 
         if self.dirty_properties:
             # Be specific only if this is the only reason
-            if reason_count > 1 or len(self.dirty_properties) > 1:
+            if reasons_count > 1 or len(self.dirty_properties) > 1:
                 reasons.append('properties')
             else:
                 reasons.append('{!r} property'.format(
@@ -79,7 +104,7 @@ class DirtyReport:
 
         if self.dirty_project_options:
             # Be specific only if this is the only reason
-            if reason_count > 1 or len(self.dirty_project_options) > 1:
+            if reasons_count > 1 or len(self.dirty_project_options) > 1:
                 reasons.append('options')
             else:
                 reasons.append('{!r} option'.format(
@@ -87,11 +112,11 @@ class DirtyReport:
 
         if self.changed_dependencies:
             # Be specific only if this is the only reason
-            if reason_count > 1 or len(self.changed_dependencies) > 1:
+            if reasons_count > 1 or len(self.changed_dependencies) > 1:
                 reasons.append('dependencies')
             else:
                 reasons.append('{!r}'.format(
-                    next(iter(self.changed_dependencies))['name']))
+                    next(iter(self.changed_dependencies)).part_name))
 
         return '{} changed'.format(
             formatting_utils.humanize_list(reasons, 'and', '{}'))

@@ -65,7 +65,7 @@ class StepOutdatedError(SnapcraftError):
         messages = []
 
         if dirty_report:
-            messages.append(dirty_report.report())
+            messages.append(dirty_report.get_report())
 
         if dependents:
             humanized_dependents = formatting_utils.humanize_list(

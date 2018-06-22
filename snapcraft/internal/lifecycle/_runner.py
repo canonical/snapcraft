@@ -189,7 +189,7 @@ class _Executor:
                     if dirty_report:
                         self._handle_dirty(
                             part, current_step, dirty_report, cli_config)
-                    elif self._cache.step_has_run(part, current_step):
+                    elif self._cache.has_step_run(part, current_step):
                         # By default, if a step has already run, don't run it
                         # again. However, automatically clean and re-run the
                         # step if all the following conditions apply:
@@ -209,7 +209,6 @@ class _Executor:
                     else:
                         getattr(self, '_run_{}'.format(
                             current_step.name))(part)
-                        self._cache.add_step_run(part, current_step)
 
         self._create_meta(step, processed_part_names)
 
@@ -247,20 +246,23 @@ class _Executor:
 
     def _run_step(self, *, step: steps.Step, part, progress, hint=''):
         common.reset_env()
-        prereq_parts = self.parts_config.get_dependencies(part.name)
+        all_dependencies = self.parts_config.get_dependencies(part.name)
 
+        # Filter dependencies down to only those that need to run the
+        # prerequisite step
         prerequisite_step = steps.get_dependency_prerequisite_step(step)
-        step_prereqs = {p for p in prereq_parts
-                        if self._cache.step_should_run(p, prerequisite_step)}
+        dependencies = {p for p in all_dependencies
+                        if self._cache.should_step_run(p, prerequisite_step)}
 
-        if step_prereqs:
-            prereq_names = {p.name for p in step_prereqs}
-            # prerequisites need to go all the way to the prerequisite step to
-            # be able to share the common assets that make them a dependency.
+        if dependencies:
+            dependency_names = {p.name for p in dependencies}
+            # Dependencies need to go all the way to the prerequisite step to
+            # be able to share the common assets that make them a dependency
             logger.info(
-                '{!r} has prerequisites that need to be {}d: {}'.format(
-                    part.name, prerequisite_step.name, ' '.join(prereq_names)))
-            self.run(prerequisite_step, prereq_names)
+                '{!r} has dependencies that need to be {}d: {}'.format(
+                    part.name, prerequisite_step.name, ' '.join(
+                        dependency_names)))
+            self.run(prerequisite_step, dependency_names)
 
         # Run the preparation function for this step (if implemented)
         preparation_function = getattr(
@@ -277,6 +279,9 @@ class _Executor:
 
         notify_part_progress(part, progress, hint)
         getattr(part, step.name)()
+
+        # We know we just ran this step, so rather than check, manually twiddle
+        # the cache
         self._cache.add_step_run(part, step)
         self.steps_were_run = True
 
@@ -309,7 +314,7 @@ class _Executor:
                     step=step, part=part.name, dirty_report=dirty_report)
 
         getattr(self, '_re{}'.format(step.name))(part, hint='({})'.format(
-            dirty_report.summary()))
+            dirty_report.get_summary()))
 
 
 def notify_part_progress(part, progress, hint='', debug=False):

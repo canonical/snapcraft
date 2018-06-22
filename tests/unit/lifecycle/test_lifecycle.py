@@ -87,7 +87,7 @@ class ExecutionTestCase(LifecycleTestBase):
 
         self.assertThat(
             self.fake_logger.output,
-            Equals("'part2' has prerequisites that need to be staged: part1\n"
+            Equals("'part2' has dependencies that need to be staged: part1\n"
                    'Pulling part1 \n'
                    'Building part1 \n'
                    'Staging part1 \n'

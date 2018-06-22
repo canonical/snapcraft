@@ -23,6 +23,7 @@ from testtools.matchers import Contains, Equals, HasLength
 
 import snapcraft
 from snapcraft.internal import lifecycle, pluginhandler, steps
+from snapcraft.internal.lifecycle._status_cache import StatusCache
 
 from . import LifecycleTestBase
 
@@ -160,7 +161,7 @@ class OrderTestBase(LifecycleTestBase):
         return sorted(actual_order, key=lambda k: k['timestamp'])
 
     def assert_parts_dirty(self, expected_parts, hint):
-        cache = lifecycle.StatusCache(self.project_config)
+        cache = StatusCache(self.project_config)
         dirty_parts = []
         for part in self.project_config.parts.all_parts:
             for step in steps.STEPS:

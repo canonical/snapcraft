@@ -16,10 +16,12 @@
 
 import collections
 import contextlib
-from typing import Any, Dict, Set
+from typing import Any, Dict, List, Set  # noqa: F401
 
 from snapcraft.internal import errors, pluginhandler, steps
 import snapcraft.internal.project_loader._config as _config
+
+_Report = Dict[str, Dict[steps.Step, pluginhandler.DirtyReport]]
 
 
 class StatusCache:
@@ -32,9 +34,9 @@ class StatusCache:
         """
         self.config = config
         self._steps_run = dict()  # type: Dict[str, Set[steps.Step]]
-        self._dirty_reports = collections.defaultdict(dict)  # type: Dict[str, Dict[steps.Step, pluginhandler.DirtyReport]]  # noqa
+        self._dirty_reports = collections.defaultdict(dict)  # type: _Report
 
-    def step_should_run(self, part: pluginhandler.PluginHandler,
+    def should_step_run(self, part: pluginhandler.PluginHandler,
                         step: steps.Step) -> bool:
         """Determine if a given step of a given part should run.
 
@@ -48,13 +50,13 @@ class StatusCache:
             2. Is dirty
             3. Either (1) or (2) apply to any earlier steps in its lifecycle
         """
-        if (not self.step_has_run(part, step) or
+        if (not self.has_step_run(part, step) or
                 self.get_dirty_report(part, step) is not None):
             return True
 
         previous_step = step.previous_step()
         if previous_step:
-            return self.step_should_run(part, previous_step)
+            return self.should_step_run(part, previous_step)
 
         return False
 
@@ -68,7 +70,7 @@ class StatusCache:
         self._ensure_steps_run(part)
         self._steps_run[part.name].add(step)
 
-    def step_has_run(self, part: pluginhandler.PluginHandler,
+    def has_step_run(self, part: pluginhandler.PluginHandler,
                      step: steps.Step) -> bool:
         """Determine if a given step of a given part has already run.
 
@@ -115,44 +117,48 @@ class StatusCache:
 
     def _ensure_dirty_report(self, part: pluginhandler.PluginHandler,
                              step: steps.Step) -> None:
-        if step not in self._dirty_reports[part.name]:
-            self._dirty_reports[part.name][step] = part.get_dirty_report(step)
+        # If we already have a dirty report, bail
+        if step in self._dirty_reports[part.name]:
+            return
 
-            # The dirty report from the PluginHandler only takes into account
-            # properties specific to that part. We need to expand that here to
-            # also take its dependencies (if any) into account, but only if
-            # it's not already dirty.
-            if not self._dirty_reports[part.name][step]:
-                dependencies = self.config.parts.get_dependencies(
-                    part.name, recursive=True)
-                prerequisite_step = steps.get_dependency_prerequisite_step(
-                    step)
-                changed_dependencies = []
-                with contextlib.suppress(errors.StepHasNotRunError):
-                    step_timestamp = part.step_timestamp(step)
-                    for dependency in dependencies:
-                        # Make sure the prerequisite step of this dependency
-                        # has not run more recently than (or should run
-                        # _before_) this step.
-                        try:
-                            prerequisite_timestamp = dependency.step_timestamp(
-                                prerequisite_step)
-                        except errors.StepHasNotRunError:
-                            dependency_changed = True
-                        else:
-                            dependency_changed = (
-                                step_timestamp < prerequisite_timestamp)
-                        if (dependency_changed or
-                                self.step_should_run(
-                                    dependency, prerequisite_step)):
-                            changed_dependencies.append({
-                                'name': dependency.name,
-                                'step': prerequisite_step})
+        # Get the dirty report from the PluginHandler. If it's dirty, we can
+        # stop here
+        self._dirty_reports[part.name][step] = part.get_dirty_report(step)
+        if self._dirty_reports[part.name][step]:
+            return
 
-                    if changed_dependencies:
-                        self._dirty_reports[part.name][step] = (
-                            pluginhandler.DirtyReport(
-                                changed_dependencies=changed_dependencies))
+        # The dirty report from the PluginHandler only takes into account
+        # properties specific to that part. If it's not dirty because of those,
+        # we need to expand it here to also take its dependencies (if any) into
+        # account
+        prerequisite_step = steps.get_dependency_prerequisite_step(step)
+        dependencies = self.config.parts.get_dependencies(
+            part.name, recursive=True)
+
+        changed_dependencies = []  # type: List[pluginhandler.Dependency]
+        with contextlib.suppress(errors.StepHasNotRunError):
+            timestamp = part.step_timestamp(step)
+            for dependency in dependencies:
+                # Make sure the prerequisite step of this dependency has not
+                # run more recently than (or should run _before_) this step.
+                try:
+                    prerequisite_timestamp = dependency.step_timestamp(
+                        prerequisite_step)
+                except errors.StepHasNotRunError:
+                    dependency_changed = True
+                else:
+                    dependency_changed = timestamp < prerequisite_timestamp
+
+                if (dependency_changed or self.should_step_run(
+                            dependency, prerequisite_step)):
+                    changed_dependencies.append(pluginhandler.Dependency(
+                        part_name=dependency.name,
+                        step=prerequisite_step))
+
+            if changed_dependencies:
+                self._dirty_reports[part.name][step] = (
+                    pluginhandler.DirtyReport(
+                        changed_dependencies=changed_dependencies))
 
 
 def _get_steps_run(part: pluginhandler.PluginHandler) -> Set[steps.Step]:

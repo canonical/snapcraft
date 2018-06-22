@@ -94,7 +94,10 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'part': 'test-part',
                 'dirty_report': pluginhandler.DirtyReport(
                     changed_dependencies=[
-                        {'name': 'another-part', 'step': 'another-step'}])
+                        pluginhandler.Dependency(
+                            part_name='another-part',
+                            step=steps.PULL),
+                    ])
             },
             'expected_message': (
                 "Failed to reuse files from previous run: "
@@ -110,8 +113,13 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'part': 'test-part',
                 'dirty_report': pluginhandler.DirtyReport(
                     changed_dependencies=[
-                        {'name': 'another-part1', 'step': 'another-step1'},
-                        {'name': 'another-part2', 'step': 'another-step2'}])
+                        pluginhandler.Dependency(
+                            part_name='another-part1',
+                            step=steps.PULL),
+                        pluginhandler.Dependency(
+                            part_name='another-part2',
+                            step=steps.PULL),
+                    ])
             },
             'expected_message': (
                 "Failed to reuse files from previous run: "

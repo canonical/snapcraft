@@ -45,7 +45,7 @@ from ._metadata_extraction import extract_metadata
 from ._plugin_loader import load_plugin  # noqa
 from ._runner import Runner
 from ._patchelf import PartPatcher
-from ._dirty_report import DirtyReport
+from ._dirty_report import Dependency, DirtyReport  # noqa
 
 logger = logging.getLogger(__name__)
 
@@ -288,9 +288,8 @@ class PluginHandler:
 
     def step_timestamp(self, step):
         try:
-            return os.stat(
-                states.get_step_state_file(
-                    self.plugin.statedir, step)).st_mtime
+            return os.stat(states.get_step_state_file(
+                self.plugin.statedir, step)).st_mtime
         except FileNotFoundError as e:
             raise errors.StepHasNotRunError(self.name, step) from e
 
