@@ -35,24 +35,23 @@ def _clean_part(part_name, step, config, staged_state, primed_state):
     logger.info(template.format(step=step.name, part=part_name))
     config.parts.clean_part(part_name, staged_state, primed_state, step)
 
-    # If we just cleaned the root of a dependency tree, we need to mark all
-    # its dependents as dirty so they require cleaning.
-    return mark_dependents_dirty(part_name, step, config)
+    # If we just cleaned the root of a dependency tree. Return all dirty
+    # dependents.
+    return get_dirty_reverse_dependencies(part_name, step, config)
 
 
-def mark_dependents_dirty(part_name, cleaned_step, config):
-    dependent_part_names = config.parts.get_reverse_dependencies(part_name)
+def get_dirty_reverse_dependencies(part_name, step, config):
+    # If other parts are depending on this step of the part, they're now
+    # dirty
+    dirty_reverse_dependencies = set()
+    reverse_dependencies = config.parts.get_reverse_dependencies(
+        part_name, recursive=True)
+    dirty_step = steps.dirty_step_if_dependency_changes(step)
+    for reverse_dependency in reverse_dependencies:
+        if not reverse_dependency.should_step_run(dirty_step):
+            dirty_reverse_dependencies.add(reverse_dependency)
 
-    # Keep ordering
-    dependent_parts = [p for p in config.all_parts
-                       if p.name in dependent_part_names]
-
-    dirty_part_names = set()
-    for part in dependent_parts:
-        if part.mark_dependency_change(part_name, cleaned_step):
-            dirty_part_names.add(part.name)
-
-    return dirty_part_names
+    return dirty_reverse_dependencies
 
 
 def _clean_parts(part_names, step, config, staged_state, primed_state):
@@ -60,10 +59,11 @@ def _clean_parts(part_names, step, config, staged_state, primed_state):
         step = steps.next_step(None)
 
     for part_name in part_names:
-        resulting_dirty_parts = _clean_part(
+        dirty_parts = _clean_part(
             part_name, step, config, staged_state, primed_state)
+        dirty_part_names = {p.name for p in dirty_parts}
 
-        parts_not_being_cleaned = resulting_dirty_parts.difference(part_names)
+        parts_not_being_cleaned = dirty_part_names.difference(part_names)
         if parts_not_being_cleaned:
             logger.warning(
                 'Cleaned {!r}, which makes the following {} out of date: '

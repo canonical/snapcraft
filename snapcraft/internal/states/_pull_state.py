@@ -50,7 +50,7 @@ class PullState(PartState):
     def __init__(self, property_names, part_properties=None, project=None,
                  stage_packages=None, build_snaps=None, build_packages=None,
                  source_details=None, metadata=None, metadata_files=None,
-                 scriptlet_metadata=None, changed_dependencies=None):
+                 scriptlet_metadata=None):
         # Save this off before calling super() since we'll need it
         # FIXME: for 3.x the name `schema_properties` is leaking
         #        implementation details from a higher layer.
@@ -78,7 +78,7 @@ class PullState(PartState):
 
         self.scriptlet_metadata = scriptlet_metadata
 
-        super().__init__(part_properties, project, changed_dependencies)
+        super().__init__(part_properties, project)
 
     def properties_of_interest(self, part_properties):
         """Extract the properties concerning this step from part_properties."""

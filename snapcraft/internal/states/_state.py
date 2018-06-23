@@ -38,18 +38,13 @@ class State(yaml.YAMLObject):
 
 class PartState(State):
 
-    def __init__(self, part_properties, project, changed_dependencies):
+    def __init__(self, part_properties, project):
         super().__init__()
         if not part_properties:
             part_properties = {}
 
         self.properties = self.properties_of_interest(part_properties)
         self.project_options = self.project_options_of_interest(project)
-
-        if changed_dependencies:
-            self.changed_dependencies = changed_dependencies
-        else:
-            self.changed_dependencies = []
 
     def properties_of_interest(self, part_properties):
         """Extract the properties concerning this step from the options.
