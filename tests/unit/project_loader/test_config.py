@@ -154,8 +154,10 @@ class VariableExpansionTest(LoadPartBaseTest):
 
 class DependenciesTest(ProjectLoaderBaseTest):
 
-    def test_get_prereqs(self):
-        project_config = self.make_snapcraft_project(dedent("""\
+    def setUp(self):
+        super().setUp()
+
+        self.config = self.make_snapcraft_project(dedent(dedent("""\
             name: test
             version: "1"
             summary: test
@@ -164,39 +166,56 @@ class DependenciesTest(ProjectLoaderBaseTest):
             grade: stable
 
             parts:
-              main:
-                plugin: nil
+                main:
+                    plugin: nil
 
-              dependent:
-                plugin: nil
-                after: [main]
-        """))
+                dependent:
+                    plugin: nil
+                    after: [main]
 
-        self.assertFalse(project_config.parts.get_prereqs('main'))
-        self.assertThat(project_config.parts.get_prereqs('dependent'),
-                        Equals({'main'}))
+                nested-dependent:
+                    plugin: nil
+                    after: [dependent]""")))
 
-    def test_get_dependents(self):
-        project_config = self.make_snapcraft_project(dedent("""\
-            name: test
-            version: "1"
-            summary: test
-            description: test
-            confinement: strict
-            grade: stable
+    def assert_part_names(self, part_names, parts):
+        self.assertThat({p.name for p in parts}, Equals(part_names))
 
-            parts:
-              main:
-                plugin: nil
+    def test_get_dependencies(self):
+        self.assertFalse(self.config.parts.get_dependencies('main'))
+        self.assert_part_names(
+            {'main'}, self.config.parts.get_dependencies('dependent'))
+        self.assert_part_names(
+            {'dependent'}, self.config.parts.get_dependencies(
+                'nested-dependent'))
 
-              dependent:
-                plugin: nil
-                after: [main]
-        """))
+    def test_get_dependencies_recursive(self):
+        self.assertFalse(self.config.parts.get_dependencies(
+            'main', recursive=True))
+        self.assert_part_names(
+            {'main'}, self.config.parts.get_dependencies(
+                'dependent', recursive=True))
+        self.assert_part_names(
+            {'main', 'dependent'}, self.config.parts.get_dependencies(
+                'nested-dependent', recursive=True))
 
-        self.assertFalse(project_config.parts.get_dependents('dependent'))
-        self.assertThat(project_config.parts.get_dependents('main'),
-                        Equals({'dependent'}))
+    def test_get_reverse_dependencies(self):
+        self.assertFalse(self.config.parts.get_reverse_dependencies(
+            'nested-dependent'))
+        self.assert_part_names(
+            {'nested-dependent'}, self.config.parts.get_reverse_dependencies(
+                'dependent'))
+        self.assert_part_names(
+            {'dependent'}, self.config.parts.get_reverse_dependencies('main'))
+
+    def test_get_reverse_dependencies_recursive(self):
+        self.assertFalse(self.config.parts.get_reverse_dependencies(
+            'nested-dependent', recursive=True))
+        self.assert_part_names(
+            {'nested-dependent'}, self.config.parts.get_reverse_dependencies(
+                'dependent', recursive=True))
+        self.assert_part_names(
+            {'dependent', 'nested-dependent'},
+            self.config.parts.get_reverse_dependencies('main', recursive=True))
 
     def test_dependency_loop(self):
         snapcraft_yaml = dedent("""\

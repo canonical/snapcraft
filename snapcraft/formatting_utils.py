@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import List, Set
+from typing import Iterable, List, Sized
 
 
 def combine_paths(paths: List[str], prepend: str, separator: str) -> str:
@@ -48,7 +48,7 @@ def format_path_variable(envvar: str, paths: List[str],
             paths, prepend, separator))
 
 
-def humanize_list(items: List[str], conjunction: str,
+def humanize_list(items: Iterable[str], conjunction: str,
                   item_format: str = '{!r}') -> str:
     """Format a list into a human-readable string.
 
@@ -58,22 +58,22 @@ def humanize_list(items: List[str], conjunction: str,
     :param str item_format: Format string to use per item.
     """
 
-    if len(items) == 0:
+    if not items:
         return ''
 
     quoted_items = [item_format.format(item) for item in sorted(items)]
-    if len(items) == 1:
+    if len(quoted_items) == 1:
         return quoted_items[0]
 
     humanized = ', '.join(quoted_items[:-1])
 
-    if len(items) > 2:
+    if len(quoted_items) > 2:
         humanized += ','
 
     return '{} {} {}'.format(humanized, conjunction, quoted_items[-1])
 
 
-def pluralize(container: Set[str], if_one: str, if_multiple: str) -> str:
+def pluralize(container: Sized, if_one: str, if_multiple: str) -> str:
     if len(container) == 1:
         return if_one
     else:
