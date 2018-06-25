@@ -37,6 +37,7 @@ Additionally, this plugin uses the following plugin-specific keywords:
 """
 
 import collections
+import logging
 import os
 import shutil
 from contextlib import suppress
@@ -47,6 +48,7 @@ from snapcraft import shell_utils
 from snapcraft.internal import errors
 
 _RUSTUP = 'https://static.rust-lang.org/rustup.sh'
+logger = logging.getLogger(__name__)
 
 
 class RustPlugin(snapcraft.BasePlugin):
@@ -99,6 +101,8 @@ class RustPlugin(snapcraft.BasePlugin):
 
     def _test(self):
         if self.project.is_cross_compiling:
+            logger.warning('Skipping the test target run as this is a cross '
+                           'compilation.')
             return
 
         cmd = [self._cargo, 'test',
