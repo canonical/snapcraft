@@ -14,7 +14,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import codecs
 import collections
 import logging
 import os
@@ -22,14 +21,11 @@ import os.path
 import re
 
 import jsonschema
-import yaml
-import yaml.reader
 from typing import Set  # noqa: F401
 
 
 from snapcraft import project, formatting_utils
-from snapcraft.project._project_info import ProjectInfo
-from snapcraft.internal import deprecations, remote_parts, states
+from snapcraft.internal import deprecations, remote_parts, states, steps
 
 from ._schema import Validator
 from ._parts_config import PartsConfig
@@ -39,12 +35,8 @@ from ._env import (
     snapcraft_global_environment,
     environment_to_replacements,
 )
-from . import (
-    errors,
-    get_snapcraft_yaml,
-    grammar_processing,
-    replace_attr,
-)
+from . import errors, grammar_processing, replace_attr
+
 
 logger = logging.getLogger(__name__)
 
@@ -134,7 +126,7 @@ def _validate_architectures(instance):
             path=['architectures'], instance=instance)
 
     # We want to ensure that multiple `run-on`s (or standalone `build-on`s)
-    # don't incude the same arch, or they'll clash with each other when
+    # don't include the same arch, or they'll clash with each other when
     # releasing.
     all_run_ons = run_ons + standalone_build_ons
     duplicates = {arch for (arch, count) in all_run_ons.items() if count > 1}
@@ -198,16 +190,12 @@ class Config:
             self._remote_parts_attr = remote_parts.get_remote_parts()
         return self._remote_parts_attr
 
-    def __init__(self, project_options: project.Project=None) -> None:
-        if project_options is None:
-            project_options = project.Project()
-
+    def __init__(self, project: project.Project) -> None:
         self.build_snaps = set()  # type: Set[str]
-        self._project_options = project_options
+        self.project = project
 
-        self.snapcraft_yaml_path = get_snapcraft_yaml()
-        snapcraft_yaml = _snapcraft_yaml_load(self.snapcraft_yaml_path)
-        self.original_snapcraft_yaml = snapcraft_yaml.copy()
+        # raw_snapcraft_yaml is read only, create a new copy
+        snapcraft_yaml = project.info.get_raw_snapcraft()
 
         self.validator = Validator(snapcraft_yaml)
         self.validator.validate()
@@ -215,27 +203,23 @@ class Config:
         snapcraft_yaml = self._process_remote_parts(snapcraft_yaml)
         snapcraft_yaml = self._expand_filesets(snapcraft_yaml)
 
-        # We need to set the ProjectInfo here because ProjectOptions is
-        # created in the CLI.
-        self._project_options.info = ProjectInfo(snapcraft_yaml)
         self.data = self._expand_env(snapcraft_yaml)
         self._ensure_no_duplicate_app_aliases()
 
         grammar_processor = grammar_processing.GlobalGrammarProcessor(
-            properties=self.data, project=project_options)
+            properties=self.data, project=project)
 
         self.build_tools = grammar_processor.get_build_packages()
-        self.build_tools |= set(project_options.additional_build_packages)
+        self.build_tools |= set(project.additional_build_packages)
 
         self.parts = PartsConfig(parts=self.data,
-                                 project_options=self._project_options,
+                                 project=project,
                                  validator=self.validator,
                                  build_snaps=self.build_snaps,
-                                 build_tools=self.build_tools,
-                                 snapcraft_yaml=self.snapcraft_yaml_path)
+                                 build_tools=self.build_tools)
 
         self.data['architectures'] = _process_architectures(
-            self.data.get('architectures'), self._project_options.deb_arch)
+            self.data.get('architectures'), project.deb_arch)
 
     def get_metadata(self):
         return {'name': self.data['name'],
@@ -261,7 +245,7 @@ class Config:
         if duplicates:
             raise errors.DuplicateAliasError(aliases=duplicates)
 
-    def get_project_state(self, step):
+    def get_project_state(self, step: steps.Step):
         """Returns a dict of states for the given step of each part."""
 
         state = {}
@@ -271,24 +255,24 @@ class Config:
         return state
 
     def stage_env(self):
-        stage_dir = self._project_options.stage_dir
+        stage_dir = self.project.stage_dir
         env = []
 
-        env += runtime_env(stage_dir, self._project_options.arch_triplet)
+        env += runtime_env(stage_dir, self.project.arch_triplet)
         env += build_env_for_stage(
             stage_dir,
             self.data['name'],
-            self._project_options.arch_triplet)
+            self.project.arch_triplet)
         for part in self.parts.all_parts:
             env += part.env(stage_dir)
 
         return env
 
     def snap_env(self):
-        prime_dir = self._project_options.prime_dir
+        prime_dir = self.project.prime_dir
         env = []
 
-        env += runtime_env(prime_dir, self._project_options.arch_triplet)
+        env += runtime_env(prime_dir, self.project.arch_triplet)
         dependency_paths = set()
         for part in self.parts.all_parts:
             env += part.env(prime_dir)
@@ -309,7 +293,7 @@ class Config:
     def project_env(self):
         return [
             '{}="{}"'.format(variable, value) for variable, value in
-            snapcraft_global_environment(self._project_options).items()
+            snapcraft_global_environment(self.project).items()
         ]
 
     def _expand_env(self, snapcraft_yaml):
@@ -319,7 +303,7 @@ class Config:
                 continue
 
             replacements = environment_to_replacements(
-                snapcraft_global_environment(self._project_options))
+                snapcraft_global_environment(self.project))
 
             snapcraft_yaml[key] = replace_attr(
                 snapcraft_yaml[key], replacements)
@@ -360,27 +344,6 @@ class Config:
 
         snapcraft_yaml['parts'] = new_parts
         return snapcraft_yaml
-
-
-def _snapcraft_yaml_load(yaml_file):
-    with open(yaml_file, 'rb') as fp:
-        bs = fp.read(2)
-
-    if bs == codecs.BOM_UTF16_LE or bs == codecs.BOM_UTF16_BE:
-        encoding = 'utf-16'
-    else:
-        encoding = 'utf-8'
-
-    try:
-        with open(yaml_file, encoding=encoding) as fp:
-            return yaml.safe_load(fp)
-    except yaml.scanner.ScannerError as e:
-        raise errors.YamlValidationError('{} on line {} of {}'.format(
-            e.problem, e.problem_mark.line + 1, yaml_file)) from e
-    except yaml.reader.ReaderError as e:
-        raise errors.YamlValidationError(
-            'Invalid character {!r} at position {} of {}: {}'.format(
-                chr(e.character), e.position + 1, yaml_file, e.reason)) from e
 
 
 def _expand_filesets_for(step, properties):

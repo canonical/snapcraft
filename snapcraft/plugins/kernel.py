@@ -247,7 +247,7 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 temp_dir, 'squashfs-root', initrd_path)
 
             decompressed = False
-            # Roll over valid decompression mecanisms until one works
+            # Roll over valid decompression mechanisms until one works
             for decompressor in ('xz', 'gzip'):
                 try:
                     subprocess.check_call(

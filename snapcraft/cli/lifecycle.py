@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,20 +17,24 @@
 import click
 import os
 
-from snapcraft.internal import deprecations, lifecycle, lxd, project_loader
-from ._options import add_build_options, get_project_options
 from . import echo
 from . import env
+from ._options import add_build_options, get_project
+from snapcraft.internal import (deprecations, lifecycle, lxd, project_loader,
+                                steps)
+from snapcraft.project.errors import YamlValidationError
 
 
 def _execute(command, parts, **kwargs):
-    project_options = get_project_options(**kwargs)
+    project = get_project(**kwargs)
+    project_config = project_loader.load_config(project)
     build_environment = env.BuilderEnvironmentConfig()
+
     if build_environment.is_host:
-        lifecycle.execute(command, project_options, parts)
+        lifecycle.execute(command, project_config, parts)
     else:
-        lifecycle.containerbuild(command, project_options, parts)
-    return project_options
+        lifecycle.containerbuild(command, project_config, parts)
+    return project
 
 
 @click.group()
@@ -62,7 +66,7 @@ def pull(ctx, parts, **kwargs):
         snapcraft pull my-part1 my-part2
 
     """
-    _execute('pull', parts, **kwargs)
+    _execute(steps.PULL, parts, **kwargs)
 
 
 @lifecyclecli.command()
@@ -77,7 +81,7 @@ def build(parts, **kwargs):
         snapcraft build my-part1 my-part2
 
     """
-    _execute('build', parts, **kwargs)
+    _execute(steps.BUILD, parts, **kwargs)
 
 
 @lifecyclecli.command()
@@ -92,7 +96,7 @@ def stage(parts, **kwargs):
         snapcraft stage my-part1 my-part2
 
     """
-    _execute('stage', parts, **kwargs)
+    _execute(steps.STAGE, parts, **kwargs)
 
 
 @lifecyclecli.command()
@@ -107,7 +111,7 @@ def prime(parts, **kwargs):
         snapcraft prime my-part1 my-part2
 
     """
-    _execute('prime', parts, **kwargs)
+    _execute(steps.PRIME, parts, **kwargs)
 
 
 @lifecyclecli.command()
@@ -127,15 +131,12 @@ def snap(directory, output, **kwargs):
     """
     if directory:
         deprecations.handle_deprecation_notice('dn6')
-
-    project_options = get_project_options(**kwargs)
-    build_environment = env.BuilderEnvironmentConfig()
-    if build_environment.is_host:
-        snap_name = lifecycle.snap(
-            project_options, directory=directory, output=output)
-        echo.info('Snapped {}'.format(snap_name))
     else:
-        lifecycle.containerbuild('snap', project_options, output, directory)
+        project = _execute(steps.PRIME, parts=[], **kwargs)
+        directory = project.prime_dir
+
+    snap_name = lifecycle.pack(directory, output)
+    echo.info('Snapped {}'.format(snap_name))
 
 
 @lifecyclecli.command()
@@ -160,11 +161,11 @@ def pack(directory, output, **kwargs):
 @lifecyclecli.command()
 @add_build_options()
 @click.argument('parts', nargs=-1, metavar='<part>...', required=False)
-@click.option('--step', '-s',
+@click.option('--step', '-s', 'step_name',
               type=click.Choice(['pull', 'build', 'stage', 'prime', 'strip']),
               help='only clean the specified step and those that '
                    'depend on it.')
-def clean(parts, step, **kwargs):
+def clean(parts, step_name, **kwargs):
     """Remove content - cleans downloads, builds or install artifacts.
 
     \b
@@ -172,20 +173,28 @@ def clean(parts, step, **kwargs):
         snapcraft clean
         snapcraft clean my-part --step build
     """
-    project_options = get_project_options(**kwargs)
+    try:
+        project = get_project(**kwargs)
+    except YamlValidationError:
+        # We need to be able to clean invalid projects too.
+        project = get_project(skip_snapcraft_yaml=True, **kwargs)
     build_environment = env.BuilderEnvironmentConfig()
-    if build_environment.is_host:
-        step = step or 'pull'
-        if step == 'strip':
+
+    step = None
+    if step_name:
+        if step_name == 'strip':
             echo.warning('DEPRECATED: Use `prime` instead of `strip` '
                          'as the step to clean')
-            step = 'prime'
-        lifecycle.clean(project_options, parts, step)
+            step_name = 'prime'
+        step = steps.get_step_by_name(step_name)
+
+    if build_environment.is_host:
+        lifecycle.clean(project, parts, step)
     else:
-        config = project_loader.load_config(project_options)
-        lxd.Project(project_options=project_options,
+        project_config = project_loader.load_config(project)
+        lxd.Project(project_options=project,
                     output=None, source=os.path.curdir,
-                    metadata=config.get_metadata()).clean(parts, step)
+                    metadata=project_config.get_metadata()).clean(parts, step)
 
 
 @lifecyclecli.command()
@@ -210,13 +219,16 @@ def cleanbuild(remote, debug, **kwargs):
     If using a remote, a prior setup is required which is described on:
     https://linuxcontainers.org/lxd/getting-started-cli/#multiple-hosts
     """
+    project = get_project(**kwargs, debug=debug)
+    project_config = project_loader.load_config(project)
     # cleanbuild is a special snow flake, while all the other commands
     # would work with the host as the build_provider it makes little
     # sense in this scenario.
     build_environment = env.BuilderEnvironmentConfig(
         default='lxd', additional_providers=['multipass'])
-    project_options = get_project_options(**kwargs, debug=debug)
-    lifecycle.cleanbuild(project=project_options,
+
+    lifecycle.cleanbuild(project=project,
+                         project_config=project_config,
                          echoer=echo,
                          remote=remote,
                          build_environment=build_environment)

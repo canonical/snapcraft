@@ -40,19 +40,18 @@ logger = logging.getLogger(__name__)
 
 class PartsConfig:
 
-    def __init__(self, *, parts, project_options, validator,
-                 build_snaps, build_tools, snapcraft_yaml):
+    def __init__(self, *, parts, project, validator,
+                 build_snaps, build_tools):
         self._snap_name = parts['name']
         self._base = parts.get('base', 'core')
         self._confinement = parts.get('confinement')
         self._soname_cache = elf.SonameCache()
         self._parts_data = parts.get('parts', {})
         self._snap_type = parts.get('type', 'app')
-        self._project_options = project_options
+        self._project = project
         self._validator = validator
         self.build_snaps = build_snaps
         self.build_tools = build_tools
-        self._snapcraft_yaml = snapcraft_yaml
 
         self.all_parts = []
         self._part_names = []
@@ -132,19 +131,43 @@ class PartsConfig:
 
         return sorted_parts
 
-    def get_prereqs(self, part_name):
-        """Returns a set with all of part_names' prerequisites."""
-        return set(self.after_requests.get(part_name, []))
+    def get_dependencies(self, part_name, *, recursive=False):
+        # type: (str, bool) -> Set[pluginhandler.PluginHandler]
+        """Returns a set of all the parts upon which part_name depends."""
 
-    def get_dependents(self, part_name):
+        dependency_names = set(self.after_requests.get(part_name, []))
+        dependencies = {p for p in self.all_parts
+                        if p.name in dependency_names}
+
+        if recursive:
+            # No need to worry about infinite recursion due to circular
+            # dependencies since the YAML validation won't allow it.
+            for dependency_name in dependency_names:
+                dependencies |= self.get_dependencies(
+                    dependency_name, recursive=recursive)
+
+        return dependencies
+
+    def get_reverse_dependencies(self, part_name, *, recursive=False):
+        # type: (str, bool) -> Set[pluginhandler.PluginHandler]
         """Returns a set of all the parts that depend upon part_name."""
 
-        dependents = set()
-        for part, prerequisites in self.after_requests.items():
-            if part_name in prerequisites:
-                dependents.add(part)
+        reverse_dependency_names = set()
+        for part, dependencies in self.after_requests.items():
+            if part_name in dependencies:
+                reverse_dependency_names.add(part)
 
-        return dependents
+        reverse_dependencies = {p for p in self.all_parts
+                                if p.name in reverse_dependency_names}
+
+        if recursive:
+            # No need to worry about infinite recursion due to circular
+            # dependencies since the YAML validation won't allow it.
+            for reverse_dependency_name in reverse_dependency_names:
+                reverse_dependencies |= self.get_reverse_dependencies(
+                    reverse_dependency_name, recursive=recursive)
+
+        return reverse_dependencies
 
     def get_part(self, part_name):
         for part in self.all_parts:
@@ -162,7 +185,8 @@ class PartsConfig:
             if part_name not in self._part_names:
                 raise snapcraft.internal.errors.SnapcraftEnvironmentError(
                     'The part named {!r} is not defined in '
-                    '{!r}'.format(part_name, self._snapcraft_yaml))
+                    '{!r}'.format(part_name,
+                                  self._project.info.snapcraft_yaml_file_path))
 
     def load_part(self, part_name, plugin_name, part_properties):
         # Some legacy parts can have a '/' in them to separate the main project
@@ -175,7 +199,7 @@ class PartsConfig:
             plugin_name=plugin_name,
             part_name=part_name,
             properties=part_properties,
-            project_options=self._project_options,
+            project_options=self._project,
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema)
 
@@ -187,18 +211,18 @@ class PartsConfig:
         sources = getattr(plugin, 'PLUGIN_STAGE_SOURCES', None)
         stage_packages_repo = repo.Repo(
             plugin.osrepodir, sources=sources,
-            project_options=self._project_options)
+            project_options=self._project)
 
         grammar_processor = grammar_processing.PartGrammarProcessor(
             plugin=plugin,
             properties=part_properties,
-            project=self._project_options,
+            project=self._project,
             repo=stage_packages_repo)
 
         part = pluginhandler.PluginHandler(
             plugin=plugin,
             part_properties=part_properties,
-            project_options=self._project_options,
+            project_options=self._project,
             part_schema=self._validator.part_schema,
             definitions_schema=self._validator.definitions_schema,
             stage_packages_repo=stage_packages_repo,
@@ -227,39 +251,39 @@ class PartsConfig:
         """Return a build env of all the part's dependencies."""
 
         env = []  # type: List[str]
-        stagedir = self._project_options.stage_dir
-        is_host_compat = self._project_options.is_host_compatible_with_base(
+        stagedir = self._project.stage_dir
+        is_host_compat = self._project.is_host_compatible_with_base(
             self._base)
 
         if root_part:
             # this has to come before any {}/usr/bin
             env += part.env(part.plugin.installdir)
             env += runtime_env(
-                part.plugin.installdir, self._project_options.arch_triplet)
+                part.plugin.installdir, self._project.arch_triplet)
             env += runtime_env(
-                stagedir, self._project_options.arch_triplet)
+                stagedir, self._project.arch_triplet)
             env += build_env(
                 part.plugin.installdir,
                 self._snap_name,
-                self._project_options.arch_triplet)
+                self._project.arch_triplet)
             env += build_env_for_stage(
                 stagedir,
                 self._snap_name,
-                self._project_options.arch_triplet)
+                self._project.arch_triplet)
             # Only set the paths to the base snap if we are building on the
             # same host. Failing to do so will cause Segmentation Faults.
             if (self._confinement == 'classic' and is_host_compat):
                 env += env_for_classic(self._base,
-                                       self._project_options.arch_triplet)
+                                       self._project.arch_triplet)
 
-            global_env = snapcraft_global_environment(self._project_options)
+            global_env = snapcraft_global_environment(self._project)
             part_env = snapcraft_part_environment(part)
             for variable, value in ChainMap(part_env, global_env).items():
                 env.append('{}="{}"'.format(variable, value))
         else:
             env += part.env(stagedir)
             env += runtime_env(
-                stagedir, self._project_options.arch_triplet)
+                stagedir, self._project.arch_triplet)
 
         for dep_part in part.deps:
             env += dep_part.env(stagedir)

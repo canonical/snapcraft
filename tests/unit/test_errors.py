@@ -20,7 +20,7 @@ from subprocess import CalledProcessError
 from unittest import mock
 from testtools.matchers import Equals
 
-from snapcraft.internal import errors
+from snapcraft.internal import errors, pluginhandler, steps
 from snapcraft.internal.meta import _errors as meta_errors
 from snapcraft.internal.repo import errors as repo_errors
 from snapcraft.storeapi import errors as store_errors
@@ -38,56 +38,97 @@ class ErrorFormattingTestCase(unit.TestCase):
     scenarios = (
         ('MissingStateCleanError', {
             'exception': errors.MissingStateCleanError,
-            'kwargs': {'step': 'test-step'},
+            'kwargs': {'step': steps.PULL},
             'expected_message': (
                 "Failed to clean: "
-                "Missing state for 'test-step'. "
+                "Missing state for 'pull'. "
                 "To clean the project, run `snapcraft clean`."
                 )}),
         ('StepOutdatedError dependents', {
             'exception': errors.StepOutdatedError,
             'kwargs': {
-                'step': 'test-step',
+                'step': steps.PULL,
                 'part': 'test-part',
                 'dependents': ['test-dependent']
             },
             'expected_message': (
-                "Failed to reuse files from previous build: "
-                "The 'test-step' step of 'test-part' is out of date:\n"
-                "The 'test-step' step for 'test-part' needs to be run again, "
+                "Failed to reuse files from previous run: "
+                "The 'pull' step of 'test-part' is out of date:\n"
+                "The 'pull' step for 'test-part' needs to be run again, "
                 "but 'test-dependent' depends on it.\n"
-                "To continue, clean that part's "
-                "'test-step' step, run "
-                "`snapcraft clean test-dependent -s test-step`.")}),
+                "To continue, clean that part's 'pull' step by running "
+                "`snapcraft clean test-dependent -s pull`.")}),
         ('StepOutdatedError dirty_properties', {
             'exception': errors.StepOutdatedError,
             'kwargs': {
-                'step': 'test-step',
+                'step': steps.PULL,
                 'part': 'test-part',
-                'dirty_properties': ['test-property1', 'test-property2']
+                'dirty_report': pluginhandler.DirtyReport(
+                    dirty_properties=['test-property1', 'test-property2'])
             },
             'expected_message': (
-                "Failed to reuse files from previous build: "
-                "The 'test-step' step of 'test-part' is out of date:\n"
+                "Failed to reuse files from previous run: "
+                "The 'pull' step of 'test-part' is out of date:\n"
                 "The 'test-property1' and 'test-property2' part properties "
                 "appear to have changed.\n"
-                "To continue, clean that part's "
-                "'test-step' step, run "
-                "`snapcraft clean test-part -s test-step`.")}),
+                "To continue, clean that part's 'pull' step by running "
+                "`snapcraft clean test-part -s pull`.")}),
         ('StepOutdatedError dirty_project_options', {
             'exception': errors.StepOutdatedError,
             'kwargs': {
-                'step': 'test-step',
+                'step': steps.PULL,
                 'part': 'test-part',
-                'dirty_project_options': ['test-option']
+                'dirty_report': pluginhandler.DirtyReport(
+                    dirty_project_options=['test-option'])
             },
             'expected_message': (
-                "Failed to reuse files from previous build: "
-                "The 'test-step' step of 'test-part' is out of date:\n"
+                "Failed to reuse files from previous run: "
+                "The 'pull' step of 'test-part' is out of date:\n"
                 "The 'test-option' project option appears to have changed.\n"
+                "To continue, clean that part's 'pull' step by running "
+                "`snapcraft clean test-part -s pull`.")}),
+        ('StepOutdatedError changed_dependencies', {
+            'exception': errors.StepOutdatedError,
+            'kwargs': {
+                'step': steps.PULL,
+                'part': 'test-part',
+                'dirty_report': pluginhandler.DirtyReport(
+                    changed_dependencies=[
+                        pluginhandler.Dependency(
+                            part_name='another-part',
+                            step=steps.PULL),
+                    ])
+            },
+            'expected_message': (
+                "Failed to reuse files from previous run: "
+                "The 'pull' step of 'test-part' is out of date:\n"
+                "A dependency has changed: 'another-part'\n"
                 "To continue, clean that part's "
-                "'test-step' step, run "
-                "`snapcraft clean test-part -s test-step`.")}),
+                "'pull' step by running "
+                "`snapcraft clean test-part -s pull`.")}),
+        ('StepOutdatedError multiple changed_dependencies', {
+            'exception': errors.StepOutdatedError,
+            'kwargs': {
+                'step': steps.PULL,
+                'part': 'test-part',
+                'dirty_report': pluginhandler.DirtyReport(
+                    changed_dependencies=[
+                        pluginhandler.Dependency(
+                            part_name='another-part1',
+                            step=steps.PULL),
+                        pluginhandler.Dependency(
+                            part_name='another-part2',
+                            step=steps.PULL),
+                    ])
+            },
+            'expected_message': (
+                "Failed to reuse files from previous run: "
+                "The 'pull' step of 'test-part' is out of date:\n"
+                "Some dependencies have changed: 'another-part1' and "
+                "'another-part2'\n"
+                "To continue, clean that part's "
+                "'pull' step by running "
+                "`snapcraft clean test-part -s pull`.")}),
         ('SnapcraftEnvironmentError', {
             'exception': errors.SnapcraftEnvironmentError,
             'kwargs': {'message': 'test-message'},
@@ -472,6 +513,81 @@ class ErrorFormattingTestCase(unit.TestCase):
                 'request: not implemented (code 501).\nThe operational '
                 'status of the Snap Store can be checked at '
                 'https://status.snapcraft.io/'
+            )
+        }),
+        ('MountPointNotFoundError', {
+            'exception': errors.MountPointNotFoundError,
+            'kwargs': {
+                'mount_point': 'test-mount-point',
+            },
+            'expected_message': (
+                "Nothing is mounted at 'test-mount-point'"
+            )
+        }),
+        ('RootNotMountedError', {
+            'exception': errors.RootNotMountedError,
+            'kwargs': {
+                'root': 'test-root',
+            },
+            'expected_message': (
+                "'test-root' is not mounted"
+            )
+        }),
+        ('InvalidMountinfoFormat', {
+            'exception': errors.InvalidMountinfoFormat,
+            'kwargs': {
+                'row': [1, 2, 3],
+            },
+            'expected_message': (
+                'Unable to parse mountinfo row: [1, 2, 3]'
+            )
+        }),
+        ('InvalidStepError', {
+            'exception': errors.InvalidStepError,
+            'kwargs': {
+                'step_name': 'test-step-name',
+            },
+            'expected_message': (
+                "'test-step-name' is not a valid lifecycle step"
+            )
+        }),
+        ('NoLatestStepError', {
+            'exception': errors.NoLatestStepError,
+            'kwargs': {
+                'part_name': 'test-part-name',
+            },
+            'expected_message': (
+                "The 'test-part-name' part hasn't run any steps"
+            )
+        }),
+        ('NoNextStepError', {
+            'exception': errors.NoNextStepError,
+            'kwargs': {
+                'part_name': 'test-part-name',
+            },
+            'expected_message': (
+                "The 'test-part-name' part has run through its entire "
+                "lifecycle"
+            )
+        }),
+        ('StepHasNotRunError', {
+            'exception': errors.StepHasNotRunError,
+            'kwargs': {
+                'part_name': 'test-part-name',
+                'step': steps.BUILD,
+            },
+            'expected_message': (
+                "The 'test-part-name' part has not yet run the 'build' step"
+            )
+        }),
+        ('ScriptletDuplicateFieldError', {
+            'exception': errors.ScriptletDuplicateFieldError,
+            'kwargs': {
+                'field': 'foo',
+                'step': steps.PULL,
+            },
+            'expected_message': (
+                "Unable to set foo: it was already set in the 'pull' step."
             )
         }),
     )

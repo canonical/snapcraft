@@ -176,7 +176,7 @@ class ProjectOptions:
         try:
             # cross-compilation of x86 32bit binaries on a x86_64 host is
             # possible by reusing the native toolchain - let Kbuild figure
-            # it out by itself and pass down an empy cross-compiler-prefix
+            # it out by itself and pass down an empty cross-compiler-prefix
             # to start the build
             if (self.__platform_arch == 'x86_64' and
                     self.__target_machine == 'i686'):
@@ -233,8 +233,7 @@ class ProjectOptions:
 
     def __init__(self, use_geoip=False, parallel_builds=True,
                  target_deb_arch=None, debug=False):
-        # TODO: allow setting a different project dir and check for
-        #       snapcraft.yaml
+        # TODO: allow setting a different project dir
         self.__project_dir = os.getcwd()
         self.__use_geoip = use_geoip
         self.__parallel_builds = parallel_builds

@@ -18,5 +18,4 @@ from ._containers import cleanbuild       # noqa
 from ._containers import containerbuild   # noqa
 from ._init import init                   # noqa
 from ._packer import pack                 # noqa
-from ._packer import snap                 # noqa
 from ._runner import execute              # noqa

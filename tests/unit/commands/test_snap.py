@@ -256,7 +256,10 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
                 'Skipping pull part1 (already ran)\n'
                 'Skipping build part1 (already ran)\n'
                 'Skipping stage part1 (already ran)\n'
-                'Skipping prime part1 (already ran)\n'))
+                'Skipping prime part1 (already ran)\n'
+                'The requested action has already been taken. Consider\n'
+                'specifying parts, or clean the steps you want to run again.\n'
+            ))
 
         self.popen_spy.assert_called_once_with([
             'mksquashfs', self.prime_dir, 'snap-test_1.0_amd64.snap',
@@ -356,9 +359,7 @@ type: os
             'Snapped mysnap.snap\n'))
 
         self.assertThat(fake_logger.output, Equals(
-            'Preparing to pull part1 \n'
             'Pulling part1 \n'
-            'Preparing to build part1 \n'
             'Building part1 \n'
             'Staging part1 \n'
             'Priming part1 \n'))
@@ -414,9 +415,7 @@ type: os
         self.assertThat(
             fake_logger.output.splitlines(),
             Equals([
-                'Preparing to pull part1 ',
                 'Pulling part1 ',
-                'Preparing to build part1 ',
                 'Building part1 ',
                 'Staging part1 ',
                 'Priming part1 ',
@@ -443,6 +442,13 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             'getuid': 'test_getuid',
             'expected_idmap': 'test_getuid'}),
     )
+
+    def setUp(self):
+        super().setUp()
+
+        patcher = mock.patch('snapcraft.internal.lifecycle.pack')
+        self.pack_mock = patcher.start()
+        self.addCleanup(patcher.stop)
 
     @mock.patch('os.getuid')
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
@@ -501,10 +507,9 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             call(['python3', '-c', mock.ANY]),
             call(['apt-get', 'update']),
             call(['apt-get', 'install', 'squashfuse', '-y']),
-            call(['snapcraft', 'snap', '--output',
-                  'snap-test_1.0_amd64.snap'],
-                 cwd=project_folder, user='root'),
         ])
+
+        self.pack_mock.assert_called_once_with(self.prime_dir, None)
 
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
     @mock.patch('os.getuid')
@@ -535,10 +540,9 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
         ])
         mock_container_run.assert_has_calls([
             call(['python3', '-c', mock.ANY]),
-            call(['snapcraft', 'snap', '--output',
-                  'snap-test_1.0_amd64.snap'],
-                 cwd=project_folder, user='root'),
         ])
+
+        self.pack_mock.assert_called_once_with(self.prime_dir, None)
 
     @mock.patch('os.getuid')
     @mock.patch('snapcraft.internal.lxd.Containerbuild._container_run')
@@ -597,12 +601,11 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
         ])
         mock_container_run.assert_has_calls([
             call(['python3', '-c', mock.ANY]),
-            call(['snapcraft', 'snap', '--output',
-                  'snap-test_1.0_amd64.snap'],
-                 cwd=project_folder, user='root'),
         ])
         # Ensure there's no unexpected calls eg. two network checks
         self.assertThat(mock_container_run.call_count, Equals(2))
+
+        self.pack_mock.assert_called_once_with(self.prime_dir, None)
 
 
 class SnapCommandAsDefaultTestCase(SnapCommandBaseTestCase):

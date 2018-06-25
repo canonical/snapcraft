@@ -40,6 +40,8 @@ class EnableCITestCase(CommandBaseTestCase):
     @mock.patch.object(travis, '__doc__')
     @mock.patch.object(travis, 'enable')
     def test_enable_ci_travis(self, mock_enable, mock_doc):
+        self.make_snapcraft_yaml('name: foo')
+
         mock_doc.__str__.return_value = '<module docstring>'
 
         result = self.run_command(['enable-ci', 'travis'], input='y\n')
@@ -51,6 +53,8 @@ class EnableCITestCase(CommandBaseTestCase):
 
     @mock.patch.object(travis, 'refresh')
     def test_enable_ci_travis_refresh(self, mock_refresh):
+        self.make_snapcraft_yaml('name: foo')
+
         result = self.run_command(['enable-ci', 'travis', '--refresh'])
 
         self.assertThat(result.exit_code, Equals(0))

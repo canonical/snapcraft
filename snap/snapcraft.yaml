@@ -32,12 +32,16 @@ parts:
     requirements: requirements.txt
     build-packages:
         - build-essential
+        - libapt-pkg-dev
         - libffi-dev
+        - libssl-dev
         - libsodium-dev
         - liblzma-dev
         - patch
         - sed
     stage-packages:
+        - apt
+        - apt-utils
         - binutils
         - execstack
         - gpgv
@@ -60,48 +64,4 @@ parts:
         sed -i usr/lib/python3.5/site.py -e 's/^ENABLE_USER_SITE = None$/ENABLE_USER_SITE = False/'
         # This is the last step, let's now compile all our pyc files.
         ./usr/bin/python3 -m compileall .
-    after: [patches, apt]
-  apt:
-      source: https://salsa.debian.org/apt-team/apt.git
-      source-type: git
-      source-tag: 1.2.19
-      source-depth: 1
-      plugin: autotools
-      override-build: |
-          make startup
-          mkdir apt-build
-          cd apt-build
-          ../configure
-          make
-          install -d $SNAPCRAFT_PART_INSTALL/apt
-          cp -r bin/methods/* $SNAPCRAFT_PART_INSTALL/apt/
-          cp -r bin/methods/* $SNAPCRAFT_PART_INSTALL/apt/
-          install bin/apt-key $SNAPCRAFT_PART_INSTALL/apt/
-          install bin/apt-mark $SNAPCRAFT_PART_INSTALL/apt/
-          install bin/apt-internal-solver $SNAPCRAFT_PART_INSTALL/apt/
-          install bin/apt-helper $SNAPCRAFT_PART_INSTALL/apt/
-          install -d $SNAPCRAFT_PART_INSTALL/usr/lib
-          install bin/libapt-inst.so.2.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
-          install bin/libapt-pkg.so $SNAPCRAFT_PART_INSTALL/usr/lib/
-          install bin/libapt-pkg-5.0-0.symver $SNAPCRAFT_PART_INSTALL/usr/lib/
-          install bin/libapt-private.so $SNAPCRAFT_PART_INSTALL/usr/lib/
-          install bin/libapt-private-0.0-0.symver $SNAPCRAFT_PART_INSTALL/usr/lib/
-          install bin/libapt-private.so.0.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
-          install bin/libapt-inst.so.2.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
-          install bin/libapt-inst.so $SNAPCRAFT_PART_INSTALL/usr/lib/
-          install bin/libapt-pkg.so.5.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
-          install bin/libapt-inst-2.0-0.symver $SNAPCRAFT_PART_INSTALL/usr/lib/
-          install bin/libapt-pkg.so.5.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
-          install bin/libapt-private.so.0.0 $SNAPCRAFT_PART_INSTALL/usr/lib/
-          install -d $SNAPCRAFT_PART_INSTALL/usr/include
-          cp -r include/* $SNAPCRAFT_PART_INSTALL/usr/include/
-      prime:
-          - -usr/include
-      build-packages:
-          - gettext
-          - libbz2-dev
-          - libcurl4-gnutls-dev
-          - libdb-dev
-          - liblz4-dev
-          - liblzma-dev
-          - zlib1g-dev
+    after: [patches]

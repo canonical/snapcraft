@@ -128,7 +128,7 @@ class RubyPlugin(BasePlugin):
         # Patch versions of ruby continue to use the minor version's RUBYLIB,
         # GEM_HOME, and GEM_PATH. Fortunately there should just be one, so we
         # can detect it by globbing instead of trying to determine what the
-        # minor version is programatically
+        # minor version is programmatically
         versions = glob.glob(os.path.join(rubydir, 'gems', '*'))
 
         # Before Ruby has been pulled/installed, no versions will be found.

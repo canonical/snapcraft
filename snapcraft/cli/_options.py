@@ -15,7 +15,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import click
 
-from snapcraft.project import Project
+from snapcraft.project import Project, get_snapcraft_yaml
 
 
 class HiddenOption(click.Option):
@@ -52,7 +52,12 @@ def add_build_options(hidden=False):
     return _add_build_options
 
 
-def get_project_options(**kwargs):
+def get_project(*, skip_snapcraft_yaml: bool=False, **kwargs):
+    if skip_snapcraft_yaml:
+        snapcraft_yaml_file_path = None
+    else:
+        snapcraft_yaml_file_path = get_snapcraft_yaml()
+
     ctx = click.get_current_context()
     for key, value in ctx.parent.params.items():
         if not kwargs.get(key):
@@ -62,5 +67,6 @@ def get_project_options(**kwargs):
         debug=kwargs.pop('debug'),
         use_geoip=kwargs.pop('enable_geoip'),
         parallel_builds=not kwargs.pop('no_parallel_builds'),
-        target_deb_arch=kwargs.pop('target_arch'))
+        target_deb_arch=kwargs.pop('target_arch'),
+        snapcraft_yaml_file_path=snapcraft_yaml_file_path)
     return project

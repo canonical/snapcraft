@@ -17,6 +17,7 @@
 import os
 
 from testtools.matchers import (
+    Contains,
     DirExists,
     Not
 )
@@ -34,7 +35,7 @@ class CleanDependentsTestCase(integration.TestCase):
 
         # Need to use the state directory here instead of partdir due to
         # bug #1567054.
-        self.part_dirs = {
+        self.state_dirs = {
             'p1': os.path.join(self.parts_dir, 'p1', 'state'),
             'p2': os.path.join(self.parts_dir, 'p2', 'state'),
             'p3': os.path.join(self.parts_dir, 'p3', 'state'),
@@ -44,8 +45,8 @@ class CleanDependentsTestCase(integration.TestCase):
     def assert_clean(self, parts, common=False):
         for part in parts:
             self.expectThat(
-                self.part_dirs[part], Not(DirExists()),
-                'Expected part directory for {!r} to be cleaned'.format(part))
+                self.state_dirs[part], Not(DirExists()),
+                'Expected state directory for {!r} to be cleaned'.format(part))
 
         if common:
             self.expectThat(self.parts_dir, Not(DirExists()),
@@ -53,22 +54,22 @@ class CleanDependentsTestCase(integration.TestCase):
             self.expectThat(self.stage_dir, Not(DirExists()),
                             'Expected stage/ directory to be cleaned')
             self.expectThat(self.prime_dir, Not(DirExists()),
-                            'Expected snap/ directory to be cleaned')
+                            'Expected prime/ directory to be cleaned')
 
     def assert_not_clean(self, parts, common=False):
         for part in parts:
             self.expectThat(
-                self.part_dirs[part], DirExists(),
-                'Expected part directory for {!r} to be uncleaned'.format(
+                self.state_dirs[part], DirExists(),
+                'Expected state directory for {!r} to not be cleaned'.format(
                     part))
 
         if common:
             self.expectThat(self.parts_dir, DirExists(),
-                            'Expected parts/ directory to be uncleaned')
+                            'Expected parts/ directory to not be cleaned')
             self.expectThat(self.stage_dir, DirExists(),
-                            'Expected stage/ directory to be uncleaned')
+                            'Expected stage/ directory to not be cleaned')
             self.expectThat(self.prime_dir, DirExists(),
-                            'Expected snap/ directory to be uncleaned')
+                            'Expected prime/ directory to not be cleaned')
 
     def test_clean_nested_dependent(self):
         # Test that p3 (which has dependencies but no dependents) cleans with
@@ -103,34 +104,49 @@ class CleanDependentsTestCase(integration.TestCase):
         self.assert_not_clean(['p1', 'p2', 'p3', 'p4'], True)
 
     def test_clean_dependent_without_nested_dependents(self):
-        # Test that p2 (which has both dependencies and dependents)
-        # cleans its dependents (p3 and p4) are not specified
-        self.run_snapcraft(['clean', 'p2'])
-        self.assert_not_clean(['p1'], False)
-        self.assert_clean(['p2', 'p3', 'p4'], False)
+        # Test that cleaning p2 marks dependents as dirty, but doesn't clean
+        # them
+        output = self.run_snapcraft(['clean', 'p2'])
+        self.assertThat(output, Contains(
+            "Cleaned 'p2', which makes the following parts out of date: 'p3' "
+            "and 'p4'"))
+        self.assert_not_clean(['p1', 'p3', 'p4'])
+        self.assert_clean(['p2'])
 
     def test_clean_dependent_without_nested_dependent(self):
-        # Test that p2 (which has both dependencies and dependents)
-        # cleans its dependents (p4) is not specified
-        self.run_snapcraft(['clean', 'p2', 'p3'])
-        self.assert_not_clean(['p1'], False)
-        self.assert_clean(['p2', 'p3', 'p4'], False)
+        # Test that cleaning p2 marks dependents as dirty, but doesn't clean
+        # them if they're not specified
+        output = self.run_snapcraft(['clean', 'p2', 'p3'])
+        self.assertThat(output, Contains(
+            "Cleaned 'p2', which makes the following part out of date: 'p4'"))
+        self.assert_not_clean(['p1', 'p4'])
+        self.assert_clean(['p2', 'p3'])
 
     def test_clean_main_without_any_dependent(self):
         # Test that p1 (which has no dependencies but dependents)
-        # cleans if none of its dependents are also specified.
-        self.run_snapcraft(['clean', 'p1'])
-        self.assert_clean(['p1', 'p2', 'p3', 'p4'], True)
+        # can be cleaned, but marks everything else as dirty
+        output = self.run_snapcraft(['clean', 'p1'])
+        self.assertThat(output, Contains(
+            "Cleaned 'p1', which makes the following parts out of date: 'p2', "
+            "'p3', and 'p4'"))
+        self.assert_clean(['p1'])
+        self.assert_not_clean(['p2', 'p3', 'p4'])
 
     def test_clean_main_without_dependent(self):
-        # Test that p1 (which has no dependencies but dependents)
-        # cleans if its dependent (p2) is not specified
-        self.run_snapcraft(['clean', 'p1', 'p3', 'p4'])
-        self.assert_clean(['p1', 'p2', 'p3', 'p4'], True)
+        # Test that p1 and its nested dependencies can be cleaned while p2 is
+        # marked as dirty
+        output = self.run_snapcraft(['clean', 'p1', 'p3', 'p4'])
+        self.assertThat(output, Contains(
+            "Cleaned 'p1', which makes the following part out of date: 'p2'"))
+        self.assert_clean(['p1', 'p3', 'p4'])
+        self.assert_not_clean(['p2'])
 
     def test_clean_main_without_nested_dependent(self):
-        # Test that p1 (which has no dependencies but dependents)
-        # cleans if its nested dependent (p3, by way of p2) is not
-        # specified
-        self.run_snapcraft(['clean', 'p1', 'p2'])
-        self.assert_clean(['p1', 'p2', 'p3', 'p4'], True)
+        # Test that p1 and p2 clean and mark the nested dependents as dirty,
+        # but don't clean them
+        output = self.run_snapcraft(['clean', 'p1', 'p2'])
+        self.assertThat(output, Contains(
+            "Cleaned 'p2', which makes the following parts out of date: 'p3' "
+            "and 'p4'"))
+        self.assert_clean(['p1', 'p2'])
+        self.assert_not_clean(['p3', 'p4'])

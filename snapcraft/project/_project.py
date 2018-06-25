@@ -23,7 +23,14 @@ class Project(ProjectOptions):
     and the snap being built."""
 
     def __init__(self, *, use_geoip=False, parallel_builds=True,
-                 target_deb_arch: str=None, debug=False) -> None:
-        self.info = None  # type: ProjectInfo
+                 target_deb_arch: str=None, debug=False,
+                 snapcraft_yaml_file_path=None) -> None:
+        # This here check is mostly for backwards compatibility with the
+        # rest of the code base.
+        if snapcraft_yaml_file_path is None:
+            self.info = None  # type: ProjectInfo
+        else:
+            self.info = ProjectInfo(
+                snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
         super().__init__(use_geoip, parallel_builds, target_deb_arch, debug)
