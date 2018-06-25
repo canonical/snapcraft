@@ -103,7 +103,8 @@ class RustPluginCrossCompileTestCase(unit.TestCase):
                 [plugin._cargo, 'fetch',
                  '--manifest-path',
                  os.path.join(plugin.sourcedir, 'Cargo.toml')],
-                cwd=os.path.join(plugin.partdir, 'build')),
+                cwd=os.path.join(plugin.partdir, 'build'),
+                env=plugin._build_env()),
         ])
 
         plugin.build()
@@ -186,8 +187,13 @@ class RustPluginTestCase(unit.TestCase):
 
         plugin.build()
 
-        self.assertThat(run_mock.call_count, Equals(1))
+        self.assertThat(run_mock.call_count, Equals(2))
         run_mock.assert_has_calls([
+            mock.call(
+                [plugin._cargo, 'test',
+                 '-j{}'.format(plugin.project.parallel_build_count),
+                 '--features', 'conditional-compilation'],
+                env=plugin._build_env()),
             mock.call(
                 [plugin._cargo, 'install',
                  '-j{}'.format(plugin.project.parallel_build_count),
@@ -216,7 +222,8 @@ class RustPluginTestCase(unit.TestCase):
             '--disable-sudo', '--save']),
             mock.call([plugin._cargo, 'fetch',
                        '--manifest-path',
-                       os.path.join(plugin.sourcedir, 'Cargo.toml')])])
+                       os.path.join(plugin.sourcedir, 'Cargo.toml')],
+                      env=plugin._build_env())])
 
     @mock.patch.object(rust.sources, 'Script')
     @mock.patch.object(rust.RustPlugin, 'run')
@@ -238,7 +245,8 @@ class RustPluginTestCase(unit.TestCase):
             '--channel=nightly']),
             mock.call([plugin._cargo, 'fetch',
                        '--manifest-path',
-                       os.path.join(plugin.sourcedir, 'Cargo.toml')])])
+                       os.path.join(plugin.sourcedir, 'Cargo.toml')],
+                      env=plugin._build_env())])
 
     @mock.patch.object(rust.sources, 'Script')
     @mock.patch.object(rust.RustPlugin, 'run')
@@ -260,8 +268,9 @@ class RustPluginTestCase(unit.TestCase):
             '--revision=1.13.0']),
             mock.call([
                 plugin._cargo, 'fetch',
-                '--manifest-path', os.path.join(plugin.sourcedir, 'Cargo.toml')
-            ])])
+                '--manifest-path',
+                os.path.join(plugin.sourcedir, 'Cargo.toml')],
+                env=plugin._build_env())])
 
     @mock.patch.object(rust.sources, 'Script')
     @mock.patch.object(rust.RustPlugin, 'run')
@@ -278,8 +287,8 @@ class RustPluginTestCase(unit.TestCase):
             mock.call([
                 plugin._cargo, 'fetch',
                 '--manifest-path',
-                os.path.join(plugin.sourcedir, 'test-subdir', 'Cargo.toml')
-            ])])
+                os.path.join(plugin.sourcedir, 'test-subdir', 'Cargo.toml')],
+                env=plugin._build_env())])
 
     @mock.patch('snapcraft.ProjectOptions.deb_arch', 'fantasy-arch')
     def test_cross_compiling_unsupported_arch_raises_exception(self):
@@ -298,8 +307,12 @@ class RustPluginTestCase(unit.TestCase):
 
         plugin.build()
 
-        self.assertThat(run_mock.call_count, Equals(1))
+        self.assertThat(run_mock.call_count, Equals(2))
         run_mock.assert_has_calls([
+            mock.call(
+                [plugin._cargo, 'test',
+                 '-j{}'.format(plugin.project.parallel_build_count)],
+                env=plugin._build_env()),
             mock.call(
                 [plugin._cargo, 'install',
                  '-j{}'.format(plugin.project.parallel_build_count),
