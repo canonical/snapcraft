@@ -20,8 +20,8 @@ from testtools.matchers import (Equals, FileExists, FileContains,
                                 StartsWith, EndsWith)
 
 from tests import unit
-from snapcraft.internal.build_providers._qemu._keys import (
-    SSHKey, SSHKeyPathError)
+from snapcraft.internal.build_providers import errors
+from snapcraft.internal.build_providers._qemu._keys import SSHKey
 
 
 class SSHKeyTest(unit.TestCase):
@@ -52,4 +52,5 @@ class SSHKeyTest(unit.TestCase):
         self.assertThat(ssh_key.get_public_key(), StartsWith('ssh-rsa '))
 
     def test_init_with_no_id_rsa(self):
-        self.assertRaises(SSHKeyPathError, SSHKey, root_dir=self.path)
+        self.assertRaises(errors.SSHKeyFileNotFoundError,
+                          SSHKey, root_dir=self.path)

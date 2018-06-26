@@ -145,3 +145,15 @@ class ProviderBadDataError(_SnapcraftError):
 
     def __init__(self, *, provider_name: str, data: str) -> None:
         super().__init__(provider_name=provider_name, data=data)
+
+
+class SSHKeyFileNotFoundError(_SnapcraftError):
+
+    fmt = (
+        '{private_key_file_path!r} does not exist. '
+        'A private key is required.\n'
+        'Please file a report on https://launchpad.net/snapcraft/+filebug'
+    )
+
+    def __init__(self, *, private_key_file_path: str) -> None:
+        super().__init__(private_key_file_path=private_key_file_path)

@@ -19,28 +19,28 @@ from typing import TypeVar, Type
 
 from paramiko import RSAKey
 
-from snapcraft.internal.errors import SnapcraftError
-
+from snapcraft.internal.build_providers import errors
 
 SSHKeyT = TypeVar('SSHKeyT', bound='SSHKey')
 
 
-class SSHKeyPathError(SnapcraftError):
-
-    fmt = (
-        '{private_key_file_path!r} does not exist. '
-        'A private key is required.\n'
-        'Please file a report on https://launchpad.net/snapcraft/+filebug'
-    )
-
-    def __init__(self, *, private_key_file_path: str) -> None:
-        super().__init__(private_key_file_path=private_key_file_path)
-
-
 class SSHKey:
+    """SSHKey provides primitives to create and use RSA keys with SSH.
+
+    The general use case is that if an instance of SSHKey returns
+    SSHKeyPathFileNotFoundError new_key can be called.
+
+    :ivar str private_key_file_path: the absolute path to the private key.
+    """
 
     @classmethod
     def new_key(cls: Type[SSHKeyT], *, root_dir: str) -> SSHKeyT:
+        """Create a new RSA key and return an instance of SSHKey.
+
+        :param str rootdir: the path to the directory to store the private key.
+        :returns: an instance of SSHKey using the newly generated key.
+        :rtype: SSHKey
+        """
         private_key_file_path = os.path.join(root_dir, 'id_rsa')
 
         # Keep the amount of bits up to date with latest trends.
@@ -50,12 +50,29 @@ class SSHKey:
         return cls(root_dir=root_dir)
 
     def __init__(self, *, root_dir: str) -> None:
+        """Instantiate an SSHKey with the RSA key stored in root_dir.
+
+        :param str root_dir: the path to the directory where the private key
+                             is stored.
+        :raises SSHKeyPathFileNotFoundError:
+            raised when the private key cannot be found. This exception should
+            generally be handled by the use of new_key.
+        """
         private_key_file_path = os.path.join(root_dir, 'id_rsa')
         if not os.path.exists(private_key_file_path):
-            raise SSHKeyPathError(private_key_file_path=private_key_file_path)
+            raise errors.SSHKeyFileNotFoundError(
+                private_key_file_path=private_key_file_path)
 
         self._key = RSAKey.from_private_key_file(private_key_file_path)
         self.private_key_file_path = private_key_file_path
 
     def get_public_key(self) -> str:
+        """Return the public key formatted for use as an authorized keys entry.
+
+        The returned string can be used as an entry for cloud init's
+        ssh_authorized_keys or ssh's authorized_keys file.
+
+        :returns: the public key formatted as 'ssh-rsa <hash>'.
+        :rtype: str.
+        """
         return '{} {}'.format(self._key.get_name(), self._key.get_base64())
