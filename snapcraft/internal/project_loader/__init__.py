@@ -45,7 +45,12 @@ def replace_attr(
         return [cast(str, replace_attr(i, replacements))
                 for i in attr]
     elif isinstance(attr, dict):
-        return {k: cast(str, replace_attr(attr[k], replacements))
-                for k in attr}
+        result = dict()  # type: Dict[str, str]
+        for key, value in attr.items():
+            # Run replacements on both the key and value
+            key = cast(str, replace_attr(key, replacements))
+            value = cast(str, replace_attr(value, replacements))
+            result[key] = value
+        return result
 
     return attr
