@@ -109,6 +109,14 @@ class ErrorFormattingTest(unit.TestCase):
                 "An error occurred when trying to communicate with the "
                 "instance using 'telnet' over port 7232: unknown host."
             ))),
+        ('SSHKeyFileNotFoundError', dict(
+            exception=errors.SSHKeyFileNotFoundError,
+            kwargs=dict(private_key_file_path='/dir/id_rsa'),
+            expected_message=(
+                "'/dir/id_rsa' does not exist. A private key is required.\n"
+                "Please file a report on "
+                "https://launchpad.net/snapcraft/+filebug"
+            ))),
     ]
 
     def test_error_formatting(self):
