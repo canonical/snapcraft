@@ -1,39 +1,91 @@
 project: snapcraft
 
 environment:
-  LANG: "$(echo ${LANG:-C.UTF-8})"
-  LANGUAGE: "$(echo ${LANGUAGE:-en})"
+  # FIXME: This variable is only used by the spread_tests/ suite.
   SNAPCRAFT_FROM_SNAP: "1"
+
+  # If this variable is defined, spread will install snapcraft from that
+  # channel. Otherwise, it'll look for a snap in the source tree.
+  SNAPCRAFT_CHANNEL: "$(HOST: echo ${SNAPCRAFT_CHANNEL})"
+
+  SETUP_DIR: /snapcraft/tests/spread/setup
 
 backends:
   lxd:
-    systems: [ubuntu-16.04]
+    systems:
+      - ubuntu-16.04
+      - ubuntu-17.10
+      - ubuntu-18.04
   linode:
     key: "$(HOST: echo $SPREAD_LINODE_KEY)"
     systems:
       - ubuntu-16.04-64:
           kernel: GRUB 2
           workers: 3
+  google:
+    key: "$(HOST: echo $SPREAD_GOOGLE_KEY)"
+    location: computeengine/us-west1-b
+    systems:
+      - ubuntu-14.04-64
+      - ubuntu-16.04-64
+      - ubuntu-17.10-64
+      - ubuntu-18.04-64
+
+exclude: [snaps-cache/]
+
+prepare: |
+  # This unfortunately cannot be extracted into a standalone script since this
+  # portion of of YAML runs before the source code has been fetched.
+
+  # 'apt update' is hanging on security.ubuntu.com with IPv6. Prefer IPv4 over
+  # IPv6
+  cat <<EOF > gai.conf
+  precedence  ::1/128       50
+  precedence  ::/0          40
+  precedence  2002::/16     30
+  precedence ::/96          20
+  precedence ::ffff:0:0/96 100
+  EOF
+  if ! mv gai.conf /etc/gai.conf; then
+      echo "/etc/gai.conf is not writable, ubuntu-core system? apt update won't"
+      echo "be affected in that case"
+      rm -f gai.conf
+  fi
+
+  # Now run 'apt update', but don't show output unless it fails. The logs are
+  # long enough as it is.
+  tempfile="$(mktemp)"
+  if ! apt update > "$tempfile" 2>&1; then
+      cat "$tempfile"
+      exit 1
+  fi
+
+  apt install -y snapd
+
+  # If $SNAPCRAFT_CHANNEL is defined, install snapcraft from that channel.
+  # Otherwise, look for it in /snapcraft/.
+  if [ -z "$SNAPCRAFT_CHANNEL" ]; then
+      if stat /snapcraft/*.snap 2>/dev/null; then
+          snap install --classic --dangerous /snapcraft/*.snap
+      else
+          echo "Expected a snap to exist in /snapcraft/. Did you forget to "
+          echo "define \$SNAPCRAFT_CHANNEL?"
+          exit 1
+      fi
+  else
+      snap install --classic snapcraft --channel="$SNAPCRAFT_CHANNEL"
+  fi
+
+restore: $SETUP_DIR/restore.sh
 
 suites:
- spread_tests/:
+ tests/spread/run/:
    summary: tests of the snapcraft snap
-   prepare: |
-     # apt update is hanging on security.ubuntu.com with IPv6, prefer IPv4 over IPv6
-     cat <<EOF > gai.conf
-     precedence  ::1/128       50
-     precedence  ::/0          40
-     precedence  2002::/16     30
-     precedence ::/96          20
-     precedence ::ffff:0:0/96 100
-     EOF
-     if ! mv gai.conf /etc/gai.conf; then
-       # not writable, disable ipv6 through sysctl
-       sysctl -w net.ipv6.conf.all.disable_ipv6=1
-       rm -f gai.conf
-     fi
 
-     apt update
+ spread_tests/:
+   summary: old tests of the snapcraft snap, being phased out
+   manual: true
+   prepare: |
      apt install --yes gcc g++ make python3-dev python3-venv libffi-dev libsodium-dev libapt-pkg-dev libarchive13 squashfs-tools xdelta3 bzr git mercurial subversion
      # Only required for the lxd backend.
      apt install --yes squashfuse
@@ -44,7 +96,5 @@ suites:
      source /snapcraft/venv/bin/activate
      pip install --upgrade pip
      pip install -r /snapcraft/requirements.txt -r /snapcraft/requirements-devel.txt
-     apt install --yes snapd
-     snap install snapcraft --classic --edge
 
 path: /snapcraft/

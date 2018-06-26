@@ -2,6 +2,11 @@ language: bash
 
 services: [docker]
 
+env:
+  global:
+    # SPREAD_GOOGLE_KEY
+    - secure: "uWKJdJlHc8tg+98jGpcc/FvsssEbw2FARqtgO0smBp5x8JWCmAt5fAVPB8qRbbirdHS5Yjpk8SSSa3vWVizYeTIOV+Vo3w8/1oqymPnMEEMtcLkyGZP+fNMDgNnX+icOU/bmh8werhOn9+qiZfKmFuXgpjrXzYoWzrhn55EuDN68Yhe6gB1zznHihDtSKjwQrbZFlgNnTh13Wk9lY8y2XYsWZZVfQ25dP4PaQQv647nBhcWPvrB0N/vMmDS/twvUBcbbEjRg5yKtsqzuT2lEqdIpwosp3/gZjWAWK0FjjmnzRcSHbugtaxWHmghHDLHSpP4GF7bzYL01tklFWDSW9DDvVfZ3HgiN058LL1jsk+VjcMCgu7csUWUj2kib3/TjKQy32R1vALpgDOrLHutdVDXoED33qxcyAYLODNRwW9o+QQM2HoZD4PKVDcKW4WOvAKp7Z1NK+ag26WdA/bM7ZgAll40dY9yPtgg0fdMM9N1X9e4v2TJmjnSLXF8v0jXIwp3VL01c/RpsmD7ubTUp0ixSaiKK0cCvxdflsDSUGojckeA4OsGOf9X+anqxmJsiY7vW/TKULMgToKEYDIPB0EfJ0Tf8P/ve4veEZSnhFinrDk46jwSP2m4kpR2FHAMtjCwqWEXZWouIJOOclAk4IqUWGT88Iomdz/LFbQa2rdo="
+
 matrix:
   include:
     - os: osx
@@ -19,6 +24,7 @@ jobs:
     - stage: static
       if: type != cron
       script: sudo ./tools/travis/run_tests.sh static
+
     - stage: unit
       if: type != cron
       script: sudo ./tools/travis/run_tests.sh tests/unit
@@ -34,6 +40,7 @@ jobs:
     - stage: snap
       if: type != cron
       script: sudo ./tools/travis/build_snapcraft_snap.sh
+
     - stage: integration
       if: type != cron
       script: sudo ./tools/travis/run_tests.sh tests/integration/general
@@ -70,8 +77,13 @@ jobs:
     # CLA check, only in pull requests, not coming from the bot.
     - if: type = pull_request AND sender != snappy-m-o
       script: ./tools/travis/run_cla_check.sh
+
+    - stage: spread
+      if: type != cron
+      script: ./tools/travis/run_tests.sh spread
+
     # Trigger nightly tests, only in cron.
     - stage: nightly
     # Run spread tests for the snapcraft snap in edge.
       if: type = cron
-      script: ./runtests.sh spread
+      script: ./runtests.sh old-spread

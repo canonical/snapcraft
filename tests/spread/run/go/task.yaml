@@ -1,0 +1,6 @@
+summary: build and run go snap
+
+execute: |
+  snapcraft
+  sudo snap install go-hello_*.snap --dangerous
+  [ "$(go-hello)" = "hello world" ]

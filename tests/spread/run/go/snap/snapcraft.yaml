@@ -1,0 +1,18 @@
+name: go-hello
+version: 0.1
+summary: A simple go project
+description: |
+  This is a basic go snap. It just prints a hello world and checksthat it is
+  possible to build a snap using local go sources.
+
+grade: devel
+confinement: strict
+
+apps:
+  go-hello:
+    command: go-hello
+
+parts:
+  go-hello:
+    plugin: go
+    source: go-hello

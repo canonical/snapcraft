@@ -50,6 +50,8 @@ elif [[ "$test_suite" = "tests/integration"* || "$test_suite" = "tests.integrati
     # TODO remove the need to install the snapcraft dependencies due to nesting
     #      the tests in the snapcraft package
     dependencies="apt install -y bzr git libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev mercurial python3-pip subversion sudo snapd && python3 -m pip install -r requirements-devel.txt -r requirements.txt && (snap install core || echo 'ignored error') && ${SNAPCRAFT_INSTALL_COMMAND:-sudo snap install snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap --dangerous --classic}"
+elif [ "$test_suite" = "spread" ]; then
+    cp "$TRAVIS_BUILD_DIR/snaps-cache/snapcraft-pr$TRAVIS_PULL_REQUEST.snap" .
 else
     echo "Unknown test suite: $test_suite"
     exit 1
@@ -61,6 +63,8 @@ echo "Going to run $test_suite on $TRAVIS_OS_NAME"
 if [ "$TRAVIS_OS_NAME" = "osx" ]; then
     project_path="$(greadlink -f "$script_path/../..")"
     ./runtests.sh "$test_suite" "$use_run"
+elif [ "$test_suite" = "spread" ]; then
+    ./runtests.sh "$test_suite"
 else
     project_path="$(readlink -f "$script_path/../..")"
     lxc="/snap/bin/lxc"
