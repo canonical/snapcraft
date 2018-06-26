@@ -120,20 +120,32 @@ class Pip:
                                            staging or part's install area.
         """
         self._python_major_version = python_major_version
-        self._part_dir = part_dir
         self._install_dir = install_dir
         self._stage_dir = stage_dir
 
-        self._python_package_dir = os.path.join(
-            self._part_dir, 'python-packages')
+        self._python_package_dir = os.path.join(part_dir, 'python-packages')
         os.makedirs(self._python_package_dir, exist_ok=True)
 
-        self._python_command = get_python_command(
-            self._python_major_version, stage_dir=self._stage_dir,
-            install_dir=self._install_dir)
-        self._python_home = get_python_home(
-            self._python_major_version, stage_dir=self._stage_dir,
-            install_dir=self._install_dir)
+        self.__python_command = None  # type:str
+        self.__python_home = None  # type: str
+
+    @property
+    def _python_command(self):
+        """Lazily determine the python command required."""
+        if not self.__python_command:
+            self.__python_command = get_python_command(
+                self._python_major_version, stage_dir=self._stage_dir,
+                install_dir=self._install_dir)
+        return self.__python_command
+
+    @property
+    def _python_home(self):
+        """Lazily determine the correct python home."""
+        if not self.__python_home:
+            self.__python_home = get_python_home(
+                self._python_major_version, stage_dir=self._stage_dir,
+                install_dir=self._install_dir)
+        return self.__python_home
 
     def setup(self):
         """Install pip and dependencies.
@@ -159,20 +171,20 @@ class Pip:
         if not self._is_pip_installed():
             logger.info('Fetching and installing pip...')
 
-            real_python_home = self._python_home
+            real_python_home = self.__python_home
 
             # Make sure we're using pip from the host. Wrapping this operation
             # in a try/finally to make sure we revert away from the host's
             # python at the end.
             try:
-                self._python_home = os.path.join(os.path.sep, 'usr')
+                self.__python_home = os.path.join(os.path.sep, 'usr')
 
                 # Using the host's pip, install our own pip
                 self.download({'pip'})
                 self.install({'pip'}, ignore_installed=True)
             finally:
                 # Now that we have our own pip, reset the python home
-                self._python_home = real_python_home
+                self.__python_home = real_python_home
 
     def _ensure_wheel_installed(self):
         if not self._is_wheel_installed():
