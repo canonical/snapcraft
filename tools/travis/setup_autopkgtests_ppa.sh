@@ -16,4 +16,5 @@
 
 apt-key adv --keyserver keyserver.ubuntu.com --recv-key 78E1918602959B9C59103100F1831DDAFC42E99D
 set -x; REL=$(sed -rn "/^(deb|deb-src) .*(ubuntu.com|ftpmaster)/ { s/^[^ ]+ +(\[.*\] *)?[^ ]* +([^ -]+) +.*$/\\2/p; q }" /etc/apt/sources.list)
-echo "deb http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu $REL main\ndeb-src http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu $REL main" > /etc/apt/sources.list.d/autopkgtest-snapcraft.list
+echo "deb http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu $REL main" > /etc/apt/sources.list.d/autopkgtest-snapcraft.list
+echo "deb-src http://ppa.launchpad.net/snappy-dev/snapcraft-daily/ubuntu $REL main" >> /etc/apt/sources.list.d/autopkgtest-snapcraft.list

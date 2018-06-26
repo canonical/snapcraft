@@ -21,7 +21,7 @@
 set -ev
 
 if [ "$#" -ne 2 ] ; then
-    echo "Usage: "$0" <distro> <test>"
+    echo "Usage: $0 <distro> <test>"
     exit 1
 fi
 
@@ -35,7 +35,7 @@ project_path="$(readlink -f "$script_path/../..")"
 
 "$script_path/setup_lxd.sh"
 "$script_path/run_lxd_container.sh" test-runner
-$lxc file push --recursive $project_path test-runner/root/
+$lxc file push --recursive "$project_path" test-runner/root/
 $lxc exec test-runner -- sh -c "apt remove --yes lxd lxd-client"
 # Ignore the core install error as a workaround for
 # - Setup snap "core" (2462) security profiles (cannot reload udev rules: exit status 2
