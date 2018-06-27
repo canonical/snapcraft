@@ -266,8 +266,8 @@ class _Executor:
         self._rerun_step(
             step=steps.PRIME, part=part, progress='Re-priming', hint=hint)
 
-    def _prepare_to_run(self, *, step: steps.Step,
-                        part: pluginhandler.PluginHandler):
+    def _prepare_step(self, *, step: steps.Step,
+                      part: pluginhandler.PluginHandler):
         common.reset_env()
         all_dependencies = self.parts_config.get_dependencies(part.name)
 
@@ -301,16 +301,16 @@ class _Executor:
         part = _replace_in_part(part)
 
     def _run_step(self, *, step: steps.Step, part, progress, hint=''):
-        self._prepare_to_run(step=step, part=part)
+        self._prepare_step(step=step, part=part)
 
         notify_part_progress(part, progress, hint)
         getattr(part, step.name)()
 
         # We know we just ran this step, so rather than check, manually twiddle
         # the cache
-        self._step_complete(part, step)
+        self._complete_step(part, step)
 
-    def _step_complete(self, part, step):
+    def _complete_step(self, part, step):
         self._cache.clear_step(part, step)
         self._cache.add_step_run(part, step)
         self.steps_were_run = True
@@ -355,7 +355,7 @@ class _Executor:
 
         update_function = getattr(part, 'update_{}'.format(step.name), None)
         if update_function:
-            self._prepare_to_run(step=step, part=part)
+            self._prepare_step(step=step, part=part)
             notify_part_progress(
                 part, 'Updating {} step for'.format(step.name), '({})'.format(
                     outdated_report.get_summary()))
@@ -363,7 +363,7 @@ class _Executor:
 
             # We know we just ran this step, so rather than check, manually
             # twiddle the cache
-            self._step_complete(part, step)
+            self._complete_step(part, step)
         else:
             getattr(self, '_re{}'.format(step.name))(part, '({})'.format(
                 outdated_report.get_summary()))
