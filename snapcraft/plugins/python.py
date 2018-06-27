@@ -195,7 +195,7 @@ class PythonPlugin(snapcraft.BasePlugin):
         # Pip requires only the major version of python rather than the command
         # name like our option requires.
         match = re.match(
-            'python(?P<major_version>\d).*', self.options.python_version)
+            r'python(?P<major_version>\d).*', self.options.python_version)
         if not match:
             raise UnsupportedPythonVersionError(
                 python_version=self.options.python_version)
