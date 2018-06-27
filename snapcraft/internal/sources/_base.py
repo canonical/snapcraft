@@ -24,6 +24,7 @@ from snapcraft.internal.indicators import (
     download_urllib_source
 )
 from ._checksum import split_checksum, verify_checksum
+from .errors import SourceUpdateUnsupportedError
 
 
 class Base:
@@ -66,11 +67,11 @@ class Base:
 
         :param str target: Path to target file.
         """
-        raise NotImplementedError
+        raise SourceUpdateUnsupportedError(self)
 
     def _update(self):
         """Update pulled source."""
-        raise NotImplementedError
+        raise SourceUpdateUnsupportedError(self)
 
 
 class FileBase(Base):

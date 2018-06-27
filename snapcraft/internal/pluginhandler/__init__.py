@@ -377,7 +377,7 @@ class PluginHandler:
             self.plugin.statedir, steps.PULL)
 
         # Not all sources support checking for updates
-        with contextlib.suppress(NotImplementedError):
+        with contextlib.suppress(sources.errors.SourceUpdateUnsupportedError):
             if self.source_handler.check(state_file):
                 return OutdatedReport(source_updated=True)
         return None

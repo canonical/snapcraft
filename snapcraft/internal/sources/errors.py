@@ -20,11 +20,15 @@ from snapcraft.internal import errors
 from typing import List
 
 
-class VCSError(errors.SnapcraftError):
+class SnapcraftSourceError(errors.SnapcraftError):
+    pass
+
+
+class VCSError(SnapcraftSourceError):
     fmt = '{message}'
 
 
-class SnapcraftSourceUnhandledError(errors.SnapcraftError):
+class SnapcraftSourceUnhandledError(SnapcraftSourceError):
 
     fmt = ('Failed to pull source: '
            'unable to determine source type of {source!r}.\n'
@@ -36,7 +40,7 @@ class SnapcraftSourceUnhandledError(errors.SnapcraftError):
         super().__init__(source=source)
 
 
-class SnapcraftSourceInvalidOptionError(errors.SnapcraftError):
+class SnapcraftSourceInvalidOptionError(SnapcraftSourceError):
 
     fmt = (
         "Failed to pull source: "
@@ -48,7 +52,7 @@ class SnapcraftSourceInvalidOptionError(errors.SnapcraftError):
         super().__init__(source_type=source_type, option=option)
 
 
-class SnapcraftSourceIncompatibleOptionsError(errors.SnapcraftError):
+class SnapcraftSourceIncompatibleOptionsError(SnapcraftSourceError):
 
     fmt = (
         "Failed to pull source: "
@@ -63,7 +67,7 @@ class SnapcraftSourceIncompatibleOptionsError(errors.SnapcraftError):
             humanized_options=formatting_utils.humanize_list(options, 'and'))
 
 
-class DigestDoesNotMatchError(errors.SnapcraftError):
+class DigestDoesNotMatchError(SnapcraftSourceError):
 
     fmt = ('Expected the digest for source to be {expected}, '
            'but it was {calculated}')
@@ -72,8 +76,19 @@ class DigestDoesNotMatchError(errors.SnapcraftError):
         super().__init__(expected=expected, calculated=calculated)
 
 
-class InvalidDebError(errors.SnapcraftError):
+class InvalidDebError(SnapcraftSourceError):
 
     fmt = ('The {deb_file} used does not contain valid data. '
            'Ensure a proper deb file is passed for .deb files '
            'as sources.')
+
+
+class SourceUpdateUnsupportedError(SnapcraftSourceError):
+
+    fmt = (
+        'Failed to update source: '
+        "{source!s} sources don't support updating"
+    )
+
+    def __init__(self, source):
+        super().__init__(source=source)
