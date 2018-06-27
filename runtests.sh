@@ -70,7 +70,9 @@ run_static_tests(){
     codespell -S "*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,./.git,changelog,.mypy_cache,parts,stage,prime" -q4
 
     echo "Running shellcheck"
-    find . \( -name .git \) -prune -o -print0 | xargs -0 file -N | awk -F": " '$2~/shell.script/{print $1}' | xargs shellcheck
+    # Need to skip 'demos/gradle/gradlew' as it wasn't written by us and has
+    # tons of issues.
+    find . \( -name .git -o -name gradlew \) -prune -o -print0 | xargs -0 file -N | awk -F": " '$2~/shell.script/{print $1}' | xargs shellcheck
 }
 
 run_snapcraft_tests(){

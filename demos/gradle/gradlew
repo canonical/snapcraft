@@ -9,7 +9,6 @@
 # Attempt to set APP_HOME
 # Resolve links: $0 may be a link
 PRG="$0"
-# shellcheck disable=SC2006
 # Need this for relative symlinks.
 while [ -h "$PRG" ] ; do
     ls=`ls -ld "$PRG"`
@@ -20,17 +19,12 @@ while [ -h "$PRG" ] ; do
         PRG=`dirname "$PRG"`"/$link"
     fi
 done
-# shellcheck disable=SC2006
 SAVED="`pwd`"
-# shellcheck disable=SC2006,SC2086,SC2164
 cd "`dirname \"$PRG\"`/" >/dev/null
-# shellcheck disable=SC2006
 APP_HOME="`pwd -P`"
-# shellcheck disable=SC2164
 cd "$SAVED" >/dev/null
 
 APP_NAME="Gradle"
-# shellcheck disable=SC2006
 APP_BASE_NAME=`basename "$0"`
 
 # Add default JVM options here. You can also use JAVA_OPTS and GRADLE_OPTS to pass JVM options to this script.
@@ -55,8 +49,6 @@ cygwin=false
 msys=false
 darwin=false
 nonstop=false
-
-# shellcheck disable=SC2006
 case "`uname`" in
   CYGWIN* )
     cygwin=true
@@ -65,7 +57,6 @@ case "`uname`" in
     darwin=true
     ;;
   MINGW* )
-    # shellcheck disable=SC2034
     msys=true
     ;;
   NONSTOP* )
@@ -97,7 +88,6 @@ Please set the JAVA_HOME variable in your environment to match the
 location of your Java installation."
 fi
 
-# shellcheck disable=SC2086,SC2006,SC2166,SC2181
 # Increase the maximum file descriptors if we can.
 if [ "$cygwin" = "false" -a "$darwin" = "false" -a "$nonstop" = "false" ] ; then
     MAX_FD_LIMIT=`ulimit -H -n`
@@ -119,7 +109,6 @@ if $darwin; then
     GRADLE_OPTS="$GRADLE_OPTS \"-Xdock:name=$APP_NAME\" \"-Xdock:icon=$APP_HOME/media/gradle.icns\""
 fi
 
-# shellcheck disable=SC2006
 # For Cygwin, switch paths to Windows format before running java
 if $cygwin ; then
     APP_HOME=`cygpath --path --mixed "$APP_HOME"`
@@ -140,8 +129,6 @@ if $cygwin ; then
     fi
     # Now convert the arguments - kludge to limit ourselves to /bin/sh
     i=0
-
-    # shellcheck disable=SC2046,SC2116,SC2006,SC2086,SC2196
     for arg in "$@" ; do
         CHECK=`echo "$arg"|egrep -c "$OURCYGPATTERN" -`
         CHECK2=`echo "$arg"|egrep -c "^-"`                                 ### Determine if an option
@@ -153,8 +140,6 @@ if $cygwin ; then
         fi
         i=$((i+1))
     done
-
-    # shellcheck disable=SC2154
     case $i in
         (0) set -- ;;
         (1) set -- "$args0" ;;
@@ -173,7 +158,6 @@ fi
 function splitJvmOpts() {
     JVM_OPTS=("$@")
 }
-# shellcheck disable=SC2153,SC2086
 eval splitJvmOpts $DEFAULT_JVM_OPTS $JAVA_OPTS $GRADLE_OPTS
 JVM_OPTS[${#JVM_OPTS[*]}]="-Dorg.gradle.appname=$APP_BASE_NAME"
 
