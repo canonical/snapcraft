@@ -256,3 +256,25 @@ class PythonPluginTestCase(integration.TestCase):
             self.run_snapcraft('stage')
         except subprocess.CalledProcessError:
             self.fail('These parts should not have conflicted')
+
+    def test_python_part_can_be_cleaned(self):
+        # Regression test for LP: #1778716
+
+        snapcraft_yaml = fixture_setup.SnapcraftYaml(self.path)
+        snapcraft_yaml.update_part('python-part', {
+            'plugin': 'python',
+            'source': '.',
+        })
+        snapcraft_yaml.update_part('dummy-part', {
+            'plugin': 'nil',
+        })
+        self.useFixture(snapcraft_yaml)
+
+        # First stage both parts
+        self.run_snapcraft('stage')
+
+        # Now clean the python one, which should succeed
+        try:
+            self.run_snapcraft(['clean', 'python-part'])
+        except subprocess.CalledProcessError:
+            self.fail('Expected python part to clean successfully')
