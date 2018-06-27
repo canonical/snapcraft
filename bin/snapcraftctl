@@ -14,17 +14,29 @@
 # snapcraft). To that end, this script will use the interpreter defined within
 # the SNAPCRAFT_INTERPRETER environment variable.
 
+# Shell quote arbitrary string by replacing every occurrence of '
+# with '\'', then put ' at the beginning and end of the string.
+# Prepare yourself, fun regex ahead.
+quote()
+{
+    for i; do
+        printf %s\\n "$i" | sed "s/'/'\\\\''/g;1s/^/'/;\$s/\$/' \\\\/"
+    done
+    echo " "
+}
+
 # Which python3 are we using? By default, the one from the PATH. If
 # SNAPCRAFT_INTERPRETER is specified, use that one instead.
 python3_command="${SNAPCRAFT_INTERPRETER:-$(which python3)}"
 
-snapcraftctl_command="""$python3_command"" -c '
+snapcraftctl_command="$python3_command -c '
 import snapcraft.cli.__main__
 
 # Click strips off the first arg by default, so the -c will not be passed
 snapcraft.cli.__main__.run_snapcraftctl(prog_name=\"snapcraftctl\")
-' ""$@"
+'"
 
+snapcraftctl_args=$(quote "$@")
 
 # We don't actually want a 100% clean environment. Pass on the SNAP variables,
 # locale settings, and environment variables required by snapcraftctl itself.
@@ -51,5 +63,7 @@ export LANG="$LANG"
 # Required for snapcraftctl to work
 export SNAPCRAFTCTL_CALL_FIFO="$SNAPCRAFTCTL_CALL_FIFO"
 export SNAPCRAFTCTL_FEEDBACK_FIFO="$SNAPCRAFTCTL_FEEDBACK_FIFO"
-$snapcraftctl_command
+
+# No need to quote here as the args are already quoted
+$snapcraftctl_command $snapcraftctl_args
 END

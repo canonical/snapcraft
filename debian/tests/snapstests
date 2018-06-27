@@ -6,14 +6,23 @@ echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers.d/autopkgtest
 
 script_path="$(dirname "$0")"
 
-if [ "$($script_path/get-release-codename)" != "xenial" ]; then
+if [ "$("$script_path/get-release-codename")" != "xenial" ]; then
     echo "These tests are only supported on xenial"
     exit 0
 fi
 
 snapd_config_dir=/etc/systemd/system/snapd.service.d
 mkdir -p $snapd_config_dir
-echo "[Service]\nEnvironment='http_proxy=$http_proxy'\nEnvironment='https_proxy=$https_proxy'\nEnvironment='ftp_proxy=$http_proxy'\nEnvironment='no_proxy=$no_proxy'\n" | tee $snapd_config_dir/snapd.env.conf > /dev/null
+
+# shellcheck disable=SC2154
+cat << EOF > "$snapd_config_dir/snapd.env.conf"
+[Service]
+Environment='http_proxy=$http_proxy'
+Environment='https_proxy=$https_proxy'
+Environment='ftp_proxy=$http_proxy'
+Environment='no_proxy=$no_proxy'
+EOF
+
 systemctl daemon-reload
 
 su ubuntu -c "ADT_TEST=1 SNAPCRAFT_FROM_DEB=1 python3 -m snaps_tests --ip localhost"

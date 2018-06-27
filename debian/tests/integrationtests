@@ -7,7 +7,7 @@ echo 'ubuntu ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers.d/autopkgtest
 if [ -z "$SNAPCRAFT_AUTOPKGTEST_SUITES" ]; then
     suites="tests/integration"
 else
-    suites=$SNAPCRAFT_AUTOPKGTEST_SUITES
+    suites="$SNAPCRAFT_AUTOPKGTEST_SUITES"
 fi
 
 if [ -z "$SNAPCRAFT_SLOW_TESTS" ]; then
@@ -18,8 +18,10 @@ if [ -z "$SNAPCRAFT_TEST_PATTERN" ]; then
     SNAPCRAFT_TEST_PATTERN="test*.py"
 fi
 
-mkdir --parents /home/ubuntu/autopkgtest_tmp --mode 777
+mkdir -p /home/ubuntu/autopkgtest_tmp
+chmod 777 /home/ubuntu/autopkgtest_tmp
+
 for suite in $suites; do
-    echo $suite
+    echo "$suite"
     su ubuntu -c "SNAPCRAFT_FROM_DEB=1 SNAPCRAFT_SLOW_TESTS=${SNAPCRAFT_SLOW_TESTS} TEST_STORE=fake ADT_TEST=1 PATH=/snap/bin:$PATH TMPDIR=\$HOME/autopkgtest_tmp python3 -m unittest discover -b -v -s ${suite} -p ${SNAPCRAFT_TEST_PATTERN}"
 done

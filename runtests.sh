@@ -17,8 +17,11 @@
 
 set -e
 
-export PATH=$(pwd)/bin:$PATH
-export PYTHONPATH=$(pwd)${PYTHONPATH:+:$PYTHONPATH}
+PATH="$(pwd)/bin:$PATH"
+PYTHONPATH="$(pwd)${PYTHONPATH:+:$PYTHONPATH}"
+
+export PATH
+export PYTHONPATH
 
 printhelp(){
     echo "Usage: "
@@ -27,7 +30,7 @@ printhelp(){
     echo "    ./runtests.sh tests/integration[/<test-suite>]"
     echo "    ./runtests.sh snaps"
     echo ""
-    echo "<test-suite> can be: $(ls tests/integration| grep '^[a-z].*' | tr '\n' ' ')"
+    echo "<test-suite> can be one of: $(find tests/integration/ -mindepth 1 -maxdepth 1 -type d ! -name __pycache__ | tr '\n' ' ')"
     echo "<use-run> makes use of run instead of discover to run the tests"
 }
 
@@ -57,10 +60,19 @@ parseargs(){
 python3 -m coverage 1>/dev/null 2>&1 && coverage="true"
 
 run_static_tests(){
-    SRC_PATHS="bin external_snaps_tests setup.py snapcraft snaps_tests tests"
-    python3 -m flake8 --max-complexity=10 $SRC_PATHS
+    echo "Running flake8"
+    python3 -m flake8 --max-complexity=10 bin external_snaps_tests setup.py snapcraft snaps_tests tests
+
+    echo "Running mypy"
     mypy --ignore-missing-imports --follow-imports=silent -p snapcraft
+
+    echo "Running codespell"
     codespell -S "*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,./.git,changelog,.mypy_cache,parts,stage,prime" -q4
+
+    echo "Running shellcheck"
+    # Need to skip 'demos/gradle/gradlew' as it wasn't written by us and has
+    # tons of issues.
+    find . \( -name .git -o -name gradlew \) -prune -o -print0 | xargs -0 file -N | awk -F": " '$2~/shell.script/{print $1}' | xargs shellcheck
 }
 
 run_snapcraft_tests(){

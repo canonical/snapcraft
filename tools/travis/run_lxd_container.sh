@@ -21,12 +21,10 @@
 set -ev
 
 if [ "$#" -lt 1 ]; then
-    echo "Usage: "$0" <name>"
+    echo "Usage: $0 <name>"
     exit 1
 fi
 
-script_path="$(dirname "$0")"
-project_path="$(readlink -f "$script_path/../..")"
 name="$1"
 image="$LXD_IMAGE"
 [ -z "$image" ] && image="ubuntu:xenial"

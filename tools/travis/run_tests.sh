@@ -22,7 +22,7 @@ set -ev
 
 argc="$#"
 if [ "$argc" -gt 2 ]; then
-    echo "Usage: "$0" <test> [<use-run>]"
+    echo "Usage: $0 <test> [<use-run>]"
     exit 1
 fi
 
@@ -43,7 +43,7 @@ if [ "$TRAVIS_OS_NAME" = "osx" ]; then
     python3 -m pip install -r requirements.txt
     python3 -m pip install -r requirements-devel.txt
 elif [ "$test_suite" = "static" ]; then
-    dependencies="apt install -y python3-pip && python3 -m pip install -r requirements-devel.txt"
+    dependencies="apt install -y python3-pip shellcheck && python3 -m pip install -r requirements-devel.txt"
 elif [ "$test_suite" = "tests/unit" ]; then
     dependencies="apt install -y git bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov && apt install -y python3-coverage"
 elif [[ "$test_suite" = "tests/integration"* || "$test_suite" = "tests.integration"* ]]; then
@@ -57,7 +57,7 @@ fi
 
 script_path="$(dirname "$0")"
 
-echo "Going to run $test_stuite on $TRAVIS_OS_NAME"
+echo "Going to run $test_suite on $TRAVIS_OS_NAME"
 if [ "$TRAVIS_OS_NAME" = "osx" ]; then
     project_path="$(greadlink -f "$script_path/../..")"
     ./runtests.sh "$test_suite" "$use_run"
@@ -68,7 +68,7 @@ else
     "$script_path/setup_lxd.sh"
     "$script_path/run_lxd_container.sh" test-runner
 
-    $lxc file push --recursive $project_path test-runner/root/
+    $lxc file push --recursive "$project_path" test-runner/root/
     $lxc exec test-runner -- sh -c "cd snapcraft && ./tools/travis/setup_lxd.sh"
     $lxc exec test-runner -- sh -c "cd snapcraft && $dependencies"
     $lxc exec test-runner -- sh -c "cd snapcraft && ./runtests.sh $test_suite $use_run"

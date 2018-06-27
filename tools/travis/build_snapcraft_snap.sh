@@ -33,7 +33,7 @@ lxc="/snap/bin/lxc"
 # Workaround for
 # - Setup snap "core" (2462) security profiles (cannot reload udev rules: exit status 2
 $lxc exec snap-builder -- sh -c "snap install core" || echo "ignored error"
-$lxc file push --recursive $project_path snap-builder/root/
+$lxc file push --recursive "$project_path" snap-builder/root/
 # TODO use the stable snap once it's published.
 $lxc exec snap-builder -- sh -c "snap install snapcraft --candidate --classic"
 $lxc exec snap-builder -- sh -c "cd snapcraft && /snap/bin/snapcraft snap --output snapcraft-pr$TRAVIS_PULL_REQUEST.snap"
