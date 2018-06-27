@@ -21,7 +21,7 @@
 set -ev
 
 if [ "$#" -ne 1 ] ; then
-    echo "Usage: "$0" <day>"
+    echo "Usage: $0 <day>"
     exit 1
 fi
 
@@ -34,10 +34,10 @@ project_path="$(readlink -f "$script_path/../..")"
 
 "$script_path/setup_lxd.sh"
 "$script_path/run_lxd_container.sh" autopkgtest-results
-$lxc file push --recursive $project_path/tools autopkgtest-results/root/
+$lxc file push --recursive "$project_path/tools" autopkgtest-results/root/
 $lxc exec autopkgtest-results -- sh -c "apt update && apt install --yes squashfuse"
 # Ignore the core install error as a workaround for
 # - Setup snap "core" (2462) security profiles (cannot reload udev rules: exit status 2
 $lxc exec autopkgtest-results -- sh -c "snap install core" || echo "ignored error"
-$lxc exec autopkgtest-results -- sh -c "/root/tools/collect_ppa_autopkgtests_results.py $1"
+$lxc exec autopkgtest-results -- sh -c "/root/tools/collect_ppa_autopkgtests_results.py $day"
 $lxc stop autopkgtest-results
