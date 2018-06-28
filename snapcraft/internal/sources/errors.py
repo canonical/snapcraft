@@ -87,7 +87,7 @@ class SourceUpdateUnsupportedError(SnapcraftSourceError):
 
     fmt = (
         'Failed to update source: '
-        "{source!s} sources don't support updating"
+        "{source!s} sources don't support updating."
     )
 
     def __init__(self, source):
