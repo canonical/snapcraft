@@ -21,7 +21,8 @@ from typing import Any, Dict, List, Set  # noqa: F401
 from snapcraft.internal import errors, pluginhandler, steps
 import snapcraft.internal.project_loader._config as _config
 
-_Report = Dict[str, Dict[steps.Step, pluginhandler.DirtyReport]]
+_DirtyReport = Dict[str, Dict[steps.Step, pluginhandler.DirtyReport]]
+_OutdatedReport = Dict[str, Dict[steps.Step, pluginhandler.OutdatedReport]]
 
 
 class StatusCache:
@@ -34,8 +35,8 @@ class StatusCache:
         """
         self.config = config
         self._steps_run = dict()  # type: Dict[str, Set[steps.Step]]
-        self._outdated_reports = collections.defaultdict(dict)  # type: _Report
-        self._dirty_reports = collections.defaultdict(dict)  # type: _Report
+        self._outdated_reports = collections.defaultdict(dict)  # type: _OutdatedReport  # noqa
+        self._dirty_reports = collections.defaultdict(dict)  # type: _DirtyReport  # noqa
 
     def should_step_run(self, part: pluginhandler.PluginHandler,
                         step: steps.Step) -> bool:

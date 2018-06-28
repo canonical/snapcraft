@@ -19,10 +19,24 @@ from snapcraft.internal import steps
 
 
 class OutdatedReport:
-    """The OutdatedReport class explains why a given step is outdated."""
+    """The OutdatedReport class explains why a given step is outdated.
+
+    An outdated step is defined to be a step that has run, but since doing so
+    one of the following things have happened:
+
+    - A step earlier in the lifecycle has run again.
+
+    - The source on disk has been updated.
+    """
 
     def __init__(self, *, previous_step_modified: steps.Step=None,
                  source_updated: bool=False) -> None:
+        """Create a new OutdatedReport.
+
+        :param steps.step previous_step_modified: Step earlier in the lifecycle
+                                                  that has changed.
+        :param bool source_updated: Whether or not the source changed on disk.
+        """
         self.previous_step_modified = previous_step_modified
         self.source_updated = source_updated
 

@@ -250,15 +250,27 @@ class PluginHandler:
         except errors.NoLatestStepError:
             return True
 
-    def is_outdated(self, step):
-        """Return true if the given step needs to be updated (no cleaning)."""
+    def is_outdated(self, step: steps.Step) -> bool:
+        """Return true if the given step is outdated.
+
+        See get_outdated_report() for more information.
+
+        :param steps.Step step: The step to be checked.
+        """
 
         return self.get_outdated_report(step) is not None
 
-    def get_outdated_report(self, step: steps.Step):
-        """Return an OutdatedReport class describing why step is outdated.
+    def get_outdated_report(self, step: steps.Step) -> OutdatedReport:
+        """Return an OutdatedReport class describing why the step is outdated.
 
-        Returns None if step is not outdated.
+        A step is considered to be outdated if an earlier step in the lifecycle
+        has been run more recently, or if the source code changed on disk.
+        This means the step needs to be updated by taking modified files from
+        the previous step. This is in contrast to a "dirty" step, which must
+        be cleaned and run again.
+
+        :param steps.Step step: The step to be checked.
+        :returns: OutdatedReport if the step is outdated, None otherwise.
         """
 
         try:
@@ -276,15 +288,29 @@ class PluginHandler:
                                 previous_step_modified=previous_step)
             return None
 
-    def is_dirty(self, step):
-        """Return true if the given step needs to be cleaned and run again."""
+    def is_dirty(self, step: steps.Step) -> bool:
+        """Return true if the given step is dirty.
+
+        See get_dirty_report() for more information.
+
+        :param steps.Step step: The step to be checked.
+        """
 
         return self.get_dirty_report(step) is not None
 
-    def get_dirty_report(self, step):
-        """Return a DirtyReport class describing why step is dirty.
+    def get_dirty_report(self, step: steps.Step) -> DirtyReport:
+        """Return a DirtyReport class describing why the step is dirty.
 
-        Returns None if step is not dirty.
+        A step is considered to be dirty if either YAML properties used by it
+        (`stage-packages` are used by the `pull` step, for example), or project
+        options used by it (`--target-arch` is used by the `pull` step as well)
+        have changed since the step was run. This means the step needs to be
+        cleaned and run again. This is in contrast to an "outdated" step, which
+        typically doesn't need to be cleaned, just updated with files from an
+        earlier step in the lifecycle.
+
+        :param steps.Step step: The step to be checked.
+        :returns: DirtyReport if the step is dirty, None otherwise.
         """
 
         # Retrieve the stored state for this step (assuming it has already run)
