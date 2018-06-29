@@ -35,8 +35,10 @@ class StatusCache:
         """
         self.config = config
         self._steps_run = dict()  # type: Dict[str, Set[steps.Step]]
-        self._outdated_reports = collections.defaultdict(dict)  # type: _OutdatedReport  # noqa
-        self._dirty_reports = collections.defaultdict(dict)  # type: _DirtyReport  # noqa
+        self._outdated_reports = (
+            collections.defaultdict(dict))  # type: _OutdatedReport
+        self._dirty_reports = (
+            collections.defaultdict(dict))  # type: _DirtyReport
 
     def should_step_run(self, part: pluginhandler.PluginHandler,
                         step: steps.Step) -> bool:
