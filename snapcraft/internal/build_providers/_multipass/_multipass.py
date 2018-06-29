@@ -14,6 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+import os
 import shlex
 
 from .._base_provider import Provider
@@ -24,6 +25,12 @@ from ._multipass_command import MultipassCommand
 class Multipass(Provider):
     """A multipass provider for snapcraft to execute its lifecycle."""
 
+    @property
+    def _snaps_path_or_dev(self) -> str:
+        # https://github.com/snapcore/snapd/blob/master/dirs/dirs.go
+        # CoreLibExecDir
+        return os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps')
+
     def _run(self, command) -> None:
         self._multipass_cmd.execute(instance_name=self.instance_name,
                                     command=command)
@@ -31,6 +38,14 @@ class Multipass(Provider):
     def _launch(self) -> None:
         self._multipass_cmd.launch(instance_name=self.instance_name,
                                    image='16.04')
+
+    def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:
+        target = '{}:{}'.format(self.instance_name, mountpoint)
+        self._multipass_cmd.mount(source=dev_or_path, target=target)
+
+    def _push_file(self, *, source: str, destination: str) -> None:
+        destination = '{}:{}'.format(self.instance_name, destination)
+        self._multipass_cmd.copy_files(source=source, destination=destination)
 
     def __init__(self, *, project, echoer) -> None:
         super().__init__(project=project, echoer=echoer)

@@ -124,6 +124,22 @@ class MultipassCommand:
                 command=command,
                 exit_code=process_error.returncode) from process_error
 
+    def mount(self, *, source: str, target: str) -> None:
+        """Passthrough for running multipass mount.
+
+        :param str source: path to the local directory to mount.
+        :param str target: mountpoint inside the instance in the form of
+                           <instance-name>:path.
+        :raises errors.ProviderMountError: when the mount operation fails.
+        """
+        cmd = [self.provider_cmd, 'mount', source, target]
+        try:
+            _run(cmd)
+        except subprocess.CalledProcessError as process_error:
+            raise errors.ProviderMountError(
+                provider_name=self.provider_name,
+                exit_code=process_error.returncode) from process_error
+
     def copy_files(self, *, source: str, destination: str) -> None:
         """Passthrough for running multipass copy-files.
 

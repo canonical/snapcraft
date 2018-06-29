@@ -120,6 +120,15 @@ class SnapUnavailableError(RepoError):
         super().__init__(snap_name=snap_name, snap_channel=snap_channel)
 
 
+class SnapFindError(RepoError):
+
+    fmt = ('Could not find the snap {snap_name!r} installed on this host.\n'
+           'Install the snap and try again.')
+
+    def __init__(self, *, snap_name):
+        super().__init__(snap_name=snap_name)
+
+
 class SnapInstallError(RepoError):
 
     fmt = ('Error while installing snap {snap_name!r} from channel '
