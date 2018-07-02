@@ -59,10 +59,6 @@ class Provider():
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.destroy()
 
-    @abc.abstractproperty
-    def _snaps_path_or_dev(self) -> str:
-        """Return the path or device exposed in the provider to mount."""
-
     @abc.abstractmethod
     def _run(self, command: List) -> None:
         """Run a command on the instance."""
@@ -74,6 +70,10 @@ class Provider():
     @abc.abstractmethod
     def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:
         """Mount a path from the host inside the instance."""
+
+    @abc.abstractmethod
+    def _mount_snaps_directory(self) -> str:
+        """Mount the host directory with snaps into the provider."""
 
     @abc.abstractmethod
     def _push_file(self, *, source: str, destination: str) -> None:
@@ -142,8 +142,7 @@ class Provider():
         # TODO make mounting requirement smarter and depend on is_installed
         if common.is_snap():
             # Make the snaps available to the provider
-            self._mount(mountpoint=self._SNAPS_MOUNTPOINT,
-                        dev_or_path=self._snaps_path_or_dev)
+            self._mount_snaps_directory()
 
         # Now install the snapcraft required base/core.
         self.echoer.info('Setting up core')

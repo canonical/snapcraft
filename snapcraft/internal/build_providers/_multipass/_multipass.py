@@ -25,12 +25,6 @@ from ._multipass_command import MultipassCommand
 class Multipass(Provider):
     """A multipass provider for snapcraft to execute its lifecycle."""
 
-    @property
-    def _snaps_path_or_dev(self) -> str:
-        # https://github.com/snapcore/snapd/blob/master/dirs/dirs.go
-        # CoreLibExecDir
-        return os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps')
-
     def _run(self, command) -> None:
         self._multipass_cmd.execute(instance_name=self.instance_name,
                                     command=command)
@@ -42,6 +36,12 @@ class Multipass(Provider):
     def _mount(self, *, mountpoint: str, dev_or_path: str) -> None:
         target = '{}:{}'.format(self.instance_name, mountpoint)
         self._multipass_cmd.mount(source=dev_or_path, target=target)
+
+    def _mount_snaps_directory(self) -> None:
+        # https://github.com/snapcore/snapd/blob/master/dirs/dirs.go
+        # CoreLibExecDir
+        path = os.path.join(os.path.sep, 'var', 'lib', 'snapd', 'snaps')
+        self._mount(mountpoint=self._SNAPS_MOUNTPOINT, dev_or_path=path)
 
     def _push_file(self, *, source: str, destination: str) -> None:
         destination = '{}:{}'.format(self.instance_name, destination)

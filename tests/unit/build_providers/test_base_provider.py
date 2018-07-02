@@ -34,10 +34,6 @@ class ProviderImpl(Provider):
         self.launch_mock = Mock()
         self.mount_mock = Mock()
 
-    @property
-    def _snaps_path_or_dev(self):
-        return 'snaps-dev'
-
     def _run(self, command):
         self.run_mock(command)
 
@@ -46,6 +42,10 @@ class ProviderImpl(Provider):
 
     def _mount(self, *, mountpoint: str, dev_or_path: str):
         self.mount_mock(mountpoint=mountpoint, dev_or_path=dev_or_path)
+
+    def _mount_snaps_directory(self):
+        self._mount(mountpoint=self._SNAPS_MOUNTPOINT,
+                    dev_or_path='snaps-dev')
 
 
 class BaseProviderTest(BaseProviderBaseTest):
