@@ -230,7 +230,7 @@ def _snap_command_requires_sudo():
 def get_assertion(assertion_params: Sequence[str]) -> bytes:
     """Get assertion information.
 
-    :param assertion_params: a sequence of strings to pas to 'snap known'.
+    :param assertion_params: a sequence of strings to pass to 'snap known'.
     :returns: a stream of bytes from the assertion.
     :rtype: bytes
     """
