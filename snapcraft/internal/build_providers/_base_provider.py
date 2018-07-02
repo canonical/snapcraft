@@ -16,6 +16,7 @@
 
 import abc
 import contextlib
+import datetime
 import os
 import shlex
 import tempfile
@@ -118,7 +119,12 @@ class Provider():
         self._launch()
 
     def _disable_and_wait_for_refreshes(self):
-        # Auto refresh may kick in at any moment
+        # Disable autorefresh for 15 minutes,
+        # https://github.com/snapcore/snapd/pull/5436/files
+        now_plus_15 = datetime.datetime.now() + datetime.timedelta(minutes=15)
+        self._run(['sudo', 'snap', 'set', 'core', 'refresh.hold={}Z'.format(
+            now_plus_15.isoformat())])
+        # Auto refresh may have kicked in while setting the hold.
         self.echoer.info('Waiting for pending snap auto refreshes.')
         with contextlib.suppress(errors.ProviderExecError):
             self._run(['sudo', 'snap', 'watch', '--last=auto-refresh'])

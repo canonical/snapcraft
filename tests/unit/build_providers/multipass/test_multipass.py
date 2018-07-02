@@ -104,6 +104,9 @@ class MultipassTest(BaseProviderBaseTest):
         self.multipass_cmd_mock().execute.assert_has_calls([
             mock.call(
                 instance_name=self.instance_name,
+                command=['sudo', 'snap', 'set', 'core', mock.ANY]),
+            mock.call(
+                instance_name=self.instance_name,
                 command=['sudo', 'snap', 'watch', '--last=auto-refresh']),
             mock.call(
                 instance_name=self.instance_name,

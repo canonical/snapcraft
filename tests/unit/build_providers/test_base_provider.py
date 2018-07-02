@@ -103,6 +103,7 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
 
         provider.launch_mock.assert_not_called()
         provider.run_mock.assert_has_calls([
+            call(['sudo', 'snap', 'set', 'core', ANY]),
             call(['sudo', 'snap', 'watch', '--last=auto-refresh']),
             call(['sudo', 'snap', 'ack', ANY]),
             call(['sudo', 'snap', 'install', 'core']),
@@ -159,6 +160,7 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
 
         provider.launch_mock.assert_not_called()
         provider.run_mock.assert_has_calls([
+            call(['sudo', 'snap', 'set', 'core', ANY]),
             call(['sudo', 'snap', 'watch', '--last=auto-refresh']),
             call(['sudo', 'snap', 'ack', ANY]),
             call(['sudo', 'snap', 'ack', ANY]),
@@ -212,6 +214,7 @@ class BaseProviderProvisionSnapcraftTest(BaseProviderBaseTest):
 
         provider.launch_mock.assert_not_called()
         provider.run_mock.assert_has_calls([
+            call(['sudo', 'snap', 'set', 'core', ANY]),
             call(['sudo', 'snap', 'watch', '--last=auto-refresh']),
             call(['sudo', 'snap', 'ack', ANY]),
             call(['sudo', 'snap', 'ack', ANY]),
