@@ -116,6 +116,13 @@ class TempXDG(fixtures.Fixture):
         patcher_dirs.start()
         self.addCleanup(patcher_dirs.stop)
 
+        self.useFixture(fixtures.EnvironmentVariable(
+            'XDG_CONFIG_HOME', os.path.join(self.path, '.config')))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'XDG_DATA_HOME', os.path.join(self.path, '.local')))
+        self.useFixture(fixtures.EnvironmentVariable(
+            'XDG_CACHE_HOME', os.path.join(self.path, '.cache')))
+
 
 class FakeProjectOptions(fixtures.Fixture):
 

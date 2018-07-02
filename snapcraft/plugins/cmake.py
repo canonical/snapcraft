@@ -34,7 +34,6 @@ Additionally, this plugin uses the following plugin-specific keywords:
 """
 
 import os
-import shutil
 
 import snapcraft.plugins.make
 
@@ -65,12 +64,9 @@ class CMakePlugin(snapcraft.plugins.make.MakePlugin):
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
         self.build_packages.append('cmake')
+        self.out_of_source_build = True
 
     def build(self):
-        if os.path.exists(self.builddir):
-            shutil.rmtree(self.builddir)
-        os.mkdir(self.builddir)
-
         source_subdir = getattr(self.options, 'source_subdir', None)
         if source_subdir:
             sourcedir = os.path.join(self.sourcedir, source_subdir)

@@ -129,6 +129,36 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "To continue, clean that part's "
                 "'pull' step by running "
                 "`snapcraft clean test-part -s pull`.")}),
+        ('StepOutdatedError previous step updated', {
+            'exception': errors.StepOutdatedError,
+            'kwargs': {
+                'step': steps.STAGE,
+                'part': 'test-part',
+                'outdated_report': pluginhandler.OutdatedReport(
+                    previous_step_modified=steps.BUILD)
+            },
+            'expected_message': (
+                "Failed to reuse files from previous run: "
+                "The 'stage' step of 'test-part' is out of date:\n"
+                "The 'build' step has run more recently.\n"
+                "To continue, clean that part's "
+                "'stage' step by running "
+                "`snapcraft clean test-part -s stage`.")}),
+        ('StepOutdatedError source updated', {
+            'exception': errors.StepOutdatedError,
+            'kwargs': {
+                'step': steps.PULL,
+                'part': 'test-part',
+                'outdated_report': pluginhandler.OutdatedReport(
+                    source_updated=True)
+            },
+            'expected_message': (
+                "Failed to reuse files from previous run: "
+                "The 'pull' step of 'test-part' is out of date:\n"
+                "The source has changed on disk.\n"
+                "To continue, clean that part's "
+                "'pull' step by running "
+                "`snapcraft clean test-part -s pull`.")}),
         ('SnapcraftEnvironmentError', {
             'exception': errors.SnapcraftEnvironmentError,
             'kwargs': {'message': 'test-message'},

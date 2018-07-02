@@ -106,7 +106,7 @@ def link_or_copy(source: str, destination: str,
     """
 
     try:
-        _link(source, destination, follow_symlinks)
+        link(source, destination, follow_symlinks=follow_symlinks)
     except OSError as e:
         if e.errno == errno.EEXIST and not os.path.isdir(destination):
             # os.link will fail if the destination already exists, so let's
@@ -114,10 +114,19 @@ def link_or_copy(source: str, destination: str,
             os.remove(destination)
             link_or_copy(source, destination, follow_symlinks)
         else:
-            _copy(source, destination, follow_symlinks)
+            copy(source, destination, follow_symlinks=follow_symlinks)
 
 
-def _link(source: str, destination: str, follow_symlinks: bool=False) -> None:
+def link(source: str, destination: str, *,
+         follow_symlinks: bool=False) -> None:
+    """Hard-link source and destination files.
+
+    :param str source: The source to which destination will be linked.
+    :param str destination: The destination to be linked to source.
+    :param bool follow_symlinks: Whether or not symlinks should be followed.
+
+    :raises SnapcraftCopyFileNotFoundError: If source doesn't exist.
+    """
     # Note that follow_symlinks doesn't seem to work for os.link, so we'll
     # implement this logic ourselves using realpath.
     source_path = source
@@ -137,7 +146,19 @@ def _link(source: str, destination: str, follow_symlinks: bool=False) -> None:
         raise SnapcraftCopyFileNotFoundError(source)
 
 
-def _copy(source: str, destination: str, follow_symlinks: bool=False) -> None:
+def copy(source: str, destination: str, *,
+         follow_symlinks: bool=False) -> None:
+    """Copy source and destination files.
+
+    This function overwrites the destination if it already exists, and also
+    tries to copy ownership information.
+
+    :param str source: The source to be copied to destination.
+    :param str destination: Where to put the copy.
+    :param bool follow_symlinks: Whether or not symlinks should be followed.
+
+    :raises SnapcraftCopyFileNotFoundError: If source doesn't exist.
+    """
     # If os.link raised an I/O error, it may have left a file behind. Skip on
     # OSError in case it doesn't exist or is a directory.
     with suppress(OSError):

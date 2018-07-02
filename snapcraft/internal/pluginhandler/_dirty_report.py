@@ -30,11 +30,29 @@ class Dependency:
 
 
 class DirtyReport:
-    """The DirtyReport class explains why a given step is dirty."""
+    """The DirtyReport class explains why a given step is dirty.
+
+    A dirty step is defined to be a step that has run, but since doing so one
+    of the following things have happened:
+
+    - One or more YAML properties used by the step (e.g. `stage-packages`) have
+      changed.
+
+    - One of more project options (e.g. the `--target-arch` CLI option) have
+      changed.
+
+    - One of more of its dependencies have been re-staged.
+    """
 
     def __init__(self, *, dirty_properties: StrCollection=None,
                  dirty_project_options: StrCollection=None,
                  changed_dependencies: DependencyCollection=None) -> None:
+        """Create a new DirtyReport.
+
+        :param list dirty_properties: YAML properties that have changed.
+        :param list dirty_project_options: Project options that have changed.
+        :param list changed_dependencies: Dependencies that have changed.
+        """
         self.dirty_properties = dirty_properties
         self.dirty_project_options = dirty_project_options
         self.changed_dependencies = changed_dependencies

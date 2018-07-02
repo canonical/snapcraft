@@ -184,33 +184,55 @@ class _Executor:
                     # already been built --elopio - 20170713
                     pluginhandler.check_for_collisions(self.config.all_parts)
                 for part in parts:
-                    dirty_report = self._cache.get_dirty_report(
-                        part, current_step)
-                    if dirty_report:
-                        self._handle_dirty(
-                            part, current_step, dirty_report, cli_config)
-                    elif self._cache.has_step_run(part, current_step):
-                        # By default, if a step has already run, don't run it
-                        # again. However, automatically clean and re-run the
-                        # step if all the following conditions apply:
-                        #
-                        #   1. The step is the exact step that was requested
-                        #      (not an earlier one)
-                        #   2. The part was explicitly specified
-                        if (part_names and current_step == step and
-                                part.name in part_names):
-                            getattr(self, '_re{}'.format(
-                                current_step.name))(part)
-                        else:
-                            notify_part_progress(
-                                part,
-                                'Skipping {}'.format(current_step.name),
-                                '(already ran)')
-                    else:
-                        getattr(self, '_run_{}'.format(
-                            current_step.name))(part)
+                    self._handle_step(
+                        part_names, part, step, current_step, cli_config)
 
         self._create_meta(step, processed_part_names)
+
+    def _handle_step(self, requested_part_names: Sequence[str],
+                     part: pluginhandler.PluginHandler,
+                     requested_step: steps.Step,
+                     current_step: steps.Step, cli_config) -> None:
+        # If this step hasn't yet run, all we need to do is run it
+        if not self._cache.has_step_run(part, current_step):
+            getattr(self, '_run_{}'.format(current_step.name))(part)
+            return
+
+        # Alright, this step has already run. In that case, a few different
+        # things need to happen:
+
+        # 1. By default, if a step has already run, don't run it again.
+        #    However, automatically clean and re-run the step if all the
+        #    following conditions apply:
+        #
+        #      1.1. The step is the exact step that was requested (not an
+        #           earlier one).
+        #      1.2. The part was explicitly specified.
+        if (requested_part_names and current_step == requested_step and
+                part.name in requested_part_names):
+            getattr(self, '_re{}'.format(current_step.name))(part)
+            return
+
+        # 2. If a step has already run, it might be dirty, in which case we
+        #    need to clean and run it again.
+        dirty_report = self._cache.get_dirty_report(part, current_step)
+        if dirty_report:
+            self._handle_dirty(part, current_step, dirty_report, cli_config)
+            return
+
+        # 3. If a step has already run, it might be outdated, in which case we
+        #    need to update it (without cleaning if possible).
+        outdated_report = self._cache.get_outdated_report(
+            part, current_step)
+        if outdated_report:
+            self._handle_outdated(
+                part, current_step, outdated_report, cli_config)
+            return
+
+        # 4. The step has already run, and is up-to-date, no need to run it
+        #    again.
+        notify_part_progress(
+            part, 'Skipping {}'.format(current_step.name), '(already ran)')
 
     def _run_pull(self, part):
         self._run_step(step=steps.PULL, part=part, progress='Pulling')
@@ -244,7 +266,8 @@ class _Executor:
         self._rerun_step(
             step=steps.PRIME, part=part, progress='Re-priming', hint=hint)
 
-    def _run_step(self, *, step: steps.Step, part, progress, hint=''):
+    def _prepare_step(self, *, step: steps.Step,
+                      part: pluginhandler.PluginHandler):
         common.reset_env()
         all_dependencies = self.parts_config.get_dependencies(part.name)
 
@@ -277,11 +300,18 @@ class _Executor:
 
         part = _replace_in_part(part)
 
+    def _run_step(self, *, step: steps.Step, part, progress, hint=''):
+        self._prepare_step(step=step, part=part)
+
         notify_part_progress(part, progress, hint)
         getattr(part, step.name)()
 
         # We know we just ran this step, so rather than check, manually twiddle
         # the cache
+        self._complete_step(part, step)
+
+    def _complete_step(self, part, step):
+        self._cache.clear_step(part, step)
         self._cache.add_step_run(part, step)
         self.steps_were_run = True
 
@@ -315,6 +345,28 @@ class _Executor:
 
         getattr(self, '_re{}'.format(step.name))(part, hint='({})'.format(
             dirty_report.get_summary()))
+
+    def _handle_outdated(self, part, step, outdated_report, cli_config):
+        dirty_action = cli_config.get_outdated_step_action()
+        if not step.clean_if_dirty:
+            if dirty_action == config.OutdatedStepAction.ERROR:
+                raise errors.StepOutdatedError(
+                    step=step, part=part.name, outdated_report=outdated_report)
+
+        update_function = getattr(part, 'update_{}'.format(step.name), None)
+        if update_function:
+            self._prepare_step(step=step, part=part)
+            notify_part_progress(
+                part, 'Updating {} step for'.format(step.name), '({})'.format(
+                    outdated_report.get_summary()))
+            update_function()
+
+            # We know we just ran this step, so rather than check, manually
+            # twiddle the cache
+            self._complete_step(part, step)
+        else:
+            getattr(self, '_re{}'.format(step.name))(part, '({})'.format(
+                outdated_report.get_summary()))
 
 
 def notify_part_progress(part, progress, hint='', debug=False):

@@ -99,8 +99,8 @@ class StageTestCase(integration.TestCase):
             os.path.join(self.stage_dir, 'dir', 'dir', 'file'), FileExists())
 
         # Now clean, and stage again
-        self.run_snapcraft(['clean', '--step=stage'], 'stage-twice')
-        self.run_snapcraft(['stage'], 'stage-twice')
+        self.run_snapcraft(['clean', '--step=stage'])
+        self.run_snapcraft(['stage'])
         self.assertThat(
             os.path.join(self.stage_dir, 'dir', 'dir', 'file'), FileExists())
 

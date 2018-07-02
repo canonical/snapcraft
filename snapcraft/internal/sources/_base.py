@@ -24,6 +24,7 @@ from snapcraft.internal.indicators import (
     download_urllib_source
 )
 from ._checksum import split_checksum, verify_checksum
+from .errors import SourceUpdateUnsupportedError
 
 
 class Base:
@@ -41,6 +42,36 @@ class Base:
         self.source_details = None
 
         self.command = command
+        self._checked = False
+
+    def check(self, target: str):
+        """Check if pulled sources have changed since target was created.
+
+        :param str target: Path to target file.
+        """
+        self._checked = True
+        return self._check(target)
+
+    def update(self):
+        """Update pulled source.
+
+        :raises RuntimeError: If this function is called before `check()`.
+        """
+        if not self._checked:
+            # This is programmer error
+            raise RuntimeError("source must be checked before it's updated")
+        self._update()
+
+    def _check(self, target: str):
+        """Check if pulled sources have changed since target was created.
+
+        :param str target: Path to target file.
+        """
+        raise SourceUpdateUnsupportedError(self)
+
+    def _update(self):
+        """Update pulled source."""
+        raise SourceUpdateUnsupportedError(self)
 
 
 class FileBase(Base):
