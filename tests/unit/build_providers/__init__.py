@@ -40,3 +40,7 @@ class BaseProviderBaseTest(unit.TestCase):
             snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
         self.echoer_mock = mock.Mock()
+
+        patcher = mock.patch('snapcraft.internal.repo.snaps.get_assertion')
+        self.get_assertion_mock = patcher.start()
+        self.addCleanup(patcher.stop)

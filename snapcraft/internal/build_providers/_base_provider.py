@@ -18,7 +18,6 @@ import abc
 import contextlib
 import os
 import shlex
-import subprocess
 import tempfile
 from typing import List
 
@@ -118,42 +117,40 @@ class Provider():
             self.instance_name))
         self._launch()
 
-    def setup_snapcraft(self) -> None:
-        self.echoer.info('Setting up snapcraft in {!r}'.format(
-            self.instance_name))
-        if common.is_snap():
-            self._inject_snapcraft()
-        else:
-            self._install_snapcraft()
-
-    def _install_snapcraft(self) -> None:
-        """Install snapcraft from the store."""
-        install_cmd = ['sudo', 'snap', 'install', 'snapcraft', '--classic']
-        self._run(install_cmd)
-
-    def _inject_snapcraft(self) -> None:
-        """Install snapcraft using local assets."""
-        # Make the snaps available to the provider
-        self._mount(mountpoint=self._SNAPS_MOUNTPOINT,
-                    dev_or_path=self._snaps_path_or_dev)
-        # TODO this should be properly fixed in snapd.
+    def _disable_and_wait_for_refreshes(self):
+        # Auto refresh may kick in at any moment
         self.echoer.info('Waiting for pending snap auto refreshes.')
         with contextlib.suppress(errors.ProviderExecError):
             self._run(['sudo', 'snap', 'watch', '--last=auto-refresh'])
+
+    def setup_snapcraft(self) -> None:
+        self._disable_and_wait_for_refreshes()
+        self.echoer.info('Setting up snapcraft in {!r}'.format(
+            self.instance_name))
+
         # Add the store assertion, common to all snaps.
         self._inject_assertions([
             ['account-key', 'public-key-sha3-384={}'.format(
                 _STORE_ASSERTION_KEY)]])
+
+        # TODO make mounting requirement smarter and depend on is_installed
+        if common.is_snap():
+            # Make the snaps available to the provider
+            self._mount(mountpoint=self._SNAPS_MOUNTPOINT,
+                        dev_or_path=self._snaps_path_or_dev)
+
+        # Now install the snapcraft required base/core.
         self.echoer.info('Setting up core')
         self._install_snap('core')
+
+        # And finally install snapcraft itself.
         self.echoer.info('Setting up snapcraft')
         self._install_snap('snapcraft')
 
     def _inject_assertions(self, assertions: List[List[str]]):
         with tempfile.NamedTemporaryFile() as assertion_file:
             for assertion in assertions:
-                assertion_file.write(
-                    subprocess.check_output(['snap', 'known', *assertion]))
+                assertion_file.write(repo.snaps.get_assertion(assertion))
                 assertion_file.write(b'\n')
             assertion_file.flush()
 
@@ -161,38 +158,38 @@ class Provider():
                             destination=assertion_file.name)
             self._run(['sudo', 'snap', 'ack', assertion_file.name])
 
-    def _inject_snap(self, snap_file_path: str, *, is_dangerous: bool,
-                     is_classic: bool) -> None:
-        # Install: will do nothing if already installed
-        args = []
-        if is_dangerous:
-            args.append('--dangerous')
-        if is_classic:
-            args.append('--classic')
-
-        self._run(['sudo', 'snap', 'install', snap_file_path] + args)
-
     def _install_snap(self, snap_name: str) -> None:
         snap = repo.snaps.SnapPackage(snap_name)
-        if not snap.installed:
-            raise repo.errors.SnapFindError(snap_name=snap_name)
-        snap_info = snap.get_local_snap_info()
-        snap_id = snap_info['id']
-        snap_rev = snap_info['revision']
-        is_classic = snap_info['confinement'] == 'classic'
-        is_dangerous = snap_rev.startswith('x')
 
-        if not is_dangerous:
-            self._inject_assertions([
-                ['snap-declaration', 'snap-name={}'.format(snap_name)],
-                ['snap-revision', 'snap-revision={}'.format(snap_rev),
-                 'snap-id={}'.format(snap_id)],
-            ])
+        args = []
 
-        # https://github.com/snapcore/snapd/blob/master/snap/info.go
-        # MountFile
-        snap_file_name = '{}_{}.snap'.format(snap_name, snap_rev)
-        snap_file_path = os.path.join(self._SNAPS_MOUNTPOINT, snap_file_name)
-        self._inject_snap(snap_file_path,
-                          is_classic=is_classic,
-                          is_dangerous=is_dangerous)
+        if snap.installed:
+            snap_info = snap.get_local_snap_info()
+
+            if snap_info['revision'].startswith('x'):
+                args.append('--dangerous')
+            else:
+                self._inject_assertions([
+                    ['snap-declaration', 'snap-name={}'.format(snap_name)],
+                    ['snap-revision', 'snap-revision={}'.format(
+                        snap_info['revision']),
+                     'snap-id={}'.format(snap_info['id'])],
+                ])
+
+            if snap_info['confinement'] == 'classic':
+                args.append('--classic')
+
+            # https://github.com/snapcore/snapd/blob/master/snap/info.go
+            # MountFile
+            snap_file_name = '{}_{}.snap'.format(
+                snap_name, snap_info['revision'])
+            args.append(os.path.join(self._SNAPS_MOUNTPOINT, snap_file_name))
+        else:
+            snap_info = snap.get_store_snap_info()
+            # TODO support other channels
+            confinement = snap_info['channels']['latest/stable']['confinement']
+            if confinement == 'classic':
+                args.append('--classic')
+            args.append(snap_name)
+
+        self._run(['sudo', 'snap', 'install'] + args)
