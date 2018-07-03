@@ -70,6 +70,13 @@ class ErrorFormattingTest(unit.TestCase):
                 "An error occurred when trying to execute "
                 "'snap install snapcraft --classic' with 'multipass': "
                 "returned exit code 1."))),
+        ('ProviderMountError', dict(
+            exception=errors.ProviderMountError,
+            kwargs=dict(provider_name='multipass', exit_code=1),
+            expected_message=(
+                "An error occurred when trying to mount using 'multipass': "
+                "returned exit code 1."
+            ))),
         ('ProviderFileCopyError', dict(
             exception=errors.ProviderFileCopyError,
             kwargs=dict(provider_name='multipass', exit_code=1),

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2015-2017 Canonical Ltd
+# Copyright (C) 2015-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -13,6 +13,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+from typing import Sequence
 
 from snapcraft.internal.os_release import OsRelease
 from ._platform import _is_deb_based
@@ -120,6 +122,15 @@ class SnapUnavailableError(RepoError):
         super().__init__(snap_name=snap_name, snap_channel=snap_channel)
 
 
+class SnapFindError(RepoError):
+
+    fmt = ('Could not find the snap {snap_name!r} installed on this host.\n'
+           'Install the snap and try again.')
+
+    def __init__(self, *, snap_name):
+        super().__init__(snap_name=snap_name)
+
+
 class SnapInstallError(RepoError):
 
     fmt = ('Error while installing snap {snap_name!r} from channel '
@@ -127,6 +138,16 @@ class SnapInstallError(RepoError):
 
     def __init__(self, *, snap_name, snap_channel):
         super().__init__(snap_name=snap_name, snap_channel=snap_channel)
+
+
+class SnapGetAssertionError(RepoError):
+
+    fmt = ('Error while retrieving assertion with parameters '
+           '{assertion_params!r}\n'
+           'Verify the assertion exists and try again.')
+
+    def __init__(self, *, assertion_params: Sequence[str]) -> None:
+        super().__init__(assertion_params=assertion_params)
 
 
 class SnapRefreshError(RepoError):

@@ -1,6 +1,6 @@
 # -*- Mode:Python; indent-tabs-mode:nil; tab-width:4 -*-
 #
-# Copyright (C) 2017 Canonical Ltd
+# Copyright (C) 2017-2018 Canonical Ltd
 #
 # This program is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License version 3 as
@@ -17,6 +17,7 @@ import contextlib
 import logging
 import sys
 from subprocess import check_call, check_output, CalledProcessError
+from typing import Sequence
 from urllib import parse
 
 import requests_unixsocket
@@ -224,6 +225,20 @@ def _snap_command_requires_sudo():
         logger.warning('snapd is not logged in, snap install '
                        'commands will use sudo')
     return requires_root
+
+
+def get_assertion(assertion_params: Sequence[str]) -> bytes:
+    """Get assertion information.
+
+    :param assertion_params: a sequence of strings to pass to 'snap known'.
+    :returns: a stream of bytes from the assertion.
+    :rtype: bytes
+    """
+    try:
+        return check_output(['snap', 'known', *assertion_params])
+    except CalledProcessError as call_error:
+        raise errors.SnapGetAssertionError(
+            assertion_params=assertion_params) from call_error
 
 
 def get_installed_snaps():

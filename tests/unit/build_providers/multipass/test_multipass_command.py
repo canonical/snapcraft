@@ -162,6 +162,33 @@ class MultipassCommandDeleteTest(MultipassCommandPassthroughBaseTest):
         self.check_output_mock.assert_not_called()
 
 
+class MultipassCommandMountTest(MultipassCommandPassthroughBaseTest):
+
+    def test_mount(self):
+        source = 'mountpath'
+        target = '{}/mountpoint'.format(self.instance_name)
+        self.multipass_command.mount(source=source,
+                                     target=target)
+
+        self.check_call_mock.assert_called_once_with([
+            'multipass', 'mount', source, target
+        ])
+        self.check_output_mock.assert_not_called()
+
+    def test_mount_fails(self):
+        source = 'mountpath'
+        target = '{}/mountpoint'.format(self.instance_name)
+        cmd = ['multipass', 'mount', source, target]
+        self.check_call_mock.side_effect = subprocess.CalledProcessError(
+            1, cmd)
+
+        self.assertRaises(errors.ProviderMountError,
+                          self.multipass_command.mount,
+                          source=source, target=target)
+        self.check_call_mock.assert_called_once_with(cmd)
+        self.check_output_mock.assert_not_called()
+
+
 class MultipassCommandCopyFilesTest(MultipassCommandPassthroughBaseTest):
 
     def test_copy_files(self):
