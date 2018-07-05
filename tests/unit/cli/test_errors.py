@@ -29,7 +29,7 @@ from snapcraft.cli._errors import exception_handler
 from tests import unit
 
 
-class TestSnapcraftError(snapcraft.internal.errors.SnapcraftError):
+class FakeSnapcraftError(snapcraft.internal.errors.SnapcraftError):
 
     fmt = '{message}'
 
@@ -112,7 +112,7 @@ class ErrorsTestCase(ErrorsBaseTestCase):
 
     def test_handler_catches_snapcraft_exceptions_no_debug(self):
         try:
-            self.call_handler(TestSnapcraftError('is a SnapcraftError'), False)
+            self.call_handler(FakeSnapcraftError('is a SnapcraftError'), False)
         except Exception:
             self.fail('Exception unexpectedly raised')
 
@@ -122,14 +122,14 @@ class ErrorsTestCase(ErrorsBaseTestCase):
 
     def test_handler_traces_snapcraft_exceptions_with_debug(self):
         try:
-            self.call_handler(TestSnapcraftError('is a SnapcraftError'), True)
+            self.call_handler(FakeSnapcraftError('is a SnapcraftError'), True)
         except Exception:
             self.fail('Exception unexpectedly raised')
 
         self.error_mock.assert_not_called
         self.exit_mock.assert_not_called
         self.print_exception_mock.assert_called_once_with(
-            TestSnapcraftError, mock.ANY, mock.ANY)
+            FakeSnapcraftError, mock.ANY, mock.ANY)
 
 
 class SendToSentryBaseTest(ErrorsBaseTestCase):

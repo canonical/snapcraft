@@ -25,6 +25,7 @@ import sys
 import tempfile
 import textwrap
 
+import fixtures
 from unittest import mock
 import testtools
 from testtools.matchers import (
@@ -749,6 +750,8 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self._verify_run_environment(plugin)
 
     def _evaluate_environment(self, predefinition=''):
+        # Don't allow test infrastructure to leak into our environment test
+        self.useFixture(fixtures.EnvironmentVariable('PYTHONPATH'))
         plugin = catkin.CatkinPlugin('test-part', self.properties,
                                      self.project_options)
 

@@ -97,13 +97,12 @@ class Local(Base):
 
 
 def _ignore(source, current_directory, directory, files):
-            if directory == source or \
-               directory == current_directory:
-                ignored = copy.copy(common.SNAPCRAFT_FILES)
-                snaps = glob.glob(os.path.join(directory, '*.snap'))
-                if snaps:
-                    snaps = [os.path.basename(s) for s in snaps]
-                    ignored += snaps
-                return ignored
-            else:
-                return []
+    if directory == source or directory == current_directory:
+        ignored = copy.copy(common.SNAPCRAFT_FILES)
+        snaps = glob.glob(os.path.join(directory, '*.snap'))
+        if snaps:
+            snaps = [os.path.basename(s) for s in snaps]
+            ignored += snaps
+        return ignored
+    else:
+        return []

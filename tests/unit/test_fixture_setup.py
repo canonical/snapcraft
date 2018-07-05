@@ -43,14 +43,14 @@ class TempCWDTestCase(unit.TestCase):
             Equals(test_tmp_dir))
 
 
-class TestFakeServer(http.server.HTTPServer):
+class FakeServer(http.server.HTTPServer):
 
     def __init__(self, server_address):
         super().__init__(
-            server_address, TestFakeRequestHandler)
+            server_address, FakeRequestHandler)
 
 
-class TestFakeRequestHandler(http.server.BaseHTTPRequestHandler):
+class FakeRequestHandler(http.server.BaseHTTPRequestHandler):
 
     def do_GET(self):
         self.send_response(200)
@@ -68,7 +68,7 @@ class FakeServerRunningTestCase(unit.TestCase):
     def setUp(self):
         super().setUp()
         self.fake_server_fixture = fixture_setup.FakeServerRunning()
-        self.fake_server_fixture.fake_server = TestFakeServer
+        self.fake_server_fixture.fake_server = FakeServer
 
     def start_fake_server(self):
         self.useFixture(self.fake_server_fixture)

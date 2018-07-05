@@ -13,8 +13,10 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from unittest import mock
 
+import subprocess
+
+from unittest import mock
 import fixtures
 from testtools.matchers import Contains, Equals
 
@@ -154,7 +156,35 @@ class EditDevelopersTestCase(unit.TestCase):
 
     def setUp(self):
         super().setUp()
-        patcher = mock.patch('subprocess.check_call')
+
+        self.useFixture(fixtures.EnvironmentVariable('EDITOR', 'testeditor'))
+
+        self.existing_developers = ("developers:\n"
+                                    "- developer-id: test-dev-id1\n"
+                                    "  since: '2017-02-10 08:35:00'\n"
+                                    "  until: '2018-02-10 08:35:00'\n"
+                                    "- developer-id: test-dev-id2\n"
+                                    "  since: '2016-02-10 08:35:00'\n"
+                                    "  until: '2019-02-10 08:35:00'\n")
+        self.written = ''
+
+        original_check_call = subprocess.check_call
+
+        def _fake_check_call(*args, **kwargs):
+            if len(args) > 0:
+                args = args[0]
+                if len(args) == 2 and args[0] == 'testeditor':
+                    with open(args[1], 'r') as f:
+                        self.written = f.read()
+                    with open(args[1], 'w') as f:
+                        f.write('{}\n{}'.format(
+                            assertions._COLLABORATION_HEADER,
+                            self.existing_developers))
+            else:
+                return original_check_call(*args, **kwargs)
+
+        patcher = mock.patch(
+            'subprocess.check_call', side_effect=_fake_check_call)
         patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -168,27 +198,13 @@ class EditDevelopersTestCase(unit.TestCase):
              'until': '2019-02-10T08:35:00.000000Z'},
         ]
 
-        existing_developers = ("developers:\n"
-                               "- developer-id: test-dev-id1\n"
-                               "  since: '2017-02-10 08:35:00'\n"
-                               "  until: '2018-02-10 08:35:00'\n"
-                               "- developer-id: test-dev-id2\n"
-                               "  since: '2016-02-10 08:35:00'\n"
-                               "  until: '2019-02-10 08:35:00'\n")
         expected_written = (assertions._COLLABORATION_HEADER + '\n' +
-                            existing_developers)
+                            self.existing_developers)
 
-        with mock.patch(
-                'builtins.open',
-                new_callable=mock.mock_open,
-                read_data=expected_written) as mock_open:
-            developers_for_assertion = assertions._update_developers(
-                developers_from_assertion)
+        developers_for_assertion = assertions._update_developers(
+            developers_from_assertion)
 
-        written = ''
-        for call in mock_open().write.call_args_list:
-            written += str(call.call_list()[0][0][0])
-        self.assertThat(written, Equals(expected_written))
+        self.assertThat(self.written, Equals(expected_written))
         self.assertThat(
             developers_for_assertion, Equals(developers_from_assertion))
 
@@ -199,18 +215,8 @@ class EditDevelopersTestCase(unit.TestCase):
              'until': '2018-02-10T08:35:00.000000Z'},
         ]
 
-        new_developers = ("developers:\n"
-                          "- developer-id: test-dev-id1\n"
-                          "  since: '2017-02-10 08:35:00'\n"
-                          "  until: '2018-02-10 08:35:00'\n"
-                          "- developer-id: test-dev-id2\n"
-                          "  since: '2016-02-10 08:35:00'\n"
-                          "  until: '2019-02-10 08:35:00'\n")
-
-        with mock.patch('builtins.open', new_callable=mock.mock_open,
-                        read_data=new_developers):
-            developers_for_assertion = assertions._update_developers(
-                developers_from_assertion)
+        developers_for_assertion = assertions._update_developers(
+            developers_from_assertion)
 
         expected_developers = developers_from_assertion + [{
             'developer-id': 'test-dev-id2',

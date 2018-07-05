@@ -322,7 +322,7 @@ def run(args):
     try:
         output = urllib.request.urlopen(index).read()
     except urllib.error.URLError as e:
-        logging.error('Unable to access index: {!r}'.format(e))
+        logging.error('Unable to access index: {!r} ({!r})'.format(e, index))
         return 1
 
     data = _process_index(output)

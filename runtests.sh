@@ -79,10 +79,9 @@ run_snapcraft_tests(){
     if [[ ! -z "$use_run" ]]; then
         python3 -m unittest -b -v run "$test_suite"
     elif [[ ! -z "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
-        python3 -m coverage erase
-        python3 -m coverage run --branch --source snapcraft -m unittest discover -b -v -s "$test_suite" -t .
+        pytest -v -nauto --cov snapcraft --cov-branch "$test_suite"
     else
-        python3 -m unittest discover -b -v -s "$test_suite" -t .
+        pytest -v -nauto "$test_suite"
     fi
 }
 
@@ -107,11 +106,9 @@ fi
 parseargs "$@"
 
 if [[ ! -z "$coverage" ]] && [[ "$test_suite" == "tests/unit"* ]]; then
-    python3 -m coverage report
-
     echo
-    echo "Run 'python3-coverage html' to get a nice report"
-    echo "View it by running 'x-www-browser htmlcov'"
+    echo "Run 'python3 -m coverage html' to get a nice report"
+    echo "View it by running 'x-www-browser htmlcov/index.html'"
     echo
 fi
 

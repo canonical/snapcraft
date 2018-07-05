@@ -28,17 +28,17 @@ from tests import unit
 
 class DumbTerminalTests(unit.TestCase):
 
-    @patch('os.isatty')
-    def setUp(self, mock_os_isatty):
+    @patch('snapcraft.internal.indicators._is_stdout_tty')
+    def setUp(self, mock_is_stdout_tty):
         super().setUp()
-        self.mock_os_isatty = mock_os_isatty
-        self.mock_os_isatty.return_value = True
+        self.mock_is_stdout_tty = mock_is_stdout_tty
+        self.mock_is_stdout_tty.return_value = True
 
     def test_tty_terminal(self):
-        self.assertTrue(indicators.is_dumb_terminal())
+        self.assertFalse(indicators.is_dumb_terminal())
 
     def test_not_a_tty_terminal(self):
-        self.mock_os_isatty.return_value = False
+        self.mock_is_stdout_tty.return_value = False
         self.assertFalse(indicators.is_dumb_terminal())
 
     def test_dumb_terminal_environment(self):

@@ -369,7 +369,7 @@ class AutotoolsCrossCompilePluginTestCase(unit.TestCase):
         self.project_options = snapcraft.ProjectOptions(
             target_deb_arch=self.deb_arch)
 
-        patcher = mock.patch('snapcraft.internal.common.run')
+        patcher = mock.patch.object(autotools.AutotoolsPlugin, 'run')
         self.run_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
@@ -385,5 +385,4 @@ class AutotoolsCrossCompilePluginTestCase(unit.TestCase):
         plugin.enable_cross_compilation()
         plugin.build()
         self.run_mock.assert_has_calls([mock.call([
-            './configure', '--prefix=', '--host={}'.format(self.triplet)],
-            cwd=mock.ANY)])
+            './configure', '--prefix=', '--host={}'.format(self.triplet)])])

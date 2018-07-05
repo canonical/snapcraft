@@ -110,9 +110,13 @@ def download_urllib_source(uri, destination, message=None):
     UrllibDownloader(uri, destination, message).download()
 
 
+def _is_stdout_tty():
+    return os.isatty(1)
+
+
 def is_dumb_terminal():
     """Return True if on a dumb terminal."""
-    is_stdout_tty = os.isatty(1)
+    is_stdout_tty = _is_stdout_tty()
     is_term_dumb = os.environ.get('TERM', '') == 'dumb'
     is_windows = sys.platform == 'win32'
     return not is_stdout_tty or is_term_dumb or is_windows
