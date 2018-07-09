@@ -21,6 +21,7 @@ import filecmp
 import logging
 import os
 import shutil
+import subprocess
 import sys
 from glob import glob, iglob
 from typing import Dict, Set, Sequence  # noqa: F401
@@ -569,8 +570,11 @@ class PluginHandler:
             scriptlet_metadata=self._scriptlet_metadata[steps.BUILD]))
 
     def _get_machine_manifest(self):
+        # Use subprocess directly here. common.run_output will use binaries out
+        # of the snap, and we want to use the one on the host.
+        uname = subprocess.check_output(['uname', '-srvmpio'])
         return {
-            'uname': common.run_output(['uname', '-srvmpio']),
+            'uname': uname.decode(sys.getfilesystemencoding()).strip(),
             'installed-packages': repo.Repo.get_installed_packages(),
             'installed-snaps': repo.snaps.get_installed_snaps()
         }
