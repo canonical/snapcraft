@@ -38,7 +38,7 @@ def _create_tar_filter(tar_filename):
     return _tar_filter
 
 
-def containerbuild(command, project_config, output=None, args=None):
+def containerbuild(command: str, project_config, output=None, args=None):
     if args is None:
         args = []
 

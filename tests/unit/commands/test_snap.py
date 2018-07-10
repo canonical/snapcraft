@@ -507,6 +507,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
             call(['python3', '-c', mock.ANY]),
             call(['apt-get', 'update']),
             call(['apt-get', 'install', 'squashfuse', '-y']),
+            call(['snapcraft', 'prime'], cwd=mock.ANY, user=mock.ANY),
         ])
 
         self.pack_mock.assert_called_once_with(self.prime_dir, None)
@@ -540,6 +541,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
         ])
         mock_container_run.assert_has_calls([
             call(['python3', '-c', mock.ANY]),
+            call(['snapcraft', 'prime'], cwd=mock.ANY, user=mock.ANY),
         ])
 
         self.pack_mock.assert_called_once_with(self.prime_dir, None)
@@ -601,6 +603,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
         ])
         mock_container_run.assert_has_calls([
             call(['python3', '-c', mock.ANY]),
+            call(['snapcraft', 'prime'], cwd=mock.ANY, user=mock.ANY),
         ])
         # Ensure there's no unexpected calls eg. two network checks
         self.assertThat(mock_container_run.call_count, Equals(2))
