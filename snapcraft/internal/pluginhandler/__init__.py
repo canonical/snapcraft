@@ -572,9 +572,22 @@ class PluginHandler:
     def _get_machine_manifest(self):
         # Use subprocess directly here. common.run_output will use binaries out
         # of the snap, and we want to use the one on the host.
-        uname = subprocess.check_output(['uname', '-srvmpio'])
+        try:
+            output = subprocess.check_output(['uname', '-srvmpio'])
+        except subprocess.CalledProcessError as e:
+            logger.warning(
+                "'uname' exited with code {}: unable to record machine "
+                "manifest".format(e.returncode))
+            return {}
+
+        try:
+            uname = output.decode(sys.getfilesystemencoding()).strip()
+        except UnicodeEncodeError:
+            logger.warning("Could not decode output for 'uname' correctly")
+            uname = output.decode('latin-1', 'surrogateescape').strip()
+
         return {
-            'uname': uname.decode(sys.getfilesystemencoding()).strip(),
+            'uname': uname,
             'installed-packages': repo.Repo.get_installed_packages(),
             'installed-snaps': repo.snaps.get_installed_snaps()
         }
