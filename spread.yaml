@@ -79,8 +79,8 @@ prepare: |
 restore: $SETUP_DIR/restore.sh
 
 suites:
- tests/spread/run/:
-   summary: tests of the snapcraft snap
+ tests/spread/plugins/:
+   summary: tests of snapcraft's plugins
 
  spread_tests/:
    summary: old tests of the snapcraft snap, being phased out

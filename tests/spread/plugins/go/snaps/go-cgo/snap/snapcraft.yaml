@@ -10,4 +10,4 @@ confinement: strict
 parts:
   go-cgo:
     plugin: go
-    source: .
+    source: go-cgo

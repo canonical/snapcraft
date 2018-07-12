@@ -69,7 +69,7 @@ run_static_tests(){
     mypy --ignore-missing-imports --follow-imports=silent -p snapcraft
 
     echo "Running codespell"
-    codespell -S "*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,./.git,changelog,.mypy_cache,parts,stage,prime" -q4
+    codespell -S "*.tar,*.xz,*.zip,*.bz2,*.7z,*.gz,*.deb,*.rpm,*.snap,*.gpg,*.pyc,*.png,*.ico,*.jar,./.git,changelog,.mypy_cache,.vscode,parts,stage,prime" -q4
 
     echo "Running shellcheck"
     # Need to skip 'demos/gradle/gradlew' as it wasn't written by us and has

@@ -9,6 +9,9 @@ grade: devel # must be 'stable' to release into candidate/stable channels
 confinement: classic
 
 parts:
+  go:
+    source-tag: go1.9.2
+    source-depth: 1
   gotty:
     source: https://github.com/yudai/gotty
     source-type: git
@@ -16,6 +19,3 @@ parts:
     plugin: go
     go-importpath: github.com/yudai/gotty
     after: [go]
-  go:
-    source-tag: go1.9.2
-    source-depth: 1
