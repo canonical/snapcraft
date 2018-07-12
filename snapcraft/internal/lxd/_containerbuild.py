@@ -182,7 +182,7 @@ class Containerbuild:
             'environment.SNAPCRAFT_IMAGE_INFO',
             json.dumps(edited_image_info)])
 
-    def execute(self, step='snap', args=None):
+    def execute(self, step: str='snap', args=None):
         with self._container_running():
             self._setup_project()
             command = ['snapcraft', step]
@@ -225,6 +225,10 @@ class Containerbuild:
             else:
                 raise errors.ContainerRunError(command=original_cmd,
                                                exit_code=e.returncode)
+
+    def _setup_project(self):
+        # Must be implemented by subclasses
+        raise NotImplementedError
 
     def _wait_for_network(self):
         logger.info('Waiting for a network connection...')

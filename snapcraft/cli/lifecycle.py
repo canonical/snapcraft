@@ -25,15 +25,16 @@ from snapcraft.internal import (deprecations, lifecycle, lxd, project_loader,
 from snapcraft.project.errors import YamlValidationError
 
 
-def _execute(command, parts, **kwargs):
+def _execute(step: steps.Step, parts, **kwargs):
     project = get_project(**kwargs)
     project_config = project_loader.load_config(project)
     build_environment = env.BuilderEnvironmentConfig()
 
     if build_environment.is_host:
-        lifecycle.execute(command, project_config, parts)
+        lifecycle.execute(step, project_config, parts)
     else:
-        lifecycle.containerbuild(command, project_config, parts)
+        # containerbuild takes a snapcraft command name, not a step
+        lifecycle.containerbuild(step.name, project_config, parts)
     return project
 
 
