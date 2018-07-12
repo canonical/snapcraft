@@ -573,7 +573,10 @@ class PluginHandler:
         # Use subprocess directly here. common.run_output will use binaries out
         # of the snap, and we want to use the one on the host.
         try:
-            output = subprocess.check_output(['uname', '-srvmpio'])
+            output = subprocess.check_output([
+                'uname', '--kernel-name', '--kernel-release',
+                '--kernel-version', '--machine', '--processor',
+                '--hardware-platform', '--operating-system'])
         except subprocess.CalledProcessError as e:
             logger.warning(
                 "'uname' exited with code {}: unable to record machine "
