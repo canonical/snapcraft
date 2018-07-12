@@ -200,7 +200,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.assertThat(str(raised), Contains(
             'SNAPCRAFT_BUILD_ENVIRONMENT and SNAPCRAFT_CONTAINER_BUILDS '
             'cannot be used together.\n'
-            'Given that SNAPCRAFT_BUILD_ENVIRONMENT is deprecated, '
+            'Given that SNAPCRAFT_CONTAINER_BUILDS is deprecated, '
             'unset that variable from the environment and try again.'))
 
     def test_snap_type_os_does_not_use_all_root(self):
