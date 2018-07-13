@@ -1,0 +1,32 @@
+summary: Build Go snap with multiple main packages
+
+environment:
+  SNAP_DIR: ../snaps/go-with-multiple-main-packages
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+
+  # Ensure that all mains get built and installed
+  snapcraft stage
+  [ -f stage/bin/main1 ]
+  [ -f stage/bin/main2 ]
+  [ -f stage/bin/main3 ]
+  snapcraft clean
+
+  # Now run the same test again, but with multiple go-packages
+  cat << EOF >> snap/snapcraft.yaml
+        go-packages:
+            - main/main1
+            - main/main2
+            - main/main3
+  EOF
+
+  snapcraft stage
+  [ -f stage/bin/main1 ]
+  [ -f stage/bin/main2 ]
+  [ -f stage/bin/main3 ]

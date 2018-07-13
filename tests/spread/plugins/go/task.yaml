@@ -1,9 +1,0 @@
-summary: Test the Go plugin
-
-prepare: |
-  # patchelf isn't available on all platforms, e.g. trusty
-  apt install patchelf -y || true
-
-execute: |
-  . "$SETUP_DIR/test_runner.sh"
-  run_tests test.sh

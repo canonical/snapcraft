@@ -79,7 +79,7 @@ prepare: |
 restore: $SETUP_DIR/restore.sh
 
 suites:
- tests/spread/plugins/:
+ tests/spread/plugins/go/:
    summary: tests of snapcraft's plugins
 
  spread_tests/:

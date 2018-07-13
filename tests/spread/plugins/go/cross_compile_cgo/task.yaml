@@ -1,0 +1,17 @@
+summary: Cross-compile Go snaps using cgo
+
+# cgo doesn't build on 14.04
+systems: [-ubuntu-14*]
+
+environment:
+  SNAP_DIR: ../snaps/go-cgo
+
+restore: |
+  cd "$SNAP_DIR"
+  snapcraft clean
+  rm -f ./*.snap
+
+execute: |
+  cd "$SNAP_DIR"
+  snapcraft stage --target-arch=armhf
+  file stage/bin/go-cgo | MATCH ",\s*ARM\s*,"
