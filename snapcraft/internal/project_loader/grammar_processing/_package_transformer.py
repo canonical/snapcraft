@@ -36,12 +36,12 @@ def _is_or_contains_to_statement(statement: Statement) -> bool:
     return False
 
 
-def package_transformer(call_stack: typing.CallStack,
-                        package_name: str,
-                        project: project.Project) -> str:
+def package_transformer(
+    call_stack: typing.CallStack, package_name: str, project: project.Project
+) -> str:
     if any(_is_or_contains_to_statement(s) for s in call_stack):
-        if ':' not in package_name:
+        if ":" not in package_name:
             # deb_arch is target arch or host arch if both are the same
-            package_name += ':{}'.format(project.deb_arch)
+            package_name += ":{}".format(project.deb_arch)
 
     return package_name

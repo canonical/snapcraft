@@ -43,7 +43,7 @@ if [ "$TRAVIS_OS_NAME" = "osx" ]; then
     python3 -m pip install -r requirements.txt
     python3 -m pip install -r requirements-devel.txt
 elif [ "$test_suite" = "static" ]; then
-    dependencies="apt install -y python3-pip shellcheck && python3 -m pip install -r requirements-devel.txt"
+    dependencies="snap install black --devmode --edge && apt install -y python3-pip shellcheck && python3 -m pip install -r requirements-devel.txt"
 elif [ "$test_suite" = "tests/unit" ]; then
     dependencies="apt install -y git bzr subversion mercurial rpm2cpio p7zip-full libnacl-dev libssl-dev libsodium-dev libffi-dev libapt-pkg-dev python3-pip squashfs-tools xdelta3 && python3 -m pip install -r requirements-devel.txt -r requirements.txt codecov && apt install -y python3-coverage"
 elif [[ "$test_suite" = "tests/integration"* || "$test_suite" = "tests.integration"* ]]; then

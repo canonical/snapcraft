@@ -18,24 +18,22 @@ import os
 import re
 import subprocess
 
-from testtools.matchers import (
-    Contains,
-    FileExists,
-    MatchesRegex,
-)
+from testtools.matchers import Contains, FileExists, MatchesRegex
 
 from tests import integration
 
 
 class ReleaseTestCase(integration.StoreTestCase):
-
     def test_release_without_login(self):
         error = self.assertRaises(
             subprocess.CalledProcessError,
             self.run_snapcraft,
-            ['release', 'test-snap', '19', 'beta'])
-        self.assertIn('No valid credentials found. Have you run "snapcraft '
-                      'login"?', str(error.output))
+            ["release", "test-snap", "19", "beta"],
+        )
+        self.assertIn(
+            'No valid credentials found. Have you run "snapcraft ' 'login"?',
+            str(error.output),
+        )
 
     def test_release_with_login(self):
         self.addCleanup(self.logout)
@@ -44,25 +42,24 @@ class ReleaseTestCase(integration.StoreTestCase):
         # Change to a random name and version.
         name = self.get_unique_name()
         version = self.get_unique_version()
-        self.copy_project_to_cwd('basic')
+        self.copy_project_to_cwd("basic")
         self.update_name_and_version(name, version)
 
-        self.run_snapcraft('snap')
+        self.run_snapcraft("snap")
 
         # Register the snap
         self.register(name)
         # Upload the snap
-        snap_file_path = '{}_{}_{}.snap'.format(name, version, 'all')
-        self.assertThat(
-            os.path.join(snap_file_path), FileExists())
+        snap_file_path = "{}_{}_{}.snap".format(name, version, "all")
+        self.assertThat(os.path.join(snap_file_path), FileExists())
 
-        output = self.run_snapcraft(['upload', snap_file_path])
-        expected = r'.*Ready to release!.*'
+        output = self.run_snapcraft(["upload", snap_file_path])
+        expected = r".*Ready to release!.*"
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
         # Release it
-        output = self.run_snapcraft(['release', name, '1', 'edge'])
-        expected = r'.*The \'edge\' channel is now open.*'
+        output = self.run_snapcraft(["release", name, "1", "edge"])
+        expected = r".*The \'edge\' channel is now open.*"
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
     def test_release_to_channel_without_permission(self):
@@ -75,29 +72,34 @@ class ReleaseTestCase(integration.StoreTestCase):
         # Change to a random name and version.
         name = self.get_unique_name()
         version = self.get_unique_version()
-        self.copy_project_to_cwd('basic')
+        self.copy_project_to_cwd("basic")
         self.update_name_and_version(name, version)
 
-        self.run_snapcraft('snap')
+        self.run_snapcraft("snap")
 
         # Register the snap
         self.register(name)
         # Upload the snap
-        snap_file_path = '{}_{}_{}.snap'.format(name, version, 'all')
-        self.assertThat(
-            os.path.join(snap_file_path), FileExists())
+        snap_file_path = "{}_{}_{}.snap".format(name, version, "all")
+        self.assertThat(os.path.join(snap_file_path), FileExists())
 
-        output = self.run_snapcraft(['push', snap_file_path])
-        expected = r'.*Ready to release!.*'
+        output = self.run_snapcraft(["push", snap_file_path])
+        expected = r".*Ready to release!.*"
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
         # Attempt to release it
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, ['release', name, '1', 'no-permission'])
-        self.assertThat(error.output, Contains(
-            "Received 403: Lacking permission to release to channel(s) "
-            "'no-permission'"))
+            self.run_snapcraft,
+            ["release", name, "1", "no-permission"],
+        )
+        self.assertThat(
+            error.output,
+            Contains(
+                "Received 403: Lacking permission to release to channel(s) "
+                "'no-permission'"
+            ),
+        )
 
     def test_release_internal_error(self):
         if not self.is_store_fake():
@@ -109,27 +111,32 @@ class ReleaseTestCase(integration.StoreTestCase):
         # Change to a random name and version.
         name = self.get_unique_name()
         version = self.get_unique_version()
-        self.copy_project_to_cwd('basic')
+        self.copy_project_to_cwd("basic")
         self.update_name_and_version(name, version)
 
-        self.run_snapcraft('snap')
+        self.run_snapcraft("snap")
 
         # Register the snap
         self.register(name)
         # Upload the snap
-        snap_file_path = '{}_{}_{}.snap'.format(name, version, 'all')
-        self.assertThat(
-            os.path.join(snap_file_path), FileExists())
+        snap_file_path = "{}_{}_{}.snap".format(name, version, "all")
+        self.assertThat(os.path.join(snap_file_path), FileExists())
 
-        output = self.run_snapcraft(['push', snap_file_path])
-        expected = r'.*Ready to release!.*'
+        output = self.run_snapcraft(["push", snap_file_path])
+        expected = r".*Ready to release!.*"
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))
 
         # Attempt to release it
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, ['release', name, '1', 'bad-channel'])
-        self.assertThat(error.output, Contains(
-            'Snap Store encountered an error while processing your request: '
-            'internal server error (code 500).\nThe operational status of the '
-            'Snap Store can be checked at https://status.snapcraft.io/'))
+            self.run_snapcraft,
+            ["release", name, "1", "bad-channel"],
+        )
+        self.assertThat(
+            error.output,
+            Contains(
+                "Snap Store encountered an error while processing your request: "
+                "internal server error (code 500).\nThe operational status of the "
+                "Snap Store can be checked at https://status.snapcraft.io/"
+            ),
+        )

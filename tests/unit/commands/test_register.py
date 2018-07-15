@@ -23,70 +23,93 @@ from . import CommandBaseTestCase
 
 
 class RegisterTestCase(CommandBaseTestCase):
-
     def test_register_without_name_must_error(self):
-        result = self.run_command(['register'])
+        result = self.run_command(["register"])
 
         self.assertThat(result.exit_code, Equals(2))
-        self.assertThat(result.output, Contains('Usage:'))
+        self.assertThat(result.output, Contains("Usage:"))
 
     def test_register_without_login_must_error(self):
         raised = self.assertRaises(
             storeapi.errors.InvalidCredentialsError,
-            self.run_command, ['register', 'snap-test'], input='y\n')
-        self.assertThat(str(raised), Contains('Invalid credentials'))
+            self.run_command,
+            ["register", "snap-test"],
+            input="y\n",
+        )
+        self.assertThat(str(raised), Contains("Invalid credentials"))
 
     def test_register_name_successfully(self):
         with mock.patch.object(
-                storeapi._sca_client.SCAClient, 'register') as mock_register:
-            result = self.run_command(['register', 'test-snap'], input='y\n')
+            storeapi._sca_client.SCAClient, "register"
+        ) as mock_register:
+            result = self.run_command(["register", "test-snap"], input="y\n")
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains('Registering test-snap'))
-        self.assertThat(result.output, Contains(
-            "Congrats! You are now the publisher of 'test-snap'."))
-        self.assertThat(result.output, Not(Contains(
-            "Congratulations! You're now the publisher for 'test-snap'.")))
-        mock_register.assert_called_once_with('test-snap', False, '16')
+        self.assertThat(result.output, Contains("Registering test-snap"))
+        self.assertThat(
+            result.output,
+            Contains("Congrats! You are now the publisher of 'test-snap'."),
+        )
+        self.assertThat(
+            result.output,
+            Not(Contains("Congratulations! You're now the publisher for 'test-snap'.")),
+        )
+        mock_register.assert_called_once_with("test-snap", False, "16")
 
     def test_register_private_name_successfully(self):
         with mock.patch.object(
-                storeapi._sca_client.SCAClient, 'register') as mock_register:
-            result = self.run_command(['register', 'test-snap', '--private'],
-                                      input='y\n')
+            storeapi._sca_client.SCAClient, "register"
+        ) as mock_register:
+            result = self.run_command(
+                ["register", "test-snap", "--private"], input="y\n"
+            )
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains(
-            'Even though this is private snap, you should think carefully'))
-        self.assertThat(result.output, Contains('Registering test-snap'))
-        self.assertThat(result.output, Contains(
-            "Congrats! You are now the publisher of 'test-snap'."))
-        self.assertThat(result.output, Not(Contains(
-            "Congratulations! You're now the publisher for 'test-snap'.")))
-        mock_register.assert_called_once_with('test-snap', True, '16')
+        self.assertThat(
+            result.output,
+            Contains("Even though this is private snap, you should think carefully"),
+        )
+        self.assertThat(result.output, Contains("Registering test-snap"))
+        self.assertThat(
+            result.output,
+            Contains("Congrats! You are now the publisher of 'test-snap'."),
+        )
+        self.assertThat(
+            result.output,
+            Not(Contains("Congratulations! You're now the publisher for 'test-snap'.")),
+        )
+        mock_register.assert_called_once_with("test-snap", True, "16")
 
     def test_registration_failed(self):
         response = mock.Mock()
-        response.json.side_effect = JSONDecodeError('mock-fail', 'doc', 1)
+        response.json.side_effect = JSONDecodeError("mock-fail", "doc", 1)
         with mock.patch.object(
-                storeapi._sca_client.SCAClient, 'register') as mock_register:
+            storeapi._sca_client.SCAClient, "register"
+        ) as mock_register:
             mock_register.side_effect = storeapi.errors.StoreRegistrationError(
-                'test-snap', response)
+                "test-snap", response
+            )
             raised = self.assertRaises(
                 storeapi.errors.StoreRegistrationError,
-                self.run_command, ['register', 'test-snap'], input='y\n')
+                self.run_command,
+                ["register", "test-snap"],
+                input="y\n",
+            )
 
-        self.assertThat(str(raised), Equals('Registration failed.'))
+        self.assertThat(str(raised), Equals("Registration failed."))
 
     def test_registration_cancelled(self):
         response = mock.Mock()
-        response.json.side_effect = JSONDecodeError('mock-fail', 'doc', 1)
+        response.json.side_effect = JSONDecodeError("mock-fail", "doc", 1)
         with mock.patch.object(
-                storeapi._sca_client.SCAClient, 'register') as mock_register:
+            storeapi._sca_client.SCAClient, "register"
+        ) as mock_register:
             mock_register.side_effect = storeapi.errors.StoreRegistrationError(
-                'test-snap', response)
-            result = self.run_command(['register', 'test-snap'], input='n\n')
+                "test-snap", response
+            )
+            result = self.run_command(["register", "test-snap"], input="n\n")
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains(
-            "Thank you! 'test-snap' will remain available"))
+        self.assertThat(
+            result.output, Contains("Thank you! 'test-snap' will remain available")
+        )

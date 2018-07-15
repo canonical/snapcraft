@@ -53,34 +53,27 @@ import snapcraft.common
 
 
 class MakePlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
-        schema['properties']['makefile'] = {
-            'type': 'string',
+        schema["properties"]["makefile"] = {"type": "string"}
+        schema["properties"]["make-parameters"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
         }
-        schema['properties']['make-parameters'] = {
-            'type': 'array',
-            'minitems': 1,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string',
-            },
-            'default': [],
+        schema["properties"]["make-install-var"] = {
+            "type": "string",
+            "default": "DESTDIR",
         }
-        schema['properties']['make-install-var'] = {
-            'type': 'string',
-            'default': 'DESTDIR',
-        }
-        schema['properties']['artifacts'] = {
-            'type': 'array',
-            'minitems': 1,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string',
-            },
-            'default': [],
+        schema["properties"]["artifacts"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
         }
 
         return schema
@@ -89,37 +82,38 @@ class MakePlugin(snapcraft.BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['makefile', 'make-parameters', 'make-install-var', 'artifacts']
+        return ["makefile", "make-parameters", "make-install-var", "artifacts"]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.append('make')
+        self.build_packages.append("make")
 
     def make(self, env=None):
-        command = ['make']
+        command = ["make"]
 
         if self.options.makefile:
-            command.extend(['-f', self.options.makefile])
+            command.extend(["-f", self.options.makefile])
 
         if self.options.make_parameters:
             command.extend(self.options.make_parameters)
 
-        self.run(command + ['-j{}'.format(self.parallel_build_count)], env=env)
+        self.run(command + ["-j{}".format(self.parallel_build_count)], env=env)
         if self.options.artifacts:
             for artifact in self.options.artifacts:
                 source_path = os.path.join(self.builddir, artifact)
                 destination_path = os.path.join(self.installdir, artifact)
                 if os.path.isdir(source_path):
                     snapcraft.file_utils.link_or_copy_tree(
-                        source_path, destination_path)
+                        source_path, destination_path
+                    )
                 else:
-                    snapcraft.file_utils.link_or_copy(
-                        source_path, destination_path)
+                    snapcraft.file_utils.link_or_copy(source_path, destination_path)
         else:
-            command.append('install')
+            command.append("install")
             if self.options.make_install_var:
-                command.append('{}={}'.format(
-                    self.options.make_install_var, self.installdir))
+                command.append(
+                    "{}={}".format(self.options.make_install_var, self.installdir)
+                )
 
             self.run(command, env=env)
 

@@ -23,27 +23,37 @@ from ._base import FileBase
 
 
 class Zip(FileBase):
-
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None, source_checksum=None):
-        super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth, source_checksum)
+    def __init__(
+        self,
+        source,
+        source_dir,
+        source_tag=None,
+        source_commit=None,
+        source_branch=None,
+        source_depth=None,
+        source_checksum=None,
+    ):
+        super().__init__(
+            source,
+            source_dir,
+            source_tag,
+            source_commit,
+            source_branch,
+            source_depth,
+            source_checksum,
+        )
         if source_tag:
-            raise errors.SnapcraftSourceInvalidOptionError(
-                'zip', 'source-tag')
+            raise errors.SnapcraftSourceInvalidOptionError("zip", "source-tag")
         elif source_branch:
-            raise errors.SnapcraftSourceInvalidOptionError(
-                'zip', 'source-branch')
+            raise errors.SnapcraftSourceInvalidOptionError("zip", "source-branch")
         if source_depth:
-            raise errors.SnapcraftSourceInvalidOptionError(
-                'zip', 'source-depth')
+            raise errors.SnapcraftSourceInvalidOptionError("zip", "source-depth")
 
     def provision(self, dst, clean_target=True, keep_zip=False, src=None):
         if src:
             zip = src
         else:
-            zip = os.path.join(
-                self.source_dir, os.path.basename(self.source))
+            zip = os.path.join(self.source_dir, os.path.basename(self.source))
 
         if clean_target:
             tmp_zip = tempfile.NamedTemporaryFile().name
@@ -53,7 +63,7 @@ class Zip(FileBase):
             shutil.move(tmp_zip, zip)
 
         # Workaround for: https://bugs.python.org/issue15795
-        with zipfile.ZipFile(zip, 'r') as f:
+        with zipfile.ZipFile(zip, "r") as f:
             for info in f.infolist():
                 extracted_file = f.extract(info.filename, path=dst)
 

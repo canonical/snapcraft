@@ -16,33 +16,30 @@
 
 import subprocess
 
-from testtools.matchers import (
-    Contains,
-    Equals,
-    Not,
-)
+from testtools.matchers import Contains, Equals, Not
 
 from tests import integration
 
 
 class PullTestCase(integration.TestCase):
-
     def _pull_invalid_part(self, debug):
         exception = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, ['pull', 'invalid-part-name'],
-            'go-hello', debug=debug)
+            self.run_snapcraft,
+            ["pull", "invalid-part-name"],
+            "go-hello",
+            debug=debug,
+        )
 
         self.assertThat(exception.returncode, Equals(2))
-        self.assertThat(exception.output, Contains(
-            "part named 'invalid-part-name' is not defined"))
+        self.assertThat(
+            exception.output, Contains("part named 'invalid-part-name' is not defined")
+        )
 
         return exception.output
 
     def test_pull_invalid_part_no_traceback_without_debug(self):
-        self.assertThat(
-            self._pull_invalid_part(False), Not(Contains("Traceback")))
+        self.assertThat(self._pull_invalid_part(False), Not(Contains("Traceback")))
 
     def test_pull_invalid_part_does_traceback_with_debug(self):
-        self.assertThat(
-            self._pull_invalid_part(True), Contains("Traceback"))
+        self.assertThat(self._pull_invalid_part(True), Contains("Traceback"))

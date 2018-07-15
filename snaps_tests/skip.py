@@ -35,5 +35,7 @@ def skip_unless_codename(codename, message):
         @skipUnless(actual_codename == codename, message)
         def _skip_test(*args, **kwargs):
             func(*args, **kwargs)
+
         return _skip_test
+
     return _wrap

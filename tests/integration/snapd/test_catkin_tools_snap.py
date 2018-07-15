@@ -26,11 +26,10 @@ class CatkinToolsTestCase(integration.SnapdIntegrationTestCase):
 
     slow_test = True
 
-    @skip.skip_unless_codename('xenial', 'ROS Kinetic only targets Xenial')
+    @skip.skip_unless_codename("xenial", "ROS Kinetic only targets Xenial")
     def test_install_and_execution(self) -> None:
-        self.useFixture(
-            fixture_setup.WithoutSnapInstalled('catkin-tools-example'))
-        self.run_snapcraft(project_dir='catkin-tools-talker-listener')
+        self.useFixture(fixture_setup.WithoutSnapInstalled("catkin-tools-example"))
+        self.run_snapcraft(project_dir="catkin-tools-talker-listener")
         self.install_snap()
 
         # Run the ROS system. By default this will never exit, but the code
@@ -38,8 +37,8 @@ class CatkinToolsTestCase(integration.SnapdIntegrationTestCase):
         # the system to shutdown after the listener has successfully received
         # a message.
         output = subprocess.check_output(
-            ['catkin-tools-example.launch-project',
-             'exit-after-receive:=true']).decode()
+            ["catkin-tools-example.launch-project", "exit-after-receive:=true"]
+        ).decode()
         self.assertThat(
-            output,
-            MatchesRegex(r'.*I heard Hello world.*', flags=re.DOTALL))
+            output, MatchesRegex(r".*I heard Hello world.*", flags=re.DOTALL)
+        )

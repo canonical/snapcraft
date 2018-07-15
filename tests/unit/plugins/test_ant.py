@@ -27,13 +27,13 @@ from tests import unit
 
 
 class AntPluginTestCase(unit.TestCase):
-
     def setUp(self):
         super().setUp()
 
         class Options:
             ant_properties = {}
             ant_build_targets = None
+
         self.options = Options()
 
         self.project_options = snapcraft.ProjectOptions()
@@ -41,95 +41,95 @@ class AntPluginTestCase(unit.TestCase):
     def test_schema(self):
         schema = ant.AntPlugin.schema()
 
-        properties = schema['properties']
-        for expected in ['ant-properties', 'ant-build-targets']:
+        properties = schema["properties"]
+        for expected in ["ant-properties", "ant-build-targets"]:
             self.assertTrue(
                 expected in properties,
-                'Expected {!r} to be included in properties'.format(expected))
+                "Expected {!r} to be included in properties".format(expected),
+            )
 
-        properties_type = schema['properties']['ant-properties']['type']
-        self.assertThat(properties_type, Equals('object'),
-                        'Expected "ant-properties" "type" to be "object", '
-                        'but it was "{}"'.format(properties_type))
-        build_targets_type = schema['properties']['ant-build-targets']['type']
-        self.assertThat(build_targets_type, Equals('array'),
-                        'Expected "ant-build-targets" "type" to be "object", '
-                        'but it was "{}"'.format(build_targets_type))
+        properties_type = schema["properties"]["ant-properties"]["type"]
+        self.assertThat(
+            properties_type,
+            Equals("object"),
+            'Expected "ant-properties" "type" to be "object", '
+            'but it was "{}"'.format(properties_type),
+        )
+        build_targets_type = schema["properties"]["ant-build-targets"]["type"]
+        self.assertThat(
+            build_targets_type,
+            Equals("array"),
+            'Expected "ant-build-targets" "type" to be "object", '
+            'but it was "{}"'.format(build_targets_type),
+        )
 
     def test_get_build_properties(self):
-        expected_build_properties = ['ant-build-targets', 'ant-properties']
+        expected_build_properties = ["ant-build-targets", "ant-properties"]
         resulting_build_properties = ant.AntPlugin.get_build_properties()
 
-        self.assertThat(resulting_build_properties,
-                        HasLength(len(expected_build_properties)))
+        self.assertThat(
+            resulting_build_properties, HasLength(len(expected_build_properties))
+        )
 
         for property in expected_build_properties:
             self.assertIn(property, resulting_build_properties)
 
-    @mock.patch.object(ant.AntPlugin, 'run')
+    @mock.patch.object(ant.AntPlugin, "run")
     def test_build(self, run_mock):
-        plugin = ant.AntPlugin('test-part', self.options,
-                               self.project_options)
+        plugin = ant.AntPlugin("test-part", self.options, self.project_options)
 
         def side(l):
-            os.makedirs(os.path.join(plugin.builddir, 'target'))
-            open(os.path.join(plugin.builddir,
-                 'target', 'dummy.jar'), 'w').close()
+            os.makedirs(os.path.join(plugin.builddir, "target"))
+            open(os.path.join(plugin.builddir, "target", "dummy.jar"), "w").close()
 
         run_mock.side_effect = side
         os.makedirs(plugin.sourcedir)
 
         plugin.build()
 
-        run_mock.assert_has_calls([
-            mock.call(['ant']),
-        ])
+        run_mock.assert_has_calls([mock.call(["ant"])])
 
-    @mock.patch.object(ant.AntPlugin, 'run')
+    @mock.patch.object(ant.AntPlugin, "run")
     def test_build_with_options(self, run_mock):
         options = copy.deepcopy(self.options)
-        plugin = ant.AntPlugin('test-part', options,
-                               self.project_options)
-        options.ant_build_targets = ['artifacts', 'jar']
-        options.ant_properties = {'basedir': '.',
-                                  'dist.dir': plugin.installdir}
+        plugin = ant.AntPlugin("test-part", options, self.project_options)
+        options.ant_build_targets = ["artifacts", "jar"]
+        options.ant_properties = {"basedir": ".", "dist.dir": plugin.installdir}
 
         os.makedirs(plugin.sourcedir)
         plugin.build()
 
-        destination = '-Ddist.dir={}'.format(plugin.installdir)
-        basedir = '-Dbasedir=.'
+        destination = "-Ddist.dir={}".format(plugin.installdir)
+        basedir = "-Dbasedir=."
         args = run_mock.call_args[0][0]
-        self.assertThat(args[0], Equals('ant'))
-        self.assertThat(args[1], Equals('artifacts'))
-        self.assertThat(args[2], Equals('jar'))
+        self.assertThat(args[0], Equals("ant"))
+        self.assertThat(args[1], Equals("artifacts"))
+        self.assertThat(args[2], Equals("jar"))
         self.assertIn(destination, args)
         self.assertIn(basedir, args)
 
     def test_env(self):
-        plugin = ant.AntPlugin('test-part', self.options,
-                               self.project_options)
+        plugin = ant.AntPlugin("test-part", self.options, self.project_options)
 
-        os.makedirs(os.path.join(plugin.installdir, 'jar'))
-        open(os.path.join(plugin.installdir,
-             'jar', 'lib1.jar'), 'w').close()
-        open(os.path.join(plugin.installdir,
-             'jar', 'lib2.jar'), 'w').close()
+        os.makedirs(os.path.join(plugin.installdir, "jar"))
+        open(os.path.join(plugin.installdir, "jar", "lib1.jar"), "w").close()
+        open(os.path.join(plugin.installdir, "jar", "lib2.jar"), "w").close()
         env = plugin.env(plugin.partdir)
         self.assertIn(
-            'CLASSPATH={}/jar/lib1.jar:{}/jar/lib2.jar:$CLASSPATH'.format(
-                plugin.partdir, plugin.partdir),
-            env)
+            "CLASSPATH={}/jar/lib1.jar:{}/jar/lib2.jar:$CLASSPATH".format(
+                plugin.partdir, plugin.partdir
+            ),
+            env,
+        )
 
     def test_env_proxies(self):
         env_vars = (
-            ('http_proxy', 'http://user:pass@localhost:3132'),
-            ('https_proxy', 'http://user2:pass2@localhost2:3133'),
+            ("http_proxy", "http://user:pass@localhost:3132"),
+            ("https_proxy", "http://user2:pass2@localhost2:3133"),
         )
         for key, value in env_vars:
             self.useFixture(fixtures.EnvironmentVariable(key, value))
-        plugin = ant.AntPlugin('test-part', self.options,
-                               self.project_options)
+        plugin = ant.AntPlugin("test-part", self.options, self.project_options)
 
         env = plugin.env(plugin.partdir)
         self.assertIn(
@@ -138,4 +138,5 @@ class AntPluginTestCase(unit.TestCase):
             "-Dhttp.proxyUser=user -Dhttp.proxyPassword=pass "
             "-Dhttps.proxyHost=localhost2 -Dhttps.proxyPort=3133 "
             "-Dhttps.proxyUser=user2 -Dhttps.proxyPassword=pass2'",
-            env)
+            env,
+        )

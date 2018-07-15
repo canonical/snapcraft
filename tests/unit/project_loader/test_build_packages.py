@@ -26,21 +26,28 @@ from . import ProjectLoaderBaseTest
 class VCSBuildPackagesTest(ProjectLoaderBaseTest):
 
     scenarios = [
-        ('git', dict(
-            source='git://github.com/ubuntu-core/snapcraft.git',
-            expected_package='git')),
-        ('bzr', dict(
-            source='lp:ubuntu-push',
-            expected_package='bzr')),
-        ('tar', dict(
-            source=(
-                'https://github.com/ubuntu-core/snapcraft/archive/'
-                '2.0.1.tar.gz'),
-            expected_package=None)),
+        (
+            "git",
+            dict(
+                source="git://github.com/ubuntu-core/snapcraft.git",
+                expected_package="git",
+            ),
+        ),
+        ("bzr", dict(source="lp:ubuntu-push", expected_package="bzr")),
+        (
+            "tar",
+            dict(
+                source=(
+                    "https://github.com/ubuntu-core/snapcraft/archive/" "2.0.1.tar.gz"
+                ),
+                expected_package=None,
+            ),
+        ),
     ]
 
     def test_config_adds_vcs_packages_to_build_packages(self):
-        snapcraft_yaml = dedent("""\
+        snapcraft_yaml = dedent(
+            """\
             name: test
             version: "1"
             summary: test
@@ -52,29 +59,30 @@ class VCSBuildPackagesTest(ProjectLoaderBaseTest):
               part1:
                 source: {0}
                 plugin: nil
-            """).format(self.source)
+            """
+        ).format(self.source)
 
         project_config = self.make_snapcraft_project(snapcraft_yaml)
 
         if self.expected_package:
-            self.assertThat(project_config.build_tools,
-                            Contains(self.expected_package))
+            self.assertThat(project_config.build_tools, Contains(self.expected_package))
 
 
 class VCSBuildPackagesFromTypeTest(ProjectLoaderBaseTest):
 
     scenarios = [
-        ('git', dict(type_='git', package='git')),
-        ('hg', dict(type_='hg', package='mercurial')),
-        ('mercurial', dict(type_='mercurial', package='mercurial')),
-        ('bzr', dict(type_='bzr', package='bzr')),
-        ('tar', dict(type_='tar', package=None)),
-        ('svn', dict(type_='svn', package='subversion')),
-        ('subversion', dict(type_='subversion', package='subversion')),
+        ("git", dict(type_="git", package="git")),
+        ("hg", dict(type_="hg", package="mercurial")),
+        ("mercurial", dict(type_="mercurial", package="mercurial")),
+        ("bzr", dict(type_="bzr", package="bzr")),
+        ("tar", dict(type_="tar", package=None)),
+        ("svn", dict(type_="svn", package="subversion")),
+        ("subversion", dict(type_="subversion", package="subversion")),
     ]
 
     def test_config_adds_vcs_packages_to_build_packages_from_types(self):
-        snapcraft_yaml = dedent("""\
+        snapcraft_yaml = dedent(
+            """\
             name: test
             version: "1"
             summary: test
@@ -87,21 +95,21 @@ class VCSBuildPackagesFromTypeTest(ProjectLoaderBaseTest):
                 source: http://something/somewhere
                 source-type: {0}
                 plugin: autotools
-        """).format(self.type_)
+        """
+        ).format(self.type_)
 
         project_config = self.make_snapcraft_project(snapcraft_yaml)
 
         if self.package:
-            self.assertThat(project_config.build_tools,
-                            Contains(self.package))
+            self.assertThat(project_config.build_tools, Contains(self.package))
 
 
 class XCompileTest(ProjectLoaderBaseTest):
-
     def setUp(self):
         super().setUp()
 
-        self.snapcraft_yaml = dedent("""\
+        self.snapcraft_yaml = dedent(
+            """\
             name: test
             version: "1"
             summary: test
@@ -112,21 +120,26 @@ class XCompileTest(ProjectLoaderBaseTest):
             parts:
               part1:
                 plugin: nil
-        """)
+        """
+        )
 
     def test_config_adds_extra_build_tools_when_cross_compiling(self):
-        project_kwargs = dict(target_deb_arch='armhf')
-        with unittest.mock.patch('platform.machine') as machine_mock, \
-                unittest.mock.patch('platform.architecture') as arch_mock:
-            arch_mock.return_value = ('64bit', 'ELF')
-            machine_mock.return_value = 'x86_64'
+        project_kwargs = dict(target_deb_arch="armhf")
+        with unittest.mock.patch(
+            "platform.machine"
+        ) as machine_mock, unittest.mock.patch("platform.architecture") as arch_mock:
+            arch_mock.return_value = ("64bit", "ELF")
+            machine_mock.return_value = "x86_64"
             project_config = self.make_snapcraft_project(
-                self.snapcraft_yaml, project_kwargs)
+                self.snapcraft_yaml, project_kwargs
+            )
 
-        self.assertThat(project_config.parts.build_tools,
-                        Contains('gcc-arm-linux-gnueabihf')),
-        self.assertThat(project_config.parts.build_tools,
-                        Contains('libc6-dev-armhf-cross')),
+        self.assertThat(
+            project_config.parts.build_tools, Contains("gcc-arm-linux-gnueabihf")
+        ),
+        self.assertThat(
+            project_config.parts.build_tools, Contains("libc6-dev-armhf-cross")
+        ),
 
     def test_config_has_no_extra_build_tools_when_not_cross_compiling(self):
         project_config = self.make_snapcraft_project(self.snapcraft_yaml)

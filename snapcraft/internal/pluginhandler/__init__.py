@@ -29,15 +29,7 @@ import yaml
 
 import snapcraft.extractors
 from snapcraft import file_utils
-from snapcraft.internal import (
-    common,
-    elf,
-    errors,
-    repo,
-    sources,
-    states,
-    steps,
-)
+from snapcraft.internal import common, elf, errors, repo, sources, states, steps
 from snapcraft.internal.mangling import clear_execstack
 
 from ._build_attributes import BuildAttributes
@@ -52,19 +44,29 @@ logger = logging.getLogger(__name__)
 
 
 class PluginHandler:
-
     @property
     def name(self):
         return self.plugin.name
 
-    def __init__(self, *, plugin, part_properties, project_options,
-                 part_schema, definitions_schema, stage_packages_repo,
-                 grammar_processor, snap_base_path, base, confinement,
-                 snap_type, soname_cache):
+    def __init__(
+        self,
+        *,
+        plugin,
+        part_properties,
+        project_options,
+        part_schema,
+        definitions_schema,
+        stage_packages_repo,
+        grammar_processor,
+        snap_base_path,
+        base,
+        confinement,
+        snap_type,
+        soname_cache
+    ):
         self.valid = False
         self.plugin = plugin
-        self._part_properties = _expand_part_properties(
-            part_properties, part_schema)
+        self._part_properties = _expand_part_properties(part_properties, part_schema)
         self.stage_packages = []
         self._stage_packages_repo = stage_packages_repo
         self._grammar_processor = grammar_processor
@@ -75,7 +77,7 @@ class PluginHandler:
         self._soname_cache = soname_cache
         self._source = grammar_processor.get_source()
         if not self._source:
-            self._source = part_schema['source'].get('default')
+            self._source = part_schema["source"].get("default")
 
         self._pull_state = None  # type: states.PullState
         self._build_state = None  # type: states.BuildState
@@ -90,18 +92,19 @@ class PluginHandler:
 
         # We don't need to set the source_handler on systems where we do not
         # build
-        if sys.platform == 'linux':
-            self.source_handler = self._get_source_handler(
-                self._part_properties)
+        if sys.platform == "linux":
+            self.source_handler = self._get_source_handler(self._part_properties)
         else:
             self.source_handler = None
 
         self._build_attributes = BuildAttributes(
-            self._part_properties['build-attributes'])
+            self._part_properties["build-attributes"]
+        )
 
         # Scriptlet data is a dict of dicts for each step
         self._scriptlet_metadata = collections.defaultdict(
-            snapcraft.extractors.ExtractedMetadata)
+            snapcraft.extractors.ExtractedMetadata
+        )
         self._runner = Runner(
             part_properties=self._part_properties,
             sourcedir=self.plugin.sourcedir,
@@ -113,34 +116,31 @@ class PluginHandler:
                 steps.BUILD.name: self.plugin.build,
                 steps.STAGE.name: self._do_stage,
                 steps.PRIME.name: self._do_prime,
-                'set-version': self._set_version,
-                'set-grade': self._set_grade,
-            })
+                "set-version": self._set_version,
+                "set-grade": self._set_grade,
+            },
+        )
 
         self._migrate_state_file()
 
     def get_pull_state(self) -> states.PullState:
         if not self._pull_state:
-            self._pull_state = states.get_state(
-                self.plugin.statedir, steps.PULL)
+            self._pull_state = states.get_state(self.plugin.statedir, steps.PULL)
         return self._pull_state
 
     def get_build_state(self) -> states.BuildState:
         if not self._build_state:
-            self._build_state = states.get_state(
-                self.plugin.statedir, steps.BUILD)
+            self._build_state = states.get_state(self.plugin.statedir, steps.BUILD)
         return self._build_state
 
     def get_stage_state(self) -> states.StageState:
         if not self._stage_state:
-            self._stage_state = states.get_state(
-                self.plugin.statedir, steps.STAGE)
+            self._stage_state = states.get_state(self.plugin.statedir, steps.STAGE)
         return self._stage_state
 
     def get_prime_state(self) -> states.PrimeState:
         if not self._prime_state:
-            self._prime_state = states.get_state(
-                self.plugin.statedir, steps.PRIME)
+            self._prime_state = states.get_state(self.plugin.statedir, steps.PRIME)
         return self._prime_state
 
     def _get_source_handler(self, properties):
@@ -150,15 +150,16 @@ class PluginHandler:
         source_handler = None
         if self._source:
             handler_class = sources.get_source_handler(
-                self._source, source_type=properties['source-type'])
+                self._source, source_type=properties["source-type"]
+            )
             source_handler = handler_class(
                 self._source,
                 self.plugin.sourcedir,
-                source_checksum=properties['source-checksum'],
-                source_branch=properties['source-branch'],
-                source_tag=properties['source-tag'],
-                source_depth=properties['source-depth'],
-                source_commit=properties['source-commit'],
+                source_checksum=properties["source-checksum"],
+                source_branch=properties["source-branch"],
+                source_tag=properties["source-tag"],
+                source_depth=properties["source-depth"],
+                source_commit=properties["source-commit"],
             )
 
         return source_handler
@@ -166,27 +167,27 @@ class PluginHandler:
     def _set_version(self, *, version):
         try:
             self._set_scriptlet_metadata(
-                snapcraft.extractors.ExtractedMetadata(version=version))
+                snapcraft.extractors.ExtractedMetadata(version=version)
+            )
         except errors.ScriptletDuplicateDataError as e:
-            raise errors.ScriptletDuplicateFieldError('version', e.other_step)
+            raise errors.ScriptletDuplicateFieldError("version", e.other_step)
 
     def _set_grade(self, *, grade):
         try:
             self._set_scriptlet_metadata(
-                snapcraft.extractors.ExtractedMetadata(grade=grade))
+                snapcraft.extractors.ExtractedMetadata(grade=grade)
+            )
         except errors.ScriptletDuplicateDataError as e:
-            raise errors.ScriptletDuplicateFieldError('grade', e.other_step)
+            raise errors.ScriptletDuplicateFieldError("grade", e.other_step)
 
-    def _set_scriptlet_metadata(
-            self, metadata: snapcraft.extractors.ExtractedMetadata):
+    def _set_scriptlet_metadata(self, metadata: snapcraft.extractors.ExtractedMetadata):
         step = self.next_step()
 
         # First, ensure the metadata set here doesn't conflict with metadata
         # already set for this step
         conflicts = metadata.overlap(self._scriptlet_metadata[step])
         if len(conflicts) > 0:
-            raise errors.ScriptletDuplicateDataError(
-                step, step, list(conflicts))
+            raise errors.ScriptletDuplicateDataError(step, step, list(conflicts))
 
         # Now ensure the metadata from this step doesn't conflict with
         # metadata from any other step (if any)
@@ -198,15 +199,19 @@ class PluginHandler:
                 conflicts = metadata.overlap(state.scriptlet_metadata)
                 if len(conflicts) > 0:
                     raise errors.ScriptletDuplicateDataError(
-                        step, other_step, list(conflicts))
+                        step, other_step, list(conflicts)
+                    )
 
         self._scriptlet_metadata[step].update(metadata)
 
     def makedirs(self):
         dirs = [
-            self.plugin.sourcedir, self.plugin.builddir,
-            self.plugin.installdir, self.plugin.statedir,
-            self.stagedir, self.primedir,
+            self.plugin.sourcedir,
+            self.plugin.builddir,
+            self.plugin.installdir,
+            self.plugin.statedir,
+            self.stagedir,
+            self.primedir,
         ]
         for d in dirs:
             os.makedirs(d, exist_ok=True)
@@ -216,7 +221,7 @@ class PluginHandler:
         # Rather than die if we're running on output from an old version,
         # migrate it for them.
         if os.path.isfile(self.plugin.statedir):
-            with open(self.plugin.statedir, 'r') as f:
+            with open(self.plugin.statedir, "r") as f:
                 step = f.read()
 
             if step:
@@ -226,8 +231,7 @@ class PluginHandler:
 
     def latest_step(self):
         for step in reversed(steps.STEPS):
-            if os.path.exists(
-                    states.get_step_state_file(self.plugin.statedir, step)):
+            if os.path.exists(states.get_step_state_file(self.plugin.statedir, step)):
                 return step
 
         raise errors.NoLatestStepError(self.name)
@@ -274,7 +278,7 @@ class PluginHandler:
         """
 
         try:
-            return getattr(self, 'check_{}'.format(step.name))()
+            return getattr(self, "check_{}".format(step.name))()
         except AttributeError:
             with contextlib.suppress(errors.StepHasNotRunError):
                 timestamp = self.step_timestamp(step)
@@ -284,8 +288,7 @@ class PluginHandler:
                     # step needs to be updated.
                     with contextlib.suppress(errors.StepHasNotRunError):
                         if timestamp < self.step_timestamp(previous_step):
-                            return OutdatedReport(
-                                previous_step_modified=previous_step)
+                            return OutdatedReport(previous_step_modified=previous_step)
             return None
 
     def is_dirty(self, step: steps.Step) -> bool:
@@ -320,19 +323,18 @@ class PluginHandler:
             # about, and we're comparing it to those same keys in the current
             # YAML (self._part_properties). If they've changed, then this step
             # is dirty and needs to run again.
-            properties = state.diff_properties_of_interest(
-                self._part_properties)
+            properties = state.diff_properties_of_interest(self._part_properties)
 
             # state.project_options contains the old project options that this
             # step cares about, and we're comparing it to those same options in
             # the current project. If they've changed, then this step is dirty
             # and needs to run again.
-            options = state.diff_project_options_of_interest(
-                self._project_options)
+            options = state.diff_project_options_of_interest(self._project_options)
 
             if properties or options:
                 return DirtyReport(
-                    dirty_properties=properties, dirty_project_options=options)
+                    dirty_properties=properties, dirty_project_options=options
+                )
 
         return None
 
@@ -341,8 +343,9 @@ class PluginHandler:
 
     def step_timestamp(self, step):
         try:
-            return os.stat(states.get_step_state_file(
-                self.plugin.statedir, step)).st_mtime
+            return os.stat(
+                states.get_step_state_file(self.plugin.statedir, step)
+            ).st_mtime
         except FileNotFoundError as e:
             raise errors.StepHasNotRunError(self.name, step) from e
 
@@ -350,8 +353,7 @@ class PluginHandler:
         if not state:
             state = {}
 
-        with open(states.get_step_state_file(
-                self.plugin.statedir, step), 'w') as f:
+        with open(states.get_step_state_file(self.plugin.statedir, step), "w") as f:
             f.write(yaml.dump(state))
 
     def mark_cleaned(self, step):
@@ -359,25 +361,24 @@ class PluginHandler:
         if os.path.exists(state_file):
             os.remove(state_file)
 
-        if (os.path.isdir(self.plugin.statedir) and
-                not os.listdir(self.plugin.statedir)):
+        if os.path.isdir(self.plugin.statedir) and not os.listdir(self.plugin.statedir):
             os.rmdir(self.plugin.statedir)
 
     def _fetch_stage_packages(self):
         stage_packages = self._grammar_processor.get_stage_packages()
         if stage_packages:
-            logger.debug('Fetching stage-packages {!r}'.format(stage_packages))
+            logger.debug("Fetching stage-packages {!r}".format(stage_packages))
             try:
-                self.stage_packages = self._stage_packages_repo.get(
-                    stage_packages)
+                self.stage_packages = self._stage_packages_repo.get(stage_packages)
             except repo.errors.PackageNotFoundError as e:
                 raise errors.StagePackageDownloadError(self.name, e.message)
 
     def _unpack_stage_packages(self):
         stage_packages = self._grammar_processor.get_stage_packages()
         if stage_packages:
-            logger.debug('Unpacking stage-packages to {!r}'.format(
-                self.plugin.installdir))
+            logger.debug(
+                "Unpacking stage-packages to {!r}".format(self.plugin.installdir)
+            )
             self._stage_packages_repo.unpack(self.plugin.installdir)
 
     def prepare_pull(self, force=False):
@@ -387,8 +388,9 @@ class PluginHandler:
 
     def pull(self, force=False):
         # Ensure any previously-failed pull is cleared out before we try again
-        if (os.path.islink(self.plugin.sourcedir) or
-                os.path.isfile(self.plugin.sourcedir)):
+        if os.path.islink(self.plugin.sourcedir) or os.path.isfile(
+            self.plugin.sourcedir
+        ):
             os.remove(self.plugin.sourcedir)
         elif os.path.isdir(self.plugin.sourcedir):
             shutil.rmtree(self.plugin.sourcedir)
@@ -399,8 +401,7 @@ class PluginHandler:
 
     def check_pull(self):
         # Check to see if pull needs to be updated
-        state_file = states.get_step_state_file(
-            self.plugin.statedir, steps.PULL)
+        state_file = states.get_step_state_file(self.plugin.statedir, steps.PULL)
 
         # Not all sources support checking for updates
         with contextlib.suppress(sources.errors.SourceUpdateUnsupportedError):
@@ -421,27 +422,33 @@ class PluginHandler:
         pull_properties = self.plugin.get_pull_properties()
 
         # Add the annotated list of build packages
-        part_build_packages = self._part_properties.get('build-packages', [])
-        part_build_snaps = self._part_properties.get('build-snaps', [])
+        part_build_packages = self._part_properties.get("build-packages", [])
+        part_build_snaps = self._part_properties.get("build-snaps", [])
 
         # Extract any requested metadata available in the source directory
         metadata = snapcraft.extractors.ExtractedMetadata()
         metadata_files = []
-        for path in self._part_properties.get('parse-info', []):
+        for path in self._part_properties.get("parse-info", []):
             file_path = os.path.join(self.plugin.sourcedir, path)
             with contextlib.suppress(errors.MissingMetadataFileError):
                 metadata.update(extract_metadata(self.name, file_path))
                 metadata_files.append(path)
 
-        self.mark_done(steps.PULL, states.PullState(
-            pull_properties, part_properties=self._part_properties,
-            project=self._project_options, stage_packages=self.stage_packages,
-            build_snaps=part_build_snaps,
-            build_packages=part_build_packages,
-            source_details=self.source_handler.source_details,
-            metadata=metadata,
-            metadata_files=metadata_files,
-            scriptlet_metadata=self._scriptlet_metadata[steps.PULL]))
+        self.mark_done(
+            steps.PULL,
+            states.PullState(
+                pull_properties,
+                part_properties=self._part_properties,
+                project=self._project_options,
+                stage_packages=self.stage_packages,
+                build_snaps=part_build_snaps,
+                build_packages=part_build_packages,
+                source_details=self.source_handler.source_details,
+                metadata=metadata,
+                metadata_files=metadata_files,
+                scriptlet_metadata=self._scriptlet_metadata[steps.PULL],
+            ),
+        )
 
     def clean_pull(self):
         if self.is_clean(steps.PULL):
@@ -479,7 +486,7 @@ class PluginHandler:
             # symlinks.
             def ignore(directory, files):
                 if directory == self.plugin.sourcedir:
-                    snaps = glob(os.path.join(directory, '*.snap'))
+                    snaps = glob(os.path.join(directory, "*.snap"))
                     if snaps:
                         snaps = [os.path.basename(s) for s in snaps]
                         return common.SNAPCRAFT_FILES + snaps
@@ -490,8 +497,12 @@ class PluginHandler:
 
             # No hard-links being used here in case the build process modifies
             # these files.
-            shutil.copytree(self.plugin.sourcedir, self.plugin.build_basedir,
-                            symlinks=True, ignore=ignore)
+            shutil.copytree(
+                self.plugin.sourcedir,
+                self.plugin.build_basedir,
+                symlinks=True,
+                ignore=ignore,
+            )
 
         self._do_build()
 
@@ -501,10 +512,13 @@ class PluginHandler:
             # file_utils.copy instead of link_or_copy, as the build process
             # may modify these files
             source = sources.Local(
-                self.plugin.sourcedir, self.plugin.build_basedir,
-                copy_function=file_utils.copy)
-            if not source.check(states.get_step_state_file(
-                    self.plugin.statedir, steps.BUILD)):
+                self.plugin.sourcedir,
+                self.plugin.build_basedir,
+                copy_function=file_utils.copy,
+            )
+            if not source.check(
+                states.get_step_state_file(self.plugin.statedir, steps.BUILD)
+            ):
                 return
             source.update()
 
@@ -536,7 +550,7 @@ class PluginHandler:
         # followed by the install directory (which takes precedence)
         metadata_files = []
         metadata = snapcraft.extractors.ExtractedMetadata()
-        for path in self._part_properties.get('parse-info', []):
+        for path in self._part_properties.get("parse-info", []):
             file_path = os.path.join(self.plugin.builddir, path)
             found = False
             with contextlib.suppress(errors.MissingMetadataFileError):
@@ -555,24 +569,28 @@ class PluginHandler:
                 # install, check the pull state to make sure it was found
                 # there. If not, we need to let the user know.
                 state = self.get_pull_state()
-                if not state or path not in state.extracted_metadata['files']:
+                if not state or path not in state.extracted_metadata["files"]:
                     raise errors.MissingMetadataFileError(self.name, path)
 
-        self.mark_done(steps.BUILD, states.BuildState(
-            property_names=build_properties,
-            part_properties=self._part_properties,
-            project=self._project_options,
-            plugin_assets=plugin_manifest,
-            machine_assets=machine_manifest,
-            metadata=metadata,
-            metadata_files=metadata_files,
-            scriptlet_metadata=self._scriptlet_metadata[steps.BUILD]))
+        self.mark_done(
+            steps.BUILD,
+            states.BuildState(
+                property_names=build_properties,
+                part_properties=self._part_properties,
+                project=self._project_options,
+                plugin_assets=plugin_manifest,
+                machine_assets=machine_manifest,
+                metadata=metadata,
+                metadata_files=metadata_files,
+                scriptlet_metadata=self._scriptlet_metadata[steps.BUILD],
+            ),
+        )
 
     def _get_machine_manifest(self):
         return {
-            'uname': common.run_output(['uname', '-srvmpio']),
-            'installed-packages': repo.Repo.get_installed_packages(),
-            'installed-snaps': repo.snaps.get_installed_snaps()
+            "uname": common.run_output(["uname", "-srvmpio"]),
+            "installed-packages": repo.Repo.get_installed_packages(),
+            "installed-snaps": repo.snaps.get_installed_snaps(),
         }
 
     def clean_build(self):
@@ -594,8 +612,7 @@ class PluginHandler:
         includes = _get_includes(fileset)
         # If we're priming and we don't have an explicit set of files to prime
         # include the files from the stage step
-        if step == steps.PRIME and (fileset == ['*'] or
-                                    len(includes) == 0):
+        if step == steps.PRIME and (fileset == ["*"] or len(includes) == 0):
             stage_fileset = self._get_fileset(steps.STAGE.name).copy()
             fileset = _combine_filesets(stage_fileset, fileset)
 
@@ -605,13 +622,13 @@ class PluginHandler:
 
     def _get_fileset(self, option, default=None):
         if default is None:
-            default = ['*']
+            default = ["*"]
 
         fileset = getattr(self.plugin.options, option, default)
         return fileset if fileset else default
 
     def _organize(self):
-        fileset = self._get_fileset('organize', {})
+        fileset = self._get_fileset("organize", {})
 
         _organize_filesets(fileset.copy(), self.plugin.installdir)
 
@@ -630,22 +647,33 @@ class PluginHandler:
         def fixup_func(file_path):
             if os.path.islink(file_path):
                 return
-            if not file_path.endswith('.pc'):
+            if not file_path.endswith(".pc"):
                 return
-            repo.fix_pkg_config(
-                self.stagedir, file_path, self.plugin.installdir)
+            repo.fix_pkg_config(self.stagedir, file_path, self.plugin.installdir)
 
-        _migrate_files(snap_files, snap_dirs, self.plugin.installdir,
-                       self.stagedir, fixup_func=fixup_func)
+        _migrate_files(
+            snap_files,
+            snap_dirs,
+            self.plugin.installdir,
+            self.stagedir,
+            fixup_func=fixup_func,
+        )
         # TODO once `snappy try` is in place we will need to copy
         # dependencies here too
 
         self.mark_stage_done(snap_files, snap_dirs)
 
     def mark_stage_done(self, snap_files, snap_dirs):
-        self.mark_done(steps.STAGE, states.StageState(
-            snap_files, snap_dirs, self._part_properties,
-            self._project_options, self._scriptlet_metadata[steps.STAGE]))
+        self.mark_done(
+            steps.STAGE,
+            states.StageState(
+                snap_files,
+                snap_dirs,
+                self._part_properties,
+                self._project_options,
+                self._scriptlet_metadata[steps.STAGE],
+            ),
+        )
 
     def clean_stage(self, project_staged_state):
         if self.is_clean(steps.STAGE):
@@ -654,8 +682,7 @@ class PluginHandler:
         state = states.get_state(self.plugin.statedir, steps.STAGE)
 
         try:
-            self._clean_shared_area(self.stagedir, state,
-                                    project_staged_state)
+            self._clean_shared_area(self.stagedir, state, project_staged_state)
         except AttributeError:
             raise errors.MissingStateCleanError(steps.STAGE)
 
@@ -674,7 +701,7 @@ class PluginHandler:
         snap_files, snap_dirs = self.migratable_fileset_for(steps.PRIME)
         _migrate_files(snap_files, snap_dirs, self.stagedir, self.primedir)
 
-        if self._snap_type == 'app':
+        if self._snap_type == "app":
             dependency_paths = self._handle_elf(snap_files)
         else:
             dependency_paths = set()
@@ -691,9 +718,12 @@ class PluginHandler:
         self._soname_cache.reset_except_root(self.primedir)
         for elf_file in elf_files:
             all_dependencies.update(
-                elf_file.load_dependencies(root_path=self.primedir,
-                                           core_base_path=core_path,
-                                           soname_cache=self._soname_cache))
+                elf_file.load_dependencies(
+                    root_path=self.primedir,
+                    core_base_path=core_path,
+                    soname_cache=self._soname_cache,
+                )
+            )
 
         dependency_paths = self._handle_dependencies(all_dependencies)
 
@@ -702,9 +732,10 @@ class PluginHandler:
 
         if self._build_attributes.no_patchelf():
             logger.warning(
-                'The primed files for part {!r} will not be verified for '
-                'correctness or patched: build-attributes: [no-patchelf] '
-                'is set.'.format(self.name))
+                "The primed files for part {!r} will not be verified for "
+                "correctness or patched: build-attributes: [no-patchelf] "
+                "is set.".format(self.name)
+            )
         else:
             part_patcher = PartPatcher(
                 elf_files=elf_files,
@@ -715,26 +746,33 @@ class PluginHandler:
                 snap_base_path=self._snap_base_path,
                 stagedir=self.stagedir,
                 primedir=self.primedir,
-                stage_packages=self._part_properties.get(
-                    'stage-packages', []))
+                stage_packages=self._part_properties.get("stage-packages", []),
+            )
             part_patcher.patch()
 
         return dependency_paths
 
     def mark_prime_done(self, snap_files, snap_dirs, dependency_paths):
-        self.mark_done(steps.PRIME, states.PrimeState(
-            snap_files, snap_dirs, dependency_paths, self._part_properties,
-            self._project_options, self._scriptlet_metadata[steps.PRIME]))
+        self.mark_done(
+            steps.PRIME,
+            states.PrimeState(
+                snap_files,
+                snap_dirs,
+                dependency_paths,
+                self._part_properties,
+                self._project_options,
+                self._scriptlet_metadata[steps.PRIME],
+            ),
+        )
 
-    def clean_prime(self, project_primed_state, hint=''):
+    def clean_prime(self, project_primed_state, hint=""):
         if self.is_clean(steps.PRIME):
             return
 
         state = self.get_prime_state()
 
         try:
-            self._clean_shared_area(self.primedir, state,
-                                    project_primed_state)
+            self._clean_shared_area(self.primedir, state, project_primed_state)
         except AttributeError:
             raise errors.MissingStateCleanError(steps.PRIME)
 
@@ -755,8 +793,7 @@ class PluginHandler:
 
         # Finally, clean the files and directories that are specific to this
         # part.
-        _clean_migrated_files(primed_files, primed_directories,
-                              shared_directory)
+        _clean_migrated_files(primed_files, primed_directories, shared_directory)
 
     def _handle_dependencies(self, all_dependencies: Set[str]):
         # Split the necessary dependencies into their corresponding location.
@@ -765,8 +802,8 @@ class PluginHandler:
         # already been primed by other means, and migrating them again could
         # potentially override the `stage` or `snap` filtering.
         (in_part, staged, primed, system) = _split_dependencies(
-            all_dependencies, self.plugin.installdir, self.stagedir,
-            self.primedir)
+            all_dependencies, self.plugin.installdir, self.stagedir, self.primedir
+        )
         part_dependency_paths = {os.path.dirname(d) for d in in_part}
         staged_dependency_paths = {os.path.dirname(d) for d in staged}
         dependency_paths = part_dependency_paths | staged_dependency_paths
@@ -779,17 +816,24 @@ class PluginHandler:
                 # Lots of dependencies are linked with a symlink, so we need to
                 # make sure we follow those symlinks when we migrate the
                 # dependencies.
-                _migrate_files(system, system_dependency_paths, '/',
-                               self.primedir, follow_symlinks=True)
-                formatted_system = '\n'.join(sorted(system))
+                _migrate_files(
+                    system,
+                    system_dependency_paths,
+                    "/",
+                    self.primedir,
+                    follow_symlinks=True,
+                )
+                formatted_system = "\n".join(sorted(system))
                 logger.warning(
-                    'Files from the build host were migrated into the snap to '
-                    'satisfy dependencies that would otherwise not be met. '
-                    'This feature will be removed in a future release. If '
-                    'these libraries are needed in the final snap, ensure '
-                    'that the following are either satisfied by a '
-                    'stage-packages entry or through a part:\n{}'.format(
-                        formatted_system))
+                    "Files from the build host were migrated into the snap to "
+                    "satisfy dependencies that would otherwise not be met. "
+                    "This feature will be removed in a future release. If "
+                    "these libraries are needed in the final snap, ensure "
+                    "that the following are either satisfied by a "
+                    "stage-packages entry or through a part:\n{}".format(
+                        formatted_system
+                    )
+                )
         return dependency_paths
 
     def get_primed_dependency_paths(self):
@@ -797,16 +841,14 @@ class PluginHandler:
         state = self.get_prime_state()
         if state:
             for path in state.dependency_paths:
-                dependency_paths.add(
-                    os.path.join(self.primedir, path.lstrip('/')))
+                dependency_paths.add(os.path.join(self.primedir, path.lstrip("/")))
 
         return dependency_paths
 
     def env(self, root):
         return self.plugin.env(root)
 
-    def clean(self, project_staged_state=None, project_primed_state=None,
-              step=None):
+    def clean(self, project_staged_state=None, project_primed_state=None, step=None):
         if not project_staged_state:
             project_staged_state = {}
 
@@ -814,8 +856,7 @@ class PluginHandler:
             project_primed_state = {}
 
         try:
-            self._clean_steps(
-                project_staged_state, project_primed_state, step)
+            self._clean_steps(project_staged_state, project_primed_state, step)
         except errors.MissingStateCleanError:
             # If one of the step cleaning rules is missing state, it must be
             # running on the output of an old Snapcraft. In that case, if we
@@ -825,23 +866,21 @@ class PluginHandler:
             if step:
                 raise
 
-            logger.info('Cleaning up for part {!r}'.format(self.name))
+            logger.info("Cleaning up for part {!r}".format(self.name))
             if os.path.exists(self.plugin.partdir):
                 shutil.rmtree(self.plugin.partdir)
 
         # Remove the part directory if it's completely empty (i.e. all steps
         # have been cleaned).
-        if (os.path.exists(self.plugin.partdir) and
-                not os.listdir(self.plugin.partdir)):
+        if os.path.exists(self.plugin.partdir) and not os.listdir(self.plugin.partdir):
             os.rmdir(self.plugin.partdir)
 
-    def _clean_steps(self, project_staged_state, project_primed_state,
-                     step=None):
+    def _clean_steps(self, project_staged_state, project_primed_state, step=None):
         if step:
             if step not in steps.STEPS:
                 raise RuntimeError(
-                    '{!r} is not a valid step for part {!r}'.format(
-                        step, self.name))
+                    "{!r} is not a valid step for part {!r}".format(step, self.name)
+                )
 
         if not step or step <= steps.PRIME:
             self.clean_prime(project_primed_state)
@@ -875,7 +914,7 @@ def _split_dependencies(dependencies, installdir, stagedir, primedir):
         elif file_path.startswith(primedir):
             primed_dependencies.add(os.path.relpath(file_path, primedir))
         else:
-            file_path = file_path.lstrip('/')
+            file_path = file_path.lstrip("/")
 
             # This was a dependency that was resolved to be on the system.
             # However, it's possible that this library is actually included in
@@ -891,8 +930,12 @@ def _split_dependencies(dependencies, installdir, stagedir, primedir):
             else:
                 system_dependencies.add(file_path)
 
-    return (part_dependencies, staged_dependencies, primed_dependencies,
-            system_dependencies)
+    return (
+        part_dependencies,
+        staged_dependencies,
+        primed_dependencies,
+        system_dependencies,
+    )
 
 
 def _expand_part_properties(part_properties, part_schema):
@@ -910,7 +953,7 @@ def _expand_part_properties(part_properties, part_schema):
     # values as defined in the schema.
     properties = {}
     for schema_property, subschema in part_schema.items():
-        properties[schema_property] = subschema.get('default')
+        properties[schema_property] = subschema.get("default")
 
     # Now expand (overwriting if necessary) the default schema properties with
     # the ones from the actual part.
@@ -928,13 +971,17 @@ def _migratable_filesets(fileset, srcdir):
     # And chop files, including whole trees if any dirs are mentioned
     snap_files = include_files - exclude_files
     for exclude_dir in exclude_dirs:
-        snap_files = set([x for x in snap_files
-                          if not x.startswith(exclude_dir + '/')])
+        snap_files = set([x for x in snap_files if not x.startswith(exclude_dir + "/")])
 
     # Separate dirs from files
-    snap_dirs = set([x for x in snap_files
-                     if os.path.isdir(os.path.join(srcdir, x)) and
-                     not os.path.islink(os.path.join(srcdir, x))])
+    snap_dirs = set(
+        [
+            x
+            for x in snap_files
+            if os.path.isdir(os.path.join(srcdir, x))
+            and not os.path.islink(os.path.join(srcdir, x))
+        ]
+    )
     snap_files = snap_files - snap_dirs
 
     # Make sure we also obtain the parent directories of files
@@ -947,8 +994,15 @@ def _migratable_filesets(fileset, srcdir):
     return snap_files, snap_dirs
 
 
-def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
-                   follow_symlinks=False, fixup_func=lambda *args: None):
+def _migrate_files(
+    snap_files,
+    snap_dirs,
+    srcdir,
+    dstdir,
+    missing_ok=False,
+    follow_symlinks=False,
+    fixup_func=lambda *args: None,
+):
 
     for directory in snap_dirs:
         src = os.path.join(srcdir, directory)
@@ -960,8 +1014,9 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
         src = os.path.join(srcdir, snap_file)
         dst = os.path.join(dstdir, snap_file)
 
-        snapcraft.file_utils.create_similar_directory(os.path.dirname(src),
-                                                      os.path.dirname(dst))
+        snapcraft.file_utils.create_similar_directory(
+            os.path.dirname(src), os.path.dirname(dst)
+        )
 
         if missing_ok and not os.path.exists(src):
             continue
@@ -974,7 +1029,7 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
         if os.path.exists(dst):
             os.remove(dst)
 
-        if src.endswith('.pc'):
+        if src.endswith(".pc"):
             shutil.copy2(src, dst, follow_symlinks=follow_symlinks)
         else:
             file_utils.link_or_copy(src, dst, follow_symlinks=follow_symlinks)
@@ -983,25 +1038,27 @@ def _migrate_files(snap_files, snap_dirs, srcdir, dstdir, missing_ok=False,
 
 
 def _organize_filesets(fileset, base_dir):
-    for key in sorted(fileset, key=lambda x: ['*' in x, x]):
+    for key in sorted(fileset, key=lambda x: ["*" in x, x]):
         src = os.path.join(base_dir, key)
         # Remove the leading slash if there so os.path.join
         # actually joins
-        dst = os.path.join(base_dir, fileset[key].lstrip('/'))
+        dst = os.path.join(base_dir, fileset[key].lstrip("/"))
 
         sources = iglob(src, recursive=True)
 
         for src in sources:
-            if os.path.isdir(src) and '*' not in key:
+            if os.path.isdir(src) and "*" not in key:
                 file_utils.link_or_copy_tree(src, dst)
                 # TODO create alternate organization location to avoid
                 # deletions.
                 shutil.rmtree(src)
             elif os.path.isfile(dst):
                 raise errors.SnapcraftEnvironmentError(
-                    'Trying to organize file {key!r} to {dst!r}, '
-                    'but {dst!r} already exists'.format(
-                        key=key, dst=os.path.relpath(dst, base_dir)))
+                    "Trying to organize file {key!r} to {dst!r}, "
+                    "but {dst!r} already exists".format(
+                        key=key, dst=os.path.relpath(dst, base_dir)
+                    )
+                )
             else:
                 os.makedirs(os.path.dirname(dst), exist_ok=True)
                 shutil.move(src, dst)
@@ -1027,16 +1084,16 @@ def _get_file_list(stage_set):
     excludes = []
 
     for item in stage_set:
-        if item.startswith('-'):
+        if item.startswith("-"):
             excludes.append(item[1:])
-        elif item.startswith('\\'):
+        elif item.startswith("\\"):
             includes.append(item[1:])
         else:
             includes.append(item)
 
     _validate_relative_paths(includes + excludes)
 
-    includes = includes or ['*']
+    includes = includes or ["*"]
 
     return includes, excludes
 
@@ -1044,12 +1101,12 @@ def _get_file_list(stage_set):
 def _generate_include_set(directory, includes):
     include_files = set()
     for include in includes:
-        if '*' in include:
+        if "*" in include:
             pattern = os.path.join(directory, include)
             matches = iglob(pattern, recursive=True)
             include_files |= set(matches)
         else:
-            include_files |= set([os.path.join(directory, include), ])
+            include_files |= set([os.path.join(directory, include)])
 
     include_dirs = [x for x in include_files if os.path.isdir(x)]
     include_files = set([os.path.relpath(x, directory) for x in include_files])
@@ -1058,12 +1115,12 @@ def _generate_include_set(directory, includes):
     # files from an include like 'lib'
     for include_dir in include_dirs:
         for root, dirs, files in os.walk(include_dir):
-            include_files |= \
-                set([os.path.relpath(os.path.join(root, d), directory)
-                     for d in dirs])
-            include_files |= \
-                set([os.path.relpath(os.path.join(root, f), directory)
-                     for f in files])
+            include_files |= set(
+                [os.path.relpath(os.path.join(root, d), directory) for d in dirs]
+            )
+            include_files |= set(
+                [os.path.relpath(os.path.join(root, f), directory) for f in files]
+            )
 
     return include_files
 
@@ -1076,10 +1133,10 @@ def _generate_exclude_set(directory, excludes):
         matches = iglob(pattern, recursive=True)
         exclude_files |= set(matches)
 
-    exclude_dirs = [os.path.relpath(x, directory)
-                    for x in exclude_files if os.path.isdir(x)]
-    exclude_files = set([os.path.relpath(x, directory)
-                         for x in exclude_files])
+    exclude_dirs = [
+        os.path.relpath(x, directory) for x in exclude_files if os.path.isdir(x)
+    ]
+    exclude_files = set([os.path.relpath(x, directory) for x in exclude_files])
 
     return exclude_files, exclude_dirs
 
@@ -1091,7 +1148,7 @@ def _validate_relative_paths(files):
 
 
 def _file_collides(file_this, file_other):
-    if not file_this.endswith('.pc'):
+    if not file_this.endswith(".pc"):
         return not filecmp.cmp(file_this, file_other, shallow=False)
 
     pc_file_1 = open(file_this)
@@ -1099,8 +1156,8 @@ def _file_collides(file_this, file_other):
 
     try:
         for lines in zip(pc_file_1, pc_file_2):
-            for line in zip(lines[0].split('\n'), lines[1].split('\n')):
-                if line[0].startswith('prefix='):
+            for line in zip(lines[0].split("\n"), lines[1].split("\n")):
+                if line[0].startswith("prefix="):
                     continue
                 if line[0] != line[1]:
                     return True
@@ -1122,13 +1179,11 @@ def check_for_collisions(parts):
 
         # Scan previous parts for collisions
         for other_part_name in parts_files:
-            common = part_contents & parts_files[other_part_name]['files']
+            common = part_contents & parts_files[other_part_name]["files"]
             conflict_files = []
             for f in common:
                 this = os.path.join(part.plugin.installdir, f)
-                other = os.path.join(
-                    parts_files[other_part_name]['installdir'],
-                    f)
+                other = os.path.join(parts_files[other_part_name]["installdir"], f)
 
                 if _paths_collide(this, other):
                     conflict_files.append(f)
@@ -1137,11 +1192,14 @@ def check_for_collisions(parts):
                 raise errors.SnapcraftPartConflictError(
                     other_part_name=other_part_name,
                     part_name=part.name,
-                    conflict_files=conflict_files)
+                    conflict_files=conflict_files,
+                )
 
         # And add our files to the list
-        parts_files[part.name] = {'files': part_contents,
-                                  'installdir': part.plugin.installdir}
+        parts_files[part.name] = {
+            "files": part_contents,
+            "installdir": part.plugin.installdir,
+        }
 
 
 def _paths_collide(path1: str, path2: str) -> bool:
@@ -1176,11 +1234,11 @@ def _paths_collide(path1: str, path2: str) -> bool:
 
 
 def _get_includes(fileset):
-    return [x for x in fileset if x[0] != '-']
+    return [x for x in fileset if x[0] != "-"]
 
 
 def _get_excludes(fileset):
-    return [x[1:] for x in fileset if x[0] == '-']
+    return [x[1:] for x in fileset if x[0] == "-"]
 
 
 def _combine_filesets(starting_fileset, modifying_fileset):
@@ -1192,8 +1250,7 @@ def _combine_filesets(starting_fileset, modifying_fileset):
     starting_excludes = set(_get_excludes(starting_fileset))
     modifying_includes = set(_get_includes(modifying_fileset))
 
-    contradicting_fileset = set.intersection(starting_excludes,
-                                             modifying_includes)
+    contradicting_fileset = set.intersection(starting_excludes, modifying_includes)
 
     if contradicting_fileset:
         raise errors.PrimeFileConflictError(fileset=contradicting_fileset)
@@ -1201,12 +1258,12 @@ def _combine_filesets(starting_fileset, modifying_fileset):
     to_combine = False
     # combine if starting_fileset has a wildcard
     # XXX: should this only be a single wildcard and possibly excludes?
-    if '*' in modifying_fileset:
+    if "*" in modifying_fileset:
         to_combine = True
-        modifying_fileset.remove('*')
+        modifying_fileset.remove("*")
 
     # combine if modifying_fileset is only excludes
-    if set([x[0] for x in modifying_fileset]) == set('-'):
+    if set([x[0] for x in modifying_fileset]) == set("-"):
         to_combine = True
 
     if to_combine:

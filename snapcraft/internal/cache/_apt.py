@@ -32,12 +32,12 @@ class AptStagePackageCache(SnapcraftStagePackageCache):
         """
 
         super().__init__()
-        cache_base_dir = os.path.join(self.stage_package_cache_root, 'apt')
+        cache_base_dir = os.path.join(self.stage_package_cache_root, "apt")
 
         # TODO: Clean old cache, LP: #1663051
 
-        self.base_dir = os.path.join(
-            cache_base_dir, sources_digest)
+        self.base_dir = os.path.join(cache_base_dir, sources_digest)
         self.packages_dir = os.path.join(
-            self.base_dir, 'var', 'cache', 'apt', 'archives')
+            self.base_dir, "var", "cache", "apt", "archives"
+        )
         os.makedirs(self.packages_dir, exist_ok=True)

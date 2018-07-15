@@ -24,56 +24,58 @@ from tests import integration
 
 
 class CmakePluginTestCase(integration.TestCase):
-
     def test_stage_cmake_plugin(self):
-        self.run_snapcraft('stage', 'cmake-hello')
+        self.run_snapcraft("stage", "cmake-hello")
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join(self.stage_dir, 'bin', 'cmake-hello'))
+            os.path.join(self.stage_dir, "bin", "cmake-hello")
+        )
         self.assertThat(binary_output, Equals("It's a CMake world\n"))
 
     def test_cmake_can_rebuild(self):
         # Flip the config switch to automatically update
         config_path = os.path.join(
-            xdg.BaseDirectory.save_config_path('snapcraft'), 'cli.cfg')
-        with open(config_path, 'w') as f:
-            f.write('[Lifecycle]\noutdated_step_action = clean')
+            xdg.BaseDirectory.save_config_path("snapcraft"), "cli.cfg"
+        )
+        with open(config_path, "w") as f:
+            f.write("[Lifecycle]\noutdated_step_action = clean")
 
-        self.copy_project_to_cwd('cmake-with-lib')
-        output = self.run_snapcraft('prime')
+        self.copy_project_to_cwd("cmake-with-lib")
+        output = self.run_snapcraft("prime")
 
         # Assert that cmake actually configured and built from scratch
-        self.assertThat(output, Contains('The CXX compiler identification'))
+        self.assertThat(output, Contains("The CXX compiler identification"))
         self.assertThat(
-            output,
-            Contains('Building CXX object CMakeFiles/foo.dir/foo.cpp.o'))
+            output, Contains("Building CXX object CMakeFiles/foo.dir/foo.cpp.o")
+        )
         self.assertThat(
-            output,
-            Contains('Building CXX object CMakeFiles/usefoo.dir/main.cpp.o'))
+            output, Contains("Building CXX object CMakeFiles/usefoo.dir/main.cpp.o")
+        )
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join(self.prime_dir, 'bin', 'usefoo'))
+            os.path.join(self.prime_dir, "bin", "usefoo")
+        )
         self.assertThat(binary_output, Equals("foo\n"))
 
         # Modify the source code
-        source_file_path = os.path.join('src', 'foo.cpp')
-        shutil.copy('new_foo.cpp', source_file_path)
+        source_file_path = os.path.join("src", "foo.cpp")
+        shutil.copy("new_foo.cpp", source_file_path)
 
         # Prime again. This should rebuild
-        output = self.run_snapcraft('prime')
+        output = self.run_snapcraft("prime")
 
         # Assert that cmake did not start from scratch, and reused everything
         # it could
+        self.assertThat(output, Not(Contains("The CXX compiler identification")))
         self.assertThat(
-            output, Not(Contains('The CXX compiler identification')))
+            output, Contains("Building CXX object CMakeFiles/foo.dir/foo.cpp.o")
+        )
         self.assertThat(
             output,
-            Contains('Building CXX object CMakeFiles/foo.dir/foo.cpp.o'))
-        self.assertThat(
-            output,
-            Not(Contains(
-                'Building CXX object CMakeFiles/usefoo.dir/main.cpp.o')))
+            Not(Contains("Building CXX object CMakeFiles/usefoo.dir/main.cpp.o")),
+        )
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join(self.prime_dir, 'bin', 'usefoo'))
+            os.path.join(self.prime_dir, "bin", "usefoo")
+        )
         self.assertThat(binary_output, Equals("new foo\n"))

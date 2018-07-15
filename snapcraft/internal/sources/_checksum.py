@@ -25,11 +25,10 @@ def split_checksum(source_checksum: str) -> Tuple:
     :returns: a tuple consisting of the algorithm and the hash.
     """
     try:
-        algorithm, digest = source_checksum.split('/', 1)
+        algorithm, digest = source_checksum.split("/", 1)
 
     except ValueError:
-        raise ValueError('invalid checksum format: {!r}'
-                         .format(source_checksum))
+        raise ValueError("invalid checksum format: {!r}".format(source_checksum))
     return (algorithm, digest)
 
 

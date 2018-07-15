@@ -23,42 +23,49 @@ from testtools.matchers import FileExists
 from tests import integration
 
 
-class PlainboxProviderPluginStageTestCase(testscenarios.WithScenarios,
-                                          integration.TestCase):
+class PlainboxProviderPluginStageTestCase(
+    testscenarios.WithScenarios, integration.TestCase
+):
 
     scenarios = [
-        ('basic', dict(project_directory='plainbox-provider')),
-        ('with-stage-packages',
-         dict(project_directory='plainbox-provider-with-stage-packages')),
+        ("basic", dict(project_directory="plainbox-provider")),
+        (
+            "with-stage-packages",
+            dict(project_directory="plainbox-provider-with-stage-packages"),
+        ),
     ]
 
     def test_stage(self):
-        self.run_snapcraft('stage', self.project_directory)
+        self.run_snapcraft("stage", self.project_directory)
 
         self.assertThat(
             os.path.join(
-                self.stage_dir, 'providers', 'simple-plainbox-provider',
-                'plainbox-provider-simple.provider'),
-            FileExists())
+                self.stage_dir,
+                "providers",
+                "simple-plainbox-provider",
+                "plainbox-provider-simple.provider",
+            ),
+            FileExists(),
+        )
 
 
 class PlainboxProviderPluginTestCase(integration.TestCase):
-
     def test_snap_provider_with_deps(self):
-        project_dir = 'plainbox-provider-with-deps'
-        self.run_snapcraft('stage', project_dir)
+        project_dir = "plainbox-provider-with-deps"
+        self.run_snapcraft("stage", project_dir)
         # No assertion required as the project will fail to complete to the
         # prime step if validation fails
 
     def test_invalid_provider(self):
-        project_dir = 'plainbox-provider-invalid'
+        project_dir = "plainbox-provider-invalid"
         # The validate command should fail during the builid step of the
         # provider in this project
-        self.assertRaises(subprocess.CalledProcessError, self.run_snapcraft,
-                          'prime', project_dir)
+        self.assertRaises(
+            subprocess.CalledProcessError, self.run_snapcraft, "prime", project_dir
+        )
 
     def test_python_stage_pkg_mix(self):
-        project_dir = 'plainbox-provider-python-stage-pkg-mix'
-        self.run_snapcraft('stage', project_dir)
+        project_dir = "plainbox-provider-python-stage-pkg-mix"
+        self.run_snapcraft("stage", project_dir)
         # Tests bug where snap would fail to build with error:
         # "Failed building wheel for bitstring"

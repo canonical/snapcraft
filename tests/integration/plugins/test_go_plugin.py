@@ -18,93 +18,95 @@ import os
 import subprocess
 
 import yaml
-from testtools.matchers import (Equals, FileContains, FileExists, MatchesRegex,
-                                Not)
+from testtools.matchers import Equals, FileContains, FileExists, MatchesRegex, Not
 
 from tests import integration, os_release
 from tests.matchers import HasArchitecture
 
 
 class GoPluginTestCase(integration.TestCase):
-
     def test_stage_go_plugin(self):
-        self.run_snapcraft('stage', 'go-hello')
+        self.run_snapcraft("stage", "go-hello")
 
         # XXX go names the binary after the directory. --elopio - 2017-01-25
         binary_output = subprocess.check_output(
-            os.path.join(self.stage_dir, 'bin', os.path.basename(self.path)),
-            universal_newlines=True)
-        self.assertThat(binary_output, Equals('Hello snapcrafter\n'))
+            os.path.join(self.stage_dir, "bin", os.path.basename(self.path)),
+            universal_newlines=True,
+        )
+        self.assertThat(binary_output, Equals("Hello snapcrafter\n"))
 
     def test_classic_with_conflicting_build_id(self):
         # TODO find a faster test to verify LP: #1736861
-        if os.environ.get('ADT_TEST') and self.deb_arch == 'armhf':
+        if os.environ.get("ADT_TEST") and self.deb_arch == "armhf":
             self.skipTest("The autopkgtest armhf runners can't install snaps")
 
-        self.copy_project_to_cwd('go-gotty')
-        if os_release.get_version_codename() != 'xenial':
-            snapcraft_yaml_file = 'snapcraft.yaml'
+        self.copy_project_to_cwd("go-gotty")
+        if os_release.get_version_codename() != "xenial":
+            snapcraft_yaml_file = "snapcraft.yaml"
             with open(snapcraft_yaml_file) as f:
                 snapcraft_yaml = yaml.load(f)
-                snapcraft_yaml['parts']['gotty']['stage-packages'] = ['libc6']
-            with open(snapcraft_yaml_file, 'w') as f:
+                snapcraft_yaml["parts"]["gotty"]["stage-packages"] = ["libc6"]
+            with open(snapcraft_yaml_file, "w") as f:
                 yaml.dump(snapcraft_yaml, f)
 
-        self.run_snapcraft('prime')
+        self.run_snapcraft("prime")
 
-        bin_path = os.path.join(self.prime_dir, 'bin', 'gotty')
+        bin_path = os.path.join(self.prime_dir, "bin", "gotty")
 
         self.assertThat(bin_path, FileExists())
 
-        interpreter = subprocess.check_output([
-            self.patchelf_command, '--print-interpreter', bin_path]).decode()
+        interpreter = subprocess.check_output(
+            [self.patchelf_command, "--print-interpreter", bin_path]
+        ).decode()
         # On anything greater than xenial we will have a libc6 discrepancy
-        if os_release.get_version_codename() == 'xenial':
-            expected_interpreter = r'^/snap/core/current/.*'
+        if os_release.get_version_codename() == "xenial":
+            expected_interpreter = r"^/snap/core/current/.*"
         else:
-            expected_interpreter = r'^/snap/gotty/current/.*'
+            expected_interpreter = r"^/snap/gotty/current/.*"
         self.assertThat(interpreter, MatchesRegex(expected_interpreter))
 
     def test_building_multiple_main_packages(self):
-        self.run_snapcraft('stage', 'go-with-multiple-main-packages')
+        self.run_snapcraft("stage", "go-with-multiple-main-packages")
 
-        for bin in ['main1', 'main2', 'main3']:
-            self.assertThat(os.path.join('stage', 'bin', bin), FileExists())
+        for bin in ["main1", "main2", "main3"]:
+            self.assertThat(os.path.join("stage", "bin", bin), FileExists())
 
     def test_building_multiple_main_packages_without_go_packages(self):
-        self.copy_project_to_cwd('go-with-multiple-main-packages')
+        self.copy_project_to_cwd("go-with-multiple-main-packages")
 
-        snapcraft_yaml_file = 'snapcraft.yaml'
+        snapcraft_yaml_file = "snapcraft.yaml"
         with open(snapcraft_yaml_file) as f:
             snapcraft_yaml = yaml.load(f)
-        del snapcraft_yaml['parts']['multiple-mains']['go-packages']
-        with open(snapcraft_yaml_file, 'w') as f:
+        del snapcraft_yaml["parts"]["multiple-mains"]["go-packages"]
+        with open(snapcraft_yaml_file, "w") as f:
             yaml.dump(snapcraft_yaml, f)
 
-        self.assertThat(snapcraft_yaml_file, Not(FileContains('go-packages')))
-        self.run_snapcraft('stage')
+        self.assertThat(snapcraft_yaml_file, Not(FileContains("go-packages")))
+        self.run_snapcraft("stage")
 
-        for bin in ['main1', 'main2', 'main3']:
-            self.assertThat(os.path.join('stage', 'bin', bin), FileExists())
+        for bin in ["main1", "main2", "main3"]:
+            self.assertThat(os.path.join("stage", "bin", bin), FileExists())
 
     def test_cross_compiling(self):
-        if self.deb_arch != 'amd64':
-            self.skipTest('The test only handles amd64 to arm64')
+        if self.deb_arch != "amd64":
+            self.skipTest("The test only handles amd64 to arm64")
 
-        target_arch = 'arm64'
-        self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
-                           'go-hello')
-        binary = os.path.join(self.parts_dir, 'go-hello', 'install', 'bin',
-                              os.path.basename(self.path))
-        self.assertThat(binary, HasArchitecture('aarch64'))
+        target_arch = "arm64"
+        self.run_snapcraft(
+            ["build", "--target-arch={}".format(target_arch)], "go-hello"
+        )
+        binary = os.path.join(
+            self.parts_dir, "go-hello", "install", "bin", os.path.basename(self.path)
+        )
+        self.assertThat(binary, HasArchitecture("aarch64"))
 
     def test_cross_compiling_with_cgo(self):
-        if self.deb_arch != 'amd64':
-            self.skipTest('The test only handles amd64 to arm64')
+        if self.deb_arch != "amd64":
+            self.skipTest("The test only handles amd64 to arm64")
 
-        target_arch = 'arm64'
-        self.run_snapcraft(['build', '--target-arch={}'.format(target_arch)],
-                           'go-cgo')
-        binary = os.path.join(self.parts_dir, 'go-cgo', 'install', 'bin',
-                              os.path.basename(self.path))
-        self.assertThat(binary, HasArchitecture('aarch64'))
+        target_arch = "arm64"
+        self.run_snapcraft(["build", "--target-arch={}".format(target_arch)], "go-cgo")
+        binary = os.path.join(
+            self.parts_dir, "go-cgo", "install", "bin", os.path.basename(self.path)
+        )
+        self.assertThat(binary, HasArchitecture("aarch64"))

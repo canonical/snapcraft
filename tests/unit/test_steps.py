@@ -21,7 +21,6 @@ from tests import unit
 
 
 class StepsTestCase(unit.TestCase):
-
     def test_step_order(self):
         step = steps.PULL
         step = step.next_step()
@@ -47,22 +46,16 @@ class StepsTestCase(unit.TestCase):
 class NextStepsTestCase(unit.TestCase):
 
     scenarios = [
-        ('pull', {
-            'step': steps.PULL,
-            'expected_steps': [steps.BUILD, steps.STAGE, steps.PRIME],
-        }),
-        ('build', {
-            'step': steps.BUILD,
-            'expected_steps': [steps.STAGE, steps.PRIME],
-        }),
-        ('stage', {
-            'step': steps.STAGE,
-            'expected_steps': [steps.PRIME],
-        }),
-        ('prime', {
-            'step': steps.PRIME,
-            'expected_steps': [],
-        }),
+        (
+            "pull",
+            {
+                "step": steps.PULL,
+                "expected_steps": [steps.BUILD, steps.STAGE, steps.PRIME],
+            },
+        ),
+        ("build", {"step": steps.BUILD, "expected_steps": [steps.STAGE, steps.PRIME]}),
+        ("stage", {"step": steps.STAGE, "expected_steps": [steps.PRIME]}),
+        ("prime", {"step": steps.PRIME, "expected_steps": []}),
     ]
 
     def test_next_steps(self):
@@ -72,24 +65,17 @@ class NextStepsTestCase(unit.TestCase):
 class PreviousStepsTestCase(unit.TestCase):
 
     scenarios = [
-        ('pull', {
-            'step': steps.PULL,
-            'expected_steps': [],
-        }),
-        ('build', {
-            'step': steps.BUILD,
-            'expected_steps': [steps.PULL],
-        }),
-        ('stage', {
-            'step': steps.STAGE,
-            'expected_steps': [steps.PULL, steps.BUILD],
-        }),
-        ('prime', {
-            'step': steps.PRIME,
-            'expected_steps': [steps.PULL, steps.BUILD, steps.STAGE],
-        }),
+        ("pull", {"step": steps.PULL, "expected_steps": []}),
+        ("build", {"step": steps.BUILD, "expected_steps": [steps.PULL]}),
+        ("stage", {"step": steps.STAGE, "expected_steps": [steps.PULL, steps.BUILD]}),
+        (
+            "prime",
+            {
+                "step": steps.PRIME,
+                "expected_steps": [steps.PULL, steps.BUILD, steps.STAGE],
+            },
+        ),
     ]
 
     def test_previous_steps(self):
-        self.assertThat(
-            self.step.previous_steps(), Equals(self.expected_steps))
+        self.assertThat(self.step.previous_steps(), Equals(self.expected_steps))

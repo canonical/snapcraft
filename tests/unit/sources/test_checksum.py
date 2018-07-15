@@ -31,55 +31,55 @@ if sys.version_info < (3, 6):
 
 
 class TestChecksum(unit.TestCase):
-
     def setUp(self):
         super().setUp()
 
     def test_invalid_checksum(self):
         # Create a file for testing
-        os.makedirs(os.path.join('src'))
-        dummy_file = os.path.join('src', 'test')
-        open(dummy_file, 'w').close()
+        os.makedirs(os.path.join("src"))
+        dummy_file = os.path.join("src", "test")
+        open(dummy_file, "w").close()
 
-        self.assertRaises(AttributeError, verify_checksum, '456/abcde',
-                          dummy_file)
+        self.assertRaises(AttributeError, verify_checksum, "456/abcde", dummy_file)
 
     def test_correct_checksum(self):
         # Create zip file for testing
-        os.makedirs(os.path.join('src'))
-        file_to_zip = os.path.join('src', 'test.txt')
-        open(file_to_zip, 'w').close()
-        zip_file = zipfile.ZipFile(os.path.join('src', 'test.zip'), 'w')
+        os.makedirs(os.path.join("src"))
+        file_to_zip = os.path.join("src", "test.txt")
+        open(file_to_zip, "w").close()
+        zip_file = zipfile.ZipFile(os.path.join("src", "test.zip"), "w")
         zip_file.write(file_to_zip)
         zip_file.close()
 
-        calculated_checksum = hashlib.new('md5',
-                                          open(os.path.join('src', 'test.zip'),
-                                               'rb').read())
+        calculated_checksum = hashlib.new(
+            "md5", open(os.path.join("src", "test.zip"), "rb").read()
+        )
         calculated_checksum = calculated_checksum.hexdigest()
 
-        verify_checksum('md5/' + calculated_checksum, 'src/test.zip')
+        verify_checksum("md5/" + calculated_checksum, "src/test.zip")
 
     def test_incorrect_checksum(self):
         # Create zip file for testing
-        os.makedirs(os.path.join('src'))
-        file_to_zip = os.path.join('src', 'test.txt')
-        open(file_to_zip, 'w').close()
-        zip_file = zipfile.ZipFile(os.path.join('src', 'test.zip'), 'w')
+        os.makedirs(os.path.join("src"))
+        file_to_zip = os.path.join("src", "test.txt")
+        open(file_to_zip, "w").close()
+        zip_file = zipfile.ZipFile(os.path.join("src", "test.zip"), "w")
         zip_file.write(file_to_zip)
         zip_file.close()
 
-        incorrect_checksum = 'fe049cfba688aa1af88bc78191d7f904'
+        incorrect_checksum = "fe049cfba688aa1af88bc78191d7f904"
 
-        calculated_checksum = hashlib.new('md5',
-                                          open(os.path.join('src', 'test.zip'),
-                                               'rb').read())
+        calculated_checksum = hashlib.new(
+            "md5", open(os.path.join("src", "test.zip"), "rb").read()
+        )
         calculated_checksum = calculated_checksum.hexdigest()
 
-        raised = self.assertRaises(errors.DigestDoesNotMatchError,
-                                   verify_checksum,
-                                   'md5/' + incorrect_checksum,
-                                   'src/test.zip')
+        raised = self.assertRaises(
+            errors.DigestDoesNotMatchError,
+            verify_checksum,
+            "md5/" + incorrect_checksum,
+            "src/test.zip",
+        )
 
         self.assertThat(raised.expected, Equals(incorrect_checksum))
         self.assertThat(raised.calculated, Equals(calculated_checksum))

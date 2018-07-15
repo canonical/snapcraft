@@ -21,35 +21,42 @@ from tests import unit
 class PrimeTypeExcludesPatchingTestCase(unit.TestCase):
 
     scenarios = (
-        ('kernel', dict(snap_type='kernel')),
-        ('gadget', dict(snap_type='gadget')),
-        ('base', dict(snap_type='base')),
-        ('os', dict(snap_type='os')),
+        ("kernel", dict(snap_type="kernel")),
+        ("gadget", dict(snap_type="gadget")),
+        ("base", dict(snap_type="base")),
+        ("os", dict(snap_type="os")),
     )
 
     def test_no_patcher_called(self):
         handler = self.load_part(
-            'test-part', part_properties={'source-subdir': 'src'},
-            snap_type=self.snap_type)
+            "test-part",
+            part_properties={"source-subdir": "src"},
+            snap_type=self.snap_type,
+        )
 
-        patcher_class = 'snapcraft.internal.pluginhandler.PartPatcher'
+        patcher_class = "snapcraft.internal.pluginhandler.PartPatcher"
         with mock.patch(patcher_class) as patcher_mock:
             handler.prime()
             patcher_mock.assert_not_called()
 
 
 class PrimeTypeAppDoesPatchingTestCase(unit.TestCase):
-
     def test_patcher_called(self):
         handler = self.load_part(
-            'test-part', part_properties={'source-subdir': 'src'},
-            snap_type='app')
+            "test-part", part_properties={"source-subdir": "src"}, snap_type="app"
+        )
 
-        patcher_class = 'snapcraft.internal.pluginhandler.PartPatcher'
+        patcher_class = "snapcraft.internal.pluginhandler.PartPatcher"
         with mock.patch(patcher_class) as patcher_mock:
             handler.prime()
             patcher_mock.assert_called_with(
-                confinement='strict', core_base='core', elf_files=frozenset(),
-                plugin=mock.ANY, primedir=self.prime_dir,
-                project=mock.ANY, snap_base_path='/snap/fake-name/current',
-                stage_packages=[], stagedir=self.stage_dir)
+                confinement="strict",
+                core_base="core",
+                elf_files=frozenset(),
+                plugin=mock.ANY,
+                primedir=self.prime_dir,
+                project=mock.ANY,
+                snap_base_path="/snap/fake-name/current",
+                stage_packages=[],
+                stagedir=self.stage_dir,
+            )

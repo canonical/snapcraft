@@ -36,19 +36,20 @@ class GlobalGrammarProcessor:
     {'hello'}
     """
 
-    def __init__(self, *, properties: Dict[str, Any],
-                 project: project.Project) -> None:
+    def __init__(self, *, properties: Dict[str, Any], project: project.Project) -> None:
         self._project = project
 
-        self._build_package_grammar = properties.get('build-packages', [])
+        self._build_package_grammar = properties.get("build-packages", [])
         self.__build_packages = set()  # type: Set[str]
 
     def get_build_packages(self) -> Set[str]:
         if not self.__build_packages:
             processor = grammar.GrammarProcessor(
-                self._build_package_grammar, self._project,
+                self._build_package_grammar,
+                self._project,
                 repo.Repo.build_package_is_valid,
-                transformer=package_transformer)
+                transformer=package_transformer,
+            )
             self.__build_packages = processor.process()
 
         return self.__build_packages

@@ -22,32 +22,31 @@ from snapcraft.internal.indicators import is_dumb_terminal
 
 
 class _StdoutFilter(logging.Filter):
-
     def filter(self, record):
         return record.levelno <= logging.WARNING
 
 
 class _StderrFilter(logging.Filter):
-
     def filter(self, record):
         return record.levelno >= logging.ERROR
 
 
 class _ColoredFormatter(logging.Formatter):
-    RESET = '\033[0m'
+    RESET = "\033[0m"
     LEVEL_COLORS = {
-        'INFO': '\033[0;32m',  # Green
-        'WARNING': '\033[1;33m',  # Yellow
-        'ERROR': '\033[0;31m',  # Dark red
-        'CRITICAL': '\033[1;31m',  # Light red
+        "INFO": "\033[0;32m",  # Green
+        "WARNING": "\033[1;33m",  # Yellow
+        "ERROR": "\033[0;31m",  # Dark red
+        "CRITICAL": "\033[1;31m",  # Light red
     }
 
     def format(self, record):
         color = self.LEVEL_COLORS.get(record.levelname, None)
         log_message = super().format(record)
         if color:
-            return '{color}{message}{reset}'.format(
-                color=color, message=log_message, reset=self.RESET)
+            return "{color}{message}{reset}".format(
+                color=color, message=log_message, reset=self.RESET
+            )
 
         return log_message
 
@@ -63,9 +62,9 @@ def configure(logger_name=None, log_level=None):
     handlers = [stdout_handler, stderr_handler]
 
     if is_dumb_terminal():
-        formatter = logging.Formatter(style='{')
+        formatter = logging.Formatter(style="{")
     else:
-        formatter = _ColoredFormatter(style='{')
+        formatter = _ColoredFormatter(style="{")
     logger = logging.getLogger(logger_name)
     for handler in handlers:
         handler.setFormatter(formatter)

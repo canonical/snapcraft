@@ -24,17 +24,21 @@ from tests import unit
 class ErrorFormattingTestCase(unit.TestCase):
 
     scenarios = (
-        ('PipListInvalidLegacyFormatError', {
-            'exception': errors.PipListInvalidLegacyFormatError,
-            'kwargs': {'output': 'test-output'},
-            'expected_message': (
-                "Failed to parse Python package list: "
-                "The returned output is not in the expected format:\n"
-                "test-output"
-                )}),
+        (
+            "PipListInvalidLegacyFormatError",
+            {
+                "exception": errors.PipListInvalidLegacyFormatError,
+                "kwargs": {"output": "test-output"},
+                "expected_message": (
+                    "Failed to parse Python package list: "
+                    "The returned output is not in the expected format:\n"
+                    "test-output"
+                ),
+            },
+        ),
     )
 
     def test_error_formatting(self):
         self.assertThat(
-            str(self.exception(**self.kwargs)),
-            Equals(self.expected_message))
+            str(self.exception(**self.kwargs)), Equals(self.expected_message)
+        )

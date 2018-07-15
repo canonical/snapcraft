@@ -46,51 +46,53 @@ import docopt
 
 def main():
     arguments = docopt.docopt(__doc__)
-    repo = arguments['REPO_URL']
-    repo_branch = arguments['--repo-branch']
-    cleanbuild = arguments['--cleanbuild']
-    keep_dir = arguments['--keep-dir']
+    repo = arguments["REPO_URL"]
+    repo_branch = arguments["--repo-branch"]
+    cleanbuild = arguments["--cleanbuild"]
+    keep_dir = arguments["--keep-dir"]
     if _is_git(repo):
-        if shutil.which('git'):
+        if shutil.which("git"):
             path = _git_clone(repo, repo_branch)
         else:
-            sys.exit('Please install git.')
+            sys.exit("Please install git.")
     elif _is_bzr(repo):
-        if shutil.which('bzr'):
+        if shutil.which("bzr"):
             path = _bzr_branch(repo)
         else:
-            sys.exit('Please install bzr.')
+            sys.exit("Please install bzr.")
     else:
-        sys.exit('Unsupported repository.')
+        sys.exit("Unsupported repository.")
 
     _build_snaps(path, cleanbuild, keep_dir)
 
 
 def _is_git(repo):
-    return (repo.startswith('https://github.com/') or
-            repo.startswith('git://') or
-            repo.startswith('https://git.launchpad.net/'))
+    return (
+        repo.startswith("https://github.com/")
+        or repo.startswith("git://")
+        or repo.startswith("https://git.launchpad.net/")
+    )
 
 
 def _git_clone(url, repo_branch=None):
-    temp_dir = tempfile.mkdtemp(prefix='snapcraft-')
-    command = ['git', 'clone', '--progress', url, temp_dir]
-    print(' '.join(command))
+    temp_dir = tempfile.mkdtemp(prefix="snapcraft-")
+    command = ["git", "clone", "--progress", url, temp_dir]
+    print(" ".join(command))
     subprocess.check_call(command)
     if repo_branch:
-        subprocess.check_call(['git', 'checkout', repo_branch], cwd=temp_dir)
+        subprocess.check_call(["git", "checkout", repo_branch], cwd=temp_dir)
     return temp_dir
 
 
 def _is_bzr(repo):
-    return repo.startswith('lp:')
+    return repo.startswith("lp:")
 
 
 def _bzr_branch(url):
-    temp_dir = tempfile.mkdtemp(prefix='snapcraft-')
-    repo_dir = os.path.join(temp_dir, 'repo')
-    command = ['bzr', 'branch', '-v', url, repo_dir]
-    print(' '.join(command))
+    temp_dir = tempfile.mkdtemp(prefix="snapcraft-")
+    repo_dir = os.path.join(temp_dir, "repo")
+    command = ["bzr", "branch", "-v", url, repo_dir]
+    print(" ".join(command))
     subprocess.check_call(command)
     return repo_dir
 
@@ -106,31 +108,33 @@ def _build_snaps(path, cleanbuild=False, keep_dir=False):
         sys.exit(e.returncode)
     finally:
         if keep_dir:
-            print(
-                'You can inspect the built project repository in {}'.format(
-                    path))
+            print("You can inspect the built project repository in {}".format(path))
         else:
             shutil.rmtree(path)
 
 
 def _is_snapcraft_dir(dirpath, dirnames, filenames):
-    return (('snap' in dirnames and
-             'snapcraft.yaml' in os.listdir(os.path.join(dirpath, 'snap'))) or
-            'snapcraft.yaml' in filenames or
-            '.snapcraft.yaml' in filenames)
+    return (
+        (
+            "snap" in dirnames
+            and "snapcraft.yaml" in os.listdir(os.path.join(dirpath, "snap"))
+        )
+        or "snapcraft.yaml" in filenames
+        or ".snapcraft.yaml" in filenames
+    )
 
 
 def _build_snap(path, cleanbuild=False, keep_dir=False):
-    snapcraft = os.path.abspath(os.path.join('bin', 'snapcraft'))
-    print('Updating the parts cache...')
-    subprocess.check_call([snapcraft, 'update'])
-    print('Snapping {}'.format(path))
-    command = [snapcraft, '-d']
+    snapcraft = os.path.abspath(os.path.join("bin", "snapcraft"))
+    print("Updating the parts cache...")
+    subprocess.check_call([snapcraft, "update"])
+    print("Snapping {}".format(path))
+    command = [snapcraft, "-d"]
     if cleanbuild:
-        command.append('cleanbuild')
-    print(' '.join(command))
+        command.append("cleanbuild")
+    print(" ".join(command))
     subprocess.check_call(command, cwd=path)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

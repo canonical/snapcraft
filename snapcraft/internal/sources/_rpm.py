@@ -25,28 +25,38 @@ from ._base import FileBase
 
 
 class Rpm(FileBase):
-
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None, source_checksum=None):
-        super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth, source_checksum,
-                         'rpm2cpio')
+    def __init__(
+        self,
+        source,
+        source_dir,
+        source_tag=None,
+        source_commit=None,
+        source_branch=None,
+        source_depth=None,
+        source_checksum=None,
+    ):
+        super().__init__(
+            source,
+            source_dir,
+            source_tag,
+            source_commit,
+            source_branch,
+            source_depth,
+            source_checksum,
+            "rpm2cpio",
+        )
         if source_tag:
-            raise errors.SnapcraftSourceInvalidOptionError(
-                'rpm', 'source-tag')
+            raise errors.SnapcraftSourceInvalidOptionError("rpm", "source-tag")
         elif source_commit:
-            raise errors.SnapcraftSourceInvalidOptionError(
-                'rpm', 'source-commit')
+            raise errors.SnapcraftSourceInvalidOptionError("rpm", "source-commit")
         elif source_branch:
-            raise errors.SnapcraftSourceInvalidOptionError(
-                'rpm', 'source-branch')
+            raise errors.SnapcraftSourceInvalidOptionError("rpm", "source-branch")
 
     def provision(self, dst, clean_target=True, keep_rpm=False, src=None):
         if src:
             rpm_file = src
         else:
-            rpm_file = os.path.join(
-                self.source_dir, os.path.basename(self.source))
+            rpm_file = os.path.join(self.source_dir, os.path.basename(self.source))
         rpm_file = os.path.realpath(rpm_file)
 
         if clean_target:
@@ -56,8 +66,7 @@ class Rpm(FileBase):
             os.makedirs(dst)
             shutil.move(tmp_rpm, rpm_file)
 
-        extract_command = 'rpm2cpio {} | cpio -idmv'.format(
-            shlex.quote(rpm_file))
+        extract_command = "rpm2cpio {} | cpio -idmv".format(shlex.quote(rpm_file))
         subprocess.check_output(extract_command, shell=True, cwd=dst)
 
         if not keep_rpm:

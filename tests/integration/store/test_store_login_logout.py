@@ -18,16 +18,14 @@ from tests import integration
 
 
 class LoginLogoutTestCase(integration.StoreTestCase):
-
     def test_successful_login(self):
         self.addCleanup(self.logout)
         self.login(expect_success=True)
 
     def test_failed_login(self):
         self.login(
-            'snapcraft-test+user@canonical.com',
-            'wrongpassword',
-            expect_success=False)
+            "snapcraft-test+user@canonical.com", "wrongpassword", expect_success=False
+        )
 
     def test_login_with(self):
         pass

@@ -24,55 +24,49 @@ from tests import unit
 
 
 class TestTarContentPlugin(unit.TestCase):
-
     def setUp(self):
         super().setUp()
 
         self.project_options = snapcraft.ProjectOptions()
 
         # setup the expected target dir in our tempdir
-        part_dir = os.path.join(self.parts_dir, 'tar_content')
-        self.build_prefix = os.path.join(part_dir, 'build')
+        part_dir = os.path.join(self.parts_dir, "tar_content")
+        self.build_prefix = os.path.join(part_dir, "build")
         os.makedirs(self.build_prefix)
-        self.install_prefix = os.path.join(part_dir, 'install')
+        self.install_prefix = os.path.join(part_dir, "install")
         os.makedirs(self.install_prefix)
 
     def test_dest_abs_path_raises_exception(self):
         class Options:
-            source = '.'
-            destination = '/destdir1'
+            source = "."
+            destination = "/destdir1"
+
         # ensure that a absolute path for a destination directory
         # raises an exception
         raised = self.assertRaises(
-            ValueError,
-            TarContentPlugin,
-            'tar_content', Options(),
-            self.project_options)
+            ValueError, TarContentPlugin, "tar_content", Options(), self.project_options
+        )
 
-        self.assertThat(raised.__str__(),
-                        Equals("path '/destdir1' must be relative"))
+        self.assertThat(raised.__str__(), Equals("path '/destdir1' must be relative"))
 
     def test_install_destination_dir_exists(self):
         class Options:
-            destination = 'destdir1'
+            destination = "destdir1"
 
-        t = TarContentPlugin('tar_content', Options(),
-                             self.project_options)
-        open(os.path.join(t.build_basedir, 'test.txt'), 'w').close()
+        t = TarContentPlugin("tar_content", Options(), self.project_options)
+        open(os.path.join(t.build_basedir, "test.txt"), "w").close()
         t.build()
 
+        self.assertTrue(os.path.exists(os.path.join(self.install_prefix, "destdir1")))
         self.assertTrue(
-            os.path.exists(os.path.join(self.install_prefix, 'destdir1')))
-        self.assertTrue(
-            os.path.exists(
-                os.path.join(self.install_prefix, 'destdir1/test.txt')))
+            os.path.exists(os.path.join(self.install_prefix, "destdir1/test.txt"))
+        )
 
     def test_without_destination_dir_attribute_defined(self):
         class Options:
-            source = '.'
+            source = "."
             destination = None
-        TarContentPlugin('tar_content', Options(),
-                         self.project_options)
 
-        self.assertTrue(
-            os.path.exists(os.path.join(self.build_prefix)))
+        TarContentPlugin("tar_content", Options(), self.project_options)
+
+        self.assertTrue(os.path.exists(os.path.join(self.build_prefix)))

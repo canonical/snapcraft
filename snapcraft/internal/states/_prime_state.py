@@ -25,14 +25,21 @@ def _prime_state_constructor(loader, node):
     return PrimeState(**parameters)
 
 
-yaml.add_constructor(u'!PrimeState', _prime_state_constructor)
+yaml.add_constructor(u"!PrimeState", _prime_state_constructor)
 
 
 class PrimeState(PartState):
-    yaml_tag = u'!PrimeState'
+    yaml_tag = u"!PrimeState"
 
-    def __init__(self, files, directories, dependency_paths=None,
-                 part_properties=None, project=None, scriptlet_metadata=None):
+    def __init__(
+        self,
+        files,
+        directories,
+        dependency_paths=None,
+        part_properties=None,
+        project=None,
+        scriptlet_metadata=None,
+    ):
         super().__init__(part_properties, project)
 
         if not scriptlet_metadata:
@@ -54,8 +61,8 @@ class PrimeState(PartState):
         """
 
         return {
-            'override-prime': part_properties.get('override-prime'),
-            'prime': part_properties.get('prime', ['*']) or ['*'],
+            "override-prime": part_properties.get("override-prime"),
+            "prime": part_properties.get("prime", ["*"]) or ["*"],
         }
 
     def project_options_of_interest(self, project):

@@ -18,9 +18,8 @@ import subprocess
 
 
 def call(cmd):
-    subprocess.check_call(cmd, stdout=subprocess.DEVNULL,
-                          stderr=subprocess.DEVNULL)
+    subprocess.check_call(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
 def call_with_output(cmd):
-    return subprocess.check_output(cmd).decode('utf-8').strip()
+    return subprocess.check_output(cmd).decode("utf-8").strip()

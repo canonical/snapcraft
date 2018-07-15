@@ -17,14 +17,15 @@ import contextlib
 import shutil
 
 from snapcraft.internal.errors import MissingCommandError
-from . import errors               # noqa
-from . import snaps                # noqa
+from . import errors  # noqa
+from . import snaps  # noqa
 from . import _platform
-from ._base import BaseRepo        # noqa
+from ._base import BaseRepo  # noqa
 from ._base import fix_pkg_config  # noqa
+
 # Imported for backwards compatibility with plugins
 if _platform._is_deb_based():
-    from ._deb import Ubuntu       # noqa
+    from ._deb import Ubuntu  # noqa
 
 Repo = _platform._get_repo_for_platform()
 
@@ -40,6 +41,6 @@ def get_pkg_name_parts(pkg_name):
     name = pkg_name
     version = None
     with contextlib.suppress(ValueError):
-        name, version = pkg_name.split('=')
+        name, version = pkg_name.split("=")
 
     return name, version

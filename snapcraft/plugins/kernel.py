@@ -69,95 +69,120 @@ from snapcraft.plugins import kbuild
 logger = logging.getLogger(__name__)
 
 
-_compression_command = {
-    'gz': 'gzip',
-}
+_compression_command = {"gz": "gzip"}
 
 default_kernel_image_target = {
-    'amd64': 'bzImage',
-    'i386': 'bzImage',
-    'armhf': 'zImage',
-    'arm64': 'Image.gz',
-    'powerpc': 'uImage',
-    'ppc64el': 'vmlinux.strip',
-    's390x': 'bzImage',
+    "amd64": "bzImage",
+    "i386": "bzImage",
+    "armhf": "zImage",
+    "arm64": "Image.gz",
+    "powerpc": "uImage",
+    "ppc64el": "vmlinux.strip",
+    "s390x": "bzImage",
 }
 
-required_generic = ['DEVTMPFS', 'DEVTMPFS_MOUNT', 'TMPFS_POSIX_ACL', 'IPV6',
-                    'SYSVIPC', 'SYSVIPC_SYSCTL', 'VFAT_FS', 'NLS_CODEPAGE_437',
-                    'NLS_ISO8859_1']
+required_generic = [
+    "DEVTMPFS",
+    "DEVTMPFS_MOUNT",
+    "TMPFS_POSIX_ACL",
+    "IPV6",
+    "SYSVIPC",
+    "SYSVIPC_SYSCTL",
+    "VFAT_FS",
+    "NLS_CODEPAGE_437",
+    "NLS_ISO8859_1",
+]
 
-required_security = ['SECURITY', 'SECURITY_APPARMOR', 'SYN_COOKIES',
-                     'STRICT_DEVMEM', 'DEFAULT_SECURITY_APPARMOR', 'SECCOMP',
-                     'SECCOMP_FILTER', 'CC_STACKPROTECTOR',
-                     'CC_STACKPROTECTOR_STRONG', 'DEBUG_RODATA',
-                     'DEBUG_SET_MODULE_RONX']
+required_security = [
+    "SECURITY",
+    "SECURITY_APPARMOR",
+    "SYN_COOKIES",
+    "STRICT_DEVMEM",
+    "DEFAULT_SECURITY_APPARMOR",
+    "SECCOMP",
+    "SECCOMP_FILTER",
+    "CC_STACKPROTECTOR",
+    "CC_STACKPROTECTOR_STRONG",
+    "DEBUG_RODATA",
+    "DEBUG_SET_MODULE_RONX",
+]
 
-required_snappy = ['RD_LZMA', 'KEYS', 'ENCRYPTED_KEYS', 'SQUASHFS',
-                   'SQUASHFS_XATTR', 'SQUASHFS_XZ',
-                   'DEVPTS_MULTIPLE_INSTANCES']
+required_snappy = [
+    "RD_LZMA",
+    "KEYS",
+    "ENCRYPTED_KEYS",
+    "SQUASHFS",
+    "SQUASHFS_XATTR",
+    "SQUASHFS_XZ",
+    "DEVPTS_MULTIPLE_INSTANCES",
+]
 
-required_systemd = ['DEVTMPFS', 'CGROUPS', 'INOTIFY_USER', 'SIGNALFD',
-                    'TIMERFD', 'EPOLL', 'NET', 'SYSFS', 'PROC_FS', 'FHANDLE',
-                    'BLK_DEV_BSG', 'NET_NS', 'IPV6', 'AUTOFS4_FS',
-                    'TMPFS_POSIX_ACL', 'TMPFS_XATTR', 'SECCOMP']
+required_systemd = [
+    "DEVTMPFS",
+    "CGROUPS",
+    "INOTIFY_USER",
+    "SIGNALFD",
+    "TIMERFD",
+    "EPOLL",
+    "NET",
+    "SYSFS",
+    "PROC_FS",
+    "FHANDLE",
+    "BLK_DEV_BSG",
+    "NET_NS",
+    "IPV6",
+    "AUTOFS4_FS",
+    "TMPFS_POSIX_ACL",
+    "TMPFS_XATTR",
+    "SECCOMP",
+]
 
-required_boot = ['squashfs']
+required_boot = ["squashfs"]
 
 
 class KernelPlugin(kbuild.KBuildPlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
 
-        schema['properties']['kernel-image-target'] = {
-            'oneOf': [
-                {'type': 'string'},
-                {'type': 'object'},
-            ],
-            'default': '',
+        schema["properties"]["kernel-image-target"] = {
+            "oneOf": [{"type": "string"}, {"type": "object"}],
+            "default": "",
         }
 
-        schema['properties']['kernel-with-firmware'] = {
-            'type': 'boolean',
-            'default': True,
+        schema["properties"]["kernel-with-firmware"] = {
+            "type": "boolean",
+            "default": True,
         }
 
-        schema['properties']['kernel-initrd-modules'] = {
-            'type': 'array',
-            'minitems': 1,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string',
-            },
-            'default': [],
+        schema["properties"]["kernel-initrd-modules"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
         }
 
-        schema['properties']['kernel-initrd-firmware'] = {
-            'type': 'array',
-            'minitems': 1,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string',
-            },
-            'default': [],
+        schema["properties"]["kernel-initrd-firmware"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
         }
 
-        schema['properties']['kernel-device-trees'] = {
-            'type': 'array',
-            'minitems': 1,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string',
-            },
-            'default': [],
+        schema["properties"]["kernel-device-trees"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
         }
 
-        schema['properties']['kernel-initrd-compression'] = {
-            'type': 'string',
-            'default': 'gz',
-            'enum': ['gz'],
+        schema["properties"]["kernel-initrd-compression"] = {
+            "type": "string",
+            "default": "gz",
+            "enum": ["gz"],
         }
 
         return schema
@@ -167,9 +192,13 @@ class KernelPlugin(kbuild.KBuildPlugin):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
         return super().get_build_properties() + [
-            'kernel-image-target', 'kernel-with-firmware',
-            'kernel-initrd-modules', 'kernel-initrd-firmware',
-            'kernel-device-trees', 'kernel-initrd-compression']
+            "kernel-image-target",
+            "kernel-with-firmware",
+            "kernel-initrd-modules",
+            "kernel-initrd-firmware",
+            "kernel-device-trees",
+            "kernel-initrd-compression",
+        ]
 
     @property
     def compression_cmd(self):
@@ -179,16 +208,17 @@ class KernelPlugin(kbuild.KBuildPlugin):
         super().__init__(name, options, project)
 
         # We need to be able to shell out to modprobe
-        self.build_packages.append('kmod')
+        self.build_packages.append("kmod")
 
         self._set_kernel_targets()
 
-        self.os_snap = os.path.join(self.sourcedir, 'os.snap')
-        self.kernel_release = ''
+        self.os_snap = os.path.join(self.sourcedir, "os.snap")
+        self.kernel_release = ""
 
     def enable_cross_compilation(self):
-        logger.info('Cross compiling kernel target {!r}'.format(
-                    self.project.kernel_arch))
+        logger.info(
+            "Cross compiling kernel target {!r}".format(self.project.kernel_arch)
+        )
         super().enable_cross_compilation()
         # by enabling cross compilation, the kernel_arch and deb_arch
         # from the project options have effectively changed so we reset
@@ -197,27 +227,29 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
     def _set_kernel_targets(self):
         if not self.options.kernel_image_target:
-            self.kernel_image_target = \
-                default_kernel_image_target[self.project.deb_arch]
+            self.kernel_image_target = default_kernel_image_target[
+                self.project.deb_arch
+            ]
         elif isinstance(self.options.kernel_image_target, str):
             self.kernel_image_target = self.options.kernel_image_target
         elif self.project.deb_arch in self.options.kernel_image_target:
-            self.kernel_image_target = \
-                self.options.kernel_image_target[self.project.deb_arch]
+            self.kernel_image_target = self.options.kernel_image_target[
+                self.project.deb_arch
+            ]
 
-        self.make_targets = [self.kernel_image_target, 'modules']
+        self.make_targets = [self.kernel_image_target, "modules"]
         self.make_install_targets = [
-            'modules_install', 'INSTALL_MOD_PATH={}'.format(self.installdir)]
-        self.dtbs = ['{}.dtb'.format(i)
-                     for i in self.options.kernel_device_trees]
+            "modules_install",
+            "INSTALL_MOD_PATH={}".format(self.installdir),
+        ]
+        self.dtbs = ["{}.dtb".format(i) for i in self.options.kernel_device_trees]
         if self.dtbs:
             self.make_targets.extend(self.dtbs)
-        elif (self.project.kernel_arch == "arm" or
-                self.project.kernel_arch == "arm64"):
-            self.make_targets.append('dtbs')
-            self.make_install_targets.extend([
-                'dtbs_install',
-                'INSTALL_DTBS_PATH={}/dtbs'.format(self.installdir)])
+        elif self.project.kernel_arch == "arm" or self.project.kernel_arch == "arm64":
+            self.make_targets.append("dtbs")
+            self.make_install_targets.extend(
+                ["dtbs_install", "INSTALL_DTBS_PATH={}/dtbs".format(self.installdir)]
+            )
         self.make_install_targets.extend(self._get_fw_install_targets())
 
     def _get_fw_install_targets(self):
@@ -225,35 +257,39 @@ class KernelPlugin(kbuild.KBuildPlugin):
             return []
 
         return [
-            'firmware_install',
-            'INSTALL_FW_PATH={}'.format(
-                os.path.join(self.installdir, 'lib', 'firmware'))]
+            "firmware_install",
+            "INSTALL_FW_PATH={}".format(
+                os.path.join(self.installdir, "lib", "firmware")
+            ),
+        ]
 
     def _unpack_generic_initrd(self):
-        initrd_path = os.path.join(
-            'boot', 'initrd.img-core')
-        initrd_unpacked_path = os.path.join(self.builddir, 'initrd-staging')
+        initrd_path = os.path.join("boot", "initrd.img-core")
+        initrd_unpacked_path = os.path.join(self.builddir, "initrd-staging")
         if os.path.exists(initrd_unpacked_path):
             shutil.rmtree(initrd_unpacked_path)
         os.makedirs(initrd_unpacked_path)
 
         with tempfile.TemporaryDirectory() as temp_dir:
-            unsquashfs_path = snapcraft.file_utils.get_tool_path('unsquashfs')
-            subprocess.check_call([
-                unsquashfs_path, self.os_snap, os.path.dirname(initrd_path)],
-                cwd=temp_dir)
+            unsquashfs_path = snapcraft.file_utils.get_tool_path("unsquashfs")
+            subprocess.check_call(
+                [unsquashfs_path, self.os_snap, os.path.dirname(initrd_path)],
+                cwd=temp_dir,
+            )
 
-            tmp_initrd_path = os.path.join(
-                temp_dir, 'squashfs-root', initrd_path)
+            tmp_initrd_path = os.path.join(temp_dir, "squashfs-root", initrd_path)
 
             decompressed = False
             # Roll over valid decompression mechanisms until one works
-            for decompressor in ('xz', 'gzip'):
+            for decompressor in ("xz", "gzip"):
                 try:
                     subprocess.check_call(
-                        'cat {0} | {1} -dc | cpio -i'.format(
-                            tmp_initrd_path, decompressor),
-                        shell=True, cwd=initrd_unpacked_path)
+                        "cat {0} | {1} -dc | cpio -i".format(
+                            tmp_initrd_path, decompressor
+                        ),
+                        shell=True,
+                        cwd=initrd_unpacked_path,
+                    )
                 except subprocess.CalledProcessError:
                     pass
                 else:
@@ -261,14 +297,17 @@ class KernelPlugin(kbuild.KBuildPlugin):
                     break
 
             if not decompressed:
-                raise RuntimeError('The initrd file type is unsupported')
+                raise RuntimeError("The initrd file type is unsupported")
 
         return initrd_unpacked_path
 
     def _make_initrd(self):
 
-        logger.info('Generating driver initrd for kernel release: {}'.format(
-            self.kernel_release))
+        logger.info(
+            "Generating driver initrd for kernel release: {}".format(
+                self.kernel_release
+            )
+        )
 
         initrd_unpacked_path = self._unpack_generic_initrd()
 
@@ -277,23 +316,34 @@ class KernelPlugin(kbuild.KBuildPlugin):
         # modprobe is typically in /sbin, which may not always be available on
         # the PATH. Add it for this call.
         env = os.environ.copy()
-        env['PATH'] += ':/sbin'
+        env["PATH"] += ":/sbin"
         for module in self.options.kernel_initrd_modules:
-            modprobe_out = self.run_output([
-                'modprobe', '-n', '--show-depends', '-d', self.installdir,
-                '-S', self.kernel_release, module], env=env)
+            modprobe_out = self.run_output(
+                [
+                    "modprobe",
+                    "-n",
+                    "--show-depends",
+                    "-d",
+                    self.installdir,
+                    "-S",
+                    self.kernel_release,
+                    module,
+                ],
+                env=env,
+            )
             modprobe_outs.extend(modprobe_out.split(os.linesep))
 
         modprobe_outs = [_ for _ in modprobe_outs if _]
-        modules_path = os.path.join('lib', 'modules', self.kernel_release)
+        modules_path = os.path.join("lib", "modules", self.kernel_release)
         for src in set(_.split()[1] for _ in modprobe_outs):
-            dst = os.path.join(initrd_unpacked_path,
-                               os.path.relpath(src, self.installdir))
+            dst = os.path.join(
+                initrd_unpacked_path, os.path.relpath(src, self.installdir)
+            )
             os.makedirs(os.path.dirname(dst), exist_ok=True)
             os.link(src, dst)
 
         if modprobe_outs:
-            for module_info in ['modules.dep', 'modules.dep.bin']:
+            for module_info in ["modules.dep", "modules.dep.bin"]:
                 module_info_path = os.path.join(modules_path, module_info)
                 src = os.path.join(self.installdir, module_info_path)
                 dst = os.path.join(initrd_unpacked_path, module_info_path)
@@ -309,66 +359,68 @@ class KernelPlugin(kbuild.KBuildPlugin):
             else:
                 os.link(src, dst)
 
-        initrd = 'initrd-{}.img'.format(self.kernel_release)
+        initrd = "initrd-{}.img".format(self.kernel_release)
         initrd_path = os.path.join(self.installdir, initrd)
         subprocess.check_call(
-            'find . | cpio --create --format=newc | '
-            '{} > {}'.format(self.compression_cmd, initrd_path), shell=True,
-            cwd=initrd_unpacked_path)
-        unversioned_initrd_path = os.path.join(self.installdir, 'initrd.img')
+            "find . | cpio --create --format=newc | "
+            "{} > {}".format(self.compression_cmd, initrd_path),
+            shell=True,
+            cwd=initrd_unpacked_path,
+        )
+        unversioned_initrd_path = os.path.join(self.installdir, "initrd.img")
         os.link(initrd_path, unversioned_initrd_path)
 
     def _parse_kernel_release(self):
         kernel_release_path = os.path.join(
-            self.builddir, 'include', 'config', 'kernel.release')
+            self.builddir, "include", "config", "kernel.release"
+        )
 
-        with open(kernel_release_path, 'r') as f:
+        with open(kernel_release_path, "r") as f:
             self.kernel_release = f.read().strip()
 
         if not self.kernel_release:
             raise ValueError(
-                'No kernel release version info found at {!r}'.format(
-                    kernel_release_path))
+                "No kernel release version info found at {!r}".format(
+                    kernel_release_path
+                )
+            )
 
     def _get_build_arch_dir(self):
-        return os.path.join(
-            self.builddir, 'arch', self.project.kernel_arch, 'boot')
+        return os.path.join(self.builddir, "arch", self.project.kernel_arch, "boot")
 
     def _copy_vmlinuz(self):
-        kernel = '{}-{}'.format(
-            self.kernel_image_target, self.kernel_release)
-        src = os.path.join(self._get_build_arch_dir(),
-                           self.kernel_image_target)
+        kernel = "{}-{}".format(self.kernel_image_target, self.kernel_release)
+        src = os.path.join(self._get_build_arch_dir(), self.kernel_image_target)
         dst = os.path.join(self.installdir, kernel)
         if not os.path.exists(src):
             raise ValueError(
-                'kernel build did not output a vmlinux binary in top level '
-                'dir, expected {!r}'.format(src))
+                "kernel build did not output a vmlinux binary in top level "
+                "dir, expected {!r}".format(src)
+            )
         os.link(src, dst)
-        os.link(src, os.path.join(self.installdir, 'kernel.img'))
+        os.link(src, os.path.join(self.installdir, "kernel.img"))
 
     def _copy_system_map(self):
-        src = os.path.join(self.builddir, 'System.map')
-        dst = os.path.join(
-            self.installdir, 'System.map-{}'.format(self.kernel_release))
+        src = os.path.join(self.builddir, "System.map")
+        dst = os.path.join(self.installdir, "System.map-{}".format(self.kernel_release))
         if not os.path.exists(src):
             raise ValueError(
-                'kernel build did not output a System.map in top level dir')
+                "kernel build did not output a System.map in top level dir"
+            )
         os.link(src, dst)
 
     def _copy_dtbs(self):
         if not self.options.kernel_device_trees:
             return
 
-        dtb_dir = os.path.join(self.installdir, 'dtbs')
+        dtb_dir = os.path.join(self.installdir, "dtbs")
         os.makedirs(dtb_dir)
 
-        base_path = os.path.join(self._get_build_arch_dir(), 'dts')
+        base_path = os.path.join(self._get_build_arch_dir(), "dts")
         for dtb in self.dtbs:
             found_dtbs = glob.glob(os.path.join(base_path, dtb))
             if not found_dtbs:
-                raise RuntimeError(
-                    'No match for dtb {!r} was found'.format(dtb))
+                raise RuntimeError("No match for dtb {!r} was found".format(dtb))
             for f in found_dtbs:
                 os.link(f, os.path.join(dtb_dir, os.path.basename(f)))
 
@@ -378,30 +430,33 @@ class KernelPlugin(kbuild.KBuildPlugin):
         # tokenize .config and store options in builtin[] or modules[]
         with open(config_path) as f:
             for line in f:
-                tok = line.strip().split('=')
+                tok = line.strip().split("=")
                 items = len(tok)
                 if items == 2:
                     opt = tok[0].upper()
                     val = tok[1].upper()
-                    if val == 'Y':
+                    if val == "Y":
                         builtin.append(opt)
-                    elif val == 'M':
+                    elif val == "M":
                         modules.append(opt)
         return builtin, modules
 
     def _do_check_config(self, builtin, modules):
         # check the resulting .config has all the necessary options
-        msg = ('**** WARNING **** WARNING **** WARNING **** WARNING ****\n'
-               'Your kernel config is missing some features that Ubuntu Core '
-               'recommends or requires.\n'
-               'While we will not prevent you from building this kernel snap, '
-               'we suggest you take a look at these:\n')
-        required_opts = (required_generic + required_security +
-                         required_snappy + required_systemd)
+        msg = (
+            "**** WARNING **** WARNING **** WARNING **** WARNING ****\n"
+            "Your kernel config is missing some features that Ubuntu Core "
+            "recommends or requires.\n"
+            "While we will not prevent you from building this kernel snap, "
+            "we suggest you take a look at these:\n"
+        )
+        required_opts = (
+            required_generic + required_security + required_snappy + required_systemd
+        )
         missing = []
 
         for code in required_opts:
-            opt = 'CONFIG_{}'.format(code)
+            opt = "CONFIG_{}".format(code)
             if opt in builtin:
                 continue
             elif opt in modules:
@@ -410,26 +465,28 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 missing.append(opt)
 
         if missing:
-            warn = '\n{}\n'.format(msg)
+            warn = "\n{}\n".format(msg)
             for opt in missing:
-                note = ''
-                if opt == 'CONFIG_CC_STACKPROTECTOR_STRONG':
-                    note = '(4.1.x and later versions only)'
-                elif opt == 'CONFIG_DEVPTS_MULTIPLE_INSTANCES':
-                    note = '(4.8.x and earlier versions only)'
-                warn += '{} {}\n'.format(opt, note)
+                note = ""
+                if opt == "CONFIG_CC_STACKPROTECTOR_STRONG":
+                    note = "(4.1.x and later versions only)"
+                elif opt == "CONFIG_DEVPTS_MULTIPLE_INSTANCES":
+                    note = "(4.8.x and earlier versions only)"
+                warn += "{} {}\n".format(opt, note)
             logger.warn(warn)
 
     def _do_check_initrd(self, builtin, modules):
         # check all required_boot[] items are either builtin or part of initrd
-        msg = ("**** WARNING **** WARNING **** WARNING **** WARNING ****\n"
-               "The following features are deemed boot essential for\n"
-               "ubuntu core, consider making them static[=Y] or adding\n"
-               "the corresponding module to initrd:\n")
+        msg = (
+            "**** WARNING **** WARNING **** WARNING **** WARNING ****\n"
+            "The following features are deemed boot essential for\n"
+            "ubuntu core, consider making them static[=Y] or adding\n"
+            "the corresponding module to initrd:\n"
+        )
         missing = []
 
         for code in required_boot:
-            opt = 'CONFIG_{}'.format(code.upper())
+            opt = "CONFIG_{}".format(code.upper())
             if opt in builtin:
                 continue
             elif opt in modules:
@@ -441,15 +498,14 @@ class KernelPlugin(kbuild.KBuildPlugin):
                 missing.append(opt)
 
         if missing:
-            warn = '\n{}\n'.format(msg)
+            warn = "\n{}\n".format(msg)
             for opt in missing:
-                warn += '{}\n'.format(opt)
+                warn += "{}\n".format(opt)
             logger.warn(warn)
 
     def pull(self):
         super().pull()
-        snapcraft.download(
-            'core', 'stable', self.os_snap, self.project.deb_arch)
+        snapcraft.download("core", "stable", self.os_snap, self.project.deb_arch)
 
     def do_configure(self):
         super().do_configure()
@@ -469,10 +525,9 @@ class KernelPlugin(kbuild.KBuildPlugin):
 
         # upstream kernel installs under $INSTALL_MOD_PATH/lib/modules/
         # but snapd expects modules/ and firmware/
-        shutil.move(
-            os.path.join(self.installdir, 'lib', 'modules'), self.installdir)
+        shutil.move(os.path.join(self.installdir, "lib", "modules"), self.installdir)
         if self.options.kernel_with_firmware:
             shutil.move(
-                os.path.join(self.installdir, 'lib', 'firmware'),
-                self.installdir)
-        os.rmdir(os.path.join(self.installdir, 'lib'))
+                os.path.join(self.installdir, "lib", "firmware"), self.installdir
+            )
+        os.rmdir(os.path.join(self.installdir, "lib"))

@@ -27,8 +27,8 @@ from ._statement import Statement
 if TYPE_CHECKING:
     from ._processor import GrammarProcessor  # noqa: F401
 
-_SELECTOR_PATTERN = re.compile(r'\Aon\s+([^,\s](?:,?[^,]+)*)\Z')
-_WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
+_SELECTOR_PATTERN = re.compile(r"\Aon\s+([^,\s](?:,?[^,]+)*)\Z")
+_WHITESPACE_PATTERN = re.compile(r"\A.*\s.*\Z")
 
 
 class OnStatement(Statement):
@@ -53,9 +53,14 @@ class OnStatement(Statement):
     {'bar'}
     """
 
-    def __init__(self, *, on: str, body: typing.Grammar,
-                 processor: 'GrammarProcessor',
-                 call_stack: typing.CallStack=None) -> None:
+    def __init__(
+        self,
+        *,
+        on: str,
+        body: typing.Grammar,
+        processor: "GrammarProcessor",
+        call_stack: typing.CallStack = None
+    ) -> None:
         """Create an OnStatement instance.
 
         :param str on: The 'on <selectors>' part of the clause.
@@ -91,7 +96,7 @@ class OnStatement(Statement):
         return False
 
     def __str__(self) -> str:
-        return 'on {}'.format(','.join(sorted(self.selectors)))
+        return "on {}".format(",".join(sorted(self.selectors)))
 
 
 def _extract_on_clause_selectors(on: str) -> Set[str]:
@@ -112,7 +117,7 @@ def _extract_on_clause_selectors(on: str) -> Set[str]:
     try:
         selector_group = match.group(1)
     except AttributeError:
-        raise OnStatementSyntaxError(on, message='selectors are missing')
+        raise OnStatementSyntaxError(on, message="selectors are missing")
     except IndexError:
         raise OnStatementSyntaxError(on)
 
@@ -120,6 +125,7 @@ def _extract_on_clause_selectors(on: str) -> Set[str]:
     # to provide a very generic error when we can try to be more helpful.
     if _WHITESPACE_PATTERN.match(selector_group):
         raise OnStatementSyntaxError(
-            on, message='spaces are not allowed in the selectors')
+            on, message="spaces are not allowed in the selectors"
+        )
 
-    return {selector.strip() for selector in selector_group.split(',')}
+    return {selector.strip() for selector in selector_group.split(",")}

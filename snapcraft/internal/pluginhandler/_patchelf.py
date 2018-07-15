@@ -48,16 +48,19 @@ def is_go_based_plugin(plugin):
 class PartPatcher:
     """Takes care of patching files in a part if necessary."""
 
-    def __init__(self, *,
-                 elf_files: FrozenSet[elf.ElfFile],
-                 plugin,
-                 project: ProjectOptions,
-                 confinement: str,     # TODO remove once project has this
-                 core_base: str,       # TODO remove once project has this
-                 snap_base_path: str,  # TODO remove once project has this
-                 stage_packages: List[str],
-                 stagedir: str,
-                 primedir: str) -> None:
+    def __init__(
+        self,
+        *,
+        elf_files: FrozenSet[elf.ElfFile],
+        plugin,
+        project: ProjectOptions,
+        confinement: str,  # TODO remove once project has this
+        core_base: str,  # TODO remove once project has this
+        snap_base_path: str,  # TODO remove once project has this
+        stage_packages: List[str],
+        stagedir: str,
+        primedir: str
+    ) -> None:
         """Initialize PartPatcher.
 
         :param elf_files: the list of elf files to analyze.
@@ -79,37 +82,37 @@ class PartPatcher:
         self._elf_files = elf_files
         self._is_go_based_plugin = is_go_based_plugin(plugin)
         self._project = project
-        self._is_classic = confinement == 'classic'
-        self._is_host_compat_with_base = project.is_host_compatible_with_base(
-            core_base)
+        self._is_classic = confinement == "classic"
+        self._is_host_compat_with_base = project.is_host_compatible_with_base(core_base)
         self._core_base = core_base
         self._snap_base_path = snap_base_path
         # If libc6 is staged, to avoid symbol mixups we will resort to
         # glibc mangling.
-        self._is_libc6_staged = 'libc6' in stage_packages
+        self._is_libc6_staged = "libc6" in stage_packages
         self._stagedir = stagedir
         self._primedir = primedir
 
     def _get_glibc_compatibility(self, linker_version: str) -> Dict[str, str]:
         linker_incompat = dict()  # type: Dict[str, str]
         for elf_file in self._elf_files:
-            if not elf_file.is_linker_compatible(
-                    linker_version=linker_version):
-                linker_incompat[elf_file.path] = \
-                    elf_file.get_required_glibc()
+            if not elf_file.is_linker_compatible(linker_version=linker_version):
+                linker_incompat[elf_file.path] = elf_file.get_required_glibc()
         if linker_incompat:
-            formatted_items = ['- {} (requires GLIBC {})'.format(k, v)
-                               for k, v in linker_incompat.items()]
+            formatted_items = [
+                "- {} (requires GLIBC {})".format(k, v)
+                for k, v in linker_incompat.items()
+            ]
             logger.warning(
-                'The GLIBC version of the targeted core is {}. A newer '
-                'libc will be required for the following files:'
-                '\n{}'.format(linker_version, '\n'.join(formatted_items)))
+                "The GLIBC version of the targeted core is {}. A newer "
+                "libc will be required for the following files:"
+                "\n{}".format(linker_version, "\n".join(formatted_items))
+            )
         return linker_incompat
 
     def _get_preferred_patchelf_path(self):
         # TODO revisit if we need to support variations and permutations
         #  of this
-        staged_patchelf_path = os.path.join(self._stagedir, 'bin', 'patchelf')
+        staged_patchelf_path = os.path.join(self._stagedir, "bin", "patchelf")
         if not os.path.exists(staged_patchelf_path):
             staged_patchelf_path = None
         return staged_patchelf_path
@@ -120,7 +123,8 @@ class PartPatcher:
         elf_patcher = elf.Patcher(
             dynamic_linker=dynamic_linker,
             root_path=self._primedir,
-            preferred_patchelf_path=preferred_patchelf_path)
+            preferred_patchelf_path=preferred_patchelf_path,
+        )
 
         # Patching all files instead of a subset of them to ensure the
         # environment is consistent and the chain of dlopens that may
@@ -130,23 +134,27 @@ class PartPatcher:
                 elf_patcher.patch(elf_file=elf_file)
             except errors.PatcherError as patch_error:
                 logger.warning(
-                    'An attempt to patch {!r} so that it would work '
-                    'correctly in diverse environments was made and failed. '
-                    'To disable this behavior set '
-                    '`build-attributes: [no-patchelf]` for the part.'.format(
-                        elf_file.path))
+                    "An attempt to patch {!r} so that it would work "
+                    "correctly in diverse environments was made and failed. "
+                    "To disable this behavior set "
+                    "`build-attributes: [no-patchelf]` for the part.".format(
+                        elf_file.path
+                    )
+                )
                 if not self._is_go_based_plugin:
                     raise patch_error
 
     def _verify_compat(self) -> None:
-        linker_version = self._project._get_linker_version_for_base(
-            self._core_base)
+        linker_version = self._project._get_linker_version_for_base(self._core_base)
         linker_incompat = self._get_glibc_compatibility(linker_version)
-        logger.debug('List of files incompatible with {!r}: {!r}'.format(
-            linker_version, linker_incompat))
+        logger.debug(
+            "List of files incompatible with {!r}: {!r}".format(
+                linker_version, linker_incompat
+            )
+        )
         # Even though we do this in patch, it does not hurt to check again
         if linker_incompat and not self._is_libc6_staged:
-            raise errors.StagePackageMissingError(package='libc6')
+            raise errors.StagePackageMissingError(package="libc6")
 
     def patch(self) -> None:
         """Executes the patching process for elf_files.
@@ -171,27 +179,29 @@ class PartPatcher:
         :raises errors.SnapcraftEnvironementError:
             if something is horribly wrong.
         """
-        logger.debug('Host compatible with base: {!r}'.format(
-            self._is_host_compat_with_base))
+        logger.debug(
+            "Host compatible with base: {!r}".format(self._is_host_compat_with_base)
+        )
         if not self._is_host_compat_with_base:
             self._verify_compat()
-        logger.debug('Is classic: {!r}'.format(self._is_classic))
-        logger.debug('Is libc6 in stage-packages: {!r}'.format(
-            self._is_libc6_staged))
+        logger.debug("Is classic: {!r}".format(self._is_classic))
+        logger.debug("Is libc6 in stage-packages: {!r}".format(self._is_libc6_staged))
         if not (self._is_classic or self._is_libc6_staged):
             return
 
         if self._is_libc6_staged:
             dynamic_linker = elf.find_linker(
-                root_path=self._primedir,
-                snap_base_path=self._snap_base_path)
+                root_path=self._primedir, snap_base_path=self._snap_base_path
+            )
         elif self._is_classic:
             dynamic_linker = self._project.get_core_dynamic_linker(
-                self._core_base, expand=False)
+                self._core_base, expand=False
+            )
         else:
             raise errors.SnapcraftEnvironmentError(
-                'An unexpected error has occurred while patching. '
-                'Please log an issue against the snapcraft tool.')
+                "An unexpected error has occurred while patching. "
+                "Please log an issue against the snapcraft tool."
+            )
 
-        logger.debug('Dynamic linker set to {!r}'.format(dynamic_linker))
+        logger.debug("Dynamic linker set to {!r}".format(dynamic_linker))
         self._patch(dynamic_linker)

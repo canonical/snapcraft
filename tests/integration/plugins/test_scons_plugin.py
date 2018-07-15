@@ -22,10 +22,10 @@ from tests import integration
 
 
 class SconsPluginTestCase(integration.TestCase):
-
     def test_stage_scons_plugin(self):
-        self.run_snapcraft('stage', 'scons-hello')
+        self.run_snapcraft("stage", "scons-hello")
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join(self.stage_dir, 'opt', 'bin', 'main'))
-        self.assertThat(binary_output, Equals('Hello world\n'))
+            os.path.join(self.stage_dir, "opt", "bin", "main")
+        )
+        self.assertThat(binary_output, Equals("Hello world\n"))

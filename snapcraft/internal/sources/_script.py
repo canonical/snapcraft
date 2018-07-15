@@ -21,11 +21,18 @@ from ._base import FileBase
 
 
 class Script(FileBase):
-
-    def __init__(self, source, source_dir, source_tag=None, source_commit=None,
-                 source_branch=None, source_depth=None):
-        super().__init__(source, source_dir, source_tag, source_commit,
-                         source_branch, source_depth)
+    def __init__(
+        self,
+        source,
+        source_dir,
+        source_tag=None,
+        source_commit=None,
+        source_branch=None,
+        source_depth=None,
+    ):
+        super().__init__(
+            source, source_dir, source_tag, source_commit, source_branch, source_depth
+        )
 
     def download(self):
         super().download()

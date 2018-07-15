@@ -21,35 +21,36 @@ from . import env
 
 
 _CMD_DEPRECATED_REPLACEMENTS = {
-    'strip': 'prime',
-    'upload': 'push',
-    'history': 'list-revisions',
+    "strip": "prime",
+    "upload": "push",
+    "history": "list-revisions",
 }
 
 _CMD_ALIASES = {
-    'registered': 'list-registered',
-    'keys': 'list-keys',
-    'revisions': 'list-revisions',
-    'plugins': 'list-plugins',
-    'collaborators': 'edit-collaborators',
+    "registered": "list-registered",
+    "keys": "list-keys",
+    "revisions": "list-revisions",
+    "plugins": "list-plugins",
+    "collaborators": "edit-collaborators",
 }
 
-_CMD_DEPRECATION_NOTICES = {
-    'history': 'dn4',
-}
+_CMD_DEPRECATION_NOTICES = {"history": "dn4"}
 
 
 class SnapcraftGroup(click.Group):
-
     def get_command(self, ctx, cmd_name):
         new_cmd_name = _CMD_DEPRECATED_REPLACEMENTS.get(cmd_name)
         if new_cmd_name:
             if _CMD_DEPRECATION_NOTICES.get(cmd_name):
                 deprecations.handle_deprecation_notice(
-                    _CMD_DEPRECATION_NOTICES.get(cmd_name))
+                    _CMD_DEPRECATION_NOTICES.get(cmd_name)
+                )
             else:
-                echo.warning('DEPRECATED: Use {!r} instead of {!r}'.format(
-                    new_cmd_name, cmd_name))
+                echo.warning(
+                    "DEPRECATED: Use {!r} instead of {!r}".format(
+                        new_cmd_name, cmd_name
+                    )
+                )
             cmd = click.Group.get_command(self, ctx, new_cmd_name)
         else:
             cmd_name = _CMD_ALIASES.get(cmd_name, cmd_name)
@@ -60,8 +61,8 @@ class SnapcraftGroup(click.Group):
         commands = super().list_commands(ctx)
         # Let's keep edit-collaborators hidden until we get the green light
         # from the store.
-        commands.pop(commands.index('edit-collaborators'))
+        commands.pop(commands.index("edit-collaborators"))
         build_environment = env.BuilderEnvironmentConfig()
         if build_environment.is_host:
-            commands.pop(commands.index('refresh'))
+            commands.pop(commands.index("refresh"))
         return commands

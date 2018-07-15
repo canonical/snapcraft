@@ -20,10 +20,8 @@ from tests import unit
 
 # LP: #1733584
 class PythonBaseTestCase(unit.TestCase):  # type: ignore
-
     def _create_python_binary(self, base_dir):
-        python_command_path = os.path.join(
-            base_dir, 'usr', 'bin', 'pythontest')
+        python_command_path = os.path.join(base_dir, "usr", "bin", "pythontest")
         os.makedirs(os.path.dirname(python_command_path), exist_ok=True)
-        open(python_command_path, 'w').close()
+        open(python_command_path, "w").close()
         return python_command_path

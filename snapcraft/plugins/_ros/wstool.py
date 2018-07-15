@@ -21,10 +21,7 @@ import sys
 from typing import List
 
 import snapcraft
-from snapcraft.internal import (
-    errors,
-    repo
-)
+from snapcraft.internal import errors, repo
 
 logger = logging.getLogger(__name__)
 
@@ -34,21 +31,21 @@ class WstoolError(errors.SnapcraftError):
 
 
 class WorkspaceInitializationError(WstoolError):
-    fmt = 'Error initializing workspace: {message}'
+    fmt = "Error initializing workspace: {message}"
 
     def __init__(self, message: str) -> None:
         super().__init__(message=message)
 
 
 class RosinstallMergeError(WstoolError):
-    fmt = 'Error merging rosinstall file {path!r} into workspace: {message}'
+    fmt = "Error merging rosinstall file {path!r} into workspace: {message}"
 
     def __init__(self, path: str, message: str) -> None:
         super().__init__(path=path, message=message)
 
 
 class WorkspaceUpdateError(WstoolError):
-    fmt = 'Error updating workspace: {message}'
+    fmt = "Error updating workspace: {message}"
 
     def __init__(self, message: str) -> None:
         super().__init__(message=message)
@@ -57,9 +54,13 @@ class WorkspaceUpdateError(WstoolError):
 class Wstool:
     """This class serves as a Python wrapper for the CLI utility wstool."""
 
-    def __init__(self, ros_package_path: str, wstool_path: str,
-                 ubuntu_sources: str,
-                 project: snapcraft.ProjectOptions) -> None:
+    def __init__(
+        self,
+        ros_package_path: str,
+        wstool_path: str,
+        ubuntu_sources: str,
+        project: snapcraft.ProjectOptions,
+    ) -> None:
         """Create new Wstool
 
         :param str ros_package_path: The path where the packages should be
@@ -74,7 +75,7 @@ class Wstool:
         self._ros_package_path = ros_package_path
         self._ubuntu_sources = ubuntu_sources
         self._wstool_path = wstool_path
-        self._wstool_install_path = os.path.join(wstool_path, 'install')
+        self._wstool_install_path = os.path.join(wstool_path, "install")
         self._project = project
 
     def setup(self) -> None:
@@ -84,22 +85,30 @@ class Wstool:
 
         # wstool isn't a dependency of the project, so we'll unpack it
         # somewhere else, and use it from there.
-        logger.info('Preparing to fetch wstool...')
-        ubuntu = repo.Ubuntu(self._wstool_path, sources=self._ubuntu_sources,
-                             project_options=self._project)
-        logger.info('Fetching wstool...')
-        ubuntu.get(['python-wstool'])
+        logger.info("Preparing to fetch wstool...")
+        ubuntu = repo.Ubuntu(
+            self._wstool_path,
+            sources=self._ubuntu_sources,
+            project_options=self._project,
+        )
+        logger.info("Fetching wstool...")
+        ubuntu.get(["python-wstool"])
 
-        logger.info('Installing wstool...')
+        logger.info("Installing wstool...")
         ubuntu.unpack(self._wstool_install_path)
 
-        logger.info('Initializing workspace (if necessary)...')
+        logger.info("Initializing workspace (if necessary)...")
         try:
-            self._run(['init', self._ros_package_path, '-j{}'.format(
-                self._project.parallel_build_count)])
+            self._run(
+                [
+                    "init",
+                    self._ros_package_path,
+                    "-j{}".format(self._project.parallel_build_count),
+                ]
+            )
         except subprocess.CalledProcessError as e:
             output = e.output.decode(sys.getfilesystemencoding()).strip()
-            if 'already is a workspace' not in output:
+            if "already is a workspace" not in output:
                 stderr = e.stderr.decode(sys.getfilesystemencoding()).strip()
                 raise WorkspaceInitializationError(stderr)
 
@@ -114,8 +123,13 @@ class Wstool:
             # --confirm-all: Don't ask for confirmation
             # -t: Path to workspace
             return self._run(
-                ['merge', rosinstall_file, '--confirm-all', '-t{}'.format(
-                    self._ros_package_path)]).strip()
+                [
+                    "merge",
+                    rosinstall_file,
+                    "--confirm-all",
+                    "-t{}".format(self._ros_package_path),
+                ]
+            ).strip()
         except subprocess.CalledProcessError as e:
             stderr = e.stderr.decode(sys.getfilesystemencoding()).strip()
             raise RosinstallMergeError(rosinstall_file, stderr)
@@ -131,8 +145,12 @@ class Wstool:
             # -j: Use multiple jobs to fetch
             # -t: Path to workspace (into which packages will be fetched)
             return self._run(
-                ['update', '-j{}'.format(self._project.parallel_build_count),
-                 '-t{}'.format(self._ros_package_path)])
+                [
+                    "update",
+                    "-j{}".format(self._project.parallel_build_count),
+                    "-t{}".format(self._ros_package_path),
+                ]
+            )
         except subprocess.CalledProcessError as e:
             stderr = e.stderr.decode(sys.getfilesystemencoding()).strip()
             raise WorkspaceUpdateError(stderr)
@@ -140,11 +158,15 @@ class Wstool:
     def _run(self, arguments: List[str]) -> str:
         env = os.environ.copy()
 
-        env['PATH'] += ':' + os.path.join(self._wstool_install_path, 'usr',
-                                          'bin')
-        env['PYTHONPATH'] = os.path.join(self._wstool_install_path, 'usr',
-                                         'lib', 'python2.7', 'dist-packages')
+        env["PATH"] += ":" + os.path.join(self._wstool_install_path, "usr", "bin")
+        env["PYTHONPATH"] = os.path.join(
+            self._wstool_install_path, "usr", "lib", "python2.7", "dist-packages"
+        )
 
-        return subprocess.check_output(
-            ['wstool'] + arguments, stderr=subprocess.PIPE, env=env).decode(
-                sys.getfilesystemencoding()).strip()
+        return (
+            subprocess.check_output(
+                ["wstool"] + arguments, stderr=subprocess.PIPE, env=env
+            )
+            .decode(sys.getfilesystemencoding())
+            .strip()
+        )

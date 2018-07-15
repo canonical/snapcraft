@@ -27,12 +27,7 @@ import elftools.elf.elffile
 from pkg_resources import parse_version
 
 from snapcraft import file_utils
-from snapcraft.internal import (
-    common,
-    errors,
-    os_release,
-    repo,
-)
+from snapcraft.internal import common, errors, os_release, repo
 
 
 logger = logging.getLogger(__name__)
@@ -50,38 +45,45 @@ class NeededLibrary:
 
 
 ElfArchitectureTuple = Tuple[str, str, str]
-ElfDataTuple = Tuple[ElfArchitectureTuple, str, str, Dict[str, NeededLibrary], bool]  # noqa: E501
+ElfDataTuple = Tuple[
+    ElfArchitectureTuple, str, str, Dict[str, NeededLibrary], bool
+]  # noqa: E501
 SonameCacheDict = Dict[Tuple[ElfArchitectureTuple, str], str]
 
 
 # Old pyelftools uses byte strings for section names.  Some data is
 # also returned as bytes, which is handled below.
-if parse_version(elftools.__version__) >= parse_version('0.24'):
-    _DYNAMIC = '.dynamic'              # type: Union[str, bytes]
-    _GNU_VERSION_R = '.gnu.version_r'  # type: Union[str, bytes]
-    _INTERP = '.interp'                # type: Union[str, bytes]
+if parse_version(elftools.__version__) >= parse_version("0.24"):
+    _DYNAMIC = ".dynamic"  # type: Union[str, bytes]
+    _GNU_VERSION_R = ".gnu.version_r"  # type: Union[str, bytes]
+    _INTERP = ".interp"  # type: Union[str, bytes]
 else:
-    _DYNAMIC = b'.dynamic'
-    _GNU_VERSION_R = b'.gnu.version_r'
-    _INTERP = b'.interp'
+    _DYNAMIC = b".dynamic"
+    _GNU_VERSION_R = b".gnu.version_r"
+    _INTERP = b".interp"
 
 
 class SonameCache:
     """A cache for sonames."""
+
     def __getitem__(self, key):
         return self._soname_paths[key]
 
     def __setitem__(self, key, item):
         # Initial API error checks
         if not isinstance(key, tuple):
-            raise EnvironmentError('The key for SonameCache has to be a '
-                                   '(arch, soname) tuple.')
+            raise EnvironmentError(
+                "The key for SonameCache has to be a " "(arch, soname) tuple."
+            )
         if not isinstance(key[0], tuple) or len(key[0]) != 3:
-            raise EnvironmentError('The first element of the key needs to of '
-                                   'type ElfArchitectureTuple.')
+            raise EnvironmentError(
+                "The first element of the key needs to of " "type ElfArchitectureTuple."
+            )
         if not isinstance(key[1], str):
-            raise EnvironmentError('The second element of the key needs to be '
-                                   'of type str representing the soname.')
+            raise EnvironmentError(
+                "The second element of the key needs to be "
+                "of type str representing the soname."
+            )
         self._soname_paths[key] = item
 
     def __contains__(self, key):
@@ -104,9 +106,16 @@ class SonameCache:
 class Library:
     """Represents the SONAME and path to the library."""
 
-    def __init__(self, *, soname: str, path: str, root_path: str,
-                 core_base_path: str, arch: ElfArchitectureTuple,
-                 soname_cache: SonameCache) -> None:
+    def __init__(
+        self,
+        *,
+        soname: str,
+        path: str,
+        root_path: str,
+        core_base_path: str,
+        arch: ElfArchitectureTuple,
+        soname_cache: SonameCache
+    ) -> None:
         self.soname = soname
 
         # We need to always look for the soname inside root first,
@@ -114,11 +123,13 @@ class Library:
         if path.startswith(root_path):
             self.path = path
         else:
-            self.path = _crawl_for_path(soname=soname,
-                                        root_path=root_path,
-                                        core_base_path=core_base_path,
-                                        arch=arch,
-                                        soname_cache=soname_cache)
+            self.path = _crawl_for_path(
+                soname=soname,
+                root_path=root_path,
+                core_base_path=core_base_path,
+                arch=arch,
+                soname_cache=soname_cache,
+            )
 
         if not self.path and path.startswith(core_base_path):
             self.path = path
@@ -140,14 +151,19 @@ class Library:
             self.in_base_snap = False
 
 
-def _crawl_for_path(*, soname: str, root_path: str, core_base_path: str,
-                    arch: ElfArchitectureTuple,
-                    soname_cache: SonameCache) -> str:
+def _crawl_for_path(
+    *,
+    soname: str,
+    root_path: str,
+    core_base_path: str,
+    arch: ElfArchitectureTuple,
+    soname_cache: SonameCache
+) -> str:
     # Speed things up and return what was already found once.
     if (arch, soname) in soname_cache:
         return soname_cache[arch, soname]
 
-    logger.debug('Crawling to find soname {!r}'.format(soname))
+    logger.debug("Crawling to find soname {!r}".format(soname))
     for path in (root_path, core_base_path):
         if not os.path.exists(path):
             continue
@@ -173,7 +189,7 @@ def _crawl_for_path(*, soname: str, root_path: str, core_base_path: str,
 # a consistent result.
 def _ensure_str(s):
     if isinstance(s, bytes):
-        return s.decode('ascii')
+        return s.decode("ascii")
     assert isinstance(s, str)
     return s
 
@@ -186,8 +202,8 @@ class ElfFile:
         if not os.path.isfile(path):
             # ELF binaries are regular files
             return False
-        with open(path, 'rb') as bin_file:
-            return bin_file.read(4) == b'\x7fELF'
+        with open(path, "rb") as bin_file:
+            return bin_file.read(4) == b"\x7fELF"
 
     def __init__(self, *, path: str) -> None:
         """Initialize an ElfFile instance.
@@ -210,7 +226,7 @@ class ElfFile:
         libs = dict()
         execstack_set = False
 
-        with open(path, 'rb') as fp:
+        with open(path, "rb") as fp:
             elf = elftools.elf.elffile.ELFFile(fp)
 
             # A set of fields to identify the architecture of the ELF file:
@@ -220,29 +236,37 @@ class ElfFile:
             #
             # For amd64 binaries, this will evaluate to:
             #   ('ELFCLASS64', 'ELFDATA2LSB', 'EM_X86_64')
-            arch = (elf.header.e_ident.EI_CLASS,
-                    elf.header.e_ident.EI_DATA,
-                    elf.header.e_machine)
+            arch = (
+                elf.header.e_ident.EI_CLASS,
+                elf.header.e_ident.EI_DATA,
+                elf.header.e_machine,
+            )
 
             # If we are processing a detached debug info file, these
             # sections will be present but empty.
             interp_section = elf.get_section_by_name(_INTERP)
-            if (interp_section is not None and
-                    interp_section.header.sh_type != 'SHT_NOBITS'):
-                interp = interp_section.data().rstrip(b'\x00').decode('ascii')
+            if (
+                interp_section is not None
+                and interp_section.header.sh_type != "SHT_NOBITS"
+            ):
+                interp = interp_section.data().rstrip(b"\x00").decode("ascii")
 
             dynamic_section = elf.get_section_by_name(_DYNAMIC)
-            if (dynamic_section is not None and
-                    dynamic_section.header.sh_type != 'SHT_NOBITS'):
-                for tag in dynamic_section.iter_tags('DT_NEEDED'):
+            if (
+                dynamic_section is not None
+                and dynamic_section.header.sh_type != "SHT_NOBITS"
+            ):
+                for tag in dynamic_section.iter_tags("DT_NEEDED"):
                     needed = _ensure_str(tag.needed)
                     libs[needed] = NeededLibrary(name=needed)
-                for tag in dynamic_section.iter_tags('DT_SONAME'):
+                for tag in dynamic_section.iter_tags("DT_SONAME"):
                     soname = _ensure_str(tag.soname)
 
             verneed_section = elf.get_section_by_name(_GNU_VERSION_R)
-            if (verneed_section is not None and
-                    verneed_section.header.sh_type != 'SHT_NOBITS'):
+            if (
+                verneed_section is not None
+                and verneed_section.header.sh_type != "SHT_NOBITS"
+            ):
                 for library, versions in verneed_section.iter_versions():
                     library_name = _ensure_str(library.name)
                     # If the ELF file only references weak symbols
@@ -256,10 +280,10 @@ class ElfFile:
                         lib.add_version(_ensure_str(version.name))
 
             for segment in elf.iter_segments():
-                if segment['p_type'] == 'PT_GNU_STACK':
+                if segment["p_type"] == "PT_GNU_STACK":
                     # p_flags holds the bit mask for this segment.
                     # See `man 5 elf`.
-                    mode = segment['p_flags']
+                    mode = segment["p_flags"]
                     if mode & elftools.elf.constants.P_FLAGS.PF_X:
                         execstack_set = True
 
@@ -269,9 +293,12 @@ class ElfFile:
         """Determines if linker will work given the required glibc version."""
         version_required = self.get_required_glibc()
         r = parse_version(version_required) <= parse_version(linker_version)
-        logger.debug('Checking if linker {!r} will work with '
-                     'GLIBC_{} required by {!r}: {!r}'.format(
-                         linker_version, version_required, self.path, r))
+        logger.debug(
+            "Checking if linker {!r} will work with "
+            "GLIBC_{} required by {!r}: {!r}".format(
+                linker_version, version_required, self.path, r
+            )
+        )
         return r
 
     def get_required_glibc(self) -> str:
@@ -279,10 +306,10 @@ class ElfFile:
         with contextlib.suppress(AttributeError):
             return self._required_glibc  # type: ignore
 
-        version_required = ''
+        version_required = ""
         for lib in self.needed.values():
             for version in lib.versions:
-                if not version.startswith('GLIBC_'):
+                if not version.startswith("GLIBC_"):
                     continue
                 version = version[6:]
                 if parse_version(version) > parse_version(version_required):
@@ -291,9 +318,9 @@ class ElfFile:
         self._required_glibc = version_required
         return version_required
 
-    def load_dependencies(self, root_path: str,
-                          core_base_path: str,
-                          soname_cache: SonameCache=None) -> Set[str]:
+    def load_dependencies(
+        self, root_path: str, core_base_path: str, soname_cache: SonameCache = None
+    ) -> Set[str]:
         """Load the set of libraries that are needed to satisfy elf's runtime.
 
         This may include libraries contained within the project.
@@ -310,37 +337,39 @@ class ElfFile:
         if soname_cache is None:
             soname_cache = SonameCache()
 
-        logger.debug('Getting dependencies for {!r}'.format(self.path))
+        logger.debug("Getting dependencies for {!r}".format(self.path))
         ldd_out = []  # type: List[str]
         try:
             # ldd output sample:
             # /lib64/ld-linux-x86-64.so.2 (0x00007fb3c5298000)
             # libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb3bef03000)
-            ldd_out = common.run_output(['ldd', self.path]).split('\n')
+            ldd_out = common.run_output(["ldd", self.path]).split("\n")
         except subprocess.CalledProcessError:
             logger.warning(
-                'Unable to determine library dependencies for '
-                '{!r}'.format(self.path))
+                "Unable to determine library dependencies for " "{!r}".format(self.path)
+            )
             return set()
         ldd_out_split = [l.split() for l in ldd_out]
         libs = set()
         for ldd_line in ldd_out_split:
             if len(ldd_line) > 2:
-                libs.add(Library(soname=ldd_line[0],
-                                 path=ldd_line[2],
-                                 root_path=root_path,
-                                 core_base_path=core_base_path,
-                                 arch=self.arch,
-                                 soname_cache=soname_cache))
+                libs.add(
+                    Library(
+                        soname=ldd_line[0],
+                        path=ldd_line[2],
+                        root_path=root_path,
+                        core_base_path=core_base_path,
+                        arch=self.arch,
+                        soname_cache=soname_cache,
+                    )
+                )
 
         self.dependencies = libs
 
         # Return a set useful only for fetching libraries from the host
         library_paths = set()  # type: Set[str]
         for l in libs:
-            if (os.path.exists(l.path) and
-                    not l.in_base_snap and
-                    not l.system_lib):
+            if os.path.exists(l.path) and not l.in_base_snap and not l.system_lib:
                 library_paths.add(l.path)
         return library_paths
 
@@ -348,8 +377,9 @@ class ElfFile:
 class Patcher:
     """Patcher holds the necessary logic to patch elf files."""
 
-    def __init__(self, *, dynamic_linker: str, root_path: str,
-                 preferred_patchelf_path=None) -> None:
+    def __init__(
+        self, *, dynamic_linker: str, root_path: str, preferred_patchelf_path=None
+    ) -> None:
         """Create a Patcher instance.
 
         :param str dynamic_linker: the path to the dynamic linker to set the
@@ -365,9 +395,9 @@ class Patcher:
         if preferred_patchelf_path:
             self._patchelf_cmd = preferred_patchelf_path
         else:
-            self._patchelf_cmd = file_utils.get_tool_path('patchelf')
+            self._patchelf_cmd = file_utils.get_tool_path("patchelf")
 
-        self._strip_cmd = file_utils.get_tool_path('strip')
+        self._strip_cmd = file_utils.get_tool_path("strip")
 
     def patch(self, *, elf_file: ElfFile) -> None:
         """Patch elf_file with the Patcher instance configuration.
@@ -382,33 +412,33 @@ class Patcher:
         """
         patchelf_args = []
         if elf_file.interp:
-            patchelf_args.extend(['--set-interpreter',  self._dynamic_linker])
+            patchelf_args.extend(["--set-interpreter", self._dynamic_linker])
         if elf_file.dependencies:
             rpath = self._get_rpath(elf_file)
             # Due to https://github.com/NixOS/patchelf/issues/94 we need
             # to first clear the current rpath
-            self._run_patchelf(patchelf_args=['--remove-rpath'],
-                               elf_file_path=elf_file.path)
+            self._run_patchelf(
+                patchelf_args=["--remove-rpath"], elf_file_path=elf_file.path
+            )
             # Parameters:
             # --force-rpath: use RPATH instead of RUNPATH.
             # --shrink-rpath: will remove unneeded entries, with the
             #                 side effect of preferring host libraries
             #                 so we simply do not use it.
             # --set-rpath: set the RPATH to the colon separated argument.
-            patchelf_args.extend(['--force-rpath', '--set-rpath', rpath])
+            patchelf_args.extend(["--force-rpath", "--set-rpath", rpath])
 
         # no patchelf_args means there is nothing to do.
         if not patchelf_args:
             return
 
-        self._run_patchelf(patchelf_args=patchelf_args,
-                           elf_file_path=elf_file.path)
+        self._run_patchelf(patchelf_args=patchelf_args, elf_file_path=elf_file.path)
 
-    def _run_patchelf(self, *, patchelf_args: List[str],
-                      elf_file_path: str) -> None:
+    def _run_patchelf(self, *, patchelf_args: List[str], elf_file_path: str) -> None:
         try:
             return self._do_run_patchelf(
-                patchelf_args=patchelf_args, elf_file_path=elf_file_path)
+                patchelf_args=patchelf_args, elf_file_path=elf_file_path
+            )
         except errors.PatcherError as patch_error:
             # This is needed for patchelf to properly work with
             # go binaries (LP: #1736861).
@@ -418,21 +448,28 @@ class Patcher:
             # should eventually be removed once patchelf catches up.
             try:
                 logger.warning(
-                    'Failed to update {!r}. Retrying after stripping '
-                    'the .note.go.buildid from the elf file.'.format(
-                        elf_file_path))
-                subprocess.check_call([
-                    self._strip_cmd, '--remove-section', '.note.go.buildid',
-                    elf_file_path])
+                    "Failed to update {!r}. Retrying after stripping "
+                    "the .note.go.buildid from the elf file.".format(elf_file_path)
+                )
+                subprocess.check_call(
+                    [
+                        self._strip_cmd,
+                        "--remove-section",
+                        ".note.go.buildid",
+                        elf_file_path,
+                    ]
+                )
             except subprocess.CalledProcessError:
-                logger.warning('Could not properly strip .note.go.buildid '
-                               'from {!r}.'.format(elf_file_path))
+                logger.warning(
+                    "Could not properly strip .note.go.buildid "
+                    "from {!r}.".format(elf_file_path)
+                )
                 raise patch_error
             return self._do_run_patchelf(
-                patchelf_args=patchelf_args, elf_file_path=elf_file_path)
+                patchelf_args=patchelf_args, elf_file_path=elf_file_path
+            )
 
-    def _do_run_patchelf(self, *, patchelf_args: List[str],
-                         elf_file_path: str) -> None:
+    def _do_run_patchelf(self, *, patchelf_args: List[str], elf_file_path: str) -> None:
         # Run patchelf on a copy of the primed file and replace it
         # after it is successful. This allows us to break the potential
         # hard link created when migrating the file across the steps of
@@ -447,29 +484,34 @@ class Patcher:
             # bundled with snapcraft which means its lack of existence is a
             # "packager" error.
             except subprocess.CalledProcessError as call_error:
-                patchelf_version = subprocess.check_output(
-                    [self._patchelf_cmd, '--version']).decode().strip()
+                patchelf_version = (
+                    subprocess.check_output([self._patchelf_cmd, "--version"])
+                    .decode()
+                    .strip()
+                )
                 # 0.10 is the version where patching certain binaries will
                 # work (currently known affected packages are mostly built
                 # with go).
-                if parse_version(patchelf_version) < parse_version('0.10'):
+                if parse_version(patchelf_version) < parse_version("0.10"):
                     raise errors.PatcherNewerPatchelfError(
                         elf_file=elf_file_path,
                         process_exception=call_error,
-                        patchelf_version=patchelf_version)
+                        patchelf_version=patchelf_version,
+                    )
                 else:
                     raise errors.PatcherGenericError(
-                        elf_file=elf_file_path,
-                        process_exception=call_error)
+                        elf_file=elf_file_path, process_exception=call_error
+                    )
 
             # We unlink to break the potential hard link
             os.unlink(elf_file_path)
             shutil.copy2(temp_file.name, elf_file_path)
 
     def _get_existing_rpath(self, elf_file_path):
-        output = subprocess.check_output([self._patchelf_cmd, '--print-rpath',
-                                          elf_file_path])
-        return output.decode().strip().split(':')
+        output = subprocess.check_output(
+            [self._patchelf_cmd, "--print-rpath", elf_file_path]
+        )
+        return output.decode().strip().split(":")
 
     def _get_rpath(self, elf_file) -> str:
         origin_rpaths = list()  # type: List[str]
@@ -481,28 +523,27 @@ class Patcher:
                 if dependency.in_base_snap:
                     base_rpaths.add(os.path.dirname(dependency.path))
                 elif dependency.path.startswith(self._root_path):
-                    rel_library_path = os.path.relpath(dependency.path,
-                                                       elf_file.path)
+                    rel_library_path = os.path.relpath(dependency.path, elf_file.path)
                     rel_library_path_dir = os.path.dirname(rel_library_path)
                     # return the dirname, with the first .. replace
                     # with $ORIGIN
-                    origin_rpath = rel_library_path_dir.replace(
-                        '..', '$ORIGIN', 1)
+                    origin_rpath = rel_library_path_dir.replace("..", "$ORIGIN", 1)
                     if origin_rpath not in origin_rpaths:
                         origin_rpaths.append(origin_rpath)
 
         if existing_rpaths:
             # Only keep those that mention origin and are not already in our
             # bundle.
-            existing_rpaths = [r for r in existing_rpaths
-                               if '$ORIGIN' in r and r not in origin_rpaths]
+            existing_rpaths = [
+                r for r in existing_rpaths if "$ORIGIN" in r and r not in origin_rpaths
+            ]
             origin_rpaths = existing_rpaths + origin_rpaths
 
-        origin_paths = ':'.join((r for r in origin_rpaths if r))
-        core_base_rpaths = ':'.join(base_rpaths)
+        origin_paths = ":".join((r for r in origin_rpaths if r))
+        core_base_rpaths = ":".join(base_rpaths)
 
         if origin_paths and core_base_rpaths:
-            return '{}:{}'.format(origin_paths, core_base_rpaths)
+            return "{}:{}".format(origin_paths, core_base_rpaths)
         elif origin_paths and not core_base_rpaths:
             return origin_paths
         else:
@@ -522,9 +563,7 @@ def determine_ld_library_path(root: str) -> List[str]:
               can be found within root.
     """
     # If more ld.so.conf files need to be supported, add them here.
-    ld_config_globs = {
-        '{}/usr/lib/*/mesa*/ld.so.conf'.format(root)
-    }
+    ld_config_globs = {"{}/usr/lib/*/mesa*/ld.so.conf".format(root)}
 
     ld_library_paths = []
     for this_glob in ld_config_globs:
@@ -537,14 +576,14 @@ def determine_ld_library_path(root: str) -> List[str]:
 def _extract_ld_library_paths(ld_conf_file: str) -> List[str]:
     # From the ldconfig manpage, paths can be colon-, space-, tab-, newline-,
     # or comma-separated.
-    path_delimiters = re.compile(r'[:\s,]')
-    comments = re.compile(r'#.*$')
+    path_delimiters = re.compile(r"[:\s,]")
+    comments = re.compile(r"#.*$")
 
     paths = []
-    with open(ld_conf_file, 'r') as f:
+    with open(ld_conf_file, "r") as f:
         for line in f:
             # Remove comments from line
-            line = comments.sub('', line).strip()
+            line = comments.sub("", line).strip()
 
             if line:
                 paths.extend(path_delimiters.split(line))
@@ -564,13 +603,13 @@ def _get_system_libs() -> FrozenSet[str]:
 
     release = os_release.OsRelease()
     with contextlib.suppress(errors.OsReleaseVersionIdError):
-        lib_path = os.path.join(
-            common.get_librariesdir(), release.version_id())
+        lib_path = os.path.join(common.get_librariesdir(), release.version_id())
 
     if not lib_path or not os.path.exists(lib_path):
-        logger.debug('Only excluding libc libraries from the release')
-        libc6_libs = [os.path.basename(l)
-                      for l in repo.Repo.get_package_libraries('libc6')]
+        logger.debug("Only excluding libc libraries from the release")
+        libc6_libs = [
+            os.path.basename(l) for l in repo.Repo.get_package_libraries("libc6")
+        ]
         _libraries = frozenset(libc6_libs)
     else:
         with open(lib_path) as fn:
@@ -579,8 +618,7 @@ def _get_system_libs() -> FrozenSet[str]:
     return _libraries
 
 
-def get_elf_files(root: str,
-                  file_list: Sequence[str]) -> FrozenSet[ElfFile]:
+def get_elf_files(root: str, file_list: Sequence[str]) -> FrozenSet[ElfFile]:
     """Return a frozenset of elf files from file_list prepended with root.
 
     :param str root: the root directory from where the file_list is generated.
@@ -591,14 +629,13 @@ def get_elf_files(root: str,
 
     for part_file in file_list:
         # Filter out object (*.o) files-- we only care about binaries.
-        if part_file.endswith('.o'):
+        if part_file.endswith(".o"):
             continue
 
         # No need to crawl links-- the original should be here, too.
         path = os.path.join(root, part_file)  # type: str
         if os.path.islink(path):
-            logger.debug('Skipped link {!r} while finding dependencies'.format(
-                path))
+            logger.debug("Skipped link {!r} while finding dependencies".format(path))
             continue
         # Finally, make sure this is actually an ELF file
         if ElfFile.is_elf(path):
@@ -612,7 +649,7 @@ def get_elf_files(root: str,
 
 def _get_dynamic_linker(library_list: List[str]) -> str:
     """Return the dynamic linker from library_list."""
-    regex = re.compile(r'(?P<dynamic_linker>ld-[\d.]+.so)$')
+    regex = re.compile(r"(?P<dynamic_linker>ld-[\d.]+.so)$")
 
     for library in library_list:
         m = regex.search(os.path.basename(library))
@@ -620,9 +657,10 @@ def _get_dynamic_linker(library_list: List[str]) -> str:
             return library
 
     raise RuntimeError(
-        'The format for the linker should be of the form '
-        '<root>/ld-<X>.<Y>.so. There are no matches for the '
-        'current libc6 package')
+        "The format for the linker should be of the form "
+        "<root>/ld-<X>.<Y>.so. There are no matches for the "
+        "current libc6 package"
+    )
 
 
 def find_linker(*, root_path: str, snap_base_path: str) -> str:
@@ -635,13 +673,14 @@ def find_linker(*, root_path: str, snap_base_path: str) -> str:
     """
     # We assume the current system will satisfy the GLIBC requirement,
     # get the current libc6 libraries (which includes the linker)
-    libc6_libraries_list = repo.Repo.get_package_libraries('libc6')
+    libc6_libraries_list = repo.Repo.get_package_libraries("libc6")
 
     # For security reasons, we do not want to automatically pull in
     # libraries but expect them to be consciously brought in by stage-packages
     # instead.
-    libc6_libraries_paths = [os.path.join(root_path, l[1:])
-                             for l in libc6_libraries_list]
+    libc6_libraries_paths = [
+        os.path.join(root_path, l[1:]) for l in libc6_libraries_list
+    ]
 
     dynamic_linker = _get_dynamic_linker(libc6_libraries_paths)
 
@@ -650,6 +689,7 @@ def find_linker(*, root_path: str, snap_base_path: str) -> str:
     # variables + the leading `/` so that os.path.join can perform the
     # proper join with snap_base_path.
     dynamic_linker_path = os.path.join(
-        snap_base_path, dynamic_linker[len(root_path)+1:])
+        snap_base_path, dynamic_linker[len(root_path) + 1 :]
+    )
 
     return dynamic_linker_path

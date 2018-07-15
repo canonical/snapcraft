@@ -18,10 +18,10 @@ import contextlib
 
 
 _ID_TO_UBUNTU_CODENAME = {
-    '17.10': 'artful',
-    '17.04': 'zesty',
-    '16.04': 'xenial',
-    '14.04': 'trusty',
+    "17.10": "artful",
+    "17.04": "zesty",
+    "16.04": "xenial",
+    "14.04": "trusty",
 }
 
 
@@ -34,16 +34,16 @@ def get_version_codename() -> str:
     """
     os_release = {}  # type: Dict[str, str]
     with contextlib.suppress(FileNotFoundError):
-        with open('/etc/os-release') as f:
+        with open("/etc/os-release") as f:
             for line in f:
-                entry = line.rstrip().split('=')
+                entry = line.rstrip().split("=")
                 if len(entry) == 2:
                     os_release[entry[0]] = entry[1].strip('"')
 
     with contextlib.suppress(KeyError):
-        return os_release['VERSION_CODENAME']
+        return os_release["VERSION_CODENAME"]
 
     with contextlib.suppress(KeyError):
-        return _ID_TO_UBUNTU_CODENAME[os_release['VERSION_ID']]
+        return _ID_TO_UBUNTU_CODENAME[os_release["VERSION_ID"]]
 
     return None

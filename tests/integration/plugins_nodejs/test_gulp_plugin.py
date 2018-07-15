@@ -23,10 +23,10 @@ from tests import integration
 
 
 class GulpPluginTestCase(integration.TestCase):
-
     def test_stage_make_plugin(self):
-        self.run_snapcraft('stage', 'gulp-hello')
+        self.run_snapcraft("stage", "gulp-hello")
 
         binary_output = subprocess.check_output(
-            [os.path.join(self.stage_dir, 'hello-world')])
-        self.assertThat(binary_output, Equals(b'I was installed with gulp\n'))
+            [os.path.join(self.stage_dir, "hello-world")]
+        )
+        self.assertThat(binary_output, Equals(b"I was installed with gulp\n"))

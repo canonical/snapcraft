@@ -34,23 +34,23 @@ class Step:
                 raise errors.InvalidStepError(self.name)
         return self.__order
 
-    def previous_step(self) -> 'Step':
+    def previous_step(self) -> "Step":
         if self._order > 0:
-            return STEPS[self._order-1]
+            return STEPS[self._order - 1]
         else:
             return None
 
-    def next_step(self) -> 'Step':
+    def next_step(self) -> "Step":
         try:
-            return STEPS[self._order+1]
+            return STEPS[self._order + 1]
         except IndexError:
             return None
 
-    def previous_steps(self) -> List['Step']:
-        return STEPS[:self._order]
+    def previous_steps(self) -> List["Step"]:
+        return STEPS[: self._order]
 
-    def next_steps(self) -> List['Step']:
-        return STEPS[self._order+1:]
+    def next_steps(self) -> List["Step"]:
+        return STEPS[self._order + 1 :]
 
     def __lt__(self, other) -> bool:
         if type(other) is type(self):
@@ -86,16 +86,16 @@ class Step:
         return hash(self.name)
 
     def __repr__(self):
-        return 'Step({!r})'.format(self.name)
+        return "Step({!r})".format(self.name)
 
 
 # Step names and order are now maintained in a single place: right here. If
 # another step is needed, add it here, and insert it into STEPS in the proper
 # order.
-PULL = Step('pull', False)
-BUILD = Step('build', False)
-STAGE = Step('stage', True)
-PRIME = Step('prime', True)
+PULL = Step("pull", False)
+BUILD = Step("build", False)
+STAGE = Step("stage", True)
+PRIME = Step("prime", True)
 
 STEPS = [PULL, BUILD, STAGE, PRIME]
 

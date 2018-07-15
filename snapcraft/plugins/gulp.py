@@ -45,23 +45,20 @@ logger = logging.getLogger(__name__)
 
 
 class GulpPlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
-        node_properties = nodejs.NodePlugin.schema()['properties']
+        node_properties = nodejs.NodePlugin.schema()["properties"]
 
-        schema['properties']['gulp-tasks'] = {
-            'type': 'array',
-            'minitems': 1,
-            'uniqueItems': True,
-            'items': {
-                'type': 'string'
-            },
-            'default': [],
+        schema["properties"]["gulp-tasks"] = {
+            "type": "array",
+            "minitems": 1,
+            "uniqueItems": True,
+            "items": {"type": "string"},
+            "default": [],
         }
-        schema['properties']['node-engine'] = node_properties['node-engine']
-        schema['required'].append('gulp-tasks')
+        schema["properties"]["node-engine"] = node_properties["node-engine"]
+        schema["required"].append("gulp-tasks")
 
         return schema
 
@@ -69,19 +66,21 @@ class GulpPlugin(snapcraft.BasePlugin):
     def get_build_properties(cls):
         # Inform Snapcraft of the properties associated with building. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['gulp-tasks']
+        return ["gulp-tasks"]
 
     @classmethod
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the pull step dirty.
-        return ['node-engine']
+        return ["node-engine"]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self._npm_dir = os.path.join(self.partdir, 'npm')
-        self._nodejs_tar = sources.Tar(nodejs.get_nodejs_release(
-            self.options.node_engine, self.project.deb_arch), self._npm_dir)
+        self._npm_dir = os.path.join(self.partdir, "npm")
+        self._nodejs_tar = sources.Tar(
+            nodejs.get_nodejs_release(self.options.node_engine, self.project.deb_arch),
+            self._npm_dir,
+        )
 
     def pull(self):
         super().pull()
@@ -98,16 +97,15 @@ class GulpPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
 
-        self._nodejs_tar.provision(
-            self._npm_dir, clean_target=False, keep_tarball=True)
+        self._nodejs_tar.provision(self._npm_dir, clean_target=False, keep_tarball=True)
 
         env = os.environ.copy()
-        env['PATH'] = '{}:{}'.format(
-            os.path.join(self._npm_dir, 'bin'), env['PATH'])
-        env['NPM_CONFIG_PREFIX'] = self._npm_dir
-        self.run(['npm', 'install', '-g', 'gulp-cli'], env=env)
-        if os.path.exists(os.path.join(self.builddir, 'package.json')):
-            self.run(['npm', 'install', '--only-development'], env=env)
-        self.run([
-            os.path.join(self._npm_dir, 'bin', 'gulp')] +
-            self.options.gulp_tasks, env=env)
+        env["PATH"] = "{}:{}".format(os.path.join(self._npm_dir, "bin"), env["PATH"])
+        env["NPM_CONFIG_PREFIX"] = self._npm_dir
+        self.run(["npm", "install", "-g", "gulp-cli"], env=env)
+        if os.path.exists(os.path.join(self.builddir, "package.json")):
+            self.run(["npm", "install", "--only-development"], env=env)
+        self.run(
+            [os.path.join(self._npm_dir, "bin", "gulp")] + self.options.gulp_tasks,
+            env=env,
+        )

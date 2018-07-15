@@ -29,19 +29,18 @@ from snapcraft.internal.errors import (
 logger = logging.getLogger(__name__)
 
 
-def extract_metadata(part_name: str,
-                     file_path: str) -> extractors.ExtractedMetadata:
+def extract_metadata(part_name: str, file_path: str) -> extractors.ExtractedMetadata:
     if not os.path.exists(file_path):
         raise MissingMetadataFileError(part_name, file_path)
 
     # Iterate through each extractor module, calling the 'extract' function
     # from it. If it raises an 'UnhandledFileError' move onto the next.
-    for _, module_name, _ in pkgutil.iter_modules(
-            extractors.__path__):  # type: ignore
+    for _, module_name, _ in pkgutil.iter_modules(extractors.__path__):  # type: ignore
         # We only care about non-private modules in here
-        if not module_name.startswith('_'):
+        if not module_name.startswith("_"):
             module = importlib.import_module(
-                'snapcraft.extractors.{}'.format(module_name))
+                "snapcraft.extractors.{}".format(module_name)
+            )
 
             try:
                 # mypy is confused since we dynamically loaded the module. It
@@ -56,7 +55,8 @@ def extract_metadata(part_name: str,
             except AttributeError:
                 logger.warn(
                     "Extractor {!r} doesn't include the 'extract' function. "
-                    'Skipping...'.format(module_name))
+                    "Skipping...".format(module_name)
+                )
 
     # If we get here, no extractor was able to handle the file
     raise UnhandledMetadataFileTypeError(file_path)

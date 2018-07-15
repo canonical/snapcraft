@@ -18,20 +18,22 @@ import snapcraft
 
 
 class JdkPlugin(snapcraft.BasePlugin):
-
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.stage_packages.append('default-jdk')
+        self.stage_packages.append("default-jdk")
 
     def env(self, root):
-        return ['JAVA_HOME=%s/usr/lib/jvm/default-java' % root,
-                'PATH=%s/usr/lib/jvm/default-java/bin:'
-                '%s/usr/lib/jvm/default-java/jre/bin:$PATH' % (root, root)]
+        return [
+            "JAVA_HOME=%s/usr/lib/jvm/default-java" % root,
+            "PATH=%s/usr/lib/jvm/default-java/bin:"
+            "%s/usr/lib/jvm/default-java/jre/bin:$PATH" % (root, root),
+        ]
 
     def snap_fileset(self):
         # Cut out jdk bits (jre bits are in default-java/jre)
-        return (['-usr/lib/jvm/default-java/bin',
-                 '-usr/lib/jvm/default-java/include',
-                 '-usr/lib/jvm/default-java/lib',
-                 '-usr/share/doc',
-                 ])
+        return [
+            "-usr/lib/jvm/default-java/bin",
+            "-usr/lib/jvm/default-java/include",
+            "-usr/lib/jvm/default-java/lib",
+            "-usr/share/doc",
+        ]

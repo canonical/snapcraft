@@ -22,7 +22,8 @@ from textwrap import dedent
 from ._python_finder import get_python_command
 from . import errors
 
-_SITECUSTOMIZE_TEMPLATE = dedent("""\
+_SITECUSTOMIZE_TEMPLATE = dedent(
+    """\
     import site
     import os
 
@@ -36,18 +37,19 @@ _SITECUSTOMIZE_TEMPLATE = dedent("""\
             site.addsitedir(site_dir)
 
     if snap_dir:
-        site.ENABLE_USER_SITE = False""")
+        site.ENABLE_USER_SITE = False"""
+)
 
 
 def _get_user_site_dir(python_major_version, *, install_dir):
     path_glob = os.path.join(
-        install_dir, 'lib', 'python{}*'.format(python_major_version),
-        'site-packages')
+        install_dir, "lib", "python{}*".format(python_major_version), "site-packages"
+    )
     user_site_dirs = glob.glob(path_glob)
     if not user_site_dirs:
         raise errors.MissingUserSitePackagesError(path_glob)
 
-    return user_site_dirs[0][len(install_dir)+1:]
+    return user_site_dirs[0][len(install_dir) + 1 :]
 
 
 def _get_sitecustomize_path(python_major_version, *, stage_dir, install_dir):
@@ -55,13 +57,14 @@ def _get_sitecustomize_path(python_major_version, *, stage_dir, install_dir):
     base_dir = install_dir
     with contextlib.suppress(errors.MissingPythonCommandError):
         python_command = get_python_command(
-            python_major_version, stage_dir=stage_dir, install_dir=install_dir)
+            python_major_version, stage_dir=stage_dir, install_dir=install_dir
+        )
         if python_command.startswith(stage_dir):
             base_dir = stage_dir
 
     site_py_glob = os.path.join(
-        base_dir, 'usr', 'lib', 'python{}*'.format(python_major_version),
-        'site.py')
+        base_dir, "usr", "lib", "python{}*".format(python_major_version), "site.py"
+    )
     python_sites = glob.glob(site_py_glob)
     if not python_sites:
         raise errors.MissingSitePyError(site_py_glob)
@@ -69,7 +72,8 @@ def _get_sitecustomize_path(python_major_version, *, stage_dir, install_dir):
     python_site_dir = os.path.dirname(python_sites[0])
 
     return os.path.join(
-        install_dir, python_site_dir[len(base_dir)+1:], 'sitecustomize.py')
+        install_dir, python_site_dir[len(base_dir) + 1 :], "sitecustomize.py"
+    )
 
 
 def generate_sitecustomize(python_major_version, *, stage_dir, install_dir):
@@ -89,7 +93,8 @@ def generate_sitecustomize(python_major_version, *, stage_dir, install_dir):
                                 staging area or the part install area.
     """
     sitecustomize_path = _get_sitecustomize_path(
-        python_major_version, stage_dir=stage_dir, install_dir=install_dir)
+        python_major_version, stage_dir=stage_dir, install_dir=install_dir
+    )
     os.makedirs(os.path.dirname(sitecustomize_path), exist_ok=True)
 
     # There may very well already be a sitecustomize.py already there. If so,
@@ -99,7 +104,7 @@ def generate_sitecustomize(python_major_version, *, stage_dir, install_dir):
         target_path = os.path.realpath(sitecustomize_path)
 
         # Only remove the target if it's contained within the install directory
-        if target_path.startswith(os.path.abspath(install_dir)+os.sep):
+        if target_path.startswith(os.path.abspath(install_dir) + os.sep):
             with contextlib.suppress(FileNotFoundError):
                 os.remove(target_path)
 
@@ -109,6 +114,11 @@ def generate_sitecustomize(python_major_version, *, stage_dir, install_dir):
     # Create our sitecustomize. Python from the archives already has one
     # which is distro-specific and not needed here, so we truncate it if it's
     # already there.
-    with open(sitecustomize_path, 'w') as f:
-        f.write(_SITECUSTOMIZE_TEMPLATE.format(site_dir=_get_user_site_dir(
-            python_major_version, install_dir=install_dir)))
+    with open(sitecustomize_path, "w") as f:
+        f.write(
+            _SITECUSTOMIZE_TEMPLATE.format(
+                site_dir=_get_user_site_dir(
+                    python_major_version, install_dir=install_dir
+                )
+            )
+        )

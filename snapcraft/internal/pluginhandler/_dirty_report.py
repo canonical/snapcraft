@@ -20,7 +20,7 @@ from snapcraft import formatting_utils
 # Ideally we'd just use Collection from typing, but that wasn't introduced
 # until 3.6
 StrCollection = Union[List[str], Set[str]]
-DependencyCollection = Union[List['Dependency'], Set['Dependency']]
+DependencyCollection = Union[List["Dependency"], Set["Dependency"]]
 
 
 class Dependency:
@@ -44,9 +44,13 @@ class DirtyReport:
     - One of more of its dependencies have been re-staged.
     """
 
-    def __init__(self, *, dirty_properties: StrCollection=None,
-                 dirty_project_options: StrCollection=None,
-                 changed_dependencies: DependencyCollection=None) -> None:
+    def __init__(
+        self,
+        *,
+        dirty_properties: StrCollection = None,
+        dirty_project_options: StrCollection = None,
+        changed_dependencies: DependencyCollection = None
+    ) -> None:
         """Create a new DirtyReport.
 
         :param list dirty_properties: YAML properties that have changed.
@@ -67,34 +71,42 @@ class DirtyReport:
 
         if self.dirty_properties:
             humanized_properties = formatting_utils.humanize_list(
-                self.dirty_properties, 'and')
+                self.dirty_properties, "and"
+            )
             pluralized_connection = formatting_utils.pluralize(
-                self.dirty_properties, 'property appears',
-                'properties appear')
+                self.dirty_properties, "property appears", "properties appear"
+            )
             messages.append(
-                'The {} part {} to have changed.\n'.format(
-                    humanized_properties, pluralized_connection))
+                "The {} part {} to have changed.\n".format(
+                    humanized_properties, pluralized_connection
+                )
+            )
 
         if self.dirty_project_options:
             humanized_options = formatting_utils.humanize_list(
-                self.dirty_project_options, 'and')
+                self.dirty_project_options, "and"
+            )
             pluralized_connection = formatting_utils.pluralize(
-                self.dirty_project_options, 'option appears',
-                'options appear')
+                self.dirty_project_options, "option appears", "options appear"
+            )
             messages.append(
-                'The {} project {} to have changed.\n'.format(
-                    humanized_options, pluralized_connection))
+                "The {} project {} to have changed.\n".format(
+                    humanized_options, pluralized_connection
+                )
+            )
 
         if self.changed_dependencies:
-            dependencies = [
-                d.part_name for d in self.changed_dependencies]
-            messages.append('{} changed: {}\n'.format(
-                formatting_utils.pluralize(
-                    dependencies, 'A dependency has',
-                    'Some dependencies have'),
-                formatting_utils.humanize_list(dependencies, 'and')))
+            dependencies = [d.part_name for d in self.changed_dependencies]
+            messages.append(
+                "{} changed: {}\n".format(
+                    formatting_utils.pluralize(
+                        dependencies, "A dependency has", "Some dependencies have"
+                    ),
+                    formatting_utils.humanize_list(dependencies, "and"),
+                )
+            )
 
-        return ''.join(messages)
+        return "".join(messages)
 
     def get_summary(self) -> str:
         """Get summarized report.
@@ -115,26 +127,28 @@ class DirtyReport:
         if self.dirty_properties:
             # Be specific only if this is the only reason
             if reasons_count > 1 or len(self.dirty_properties) > 1:
-                reasons.append('properties')
+                reasons.append("properties")
             else:
-                reasons.append('{!r} property'.format(
-                    next(iter(self.dirty_properties))))
+                reasons.append(
+                    "{!r} property".format(next(iter(self.dirty_properties)))
+                )
 
         if self.dirty_project_options:
             # Be specific only if this is the only reason
             if reasons_count > 1 or len(self.dirty_project_options) > 1:
-                reasons.append('options')
+                reasons.append("options")
             else:
-                reasons.append('{!r} option'.format(
-                    next(iter(self.dirty_project_options))))
+                reasons.append(
+                    "{!r} option".format(next(iter(self.dirty_project_options)))
+                )
 
         if self.changed_dependencies:
             # Be specific only if this is the only reason
             if reasons_count > 1 or len(self.changed_dependencies) > 1:
-                reasons.append('dependencies')
+                reasons.append("dependencies")
             else:
-                reasons.append('{!r}'.format(
-                    next(iter(self.changed_dependencies)).part_name))
+                reasons.append(
+                    "{!r}".format(next(iter(self.changed_dependencies)).part_name)
+                )
 
-        return '{} changed'.format(
-            formatting_utils.humanize_list(reasons, 'and', '{}'))
+        return "{} changed".format(formatting_utils.humanize_list(reasons, "and", "{}"))

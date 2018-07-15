@@ -30,9 +30,7 @@ class UnhandledFileError(MetadataExtractionError):
 
 class AppstreamFileParseError(MetadataExtractionError):
 
-    fmt = (
-        "Failed to extract metadata from {path!r}: "
-        "it's not a valid XML file.")
+    fmt = "Failed to extract metadata from {path!r}: " "it's not a valid XML file."
 
     def __init__(self, path: str) -> None:
         super().__init__(path=path)

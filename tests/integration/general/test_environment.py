@@ -23,25 +23,23 @@ from tests import integration
 
 
 class EnvironmentTestCase(integration.TestCase):
-
     def test_environment(self):
-        self.run_snapcraft('stage', 'snapcraft-environment')
+        self.run_snapcraft("stage", "snapcraft-environment")
 
-        part_install_dir = os.path.join(self.path,
-                                        self.parts_dir, 'env', 'install')
+        part_install_dir = os.path.join(self.path, self.parts_dir, "env", "install")
 
-        test_name = os.path.join(self.stage_dir, 'test_name')
-        self.assertThat(test_name, FileContains('test-environment'))
+        test_name = os.path.join(self.stage_dir, "test_name")
+        self.assertThat(test_name, FileContains("test-environment"))
 
-        test_version = os.path.join(self.stage_dir, 'test_version')
-        self.assertThat(test_version, FileContains('0.1'))
+        test_version = os.path.join(self.stage_dir, "test_version")
+        self.assertThat(test_version, FileContains("0.1"))
 
-        test_stage = os.path.join(self.stage_dir, 'test_stage')
+        test_stage = os.path.join(self.stage_dir, "test_stage")
         self.assertThat(
-            test_stage, FileContains(os.path.join(self.path, self.stage_dir)))
+            test_stage, FileContains(os.path.join(self.path, self.stage_dir))
+        )
 
-        test_part_install = os.path.join(
-            self.path, self.stage_dir, 'test_part_install')
+        test_part_install = os.path.join(self.path, self.stage_dir, "test_part_install")
         self.assertThat(test_part_install, FileContains(part_install_dir))
 
     def test_project_environment_within_snapcraft(self):
@@ -49,27 +47,27 @@ class EnvironmentTestCase(integration.TestCase):
 
         If the correct environment SNAPCRAFT_PROJECT values aren't replaced
         this test will fail its pull step."""
-        self.run_snapcraft('pull', 'snapcraft-key-values')
+        self.run_snapcraft("pull", "snapcraft-key-values")
 
     def test_snapcraft_stage_env_replacement(self):
-        self.run_snapcraft('stage', 'stage_env')
+        self.run_snapcraft("stage", "stage_env")
 
     def test_stage_cmake_plugin_with_replace(self):
         """Replace SNAPCRAFT_PART_* in the part's attributes"""
-        self.run_snapcraft('stage', 'cmake-with-env-var')
+        self.run_snapcraft("stage", "cmake-with-env-var")
 
-        binary_output = subprocess.check_output([
-            os.path.join(self.stage_dir, 'bin', 'cmake-with-env-var')])
-        sourcedir = os.path.join(
-            self.path, self.parts_dir, 'cmake-project', 'src')
-        builddir = os.path.join(
-            self.path, self.parts_dir, 'cmake-project', 'build')
-        installdir = os.path.join(
-            self.path, self.parts_dir, 'cmake-project', 'install')
+        binary_output = subprocess.check_output(
+            [os.path.join(self.stage_dir, "bin", "cmake-with-env-var")]
+        )
+        sourcedir = os.path.join(self.path, self.parts_dir, "cmake-project", "src")
+        builddir = os.path.join(self.path, self.parts_dir, "cmake-project", "build")
+        installdir = os.path.join(self.path, self.parts_dir, "cmake-project", "install")
         self.assertThat(
-            binary_output.decode('utf-8'),
+            binary_output.decode("utf-8"),
             Equals(
-                'I was built with:\n'
-                'PART_SRC: {}\n'
-                'PART_BUILD: {}\n'
-                'PART_INSTALL: {}\n'.format(sourcedir, builddir, installdir)))
+                "I was built with:\n"
+                "PART_SRC: {}\n"
+                "PART_BUILD: {}\n"
+                "PART_INSTALL: {}\n".format(sourcedir, builddir, installdir)
+            ),
+        )

@@ -16,39 +16,34 @@
 
 import os
 
-from testtools.matchers import (
-    Contains,
-    FileExists,
-    Not
-)
+from testtools.matchers import Contains, FileExists, Not
 
 from tests import integration
 
 
 class PrimeKeywordTestCase(integration.TestCase):
-
     def test_prime_filter(self):
-        self.run_snapcraft(['prime', 'prime-keyword'], 'prime-filter')
+        self.run_snapcraft(["prime", "prime-keyword"], "prime-filter")
 
         # Verify that only the `prime1` file made it into prime (i.e. `prime2`
         # was filtered out).
-        self.assertThat(os.path.join(self.prime_dir, 'prime1'), FileExists())
-        self.assertThat(
-            os.path.join(self.prime_dir, 'prime2'), Not(FileExists()))
+        self.assertThat(os.path.join(self.prime_dir, "prime1"), FileExists())
+        self.assertThat(os.path.join(self.prime_dir, "prime2"), Not(FileExists()))
 
     def test_snap_filter_is_deprecated(self):
-        output = self.run_snapcraft(
-            ['prime', 'snap-keyword'], 'prime-filter')
+        output = self.run_snapcraft(["prime", "snap-keyword"], "prime-filter")
 
         # Verify that the `snap` keyword is deprecated.
         self.assertThat(
-            output, Contains(
+            output,
+            Contains(
                 "DEPRECATED: The 'snap' keyword has been replaced by 'prime'."
                 "\nSee http://snapcraft.io/docs/deprecation-notices/dn1 "
-                "for more information."))
+                "for more information."
+            ),
+        )
 
         # Verify that only the `snap1` file made it into prime (i.e. `snap2`
         # was filtered out).
-        self.assertThat(os.path.join(self.prime_dir, 'snap1'), FileExists())
-        self.assertThat(
-            os.path.join(self.prime_dir, 'snap2'), Not(FileExists()))
+        self.assertThat(os.path.join(self.prime_dir, "snap1"), FileExists())
+        self.assertThat(os.path.join(self.prime_dir, "snap2"), Not(FileExists()))

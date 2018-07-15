@@ -16,12 +16,12 @@
 
 
 from pyramid import config
+
 # LP: #1733579
 from wsgiref import simple_server  # type: ignore
 
 
-class BaseFakeServer():
-
+class BaseFakeServer:
     def __init__(self, server_address):
         super().__init__()
         self.server_address = server_address
@@ -29,7 +29,8 @@ class BaseFakeServer():
         self.configure(configurator)
         app = configurator.make_wsgi_app()
         self.server = simple_server.make_server(
-            self.server_address[0], self.server_address[1], app)
+            self.server_address[0], self.server_address[1], app
+        )
         self.server_port = self.server.server_port
         self.socket = self.server.socket
 

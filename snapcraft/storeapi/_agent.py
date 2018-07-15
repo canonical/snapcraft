@@ -21,22 +21,21 @@ import snapcraft
 
 
 def _is_ci_env():
-    env_prefixes = ['TRAVIS', 'AUTOPKGTEST_TMP']
+    env_prefixes = ["TRAVIS", "AUTOPKGTEST_TMP"]
     matches = []
 
     for prefix in env_prefixes:
-        matches += [
-            var for var in os.environ.keys() if var.startswith(prefix)]
+        matches += [var for var in os.environ.keys() if var.startswith(prefix)]
 
     return len(matches) > 0
 
 
 def get_user_agent():
     arch = snapcraft.ProjectOptions().deb_arch
-    testing = '(testing) ' if _is_ci_env() else ''
-    return 'snapcraft/{} {}{} ({})'.format(
-                snapcraft.__version__,
-                testing,
-                '/'.join(platform.dist()[0:2]),  # i.e. Ubuntu/16.04
-                arch,
-            )
+    testing = "(testing) " if _is_ci_env() else ""
+    return "snapcraft/{} {}{} ({})".format(
+        snapcraft.__version__,
+        testing,
+        "/".join(platform.dist()[0:2]),  # i.e. Ubuntu/16.04
+        arch,
+    )

@@ -21,63 +21,58 @@ from tests import unit
 
 
 class HumanizeListTestCases(unit.TestCase):
-
     def test_no_items(self):
         items = []
-        output = formatting_utils.humanize_list(items, 'and')
-        self.assertThat(output, Equals(''))
+        output = formatting_utils.humanize_list(items, "and")
+        self.assertThat(output, Equals(""))
 
     def test_one_item(self):
-        items = ['foo']
-        output = formatting_utils.humanize_list(items, 'and')
+        items = ["foo"]
+        output = formatting_utils.humanize_list(items, "and")
         self.assertThat(output, Equals("'foo'"))
 
     def test_two_items(self):
-        items = ['foo', 'bar']
-        output = formatting_utils.humanize_list(items, 'and')
-        self.assertThat(output, Equals("'bar' and 'foo'"),
-                        "Expected 'bar' before 'foo' due to sorting")
+        items = ["foo", "bar"]
+        output = formatting_utils.humanize_list(items, "and")
+        self.assertThat(
+            output,
+            Equals("'bar' and 'foo'"),
+            "Expected 'bar' before 'foo' due to sorting",
+        )
 
     def test_three_items(self):
-        items = ['foo', 'bar', 'baz']
-        output = formatting_utils.humanize_list(items, 'and')
+        items = ["foo", "bar", "baz"]
+        output = formatting_utils.humanize_list(items, "and")
         self.assertThat(output, Equals("'bar', 'baz', and 'foo'"))
 
     def test_four_items(self):
-        items = ['foo', 'bar', 'baz', 'qux']
-        output = formatting_utils.humanize_list(items, 'and')
+        items = ["foo", "bar", "baz", "qux"]
+        output = formatting_utils.humanize_list(items, "and")
         self.assertThat(output, Equals("'bar', 'baz', 'foo', and 'qux'"))
 
     def test_another_conjunction(self):
-        items = ['foo', 'bar', 'baz', 'qux']
-        output = formatting_utils.humanize_list(items, 'or')
+        items = ["foo", "bar", "baz", "qux"]
+        output = formatting_utils.humanize_list(items, "or")
         self.assertThat(output, Equals("'bar', 'baz', 'foo', or 'qux'"))
 
 
 class FormatPathVariableTestCases(unit.TestCase):
-
     def test_no_paths(self):
-        self.assertRaises(ValueError,
-                          formatting_utils.format_path_variable,
-                          'PATH', None, '/usr', ':')
+        self.assertRaises(
+            ValueError, formatting_utils.format_path_variable, "PATH", None, "/usr", ":"
+        )
 
     def test_one_path(self):
-        paths = ['/bin']
-        output = formatting_utils.format_path_variable('PATH', paths,
-                                                       '/usr', ':')
-        self.assertThat(output,
-                        Equals('PATH="$PATH:/usr/bin"'))
+        paths = ["/bin"]
+        output = formatting_utils.format_path_variable("PATH", paths, "/usr", ":")
+        self.assertThat(output, Equals('PATH="$PATH:/usr/bin"'))
 
     def test_two_paths(self):
-        paths = ['/bin', '/sbin']
-        output = formatting_utils.format_path_variable('PATH', paths,
-                                                       '/usr', ':')
-        self.assertThat(output,
-                        Equals('PATH="$PATH:/usr/bin:/usr/sbin"'))
+        paths = ["/bin", "/sbin"]
+        output = formatting_utils.format_path_variable("PATH", paths, "/usr", ":")
+        self.assertThat(output, Equals('PATH="$PATH:/usr/bin:/usr/sbin"'))
 
     def test_two_paths_other_paremeters(self):
-        paths = ['/usr/bin', '/usr/sbin']
-        output = formatting_utils.format_path_variable('PATH', paths,
-                                                       '', ',')
-        self.assertThat(output,
-                        Equals('PATH="$PATH,/usr/bin,/usr/sbin"'))
+        paths = ["/usr/bin", "/usr/sbin"]
+        output = formatting_utils.format_path_variable("PATH", paths, "", ",")
+        self.assertThat(output, Equals('PATH="$PATH,/usr/bin,/usr/sbin"'))

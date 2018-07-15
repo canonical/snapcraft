@@ -24,46 +24,45 @@ from testtools.matchers import Equals, FileExists, Not
 from tests import integration
 
 
-class GodepsPluginTestCase(testscenarios.WithScenarios,
-                           integration.TestCase):
+class GodepsPluginTestCase(testscenarios.WithScenarios, integration.TestCase):
 
     scenarios = [
-        ('no GOBIN', dict(set_gobin=False)),
-        ('with GOBIN', dict(set_gobin=True)),
+        ("no GOBIN", dict(set_gobin=False)),
+        ("with GOBIN", dict(set_gobin=True)),
     ]
 
     def _assert_bcrypt_output(self, *, binary):
-        hash_command = [binary, 'hash', '10', 'password']
+        hash_command = [binary, "hash", "10", "password"]
         output = subprocess.check_output(hash_command)
 
-        check_hash_command = [binary, 'check', output, 'password']
+        check_hash_command = [binary, "check", output, "password"]
         output = subprocess.check_output(check_hash_command)
 
-        self.assertThat(output.decode('UTF-8').strip(' \n'), Equals('Equal'))
+        self.assertThat(output.decode("UTF-8").strip(" \n"), Equals("Equal"))
 
     def test_stage(self):
         if self.set_gobin:
-            gobin = 'gobin'
-            self.useFixture(fixtures.EnvironmentVariable('GOBIN', gobin))
+            gobin = "gobin"
+            self.useFixture(fixtures.EnvironmentVariable("GOBIN", gobin))
 
-        self.run_snapcraft('stage', 'godeps')
+        self.run_snapcraft("stage", "godeps")
 
-        binary = os.path.join(self.stage_dir, 'bin', 'bcrypt')
+        binary = os.path.join(self.stage_dir, "bin", "bcrypt")
         self.assertThat(binary, FileExists())
 
         self._assert_bcrypt_output(binary=binary)
 
     def test_stage_with_go_packages(self):
         if self.set_gobin:
-            gobin = 'gobin'
-            self.useFixture(fixtures.EnvironmentVariable('GOBIN', gobin))
+            gobin = "gobin"
+            self.useFixture(fixtures.EnvironmentVariable("GOBIN", gobin))
 
-        self.run_snapcraft('stage', 'godeps-with-go-packages')
+        self.run_snapcraft("stage", "godeps-with-go-packages")
 
-        binary = os.path.join(self.stage_dir, 'bin', 'only-main')
+        binary = os.path.join(self.stage_dir, "bin", "only-main")
         self.assertThat(binary, FileExists())
         self.assertThat(
-            os.path.join(self.stage_dir, 'bin', 'bcrypt'),
-            Not(FileExists()))
+            os.path.join(self.stage_dir, "bin", "bcrypt"), Not(FileExists())
+        )
 
         self._assert_bcrypt_output(binary=binary)

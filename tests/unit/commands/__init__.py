@@ -21,59 +21,57 @@ from click.testing import CliRunner
 
 from snapcraft import storeapi
 from snapcraft.cli._runner import run
-from tests import (
-    fixture_setup,
-    unit
-)
+from tests import fixture_setup, unit
 
 
 _sample_keys = [
     {
-        'name': 'default',
-        'sha3-384': (
-            'vdEeQvRxmZ26npJCFaGnl-VfGz0lU2jZ'
-            'ZkWp_s7E-RxVCNtH2_mtjcxq2NkDKkIp'),
+        "name": "default",
+        "sha3-384": (
+            "vdEeQvRxmZ26npJCFaGnl-VfGz0lU2jZ" "ZkWp_s7E-RxVCNtH2_mtjcxq2NkDKkIp"
+        ),
     },
     {
-        'name': 'another',
-        'sha3-384': (
-            'JsfToV5hO2eN9l89pYYCKXUioTERrZII'
-            'HUgQQd47jW8YNNBskupiIjWYd3KXLY_D'),
+        "name": "another",
+        "sha3-384": (
+            "JsfToV5hO2eN9l89pYYCKXUioTERrZII" "HUgQQd47jW8YNNBskupiIjWYd3KXLY_D"
+        ),
     },
 ]
 
 
 def get_sample_key(name):
     for key in _sample_keys:
-        if key['name'] == name:
+        if key["name"] == name:
             return key
     raise KeyError(name)
 
 
 def mock_snap_output(command, *args, **kwargs):
-    if command == ['snap', 'keys', '--json']:
+    if command == ["snap", "keys", "--json"]:
         return json.dumps(_sample_keys)
-    elif command[:2] == ['snap', 'export-key']:
-        if not command[2].startswith('--account='):
-            raise AssertionError('Unhandled command: {}'.format(command))
-        account_id = command[2][len('--account='):]
+    elif command[:2] == ["snap", "export-key"]:
+        if not command[2].startswith("--account="):
+            raise AssertionError("Unhandled command: {}".format(command))
+        account_id = command[2][len("--account=") :]
         name = command[3]
         # This isn't a full account-key-request assertion, but it's enough
         # for testing.
-        return dedent('''\
+        return dedent(
+            """\
             type: account-key-request
             account-id: {account_id}
             name: {name}
             public-key-sha3-384: {sha3_384}
-            ''').format(
-                account_id=account_id, name=name,
-                sha3_384=get_sample_key(name)['sha3-384'])
+            """
+        ).format(
+            account_id=account_id, name=name, sha3_384=get_sample_key(name)["sha3-384"]
+        )
     else:
-        raise AssertionError('Unhandled command: {}'.format(command))
+        raise AssertionError("Unhandled command: {}".format(command))
 
 
 class CommandBaseTestCase(unit.TestCase):
-
     def setUp(self):
         super().setUp()
         self.runner = CliRunner()
@@ -101,25 +99,19 @@ parts:
         if not yaml_part:
             yaml_part = self.yaml_part
 
-        parts = '\n'.join([yaml_part.format(step=step, iter=i)
-                           for i in range(n)])
-        super().make_snapcraft_yaml(self.yaml_template.format(step=step,
-                                                              parts=parts))
+        parts = "\n".join([yaml_part.format(step=step, iter=i) for i in range(n)])
+        super().make_snapcraft_yaml(self.yaml_template.format(step=step, parts=parts))
 
         parts = []
         for i in range(n):
-            part_dir = os.path.join(self.parts_dir, '{}{}'.format(step, i))
-            state_dir = os.path.join(part_dir, 'state')
-            parts.append({
-                'part_dir': part_dir,
-                'state_dir': state_dir,
-            })
+            part_dir = os.path.join(self.parts_dir, "{}{}".format(step, i))
+            state_dir = os.path.join(part_dir, "state")
+            parts.append({"part_dir": part_dir, "state_dir": state_dir})
 
         return parts
 
 
 class StoreCommandsBaseTestCase(CommandBaseTestCase):
-
     def setUp(self):
         super().setUp()
         self.fake_store = fixture_setup.FakeStore()

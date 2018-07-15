@@ -25,41 +25,50 @@ def _pull_state_constructor(loader, node):
     return PullState(**parameters)
 
 
-yaml.add_constructor(u'!PullState', _pull_state_constructor)
+yaml.add_constructor(u"!PullState", _pull_state_constructor)
 
 
 def _schema_properties():
     return {
-        'override-pull',
-        'parse-info',
-        'plugin',
-        'source',
-        'source-commit',
-        'source-depth',
-        'source-tag',
-        'source-type',
-        'source-branch',
-        'source-subdir',
-        'stage-packages',
+        "override-pull",
+        "parse-info",
+        "plugin",
+        "source",
+        "source-commit",
+        "source-depth",
+        "source-tag",
+        "source-type",
+        "source-branch",
+        "source-subdir",
+        "stage-packages",
     }
 
 
 class PullState(PartState):
-    yaml_tag = u'!PullState'
+    yaml_tag = u"!PullState"
 
-    def __init__(self, property_names, part_properties=None, project=None,
-                 stage_packages=None, build_snaps=None, build_packages=None,
-                 source_details=None, metadata=None, metadata_files=None,
-                 scriptlet_metadata=None):
+    def __init__(
+        self,
+        property_names,
+        part_properties=None,
+        project=None,
+        stage_packages=None,
+        build_snaps=None,
+        build_packages=None,
+        source_details=None,
+        metadata=None,
+        metadata_files=None,
+        scriptlet_metadata=None,
+    ):
         # Save this off before calling super() since we'll need it
         # FIXME: for 3.x the name `schema_properties` is leaking
         #        implementation details from a higher layer.
         self.schema_properties = property_names
         self.assets = {
-            'stage-packages': stage_packages,
-            'build-snaps': build_snaps,
-            'build-packages': build_packages,
-            'source-details': source_details,
+            "stage-packages": stage_packages,
+            "build-snaps": build_snaps,
+            "build-packages": build_packages,
+            "source-details": source_details,
         }
 
         if not scriptlet_metadata:
@@ -71,10 +80,7 @@ class PullState(PartState):
         if not metadata_files:
             metadata_files = []
 
-        self.extracted_metadata = {
-            'metadata': metadata,
-            'files': metadata_files
-        }
+        self.extracted_metadata = {"metadata": metadata, "files": metadata_files}
 
         self.scriptlet_metadata = scriptlet_metadata
 
@@ -98,4 +104,4 @@ class PullState(PartState):
         The pull step only cares about the target architecture.
         """
 
-        return {'deb_arch': getattr(project, 'deb_arch', None)}
+        return {"deb_arch": getattr(project, "deb_arch", None)}

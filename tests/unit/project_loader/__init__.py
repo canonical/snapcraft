@@ -22,25 +22,22 @@ from tests import unit
 
 
 class ProjectLoaderBaseTest(unit.TestCase):
-
     def make_snapcraft_project(self, snapcraft_yaml, project_kwargs=None):
-        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
-            snapcraft_yaml)
+        snapcraft_yaml_file_path = self.make_snapcraft_yaml(snapcraft_yaml)
         if project_kwargs is None:
             project_kwargs = dict()
         project = _Project(
-            snapcraft_yaml_file_path=snapcraft_yaml_file_path,
-            **project_kwargs)
+            snapcraft_yaml_file_path=snapcraft_yaml_file_path, **project_kwargs
+        )
         return project_loader.load_config(project)
 
 
 class LoadPartBaseTest(ProjectLoaderBaseTest):
-
     def setUp(self):
         super().setUp()
 
         patcher = mock.patch(
-            'snapcraft.internal.project_loader._parts_config.PartsConfig'
-            '.load_part')
+            "snapcraft.internal.project_loader._parts_config.PartsConfig" ".load_part"
+        )
         self.mock_load_part = patcher.start()
         self.addCleanup(patcher.stop)

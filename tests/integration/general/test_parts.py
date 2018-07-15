@@ -26,37 +26,37 @@ from tests import integration
 
 
 class PartsTestCase(integration.TestCase):
-
     def _parts_dir(self):
-        parts_uri = 'https://parts.snapcraft.io/v1/parts.yaml'
+        parts_uri = "https://parts.snapcraft.io/v1/parts.yaml"
         return os.path.join(
-            xdg.BaseDirectory.save_data_path('snapcraft'),
-            hashlib.sha384(parts_uri.encode(
-                sys.getfilesystemencoding())).hexdigest())
+            xdg.BaseDirectory.save_data_path("snapcraft"),
+            hashlib.sha384(parts_uri.encode(sys.getfilesystemencoding())).hexdigest(),
+        )
 
     def setUp(self):
         super().setUp()
 
         self.parts_dir = self._parts_dir()
-        self.parts_yaml = os.path.join(self.parts_dir, 'parts.yaml')
-        self.headers_yaml = os.path.join(self.parts_dir, 'headers.yaml')
+        self.parts_yaml = os.path.join(self.parts_dir, "parts.yaml")
+        self.headers_yaml = os.path.join(self.parts_dir, "headers.yaml")
 
     def test_update(self):
-        self.run_snapcraft('update')
+        self.run_snapcraft("update")
 
         self.assertTrue(os.path.exists(self.parts_yaml))
         self.assertTrue(os.path.exists(self.headers_yaml))
 
     def test_curl_exists_and_properly_defined(self):
         """Curl is used in most of the demos so we test for its existence."""
-        self.run_snapcraft('update')
-        output = self.run_snapcraft(['define', 'curl'])
+        self.run_snapcraft("update")
+        output = self.run_snapcraft(["define", "curl"])
 
         expected_prefix = (
             "Maintainer: 'Sergio Schvezov <sergio.schvezov@ubuntu.com>'\n"
             "Description: A tool and a library (usable from many languages) "
             "for client side URL transfers, supporting FTP, FTPS, HTTP, "
-            "HTTPS, TELNET, DICT, FILE and LDAP.\n\n")
+            "HTTPS, TELNET, DICT, FILE and LDAP.\n\n"
+        )
         self.assertThat(output, Contains(expected_prefix))
         idx = output.index(expected_prefix) + len(expected_prefix)
         part = yaml.safe_load(output[idx:])
@@ -78,42 +78,31 @@ class PartsTestCase(integration.TestCase):
                     "-include",
                     "-share",
                 ],
-            },
+            }
         }
         self.assertThat(part, Equals(expected_part))
 
 
 class PartsWithFilesetsTestCase(integration.TestCase):
-
     def test_part_with_fileset(self):
-        self.run_snapcraft('update')
+        self.run_snapcraft("update")
 
-        output = self.run_snapcraft(['define', 'simple-make-filesets'])
+        output = self.run_snapcraft(["define", "simple-make-filesets"])
 
         expected_prefix = (
             "Maintainer: 'Jonathan Cave <jonathan.cave@canonical.com>'\n"
             "Description: The filesets test from the integration test suite."
-            "\n\n")
+            "\n\n"
+        )
         self.assertThat(output, Contains(expected_prefix))
         idx = output.index(expected_prefix) + len(expected_prefix)
         part = yaml.safe_load(output[idx:])
         expected_part = {
             "simple-make-filesets": {
                 "plugin": "make",
-                "filesets": {
-                    "files": [
-                        "share/file1",
-                        "share/file2",
-                    ],
-                },
-                "stage": [
-                    "$files",
-                    "new/dir1",
-                    "new/dir2",
-                ],
-                "snap": [
-                    "-new/dir1",
-                ],
+                "filesets": {"files": ["share/file1", "share/file2"]},
+                "stage": ["$files", "new/dir1", "new/dir2"],
+                "snap": ["-new/dir1"],
                 "organize": {
                     "file1": "share/file1",
                     "file2": "share/file2",
@@ -121,8 +110,8 @@ class PartsWithFilesetsTestCase(integration.TestCase):
                     "dir2": "new/dir2",
                 },
                 "source": "https://github.com/jocave/simple-make-filesets.git",
-            },
+            }
         }
         self.assertThat(part, Equals(expected_part))
 
-        self.run_snapcraft('snap', 'wiki-filesets')
+        self.run_snapcraft("snap", "wiki-filesets")

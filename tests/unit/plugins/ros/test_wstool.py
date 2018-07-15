@@ -27,43 +27,49 @@ from tests import unit
 
 
 class WstoolTestCase(unit.TestCase):
-
     def setUp(self):
         super().setUp()
         self.project = snapcraft.ProjectOptions()
         self.wstool = wstool.Wstool(
-            'package_path', 'wstool_path', 'sources', self.project)
+            "package_path", "wstool_path", "sources", self.project
+        )
 
-        patcher = mock.patch('snapcraft.repo.Ubuntu')
+        patcher = mock.patch("snapcraft.repo.Ubuntu")
         self.ubuntu_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
-        patcher = mock.patch('subprocess.check_output')
+        patcher = mock.patch("subprocess.check_output")
         self.check_output_mock = patcher.start()
         self.addCleanup(patcher.stop)
 
     def test_setup(self):
         # Return something other than a Mock to ease later assertions
-        self.check_output_mock.return_value = b''
+        self.check_output_mock.return_value = b""
 
         self.wstool.setup()
 
         # Verify that only wstool was installed (no other .debs)
         self.assertThat(self.ubuntu_mock.call_count, Equals(1))
-        self.assertThat(
-            self.ubuntu_mock.return_value.get.call_count, Equals(1))
-        self.assertThat(
-            self.ubuntu_mock.return_value.unpack.call_count, Equals(1))
-        self.ubuntu_mock.assert_has_calls([
-            mock.call(self.wstool._wstool_path, sources='sources',
-                      project_options=self.project),
-            mock.call().get(['python-wstool']),
-            mock.call().unpack(self.wstool._wstool_install_path)])
+        self.assertThat(self.ubuntu_mock.return_value.get.call_count, Equals(1))
+        self.assertThat(self.ubuntu_mock.return_value.unpack.call_count, Equals(1))
+        self.ubuntu_mock.assert_has_calls(
+            [
+                mock.call(
+                    self.wstool._wstool_path,
+                    sources="sources",
+                    project_options=self.project,
+                ),
+                mock.call().get(["python-wstool"]),
+                mock.call().unpack(self.wstool._wstool_install_path),
+            ]
+        )
 
         # Verify that wstool was initialized
         self.check_output_mock.assert_called_once_with(
-            ['wstool', 'init', 'package_path', '-j2'], env=mock.ANY,
-            stderr=subprocess.PIPE)
+            ["wstool", "init", "package_path", "-j2"],
+            env=mock.ANY,
+            stderr=subprocess.PIPE,
+        )
 
     def test_setup_can_run_multiple_times(self):
         self.wstool.setup()
@@ -77,11 +83,13 @@ class WstoolTestCase(unit.TestCase):
         """Test that an existing .rosinstall file is not an error."""
 
         def run(args, **kwargs):
-            if args[0:2] == ['wstool', 'init']:
+            if args[0:2] == ["wstool", "init"]:
                 raise subprocess.CalledProcessError(
-                    1, 'foo',
-                    b'Error: There already is a workspace config file '
-                    b'.rosinstall at ".". Use wstool install/modify.')
+                    1,
+                    "foo",
+                    b"Error: There already is a workspace config file "
+                    b'.rosinstall at ".". Use wstool install/modify.',
+                )
 
         self.check_output_mock.side_effect = run
 
@@ -89,73 +97,80 @@ class WstoolTestCase(unit.TestCase):
 
     def test_setup_initialization_failure(self):
         def run(args, **kwargs):
-            if args[0:2] == ['wstool', 'init']:
-                raise subprocess.CalledProcessError(1, 'foo', b'bar', b'baz')
+            if args[0:2] == ["wstool", "init"]:
+                raise subprocess.CalledProcessError(1, "foo", b"bar", b"baz")
 
         self.check_output_mock.side_effect = run
 
         raised = self.assertRaises(
-            wstool.WorkspaceInitializationError, self.wstool.setup)
+            wstool.WorkspaceInitializationError, self.wstool.setup
+        )
 
-        self.assertThat(str(raised),
-                        Equals('Error initializing workspace: baz'))
+        self.assertThat(str(raised), Equals("Error initializing workspace: baz"))
 
     def test_merge(self):
-        self.wstool.merge('rosinstall-file')
+        self.wstool.merge("rosinstall-file")
 
         self.check_output_mock.assert_called_with(
-            ['wstool', 'merge', 'rosinstall-file', '--confirm-all',
-             '-tpackage_path'],
-            stderr=subprocess.PIPE, env=mock.ANY)
+            ["wstool", "merge", "rosinstall-file", "--confirm-all", "-tpackage_path"],
+            stderr=subprocess.PIPE,
+            env=mock.ANY,
+        )
 
     def test_merge_failure(self):
         def run(args, **kwargs):
-            if args[0:2] == ['wstool', 'merge']:
-                raise subprocess.CalledProcessError(1, 'foo', b'bar', b'baz')
+            if args[0:2] == ["wstool", "merge"]:
+                raise subprocess.CalledProcessError(1, "foo", b"bar", b"baz")
 
         self.check_output_mock.side_effect = run
 
         raised = self.assertRaises(
-            wstool.RosinstallMergeError, self.wstool.merge, 'rosinstall-file')
+            wstool.RosinstallMergeError, self.wstool.merge, "rosinstall-file"
+        )
 
         self.assertThat(
-            str(raised), Equals(
-                "Error merging rosinstall file 'rosinstall-file' into "
-                'workspace: baz'))
+            str(raised),
+            Equals(
+                "Error merging rosinstall file 'rosinstall-file' into " "workspace: baz"
+            ),
+        )
 
     def test_update(self):
         self.wstool.update()
 
         self.check_output_mock.assert_called_with(
-            ['wstool', 'update', '-j2', '-tpackage_path'], env=mock.ANY,
-            stderr=subprocess.PIPE)
+            ["wstool", "update", "-j2", "-tpackage_path"],
+            env=mock.ANY,
+            stderr=subprocess.PIPE,
+        )
 
     def test_update_failure(self):
         def run(args, **kwargs):
-            if args[0:2] == ['wstool', 'update']:
-                raise subprocess.CalledProcessError(1, 'foo', b'bar', b'baz')
+            if args[0:2] == ["wstool", "update"]:
+                raise subprocess.CalledProcessError(1, "foo", b"bar", b"baz")
 
         self.check_output_mock.side_effect = run
 
-        raised = self.assertRaises(
-            wstool.WorkspaceUpdateError, self.wstool.update)
+        raised = self.assertRaises(wstool.WorkspaceUpdateError, self.wstool.update)
 
-        self.assertThat(
-            str(raised), Equals(
-                'Error updating workspace: baz'))
+        self.assertThat(str(raised), Equals("Error updating workspace: baz"))
 
     def test_run(self):
         wstool = self.wstool
-        wstool._run(['init'])
+        wstool._run(["init"])
 
-        class check_env():
+        class check_env:
             def __eq__(self, env):
-                return (
-                    env['PATH'] == os.environ['PATH'] + ':' + os.path.join(
-                        wstool._wstool_install_path, 'usr', 'bin') and
-                    env['PYTHONPATH'] == os.path.join(
-                        wstool._wstool_install_path, 'usr', 'lib',
-                        'python2.7', 'dist-packages'))
+                return env["PATH"] == os.environ["PATH"] + ":" + os.path.join(
+                    wstool._wstool_install_path, "usr", "bin"
+                ) and env["PYTHONPATH"] == os.path.join(
+                    wstool._wstool_install_path,
+                    "usr",
+                    "lib",
+                    "python2.7",
+                    "dist-packages",
+                )
 
         self.check_output_mock.assert_called_with(
-            mock.ANY, env=check_env(), stderr=subprocess.PIPE)
+            mock.ANY, env=check_env(), stderr=subprocess.PIPE
+        )

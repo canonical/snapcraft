@@ -23,20 +23,18 @@ from tests.matchers import HasArchitecture
 
 
 class AutotoolsPluginTestCase(integration.TestCase):
-
     def test_stage(self):
-        self.run_snapcraft('stage', 'autotools-hello')
+        self.run_snapcraft("stage", "autotools-hello")
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join(self.stage_dir, 'bin', 'hello'))
-        self.assertThat(binary_output, Equals('Hello, world!\n'))
+            os.path.join(self.stage_dir, "bin", "hello")
+        )
+        self.assertThat(binary_output, Equals("Hello, world!\n"))
 
     def test_cross_compiling(self):
-        if self.deb_arch != 'amd64':
-            self.skipTest('The test only handles amd64 to arm64')
+        if self.deb_arch != "amd64":
+            self.skipTest("The test only handles amd64 to arm64")
 
-        self.run_snapcraft(['build', '--target-arch=arm64'],
-                           'autotools-hello')
-        binary = os.path.join(self.parts_dir, 'make-project', 'install', 'bin',
-                              'hello')
-        self.assertThat(binary, HasArchitecture('aarch64'))
+        self.run_snapcraft(["build", "--target-arch=arm64"], "autotools-hello")
+        binary = os.path.join(self.parts_dir, "make-project", "install", "bin", "hello")
+        self.assertThat(binary, HasArchitecture("aarch64"))

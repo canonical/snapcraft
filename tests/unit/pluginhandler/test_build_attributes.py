@@ -24,5 +24,5 @@ class BuildAttributesTestCase(unit.TestCase):
         build_attributes = BuildAttributes([])
         self.assertFalse(build_attributes.no_system_libraries())
 
-        build_attributes = BuildAttributes(['no-system-libraries'])
+        build_attributes = BuildAttributes(["no-system-libraries"])
         self.assertTrue(build_attributes.no_system_libraries())

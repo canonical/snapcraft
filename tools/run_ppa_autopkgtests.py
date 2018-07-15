@@ -22,8 +22,8 @@ import tempfile
 from launchpadlib.launchpad import Launchpad
 
 
-ACTIVE_DISTROS = ('xenial', 'artful', 'bionic')
-ACTIVE_ARCHITECTURES = ('amd64', 'i386', 'armhf', 'arm64')
+ACTIVE_DISTROS = ("xenial", "artful", "bionic")
+ACTIVE_ARCHITECTURES = ("amd64", "i386", "armhf", "arm64")
 
 
 def main():
@@ -31,7 +31,8 @@ def main():
         cookie_file_path = save_cookie()
         for distro, architecture, version in snapcraft_ppa_packages():
             request_autopkgtest_execution(
-                cookie_file_path, distro, architecture, version)
+                cookie_file_path, distro, architecture, version
+            )
     finally:
         os.remove(cookie_file_path)
 
@@ -39,40 +40,52 @@ def main():
 def save_cookie():
     cookie_file = tempfile.NamedTemporaryFile(delete=False)
     cookie_file.write(
-        'autopkgtest.ubuntu.com\tTRUE\t/\tTRUE\t0\tsession\t{}'.format(
-            os.environ.get('SNAPCRAFT_AUTOPKGTEST_COOKIE')))
+        "autopkgtest.ubuntu.com\tTRUE\t/\tTRUE\t0\tsession\t{}".format(
+            os.environ.get("SNAPCRAFT_AUTOPKGTEST_COOKIE")
+        )
+    )
     cookie_file.close()
     return cookie_file.name
 
 
 def snapcraft_ppa_packages():
-    launchpad = Launchpad.login_anonymously('snappy-m-o', 'production')
-    ubuntu = launchpad.distributions['ubuntu']
-    snapcraft_daily_ppa = launchpad.people['snappy-dev'].getPPAByName(
-        name='snapcraft-daily')
+    launchpad = Launchpad.login_anonymously("snappy-m-o", "production")
+    ubuntu = launchpad.distributions["ubuntu"]
+    snapcraft_daily_ppa = launchpad.people["snappy-dev"].getPPAByName(
+        name="snapcraft-daily"
+    )
 
     for distro in ACTIVE_DISTROS:
         for architecture in ACTIVE_ARCHITECTURES:
-            distro_arch = ubuntu.getSeries(
-                name_or_version=distro).getDistroArchSeries(
-                    archtag=architecture)
+            distro_arch = ubuntu.getSeries(name_or_version=distro).getDistroArchSeries(
+                archtag=architecture
+            )
             for package in snapcraft_daily_ppa.getPublishedBinaries(
-                    status='Published', binary_name='snapcraft',
-                    exact_match=True, distro_arch_series=distro_arch):
+                status="Published",
+                binary_name="snapcraft",
+                exact_match=True,
+                distro_arch_series=distro_arch,
+            ):
                 yield distro, architecture, str(package.binary_package_version)
 
 
 def request_autopkgtest_execution(cookie_path, distro, architecture, version):
-    output = subprocess.check_output([
-        'wget', '-O-', '--load-cookies', cookie_path,
-        'https://autopkgtest.ubuntu.com/request.cgi?release={distro}&'
-        'arch={architecture}&package=snapcraft&'
-        'ppa=snappy-dev/snapcraft-daily&'
-        'trigger=snapcraft/{version}'.format(
-            distro=distro, architecture=architecture, version=version)
-    ])
-    if 'Test request submitted' not in output:
-        exit('Failed to request the autopkgtest')
+    output = subprocess.check_output(
+        [
+            "wget",
+            "-O-",
+            "--load-cookies",
+            cookie_path,
+            "https://autopkgtest.ubuntu.com/request.cgi?release={distro}&"
+            "arch={architecture}&package=snapcraft&"
+            "ppa=snappy-dev/snapcraft-daily&"
+            "trigger=snapcraft/{version}".format(
+                distro=distro, architecture=architecture, version=version
+            ),
+        ]
+    )
+    if "Test request submitted" not in output:
+        exit("Failed to request the autopkgtest")
 
 
 if __name__ == "__main__":

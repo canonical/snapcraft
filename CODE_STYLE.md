@@ -11,9 +11,10 @@ Some of the rules are enforced with static tests. You can read the [TESTING][1]
 document for more information and details about how to run the static suite of
 tests. Some other rules are only socially enforced during code reviews.
 
-## PEP 8
+## black
 
-We adhere to the Style Guide for Python Code documented in the [PEP 8][2].
+This code base adheres to black[2].
+You can `snap install black --edge` to install the linter and formatter onto your host.
 
 ## Multiline strings
 
@@ -48,4 +49,4 @@ fix it.
   tested only once, in the module tests/unit/test_errors.py
 
 [1]: TESTING.md
-[2]: https://www.python.org/dev/peps/pep-0008
+[2]: https://github.com/ambv/black

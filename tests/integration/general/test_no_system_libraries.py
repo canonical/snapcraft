@@ -17,27 +17,23 @@
 import glob
 import os
 
-from testtools.matchers import (
-    DirExists,
-    Not
-)
+from testtools.matchers import DirExists, Not
 
 from tests import integration
 
 
 class NoSystemLibrariesTestCase(integration.TestCase):
-
     def test_system_libraries(self):
-        self.run_snapcraft(['prime', 'main-no-prereq'], 'fake-curl-library')
+        self.run_snapcraft(["prime", "main-no-prereq"], "fake-curl-library")
 
         # Verify that the system's libcurl was pulled in.
         libcurl_path = os.path.join(
-            self.prime_dir, 'usr', 'lib', self.arch_triplet, 'libcurl.so*')
-        self.assertTrue(glob.glob(libcurl_path + '*'))
+            self.prime_dir, "usr", "lib", self.arch_triplet, "libcurl.so*"
+        )
+        self.assertTrue(glob.glob(libcurl_path + "*"))
 
     def test_no_system_libraries(self):
-        self.run_snapcraft(['prime', 'main-no-libs'], 'fake-curl-library')
+        self.run_snapcraft(["prime", "main-no-libs"], "fake-curl-library")
 
         # Verify that the system's libcurl was NOT pulled in.
-        self.assertThat(
-            os.path.join(self.prime_dir, 'usr'), Not(DirExists()))
+        self.assertThat(os.path.join(self.prime_dir, "usr"), Not(DirExists()))

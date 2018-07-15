@@ -28,24 +28,23 @@ logger = logging.getLogger(__name__)
 def get_version(version: str, version_script: str = None) -> str:
     new_version = version
     if version_script:
-        logger.info('Determining the version from the project '
-                    'repo (version-script).')
+        logger.info(
+            "Determining the version from the project " "repo (version-script)."
+        )
         try:
             new_version = shell_utils.run_script(version_script).strip()
             if not new_version:
-                raise _errors.CommandError(
-                    'The version-script produced no output')
+                raise _errors.CommandError("The version-script produced no output")
         except subprocess.CalledProcessError as e:
             raise _errors.CommandError(
-                'The version-script failed to run (exit code {})'.format(
-                    e.returncode))
+                "The version-script failed to run (exit code {})".format(e.returncode)
+            )
     # we want to whitelist what we support here.
-    elif version == 'git':
-        logger.info('Determining the version from the project '
-                    'repo (version: git).')
-        vcs_handler = sources.get_source_handler_from_type('git')
+    elif version == "git":
+        logger.info("Determining the version from the project " "repo (version: git).")
+        vcs_handler = sources.get_source_handler_from_type("git")
         new_version = vcs_handler.generate_version()
 
     if new_version != version:
-        logger.info('The version has been set to {!r}'.format(new_version))
+        logger.info("The version has been set to {!r}".format(new_version))
     return new_version

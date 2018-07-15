@@ -29,21 +29,20 @@ class ProjectInfo:
 
     def __init__(self, *, snapcraft_yaml_file_path) -> None:
         self.snapcraft_yaml_file_path = snapcraft_yaml_file_path
-        self.__raw_snapcraft = _load_yaml(
-            yaml_file_path=snapcraft_yaml_file_path)
+        self.__raw_snapcraft = _load_yaml(yaml_file_path=snapcraft_yaml_file_path)
 
         try:
-            self.name = self.__raw_snapcraft['name']
+            self.name = self.__raw_snapcraft["name"]
         except KeyError as key_error:
             raise errors.YamlValidationError(
-                "'name' is a required property in {!r}".format(
-                    snapcraft_yaml_file_path)) from key_error
-        self.version = self.__raw_snapcraft.get('version')
-        self.summary = self.__raw_snapcraft.get('summary')
-        self.description = self.__raw_snapcraft.get('description')
-        self.confinement = self.__raw_snapcraft.get('confinement')
-        self.grade = self.__raw_snapcraft.get('grade')
-        self.base = self.__raw_snapcraft.get('base')
+                "'name' is a required property in {!r}".format(snapcraft_yaml_file_path)
+            ) from key_error
+        self.version = self.__raw_snapcraft.get("version")
+        self.summary = self.__raw_snapcraft.get("summary")
+        self.description = self.__raw_snapcraft.get("description")
+        self.confinement = self.__raw_snapcraft.get("confinement")
+        self.grade = self.__raw_snapcraft.get("grade")
+        self.base = self.__raw_snapcraft.get("base")
 
     def get_raw_snapcraft(self):
         # TODO this should be a MappingProxyType, but ordered writing
@@ -52,24 +51,28 @@ class ProjectInfo:
 
 
 def _load_yaml(*, yaml_file_path: str) -> OrderedDict:
-    with open(yaml_file_path, 'rb') as fp:
+    with open(yaml_file_path, "rb") as fp:
         bs = fp.read(2)
 
     if bs == codecs.BOM_UTF16_LE or bs == codecs.BOM_UTF16_BE:
-        encoding = 'utf-16'
+        encoding = "utf-16"
     else:
-        encoding = 'utf-8'
+        encoding = "utf-8"
 
     try:
         with open(yaml_file_path, encoding=encoding) as fp:  # type: ignore
-            yaml_contents = yaml.safe_load(fp)               # type: ignore
+            yaml_contents = yaml.safe_load(fp)  # type: ignore
     except yaml.scanner.ScannerError as e:
-        raise errors.YamlValidationError('{} on line {} of {}'.format(
-            e.problem, e.problem_mark.line + 1, yaml_file_path)) from e
+        raise errors.YamlValidationError(
+            "{} on line {} of {}".format(
+                e.problem, e.problem_mark.line + 1, yaml_file_path
+            )
+        ) from e
     except yaml.reader.ReaderError as e:
         raise errors.YamlValidationError(
-            'Invalid character {!r} at position {} of {}: {}'.format(
-                chr(e.character), e.position + 1, yaml_file_path,
-                e.reason)) from e
+            "Invalid character {!r} at position {} of {}: {}".format(
+                chr(e.character), e.position + 1, yaml_file_path, e.reason
+            )
+        ) from e
 
     return yaml_contents

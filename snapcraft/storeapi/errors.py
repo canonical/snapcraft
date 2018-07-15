@@ -27,8 +27,8 @@ from snapcraft import formatting_utils
 
 logger = logging.getLogger(__name__)
 
-_STORE_STATUS_URL = 'https://status.snapcraft.io/'
-_FORUM_URL = 'https://forum.snapcraft.io/c/store'
+_STORE_STATUS_URL = "https://status.snapcraft.io/"
+_FORUM_URL = "https://forum.snapcraft.io/c/store"
 
 
 class StoreError(SnapcraftError):
@@ -40,15 +40,13 @@ class StoreError(SnapcraftError):
 
     def __init__(self, **kwargs):
         with contextlib.suppress(KeyError, AttributeError):
-            logger.debug('Store error response: {}'.format(
-                kwargs['response'].__dict__))
+            logger.debug("Store error response: {}".format(kwargs["response"].__dict__))
         super().__init__(**kwargs)
 
 
 class InvalidCredentialsError(StoreError):
 
-    fmt = ('Invalid credentials: {message}. '
-           'Have you run "snapcraft login"?')
+    fmt = "Invalid credentials: {message}. " 'Have you run "snapcraft login"?'
 
     def __init__(self, message):
         super().__init__(message=message)
@@ -56,43 +54,42 @@ class InvalidCredentialsError(StoreError):
 
 class LoginRequiredError(StoreError):
 
-    fmt = '{message}'
+    fmt = "{message}"
 
-    def __init__(self, extra_information=''):
-        message = 'Cannot continue without logging in successfully'
+    def __init__(self, extra_information=""):
+        message = "Cannot continue without logging in successfully"
         if extra_information:
-            message += ': {}'.format(extra_information)
+            message += ": {}".format(extra_information)
         super().__init__(message=message)
 
 
 class StoreNetworkError(StoreError):
 
-    fmt = 'There seems to be a network error: {message}'
+    fmt = "There seems to be a network error: {message}"
 
     def __init__(self, exception):
         message = str(exception)
         with contextlib.suppress(IndexError):
             underlying_exception = exception.args[0]
-            if isinstance(underlying_exception,
-                          urllib3.exceptions.MaxRetryError):
+            if isinstance(underlying_exception, urllib3.exceptions.MaxRetryError):
                 message = (
-                    'maximum retries exceeded trying to reach the store.\n'
-                    'Check your network connection, and check the store '
-                    'status at {}'.format(_STORE_STATUS_URL))
+                    "maximum retries exceeded trying to reach the store.\n"
+                    "Check your network connection, and check the store "
+                    "status at {}".format(_STORE_STATUS_URL)
+                )
         super().__init__(message=message)
 
 
 class SnapNotFoundError(StoreError):
 
     __FMT_ARCH_CHANNEL = (
-        'Snap {name!r} for {arch!r} cannot be found in the {channel!r} '
-        'channel.')
-    __FMT_CHANNEL = 'Snap {name!r} was not found in the {channel!r} channel.'
-    __FMT_SERIES_ARCH = (
-        'Snap {name!r} for {arch!r} was not found in {series!r} series.')
-    __FMT_SERIES = 'Snap {name!r} was not found in {series!r} series.'
+        "Snap {name!r} for {arch!r} cannot be found in the {channel!r} " "channel."
+    )
+    __FMT_CHANNEL = "Snap {name!r} was not found in the {channel!r} channel."
+    __FMT_SERIES_ARCH = "Snap {name!r} for {arch!r} was not found in {series!r} series."
+    __FMT_SERIES = "Snap {name!r} was not found in {series!r} series."
 
-    fmt = 'Snap {name!r} was not found.'
+    fmt = "Snap {name!r} was not found."
 
     def __init__(self, name, channel=None, arch=None, series=None):
         if channel and arch:
@@ -110,9 +107,10 @@ class SnapNotFoundError(StoreError):
 class NoSnapIdError(StoreError):
 
     fmt = (
-        'Failed to get snap ID for snap {snap_name!r}. This is an error in '
+        "Failed to get snap ID for snap {snap_name!r}. This is an error in "
         "the store, please open a new topic in the 'store' category in the "
-        'forum: {forum_url}')
+        "forum: {forum_url}"
+    )
 
     def __init__(self, snap_name):
         super().__init__(snap_name=snap_name, forum_url=_FORUM_URL)
@@ -120,7 +118,7 @@ class NoSnapIdError(StoreError):
 
 class SHAMismatchError(StoreError):
 
-    fmt = 'SHA512 checksum for {path} is not {expected_sha}.'
+    fmt = "SHA512 checksum for {path} is not {expected_sha}."
 
     def __init__(self, path, expected_sha):
         super().__init__(path=path, expected_sha=expected_sha)
@@ -128,53 +126,53 @@ class SHAMismatchError(StoreError):
 
 class StoreAuthenticationError(StoreError):
 
-    fmt = 'Authentication error: {message}'
+    fmt = "Authentication error: {message}"
 
     def __init__(self, message, response=None):
         # Unfortunately the store doesn't give us a consistent error response,
         # so we'll check the ones of which we're aware.
         with contextlib.suppress(AttributeError, JSONDecodeError):
             response_json = response.json()
-            extra_error_message = ''
-            if 'error_message' in response_json:
-                extra_error_message = response_json['error_message']
-            elif 'message' in response_json:
-                extra_error_message = response_json['message']
+            extra_error_message = ""
+            if "error_message" in response_json:
+                extra_error_message = response_json["error_message"]
+            elif "message" in response_json:
+                extra_error_message = response_json["message"]
 
             if extra_error_message:
-                message += ': {}'.format(extra_error_message)
+                message += ": {}".format(extra_error_message)
 
         super().__init__(response=response, message=message)
 
 
 class StoreTwoFactorAuthenticationRequired(StoreAuthenticationError):
-
     def __init__(self):
         super().__init__("Two-factor authentication required.")
 
 
 class StoreMacaroonNeedsRefreshError(StoreError):
 
-    fmt = 'Authentication macaroon needs to be refreshed.'
+    fmt = "Authentication macaroon needs to be refreshed."
 
 
 class DeveloperAgreementSignError(StoreError):
 
     fmt = (
-        'There was an error while signing developer agreement.\n'
-        'Reason: {reason!r}\n'
-        'Text: {text!r}')
+        "There was an error while signing developer agreement.\n"
+        "Reason: {reason!r}\n"
+        "Text: {text!r}"
+    )
 
     def __init__(self, response):
-        super().__init__(
-            response=response, reason=response.reason, text=response.text)
+        super().__init__(response=response, reason=response.reason, text=response.text)
 
 
 class NeedTermsSignedError(StoreError):
 
     fmt = (
-        'Developer Terms of Service agreement must be signed '
-        'before continuing: {message}')
+        "Developer Terms of Service agreement must be signed "
+        "before continuing: {message}"
+    )
 
     def __init__(self, message):
         super().__init__(message=message)
@@ -182,19 +180,22 @@ class NeedTermsSignedError(StoreError):
 
 class StoreAccountInformationError(StoreError):
 
-    fmt = 'Error fetching account information from store: {error}'
+    fmt = "Error fetching account information from store: {error}"
 
     def __init__(self, response):
-        error = '{} {}'.format(response.status_code, response.reason)
+        error = "{} {}".format(response.status_code, response.reason)
         extra = []
         try:
             response_json = response.json()
-            if 'error_list' in response_json:
-                error = ' '.join(
-                    error['message'] for error in response_json['error_list'])
+            if "error_list" in response_json:
+                error = " ".join(
+                    error["message"] for error in response_json["error_list"]
+                )
                 extra = [
-                    error['extra'] for error in response_json[
-                        'error_list'] if 'extra' in error]
+                    error["extra"]
+                    for error in response_json["error_list"]
+                    if "extra" in error
+                ]
         except JSONDecodeError:
             pass
         super().__init__(response=response, error=error, extra=extra)
@@ -202,15 +203,16 @@ class StoreAccountInformationError(StoreError):
 
 class StoreKeyRegistrationError(StoreError):
 
-    fmt = 'Key registration failed: {error}'
+    fmt = "Key registration failed: {error}"
 
     def __init__(self, response):
-        error = '{} {}'.format(response.status_code, response.reason)
+        error = "{} {}".format(response.status_code, response.reason)
         try:
             response_json = response.json()
-            if 'error_list' in response_json:
-                error = ' '.join(
-                    error['message'] for error in response_json['error_list'])
+            if "error_list" in response_json:
+                error = " ".join(
+                    error["message"] for error in response_json["error_list"]
+                )
         except JSONDecodeError:
             pass
         super().__init__(response=response, error=error)
@@ -224,34 +226,38 @@ class StoreRegistrationError(StoreError):
 
     See https://myapps.developer.ubuntu.com/docs/api/snap.html#errors
     """
-    __FMT_ALREADY_REGISTERED = (
-        'The name {snap_name!r} is already taken.\n\n'
-        'We can if needed rename snaps to ensure they match the expectations '
-        'of most users. If you are the publisher most users expect for '
-        '{snap_name!r} then claim the name at {register_name_url!r}')
 
-    __FMT_ALREADY_OWNED = 'You already own the name {snap_name!r}.'
+    __FMT_ALREADY_REGISTERED = (
+        "The name {snap_name!r} is already taken.\n\n"
+        "We can if needed rename snaps to ensure they match the expectations "
+        "of most users. If you are the publisher most users expect for "
+        "{snap_name!r} then claim the name at {register_name_url!r}"
+    )
+
+    __FMT_ALREADY_OWNED = "You already own the name {snap_name!r}."
 
     __FMT_RESERVED = (
-        'The name {snap_name!r} is reserved.\n\n'
-        'If you are the publisher most users expect for '
-        '{snap_name!r} then please claim the name at {register_name_url!r}\n\n'
-        'Otherwise, please register another name.')
+        "The name {snap_name!r} is reserved.\n\n"
+        "If you are the publisher most users expect for "
+        "{snap_name!r} then please claim the name at {register_name_url!r}\n\n"
+        "Otherwise, please register another name."
+    )
 
     __FMT_RETRY_WAIT = (
-        'You must wait {retry_after} seconds before trying to register '
-        'your next snap.')
+        "You must wait {retry_after} seconds before trying to register "
+        "your next snap."
+    )
 
-    __FMT_INVALID = '{message}'
+    __FMT_INVALID = "{message}"
 
-    fmt = 'Registration failed.'
+    fmt = "Registration failed."
 
     __error_messages = {
-        'already_registered': __FMT_ALREADY_REGISTERED,
-        'already_owned': __FMT_ALREADY_OWNED,
-        'reserved_name': __FMT_RESERVED,
-        'register_window': __FMT_RETRY_WAIT,
-        'invalid': __FMT_INVALID,
+        "already_registered": __FMT_ALREADY_REGISTERED,
+        "already_owned": __FMT_ALREADY_OWNED,
+        "reserved_name": __FMT_RESERVED,
+        "register_window": __FMT_RETRY_WAIT,
+        "invalid": __FMT_INVALID,
     }
 
     def __init__(self, snap_name, response):
@@ -263,15 +269,15 @@ class StoreRegistrationError(StoreError):
             response_json = {}
 
         # Annotate 'snap_name' to be used when formatting errors.
-        response_json['snap_name'] = snap_name
+        response_json["snap_name"] = snap_name
 
         # Extract the new-format error structure.
-        error_list = response_json.pop('error_list', None)
+        error_list = response_json.pop("error_list", None)
 
         # Cope with legacy errors (missing 'error_list', single error and
         # top-level 'code').
         if error_list is None:
-            error_code = response_json.get('code')
+            error_code = response_json.get("code")
             # we default to self.fmt in case error_code is not mapped yet.
             fmt = self.__error_messages.get(error_code, self.fmt)
             self._errors.append(fmt.format(**response_json))
@@ -279,7 +285,7 @@ class StoreRegistrationError(StoreError):
 
         # Support new style formatted errors.
         for error in error_list:
-            fmt = self.__error_messages.get(error['code'], self.fmt)
+            fmt = self.__error_messages.get(error["code"], self.fmt)
             # Augment 'error' with remaining top-level keys. Should be a
             # no-op once they are moved to their specific error record.
             error.update(response_json)
@@ -287,29 +293,30 @@ class StoreRegistrationError(StoreError):
 
     def __str__(self):
         """Simply join formatted error as lines."""
-        return '\n'.join(self._errors)
+        return "\n".join(self._errors)
 
 
 class StoreUploadError(StoreError):
 
     fmt = (
-        'There was an error uploading the package.\n'
-        'Reason: {reason!r}\n'
-        'Text: {text!r}')
+        "There was an error uploading the package.\n"
+        "Reason: {reason!r}\n"
+        "Text: {text!r}"
+    )
 
     def __init__(self, response):
-        super().__init__(
-            response=response, reason=response.reason, text=response.text)
+        super().__init__(response=response, reason=response.reason, text=response.text)
 
 
 class StorePushError(StoreError):
 
     __FMT_NOT_REGISTERED = (
-        'You are not the publisher or allowed to push revisions for this '
-        'snap. To become the publisher, run `snapcraft register {snap_name}` '
-        'and try to push again.')
+        "You are not the publisher or allowed to push revisions for this "
+        "snap. To become the publisher, run `snapcraft register {snap_name}` "
+        "and try to push again."
+    )
 
-    fmt = 'Received {status_code!r}: {text!r}'
+    fmt = "Received {status_code!r}: {text!r}"
 
     def __init__(self, snap_name, response):
         try:
@@ -321,13 +328,16 @@ class StorePushError(StoreError):
             self.fmt = self.__FMT_NOT_REGISTERED
         elif response.status_code == 401 or response.status_code == 403:
             try:
-                response_json['text'] = response.text
+                response_json["text"] = response.text
             except AttributeError:
-                response_json['text'] = 'error while pushing'
+                response_json["text"] = "error while pushing"
 
         super().__init__(
-            response=response, snap_name=snap_name,
-            status_code=response.status_code, **response_json)
+            response=response,
+            snap_name=snap_name,
+            status_code=response.status_code,
+            **response_json
+        )
 
 
 class StoreReviewError(StoreError):
@@ -340,66 +350,71 @@ class StoreReviewError(StoreError):
         "If you need to disable confinement, please consider using devmode, "
         "but note that devmode revision will only be allowed to be released "
         "in edge and beta channels.\n"
-        "Please check the errors and some hints below:")
+        "Please check the errors and some hints below:"
+    )
 
-    __FMT_PROCESSING_ERROR = (
-        'The store was unable to accept this snap.')
+    __FMT_PROCESSING_ERROR = "The store was unable to accept this snap."
 
     __FMT_PROCESSING_UPLOAD_DELTA_ERROR = (
-        'There has been a problem while processing a snap delta.')
+        "There has been a problem while processing a snap delta."
+    )
 
     __messages = {
-        'need_manual_review': __FMT_NEED_MANUAL_REVIEW,
-        'processing_error': __FMT_PROCESSING_ERROR,
-        'processing_upload_delta_error': __FMT_PROCESSING_UPLOAD_DELTA_ERROR,
+        "need_manual_review": __FMT_NEED_MANUAL_REVIEW,
+        "processing_error": __FMT_PROCESSING_ERROR,
+        "processing_upload_delta_error": __FMT_PROCESSING_UPLOAD_DELTA_ERROR,
     }
 
     def __init__(self, result):
-        self.fmt = self.__messages[result['code']]
+        self.fmt = self.__messages[result["code"]]
         additional = []
-        errors = result.get('errors')
+        errors = result.get("errors")
         if errors:
             for error in errors:
-                message = error.get('message')
+                message = error.get("message")
                 if message:
-                    additional.append('  - {message}'.format(message=message))
+                    additional.append("  - {message}".format(message=message))
         if additional:
-            self.additional = '\n'.join(additional)
-            self.fmt += '\n{additional}'
-        self.code = result['code']
+            self.additional = "\n".join(additional)
+            self.fmt += "\n{additional}"
+        self.code = result["code"]
         super().__init__()
 
 
 class StoreServerError(StoreError):
 
-    fmt = '{what}: {error_text} (code {error_code}).\n{action}'
+    fmt = "{what}: {error_text} (code {error_code}).\n{action}"
 
     def __init__(self, response):
-        what = ('The Snap Store encountered an error while processing your '
-                'request')
+        what = "The Snap Store encountered an error while processing your " "request"
         error_code = response.status_code
         error_text = responses[error_code].lower()
-        action = ('The operational status of the Snap Store can be checked at '
-                  '{}'.format(_STORE_STATUS_URL))
+        action = (
+            "The operational status of the Snap Store can be checked at "
+            "{}".format(_STORE_STATUS_URL)
+        )
 
         super().__init__(
-            response=response, what=what, error_text=error_text,
-            error_code=error_code, action=action)
+            response=response,
+            what=what,
+            error_text=error_text,
+            error_code=error_code,
+            action=action,
+        )
 
 
 class StoreReleaseError(StoreError):
 
-    fmt = '{message}'
+    fmt = "{message}"
 
     __FMT_NOT_REGISTERED = (
-        'Sorry, try `snapcraft register {snap_name}` before trying to '
-        'release or choose an existing revision.')
+        "Sorry, try `snapcraft register {snap_name}` before trying to "
+        "release or choose an existing revision."
+    )
 
-    __FMT_BAD_REQUEST = (
-        '{code}: {message}\n')
+    __FMT_BAD_REQUEST = "{code}: {message}\n"
 
-    __FMT_UNAUTHORIZED_OR_FORBIDDEN = (
-        'Received {status_code!r}: {text}')
+    __FMT_UNAUTHORIZED_OR_FORBIDDEN = "Received {status_code!r}: {text}"
 
     def __init__(self, snap_name, response):
         self.fmt_errors = {
@@ -409,11 +424,11 @@ class StoreReleaseError(StoreError):
             404: self.__fmt_error_404,
         }
 
-        fmt_error = self.fmt_errors.get(
-            response.status_code, self.__fmt_error_unknown)
+        fmt_error = self.fmt_errors.get(response.status_code, self.__fmt_error_unknown)
 
-        super().__init__(response=response, message=fmt_error(response).format(
-            snap_name=snap_name))
+        super().__init__(
+            response=response, message=fmt_error(response).format(snap_name=snap_name)
+        )
 
     def __to_json(self, response):
         try:
@@ -427,8 +442,8 @@ class StoreReleaseError(StoreError):
         response_json = self.__to_json(response)
 
         try:
-            fmt = ''
-            for error in response_json['error_list']:
+            fmt = ""
+            for error in response_json["error_list"]:
                 fmt += self.__FMT_BAD_REQUEST.format(**error)
 
         except (AttributeError, KeyError):
@@ -442,14 +457,15 @@ class StoreReleaseError(StoreError):
 
             with contextlib.suppress(AttributeError, JSONDecodeError):
                 response_json = response.json()
-                if 'error_list' in response_json:
+                if "error_list" in response_json:
                     text = _error_list_to_message(response_json)
 
         except AttributeError:
-            text = 'error while releasing'
+            text = "error while releasing"
 
         return self.__FMT_UNAUTHORIZED_OR_FORBIDDEN.format(
-            status_code=response.status_code, text=text)
+            status_code=response.status_code, text=text
+        )
 
     def __fmt_error_404(self, response):
         return self.__FMT_NOT_REGISTERED
@@ -458,10 +474,10 @@ class StoreReleaseError(StoreError):
         response_json = self.__to_json(response)
 
         try:
-            fmt = '{errors}'.format(**response_json)
+            fmt = "{errors}".format(**response_json)
 
         except AttributeError:
-            fmt = '{}'.format(response)
+            fmt = "{}".format(response)
 
         return fmt
 
@@ -474,7 +490,7 @@ class StoreMetadataError(StoreError):
         "`snapcraft push <snap-file>`."
     )
 
-    fmt = 'Received {status_code!r}: {text!r}'
+    fmt = "Received {status_code!r}: {text!r}"
 
     def __init__(self, snap_name, response, metadata):
         try:
@@ -485,58 +501,68 @@ class StoreMetadataError(StoreError):
         if response.status_code == 404:
             self.fmt = self.__FMT_NOT_FOUND
         elif response.status_code == 409:
-            conflicts = [(error['extra']['name'], error)
-                         for error in response_json['error_list']
-                         if error['code'] == 'conflict']
+            conflicts = [
+                (error["extra"]["name"], error)
+                for error in response_json["error_list"]
+                if error["code"] == "conflict"
+            ]
             parts = ["Metadata not pushed!"]
             for field_name, error in sorted(conflicts):
                 sent = metadata.get(field_name)
-                parts.extend((
-                    "Conflict in {!r} field:".format(field_name),
-                    "    In snapcraft.yaml: {!r}".format(sent),
-                    "    In the Store:      {!r}".format(error['message']),
-                ))
+                parts.extend(
+                    (
+                        "Conflict in {!r} field:".format(field_name),
+                        "    In snapcraft.yaml: {!r}".format(sent),
+                        "    In the Store:      {!r}".format(error["message"]),
+                    )
+                )
             parts.append(
                 "You can repeat the push-metadata command with "
-                "--force to force the local values into the Store")
+                "--force to force the local values into the Store"
+            )
             self.parts = "\n".join(parts)
-            self.fmt = '{parts}'
-        elif 'error_list' in response_json:
-            response_json['text'] = response_json['error_list'][0]['message']
+            self.fmt = "{parts}"
+        elif "error_list" in response_json:
+            response_json["text"] = response_json["error_list"][0]["message"]
 
         super().__init__(
-            response=response, snap_name=snap_name,
-            status_code=response.status_code, **response_json)
+            response=response,
+            snap_name=snap_name,
+            status_code=response.status_code,
+            **response_json
+        )
 
 
 class StoreValidationError(StoreError):
 
-    fmt = 'Received error {status_code!r}: {text!r}'
+    fmt = "Received error {status_code!r}: {text!r}"
 
     def __init__(self, snap_id, response, message=None):
         try:
             response_json = response.json()
-            error = response.json()['error_list'][0]
-            response_json['text'] = error.get('message')
-            response_json['extra'] = error.get('extra')
+            error = response.json()["error_list"][0]
+            response_json["text"] = error.get("message")
+            response_json["extra"] = error.get("extra")
         except (AttributeError, JSONDecodeError):
-            response_json = {'text': message or response}
+            response_json = {"text": message or response}
 
-        super().__init__(response=response, status_code=response.status_code,
-                         **response_json)
+        super().__init__(
+            response=response, status_code=response.status_code, **response_json
+        )
 
 
 class StoreSnapBuildError(StoreError):
 
-    fmt = 'Could not assert build: {error}'
+    fmt = "Could not assert build: {error}"
 
     def __init__(self, response):
-        error = '{} {}'.format(response.status_code, response.reason)
+        error = "{} {}".format(response.status_code, response.reason)
         try:
             response_json = response.json()
-            if 'error_list' in response_json:
-                error = ' '.join(
-                    error['message'] for error in response_json['error_list'])
+            if "error_list" in response_json:
+                error = " ".join(
+                    error["message"] for error in response_json["error_list"]
+                )
         except JSONDecodeError:
             pass
 
@@ -546,27 +572,33 @@ class StoreSnapBuildError(StoreError):
 class StoreSnapRevisionsError(StoreError):
 
     fmt = (
-        'Error fetching revisions of snap id {snap_id!r} for {arch!r} '
-        'in {series!r} series: {error}.')
+        "Error fetching revisions of snap id {snap_id!r} for {arch!r} "
+        "in {series!r} series: {error}."
+    )
 
     def __init__(self, response, snap_id, series, arch):
-        error = '{} {}'.format(response.status_code, response.reason)
+        error = "{} {}".format(response.status_code, response.reason)
         try:
             response_json = response.json()
-            if 'error_list' in response_json:
-                error = ' '.join(
-                    error['message'] for error in response_json['error_list'])
+            if "error_list" in response_json:
+                error = " ".join(
+                    error["message"] for error in response_json["error_list"]
+                )
         except JSONDecodeError:
             pass
 
         super().__init__(
-            response=response, snap_id=snap_id, arch=arch or 'any arch',
-            series=series or 'any', error=error)
+            response=response,
+            snap_id=snap_id,
+            arch=arch or "any arch",
+            series=series or "any",
+            error=error,
+        )
 
 
 class StoreDeltaApplicationError(StoreError):
 
-    fmt = '{message}'
+    fmt = "{message}"
 
     def __init__(self, message):
         super().__init__(message=message)
@@ -575,21 +607,21 @@ class StoreDeltaApplicationError(StoreError):
 class StoreSnapStatusError(StoreSnapRevisionsError):
 
     fmt = (
-        'Error fetching status of snap id {snap_id!r} for {arch!r} '
-        'in {series!r} series: {error}.')
+        "Error fetching status of snap id {snap_id!r} for {arch!r} "
+        "in {series!r} series: {error}."
+    )
 
 
 class StoreChannelClosingError(StoreError):
 
-    fmt = 'Could not close channel: {error}'
+    fmt = "Could not close channel: {error}"
 
     def __init__(self, response):
         try:
-            e = response.json()['error_list'][0]
-            error = '{}'.format(e['message'])
+            e = response.json()["error_list"][0]
+            error = "{}".format(e["message"])
         except (JSONDecodeError, KeyError, IndexError):
-            error = '{} {}'.format(
-                response.status_code, response.reason)
+            error = "{} {}".format(response.status_code, response.reason)
 
         super().__init__(response=response, error=error)
 
@@ -597,9 +629,9 @@ class StoreChannelClosingError(StoreError):
 class StoreChannelClosingPermissionError(StoreError):
 
     fmt = (
-        'Your account lacks permission to close channels for this snap. Make '
-        'sure the logged in account has upload permissions on {snap_name!r} '
-        'in series {snap_series!r}.'
+        "Your account lacks permission to close channels for this snap. Make "
+        "sure the logged in account has upload permissions on {snap_name!r} "
+        "in series {snap_series!r}."
     )
 
     def __init__(self, snap_name, snap_series):
@@ -609,9 +641,9 @@ class StoreChannelClosingPermissionError(StoreError):
 class StoreBuildAssertionPermissionError(StoreError):
 
     fmt = (
-        'Your account lacks permission to assert builds for this snap. Make '
-        'sure you are logged in as the publisher of {snap_name!r} '
-        'for series {snap_series!r}.'
+        "Your account lacks permission to assert builds for this snap. Make "
+        "sure you are logged in as the publisher of {snap_name!r} "
+        "for series {snap_series!r}."
     )
 
     def __init__(self, snap_name, snap_series):
@@ -620,13 +652,13 @@ class StoreBuildAssertionPermissionError(StoreError):
 
 class StoreAssertionError(StoreError):
 
-    fmt = 'Error signing {endpoint} assertion for {snap_name}: {error!s}'
+    fmt = "Error signing {endpoint} assertion for {snap_name}: {error!s}"
 
 
 class MissingSnapdError(StoreError):
 
     fmt = (
-        'The snapd package is not installed. In order to use {command!r}, '
+        "The snapd package is not installed. In order to use {command!r}, "
         "you must run 'apt install snapd'."
     )
 
@@ -636,7 +668,7 @@ class MissingSnapdError(StoreError):
 
 class KeyAlreadyRegisteredError(StoreError):
 
-    fmt = 'You have already registered a key named {key_name!r}'
+    fmt = "You have already registered a key named {key_name!r}"
 
     def __init__(self, key_name):
         super().__init__(key_name=key_name)
@@ -645,16 +677,16 @@ class KeyAlreadyRegisteredError(StoreError):
 class NoKeysError(StoreError):
 
     fmt = (
-        'You have no usable keys.\nPlease create at least one key with '
-        '`snapcraft create-key` for use with snap.'
+        "You have no usable keys.\nPlease create at least one key with "
+        "`snapcraft create-key` for use with snap."
     )
 
 
 class NoSuchKeyError(StoreError):
 
     fmt = (
-        'You have no usable key named {key_name!r}.\nSee the keys available '
-        'in your system with `snapcraft keys`.'
+        "You have no usable key named {key_name!r}.\nSee the keys available "
+        "in your system with `snapcraft keys`."
     )
 
     def __init__(self, key_name):
@@ -664,9 +696,9 @@ class NoSuchKeyError(StoreError):
 class KeyNotRegisteredError(StoreError):
 
     fmt = (
-        'The key {key_name!r} is not registered in the Store.\nPlease '
-        'register it with `snapcraft register-key {key_name!r}` before '
-        'signing and pushing signatures to the Store.'
+        "The key {key_name!r} is not registered in the Store.\nPlease "
+        "register it with `snapcraft register-key {key_name!r}` before "
+        "signing and pushing signatures to the Store."
     )
 
     def __init__(self, key_name):
@@ -675,19 +707,16 @@ class KeyNotRegisteredError(StoreError):
 
 class InvalidValidationRequestsError(StoreError):
 
-    fmt = (
-        'Invalid validation requests (format must be name=revision): '
-        '{requests}'
-    )
+    fmt = "Invalid validation requests (format must be name=revision): " "{requests}"
 
     def __init__(self, requests):
-        requests_str = ' '.join(requests)
+        requests_str = " ".join(requests)
         super().__init__(requests=requests_str)
 
 
 class SignBuildAssertionError(StoreError):
 
-    fmt = 'Failed to sign build assertion for {snap_name!r}'
+    fmt = "Failed to sign build assertion for {snap_name!r}"
 
     def __init__(self, snap_name):
         super().__init__(snap_name=snap_name)
@@ -695,7 +724,7 @@ class SignBuildAssertionError(StoreError):
 
 class InvalidLoginConfig(StoreError):
 
-    fmt = 'Invalid login config: {error}'
+    fmt = "Invalid login config: {error}"
 
     def __init__(self, error):
         super().__init__(error=error)
@@ -708,11 +737,10 @@ def _error_list_to_message(response_json):
     https://dashboard.snapcraft.io/docs/api/snap.html#format
     """
     messages = []
-    for error_list_item in response_json['error_list']:
-        messages.append(_error_list_item_to_message(
-            error_list_item, response_json))
+    for error_list_item in response_json["error_list"]:
+        messages.append(_error_list_item_to_message(error_list_item, response_json))
 
-    return ', and '.join(messages)
+    return ", and ".join(messages)
 
 
 def _error_list_item_to_message(error_list_item, response_json):
@@ -721,22 +749,23 @@ def _error_list_item_to_message(error_list_item, response_json):
     The list of codes are here:
     https://dashboard.snapcraft.io/docs/api/snap.html#codes
     """
-    code = error_list_item['code']
-    message = ''
-    if code == 'macaroon-permission-required':
+    code = error_list_item["code"]
+    message = ""
+    if code == "macaroon-permission-required":
         message = _handle_macaroon_permission_required(response_json)
 
     if message:
         return message
     else:
-        return error_list_item['message']
+        return error_list_item["message"]
 
 
 def _handle_macaroon_permission_required(response_json):
-    if 'permission' in response_json and 'channels' in response_json:
-        if response_json['permission'] == 'channel':
-            channels = response_json['channels']
-            return 'Lacking permission to release to channel(s) {}'.format(
-                formatting_utils.humanize_list(channels, 'and'))
+    if "permission" in response_json and "channels" in response_json:
+        if response_json["permission"] == "channel":
+            channels = response_json["channels"]
+            return "Lacking permission to release to channel(s) {}".format(
+                formatting_utils.humanize_list(channels, "and")
+            )
 
-    return ''
+    return ""

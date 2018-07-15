@@ -29,8 +29,9 @@ class OutdatedReport:
     - The source on disk has been updated.
     """
 
-    def __init__(self, *, previous_step_modified: steps.Step=None,
-                 source_updated: bool=False) -> None:
+    def __init__(
+        self, *, previous_step_modified: steps.Step = None, source_updated: bool = False
+    ) -> None:
         """Create a new OutdatedReport.
 
         :param steps.step previous_step_modified: Step earlier in the lifecycle
@@ -50,13 +51,15 @@ class OutdatedReport:
 
         if self.previous_step_modified:
             messages.append(
-                'The {!r} step has run more recently.\n'.format(
-                    self.previous_step_modified.name))
+                "The {!r} step has run more recently.\n".format(
+                    self.previous_step_modified.name
+                )
+            )
 
         if self.source_updated:
-            messages.append('The source has changed on disk.\n')
+            messages.append("The source has changed on disk.\n")
 
-        return ''.join(messages)
+        return "".join(messages)
 
     def get_summary(self) -> str:
         """Get summarized report.
@@ -67,11 +70,9 @@ class OutdatedReport:
         reasons = []
 
         if self.previous_step_modified:
-            reasons.append('{!r} step'.format(
-                self.previous_step_modified.name))
+            reasons.append("{!r} step".format(self.previous_step_modified.name))
 
         if self.source_updated:
-            reasons.append('source')
+            reasons.append("source")
 
-        return '{} changed'.format(
-            formatting_utils.humanize_list(reasons, 'and', '{}'))
+        return "{} changed".format(formatting_utils.humanize_list(reasons, "and", "{}"))

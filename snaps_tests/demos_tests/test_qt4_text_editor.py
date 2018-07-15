@@ -19,10 +19,10 @@ import snaps_tests
 
 class Qt4TextEditorTestCase(snaps_tests.SnapsTestCase):
 
-    snap_content_dir = 'qt4-text-editor'
+    snap_content_dir = "qt4-text-editor"
 
     def test_text_editor(self):
         snap_path = self.build_snap(self.snap_content_dir)
-        self.install_snap(snap_path, 'text-editor', '1.0')
+        self.install_snap(snap_path, "text-editor", "1.0")
 
         # TODO: Need xvfb in order to actually run

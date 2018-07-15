@@ -23,17 +23,16 @@ from tests import integration
 
 
 class PushMetadataTestCase(integration.StoreTestCase):
-
     def _build_snap(self):
         """Build a snap file and return its name and path."""
         name = self.get_unique_name()
         version = self.get_unique_version()
-        self.copy_project_to_cwd('basic')
+        self.copy_project_to_cwd("basic")
         self.update_name_and_version(name, version)
 
-        self.run_snapcraft('snap')
+        self.run_snapcraft("snap")
 
-        snap_file_path = '{}_{}_{}.snap'.format(name, version, 'all')
+        snap_file_path = "{}_{}_{}.snap".format(name, version, "all")
         self.assertThat(os.path.join(snap_file_path), FileExists())
         return name, snap_file_path
 
@@ -42,9 +41,13 @@ class PushMetadataTestCase(integration.StoreTestCase):
 
         error = self.assertRaises(
             subprocess.CalledProcessError,
-            self.run_snapcraft, ['push-metadata', snap_file_path])
-        self.assertIn('No valid credentials found. Have you run "snapcraft '
-                      'login"?', str(error.output))
+            self.run_snapcraft,
+            ["push-metadata", snap_file_path],
+        )
+        self.assertIn(
+            'No valid credentials found. Have you run "snapcraft ' 'login"?',
+            str(error.output),
+        )
 
     def test_with_login(self):
         self.addCleanup(self.logout)
@@ -55,10 +58,10 @@ class PushMetadataTestCase(integration.StoreTestCase):
         self.register(name)
 
         # Push the snap
-        output = self.run_snapcraft(['push', snap_file_path])
+        output = self.run_snapcraft(["push", snap_file_path])
 
         # Now push the metadata
-        output = self.run_snapcraft(['push-metadata', snap_file_path])
+        output = self.run_snapcraft(["push-metadata", snap_file_path])
         expected = "Pushing metadata to the Store (force=False)"
         self.assertThat(output, Contains(expected))
         expected = "The metadata has been pushed"
@@ -73,7 +76,7 @@ class PushMetadataTestCase(integration.StoreTestCase):
         self.register(name)
 
         # Now push the metadata
-        output = self.run_snapcraft(['push-metadata', snap_file_path])
+        output = self.run_snapcraft(["push-metadata", snap_file_path])
         expected = "Pushing metadata to the Store (force=False)"
         self.assertThat(output, Contains(expected))
         expected = "The metadata has been pushed"

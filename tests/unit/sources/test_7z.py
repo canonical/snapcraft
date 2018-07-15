@@ -26,18 +26,18 @@ from tests import unit
 
 class Test7z(unit.TestCase):
 
-    _7z_test_files = {'test1.txt', 'test2.txt', 'test3.txt'}
+    _7z_test_files = {"test1.txt", "test2.txt", "test3.txt"}
 
     def setUp(self):
         super().setUp()
         test_7z_file = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)),
-            '7z', 'test.7z')
-        self.test_7z_file_path = os.path.join(self.path, 'test.7z')
+            os.path.dirname(os.path.realpath(__file__)), "7z", "test.7z"
+        )
+        self.test_7z_file_path = os.path.join(self.path, "test.7z")
         shutil.copy2(test_7z_file, self.test_7z_file_path)
 
     def test_pull_7z_file_must_extract(self):
-        dest_dir = 'src'
+        dest_dir = "src"
         os.makedirs(dest_dir)
 
         seven_zip_source = sources.SevenZip(self.test_7z_file_path, dest_dir)
@@ -46,7 +46,7 @@ class Test7z(unit.TestCase):
         self.assertThat(set(os.listdir(dest_dir)), Equals(self._7z_test_files))
 
     def test_extract_and_keep_7zfile(self):
-        dest_dir = 'src'
+        dest_dir = "src"
         os.makedirs(dest_dir)
 
         seven_zip_source = sources.SevenZip(self.test_7z_file_path, dest_dir)
@@ -56,8 +56,9 @@ class Test7z(unit.TestCase):
         seven_zip_source.provision(dst=dest_dir, keep_7z=True)
 
         test_output_files = self._7z_test_files.union(
-            {os.path.basename(self.test_7z_file_path), })
+            {os.path.basename(self.test_7z_file_path)}
+        )
         self.assertCountEqual(set(os.listdir(dest_dir)), test_output_files)
 
     def test_has_source_handler_entry(self):
-        self.assertTrue(sources._source_handler['7z'] is sources.SevenZip)
+        self.assertTrue(sources._source_handler["7z"] is sources.SevenZip)

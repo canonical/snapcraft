@@ -25,16 +25,18 @@ class SnapcraftSourceError(errors.SnapcraftError):
 
 
 class VCSError(SnapcraftSourceError):
-    fmt = '{message}'
+    fmt = "{message}"
 
 
 class SnapcraftSourceUnhandledError(SnapcraftSourceError):
 
-    fmt = ('Failed to pull source: '
-           'unable to determine source type of {source!r}.\n'
-           'Check that the URL is correct or '
-           'consider specifying `source-type` for this part. '
-           'See `snapcraft help sources` for more information.')
+    fmt = (
+        "Failed to pull source: "
+        "unable to determine source type of {source!r}.\n"
+        "Check that the URL is correct or "
+        "consider specifying `source-type` for this part. "
+        "See `snapcraft help sources` for more information."
+    )
 
     def __init__(self, source):
         super().__init__(source=source)
@@ -64,13 +66,13 @@ class SnapcraftSourceIncompatibleOptionsError(SnapcraftSourceError):
         self.options = options
         super().__init__(
             source_type=source_type,
-            humanized_options=formatting_utils.humanize_list(options, 'and'))
+            humanized_options=formatting_utils.humanize_list(options, "and"),
+        )
 
 
 class DigestDoesNotMatchError(SnapcraftSourceError):
 
-    fmt = ('Expected the digest for source to be {expected}, '
-           'but it was {calculated}')
+    fmt = "Expected the digest for source to be {expected}, " "but it was {calculated}"
 
     def __init__(self, expected, calculated):
         super().__init__(expected=expected, calculated=calculated)
@@ -78,17 +80,16 @@ class DigestDoesNotMatchError(SnapcraftSourceError):
 
 class InvalidDebError(SnapcraftSourceError):
 
-    fmt = ('The {deb_file} used does not contain valid data. '
-           'Ensure a proper deb file is passed for .deb files '
-           'as sources.')
+    fmt = (
+        "The {deb_file} used does not contain valid data. "
+        "Ensure a proper deb file is passed for .deb files "
+        "as sources."
+    )
 
 
 class SourceUpdateUnsupportedError(SnapcraftSourceError):
 
-    fmt = (
-        'Failed to update source: '
-        "{source!s} sources don't support updating."
-    )
+    fmt = "Failed to update source: " "{source!s} sources don't support updating."
 
     def __init__(self, source):
         super().__init__(source=source)
