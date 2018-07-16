@@ -132,7 +132,7 @@ class KBuildPlugin(BasePlugin):
         try:
             branch = env.split(".")[1].strip()
         except IndexError:
-            raise RuntimeError("Malformed debian.env, cannot extract" " branch name")
+            raise RuntimeError("Malformed debian.env, cannot extract branch name")
         flavour = self.options.kconfigflavour
 
         configfiles = []
@@ -159,7 +159,7 @@ class KBuildPlugin(BasePlugin):
                         config_file.write(config_part.read())
         except OSError as e:
             raise RuntimeError(
-                "Unable to access {!r}: " "{}".format(e.filename, e.strerror)
+                "Unable to access {!r}: {}".format(e.filename, e.strerror)
             )
 
     def get_config_path(self):

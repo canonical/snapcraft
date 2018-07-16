@@ -280,7 +280,7 @@ class Ubuntu(BaseRepo):
             if apt_cache.is_virtual_package(name):
                 name = apt_cache.get_providing_packages(name)[0].name
             logger.debug(
-                "Marking {!r} (and its dependencies) to be " "fetched".format(name)
+                "Marking {!r} (and its dependencies) to be fetched".format(name)
             )
             name_arch, version = repo.get_pkg_name_parts(name)
             try:

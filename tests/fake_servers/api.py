@@ -360,7 +360,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                         {
                             "code": "feature-disabled",
                             "message": (
-                                "The snap-build assertions are currently " "disabled."
+                                "The snap-build assertions are currently disabled."
                             ),
                         }
                     ]
@@ -406,7 +406,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                         {
                             "code": "invalid-field",
                             "message": (
-                                "The 'channels' field content is not " "valid."
+                                "The 'channels' field content is not valid."
                             ),
                         }
                     ]

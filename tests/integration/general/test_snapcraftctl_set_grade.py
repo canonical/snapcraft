@@ -84,6 +84,6 @@ class SnapcraftctlSetGradeTestCase(integration.TestCase):
         )
         self.assertThat(
             raised.output,
-            Contains("Unable to set grade: it was already set in the 'pull' " "step"),
+            Contains("Unable to set grade: it was already set in the 'pull' step"),
         )
         self.assertThat(raised.output, Contains("Failed to run 'override-prime'"))

@@ -123,7 +123,7 @@ def register(snap_name, private):
 @click.option(
     "--release",
     metavar="<channels>",
-    help="Optional comma separated list of channels to release " "<snap-file>",
+    help="Optional comma separated list of channels to release <snap-file>",
 )
 @click.argument(
     "snap-file",
@@ -413,7 +413,7 @@ def export_login(login_file: str, snaps: str, channels: str, acls: str, expires:
     )
     echo.info(_human_readable_acls(store))
     echo.warning(
-        "This exported login is not encrypted. Do not commit it to version " "control!"
+        "This exported login is not encrypted. Do not commit it to version control!"
     )
 
 

@@ -72,7 +72,7 @@ class SnapcraftSourceIncompatibleOptionsError(SnapcraftSourceError):
 
 class DigestDoesNotMatchError(SnapcraftSourceError):
 
-    fmt = "Expected the digest for source to be {expected}, " "but it was {calculated}"
+    fmt = "Expected the digest for source to be {expected}, but it was {calculated}"
 
     def __init__(self, expected, calculated):
         super().__init__(expected=expected, calculated=calculated)
@@ -89,7 +89,7 @@ class InvalidDebError(SnapcraftSourceError):
 
 class SourceUpdateUnsupportedError(SnapcraftSourceError):
 
-    fmt = "Failed to update source: " "{source!s} sources don't support updating."
+    fmt = "Failed to update source: {source!s} sources don't support updating."
 
     def __init__(self, source):
         super().__init__(source=source)

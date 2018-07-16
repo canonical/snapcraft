@@ -24,7 +24,7 @@ class GatedTestCase(integration.StoreTestCase):
         super().setUp()
         if not self.is_store_fake():
             self.skipTest(
-                "Right combination of snaps and IDs is not " "available in real stores."
+                "Right combination of snaps and IDs is not available in real stores."
             )
 
     def test_gated_success(self):

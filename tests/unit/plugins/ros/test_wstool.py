@@ -131,7 +131,7 @@ class WstoolTestCase(unit.TestCase):
         self.assertThat(
             str(raised),
             Equals(
-                "Error merging rosinstall file 'rosinstall-file' into " "workspace: baz"
+                "Error merging rosinstall file 'rosinstall-file' into workspace: baz"
             ),
         )
 

@@ -28,7 +28,7 @@ class ValidateTestCase(integration.StoreTestCase):
         super().setUp()
         if not self.is_store_fake():
             self.skipTest(
-                "Right combination of snaps and IDs is not " "available in real stores."
+                "Right combination of snaps and IDs is not available in real stores."
             )
 
         keys_dir = os.path.join(os.path.dirname(__file__), "keys")

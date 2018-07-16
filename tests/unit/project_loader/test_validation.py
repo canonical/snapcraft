@@ -88,7 +88,7 @@ class ValidationTest(ValidationBaseTest):
             raised = self.assertRaises(errors.YamlValidationError, Validator, self.data)
 
         expected_message = (
-            "snapcraft validation file is missing from " "installation path"
+            "snapcraft validation file is missing from installation path"
         )
         self.assertThat(raised.message, Equals(expected_message))
 
@@ -173,7 +173,7 @@ class ValidationTest(ValidationBaseTest):
         )
 
         expected_message = (
-            "'adopt-info' is a required property or 'summary' is a required " "property"
+            "'adopt-info' is a required property or 'summary' is a required property"
         )
         self.assertThat(raised.message, Equals(expected_message), message=self.data)
 
@@ -269,7 +269,7 @@ class RequiredPropertiesTest(ValidationBaseTest):
 
 
 class InvalidNamesTest(ValidationBaseTest):
-    e1 = "not a valid snap name. Snap names can only use ASCII lowercase" " letters, numbers, and hyphens, and must have at least one letter."
+    e1 = "not a valid snap name. Snap names can only use ASCII lowercase letters, numbers, and hyphens, and must have at least one letter."
     e2 = "not a valid snap name. Snap names cannot start with a hyphen."
     e3 = "not a valid snap name. Snap names cannot end with a hyphen."
     e4 = "not a valid snap name. Snap names cannot have two hyphens in a row."
@@ -321,7 +321,7 @@ class InvalidNamesTest(ValidationBaseTest):
         raised = self.assertRaises(errors.YamlValidationError, Validator(data).validate)
 
         expected_message = (
-            "The 'name' property does not match the required schema: " "{!r} is {}"
+            "The 'name' property does not match the required schema: {!r} is {}"
         ).format(self.name, self.err)
         self.assertThat(raised.message, Equals(expected_message), message=data)
 

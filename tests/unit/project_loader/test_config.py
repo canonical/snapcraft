@@ -322,6 +322,6 @@ class FilesetsTest(unit.TestCase):
         self.assertThat(
             str(raised),
             Contains(
-                "'$3' referred to in the 'stage' fileset but it is not " "in filesets"
+                "'$3' referred to in the 'stage' fileset but it is not in filesets"
             ),
         )

@@ -84,6 +84,6 @@ class SnapcraftctlSetVersionTestCase(integration.TestCase):
         )
         self.assertThat(
             raised.output,
-            Contains("Unable to set version: it was already set in the 'pull' " "step"),
+            Contains("Unable to set version: it was already set in the 'pull' step"),
         )
         self.assertThat(raised.output, Contains("Failed to run 'override-prime'"))

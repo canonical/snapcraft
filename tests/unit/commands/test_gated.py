@@ -58,7 +58,7 @@ class GatedCommandTestCase(StoreCommandsBaseTestCase):
 
         self.assertThat(result.exit_code, Equals(0))
         expected_output = (
-            "There are no validations for snap " "'test-snap-with-no-validations'\n"
+            "There are no validations for snap 'test-snap-with-no-validations'\n"
         )
         self.assertThat(result.output, Contains(expected_output))
 

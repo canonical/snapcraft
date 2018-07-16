@@ -28,13 +28,13 @@ _sample_keys = [
     {
         "name": "default",
         "sha3-384": (
-            "vdEeQvRxmZ26npJCFaGnl-VfGz0lU2jZ" "ZkWp_s7E-RxVCNtH2_mtjcxq2NkDKkIp"
+            "vdEeQvRxmZ26npJCFaGnl-VfGz0lU2jZZkWp_s7E-RxVCNtH2_mtjcxq2NkDKkIp"
         ),
     },
     {
         "name": "another",
         "sha3-384": (
-            "JsfToV5hO2eN9l89pYYCKXUioTERrZII" "HUgQQd47jW8YNNBskupiIjWYd3KXLY_D"
+            "JsfToV5hO2eN9l89pYYCKXUioTERrZIIHUgQQd47jW8YNNBskupiIjWYd3KXLY_D"
         ),
     },
 ]

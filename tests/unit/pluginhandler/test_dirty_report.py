@@ -51,7 +51,7 @@ class DirtyReportGetReportTest(unit.TestCase):
             "single project option",
             dict(
                 dirty_project_options=["op1"],
-                options_report="The 'op1' project option appears to have " "changed.",
+                options_report="The 'op1' project option appears to have changed.",
             ),
         ),
         (

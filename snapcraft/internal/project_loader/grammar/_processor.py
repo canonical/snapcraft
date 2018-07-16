@@ -207,7 +207,7 @@ def _handle_else(statement: Statement, else_body: typing.Grammar):
         statement.add_else(else_body)
     except AttributeError:
         raise GrammarSyntaxError(
-            "'else' doesn't seem to correspond to an 'on' or " "'try'"
+            "'else' doesn't seem to correspond to an 'on' or 'try'"
         )
 
 

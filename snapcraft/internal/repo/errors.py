@@ -138,7 +138,7 @@ class SnapFindError(RepoError):
 
 class SnapInstallError(RepoError):
 
-    fmt = "Error while installing snap {snap_name!r} from channel " "{snap_channel!r}"
+    fmt = "Error while installing snap {snap_name!r} from channel {snap_channel!r}"
 
     def __init__(self, *, snap_name, snap_channel):
         super().__init__(snap_name=snap_name, snap_channel=snap_channel)
@@ -158,7 +158,7 @@ class SnapGetAssertionError(RepoError):
 
 class SnapRefreshError(RepoError):
 
-    fmt = "Error while refreshing snap {snap_name!r} to channel " "{snap_channel!r}"
+    fmt = "Error while refreshing snap {snap_name!r} to channel {snap_channel!r}"
 
     def __init__(self, *, snap_name, snap_channel):
         super().__init__(snap_name=snap_name, snap_channel=snap_channel)

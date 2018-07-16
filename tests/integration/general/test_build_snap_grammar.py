@@ -57,7 +57,7 @@ class BuildSnapGrammarTestCase(testscenarios.WithScenarios, integration.TestCase
         # - Mount snap "core" (2775) ([start snap-core-2775.mount] \
         # failed with exit status 1: Job for snap-core-2775.mount failed.
         if os.environ.get("ADT_TEST") and self.deb_arch == "armhf":
-            self.skipTest("snap installation not working well with " "adt on armhf")
+            self.skipTest("snap installation not working well with adt on armhf")
         self.useFixture(fixture_setup.WithoutSnapInstalled("hello"))
 
     def _add_channel_information_to_hello(self):

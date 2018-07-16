@@ -235,7 +235,7 @@ class ExecutionTestCase(LifecycleTestBase):
         self.assertThat(raised.part, Equals("part1"))
         self.assertThat(
             raised.report,
-            Equals("The 'bar' and 'foo' part properties appear to have " "changed.\n"),
+            Equals("The 'bar' and 'foo' part properties appear to have changed.\n"),
         )
         self.assertThat(raised.parts_names, Equals("part1"))
 
@@ -1235,7 +1235,7 @@ class CoreSetupTestCase(unit.TestCase):
 
         self.tempdir = os.path.join(self.path, "tmpdir")
         patcher = mock.patch(
-            "snapcraft.internal.lifecycle._runner." "TemporaryDirectory"
+            "snapcraft.internal.lifecycle._runner.TemporaryDirectory"
         )
         self.tempdir_mock = patcher.start()
         self.addCleanup(patcher.stop)
@@ -1269,7 +1269,7 @@ class CoreSetupTestCase(unit.TestCase):
 
         lifecycle.execute(steps.PULL, project_config)
 
-        regex = (".*" "mkdir -p {}\n" "unsquashfs -d {} .*{}\n").format(
+        regex = (".*mkdir -p {}\nunsquashfs -d {} .*{}\n").format(
             os.path.dirname(self.core_path), self.core_path, core_snap_hash
         )
         self.assertThat(
@@ -1301,7 +1301,7 @@ class CoreSetupTestCase(unit.TestCase):
 
         lifecycle.execute(steps.PULL, project_config)
 
-        regex = (".*" "mkdir -p {}\n" "unsquashfs -d {} .*{}\n").format(
+        regex = (".*mkdir -p {}\nunsquashfs -d {} .*{}\n").format(
             os.path.dirname(self.core_path), self.core_path, core_snap_hash
         )
         self.assertThat(

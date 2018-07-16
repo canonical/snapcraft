@@ -37,7 +37,7 @@ class LoadPartBaseTest(ProjectLoaderBaseTest):
         super().setUp()
 
         patcher = mock.patch(
-            "snapcraft.internal.project_loader._parts_config.PartsConfig" ".load_part"
+            "snapcraft.internal.project_loader._parts_config.PartsConfig.load_part"
         )
         self.mock_load_part = patcher.start()
         self.addCleanup(patcher.stop)

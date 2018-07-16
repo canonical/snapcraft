@@ -83,7 +83,7 @@ class StoreNetworkError(StoreError):
 class SnapNotFoundError(StoreError):
 
     __FMT_ARCH_CHANNEL = (
-        "Snap {name!r} for {arch!r} cannot be found in the {channel!r} " "channel."
+        "Snap {name!r} for {arch!r} cannot be found in the {channel!r} channel."
     )
     __FMT_CHANNEL = "Snap {name!r} was not found in the {channel!r} channel."
     __FMT_SERIES_ARCH = "Snap {name!r} for {arch!r} was not found in {series!r} series."
@@ -386,7 +386,7 @@ class StoreServerError(StoreError):
     fmt = "{what}: {error_text} (code {error_code}).\n{action}"
 
     def __init__(self, response):
-        what = "The Snap Store encountered an error while processing your " "request"
+        what = "The Snap Store encountered an error while processing your request"
         error_code = response.status_code
         error_text = responses[error_code].lower()
         action = (
@@ -707,7 +707,7 @@ class KeyNotRegisteredError(StoreError):
 
 class InvalidValidationRequestsError(StoreError):
 
-    fmt = "Invalid validation requests (format must be name=revision): " "{requests}"
+    fmt = "Invalid validation requests (format must be name=revision): {requests}"
 
     def __init__(self, requests):
         requests_str = " ".join(requests)

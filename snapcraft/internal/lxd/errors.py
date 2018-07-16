@@ -129,7 +129,7 @@ class ContainerNetworkError(ContainerError):
 
 class ContainerRunError(ContainerError):
 
-    fmt = "The following command failed to run: " "{command!r} exited with {exit_code}"
+    fmt = "The following command failed to run: {command!r} exited with {exit_code}"
 
     def __init__(self, *, command, exit_code):
         if isinstance(command, list):

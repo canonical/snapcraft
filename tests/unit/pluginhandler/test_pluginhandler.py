@@ -180,7 +180,7 @@ class PluginTestCase(unit.TestCase):
             self.assertThat(
                 f.read(),
                 Equals("installed"),
-                "Expected staging to allow overwriting of " "already-staged files",
+                "Expected staging to allow overwriting of already-staged files",
             )
 
     def test_migrate_files_supports_no_follow_symlinks(self):
@@ -691,7 +691,7 @@ class RealStageTestCase(unit.TestCase):
             f.write("Version: 0.4\n")
             f.write("Libs: -L${libdir} -lgranite\n")
             f.write("Cflags: -I${includedir}/granite\n")
-            f.write("Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 " "gobject-2.0\n")
+            f.write("Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0\n")
 
         # Now we stage
         lifecycle.execute(steps.STAGE, project_config)
@@ -738,7 +738,7 @@ Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0
             f.write("Version: 0.4\n")
             f.write("Libs: -L${libdir} -lgranite\n")
             f.write("Cflags: -I${includedir}/granite\n")
-            f.write("Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 " "gobject-2.0\n")
+            f.write("Requires: cairo gee-0.8 glib-2.0 gio-unix-2.0 gobject-2.0\n")
 
         # Now we stage
         lifecycle.execute(steps.STAGE, project_config)

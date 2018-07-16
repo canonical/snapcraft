@@ -73,11 +73,11 @@ class SonameCache:
         # Initial API error checks
         if not isinstance(key, tuple):
             raise EnvironmentError(
-                "The key for SonameCache has to be a " "(arch, soname) tuple."
+                "The key for SonameCache has to be a (arch, soname) tuple."
             )
         if not isinstance(key[0], tuple) or len(key[0]) != 3:
             raise EnvironmentError(
-                "The first element of the key needs to of " "type ElfArchitectureTuple."
+                "The first element of the key needs to of type ElfArchitectureTuple."
             )
         if not isinstance(key[1], str):
             raise EnvironmentError(
@@ -346,7 +346,7 @@ class ElfFile:
             ldd_out = common.run_output(["ldd", self.path]).split("\n")
         except subprocess.CalledProcessError:
             logger.warning(
-                "Unable to determine library dependencies for " "{!r}".format(self.path)
+                "Unable to determine library dependencies for {!r}".format(self.path)
             )
             return set()
         ldd_out_split = [l.split() for l in ldd_out]

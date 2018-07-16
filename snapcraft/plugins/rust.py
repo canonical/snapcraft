@@ -91,7 +91,7 @@ class RustPlugin(snapcraft.BasePlugin):
     def _test(self):
         if self.project.is_cross_compiling:
             logger.warning(
-                "Skipping the test target run as this is a cross " "compilation."
+                "Skipping the test target run as this is a cross compilation."
             )
             return
 

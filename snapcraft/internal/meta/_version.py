@@ -29,7 +29,7 @@ def get_version(version: str, version_script: str = None) -> str:
     new_version = version
     if version_script:
         logger.info(
-            "Determining the version from the project " "repo (version-script)."
+            "Determining the version from the project repo (version-script)."
         )
         try:
             new_version = shell_utils.run_script(version_script).strip()
@@ -41,7 +41,7 @@ def get_version(version: str, version_script: str = None) -> str:
             )
     # we want to whitelist what we support here.
     elif version == "git":
-        logger.info("Determining the version from the project " "repo (version: git).")
+        logger.info("Determining the version from the project repo (version: git).")
         vcs_handler = sources.get_source_handler_from_type("git")
         new_version = vcs_handler.generate_version()
 

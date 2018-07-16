@@ -149,7 +149,7 @@ class SnapTestCase(integration.TestCase):
     def test_error_with_unexistent_build_package(self):
         self.copy_project_to_cwd("assemble")
         with open("snapcraft.yaml", "a") as yaml_file:
-            yaml_file.write("build-packages:\n" "  - inexistent-package\n")
+            yaml_file.write("build-packages:\n  - inexistent-package\n")
 
         # We update here to get a clean log/stdout later
         self.run_snapcraft("update")

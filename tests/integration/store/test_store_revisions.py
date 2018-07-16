@@ -151,7 +151,7 @@ class RevisionsTestCase(integration.StoreTestCase):
             (
                 ".*",
                 "Rev.    Uploaded              Arch       Version    Channels",
-                "1       {datetime_re}  Arch: All  1          candidate\*, beta\*" ".*",
+                "1       {datetime_re}  Arch: All  1          candidate\*, beta\*.*",
             )
         ).format(datetime_re=datetime_re)
         self.assertThat(output, MatchesRegex(expected, flags=re.DOTALL))

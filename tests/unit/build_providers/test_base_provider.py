@@ -77,7 +77,7 @@ class BaseProviderTest(BaseProviderBaseTest):
         provider.launch_mock.assert_any_call()
         provider.run_mock.assert_not_called()
         self.echoer_mock.info.assert_called_once_with(
-            "Creating a build environment named " "{!r}".format(self.instance_name)
+            "Creating a build environment named {!r}".format(self.instance_name)
         )
 
 

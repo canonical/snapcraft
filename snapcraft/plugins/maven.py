@@ -97,7 +97,7 @@ class MavenPlugin(snapcraft.plugins.jdk.JdkPlugin):
             arfiles = glob.glob(os.path.join(src, "*.[jw]ar"))
 
             if len(arfiles) == 0:
-                raise RuntimeError("Could not find any " "built jar files for part")
+                raise RuntimeError("Could not find any built jar files for part")
             if len(jarfiles) > 0 and len(f) == 0:
                 basedir = "jar"
             elif len(warfiles) > 0 and len(f) == 0:

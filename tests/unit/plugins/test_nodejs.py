@@ -549,7 +549,7 @@ class NodeReleaseTestCase(unit.TestCase):
                 machine="i686",
                 engine="4.4.4",
                 expected_url=(
-                    "https://nodejs.org/dist/v4.4.4/" "node-v4.4.4-linux-x86.tar.gz"
+                    "https://nodejs.org/dist/v4.4.4/node-v4.4.4-linux-x86.tar.gz"
                 ),
             ),
         ),
@@ -560,7 +560,7 @@ class NodeReleaseTestCase(unit.TestCase):
                 machine="x86_64",
                 engine="4.4.4",
                 expected_url=(
-                    "https://nodejs.org/dist/v4.4.4/" "node-v4.4.4-linux-x64.tar.gz"
+                    "https://nodejs.org/dist/v4.4.4/node-v4.4.4-linux-x64.tar.gz"
                 ),
             ),
         ),
@@ -571,7 +571,7 @@ class NodeReleaseTestCase(unit.TestCase):
                 machine="x86_64",
                 engine="4.4.4",
                 expected_url=(
-                    "https://nodejs.org/dist/v4.4.4/" "node-v4.4.4-linux-x86.tar.gz"
+                    "https://nodejs.org/dist/v4.4.4/node-v4.4.4-linux-x86.tar.gz"
                 ),
             ),
         ),
@@ -582,7 +582,7 @@ class NodeReleaseTestCase(unit.TestCase):
                 machine="armv7l",
                 engine="4.4.4",
                 expected_url=(
-                    "https://nodejs.org/dist/v4.4.4/" "node-v4.4.4-linux-armv7l.tar.gz"
+                    "https://nodejs.org/dist/v4.4.4/node-v4.4.4-linux-armv7l.tar.gz"
                 ),
             ),
         ),
@@ -593,7 +593,7 @@ class NodeReleaseTestCase(unit.TestCase):
                 machine="aarch64",
                 engine="4.4.4",
                 expected_url=(
-                    "https://nodejs.org/dist/v4.4.4/" "node-v4.4.4-linux-arm64.tar.gz"
+                    "https://nodejs.org/dist/v4.4.4/node-v4.4.4-linux-arm64.tar.gz"
                 ),
             ),
         ),
@@ -604,7 +604,7 @@ class NodeReleaseTestCase(unit.TestCase):
                 machine="aarch64",
                 engine="4.4.4",
                 expected_url=(
-                    "https://nodejs.org/dist/v4.4.4/" "node-v4.4.4-linux-armv7l.tar.gz"
+                    "https://nodejs.org/dist/v4.4.4/node-v4.4.4-linux-armv7l.tar.gz"
                 ),
             ),
         ),

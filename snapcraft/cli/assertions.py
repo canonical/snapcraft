@@ -137,7 +137,7 @@ def edit_collaborators(snap_name, key_name):
         if click.confirm("Are you sure you want to continue?"):
             new_dev_assertion.push(force=True)
         else:
-            echo.warning("The collaborators for this snap have not been " "altered.")
+            echo.warning("The collaborators for this snap have not been altered.")
 
 
 def _update_developers(developers: List[Dict[str, str]]) -> List[Dict[str, str]]:

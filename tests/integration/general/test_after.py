@@ -35,7 +35,7 @@ class AfterTestCase(integration.TestCase):
             snapcraft_yaml_contents = snapcraft_yaml.read()
         with open("snapcraft.yaml", "w") as snapcraft_yaml:
             snapcraft_yaml.write(
-                snapcraft_yaml_contents.replace("p1:", "p1:\n" "    after: [p3]")
+                snapcraft_yaml_contents.replace("p1:", "p1:\n    after: [p3]")
             )
 
         # We update here to get a clean log/stdout later

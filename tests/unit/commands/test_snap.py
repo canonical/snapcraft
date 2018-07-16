@@ -176,7 +176,7 @@ class SnapCommandTestCase(SnapCommandBaseTestCase):
         self.assertThat(
             str(raised),
             Contains(
-                "bad-type' is not one of ['app', 'base', 'gadget', " "'kernel', 'os']"
+                "bad-type' is not one of ['app', 'base', 'gadget', 'kernel', 'os']"
             ),
         )
 
@@ -766,7 +766,7 @@ class SnapCommandWithContainerBuildTestCase(SnapCommandBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
 
         self.assertIn(
-            "Waiting for a network connection...\n" "Network connection established\n",
+            "Waiting for a network connection...\nNetwork connection established\n",
             fake_logger.output,
         )
 

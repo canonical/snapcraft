@@ -164,7 +164,7 @@ class CollaborateErrorsTestCase(CollaborateBaseTestCase):
             str(raised),
             Contains(
                 'Received error 409: "{}"'.format(
-                    "The assertion's `developers` would revoke " "existing uploads."
+                    "The assertion's `developers` would revoke existing uploads."
                 )
             ),
         )

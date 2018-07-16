@@ -86,7 +86,7 @@ def exception_handler(exception_type, exception, exception_traceback, *, debug=F
         traceback.print_exception(exception_type, exception, exception_traceback)
         if not is_raven_setup:
             echo.warning(
-                "raven is not installed on this system, cannot send data " "to sentry"
+                "raven is not installed on this system, cannot send data to sentry"
             )
         elif _is_send_to_sentry():
             echo.info("Sending this error report.")

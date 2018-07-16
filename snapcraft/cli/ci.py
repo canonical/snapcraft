@@ -36,7 +36,7 @@ def cicli():
     "--refresh",
     is_flag=True,
     help=(
-        "Refresh the macaroon required to be able to push and " "release to channels"
+        "Refresh the macaroon required to be able to push and release to channels"
     ),
 )
 def enableci(ci_system, refresh):

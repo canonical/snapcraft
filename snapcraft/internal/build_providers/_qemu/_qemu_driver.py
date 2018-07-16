@@ -177,7 +177,7 @@ class QemuDriver:
                 time.sleep(1)
                 result = sock.connect_ex(("localhost", self._ssh_port))
                 logger.debug(
-                    "Pinging for ssh availability: port check " "{}".format(result)
+                    "Pinging for ssh availability: port check {}".format(result)
                 )
                 if result == 0:
                     break

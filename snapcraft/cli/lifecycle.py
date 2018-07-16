@@ -165,7 +165,7 @@ def pack(directory, output, **kwargs):
     "-s",
     "step_name",
     type=click.Choice(["pull", "build", "stage", "prime", "strip"]),
-    help="only clean the specified step and those that " "depend on it.",
+    help="only clean the specified step and those that depend on it.",
 )
 def clean(parts, step_name, **kwargs):
     """Remove content - cleans downloads, builds or install artifacts.
@@ -186,7 +186,7 @@ def clean(parts, step_name, **kwargs):
     if step_name:
         if step_name == "strip":
             echo.warning(
-                "DEPRECATED: Use `prime` instead of `strip` " "as the step to clean"
+                "DEPRECATED: Use `prime` instead of `strip` as the step to clean"
             )
             step_name = "prime"
         step = steps.get_step_by_name(step_name)

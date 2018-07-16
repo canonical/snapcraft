@@ -395,7 +395,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
         self.assertThat(
             str(raised),
             Equals(
-                "Failed to fetch apt dependencies: The " "package 'foo' was not found."
+                "Failed to fetch apt dependencies: The package 'foo' was not found."
             ),
         )
 
@@ -676,7 +676,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             self.assertThat(
                 f.read(),
                 Equals("python foo"),
-                "The absolute path to python was not replaced as " "expected",
+                "The absolute path to python was not replaced as expected",
             )
 
     def test_use_in_snap_python_rewrites_1_ros_package_path_sh(self):
@@ -699,7 +699,7 @@ class CatkinPluginTestCase(CatkinPluginBaseTestCase):
             self.assertThat(
                 f.read(),
                 Equals("python foo"),
-                "The absolute path to python was not replaced as " "expected",
+                "The absolute path to python was not replaced as expected",
             )
 
     def _verify_run_environment(self, plugin):

@@ -35,7 +35,7 @@ class StageCommandTestCase(LifecycleCommandsBaseTestCase):
         self.assertThat(
             str(raised),
             Equals(
-                "The part named 'no-stage' is not defined in " "'snap/snapcraft.yaml'"
+                "The part named 'no-stage' is not defined in 'snap/snapcraft.yaml'"
             ),
         )
 
@@ -76,7 +76,7 @@ class StageCommandTestCase(LifecycleCommandsBaseTestCase):
         self.assertThat(result.exit_code, Equals(0))
         self.assertThat(
             fake_logger.output,
-            Equals("Pulling stage0 \n" "Building stage0 \n" "Staging stage0 \n"),
+            Equals("Pulling stage0 \nBuilding stage0 \nStaging stage0 \n"),
         )
 
         self.assertThat(self.stage_dir, DirExists())

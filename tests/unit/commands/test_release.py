@@ -261,7 +261,7 @@ class ReleaseCommandTestCase(CommandBaseTestCase):
         self.assertThat(
             result.output,
             Contains(
-                "Unexpected channel info: " "'fake-bad-channel-info' in channel stable"
+                "Unexpected channel info: 'fake-bad-channel-info' in channel stable"
             ),
         )
 

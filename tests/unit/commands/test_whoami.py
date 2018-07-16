@@ -71,7 +71,7 @@ class WhoamiCommandBaseTestCase(commands.CommandBaseTestCase):
         self.assertThat(
             result.output,
             MatchesRegex(
-                ".*email: +test@example.com\n" "developer-id: +test_account_id\n",
+                ".*email: +test@example.com\ndeveloper-id: +test_account_id\n",
                 flags=re.DOTALL,
             ),
         )

@@ -218,7 +218,7 @@ class SCAClient(Client):
             response_json = response.json()
         except JSONDecodeError:
             message = (
-                "Invalid response from the server when pushing " "validations: {} {}"
+                "Invalid response from the server when pushing validations: {} {}"
             ).format(response.status_code, response)
             logger.debug(message)
             raise errors.StoreValidationError(
@@ -243,7 +243,7 @@ class SCAClient(Client):
             response_json = response.json()
         except JSONDecodeError:
             message = (
-                "Invalid response from the server when getting " "{}: {} {}"
+                "Invalid response from the server when getting {}: {} {}"
             ).format(endpoint, response.status_code, response)
             logger.debug(message)
             raise errors.StoreValidationError(

@@ -50,7 +50,7 @@ TWO_FACTOR_WARNING = (
     "https://help.ubuntu.com/community/SSO/FAQs/2FA"
 )
 INVALID_CREDENTIALS = "Invalid credentials supplied."
-AUTHENTICATION_ERROR = "Problems encountered when authenticating your " "credentials."
+AUTHENTICATION_ERROR = "Problems encountered when authenticating your credentials."
 ACCOUNT_INFORMATION_ERROR = (
-    "Unexpected error when obtaining your account " "information."
+    "Unexpected error when obtaining your account information."
 )

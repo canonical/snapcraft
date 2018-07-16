@@ -150,7 +150,7 @@ class ExecStackTestCase(integration.TestCase):
                 "plugin": "nil",
                 "build-attributes": attributes,
                 "build": (
-                    "execstack --set-execstack " "$SNAPCRAFT_PART_INSTALL/usr/bin/hello"
+                    "execstack --set-execstack $SNAPCRAFT_PART_INSTALL/usr/bin/hello"
                 ),
                 "prime": ["usr/bin/hello"],
                 "build-packages": ["execstack"],

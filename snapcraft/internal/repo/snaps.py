@@ -228,7 +228,7 @@ def _snap_command_requires_sudo():
     except IndexError:
         requires_root = True
     if requires_root:
-        logger.warning("snapd is not logged in, snap install " "commands will use sudo")
+        logger.warning("snapd is not logged in, snap install commands will use sudo")
     return requires_root
 
 

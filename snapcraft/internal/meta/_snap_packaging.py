@@ -515,7 +515,7 @@ class _SnapPackaging:
             if assembled_env:
                 print("{}".format(assembled_env), file=f)
                 print(
-                    "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:" "$LD_LIBRARY_PATH",
+                    "export LD_LIBRARY_PATH=$SNAP_LIBRARY_PATH:$LD_LIBRARY_PATH",
                     file=f,
                 )
             if cwd:

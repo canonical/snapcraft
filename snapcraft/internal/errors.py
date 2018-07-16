@@ -202,7 +202,7 @@ class PartNotInCacheError(RemotePartsError):
 
 class RemotePartsUpdateConnectionError(RemotePartsError):
 
-    fmt = "Failed to update cache of remote parts: {message}\n" "Please try again."
+    fmt = "Failed to update cache of remote parts: {message}\nPlease try again."
 
     def __init__(self, requests_exception):
         super().__init__(message=requests_exception.__doc__)
@@ -488,7 +488,7 @@ class SnapcraftCommandError(SnapcraftError, CalledProcessError):
     compatibility.
     """
 
-    fmt = "Failed to run {command!r}: " "Exited with code {exit_code}."
+    fmt = "Failed to run {command!r}: Exited with code {exit_code}."
 
     def __init__(self, *, command: str, call_error: CalledProcessError) -> None:
         super().__init__(command=command, exit_code=call_error.returncode)
@@ -527,7 +527,7 @@ class ScriptletBaseError(SnapcraftError):
 
 
 class ScriptletRunError(ScriptletBaseError):
-    fmt = "Failed to run {scriptlet_name!r}: " "Exit code was {code}."
+    fmt = "Failed to run {scriptlet_name!r}: Exit code was {code}."
 
     def __init__(self, scriptlet_name: str, code: int) -> None:
         super().__init__(scriptlet_name=scriptlet_name, code=code)
@@ -552,7 +552,7 @@ class ScriptletDuplicateDataError(ScriptletBaseError):
 
 
 class ScriptletDuplicateFieldError(ScriptletBaseError):
-    fmt = "Unable to set {field}: " "it was already set in the {step.name!r} step."
+    fmt = "Unable to set {field}: it was already set in the {step.name!r} step."
 
     def __init__(self, field: str, step: steps.Step) -> None:
         super().__init__(field=field, step=step)
@@ -567,7 +567,7 @@ class SnapcraftctlError(ScriptletBaseError):
 
 class SnapcraftInvalidCLIConfigError(SnapcraftError):
 
-    fmt = "The cli configuration file {config_file!r} has invalid " "data: {error!r}."
+    fmt = "The cli configuration file {config_file!r} has invalid data: {error!r}."
 
     def __init__(self, *, config_file: str, error: str) -> None:
         super().__init__(config_file=config_file, error=error)

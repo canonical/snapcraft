@@ -241,9 +241,9 @@ class PrepareBuildTestCase(CatkinToolsPluginBaseTestCase):
 
         if "debug" in build_attributes:
             self.assertRegexpMatches(
-                command, ".*--cmake-args." "*-DCMAKE_BUILD_TYPE=Debug"
+                command, ".*--cmake-args.*-DCMAKE_BUILD_TYPE=Debug"
             )
         else:
             self.assertRegexpMatches(
-                command, ".*--cmake-args." "*-DCMAKE_BUILD_TYPE=Release"
+                command, ".*--cmake-args.*-DCMAKE_BUILD_TYPE=Release"
             )

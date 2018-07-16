@@ -629,7 +629,7 @@ class ErrorFormattingTestCase(unit.TestCase):
                     ),
                 },
                 "expected_message": (
-                    "Failed to run 'pip install foo': " "Exited with code 1."
+                    "Failed to run 'pip install foo': Exited with code 1."
                 ),
             },
         ),
@@ -803,7 +803,7 @@ class ErrorFormattingTestCase(unit.TestCase):
                 "exception": errors.NoNextStepError,
                 "kwargs": {"part_name": "test-part-name"},
                 "expected_message": (
-                    "The 'test-part-name' part has run through its entire " "lifecycle"
+                    "The 'test-part-name' part has run through its entire lifecycle"
                 ),
             },
         ),

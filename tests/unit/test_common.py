@@ -88,7 +88,7 @@ class FormatInColumnsTestCase(unit.TestCase):
         expected = [
             "ant        catkin  copy  jdk     kernel  maven  "
             "nodejs   python3  tar-content",
-            "autotools  cmake   go    kbuild  make    nil    " "python2  scons  ",
+            "autotools  cmake   go    kbuild  make    nil    python2  scons  ",
         ]
         self.assertThat(
             common.format_output_in_columns(self.elements_list), Equals(expected)
