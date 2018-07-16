@@ -28,9 +28,7 @@ logger = logging.getLogger(__name__)
 def get_version(version: str, version_script: str = None) -> str:
     new_version = version
     if version_script:
-        logger.info(
-            "Determining the version from the project repo (version-script)."
-        )
+        logger.info("Determining the version from the project repo (version-script).")
         try:
             new_version = shell_utils.run_script(version_script).strip()
             if not new_version:

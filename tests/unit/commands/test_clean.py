@@ -86,9 +86,7 @@ class CleanCommandTestCase(CleanCommandBaseTestCase):
 
         self.assertThat(
             str(raised),
-            Equals(
-                "The part named 'no-clean' is not defined in 'snap/snapcraft.yaml'"
-            ),
+            Equals("The part named 'no-clean' is not defined in 'snap/snapcraft.yaml'"),
         )
 
     def test_clean_all(self):

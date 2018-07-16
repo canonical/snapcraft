@@ -1234,9 +1234,7 @@ class CoreSetupTestCase(unit.TestCase):
         self.addCleanup(patcher.stop)
 
         self.tempdir = os.path.join(self.path, "tmpdir")
-        patcher = mock.patch(
-            "snapcraft.internal.lifecycle._runner.TemporaryDirectory"
-        )
+        patcher = mock.patch("snapcraft.internal.lifecycle._runner.TemporaryDirectory")
         self.tempdir_mock = patcher.start()
         self.addCleanup(patcher.stop)
 

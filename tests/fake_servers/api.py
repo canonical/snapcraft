@@ -405,9 +405,7 @@ class FakeStoreAPIServer(base.BaseFakeServer):
                     "error_list": [
                         {
                             "code": "invalid-field",
-                            "message": (
-                                "The 'channels' field content is not valid."
-                            ),
+                            "message": ("The 'channels' field content is not valid."),
                         }
                     ]
                 }

@@ -51,6 +51,4 @@ TWO_FACTOR_WARNING = (
 )
 INVALID_CREDENTIALS = "Invalid credentials supplied."
 AUTHENTICATION_ERROR = "Problems encountered when authenticating your credentials."
-ACCOUNT_INFORMATION_ERROR = (
-    "Unexpected error when obtaining your account information."
-)
+ACCOUNT_INFORMATION_ERROR = "Unexpected error when obtaining your account information."

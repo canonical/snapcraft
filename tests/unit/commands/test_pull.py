@@ -32,9 +32,7 @@ class PullCommandTestCase(LifecycleCommandsBaseTestCase):
 
         self.assertThat(
             str(raised),
-            Equals(
-                "The part named 'no-pull' is not defined in 'snap/snapcraft.yaml'"
-            ),
+            Equals("The part named 'no-pull' is not defined in 'snap/snapcraft.yaml'"),
         )
 
     def test_pull_defaults(self):

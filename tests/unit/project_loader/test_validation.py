@@ -87,9 +87,7 @@ class ValidationTest(ValidationBaseTest):
         ):
             raised = self.assertRaises(errors.YamlValidationError, Validator, self.data)
 
-        expected_message = (
-            "snapcraft validation file is missing from installation path"
-        )
+        expected_message = "snapcraft validation file is missing from installation path"
         self.assertThat(raised.message, Equals(expected_message))
 
     def test_icon_missing_is_valid_yaml(self):

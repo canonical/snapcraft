@@ -34,9 +34,7 @@ class StageCommandTestCase(LifecycleCommandsBaseTestCase):
         )
         self.assertThat(
             str(raised),
-            Equals(
-                "The part named 'no-stage' is not defined in 'snap/snapcraft.yaml'"
-            ),
+            Equals("The part named 'no-stage' is not defined in 'snap/snapcraft.yaml'"),
         )
 
     def test_stage_defaults(self):

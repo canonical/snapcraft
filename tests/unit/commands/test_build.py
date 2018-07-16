@@ -32,9 +32,7 @@ class BuildCommandTestCase(LifecycleCommandsBaseTestCase):
 
         self.assertThat(
             str(raised),
-            Equals(
-                "The part named 'no-build' is not defined in 'snap/snapcraft.yaml'"
-            ),
+            Equals("The part named 'no-build' is not defined in 'snap/snapcraft.yaml'"),
         )
 
     def test_build_defaults(self):
