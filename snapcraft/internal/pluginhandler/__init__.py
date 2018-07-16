@@ -21,6 +21,7 @@ import filecmp
 import logging
 import os
 import shutil
+import subprocess
 import sys
 from glob import glob, iglob
 from typing import Dict, Set, Sequence  # noqa: F401
@@ -569,8 +570,27 @@ class PluginHandler:
             scriptlet_metadata=self._scriptlet_metadata[steps.BUILD]))
 
     def _get_machine_manifest(self):
+        # Use subprocess directly here. common.run_output will use binaries out
+        # of the snap, and we want to use the one on the host.
+        try:
+            output = subprocess.check_output([
+                'uname', '--kernel-name', '--kernel-release',
+                '--kernel-version', '--machine', '--processor',
+                '--hardware-platform', '--operating-system'])
+        except subprocess.CalledProcessError as e:
+            logger.warning(
+                "'uname' exited with code {}: unable to record machine "
+                "manifest".format(e.returncode))
+            return {}
+
+        try:
+            uname = output.decode(sys.getfilesystemencoding()).strip()
+        except UnicodeEncodeError:
+            logger.warning("Could not decode output for 'uname' correctly")
+            uname = output.decode('latin-1', 'surrogateescape').strip()
+
         return {
-            'uname': common.run_output(['uname', '-srvmpio']),
+            'uname': uname,
             'installed-packages': repo.Repo.get_installed_packages(),
             'installed-snaps': repo.snaps.get_installed_snaps()
         }

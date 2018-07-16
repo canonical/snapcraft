@@ -484,15 +484,15 @@ class RecordManifestBaseTestCase(LifecycleTestBase):
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        original_run_output = snapcraft.internal.common.run_output
+        original_check_output = subprocess.check_output
 
         def fake_uname(cmd, *args, **kwargs):
             if 'uname' in cmd:
-                return 'Linux test uname 4.10 x86_64'
+                return b'Linux test uname 4.10 x86_64'
             else:
-                return original_run_output(cmd, *args, **kwargs)
+                return original_check_output(cmd, *args, **kwargs)
         check_output_patcher = mock.patch(
-            'snapcraft.internal.common.run_output', side_effect=fake_uname)
+            'subprocess.check_output', side_effect=fake_uname)
         check_output_patcher.start()
         self.addCleanup(check_output_patcher.stop)
 
