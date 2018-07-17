@@ -624,6 +624,8 @@ def _push_delta(snap_name, snap_filename, source_snap):
             raise storeapi.errors.StoreDeltaApplicationError(str(e))
         else:
             raise
+    except storeapi.errors.StoreServerError as e:
+        raise storeapi.errors.StorePushError(snap_name, e.response)
     finally:
         if os.path.isfile(delta_filename):
             try:
