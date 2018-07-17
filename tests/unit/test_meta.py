@@ -362,7 +362,7 @@ class CreateTestCase(CreateBaseTestCase):
         _create_file(os.path.join(icon_dir, "app2.png"))
         _create_file(
             os.path.join(self.prime_dir, "app2.desktop"),
-            content="[Desktop Entry]\nExec=app2.exe\nIcon=/usr/share/" "app2.png",
+            content="[Desktop Entry]\nExec=app2.exe\nIcon=/usr/share/app2.png",
         )
         _create_file(
             os.path.join(self.prime_dir, "app3.desktop"),
@@ -1148,7 +1148,7 @@ class CreateWithConfinementTestCase(CreateBaseTestCase):
             self.assertThat(
                 fake_logger.output,
                 Contains(
-                    "'confinement' property not specified: defaulting to " "'strict'"
+                    "'confinement' property not specified: defaulting to 'strict'"
                 ),
             )
 
