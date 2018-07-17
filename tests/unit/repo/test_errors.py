@@ -22,15 +22,20 @@ from tests import unit
 class ErrorFormattingTestCase(unit.TestCase):
 
     scenarios = (
-        ('SnapdConnectionError', {
-            'exception': errors.SnapdConnectionError,
-            'kwargs': {'snap_name': 'test', 'url': 'url'},
-            'expected_message': (
-                "Failed to get information for snap 'test': "
-                "could not connect to 'url'.")}),
+        (
+            "SnapdConnectionError",
+            {
+                "exception": errors.SnapdConnectionError,
+                "kwargs": {"snap_name": "test", "url": "url"},
+                "expected_message": (
+                    "Failed to get information for snap 'test': "
+                    "could not connect to 'url'."
+                ),
+            },
+        ),
     )
 
     def test_error_formatting(self):
         self.assertThat(
-            str(self.exception(**self.kwargs)),
-            Equals(self.expected_message))
+            str(self.exception(**self.kwargs)), Equals(self.expected_message)
+        )

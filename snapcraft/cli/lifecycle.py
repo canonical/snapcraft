@@ -20,8 +20,7 @@ import os
 from . import echo
 from . import env
 from ._options import add_build_options, get_project
-from snapcraft.internal import (deprecations, lifecycle, lxd, project_loader,
-                                steps)
+from snapcraft.internal import deprecations, lifecycle, lxd, project_loader, steps
 from snapcraft.project.errors import YamlValidationError
 
 
@@ -49,15 +48,14 @@ def lifecyclecli(ctx, **kwargs):
 def init():
     """Initialize a snapcraft project."""
     snapcraft_yaml_path = lifecycle.init()
-    echo.info('Created {}.'.format(snapcraft_yaml_path))
-    echo.info(
-        'Edit the file to your liking or run `snapcraft` to get started')
+    echo.info("Created {}.".format(snapcraft_yaml_path))
+    echo.info("Edit the file to your liking or run `snapcraft` to get started")
 
 
 @lifecyclecli.command()
 @click.pass_context
 @add_build_options()
-@click.argument('parts', nargs=-1, metavar='<part>...', required=False)
+@click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def pull(ctx, parts, **kwargs):
     """Download or retrieve artifacts defined for a part.
 
@@ -72,7 +70,7 @@ def pull(ctx, parts, **kwargs):
 
 @lifecyclecli.command()
 @add_build_options()
-@click.argument('parts', nargs=-1, metavar='<part>...', required=False)
+@click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def build(parts, **kwargs):
     """Build artifacts defined for a part.
 
@@ -87,7 +85,7 @@ def build(parts, **kwargs):
 
 @lifecyclecli.command()
 @add_build_options()
-@click.argument('parts', nargs=-1, metavar='<part>...', required=False)
+@click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def stage(parts, **kwargs):
     """Stage the part's built artifacts into the common staging area.
 
@@ -102,7 +100,7 @@ def stage(parts, **kwargs):
 
 @lifecyclecli.command()
 @add_build_options()
-@click.argument('parts', nargs=-1, metavar='<part>...', required=False)
+@click.argument("parts", nargs=-1, metavar="<part>...", required=False)
 def prime(parts, **kwargs):
     """Final copy and preparation for the snap.
 
@@ -117,8 +115,8 @@ def prime(parts, **kwargs):
 
 @lifecyclecli.command()
 @add_build_options()
-@click.argument('directory', required=False)
-@click.option('--output', '-o', help='path to the resulting snap.')
+@click.argument("directory", required=False)
+@click.option("--output", "-o", help="path to the resulting snap.")
 def snap(directory, output, **kwargs):
     """Create a snap.
 
@@ -131,18 +129,18 @@ def snap(directory, output, **kwargs):
     instead.
     """
     if directory:
-        deprecations.handle_deprecation_notice('dn6')
+        deprecations.handle_deprecation_notice("dn6")
     else:
         project = _execute(steps.PRIME, parts=[], **kwargs)
         directory = project.prime_dir
 
     snap_name = lifecycle.pack(directory, output)
-    echo.info('Snapped {}'.format(snap_name))
+    echo.info("Snapped {}".format(snap_name))
 
 
 @lifecyclecli.command()
-@click.argument('directory')
-@click.option('--output', '-o', help='path to the resulting snap.')
+@click.argument("directory")
+@click.option("--output", "-o", help="path to the resulting snap.")
 def pack(directory, output, **kwargs):
     """Create a snap from a directory holding a valid snap.
 
@@ -156,16 +154,19 @@ def pack(directory, output, **kwargs):
 
     """
     snap_name = lifecycle.pack(directory, output)
-    echo.info('Snapped {}'.format(snap_name))
+    echo.info("Snapped {}".format(snap_name))
 
 
 @lifecyclecli.command()
 @add_build_options()
-@click.argument('parts', nargs=-1, metavar='<part>...', required=False)
-@click.option('--step', '-s', 'step_name',
-              type=click.Choice(['pull', 'build', 'stage', 'prime', 'strip']),
-              help='only clean the specified step and those that '
-                   'depend on it.')
+@click.argument("parts", nargs=-1, metavar="<part>...", required=False)
+@click.option(
+    "--step",
+    "-s",
+    "step_name",
+    type=click.Choice(["pull", "build", "stage", "prime", "strip"]),
+    help="only clean the specified step and those that depend on it.",
+)
 def clean(parts, step_name, **kwargs):
     """Remove content - cleans downloads, builds or install artifacts.
 
@@ -183,27 +184,35 @@ def clean(parts, step_name, **kwargs):
 
     step = None
     if step_name:
-        if step_name == 'strip':
-            echo.warning('DEPRECATED: Use `prime` instead of `strip` '
-                         'as the step to clean')
-            step_name = 'prime'
+        if step_name == "strip":
+            echo.warning(
+                "DEPRECATED: Use `prime` instead of `strip` as the step to clean"
+            )
+            step_name = "prime"
         step = steps.get_step_by_name(step_name)
 
     if build_environment.is_host:
         lifecycle.clean(project, parts, step)
     else:
         project_config = project_loader.load_config(project)
-        lxd.Project(project_options=project,
-                    output=None, source=os.path.curdir,
-                    metadata=project_config.get_metadata()).clean(parts, step)
+        lxd.Project(
+            project_options=project,
+            output=None,
+            source=os.path.curdir,
+            metadata=project_config.get_metadata(),
+        ).clean(parts, step)
 
 
 @lifecyclecli.command()
 @add_build_options()
-@click.option('--remote', metavar='<remote>',
-              help='Use a specific lxd remote instead of a local container.')
-@click.option('--debug', is_flag=True,
-              help='Shells into the environment if the build fails.')
+@click.option(
+    "--remote",
+    metavar="<remote>",
+    help="Use a specific lxd remote instead of a local container.",
+)
+@click.option(
+    "--debug", is_flag=True, help="Shells into the environment if the build fails."
+)
 def cleanbuild(remote, debug, **kwargs):
     """Create a snap using a clean environment managed by a build provider.
 
@@ -226,14 +235,17 @@ def cleanbuild(remote, debug, **kwargs):
     # would work with the host as the build_provider it makes little
     # sense in this scenario.
     build_environment = env.BuilderEnvironmentConfig(
-        default='lxd', additional_providers=['multipass'])
+        default="lxd", additional_providers=["multipass"]
+    )
 
-    lifecycle.cleanbuild(project=project,
-                         project_config=project_config,
-                         echoer=echo,
-                         remote=remote,
-                         build_environment=build_environment)
+    lifecycle.cleanbuild(
+        project=project,
+        project_config=project_config,
+        echoer=echo,
+        remote=remote,
+        build_environment=build_environment,
+    )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     lifecyclecli.main()

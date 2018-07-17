@@ -20,25 +20,24 @@ import os
 import subprocess
 import sys
 
-DEFAULT_REFERENCE_FILE = 'docs/reference.md'
+DEFAULT_REFERENCE_FILE = "docs/reference.md"
 
 
 def _get_help_output(topic, lines=False):
-    TRANSLATE = {
-        'tar-content': 'tar_content',
-    }
+    TRANSLATE = {"tar-content": "tar_content"}
     if topic in TRANSLATE:
         topic = TRANSLATE[topic]
-    return _run_snapcraft(['help', topic], lines)
+    return _run_snapcraft(["help", topic], lines)
 
 
 def _run_snapcraft(cmd, lines=False):
-    cmd = ['./snapcraft'] + cmd
+    cmd = ["./snapcraft"] + cmd
     output = subprocess.check_output(
-        cmd, cwd=os.path.join(os.path.dirname(__file__), '../../bin'))
-    output = output.decode('utf-8')
+        cmd, cwd=os.path.join(os.path.dirname(__file__), "../../bin")
+    )
+    output = output.decode("utf-8")
     if lines:
-        return output.split('\n')[:-1]  # drop last empty line
+        return output.split("\n")[:-1]  # drop last empty line
     return output
 
 
@@ -48,22 +47,20 @@ class Reference:
         self.topics = []
         self.plugins = []
         self.output_file = output_file
-        assert os.path.isdir(os.path.dirname(self.output_file)), \
-            'Directory {} does not exist.'.format(
-                os.path.dirname(self.output_file))
+        assert os.path.isdir(
+            os.path.dirname(self.output_file)
+        ), "Directory {} does not exist.".format(os.path.dirname(self.output_file))
         self._read()
         self._write()
 
     def _read(self):
-        self.topics = _get_help_output('topics', lines=True)
-        self.plugins = _run_snapcraft(['list-plugins'], lines=True)
+        self.topics = _get_help_output("topics", lines=True)
+        self.plugins = _run_snapcraft(["list-plugins"], lines=True)
         self.topics.extend(self.plugins)
         for topic in self.topics:
             text = _get_help_output(topic)
-            if not text.startswith('The plugin has no documentation'):
-                self.docs += [
-                    (topic, text)
-                ]
+            if not text.startswith("The plugin has no documentation"):
+                self.docs += [(topic, text)]
 
     def _write(self):
         reference_text = """
@@ -84,7 +81,9 @@ snappy. It's a reference of `snapcraft`'s plugins and internals.
             reference_text += """
 ### Topic: {}
 
-{}""".format(entry[0].title(), entry[1].replace('# ', '#### '))
+{}""".format(
+                entry[0].title(), entry[1].replace("# ", "#### ")
+            )
         reference_text += """
 
 ## snapcraft's Plugins
@@ -96,24 +95,28 @@ and their options.
             reference_text += """
 ### The {} plugin
 
-{}""".format(entry[0], entry[1])
-        with open(os.path.join(self.output_file), 'w') as f:
+{}""".format(
+                entry[0], entry[1]
+            )
+        with open(os.path.join(self.output_file), "w") as f:
             f.write(str(reference_text))
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '-O', '--output-file',
-        help='specify output file, default: {}'.format(DEFAULT_REFERENCE_FILE),
-        default=DEFAULT_REFERENCE_FILE)
+        "-O",
+        "--output-file",
+        help="specify output file, default: {}".format(DEFAULT_REFERENCE_FILE),
+        default=DEFAULT_REFERENCE_FILE,
+    )
     args = parser.parse_args()
     Reference(args.output_file)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print('Aborted.')
+        print("Aborted.")
         sys.exit(1)

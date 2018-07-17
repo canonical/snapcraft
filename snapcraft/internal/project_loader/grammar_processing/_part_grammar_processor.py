@@ -72,36 +72,41 @@ class PartGrammarProcessor:
     'foo'
     """
 
-    def __init__(self, *, plugin: pluginhandler.PluginHandler,
-                 properties: Dict[str, Any], project: project.Project,
-                 repo: 'repo.Ubuntu') -> None:
+    def __init__(
+        self,
+        *,
+        plugin: pluginhandler.PluginHandler,
+        properties: Dict[str, Any],
+        project: project.Project,
+        repo: "repo.Ubuntu"
+    ) -> None:
         self._project = project
         self._repo = repo
 
-        self._build_snap_grammar = getattr(plugin, 'build_snaps', [])
+        self._build_snap_grammar = getattr(plugin, "build_snaps", [])
         self.__build_snaps = set()  # type: Set[str]
 
-        self._build_package_grammar = getattr(plugin, 'build_packages', [])
+        self._build_package_grammar = getattr(plugin, "build_packages", [])
         self.__build_packages = set()  # type: Set[str]
 
-        self._stage_package_grammar = getattr(plugin, 'stage_packages', [])
+        self._stage_package_grammar = getattr(plugin, "stage_packages", [])
         self.__stage_packages = set()  # type: Set[str]
 
-        source_grammar = properties.get('source', [''])
+        source_grammar = properties.get("source", [""])
         if not isinstance(source_grammar, list):
             self._source_grammar = [source_grammar]
         else:
             self._source_grammar = source_grammar
 
-        self.__source = ''
+        self.__source = ""
 
     def get_source(self) -> str:
         if not self.__source:
             # The grammar is array-based, even though we only support a single
             # source.
             processor = grammar.GrammarProcessor(
-                self._source_grammar, self._project,
-                lambda s: True)
+                self._source_grammar, self._project, lambda s: True
+            )
             source_array = processor.process()
             if len(source_array) > 0:
                 self.__source = source_array.pop()
@@ -110,8 +115,10 @@ class PartGrammarProcessor:
     def get_build_snaps(self) -> Set[str]:
         if not self.__build_snaps:
             processor = grammar.GrammarProcessor(
-                self._build_snap_grammar, self._project,
-                repo.snaps.SnapPackage.is_valid_snap)
+                self._build_snap_grammar,
+                self._project,
+                repo.snaps.SnapPackage.is_valid_snap,
+            )
             self.__build_snaps = processor.process()
 
         return self.__build_snaps
@@ -119,9 +126,11 @@ class PartGrammarProcessor:
     def get_build_packages(self) -> Set[str]:
         if not self.__build_packages:
             processor = grammar.GrammarProcessor(
-                self._build_package_grammar, self._project,
+                self._build_package_grammar,
+                self._project,
                 self._repo.build_package_is_valid,
-                transformer=package_transformer)
+                transformer=package_transformer,
+            )
             self.__build_packages = processor.process()
 
         return self.__build_packages
@@ -129,9 +138,11 @@ class PartGrammarProcessor:
     def get_stage_packages(self) -> Set[str]:
         if not self.__stage_packages:
             processor = grammar.GrammarProcessor(
-                self._stage_package_grammar, self._project,
+                self._stage_package_grammar,
+                self._project,
                 self._repo.is_valid,
-                transformer=package_transformer)
+                transformer=package_transformer,
+            )
             self.__stage_packages = processor.process()
 
         return self.__stage_packages

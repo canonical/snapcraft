@@ -25,30 +25,31 @@ from . import LifecycleTestBase
 
 
 class StatusCacheTestCase(LifecycleTestBase):
-
     def setUp(self):
         super().setUp()
 
         self.project_config = self.make_snapcraft_project(
-            textwrap.dedent("""\
+            textwrap.dedent(
+                """\
                 parts:
                   main:
                     plugin: nil
                   dependent:
                     plugin: nil
                     after: [main]
-                """))
+                """
+            )
+        )
 
         self.cache = StatusCache(self.project_config)
 
     def test_has_step_run(self):
         # No steps should have run, yet
-        main_part = self.project_config.parts.get_part('main')
+        main_part = self.project_config.parts.get_part("main")
         self.assertFalse(self.cache.has_step_run(main_part, steps.PULL))
 
         # Now run the pull step
-        lifecycle.execute(
-            steps.PULL, self.project_config, part_names=['main'])
+        lifecycle.execute(steps.PULL, self.project_config, part_names=["main"])
 
         # Should still have cached that no steps have run
         self.assertFalse(self.cache.has_step_run(main_part, steps.PULL))
@@ -59,7 +60,7 @@ class StatusCacheTestCase(LifecycleTestBase):
 
     def test_add_step_run(self):
         # No steps should have run, yet
-        main_part = self.project_config.parts.get_part('main')
+        main_part = self.project_config.parts.get_part("main")
         self.assertFalse(self.cache.has_step_run(main_part, steps.PULL))
 
         # Tell the cache that the pull step has run though
@@ -74,50 +75,43 @@ class StatusCacheTestCase(LifecycleTestBase):
 
     def test_get_dirty_report(self):
         # No dirty reports should be available, yet
-        dependent_part = self.project_config.parts.get_part('dependent')
-        self.assertFalse(self.cache.get_dirty_report(
-            dependent_part, steps.PULL))
+        dependent_part = self.project_config.parts.get_part("dependent")
+        self.assertFalse(self.cache.get_dirty_report(dependent_part, steps.PULL))
 
         # Now run the pull step
         lifecycle.execute(steps.PULL, self.project_config)
 
         # Re-stage main, which will make dependent dirty
-        lifecycle.execute(
-            steps.PULL, self.project_config, part_names=['main'])
+        lifecycle.execute(steps.PULL, self.project_config, part_names=["main"])
 
         # Should still have cached that it's not dirty, though
-        self.assertFalse(self.cache.get_dirty_report(
-            dependent_part, steps.PULL))
+        self.assertFalse(self.cache.get_dirty_report(dependent_part, steps.PULL))
 
         # Now clear that step from the cache, and it should be up-to-date
         self.cache.clear_step(dependent_part, steps.PULL)
-        self.assertTrue(self.cache.get_dirty_report(
-            dependent_part, steps.PULL))
+        self.assertTrue(self.cache.get_dirty_report(dependent_part, steps.PULL))
 
     def test_get_outdated_report(self):
         # No outdated reports should be available, yet
-        main_part = self.project_config.parts.get_part('main')
-        self.assertFalse(self.cache.get_outdated_report(
-            main_part, steps.PULL))
+        main_part = self.project_config.parts.get_part("main")
+        self.assertFalse(self.cache.get_outdated_report(main_part, steps.PULL))
 
         # Now run the pull step for main
-        lifecycle.execute(
-            steps.PULL, self.project_config, part_names=['main'])
+        lifecycle.execute(steps.PULL, self.project_config, part_names=["main"])
 
         # Change the source on disk, which will make the pull step of main
         # outdated (to ensure this is the case, manually set the timestamp)
-        open('new-file', 'w').close()
+        open("new-file", "w").close()
         pull_state_file = states.get_step_state_file(
-            main_part.plugin.statedir, steps.PULL)
+            main_part.plugin.statedir, steps.PULL
+        )
         access_time = os.stat(pull_state_file).st_atime
         modified_time = os.stat(pull_state_file).st_atime
-        os.utime('new-file', (access_time, modified_time+1))
+        os.utime("new-file", (access_time, modified_time + 1))
 
         # Should still have cached that it's not outdated, though
-        self.assertFalse(self.cache.get_outdated_report(
-            main_part, steps.PULL))
+        self.assertFalse(self.cache.get_outdated_report(main_part, steps.PULL))
 
         # Now clear that step from the cache, and it should be up-to-date
         self.cache.clear_step(main_part, steps.PULL)
-        self.assertTrue(self.cache.get_outdated_report(
-            main_part, steps.PULL))
+        self.assertTrue(self.cache.get_outdated_report(main_part, steps.PULL))

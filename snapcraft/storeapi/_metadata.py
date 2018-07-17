@@ -28,8 +28,7 @@ def _media_hash(media_file):
     return sha.hexdigest()
 
 
-class StoreMetadataHandler():
-
+class StoreMetadataHandler:
     def __init__(self, store_client, store_auth, snap_id, snap_name):
         super().__init__()
         self.client = store_client
@@ -39,37 +38,35 @@ class StoreMetadataHandler():
 
     def push(self, metadata, force):
         """Push the metadata to SCA."""
-        url = 'snaps/' + self.snap_id + '/metadata'
+        url = "snaps/" + self.snap_id + "/metadata"
         headers = {
-            'Authorization': self.auth,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
+            "Authorization": self.auth,
+            "Content-Type": "application/json",
+            "Accept": "application/json",
         }
-        method = 'PUT' if force else 'POST'
+        method = "PUT" if force else "POST"
         response = self.client.request(
-            method, url, data=json.dumps(metadata), headers=headers)
+            method, url, data=json.dumps(metadata), headers=headers
+        )
 
         if not response.ok:
             raise StoreMetadataError(self.snap_name, response, metadata)
 
     def _current_binary_metadata(self):
         """Get current icons and screenshots as set in the store."""
-        url = 'snaps/' + self.snap_id + '/binary-metadata'
-        headers = {
-            'Authorization': self.auth,
-            'Accept': 'application/json',
-        }
+        url = "snaps/" + self.snap_id + "/binary-metadata"
+        headers = {"Authorization": self.auth, "Accept": "application/json"}
         # get current binary metadata information
-        response = self.client.request('GET', url, headers=headers)
+        response = self.client.request("GET", url, headers=headers)
         if not response.ok:
             raise StoreMetadataError(self.snap_name, response, {})
 
         binary_metadata = response.json()
         # current icons and screenshots
-        icons = [media for media in binary_metadata
-                 if media.get('type') == 'icon']
-        screenshots = [media for media in binary_metadata
-                       if media.get('type') == 'screenshot']
+        icons = [media for media in binary_metadata if media.get("type") == "icon"]
+        screenshots = [
+            media for media in binary_metadata if media.get("type") == "screenshot"
+        ]
         return icons, screenshots
 
     def _build_binary_request_data(self, metadata):
@@ -80,7 +77,7 @@ class StoreMetadataHandler():
         current_icon = icons[0] if icons else None
 
         # only icon support atm
-        icon = metadata.get('icon')
+        icon = metadata.get("icon")
         # keep original screenshots
         updated_info = screenshots
 
@@ -90,11 +87,15 @@ class StoreMetadataHandler():
 
         if icon:
             icon_hash = _media_hash(icon)
-            if current_icon is None or current_icon.get('hash') != icon_hash:
-                upload_icon = {'type': 'icon', 'hash': icon_hash,
-                               'key': 'icon', 'filename': icon.name}
+            if current_icon is None or current_icon.get("hash") != icon_hash:
+                upload_icon = {
+                    "type": "icon",
+                    "hash": icon_hash,
+                    "key": "icon",
+                    "filename": icon.name,
+                }
                 updated_info.append(upload_icon)
-                files = {'icon': icon}
+                files = {"icon": icon}
             else:
                 # icon unchanged, nothing to push
                 return data, files
@@ -102,9 +103,9 @@ class StoreMetadataHandler():
         if not files:
             # API requires a multipart request, but we have no files to push
             # https://github.com/requests/requests/issues/1081
-            files = {'info': ('', json.dumps(updated_info))}
+            files = {"info": ("", json.dumps(updated_info))}
         else:
-            data = {'info': json.dumps(updated_info)}
+            data = {"info": json.dumps(updated_info)}
 
         return data, files
 
@@ -115,16 +116,13 @@ class StoreMetadataHandler():
             # nothing to update
             return
 
-        url = 'snaps/' + self.snap_id + '/binary-metadata'
-        headers = {
-            'Authorization': self.auth,
-            'Accept': 'application/json',
-        }
-        method = 'PUT' if force else 'POST'
+        url = "snaps/" + self.snap_id + "/binary-metadata"
+        headers = {"Authorization": self.auth, "Accept": "application/json"}
+        method = "PUT" if force else "POST"
         response = self.client.request(
-            method, url, data=data, files=files, headers=headers)
+            method, url, data=data, files=files, headers=headers
+        )
         if not response.ok:
-            icon = metadata.get('icon')
+            icon = metadata.get("icon")
             icon_name = os.path.basename(icon.name) if icon else None
-            raise StoreMetadataError(
-                self.snap_name, response, {'icon': icon_name})
+            raise StoreMetadataError(self.snap_name, response, {"icon": icon_name})

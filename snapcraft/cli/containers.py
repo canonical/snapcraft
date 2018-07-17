@@ -28,8 +28,9 @@ def containerscli():
 
 
 @containerscli.command()
-@click.option('--debug', is_flag=True,
-              help='Shells into the environment if the build fails.')
+@click.option(
+    "--debug", is_flag=True, help="Shells into the environment if the build fails."
+)
 def refresh(debug, **kwargs):
     """Refresh an existing LXD container.
 
@@ -48,10 +49,14 @@ def refresh(debug, **kwargs):
             "SNAPCRAFT_BUILD_ENVIRONMENT is not set or set to host.\n"
             "Maybe you meant to update the parts cache instead? "
             "You can do that with the following command:\n\n"
-            "snapcraft update")
+            "snapcraft update"
+        )
 
     project = get_project(**kwargs, debug=debug)
     config = project_loader.load_config(project)
-    lxd.Project(project_options=project,
-                output=None, source=os.path.curdir,
-                metadata=config.get_metadata()).refresh()
+    lxd.Project(
+        project_options=project,
+        output=None,
+        source=os.path.curdir,
+        metadata=config.get_metadata(),
+    ).refresh()

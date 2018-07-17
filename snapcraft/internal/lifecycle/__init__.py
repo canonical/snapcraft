@@ -13,9 +13,9 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-from ._clean import clean                 # noqa
-from ._containers import cleanbuild       # noqa
-from ._containers import containerbuild   # noqa
-from ._init import init                   # noqa
-from ._packer import pack                 # noqa
-from ._runner import execute              # noqa
+from ._clean import clean  # noqa
+from ._containers import cleanbuild  # noqa
+from ._containers import containerbuild  # noqa
+from ._init import init  # noqa
+from ._packer import pack  # noqa
+from ._runner import execute  # noqa

@@ -22,23 +22,22 @@ from tests import integration
 
 
 class CopyPluginTestCase(integration.TestCase):
-
     def test_stage_copy_plugin(self):
-        self.run_snapcraft('stage', 'copy-with-file-and-dir')
+        self.run_snapcraft("stage", "copy-with-file-and-dir")
 
         self.assertThat(
-            os.path.join(self.stage_dir, 'dst'),
-            FileContains('I got copied\n'))
+            os.path.join(self.stage_dir, "dst"), FileContains("I got copied\n")
+        )
         self.assertThat(
-            os.path.join(self.stage_dir, 'dstdir', 'srcdirfile.txt'),
-            FileContains('A file in the source directory\n'))
+            os.path.join(self.stage_dir, "dstdir", "srcdirfile.txt"),
+            FileContains("A file in the source directory\n"),
+        )
 
     def test_copy_plugin_with_source(self):
-        self.run_snapcraft('stage', 'copy-with-source')
+        self.run_snapcraft("stage", "copy-with-source")
 
+        self.assertThat(os.path.join(self.stage_dir, "file"), FileContains("A file\n"))
         self.assertThat(
-            os.path.join(self.stage_dir, 'file'),
-            FileContains('A file\n'))
-        self.assertThat(
-            os.path.join(self.stage_dir, 'directory', 'file'),
-            FileContains('A file in directory\n'))
+            os.path.join(self.stage_dir, "directory", "file"),
+            FileContains("A file in directory\n"),
+        )

@@ -23,61 +23,57 @@ from tests import integration
 
 
 class LocalSourceTestCase(integration.TestCase):
-
     def test_build_local_source(self):
-        self.run_snapcraft('build', 'local-source')
+        self.run_snapcraft("build", "local-source")
 
         self.assertThat(
-            os.path.join(
-                self.parts_dir, 'make-project', 'build', 'stamp-all'),
-            FileExists())
+            os.path.join(self.parts_dir, "make-project", "build", "stamp-all"),
+            FileExists(),
+        )
 
     def test_stage_local_source(self):
-        self.run_snapcraft('stage', 'local-source')
+        self.run_snapcraft("stage", "local-source")
 
         self.assertThat(
-            os.path.join(
-                self.parts_dir, 'make-project', 'build',
-                'stamp-install'),
-            FileExists())
+            os.path.join(self.parts_dir, "make-project", "build", "stamp-install"),
+            FileExists(),
+        )
 
 
 class LocalSourceTypeTestCase(integration.TestCase):
-
     def test_build_local_source(self):
-        self.run_snapcraft('build', 'local-source-type')
+        self.run_snapcraft("build", "local-source-type")
 
         self.assertThat(
-            os.path.join(
-                self.parts_dir, 'make-project', 'build', 'stamp-all'),
-            FileExists())
+            os.path.join(self.parts_dir, "make-project", "build", "stamp-all"),
+            FileExists(),
+        )
 
     def test_stage_local_source(self):
-        self.run_snapcraft('stage', 'local-source')
+        self.run_snapcraft("stage", "local-source")
 
         self.assertThat(
-            os.path.join(
-                self.parts_dir, 'make-project', 'build',
-                'stamp-install'),
-            FileExists())
+            os.path.join(self.parts_dir, "make-project", "build", "stamp-install"),
+            FileExists(),
+        )
 
 
-class LocalSourceSubfoldersTestCase(
-        testscenarios.WithScenarios, integration.TestCase):
+class LocalSourceSubfoldersTestCase(testscenarios.WithScenarios, integration.TestCase):
 
     scenarios = [
-        ('Top folder',
-            {'subfolder': '.'}),
-        ('Sub folder Level 1',
-            {'subfolder': 'packaging'}),
-        ('Sub folder Level 2',
-            {'subfolder': os.path.join('packaging', 'snap-package')}),
-        ('Sub folder Level 3',
-            {'subfolder': os.path.join(
-                'packaging', 'snap-package', 'yes-really-deep')}),
+        ("Top folder", {"subfolder": "."}),
+        ("Sub folder Level 1", {"subfolder": "packaging"}),
+        (
+            "Sub folder Level 2",
+            {"subfolder": os.path.join("packaging", "snap-package")},
+        ),
+        (
+            "Sub folder Level 3",
+            {"subfolder": os.path.join("packaging", "snap-package", "yes-really-deep")},
+        ),
     ]
 
     def test_pull_local_source(self):
-        self.copy_project_to_cwd('local-source-subfolders')
+        self.copy_project_to_cwd("local-source-subfolders")
         os.chdir(self.subfolder)
-        self.run_snapcraft('pull')
+        self.run_snapcraft("pull")

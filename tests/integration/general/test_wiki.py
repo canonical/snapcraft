@@ -18,6 +18,5 @@ from tests import integration
 
 
 class WikiTestCase(integration.TestCase):
-
     def test_pull_wiki_part(self):
-        self.run_snapcraft('pull', 'wiki')
+        self.run_snapcraft("pull", "wiki")

@@ -42,8 +42,9 @@ class BuilderEnvironmentConfig:
     results in an error.
     """
 
-    def __init__(self, *, default='host',
-                 additional_providers: List[str]=None) -> None:
+    def __init__(
+        self, *, default="host", additional_providers: List[str] = None
+    ) -> None:
         """Instantiate a BuildEnvironmentConfig.
 
         :param str default: the default provider to use among the list of valid
@@ -51,40 +52,45 @@ class BuilderEnvironmentConfig:
         :param str additional_providers: Additional providers allowed in the
                                          environment.
         """
-        valid_providers = ['host', 'lxd']
+        valid_providers = ["host", "lxd"]
         if additional_providers is not None:
             valid_providers.extend(additional_providers)
 
         use_lxd = None
-        container_builds = os.environ.get('SNAPCRAFT_CONTAINER_BUILDS')
+        container_builds = os.environ.get("SNAPCRAFT_CONTAINER_BUILDS")
         if container_builds:
             echo.warning(
-                'The flag SNAPCRAFT_CONTAINER_BUILDS has been deprecated. '
-                'Use SNAPCRAFT_BUILD_ENVIRONMENT=lxd instead.')
+                "The flag SNAPCRAFT_CONTAINER_BUILDS has been deprecated. "
+                "Use SNAPCRAFT_BUILD_ENVIRONMENT=lxd instead."
+            )
             try:
                 use_lxd = util.strtobool(container_builds)
             except ValueError:
                 raise errors.SnapcraftEnvironmentError(
-                    'The experimental feature of using non-local LXD remotes '
-                    'with SNAPCRAFT_CONTAINER_BUILDS has been dropped.')
+                    "The experimental feature of using non-local LXD remotes "
+                    "with SNAPCRAFT_CONTAINER_BUILDS has been dropped."
+                )
 
-        build_provider = os.environ.get('SNAPCRAFT_BUILD_ENVIRONMENT')
+        build_provider = os.environ.get("SNAPCRAFT_BUILD_ENVIRONMENT")
         if build_provider and use_lxd:
             raise errors.SnapcraftEnvironmentError(
-                'SNAPCRAFT_BUILD_ENVIRONMENT and SNAPCRAFT_CONTAINER_BUILDS '
-                'cannot be used together.\n'
-                'Given that SNAPCRAFT_CONTAINER_BUILDS is deprecated, '
-                'unset that variable from the environment and try again.')
+                "SNAPCRAFT_BUILD_ENVIRONMENT and SNAPCRAFT_CONTAINER_BUILDS "
+                "cannot be used together.\n"
+                "Given that SNAPCRAFT_CONTAINER_BUILDS is deprecated, "
+                "unset that variable from the environment and try again."
+            )
 
         if use_lxd:
-            build_provider = 'lxd'
+            build_provider = "lxd"
         elif not build_provider:
             build_provider = default
         elif build_provider not in valid_providers:
             raise errors.SnapcraftEnvironmentError(
-                'SNAPCRAFT_BUILD_ENVIRONMENT must be one of: {}.'.format(
-                    humanize_list(items=valid_providers, conjunction='or')))
+                "SNAPCRAFT_BUILD_ENVIRONMENT must be one of: {}.".format(
+                    humanize_list(items=valid_providers, conjunction="or")
+                )
+            )
 
         self.provider = build_provider
-        self.is_host = build_provider == 'host'
-        self.is_lxd = build_provider == 'lxd'
+        self.is_host = build_provider == "host"
+        self.is_lxd = build_provider == "lxd"

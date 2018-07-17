@@ -28,10 +28,10 @@ logger = logging.getLogger(__name__)
 
 
 def extract(path: str) -> ExtractedMetadata:
-    if os.path.basename(path) != 'setup.py':
-        raise _errors.UnhandledFileError(path, 'setup.py')
+    if os.path.basename(path) != "setup.py":
+        raise _errors.UnhandledFileError(path, "setup.py")
 
-    spec = importlib.util.spec_from_file_location('setuppy', path)
+    spec = importlib.util.spec_from_file_location("setuppy", path)
     setuppy = importlib.util.module_from_spec(spec)
 
     params = dict()  # type: Dict[str, str]
@@ -40,8 +40,8 @@ def extract(path: str) -> ExtractedMetadata:
         nonlocal params
         params = kwargs
 
-    with patch('setuptools.setup') as setuptools_mock:
-        with patch('distutils.core.setup') as distutils_mock:
+    with patch("setuptools.setup") as setuptools_mock:
+        with patch("distutils.core.setup") as distutils_mock:
             setuptools_mock.side_effect = _fake_setup
             distutils_mock.side_effect = _fake_setup
             # This would really fail during the use of the plugin
@@ -51,10 +51,9 @@ def extract(path: str) -> ExtractedMetadata:
             except SystemExit as e:
                 raise _errors.SetupPyFileParseError(path=path)
             except ImportError as e:
-                raise _errors.SetupPyImportError(
-                    path=path, error=str(e)) from e
+                raise _errors.SetupPyImportError(path=path, error=str(e)) from e
 
-    version = params.get('version')
-    description = params.get('description')
+    version = params.get("version")
+    description = params.get("description")
 
     return ExtractedMetadata(version=version, description=description)

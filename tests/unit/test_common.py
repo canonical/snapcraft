@@ -18,133 +18,176 @@ import os
 
 from testtools.matchers import Equals
 
-from snapcraft.internal import (
-    common,
-    errors
-)
+from snapcraft.internal import common, errors
 from tests import unit
 
 
 class CommonTestCase(unit.TestCase):
-
     def test_set_plugindir(self):
-        plugindir = os.path.join(self.path, 'testplugin')
+        plugindir = os.path.join(self.path, "testplugin")
         common.set_plugindir(plugindir)
         self.assertThat(plugindir, Equals(common.get_plugindir()))
 
     def test_isurl(self):
-        self.assertTrue(common.isurl('git://'))
-        self.assertTrue(common.isurl('bzr://'))
-        self.assertFalse(common.isurl('./'))
-        self.assertFalse(common.isurl('/foo'))
-        self.assertFalse(common.isurl('/fo:o'))
+        self.assertTrue(common.isurl("git://"))
+        self.assertTrue(common.isurl("bzr://"))
+        self.assertFalse(common.isurl("./"))
+        self.assertFalse(common.isurl("/foo"))
+        self.assertFalse(common.isurl("/fo:o"))
 
 
 class CommonMigratedTestCase(unit.TestCase):
-
     def test_parallel_build_count_migration_message(self):
         raised = self.assertRaises(
-            errors.PluginOutdatedError,
-            common.get_parallel_build_count)
+            errors.PluginOutdatedError, common.get_parallel_build_count
+        )
 
         self.assertThat(
-            str(raised),
-            Equals("This plugin is outdated: use 'parallel_build_count'"))
+            str(raised), Equals("This plugin is outdated: use 'parallel_build_count'")
+        )
 
     def test_deb_arch_migration_message(self):
-        raised = self.assertRaises(
-            errors.PluginOutdatedError,
-            common.get_arch)
+        raised = self.assertRaises(errors.PluginOutdatedError, common.get_arch)
 
         self.assertThat(
-            str(raised),
-            Equals("This plugin is outdated: use 'project.deb_arch'"))
+            str(raised), Equals("This plugin is outdated: use 'project.deb_arch'")
+        )
 
     def test_arch_triplet_migration_message(self):
-        raised = self.assertRaises(
-            errors.PluginOutdatedError,
-            common.get_arch_triplet)
+        raised = self.assertRaises(errors.PluginOutdatedError, common.get_arch_triplet)
 
         self.assertThat(
-            str(raised),
-            Equals("This plugin is outdated: use 'project.arch_triplet'"))
+            str(raised), Equals("This plugin is outdated: use 'project.arch_triplet'")
+        )
 
 
 class FormatInColumnsTestCase(unit.TestCase):
 
-    elements_list = ['ant', 'autotools', 'catkin', 'cmake', 'copy', 'go',
-                     'jdk', 'kbuild', 'kernel', 'make', 'maven', 'nil',
-                     'nodejs', 'python2', 'python3', 'scons', 'tar-content']
+    elements_list = [
+        "ant",
+        "autotools",
+        "catkin",
+        "cmake",
+        "copy",
+        "go",
+        "jdk",
+        "kbuild",
+        "kernel",
+        "make",
+        "maven",
+        "nil",
+        "nodejs",
+        "python2",
+        "python3",
+        "scons",
+        "tar-content",
+    ]
 
     def test_format_output_in_columns_default(self):
         """Format output on 2 lines, with default max-width and space sep"""
-        expected = ['ant        catkin  copy  jdk     kernel  maven  '
-                    'nodejs   python3  tar-content',
-                    'autotools  cmake   go    kbuild  make    nil    '
-                    'python2  scons  ']
+        expected = [
+            "ant        catkin  copy  jdk     kernel  maven  "
+            "nodejs   python3  tar-content",
+            "autotools  cmake   go    kbuild  make    nil    python2  scons  ",
+        ]
         self.assertThat(
-            common.format_output_in_columns(self.elements_list),
-            Equals(expected))
+            common.format_output_in_columns(self.elements_list), Equals(expected)
+        )
 
     def test_format_output_in_columns_narrow(self):
         """Format output on 3 lines, with narrow max-width and space sep"""
-        expected = ['ant        cmake  jdk     make   nodejs   scons      ',
-                    'autotools  copy   kbuild  maven  python2  tar-content',
-                    'catkin     go     kernel  nil    python3']
+        expected = [
+            "ant        cmake  jdk     make   nodejs   scons      ",
+            "autotools  copy   kbuild  maven  python2  tar-content",
+            "catkin     go     kernel  nil    python3",
+        ]
         self.assertThat(
-            common.format_output_in_columns(self.elements_list,
-                                            max_width=60),
-            Equals(expected))
+            common.format_output_in_columns(self.elements_list, max_width=60),
+            Equals(expected),
+        )
 
     def test_format_output_in_columns_large(self):
         """Format output on one big line, with default space sep"""
-        expected = ['ant  autotools  catkin  cmake  copy  go  jdk  kbuild  '
-                    'kernel  make  maven  nil  nodejs  python2  python3  '
-                    'scons  tar-content']
+        expected = [
+            "ant  autotools  catkin  cmake  copy  go  jdk  kbuild  "
+            "kernel  make  maven  nil  nodejs  python2  python3  "
+            "scons  tar-content"
+        ]
         self.assertThat(
-            common.format_output_in_columns(self.elements_list,
-                                            max_width=990),
-            Equals(expected))
+            common.format_output_in_columns(self.elements_list, max_width=990),
+            Equals(expected),
+        )
 
     def test_format_output_in_columns_one_space(self):
         """Format output with one space sep"""
-        expected = ['ant       cmake jdk    make  nodejs  scons      ',
-                    'autotools copy  kbuild maven python2 tar-content',
-                    'catkin    go    kernel nil   python3']
+        expected = [
+            "ant       cmake jdk    make  nodejs  scons      ",
+            "autotools copy  kbuild maven python2 tar-content",
+            "catkin    go    kernel nil   python3",
+        ]
         self.assertThat(
-            common.format_output_in_columns(self.elements_list,
-                                            max_width=60,
-                                            num_col_spaces=1),
-            Equals(expected))
+            common.format_output_in_columns(
+                self.elements_list, max_width=60, num_col_spaces=1
+            ),
+            Equals(expected),
+        )
 
 
 class FormatSnapFileNameTest(unit.TestCase):
 
     scenarios = [
-        ('all info', dict(snap=dict(name='name', version='version',
-                                    architectures=['amd64']),
-                          expected='name_version_amd64.snap')),
-        ('missing version', dict(snap=dict(name='name',
-                                 architectures=['amd64']),
-                                 allow_empty_version=True,
-                                 expected='name_amd64.snap')),
-        ('no arch', dict(snap=dict(name='name', version='version'),
-                         expected='name_version_all.snap')),
-        ('multi', dict(snap=dict(name='name', version='version',
-                                 architectures=['amd64', 'i386']),
-                       expected='name_version_multi.snap')),
-        ('pack', dict(snap=dict(name='name', version='version',
-                                arch=['amd64']),
-                      expected='name_version_amd64.snap')),
-        ('pack multi', dict(snap=dict(name='name', version='version',
-                                      arch=['amd64', 'i386']),
-                            expected='name_version_multi.snap')),
+        (
+            "all info",
+            dict(
+                snap=dict(name="name", version="version", architectures=["amd64"]),
+                expected="name_version_amd64.snap",
+            ),
+        ),
+        (
+            "missing version",
+            dict(
+                snap=dict(name="name", architectures=["amd64"]),
+                allow_empty_version=True,
+                expected="name_amd64.snap",
+            ),
+        ),
+        (
+            "no arch",
+            dict(
+                snap=dict(name="name", version="version"),
+                expected="name_version_all.snap",
+            ),
+        ),
+        (
+            "multi",
+            dict(
+                snap=dict(
+                    name="name", version="version", architectures=["amd64", "i386"]
+                ),
+                expected="name_version_multi.snap",
+            ),
+        ),
+        (
+            "pack",
+            dict(
+                snap=dict(name="name", version="version", arch=["amd64"]),
+                expected="name_version_amd64.snap",
+            ),
+        ),
+        (
+            "pack multi",
+            dict(
+                snap=dict(name="name", version="version", arch=["amd64", "i386"]),
+                expected="name_version_multi.snap",
+            ),
+        ),
     ]
 
     def test_filename(self):
-        if hasattr(self, 'allow_empty_version'):
+        if hasattr(self, "allow_empty_version"):
             snap_name = common.format_snap_name(
-                self.snap, allow_empty_version=self.allow_empty_version)
+                self.snap, allow_empty_version=self.allow_empty_version
+            )
         else:
             snap_name = common.format_snap_name(self.snap)
 
@@ -152,9 +195,8 @@ class FormatSnapFileNameTest(unit.TestCase):
 
 
 class FormatSnapFileNameErrorTest(unit.TestCase):
-
     def test_version_missing_and_not_allowed_is_error(self):
         # This is to not experience unexpected results given the
         # fact that version is not allowed.
-        snap = dict(name='name')
+        snap = dict(name="name")
         self.assertRaises(KeyError, common.format_snap_name, snap)

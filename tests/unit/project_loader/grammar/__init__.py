@@ -18,6 +18,5 @@ from tests import unit
 
 
 class GrammarBaseTestCase(unit.TestCase):
-
     def checker(self, primitive):
-        return 'invalid' not in primitive
+        return "invalid" not in primitive

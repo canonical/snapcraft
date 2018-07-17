@@ -23,38 +23,36 @@ from tests import integration
 
 
 class LocalPluginTestCase(integration.TestCase):
-
     def test_stage_local_plugin(self):
-        self.run_snapcraft('stage', 'local-plugin')
+        self.run_snapcraft("stage", "local-plugin")
 
-        self.assertThat(
-            os.path.join(self.stage_dir, 'build-stamp'), FileExists())
+        self.assertThat(os.path.join(self.stage_dir, "build-stamp"), FileExists())
 
     def test_stage_local_plugin_in_parts(self):
-        self.run_snapcraft('stage', 'local-plugin-in-parts')
+        self.run_snapcraft("stage", "local-plugin-in-parts")
 
-        self.assertThat(
-            os.path.join(self.stage_dir, 'build-stamp'),
-            FileExists())
+        self.assertThat(os.path.join(self.stage_dir, "build-stamp"), FileExists())
 
 
-class LocalPluginCleanTestCase(testscenarios.WithScenarios,
-                               integration.TestCase):
+class LocalPluginCleanTestCase(testscenarios.WithScenarios, integration.TestCase):
 
     scenarios = [
-        ('local-plugin', dict(project='local-plugin',
-                              base_dir='snap')),
-        ('local-plugin-in-parts', dict(project='local-plugin-in-parts',
-                                       base_dir='parts')),
+        ("local-plugin", dict(project="local-plugin", base_dir="snap")),
+        (
+            "local-plugin-in-parts",
+            dict(project="local-plugin-in-parts", base_dir="parts"),
+        ),
     ]
 
     def test_clean(self):
         self.copy_project_to_cwd(self.project)
-        self.run_snapcraft('stage')
+        self.run_snapcraft("stage")
 
         # Now clean, and verify that the local plugin is still there.
-        self.run_snapcraft('clean')
+        self.run_snapcraft("clean")
 
         self.assertThat(
-            os.path.join(self.base_dir, 'plugins', 'x_local_plugin.py'),
-            FileExists(), 'Expected local plugin to remain when cleaned')
+            os.path.join(self.base_dir, "plugins", "x_local_plugin.py"),
+            FileExists(),
+            "Expected local plugin to remain when cleaned",
+        )

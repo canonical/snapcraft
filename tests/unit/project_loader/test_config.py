@@ -26,9 +26,10 @@ from tests import unit
 
 
 class GetMetadataTest(ProjectLoaderBaseTest):
-
     def test_get_metadata(self):
-        project_config = self.make_snapcraft_project(dedent("""\
+        project_config = self.make_snapcraft_project(
+            dedent(
+                """\
             name: test
             version: "1"
             summary: test
@@ -43,15 +44,19 @@ class GetMetadataTest(ProjectLoaderBaseTest):
               part1:
                 plugin: go
                 stage-packages: [fswebcam]
-        """))
+        """
+            )
+        )
         metadata = project_config.get_metadata()
 
-        self.assertThat(metadata['name'], Equals('test'))
-        self.assertThat(metadata['version'], Equals('1'))
-        self.assertThat(metadata['arch'], Equals(['amd64']))
+        self.assertThat(metadata["name"], Equals("test"))
+        self.assertThat(metadata["version"], Equals("1"))
+        self.assertThat(metadata["arch"], Equals(["amd64"]))
 
     def test_get_metadata_version_adopted(self):
-        project_config = self.make_snapcraft_project(dedent("""\
+        project_config = self.make_snapcraft_project(
+            dedent(
+                """\
             name: test
             summary: test
             description: nothing
@@ -66,18 +71,21 @@ class GetMetadataTest(ProjectLoaderBaseTest):
               part1:
                 plugin: go
                 stage-packages: [fswebcam]
-            """))
+            """
+            )
+        )
         metadata = project_config.get_metadata()
 
-        self.assertThat(metadata['name'], Equals('test'))
-        self.assertThat(metadata['version'], Is(None))
-        self.assertThat(metadata['arch'], Equals(['amd64']))
+        self.assertThat(metadata["name"], Equals("test"))
+        self.assertThat(metadata["version"], Is(None))
+        self.assertThat(metadata["arch"], Equals(["amd64"]))
 
 
 class VariableExpansionTest(LoadPartBaseTest):
-
     def test_version_script(self):
-        project_config = self.make_snapcraft_project(dedent("""\
+        project_config = self.make_snapcraft_project(
+            dedent(
+                """\
             name: test
             version: "1.0"
             version-script: echo $SNAPCRAFT_PROJECT_VERSION-$SNAPCRAFT_PROJECT_GRADE
@@ -91,13 +99,16 @@ class VariableExpansionTest(LoadPartBaseTest):
               part1:
                 plugin: go
                 stage-packages: [fswebcam]
-        """))  # noqa: E501
+        """
+            )
+        )  # noqa: E501
 
-        self.assertThat(project_config.data['version-script'],
-                        Equals('echo 1.0-devel'))
+        self.assertThat(project_config.data["version-script"], Equals("echo 1.0-devel"))
 
     def test_config_expands_filesets(self):
-        self.make_snapcraft_project(dedent("""\
+        self.make_snapcraft_project(
+            dedent(
+                """\
             name: test
             version: "1"
             summary: test
@@ -121,17 +132,29 @@ class VariableExpansionTest(LoadPartBaseTest):
                 prime:
                   - $wget
                   - /usr/share/my-icon.png
-        """))
+        """
+            )
+        )
 
-        self.mock_load_part.assert_called_with('part1', 'go', {
-            'prime': ['/usr/lib/wget.so', '/usr/bin/wget',
-                      '/usr/share/my-icon.png'],
-            'plugin': 'go', 'stage-packages': ['fswebcam'],
-            'stage': ['/usr/lib/wget.so', '/usr/bin/wget', '/usr/lib/wget.a'],
-        })
+        self.mock_load_part.assert_called_with(
+            "part1",
+            "go",
+            {
+                "prime": [
+                    "/usr/lib/wget.so",
+                    "/usr/bin/wget",
+                    "/usr/share/my-icon.png",
+                ],
+                "plugin": "go",
+                "stage-packages": ["fswebcam"],
+                "stage": ["/usr/lib/wget.so", "/usr/bin/wget", "/usr/lib/wget.a"],
+            },
+        )
 
     def test_replace_snapcraft_variables(self):
-        self.make_snapcraft_project(dedent("""\
+        self.make_snapcraft_project(
+            dedent(
+                """\
             name: project-name
             version: "1"
             summary: test
@@ -143,21 +166,31 @@ class VariableExpansionTest(LoadPartBaseTest):
                 plugin: make
                 source: $SNAPCRAFT_PROJECT_NAME-$SNAPCRAFT_PROJECT_VERSION
                 make-options: [DEP=$SNAPCRAFT_STAGE]
-            """))
+            """
+            )
+        )
 
-        self.mock_load_part.assert_called_with('main', 'make', {
-            'source': 'project-name-1',
-            'plugin': 'make', 'stage': [], 'prime': [],
-            'make-options': ['DEP={}'.format(self.stage_dir)],
-        })
+        self.mock_load_part.assert_called_with(
+            "main",
+            "make",
+            {
+                "source": "project-name-1",
+                "plugin": "make",
+                "stage": [],
+                "prime": [],
+                "make-options": ["DEP={}".format(self.stage_dir)],
+            },
+        )
 
 
 class DependenciesTest(ProjectLoaderBaseTest):
-
     def setUp(self):
         super().setUp()
 
-        self.config = self.make_snapcraft_project(dedent(dedent("""\
+        self.config = self.make_snapcraft_project(
+            dedent(
+                dedent(
+                    """\
             name: test
             version: "1"
             summary: test
@@ -175,50 +208,61 @@ class DependenciesTest(ProjectLoaderBaseTest):
 
                 nested-dependent:
                     plugin: nil
-                    after: [dependent]""")))
+                    after: [dependent]"""
+                )
+            )
+        )
 
     def assert_part_names(self, part_names, parts):
         self.assertThat({p.name for p in parts}, Equals(part_names))
 
     def test_get_dependencies(self):
-        self.assertFalse(self.config.parts.get_dependencies('main'))
+        self.assertFalse(self.config.parts.get_dependencies("main"))
         self.assert_part_names(
-            {'main'}, self.config.parts.get_dependencies('dependent'))
+            {"main"}, self.config.parts.get_dependencies("dependent")
+        )
         self.assert_part_names(
-            {'dependent'}, self.config.parts.get_dependencies(
-                'nested-dependent'))
+            {"dependent"}, self.config.parts.get_dependencies("nested-dependent")
+        )
 
     def test_get_dependencies_recursive(self):
-        self.assertFalse(self.config.parts.get_dependencies(
-            'main', recursive=True))
+        self.assertFalse(self.config.parts.get_dependencies("main", recursive=True))
         self.assert_part_names(
-            {'main'}, self.config.parts.get_dependencies(
-                'dependent', recursive=True))
+            {"main"}, self.config.parts.get_dependencies("dependent", recursive=True)
+        )
         self.assert_part_names(
-            {'main', 'dependent'}, self.config.parts.get_dependencies(
-                'nested-dependent', recursive=True))
+            {"main", "dependent"},
+            self.config.parts.get_dependencies("nested-dependent", recursive=True),
+        )
 
     def test_get_reverse_dependencies(self):
-        self.assertFalse(self.config.parts.get_reverse_dependencies(
-            'nested-dependent'))
+        self.assertFalse(self.config.parts.get_reverse_dependencies("nested-dependent"))
         self.assert_part_names(
-            {'nested-dependent'}, self.config.parts.get_reverse_dependencies(
-                'dependent'))
+            {"nested-dependent"},
+            self.config.parts.get_reverse_dependencies("dependent"),
+        )
         self.assert_part_names(
-            {'dependent'}, self.config.parts.get_reverse_dependencies('main'))
+            {"dependent"}, self.config.parts.get_reverse_dependencies("main")
+        )
 
     def test_get_reverse_dependencies_recursive(self):
-        self.assertFalse(self.config.parts.get_reverse_dependencies(
-            'nested-dependent', recursive=True))
+        self.assertFalse(
+            self.config.parts.get_reverse_dependencies(
+                "nested-dependent", recursive=True
+            )
+        )
         self.assert_part_names(
-            {'nested-dependent'}, self.config.parts.get_reverse_dependencies(
-                'dependent', recursive=True))
+            {"nested-dependent"},
+            self.config.parts.get_reverse_dependencies("dependent", recursive=True),
+        )
         self.assert_part_names(
-            {'dependent', 'nested-dependent'},
-            self.config.parts.get_reverse_dependencies('main', recursive=True))
+            {"dependent", "nested-dependent"},
+            self.config.parts.get_reverse_dependencies("main", recursive=True),
+        )
 
     def test_dependency_loop(self):
-        snapcraft_yaml = dedent("""\
+        snapcraft_yaml = dedent(
+            """\
             name: test
             version: "1"
             summary: test
@@ -235,48 +279,49 @@ class DependenciesTest(ProjectLoaderBaseTest):
                 plugin: tar-content
                 source: .
                 after: [p1]
-        """)
+        """
+        )
         raised = self.assertRaises(
-            errors.SnapcraftLogicError,
-            self.make_snapcraft_project, snapcraft_yaml)
+            errors.SnapcraftLogicError, self.make_snapcraft_project, snapcraft_yaml
+        )
 
         self.assertThat(
             raised.message,
-            Equals('circular dependency chain found in parts definition'))
+            Equals("circular dependency chain found in parts definition"),
+        )
 
 
 class FilesetsTest(unit.TestCase):
-
     def setUp(self):
         super().setUp()
 
-        self.properties = {
-            'filesets': {
-                '1': ['1', '2', '3'],
-                '2': [],
-            }
-        }
+        self.properties = {"filesets": {"1": ["1", "2", "3"], "2": []}}
 
     def test_expand_var(self):
-        self.properties['stage'] = ['$1']
+        self.properties["stage"] = ["$1"]
 
-        fs = _config._expand_filesets_for('stage', self.properties)
-        self.assertThat(fs, Equals(['1', '2', '3']))
+        fs = _config._expand_filesets_for("stage", self.properties)
+        self.assertThat(fs, Equals(["1", "2", "3"]))
 
     def test_no_expansion(self):
-        self.properties['stage'] = ['1']
+        self.properties["stage"] = ["1"]
 
-        fs = _config._expand_filesets_for('stage', self.properties)
-        self.assertThat(fs, Equals(['1']))
+        fs = _config._expand_filesets_for("stage", self.properties)
+        self.assertThat(fs, Equals(["1"]))
 
     def test_invalid_expansion(self):
-        self.properties['stage'] = ['$3']
+        self.properties["stage"] = ["$3"]
 
         raised = self.assertRaises(
             errors.SnapcraftLogicError,
             _config._expand_filesets_for,
-            'stage', self.properties)
+            "stage",
+            self.properties,
+        )
 
-        self.assertThat(str(raised), Contains(
-            '\'$3\' referred to in the \'stage\' fileset but it is not '
-            'in filesets'))
+        self.assertThat(
+            str(raised),
+            Contains(
+                "'$3' referred to in the 'stage' fileset but it is not in filesets"
+            ),
+        )

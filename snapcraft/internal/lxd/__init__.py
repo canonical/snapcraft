@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-from ._containerbuild import Containerbuild            # noqa
-from ._cleanbuilder import Cleanbuilder                # noqa
-from ._project import Project                          # noqa
+from ._containerbuild import Containerbuild  # noqa
+from ._cleanbuilder import Cleanbuilder  # noqa
+from ._project import Project  # noqa
 
-from ._containerbuild import _remote_is_valid          # noqa
+from ._containerbuild import _remote_is_valid  # noqa

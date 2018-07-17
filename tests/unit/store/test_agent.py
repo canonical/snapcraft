@@ -18,42 +18,34 @@ import os
 import platform
 
 import fixtures
-from snapcraft import (
-    ProjectOptions,
-    storeapi,
-    __version__ as snapcraft_version,
-)
+from snapcraft import ProjectOptions, storeapi, __version__ as snapcraft_version
 from tests import unit
 
 
 class UserAgentTestCase(unit.TestCase):
-
     def test_user_agent(self):
         arch = ProjectOptions().deb_arch
-        expected_pre = 'snapcraft/{} '.format(snapcraft_version)
-        expected_post = ' {} ({})'.format(
-            '/'.join(platform.dist()[0:2]),  # i.e. Ubuntu/16.04
-            arch,
+        expected_pre = "snapcraft/{} ".format(snapcraft_version)
+        expected_post = " {} ({})".format(
+            "/".join(platform.dist()[0:2]), arch  # i.e. Ubuntu/16.04
         )
         actual = storeapi._agent.get_user_agent()
         self.assertTrue(actual.startswith(expected_pre))
         self.assertTrue(actual.endswith(expected_post))
 
     def test_in_travis_ci_env(self):
-        self.useFixture(fixtures.EnvironmentVariable(
-            'TRAVIS_TESTING', '1'))
+        self.useFixture(fixtures.EnvironmentVariable("TRAVIS_TESTING", "1"))
 
         self.assertTrue(storeapi._agent._is_ci_env())
 
     def test_in_autopkgtest_ci_env(self):
-        self.useFixture(fixtures.EnvironmentVariable(
-            'AUTOPKGTEST_TMP', '1'))
+        self.useFixture(fixtures.EnvironmentVariable("AUTOPKGTEST_TMP", "1"))
 
         self.assertTrue(storeapi._agent._is_ci_env())
 
     def test_not_in_ci_env(self):
         # unset any known testing environment vars
-        testing_vars = ['TRAVIS', 'AUTHPKGTEST_TMP']
+        testing_vars = ["TRAVIS", "AUTHPKGTEST_TMP"]
         vars_to_unset = []
         for env_var in os.environ:
             for test_var in testing_vars:

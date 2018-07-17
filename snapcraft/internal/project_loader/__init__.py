@@ -17,33 +17,33 @@
 from typing import cast, Dict, List, Union
 from typing import TYPE_CHECKING
 
-from ._env import (                        # noqa: F401
+from ._env import (  # noqa: F401
     environment_to_replacements,
     snapcraft_global_environment,
     snapcraft_part_environment,
 )
-from ._schema import Validator             # noqa: F401
-from ._parts_config import PartsConfig     # noqa: F401
+from ._schema import Validator  # noqa: F401
+from ._parts_config import PartsConfig  # noqa: F401
 
 if TYPE_CHECKING:
     from snapcraft.project import Project  # noqa: F401
 
 
-def load_config(project: 'Project'):
+def load_config(project: "Project"):
     from ._config import Config
+
     return Config(project)
 
 
 def replace_attr(
-        attr: Union[List[str], Dict[str, str], str],
-        replacements: Dict[str, str]) -> Union[List[str], Dict[str, str], str]:
+    attr: Union[List[str], Dict[str, str], str], replacements: Dict[str, str]
+) -> Union[List[str], Dict[str, str], str]:
     if isinstance(attr, str):
         for replacement, value in replacements.items():
             attr = attr.replace(replacement, str(value))
         return attr
     elif isinstance(attr, list) or isinstance(attr, tuple):
-        return [cast(str, replace_attr(i, replacements))
-                for i in attr]
+        return [cast(str, replace_attr(i, replacements)) for i in attr]
     elif isinstance(attr, dict):
         result = dict()  # type: Dict[str, str]
         for key, value in attr.items():

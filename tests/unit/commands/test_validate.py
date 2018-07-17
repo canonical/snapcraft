@@ -24,84 +24,91 @@ from . import StoreCommandsBaseTestCase
 
 
 class ValidateCommandTestCase(StoreCommandsBaseTestCase):
-
     def setUp(self):
         super().setUp()
 
-        patcher = mock.patch('snapcraft._store.Popen')
+        patcher = mock.patch("snapcraft._store.Popen")
         self.popen_mock = patcher.start()
         rv_mock = mock.Mock()
         rv_mock.returncode = 0
-        rv_mock.communicate.return_value = [b'foo', b'']
+        rv_mock.communicate.return_value = [b"foo", b""]
         self.popen_mock.return_value = rv_mock
         self.addCleanup(patcher.stop)
 
     def test_validate_success(self):
-        self.client.login('dummy', 'test correct password')
+        self.client.login("dummy", "test correct password")
 
-        result = self.run_command([
-            'validate', 'core', 'core=3', 'test-snap=4'])
+        result = self.run_command(["validate", "core", "core=3", "test-snap=4"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains(
-            'Signing validations assertion for core=3'))
-        self.assertThat(result.output, Contains(
-            'Signing validations assertion for test-snap=4'))
+        self.assertThat(
+            result.output, Contains("Signing validations assertion for core=3")
+        )
+        self.assertThat(
+            result.output, Contains("Signing validations assertion for test-snap=4")
+        )
 
     def test_validate_with_key(self):
-        self.client.login('dummy', 'test correct password')
+        self.client.login("dummy", "test correct password")
 
-        result = self.run_command([
-            'validate', 'core', 'core=3',
-            'test-snap=4', '--key-name=keyname'])
+        result = self.run_command(
+            ["validate", "core", "core=3", "test-snap=4", "--key-name=keyname"]
+        )
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains(
-            'Signing validations assertion for core=3'))
-        self.assertThat(result.output, Contains(
-            'Signing validations assertion for test-snap=4'))
-        self.popen_mock.assert_called_with(['snap', 'sign', '-k', 'keyname'],
-                                           stderr=-1, stdin=-1, stdout=-1)
+        self.assertThat(
+            result.output, Contains("Signing validations assertion for core=3")
+        )
+        self.assertThat(
+            result.output, Contains("Signing validations assertion for test-snap=4")
+        )
+        self.popen_mock.assert_called_with(
+            ["snap", "sign", "-k", "keyname"], stderr=-1, stdin=-1, stdout=-1
+        )
 
     def test_validate_from_branded_store(self):
         # Validating snaps from a branded store requires setting
         # `SNAPCRAFT_UBUNTU_STORE` environment variable to the store 'slug'.
-        self.client.login('dummy', 'test correct password')
+        self.client.login("dummy", "test correct password")
         self.useFixture(
-            fixtures.EnvironmentVariable(
-                'SNAPCRAFT_UBUNTU_STORE', 'Test-Branded'))
+            fixtures.EnvironmentVariable("SNAPCRAFT_UBUNTU_STORE", "Test-Branded")
+        )
 
-        result = self.run_command(
-            ['validate', 'core', 'test-snap-branded-store=1'])
+        result = self.run_command(["validate", "core", "test-snap-branded-store=1"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, Contains(
-            'Signing validations assertion for test-snap-branded-store=1'))
+        self.assertThat(
+            result.output,
+            Contains("Signing validations assertion for test-snap-branded-store=1"),
+        )
 
     def test_validate_unknown_snap(self):
-        self.client.login('dummy', 'test correct password')
+        self.client.login("dummy", "test correct password")
 
         raised = self.assertRaises(
             snapcraft.storeapi.errors.SnapNotFoundError,
             self.run_command,
-            ['validate', 'notfound', 'core=3', 'test-snap=4'])
+            ["validate", "notfound", "core=3", "test-snap=4"],
+        )
 
         self.assertThat(str(raised), Equals("Snap 'notfound' was not found."))
 
     def test_validate_bad_argument(self):
-        self.client.login('dummy', 'test correct password')
+        self.client.login("dummy", "test correct password")
 
         raised = self.assertRaises(
             snapcraft.storeapi.errors.InvalidValidationRequestsError,
             self.run_command,
-            ['validate', 'core', 'core=foo'])
+            ["validate", "core", "core=foo"],
+        )
 
-        self.assertThat(str(raised), Contains('format must be name=revision'))
+        self.assertThat(str(raised), Contains("format must be name=revision"))
 
     def test_no_login(self):
         raised = self.assertRaises(
             snapcraft.storeapi.errors.InvalidCredentialsError,
             self.run_command,
-            ['validate', 'core', 'core=3', 'test-snap=4'])
+            ["validate", "core", "core=3", "test-snap=4"],
+        )
 
-        self.assertThat(str(raised), Contains('Invalid credentials'))
+        self.assertThat(str(raised), Contains("Invalid credentials"))

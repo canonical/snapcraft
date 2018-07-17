@@ -23,24 +23,25 @@ from tests import unit
 
 
 class BaseProviderBaseTest(unit.TestCase):
-
     def setUp(self):
         super().setUp()
 
-        self.instance_name = 'ridicoulus-hours'
-        patcher = mock.patch('petname.Generate',
-                             return_value=self.instance_name)
+        self.instance_name = "ridicoulus-hours"
+        patcher = mock.patch("petname.Generate", return_value=self.instance_name)
         patcher.start()
         self.addCleanup(patcher.stop)
 
-        snapcraft_yaml_file_path = self.make_snapcraft_yaml(dedent("""\
+        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
+            dedent(
+                """\
             name: project-name
-        """))
-        self.project = Project(
-            snapcraft_yaml_file_path=snapcraft_yaml_file_path)
+        """
+            )
+        )
+        self.project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
         self.echoer_mock = mock.Mock()
 
-        patcher = mock.patch('snapcraft.internal.repo.snaps.get_assertion')
+        patcher = mock.patch("snapcraft.internal.repo.snaps.get_assertion")
         self.get_assertion_mock = patcher.start()
         self.addCleanup(patcher.stop)

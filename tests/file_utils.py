@@ -19,5 +19,4 @@ import os
 
 
 def get_snapcraft_path():
-    return os.path.realpath(
-        os.path.join(os.path.dirname(__file__), '..'))
+    return os.path.realpath(os.path.join(os.path.dirname(__file__), ".."))

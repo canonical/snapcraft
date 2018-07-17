@@ -15,4 +15,4 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 import os
 
-SNAPCRAFT_INTERNAL_DIR = os.path.join('snap', '.snapcraft')
+SNAPCRAFT_INTERNAL_DIR = os.path.join("snap", ".snapcraft")

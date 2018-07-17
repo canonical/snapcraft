@@ -23,13 +23,10 @@ from tests import integration
 
 
 class RpmSourceTestCase(integration.TestCase):
-
     def test_stage_rpm(self):
-        self.run_snapcraft('stage', 'rpm-hello')
+        self.run_snapcraft("stage", "rpm-hello")
 
+        self.assertThat(os.path.join(self.stage_dir, "bin", "hello"), FileExists())
         self.assertThat(
-            os.path.join(self.stage_dir, 'bin', 'hello'),
-            FileExists())
-        self.assertThat(
-            os.path.join(self.stage_dir, 'usr', 'bin', 'world'),
-            FileExists())
+            os.path.join(self.stage_dir, "usr", "bin", "world"), FileExists()
+        )

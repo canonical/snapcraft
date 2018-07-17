@@ -21,15 +21,15 @@ from tests import integration
 
 
 class CleanbuildTestCase(integration.TestCase):
-
     def run_snapcraft_cleanbuild(self, project_dir):
         if project_dir:
             self.copy_project_to_cwd(project_dir)
 
-        command = [self.snapcraft_command, '-d', 'cleanbuild']
+        command = [self.snapcraft_command, "-d", "cleanbuild"]
         popen = subprocess.Popen(
-            command, stdout=subprocess.PIPE, universal_newlines=True)
-        for line in iter(popen.stdout.readline, ''):
+            command, stdout=subprocess.PIPE, universal_newlines=True
+        )
+        for line in iter(popen.stdout.readline, ""):
             print(line)
         popen.stdout.close()
         return_code = popen.wait()
@@ -37,7 +37,7 @@ class CleanbuildTestCase(integration.TestCase):
             raise subprocess.CalledProcessError(return_code, command)
 
     def test_cleanbuild(self):
-        self.run_snapcraft_cleanbuild('basic')
+        self.run_snapcraft_cleanbuild("basic")
 
-        snap_file_path = 'basic_0.1_all.snap'
+        snap_file_path = "basic_0.1_all.snap"
         self.assertThat(snap_file_path, FileExists())

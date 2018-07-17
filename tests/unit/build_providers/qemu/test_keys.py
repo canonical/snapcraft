@@ -16,8 +16,7 @@
 
 import os
 
-from testtools.matchers import (Equals, FileExists, FileContains,
-                                StartsWith, EndsWith)
+from testtools.matchers import Equals, FileExists, FileContains, StartsWith, EndsWith
 
 from tests import unit
 from snapcraft.internal.build_providers import errors
@@ -25,17 +24,20 @@ from snapcraft.internal.build_providers._qemu._keys import SSHKey
 
 
 class SSHKeyTest(unit.TestCase):
-
     def test_new_key(self):
         ssh_key = SSHKey.new_key(root_dir=self.path)
 
-        self.assertThat('id_rsa', FileExists())
-        self.assertThat(ssh_key.private_key_file_path, Equals(
-            os.path.join(self.path, 'id_rsa')))
-        self.assertThat('id_rsa', FileContains(matcher=StartsWith(
-            '-----BEGIN RSA PRIVATE KEY-----')))
-        self.assertThat('id_rsa', FileContains(matcher=EndsWith(
-            '-----END RSA PRIVATE KEY-----\n')))
+        self.assertThat("id_rsa", FileExists())
+        self.assertThat(
+            ssh_key.private_key_file_path, Equals(os.path.join(self.path, "id_rsa"))
+        )
+        self.assertThat(
+            "id_rsa",
+            FileContains(matcher=StartsWith("-----BEGIN RSA PRIVATE KEY-----")),
+        )
+        self.assertThat(
+            "id_rsa", FileContains(matcher=EndsWith("-----END RSA PRIVATE KEY-----\n"))
+        )
 
     def test_load_existing(self):
         # We need to first create a key
@@ -43,14 +45,14 @@ class SSHKeyTest(unit.TestCase):
 
         ssh_key = SSHKey(root_dir=self.path)
 
-        self.assertThat(ssh_key.private_key_file_path, Equals(
-            os.path.join(self.path, 'id_rsa')))
+        self.assertThat(
+            ssh_key.private_key_file_path, Equals(os.path.join(self.path, "id_rsa"))
+        )
 
     def test_get_public_key(self):
         ssh_key = SSHKey.new_key(root_dir=self.path)
 
-        self.assertThat(ssh_key.get_public_key(), StartsWith('ssh-rsa '))
+        self.assertThat(ssh_key.get_public_key(), StartsWith("ssh-rsa "))
 
     def test_init_with_no_id_rsa(self):
-        self.assertRaises(errors.SSHKeyFileNotFoundError,
-                          SSHKey, root_dir=self.path)
+        self.assertRaises(errors.SSHKeyFileNotFoundError, SSHKey, root_dir=self.path)

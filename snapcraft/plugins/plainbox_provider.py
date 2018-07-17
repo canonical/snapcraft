@@ -36,12 +36,12 @@ from snapcraft.internal import mangling
 
 
 class PlainboxProviderPlugin(snapcraft.BasePlugin):
-
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
-        self.build_packages.extend(['intltool'])
-        self.stage_packages.extend(['python3-pip', 'python3-wheel',
-                                    'python3-setuptools'])
+        self.build_packages.extend(["intltool"])
+        self.stage_packages.extend(
+            ["python3-pip", "python3-wheel", "python3-setuptools"]
+        )
 
     def build(self):
         super().build()
@@ -50,19 +50,27 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
         # Ensure the first provider does not attempt to validate against
         # providers installed on the build host by initialising PROVIDERPATH
         # to empty
-        env['PROVIDERPATH'] = ''
-        provider_stage_dir = os.path.join(self.project.stage_dir, 'providers')
+        env["PROVIDERPATH"] = ""
+        provider_stage_dir = os.path.join(self.project.stage_dir, "providers")
         if os.path.exists(provider_stage_dir):
-            provider_dirs = [os.path.join(provider_stage_dir, provider)
-                             for provider in os.listdir(provider_stage_dir)]
-            env['PROVIDERPATH'] = ':'.join(provider_dirs)
-        self.run(['python3', 'manage.py', 'validate'], env=env)
-        self.run(['python3', 'manage.py', 'build'])
-        self.run(['python3', 'manage.py', 'i18n'])
-        self.run([
-            'python3', 'manage.py', 'install', '--layout=relocatable',
-            '--prefix=/providers/{}'.format(self.name),
-            '--root={}'.format(self.installdir)])
+            provider_dirs = [
+                os.path.join(provider_stage_dir, provider)
+                for provider in os.listdir(provider_stage_dir)
+            ]
+            env["PROVIDERPATH"] = ":".join(provider_dirs)
+        self.run(["python3", "manage.py", "validate"], env=env)
+        self.run(["python3", "manage.py", "build"])
+        self.run(["python3", "manage.py", "i18n"])
+        self.run(
+            [
+                "python3",
+                "manage.py",
+                "install",
+                "--layout=relocatable",
+                "--prefix=/providers/{}".format(self.name),
+                "--root={}".format(self.installdir),
+            ]
+        )
 
         mangling.rewrite_python_shebangs(self.installdir)
 
@@ -71,6 +79,6 @@ class PlainboxProviderPlugin(snapcraft.BasePlugin):
         # If a python package is added as a stage-packages it will include
         # sitecustomize.py which is irrelevant and will cause unnecessary
         # conflicts so instead we just ignore these entries.
-        fileset.append('-usr/lib/python*/sitecustomize.py')
-        fileset.append('-etc/python*/sitecustomize.py')
+        fileset.append("-usr/lib/python*/sitecustomize.py")
+        fileset.append("-etc/python*/sitecustomize.py")
         return fileset

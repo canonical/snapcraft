@@ -41,33 +41,36 @@ from snapcraft import formatting_utils
 from typing import List
 
 
-_DOTNET_RELEASE_METADATA_URL = 'https://raw.githubusercontent.com/dotnet/core/master/release-notes/releases.json'  # noqa
-_RUNTIME_DEFAULT = '2.0.5'
+_DOTNET_RELEASE_METADATA_URL = (
+    "https://raw.githubusercontent.com/dotnet/core/master/release-notes/releases.json"
+)  # noqa
+_RUNTIME_DEFAULT = "2.0.5"
 
 # TODO extend for other architectures
-_SDK_ARCH = ['amd64']
+_SDK_ARCH = ["amd64"]
 
 
 class DotNetBadArchitectureError(snapcraft.internal.errors.SnapcraftError):
 
     fmt = (
-        'Failed to prepare the .NET SDK: '
-        'The architecture {architecture!r} is not supported. '
-        'Supported architectures are: {supported}.'
+        "Failed to prepare the .NET SDK: "
+        "The architecture {architecture!r} is not supported. "
+        "Supported architectures are: {supported}."
     )
 
     def __init__(self, *, architecture: str, supported: List[str]) -> None:
         super().__init__(
             architecture=architecture,
-            supported=formatting_utils.humanize_list(supported, 'and'))
+            supported=formatting_utils.humanize_list(supported, "and"),
+        )
 
 
 class DotNetBadReleaseDataError(snapcraft.internal.errors.SnapcraftError):
 
     fmt = (
-        'Failed to prepare the .NET SDK: '
-        'An error occurred while fetching the version details '
-        'for {version!r}. Check that the version is correct.'
+        "Failed to prepare the .NET SDK: "
+        "An error occurred while fetching the version details "
+        "for {version!r}. Check that the version is correct."
     )
 
     def __init__(self, version):
@@ -75,18 +78,17 @@ class DotNetBadReleaseDataError(snapcraft.internal.errors.SnapcraftError):
 
 
 class DotNetPlugin(snapcraft.BasePlugin):
-
     @classmethod
     def schema(cls):
         schema = super().schema()
 
-        schema['properties']['dotnet-runtime-version'] = {
-            'type': 'string',
-            'default': _RUNTIME_DEFAULT,
+        schema["properties"]["dotnet-runtime-version"] = {
+            "type": "string",
+            "default": _RUNTIME_DEFAULT,
         }
 
-        if 'required' in schema:
-            del schema['required']
+        if "required" in schema:
+            del schema["required"]
 
         return schema
 
@@ -94,42 +96,44 @@ class DotNetPlugin(snapcraft.BasePlugin):
     def get_pull_properties(cls):
         # Inform Snapcraft of the properties associated with pulling. If these
         # change in the YAML Snapcraft will consider the build step dirty.
-        return ['dotnet-runtime-version']
+        return ["dotnet-runtime-version"]
 
     def __init__(self, name, options, project):
         super().__init__(name, options, project)
 
-        self._dotnet_dir = os.path.join(self.partdir, 'dotnet')
-        self._dotnet_sdk_dir = os.path.join(self._dotnet_dir, 'sdk')
+        self._dotnet_dir = os.path.join(self.partdir, "dotnet")
+        self._dotnet_sdk_dir = os.path.join(self._dotnet_dir, "sdk")
 
-        self.stage_packages.extend([
-            'libcurl3',
-            'libcurl3-gnutls',
-            'libicu55',
-            'liblttng-ust0',
-            'libunwind8',
-            'lldb',
-            'libssl1.0.0',
-            'libgssapi-krb5-2',
-            'libc6',
-            'zlib1g',
-            'libgcc1'
-        ])
+        self.stage_packages.extend(
+            [
+                "libcurl3",
+                "libcurl3-gnutls",
+                "libicu55",
+                "liblttng-ust0",
+                "libunwind8",
+                "lldb",
+                "libssl1.0.0",
+                "libgssapi-krb5-2",
+                "libc6",
+                "zlib1g",
+                "libgcc1",
+            ]
+        )
 
         self._sdk = self._get_sdk()
-        self._dotnet_cmd = os.path.join(self._dotnet_sdk_dir, 'dotnet')
+        self._dotnet_cmd = os.path.join(self._dotnet_sdk_dir, "dotnet")
 
     def _get_sdk(self):
         sdk_arch = self.project.deb_arch
         if sdk_arch not in _SDK_ARCH:
-            raise DotNetBadArchitectureError(
-                architecture=sdk_arch, supported=_SDK_ARCH)
+            raise DotNetBadArchitectureError(architecture=sdk_arch, supported=_SDK_ARCH)
         # TODO: Make this a class that takes care of retrieving the infos
         sdk_info = self._get_sdk_info(self.options.dotnet_runtime_version)
 
-        sdk_url = sdk_info['package_url']
-        return sources.Tar(sdk_url, self._dotnet_sdk_dir,
-                           source_checksum=sdk_info['checksum'])
+        sdk_url = sdk_info["package_url"]
+        return sources.Tar(
+            sdk_url, self._dotnet_sdk_dir, source_checksum=sdk_info["checksum"]
+        )
 
     def pull(self):
         super().pull()
@@ -148,17 +152,23 @@ class DotNetPlugin(snapcraft.BasePlugin):
     def build(self):
         super().build()
 
-        if 'debug' in self.options.build_attributes:
-            configuration = 'Debug'
+        if "debug" in self.options.build_attributes:
+            configuration = "Debug"
         else:
-            configuration = 'Release'
+            configuration = "Release"
 
-        self.run([self._dotnet_cmd, 'build', '-c', configuration])
+        self.run([self._dotnet_cmd, "build", "-c", configuration])
 
-        publish_cmd = [self._dotnet_cmd, 'publish', '-c', configuration,
-                       '-o', self.installdir]
+        publish_cmd = [
+            self._dotnet_cmd,
+            "publish",
+            "-c",
+            configuration,
+            "-o",
+            self.installdir,
+        ]
         # Build command for self-contained application
-        publish_cmd += ['--self-contained', '-r', 'linux-x64']
+        publish_cmd += ["--self-contained", "-r", "linux-x64"]
         self.run(publish_cmd)
 
         # Workaround to set the right permission for the executable.
@@ -168,13 +178,14 @@ class DotNetPlugin(snapcraft.BasePlugin):
 
     def _get_appname(self):
         for file in os.listdir(self.builddir):
-            if fnmatch.fnmatch(file, '*.??proj'):
+            if fnmatch.fnmatch(file, "*.??proj"):
                 return os.path.splitext(file)[0]
 
     def _get_version_metadata(self, version):
         jsonData = self._get_dotnet_release_metadata()
-        package_data = list(filter(lambda x: x.get('version-runtime')
-                            == version, jsonData))
+        package_data = list(
+            filter(lambda x: x.get("version-runtime") == version, jsonData)
+        )
 
         if not package_data:
             raise DotNetBadReleaseDataError(version)
@@ -186,40 +197,41 @@ class DotNetPlugin(snapcraft.BasePlugin):
 
         req = urllib.request.Request(_DOTNET_RELEASE_METADATA_URL)
         r = urllib.request.urlopen(req).read()
-        package_metadata = json.loads(r.decode('utf-8'))
+        package_metadata = json.loads(r.decode("utf-8"))
 
         return package_metadata
 
     def _get_sdk_info(self, version):
         metadata = self._get_version_metadata(version)
 
-        if 'sdk-linux-x64' in metadata[0]:
+        if "sdk-linux-x64" in metadata[0]:
             # look for sdk-linux-x64 property, if it doesn't exist
             # look for ubuntu.14.04 entry as shipped during 1.1
-            sdk_packge_name = metadata[0]['sdk-linux-x64']
-        elif 'sdk-ubuntu.14.04' in metadata[0]:
-            sdk_packge_name = metadata[0]['sdk-ubuntu.14.04']
+            sdk_packge_name = metadata[0]["sdk-linux-x64"]
+        elif "sdk-ubuntu.14.04" in metadata[0]:
+            sdk_packge_name = metadata[0]["sdk-ubuntu.14.04"]
         else:
             raise DotNetBadReleaseDataError(version)
 
-        sdk_package_url = '{}{}'.format(metadata[0]['blob-sdk'],
-                                        sdk_packge_name)
+        sdk_package_url = "{}{}".format(metadata[0]["blob-sdk"], sdk_packge_name)
         sdk_checksum = self._get_package_checksum(
-            metadata[0]['checksums-sdk'], sdk_packge_name, version)
+            metadata[0]["checksums-sdk"], sdk_packge_name, version
+        )
 
-        return {'package_url': sdk_package_url, 'checksum': sdk_checksum}
+        return {"package_url": sdk_package_url, "checksum": sdk_checksum}
 
-    def _get_package_checksum(self, checksum_url: str,
-                              filename: str, version: str) -> str:
+    def _get_package_checksum(
+        self, checksum_url: str, filename: str, version: str
+    ) -> str:
         req = urllib.request.Request(checksum_url)
         r = urllib.request.urlopen(req).read()
-        data = r.decode('utf-8').split('\n')
+        data = r.decode("utf-8").split("\n")
 
         hash = None
         checksum = None
         for line in data:
             text = line.split()
-            if len(text) == 2 and 'Hash' in text[0]:
+            if len(text) == 2 and "Hash" in text[0]:
                 hash = text[1]
 
             if len(text) == 2 and filename in text[1]:
@@ -229,11 +241,11 @@ class DotNetPlugin(snapcraft.BasePlugin):
         if not hash or not checksum:
             raise DotNetBadReleaseDataError(version)
 
-        return '{}/{}'.format(hash.lower(), checksum)
+        return "{}/{}".format(hash.lower(), checksum)
 
     def env(self, root):
         # Update the PATH only during the Build and Install step
         if root == self.installdir:
-            return ['PATH={}:$PATH'.format(self._dotnet_sdk_dir)]
+            return ["PATH={}:$PATH".format(self._dotnet_sdk_dir)]
         else:
             return []

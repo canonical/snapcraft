@@ -28,7 +28,7 @@ from snapcraft.internal import log
 
 
 @click.group()
-@click.option('--debug', '-d', is_flag=True, envvar='SNAPCRAFT_DEBUG')
+@click.option("--debug", "-d", is_flag=True, envvar="SNAPCRAFT_DEBUG")
 def run(debug):
     """snapcraftctl is how snapcraft.yaml can communicate with snapcraft"""
 
@@ -47,68 +47,65 @@ def run(debug):
 @run.command()
 def pull():
     """Run the 'pull' step of the calling part's lifecycle"""
-    _call_function('pull')
+    _call_function("pull")
 
 
 @run.command()
 def build():
     """Run the 'build' step of the calling part's lifecycle"""
-    _call_function('build')
+    _call_function("build")
 
 
 @run.command()
 def stage():
     """Run the 'stage' step of the calling part's lifecycle"""
-    _call_function('stage')
+    _call_function("stage")
 
 
 @run.command()
 def prime():
     """Run the 'prime' step of the calling part's lifecycle"""
-    _call_function('prime')
+    _call_function("prime")
 
 
-@run.command('set-version')
-@click.argument('version')
+@run.command("set-version")
+@click.argument("version")
 def set_version(version):
     """Set the version of the snap"""
-    _call_function('set-version', {'version': version})
+    _call_function("set-version", {"version": version})
 
 
-@run.command('set-grade')
-@click.argument('grade')
+@run.command("set-grade")
+@click.argument("grade")
 def set_grade(grade):
     """Set the grade of the snap"""
-    _call_function('set-grade', {'grade': grade})
+    _call_function("set-grade", {"grade": grade})
 
 
 def _call_function(function_name, args=None):
     if not args:
         args = {}
 
-    data = {
-        'function': function_name,
-        'args': args,
-    }
+    data = {"function": function_name, "args": args}
 
     # We could load the FIFOs in `run` and shove them in the context, but
     # that's too early to error out if these variables aren't defined. Doing it
     # here allows one to run e.g. `snapcraftctl build --help` without needing
     # these variables defined, which is a win for usability.
     try:
-        call_fifo = os.environ['SNAPCRAFTCTL_CALL_FIFO']
-        feedback_fifo = os.environ['SNAPCRAFTCTL_FEEDBACK_FIFO']
+        call_fifo = os.environ["SNAPCRAFTCTL_CALL_FIFO"]
+        feedback_fifo = os.environ["SNAPCRAFTCTL_FEEDBACK_FIFO"]
     except KeyError as e:
         raise errors.SnapcraftEnvironmentError(
             "{!s} environment variable must be defined. Note that this "
-            "utility is only designed for use within a snapcraft.yaml".format(
-                e)) from e
+            "utility is only designed for use within a snapcraft.yaml".format(e)
+        ) from e
 
-    with open(call_fifo, 'w') as f:
+    with open(call_fifo, "w") as f:
         f.write(json.dumps(data))
         f.flush()
 
-    with open(feedback_fifo, 'r') as f:
+    with open(feedback_fifo, "r") as f:
         feedback = f.readline().strip()
 
     # Any feedback is considered a fatal error to be printed

@@ -26,7 +26,7 @@ from requests import exceptions
 from . import errors
 
 
-_CHANNEL_RISKS = ['stable', 'candidate', 'beta', 'edge']
+_CHANNEL_RISKS = ["stable", "candidate", "beta", "edge"]
 logger = logging.getLogger(__name__)
 
 
@@ -57,8 +57,8 @@ class SnapPackage:
         """Lifecycle handler for a snap of the format <snap-name>/<channel>."""
         self.name, self.channel = _get_parsed_snap(snap)
         self._original_channel = self.channel
-        if not self.channel or self.channel == 'stable':
-            self.channel = 'latest/stable'
+        if not self.channel or self.channel == "stable":
+            self.channel = "latest/stable"
 
         # This store information from a local request
         self._local_snap_info = None
@@ -104,15 +104,16 @@ class SnapPackage:
                     self._store_snap_info = _get_store_snap_info(self.name)
                     break
                 except exceptions.HTTPError as http_error:
-                    logger.debug('The http error when checking the store for '
-                                 '{!r} is {!r} (retries left {})'.format(
-                                     self.name,
-                                     http_error.response.status_code,
-                                     retry_count))
+                    logger.debug(
+                        "The http error when checking the store for "
+                        "{!r} is {!r} (retries left {})".format(
+                            self.name, http_error.response.status_code, retry_count
+                        )
+                    )
                     if http_error.response.status_code == 404:
                         raise errors.SnapUnavailableError(
-                            snap_name=self.name,
-                            snap_channel=self.channel)
+                            snap_name=self.name, snap_channel=self.channel
+                        )
                     retry_count -= 1
 
         return self._store_snap_info
@@ -122,29 +123,29 @@ class SnapPackage:
         if not self.in_store:
             return dict()
 
-        return snap_store_info['channels']
+        return snap_store_info["channels"]
 
     def get_current_channel(self):
-        current_channel = ''
+        current_channel = ""
         if self.installed:
             local_snap_info = self.get_local_snap_info()
-            current_channel = local_snap_info['channel']
-            if any([current_channel.startswith(risk)
-                    for risk in _CHANNEL_RISKS]):
-                current_channel = 'latest/{}'.format(current_channel)
+            current_channel = local_snap_info["channel"]
+            if any([current_channel.startswith(risk) for risk in _CHANNEL_RISKS]):
+                current_channel = "latest/{}".format(current_channel)
         return current_channel
 
     def is_classic(self):
         store_channels = self._get_store_channels()
         try:
-            return store_channels[self.channel]['confinement'] == 'classic'
+            return store_channels[self.channel]["confinement"] == "classic"
         except KeyError:
             # We have seen some KeyError issues when running tests that are
             # hard to debug as they only occur there, logging in debug mode
             # will help uncover the root cause if it happens again.
-            logger.debug('Current store channels are {!r} and the store'
-                         'payload is {!r}'.format(store_channels,
-                                                  self._store_snap_info))
+            logger.debug(
+                "Current store channels are {!r} and the store"
+                "payload is {!r}".format(store_channels, self._store_snap_info)
+            )
             raise
 
     def is_valid(self):
@@ -158,34 +159,37 @@ class SnapPackage:
         """Installs the snap onto the system."""
         snap_install_cmd = []
         if _snap_command_requires_sudo():
-            snap_install_cmd = ['sudo']
-        snap_install_cmd.extend(['snap', 'install', self.name])
+            snap_install_cmd = ["sudo"]
+        snap_install_cmd.extend(["snap", "install", self.name])
         if self._original_channel:
-            snap_install_cmd.extend(['--channel', self._original_channel])
+            snap_install_cmd.extend(["--channel", self._original_channel])
         if self.is_classic():
             # TODO make this a user explicit choice
-            snap_install_cmd.append('--classic')
+            snap_install_cmd.append("--classic")
         try:
             check_call(snap_install_cmd)
         except CalledProcessError as install_error:
-            raise errors.SnapInstallError(snap_name=self.name,
-                                          snap_channel=self.channel)
+            raise errors.SnapInstallError(
+                snap_name=self.name, snap_channel=self.channel
+            )
 
     def refresh(self):
         """Refreshes a snap onto a channel on the system."""
         snap_refresh_cmd = []
         if _snap_command_requires_sudo():
-            snap_refresh_cmd = ['sudo']
-        snap_refresh_cmd.extend(['snap', 'refresh', self.name,
-                                 '--channel', self.channel])
+            snap_refresh_cmd = ["sudo"]
+        snap_refresh_cmd.extend(
+            ["snap", "refresh", self.name, "--channel", self.channel]
+        )
         if self.is_classic():
             # TODO make this a user explicit choice
-            snap_refresh_cmd.append('--classic')
+            snap_refresh_cmd.append("--classic")
         try:
             check_call(snap_refresh_cmd)
         except CalledProcessError as install_error:
-            raise errors.SnapRefreshError(snap_name=self.name,
-                                          snap_channel=self.channel)
+            raise errors.SnapRefreshError(
+                snap_name=self.name, snap_channel=self.channel
+            )
 
 
 def install_snaps(snaps_list):
@@ -197,8 +201,9 @@ def install_snaps(snaps_list):
     for snap in snaps_list:
         snap_pkg = SnapPackage(snap)
         if not snap_pkg.is_valid():
-            raise errors.SnapUnavailableError(snap_name=snap_pkg.name,
-                                              snap_channel=snap_pkg.channel)
+            raise errors.SnapUnavailableError(
+                snap_name=snap_pkg.name, snap_channel=snap_pkg.channel
+            )
 
         if not snap_pkg.installed:
             snap_pkg.install()
@@ -206,24 +211,24 @@ def install_snaps(snaps_list):
             snap_pkg.refresh()
 
         snap_pkg = SnapPackage(snap)
-        snaps_installed.append('{}={}'.format(
-            snap_pkg.name, snap_pkg.get_local_snap_info()['revision']))
+        snaps_installed.append(
+            "{}={}".format(snap_pkg.name, snap_pkg.get_local_snap_info()["revision"])
+        )
     return snaps_installed
 
 
 def _snap_command_requires_sudo():
     # snap whoami returns - if the user is not logged in.
-    output = check_output(['snap', 'whoami'])
+    output = check_output(["snap", "whoami"])
     whoami = output.decode(sys.getfilesystemencoding())
     requires_root = False
     try:
-        requires_root = whoami.split(':')[1].strip() == '-'
+        requires_root = whoami.split(":")[1].strip() == "-"
     # A safeguard if the output changes
     except IndexError:
         requires_root = True
     if requires_root:
-        logger.warning('snapd is not logged in, snap install '
-                       'commands will use sudo')
+        logger.warning("snapd is not logged in, snap install commands will use sudo")
     return requires_root
 
 
@@ -235,10 +240,11 @@ def get_assertion(assertion_params: Sequence[str]) -> bytes:
     :rtype: bytes
     """
     try:
-        return check_output(['snap', 'known', *assertion_params])
+        return check_output(["snap", "known", *assertion_params])
     except CalledProcessError as call_error:
         raise errors.SnapGetAssertionError(
-            assertion_params=assertion_params) from call_error
+            assertion_params=assertion_params
+        ) from call_error
 
 
 def get_installed_snaps():
@@ -250,27 +256,26 @@ def get_installed_snaps():
         local_snaps = _get_local_snaps()
     except exceptions.ConnectionError as e:
         local_snaps = []
-    return ['{}={}'.format(snap['name'], snap['revision']) for
-            snap in local_snaps]
+    return ["{}={}".format(snap["name"], snap["revision"]) for snap in local_snaps]
 
 
 def _get_parsed_snap(snap):
-    if '/' in snap:
-        sep_index = snap.find('/')
+    if "/" in snap:
+        sep_index = snap.find("/")
         snap_name = snap[:sep_index]
-        snap_channel = snap[sep_index+1:]
+        snap_channel = snap[sep_index + 1 :]
     else:
         snap_name = snap
-        snap_channel = ''
+        snap_channel = ""
     return snap_name, snap_channel
 
 
 def get_snapd_socket_path_template():
-    return 'http+unix://%2Frun%2Fsnapd.socket/v2/{}'
+    return "http+unix://%2Frun%2Fsnapd.socket/v2/{}"
 
 
 def _get_local_snap_info(snap_name):
-    slug = 'snaps/{}'.format(parse.quote(snap_name, safe=''))
+    slug = "snaps/{}".format(parse.quote(snap_name, safe=""))
     url = get_snapd_socket_path_template().format(slug)
     with requests_unixsocket.Session() as session:
         try:
@@ -278,24 +283,24 @@ def _get_local_snap_info(snap_name):
         except exceptions.ConnectionError as e:
             raise errors.SnapdConnectionError(snap_name, url) from e
     snap_info.raise_for_status()
-    return snap_info.json()['result']
+    return snap_info.json()["result"]
 
 
 def _get_store_snap_info(snap_name):
     # This logic uses /v2/find returns an array of results, given that
     # we do a strict search either 1 result or a 404 will be returned.
-    slug = 'find?{}'.format(parse.urlencode(dict(name=snap_name)))
+    slug = "find?{}".format(parse.urlencode(dict(name=snap_name)))
     url = get_snapd_socket_path_template().format(slug)
     with requests_unixsocket.Session() as session:
         snap_info = session.get(url)
     snap_info.raise_for_status()
-    return snap_info.json()['result'][0]
+    return snap_info.json()["result"][0]
 
 
 def _get_local_snaps():
-    slug = 'snaps'
+    slug = "snaps"
     url = get_snapd_socket_path_template().format(slug)
     with requests_unixsocket.Session() as session:
         snap_info = session.get(url)
     snap_info.raise_for_status()
-    return snap_info.json()['result']
+    return snap_info.json()["result"]

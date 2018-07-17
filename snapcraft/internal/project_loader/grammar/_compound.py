@@ -27,9 +27,14 @@ if TYPE_CHECKING:
 class CompoundStatement(Statement):
     """Multiple statements that need to be treated as a group."""
 
-    def __init__(self, *, statements: List[Statement], body: typing.Grammar,
-                 processor: 'GrammarProcessor',
-                 call_stack: typing.CallStack=None) -> None:
+    def __init__(
+        self,
+        *,
+        statements: List[Statement],
+        body: typing.Grammar,
+        processor: "GrammarProcessor",
+        call_stack: typing.CallStack = None
+    ) -> None:
         """Create an CompoundStatement instance.
 
         :param list statements: List of compound statements
@@ -62,8 +67,8 @@ class CompoundStatement(Statement):
         return False
 
     def __str__(self) -> str:
-        representation = ''
+        representation = ""
         for statement in self.statements:
-            representation += '{!s} '.format(statement)
+            representation += "{!s} ".format(statement)
 
         return representation.strip()

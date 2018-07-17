@@ -23,11 +23,11 @@ from . import CommandBaseTestCase
 
 
 class LogoutCommandTestCase(CommandBaseTestCase):
-
-    @mock.patch.object(config.Config, 'clear')
+    @mock.patch.object(config.Config, "clear")
     def test_logout_clears_config(self, mock_clear):
-        result = self.run_command(['logout'])
+        result = self.run_command(["logout"])
 
         self.assertThat(result.exit_code, Equals(0))
-        self.assertThat(result.output, MatchesRegex(
-            '.*Credentials cleared.\n', flags=re.DOTALL))
+        self.assertThat(
+            result.output, MatchesRegex(".*Credentials cleared.\n", flags=re.DOTALL)
+        )

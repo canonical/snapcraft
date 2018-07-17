@@ -20,34 +20,34 @@ import textwrap
 
 from testtools.matchers import Equals
 
-from tests import (
-    fixture_setup,
-    integration
-)
+from tests import fixture_setup, integration
 
 
 class CheckboxTestCase(integration.SnapdIntegrationTestCase):
-
     def test_install_and_execution(self):
-        with fixture_setup.WithoutSnapInstalled('checkbox-simple'):
-            self.run_snapcraft(project_dir='checkbox-simple')
+        with fixture_setup.WithoutSnapInstalled("checkbox-simple"):
+            self.run_snapcraft(project_dir="checkbox-simple")
             self.install_snap()
 
             # This test fails if the binary is executed from /tmp.
-            os.chdir(os.path.expanduser('~'))
+            os.chdir(os.path.expanduser("~"))
 
-            expected = textwrap.dedent("""\
+            expected = textwrap.dedent(
+                """\
                 job 'com.canonical.plainbox::collect-manifest'
                 job 'com.canonical.plainbox::manifest'
                 job 'com.example::always-pass'
                 job 'com.example::always-fail'
-                """)
+                """
+            )
             self.assertThat(
                 subprocess.check_output(
-                    ['checkbox-simple.checkbox-cli', 'list', 'job'],
-                    universal_newlines=True),
-                Equals(expected))
+                    ["checkbox-simple.checkbox-cli", "list", "job"],
+                    universal_newlines=True,
+                ),
+                Equals(expected),
+            )
 
             subprocess.check_call(
-                ['checkbox-simple.checkbox-cli', 'run',
-                 'com.example::always-pass'])
+                ["checkbox-simple.checkbox-cli", "run", "com.example::always-pass"]
+            )

@@ -29,7 +29,7 @@ class FileCache(SnapcraftCache):
     def __init__(self):
         """Create a FileCache."""
         super().__init__()
-        self.file_cache = os.path.join(self.cache_root, 'files')
+        self.file_cache = os.path.join(self.cache_root, "files")
 
     def cache(self, *, filename, algorithm, hash):
         """Cache a file revision with hash in XDG cache, unless it already exists.
@@ -42,9 +42,11 @@ class FileCache(SnapcraftCache):
         # First we verify
         calculated_hash = calculate_hash(filename, algorithm=algorithm)
         if calculated_hash != hash:
-            logger.warning('Skipping caching of {!r} as the expected '
-                           'hash does not match the one '
-                           'provided'.format(filename))
+            logger.warning(
+                "Skipping caching of {!r} as the expected "
+                "hash does not match the one "
+                "provided".format(filename)
+            )
             return None
         cached_file_path = os.path.join(self.file_cache, algorithm, hash)
         os.makedirs(os.path.dirname(cached_file_path), exist_ok=True)
@@ -55,8 +57,7 @@ class FileCache(SnapcraftCache):
                 # using fileutils.link_or_copy.
                 shutil.copyfile(filename, cached_file_path)
         except OSError:
-            logger.warning(
-                'Unable to cache file {}.'.format(cached_file_path))
+            logger.warning("Unable to cache file {}.".format(cached_file_path))
             return None
         return cached_file_path
 
@@ -70,7 +71,7 @@ class FileCache(SnapcraftCache):
         """
         cached_file_path = os.path.join(self.file_cache, algorithm, hash)
         if os.path.exists(cached_file_path):
-            logger.debug('Cache hit for hash {!r}'.format(hash))
+            logger.debug("Cache hit for hash {!r}".format(hash))
             return cached_file_path
         else:
             return None

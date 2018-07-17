@@ -28,26 +28,21 @@ from ._env import (
     build_env_for_stage,
     runtime_env,
     snapcraft_global_environment,
-    snapcraft_part_environment
+    snapcraft_part_environment,
 )
-from . import (
-    errors,
-    grammar_processing,
-)
+from . import errors, grammar_processing
 
 logger = logging.getLogger(__name__)
 
 
 class PartsConfig:
-
-    def __init__(self, *, parts, project, validator,
-                 build_snaps, build_tools):
-        self._snap_name = parts['name']
-        self._base = parts.get('base', 'core')
-        self._confinement = parts.get('confinement')
+    def __init__(self, *, parts, project, validator, build_snaps, build_tools):
+        self._snap_name = parts["name"]
+        self._base = parts.get("base", "core")
+        self._confinement = parts.get("confinement")
         self._soname_cache = elf.SonameCache()
-        self._parts_data = parts.get('parts', {})
-        self._snap_type = parts.get('type', 'app')
+        self._parts_data = parts.get("parts", {})
+        self._snap_type = parts.get("type", "app")
         self._project = project
         self._validator = validator
         self.build_snaps = build_snaps
@@ -65,27 +60,28 @@ class PartsConfig:
 
     def _process_parts(self):
         for part_name in self._parts_data:
-            if '/' in part_name:
-                logger.warning('DEPRECATED: Found a "/" '
-                               'in the name of the {!r} part'.format(
-                                part_name))
+            if "/" in part_name:
+                logger.warning(
+                    'DEPRECATED: Found a "/" '
+                    "in the name of the {!r} part".format(part_name)
+                )
             self._part_names.append(part_name)
             properties = self._parts_data[part_name] or {}
 
-            plugin_name = properties.get('plugin')
+            plugin_name = properties.get("plugin")
 
-            if 'after' in properties:
-                self.after_requests[part_name] = properties.pop('after')
+            if "after" in properties:
+                self.after_requests[part_name] = properties.pop("after")
 
-            if 'filesets' in properties:
-                del properties['filesets']
+            if "filesets" in properties:
+                del properties["filesets"]
 
             # Handle the deprecated snap keyword.
-            if 'snap' in properties:
-                snap = properties.pop('snap')
+            if "snap" in properties:
+                snap = properties.pop("snap")
                 if snap:
-                    deprecations.handle_deprecation_notice('dn1')
-                    properties['prime'] = snap
+                    deprecations.handle_deprecation_notice("dn1")
+                    properties["prime"] = snap
 
             self.load_part(part_name, plugin_name, properties)
 
@@ -93,7 +89,7 @@ class PartsConfig:
         self.all_parts = self._sort_parts()
 
     def _compute_dependencies(self):
-        '''Gather the lists of dependencies and adds to all_parts.'''
+        """Gather the lists of dependencies and adds to all_parts."""
 
         for part in self.all_parts:
             dep_names = self.after_requests.get(part.name, [])
@@ -104,13 +100,14 @@ class PartsConfig:
                         break
 
     def _sort_parts(self):
-        '''Performs an inneficient but easy to follow sorting of parts.'''
+        """Performs an inneficient but easy to follow sorting of parts."""
         sorted_parts = []
 
         # We want to process parts in a consistent order between runs. The
         # simplest way to do this is to sort them by name.
         self.all_parts = sorted(
-            self.all_parts, key=lambda part: part.name, reverse=True)
+            self.all_parts, key=lambda part: part.name, reverse=True
+        )
 
         while self.all_parts:
             top_part = None
@@ -125,7 +122,8 @@ class PartsConfig:
                     break
             if not top_part:
                 raise errors.SnapcraftLogicError(
-                    'circular dependency chain found in parts definition')
+                    "circular dependency chain found in parts definition"
+                )
             sorted_parts = [top_part] + sorted_parts
             self.all_parts.remove(top_part)
 
@@ -136,15 +134,15 @@ class PartsConfig:
         """Returns a set of all the parts upon which part_name depends."""
 
         dependency_names = set(self.after_requests.get(part_name, []))
-        dependencies = {p for p in self.all_parts
-                        if p.name in dependency_names}
+        dependencies = {p for p in self.all_parts if p.name in dependency_names}
 
         if recursive:
             # No need to worry about infinite recursion due to circular
             # dependencies since the YAML validation won't allow it.
             for dependency_name in dependency_names:
                 dependencies |= self.get_dependencies(
-                    dependency_name, recursive=recursive)
+                    dependency_name, recursive=recursive
+                )
 
         return dependencies
 
@@ -157,15 +155,17 @@ class PartsConfig:
             if part_name in dependencies:
                 reverse_dependency_names.add(part)
 
-        reverse_dependencies = {p for p in self.all_parts
-                                if p.name in reverse_dependency_names}
+        reverse_dependencies = {
+            p for p in self.all_parts if p.name in reverse_dependency_names
+        }
 
         if recursive:
             # No need to worry about infinite recursion due to circular
             # dependencies since the YAML validation won't allow it.
             for reverse_dependency_name in reverse_dependency_names:
                 reverse_dependencies |= self.get_reverse_dependencies(
-                    reverse_dependency_name, recursive=recursive)
+                    reverse_dependency_name, recursive=recursive
+                )
 
         return reverse_dependencies
 
@@ -184,16 +184,18 @@ class PartsConfig:
         for part_name in part_names:
             if part_name not in self._part_names:
                 raise snapcraft.internal.errors.SnapcraftEnvironmentError(
-                    'The part named {!r} is not defined in '
-                    '{!r}'.format(part_name,
-                                  self._project.info.snapcraft_yaml_file_path))
+                    "The part named {!r} is not defined in "
+                    "{!r}".format(
+                        part_name, self._project.info.snapcraft_yaml_file_path
+                    )
+                )
 
     def load_part(self, part_name, plugin_name, part_properties):
         # Some legacy parts can have a '/' in them to separate the main project
         # part with the subparts. This is rather unfortunate as it affects the
         # the layout of parts inside the parts directory causing collisions
         # between the main project part and its subparts.
-        part_name = part_name.replace('/', '\N{BIG SOLIDUS}')
+        part_name = part_name.replace("/", "\N{BIG SOLIDUS}")
 
         plugin = pluginhandler.load_plugin(
             plugin_name=plugin_name,
@@ -201,23 +203,25 @@ class PartsConfig:
             properties=part_properties,
             project_options=self._project,
             part_schema=self._validator.part_schema,
-            definitions_schema=self._validator.definitions_schema)
+            definitions_schema=self._validator.definitions_schema,
+        )
 
-        logger.debug('Setting up part {!r} with plugin {!r} and '
-                     'properties {!r}.'.format(part_name,
-                                               plugin_name,
-                                               part_properties))
+        logger.debug(
+            "Setting up part {!r} with plugin {!r} and "
+            "properties {!r}.".format(part_name, plugin_name, part_properties)
+        )
 
-        sources = getattr(plugin, 'PLUGIN_STAGE_SOURCES', None)
+        sources = getattr(plugin, "PLUGIN_STAGE_SOURCES", None)
         stage_packages_repo = repo.Repo(
-            plugin.osrepodir, sources=sources,
-            project_options=self._project)
+            plugin.osrepodir, sources=sources, project_options=self._project
+        )
 
         grammar_processor = grammar_processing.PartGrammarProcessor(
             plugin=plugin,
             properties=part_properties,
             project=self._project,
-            repo=stage_packages_repo)
+            repo=stage_packages_repo,
+        )
 
         part = pluginhandler.PluginHandler(
             plugin=plugin,
@@ -227,11 +231,12 @@ class PartsConfig:
             definitions_schema=self._validator.definitions_schema,
             stage_packages_repo=stage_packages_repo,
             grammar_processor=grammar_processor,
-            snap_base_path=path.join('/', 'snap', self._snap_name, 'current'),
+            snap_base_path=path.join("/", "snap", self._snap_name, "current"),
             base=self._base,
             confinement=self._confinement,
             snap_type=self._snap_type,
-            soname_cache=self._soname_cache)
+            soname_cache=self._soname_cache,
+        )
 
         self.build_snaps |= grammar_processor.get_build_snaps()
         self.build_tools |= grammar_processor.get_build_packages()
@@ -242,7 +247,8 @@ class PartsConfig:
         if part.source_handler and part.source_handler.command:
             # TODO get_packages_for_source_type should not be a thing.
             self.build_tools |= repo.Repo.get_packages_for_source_type(
-                part.source_handler.command)
+                part.source_handler.command
+            )
         self.all_parts.append(part)
 
         return part
@@ -252,29 +258,23 @@ class PartsConfig:
 
         env = []  # type: List[str]
         stagedir = self._project.stage_dir
-        is_host_compat = self._project.is_host_compatible_with_base(
-            self._base)
+        is_host_compat = self._project.is_host_compatible_with_base(self._base)
 
         if root_part:
             # this has to come before any {}/usr/bin
             env += part.env(part.plugin.installdir)
-            env += runtime_env(
-                part.plugin.installdir, self._project.arch_triplet)
-            env += runtime_env(
-                stagedir, self._project.arch_triplet)
+            env += runtime_env(part.plugin.installdir, self._project.arch_triplet)
+            env += runtime_env(stagedir, self._project.arch_triplet)
             env += build_env(
-                part.plugin.installdir,
-                self._snap_name,
-                self._project.arch_triplet)
+                part.plugin.installdir, self._snap_name, self._project.arch_triplet
+            )
             env += build_env_for_stage(
-                stagedir,
-                self._snap_name,
-                self._project.arch_triplet)
+                stagedir, self._snap_name, self._project.arch_triplet
+            )
             # Only set the paths to the base snap if we are building on the
             # same host. Failing to do so will cause Segmentation Faults.
-            if (self._confinement == 'classic' and is_host_compat):
-                env += env_for_classic(self._base,
-                                       self._project.arch_triplet)
+            if self._confinement == "classic" and is_host_compat:
+                env += env_for_classic(self._base, self._project.arch_triplet)
 
             global_env = snapcraft_global_environment(self._project)
             part_env = snapcraft_part_environment(part)
@@ -282,8 +282,7 @@ class PartsConfig:
                 env.append('{}="{}"'.format(variable, value))
         else:
             env += part.env(stagedir)
-            env += runtime_env(
-                stagedir, self._project.arch_triplet)
+            env += runtime_env(stagedir, self._project.arch_triplet)
 
         for dep_part in part.deps:
             env += dep_part.env(stagedir)

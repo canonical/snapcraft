@@ -20,9 +20,7 @@ import click
 from ._options import get_project
 
 
-_SUPPORTED_CI_SYSTEMS = (
-    'travis',
-)
+_SUPPORTED_CI_SYSTEMS = ("travis",)
 
 
 @click.group()
@@ -30,16 +28,18 @@ def cicli():
     pass
 
 
-@cicli.command('enable-ci')
-@click.argument('ci-system', metavar='<ci-system>',
-                type=click.Choice(_SUPPORTED_CI_SYSTEMS))
-@click.option('--refresh', is_flag=True,
-              help=('Refresh the macaroon required to be able to push and '
-                    'release to channels'))
+@cicli.command("enable-ci")
+@click.argument(
+    "ci-system", metavar="<ci-system>", type=click.Choice(_SUPPORTED_CI_SYSTEMS)
+)
+@click.option(
+    "--refresh",
+    is_flag=True,
+    help=("Refresh the macaroon required to be able to push and release to channels"),
+)
 def enableci(ci_system, refresh):
     """Enable continuous-integration systems to build and release snaps."""
-    module = importlib.import_module(
-        'snapcraft.integrations.{}'.format(ci_system))
+    module = importlib.import_module("snapcraft.integrations.{}".format(ci_system))
 
     project = get_project()
     if refresh:

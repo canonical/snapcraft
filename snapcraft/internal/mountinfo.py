@@ -38,20 +38,19 @@ class Mount:
             self.root = mountinfo_row[3]
             self.mount_point = mountinfo_row[4]
             self.mount_options = mountinfo_row[5]
-            separator_index = mountinfo_row.index('-')
+            separator_index = mountinfo_row.index("-")
             self.optional_fields = mountinfo_row[6:separator_index]
-            self.filesystem_type = mountinfo_row[separator_index+1]
-            self.mount_source = mountinfo_row[separator_index+2]
-            self.super_options = mountinfo_row[separator_index+3]
+            self.filesystem_type = mountinfo_row[separator_index + 1]
+            self.mount_source = mountinfo_row[separator_index + 2]
+            self.super_options = mountinfo_row[separator_index + 3]
         except IndexError as e:
-            raise errors.InvalidMountinfoFormat(' '.join(mountinfo_row)) from e
+            raise errors.InvalidMountinfoFormat(" ".join(mountinfo_row)) from e
 
 
 class MountInfo:
     """A class to provide programmatic access to /proc/self/mountinfo"""
 
-    def __init__(self, *,
-                 mountinfo_file: str = '/proc/self/mountinfo') -> None:
+    def __init__(self, *, mountinfo_file: str = "/proc/self/mountinfo") -> None:
         """Create a new MountInfo instance.
 
         :param str mountinfo_file: Path to mountinfo file to be parsed.
@@ -59,11 +58,13 @@ class MountInfo:
         # Maintain two dicts pointing to the same underlying objects:
         # a dict of mount points to Mounts, and a dict of roots to Mounts.
         self._mount_point_mounts = {}  # type: Dict[str, Mount]
-        root_mounts = collections.defaultdict(list)  # type: Dict[str, List[Mount]]  # noqa
+        root_mounts = collections.defaultdict(
+            list
+        )  # type: Dict[str, List[Mount]]  # noqa
 
         with contextlib.suppress(FileNotFoundError):
             with open(mountinfo_file) as f:
-                for row in csv.reader(f, delimiter=' '):
+                for row in csv.reader(f, delimiter=" "):
                     try:
                         mount = Mount(row)
                         self._mount_point_mounts[mount.mount_point] = mount

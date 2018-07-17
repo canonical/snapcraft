@@ -19,10 +19,9 @@ from tests import integration
 
 
 class InitTestCase(integration.TestCase):
-
     def test_init_without_locale(self):
-        self.useFixture(fixtures.EnvironmentVariable('LC_ALL'))
-        self.useFixture(fixtures.EnvironmentVariable('LANG'))
+        self.useFixture(fixtures.EnvironmentVariable("LC_ALL"))
+        self.useFixture(fixtures.EnvironmentVariable("LANG"))
 
         # This should not throw exceptions
-        self.run_snapcraft(['init'])
+        self.run_snapcraft(["init"])

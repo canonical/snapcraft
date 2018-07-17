@@ -34,7 +34,7 @@ from snapcraft.internal import errors
 class DumpInvalidSymlinkError(errors.SnapcraftError):
     fmt = (
         "Failed to copy {path!r}: it's a symlink pointing outside the snap.\n"
-        'Fix it to be valid when snapped and try again.'
+        "Fix it to be valid when snapped and try again."
     )
 
     def __init__(self, path):
@@ -42,16 +42,16 @@ class DumpInvalidSymlinkError(errors.SnapcraftError):
 
 
 class DumpPlugin(snapcraft.BasePlugin):
-
     def enable_cross_compilation(self):
         pass
 
     def build(self):
         super().build()
         snapcraft.file_utils.link_or_copy_tree(
-            self.builddir, self.installdir,
-            copy_function=lambda src, dst: _link_or_copy(src, dst,
-                                                         self.installdir))
+            self.builddir,
+            self.installdir,
+            copy_function=lambda src, dst: _link_or_copy(src, dst, self.installdir),
+        )
 
 
 def _link_or_copy(source, destination, boundary):
@@ -68,11 +68,12 @@ def _link_or_copy(source, destination, boundary):
         normalized = os.path.normpath(os.path.join(destination_dirname, link))
         if os.path.isabs(link) or not normalized.startswith(boundary):
             # Only follow symlinks that are NOT pointing at libc (LP: #1658774)
-            if link not in snapcraft.repo.Repo.get_package_libraries('libc6'):
+            if link not in snapcraft.repo.Repo.get_package_libraries("libc6"):
                 follow_symlinks = True
 
     try:
-        snapcraft.file_utils.link_or_copy(source, destination,
-                                          follow_symlinks=follow_symlinks)
+        snapcraft.file_utils.link_or_copy(
+            source, destination, follow_symlinks=follow_symlinks
+        )
     except errors.SnapcraftCopyFileNotFoundError:
         raise DumpInvalidSymlinkError(source)

@@ -22,7 +22,6 @@ from . import CommandBaseTestCase
 
 
 class InitCommandTestCase(CommandBaseTestCase):
-
     def test_init_must_write_snapcraft_yaml(self):
         expected_yaml = """name: my-snap-name # you probably want to 'snapcraft register <name>'
 version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
@@ -41,33 +40,47 @@ parts:
     # See 'snapcraft plugins'
     plugin: nil\n"""  # noqa, lines too long
 
-        result = self.run_command(['init'])
+        result = self.run_command(["init"])
 
-        self.assertThat(result.output, Equals(
-            'Created snap/snapcraft.yaml.\nEdit the file to your liking or '
-            'run `snapcraft` to get started\n'))
+        self.assertThat(
+            result.output,
+            Equals(
+                "Created snap/snapcraft.yaml.\nEdit the file to your liking or "
+                "run `snapcraft` to get started\n"
+            ),
+        )
 
         # Verify the generated yaml
-        self.assertThat(os.path.join('snap', 'snapcraft.yaml'),
-                        FileContains(expected_yaml))
+        self.assertThat(
+            os.path.join("snap", "snapcraft.yaml"), FileContains(expected_yaml)
+        )
 
 
 class InitCommandExistingProjectTestCase(CommandBaseTestCase):
 
     scenarios = [
-        ('snap/snapcraft.yaml', {
-            'yaml_path': os.path.join('snap', 'snapcraft.yaml'),
-            'message': 'snap/snapcraft.yaml already exists!\n'
-        }),
+        (
+            "snap/snapcraft.yaml",
+            {
+                "yaml_path": os.path.join("snap", "snapcraft.yaml"),
+                "message": "snap/snapcraft.yaml already exists!\n",
+            },
+        ),
         # FIXME: Both snapcraft.yaml and .snapcraft.yaml are deprecated.
-        ('snapcraft.yaml', {
-            'yaml_path': 'snapcraft.yaml',
-            'message': 'snapcraft.yaml already exists!\n'
-        }),
-        ('.snapcraft.yaml', {
-            'yaml_path': '.snapcraft.yaml',
-            'message': '.snapcraft.yaml already exists!\n'
-        })
+        (
+            "snapcraft.yaml",
+            {
+                "yaml_path": "snapcraft.yaml",
+                "message": "snapcraft.yaml already exists!\n",
+            },
+        ),
+        (
+            ".snapcraft.yaml",
+            {
+                "yaml_path": ".snapcraft.yaml",
+                "message": ".snapcraft.yaml already exists!\n",
+            },
+        ),
     ]
 
     def test_init_with_existing_yaml(self):
@@ -76,11 +89,14 @@ class InitCommandExistingProjectTestCase(CommandBaseTestCase):
         if dirname:
             os.mkdir(dirname)
 
-        open(self.yaml_path, 'w').close()
+        open(self.yaml_path, "w").close()
 
         raised = self.assertRaises(
             snapcraft.internal.errors.SnapcraftEnvironmentError,
-            self.run_command, ['init'])
+            self.run_command,
+            ["init"],
+        )
 
-        self.assertThat(str(raised), Equals(
-            '{} already exists!'.format(self.yaml_path)))
+        self.assertThat(
+            str(raised), Equals("{} already exists!".format(self.yaml_path))
+        )

@@ -24,12 +24,13 @@ from tests import integration, fixture_setup
 
 
 class SetupPyMetadataTestCase(integration.TestCase):
-
     def setUp(self):
         super().setUp()
 
-        with open('setup.py', 'w') as setup_file:
-            print(dedent("""\
+        with open("setup.py", "w") as setup_file:
+            print(
+                dedent(
+                    """\
                 from setuptools import setup
 
                 setup(
@@ -40,66 +41,61 @@ class SetupPyMetadataTestCase(integration.TestCase):
                     author_email='snapcraft@lists.snapcraft.io',
                     scripts=['hello']
                 )
-                """), file=setup_file)
+                """
+                ),
+                file=setup_file,
+            )
 
     def test_metadata_extracted_from_setuppy(self):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(
-            self.path, version=None, description=None)
-        snapcraft_yaml.data['adopt-info'] = 'test-part'
+            self.path, version=None, description=None
+        )
+        snapcraft_yaml.data["adopt-info"] = "test-part"
         snapcraft_yaml.update_part(
-            'test-part', {
-                'plugin': 'nil',
-                'parse-info': ['setup.py']})
+            "test-part", {"plugin": "nil", "parse-info": ["setup.py"]}
+        )
         self.useFixture(snapcraft_yaml)
 
-        self.run_snapcraft('prime')
-        snap_yaml_path = os.path.join('prime', 'meta', 'snap.yaml')
+        self.run_snapcraft("prime")
+        snap_yaml_path = os.path.join("prime", "meta", "snap.yaml")
         with open(snap_yaml_path) as snap_yaml_file:
             snap_yaml = yaml.load(snap_yaml_file)
 
-        self.assertThat(snap_yaml['version'],
-                        Equals('test-setuppy-version'))
-        self.assertThat(snap_yaml['description'],
-                        Equals('test-setuppy-description'))
+        self.assertThat(snap_yaml["version"], Equals("test-setuppy-version"))
+        self.assertThat(snap_yaml["description"], Equals("test-setuppy-description"))
 
     def test_all_metadata_from_yaml(self):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(
-            self.path, version='test-yaml-version',
-            description='test-yaml-description')
-        snapcraft_yaml.data['adopt-info'] = 'test-part'
+            self.path, version="test-yaml-version", description="test-yaml-description"
+        )
+        snapcraft_yaml.data["adopt-info"] = "test-part"
         snapcraft_yaml.update_part(
-            'test-part', {
-                'plugin': 'dump',
-                'parse-info': ['setup.py']})
+            "test-part", {"plugin": "dump", "parse-info": ["setup.py"]}
+        )
         self.useFixture(snapcraft_yaml)
 
-        self.run_snapcraft('prime')
-        snap_yaml_path = os.path.join('prime', 'meta', 'snap.yaml')
+        self.run_snapcraft("prime")
+        snap_yaml_path = os.path.join("prime", "meta", "snap.yaml")
         with open(snap_yaml_path) as snap_yaml_file:
             snap_yaml = yaml.load(snap_yaml_file)
 
-        self.assertThat(snap_yaml['version'],
-                        Equals('test-yaml-version'))
-        self.assertThat(snap_yaml['description'],
-                        Equals('test-yaml-description'))
+        self.assertThat(snap_yaml["version"], Equals("test-yaml-version"))
+        self.assertThat(snap_yaml["description"], Equals("test-yaml-description"))
 
     def test_version_metadata_from_yaml_description_collected(self):
         snapcraft_yaml = fixture_setup.SnapcraftYaml(
-            self.path, version='test-yaml-version',
-            description=None)
-        snapcraft_yaml.data['adopt-info'] = 'test-part'
+            self.path, version="test-yaml-version", description=None
+        )
+        snapcraft_yaml.data["adopt-info"] = "test-part"
         snapcraft_yaml.update_part(
-            'test-part', {
-                'plugin': 'dump',
-                'parse-info': ['setup.py']})
+            "test-part", {"plugin": "dump", "parse-info": ["setup.py"]}
+        )
         self.useFixture(snapcraft_yaml)
 
-        self.run_snapcraft('prime')
-        snap_yaml_path = os.path.join('prime', 'meta', 'snap.yaml')
+        self.run_snapcraft("prime")
+        snap_yaml_path = os.path.join("prime", "meta", "snap.yaml")
         with open(snap_yaml_path) as snap_yaml_file:
             snap_yaml = yaml.load(snap_yaml_file)
 
-        self.assertThat(snap_yaml['version'],
-                        Equals('test-yaml-version'))
-        self.assertThat(snap_yaml['description'],
-                        Equals('test-setuppy-description'))
+        self.assertThat(snap_yaml["version"], Equals("test-yaml-version"))
+        self.assertThat(snap_yaml["description"], Equals("test-setuppy-description"))

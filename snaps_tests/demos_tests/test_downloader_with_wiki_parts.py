@@ -21,11 +21,12 @@ import snaps_tests
 
 class DownloaderWithWikiPartsTestCase(snaps_tests.SnapsTestCase):
 
-    snap_content_dir = 'downloader-with-wiki-parts'
+    snap_content_dir = "downloader-with-wiki-parts"
 
     def test_downloader_with_wiki_parts(self):
         snap_path = self.build_snap(self.snap_content_dir)
-        self.install_snap(snap_path, 'downloader', '1.0')
-        expected = '.*Lorem Ipsum.*'
+        self.install_snap(snap_path, "downloader", "1.0")
+        expected = ".*Lorem Ipsum.*"
         self.assert_command_in_snappy_testbed_with_regex(
-            '/snap/bin/downloader.test', expected, flags=re.DOTALL)
+            "/snap/bin/downloader.test", expected, flags=re.DOTALL
+        )

@@ -24,18 +24,20 @@ class PythonPluginError(snapcraft.internal.errors.SnapcraftError):
 
 class MissingPythonCommandError(PythonPluginError):
 
-    fmt = 'Unable to find {python_version}, searched: {search_paths}'
+    fmt = "Unable to find {python_version}, searched: {search_paths}"
 
     def __init__(self, python_version, search_paths):
         super().__init__(
             python_version=python_version,
             search_paths=snapcraft.formatting_utils.combine_paths(
-                search_paths, '', ':'))
+                search_paths, "", ":"
+            ),
+        )
 
 
 class MissingUserSitePackagesError(PythonPluginError):
 
-    fmt = 'Unable to find user site packages: {site_dir_glob}'
+    fmt = "Unable to find user site packages: {site_dir_glob}"
 
     def __init__(self, site_dir_glob):
         super().__init__(site_dir_glob=site_dir_glob)
@@ -43,7 +45,7 @@ class MissingUserSitePackagesError(PythonPluginError):
 
 class MissingSitePyError(PythonPluginError):
 
-    fmt = 'Unable to find site.py: {site_py_glob}'
+    fmt = "Unable to find site.py: {site_py_glob}"
 
     def __init__(self, site_py_glob):
         super().__init__(site_py_glob=site_py_glob)
@@ -71,7 +73,7 @@ class PipListInvalidJsonError(PythonPluginError):
 
 class PipListMissingFieldError(PythonPluginError):
 
-    fmt = 'Pip packages json missing {field!r} field: {json!r}'
+    fmt = "Pip packages json missing {field!r} field: {json!r}"
 
     def __init__(self, field, json):
         super().__init__(field=field, json=json)

@@ -3,11 +3,7 @@ from time import sleep
 from threading import Thread
 from queue import Queue
 
-from progressbar import (
-    AnimatedMarker,
-    ProgressBar,
-    UnknownLength,
-)
+from progressbar import AnimatedMarker, ProgressBar, UnknownLength
 
 import requests
 
@@ -18,17 +14,17 @@ from . import errors
 class StatusTracker:
 
     __messages = {
-        'being_processed': 'Processing...',
-        'ready_to_release': 'Ready to release!',
-        'need_manual_review': 'Will need manual review...',
-        'processing_upload_delta_error': 'Error while processing delta...',
-        'processing_error': 'Error while processing...',
+        "being_processed": "Processing...",
+        "ready_to_release": "Ready to release!",
+        "need_manual_review": "Will need manual review...",
+        "processing_upload_delta_error": "Error while processing delta...",
+        "processing_error": "Error while processing...",
     }
 
     __error_codes = {
-        'processing_error',
-        'processing_upload_delta_error',
-        'need_manual_review',
+        "processing_error",
+        "processing_upload_delta_error",
+        "need_manual_review",
     }
 
     def __init__(self, status_details_url):
@@ -39,7 +35,7 @@ class StatusTracker:
         thread = Thread(target=self._update_status, args=(queue,))
         thread.start()
 
-        widgets = ['Processing...', AnimatedMarker()]
+        widgets = ["Processing...", AnimatedMarker()]
         progress_indicator = ProgressBar(widgets=widgets, maxval=UnknownLength)
         progress_indicator.start()
 
@@ -50,7 +46,7 @@ class StatusTracker:
                 content = queue.get()
                 if isinstance(content, Exception):
                     raise content
-            if content.get('processed'):
+            if content.get("processed"):
                 break
             else:
                 widgets[0] = self._get_message(content)
@@ -64,19 +60,19 @@ class StatusTracker:
         return content
 
     def raise_for_code(self):
-        if self.__content['code'] in self.__error_codes:
+        if self.__content["code"] in self.__error_codes:
             raise errors.StoreReviewError(self.__content)
 
     def _get_message(self, content):
         try:
-            return self.__messages.get(content['code'], content['code'])
+            return self.__messages.get(content["code"], content["code"])
         except KeyError:
-            return self.__messages.get('being_processed')
+            return self.__messages.get("being_processed")
 
     def _update_status(self, queue):
         for content in self._get_status():
             queue.put(content)
-            if content['processed']:
+            if content["processed"]:
                 break
             sleep(constants.SCAN_STATUS_POLL_DELAY)
 
@@ -88,6 +84,6 @@ class StatusTracker:
             except (requests.ConnectionError, requests.HTTPError) as e:
                 if not connection_errors_allowed:
                     yield e
-                content = {'processed': False, 'code': 'being_processed'}
+                content = {"processed": False, "code": "being_processed"}
                 connection_errors_allowed -= 1
             yield content

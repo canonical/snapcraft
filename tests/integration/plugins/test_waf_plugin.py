@@ -21,16 +21,15 @@ from tests.matchers import HasArchitecture
 
 
 class WafPluginTestCase(integration.TestCase):
-
     def test_build_waf_plugin(self):
-        self.run_snapcraft('build', 'waf-with-configflags')
+        self.run_snapcraft("build", "waf-with-configflags")
 
     def test_cross_compiling(self):
-        if self.deb_arch != 'amd64':
-            self.skipTest('The test only handles amd64 to arm64')
+        if self.deb_arch != "amd64":
+            self.skipTest("The test only handles amd64 to arm64")
 
-        self.run_snapcraft(['build', '--target-arch=arm64'],
-                           'waf-with-configflags')
-        binary = os.path.join(self.parts_dir, 'waf-project',
-                              'install', 'usr', 'local', 'bin', 'myprogram')
-        self.assertThat(binary, HasArchitecture('aarch64'))
+        self.run_snapcraft(["build", "--target-arch=arm64"], "waf-with-configflags")
+        binary = os.path.join(
+            self.parts_dir, "waf-project", "install", "usr", "local", "bin", "myprogram"
+        )
+        self.assertThat(binary, HasArchitecture("aarch64"))

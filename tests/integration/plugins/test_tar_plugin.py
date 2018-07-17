@@ -16,52 +16,44 @@
 
 import os
 
-from testtools.matchers import (
-    DirExists,
-    Equals,
-    FileExists
-)
+from testtools.matchers import DirExists, Equals, FileExists
 
 from tests import integration
 
 
 class TarPluginTestCase(integration.TestCase):
-
     def test_stage_nil_plugin(self):
-        self.run_snapcraft('stage', 'tar')
+        self.run_snapcraft("stage", "tar")
 
         expected_files = [
-            'flat',
-            os.path.join('flatdir', 'flat2'),
-            'onedeep',
-            os.path.join('onedeepdir', 'onedeep2'),
-            'oneflat',
-            'top-simple',
-            'notop',
-            'parent',
-            'slash',
-            'readonly_file',
-            os.path.join('destdir1', 'destdir2', 'top-simple')
+            "flat",
+            os.path.join("flatdir", "flat2"),
+            "onedeep",
+            os.path.join("onedeepdir", "onedeep2"),
+            "oneflat",
+            "top-simple",
+            "notop",
+            "parent",
+            "slash",
+            "readonly_file",
+            os.path.join("destdir1", "destdir2", "top-simple"),
         ]
         for expected_file in expected_files:
-            self.assertThat(
-                os.path.join(self.stage_dir, expected_file),
-                FileExists())
+            self.assertThat(os.path.join(self.stage_dir, expected_file), FileExists())
         expected_dirs = [
-            'dir-simple',
-            'notopdir',
-            'destdir1',
-            os.path.join('destdir1', 'destdir2')
+            "dir-simple",
+            "notopdir",
+            "destdir1",
+            os.path.join("destdir1", "destdir2"),
         ]
         for expected_dir in expected_dirs:
-            self.assertThat(
-                os.path.join(self.stage_dir, expected_dir),
-                DirExists())
+            self.assertThat(os.path.join(self.stage_dir, expected_dir), DirExists())
 
         binary_output = self.get_output_ignoring_non_zero_exit(
-            os.path.join(self.stage_dir, 'bin', 'test'))
-        self.assertThat(binary_output, Equals('tarproject\n'))
+            os.path.join(self.stage_dir, "bin", "test")
+        )
+        self.assertThat(binary_output, Equals("tarproject\n"))
 
         # Regression test for
         # https://bugs.launchpad.net/snapcraft/+bug/1500728
-        self.run_snapcraft('pull')
+        self.run_snapcraft("pull")

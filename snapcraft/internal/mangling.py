@@ -31,14 +31,15 @@ def rewrite_python_shebangs(root_dir):
     :param str root_dir: Directory that will be crawled for shebangs.
     """
 
-    file_pattern = re.compile(r'')
-    argless_shebang_pattern = re.compile(
-        r'\A#!.*(python\S*)$', re.MULTILINE)
+    file_pattern = re.compile(r"")
+    argless_shebang_pattern = re.compile(r"\A#!.*(python\S*)$", re.MULTILINE)
     shebang_pattern_with_args = re.compile(
-        r'\A#!.*(python\S*)[ \t\f\v]+(\S+)$', re.MULTILINE)
+        r"\A#!.*(python\S*)[ \t\f\v]+(\S+)$", re.MULTILINE
+    )
 
     file_utils.replace_in_file(
-        root_dir, file_pattern, argless_shebang_pattern, r'#!/usr/bin/env \1')
+        root_dir, file_pattern, argless_shebang_pattern, r"#!/usr/bin/env \1"
+    )
 
     # The above rewrite will barf if the shebang includes any args to python.
     # For example, if the shebang was `#!/usr/bin/python3 -Es`, just replacing
@@ -50,8 +51,11 @@ def rewrite_python_shebangs(root_dir):
     # some quoting hacks to ensure the file can be interpreted by both sh as
     # well as python, but it's better than shipping our own `env`.
     file_utils.replace_in_file(
-        root_dir, file_pattern, shebang_pattern_with_args,
-        r"""#!/bin/sh\n''''exec \1 \2 -- "$0" "$@" # '''""")
+        root_dir,
+        file_pattern,
+        shebang_pattern_with_args,
+        r"""#!/bin/sh\n''''exec \1 \2 -- "$0" "$@" # '''""",
+    )
 
 
 def clear_execstack(*, elf_files: FrozenSet[elf.ElfFile]) -> None:
@@ -60,23 +64,21 @@ def clear_execstack(*, elf_files: FrozenSet[elf.ElfFile]) -> None:
     param elf.ElfFile elf_files: the full list of elf files to analyze
                                  and clear the execstack if present.
     """
-    execstack_path = file_utils.get_tool_path('execstack')
+    execstack_path = file_utils.get_tool_path("execstack")
     elf_files_with_execstack = [e for e in elf_files if e.execstack_set]
 
     if elf_files_with_execstack:
-        formatted_items = ['- {}'.format(e.path)
-                           for e in elf_files_with_execstack]
+        formatted_items = ["- {}".format(e.path) for e in elf_files_with_execstack]
         logger.warning(
-            'The execstacks are going to be cleared for the following '
-            'files:\n{}\n'
-            'To disable this behavior set '
-            '`build-attributes: [keep-execstack]` '
-            'for the part.'.format('\n'.join(formatted_items)))
+            "The execstacks are going to be cleared for the following "
+            "files:\n{}\n"
+            "To disable this behavior set "
+            "`build-attributes: [keep-execstack]` "
+            "for the part.".format("\n".join(formatted_items))
+        )
 
     for elf_file in elf_files_with_execstack:
         try:
-            subprocess.check_call([execstack_path, '--clear-execstack',
-                                   elf_file.path])
+            subprocess.check_call([execstack_path, "--clear-execstack", elf_file.path])
         except subprocess.CalledProcessError:
-            logger.warning('Failed to clear execstack for {!r}'.format(
-                elf_file.path))
+            logger.warning("Failed to clear execstack for {!r}".format(elf_file.path))

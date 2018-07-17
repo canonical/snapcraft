@@ -20,7 +20,8 @@ from textwrap import dedent
 from snapcraft.internal import errors
 
 
-_TEMPLATE_YAML = dedent("""\
+_TEMPLATE_YAML = dedent(
+    """\
     name: my-snap-name # you probably want to 'snapcraft register <name>'
     version: '0.1' # just for humans, typically '1.2+git' or '1.3.2'
     summary: Single-line elevator pitch for your amazing snap # 79 char long summary
@@ -37,26 +38,26 @@ _TEMPLATE_YAML = dedent("""\
       my-part:
         # See 'snapcraft plugins'
         plugin: nil
-    """)  # noqa, lines too long.
+    """
+)  # noqa, lines too long.
 
 
 def init():
     """Initialize a snapcraft project."""
-    snapcraft_yaml_path = os.path.join('snap', 'snapcraft.yaml')
+    snapcraft_yaml_path = os.path.join("snap", "snapcraft.yaml")
 
     if os.path.exists(snapcraft_yaml_path):
         raise errors.SnapcraftEnvironmentError(
-            '{} already exists!'.format(snapcraft_yaml_path))
-    elif os.path.exists('snapcraft.yaml'):
-        raise errors.SnapcraftEnvironmentError(
-            'snapcraft.yaml already exists!')
-    elif os.path.exists('.snapcraft.yaml'):
-        raise errors.SnapcraftEnvironmentError(
-            '.snapcraft.yaml already exists!')
+            "{} already exists!".format(snapcraft_yaml_path)
+        )
+    elif os.path.exists("snapcraft.yaml"):
+        raise errors.SnapcraftEnvironmentError("snapcraft.yaml already exists!")
+    elif os.path.exists(".snapcraft.yaml"):
+        raise errors.SnapcraftEnvironmentError(".snapcraft.yaml already exists!")
     yaml = _TEMPLATE_YAML
     with contextlib.suppress(FileExistsError):
         os.mkdir(os.path.dirname(snapcraft_yaml_path))
-    with open(snapcraft_yaml_path, mode='w') as f:
+    with open(snapcraft_yaml_path, mode="w") as f:
         f.write(yaml)
 
     return snapcraft_yaml_path

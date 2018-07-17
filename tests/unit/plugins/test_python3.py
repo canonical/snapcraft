@@ -24,25 +24,23 @@ from tests import unit
 
 
 class Python3PluginTestCase(unit.TestCase):
-
     def setUp(self):
         super().setUp()
 
         class Options:
-            source = '.'
-            requirements = ''
-            constraints = ''
+            source = "."
+            requirements = ""
+            constraints = ""
             python_packages = []
             process_dependency_links = False
 
         self.options = Options()
         self.project_options = snapcraft.ProjectOptions()
 
-        patcher = mock.patch('subprocess.check_call')
+        patcher = mock.patch("subprocess.check_call")
         self.mock_call = patcher.start()
         self.addCleanup(patcher.stop)
 
     def test_check_version(self):
-        plugin = python3.Python3Plugin('test-part', self.options,
-                                       self.project_options)
-        self.assertThat(plugin.options.python_version, Equals('python3'))
+        plugin = python3.Python3Plugin("test-part", self.options, self.project_options)
+        self.assertThat(plugin.options.python_version, Equals("python3"))

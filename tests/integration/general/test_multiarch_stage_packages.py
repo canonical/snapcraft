@@ -22,16 +22,18 @@ from tests import integration
 
 
 class MultiarchTestCase(integration.TestCase):
-
     def test_bad_multiarch_stage_packages(self):
         exception = self.assertRaises(
-            subprocess.CalledProcessError, self.run_snapcraft,
-            'pull', 'bad-arch')
+            subprocess.CalledProcessError, self.run_snapcraft, "pull", "bad-arch"
+        )
 
         self.assertThat(
-            exception.output, Contains(
+            exception.output,
+            Contains(
                 "Failed to fetch stage packages: "
                 "Error downloading packages for part 'my-part': The "
                 "package 'hello:fake-arch' was not found.\n"
-                'You may need to add support for this architecture with '
-                "'dpkg --add-architecture fake-arch'"))
+                "You may need to add support for this architecture with "
+                "'dpkg --add-architecture fake-arch'"
+            ),
+        )

@@ -23,9 +23,12 @@ from snapcraft.internal import os_release
 
 
 class FakeOsRelease(fixtures.Fixture):
-
-    def __init__(self, id: str='ubuntu', version_id: str='16.04',
-                 version_codename: str=None) -> None:
+    def __init__(
+        self,
+        id: str = "ubuntu",
+        version_id: str = "16.04",
+        version_codename: str = None,
+    ) -> None:
         self._id = id
         self._version_id = version_id
         self._version_codename = version_codename
@@ -33,8 +36,10 @@ class FakeOsRelease(fixtures.Fixture):
     def _setUp(self):
         super()._setUp()
 
-        with open('os-release', 'w') as release_file:
-            print(dedent("""\
+        with open("os-release", "w") as release_file:
+            print(
+                dedent(
+                    """\
                 NAME="Ubuntu"
                 VERSION="16.04.3 LTS (Xenial Xerus)"
                 ID_LIKE=debian
@@ -42,23 +47,27 @@ class FakeOsRelease(fixtures.Fixture):
                 HOME_URL="http://www.ubuntu.com/"
                 SUPPORT_URL="http://help.ubuntu.com/"
                 BUG_REPORT_URL="http://bugs.launchpad.net/ubuntu/"
-                UBUNTU_CODENAME=xenial"""), file=release_file)
+                UBUNTU_CODENAME=xenial"""
+                ),
+                file=release_file,
+            )
             if self._id is not None:
-                print('ID={}'.format(self._id), file=release_file)
+                print("ID={}".format(self._id), file=release_file)
             if self._version_id is not None:
-                print('VERSION_ID="{}"'.format(self._version_id),
-                      file=release_file)
+                print('VERSION_ID="{}"'.format(self._version_id), file=release_file)
             if self._version_codename is not None:
-                print('VERSION_CODENAME={}'.format(self._version_codename),
-                      file=release_file)
+                print(
+                    "VERSION_CODENAME={}".format(self._version_codename),
+                    file=release_file,
+                )
 
-        release = os_release.OsRelease(os_release_file='os-release')
+        release = os_release.OsRelease(os_release_file="os-release")
 
         def _create_os_release(*args, **kwargs):
             return release
 
         patcher = mock.patch(
-            'snapcraft.internal.os_release.OsRelease',
-            wraps=_create_os_release)
+            "snapcraft.internal.os_release.OsRelease", wraps=_create_os_release
+        )
         patcher.start()
         self.addCleanup(patcher.stop)

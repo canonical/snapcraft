@@ -21,9 +21,9 @@ from . import errors
 
 def get_snapcraft_yaml(base_dir=None):
     possible_yamls = [
-        os.path.join('snap', 'snapcraft.yaml'),
-        'snapcraft.yaml',
-        '.snapcraft.yaml',
+        os.path.join("snap", "snapcraft.yaml"),
+        "snapcraft.yaml",
+        ".snapcraft.yaml",
     ]
 
     if base_dir:
@@ -33,10 +33,12 @@ def get_snapcraft_yaml(base_dir=None):
 
     if not snapcraft_yamls:
         raise errors.MissingSnapcraftYamlError(
-            snapcraft_yaml_file_path='snap/snapcraft.yaml')
+            snapcraft_yaml_file_path="snap/snapcraft.yaml"
+        )
     elif len(snapcraft_yamls) > 1:
         raise errors.DuplicateSnapcraftYamlError(
             snapcraft_yaml_file_path=snapcraft_yamls[0],
-            other_snapcraft_yaml_file_path=snapcraft_yamls[1])
+            other_snapcraft_yaml_file_path=snapcraft_yamls[1],
+        )
 
     return snapcraft_yamls[0]

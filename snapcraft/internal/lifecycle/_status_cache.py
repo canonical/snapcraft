@@ -35,13 +35,12 @@ class StatusCache:
         """
         self.config = config
         self._steps_run = dict()  # type: Dict[str, Set[steps.Step]]
-        self._outdated_reports = (
-            collections.defaultdict(dict))  # type: _OutdatedReport
-        self._dirty_reports = (
-            collections.defaultdict(dict))  # type: _DirtyReport
+        self._outdated_reports = collections.defaultdict(dict)  # type: _OutdatedReport
+        self._dirty_reports = collections.defaultdict(dict)  # type: _DirtyReport
 
-    def should_step_run(self, part: pluginhandler.PluginHandler,
-                        step: steps.Step) -> bool:
+    def should_step_run(
+        self, part: pluginhandler.PluginHandler, step: steps.Step
+    ) -> bool:
         """Determine if a given step of a given part should run.
 
         :param pluginhandler.PluginHandler part: Part in question.
@@ -56,9 +55,11 @@ class StatusCache:
             4. Either (1), (2), or (3) apply to any earlier steps in the part's
                lifecycle
         """
-        if (not self.has_step_run(part, step) or
-                self.get_outdated_report(part, step) is not None or
-                self.get_dirty_report(part, step) is not None):
+        if (
+            not self.has_step_run(part, step)
+            or self.get_outdated_report(part, step) is not None
+            or self.get_dirty_report(part, step) is not None
+        ):
             return True
 
         previous_step = step.previous_step()
@@ -67,8 +68,7 @@ class StatusCache:
 
         return False
 
-    def add_step_run(self, part: pluginhandler.PluginHandler,
-                     step: steps.Step) -> None:
+    def add_step_run(self, part: pluginhandler.PluginHandler, step: steps.Step) -> None:
         """Cache the fact that a given step has now run for the given part.
 
         :param pluginhandler.PluginHandler part: Part in question.
@@ -77,8 +77,7 @@ class StatusCache:
         self._ensure_steps_run(part)
         self._steps_run[part.name].add(step)
 
-    def has_step_run(self, part: pluginhandler.PluginHandler,
-                     step: steps.Step) -> bool:
+    def has_step_run(self, part: pluginhandler.PluginHandler, step: steps.Step) -> bool:
         """Determine if a given step of a given part has already run.
 
         :param pluginhandler.PluginHandler part: Part in question.
@@ -100,8 +99,9 @@ class StatusCache:
         self._ensure_outdated_report(part, step)
         return self._outdated_reports[part.name][step]
 
-    def get_dirty_report(self, part: pluginhandler.PluginHandler,
-                         step: steps.Step) -> pluginhandler.DirtyReport:
+    def get_dirty_report(
+        self, part: pluginhandler.PluginHandler, step: steps.Step
+    ) -> pluginhandler.DirtyReport:
         """Obtain the dirty report for a given step of the given part.
 
         :param pluginhandler.PluginHandler part: Part in question.
@@ -112,8 +112,7 @@ class StatusCache:
         self._ensure_dirty_report(part, step)
         return self._dirty_reports[part.name][step]
 
-    def clear_step(self, part: pluginhandler.PluginHandler,
-                   step: steps.Step) -> None:
+    def clear_step(self, part: pluginhandler.PluginHandler, step: steps.Step) -> None:
         """Clear the given step of the given part from the cache.
 
         :param pluginhandler.PluginHandler part: Part in question.
@@ -136,14 +135,15 @@ class StatusCache:
         if part.name not in self._steps_run:
             self._steps_run[part.name] = _get_steps_run(part)
 
-    def _ensure_outdated_report(self, part: pluginhandler.PluginHandler,
-                                step: steps.Step) -> None:
+    def _ensure_outdated_report(
+        self, part: pluginhandler.PluginHandler, step: steps.Step
+    ) -> None:
         if step not in self._outdated_reports[part.name]:
-            self._outdated_reports[part.name][step] = part.get_outdated_report(
-                step)
+            self._outdated_reports[part.name][step] = part.get_outdated_report(step)
 
-    def _ensure_dirty_report(self, part: pluginhandler.PluginHandler,
-                             step: steps.Step) -> None:
+    def _ensure_dirty_report(
+        self, part: pluginhandler.PluginHandler, step: steps.Step
+    ) -> None:
         # If we already have a dirty report, bail
         if step in self._dirty_reports[part.name]:
             return
@@ -159,8 +159,7 @@ class StatusCache:
         # we need to expand it here to also take its dependencies (if any) into
         # account
         prerequisite_step = steps.get_dependency_prerequisite_step(step)
-        dependencies = self.config.parts.get_dependencies(
-            part.name, recursive=True)
+        dependencies = self.config.parts.get_dependencies(part.name, recursive=True)
 
         changed_dependencies = []  # type: List[pluginhandler.Dependency]
         with contextlib.suppress(errors.StepHasNotRunError):
@@ -170,22 +169,26 @@ class StatusCache:
                 # run more recently than (or should run _before_) this step.
                 try:
                     prerequisite_timestamp = dependency.step_timestamp(
-                        prerequisite_step)
+                        prerequisite_step
+                    )
                 except errors.StepHasNotRunError:
                     dependency_changed = True
                 else:
                     dependency_changed = timestamp < prerequisite_timestamp
 
-                if (dependency_changed or self.should_step_run(
-                            dependency, prerequisite_step)):
-                    changed_dependencies.append(pluginhandler.Dependency(
-                        part_name=dependency.name,
-                        step=prerequisite_step))
+                if dependency_changed or self.should_step_run(
+                    dependency, prerequisite_step
+                ):
+                    changed_dependencies.append(
+                        pluginhandler.Dependency(
+                            part_name=dependency.name, step=prerequisite_step
+                        )
+                    )
 
             if changed_dependencies:
-                self._dirty_reports[part.name][step] = (
-                    pluginhandler.DirtyReport(
-                        changed_dependencies=changed_dependencies))
+                self._dirty_reports[part.name][step] = pluginhandler.DirtyReport(
+                    changed_dependencies=changed_dependencies
+                )
 
 
 def _get_steps_run(part: pluginhandler.PluginHandler) -> Set[steps.Step]:

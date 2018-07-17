@@ -20,16 +20,16 @@ from tests import integration
 
 
 class ExportLoginTestCase(integration.StoreTestCase):
-
     def test_successful_export(self):
-        self.export_login('exported', expect_success=True)
+        self.export_login("exported", expect_success=True)
 
         # Verify that the exported login is only readable by the owner
-        self.assertThat('exported', HasPermissions('0400'))
+        self.assertThat("exported", HasPermissions("0400"))
 
     def test_failed_export(self):
         self.export_login(
-            'exported',
-            'snapcraft-test+user@canonical.com',
-            'wrongpassword',
-            expect_success=False)
+            "exported",
+            "snapcraft-test+user@canonical.com",
+            "wrongpassword",
+            expect_success=False,
+        )

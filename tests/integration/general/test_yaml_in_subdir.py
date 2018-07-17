@@ -16,27 +16,23 @@
 
 import os
 
-from testtools.matchers import (
-    FileExists,
-    Equals
-)
+from testtools.matchers import FileExists, Equals
 
 from tests import integration
 
 
 class YamlInSubdirTestCase(integration.TestCase):
-
     def test_stage(self):
-        self.copy_project_to_cwd('yaml-in-subdir')
-        os.chdir('subdir')
-        self.run_snapcraft('stage')
+        self.copy_project_to_cwd("yaml-in-subdir")
+        os.chdir("subdir")
+        self.run_snapcraft("stage")
 
-        expected_file = os.path.join(self.stage_dir, 'file')
+        expected_file = os.path.join(self.stage_dir, "file")
         self.assertThat(expected_file, FileExists())
         with open(expected_file) as f:
             self.assertThat(f.read(), Equals("I'm a file\n"))
 
-        expected_file = os.path.join(self.stage_dir, 'subdirfile')
+        expected_file = os.path.join(self.stage_dir, "subdirfile")
         self.assertThat(expected_file, FileExists())
         with open(expected_file) as f:
             self.assertThat(f.read(), Equals("I'm in the subdir\n"))

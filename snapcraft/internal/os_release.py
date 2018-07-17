@@ -23,17 +23,17 @@ from typing import Dict  # noqa
 from snapcraft.internal import errors
 
 _ID_TO_UBUNTU_CODENAME = {
-    '17.10': 'artful',
-    '17.04': 'zesty',
-    '16.04': 'xenial',
-    '14.04': 'trusty',
+    "17.10": "artful",
+    "17.04": "zesty",
+    "16.04": "xenial",
+    "14.04": "trusty",
 }
 
 
 class OsRelease:
     """A class to intelligently determine the OS on which we're running"""
 
-    def __init__(self, *, os_release_file: str = '/etc/os-release') -> None:
+    def __init__(self, *, os_release_file: str = "/etc/os-release") -> None:
         """Create a new OsRelease instance.
 
         :param str os_release_file: Path to os-release file to be parsed.
@@ -42,7 +42,7 @@ class OsRelease:
             self._os_release = {}  # type: Dict[str, str]
             with open(os_release_file) as f:
                 for line in f:
-                    entry = line.rstrip().split('=')
+                    entry = line.rstrip().split("=")
                     if len(entry) == 2:
                         self._os_release[entry[0]] = entry[1].strip('"')
 
@@ -52,7 +52,7 @@ class OsRelease:
         :raises OsReleaseIdError: If no ID can be determined.
         """
         with contextlib.suppress(KeyError):
-            return self._os_release['ID']
+            return self._os_release["ID"]
 
         raise errors.OsReleaseIdError()
 
@@ -62,7 +62,7 @@ class OsRelease:
         :raises OsReleaseNameError: If no name can be determined.
         """
         with contextlib.suppress(KeyError):
-            return self._os_release['NAME']
+            return self._os_release["NAME"]
 
         raise errors.OsReleaseNameError()
 
@@ -72,7 +72,7 @@ class OsRelease:
         :raises OsReleaseVersionIdError: If no version ID can be determined.
         """
         with contextlib.suppress(KeyError):
-            return self._os_release['VERSION_ID']
+            return self._os_release["VERSION_ID"]
 
         raise errors.OsReleaseVersionIdError()
 
@@ -86,9 +86,9 @@ class OsRelease:
                                         determined.
         """
         with contextlib.suppress(KeyError):
-            return self._os_release['VERSION_CODENAME']
+            return self._os_release["VERSION_CODENAME"]
 
         with contextlib.suppress(KeyError):
-            return _ID_TO_UBUNTU_CODENAME[self._os_release['VERSION_ID']]
+            return _ID_TO_UBUNTU_CODENAME[self._os_release["VERSION_ID"]]
 
         raise errors.OsReleaseCodenameError()

@@ -23,7 +23,8 @@ from tests import os_release
 
 
 def skip_unless_codename(
-        codename: str, message: str) -> Callable[..., Callable[..., None]]:
+    codename: str, message: str
+) -> Callable[..., Callable[..., None]]:
     def _wrap(func: Callable[..., None]) -> Callable[..., None]:
         actual_codename = os_release.get_version_codename()
 
@@ -31,5 +32,7 @@ def skip_unless_codename(
         @skipUnless(actual_codename == codename, message)
         def _skip_test(*args: Any, **kwargs: Any) -> None:
             func(*args, **kwargs)
+
         return _skip_test
+
     return _wrap

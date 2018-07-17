@@ -21,21 +21,15 @@ import urllib.parse
 
 from testtools.matchers import FileExists
 
-from tests import (
-    fixture_setup,
-    integration
-)
+from tests import fixture_setup, integration
 
 
 class TestFakeServer(http.server.HTTPServer):
-
     def __init__(self, server_address):
-        super().__init__(
-            server_address, http.server.SimpleHTTPRequestHandler)
+        super().__init__(server_address, http.server.SimpleHTTPRequestHandler)
 
 
 class JHBuildPluginTestCase(integration.TestCase):
-
     def setUp(self):
         super().setUp()
         self.fake_server_fixture = fixture_setup.FakeServerRunning()
@@ -43,34 +37,53 @@ class JHBuildPluginTestCase(integration.TestCase):
 
     def start_fake_server(self):
         self.useFixture(self.fake_server_fixture)
-        self.netloc = urllib.parse.urlparse(
-            self.fake_server_fixture.url).netloc
+        self.netloc = urllib.parse.urlparse(self.fake_server_fixture.url).netloc
 
     def test_snap(self):
         files = {
-            'pull': [os.path.join(self.parts_dir, 'jhbuild', 'jhbuildrc')],
-            'build': [
-                os.path.join(self.parts_dir, 'jhbuild', 'jhbuildrc'),
-                os.path.join(self.parts_dir, 'jhbuild', 'install',
-                             'usr', 'share', 'doc', 'dep-module', 'README'),
-                os.path.join(self.parts_dir, 'jhbuild', 'install',
-                             'usr', 'share', 'doc', 'main-module', 'README'),
+            "pull": [os.path.join(self.parts_dir, "jhbuild", "jhbuildrc")],
+            "build": [
+                os.path.join(self.parts_dir, "jhbuild", "jhbuildrc"),
+                os.path.join(
+                    self.parts_dir,
+                    "jhbuild",
+                    "install",
+                    "usr",
+                    "share",
+                    "doc",
+                    "dep-module",
+                    "README",
+                ),
+                os.path.join(
+                    self.parts_dir,
+                    "jhbuild",
+                    "install",
+                    "usr",
+                    "share",
+                    "doc",
+                    "main-module",
+                    "README",
+                ),
             ],
-            'stage': [
-                os.path.join(self.stage_dir, 'usr', 'share',
-                             'doc', 'dep-module', 'README'),
-                os.path.join(self.stage_dir, 'usr', 'share',
-                             'doc', 'main-module', 'README'),
+            "stage": [
+                os.path.join(
+                    self.stage_dir, "usr", "share", "doc", "dep-module", "README"
+                ),
+                os.path.join(
+                    self.stage_dir, "usr", "share", "doc", "main-module", "README"
+                ),
             ],
-            'prime': [
-                os.path.join(self.prime_dir, 'usr', 'share',
-                             'doc', 'dep-module', 'README'),
-                os.path.join(self.prime_dir, 'usr', 'share',
-                             'doc', 'main-module', 'README'),
-                os.path.join(self.prime_dir, 'command-dep.wrapper'),
-                os.path.join(self.prime_dir, 'command-main.wrapper'),
+            "prime": [
+                os.path.join(
+                    self.prime_dir, "usr", "share", "doc", "dep-module", "README"
+                ),
+                os.path.join(
+                    self.prime_dir, "usr", "share", "doc", "main-module", "README"
+                ),
+                os.path.join(self.prime_dir, "command-dep.wrapper"),
+                os.path.join(self.prime_dir, "command-main.wrapper"),
             ],
-            'snap': [],
+            "snap": [],
         }
 
         # start the test http server
@@ -79,24 +92,24 @@ class JHBuildPluginTestCase(integration.TestCase):
         # copy the .modules file into cwd and replace the placeholder with
         # the local test http url.
         infile_path = os.path.join(
-            self.snaps_dir, 'jhbuild', 'simple-jhbuild.modules.in')
-        outfile_path = os.path.join(self.path, 'simple-jhbuild.modules')
+            self.snaps_dir, "jhbuild", "simple-jhbuild.modules.in"
+        )
+        outfile_path = os.path.join(self.path, "simple-jhbuild.modules")
 
-        infile = open(infile_path, 'r')
-        outfile = open(outfile_path, 'w')
+        infile = open(infile_path, "r")
+        outfile = open(outfile_path, "w")
 
         for line in infile:
-            outfile.write(line.replace('__TESTFIXTURE__', 'http://' +
-                                       self.netloc))
+            outfile.write(line.replace("__TESTFIXTURE__", "http://" + self.netloc))
 
         infile.close()
         outfile.close()
 
         # run the tests
-        for step in ['pull', 'build', 'stage', 'prime', 'snap']:
-            self.run_snapcraft(step, 'jhbuild')
+        for step in ["pull", "build", "stage", "prime", "snap"]:
+            self.run_snapcraft(step, "jhbuild")
 
             for path in files[step]:
                 self.assertThat(os.path.join(self.path, path), FileExists())
 
-        self.assertNotEqual([], glob.glob('test-jhbuild_*.snap'))
+        self.assertNotEqual([], glob.glob("test-jhbuild_*.snap"))

@@ -24,8 +24,8 @@ class TestNilPlugin(unit.TestCase):
     def test_schema(self):
         schema = NilPlugin.schema()
         self.assertThat(
-            schema['$schema'],
-            Equals('http://json-schema.org/draft-04/schema#'))
-        self.assertThat(schema['type'], Equals('object'))
-        self.assertFalse(schema['additionalProperties'])
-        self.assertFalse(schema['properties'])
+            schema["$schema"], Equals("http://json-schema.org/draft-04/schema#")
+        )
+        self.assertThat(schema["type"], Equals("object"))
+        self.assertFalse(schema["additionalProperties"])
+        self.assertFalse(schema["properties"])

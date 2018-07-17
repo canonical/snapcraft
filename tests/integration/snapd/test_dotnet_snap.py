@@ -18,24 +18,19 @@ import subprocess
 
 from testtools.matchers import Equals
 
-from tests import (
-    fixture_setup,
-    integration,
-    skip
-)
+from tests import fixture_setup, integration, skip
 
 
 class DotnetTestCase(integration.SnapdIntegrationTestCase):
-
-    @skip.skip_unless_codename('xenial', 'the dotnet plugin targets Xenial')
+    @skip.skip_unless_codename("xenial", "the dotnet plugin targets Xenial")
     def test_install_and_execution(self):
-        if self.deb_arch != 'amd64':
-            self.skipTest('The dotnet plugin only supports amd64, for now')
+        if self.deb_arch != "amd64":
+            self.skipTest("The dotnet plugin only supports amd64, for now")
 
-        with fixture_setup.WithoutSnapInstalled('dotnet-hello'):
-            self.run_snapcraft(project_dir='dotnet-hello')
+        with fixture_setup.WithoutSnapInstalled("dotnet-hello"):
+            self.run_snapcraft(project_dir="dotnet-hello")
             self.install_snap()
             self.assertThat(
-                subprocess.check_output(
-                    ['dotnet-hello'], universal_newlines=True),
-                Equals('Hello World!\n'))
+                subprocess.check_output(["dotnet-hello"], universal_newlines=True),
+                Equals("Hello World!\n"),
+            )

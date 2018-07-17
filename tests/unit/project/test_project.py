@@ -22,21 +22,21 @@ from snapcraft.project import Project
 
 
 class ProjectTest(unit.TestCase):
-
     def test_project_with_arguments(self):
         project = Project(
-            use_geoip=True, parallel_builds=False,
-            target_deb_arch='armhf', debug=True)
+            use_geoip=True, parallel_builds=False, target_deb_arch="armhf", debug=True
+        )
 
         self.assertThat(project.use_geoip, Equals(True))
         self.assertThat(project.parallel_builds, Equals(False))
-        self.assertThat(project.deb_arch, Equals('armhf'))
+        self.assertThat(project.deb_arch, Equals("armhf"))
         self.assertThat(project.debug, Equals(True))
         # This is a backwards compatibility check
         self.assertThat(project.info, Is(None))
 
     def test_project_with_snapcraft_yaml_file_path_carries_info(self):
-        snapcraft_yaml_file_path = self.make_snapcraft_yaml("""\
+        snapcraft_yaml_file_path = self.make_snapcraft_yaml(
+            """\
             name: foo
             version: "1"
             summary: bar
@@ -46,9 +46,10 @@ class ProjectTest(unit.TestCase):
             parts:
               part1:
                 plugin: go
-            """)
+            """
+        )
 
         project = Project(snapcraft_yaml_file_path=snapcraft_yaml_file_path)
 
         # Only 1 value is enough
-        self.assertThat(project.info.name, Equals('foo'))
+        self.assertThat(project.info.name, Equals("foo"))

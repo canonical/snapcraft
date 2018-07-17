@@ -24,17 +24,21 @@ from .errors import UnsatisfiedStatementError
 if TYPE_CHECKING:
     from ._processor import GrammarProcessor  # noqa: F401
 
-_SELECTOR_PATTERN = re.compile(r'\Aon\s+([^,\s](?:,?[^,]+)*)\Z')
-_WHITESPACE_PATTERN = re.compile(r'\A.*\s.*\Z')
+_SELECTOR_PATTERN = re.compile(r"\Aon\s+([^,\s](?:,?[^,]+)*)\Z")
+_WHITESPACE_PATTERN = re.compile(r"\A.*\s.*\Z")
 
 
 class Statement:
     """Base class for all grammar statements"""
 
-    def __init__(self, *, body: typing.Grammar,
-                 processor: 'GrammarProcessor',
-                 call_stack: typing.CallStack,
-                 check_primitives: bool=False) -> None:
+    def __init__(
+        self,
+        *,
+        body: typing.Grammar,
+        processor: "GrammarProcessor",
+        call_stack: typing.CallStack,
+        check_primitives: bool = False
+    ) -> None:
         """Create an Statement instance.
 
         :param list body: The body of the clause.
@@ -87,8 +91,8 @@ class Statement:
         """
         if self.__processed_body is None:
             self.__processed_body = self._processor.process(
-                grammar=self._body,
-                call_stack=self._call_stack(include_self=True))
+                grammar=self._body, call_stack=self._call_stack(include_self=True)
+            )
 
         return self.__processed_body
 
@@ -106,11 +110,12 @@ class Statement:
                     raise UnsatisfiedStatementError(self)
 
                 self.__processed_else = self._processor.process(
-                    grammar=else_body,
-                    call_stack=self._call_stack())
+                    grammar=else_body, call_stack=self._call_stack()
+                )
                 if self.__processed_else:
-                    if (not self._check_primitives or
-                            self._validate_primitives(self.__processed_else)):
+                    if not self._check_primitives or self._validate_primitives(
+                        self.__processed_else
+                    ):
                         break
 
         return self.__processed_else
@@ -128,7 +133,7 @@ class Statement:
                 return False
         return True
 
-    def _call_stack(self, *, include_self=False) -> List['Statement']:
+    def _call_stack(self, *, include_self=False) -> List["Statement"]:
         """The call stack when processing this statement.
 
         :param bool include_self: Whether or not this statement should be
@@ -143,7 +148,7 @@ class Statement:
             return self.__call_stack
 
     def __repr__(self):
-        return '{!r}'.format(self.__str__())
+        return "{!r}".format(self.__str__())
 
     def _check(self) -> bool:
         """Check if a statement main body should be processed.
@@ -152,10 +157,10 @@ class Statement:
                  be processed.
         :rtype: bool
         """
-        raise NotImplementedError('this must be implemented by child classes')
+        raise NotImplementedError("this must be implemented by child classes")
 
     def __eq__(self, other) -> bool:
-        raise NotImplementedError('this must be implemented by child classes')
+        raise NotImplementedError("this must be implemented by child classes")
 
     def __str__(self) -> str:
-        raise NotImplementedError('this must be implemented by child classes')
+        raise NotImplementedError("this must be implemented by child classes")
