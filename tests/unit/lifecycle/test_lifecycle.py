@@ -527,12 +527,12 @@ class RecordManifestBaseTestCase(LifecycleTestBase):
 
         def fake_uname(cmd, *args, **kwargs):
             if "uname" in cmd:
-                return b'Linux test uname 4.10 x86_64'
+                return b"Linux test uname 4.10 x86_64"
             else:
                 return original_check_output(cmd, *args, **kwargs)
 
         check_output_patcher = mock.patch(
-            'subprocess.check_output', side_effect=fake_uname)
+            "subprocess.check_output", side_effect=fake_uname
         )
         check_output_patcher.start()
         self.addCleanup(check_output_patcher.stop)
