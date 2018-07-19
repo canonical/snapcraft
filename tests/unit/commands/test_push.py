@@ -535,6 +535,61 @@ class PushCommandDeltasTestCase(PushCommandBaseTestCase):
             ]
         )
 
+    def test_push_with_disabled_delta_falls_back(self):
+        # Upload
+        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
+            result = self.run_command(["push", self.snap_file])
+        self.assertThat(result.exit_code, Equals(0))
+
+        original_upload = storeapi.StoreClient.upload
+        called = False
+
+        def _fake_upload(self, *args, **kwargs):
+            nonlocal called
+            if called:
+                return original_upload(self, *args, **kwargs)
+            else:
+                called = True
+
+                class _FakeResponse:
+                    status_code = 501
+
+                    def json(self):
+                        return {
+                            "error_list": [
+                                {
+                                    "code": "feature-disabled",
+                                    "message": "The delta upload support is currently disabled.",
+                                }
+                            ]
+                        }
+
+                raise storeapi.errors.StoreServerError(_FakeResponse())
+
+        patcher = mock.patch.object(
+            storeapi.StoreClient, "upload", side_effect=_fake_upload
+        )
+        mock_upload = patcher.start()
+        self.addCleanup(patcher.stop)
+
+        # Upload and ensure fallback is called
+        with mock.patch("snapcraft.storeapi._status_tracker.StatusTracker"):
+            result = self.run_command(["push", self.snap_file])
+        self.assertThat(result.exit_code, Equals(0))
+        mock_upload.assert_has_calls(
+            [
+                mock.call(
+                    "basic",
+                    mock.ANY,
+                    delta_format="xdelta3",
+                    delta_hash=mock.ANY,
+                    source_hash=mock.ANY,
+                    target_hash=mock.ANY,
+                ),
+                mock.call("basic", self.snap_file),
+            ]
+        )
+
 
 class PushCommandDeltasWithPruneTestCase(PushCommandBaseTestCase):
 
